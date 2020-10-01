@@ -1,0 +1,35 @@
+[run]
+omit =
+    # specific files
+    # directories
+    */tests/*
+
+    # omit virtual env in report
+    */dev-env/*
+    */stg-env/*
+    */venv/*
+    */env/*
+
+[report]
+omit =
+    # specific files
+    # directories
+    */tests/*
+
+    # omit virtual env in report
+    */dev-env/*
+    */stg-env/*
+    */venv/*
+    */env/*
+
+exclude_lines =
+    # exclude main
+    if __name__ == "__main__":
+
+    # comment this to exclude the following:
+    # a. non-test reproducible code
+    # b. environment-specific conditions
+    # c. codes that were copied and already tested from source
+    pragma: no cover
+
+precision = 2
