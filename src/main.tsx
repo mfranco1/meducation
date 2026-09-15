@@ -1,0 +1,2 @@
+import { StrictMode } from 'react'; import { createRoot } from 'react-dom/client'; import { CssBaseline, ThemeProvider } from '@mui/material'; import App from './app/App'; import { theme } from './app/theme'; import { ContentQaPanel } from './qa/ContentQaPanel';
+createRoot(document.getElementById('root')!).render(<StrictMode><ThemeProvider theme={theme}><CssBaseline/>{location.hash === '#content-qa' ? <ContentQaPanel/> : <App/>}</ThemeProvider></StrictMode>);

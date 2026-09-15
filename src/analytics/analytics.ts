@@ -1,0 +1,12 @@
+import { isCorrect } from '../domain/quizEngine';
+import type { CompletedAttempt, Question } from '../domain/types';
+export interface PerformanceRow { label: string; correct: number; total: number; percentage: number }
+export function performanceBy(questions: Question[], attempts: CompletedAttempt[], dimension: keyof Question['metadata']): PerformanceRow[] {
+  const rows = new Map<string, { correct: number; total: number }>();
+  attempts.forEach(attempt => questions.filter(q => q.quizId === attempt.quizId).forEach(question => {
+    const response = attempt.responses[question.id]; if (!response?.selectedChoiceId) return;
+    const raw = question.metadata[dimension]; const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
+    values.forEach(value => { const entry = rows.get(value) ?? { correct: 0, total: 0 }; entry.total++; if (isCorrect(question, response.selectedChoiceId)) entry.correct++; rows.set(value, entry); });
+  }));
+  return [...rows].map(([label, value]) => ({ label, ...value, percentage: Math.round(value.correct / value.total * 100) })).sort((a,b) => b.total - a.total);
+}

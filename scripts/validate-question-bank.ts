@@ -1,0 +1,2 @@
+import { questions, quizzes, subjects } from '../src/content/questionBank.ts'; import { validateQuestionBank } from '../src/content/validate.ts';
+const issues=validateQuestionBank(subjects,quizzes,questions); issues.forEach(issue=>console.log(`${issue.level.toUpperCase()}${issue.questionId?` [${issue.questionId}]`:''}: ${issue.message}`)); if(issues.some(i=>i.level==='error')) process.exitCode=1; else console.log(`Question bank valid: ${questions.length} questions across ${quizzes.length} quizzes.`);
