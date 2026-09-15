@@ -4,3 +4,18 @@ content/raw/
 *.tsbuildinfo
 tn-pdfs
 content/
+
+# Python content-pipeline artifacts
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+.pytest_cache/
+.mypy_cache/
+
+# Local configuration and test output
+.env
+.env.*
+!.env.example
+coverage/
