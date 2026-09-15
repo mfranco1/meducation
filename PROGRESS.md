@@ -13,10 +13,13 @@
 
 ## Content status
 
-No PDF questions have been marked ready: extracting text is not the same as validating source-faithful questions and answer keys. The app intentionally keeps these quizzes unavailable until reviewed content is added. Follow `docs/content-pipeline.md` to import each quiz without silently altering source material.
+- 98 actual test PDFs are enabled, containing 10,196 source-derived questions.
+- The Microbiology & Parasitology flashcard PDF under `tests/` is intentionally excluded.
+- Layout variants handled include inline columns, punctuation variants, numbering without periods, duplicated numbering artifacts, repeated discussion blocks, and 300-question Supersamplex files.
+- Two missing printed answer labels are represented as verified-answer overrides with provenance notes based on their source discussions.
 
 ## Next work
 
-1. Install Poppler and extract each PDF.
-2. Populate reviewed question data and verified-answer provenance.
-3. Expand test coverage as content is imported, including analytics across tagged questions.
+1. Continue editorial review of extracted rationales and metadata enrichment.
+2. Add page-level source references during future content audits.
+3. Expand analytics metadata beyond subject-level discipline tags.

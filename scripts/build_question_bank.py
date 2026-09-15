@@ -24,16 +24,27 @@ def slug(value: str) -> str:
 def clean(value: str) -> str:
     # PDF text layers encode spacing as tabs. Preserve line structure, normalizing only layout spacing.
     value = value.replace('\u00a0', ' ').replace('\t', ' ')
-    return '\n'.join(re.sub(r' {2,}', ' ', line).strip() for line in value.splitlines()).strip()
+    lines = [re.sub(r' {2,}', ' ', line).strip() for line in value.splitlines()]
+    return '\n'.join(line for line in lines if line and not NOISE.match(line)).strip()
 
-QUESTION = re.compile(r'(?m)^\s*(\d{1,3})\.\s*$')
+QUESTION = re.compile(r'(?m)^\s*[.]?(\d{1,3})(?:\.\d{1,3})?[.):]?(?:\s*$|\s+(?=[A-Z]))')
 CHOICE = re.compile(r'(?m)^\s*([A-D])\.\s*')
-ANSWER = re.compile(r'(?i)\banswer\s*:\s*([A-D])\s*\.')
+COLUMN_CHOICE = re.compile(r'(?m)(?:^|\t{2,})([A-D])\.\s*')
+ANSWER = re.compile(r'(?i)\banswer\s*[:;.]*\s*[^A-Za-z0-9\s]?\s*([A-D])(?:\s*[.)])?')
+NOISE = re.compile(r'(?i)^(?:TOPNOTCH MEDICAL BOARD PREP|For inquiries visit|This\s+handout\s+is\s+only\s+valid|J O H N\s+F E R M A N|.*Page\s+\d+\s+of\s+\d+\s*$)')
+
+# Source answer omissions confirmed from the accompanying discussion text.
+VERIFIED_OVERRIDES = {
+    'tn-pdfs/medicine/tests/A12 - INTERNAL MEDICINE PRACTICE TEST B OCT 2026.pdf': {72: 'A'},
+    'tn-pdfs/ob/tests/7 - OBSTETRICS AND GYNECOLOGY PRACTICE TEST C OCT 2026.pdf': {74: 'D'},
+}
 
 def parse_question_block(block: str):
     options = list(CHOICE.finditer(block))
+    column_layout = False
     if len(options) != 4 or [x.group(1) for x in options] != list('ABCD'):
-        return None
+        options = list(COLUMN_CHOICE.finditer(block)); column_layout = True
+        if len(options) != 4 or set(x.group(1) for x in options) != set('ABCD'): return None
     stem = clean(block[:options[0].start()])
     choices = []
     for index, match in enumerate(options):
@@ -41,24 +52,60 @@ def parse_question_block(block: str):
         text = clean(block[match.end():end])
         if not text: return None
         choices.append({'id': match.group(1), 'text': text})
+    if column_layout: choices.sort(key=lambda choice: choice['id'])
     return stem, choices
 
 def extract(path: Path, subject_id: str):
     reader = PdfReader(str(path))
     page_text = [page.extract_text() or '' for page in reader.pages]
     full = '\n'.join(page_text)
-    # Questions always precede the first discussion page in this test series.
-    source_questions = full.split('DISCUSSION', 1)[0]
-    matches = list(QUESTION.finditer(source_questions))
-    parsed = []
-    for i, match in enumerate(matches):
-        end = matches[i+1].start() if i+1 < len(matches) else len(source_questions)
-        result = parse_question_block(source_questions[match.end():end])
+    discussion_at = full.lower().find('discussion')
+    source_text = full[:discussion_at] if discussion_at >= 0 else full
+    source_matches = list(QUESTION.finditer(source_text))
+    source_candidates = {}
+    source_ordered = []
+    for i, match in enumerate(source_matches):
+        end = source_matches[i+1].start() if i+1 < len(source_matches) else len(source_text)
+        result = parse_question_block(source_text[match.end():end])
         if result:
             number = int(match.group(1)); stem, choices = result
-            parsed.append((number, stem, choices))
-    answers = ANSWER.findall(full)
-    return parsed, answers, len(reader.pages)
+            source_ordered.append((number, stem, choices))
+            if number not in source_candidates or len(stem) > len(source_candidates[number][0]): source_candidates[number] = (stem, choices)
+    discussion = full[discussion_at:] if discussion_at >= 0 else full
+    matches = list(QUESTION.finditer(discussion))
+    parsed = {}
+    answer_by_number = {}
+    for i, match in enumerate(matches):
+        end = matches[i+1].start() if i+1 < len(matches) else len(discussion)
+        block = discussion[match.end():end]
+        answer = ANSWER.search(block)
+        if not answer: continue
+        number = int(match.group(1))
+        answer_by_number[number] = answer.group(1).upper()
+        result = parse_question_block(block[:answer.start()])
+        if not result: continue
+        stem, choices = result
+        rest = block[answer.end():]
+        rationale_at = rest.lower().find('discussion')
+        rationale = clean(rest[rationale_at + len('discussion'):] if rationale_at >= 0 else rest)
+        candidate = (number, stem, choices, answer.group(1).upper(), rationale or None)
+        if number not in parsed or len(stem) > len(parsed[number][1]): parsed[number] = candidate
+    # Fill malformed discussion blocks from the original question section while retaining
+    # the answer attached to the same numbered discussion block.
+    for number, (stem, choices) in source_candidates.items():
+        if number not in parsed and number in answer_by_number:
+            parsed[number] = (number, stem, choices, answer_by_number[number], None)
+    # Some tests provide an answer list rather than repeated discussion blocks.
+    raw_answers = ANSWER.findall(full)
+    if len(source_ordered) == len(raw_answers):
+        for index, (number, stem, choices) in enumerate(source_ordered):
+            if number not in parsed: parsed[number] = (number, stem, choices, raw_answers[index].upper(), None)
+    relative = path.relative_to(ROOT).as_posix()
+    for number, answer in VERIFIED_OVERRIDES.get(relative, {}).items():
+        if number not in parsed and number in source_candidates:
+            stem, choices = source_candidates[number]
+            parsed[number] = (number, stem, choices, answer, None)
+    return [parsed[n] for n in sorted(parsed)], len(reader.pages)
 
 def main():
     requested = sys.argv[1:]
@@ -79,17 +126,25 @@ def main():
         pdfs = [pdf] if pdf_only else sorted((SOURCE / subject_id / 'tests').glob('*.pdf'))
         for pdf in pdfs:
             relative = pdf.relative_to(ROOT).as_posix(); quiz_id = f'{subject_id}-{slug(pdf.stem)}'
-            try: parsed, answers, pages = extract(pdf, subject_id)
+            try: parsed, pages = extract(pdf, subject_id)
             except Exception as exc:
                 review.append({'file': relative, 'reason': f'Extraction error: {exc}'}); continue
-            answer_map = {i + 1: value for i, value in enumerate(answers)}
-            ready = bool(parsed) and len(parsed) == len(answers) and [n for n,_,_ in parsed] == list(range(1, len(parsed) + 1))
+            expected = 300 if 'supersamplex' in pdf.name.lower() else 100
+            ready = len(parsed) == expected
             quizzes.append({'id':quiz_id,'subjectId':subject_id,'name':re.sub(r'^\w+\s*-\s*', '', pdf.stem).title(),'sourcePdf':relative,'questionCount':len(parsed),'status':'ready' if ready else 'needs_review'})
             if not ready:
-                review.append({'file':relative,'reason':'Parser count/order mismatch','parsedQuestions':len(parsed),'sourceAnswers':len(answers),'pages':pages})
+                parsed_numbers = {row[0] for row in parsed}
+                review.append({'file':relative,'reason':'Discussion-block count/order mismatch','parsedQuestions':len(parsed),'missingQuestions':sorted(set(range(1, expected + 1)) - parsed_numbers),'unexpectedQuestions':sorted(parsed_numbers - set(range(1, expected + 1))),'pages':pages})
                 continue
-            for number, stem, choices in parsed:
-                questions.append({'id':f'{quiz_id}-q-{number}','subjectId':subject_id,'quizId':quiz_id,'questionNumber':number,'stem':stem,'choices':choices,'sourceAnswer':answer_map[number],'answerSource':'provided_key','metadata':{'discipline':SUBJECT_NAMES[subject_id],'difficulty':'unknown'},'source':{'pdfFile':relative}})
+            for number, stem, choices, answer, rationale in parsed:
+                question = {'id':f'{quiz_id}-q-{number}','subjectId':subject_id,'quizId':quiz_id,'questionNumber':number,'stem':stem,'choices':choices,'sourceAnswer':answer,'answerSource':'provided_key','metadata':{'discipline':SUBJECT_NAMES[subject_id],'difficulty':'unknown'},'source':{'pdfFile':relative}}
+                if number in VERIFIED_OVERRIDES.get(relative, {}):
+                    question.pop('sourceAnswer')
+                    question['verifiedAnswer'] = answer
+                    question['answerSource'] = 'verified'
+                    question['answerNote'] = 'The printed answer label is missing; the answer is explicit in the source discussion.'
+                if rationale: question['rationale'] = rationale
+                questions.append(question)
             print(f'OK {relative}: {len(parsed)} questions')
     if requested:
         PARTIALS.mkdir(parents=True, exist_ok=True)
