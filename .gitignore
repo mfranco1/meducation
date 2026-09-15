@@ -3,3 +3,4 @@ dist/
 content/raw/
 *.tsbuildinfo
 tn-pdfs
+content/
