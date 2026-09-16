@@ -4,16 +4,18 @@
 
 Make stored question explanations easier to scan without changing their medical claims, source answers, question stems, choices, or stable IDs. Keep the PDF-derived `rationale` as an unchanged source record and store editorial formatting separately. For questions with no source explanation, have the AI agent draft an explanation during development and review it before it becomes static quiz content.
 
-The current bank contains 10,196 questions, 10,075 with a `rationale` and 121 without one. No question currently has `choiceExplanations` or `pearls`. The median rationale is about 556 characters; 1,390 exceed 1,000 characters. Most contain PDF line breaks, and many contain bullets, choice-by-choice discussions, or flattened tables. `FeedbackPanel` currently renders each rationale in a single MUI `Typography` element. Rebuilding content writes `questionBank.generated.json`, so edits made only there are vulnerable to replacement.
+The bank contains 10,196 questions, 10,075 with a source `rationale` and 121 without one. The median source rationale is about 556 characters; 1,390 exceed 1,000 characters. Most contain PDF line breaks, and many contain bullets, choice-by-choice discussions, or flattened tables. The source strings remain unchanged; formatting, AI explanations, and choice extraction corrections are stored separately so a content rebuild retains them.
 
-## Implemented foundation (2026-09-16)
+## Progress (2026-09-16)
 
-- The feedback UI now converts every available source rationale into semantic paragraphs and lists at render time, while retaining the original source string unchanged.
-- `src/content/explanationEnrichment.json` is the version-controlled, ID-keyed home for reviewed static explanations. It contains the first reviewed AI-authored explanation for an item with no source rationale.
-- `npm run audit:explanations` generates `content/explanation-audit.json`; the latest audit found 8,147 bulleted explanations, 1,508 choice-by-choice explanations, 231 table-like explanations, one possible extraction spillover, and 121 questions without a source rationale.
+- The feedback UI converts source rationales into semantic paragraphs and lists at render time, retaining the source strings. Trailing source lists render in a separate disclosure collapsed by default.
+- All 121 items without source rationales now have approved static AI explanations: one in `src/content/explanationEnrichment.json` and 120 in `src/content/aiExplanations.json`. No runtime AI call is used.
+- Six PDF extraction spillovers in answer choices have separate corrections in `src/content/choiceCorrections.json`, while raw extracted strings remain available for provenance.
+- `npm run audit:explanations` generates `content/explanation-audit.json`; it reports zero items without an explanation and checks that source formatting preserves the original text.
 - Enrichment validation checks stable IDs, review metadata, provenance, raw-HTML exclusion, and whether an AI-authored explanation is eligible for a question with no source rationale.
+- Browser checks covered a choice-by-choice rationale, a collapsed source disclosure, a generated explanation, and the corrected “Thermal burn edge” choice.
 
-The remaining 120 missing explanations and the source-review findings stay open in this tracker. They require individual development-time drafting and review, rather than unsafe bulk generation from an answer key.
+Thirty-two items have answer-key review notes because the PDF-provided key conflicts with the stem, choices, or reference evidence. The quiz displays an amber “Answer key under review” message for these items, and the results page warns that their source keys affect the score. Resolving these keys with verified answers remains open in this tracker.
 
 ## Steps
 

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { validateExplanationEnrichments } from './explanationValidation';
 import type { Question } from '../domain/types';
+import { questions } from './questionBank';
+import { explanationEnrichments } from './explanations';
 
 const question: Question = { id: 'q1', subjectId: 's', quizId: 'z', stem: 'Stem', choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }], sourceAnswer: 'A', answerSource: 'provided_key', metadata: {}, source: { pdfFile: 'source.pdf' } };
 
@@ -12,5 +14,10 @@ describe('explanation enrichment validation', () => {
   it('rejects HTML and unreviewed AI content', () => {
     const issues = validateExplanationEnrichments([question], { q1: { markdown: '<b>Answer</b>', provenance: 'ai_draft_reviewed', reviewedAt: '', reviewNote: '' } });
     expect(issues.filter(issue => issue.level === 'error')).toHaveLength(3);
+  });
+
+  it('covers every question that has no source rationale', () => {
+    const issues = validateExplanationEnrichments(questions, explanationEnrichments);
+    expect(issues.filter(issue => issue.level === 'error' || issue.message.startsWith('Missing explanation'))).toEqual([]);
   });
 });

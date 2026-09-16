@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatSourceRationale, parseExplanation, preservesSourceRationale } from './explanations';
+import { formatSourceRationale, parseExplanation, preservesSourceRationale, splitRationaleSources } from './explanations';
 
 describe('explanation formatting', () => {
   it('joins PDF soft breaks and retains bullet structure', () => {
@@ -21,5 +21,20 @@ describe('explanation formatting', () => {
 
   it('preserves source words and punctuation when converting layout', () => {
     expect(preservesSourceRationale('A\n• IL-8: neutrophil chemotaxis\nwith no claim changes.')).toBe(true);
+  });
+
+  it('groups choice discussions into separate list items', () => {
+    const source = 'A First choice\ncontinued\nB\nSecond choice\nC Third choice\nD Fourth choice';
+    expect(formatSourceRationale(source)).toBe('- **A** First choice continued\n- **B** Second choice\n- **C** Third choice\n- **D** Fourth choice');
+    expect(preservesSourceRationale(source)).toBe(true);
+  });
+
+  it('separates trailing references while retaining their text', () => {
+    expect(splitRationaleSources('A long explanation of the finding. Sources:\n(1) Book, p. 12.')).toEqual({ body: 'A long explanation of the finding.', sources: 'Sources:\n(1) Book, p. 12.' });
+  });
+
+  it('keeps teaching content visible when it follows an internal source citation', () => {
+    const source = 'Clinical explanation of the finding. Source: Book, p. 12.\n• Further teaching point';
+    expect(splitRationaleSources(source)).toEqual({ body: source });
   });
 });

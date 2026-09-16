@@ -25,6 +25,6 @@ const rows = questions.map(question => ({
   formattedLength: question.rationale ? formatSourceRationale(question.rationale).length : explanationEnrichments[question.id]?.markdown.length ?? 0,
   preservesSource: question.rationale ? preservesSourceRationale(question.rationale) : null,
 }));
-const report = { generatedAt: new Date().toISOString(), totals: { questions: rows.length, withSourceRationale: rows.filter(row => row.sourceLength > 0).length, enriched: rows.filter(row => row.enrichment).length, missing: rows.filter(row => row.patterns.includes('missing')).length, sourcePreservationFailures: rows.filter(row => row.preservesSource === false).length }, rows };
+const report = { generatedAt: new Date().toISOString(), totals: { questions: rows.length, withSourceRationale: rows.filter(row => row.sourceLength > 0).length, enriched: rows.filter(row => row.enrichment).length, missingSourceRationale: rows.filter(row => row.patterns.includes('missing')).length, withoutExplanation: rows.filter(row => row.patterns.includes('missing') && !row.enrichment).length, answersUnderReview: Object.values(explanationEnrichments).filter(entry => entry.answerReviewNote).length, sourcePreservationFailures: rows.filter(row => row.preservesSource === false).length }, rows };
 writeFileSync(resolve('content/explanation-audit.json'), JSON.stringify(report, null, 2) + '\n');
-console.log(`Wrote audit for ${rows.length} questions; ${report.totals.missing} need an AI draft or source review.`);
+console.log(`Wrote audit for ${rows.length} questions; ${report.totals.withoutExplanation} remain without an explanation; ${report.totals.answersUnderReview} answer keys need review.`);
