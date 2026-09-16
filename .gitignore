@@ -4,6 +4,12 @@ content/raw/
 *.tsbuildinfo
 tn-pdfs
 content/
+!src/content/
+!src/content/explanations.ts
+!src/content/explanations.test.ts
+!src/content/explanationEnrichment.json
+!src/content/explanationValidation.ts
+!src/content/explanationValidation.test.ts
 
 # Python content-pipeline artifacts
 __pycache__/

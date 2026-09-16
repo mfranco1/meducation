@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Box, Button, Card, CardContent, Chip, Container, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
@@ -12,6 +12,7 @@ import { LocalAttemptRepository } from '../persistence/localRepository';
 import { blankResponse, isCorrect, normalizeResponseForFeedbackMode, questionIndexFor, scoreAttempt, selectChoice, updateResponse } from '../domain/quizEngine';
 import type { Attempt, CompletedAttempt, FeedbackMode, Question, Quiz, Subject } from '../domain/types';
 import { performanceBy } from '../analytics/analytics';
+import { explanationFor, parseExplanation, type ExplanationBlock } from '../content/explanations';
 
 const repository = new LocalAttemptRepository();
 const duration = (ms: number) => String(Math.floor(ms / 60000)).padStart(2, '0') + ':' + String(Math.floor(ms / 1000) % 60).padStart(2, '0');
@@ -23,6 +24,34 @@ function Stopwatch({ startedAt }: { startedAt: string }) {
     return () => clearInterval(interval);
   }, []);
   return <Stack direction="row" spacing={.75} alignItems="center"><TimerOutlinedIcon fontSize="small" /><Typography fontWeight={700}>{duration(now - new Date(startedAt).getTime())}</Typography></Stack>;
+}
+
+function InlineExplanationText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).filter(Boolean);
+  return <>{parts.map((part, index): ReactNode => {
+    if (part.startsWith('**') && part.endsWith('**')) return <strong key={index}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith('*') && part.endsWith('*')) return <em key={index}>{part.slice(1, -1)}</em>;
+    return part;
+  })}</>;
+}
+
+function ExplanationList({ block }: { block: Extract<ExplanationBlock, { type: 'list' }> }) {
+  return <Box component={block.ordered ? 'ol' : 'ul'} sx={{ my: 0, pl: 3, '& li + li': { mt: .65 } }}>{block.items.map((item, itemIndex) => <li key={itemIndex}>
+    <Typography component="span" sx={{ lineHeight: 1.7 }}><InlineExplanationText text={item.text} /></Typography>
+    {item.children?.map((child, childIndex) => child.type === 'list' ? <Box key={childIndex} sx={{ mt: .65 }}><ExplanationList block={child} /></Box> : <Typography key={childIndex} sx={{ mt: .65, lineHeight: 1.7 }}><InlineExplanationText text={child.text} /></Typography>)}
+  </li>)}</Box>;
+}
+
+function ExplanationContent({ question }: { question: Question }) {
+  const explanation = explanationFor(question);
+  if (!explanation) return null;
+  return <Box sx={{ maxWidth: '72ch' }}>
+    <Typography variant="subtitle2" sx={{ mb: .75, color: 'text.secondary', letterSpacing: '.02em', textTransform: 'uppercase' }}>Explanation</Typography>
+    <Stack spacing={1.25}>{parseExplanation(explanation.markdown).map((block, index) => block.type === 'paragraph'
+      ? <Typography key={index} sx={{ fontSize: { xs: '1rem', sm: '1.0625rem' }, lineHeight: 1.75 }}><InlineExplanationText text={block.text} /></Typography>
+      : <ExplanationList key={index} block={block} />
+    )}</Stack>
+  </Box>;
 }
 
 function FeedbackPanel({ question, selectedChoiceId }: { question: Question; selectedChoiceId?: string }) {
@@ -37,10 +66,7 @@ function FeedbackPanel({ question, selectedChoiceId }: { question: Question; sel
       </Stack>
     </Box>
     <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2.25, sm: 2.75 } }}>
-      {question.rationale && <Box sx={{ maxWidth: '72ch' }}>
-        <Typography variant="subtitle2" sx={{ mb: .75, color: 'text.secondary', letterSpacing: '.02em', textTransform: 'uppercase' }}>Explanation</Typography>
-        <Typography sx={{ fontSize: { xs: '1rem', sm: '1.0625rem' }, lineHeight: 1.75 }}>{question.rationale}</Typography>
-      </Box>}
+      <ExplanationContent question={question} />
       {question.pearls?.map(pearl => <Box key={pearl} sx={{ mt: 2.5, maxWidth: '72ch', p: 1.5, borderRadius: 2, bgcolor: '#f7dfcf' }}>
         <Typography variant="subtitle2" color="primary.dark">High-yield pearl</Typography>
         <Typography sx={{ mt: .5, lineHeight: 1.65 }}>{pearl}</Typography>
