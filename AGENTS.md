@@ -87,6 +87,15 @@ Use the repository documentation as the source of truth for details:
 
 If these documents do not yet exist, create them when the corresponding work requires them.
 
+### Progress Tracking
+
+Use md file trackers for tracking progress on ongoing work.
+
+- docs/work/ongoing - directory for ongoing progress trackers. Create new trackers here.
+- docs/work/done - directory for completed trackers. Move trackers here once the task being tracked is completed.
+
+If these directories and files do not exist yet, create them when the corresponding work requires them.
+
 ## Verification
 
 After making changes, run the relevant project checks defined by the repository.
