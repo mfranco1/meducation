@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { formatSourceRationale, parseExplanation, preservesSourceRationale, splitRationaleSources } from './explanations';
+import { explanationFor } from './explanationCatalog';
+import { parseExplanation } from './explanationParser';
+import { formatSourceRationale, preservesSourceRationale, splitRationaleSources } from './sourceRationale';
 
 describe('explanation formatting', () => {
   it('joins PDF soft breaks and retains bullet structure', () => {
@@ -36,5 +38,10 @@ describe('explanation formatting', () => {
   it('keeps teaching content visible when it follows an internal source citation', () => {
     const source = 'Clinical explanation of the finding. Source: Book, p. 12.\n• Further teaching point';
     expect(splitRationaleSources(source)).toEqual({ body: source });
+  });
+
+  it('selects an automatically formatted source rationale when no enrichment exists', () => {
+    const explanation = explanationFor({ id: 'fixture', subjectId: 's', quizId: 'q', stem: 'Stem', choices: [], answerSource: 'provided_key', rationale: 'First line\ncontinues.', metadata: {}, source: { pdfFile: 'source.pdf' } });
+    expect(explanation).toMatchObject({ markdown: 'First line continues.', provenance: 'source_formatted' });
   });
 });

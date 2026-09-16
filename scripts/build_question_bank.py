@@ -6,9 +6,10 @@ PDF text layer, source answers are retained separately, and any ambiguous parse
 is rejected into content/review-report.json rather than shipped as ready.
 """
 from __future__ import annotations
-import json, re, sys
+import re, sys
 from pathlib import Path
 from pypdf import PdfReader
+from question_bank_output import write_partial, write_question_bank
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / 'tn-pdfs'
@@ -147,14 +148,9 @@ def main():
                 questions.append(question)
             print(f'OK {relative}: {len(parsed)} questions')
     if requested:
-        PARTIALS.mkdir(parents=True, exist_ok=True)
         name = slug(pdf.stem) if pdf_only else subject_ids[0]
-        (PARTIALS / f'{subject_ids[0]}--{name}.json').write_text(json.dumps({'subjects':[x for x in subjects if x['id'] == subject_ids[0]],'quizzes':quizzes,'questions':questions,'review':review}, ensure_ascii=False, indent=2) + '\n')
-        print(f'Wrote partial {name}: {len(questions)} questions; {len(review)} PDF(s) need review.')
+        write_partial(PARTIALS, subject_ids[0], name, subjects, quizzes, questions, review)
         return
-    OUT.write_text(json.dumps({'subjects':subjects,'quizzes':quizzes,'questions':questions}, ensure_ascii=False, indent=2) + '\n')
-    REPORT.parent.mkdir(exist_ok=True); REPORT.write_text(json.dumps(review, indent=2) + '\n')
-    print(f'Wrote {len(questions)} questions; {len(review)} PDF(s) need review.')
-    if review: print(json.dumps(review, indent=2))
+    write_question_bank(OUT, REPORT, subjects, quizzes, questions, review)
 
 if __name__ == '__main__': main()
