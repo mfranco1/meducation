@@ -3,6 +3,10 @@ import type { Attempt, AttemptScore, Question, QuestionResponse } from './types'
 export const answerFor = (question: Question) => question.verifiedAnswer ?? question.sourceAnswer;
 export const isCorrect = (question: Question, selected?: string) => selected !== undefined && selected === answerFor(question);
 export const blankResponse = (questionId: string): QuestionResponse => ({ questionId, flagged: false, locked: false, timeMs: 0 });
+export const questionIndexFor = (questions: Question[], questionId?: string) => {
+  const index = questionId ? questions.findIndex(question => question.id === questionId) : -1;
+  return index >= 0 ? index : 0;
+};
 export function updateResponse(attempt: Attempt, response: QuestionResponse): Attempt { return { ...attempt, responses: { ...attempt.responses, [response.questionId]: response } }; }
 export function scoreAttempt(attempt: Attempt, questions: Question[], endMs = Date.now()): AttemptScore {
   let correct = 0, incorrect = 0, unanswered = 0;

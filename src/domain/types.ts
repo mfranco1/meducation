@@ -13,7 +13,7 @@ export interface Question {
 export interface Subject { id: string; name: string; description: string; accent: string }
 export interface Quiz { id: string; subjectId: string; name: string; sourcePdf: string; questionCount: number; status: 'ready' | 'needs_review' }
 export interface QuestionResponse { questionId: string; selectedChoiceId?: string; flagged: boolean; locked: boolean; timeMs: number }
-export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; completedAt?: string; responses: Record<string, QuestionResponse> }
+export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; currentQuestionId?: string; completedAt?: string; responses: Record<string, QuestionResponse> }
 export interface CompletedAttempt extends Attempt { completedAt: string; score: AttemptScore }
 export interface AttemptScore { correct: number; incorrect: number; unanswered: number; total: number; percentage: number; elapsedMs: number }
 export interface QuizRepository { listSubjects(): Subject[]; listQuizzes(subjectId: string): Quiz[]; listQuestions(quizId: string): Question[] }
