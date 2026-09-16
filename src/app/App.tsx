@@ -9,7 +9,7 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import { questionBank, questions } from '../content/questionBank';
 import { LocalAttemptRepository } from '../persistence/localRepository';
-import { answerFor, blankResponse, isCorrect, normalizeResponseForFeedbackMode, questionIndexFor, scoreAttempt, selectChoice, updateResponse } from '../domain/quizEngine';
+import { blankResponse, isCorrect, normalizeResponseForFeedbackMode, questionIndexFor, scoreAttempt, selectChoice, updateResponse } from '../domain/quizEngine';
 import type { Attempt, CompletedAttempt, FeedbackMode, Question, Quiz, Subject } from '../domain/types';
 import { performanceBy } from '../analytics/analytics';
 
@@ -27,9 +27,6 @@ function Stopwatch({ startedAt }: { startedAt: string }) {
 
 function FeedbackPanel({ question, selectedChoiceId }: { question: Question; selectedChoiceId?: string }) {
   const correct = isCorrect(question, selectedChoiceId);
-  const selectedChoice = question.choices.find(choice => choice.id === selectedChoiceId);
-  const correctChoice = question.choices.find(choice => choice.id === answerFor(question));
-  const statusColor = correct ? 'success.main' : 'error.main';
   const statusBackground = correct ? '#e4f2e9' : '#fae9e6';
 
   return <Box aria-live="polite" sx={{ mt: 3, overflow: 'hidden', border: '1px solid', borderColor: correct ? '#b9dec6' : '#f0c6bf', borderRadius: 3, bgcolor: 'background.paper' }}>
@@ -40,11 +37,6 @@ function FeedbackPanel({ question, selectedChoiceId }: { question: Question; sel
       </Stack>
     </Box>
     <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2.25, sm: 2.75 } }}>
-      {!correct && correctChoice && <Box sx={{ mb: question.rationale || question.pearls?.length ? 2.5 : 0, px: 1.5, py: 1.25, borderLeft: '3px solid', borderColor: statusColor, borderRadius: 1, bgcolor: '#fbf8f5' }}>
-        <Typography variant="body2" color="text.secondary">Correct answer</Typography>
-        <Typography fontWeight={750} sx={{ mt: .25 }}>{correctChoice.id}. {correctChoice.text}</Typography>
-      </Box>}
-      {correct && selectedChoice && <Typography variant="body2" color="text.secondary" sx={{ mb: question.rationale || question.pearls?.length ? 2.5 : 0 }}>You chose {selectedChoice.id}. {selectedChoice.text}</Typography>}
       {question.rationale && <Box sx={{ maxWidth: '72ch' }}>
         <Typography variant="subtitle2" sx={{ mb: .75, color: 'text.secondary', letterSpacing: '.02em', textTransform: 'uppercase' }}>Explanation</Typography>
         <Typography sx={{ fontSize: { xs: '1rem', sm: '1.0625rem' }, lineHeight: 1.75 }}>{question.rationale}</Typography>
