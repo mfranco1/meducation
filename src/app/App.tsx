@@ -4,6 +4,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import FlagIcon from '@mui/icons-material/Flag';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
@@ -95,7 +96,7 @@ function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
 
 export default function App() {
   const [view, setView] = useState<View>({ page: 'dashboard' });
-  const [abortOpen, setAbortOpen] = useState(false);
+  const [exitOpen, setExitOpen] = useState(false);
   const attempts = repository.list();
   const subjectStats = useMemo(() => questionBank.listSubjects().map(subject => {
     const subjectAttempts = attempts.filter(attempt => attempt.subjectId === subject.id);
@@ -103,11 +104,14 @@ export default function App() {
     return { subject, quizCount: quizzes.length, attempts: subjectAttempts, best: subjectAttempts.length ? Math.max(...subjectAttempts.map(attempt => attempt.score.percentage)) : undefined };
   }), [view]);
 
-  const leaveForDashboard = () => {
-    if (view.page === 'quiz') repository.saveActive(pauseAttempt(view.attempt));
+  const handleHeaderNavigation = () => {
+    if (view.page === 'quiz') {
+      setExitOpen(true);
+      return;
+    }
     setView({ page: 'dashboard' });
   };
-  const header = <Box component="header" sx={{ py: 2.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}><Container maxWidth="lg"><Stack direction="row" alignItems="center"><Button startIcon={<MenuBookRoundedIcon sx={{ color: 'primary.main' }} />} onClick={leaveForDashboard} sx={{ p: 0, color: 'text.primary', fontSize: 20, letterSpacing: '-.04em' }}><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Button></Stack></Container></Box>;
+  const header = <Box component="header" sx={{ py: 2.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}><Container maxWidth="lg"><Stack direction="row" alignItems="center"><Button startIcon={<MenuBookRoundedIcon sx={{ color: 'primary.main' }} />} onClick={handleHeaderNavigation} sx={{ p: 0, color: 'text.primary', fontSize: 20, letterSpacing: '-.04em' }}><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Button></Stack></Container></Box>;
   const openQuiz = (quiz: Quiz) => {
     const existing = repository.getActive(quiz.id);
     if (existing) {
@@ -171,22 +175,23 @@ export default function App() {
     };
     const abort = () => {
       repository.clearActive(quiz.id);
-      setAbortOpen(false);
+      setExitOpen(false);
       setView({ page: 'subject', subject: questionBank.listSubjects().find(subject => subject.id === quiz.subjectId)! });
     };
     const leave = () => {
       repository.saveActive(pauseAttempt({ ...attempt, currentQuestionId: question.id }));
+      setExitOpen(false);
       setView({ page: 'subject', subject: questionBank.listSubjects().find(subject => subject.id === quiz.subjectId)! });
     };
     const feedback = response.locked && attempt.feedbackMode === 'immediate';
     const answerUnderReview = Boolean(explanationFor(question)?.answerReviewNote);
 
-    return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}><Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">Question {index + 1} of {bank.length}</Typography><Stopwatch attempt={attempt} /></Stack><LinearProgress variant="determinate" value={(index + 1) / bank.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} /><Card sx={{ mt: 3 }}><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}><Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}><Typography variant="h5" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{question.stem}</Typography><IconButton size="small" aria-label="Flag question" sx={{ p: 0, mt: .5, flexShrink: 0 }} onClick={() => mutate(updateResponse(attempt, { ...response, flagged: !response.flagged }))}>{response.flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}</IconButton></Stack><RadioGroup value={response.selectedChoiceId ?? ''} onChange={(_, choice) => select(choice)} sx={{ mt: 3, gap: 1.25 }}>{question.choices.map(choice => {
+    return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}><IconButton aria-label="Leave test" onClick={() => setExitOpen(true)} sx={{ p: .5, mb: .5 }}><ArrowBackRoundedIcon /></IconButton><Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">Question {index + 1} of {bank.length}</Typography><Stopwatch attempt={attempt} /></Stack><LinearProgress variant="determinate" value={(index + 1) / bank.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} /><Card sx={{ mt: 3 }}><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}><Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}><Typography variant="h5" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{question.stem}</Typography><IconButton size="small" aria-label="Flag question" sx={{ p: 0, mt: .5, flexShrink: 0 }} onClick={() => mutate(updateResponse(attempt, { ...response, flagged: !response.flagged }))}>{response.flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}</IconButton></Stack><RadioGroup value={response.selectedChoiceId ?? ''} onChange={(_, choice) => select(choice)} sx={{ mt: 3, gap: 1.25 }}>{question.choices.map(choice => {
       const selected = response.selectedChoiceId === choice.id;
       const correct = isCorrect(question, choice.id);
       const state = feedback && !answerUnderReview ? correct ? '#e4f2e9' : selected ? '#fae9e6' : undefined : undefined;
       return <Box key={choice.id} sx={{ border: '1px solid', borderColor: selected ? 'primary.main' : '#e8dfd9', bgcolor: state, borderRadius: 1, p: .5 }}><FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography sx={{ py: .8 }}><b>{choice.id}.</b> {choice.text}</Typography>} sx={{ m: 0, width: '100%' }} /></Box>;
-    })}</RadioGroup>{feedback && <FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} />}</CardContent></Card><Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}><Stack direction="row" spacing={1}><Button onClick={leave}>Leave test</Button><Button color="error" onClick={() => setAbortOpen(true)}>Abort test</Button></Stack><Stack direction="row" spacing={1}><Button startIcon={<ArrowBackRoundedIcon />} disabled={index === 0} onClick={() => mutate(attempt, index - 1)}>Previous</Button>{index === bank.length - 1 ? <Button variant="contained" onClick={finish}>{attempt.feedbackMode === 'exam' ? 'Submit test' : 'Finish'}</Button> : <Button endIcon={<ArrowForwardRoundedIcon />} onClick={() => mutate(attempt, index + 1)}>{feedback ? 'Continue' : 'Next'}</Button>}</Stack></Stack><Dialog open={abortOpen} onClose={() => setAbortOpen(false)}><DialogTitle>Abort this test?</DialogTitle><DialogContent><DialogContentText>Your current answers and progress will be discarded. You’ll return to this subject’s quiz list, where you can begin a new attempt.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setAbortOpen(false)}>Keep testing</Button><Button color="error" variant="contained" onClick={abort}>Abort test</Button></DialogActions></Dialog></Container>;
+    })}</RadioGroup>{feedback && <FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} />}</CardContent></Card><Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ mt: 3 }}><Stack direction="row" spacing={1}><Button startIcon={<ArrowBackRoundedIcon />} disabled={index === 0} onClick={() => mutate(attempt, index - 1)}>Previous</Button>{index === bank.length - 1 ? <Button variant="contained" onClick={finish}>{attempt.feedbackMode === 'exam' ? 'Submit test' : 'Finish'}</Button> : <Button endIcon={<ArrowForwardRoundedIcon />} onClick={() => mutate(attempt, index + 1)}>{feedback ? 'Continue' : 'Next'}</Button>}</Stack></Stack><Dialog open={exitOpen} onClose={() => setExitOpen(false)} aria-labelledby="test-exit-dialog-title"><DialogTitle id="test-exit-dialog-title" sx={{ pr: 6, position: 'relative' }}>Leave or abort this test?<IconButton aria-label="Continue test" onClick={() => setExitOpen(false)} sx={{ position: 'absolute', top: 8, right: 8 }}><CloseRoundedIcon /></IconButton></DialogTitle><DialogContent><DialogContentText>Leaving saves your progress and pauses the stopwatch. Aborting discards this test and its saved progress.</DialogContentText></DialogContent><DialogActions><Button variant="contained" onClick={leave}>Leave test</Button><Button color="error" variant="outlined" onClick={abort}>Abort test</Button></DialogActions></Dialog></Container>;
   };
 
   const Results = ({ quiz, attempt }: Extract<View, { page: 'results' }>) => {
