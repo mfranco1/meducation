@@ -67,7 +67,7 @@ function FeedbackPanel({ question, selectedChoiceId }: { question: Question; sel
   const statusBackground = answerUnderReview ? '#fff4dd' : correct ? '#e4f2e9' : '#fae9e6';
 
   const hasContent = Boolean(explanation || question.pearls?.length);
-  return <Box aria-live="polite" sx={{ mt: 3, overflow: 'hidden', border: '1px solid', borderColor: answerUnderReview ? '#e9cf98' : correct ? '#b9dec6' : '#f0c6bf', borderRadius: 3, bgcolor: 'background.paper' }}>
+  return <Box aria-live="polite" sx={{ mt: 3, overflow: 'hidden', border: '1px solid', borderColor: answerUnderReview ? '#e9cf98' : correct ? '#b9dec6' : '#f0c6bf', borderRadius: 1, bgcolor: 'background.paper' }}>
     <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 1.75, bgcolor: statusBackground, borderBottom: '1px solid', borderColor: answerUnderReview ? '#f0dcaf' : correct ? '#cce6d5' : '#f3d3cd' }}>
       <Stack direction="row" spacing={1} alignItems="center">
         {answerUnderReview ? <WarningAmberRoundedIcon color="warning" /> : correct ? <CheckCircleRoundedIcon color="success" /> : <CancelRoundedIcon color="error" />}
@@ -169,7 +169,7 @@ export default function App() {
       const selected = response.selectedChoiceId === choice.id;
       const correct = isCorrect(question, choice.id);
       const state = feedback && !answerUnderReview ? correct ? '#e4f2e9' : selected ? '#fae9e6' : undefined : undefined;
-      return <Box key={choice.id} sx={{ border: '1px solid', borderColor: selected ? 'primary.main' : '#e8dfd9', bgcolor: state, borderRadius: 2, p: .5 }}><FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography sx={{ py: .8 }}><b>{choice.id}.</b> {choice.text}</Typography>} sx={{ m: 0, width: '100%' }} /></Box>;
+      return <Box key={choice.id} sx={{ border: '1px solid', borderColor: selected ? 'primary.main' : '#e8dfd9', bgcolor: state, borderRadius: 1, p: .5 }}><FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography sx={{ py: .8 }}><b>{choice.id}.</b> {choice.text}</Typography>} sx={{ m: 0, width: '100%' }} /></Box>;
     })}</RadioGroup>{feedback && <FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} />}</CardContent></Card><Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 3 }}><Stack direction="row" spacing={1}><Button onClick={leave}>Leave test</Button><Button color="error" onClick={() => setAbortOpen(true)}>Abort test</Button></Stack><Stack direction="row" spacing={1}><Button disabled={index === 0} onClick={() => mutate(attempt, index - 1)}>Previous</Button>{index === bank.length - 1 ? <Button variant="contained" onClick={finish}>{attempt.feedbackMode === 'exam' ? 'Submit test' : 'Finish'}</Button> : <Button onClick={() => mutate(attempt, index + 1)}>{feedback ? 'Continue' : 'Next'}</Button>}</Stack></Stack><Dialog open={abortOpen} onClose={() => setAbortOpen(false)}><DialogTitle>Abort this test?</DialogTitle><DialogContent><DialogContentText>Your current answers and progress will be discarded. You’ll return to this subject’s quiz list, where you can begin a new attempt.</DialogContentText></DialogContent><DialogActions><Button onClick={() => setAbortOpen(false)}>Keep testing</Button><Button color="error" variant="contained" onClick={abort}>Abort test</Button></DialogActions></Dialog></Container>;
   };
 
