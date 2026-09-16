@@ -10,7 +10,7 @@ import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { questionBank, questions } from '../content/questionBank';
 import { LocalAttemptRepository } from '../persistence/localRepository';
-import { blankResponse, isCorrect, normalizeResponseForFeedbackMode, questionIndexFor, scoreAttempt, selectChoice, updateResponse } from '../domain/quizEngine';
+import { blankResponse, elapsedTimeFor, isCorrect, normalizeResponseForFeedbackMode, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, selectChoice, updateResponse } from '../domain/quizEngine';
 import type { Attempt, CompletedAttempt, FeedbackMode, Question, Quiz, Subject } from '../domain/types';
 import { performanceBy } from '../analytics/analytics';
 import { explanationFor, parseExplanation, type ExplanationBlock } from '../content/explanations';
@@ -18,13 +18,13 @@ import { explanationFor, parseExplanation, type ExplanationBlock } from '../cont
 const repository = new LocalAttemptRepository();
 const duration = (ms: number) => String(Math.floor(ms / 60000)).padStart(2, '0') + ':' + String(Math.floor(ms / 1000) % 60).padStart(2, '0');
 
-function Stopwatch({ startedAt }: { startedAt: string }) {
+function Stopwatch({ attempt }: { attempt: Attempt }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
-  return <Stack direction="row" spacing={.75} alignItems="center"><TimerOutlinedIcon fontSize="small" /><Typography fontWeight={700}>{duration(now - new Date(startedAt).getTime())}</Typography></Stack>;
+  return <Stack direction="row" spacing={.75} alignItems="center"><TimerOutlinedIcon fontSize="small" /><Typography fontWeight={700}>{duration(elapsedTimeFor(attempt, now))}</Typography></Stack>;
 }
 
 function InlineExplanationText({ text }: { text: string }) {
@@ -102,14 +102,23 @@ export default function App() {
     return { subject, quizCount: quizzes.length, attempts: subjectAttempts, best: subjectAttempts.length ? Math.max(...subjectAttempts.map(attempt => attempt.score.percentage)) : undefined };
   }), [view]);
 
-  const header = <Box component="header" sx={{ py: 2.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}><Container maxWidth="lg"><Stack direction="row" alignItems="center"><Button startIcon={<MenuBookRoundedIcon sx={{ color: 'primary.main' }} />} onClick={() => setView({ page: 'dashboard' })} sx={{ p: 0, color: 'text.primary', fontSize: 20, letterSpacing: '-.04em' }}><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Button></Stack></Container></Box>;
+  const leaveForDashboard = () => {
+    if (view.page === 'quiz') repository.saveActive(pauseAttempt(view.attempt));
+    setView({ page: 'dashboard' });
+  };
+  const header = <Box component="header" sx={{ py: 2.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}><Container maxWidth="lg"><Stack direction="row" alignItems="center"><Button startIcon={<MenuBookRoundedIcon sx={{ color: 'primary.main' }} />} onClick={leaveForDashboard} sx={{ p: 0, color: 'text.primary', fontSize: 20, letterSpacing: '-.04em' }}><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Button></Stack></Container></Box>;
   const openQuiz = (quiz: Quiz) => {
     const existing = repository.getActive(quiz.id);
-    if (existing) setView({ page: 'quiz', quiz, attempt: existing, index: questionIndexFor(questionBank.listQuestions(quiz.id), existing.currentQuestionId) });
+    if (existing) {
+      const resumed = resumeAttempt(existing);
+      repository.saveActive(resumed);
+      setView({ page: 'quiz', quiz, attempt: resumed, index: questionIndexFor(questionBank.listQuestions(quiz.id), resumed.currentQuestionId) });
+    }
     else setView({ page: 'setup', quiz });
   };
   const start = (quiz: Quiz, mode: FeedbackMode) => {
-    const attempt: Attempt = { id: crypto.randomUUID(), quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: mode, startedAt: new Date().toISOString(), currentQuestionId: questionBank.listQuestions(quiz.id)[0]?.id, responses: {} };
+    const now = new Date().toISOString();
+    const attempt: Attempt = { id: crypto.randomUUID(), quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: mode, startedAt: now, elapsedMs: 0, timerStartedAt: now, currentQuestionId: questionBank.listQuestions(quiz.id)[0]?.id, responses: {} };
     repository.saveActive(attempt);
     setView({ page: 'quiz', quiz, attempt, index: 0 });
   };
@@ -141,14 +150,20 @@ export default function App() {
       setView({ page: 'quiz', quiz, attempt: checkpointed, index: nextIndex });
     };
     useEffect(() => {
+      const pauseOnPageHide = () => repository.saveActive(pauseAttempt(attempt));
+      window.addEventListener('pagehide', pauseOnPageHide);
+      return () => window.removeEventListener('pagehide', pauseOnPageHide);
+    }, [attempt]);
+    useEffect(() => {
       if (!savedResponse) return;
       const normalized = normalizeResponseForFeedbackMode(savedResponse, attempt.feedbackMode);
       if (normalized !== savedResponse) mutate(updateResponse(attempt, normalized));
     }, [attempt, question.id]);
     const select = (choice: string) => !response.locked && mutate(updateResponse(attempt, selectChoice(response, choice, attempt.feedbackMode)));
     const finish = () => {
-      const score = scoreAttempt(attempt, bank);
-      const complete: CompletedAttempt = { ...attempt, completedAt: new Date().toISOString(), score };
+      const paused = pauseAttempt(attempt);
+      const score = scoreAttempt(paused, bank);
+      const complete: CompletedAttempt = { ...paused, completedAt: new Date().toISOString(), score };
       repository.saveCompleted(complete);
       repository.clearActive(quiz.id);
       setView({ page: 'results', quiz, attempt: complete });
@@ -159,13 +174,13 @@ export default function App() {
       setView({ page: 'subject', subject: questionBank.listSubjects().find(subject => subject.id === quiz.subjectId)! });
     };
     const leave = () => {
-      repository.saveActive({ ...attempt, currentQuestionId: question.id });
+      repository.saveActive(pauseAttempt({ ...attempt, currentQuestionId: question.id }));
       setView({ page: 'subject', subject: questionBank.listSubjects().find(subject => subject.id === quiz.subjectId)! });
     };
     const feedback = response.locked && attempt.feedbackMode === 'immediate';
     const answerUnderReview = Boolean(explanationFor(question)?.answerReviewNote);
 
-    return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}><Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">Question {index + 1} of {bank.length}</Typography><Stopwatch startedAt={attempt.startedAt} /></Stack><LinearProgress variant="determinate" value={(index + 1) / bank.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} /><Card sx={{ mt: 3 }}><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}><Stack direction="row" justifyContent="space-between" spacing={2}><Typography variant="h5" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{question.stem}</Typography><IconButton aria-label="Flag question" onClick={() => mutate(updateResponse(attempt, { ...response, flagged: !response.flagged }))}>{response.flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}</IconButton></Stack><RadioGroup value={response.selectedChoiceId ?? ''} onChange={(_, choice) => select(choice)} sx={{ mt: 3, gap: 1.25 }}>{question.choices.map(choice => {
+    return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}><Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">Question {index + 1} of {bank.length}</Typography><Stopwatch attempt={attempt} /></Stack><LinearProgress variant="determinate" value={(index + 1) / bank.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} /><Card sx={{ mt: 3 }}><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}><Stack direction="row" justifyContent="space-between" spacing={2}><Typography variant="h5" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{question.stem}</Typography><IconButton aria-label="Flag question" onClick={() => mutate(updateResponse(attempt, { ...response, flagged: !response.flagged }))}>{response.flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}</IconButton></Stack><RadioGroup value={response.selectedChoiceId ?? ''} onChange={(_, choice) => select(choice)} sx={{ mt: 3, gap: 1.25 }}>{question.choices.map(choice => {
       const selected = response.selectedChoiceId === choice.id;
       const correct = isCorrect(question, choice.id);
       const state = feedback && !answerUnderReview ? correct ? '#e4f2e9' : selected ? '#fae9e6' : undefined : undefined;
