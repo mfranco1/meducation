@@ -1,3 +1,3 @@
 # Design system
 
-Meducation uses a light, warm autumn palette with `#b9511b` as its restrained primary accent, off-white surfaces, strong type hierarchy, soft borders, 14px radius cards, and visible native MUI focus states. Correctness always combines written feedback, an icon, and color.
+Meducation uses a light, warm autumn palette with `#b9511b` as its restrained primary accent, off-white surfaces, strong type hierarchy, soft borders, 14px radius cards, and visible native MUI focus states. Correctness always combines written feedback, an icon, and color. Immediate feedback uses a compact tinted status header followed by a neutral reading surface; long explanations should have a clear heading, generous line height, and a constrained readable measure rather than a fully tinted wall of text. State the correct answer after an incorrect selection, and render optional high-yield pearls as separate callouts. Visual formatting must not change question or enrichment text.
