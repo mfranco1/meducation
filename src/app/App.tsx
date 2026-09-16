@@ -111,7 +111,7 @@ export default function App() {
     }
     setView({ page: 'dashboard' });
   };
-  const header = <Box component="header" sx={{ py: 2.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}><Container maxWidth="lg"><Stack direction="row" alignItems="center"><Button startIcon={<MenuBookRoundedIcon sx={{ color: 'primary.main' }} />} onClick={handleHeaderNavigation} sx={{ p: 0, color: 'text.primary', fontSize: 20, letterSpacing: '-.04em' }}><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Button></Stack></Container></Box>;
+  const header = <Box component="header" sx={{ py: 2.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}><Container maxWidth="lg"><Stack direction="row" alignItems="center"><Button disableRipple startIcon={<MenuBookRoundedIcon sx={{ color: 'primary.main' }} />} onClick={handleHeaderNavigation} sx={{ p: 0, color: 'text.primary', fontSize: 20, letterSpacing: '-.04em', bgcolor: 'transparent', transition: 'none', '&:hover, &:active': { bgcolor: 'transparent' } }}><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Button></Stack></Container></Box>;
   const openQuiz = (quiz: Quiz) => {
     const existing = repository.getActive(quiz.id);
     if (existing) {
@@ -134,8 +134,9 @@ export default function App() {
     const quizzes = questionBank.listQuizzes(subject.id);
     return <Container maxWidth="md" sx={{ py: 5 }}><Button startIcon={<ArrowBackRoundedIcon />} onClick={() => setView({ page: 'dashboard' })} color="inherit">All subjects</Button><Typography variant="h3" sx={{ mt: 3, mb: 4 }}>{subject.name}</Typography><Stack spacing={2}>{quizzes.map(quiz => {
       const active = repository.getActive(quiz.id);
+      const completionCount = repository.completionCount(quiz.id);
       const current = active ? questionIndexFor(questionBank.listQuestions(quiz.id), active.currentQuestionId) + 1 : undefined;
-      return <Card key={quiz.id}><CardContent><Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2}><Box><Typography variant="h6">{quiz.name}</Typography><Typography variant="body2" color="text.secondary">{quiz.status === 'ready' ? active ? 'Resume from question ' + current + ' of ' + quiz.questionCount : String(quiz.questionCount) + ' questions' : 'Content awaiting review'}</Typography></Box><Button variant="contained" disabled={quiz.status !== 'ready'} onClick={() => openQuiz(quiz)}>{quiz.status === 'ready' ? active ? 'Resume test' : 'Start quiz' : 'Not ready'}</Button></Stack></CardContent></Card>;
+      return <Card key={quiz.id}><CardContent><Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2}><Box><Typography variant="h6">{quiz.name}</Typography><Typography variant="body2" color="text.secondary">{quiz.status === 'ready' ? active ? 'Resume from question ' + current + ' of ' + quiz.questionCount : String(quiz.questionCount) + ' questions' : 'Content awaiting review'}</Typography>{completionCount > 0 && <Chip label={'Completed ' + completionCount + ' ' + (completionCount === 1 ? 'time' : 'times')} size="small" variant="outlined" sx={{ mt: 1 }} />}</Box><Button variant="contained" disabled={quiz.status !== 'ready'} onClick={() => openQuiz(quiz)}>{quiz.status === 'ready' ? active ? 'Resume test' : 'Start quiz' : 'Not ready'}</Button></Stack></CardContent></Card>;
     })}</Stack></Container>;
   };
 
