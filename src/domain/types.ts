@@ -16,5 +16,6 @@ export interface QuestionResponse { questionId: string; selectedChoiceId?: strin
 export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; elapsedMs?: number; timerStartedAt?: string; currentQuestionId?: string; completedAt?: string; responses: Record<string, QuestionResponse> }
 export interface CompletedAttempt extends Attempt { completedAt: string; score: AttemptScore }
 export interface AttemptScore { correct: number; incorrect: number; unanswered: number; total: number; percentage: number; elapsedMs: number }
+export interface RecentScore { percentage: number; completedAt: string }
 export interface QuizRepository { listSubjects(): Subject[]; listQuizzes(subjectId: string): Quiz[]; listQuestions(quizId: string): Question[] }
-export interface AttemptRepository { list(): CompletedAttempt[]; completionCount(quizId: string): number; lowestScore(quizId: string): number | undefined; getActive(quizId: string): Attempt | undefined; saveActive(attempt: Attempt): void; clearActive(quizId: string): void; saveCompleted(attempt: CompletedAttempt): void }
+export interface AttemptRepository { list(): CompletedAttempt[]; completionCount(quizId: string): number; lowestScore(quizId: string): number | undefined; latestScore(quizId: string): RecentScore | undefined; getActive(quizId: string): Attempt | undefined; saveActive(attempt: Attempt): void; clearActive(quizId: string): void; saveCompleted(attempt: CompletedAttempt): void }

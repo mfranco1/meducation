@@ -4,8 +4,8 @@ import { explanationFor } from '../content/explanationCatalog';
 import { questionBank, questions } from '../content/questionBank';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { questionIndexFor } from '../domain/quizEngine';
-import { averageScore, lowestScore } from '../analytics/analytics';
-import type { Quiz } from '../domain/types';
+import { averageScore, lowestScore, mostRecentScore } from '../analytics/analytics';
+import type { Quiz, RecentScore } from '../domain/types';
 import { AppHeader } from './components/AppHeader';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
 import { subjectForQuiz } from './navigation';
@@ -28,16 +28,17 @@ export default function App() {
   const session = useQuizSession(questionBank, attemptRepository);
   const [exitOpen, setExitOpen] = useState(false);
   const subjectStats = useMemo<SubjectStat[]>(() => questionBank.listSubjects().map(subject => {
-    const quizLows = questionBank.listQuizzes(subject.id).map(quiz => attemptRepository.lowestScore(quiz.id));
+    const quizzes = questionBank.listQuizzes(subject.id);
+    const recentQuizScores = quizzes.map(quiz => attemptRepository.latestScore(quiz.id)).filter((score): score is RecentScore => score !== undefined);
     return {
       subject,
-      quizCount: questionBank.listQuizzes(subject.id).length,
-      lowest: lowestScore(quizLows.filter((score): score is number => score !== undefined)),
+      quizCount: quizzes.length,
+      latest: mostRecentScore(recentQuizScores)?.percentage,
     };
   }), [session.completedAttempts]);
-  const subjectLows = subjectStats.map(stat => stat.lowest).filter((score): score is number => score !== undefined);
-  const averageSubjectLowest = averageScore(subjectLows);
-  const personalLowest = lowestScore(subjectLows);
+  const subjectLatestScores = subjectStats.map(stat => stat.latest).filter((score): score is number => score !== undefined);
+  const averageLatest = averageScore(subjectLatestScores);
+  const personalLowest = lowestScore(subjectLatestScores);
 
   const progressForSubject = (subjectId: string): QuizProgress[] => questionBank.listQuizzes(subjectId).map(quiz => {
     const active = attemptRepository.getActive(quiz.id);
@@ -47,6 +48,7 @@ export default function App() {
       active,
       completionCount: attemptRepository.completionCount(quiz.id),
       lowestScore: attemptRepository.lowestScore(quiz.id),
+      latestScore: attemptRepository.latestScore(quiz.id)?.percentage,
       currentQuestion: active ? questionIndexFor(questionIds, active.currentQuestionId) + 1 : undefined,
     };
   });
@@ -64,7 +66,7 @@ export default function App() {
 
   return <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
     <AppHeader onNavigateHome={handleHeaderNavigation} />
-    {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} averageSubjectLowest={averageSubjectLowest} personalLowest={personalLowest} onSelectSubject={session.showSubject} />}
+    {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} onSelectSubject={session.showSubject} />}
     {session.view.page === 'subject' && <SubjectScreen subject={session.view.subject} progress={progressForSubject(session.view.subject.id)} onBack={session.showDashboard} onOpenQuiz={session.openQuiz} />}
     {session.view.page === 'setup' && <SetupScreen subject={subjectForQuiz(questionBank.listSubjects(), session.view.quiz)} quiz={session.view.quiz} onBack={leaveSetup} onStart={session.startQuiz} />}
     {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => setExitOpen(true)} />}

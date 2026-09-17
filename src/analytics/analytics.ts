@@ -1,5 +1,5 @@
 import { isCorrect } from '../domain/quizEngine';
-import type { CompletedAttempt, Question } from '../domain/types';
+import type { CompletedAttempt, Question, RecentScore } from '../domain/types';
 export interface PerformanceRow { label: string; correct: number; total: number; percentage: number }
 export function lowestScore(scores: Iterable<number>): number | undefined {
   let lowest: number | undefined;
@@ -10,6 +10,11 @@ export function averageScore(scores: Iterable<number>): number | undefined {
   let total = 0; let count = 0;
   for (const score of scores) { total += score; count++; }
   return count ? Math.round(total / count) : undefined;
+}
+export function mostRecentScore(scores: Iterable<RecentScore>): RecentScore | undefined {
+  let mostRecent: RecentScore | undefined;
+  for (const score of scores) if (!mostRecent || score.completedAt > mostRecent.completedAt) mostRecent = score;
+  return mostRecent;
 }
 export function performanceBy(questions: Question[], attempts: CompletedAttempt[], dimension: keyof Question['metadata']): PerformanceRow[] {
   const rows = new Map<string, { correct: number; total: number }>();
