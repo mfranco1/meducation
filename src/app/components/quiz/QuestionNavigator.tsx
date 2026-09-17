@@ -1,6 +1,9 @@
+import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import { useEffect, useRef, type Ref } from 'react';
 import { Box, ButtonBase, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { explanationFor } from '../../../content/explanationCatalog';
+import { isCorrect } from '../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../domain/types';
 
 export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'flagged';
@@ -10,16 +13,19 @@ export interface QuestionNavigationItem {
   number: number;
   answered: boolean;
   flagged: boolean;
+  wrong: boolean;
 }
 
 export function questionNavigationItems(questions: Question[], attempt: Attempt): QuestionNavigationItem[] {
   return questions.map((question, index) => {
     const response = attempt.responses[question.id];
+    const answerUnderReview = Boolean(explanationFor(question)?.answerReviewNote);
     return {
       index,
       number: question.questionNumber ?? index + 1,
       answered: Boolean(response?.selectedChoiceId),
       flagged: Boolean(response?.flagged),
+      wrong: attempt.feedbackMode === 'immediate' && Boolean(response?.locked && response.selectedChoiceId && !answerUnderReview && !isCorrect(question, response.selectedChoiceId)),
     };
   });
 }
@@ -93,7 +99,7 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
 }
 
 function QuestionTile({ item, current, onClick, tileRef }: { item: QuestionNavigationItem; current: boolean; onClick: () => void; tileRef?: Ref<HTMLButtonElement> }) {
-  const status = [item.answered ? 'answered' : 'unanswered', item.flagged ? 'flagged' : undefined].filter(Boolean).join(', ');
+  const status = [item.wrong ? 'answered incorrectly' : item.answered ? 'answered' : 'unanswered', item.flagged ? 'flagged' : undefined].filter(Boolean).join(', ');
   return <ButtonBase
     ref={tileRef}
     onClick={onClick}
@@ -115,6 +121,7 @@ function QuestionTile({ item, current, onClick, tileRef }: { item: QuestionNavig
     }}
   >
     {item.number}
-    {item.flagged && <FlagRoundedIcon aria-hidden sx={{ position: 'absolute', top: 3, right: 3, fontSize: 13, color: 'primary.dark' }} />}
+    {item.flagged && <FlagRoundedIcon aria-hidden sx={{ position: 'absolute', top: 3, right: 3, fontSize: 13, color: 'error.main' }} />}
+    {item.wrong && <ErrorRoundedIcon aria-hidden sx={{ position: 'absolute', right: 3, bottom: 3, fontSize: 14, color: 'error.main' }} />}
   </ButtonBase>;
 }
