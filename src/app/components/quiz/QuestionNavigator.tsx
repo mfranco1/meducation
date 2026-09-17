@@ -57,7 +57,7 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
       <ToggleButton value="unanswered" aria-label={`Unanswered questions, ${unanswered}`}>Open <Box component="span" sx={{ ml: .5 }}>{unanswered}</Box></ToggleButton>
       <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged <Box component="span" sx={{ ml: .5 }}>{flagged}</Box></ToggleButton>
     </ToggleButtonGroup>
-    <Box sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 230px)', md: 470 }, pr: .5 }}>
+    <Box sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: .75 }}>
       {visibleItems.length ? <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1 }}>
         {visibleItems.map(item => <QuestionTile key={item.index} item={item} current={item.index === currentIndex} onClick={() => onNavigate(item.index)} />)}
       </Box> : <Box sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
@@ -79,16 +79,16 @@ function QuestionTile({ item, current, onClick }: { item: QuestionNavigationItem
       borderRadius: 1,
       position: 'relative',
       border: '1px solid',
-      borderColor: current ? 'primary.main' : item.answered ? '#473b35' : '#d9dfe7',
-      bgcolor: item.answered ? '#473b35' : '#fffdfb',
-      color: item.answered ? '#fffdfb' : '#4e5e73',
+      borderColor: current ? 'primary.main' : item.answered ? '#e6b18d' : '#d9dfe7',
+      bgcolor: item.answered ? 'primary.light' : '#fffdfb',
+      color: item.answered ? '#853812' : '#4e5e73',
       fontWeight: 750,
       boxShadow: current ? '0 0 0 3px rgba(185, 81, 27, .18)' : 'none',
-      '&:hover': { bgcolor: item.answered ? '#352b27' : '#f7dfcf' },
+      '&:hover': { bgcolor: item.answered ? '#efc7ac' : '#f7dfcf' },
       '&:focus-visible': { outline: '3px solid #b9511b', outlineOffset: 2 },
     }}
   >
     {item.number}
-    {item.flagged && <FlagRoundedIcon aria-hidden sx={{ position: 'absolute', top: 3, right: 3, fontSize: 13, color: item.answered ? '#f7dfcf' : 'primary.main' }} />}
+    {item.flagged && <FlagRoundedIcon aria-hidden sx={{ position: 'absolute', top: 3, right: 3, fontSize: 13, color: 'primary.dark' }} />}
   </ButtonBase>;
 }
