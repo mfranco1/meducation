@@ -53,9 +53,9 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
       aria-label="Filter questions"
       onChange={(_, value: QuestionNavigatorFilter | null) => { if (value) onFilterChange(value); }}
     >
-      <ToggleButton value="all" aria-label={`All questions, ${items.length}`}>All <Box component="span" sx={{ ml: .5 }}>{items.length}</Box></ToggleButton>
-      <ToggleButton value="unanswered" aria-label={`Unanswered questions, ${unanswered}`}>Open <Box component="span" sx={{ ml: .5 }}>{unanswered}</Box></ToggleButton>
-      <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged <Box component="span" sx={{ ml: .5 }}>{flagged}</Box></ToggleButton>
+      <ToggleButton value="all" aria-label={`All questions, ${items.length}`}>All</ToggleButton>
+      <ToggleButton value="unanswered" aria-label={`Unanswered questions, ${unanswered}`}>Open</ToggleButton>
+      <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged</ToggleButton>
     </ToggleButtonGroup>
     <Box sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: .75 }}>
       {visibleItems.length ? <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1 }}>
