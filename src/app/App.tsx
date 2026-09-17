@@ -4,6 +4,7 @@ import { explanationFor } from '../content/explanationCatalog';
 import { questionBank, questions } from '../content/questionBank';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { questionIndexFor } from '../domain/quizEngine';
+import { averageScore, lowestScore } from '../analytics/analytics';
 import type { Quiz } from '../domain/types';
 import { AppHeader } from './components/AppHeader';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
@@ -27,13 +28,16 @@ export default function App() {
   const session = useQuizSession(questionBank, attemptRepository);
   const [exitOpen, setExitOpen] = useState(false);
   const subjectStats = useMemo<SubjectStat[]>(() => questionBank.listSubjects().map(subject => {
-    const subjectAttempts = session.completedAttempts.filter(attempt => attempt.subjectId === subject.id);
+    const quizLows = questionBank.listQuizzes(subject.id).map(quiz => attemptRepository.lowestScore(quiz.id));
     return {
       subject,
       quizCount: questionBank.listQuizzes(subject.id).length,
-      best: subjectAttempts.length ? Math.max(...subjectAttempts.map(attempt => attempt.score.percentage)) : undefined,
+      lowest: lowestScore(quizLows.filter((score): score is number => score !== undefined)),
     };
   }), [session.completedAttempts]);
+  const subjectLows = subjectStats.map(stat => stat.lowest).filter((score): score is number => score !== undefined);
+  const averageSubjectLowest = averageScore(subjectLows);
+  const personalLowest = lowestScore(subjectLows);
 
   const progressForSubject = (subjectId: string): QuizProgress[] => questionBank.listQuizzes(subjectId).map(quiz => {
     const active = attemptRepository.getActive(quiz.id);
@@ -42,6 +46,7 @@ export default function App() {
       quiz,
       active,
       completionCount: attemptRepository.completionCount(quiz.id),
+      lowestScore: attemptRepository.lowestScore(quiz.id),
       currentQuestion: active ? questionIndexFor(questionIds, active.currentQuestionId) + 1 : undefined,
     };
   });
@@ -59,7 +64,7 @@ export default function App() {
 
   return <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
     <AppHeader onNavigateHome={handleHeaderNavigation} />
-    {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} onSelectSubject={session.showSubject} />}
+    {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} averageSubjectLowest={averageSubjectLowest} personalLowest={personalLowest} onSelectSubject={session.showSubject} />}
     {session.view.page === 'subject' && <SubjectScreen subject={session.view.subject} progress={progressForSubject(session.view.subject.id)} onBack={session.showDashboard} onOpenQuiz={session.openQuiz} />}
     {session.view.page === 'setup' && <SetupScreen subject={subjectForQuiz(questionBank.listSubjects(), session.view.quiz)} quiz={session.view.quiz} onBack={leaveSetup} onStart={session.startQuiz} />}
     {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => setExitOpen(true)} />}

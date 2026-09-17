@@ -17,4 +17,4 @@ export interface Attempt { id: string; quizId: string; subjectId: string; feedba
 export interface CompletedAttempt extends Attempt { completedAt: string; score: AttemptScore }
 export interface AttemptScore { correct: number; incorrect: number; unanswered: number; total: number; percentage: number; elapsedMs: number }
 export interface QuizRepository { listSubjects(): Subject[]; listQuizzes(subjectId: string): Quiz[]; listQuestions(quizId: string): Question[] }
-export interface AttemptRepository { list(): CompletedAttempt[]; completionCount(quizId: string): number; getActive(quizId: string): Attempt | undefined; saveActive(attempt: Attempt): void; clearActive(quizId: string): void; saveCompleted(attempt: CompletedAttempt): void }
+export interface AttemptRepository { list(): CompletedAttempt[]; completionCount(quizId: string): number; lowestScore(quizId: string): number | undefined; getActive(quizId: string): Attempt | undefined; saveActive(attempt: Attempt): void; clearActive(quizId: string): void; saveCompleted(attempt: CompletedAttempt): void }
