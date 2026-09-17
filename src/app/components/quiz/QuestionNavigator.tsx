@@ -1,5 +1,6 @@
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
-import { Box, ButtonBase, Chip, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { useEffect, useRef, type Ref } from 'react';
+import { Box, ButtonBase, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import type { Attempt, Question } from '../../../domain/types';
 
 export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'flagged';
@@ -43,6 +44,30 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
   const visibleItems = filterQuestionNavigationItems(items, filter);
   const unanswered = items.filter(item => !item.answered).length;
   const flagged = items.filter(item => item.flagged).length;
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const currentTileRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const scrollArea = scrollAreaRef.current;
+    const currentTile = currentTileRef.current;
+    if (!scrollArea || !currentTile) return;
+
+    const frame = requestAnimationFrame(() => {
+      const areaBounds = scrollArea.getBoundingClientRect();
+      const tileBounds = currentTile.getBoundingClientRect();
+      const tileCenter = tileBounds.top - areaBounds.top + tileBounds.height / 2;
+      const centerBandStart = scrollArea.clientHeight * .25;
+      const centerBandEnd = scrollArea.clientHeight * .75;
+      if (tileCenter >= centerBandStart && tileCenter <= centerBandEnd) return;
+
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      scrollArea.scrollTo({
+        top: scrollArea.scrollTop + tileCenter - scrollArea.clientHeight / 2,
+        behavior: reducedMotion ? 'auto' : 'smooth',
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [currentIndex, filter]);
 
   return <Stack spacing={2} aria-label="Question navigator">
     <ToggleButtonGroup
@@ -57,9 +82,9 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
       <ToggleButton value="unanswered" aria-label={`Unanswered questions, ${unanswered}`}>Open</ToggleButton>
       <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged</ToggleButton>
     </ToggleButtonGroup>
-    <Box sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: .75 }}>
+    <Box ref={scrollAreaRef} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: .75 }}>
       {visibleItems.length ? <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1 }}>
-        {visibleItems.map(item => <QuestionTile key={item.index} item={item} current={item.index === currentIndex} onClick={() => onNavigate(item.index)} />)}
+        {visibleItems.map(item => <QuestionTile key={item.index} item={item} current={item.index === currentIndex} tileRef={item.index === currentIndex ? currentTileRef : undefined} onClick={() => onNavigate(item.index)} />)}
       </Box> : <Box sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
         <Typography variant="body2" color="text.secondary">{filter === 'flagged' ? 'No flagged questions.' : 'No unanswered questions.'}</Typography>
       </Box>}
@@ -67,9 +92,10 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
   </Stack>;
 }
 
-function QuestionTile({ item, current, onClick }: { item: QuestionNavigationItem; current: boolean; onClick: () => void }) {
+function QuestionTile({ item, current, onClick, tileRef }: { item: QuestionNavigationItem; current: boolean; onClick: () => void; tileRef?: Ref<HTMLButtonElement> }) {
   const status = [item.answered ? 'answered' : 'unanswered', item.flagged ? 'flagged' : undefined].filter(Boolean).join(', ');
   return <ButtonBase
+    ref={tileRef}
     onClick={onClick}
     aria-label={`Question ${item.number}, ${status}${current ? ', current question' : ''}`}
     aria-current={current ? 'step' : undefined}
