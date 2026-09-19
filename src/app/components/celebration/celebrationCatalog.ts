@@ -9,23 +9,23 @@ export interface CelebrationEvent {
 }
 
 const streakMessages: Record<StreakMilestone, string> = {
-  3: 'Three correct in a row — keep it going.',
-  5: 'Five in a row — strong work.',
-  10: 'Ten in a row — you are on a roll.',
-  25: 'Twenty-five in a row — outstanding focus.',
-  50: 'Fifty in a row — exceptional mastery.',
+  3: 'Keep it going!',
+  5: 'Strong work!',
+  10: 'On a roll!',
+  25: 'Outstanding focus!',
+  50: 'Exceptional mastery!',
 };
 
 export const celebrationForStreak = (milestone: StreakMilestone): CelebrationEvent => ({
   id: `streak-${milestone}`,
-  title: `${milestone} in a row!`,
+  title: `${milestone}-in-a-row!`,
   message: streakMessages[milestone],
   variant: 'streak',
 });
 
 export const perfectTestCelebration = (): CelebrationEvent => ({
   id: 'perfect-test',
-  title: 'Perfect test!',
-  message: 'Every answer correct — excellent work.',
+  title: 'Perfect Test!',
+  message: 'Every answer correct, amazing work!',
   variant: 'perfect',
 });

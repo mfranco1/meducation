@@ -26,7 +26,7 @@ Add brief, encouraging celebrations when a learner reaches a correct-answer stre
 
 - Present a small overlay/badge above the quiz content after feedback appears, with concise copy such as **5 in a row!** and a short escalating encouragement.
 - Use a quick entrance, a short hold, and a gentle exit (roughly 1.5–2 seconds total).
-- Use restrained theme-aligned particles, sparkles, or rings rather than a full-screen confetti storm.
+- Use a clear green checkmark rather than sparkles or confetti.
 - Keep `pointer-events: none` on decorative layers so answering, scrolling, and **Continue** remain usable.
 - Ensure the overlay does not cover the selected answer or primary navigation on narrow screens.
 
