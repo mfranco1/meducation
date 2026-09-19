@@ -25,6 +25,13 @@ const reducedEnter = keyframes`
   14%, 86% { opacity: 1; }
   100% { opacity: 0; }
 `;
+const radiate = keyframes`
+  0% { opacity: 0; transform: translate(0, 0) scale(.45); }
+  20% { opacity: 1; }
+  78% { opacity: .72; }
+  100% { opacity: 0; transform: translate(var(--particle-x), var(--particle-y)) scale(1.1); }
+`;
+
 function useReducedMotion() {
   const [reducedMotion, setReducedMotion] = useState(false);
   useEffect(() => {
@@ -46,6 +53,7 @@ export function CelebrationOverlay({ open, title, message, variant, durationMs =
   }, [durationMs, onComplete, open]);
 
   if (!open) return null;
+  const particles = variant === 'perfect' ? 7 : 5;
   return <Box
     role="status"
     aria-live="polite"
@@ -62,6 +70,14 @@ export function CelebrationOverlay({ open, title, message, variant, durationMs =
         <Box aria-hidden sx={{ display: 'grid', placeItems: 'center', width: 34, height: 34, borderRadius: '50%', bgcolor: '#d9f0e1', color: 'success.main', flexShrink: 0 }}><CheckRoundedIcon fontSize="small" /></Box>
         <Box><Typography fontWeight={800} lineHeight={1.2}>{title}</Typography><Typography variant="body2" color="text.secondary">{message}</Typography></Box>
       </Stack>
+      {!reducedMotion && <Box aria-hidden sx={{ position: 'absolute', inset: 0, overflow: 'visible' }}>
+        {Array.from({ length: particles }, (_, index) => <Box
+          key={index}
+          sx={{
+            '--particle-x': `${(index - (particles - 1) / 2) * 18}px`, '--particle-y': `${-22 - (index % 3) * 13}px`, position: 'absolute', width: index % 2 ? 6 : 8, height: index % 2 ? 6 : 8, borderRadius: '50%', bgcolor: index % 2 ? '#74b98d' : '#2f7a55', top: index % 2 ? '52%' : '34%', left: `${17 + index * (66 / (particles - 1))}%`, animation: `${radiate} ${durationMs - 150}ms ease-out both`, animationDelay: `${90 + index * 28}ms`,
+          }}
+        />)}
+      </Box>}
     </Box>
   </Box>;
 }
