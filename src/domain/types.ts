@@ -1,6 +1,7 @@
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'unknown';
 export type AnswerSource = 'provided_key' | 'verified' | 'uncertain';
 export type FeedbackMode = 'immediate' | 'exam';
+export type StreakMilestone = 3 | 5 | 10 | 25 | 50;
 
 export interface Choice { id: string; text: string }
 export interface QuestionMetadata { topic?: string; subtopic?: string; system?: string; discipline?: string; difficulty?: Difficulty; questionType?: string; tags?: string[] }
@@ -13,7 +14,8 @@ export interface Question {
 export interface Subject { id: string; name: string; description: string; accent: string }
 export interface Quiz { id: string; subjectId: string; name: string; sourcePdf: string; questionCount: number; status: 'ready' | 'needs_review' }
 export interface QuestionResponse { questionId: string; selectedChoiceId?: string; flagged: boolean; locked: boolean; timeMs: number }
-export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; elapsedMs?: number; timerStartedAt?: string; currentQuestionId?: string; completedAt?: string; responses: Record<string, QuestionResponse> }
+export interface CelebrationProgress { correctStreak: number; awardedStreakMilestones: StreakMilestone[] }
+export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; elapsedMs?: number; timerStartedAt?: string; currentQuestionId?: string; completedAt?: string; celebrationProgress?: CelebrationProgress; responses: Record<string, QuestionResponse> }
 export interface CompletedAttempt extends Attempt { completedAt: string; score: AttemptScore }
 export interface AttemptScore { correct: number; incorrect: number; unanswered: number; total: number; percentage: number; elapsedMs: number }
 export interface RecentScore { percentage: number; completedAt: string }

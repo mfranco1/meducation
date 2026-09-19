@@ -56,7 +56,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     const attempt: Attempt = {
       id: crypto.randomUUID(), quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: mode,
       startedAt: now, elapsedMs: 0, timerStartedAt: now,
-      currentQuestionId: questionBank.listQuestions(quiz.id)[0]?.id, responses: {},
+      currentQuestionId: questionBank.listQuestions(quiz.id)[0]?.id, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, responses: {},
     };
     attempts.saveActive(attempt);
     setView({ page: 'quiz', quiz, attempt, index: 0 });

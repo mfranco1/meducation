@@ -1,4 +1,6 @@
-import type { Attempt, AttemptScore, FeedbackMode, Question, QuestionResponse } from './types';
+import type { Attempt, AttemptScore, CelebrationProgress, FeedbackMode, Question, QuestionResponse, StreakMilestone } from './types';
+
+export const STREAK_MILESTONES: readonly StreakMilestone[] = [3, 5, 10, 25, 50];
 
 export const answerFor = (question: Question) => question.verifiedAnswer ?? question.sourceAnswer;
 export const isCorrect = (question: Question, selected?: string) => selected !== undefined && selected === answerFor(question);
@@ -7,6 +9,30 @@ export const selectChoice = (response: QuestionResponse, choiceId: string, feedb
   if (response.locked) return response;
   return { ...response, selectedChoiceId: choiceId, locked: feedbackMode === 'immediate' };
 };
+export const celebrationProgressFor = (attempt: Attempt): CelebrationProgress => ({
+  correctStreak: attempt.celebrationProgress?.correctStreak ?? 0,
+  awardedStreakMilestones: attempt.celebrationProgress?.awardedStreakMilestones ?? [],
+});
+export function commitAnswer(attempt: Attempt, question: Question, choiceId: string): { attempt: Attempt; streakMilestone?: StreakMilestone } {
+  const current = attempt.responses[question.id] ?? blankResponse(question.id);
+  const selected = selectChoice(current, choiceId, attempt.feedbackMode);
+  const selectedAttempt = updateResponse(attempt, selected);
+  if (attempt.feedbackMode !== 'immediate' || current.locked) return { attempt: selectedAttempt };
+
+  const progress = celebrationProgressFor(attempt);
+  const correctStreak = isCorrect(question, choiceId) ? progress.correctStreak + 1 : 0;
+  const milestone = STREAK_MILESTONES.find(value => value === correctStreak && !progress.awardedStreakMilestones.includes(value));
+  return {
+    attempt: {
+      ...selectedAttempt,
+      celebrationProgress: {
+        correctStreak,
+        awardedStreakMilestones: milestone ? [...progress.awardedStreakMilestones, milestone] : progress.awardedStreakMilestones,
+      },
+    },
+    streakMilestone: milestone,
+  };
+}
 export const normalizeResponseForFeedbackMode = (response: QuestionResponse, feedbackMode: FeedbackMode): QuestionResponse => {
   if (feedbackMode !== 'immediate' || !response.selectedChoiceId || response.locked) return response;
   return { ...response, locked: true };
@@ -33,3 +59,4 @@ export function scoreAttempt(attempt: Attempt, questions: Question[], endMs = Da
   const total = questions.length;
   return { correct, incorrect, unanswered, total, percentage: total ? Math.round((correct / total) * 100) : 0, elapsedMs: elapsedTimeFor(attempt, endMs) };
 }
+export const isPerfectScore = (score: AttemptScore) => score.total > 0 && score.correct === score.total;

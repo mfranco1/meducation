@@ -5,8 +5,10 @@ import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { useState } from 'react';
 import { Box, Button, Card, CardContent, Container, Drawer, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, Typography } from '@mui/material';
 import { explanationFor } from '../../content/explanationCatalog';
-import { blankResponse, isCorrect, selectChoice, updateResponse } from '../../domain/quizEngine';
+import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../domain/types';
+import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
+import { celebrationForStreak, type CelebrationEvent } from '../components/celebration/celebrationCatalog';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { Stopwatch } from '../components/quiz/Stopwatch';
@@ -24,13 +26,17 @@ interface QuizScreenProps {
 export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFinish, onRequestExit }: QuizScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
+  const [celebrationQueue, setCelebrationQueue] = useState<CelebrationEvent[]>([]);
   const question = questions[index];
   const savedResponse = attempt.responses[question.id];
   const response = savedResponse ?? blankResponse(question.id);
   const feedback = response.locked && attempt.feedbackMode === 'immediate';
   const answerUnderReview = Boolean(explanationFor(question)?.answerReviewNote);
   const select = (choice: string) => {
-    if (!response.locked) onCheckpoint(updateResponse(attempt, selectChoice(response, choice, attempt.feedbackMode)));
+    if (response.locked) return;
+    const result = commitAnswer(attempt, question, choice);
+    onCheckpoint(result.attempt);
+    if (result.streakMilestone) setCelebrationQueue(queue => [...queue, celebrationForStreak(result.streakMilestone!)]);
   };
   const toggleFlag = () => onCheckpoint(updateResponse(attempt, { ...response, flagged: !response.flagged }));
   const navigateToQuestion = (targetIndex: number) => {
@@ -46,7 +52,9 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
     onNavigate={navigateToQuestion}
   />;
 
+  const celebration = celebrationQueue[0];
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
+    {celebration && <CelebrationOverlay key={celebration.id} open title={celebration.title} message={celebration.message} variant={celebration.variant} onComplete={() => setCelebrationQueue(queue => queue.slice(1))} />}
     <IconButton aria-label="Leave test" onClick={onRequestExit} sx={{ p: .5, mb: .5 }}><ArrowBackRoundedIcon /></IconButton>
     <Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">Question {index + 1} of {questions.length}</Typography><Stopwatch attempt={attempt} /></Stack>
     <LinearProgress variant="determinate" value={(index + 1) / questions.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} />
