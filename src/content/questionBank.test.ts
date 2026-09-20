@@ -3,7 +3,7 @@ import { questionBank, questions, quizzes, schemaVersion, subjects } from './que
 
 describe('canonical question bank', () => {
   it('exposes the versioned bank through indexed repository reads', () => {
-    expect(schemaVersion).toBe(1);
+    expect(schemaVersion).toBe(2);
     expect(subjects).toHaveLength(12);
     expect(quizzes).toHaveLength(98);
     expect(questions).toHaveLength(10196);
@@ -15,9 +15,10 @@ describe('canonical question bank', () => {
     expect(question?.choices.find(choice => choice.id === 'D')?.text).toBe('Thermal burn edge');
   });
 
-  it('stores reviewed explanation content directly on questions', () => {
-    const reviewed = questions.filter(question => question.explanation);
+  it('stores canonical Markdown rationales and review metadata directly on questions', () => {
+    expect(questions.every(question => question.rationale.trim())).toBe(true);
+    const reviewed = questions.filter(question => question.rationaleMeta?.provenance);
     expect(reviewed).toHaveLength(121);
-    expect(reviewed.filter(question => question.explanation?.answerReviewNote)).toHaveLength(32);
+    expect(reviewed.filter(question => question.rationaleMeta?.answerReviewNote)).toHaveLength(32);
   });
 });

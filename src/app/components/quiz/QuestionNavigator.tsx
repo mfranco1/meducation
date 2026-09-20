@@ -2,7 +2,6 @@ import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import { useEffect, useRef, type Ref } from 'react';
 import { Box, ButtonBase, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
-import { explanationFor } from '../../../content/explanationCatalog';
 import { isCorrect } from '../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../domain/types';
 
@@ -19,7 +18,7 @@ export interface QuestionNavigationItem {
 export function questionNavigationItems(questions: Question[], attempt: Attempt): QuestionNavigationItem[] {
   return questions.map((question, index) => {
     const response = attempt.responses[question.id];
-    const answerUnderReview = Boolean(explanationFor(question)?.answerReviewNote);
+    const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
     return {
       index,
       number: question.questionNumber ?? index + 1,

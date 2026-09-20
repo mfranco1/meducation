@@ -1,16 +1,15 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { formatSourceRationale, preservesSourceRationale } from '../src/content/explanations.ts';
 import { questions } from '../src/content/questionBank.ts';
 
-type Pattern = 'plain_prose' | 'bulleted' | 'choice_by_choice' | 'table_like' | 'possible_spillover' | 'missing';
-const patternFor = (rationale?: string): Pattern[] => {
-  if (!rationale) return ['missing'];
+type Pattern = 'plain_prose' | 'bulleted' | 'choice_by_choice' | 'table_like' | 'heading' | 'source_disclosure';
+const patternFor = (rationale: string, sources?: string): Pattern[] => {
   const patterns: Pattern[] = [];
-  if (/^\s*(?:[•●▪]|o\s)/m.test(rationale)) patterns.push('bulleted');
-  if (/^\s*[A-D]\s*$/m.test(rationale)) patterns.push('choice_by_choice');
+  if (/^\s*(?:[-*+] |\d+[.)] )/m.test(rationale)) patterns.push('bulleted');
+  if (/^\s*-\s+\*\*[A-D]\*\*/m.test(rationale)) patterns.push('choice_by_choice');
   if (/\b(?:TABLE|COLUMN|FUNCTION\s*\/\s*REMARKS)\b/i.test(rationale)) patterns.push('table_like');
-  if (/^\d{1,3}\.\s+Which\b/m.test(rationale)) patterns.push('possible_spillover');
+  if (/^#{1,6}\s/m.test(rationale)) patterns.push('heading');
+  if (sources) patterns.push('source_disclosure');
   return patterns.length ? patterns : ['plain_prose'];
 };
 
@@ -18,12 +17,11 @@ const rows = questions.map(question => ({
   id: question.id,
   subjectId: question.subjectId,
   quizId: question.quizId,
-  sourceLength: question.rationale?.length ?? 0,
-  patterns: patternFor(question.rationale),
-  explanation: question.explanation?.provenance ?? null,
-  formattedLength: question.rationale ? formatSourceRationale(question.rationale).length : question.explanation?.markdown.length ?? 0,
-  preservesSource: question.rationale ? preservesSourceRationale(question.rationale) : null,
+  rationaleLength: question.rationale.length,
+  patterns: patternFor(question.rationale, question.rationaleMeta?.sources),
+  provenance: question.rationaleMeta?.provenance ?? null,
+  hasSources: Boolean(question.rationaleMeta?.sources),
 }));
-const report = { generatedAt: new Date().toISOString(), totals: { questions: rows.length, withSourceRationale: rows.filter(row => row.sourceLength > 0).length, enriched: rows.filter(row => row.explanation).length, missingSourceRationale: rows.filter(row => row.patterns.includes('missing')).length, withoutExplanation: rows.filter(row => row.patterns.includes('missing') && !row.explanation).length, answersUnderReview: questions.filter(question => question.explanation?.answerReviewNote).length, sourcePreservationFailures: rows.filter(row => row.preservesSource === false).length }, rows };
+const report = { generatedAt: new Date().toISOString(), totals: { questions: rows.length, withRationale: rows.filter(row => row.rationaleLength > 0).length, withSources: rows.filter(row => row.hasSources).length, aiReviewed: rows.filter(row => row.provenance === 'ai_draft_reviewed').length, answersUnderReview: questions.filter(question => question.rationaleMeta?.answerReviewNote).length }, rows };
 writeFileSync(resolve('content/explanation-audit.json'), JSON.stringify(report, null, 2) + '\n');
-console.log(`Wrote audit for ${rows.length} questions; ${report.totals.withoutExplanation} remain without an explanation; ${report.totals.answersUnderReview} answer keys need review.`);
+console.log(`Wrote audit for ${rows.length} questions; ${report.totals.withSources} have source disclosures; ${report.totals.answersUnderReview} answer keys need review.`);

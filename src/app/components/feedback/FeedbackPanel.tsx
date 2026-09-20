@@ -2,16 +2,15 @@ import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Box, Stack, Typography } from '@mui/material';
-import { explanationFor } from '../../../content/explanationCatalog';
 import { isCorrect } from '../../../domain/quizEngine';
 import type { Question } from '../../../domain/types';
 import { ExplanationContent } from './ExplanationContent';
 
 export function FeedbackPanel({ question, selectedChoiceId }: { question: Question; selectedChoiceId?: string }) {
   const correct = isCorrect(question, selectedChoiceId);
-  const answerUnderReview = Boolean(explanationFor(question)?.answerReviewNote);
+  const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
   const statusBackground = answerUnderReview ? '#fff4dd' : correct ? '#e4f2e9' : '#fae9e6';
-  const hasContent = Boolean(explanationFor(question) || question.pearls?.length);
+  const hasContent = Boolean(question.rationale || question.pearls?.length);
   return <Box aria-live="polite" sx={{ mt: 3, overflow: 'hidden', border: '1px solid', borderColor: answerUnderReview ? '#e9cf98' : correct ? '#b9dec6' : '#f0c6bf', borderRadius: 1, bgcolor: 'background.paper' }}>
     <Box sx={{ px: { xs: 2, sm: 2.5 }, py: 1.75, bgcolor: statusBackground, borderBottom: '1px solid', borderColor: answerUnderReview ? '#f0dcaf' : correct ? '#cce6d5' : '#f3d3cd' }}>
       <Stack direction="row" spacing={1} alignItems="center">

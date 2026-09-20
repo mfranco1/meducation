@@ -1,23 +1,22 @@
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'unknown';
 export type AnswerSource = 'provided_key' | 'verified' | 'uncertain';
-export type ExplanationProvenance = 'source_formatted' | 'ai_draft_reviewed';
+export type RationaleProvenance = 'source_migrated' | 'ai_draft_reviewed';
 export type FeedbackMode = 'immediate' | 'exam';
 export type StreakMilestone = 3 | 5 | 10 | 25 | 50;
 
 export interface Choice { id: string; text: string }
 export interface QuestionMetadata { topic?: string; subtopic?: string; system?: string; discipline?: string; difficulty?: Difficulty; questionType?: string; tags?: string[] }
-export interface QuestionExplanation {
-  markdown: string;
+export interface RationaleMetadata {
   sources?: string;
   answerReviewNote?: string;
-  provenance: ExplanationProvenance;
-  reviewedAt: string;
-  reviewNote: string;
+  provenance?: RationaleProvenance;
+  reviewedAt?: string;
+  reviewNote?: string;
 }
 export interface Question {
   id: string; subjectId: string; quizId: string; questionNumber?: number; stem: string; choices: Choice[];
   sourceAnswer?: string; verifiedAnswer?: string; answerSource: AnswerSource; answerNote?: string;
-  rationale?: string; explanation?: QuestionExplanation; choiceExplanations?: Record<string, string>; pearls?: string[]; metadata: QuestionMetadata;
+  rationale: string; rationaleMeta?: RationaleMetadata; choiceExplanations?: Record<string, string>; pearls?: string[]; metadata: QuestionMetadata;
 }
 export interface Subject { id: string; name: string; description: string; accent: string }
 export interface Quiz { id: string; subjectId: string; name: string; questionCount: number }

@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import { Alert, Box, Container } from '@mui/material';
-import { explanationFor } from '../content/explanationCatalog';
 import { questionBank, questions } from '../content/questionBank';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { questionIndexFor } from '../domain/quizEngine';
@@ -19,7 +18,7 @@ import { useQuizSession } from './session/useQuizSession';
 const attemptRepository = new LocalAttemptRepository();
 
 function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
-  const count = questionBank.listQuestions(quiz.id).filter(question => explanationFor(question)?.answerReviewNote).length;
+  const count = questionBank.listQuestions(quiz.id).filter(question => question.rationaleMeta?.answerReviewNote).length;
   if (!count) return null;
   return <Container maxWidth="md" sx={{ pt: 4 }}><Alert severity="warning">This score uses {count} source answer {count === 1 ? 'key' : 'keys'} under review. Interpret the result with that in mind.</Alert></Container>;
 }

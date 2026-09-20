@@ -3,9 +3,9 @@ import { filterQuestionNavigationItems, questionNavigationItems } from './Questi
 import type { Attempt, Question } from '../../../domain/types';
 
 const questions: Question[] = [
-  { id: 'q1', subjectId: 's', quizId: 'z', questionNumber: 4, stem: 'One', choices: [], answerSource: 'uncertain', metadata: {} },
-  { id: 'q2', subjectId: 's', quizId: 'z', stem: 'Two', choices: [], answerSource: 'uncertain', metadata: {} },
-  { id: 'q3', subjectId: 's', quizId: 'z', stem: 'Three', choices: [], answerSource: 'uncertain', metadata: {} },
+  { id: 'q1', subjectId: 's', quizId: 'z', questionNumber: 4, stem: 'One', choices: [], answerSource: 'uncertain', rationale: 'R', metadata: {} },
+  { id: 'q2', subjectId: 's', quizId: 'z', stem: 'Two', choices: [], answerSource: 'uncertain', rationale: 'R', metadata: {} },
+  { id: 'q3', subjectId: 's', quizId: 'z', stem: 'Three', choices: [], answerSource: 'uncertain', rationale: 'R', metadata: {} },
 ];
 const examAttempt: Attempt = {
   id: 'a', quizId: 'z', subjectId: 's', feedbackMode: 'exam', startedAt: new Date().toISOString(), responses: {

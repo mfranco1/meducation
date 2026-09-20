@@ -4,10 +4,8 @@ dist/
 tn-pdfs
 content/
 !src/content/
-!src/content/explanations.ts
-!src/content/explanations.test.ts
-!src/content/explanationValidation.ts
-!src/content/explanationValidation.test.ts
+!src/app/components/content/
+!src/app/components/content/*.tsx
 
 # Local language-tool caches
 __pycache__/

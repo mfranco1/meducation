@@ -4,7 +4,7 @@ import FlagIcon from '@mui/icons-material/Flag';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { useEffect, useRef, useState } from 'react';
 import { Box, Button, Card, CardContent, Container, Drawer, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, Typography } from '@mui/material';
-import { explanationFor } from '../../content/explanationCatalog';
+import { MarkdownContent } from '../components/content/MarkdownContent';
 import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../domain/types';
 import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
@@ -37,7 +37,7 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
   const savedResponse = attempt.responses[question.id];
   const response = savedResponse ?? blankResponse(question.id);
   const feedback = response.locked && attempt.feedbackMode === 'immediate';
-  const answerUnderReview = Boolean(explanationFor(question)?.answerReviewNote);
+  const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
   const select = (choice: string) => {
     if (response.locked) return;
     const result = commitAnswer(attempt, question, choice);
@@ -79,7 +79,7 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
         <Button variant="outlined" size="small" onClick={() => setNavigatorOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, mb: 2 }}>Questions</Button>
         <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
-            <Typography variant="h5" sx={{ whiteSpace: 'pre-wrap', lineHeight: 1.45 }}>{question.stem}</Typography>
+            <MarkdownContent markdown={question.stem} variant="stem" />
             <IconButton size="small" aria-label={response.flagged ? 'Remove question flag' : 'Flag question'} sx={{ p: 0, mt: .5, flexShrink: 0 }} onClick={toggleFlag}>{response.flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}</IconButton>
           </Stack>
           <RadioGroup value={response.selectedChoiceId ?? ''} onChange={(_, choice) => select(choice)} sx={{ mt: 3, gap: 1.25 }}>
@@ -90,7 +90,7 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
               const showCorrectAnswerBurst = correctAnswerBurst?.questionId === question.id && correctAnswerBurst.choiceId === choice.id;
               return <Box key={choice.id} sx={{ position: 'relative', isolation: 'isolate', overflow: 'visible', border: '1px solid', borderColor: selected ? 'primary.main' : '#e8dfd9', bgcolor: state, borderRadius: 1, p: .5 }}>
                 {showCorrectAnswerBurst && <RadiatingCircles key={correctAnswerBurst.eventId} particleCount={5} durationMs={900} horizontalSpread={14} verticalSpread={17} particleSize={7} />}
-                <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography sx={{ py: .8 }}><b>{choice.id}.</b> {choice.text}</Typography>} sx={{ m: 0, width: '100%', position: 'relative', zIndex: 1 }} />
+                <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography component="div" sx={{ py: .8 }}><b>{choice.id}.</b> <MarkdownContent markdown={choice.text} variant="inline" /></Typography>} sx={{ m: 0, width: '100%', position: 'relative', zIndex: 1 }} />
               </Box>;
             })}
           </RadioGroup>
