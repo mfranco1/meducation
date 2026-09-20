@@ -2,13 +2,15 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import FlagIcon from '@mui/icons-material/Flag';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Box, Button, Card, CardContent, Container, Drawer, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, Typography } from '@mui/material';
 import { explanationFor } from '../../content/explanationCatalog';
 import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../domain/types';
 import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
 import { celebrationForStreak, type CelebrationEvent } from '../components/celebration/celebrationCatalog';
+import { RadiatingCircles } from '../components/celebration/RadiatingCircles';
+import { shouldTriggerCorrectAnswerBurst } from '../components/celebration/correctAnswerBurst';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { Stopwatch } from '../components/quiz/Stopwatch';
@@ -23,10 +25,14 @@ interface QuizScreenProps {
   onRequestExit: () => void;
 }
 
+interface CorrectAnswerBurst { questionId: string; choiceId: string; eventId: number }
+
 export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFinish, onRequestExit }: QuizScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
   const [celebrationQueue, setCelebrationQueue] = useState<CelebrationEvent[]>([]);
+  const [correctAnswerBurst, setCorrectAnswerBurst] = useState<CorrectAnswerBurst>();
+  const correctAnswerBurstSequence = useRef(0);
   const question = questions[index];
   const savedResponse = attempt.responses[question.id];
   const response = savedResponse ?? blankResponse(question.id);
@@ -36,13 +42,23 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
     if (response.locked) return;
     const result = commitAnswer(attempt, question, choice);
     onCheckpoint(result.attempt);
+    if (shouldTriggerCorrectAnswerBurst({ feedbackMode: attempt.feedbackMode, answerCorrect: isCorrect(question, choice), answerUnderReview, responseLocked: response.locked })) {
+      setCorrectAnswerBurst({ questionId: question.id, choiceId: choice, eventId: ++correctAnswerBurstSequence.current });
+    }
     if (result.streakMilestone) setCelebrationQueue(queue => [...queue, celebrationForStreak(result.streakMilestone!)]);
   };
   const toggleFlag = () => onCheckpoint(updateResponse(attempt, { ...response, flagged: !response.flagged }));
   const navigateToQuestion = (targetIndex: number) => {
+    setCorrectAnswerBurst(undefined);
     onCheckpoint(attempt, targetIndex);
     setNavigatorOpen(false);
   };
+
+  useEffect(() => {
+    if (!correctAnswerBurst) return;
+    const timer = window.setTimeout(() => setCorrectAnswerBurst(undefined), 950);
+    return () => window.clearTimeout(timer);
+  }, [correctAnswerBurst]);
   const navigator = <QuestionNavigator
     questions={questions}
     attempt={attempt}
@@ -71,18 +87,20 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
               const selected = response.selectedChoiceId === choice.id;
               const correct = isCorrect(question, choice.id);
               const state = feedback && !answerUnderReview ? correct ? '#e4f2e9' : selected ? '#fae9e6' : undefined : undefined;
-              return <Box key={choice.id} sx={{ border: '1px solid', borderColor: selected ? 'primary.main' : '#e8dfd9', bgcolor: state, borderRadius: 1, p: .5 }}>
-                <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography sx={{ py: .8 }}><b>{choice.id}.</b> {choice.text}</Typography>} sx={{ m: 0, width: '100%' }} />
+              const showCorrectAnswerBurst = correctAnswerBurst?.questionId === question.id && correctAnswerBurst.choiceId === choice.id;
+              return <Box key={choice.id} sx={{ position: 'relative', isolation: 'isolate', overflow: 'visible', border: '1px solid', borderColor: selected ? 'primary.main' : '#e8dfd9', bgcolor: state, borderRadius: 1, p: .5 }}>
+                {showCorrectAnswerBurst && <RadiatingCircles key={correctAnswerBurst.eventId} particleCount={5} durationMs={900} horizontalSpread={14} verticalSpread={17} particleSize={7} />}
+                <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography sx={{ py: .8 }}><b>{choice.id}.</b> {choice.text}</Typography>} sx={{ m: 0, width: '100%', position: 'relative', zIndex: 1 }} />
               </Box>;
             })}
           </RadioGroup>
           {feedback && <FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} />}
         </CardContent></Card>
         <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ mt: 3 }}><Stack direction="row" spacing={1}>
-          <Button startIcon={<ArrowBackRoundedIcon />} disabled={index === 0} onClick={() => onCheckpoint(attempt, index - 1)}>Previous</Button>
+          <Button startIcon={<ArrowBackRoundedIcon />} disabled={index === 0} onClick={() => navigateToQuestion(index - 1)}>Previous</Button>
           {index === questions.length - 1
             ? <Button variant="contained" onClick={onFinish}>{attempt.feedbackMode === 'exam' ? 'Submit test' : 'Finish'}</Button>
-            : <Button endIcon={<ArrowForwardRoundedIcon />} onClick={() => onCheckpoint(attempt, index + 1)}>{feedback ? 'Continue' : 'Next'}</Button>}
+            : <Button endIcon={<ArrowForwardRoundedIcon />} onClick={() => navigateToQuestion(index + 1)}>{feedback ? 'Continue' : 'Next'}</Button>}
         </Stack></Stack>
       </Box>
       <Card component="aside" aria-label="Question navigation" sx={{ display: { xs: 'none', md: 'block' }, width: 270, flexShrink: 0 }}><CardContent sx={{ p: 2 }}>{navigator}</CardContent></Card>
