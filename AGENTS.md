@@ -2,7 +2,7 @@
 
 ## Project
 
-This is a browser-based interactive study platform that digitizes multiple-choice practice tests from PDFs.
+This is a browser-based interactive study platform built around a canonical, versioned question bank.
 
 The current product is local-first and private, but the architecture should remain suitable for eventual public/commercial use and backend/cloud persistence.
 
@@ -18,9 +18,9 @@ Do not add backend infrastructure unless explicitly requested.
 
 ## Core Invariants
 
-### 1. Source questions are immutable
+### 1. Canonical question bank is authoritative
 
-The PDF is the source of truth.
+`src/content/questionBank.generated.json` is the source of truth for all quiz content.
 
 Never silently modify, rewrite, correct, reorder, simplify, or otherwise alter:
 
@@ -32,7 +32,7 @@ Never silently modify, rewrite, correct, reorder, simplify, or otherwise alter:
 - Medical terminology
 - Meaningful formatting
 
-If the source appears incorrect, preserve it and record the issue separately.
+Make intentional corrections directly in the canonical record and preserve their rationale through answer provenance, review notes, or a documented content change.
 
 ### 2. Preserve answer provenance
 
@@ -81,7 +81,7 @@ Use the repository documentation as the source of truth for details:
 - `docs/architecture.md` — system architecture and boundaries
 - `docs/product.md` — product behavior and UX requirements
 - `docs/question-schema.md` — question-bank structure and content rules
-- `docs/content-pipeline.md` — PDF ingestion, enrichment, and validation
+- `docs/content-management.md` — question-bank editing, enrichment, and validation
 - `docs/design-system.md` — visual design and UI conventions
 - `docs/testing.md` — testing and verification strategy
 

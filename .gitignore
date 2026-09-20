@@ -1,19 +1,15 @@
 node_modules/
 dist/
-content/raw/
 *.tsbuildinfo
 tn-pdfs
 content/
 !src/content/
 !src/content/explanations.ts
 !src/content/explanations.test.ts
-!src/content/explanationEnrichment.json
 !src/content/explanationValidation.ts
 !src/content/explanationValidation.test.ts
-!src/content/aiExplanations.json
-!src/content/choiceCorrections.json
 
-# Python content-pipeline artifacts
+# Local language-tool caches
 __pycache__/
 *.py[cod]
 *.pyo

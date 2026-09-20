@@ -8,9 +8,7 @@
     "build": "tsc -b && vite build",
     "test": "vitest run",
     "validate:content": "tsx scripts/validate-question-bank.ts",
-    "audit:explanations": "tsx scripts/audit-explanations.ts",
-    "extract:pdf": "tsx scripts/extract-pdf.ts",
-    "build:content": "python3 scripts/build_question_bank.py && python3 scripts/merge_question_bank.py"
+    "audit:explanations": "tsx scripts/audit-explanations.ts"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

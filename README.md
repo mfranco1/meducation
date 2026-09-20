@@ -45,9 +45,9 @@ npm run build
 
 The app loads the tracked `src/content/questionBank.generated.json`, so a normal install does **not** require rebuilding the question bank.
 
-Contributors working on PDF ingestion need Python 3, the dependencies in `requirements-content.txt`, and access to the relevant source PDFs. See [docs/content-pipeline.md](docs/content-pipeline.md) for extraction, merging, and review steps. Do not run `npm run build:content` as part of normal installation: it rebuilds the generated question bank from local PDFs and can replace the tracked data.
+Quiz content is maintained directly in [`src/content/questionBank.generated.json`](src/content/questionBank.generated.json). See [docs/content-management.md](docs/content-management.md) for the editing and validation workflow.
 
-Question text and choice order must match the PDFs. Original answer keys and reviewed corrections remain separate, and quizzes with unresolved content stay disabled. See [docs/question-schema.md](docs/question-schema.md) and [AGENTS.md](AGENTS.md) before changing content.
+Question text, choice order, answer provenance, rationales, and reviewed explanations are canonical in the JSON bank. Preserve stable IDs and record answer uncertainty explicitly. See [docs/question-schema.md](docs/question-schema.md) and [AGENTS.md](AGENTS.md) before changing content.
 
 ## Project layout
 
@@ -56,7 +56,7 @@ Question text and choice order must match the PDFs. Original answer keys and rev
 - `src/content/` — bundled question bank, validation, and static explanations
 - `src/persistence/` — browser storage implementation
 - `src/analytics/` — score summaries
-- `scripts/` — content extraction and validation tools
+- `scripts/` — content validation and audit tools
 - `docs/` — architecture, product, content, design, and testing guidance
 
 The app does not call a generative AI service at runtime. Explanations are bundled static content.

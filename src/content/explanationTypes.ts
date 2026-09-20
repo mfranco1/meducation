@@ -1,17 +1,6 @@
-export type ExplanationProvenance = 'source_formatted' | 'ai_draft_reviewed';
+import type { ExplanationProvenance, QuestionExplanation } from '../domain/types';
 
-export interface ExplanationEnrichment {
-  markdown: string;
-  sources?: string;
-  answerReviewNote?: string;
-  provenance: ExplanationProvenance;
-  reviewedAt: string;
-  reviewNote: string;
-}
-
-export interface ExplanationDataFile {
-  explanations: Record<string, ExplanationEnrichment>;
-}
+export type { ExplanationProvenance, QuestionExplanation };
 
 export type ExplanationBlock =
   | { type: 'paragraph'; text: string }

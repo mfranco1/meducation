@@ -4,7 +4,7 @@ import { parseExplanation } from './explanationParser';
 import { formatSourceRationale, preservesSourceRationale, splitRationaleSources } from './sourceRationale';
 
 describe('explanation formatting', () => {
-  it('joins PDF soft breaks and retains bullet structure', () => {
+  it('joins soft breaks and retains bullet structure', () => {
     expect(formatSourceRationale('First line\ncontinues.\n• First point\n• Second point')).toBe('First line continues.\n\n- First point\n- Second point');
   });
 
@@ -41,7 +41,7 @@ describe('explanation formatting', () => {
   });
 
   it('selects an automatically formatted source rationale when no enrichment exists', () => {
-    const explanation = explanationFor({ id: 'fixture', subjectId: 's', quizId: 'q', stem: 'Stem', choices: [], answerSource: 'provided_key', rationale: 'First line\ncontinues.', metadata: {}, source: { pdfFile: 'source.pdf' } });
+    const explanation = explanationFor({ id: 'fixture', subjectId: 's', quizId: 'q', stem: 'Stem', choices: [], answerSource: 'provided_key', rationale: 'First line\ncontinues.', metadata: {} });
     expect(explanation).toMatchObject({ markdown: 'First line continues.', provenance: 'source_formatted' });
   });
 });

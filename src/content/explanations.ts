@@ -1,4 +1,4 @@
-export { explanationEnrichments, explanationFor } from './explanationCatalog';
+export { explanationFor } from './explanationCatalog';
 export { parseExplanation } from './explanationParser';
 export {
   formatSourceRationale,
@@ -8,7 +8,6 @@ export {
 } from './sourceRationale';
 export type {
   ExplanationBlock,
-  ExplanationDataFile,
-  ExplanationEnrichment,
+  QuestionExplanation,
   ExplanationProvenance,
 } from './explanationTypes';

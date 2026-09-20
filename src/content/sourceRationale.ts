@@ -113,7 +113,7 @@ export function formatSourceRationale(source: string): string {
     : formatSourceRationaleCandidate(source, false);
 }
 
-/** Normalizes only documented layout syntax for source-preservation checks. */
+/** Normalizes only documented layout syntax for rationale-preservation checks. */
 export function normalizedExplanationText(text: string): string {
   return text
     .replace(/\r/g, '')

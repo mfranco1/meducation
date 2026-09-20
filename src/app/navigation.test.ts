@@ -3,7 +3,7 @@ import { subjectForQuiz } from './navigation';
 
 describe('subjectForQuiz', () => {
   const subject = { id: 'medicine', name: 'Medicine', description: '', accent: '' };
-  const quiz = { id: 'quiz', subjectId: 'medicine', name: 'Quiz', sourcePdf: 'source.pdf', questionCount: 1, status: 'ready' as const };
+  const quiz = { id: 'quiz', subjectId: 'medicine', name: 'Quiz', questionCount: 1 };
 
   it('returns the subject referenced by a quiz', () => {
     expect(subjectForQuiz([subject], quiz)).toBe(subject);

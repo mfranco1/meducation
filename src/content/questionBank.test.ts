@@ -1,0 +1,23 @@
+import { describe, expect, it } from 'vitest';
+import { questionBank, questions, quizzes, schemaVersion, subjects } from './questionBank';
+
+describe('canonical question bank', () => {
+  it('exposes the versioned bank through indexed repository reads', () => {
+    expect(schemaVersion).toBe(1);
+    expect(subjects).toHaveLength(12);
+    expect(quizzes).toHaveLength(98);
+    expect(questions).toHaveLength(10196);
+    expect(questionBank.listQuestions(quizzes[0].id)).toHaveLength(quizzes[0].questionCount);
+  });
+
+  it('stores corrected choice text directly in the question bank', () => {
+    const question = questions.find(candidate => candidate.id === 'leg_med-2-lmmje-practice-test-1-handout-october-2026-q-18');
+    expect(question?.choices.find(choice => choice.id === 'D')?.text).toBe('Thermal burn edge');
+  });
+
+  it('stores reviewed explanation content directly on questions', () => {
+    const reviewed = questions.filter(question => question.explanation);
+    expect(reviewed).toHaveLength(121);
+    expect(reviewed.filter(question => question.explanation?.answerReviewNote)).toHaveLength(32);
+  });
+});

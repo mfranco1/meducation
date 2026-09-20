@@ -5,7 +5,7 @@ import { theme } from '../theme';
 import { ResultsScreen } from './ResultsScreen';
 import type { CompletedAttempt, Quiz } from '../../domain/types';
 
-const quiz: Quiz = { id: 'quiz', subjectId: 'subject', name: 'Quiz', sourcePdf: 'source.pdf', questionCount: 3, status: 'ready' };
+const quiz: Quiz = { id: 'quiz', subjectId: 'subject', name: 'Quiz', questionCount: 3 };
 const attemptFor = (correct: number, total: number, percentage: number): CompletedAttempt => ({
   id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'exam', startedAt: new Date(0).toISOString(), completedAt: new Date(1).toISOString(), responses: {},
   score: { correct, incorrect: total - correct, unanswered: 0, total, percentage, elapsedMs: 0 },
