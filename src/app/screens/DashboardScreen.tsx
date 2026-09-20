@@ -7,6 +7,7 @@ export interface SubjectStat {
   subject: Subject;
   quizCount: number;
   latest?: number;
+  latestCompletedAt?: string;
   trend?: ScoreTrend;
 }
 
@@ -33,13 +34,13 @@ function ScoreTrendIndicator({ trend }: { trend: ScoreTrend }) {
   />;
 }
 
-export function DashboardScreen({ attempts, subjectStats, averageLatest, personalLowest, onSelectSubject }: { attempts: CompletedAttempt[]; subjectStats: SubjectStat[]; averageLatest?: number; personalLowest?: number; onSelectSubject: (subject: Subject) => void }) {
+export function DashboardScreen({ attempts, subjectStats, averageLatest, personalLowest, personalLowestSubject, onSelectSubject }: { attempts: CompletedAttempt[]; subjectStats: SubjectStat[]; averageLatest?: number; personalLowest?: number; personalLowestSubject?: string; onSelectSubject: (subject: Subject) => void }) {
   return <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 } }}>
     <Stack sx={{ mb: 4 }}><Typography variant="h4">Choose a subject and start practicing</Typography></Stack>
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
       <StatCard label="Completed quizzes" value={attempts.length} />
       <StatCard label="Average" value={averageLatest === undefined ? '—' : `${averageLatest}%`} />
-      <StatCard label="Personal Lowest" value={personalLowest === undefined ? '—' : `${personalLowest}%`} />
+      <StatCard badge={personalLowestSubject} label="Lowest" value={personalLowest === undefined ? '—' : `${personalLowest}%`} />
     </Stack>
     <Typography variant="h5" sx={{ mb: 2 }}>Subjects</Typography>
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 2 }}>

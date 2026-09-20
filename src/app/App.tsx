@@ -3,7 +3,7 @@ import { Alert, Box, Container } from '@mui/material';
 import { questionBank, questions } from '../content/questionBank';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { questionIndexFor } from '../domain/quizEngine';
-import { averageScore, lowestScore, mostRecentScore, scoreTrend } from '../analytics/analytics';
+import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from '../analytics/analytics';
 import type { Quiz, RecentScore } from '../domain/types';
 import { AppHeader } from './components/AppHeader';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
@@ -38,6 +38,7 @@ export default function App() {
       subject,
       quizCount: quizzes.length,
       latest: latest?.percentage,
+      latestCompletedAt: latest?.completedAt,
       trend: latest && latestAttempt && latest.completedAt === latestAttempt.completedAt && latest.percentage === latestAttempt.percentage
         ? scoreTrend(recentSubjectScores)
         : undefined,
@@ -45,7 +46,11 @@ export default function App() {
   }), [session.completedAttempts]);
   const subjectLatestScores = subjectStats.map(stat => stat.latest).filter((score): score is number => score !== undefined);
   const averageLatest = averageScore(subjectLatestScores);
-  const personalLowest = lowestScore(subjectLatestScores);
+  const personalLowestScore = lowestRecentScore(subjectStats.flatMap(stat => stat.latest === undefined || stat.latestCompletedAt === undefined
+    ? []
+    : [{ percentage: stat.latest, completedAt: stat.latestCompletedAt, subjectName: stat.subject.name }]));
+  const personalLowest = personalLowestScore?.percentage;
+  const personalLowestSubject = personalLowestScore?.subjectName;
 
   const progressForSubject = (subjectId: string): QuizProgress[] => questionBank.listQuizzes(subjectId).map(quiz => {
     const active = attemptRepository.getActive(quiz.id);
@@ -73,7 +78,7 @@ export default function App() {
 
   return <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
     <AppHeader onNavigateHome={handleHeaderNavigation} />
-    {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} onSelectSubject={session.showSubject} />}
+    {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} onSelectSubject={session.showSubject} />}
     {session.view.page === 'subject' && <SubjectScreen subject={session.view.subject} progress={progressForSubject(session.view.subject.id)} onBack={session.showDashboard} onOpenQuiz={session.openQuiz} />}
     {session.view.page === 'setup' && <SetupScreen subject={subjectForQuiz(questionBank.listSubjects(), session.view.quiz)} quiz={session.view.quiz} onBack={leaveSetup} onStart={session.startQuiz} />}
     {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => setExitOpen(true)} />}

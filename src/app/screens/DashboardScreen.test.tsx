@@ -28,3 +28,17 @@ describe('dashboard score trend indicator', () => {
     expect(screen.queryByRole('img')).toBeNull();
   });
 });
+
+describe('dashboard lowest score', () => {
+  it('shows the lowest-scoring subject in a pill beside the card label', () => {
+    render(<ThemeProvider theme={theme}><DashboardScreen
+      attempts={[]}
+      personalLowest={42}
+      personalLowestSubject="Physiology"
+      subjectStats={[{ subject, quizCount: 8, latest: 75 }]}
+      onSelectSubject={() => {}}
+    /></ThemeProvider>);
+
+    expect(screen.getByText('Physiology')).toBeVisible();
+  });
+});

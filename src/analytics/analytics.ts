@@ -17,6 +17,13 @@ export function mostRecentScore(scores: Iterable<RecentScore>): RecentScore | un
   for (const score of scores) if (!mostRecent || score.completedAt > mostRecent.completedAt) mostRecent = score;
   return mostRecent;
 }
+export function lowestRecentScore<T extends RecentScore>(scores: Iterable<T>): T | undefined {
+  let lowest: T | undefined;
+  for (const score of scores) {
+    if (!lowest || score.percentage < lowest.percentage || (score.percentage === lowest.percentage && score.completedAt > lowest.completedAt)) lowest = score;
+  }
+  return lowest;
+}
 export function scoreTrend(scores: Iterable<RecentScore>): ScoreTrend | undefined {
   const [latest, previous] = [...scores].sort((a, b) => b.completedAt.localeCompare(a.completedAt));
   if (!latest || !previous) return undefined;
