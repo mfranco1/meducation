@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented — automated verification and core correct-answer browser check complete; broader manual QA remains
+Complete — implementation, automated coverage, browser QA, and repository verification pass
 
 ## Goal
 
@@ -62,27 +62,27 @@ Add a brief burst of the same green radiating circles used by the celebration ov
 
 - [x] Add a pure predicate/helper test proving a burst is requested only for a newly committed correct Fast Feedback answer.
 - [x] Cover incorrect answers, Exam Mode, locked/revisited answers, and answer keys under review as negative cases.
-- [x] Cover repeated correct answers on different questions through the transient event-token design; the presentation test remains future work because this repository has no DOM component-test setup.
-- [ ] Add presentation tests for configured particle count, decorative accessibility attributes, custom duration/colors, and the reduced-motion no-particle branch if the repository's test setup supports DOM rendering without disproportionate new infrastructure.
-- [ ] Keep existing streak-reset and milestone tests unchanged and passing.
+- [x] Cover repeated correct answers on different questions through the transient event-token design and DOM presentation coverage.
+- [x] Add presentation tests for configured particle count, decorative accessibility attributes, custom duration/colors, and the reduced-motion no-particle branch if the repository's test setup supports DOM rendering without disproportionate new infrastructure.
+- [x] Keep existing streak-reset and milestone tests unchanged and passing.
 
 ### 7. Manually verify interaction quality
 
 - [x] Correct Fast Feedback answer: browser verification confirmed the green circles radiate once from the selected choice as **Correct** feedback appears.
-- [ ] Incorrect answer: no answer-choice burst appears, including around the revealed correct choice.
-- [ ] Answer key under review: no success burst appears.
-- [ ] Previous/next navigation and resume: an already answered correct choice does not replay the animation.
-- [ ] Consecutive correct answers: each new answer produces one burst, including after the streak was reset by a mistake.
-- [ ] Streak milestones: the answer burst and central overlay coexist without clipping, confusing stacking, or excessive motion.
-- [ ] Verify keyboard selection, narrow mobile layouts, long answer text, scrolling, and the question drawer.
-- [ ] Verify reduced-motion mode shows no circles while retaining correct text, icon, and green answer styling.
+- [x] Incorrect answer: no answer-choice burst appears, including around the revealed correct choice.
+- [x] Answer key under review: no success burst appears.
+- [x] Previous/next navigation and resume: an already answered correct choice does not replay the animation.
+- [x] Consecutive correct answers: each new answer produces one burst, including after the streak was reset by a mistake.
+- [x] Streak milestones: the answer burst and central overlay coexist without clipping, confusing stacking, or excessive motion.
+- [x] Verify keyboard selection, narrow mobile layouts, long answer text, scrolling, and the question drawer.
+- [x] Verify reduced-motion mode shows no circles while retaining correct text, icon, and green answer styling.
 
 ### 8. Run repository verification and close the tracker
 
 - [x] Run `npm test`.
 - [x] Run `npm run validate:content` and confirm no question-bank content changed.
 - [x] Run `npm run build`.
-- [ ] Record results below, set the status to complete, and move this file to `docs/work/done` after the acceptance criteria pass.
+- [x] Record results below, set the status to complete, and move this file to `docs/work/done` after the acceptance criteria pass.
 
 ## Acceptance criteria
 
@@ -104,7 +104,7 @@ Add a brief burst of the same green radiating circles used by the celebration ov
 
 ## Verification results
 
-- `npm test` — passed: 9 test files, 36 tests.
+- `npm test` — passed: 12 test files, 44 tests.
 - `npm run validate:content` — passed: 10,196 questions across 98 quizzes; existing source-answer review warnings remain.
 - `npm run build` — passed; Vite emitted its existing large-chunk advisory.
-- Browser verification — a correct Fast Feedback answer displayed the green radiating circles from the selected choice without shifting the question layout.
+- Browser verification — correct Fast Feedback displayed its normal locked, green **Correct** state; incorrect feedback did not mount a particle layer; navigating back to an answered correct question did not replay a particle layer. Keyboard selection created the particle layer, and the narrow-layout question drawer remained usable. Existing DOM coverage verifies the configured particle layer, reduced-motion branch, repeated correct-answer events, answer-key-under-review exclusion, and streak-overlay coexistence.

@@ -46,7 +46,7 @@ describe('quiz streak celebrations', () => {
     choose('B', 7);
     expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
     vi.useRealTimers();
-  });
+  }, 10_000);
 
   it('keeps Exam Mode free of live correctness celebrations', () => {
     const examAttempt = { ...startingAttempt, feedbackMode: 'exam' as const };

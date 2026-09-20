@@ -13,7 +13,12 @@ describe('radiating circles', () => {
   it('renders the configured decorative circle count', () => {
     renderWithTheme(<RadiatingCircles particleCount={7} durationMs={600} colors={['#a0d8b0', '#2f7a55']} />);
     expect(screen.getByTestId('radiating-circles')).toHaveAttribute('aria-hidden', 'true');
-    expect(screen.getAllByTestId('radiating-circle')).toHaveLength(7);
+    const particles = screen.getAllByTestId('radiating-circle');
+    expect(particles).toHaveLength(7);
+    expect(particles[0]).toHaveStyle({ backgroundColor: '#2f7a55' });
+    expect(particles[1]).toHaveStyle({ backgroundColor: '#a0d8b0' });
+    expect(getComputedStyle(particles[0]).animation).toContain('600ms');
+    expect(getComputedStyle(particles[1]).animation).toContain('600ms');
   });
 
   it('omits particles when reduced motion is preferred', () => {
