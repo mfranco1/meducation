@@ -41,7 +41,7 @@ describe('celebration streaks',()=>{
     expect(wrong.attempt.celebrationProgress?.correctStreak).toBe(0);
     expect(wrong.streakMilestone).toBeUndefined();
   });
-  it('awards every configured tier once, including when a streak is rebuilt',()=>{
+  it('allows a milestone to be earned again after an incorrect answer resets the streak',()=>{
     let current = immediateAttempt();
     const milestones: number[] = [];
     for (let index = 1; index <= 50; index++) {
@@ -51,8 +51,14 @@ describe('celebration streaks',()=>{
     }
     expect(milestones).toEqual([3, 5, 10, 25, 50]);
     current = commitAnswer(current, correctQuestion('wrong'), 'A').attempt;
-    for (let index = 1; index <= 3; index++) current = commitAnswer(current, correctQuestion(`again${index}`), 'B').attempt;
-    expect(current.celebrationProgress).toMatchObject({ correctStreak: 3, awardedStreakMilestones: [3, 5, 10, 25, 50] });
+    expect(current.celebrationProgress).toEqual({ correctStreak: 0, awardedStreakMilestones: [] });
+    let rebuiltMilestone: number | undefined;
+    for (let index = 1; index <= 3; index++) {
+      const result = commitAnswer(current, correctQuestion(`again${index}`), 'B');
+      current = result.attempt;
+      rebuiltMilestone = result.streakMilestone;
+    }
+    expect(rebuiltMilestone).toBe(3);
   });
   it('counts answer commit order, not question order, and never double-counts a locked response',()=>{
     let current = immediateAttempt();

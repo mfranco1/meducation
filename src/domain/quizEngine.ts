@@ -20,14 +20,16 @@ export function commitAnswer(attempt: Attempt, question: Question, choiceId: str
   if (attempt.feedbackMode !== 'immediate' || current.locked) return { attempt: selectedAttempt };
 
   const progress = celebrationProgressFor(attempt);
-  const correctStreak = isCorrect(question, choiceId) ? progress.correctStreak + 1 : 0;
-  const milestone = STREAK_MILESTONES.find(value => value === correctStreak && !progress.awardedStreakMilestones.includes(value));
+  const correct = isCorrect(question, choiceId);
+  const correctStreak = correct ? progress.correctStreak + 1 : 0;
+  const awardedStreakMilestones = correct ? progress.awardedStreakMilestones : [];
+  const milestone = STREAK_MILESTONES.find(value => value === correctStreak && !awardedStreakMilestones.includes(value));
   return {
     attempt: {
       ...selectedAttempt,
       celebrationProgress: {
         correctStreak,
-        awardedStreakMilestones: milestone ? [...progress.awardedStreakMilestones, milestone] : progress.awardedStreakMilestones,
+        awardedStreakMilestones: milestone ? [...awardedStreakMilestones, milestone] : awardedStreakMilestones,
       },
     },
     streakMilestone: milestone,

@@ -13,7 +13,7 @@ Add brief, encouraging celebrations when a learner reaches a correct-answer stre
 - Count a streak in the order answers are committed, not by question number. Navigating out of order therefore behaves naturally.
 - Only committed Fast Feedback answers affect the live streak. Exam Mode must not reveal correctness before submission, so it has no live streak celebration.
 - Increment the streak after a correct committed answer and reset it to zero after an incorrect committed answer. Moving between questions or leaving an answer unanswered does not itself change the streak.
-- Trigger streak milestones exactly at 3, 5, 10, 25, and 50 correct answers. Award each milestone at most once per attempt so a broken and rebuilt streak does not repeatedly show the same low-tier celebration.
+- Trigger streak milestones exactly at 3, 5, 10, 25, and 50 correct answers. An incorrect answer clears the active streak and its earned tiers, so rebuilding a streak can celebrate again.
 - Persist streak progress and awarded milestones with the active attempt so leaving and resuming preserves progress without replaying an old celebration.
 - Treat older saved attempts with no streak metadata as having zero tracked progress. Do not infer an event order from their response map or replay celebrations retroactively.
 - Define a perfect test using exact score counts: `score.total > 0 && score.correct === score.total`. Do not rely on the rounded percentage.
@@ -71,7 +71,7 @@ Add brief, encouraging celebrations when a learner reaches a correct-answer stre
 
 - [x] Extend `src/domain/quizEngine.test.ts` for correct increments and incorrect resets.
 - [x] Prove milestones fire at exactly 3, 5, 10, 25, and 50—not immediately before or after.
-- [x] Prove an awarded milestone does not fire a second time after the streak is broken and rebuilt.
+- [x] Prove a milestone can fire again after the streak is broken and rebuilt.
 - [x] Prove out-of-order question answering follows commit order.
 - [x] Prove locked answers cannot increment twice and Exam Mode emits no live celebration.
 - [x] Prove a legacy attempt with missing progress starts safely without corrupting responses, timing, flags, or checkpoints.
@@ -109,7 +109,7 @@ Add brief, encouraging celebrations when a learner reaches a correct-answer stre
 ### 9. Manually verify the complete journeys
 
 - [ ] Fast Feedback: verify 3, 5, 10, 25, and 50 fire once at the correct committed answer.
-- [ ] Verify an incorrect answer resets the active streak and previously awarded tiers do not replay.
+- [ ] Verify an incorrect answer resets the active streak and a rebuilt streak can celebrate again.
 - [ ] Verify leaving and resuming retains the current streak and does not replay the last animation.
 - [ ] Verify out-of-order navigation, flags, long feedback, the mobile question drawer, and rapid **Continue** interactions remain smooth.
 - [ ] Exam Mode: verify no correctness or streak signal appears before submission.
