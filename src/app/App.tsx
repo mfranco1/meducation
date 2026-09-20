@@ -3,7 +3,7 @@ import { Alert, Box, Container } from '@mui/material';
 import { questionBank, questions } from '../content/questionBank';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { questionIndexFor } from '../domain/quizEngine';
-import { averageScore, lowestScore, mostRecentScore } from '../analytics/analytics';
+import { averageScore, lowestScore, mostRecentScore, scoreTrend } from '../analytics/analytics';
 import type { Quiz, RecentScore } from '../domain/types';
 import { AppHeader } from './components/AppHeader';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
@@ -29,10 +29,18 @@ export default function App() {
   const subjectStats = useMemo<SubjectStat[]>(() => questionBank.listSubjects().map(subject => {
     const quizzes = questionBank.listQuizzes(subject.id);
     const recentQuizScores = quizzes.map(quiz => attemptRepository.latestScore(quiz.id)).filter((score): score is RecentScore => score !== undefined);
+    const latest = mostRecentScore(recentQuizScores);
+    const recentSubjectScores = session.completedAttempts
+      .filter(attempt => attempt.subjectId === subject.id)
+      .map(attempt => ({ percentage: attempt.score.percentage, completedAt: attempt.completedAt }));
+    const latestAttempt = mostRecentScore(recentSubjectScores);
     return {
       subject,
       quizCount: quizzes.length,
-      latest: mostRecentScore(recentQuizScores)?.percentage,
+      latest: latest?.percentage,
+      trend: latest && latestAttempt && latest.completedAt === latestAttempt.completedAt && latest.percentage === latestAttempt.percentage
+        ? scoreTrend(recentSubjectScores)
+        : undefined,
     };
   }), [session.completedAttempts]);
   const subjectLatestScores = subjectStats.map(stat => stat.latest).filter((score): score is number => score !== undefined);

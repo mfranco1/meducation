@@ -1,6 +1,7 @@
 import { isCorrect } from '../domain/quizEngine';
 import type { CompletedAttempt, Question, RecentScore } from '../domain/types';
 export interface PerformanceRow { label: string; correct: number; total: number; percentage: number }
+export type ScoreTrend = 'increase' | 'decrease' | 'unchanged';
 export function lowestScore(scores: Iterable<number>): number | undefined {
   let lowest: number | undefined;
   for (const score of scores) lowest = lowest === undefined ? score : Math.min(lowest, score);
@@ -15,6 +16,12 @@ export function mostRecentScore(scores: Iterable<RecentScore>): RecentScore | un
   let mostRecent: RecentScore | undefined;
   for (const score of scores) if (!mostRecent || score.completedAt > mostRecent.completedAt) mostRecent = score;
   return mostRecent;
+}
+export function scoreTrend(scores: Iterable<RecentScore>): ScoreTrend | undefined {
+  const [latest, previous] = [...scores].sort((a, b) => b.completedAt.localeCompare(a.completedAt));
+  if (!latest || !previous) return undefined;
+  if (latest.percentage === previous.percentage) return 'unchanged';
+  return latest.percentage > previous.percentage ? 'increase' : 'decrease';
 }
 export function performanceBy(questions: Question[], attempts: CompletedAttempt[], dimension: keyof Question['metadata']): PerformanceRow[] {
   const rows = new Map<string, { correct: number; total: number }>();

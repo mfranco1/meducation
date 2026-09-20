@@ -1,4 +1,5 @@
 import { Box, Card, CardContent, Chip, Container, Stack, Typography } from '@mui/material';
+import type { ScoreTrend } from '../../analytics/analytics';
 import type { CompletedAttempt, Subject } from '../../domain/types';
 import { StatCard } from '../components/StatCard';
 
@@ -6,6 +7,30 @@ export interface SubjectStat {
   subject: Subject;
   quizCount: number;
   latest?: number;
+  trend?: ScoreTrend;
+}
+
+function ScoreTrendIndicator({ trend }: { trend: ScoreTrend }) {
+  const labels: Record<ScoreTrend, string> = {
+    increase: 'Score increased from previous attempt',
+    decrease: 'Score decreased from previous attempt',
+    unchanged: 'Score unchanged from previous attempt',
+  };
+  return <Box
+    aria-label={labels[trend]}
+    component="span"
+    role="img"
+    sx={trend === 'unchanged'
+      ? { bgcolor: 'primary.dark', borderRadius: 1, display: 'inline-block', height: 2, width: 10 }
+      : {
+        borderLeft: '5px solid transparent',
+        borderRight: '5px solid transparent',
+        ...(trend === 'increase'
+          ? { borderBottom: '8px solid', borderBottomColor: 'success.main' }
+          : { borderTop: '8px solid', borderTopColor: 'error.main' }),
+        display: 'inline-block',
+      }}
+  />;
 }
 
 export function DashboardScreen({ attempts, subjectStats, averageLatest, personalLowest, onSelectSubject }: { attempts: CompletedAttempt[]; subjectStats: SubjectStat[]; averageLatest?: number; personalLowest?: number; onSelectSubject: (subject: Subject) => void }) {
@@ -18,9 +43,12 @@ export function DashboardScreen({ attempts, subjectStats, averageLatest, persona
     </Stack>
     <Typography variant="h5" sx={{ mb: 2 }}>Subjects</Typography>
     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 2 }}>
-      {subjectStats.map(({ subject, quizCount, latest }) => <Card key={subject.id} sx={{ cursor: 'pointer', '&:hover': { borderColor: subject.accent, transform: 'translateY(-2px)' }, transition: 'all .18s' }} onClick={() => onSelectSubject(subject)}>
+      {subjectStats.map(({ subject, quizCount, latest, trend }) => <Card key={subject.id} sx={{ cursor: 'pointer', '&:hover': { borderColor: subject.accent, transform: 'translateY(-2px)' }, transition: 'all .18s' }} onClick={() => onSelectSubject(subject)}>
         <CardContent><Typography variant="h6">{subject.name}</Typography><Chip label={`${quizCount} quizzes`} size="small" sx={{ mt: 1.25 }} />
-          {latest !== undefined && <Typography variant="body2" sx={{ mt: 2, color: 'primary.dark', fontWeight: 700 }}>Latest Score {latest}%</Typography>}
+          {latest !== undefined && <Stack alignItems="center" direction="row" spacing={0.75} sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ color: 'primary.dark', fontWeight: 700 }}>Latest Score {latest}%</Typography>
+            {trend && <ScoreTrendIndicator trend={trend} />}
+          </Stack>}
         </CardContent>
       </Card>)}
     </Box>
