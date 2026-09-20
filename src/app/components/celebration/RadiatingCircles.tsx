@@ -43,12 +43,13 @@ export function RadiatingCircles({
   const reducedMotion = useReducedMotion();
   if (reducedMotion || particleCount < 1) return null;
 
-  return <Box aria-hidden sx={{ position: 'absolute', zIndex: 0, inset: 0, overflow: 'visible', pointerEvents: 'none' }}>
+  return <Box data-testid="radiating-circles" aria-hidden sx={{ position: 'absolute', zIndex: 0, inset: 0, overflow: 'visible', pointerEvents: 'none' }}>
     {Array.from({ length: particleCount }, (_, index) => {
       const alternate = index % 2 === 1;
       const left = particleCount === 1 ? 50 : 17 + index * (66 / (particleCount - 1));
       return <Box
         key={index}
+        data-testid="radiating-circle"
         sx={{
           '--particle-x': `${(index - (particleCount - 1) / 2) * horizontalSpread}px`, '--particle-y': `${-verticalSpread - (index % 3) * (verticalSpread * .6)}px`, position: 'absolute', width: alternate ? particleSize * .75 : particleSize, height: alternate ? particleSize * .75 : particleSize, borderRadius: '50%', bgcolor: alternate ? colors[0] : colors[1], top: alternate ? '52%' : '34%', left: `${left}%`, animation: `${radiate} ${durationMs}ms ease-out both`, animationDelay: `${delayMs + index * 28}ms`,
         }}

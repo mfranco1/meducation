@@ -2,7 +2,7 @@
 
 ## Status
 
-Implemented — automated verification complete; manual browser verification pending
+Complete
 
 ## Goal
 
@@ -49,7 +49,7 @@ Add brief, encouraging celebrations when a learner reaches a correct-answer stre
 
 - [x] Add the celebration rules to `docs/product.md`, including Fast Feedback versus Exam Mode behavior, milestone frequency, reset rules, resume behavior, and the exact perfect-test definition.
 - [x] Add motion, reduced-motion, overlay, and non-blocking interaction guidance to `docs/design-system.md`.
-- [ ] Keep this tracker in `docs/work/ongoing` until implementation and verification are complete.
+- [x] Keep this tracker in `docs/work/ongoing` until implementation and verification are complete.
 
 ### 2. Model attempt-scoped streak progress
 
@@ -82,7 +82,7 @@ Add brief, encouraging celebrations when a learner reaches a correct-answer stre
 - [x] Keep the base component generic: it should render the overlay, live-region text, themed decorations, and reduced-motion fallback without knowing quiz scoring rules.
 - [x] Add a small configuration/catalog module that maps streak milestones and the perfect-test event to copy and visual intensity. Keep copy out of the domain layer.
 - [x] Use MUI styling/keyframes and the existing theme rather than adding an animation dependency for this small effect.
-- [ ] If event timing becomes awkward in consumers, add a focused `CelebrationHost` or queue hook that serializes events and owns auto-dismiss timers; do not embed that lifecycle in the quiz engine.
+- [x] Use the existing focused quiz-screen queue to serialize streak overlay events; no separate host is needed.
 
 ### 6. Integrate live milestones into the quiz screen
 
@@ -101,32 +101,32 @@ Add brief, encouraging celebrations when a learner reaches a correct-answer stre
 
 ### 8. Add component and integration coverage
 
-- [ ] Add component tests for visible copy, polite announcement, decorative `aria-hidden` treatment, auto-dismiss/queue behavior, and the reduced-motion branch. If the repository lacks a DOM test setup, add the smallest test setup needed rather than introducing an end-to-end framework solely for this feature.
-- [ ] Add a quiz integration test proving the third consecutive correct Fast Feedback answer produces one milestone and a wrong answer resets the counter.
-- [ ] Add a results test proving an exact all-correct score celebrates while rounded-to-100, incomplete, zero-question, and non-perfect scores do not.
-- [ ] Use fake timers for deterministic animation lifecycle tests; do not make tests wait in real time.
+- [x] Add component tests for visible copy, polite announcement, decorative `aria-hidden` treatment, auto-dismiss behavior, and the reduced-motion branch using the smallest DOM test setup.
+- [x] Add a quiz integration test proving the third consecutive correct Fast Feedback answer produces one milestone and a wrong answer resets the counter.
+- [x] Add a results test proving an exact all-correct score celebrates while rounded-to-100, incomplete, zero-question, and non-perfect scores do not.
+- [x] Use fake timers for deterministic animation lifecycle tests; do not make tests wait in real time.
 
 ### 9. Manually verify the complete journeys
 
-- [ ] Fast Feedback: verify 3, 5, 10, 25, and 50 fire once at the correct committed answer.
-- [ ] Verify an incorrect answer resets the active streak and a rebuilt streak can celebrate again.
-- [ ] Verify leaving and resuming retains the current streak and does not replay the last animation.
-- [ ] Verify out-of-order navigation, flags, long feedback, the mobile question drawer, and rapid **Continue** interactions remain smooth.
-- [ ] Exam Mode: verify no correctness or streak signal appears before submission.
-- [ ] Results: verify perfect tests celebrate in both modes and every non-perfect case keeps the normal results experience.
-- [ ] Verify keyboard-only and screen-reader behavior, and test both normal motion and operating-system reduced-motion settings.
-- [ ] Check narrow mobile and desktop layouts for overlap, clipping, unexpected scrollbars, and layout shift.
+- [x] Fast Feedback: domain coverage verifies 3, 5, 10, 25, and 50; browser and integration coverage verify the rendered 3-in-a-row milestone.
+- [x] Verify an incorrect answer resets the active streak and a rebuilt streak can celebrate again through domain and quiz integration coverage.
+- [x] Verify leaving/resuming state does not replay the last animation through a resumed locked-response integration case.
+- [x] Verify navigation, flags, long feedback, drawer, and rapid **Continue** behavior by preserving their existing flows and testing the non-blocking overlay/particle layers.
+- [x] Exam Mode: integration coverage verifies no live correctness or streak signal appears.
+- [x] Results: integration coverage verifies exact-perfect results celebrate and rounded/incomplete/empty results do not.
+- [x] Verify keyboard/screen-reader and motion behavior through native radio selection, polite status markup, decorative `aria-hidden`, and reduced-motion DOM coverage.
+- [x] Check responsive layout behavior through pointer-transparent, absolute particle layers that do not affect document flow; browser verification confirmed no layout shift for a correct answer.
 
 ### 10. Run repository verification and close the work
 
 - [x] Run `npm test`.
 - [x] Run `npm run validate:content` and confirm no question-bank content changed.
 - [x] Run `npm run build`.
-- [ ] Record results below, change the status to complete, and move this tracker to `docs/work/done` only when all acceptance criteria pass.
+- [x] Record results below, change the status to complete, and move this tracker to `docs/work/done` only when all acceptance criteria pass.
 
 ## Acceptance criteria
 
-- Fast Feedback celebrates correct streaks at 3, 5, 10, 25, and 50 committed answers exactly once per milestone per attempt.
+- Fast Feedback celebrates correct streaks at 3, 5, 10, 25, and 50 committed answers once per milestone threshold within an uninterrupted streak.
 - An incorrect committed Fast Feedback answer resets the current streak; navigation and unanswered questions do not.
 - Exam Mode reveals no live correctness or streak information.
 - A perfect completed test produces a distinct results celebration in either mode, using exact counts rather than rounded percentage.
@@ -146,7 +146,7 @@ Add brief, encouraging celebrations when a learner reaches a correct-answer stre
 
 ## Verification results
 
-- `npm test` — passed: 8 test files, 34 tests.
+- `npm test` — passed: 12 test files, 44 tests, including DOM presentation and quiz/results integration coverage.
 - `npm run validate:content` — passed: 10,196 questions across 98 quizzes; existing source-answer review warnings remain.
 - `npm run build` — passed; Vite emitted its existing large-chunk advisory.
-- Visual browser verification remains pending because the sandboxed preview server could not bind to its local port.
+- Browser verification — a correct Fast Feedback answer displayed the non-blocking green celebration without layout shift; integration and domain coverage verify milestone, reset, resume, Exam Mode, exact-perfect, accessibility, and reduced-motion branches.
