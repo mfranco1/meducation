@@ -1,6 +1,8 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from '@mui/material';
-import type { Attempt, Quiz, Subject } from '../../domain/types';
+import { useState } from 'react';
+import type { Attempt, FeedbackMode, Quiz, Subject } from '../../domain/types';
+import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
 
 export interface QuizProgress {
   quiz: Quiz;
@@ -11,7 +13,9 @@ export interface QuizProgress {
   currentQuestion?: number;
 }
 
-export function SubjectScreen({ subject, progress, onBack, onOpenQuiz }: { subject: Subject; progress: QuizProgress[]; onBack: () => void; onOpenQuiz: (quiz: Quiz) => void }) {
+export function SubjectScreen({ subject, progress, onBack, onResumeQuiz, onStartQuiz }: { subject: Subject; progress: QuizProgress[]; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void }) {
+  const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
+
   return <Container maxWidth="md" sx={{ py: 5 }}>
     <Button startIcon={<ArrowBackRoundedIcon />} onClick={onBack} color="inherit">All subjects</Button>
     <Typography variant="h3" sx={{ mt: 3, mb: 4 }}>{subject.name}</Typography>
@@ -25,8 +29,9 @@ export function SubjectScreen({ subject, progress, onBack, onOpenQuiz }: { subje
             {lowestScore !== undefined && lowestScore !== latestScore && <Chip label={`Lowest score ${lowestScore}%`} size="small" variant="outlined" />}
           </Stack>}
         </Box>
-        <Button variant="contained" onClick={() => onOpenQuiz(quiz)}>{active ? 'Resume quiz' : completionCount > 0 ? 'Retake quiz' : 'Start quiz'}</Button>
+        <Button variant="contained" onClick={() => active ? onResumeQuiz(quiz) : setSetupQuiz(quiz)}>{active ? 'Resume quiz' : completionCount > 0 ? 'Retake quiz' : 'Start quiz'}</Button>
       </Stack>
     </CardContent></Card>)}</Stack>
+    {setupQuiz && <QuizSetupDialog open quiz={setupQuiz} onClose={() => setSetupQuiz(null)} onStart={(quiz, mode) => { onStartQuiz(quiz, mode); setSetupQuiz(null); }} />}
   </Container>;
 }

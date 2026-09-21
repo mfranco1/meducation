@@ -7,11 +7,9 @@ import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from '..
 import type { Quiz, RecentScore } from '../domain/types';
 import { AppHeader } from './components/AppHeader';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
-import { subjectForQuiz } from './navigation';
 import { DashboardScreen, type SubjectStat } from './screens/DashboardScreen';
 import { QuizScreen } from './screens/QuizScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
-import { SetupScreen } from './screens/SetupScreen';
 import { SubjectScreen, type QuizProgress } from './screens/SubjectScreen';
 import { useQuizSession } from './session/useQuizSession';
 
@@ -71,9 +69,6 @@ export default function App() {
     if (session.view.page === 'quiz') setExitOpen(true);
     else session.showDashboard();
   };
-  const leaveSetup = () => {
-    if (session.view.page === 'setup') session.showQuizSubject(session.view.quiz);
-  };
   const leaveResults = () => {
     if (session.view.page === 'results') session.showQuizSubject(session.view.quiz);
   };
@@ -81,8 +76,7 @@ export default function App() {
   return <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
     <AppHeader onNavigateHome={handleHeaderNavigation} />
     {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} onSelectSubject={session.showSubject} />}
-    {session.view.page === 'subject' && <SubjectScreen subject={session.view.subject} progress={progressForSubject(session.view.subject.id)} onBack={session.showDashboard} onOpenQuiz={session.openQuiz} />}
-    {session.view.page === 'setup' && <SetupScreen subject={subjectForQuiz(questionBank.listSubjects(), session.view.quiz)} quiz={session.view.quiz} onBack={leaveSetup} onStart={session.startQuiz} />}
+    {session.view.page === 'subject' && <SubjectScreen subject={session.view.subject} progress={progressForSubject(session.view.subject.id)} onBack={session.showDashboard} onResumeQuiz={session.resumeQuiz} onStartQuiz={session.startQuiz} />}
     {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => setExitOpen(true)} />}
     {session.view.page === 'results' && <><ResultReviewWarning quiz={session.view.quiz} /><ResultsScreen {...session.view} questions={questions} onBack={leaveResults} /></>}
     <ExitQuizDialog open={exitOpen} onClose={() => setExitOpen(false)} onLeave={() => { session.leaveQuiz(); setExitOpen(false); }} onAbort={() => { session.abortQuiz(); setExitOpen(false); }} />

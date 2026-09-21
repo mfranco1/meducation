@@ -3,7 +3,6 @@ import type { Attempt, CompletedAttempt, Quiz, Subject } from '../domain/types';
 export type View =
   | { page: 'dashboard' }
   | { page: 'subject'; subject: Subject }
-  | { page: 'setup'; quiz: Quiz }
   | { page: 'quiz'; quiz: Quiz; attempt: Attempt; index: number }
   | { page: 'results'; quiz: Quiz; attempt: CompletedAttempt };
 

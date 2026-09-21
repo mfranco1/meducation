@@ -13,7 +13,7 @@ import { subjectForQuiz, type View } from '../navigation';
 interface QuizSession {
   view: View;
   completedAttempts: CompletedAttempt[];
-  openQuiz: (quiz: Quiz) => void;
+  resumeQuiz: (quiz: Quiz) => void;
   startQuiz: (quiz: Quiz, mode: FeedbackMode) => void;
   checkpoint: (attempt: Attempt, index?: number) => void;
   finishQuiz: () => void;
@@ -40,12 +40,9 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     setView({ ...view, attempt: checkpointed, index });
   };
 
-  const openQuiz = (quiz: Quiz) => {
+  const resumeQuiz = (quiz: Quiz) => {
     const existing = attempts.getActive(quiz.id);
-    if (!existing) {
-      setView({ page: 'setup', quiz });
-      return;
-    }
+    if (!existing) return;
     const resumed = resumeAttempt(existing);
     attempts.saveActive(resumed);
     setView({ page: 'quiz', quiz, attempt: resumed, index: questionIndexFor(questionBank.listQuestions(quiz.id), resumed.currentQuestionId) });
@@ -108,7 +105,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   return {
     view,
     completedAttempts,
-    openQuiz,
+    resumeQuiz,
     startQuiz,
     checkpoint,
     finishQuiz,
