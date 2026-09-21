@@ -10,6 +10,10 @@ Schema-v4 parity against the version-3 snapshot passed for all 12 subjects, 98 q
 
 Verification passed: `npm run validate:content` (32 existing answer-review warnings), `npm test` (59 tests), `npm run audit:explanations`, `npm run build`, and `git diff --check`. The Vite large-bundle warning remains expected because the full local bank is bundled.
 
+## Compatibility cleanup (2026-09-21)
+
+After the only active browser profile completed the local-storage conversion, removed the pre-v4 identifier map, one-time migration path, and migration-only tests. Existing compact-ID attempts continue to use the ordinary persistence implementation.
+
 ## Objective
 
 Replace verbose canonical IDs with compact type-prefixed identifiers and rename `sourceAnswer` to `answer`, while preserving browser-local attempts through a one-time compatibility migration.

@@ -10,4 +10,4 @@ When editing content:
 4. Keep provenance, sources, review data, and answer-review notes in `question.rationaleMeta`; do not create a second explanation body or JSON overlay. The application never calls an LLM at runtime.
 5. Run `npm run validate:content`, `npm test`, and `npm run build` before handoff.
 
-The current schema version is `4`. Add a deliberate migration, semantic parity check, local-attempt compatibility path, and validation coverage before changing the stored shape.
+The current schema version is `4`. Add a deliberate migration, semantic parity check, and validation coverage before changing the stored shape. Compatibility code is temporary and should be removed after every in-scope browser profile has migrated.
