@@ -79,11 +79,30 @@ describe('subject quiz action', () => {
     expect(screen.getByText('Selecting an answer locks it and shows the explanation right away.')).toBeVisible();
   });
 
+  it('starts in Fast Feedback mode by default', () => {
+    const { onStartQuiz } = renderSubject({});
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin quiz' }));
+
+    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate');
+  });
+
   it('dismisses setup without starting a quiz', () => {
     const { onStartQuiz } = renderSubject({});
 
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close quiz setup' }));
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(onStartQuiz).not.toHaveBeenCalled();
+  });
+
+  it('dismisses setup with Escape without starting a quiz', () => {
+    const { onStartQuiz } = renderSubject({});
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(onStartQuiz).not.toHaveBeenCalled();
