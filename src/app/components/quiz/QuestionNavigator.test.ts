@@ -3,9 +3,9 @@ import { filterQuestionNavigationItems, questionNavigationItems } from './Questi
 import type { Attempt, Question } from '../../../domain/types';
 
 const questions: Question[] = [
-  { id: 'q1', subjectId: 's', quizId: 'z', questionNumber: 4, stem: 'One', choices: [], answerSource: 'uncertain', rationale: 'R', metadata: {} },
-  { id: 'q2', subjectId: 's', quizId: 'z', stem: 'Two', choices: [], answerSource: 'uncertain', rationale: 'R', metadata: {} },
-  { id: 'q3', subjectId: 's', quizId: 'z', stem: 'Three', choices: [], answerSource: 'uncertain', rationale: 'R', metadata: {} },
+  { id: 'q1', quizId: 'z', stem: 'One', choices: [], rationale: 'R', metadata: {} },
+  { id: 'q2', quizId: 'z', stem: 'Two', choices: [], rationale: 'R', metadata: {} },
+  { id: 'q3', quizId: 'z', stem: 'Three', choices: [], rationale: 'R', metadata: {} },
 ];
 const examAttempt: Attempt = {
   id: 'a', quizId: 'z', subjectId: 's', feedbackMode: 'exam', startedAt: new Date().toISOString(), responses: {
@@ -17,7 +17,7 @@ const examAttempt: Attempt = {
 describe('question navigator items', () => {
   it('derives independent answer and flag states without treating a flag as an answer', () => {
     expect(questionNavigationItems(questions, examAttempt)).toEqual([
-      { index: 0, number: 4, answered: true, flagged: true, wrong: false },
+      { index: 0, number: 1, answered: true, flagged: true, wrong: false },
       { index: 1, number: 2, answered: false, flagged: true, wrong: false },
       { index: 2, number: 3, answered: false, flagged: false, wrong: false },
     ]);

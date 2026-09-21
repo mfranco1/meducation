@@ -41,7 +41,7 @@ describe('subject quiz action', () => {
   it('prioritizes Resume test when a saved attempt exists', () => {
     renderSubject({ active: activeAttempt, completionCount: 1, currentQuestion: 3 });
 
-    expect(screen.getByRole('button', { name: 'Resume test' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Resume quiz' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Retake quiz' })).toBeNull();
   });
 });

@@ -3,7 +3,7 @@ import { questionBank, questions, quizzes, schemaVersion, subjects } from './que
 
 describe('canonical question bank', () => {
   it('exposes the versioned bank through indexed repository reads', () => {
-    expect(schemaVersion).toBe(2);
+    expect(schemaVersion).toBe(3);
     expect(subjects).toHaveLength(12);
     expect(quizzes).toHaveLength(98);
     expect(questions).toHaveLength(10196);

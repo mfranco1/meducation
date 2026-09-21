@@ -21,7 +21,7 @@ export function questionNavigationItems(questions: Question[], attempt: Attempt)
     const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
     return {
       index,
-      number: question.questionNumber ?? index + 1,
+      number: index + 1,
       answered: Boolean(response?.selectedChoiceId),
       flagged: Boolean(response?.flagged),
       wrong: attempt.feedbackMode === 'immediate' && Boolean(response?.locked && response.selectedChoiceId && !answerUnderReview && !isCorrect(question, response.selectedChoiceId)),

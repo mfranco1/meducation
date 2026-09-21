@@ -1,13 +1,12 @@
 import type { Question, Quiz, QuizRepository, Subject } from '../domain/types';
 import generated from './questionBank.generated.json';
+import type { StoredQuestionBank } from './schema';
 
-interface StoredQuiz { id: string; subjectId: string; name: string }
-interface StoredQuestionBank { schemaVersion: number; subjects: Subject[]; quizzes: StoredQuiz[]; questions: Question[] }
-
-const bank = generated as StoredQuestionBank;
+const bank = generated as unknown as StoredQuestionBank;
+export const storedQuestionBank = bank;
 export const schemaVersion = bank.schemaVersion;
 export const subjects = bank.subjects;
-export const questions = bank.questions;
+export const questions: Question[] = bank.questions.map(question => ({ ...question, metadata: question.metadata ?? {} }));
 const questionsByQuizId = new Map<string, Question[]>();
 const quizzesBySubjectId = new Map<string, Quiz[]>();
 

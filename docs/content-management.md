@@ -1,13 +1,13 @@
 # Content management
 
-`src/content/questionBank.generated.json` is the canonical content store for the application. It is a schema-v2 JSON database containing subjects, quizzes, questions, final choice text, answer provenance, display-ready GFM stems and rationales, rationale metadata, and answer-review notes.
+`src/content/questionBank.generated.json` is the canonical content store for the application. It is a schema-v3 JSON database containing subjects, quizzes, questions, final choice text, answer provenance, display-ready GFM stems and rationales, rationale metadata, and answer-review notes.
 
 When editing content:
 
-1. Preserve existing subject, quiz, and question IDs, question ordering, and choice IDs.
+1. Preserve existing subject, quiz, and question IDs, canonical question ordering, and choice IDs. Question display numbers are derived from one-based position within a quiz; do not add a stored question number.
 2. Make intentional question, choice, answer, stem, or rationale changes directly in the matching record. Stems and rationales are GitHub Flavored Markdown, rendered by the shared UI component.
-3. Keep answer provenance explicit: retain `sourceAnswer`, add `verifiedAnswer` only after review, and use `answerNote` or `explanation.answerReviewNote` when a key is uncertain.
+3. Keep answer provenance explicit: retain `sourceAnswer`, add `verifiedAnswer` only after review, and use `answerNote` or `rationaleMeta.answerReviewNote` when a key is uncertain. Do not add `answerSource`; it is derived from whether a verified answer exists.
 4. Keep provenance, sources, review data, and answer-review notes in `question.rationaleMeta`; do not create a second explanation body or JSON overlay. The application never calls an LLM at runtime.
 5. Run `npm run validate:content`, `npm test`, and `npm run build` before handoff.
 
-The current schema version is `1`. Add a deliberate migration and validation coverage before changing the stored shape.
+The current schema version is `3`. Add a deliberate migration, semantic parity check, and validation coverage before changing the stored shape.

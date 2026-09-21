@@ -1,13 +1,17 @@
 # Question schema
 
-`src/content/questionBank.generated.json` has `schemaVersion: 2` and top-level `subjects`, `quizzes`, and `questions` collections. Each `Question` has a stable ID, subject/quiz IDs, canonical GFM `stem`, ordered `choices`, answer provenance (`sourceAnswer`, `verifiedAnswer`, `answerSource`, and optional note), a required GFM `rationale`, optional `rationaleMeta`, and structured metadata. Runtime scoring prefers `verifiedAnswer`, then `sourceAnswer`.
+`src/content/questionBank.generated.json` has `schemaVersion: 3` and top-level `subjects`, `quizzes`, and `questions` collections. `Quiz.subjectId` is the only stored subject relationship; a question stores `quizId` but not a redundant subject ID. Questions are grouped by quiz in canonical array order, which is their one-based learner display number and the future database `position` value.
 
-Question text and choice order are canonical once recorded. Make content corrections directly in the record, review them carefully, and preserve their rationale in the relevant provenance or review field. Never regenerate IDs casually.
+Each question has a stable ID, canonical GFM `stem`, ordered `choices`, answer provenance (`sourceAnswer`, optional `verifiedAnswer`, and optional note), a required GFM `rationale`, optional `rationaleMeta`, and sparse optional metadata. Runtime scoring prefers `verifiedAnswer`, then `sourceAnswer`. `answerSource` is not stored: a verified answer indicates verified provenance, otherwise the source answer is used. `questionCount` is derived from the indexed questions and is not stored on a quiz.
+
+Question text and choice order are canonical once recorded. Make content corrections directly in the record, review them carefully, and preserve their rationale in the relevant provenance or review field. Never regenerate IDs casually. Do not derive meaning from ID suffixes; they remain stable even where a historic suffix differs from the display position.
 
 ## Markdown and rationale metadata
 
 `stem` and `rationale` are canonical GitHub Flavored Markdown. Supported learner-facing features include paragraphs, headings, emphasis, ordered and nested lists, blockquotes, tables, code, links, and GFM footnotes. Raw HTML, images, MDX, and unsafe link protocols are forbidden. Markdown is validated at development time and rendered through one shared component; it is never rewritten by the browser.
 
-Use `rationaleMeta.provenance: 'source_migrated'` when a stored source rationale was normalized during the one-time schema-v2 migration. Use `ai_draft_reviewed` only for a reviewed development-time AI draft. Such entries require `reviewedAt` and `reviewNote`. `rationaleMeta.sources` is shown in a disclosure below the rationale. The app never generates explanations at runtime.
+Use `rationaleMeta.provenance: 'source_migrated'` when a stored source rationale was normalized during a one-time content migration. Use `ai_draft_reviewed` only for a reviewed development-time AI draft. Such entries require `reviewedAt` and `reviewNote`. `rationaleMeta.sources` is shown in a disclosure below the rationale. The app never generates explanations at runtime.
 
 When the answer key or question context is uncertain, `rationaleMeta.answerReviewNote` carries the explanation. The learner sees that note and the feedback status says the key is under review; the original `sourceAnswer` remains unchanged. Such entries still require answer verification before their quiz scores can be treated as final.
+
+`metadata` is omitted when no classification is known. Do not store default `difficulty: 'unknown'`, a duplicate discipline label, or an empty metadata object.

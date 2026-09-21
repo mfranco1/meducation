@@ -1,9 +1,10 @@
-import { questions, quizzes, schemaVersion, subjects } from '../src/content/questionBank.ts';
+import { questions, quizzes, schemaVersion, storedQuestionBank, subjects } from '../src/content/questionBank.ts';
 import { validateQuestionMarkdown } from '../src/content/markdownValidation.ts';
-import { validateQuestionBank } from '../src/content/validate.ts';
+import { validateQuestionBank, validateStoredQuestionBank } from '../src/content/validate.ts';
 
 const issues = [
-  ...(schemaVersion === 2 ? [] : [{ level: 'error' as const, message: `Unsupported question bank schema version: ${schemaVersion}` }]),
+  ...(schemaVersion === 3 ? [] : [{ level: 'error' as const, message: `Unsupported question bank schema version: ${schemaVersion}` }]),
+  ...validateStoredQuestionBank(storedQuestionBank),
   ...validateQuestionBank(subjects, quizzes, questions),
   ...validateQuestionMarkdown(questions),
 ];

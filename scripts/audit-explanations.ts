@@ -1,6 +1,6 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { questions } from '../src/content/questionBank.ts';
+import { questions, quizzes } from '../src/content/questionBank.ts';
 
 type Pattern = 'plain_prose' | 'bulleted' | 'choice_by_choice' | 'table_like' | 'heading' | 'source_disclosure';
 const patternFor = (rationale: string, sources?: string): Pattern[] => {
@@ -13,9 +13,10 @@ const patternFor = (rationale: string, sources?: string): Pattern[] => {
   return patterns.length ? patterns : ['plain_prose'];
 };
 
+const subjectIdByQuizId = new Map(quizzes.map(quiz => [quiz.id, quiz.subjectId]));
 const rows = questions.map(question => ({
   id: question.id,
-  subjectId: question.subjectId,
+  subjectId: subjectIdByQuizId.get(question.quizId),
   quizId: question.quizId,
   rationaleLength: question.rationale.length,
   patterns: patternFor(question.rationale, question.rationaleMeta?.sources),
