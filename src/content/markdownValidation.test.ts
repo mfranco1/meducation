@@ -4,7 +4,7 @@ import { questions } from './questionBank';
 import { validateQuestionMarkdown } from './markdownValidation';
 
 const question: Question = {
-  id: 'q1', quizId: 'z', stem: 'Stem', choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }], sourceAnswer: 'A', rationale: 'Answer.', metadata: {},
+  id: 'i1', quizId: 'q1', stem: 'Stem', choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }], answer: 'A', rationale: 'Answer.', metadata: {},
 };
 
 describe('canonical Markdown validation', () => {

@@ -2,7 +2,7 @@ import type { Attempt, AttemptScore, CelebrationProgress, FeedbackMode, Question
 
 export const STREAK_MILESTONES: readonly StreakMilestone[] = [3, 5, 10, 25, 50];
 
-export const answerFor = (question: Question) => question.verifiedAnswer ?? question.sourceAnswer;
+export const answerFor = (question: Question) => question.verifiedAnswer ?? question.answer;
 export const isCorrect = (question: Question, selected?: string) => selected !== undefined && selected === answerFor(question);
 export const blankResponse = (questionId: string): QuestionResponse => ({ questionId, flagged: false, locked: false, timeMs: 0 });
 export const selectChoice = (response: QuestionResponse, choiceId: string, feedbackMode: FeedbackMode): QuestionResponse => {

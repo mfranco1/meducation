@@ -1,10 +1,39 @@
 import type { Attempt, AttemptRepository, CompletedAttempt, RecentScore } from '../domain/types';
+import { currentQuestionIdForLegacy, currentQuizIdForLegacy, currentSubjectIdForLegacy } from '../content/legacyContentIds';
 const completedKey = 'meducation.completed-attempts.v1'; const completionCountsKey = 'meducation.completion-counts.v1'; const lowestScoresKey = 'meducation.lowest-scores.v1'; const latestScoresKey = 'meducation.latest-scores.v1'; const activeKey = 'meducation.active-attempts.v1';
+const contentIdentityMigrationKey = 'meducation.content-identity.v4';
 function read<T>(key: string, fallback: T): T { try { return JSON.parse(localStorage.getItem(key) ?? '') as T; } catch { return fallback; } }
 function write<T>(key: string, value: T) { localStorage.setItem(key, JSON.stringify(value)); }
 export class LocalAttemptRepository implements AttemptRepository {
-  list() { return read<CompletedAttempt[]>(completedKey, []); }
+  private migrateContentIdentity() {
+    if (localStorage.getItem(contentIdentityMigrationKey) === 'done') return;
+    const migrateAttempt = <T extends Attempt>(attempt: T): T => {
+      const responses = Object.values(attempt.responses).map(response => {
+        const questionId = currentQuestionIdForLegacy(response.questionId);
+        return [questionId, { ...response, questionId }];
+      });
+      return {
+        ...attempt,
+        quizId: currentQuizIdForLegacy(attempt.quizId),
+        subjectId: currentSubjectIdForLegacy(attempt.subjectId),
+        currentQuestionId: attempt.currentQuestionId ? currentQuestionIdForLegacy(attempt.currentQuestionId) : undefined,
+        responses: Object.fromEntries(responses),
+      };
+    };
+    const remapRecord = <T>(key: string) => Object.fromEntries(Object.entries(read<Record<string, T>>(key, {})).map(([id, value]) => [currentQuizIdForLegacy(id), value]));
+    write(completedKey, read<CompletedAttempt[]>(completedKey, []).map(migrateAttempt));
+    write(activeKey, Object.fromEntries(Object.values(read<Record<string, Attempt>>(activeKey, {})).map(attempt => {
+      const migrated = migrateAttempt(attempt);
+      return [migrated.quizId, migrated];
+    })));
+    if (localStorage.getItem(completionCountsKey) !== null) write(completionCountsKey, remapRecord<number>(completionCountsKey));
+    if (localStorage.getItem(lowestScoresKey) !== null) write(lowestScoresKey, remapRecord<number>(lowestScoresKey));
+    if (localStorage.getItem(latestScoresKey) !== null) write(latestScoresKey, remapRecord<RecentScore>(latestScoresKey));
+    localStorage.setItem(contentIdentityMigrationKey, 'done');
+  }
+  list() { this.migrateContentIdentity(); return read<CompletedAttempt[]>(completedKey, []); }
   private completionCounts() {
+    this.migrateContentIdentity();
     const savedCounts = localStorage.getItem(completionCountsKey);
     if (savedCounts !== null) return read<Record<string, number>>(completionCountsKey, {});
     const counts = this.list().reduce<Record<string, number>>((total, attempt) => ({ ...total, [attempt.quizId]: (total[attempt.quizId] ?? 0) + 1 }), {});
@@ -13,6 +42,7 @@ export class LocalAttemptRepository implements AttemptRepository {
   }
   completionCount(quizId: string) { return this.completionCounts()[quizId] ?? 0; }
   private lowestScores() {
+    this.migrateContentIdentity();
     const savedScores = localStorage.getItem(lowestScoresKey);
     if (savedScores !== null) return read<Record<string, number>>(lowestScoresKey, {});
     const scores = this.list().reduce<Record<string, number>>((total, attempt) => {
@@ -25,6 +55,7 @@ export class LocalAttemptRepository implements AttemptRepository {
   }
   lowestScore(quizId: string) { return this.lowestScores()[quizId]; }
   private latestScores() {
+    this.migrateContentIdentity();
     const savedScores = localStorage.getItem(latestScoresKey);
     if (savedScores !== null) return read<Record<string, RecentScore>>(latestScoresKey, {});
     const scores = this.list().reduce<Record<string, RecentScore>>((total, attempt) => {
@@ -36,10 +67,11 @@ export class LocalAttemptRepository implements AttemptRepository {
     return scores;
   }
   latestScore(quizId: string) { return this.latestScores()[quizId]; }
-  getActive(quizId: string) { return read<Record<string, Attempt>>(activeKey, {})[quizId]; }
-  saveActive(attempt: Attempt) { write(activeKey, { ...read<Record<string, Attempt>>(activeKey, {}), [attempt.quizId]: attempt }); }
-  clearActive(quizId: string) { const values = read<Record<string, Attempt>>(activeKey, {}); delete values[quizId]; write(activeKey, values); }
+  getActive(quizId: string) { this.migrateContentIdentity(); return read<Record<string, Attempt>>(activeKey, {})[quizId]; }
+  saveActive(attempt: Attempt) { this.migrateContentIdentity(); write(activeKey, { ...read<Record<string, Attempt>>(activeKey, {}), [attempt.quizId]: attempt }); }
+  clearActive(quizId: string) { this.migrateContentIdentity(); const values = read<Record<string, Attempt>>(activeKey, {}); delete values[quizId]; write(activeKey, values); }
   saveCompleted(attempt: CompletedAttempt) {
+    this.migrateContentIdentity();
     const counts = this.completionCounts();
     const lowestScores = this.lowestScores();
     const latestScores = this.latestScores();

@@ -3,7 +3,7 @@ import { validateQuestionMarkdown } from '../src/content/markdownValidation.ts';
 import { validateQuestionBank, validateStoredQuestionBank } from '../src/content/validate.ts';
 
 const issues = [
-  ...(schemaVersion === 3 ? [] : [{ level: 'error' as const, message: `Unsupported question bank schema version: ${schemaVersion}` }]),
+  ...(schemaVersion === 4 ? [] : [{ level: 'error' as const, message: `Unsupported question bank schema version: ${schemaVersion}` }]),
   ...validateStoredQuestionBank(storedQuestionBank),
   ...validateQuestionBank(subjects, quizzes, questions),
   ...validateQuestionMarkdown(questions),

@@ -41,7 +41,7 @@ export function validateQuestionMarkdown(questions: Question[]): ValidationIssue
       if (!meta.reviewedAt || !/^\d{4}-\d{2}-\d{2}$/.test(meta.reviewedAt)) issues.push({ level: 'error', questionId: question.id, message: 'AI-reviewed rationale requires a review date' });
       if (!meta.reviewNote?.trim()) issues.push({ level: 'error', questionId: question.id, message: 'AI-reviewed rationale requires a review note' });
     }
-    if (meta?.answerReviewNote) issues.push({ level: 'warning', questionId: question.id, message: `Source answer under review: ${meta.answerReviewNote}` });
+    if (meta?.answerReviewNote) issues.push({ level: 'warning', questionId: question.id, message: `Answer under review: ${meta.answerReviewNote}` });
   }
   return issues;
 }

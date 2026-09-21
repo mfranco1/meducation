@@ -17,7 +17,7 @@ export interface StoredQuestion {
   quizId: string;
   stem: string;
   choices: Choice[];
-  sourceAnswer?: string;
+  answer?: string;
   verifiedAnswer?: string;
   answerNote?: string;
   rationale: string;
@@ -28,7 +28,7 @@ export interface StoredQuestion {
 }
 
 export interface StoredQuestionBank {
-  schemaVersion: 3;
+  schemaVersion: 4;
   subjects: StoredSubject[];
   quizzes: StoredQuiz[];
   questions: StoredQuestion[];

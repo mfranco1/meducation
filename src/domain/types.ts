@@ -14,7 +14,7 @@ export interface RationaleMetadata {
 }
 export interface Question {
   id: string; quizId: string; stem: string; choices: Choice[];
-  sourceAnswer?: string; verifiedAnswer?: string; answerNote?: string;
+  answer?: string; verifiedAnswer?: string; answerNote?: string;
   rationale: string; rationaleMeta?: RationaleMetadata; choiceExplanations?: Record<string, string>; pearls?: string[]; metadata: QuestionMetadata;
 }
 export interface Subject { id: string; name: string; accent: string }

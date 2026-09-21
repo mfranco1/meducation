@@ -3,14 +3,14 @@ import { filterQuestionNavigationItems, questionNavigationItems } from './Questi
 import type { Attempt, Question } from '../../../domain/types';
 
 const questions: Question[] = [
-  { id: 'q1', quizId: 'z', stem: 'One', choices: [], rationale: 'R', metadata: {} },
-  { id: 'q2', quizId: 'z', stem: 'Two', choices: [], rationale: 'R', metadata: {} },
-  { id: 'q3', quizId: 'z', stem: 'Three', choices: [], rationale: 'R', metadata: {} },
+  { id: 'i1', quizId: 'q1', stem: 'One', choices: [], rationale: 'R', metadata: {} },
+  { id: 'i2', quizId: 'q1', stem: 'Two', choices: [], rationale: 'R', metadata: {} },
+  { id: 'i3', quizId: 'q1', stem: 'Three', choices: [], rationale: 'R', metadata: {} },
 ];
 const examAttempt: Attempt = {
-  id: 'a', quizId: 'z', subjectId: 's', feedbackMode: 'exam', startedAt: new Date().toISOString(), responses: {
-    q1: { questionId: 'q1', selectedChoiceId: 'A', flagged: true, locked: false, timeMs: 0 },
-    q2: { questionId: 'q2', flagged: true, locked: false, timeMs: 0 },
+  id: 'a', quizId: 'q1', subjectId: 's1', feedbackMode: 'exam', startedAt: new Date().toISOString(), responses: {
+    i1: { questionId: 'i1', selectedChoiceId: 'A', flagged: true, locked: false, timeMs: 0 },
+    i2: { questionId: 'i2', flagged: true, locked: false, timeMs: 0 },
   },
 };
 
@@ -35,12 +35,12 @@ describe('question navigator items', () => {
       ...examAttempt,
       feedbackMode: 'immediate',
       responses: {
-        q1: { questionId: 'q1', selectedChoiceId: 'A', flagged: false, locked: true, timeMs: 0 },
-        q2: { questionId: 'q2', selectedChoiceId: 'B', flagged: false, locked: false, timeMs: 0 },
-        q3: { questionId: 'q3', selectedChoiceId: 'C', flagged: false, locked: true, timeMs: 0 },
+        i1: { questionId: 'i1', selectedChoiceId: 'A', flagged: false, locked: true, timeMs: 0 },
+        i2: { questionId: 'i2', selectedChoiceId: 'B', flagged: false, locked: false, timeMs: 0 },
+        i3: { questionId: 'i3', selectedChoiceId: 'C', flagged: false, locked: true, timeMs: 0 },
       },
     };
-    const keyedQuestions = questions.map(question => ({ ...question, sourceAnswer: question.id === 'q1' ? 'B' : question.id === 'q3' ? 'C' : undefined }));
+    const keyedQuestions = questions.map(question => ({ ...question, answer: question.id === 'i1' ? 'B' : question.id === 'i3' ? 'C' : undefined }));
 
     expect(questionNavigationItems(keyedQuestions, immediateAttempt).map(item => item.wrong)).toEqual([true, false, false]);
   });
