@@ -28,6 +28,7 @@ export default function App() {
   const [exitOpen, setExitOpen] = useState(false);
   const subjectStats = useMemo<SubjectStat[]>(() => questionBank.listSubjects().map(subject => {
     const quizzes = questionBank.listQuizzes(subject.id);
+    const activeQuizCount = quizzes.filter(quiz => attemptRepository.getActive(quiz.id) !== undefined).length;
     const recentQuizScores = quizzes.map(quiz => attemptRepository.latestScore(quiz.id)).filter((score): score is RecentScore => score !== undefined);
     const latest = mostRecentScore(recentQuizScores);
     const recentSubjectScores = session.completedAttempts
@@ -37,13 +38,14 @@ export default function App() {
     return {
       subject,
       quizCount: quizzes.length,
+      activeQuizCount,
       latest: latest?.percentage,
       latestCompletedAt: latest?.completedAt,
       trend: latest && latestAttempt && latest.completedAt === latestAttempt.completedAt && latest.percentage === latestAttempt.percentage
         ? scoreTrend(recentSubjectScores)
         : undefined,
     };
-  }), [session.completedAttempts]);
+  }), [session.completedAttempts, session.view.page]);
   const subjectLatestScores = subjectStats.map(stat => stat.latest).filter((score): score is number => score !== undefined);
   const averageLatest = averageScore(subjectLatestScores);
   const personalLowestScore = lowestRecentScore(subjectStats.flatMap(stat => stat.latest === undefined || stat.latestCompletedAt === undefined
