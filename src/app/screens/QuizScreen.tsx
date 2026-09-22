@@ -14,6 +14,7 @@ import { shouldTriggerCorrectAnswerBurst } from '../components/celebration/corre
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { Stopwatch } from '../components/quiz/Stopwatch';
+import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
 
 interface QuizScreenProps {
   quiz: Quiz;
@@ -32,7 +33,9 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
   const [celebrationQueue, setCelebrationQueue] = useState<CelebrationEvent[]>([]);
   const [correctAnswerBurst, setCorrectAnswerBurst] = useState<CorrectAnswerBurst>();
+  const [submitOpen, setSubmitOpen] = useState(false);
   const correctAnswerBurstSequence = useRef(0);
+  const submissionRequested = useRef(false);
   const question = questions[index];
   const savedResponse = attempt.responses[question.id];
   const response = savedResponse ?? blankResponse(question.id);
@@ -52,6 +55,16 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
     setCorrectAnswerBurst(undefined);
     onCheckpoint(attempt, targetIndex);
     setNavigatorOpen(false);
+  };
+  const requestSubmit = () => {
+    submissionRequested.current = false;
+    setSubmitOpen(true);
+  };
+  const confirmSubmit = () => {
+    if (submissionRequested.current) return;
+    submissionRequested.current = true;
+    setSubmitOpen(false);
+    onFinish();
   };
 
   useEffect(() => {
@@ -99,7 +112,7 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
         <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ mt: 3 }}><Stack direction="row" spacing={1}>
           <Button startIcon={<ArrowBackRoundedIcon />} disabled={index === 0} onClick={() => navigateToQuestion(index - 1)}>Previous</Button>
           {index === questions.length - 1
-            ? <Button variant="contained" onClick={onFinish}>{attempt.feedbackMode === 'exam' ? 'Submit test' : 'Finish'}</Button>
+            ? <Button variant="contained" onClick={requestSubmit}>{attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'}</Button>
             : <Button endIcon={<ArrowForwardRoundedIcon />} onClick={() => navigateToQuestion(index + 1)}>{feedback ? 'Continue' : 'Next'}</Button>}
         </Stack></Stack>
       </Box>
@@ -108,5 +121,6 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
     <Drawer anchor="right" open={navigatorOpen} onClose={() => setNavigatorOpen(false)} PaperProps={{ sx: { width: 'min(100%, 380px)', p: 2.5 } }}>
       {navigator}
     </Drawer>
+    <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
   </Container>;
 }
