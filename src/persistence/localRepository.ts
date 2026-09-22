@@ -1,5 +1,5 @@
 import type { Attempt, AttemptRepository, CompletedAttempt, RecentScore } from '../domain/types';
-const completedKey = 'meducation.completed-attempts.v1'; const completionCountsKey = 'meducation.completion-counts.v1'; const lowestScoresKey = 'meducation.lowest-scores.v1'; const latestScoresKey = 'meducation.latest-scores.v1'; const activeKey = 'meducation.active-attempts.v1';
+const completedKey = 'meducation.completed-attempts.v1'; const completionCountsKey = 'meducation.completion-counts.v1'; const lowestScoresKey = 'meducation.lowest-scores.v1'; const latestScoresKey = 'meducation.latest-scores.v1'; const activeKey = 'meducation.active-attempts.v1'; const activityKey = 'meducation.quiz-activity.v1';
 function read<T>(key: string, fallback: T): T { try { return JSON.parse(localStorage.getItem(key) ?? '') as T; } catch { return fallback; } }
 function write<T>(key: string, value: T) { localStorage.setItem(key, JSON.stringify(value)); }
 export class LocalAttemptRepository implements AttemptRepository {
@@ -36,8 +36,16 @@ export class LocalAttemptRepository implements AttemptRepository {
     return scores;
   }
   latestScore(quizId: string) { return this.latestScores()[quizId]; }
+  latestActivityAt(quizId: string) {
+    const recorded = read<Record<string, string>>(activityKey, {})[quizId];
+    if (recorded) return recorded;
+    const activeAt = this.getActive(quizId)?.startedAt;
+    const completedAt = this.latestScore(quizId)?.completedAt;
+    return [activeAt, completedAt].filter((value): value is string => value !== undefined).sort().at(-1);
+  }
   getActive(quizId: string) { return read<Record<string, Attempt>>(activeKey, {})[quizId]; }
-  saveActive(attempt: Attempt) { write(activeKey, { ...read<Record<string, Attempt>>(activeKey, {}), [attempt.quizId]: attempt }); }
+  private recordActivity(quizId: string, at = new Date().toISOString()) { write(activityKey, { ...read<Record<string, string>>(activityKey, {}), [quizId]: at }); }
+  saveActive(attempt: Attempt) { write(activeKey, { ...read<Record<string, Attempt>>(activeKey, {}), [attempt.quizId]: attempt }); this.recordActivity(attempt.quizId); }
   clearActive(quizId: string) { const values = read<Record<string, Attempt>>(activeKey, {}); delete values[quizId]; write(activeKey, values); }
   saveCompleted(attempt: CompletedAttempt) {
     const counts = this.completionCounts();
@@ -51,5 +59,6 @@ export class LocalAttemptRepository implements AttemptRepository {
       ? { percentage: attempt.score.percentage, completedAt: attempt.completedAt }
       : currentLatest;
     write(latestScoresKey, { ...latestScores, [attempt.quizId]: latest });
+    this.recordActivity(attempt.quizId, attempt.completedAt);
   }
 }

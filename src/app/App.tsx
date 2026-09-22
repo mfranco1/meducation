@@ -12,6 +12,7 @@ import { QuizScreen } from './screens/QuizScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { SubjectScreen, type QuizProgress } from './screens/SubjectScreen';
 import { useQuizSession } from './session/useQuizSession';
+import { sortQuizProgressByRecentActivity } from './quizProgress';
 
 const attemptRepository = new LocalAttemptRepository();
 
@@ -52,18 +53,19 @@ export default function App() {
   const personalLowest = personalLowestScore?.percentage;
   const personalLowestSubject = personalLowestScore?.subjectName;
 
-  const progressForSubject = (subjectId: string): QuizProgress[] => questionBank.listQuizzes(subjectId).map(quiz => {
-    const active = attemptRepository.getActive(quiz.id);
-    const questionIds = questionBank.listQuestions(quiz.id);
-    return {
-      quiz,
-      active,
-      completionCount: attemptRepository.completionCount(quiz.id),
-      lowestScore: attemptRepository.lowestScore(quiz.id),
-      latestScore: attemptRepository.latestScore(quiz.id)?.percentage,
-      currentQuestion: active ? questionIndexFor(questionIds, active.currentQuestionId) + 1 : undefined,
-    };
-  });
+  const progressForSubject = (subjectId: string): QuizProgress[] => sortQuizProgressByRecentActivity(questionBank.listQuizzes(subjectId)
+    .map(quiz => {
+      const active = attemptRepository.getActive(quiz.id);
+      const questionIds = questionBank.listQuestions(quiz.id);
+      return {
+        quiz,
+        active,
+        completionCount: attemptRepository.completionCount(quiz.id),
+        lowestScore: attemptRepository.lowestScore(quiz.id),
+        latestScore: attemptRepository.latestScore(quiz.id)?.percentage,
+        currentQuestion: active ? questionIndexFor(questionIds, active.currentQuestionId) + 1 : undefined,
+      };
+    }), quizId => attemptRepository.latestActivityAt(quizId));
 
   const handleHeaderNavigation = () => {
     if (session.view.page === 'quiz') setExitOpen(true);
