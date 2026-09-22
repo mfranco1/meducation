@@ -28,11 +28,11 @@ describe('ActiveSubjectCarousel', () => {
 
     expect(screen.getByRole('button', { name: 'Open Biochemistry' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
-    expect(screen.getByRole('button', { name: 'Open Physiology' })).toBeVisible();
+    expect(screen.getAllByRole('button', { name: /Open (Biochemistry|Physiology)/ }).map(button => button.getAttribute('aria-label'))).toEqual(['Open Physiology']);
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
-    expect(screen.getByRole('button', { name: 'Open Biochemistry' })).toBeVisible();
+    expect(screen.getAllByRole('button', { name: /Open (Biochemistry|Physiology)/ }).map(button => button.getAttribute('aria-label'))).toEqual(['Open Biochemistry']);
     fireEvent.click(screen.getByRole('button', { name: 'Previous active subject' }));
-    expect(screen.getByRole('button', { name: 'Open Physiology' })).toBeVisible();
+    expect(screen.getAllByRole('button', { name: /Open (Biochemistry|Physiology)/ }).map(button => button.getAttribute('aria-label'))).toEqual(['Open Physiology']);
   });
 
   it('shows only side arrows, without a position count', () => {
