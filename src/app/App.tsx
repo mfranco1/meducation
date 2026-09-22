@@ -57,12 +57,19 @@ export default function App() {
     .map(quiz => {
       const active = attemptRepository.getActive(quiz.id);
       const questionIds = questionBank.listQuestions(quiz.id);
+      const latestScore = attemptRepository.latestScore(quiz.id);
+      const recentQuizScores = session.completedAttempts
+        .filter(attempt => attempt.quizId === quiz.id)
+        .map(attempt => ({ percentage: attempt.score.percentage, completedAt: attempt.completedAt }));
+      const latestAttempt = mostRecentScore(recentQuizScores);
       return {
         quiz,
         active,
         completionCount: attemptRepository.completionCount(quiz.id),
-        lowestScore: attemptRepository.lowestScore(quiz.id),
-        latestScore: attemptRepository.latestScore(quiz.id)?.percentage,
+        latestScore: latestScore?.percentage,
+        trend: latestScore && latestAttempt && latestScore.completedAt === latestAttempt.completedAt && latestScore.percentage === latestAttempt.percentage
+          ? scoreTrend(recentQuizScores)
+          : undefined,
         currentQuestion: active ? questionIndexFor(questionIds, active.currentQuestionId) + 1 : undefined,
       };
     }), quizId => attemptRepository.latestActivityAt(quizId));

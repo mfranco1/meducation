@@ -108,3 +108,25 @@ describe('subject quiz action', () => {
     expect(onStartQuiz).not.toHaveBeenCalled();
   });
 });
+
+describe('subject quiz score summaries', () => {
+  it('shows the latest score without a lowest-score pill', () => {
+    renderSubject({ completionCount: 2, latestScore: 75 });
+
+    expect(screen.getByText('Completed 2 times')).toBeVisible();
+    expect(screen.getByText('Latest score 75%')).toBeVisible();
+    expect(screen.queryByText(/Lowest score/)).toBeNull();
+    expect(screen.queryByRole('img')).toBeNull();
+  });
+
+  it.each([
+    ['increase', 'Score increased from previous attempt'],
+    ['decrease', 'Score decreased from previous attempt'],
+    ['unchanged', 'Score unchanged from previous attempt'],
+  ] as const)('shows the %s indicator inside the latest-score pill', (trend, label) => {
+    renderSubject({ completionCount: 2, latestScore: 75, trend });
+
+    const latestScore = screen.getByText('Latest score 75%');
+    expect(latestScore.closest('.MuiChip-root')).toContainElement(screen.getByRole('img', { name: label }));
+  });
+});
