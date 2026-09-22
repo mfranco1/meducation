@@ -1,32 +1,42 @@
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import { Box, IconButton, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { Box, IconButton, Typography, useMediaQuery } from '@mui/material';
+import useEmblaCarousel from 'embla-carousel-react';
+import { useCallback, useEffect, useState } from 'react';
 import type { SubjectStat } from '../dashboard';
 import { SubjectCard } from './SubjectCard';
 
 export function ActiveSubjectCarousel({ subjects, onSelectSubject }: { subjects: SubjectStat[]; onSelectSubject: (subject: SubjectStat['subject']) => void }) {
-  const [index, setIndex] = useState(0);
-  const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
-  const isTablet = useMediaQuery(theme.breakpoints.up('sm'));
-  const subjectCount = subjects.length;
-  const visibleCount = isDesktop ? 3 : isTablet ? 2 : 1;
+  const [canRotate, setCanRotate] = useState(false);
+  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const [viewportRef, emblaApi] = useEmblaCarousel({ align: 'start', duration: 25, loop: true, slidesToScroll: 1 });
+  const updateCanRotate = useCallback(() => {
+    if (!emblaApi) return;
+    setCanRotate(emblaApi.canScrollPrev() || emblaApi.canScrollNext());
+  }, [emblaApi]);
 
-  useEffect(() => setIndex(current => Math.min(current, Math.max(subjectCount - 1, 0))), [subjectCount]);
-  if (!subjectCount) return null;
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.reInit();
+    updateCanRotate();
+    emblaApi.on('reInit', updateCanRotate);
+    return () => { emblaApi.off('reInit', updateCanRotate); };
+  }, [emblaApi, subjects, updateCanRotate]);
 
-  const visibleSubjects = Array.from({ length: Math.min(visibleCount, subjectCount) }, (_, offset) => subjects[(index + offset) % subjectCount]);
-  const move = (direction: 1 | -1) => setIndex(currentIndex => (currentIndex + direction + subjectCount) % subjectCount);
+  if (!subjects.length) return null;
 
   return <Box component="section" aria-labelledby="continue-studying-heading" sx={{ mb: 4 }}>
     <Typography id="continue-studying-heading" variant="h6" sx={{ fontWeight: 800, mb: 1.5 }}>Continue Studying</Typography>
     <Box sx={{ position: 'relative' }}>
-      {subjectCount > 1 && <IconButton aria-label="Previous active subject" onClick={() => move(-1)} sx={{ bgcolor: 'background.paper', left: -24, position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}><ChevronLeftRoundedIcon /></IconButton>}
-      <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))' } }}>
-        {visibleSubjects.map(stat => <SubjectCard key={stat.subject.id} stat={stat} onSelect={onSelectSubject} />)}
+      {canRotate && <IconButton aria-label="Previous active subject" onClick={() => emblaApi?.scrollPrev(reducedMotion)} sx={{ bgcolor: 'background.paper', left: -24, position: 'absolute', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}><ChevronLeftRoundedIcon /></IconButton>}
+      <Box ref={viewportRef} sx={{ overflow: 'hidden' }}>
+        <Box sx={{ display: 'flex' }}>
+          {subjects.map(stat => <Box key={stat.subject.id} sx={{ boxSizing: 'border-box', flex: { xs: '0 0 100%', sm: '0 0 calc((100% + 16px) / 2)', md: '0 0 calc((100% + 16px) / 3)' }, minWidth: 0, pr: { xs: 0, sm: 2 } }}>
+            <SubjectCard stat={stat} onSelect={onSelectSubject} />
+          </Box>)}
+        </Box>
       </Box>
-      {subjectCount > 1 && <IconButton aria-label="Next active subject" onClick={() => move(1)} sx={{ bgcolor: 'background.paper', position: 'absolute', right: -24, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}><ChevronRightRoundedIcon /></IconButton>}
+      {canRotate && <IconButton aria-label="Next active subject" onClick={() => emblaApi?.scrollNext(reducedMotion)} sx={{ bgcolor: 'background.paper', position: 'absolute', right: -24, top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}><ChevronRightRoundedIcon /></IconButton>}
     </Box>
   </Box>;
 }
