@@ -2,7 +2,8 @@ import { ThemeProvider } from '@mui/material';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { theme } from '../theme';
-import { DashboardScreen, type SubjectStat } from './DashboardScreen';
+import { activeSubjectStats, type SubjectStat } from '../dashboard';
+import { DashboardScreen } from './DashboardScreen';
 
 const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };
 const renderDashboard = (trend: SubjectStat['trend'], activeQuizCount = 0) => render(<ThemeProvider theme={theme}><DashboardScreen
@@ -11,12 +12,12 @@ const renderDashboard = (trend: SubjectStat['trend'], activeQuizCount = 0) => re
   onSelectSubject={() => {}}
 /></ThemeProvider>);
 
-describe('dashboard introduction', () => {
-  it('does not render the redundant introductory title', () => {
+describe('dashboard headings', () => {
+  it('does not render the redundant Subjects title', () => {
     renderDashboard(undefined);
 
-    expect(screen.queryByRole('heading', { name: 'Choose a subject and start practicing' })).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Subjects' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Subjects' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   });
 });
 
@@ -56,12 +57,29 @@ describe('dashboard in-progress indicator', () => {
   it.each([1, 2])('shows %i active quiz count beside the quiz count', activeQuizCount => {
     renderDashboard(undefined, activeQuizCount);
 
-    expect(screen.getByText(`${activeQuizCount} in progress`)).toBeVisible();
+    expect(screen.getAllByText(`${activeQuizCount} in progress`)).toHaveLength(2);
   });
 
   it('omits the indicator when the subject has no active quizzes', () => {
     renderDashboard(undefined);
 
     expect(screen.queryByText(/in progress/)).toBeNull();
+  });
+});
+
+describe('dashboard active-subject ordering', () => {
+  it('includes only active subjects and orders them by active-quiz activity', () => {
+    const newer = { subject: { ...subject, id: 'newer', name: 'Newer' }, quizCount: 2, activeQuizCount: 1, latestActiveAt: '2026-09-22T10:00:00.000Z' };
+    const inactive = { subject: { ...subject, id: 'inactive', name: 'Inactive' }, quizCount: 2, activeQuizCount: 0, latestActiveAt: '2026-09-23T10:00:00.000Z' };
+    const older = { subject: { ...subject, id: 'older', name: 'Older' }, quizCount: 2, activeQuizCount: 1, latestActiveAt: '2026-09-21T10:00:00.000Z' };
+
+    expect(activeSubjectStats([older, inactive, newer]).map(stat => stat.subject.name)).toEqual(['Newer', 'Older']);
+  });
+
+  it('preserves catalog order when active-subject activity is tied', () => {
+    const first = { subject: { ...subject, id: 'first', name: 'First' }, quizCount: 2, activeQuizCount: 1, latestActiveAt: '2026-09-22T10:00:00.000Z' };
+    const second = { subject: { ...subject, id: 'second', name: 'Second' }, quizCount: 2, activeQuizCount: 1, latestActiveAt: '2026-09-22T10:00:00.000Z' };
+
+    expect(activeSubjectStats([first, second]).map(stat => stat.subject.name)).toEqual(['First', 'Second']);
   });
 });

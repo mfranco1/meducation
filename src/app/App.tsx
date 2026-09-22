@@ -7,7 +7,8 @@ import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from '..
 import type { Quiz, RecentScore } from '../domain/types';
 import { AppHeader } from './components/AppHeader';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
-import { DashboardScreen, type SubjectStat } from './screens/DashboardScreen';
+import { type SubjectStat } from './dashboard';
+import { DashboardScreen } from './screens/DashboardScreen';
 import { QuizScreen } from './screens/QuizScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { SubjectScreen, type QuizProgress } from './screens/SubjectScreen';
@@ -27,7 +28,8 @@ export default function App() {
   const [exitOpen, setExitOpen] = useState(false);
   const subjectStats = useMemo<SubjectStat[]>(() => questionBank.listSubjects().map(subject => {
     const quizzes = questionBank.listQuizzes(subject.id);
-    const activeQuizCount = quizzes.filter(quiz => attemptRepository.getActive(quiz.id) !== undefined).length;
+    const activeQuizzes = quizzes.filter(quiz => attemptRepository.getActive(quiz.id) !== undefined);
+    const activeQuizCount = activeQuizzes.length;
     const recentQuizScores = quizzes.map(quiz => attemptRepository.latestScore(quiz.id)).filter((score): score is RecentScore => score !== undefined);
     const latest = mostRecentScore(recentQuizScores);
     const recentSubjectScores = session.completedAttempts
@@ -38,6 +40,7 @@ export default function App() {
       subject,
       quizCount: quizzes.length,
       activeQuizCount,
+      latestActiveAt: activeQuizzes.map(quiz => attemptRepository.latestActivityAt(quiz.id)).filter((at): at is string => at !== undefined).sort().at(-1),
       latest: latest?.percentage,
       latestCompletedAt: latest?.completedAt,
       trend: latest && latestAttempt && latest.completedAt === latestAttempt.completedAt && latest.percentage === latestAttempt.percentage
