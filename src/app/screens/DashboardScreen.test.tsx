@@ -11,6 +11,15 @@ const renderDashboard = (trend: SubjectStat['trend'], activeQuizCount = 0) => re
   onSelectSubject={() => {}}
 /></ThemeProvider>);
 
+describe('dashboard introduction', () => {
+  it('does not render the redundant introductory title', () => {
+    renderDashboard(undefined);
+
+    expect(screen.queryByRole('heading', { name: 'Choose a subject and start practicing' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Subjects' })).toBeVisible();
+  });
+});
+
 describe('dashboard score trend indicator', () => {
   it.each([
     ['increase', 'Score increased from previous attempt'],
