@@ -33,9 +33,9 @@ Example content-only draft for a new subject and quiz:
 }
 ```
 
-Enter the change reason in its separate field. Choose **Validate draft**, inspect the generated-ID and validation preview, then choose **Stage validated add**. The panel assigns stable IDs above the current maximum, choice labels from array order, and the default subject accent. Add more quizzes as entries in `quizzes`, and more questions as entries in each quiz's `items` list. Changing the destination or staged snapshot requires reloading the template and validating again.
+Enter the change reason in the **Reason** field. Choose **Validate**, inspect the generated-ID and validation preview, then choose **Stage**. The panel assigns stable IDs above the current maximum, choice labels from array order, and the default subject accent. Add more quizzes as entries in `quizzes`, and more questions as entries in each quiz's `items` list. Changing the destination or staged snapshot requires reloading the template and validating again.
 
-Export downloads both `questionBank.generated.json` and `question-bank-change-set.json`. Replace the canonical repository file through normal review, retain the companion change set with the change rationale, then run `npm run validate:content`, `npm test`, `npm run build`, and `npm run audit:explanations`. Parent deletion requires explicit `cascade: true`; it can make saved browser attempts inaccessible and does not delete those attempts.
+**Export** downloads both `questionBank.generated.json` and `question-bank-change-set.json`. Replace the canonical repository file through normal review, retain the companion change set with the change rationale, then run `npm run validate:content`, `npm test`, `npm run build`, and `npm run audit:explanations`. **Import** opens an existing change set for read-only preview before **Stage import**. Parent deletion requires explicit `cascade: true`; it can make saved browser attempts inaccessible and does not delete those attempts.
 
 The local tool is enabled only for development by default. It is not authentication or authorization and must not be exposed as a production write surface before the separate backend/security work.
 
