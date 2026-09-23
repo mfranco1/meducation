@@ -1,15 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  Alert, Box, Button, ButtonGroup, Chip, Container, Divider, FormControl, InputLabel, List, ListItemButton,
-  ListItemText, MenuItem, Paper, Select, Stack, Tab, Tabs, TextField, Typography,
+  Alert, Box, Button, ButtonGroup, Chip, Container, Divider, List, ListItemButton,
+  ListItemText, Paper, Stack, Tab, Tabs, TextField, Typography,
 } from '@mui/material';
 import { storedQuestionBank } from '../content/questionBank';
 import type { StoredQuestionBank } from '../content/schema';
 import type { ValidationIssue } from '../content/validate';
 import { parseChangeSet } from './core/changeSetSchema';
 import { serializeBank } from './core/serializeBank';
-import { newQuestion, newQuiz, newSubject } from './core/templates';
-import type { AdminChangeSet, AdminOperation } from './core/types';
+import { groupedAddTemplate, newQuestion, newQuiz, newSubject } from './core/templates';
+import type { AdminChangeSet } from './core/types';
 import { InMemoryQuestionBankGateway } from './data/InMemoryQuestionBankGateway';
 
 type EntityKind = 'subject' | 'quiz' | 'question';
@@ -48,10 +48,10 @@ export function AdminApp() {
     return () => removeEventListener('beforeunload', beforeUnload);
   }, [dirty]);
 
-  const selectedSubject = snapshot?.bank.subjects.find(subject => subject.id === selection.id);
-  const selectedQuiz = snapshot?.bank.quizzes.find(quiz => quiz.id === selection.id);
-  const selectedQuestion = snapshot?.bank.questions.find(question => question.id === selection.id);
-  const entity = selection.kind === 'subject' ? selectedSubject : selection.kind === 'quiz' ? selectedQuiz : selectedQuestion;
+  const selectedQuizId = selection.kind === 'quiz' ? selection.id : selection.kind === 'question' ? selection.parentId : undefined;
+  const selectedQuiz = snapshot?.bank.quizzes.find(quiz => quiz.id === selectedQuizId);
+  const selectedSubjectId = selection.kind === 'subject' ? selection.id : selectedQuiz?.subjectId;
+  const selectedSubject = snapshot?.bank.subjects.find(subject => subject.id === selectedSubjectId);
   const filteredSubjects = useMemo(() => snapshot?.bank.subjects.filter(subject => `${subject.id} ${subject.name}`.toLowerCase().includes(filter.toLowerCase())) ?? [], [snapshot, filter]);
   const visibleQuizzes = useMemo(() => !snapshot ? [] : snapshot.bank.quizzes.filter(quiz => quiz.subjectId === selection.parentId || quiz.subjectId === selectedSubject?.id), [snapshot, selection.parentId, selectedSubject?.id]);
   const visibleQuestions = useMemo(() => !snapshot ? [] : snapshot.bank.questions.filter(question => question.quizId === selection.parentId || question.quizId === selectedQuiz?.id), [snapshot, selection.parentId, selectedQuiz?.id]);
@@ -87,6 +87,13 @@ export function AdminApp() {
       if (!parsed.changeSet) { setIssues(parsed.errors.map(message => ({ level: 'error', message }))); return undefined; }
       return parsed.changeSet;
     } catch { setIssues([{ level: 'error', message: 'Change-set JSON is invalid.' }]); return undefined; }
+  };
+  const setGroupedTemplate = (context: { subjectId?: string; quizId?: string } = {}) => {
+    if (!snapshot) return;
+    setMode('bulk');
+    setEditor(JSON.stringify(groupedAddTemplate(snapshot.bank, snapshot.revision, reason, context), null, 2));
+    setIssues([]);
+    setSummary('Grouped add template loaded. Add each item to its quiz items array, then validate and stage.');
   };
   const stage = async () => {
     const changeSet = mode === 'single' ? buildSingleChangeSet() : buildBulkChangeSet();
@@ -125,7 +132,7 @@ export function AdminApp() {
     if (!snapshot) return;
     const operations = gateway.appliedOperations();
     if (!operations.length) { setIssues([{ level: 'warning', message: 'There are no staged changes to export.' }]); return; }
-    const exported: AdminChangeSet = { changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: originalRevision }, reason, operations };
+    const exported: AdminChangeSet = { changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: originalRevision }, reason, operations };
     download('questionBank.generated.json', serializeBank(snapshot.bank));
     download('question-bank-change-set.json', `${JSON.stringify(exported, null, 2)}\n`);
     setDirty(false); setSummary('Downloaded the replacement bank and its review change set. Replace the repository file, then run content validation, tests, and build.');
@@ -145,9 +152,20 @@ export function AdminApp() {
         {selectedQuiz && <><Divider /><Typography variant="caption" sx={{ display: 'block', mt: 1 }}>Items in {selectedQuiz.name}</Typography><List dense>{visibleQuestions.slice(0, 200).map(question => <ListItemButton key={question.id} selected={selection.kind === 'question' && selection.id === question.id} onClick={() => loadEntity({ kind: 'question', id: question.id, parentId: selectedQuiz.id }, question)}><ListItemText primary={question.id} secondary={question.stem.slice(0, 64)} /></ListItemButton>)}</List>{visibleQuestions.length > 200 && <Typography variant="caption">Showing first 200 of {visibleQuestions.length}; use the browser search or select a different quiz.</Typography>}</>}
       </Paper>
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
-        <Tabs value={mode} onChange={(_, value) => { setMode(value); setEditor(value === 'bulk' ? JSON.stringify({ changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason, operations: [] }, null, 2) : editor); }}><Tab value="single" label="Single JSON record" /><Tab value="bulk" label="Bulk change set" /></Tabs>
+        <Tabs value={mode} onChange={(_, value) => {
+          if (value === 'bulk') setGroupedTemplate(selection.kind === 'question' && selection.parentId
+            ? { quizId: selection.parentId }
+            : selection.kind === 'quiz' && selection.id ? { quizId: selection.id }
+              : selection.kind === 'subject' && selection.id ? { subjectId: selection.id } : {});
+          else setMode('single');
+        }}><Tab value="single" label="Single JSON record" /><Tab value="bulk" label="Bulk change set" /></Tabs>
+        {mode === 'bulk' && <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>
+          <Button size="small" onClick={() => setGroupedTemplate()}>New subject with quiz</Button>
+          <Button size="small" disabled={!selectedSubject} onClick={() => setGroupedTemplate({ subjectId: selectedSubject?.id })}>New quiz in selected subject</Button>
+          <Button size="small" disabled={!selectedQuiz} onClick={() => setGroupedTemplate({ quizId: selectedQuiz?.id })}>Items in selected quiz</Button>
+        </Stack>}
         <Stack spacing={2} sx={{ mt: 2 }}><TextField label="Change reason" value={reason} onChange={event => setReason(event.target.value)} required fullWidth />
-          <TextField label={mode === 'single' ? `${selection.kind} JSON` : 'Change-set JSON'} value={editor} onChange={event => setEditor(event.target.value)} multiline minRows={20} fullWidth InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }} placeholder={mode === 'single' ? 'Select an entity or create a template.' : 'Paste a version-1 change set.'} />
+          <TextField label={mode === 'single' ? `${selection.kind} JSON` : 'Change-set JSON'} value={editor} onChange={event => setEditor(event.target.value)} multiline minRows={20} fullWidth InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }} placeholder={mode === 'single' ? 'Select an entity or create a template.' : 'Paste a version-1 or version-2 change set.'} />
           <Stack direction="row" spacing={1} flexWrap="wrap"><Button variant="contained" onClick={stage}>{mode === 'single' ? 'Validate and stage record' : 'Validate and stage batch'}</Button>{mode === 'single' && selection.id && <Button color="error" onClick={stageDelete}>Delete selected</Button>}<Button onClick={undo}>Undo batch</Button><Button onClick={reset}>Reset</Button><Button color="success" onClick={exportFiles}>Export staged files</Button></Stack>
         </Stack>
       </Paper>

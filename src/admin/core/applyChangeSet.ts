@@ -2,7 +2,7 @@ import type { StoredQuestion, StoredQuestionBank, StoredQuiz, StoredSubject } fr
 import type { ValidationIssue } from '../../content/validate';
 import { cloneBank } from './serializeBank';
 import { validateAdminBank } from './validateAdminBank';
-import type { AdminChangePreview, AdminChangeSet, AdminOperation } from './types';
+import type { AdminChangePreview, AdminChangeSet, AdminOperation, ContentAddOperation } from './types';
 
 class OperationError extends Error {}
 
@@ -117,12 +117,52 @@ function applyOperation(bank: StoredQuestionBank, operation: AdminOperation, res
   }
 }
 
+function applyContentAdd(bank: StoredQuestionBank, operation: ContentAddOperation, result: ReturnType<typeof summary>): void {
+  const subjectId = 'create' in operation.subject ? operation.subject.create.id : operation.subject.existingId;
+  if ('create' in operation.subject) {
+    try { applyOperation(bank, { op: 'subject.create', value: operation.subject.create }, result); }
+    catch (error) { throw new OperationError(`subject.create: ${error instanceof Error ? error.message : 'Unable to create subject.'}`); }
+  } else if (byId(bank.subjects, subjectId) < 0) {
+    throw new OperationError(`subject.existingId ${subjectId} does not exist.`);
+  }
+
+  operation.quizzes.forEach((quizBlock, quizIndex) => {
+    const quizPath = `quizzes[${quizIndex}]`;
+    const quizId = 'create' in quizBlock.quiz ? quizBlock.quiz.create.id : quizBlock.quiz.existingId;
+    if ('create' in quizBlock.quiz) {
+      try {
+        applyOperation(bank, {
+          op: 'quiz.create',
+          value: { ...quizBlock.quiz.create, subjectId },
+        }, result);
+      } catch (error) {
+        throw new OperationError(`${quizPath}.quiz.create: ${error instanceof Error ? error.message : 'Unable to create quiz.'}`);
+      }
+    } else {
+      const existing = bank.quizzes.find(quiz => quiz.id === quizId);
+      if (!existing) throw new OperationError(`${quizPath}.quiz.existingId ${quizId} does not exist.`);
+      if (existing.subjectId !== subjectId) throw new OperationError(`${quizPath}.quiz.existingId ${quizId} belongs to subject ${existing.subjectId}, not ${subjectId}.`);
+    }
+
+    quizBlock.items.forEach((item, itemIndex) => {
+      try {
+        applyOperation(bank, { op: 'question.create', value: { ...item, quizId } }, result);
+      } catch (error) {
+        throw new OperationError(`${quizPath}.items[${itemIndex}]: ${error instanceof Error ? error.message : 'Unable to add item.'}`);
+      }
+    });
+  });
+}
+
 export function previewChangeSet(bank: StoredQuestionBank, changeSet: AdminChangeSet): AdminChangePreview {
   const next = cloneBank(bank);
   const result = summary();
   const issues: ValidationIssue[] = [];
   changeSet.operations.forEach((operation, index) => {
-    try { applyOperation(next, operation, result); }
+    try {
+      if (operation.op === 'content.add') applyContentAdd(next, operation, result);
+      else applyOperation(next, operation, result);
+    }
     catch (error) { issues.push({ level: 'error', message: `Operation ${index + 1}: ${error instanceof Error ? error.message : 'Unknown failure'}` }); }
   });
   if (issues.some(issue => issue.level === 'error')) return { bank, issues, summary: result };

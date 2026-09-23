@@ -12,11 +12,25 @@ export type AdminOperation =
   | { op: 'question.update'; id: string; value: StoredQuestion; afterId?: string }
   | { op: 'question.delete'; id: string };
 
+export type GroupedSubjectRef = { create: StoredSubject } | { existingId: string };
+export type GroupedQuizRef = { create: Omit<StoredQuiz, 'subjectId'> } | { existingId: string };
+export type GroupedQuestionInput = Omit<StoredQuestion, 'quizId'>;
+export interface GroupedQuizAdd {
+  quiz: GroupedQuizRef;
+  items: GroupedQuestionInput[];
+}
+export interface ContentAddOperation {
+  op: 'content.add';
+  subject: GroupedSubjectRef;
+  quizzes: GroupedQuizAdd[];
+}
+export type AdminChangeOperation = AdminOperation | ContentAddOperation;
+
 export interface AdminChangeSet {
-  changeSetVersion: 1;
+  changeSetVersion: 1 | 2;
   base: { bankSchemaVersion: 4; revision: string };
   reason: string;
-  operations: AdminOperation[];
+  operations: AdminChangeOperation[];
 }
 
 export interface AdminBankSnapshot {
