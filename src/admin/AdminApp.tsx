@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert, Box, Button, ButtonGroup, Chip, Container, Divider, List, ListItemButton,
   ListItemText, Paper, Stack, Tab, Tabs, TextField, Typography,
@@ -7,8 +7,9 @@ import { storedQuestionBank } from '../content/questionBank';
 import type { StoredQuestionBank } from '../content/schema';
 import type { ValidationIssue } from '../content/validate';
 import { parseChangeSet } from './core/changeSetSchema';
+import { compileBulkAddDraft, type BulkAddContext } from './core/bulkAddDraft';
 import { serializeBank } from './core/serializeBank';
-import { groupedAddTemplate, newQuestion, newQuiz, newSubject } from './core/templates';
+import { bulkAddTemplate, newQuestion, newQuiz, newSubject } from './core/templates';
 import type { AdminChangeSet } from './core/types';
 import { InMemoryQuestionBankGateway } from './data/InMemoryQuestionBankGateway';
 
@@ -25,8 +26,11 @@ function download(filename: string, content: string) {
   URL.revokeObjectURL(anchor.href);
 }
 
-function issueText(issues: ValidationIssue[]) {
-  return issues.length ? issues.map(issue => `${issue.level.toUpperCase()}${issue.questionId ? ` [${issue.questionId}]` : ''}: ${issue.message}`).join('\n') : 'No validation issues.';
+function issueText(issues: ValidationIssue[], questionPaths: Record<string, string> = {}) {
+  return issues.length ? issues.map(issue => {
+    const path = issue.questionId ? questionPaths[issue.questionId] : undefined;
+    return `${issue.level.toUpperCase()}${path ? ` ${path}` : issue.questionId ? ` [${issue.questionId}]` : ''}: ${issue.message}`;
+  }).join('\n') : 'No validation issues.';
 }
 
 export function AdminApp() {
@@ -40,6 +44,10 @@ export function AdminApp() {
   const [summary, setSummary] = useState('Load a record or paste a change set.');
   const [dirty, setDirty] = useState(false);
   const [filter, setFilter] = useState('');
+  const [bulkContext, setBulkContext] = useState<BulkAddContext>();
+  const [pendingBulk, setPendingBulk] = useState<{ changeSet: AdminChangeSet; questionPaths: Record<string, string>; generatedIds: string[] }>();
+  const [importedChangeSet, setImportedChangeSet] = useState<{ text: string; changeSet: AdminChangeSet; issues: ValidationIssue[] }>();
+  const importFileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => { gateway.load().then(loaded => { setSnapshot(loaded); setOriginalRevision(loaded.revision); }); }, []);
   useEffect(() => {
@@ -81,22 +89,24 @@ export function AdminApp() {
       return parsed.changeSet;
     } catch { setIssues([{ level: 'error', message: 'Record JSON is invalid.' }]); return undefined; }
   };
-  const buildBulkChangeSet = (): AdminChangeSet | undefined => {
-    try {
-      const parsed = parseChangeSet(JSON.parse(editor));
-      if (!parsed.changeSet) { setIssues(parsed.errors.map(message => ({ level: 'error', message }))); return undefined; }
-      return parsed.changeSet;
-    } catch { setIssues([{ level: 'error', message: 'Change-set JSON is invalid.' }]); return undefined; }
-  };
-  const setGroupedTemplate = (context: { subjectId?: string; quizId?: string } = {}) => {
+  const setBulkTemplate = (kind: 'newSubject' | 'subject' | 'quiz') => {
     if (!snapshot) return;
+    const context: BulkAddContext = kind === 'newSubject'
+      ? { kind, revision: snapshot.revision }
+      : kind === 'subject' && selectedSubject
+        ? { kind, subjectId: selectedSubject.id, revision: snapshot.revision }
+        : selectedQuiz && selectedSubject
+          ? { kind: 'quiz', subjectId: selectedSubject.id, quizId: selectedQuiz.id, revision: snapshot.revision }
+          : { kind: 'newSubject', revision: snapshot.revision };
+    setBulkContext(context);
+    setPendingBulk(undefined);
     setMode('bulk');
-    setEditor(JSON.stringify(groupedAddTemplate(snapshot.bank, snapshot.revision, reason, context), null, 2));
+    setEditor(JSON.stringify(bulkAddTemplate(context), null, 2));
     setIssues([]);
-    setSummary('Grouped add template loaded. Add each item to its quiz items array, then validate and stage.');
+    setSummary('Content-only template loaded. Edit the JSON, then validate it before staging.');
   };
-  const stage = async () => {
-    const changeSet = mode === 'single' ? buildSingleChangeSet() : buildBulkChangeSet();
+  const stageSingle = async () => {
+    const changeSet = buildSingleChangeSet();
     if (!changeSet) return;
     const preview = await gateway.preview(changeSet);
     setIssues(preview.issues);
@@ -112,6 +122,73 @@ export function AdminApp() {
     }
     setDirty(true); setIssues([]); setSummary('Valid change staged in memory. Export the replacement bank when ready.');
   };
+  const validateBulkDraft = async () => {
+    if (!snapshot || !bulkContext) { setIssues([{ level: 'error', message: 'Choose a bulk-add destination template first.' }]); return; }
+    let draft: unknown;
+    try { draft = JSON.parse(editor); }
+    catch { setPendingBulk(undefined); setIssues([{ level: 'error', message: 'Draft JSON is invalid.' }]); return; }
+    const result = compileBulkAddDraft(draft, bulkContext, snapshot.bank, snapshot.revision, reason);
+    if (!result.compiled) {
+      setPendingBulk(undefined);
+      setIssues(result.errors.map(message => ({ level: 'error', message })));
+      setSummary('Draft has errors. Correct the listed fields before staging.');
+      return;
+    }
+    const preview = await gateway.preview(result.compiled.changeSet);
+    setIssues(preview.issues);
+    if (preview.issues.some(issue => issue.level === 'error')) {
+      setPendingBulk(undefined);
+      setSummary('Draft did not pass bank validation. No changes were staged.');
+      return;
+    }
+    setPendingBulk({ ...result.compiled });
+    setSummary(`Ready to stage: ${result.compiled.generatedIds.length} new record(s). Review generated IDs and warnings, then confirm.`);
+  };
+  const stageValidatedBulk = async () => {
+    if (!pendingBulk) return;
+    try {
+      const next = await gateway.apply(pendingBulk.changeSet);
+      setSnapshot(next); setDirty(true); setPendingBulk(undefined); setIssues([]);
+      setSummary('Bulk add staged in memory. Export the replacement bank when ready.');
+    } catch (error) {
+      setPendingBulk(undefined);
+      setIssues([{ level: 'error', message: error instanceof Error ? error.message : 'The staged draft is no longer current.' }]);
+      setSummary('Bulk add could not be staged. Reload the template against the current snapshot.');
+    }
+  };
+  const importChangeSetFile = async (file?: File) => {
+    if (!file || !snapshot) return;
+    const text = await file.text();
+    try {
+      const parsed = parseChangeSet(JSON.parse(text));
+      if (!parsed.changeSet) {
+        setImportedChangeSet(undefined);
+        setIssues(parsed.errors.map(message => ({ level: 'error', message })));
+        setSummary('Imported change set is invalid.');
+        return;
+      }
+      const preview = await gateway.preview(parsed.changeSet);
+      setImportedChangeSet({ text, changeSet: parsed.changeSet, issues: preview.issues });
+      setIssues(preview.issues);
+      setSummary(preview.issues.some(issue => issue.level === 'error') ? 'Imported change set failed preview.' : `Imported change set is valid: ${parsed.changeSet.operations.length} operation(s). Review it, then stage explicitly.`);
+    } catch {
+      setImportedChangeSet(undefined);
+      setIssues([{ level: 'error', message: 'Imported file is not valid JSON.' }]);
+      setSummary('Imported change set is invalid.');
+    }
+  };
+  const stageImportedChangeSet = async () => {
+    if (!importedChangeSet || importedChangeSet.issues.some(issue => issue.level === 'error')) return;
+    try {
+      const next = await gateway.apply(importedChangeSet.changeSet);
+      setSnapshot(next); setDirty(true); setImportedChangeSet(undefined); setIssues([]);
+      setSummary('Imported change set staged. Export the replacement bank when ready.');
+    } catch (error) {
+      setImportedChangeSet(undefined);
+      setIssues([{ level: 'error', message: error instanceof Error ? error.message : 'Imported change set is no longer current.' }]);
+      setSummary('Imported change set could not be staged.');
+    }
+  };
   const stageDelete = async () => {
     if (!snapshot || !selection.id) return;
     const cascade = selection.kind !== 'question' && window.confirm('Cascade deletion to all child records? Cancel to reject this delete.');
@@ -126,8 +203,8 @@ export function AdminApp() {
     const next = await gateway.apply(parsed.changeSet);
     setSnapshot(next); setSelection({ kind: 'subject' }); setEditor(''); setDirty(true); setIssues([]); setSummary('Deletion staged in memory. Export the replacement bank when ready.');
   };
-  const undo = async () => { const next = await gateway.undo(); if (next) { setSnapshot(next); setDirty(gateway.appliedOperations().length > 0); setSummary('Last staged batch undone.'); } };
-  const reset = async () => { if (!dirty || window.confirm('Discard every staged edit in this browser session?')) { const next = await gateway.reset(); setSnapshot(next); setDirty(false); setEditor(''); setIssues([]); setSummary('Reset to bundled canonical bank.'); } };
+  const undo = async () => { const next = await gateway.undo(); if (next) { setSnapshot(next); setDirty(gateway.appliedOperations().length > 0); setPendingBulk(undefined); setImportedChangeSet(undefined); setSummary('Last staged batch undone.'); } };
+  const reset = async () => { if (!dirty || window.confirm('Discard every staged edit in this browser session?')) { const next = await gateway.reset(); setSnapshot(next); setDirty(false); setEditor(''); setPendingBulk(undefined); setImportedChangeSet(undefined); setBulkContext(undefined); setIssues([]); setSummary('Reset to bundled canonical bank.'); } };
   const exportFiles = () => {
     if (!snapshot) return;
     const operations = gateway.appliedOperations();
@@ -137,6 +214,14 @@ export function AdminApp() {
     download('question-bank-change-set.json', `${JSON.stringify(exported, null, 2)}\n`);
     setDirty(false); setSummary('Downloaded the replacement bank and its review change set. Replace the repository file, then run content validation, tests, and build.');
   };
+
+  const bulkTargetLabel = bulkContext?.kind === 'newSubject'
+    ? 'New subject'
+    : bulkContext?.kind === 'subject'
+      ? selectedSubject?.name ?? 'Selected subject'
+      : selectedSubject && selectedQuiz
+        ? `${selectedSubject.name} / ${selectedQuiz.name}`
+        : 'Selected quiz';
 
   if (!localAdminEnabled) return <Container maxWidth="sm" sx={{ py: 8 }}><Alert severity="warning">The JSON content admin is disabled in production builds. It is not an authentication mechanism.</Alert></Container>;
   if (!snapshot) return <Container sx={{ py: 8 }}><Typography>Loading canonical question bank…</Typography></Container>;
@@ -153,23 +238,27 @@ export function AdminApp() {
       </Paper>
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
         <Tabs value={mode} onChange={(_, value) => {
-          if (value === 'bulk') setGroupedTemplate(selection.kind === 'question' && selection.parentId
-            ? { quizId: selection.parentId }
-            : selection.kind === 'quiz' && selection.id ? { quizId: selection.id }
-              : selection.kind === 'subject' && selection.id ? { subjectId: selection.id } : {});
-          else setMode('single');
-        }}><Tab value="single" label="Single JSON record" /><Tab value="bulk" label="Bulk change set" /></Tabs>
+          if (value === 'bulk') setBulkTemplate(selection.kind === 'question' || selection.kind === 'quiz'
+            ? 'quiz' : selection.kind === 'subject' && selection.id ? 'subject' : 'newSubject');
+          else { setMode('single'); setPendingBulk(undefined); }
+        }}><Tab value="single" label="Single JSON record" /><Tab value="bulk" label="Bulk add JSON" /></Tabs>
         {mode === 'bulk' && <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>
-          <Button size="small" onClick={() => setGroupedTemplate()}>New subject with quiz</Button>
-          <Button size="small" disabled={!selectedSubject} onClick={() => setGroupedTemplate({ subjectId: selectedSubject?.id })}>New quiz in selected subject</Button>
-          <Button size="small" disabled={!selectedQuiz} onClick={() => setGroupedTemplate({ quizId: selectedQuiz?.id })}>Items in selected quiz</Button>
+          <Button size="small" onClick={() => setBulkTemplate('newSubject')}>New subject with quizzes</Button>
+          <Button size="small" disabled={!selectedSubject} onClick={() => setBulkTemplate('subject')}>New quiz in selected subject</Button>
+          <Button size="small" disabled={!selectedQuiz} onClick={() => setBulkTemplate('quiz')}>Items in selected quiz</Button>
         </Stack>}
-        <Stack spacing={2} sx={{ mt: 2 }}><TextField label="Change reason" value={reason} onChange={event => setReason(event.target.value)} required fullWidth />
-          <TextField label={mode === 'single' ? `${selection.kind} JSON` : 'Change-set JSON'} value={editor} onChange={event => setEditor(event.target.value)} multiline minRows={20} fullWidth InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }} placeholder={mode === 'single' ? 'Select an entity or create a template.' : 'Paste a version-1 or version-2 change set.'} />
-          <Stack direction="row" spacing={1} flexWrap="wrap"><Button variant="contained" onClick={stage}>{mode === 'single' ? 'Validate and stage record' : 'Validate and stage batch'}</Button>{mode === 'single' && selection.id && <Button color="error" onClick={stageDelete}>Delete selected</Button>}<Button onClick={undo}>Undo batch</Button><Button onClick={reset}>Reset</Button><Button color="success" onClick={exportFiles}>Export staged files</Button></Stack>
+        <Stack spacing={2} sx={{ mt: 2 }}><TextField label="Change reason" value={reason} onChange={event => { setReason(event.target.value); if (mode === 'bulk') { setPendingBulk(undefined); setIssues([]); setSummary('Change reason updated. Validate the draft again before staging.'); } if (importedChangeSet) setImportedChangeSet(undefined); }} required fullWidth />
+          {mode === 'bulk' && <Alert severity="info">Destination: {bulkTargetLabel}. Technical IDs and revision are supplied by the admin panel.</Alert>}
+          <TextField label={mode === 'single' ? `${selection.kind} JSON` : 'Editable content JSON'} value={editor} onChange={event => { setEditor(event.target.value); if (mode === 'bulk') { setPendingBulk(undefined); setIssues([]); setSummary('Draft changed. Validate it again before staging.'); } }} multiline minRows={20} fullWidth InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }} placeholder={mode === 'single' ? 'Select an entity or create a template.' : 'Edit only subject, quiz, and item content fields.'} />
+          {mode === 'bulk' && <Typography variant="caption" color="text.secondary">Items need stem, 2–26 choice strings, answer label, and rationale. Optional content fields: verifiedAnswer, answerNote, rationaleMeta, choiceExplanations, pearls, metadata.</Typography>}
+          <Stack direction="row" spacing={1} flexWrap="wrap"><Button variant="contained" onClick={mode === 'single' ? stageSingle : validateBulkDraft}>{mode === 'single' ? 'Validate and stage record' : 'Validate draft'}</Button>{mode === 'bulk' && pendingBulk && <Button color="success" variant="contained" onClick={stageValidatedBulk}>Stage validated add</Button>}{mode === 'single' && selection.id && <Button color="error" onClick={stageDelete}>Delete selected</Button>}<Button onClick={undo}>Undo batch</Button><Button onClick={reset}>Reset</Button><Button color="success" onClick={exportFiles}>Export staged files</Button><Button onClick={() => importFileRef.current?.click()}>Import change set</Button><input ref={importFileRef} type="file" accept="application/json,.json" hidden onChange={event => { void importChangeSetFile(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} /></Stack>
+          {pendingBulk && <Alert severity={issues.some(issue => issue.level === 'error') ? 'error' : issues.some(issue => issue.level === 'warning') ? 'warning' : 'success'}>
+            Preview: {pendingBulk.generatedIds.length} generated IDs ({pendingBulk.generatedIds.join(', ')}). Review warnings and validation details before staging.
+          </Alert>}
+          {importedChangeSet && <Paper variant="outlined" sx={{ p: 2 }}><Stack spacing={1}><Typography variant="subtitle1">Imported change set preview</Typography><TextField value={importedChangeSet.text} multiline minRows={8} fullWidth InputProps={{ readOnly: true, sx: { fontFamily: 'monospace', fontSize: 12 } }} /><Button variant="contained" disabled={importedChangeSet.issues.some(issue => issue.level === 'error')} onClick={stageImportedChangeSet}>Stage imported change set</Button></Stack></Paper>}
         </Stack>
       </Paper>
-      <Paper variant="outlined" sx={{ width: { lg: 360 }, p: 2 }}><Stack spacing={2}><Typography variant="h6">Review</Typography><Stack direction="row" spacing={1}><Chip label={`${snapshot.bank.subjects.length} subjects`} /><Chip label={`${snapshot.bank.quizzes.length} quizzes`} /><Chip label={`${snapshot.bank.questions.length} items`} /></Stack><Alert severity={issues.some(issue => issue.level === 'error') ? 'error' : issues.length ? 'warning' : 'info'}>{summary}</Alert><TextField label="Validation details" value={issueText(issues)} multiline minRows={12} fullWidth InputProps={{ readOnly: true, sx: { fontFamily: 'monospace', fontSize: 12 } }} /><Alert severity={dirty ? 'warning' : 'success'}>{dirty ? 'Staged edits have not been exported.' : 'No unexported staged edits.'}</Alert></Stack></Paper>
+      <Paper variant="outlined" sx={{ width: { lg: 360 }, p: 2 }}><Stack spacing={2}><Typography variant="h6">Review</Typography><Stack direction="row" spacing={1}><Chip label={`${snapshot.bank.subjects.length} subjects`} /><Chip label={`${snapshot.bank.quizzes.length} quizzes`} /><Chip label={`${snapshot.bank.questions.length} items`} /></Stack><Alert severity={issues.some(issue => issue.level === 'error') ? 'error' : issues.some(issue => issue.level === 'warning') ? 'warning' : 'info'}>{summary}</Alert><TextField label="Validation details" value={issueText(issues, pendingBulk?.questionPaths)} multiline minRows={12} fullWidth InputProps={{ readOnly: true, sx: { fontFamily: 'monospace', fontSize: 12 } }} /><Alert severity={dirty ? 'warning' : 'success'}>{dirty ? 'Staged edits have not been exported.' : 'No unexported staged edits.'}</Alert></Stack></Paper>
     </Stack>
   </Container></Box>;
 }

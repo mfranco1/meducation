@@ -12,35 +12,28 @@ When editing content:
 
 ## Local JSON admin workflow
 
-In local development, open `/admin.html` to stage JSON edits to subjects, quizzes, and questions. The panel is deliberately not a rich content editor and does not write to the checked-in file. Use either a complete single-record JSON edit, a version-1 legacy change set, or a version-2 bulk change set. All operations are applied atomically to an in-memory snapshot and rejected if the final bank fails structural or Markdown validation.
+In local development, open `/admin.html` to stage JSON edits to subjects, quizzes, and questions. The panel is deliberately not a rich content editor and does not write to the checked-in file. Use a complete single-record JSON edit or a content-only bulk-add draft. Bulk drafts expose only authorable content fields; the panel captures the destination and bank revision, generates IDs and choice labels, and compiles the draft to a version-2 grouped change set. Existing version-1 and version-2 change-set files can be loaded separately through **Import change set**, where their technical JSON is read-only. All operations are previewed and applied atomically to an in-memory snapshot, then rejected if the final bank fails structural or Markdown validation.
 
-For a grouped add, `content.add` states the subject once and includes one or more quiz blocks. Each quiz is stated once with its list of items; items omit `quizId`, which is inherited from the block. A newly created quiz similarly inherits `subjectId`. Use `create` for a new subject/quiz or `existingId` to add under an existing one. The bulk editor provides templates for a new subject with a quiz, a new quiz in the selected subject, or items in the selected quiz. Version-1 change sets remain supported.
+The bulk editor provides three context-specific shapes. Creating a new subject uses `subject.name` and a `quizzes` list; each quiz has a `name` and an `items` list. Adding quizzes to a selected subject uses only `quizzes`. Adding items to a selected quiz uses only `items`. Each item contains `stem`, a compact list of choice text strings, an answer label (`A`, `B`, …), and `rationale`. Optional editable fields are `verifiedAnswer`, `answerNote`, `rationaleMeta`, `choiceExplanations`, `pearls`, and `metadata`. Choice labels are assigned in list order, up to 26 choices. No IDs, parent IDs, operation names, schema versions, base revisions, or change-set envelopes belong in this draft.
 
-Example shape for creating a new subject and quiz:
+Example content-only draft for a new subject and quiz:
 
 ```json
 {
-  "changeSetVersion": 2,
-  "base": { "bankSchemaVersion": 4, "revision": "use-current-admin-revision" },
-  "reason": "Add Pearls subject and initial quiz",
-  "operations": [{
-    "op": "content.add",
-    "subject": { "create": { "id": "s13", "name": "Pearls", "accent": "#bc531e" } },
-    "quizzes": [{
-      "quiz": { "create": { "id": "q99", "name": "Pearls Practice Test 1" } },
-      "items": [{
-        "id": "i10197",
-        "stem": "Question stem",
-        "choices": [{ "id": "A", "text": "First choice" }, { "id": "B", "text": "Second choice" }],
-        "answer": "A",
-        "rationale": "Why A is correct"
-      }]
+  "subject": { "name": "Pearls" },
+  "quizzes": [{
+    "name": "Pearls Practice Test 1",
+    "items": [{
+      "stem": "Question stem",
+      "choices": ["First choice", "Second choice"],
+      "answer": "A",
+      "rationale": "Why A is correct"
     }]
   }]
 }
 ```
 
-Use the IDs suggested by the admin templates and keep the current revision they insert. Add additional quizzes as more entries in `quizzes`, and additional questions as entries in each quiz's `items` array.
+Enter the change reason in its separate field. Choose **Validate draft**, inspect the generated-ID and validation preview, then choose **Stage validated add**. The panel assigns stable IDs above the current maximum, choice labels from array order, and the default subject accent. Add more quizzes as entries in `quizzes`, and more questions as entries in each quiz's `items` list. Changing the destination or staged snapshot requires reloading the template and validating again.
 
 Export downloads both `questionBank.generated.json` and `question-bank-change-set.json`. Replace the canonical repository file through normal review, retain the companion change set with the change rationale, then run `npm run validate:content`, `npm test`, `npm run build`, and `npm run audit:explanations`. Parent deletion requires explicit `cascade: true`; it can make saved browser attempts inaccessible and does not delete those attempts.
 

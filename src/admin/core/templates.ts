@@ -1,5 +1,5 @@
 import type { StoredQuestionBank } from '../../content/schema';
-import type { AdminChangeSet, GroupedQuestionInput, GroupedQuizAdd, GroupedSubjectRef } from './types';
+import type { BulkAddContext, BulkAddDraft } from './bulkAddDraft';
 
 function nextId(bank: StoredQuestionBank, prefix: 's' | 'q' | 'i'): string {
   const values = prefix === 's' ? bank.subjects : prefix === 'q' ? bank.quizzes : bank.questions;
@@ -13,37 +13,13 @@ export const newQuestion = (bank: StoredQuestionBank, quizId = '') => ({
   id: nextId(bank, 'i'), quizId, stem: '', choices: [{ id: 'A', text: '' }, { id: 'B', text: '' }], answer: 'A', rationale: '',
 });
 
-function itemTemplate(bank: StoredQuestionBank): GroupedQuestionInput {
-  const { quizId: _quizId, ...item } = newQuestion(bank, 'inherited');
-  return item;
-}
-
-function quizBlock(bank: StoredQuestionBank, quizId?: string): GroupedQuizAdd {
-  const quiz = quizId
-    ? { existingId: quizId }
-    : { create: { id: nextId(bank, 'q'), name: 'New quiz name' } };
-  return { quiz, items: [itemTemplate(bank)] };
-}
-
-/** A useful grouped-add JSON template for the admin bulk editor. */
-export function groupedAddTemplate(
-  bank: StoredQuestionBank,
-  revision: string,
-  reason: string,
-  context: { subjectId?: string; quizId?: string } = {},
-): AdminChangeSet {
-  const existingQuiz = context.quizId ? bank.quizzes.find(quiz => quiz.id === context.quizId) : undefined;
-  const existingSubjectId = existingQuiz?.subjectId ?? context.subjectId;
-  const subject: GroupedSubjectRef = existingSubjectId
-    ? { existingId: existingSubjectId }
-    : { create: newSubject(bank) };
-  const quizzes = existingQuiz
-    ? [quizBlock(bank, existingQuiz.id)]
-    : [quizBlock(bank)];
-  return {
-    changeSetVersion: 2,
-    base: { bankSchemaVersion: 4, revision },
-    reason,
-    operations: [{ op: 'content.add', subject, quizzes }],
+/** Editable JSON contains content only; parent IDs and protocol fields live in panel state. */
+export function bulkAddTemplate(context: BulkAddContext): BulkAddDraft {
+  const item = { stem: '', choices: ['', ''], answer: 'A', rationale: '' };
+  if (context.kind === 'newSubject') return {
+    subject: { name: '' },
+    quizzes: [{ name: '', items: [{ ...item }] }],
   };
+  if (context.kind === 'subject') return { quizzes: [{ name: '', items: [{ ...item }] }] };
+  return { items: [{ ...item }] };
 }
