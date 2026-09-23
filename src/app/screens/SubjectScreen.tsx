@@ -15,7 +15,7 @@ export interface QuizProgress {
   currentQuestion?: number;
 }
 
-export function SubjectScreen({ subject, progress, onBack, onResumeQuiz, onStartQuiz }: { subject: Subject; progress: QuizProgress[]; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void }) {
+export function SubjectScreen({ subject, progress, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz }: { subject: Subject; progress: QuizProgress[]; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
 
   return <Container maxWidth="md" sx={{ py: 5 }}>
@@ -33,6 +33,6 @@ export function SubjectScreen({ subject, progress, onBack, onResumeQuiz, onStart
         <Button variant="contained" onClick={() => active ? onResumeQuiz(quiz) : setSetupQuiz(quiz)}>{active ? 'Resume quiz' : completionCount > 0 ? 'Retake quiz' : 'Start quiz'}</Button>
       </Stack>
     </CardContent></Card>)}</Stack>
-    {setupQuiz && <QuizSetupDialog open quiz={setupQuiz} onClose={() => setSetupQuiz(null)} onStart={(quiz, mode) => { onStartQuiz(quiz, mode); setSetupQuiz(null); }} />}
+    {setupQuiz && <QuizSetupDialog open quiz={setupQuiz} onClose={() => setSetupQuiz(null)} onStart={(quiz, mode) => { onStartQuiz(quiz, mode); setSetupQuiz(null); }} onBrowse={quiz => { onBrowseQuiz(quiz); setSetupQuiz(null); }} />}
   </Container>;
 }

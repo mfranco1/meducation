@@ -15,6 +15,9 @@ interface QuizSession {
   completedAttempts: CompletedAttempt[];
   resumeQuiz: (quiz: Quiz) => void;
   startQuiz: (quiz: Quiz, mode: FeedbackMode) => void;
+  browseQuiz: (quiz: Quiz) => void;
+  navigateBrowse: (index: number) => void;
+  leaveBrowse: () => void;
   checkpoint: (attempt: Attempt, index?: number) => void;
   finishQuiz: () => void;
   leaveQuiz: () => void;
@@ -57,6 +60,16 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     };
     attempts.saveActive(attempt);
     setView({ page: 'quiz', quiz, attempt, index: 0 });
+  };
+
+  const browseQuiz = (quiz: Quiz) => setView({ page: 'quiz-browse', quiz, index: 0 });
+  const navigateBrowse = (index: number) => {
+    if (view.page !== 'quiz-browse') return;
+    const lastIndex = questionBank.listQuestions(view.quiz.id).length - 1;
+    setView({ ...view, index: Math.max(0, Math.min(index, lastIndex)) });
+  };
+  const leaveBrowse = () => {
+    if (view.page === 'quiz-browse') showQuizSubject(view.quiz);
   };
 
   const finishQuiz = () => {
@@ -107,6 +120,9 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     completedAttempts,
     resumeQuiz,
     startQuiz,
+    browseQuiz,
+    navigateBrowse,
+    leaveBrowse,
     checkpoint,
     finishQuiz,
     leaveQuiz,

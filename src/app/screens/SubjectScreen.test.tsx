@@ -19,14 +19,16 @@ const activeAttempt: Attempt = {
 function renderSubject(progress: Partial<QuizProgress>) {
   const onResumeQuiz = vi.fn();
   const onStartQuiz = vi.fn<(quiz: Quiz, mode: FeedbackMode) => void>();
+  const onBrowseQuiz = vi.fn<(quiz: Quiz) => void>();
   render(<ThemeProvider theme={theme}><SubjectScreen
     subject={subject}
     progress={[{ quiz, completionCount: 0, ...progress }]}
     onBack={() => {}}
     onResumeQuiz={onResumeQuiz}
     onStartQuiz={onStartQuiz}
+    onBrowseQuiz={onBrowseQuiz}
   /></ThemeProvider>);
-  return { onResumeQuiz, onStartQuiz };
+  return { onResumeQuiz, onStartQuiz, onBrowseQuiz };
 }
 
 describe('subject quiz action', () => {
@@ -86,6 +88,27 @@ describe('subject quiz action', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Begin quiz' }));
 
     expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate');
+  });
+
+  it('opens the read-only answer browser through its separate callback', () => {
+    const { onBrowseQuiz, onStartQuiz } = renderSubject({});
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    const dialog = screen.getByRole('dialog', { name: quiz.name });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Browse Answers' }));
+    expect(within(dialog).getByText('Browse every question with the correct answer and explanation shown. Nothing is recorded.')).toBeVisible();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Open quiz' }));
+    expect(onBrowseQuiz).toHaveBeenCalledWith(quiz);
+    expect(onStartQuiz).not.toHaveBeenCalled();
+  });
+
+  it('resets Browse Answers to Fast Feedback when setup is reopened', () => {
+    const { onBrowseQuiz } = renderSubject({});
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Browse Answers' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Close quiz setup' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    expect(screen.getByText('Selecting an answer locks it and shows the explanation right away.')).toBeVisible();
+    expect(onBrowseQuiz).not.toHaveBeenCalled();
   });
 
   it('dismisses setup without starting a quiz', () => {

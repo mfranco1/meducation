@@ -4,6 +4,7 @@ export type View =
   | { page: 'dashboard' }
   | { page: 'subject'; subject: Subject }
   | { page: 'quiz'; quiz: Quiz; attempt: Attempt; index: number }
+  | { page: 'quiz-browse'; quiz: Quiz; index: number }
   | { page: 'results'; quiz: Quiz; attempt: CompletedAttempt };
 
 export function subjectForQuiz(subjects: Subject[], quiz: Quiz): Subject {
