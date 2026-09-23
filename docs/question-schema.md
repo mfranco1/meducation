@@ -15,3 +15,7 @@ Use `rationaleMeta.provenance: 'source_migrated'` when a stored source rationale
 When the answer key or question context is uncertain, `rationaleMeta.answerReviewNote` carries the explanation. The learner sees that note and the feedback status says the key is under review; the original `answer` remains unchanged. Such entries still require answer verification before their quiz scores can be treated as final.
 
 `metadata` is omitted when no classification is known. Do not store default `difficulty: 'unknown'`, a duplicate discipline label, or an empty metadata object.
+
+## Admin change sets
+
+The local admin panel accepts version-1 JSON change sets separately from the schema-v4 bank. A change set names its base bank revision, a non-empty change reason, and ordered `subject.*`, `quiz.*`, or `question.*` create/update/delete operations. Creates and updates contain the complete stored entity; IDs cannot be renamed. Batches apply atomically, and their final bank must pass the same validation as the canonical file. Optional `afterId` controls relative insertion; question order remains canonical array order within a quiz. Deleting a subject or quiz with children requires `cascade: true`.
