@@ -23,7 +23,7 @@ describe('quiz answer browser', () => {
     renderBrowse();
 
     expect(screen.getByText('Question one')).toBeVisible();
-    expect(screen.getByText('Correct answer')).toBeVisible();
+    expect(screen.getByText('Second choice')).toBeVisible();
     expect(screen.getByText('Explanation one')).toBeVisible();
     expect(screen.queryByRole('radio')).toBeNull();
     expect(screen.queryByRole('button', { name: /Flag/ })).toBeNull();
@@ -45,7 +45,7 @@ describe('quiz answer browser', () => {
   it('uses the source answer fallback and retains review and choice explanations', () => {
     renderBrowse(1);
 
-    expect(screen.getByText('Correct answer')).toBeVisible();
+    expect(screen.getByText('Third choice')).toBeVisible();
     expect(screen.getByText('Answer key under review')).toBeVisible();
     expect(screen.getByText(/Answer under review: Check this source key/)).toBeVisible();
     expect(screen.getByText('Choice detail')).toBeVisible();
@@ -56,7 +56,7 @@ describe('quiz answer browser', () => {
     render(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={0} questions={[unansweredQuestion]} onNavigate={() => {}} onDone={() => {}} /></ThemeProvider>);
 
     expect(screen.getByText('Answer unavailable')).toBeVisible();
-    expect(screen.queryByText('Correct answer')).toBeNull();
+    expect(screen.queryByText('Second choice')).toBeVisible();
     expect(screen.getByText('Explanation one')).toBeVisible();
   });
 });

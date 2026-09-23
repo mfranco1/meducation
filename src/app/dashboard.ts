@@ -1,15 +1,5 @@
-import type { ScoreTrend } from '../analytics/analytics';
-import type { Subject } from '../domain/types';
-
-export interface SubjectStat {
-  subject: Subject;
-  quizCount: number;
-  activeQuizCount: number;
-  latestActiveAt?: string;
-  latest?: number;
-  latestCompletedAt?: string;
-  trend?: ScoreTrend;
-}
+import type { SubjectStat } from './progress';
+export type { SubjectStat } from './progress';
 
 /** Returns active subjects in most-recent active-quiz order, preserving catalog order for ties. */
 export function activeSubjectStats(subjectStats: SubjectStat[]): SubjectStat[] {

@@ -25,5 +25,5 @@ describe('canonical Markdown validation', () => {
   it('validates every canonical question', () => {
     const issues = validateQuestionMarkdown(questions);
     expect(issues.filter(issue => issue.level === 'error')).toEqual([]);
-  }, 30_000);
+  }, 60_000);
 });

@@ -2,19 +2,18 @@ import { useMemo, useState } from 'react';
 import { Alert, Box, Container } from '@mui/material';
 import { questionBank, questions } from '../content/questionBank';
 import { LocalAttemptRepository } from '../persistence/localRepository';
-import { questionIndexFor } from '../domain/quizEngine';
-import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from '../analytics/analytics';
-import type { Quiz, RecentScore } from '../domain/types';
+import { averageScore, lowestRecentScore } from '../analytics/analytics';
+import type { Quiz } from '../domain/types';
 import { AppHeader } from './components/AppHeader';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
-import { type SubjectStat } from './dashboard';
+import type { SubjectStat } from './progress';
+import { quizProgressForSubject, subjectStatsFor } from './progress';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { QuizScreen } from './screens/QuizScreen';
 import { QuizBrowseScreen } from './screens/QuizBrowseScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
-import { SubjectScreen, type QuizProgress } from './screens/SubjectScreen';
+import { SubjectScreen } from './screens/SubjectScreen';
 import { useQuizSession } from './session/useQuizSession';
-import { sortQuizProgressByRecentActivity } from './quizProgress';
 
 const attemptRepository = new LocalAttemptRepository();
 
@@ -27,28 +26,10 @@ function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
 export default function App() {
   const session = useQuizSession(questionBank, attemptRepository);
   const [exitOpen, setExitOpen] = useState(false);
-  const subjectStats = useMemo<SubjectStat[]>(() => questionBank.listSubjects().map(subject => {
-    const quizzes = questionBank.listQuizzes(subject.id);
-    const activeQuizzes = quizzes.filter(quiz => attemptRepository.getActive(quiz.id) !== undefined);
-    const activeQuizCount = activeQuizzes.length;
-    const recentQuizScores = quizzes.map(quiz => attemptRepository.latestScore(quiz.id)).filter((score): score is RecentScore => score !== undefined);
-    const latest = mostRecentScore(recentQuizScores);
-    const recentSubjectScores = session.completedAttempts
-      .filter(attempt => attempt.subjectId === subject.id)
-      .map(attempt => ({ percentage: attempt.score.percentage, completedAt: attempt.completedAt }));
-    const latestAttempt = mostRecentScore(recentSubjectScores);
-    return {
-      subject,
-      quizCount: quizzes.length,
-      activeQuizCount,
-      latestActiveAt: activeQuizzes.map(quiz => attemptRepository.latestActivityAt(quiz.id)).filter((at): at is string => at !== undefined).sort().at(-1),
-      latest: latest?.percentage,
-      latestCompletedAt: latest?.completedAt,
-      trend: latest && latestAttempt && latest.completedAt === latestAttempt.completedAt && latest.percentage === latestAttempt.percentage
-        ? scoreTrend(recentSubjectScores)
-        : undefined,
-    };
-  }), [session.completedAttempts, session.view.page]);
+  const subjectStats = useMemo<SubjectStat[]>(
+    () => subjectStatsFor(questionBank, attemptRepository, session.completedAttempts),
+    [session.completedAttempts, session.view.page],
+  );
   const subjectLatestScores = subjectStats.map(stat => stat.latest).filter((score): score is number => score !== undefined);
   const averageLatest = averageScore(subjectLatestScores);
   const personalLowestScore = lowestRecentScore(subjectStats.flatMap(stat => stat.latest === undefined || stat.latestCompletedAt === undefined
@@ -57,26 +38,12 @@ export default function App() {
   const personalLowest = personalLowestScore?.percentage;
   const personalLowestSubject = personalLowestScore?.subjectName;
 
-  const progressForSubject = (subjectId: string): QuizProgress[] => sortQuizProgressByRecentActivity(questionBank.listQuizzes(subjectId)
-    .map(quiz => {
-      const active = attemptRepository.getActive(quiz.id);
-      const questionIds = questionBank.listQuestions(quiz.id);
-      const latestScore = attemptRepository.latestScore(quiz.id);
-      const recentQuizScores = session.completedAttempts
-        .filter(attempt => attempt.quizId === quiz.id)
-        .map(attempt => ({ percentage: attempt.score.percentage, completedAt: attempt.completedAt }));
-      const latestAttempt = mostRecentScore(recentQuizScores);
-      return {
-        quiz,
-        active,
-        completionCount: attemptRepository.completionCount(quiz.id),
-        latestScore: latestScore?.percentage,
-        trend: latestScore && latestAttempt && latestScore.completedAt === latestAttempt.completedAt && latestScore.percentage === latestAttempt.percentage
-          ? scoreTrend(recentQuizScores)
-          : undefined,
-        currentQuestion: active ? questionIndexFor(questionIds, active.currentQuestionId) + 1 : undefined,
-      };
-    }), quizId => attemptRepository.latestActivityAt(quizId));
+  const progressForSubject = (subjectId: string) => quizProgressForSubject(
+    questionBank,
+    attemptRepository,
+    session.completedAttempts,
+    subjectId,
+  );
 
   const handleHeaderNavigation = () => {
     if (session.view.page === 'quiz') setExitOpen(true);

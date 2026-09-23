@@ -4,9 +4,9 @@ import { questionBank, questions, quizzes, schemaVersion, subjects } from './que
 describe('canonical question bank', () => {
   it('exposes the versioned bank through indexed repository reads', () => {
     expect(schemaVersion).toBe(4);
-    expect(subjects).toHaveLength(12);
-    expect(quizzes).toHaveLength(98);
-    expect(questions).toHaveLength(10196);
+    expect(subjects).toHaveLength(13);
+    expect(quizzes).toHaveLength(100);
+    expect(questions).toHaveLength(10396);
     expect(questionBank.listQuestions(quizzes[0].id)).toHaveLength(quizzes[0].questionCount);
   });
 

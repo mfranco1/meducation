@@ -1,12 +1,14 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import { Alert, Box, Button, Card, CardContent, Container, Drawer, IconButton, LinearProgress, Stack, Typography } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { Alert, Box, Button, Card, CardContent, Container, IconButton, LinearProgress, Stack, Typography } from '@mui/material';
+import { useRef, useState } from 'react';
 import { answerFor } from '../../domain/quizEngine';
 import type { Question, Quiz } from '../../domain/types';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { ExplanationContent } from '../components/feedback/ExplanationContent';
 import { MarkdownContent } from '../components/content/MarkdownContent';
+import { QuestionNavigationLayout } from '../components/quiz/QuestionNavigationLayout';
+import { useScrollCurrentQuestion } from '../components/quiz/useScrollCurrentQuestion';
 
 interface QuizBrowseScreenProps {
   quiz: Quiz;
@@ -29,9 +31,7 @@ export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }:
     <IconButton aria-label="Leave answer browser" onClick={onDone} sx={{ p: .5, mb: .5 }}><ArrowBackRoundedIcon /></IconButton>
     <Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">{quiz.name} · Question {index + 1} of {questions.length}</Typography></Stack>
     <LinearProgress variant="determinate" value={(index + 1) / questions.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} />
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mt: 3 }}>
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Button variant="outlined" size="small" onClick={() => setNavigatorOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, mb: 2 }}>Questions</Button>
+    <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <MarkdownContent markdown={question.stem} variant="stem" />
           <Stack spacing={1.25} sx={{ mt: 3 }}>
@@ -59,10 +59,7 @@ export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }:
             ? <Button variant="contained" onClick={onDone}>Done</Button>
             : <Button endIcon={<ArrowForwardRoundedIcon />} onClick={() => onNavigate(index + 1)}>Next</Button>}
         </Stack>
-      </Box>
-      <Card component="aside" aria-label="Question navigation" sx={{ display: { xs: 'none', md: 'block' }, width: 270, flexShrink: 0 }}><CardContent sx={{ p: 2 }}>{navigator}</CardContent></Card>
-    </Box>
-    <Drawer anchor="right" open={navigatorOpen} onClose={() => setNavigatorOpen(false)} PaperProps={{ sx: { width: 'min(100%, 380px)', p: 2.5 } }}>{navigator}</Drawer>
+    </QuestionNavigationLayout>
   </Container>;
 }
 
@@ -70,20 +67,7 @@ function QuestionGrid({ questions, currentIndex, onNavigate }: { questions: Ques
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentTileRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current;
-    const currentTile = currentTileRef.current;
-    if (!scrollArea || !currentTile) return;
-    const frame = requestAnimationFrame(() => {
-      const areaBounds = scrollArea.getBoundingClientRect();
-      const tileBounds = currentTile.getBoundingClientRect();
-      const tileCenter = tileBounds.top - areaBounds.top + tileBounds.height / 2;
-      if (tileCenter >= scrollArea.clientHeight * .25 && tileCenter <= scrollArea.clientHeight * .75) return;
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      scrollArea.scrollTo({ top: scrollArea.scrollTop + tileCenter - scrollArea.clientHeight / 2, behavior: reducedMotion ? 'auto' : 'smooth' });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [currentIndex]);
+  useScrollCurrentQuestion(scrollAreaRef, currentTileRef, [currentIndex]);
 
   return <Box ref={scrollAreaRef} aria-label="Question navigator" sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1, maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, overflowY: 'auto', p: .75 }}>
     {questions.map((question, itemIndex) => <Button key={question.id} ref={itemIndex === currentIndex ? currentTileRef : undefined} aria-label={`Question ${itemIndex + 1}${itemIndex === currentIndex ? ', current question' : ''}`} aria-current={itemIndex === currentIndex ? 'step' : undefined} onClick={() => onNavigate(itemIndex)} sx={{ aspectRatio: '1 / 1', minWidth: 0, border: '1px solid', borderColor: itemIndex === currentIndex ? 'primary.main' : '#d9dfe7', bgcolor: itemIndex === currentIndex ? '#f7dfcf' : '#fffdfb', '&:focus-visible': { outline: '3px solid #b9511b', outlineOffset: 2 } }}>{itemIndex + 1}</Button>)}

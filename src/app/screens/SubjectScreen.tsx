@@ -1,19 +1,11 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Box, Button, Card, CardContent, Chip, Container, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
-import type { ScoreTrend } from '../../analytics/analytics';
-import type { Attempt, FeedbackMode, Quiz, Subject } from '../../domain/types';
+import type { FeedbackMode, Quiz, Subject } from '../../domain/types';
 import { ScoreTrendIndicator } from '../components/ScoreTrendIndicator';
 import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
-
-export interface QuizProgress {
-  quiz: Quiz;
-  active?: Attempt;
-  completionCount: number;
-  latestScore?: number;
-  trend?: ScoreTrend;
-  currentQuestion?: number;
-}
+import type { QuizProgress } from '../progress';
+export type { QuizProgress } from '../progress';
 
 export function SubjectScreen({ subject, progress, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz }: { subject: Subject; progress: QuizProgress[]; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);

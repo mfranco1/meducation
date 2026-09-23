@@ -1,9 +1,10 @@
 import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
-import { useEffect, useRef, type Ref } from 'react';
+import { useRef, type Ref } from 'react';
 import { Box, ButtonBase, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { isCorrect } from '../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../domain/types';
+import { useScrollCurrentQuestion } from './useScrollCurrentQuestion';
 
 export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'flagged';
 
@@ -52,27 +53,7 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentTileRef = useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    const scrollArea = scrollAreaRef.current;
-    const currentTile = currentTileRef.current;
-    if (!scrollArea || !currentTile) return;
-
-    const frame = requestAnimationFrame(() => {
-      const areaBounds = scrollArea.getBoundingClientRect();
-      const tileBounds = currentTile.getBoundingClientRect();
-      const tileCenter = tileBounds.top - areaBounds.top + tileBounds.height / 2;
-      const centerBandStart = scrollArea.clientHeight * .25;
-      const centerBandEnd = scrollArea.clientHeight * .75;
-      if (tileCenter >= centerBandStart && tileCenter <= centerBandEnd) return;
-
-      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      scrollArea.scrollTo({
-        top: scrollArea.scrollTop + tileCenter - scrollArea.clientHeight / 2,
-        behavior: reducedMotion ? 'auto' : 'smooth',
-      });
-    });
-    return () => cancelAnimationFrame(frame);
-  }, [currentIndex, filter]);
+  useScrollCurrentQuestion(scrollAreaRef, currentTileRef, [currentIndex, filter]);
 
   return <Stack spacing={2} aria-label="Question navigator">
     <ToggleButtonGroup

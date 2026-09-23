@@ -3,7 +3,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import FlagIcon from '@mui/icons-material/Flag';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Card, CardContent, Container, Drawer, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Container, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, Typography } from '@mui/material';
 import { MarkdownContent } from '../components/content/MarkdownContent';
 import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../domain/types';
@@ -13,6 +13,7 @@ import { RadiatingCircles } from '../components/celebration/RadiatingCircles';
 import { shouldTriggerCorrectAnswerBurst } from '../components/celebration/correctAnswerBurst';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
+import { QuestionNavigationLayout } from '../components/quiz/QuestionNavigationLayout';
 import { Stopwatch } from '../components/quiz/Stopwatch';
 import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
 
@@ -87,9 +88,7 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
     <IconButton aria-label="Leave test" onClick={onRequestExit} sx={{ p: .5, mb: .5 }}><ArrowBackRoundedIcon /></IconButton>
     <Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">Question {index + 1} of {questions.length}</Typography><Stopwatch attempt={attempt} /></Stack>
     <LinearProgress variant="determinate" value={(index + 1) / questions.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} />
-    <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 3, mt: 3 }}>
-      <Box sx={{ minWidth: 0, flex: 1 }}>
-        <Button variant="outlined" size="small" onClick={() => setNavigatorOpen(true)} sx={{ display: { xs: 'inline-flex', md: 'none' }, mb: 2 }}>Questions</Button>
+    <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
             <MarkdownContent markdown={question.stem} variant="stem" />
@@ -115,12 +114,7 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
             ? <Button variant="contained" onClick={requestSubmit}>{attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'}</Button>
             : <Button endIcon={<ArrowForwardRoundedIcon />} onClick={() => navigateToQuestion(index + 1)}>{feedback ? 'Continue' : 'Next'}</Button>}
         </Stack></Stack>
-      </Box>
-      <Card component="aside" aria-label="Question navigation" sx={{ display: { xs: 'none', md: 'block' }, width: 270, flexShrink: 0 }}><CardContent sx={{ p: 2 }}>{navigator}</CardContent></Card>
-    </Box>
-    <Drawer anchor="right" open={navigatorOpen} onClose={() => setNavigatorOpen(false)} PaperProps={{ sx: { width: 'min(100%, 380px)', p: 2.5 } }}>
-      {navigator}
-    </Drawer>
+    </QuestionNavigationLayout>
     <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
   </Container>;
 }

@@ -1,4 +1,4 @@
-import type { QuizProgress } from './screens/SubjectScreen';
+import type { QuizProgress } from './progress';
 
 export function sortQuizProgressByRecentActivity(progress: QuizProgress[], latestActivityAt: (quizId: string) => string | undefined): QuizProgress[] {
   return progress

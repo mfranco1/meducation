@@ -1,11 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Alert, Box, Button, Container, Divider, List, ListItemButton, ListItemText, Menu,
   MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography,
 } from '@mui/material';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { storedQuestionBank } from '../content/questionBank';
-import type { StoredQuestionBank } from '../content/schema';
 import type { ValidationIssue } from '../content/validate';
 import { parseChangeSet } from './core/changeSetSchema';
 import { compileBulkAddDraft, type BulkAddContext } from './core/bulkAddDraft';
@@ -13,9 +12,8 @@ import { serializeBank } from './core/serializeBank';
 import { bulkAddTemplate, newQuestion, newQuiz, newSubject } from './core/templates';
 import type { AdminChangeSet } from './core/types';
 import { InMemoryQuestionBankGateway } from './data/InMemoryQuestionBankGateway';
+import { type EntityKind, type Selection, useAdminEditor } from './useAdminEditor';
 
-type EntityKind = 'subject' | 'quiz' | 'question';
-type Selection = { kind: EntityKind; id?: string; parentId?: string };
 const gateway = new InMemoryQuestionBankGateway(storedQuestionBank);
 const localAdminEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_LOCAL_ADMIN === 'true';
 
@@ -35,29 +33,15 @@ function issueLines(issues: ValidationIssue[], questionPaths: Record<string, str
 }
 
 export function AdminApp() {
-  const [snapshot, setSnapshot] = useState<{ bank: StoredQuestionBank; revision: string }>();
-  const [originalRevision, setOriginalRevision] = useState('');
-  const [selection, setSelection] = useState<Selection>({ kind: 'subject' });
-  const [mode, setMode] = useState<'single' | 'bulk'>('single');
-  const [editor, setEditor] = useState('');
-  const [reason, setReason] = useState('Local question-bank edit');
-  const [issues, setIssues] = useState<ValidationIssue[]>([]);
-  const [summary, setSummary] = useState('Load a record or paste a change set.');
-  const [dirty, setDirty] = useState(false);
-  const [exported, setExported] = useState(false);
-  const [filter, setFilter] = useState('');
+  const {
+    snapshot, setSnapshot, originalRevision, selection, setSelection, mode, setMode,
+    editor, setEditor, reason, setReason, issues, setIssues, summary, setSummary,
+    dirty, setDirty, exported, setExported, filter, setFilter, pendingBulk, setPendingBulk,
+    importedChangeSet, setImportedChangeSet,
+  } = useAdminEditor(gateway);
   const [bulkContext, setBulkContext] = useState<BulkAddContext>();
-  const [pendingBulk, setPendingBulk] = useState<{ changeSet: AdminChangeSet; questionPaths: Record<string, string>; generatedIds: string[] }>();
-  const [importedChangeSet, setImportedChangeSet] = useState<{ text: string; changeSet: AdminChangeSet; issues: ValidationIssue[] }>();
   const importFileRef = useRef<HTMLInputElement>(null);
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
-
-  useEffect(() => { gateway.load().then(loaded => { setSnapshot(loaded); setOriginalRevision(loaded.revision); }); }, []);
-  useEffect(() => {
-    const beforeUnload = (event: BeforeUnloadEvent) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } };
-    addEventListener('beforeunload', beforeUnload);
-    return () => removeEventListener('beforeunload', beforeUnload);
-  }, [dirty]);
 
   const selectedQuizId = selection.kind === 'quiz' ? selection.id : selection.kind === 'question' ? selection.parentId : undefined;
   const selectedQuiz = snapshot?.bank.quizzes.find(quiz => quiz.id === selectedQuizId);
