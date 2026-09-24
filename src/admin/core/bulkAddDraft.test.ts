@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StoredQuestionBank } from '../../content/schema';
+import { previewChangeSet } from './applyChangeSet';
 import { compileBulkAddDraft, parseBulkAddDraft } from './bulkAddDraft';
 import { bulkAddTemplate } from './templates';
 
@@ -48,6 +49,36 @@ describe('content-only bulk add drafts', () => {
     expect(operation.subject).toEqual({ existingId: 's1' });
     expect(operation.quizzes[0].quiz).toEqual({ existingId: 'q1' });
     expect(operation.quizzes[0].items[0]).toMatchObject({ id: 'i2', answer: 'A', verifiedAnswer: 'B', answerNote: 'Source key reviewed separately' });
+  });
+
+  it('adds multiple quizzes with their authored item counts to an existing subject', () => {
+    const result = compileBulkAddDraft({
+      quizzes: [
+        { name: 'Added quiz one', items: [item('One'), item('Two')] },
+        { name: 'Added quiz two', items: [item('Three')] },
+      ],
+    }, { kind: 'subject', subjectId: 's1', revision }, bank(), revision, 'Add quizzes');
+
+    expect(result.errors).toEqual([]);
+    expect(result.compiled?.generatedIds).toEqual(['q2', 'q3', 'i2', 'i3', 'i4']);
+    if (!result.compiled) return;
+    const preview = previewChangeSet(bank(), result.compiled.changeSet);
+    expect(preview.issues).toEqual([]);
+    expect(preview.bank.quizzes.filter(quiz => quiz.subjectId === 's1').map(quiz => quiz.id)).toEqual(['q1', 'q2', 'q3']);
+    expect(preview.bank.questions.filter(question => question.quizId === 'q2').map(question => question.id)).toEqual(['i2', 'i3']);
+    expect(preview.bank.questions.filter(question => question.quizId === 'q3').map(question => question.id)).toEqual(['i4']);
+  });
+
+  it('adds multiple items to an existing quiz in authored order', () => {
+    const result = compileBulkAddDraft({ items: [item('First added'), item('Second added'), item('Third added')] },
+      { kind: 'quiz', subjectId: 's1', quizId: 'q1', revision }, bank(), revision, 'Add items');
+
+    expect(result.errors).toEqual([]);
+    expect(result.compiled?.generatedIds).toEqual(['i2', 'i3', 'i4']);
+    if (!result.compiled) return;
+    const preview = previewChangeSet(bank(), result.compiled.changeSet);
+    expect(preview.issues).toEqual([]);
+    expect(preview.bank.questions.filter(question => question.quizId === 'q1').map(question => question.id)).toEqual(['i1', 'i2', 'i3', 'i4']);
   });
 
   it('rejects technical IDs, parent references, unknown fields, and malformed choice labels', () => {

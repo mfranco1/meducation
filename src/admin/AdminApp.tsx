@@ -16,6 +16,10 @@ import { type EntityKind, type Selection, useAdminEditor } from './useAdminEdito
 
 const gateway = new InMemoryQuestionBankGateway(storedQuestionBank);
 const localAdminEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_LOCAL_ADMIN === 'true';
+type BulkTarget =
+  | { kind: 'newSubject' }
+  | { kind: 'subject'; subjectId?: string }
+  | { kind: 'quiz'; subjectId?: string; quizId?: string };
 
 function download(filename: string, content: string) {
   const anchor = document.createElement('a');
@@ -40,6 +44,7 @@ export function AdminApp() {
     importedChangeSet, setImportedChangeSet,
   } = useAdminEditor(gateway);
   const [bulkContext, setBulkContext] = useState<BulkAddContext>();
+  const [bulkTarget, setBulkTarget] = useState<BulkTarget>({ kind: 'newSubject' });
   const importFileRef = useRef<HTMLInputElement>(null);
   const [addMenuAnchor, setAddMenuAnchor] = useState<HTMLElement | null>(null);
 
@@ -50,6 +55,11 @@ export function AdminApp() {
   const filteredSubjects = useMemo(() => snapshot?.bank.subjects.filter(subject => `${subject.id} ${subject.name}`.toLowerCase().includes(filter.toLowerCase())) ?? [], [snapshot, filter]);
   const visibleQuizzes = useMemo(() => !snapshot ? [] : snapshot.bank.quizzes.filter(quiz => quiz.subjectId === selection.parentId || quiz.subjectId === selectedSubject?.id), [snapshot, selection.parentId, selectedSubject?.id]);
   const visibleQuestions = useMemo(() => !snapshot ? [] : snapshot.bank.questions.filter(question => question.quizId === selection.parentId || question.quizId === selectedQuiz?.id), [snapshot, selection.parentId, selectedQuiz?.id]);
+  const bulkSubjectId = bulkTarget.kind === 'newSubject' ? undefined : bulkTarget.subjectId;
+  const bulkSubject = snapshot?.bank.subjects.find(subject => subject.id === bulkSubjectId);
+  const bulkQuizzes = useMemo(() => !snapshot || !bulkSubjectId ? [] : snapshot.bank.quizzes.filter(quiz => quiz.subjectId === bulkSubjectId), [snapshot, bulkSubjectId]);
+  const bulkQuizId = bulkTarget.kind === 'quiz' ? bulkTarget.quizId : undefined;
+  const bulkQuiz = snapshot?.bank.quizzes.find(quiz => quiz.id === bulkQuizId);
   const appliedOperations = gateway.appliedOperations();
   const hasAppliedChanges = appliedOperations.length > 0;
   const hasErrors = issues.some(issue => issue.level === 'error');
@@ -80,21 +90,57 @@ export function AdminApp() {
       return parsed.changeSet;
     } catch { setIssues([{ level: 'error', message: 'Record JSON is invalid.' }]); return undefined; }
   };
-  const setBulkTemplate = (kind: 'newSubject' | 'subject' | 'quiz') => {
+  const loadBulkTemplate = (context: BulkAddContext) => {
     if (!snapshot) return;
-    const context: BulkAddContext = kind === 'newSubject'
-      ? { kind, revision: snapshot.revision }
-      : kind === 'subject' && selectedSubject
-        ? { kind, subjectId: selectedSubject.id, revision: snapshot.revision }
-        : selectedQuiz && selectedSubject
-          ? { kind: 'quiz', subjectId: selectedSubject.id, quizId: selectedQuiz.id, revision: snapshot.revision }
-          : { kind: 'newSubject', revision: snapshot.revision };
     setBulkContext(context);
     setPendingBulk(undefined);
-    setMode('bulk');
     setEditor(JSON.stringify(bulkAddTemplate(context), null, 2));
     setIssues([]);
     setSummary('Content-only template loaded. Edit the JSON, then validate it before staging.');
+  };
+  const chooseBulkTarget = (kind: BulkTarget['kind']) => {
+    if (!snapshot) return;
+    setMode('bulk');
+    setPendingBulk(undefined);
+    setIssues([]);
+    if (kind === 'newSubject') {
+      setBulkTarget({ kind });
+      loadBulkTemplate({ kind, revision: snapshot.revision });
+      return;
+    }
+    if (kind === 'subject') {
+      const subjectId = selectedSubject?.id;
+      setBulkTarget({ kind, subjectId });
+      if (subjectId) loadBulkTemplate({ kind, subjectId, revision: snapshot.revision });
+      else { setBulkContext(undefined); setEditor(''); setSummary('Choose a subject to add quizzes.'); }
+      return;
+    }
+    const subjectId = selectedSubject?.id;
+    const quizId = selectedQuiz?.id;
+    setBulkTarget({ kind, subjectId, quizId });
+    if (subjectId && quizId) loadBulkTemplate({ kind, subjectId, quizId, revision: snapshot.revision });
+    else { setBulkContext(undefined); setEditor(''); setSummary('Choose a subject and quiz to add items.'); }
+  };
+  const chooseBulkSubject = (subjectId: string) => {
+    if (!snapshot || bulkTarget.kind === 'newSubject') return;
+    setPendingBulk(undefined);
+    setIssues([]);
+    if (bulkTarget.kind === 'subject') {
+      setBulkTarget({ kind: 'subject', subjectId });
+      loadBulkTemplate({ kind: 'subject', subjectId, revision: snapshot.revision });
+      return;
+    }
+    setBulkTarget({ kind: 'quiz', subjectId });
+    setBulkContext(undefined);
+    setEditor('');
+    setSummary('Choose a quiz to add items.');
+  };
+  const chooseBulkQuiz = (quizId: string) => {
+    if (!snapshot || bulkTarget.kind !== 'quiz' || !bulkTarget.subjectId) return;
+    const quiz = snapshot.bank.quizzes.find(candidate => candidate.id === quizId && candidate.subjectId === bulkTarget.subjectId);
+    if (!quiz) return;
+    setBulkTarget({ kind: 'quiz', subjectId: bulkTarget.subjectId, quizId });
+    loadBulkTemplate({ kind: 'quiz', subjectId: bulkTarget.subjectId, quizId, revision: snapshot.revision });
   };
   const stageSingle = async () => {
     const changeSet = buildSingleChangeSet();
@@ -206,13 +252,13 @@ export function AdminApp() {
     setDirty(false); setExported(true); setSummary('Downloaded the updated bank and review change set. Replace the canonical file through review.');
   };
 
-  const bulkTargetLabel = bulkContext?.kind === 'newSubject'
+  const bulkTargetLabel = bulkTarget.kind === 'newSubject'
     ? 'New subject'
-    : bulkContext?.kind === 'subject'
-      ? selectedSubject?.name ?? 'Selected subject'
-      : selectedSubject && selectedQuiz
-        ? `${selectedSubject.name} / ${selectedQuiz.name}`
-        : 'Selected quiz';
+    : bulkTarget.kind === 'subject'
+      ? bulkSubject?.name ?? 'Choose a subject'
+      : bulkSubject && bulkQuiz
+        ? `${bulkSubject.name} / ${bulkQuiz.name}`
+        : bulkSubject?.name ?? 'Choose a subject and quiz';
 
   if (!localAdminEnabled) return <Container maxWidth="sm" sx={{ py: 8 }}><Alert severity="warning">The JSON content admin is disabled in production builds. It is not an authentication mechanism.</Alert></Container>;
   if (!snapshot) return <Container sx={{ py: 8 }}><Typography>Loading canonical question bank…</Typography></Container>;
@@ -249,16 +295,24 @@ export function AdminApp() {
       </Paper>
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
         <Tabs value={mode} onChange={(_, value) => {
-          if (value === 'bulk') setBulkTemplate(selection.kind === 'question' || selection.kind === 'quiz'
+          if (value === 'bulk') chooseBulkTarget(selection.kind === 'question' || selection.kind === 'quiz'
             ? 'quiz' : selection.kind === 'subject' && selection.id ? 'subject' : 'newSubject');
           else { setMode('single'); setPendingBulk(undefined); }
         }}><Tab value="single" label="Record" /><Tab value="bulk" label="Bulk add" /></Tabs>
         {mode === 'bulk' && <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mt: 2 }}>
-          <Button size="small" onClick={() => setBulkTemplate('newSubject')}>New subject</Button>
-          <Button size="small" disabled={!selectedSubject} onClick={() => setBulkTemplate('subject')}>Add quizzes</Button>
-          <Button size="small" disabled={!selectedQuiz} onClick={() => setBulkTemplate('quiz')}>Add items</Button>
+          <Button size="small" onClick={() => chooseBulkTarget('newSubject')}>New subject</Button>
+          <Button size="small" onClick={() => chooseBulkTarget('subject')}>Add quizzes</Button>
+          <Button size="small" onClick={() => chooseBulkTarget('quiz')}>Add items</Button>
         </Stack>}
         <Stack spacing={2} sx={{ mt: 2 }}><TextField label="Reason" value={reason} onChange={event => { setReason(event.target.value); if (mode === 'bulk') { setPendingBulk(undefined); setIssues([]); setSummary('Reason changed. Validate again before staging.'); } if (importedChangeSet) setImportedChangeSet(undefined); }} required fullWidth />
+          {mode === 'bulk' && bulkTarget.kind !== 'newSubject' && <TextField select label="Subject" value={bulkTarget.subjectId ?? ''} onChange={event => chooseBulkSubject(event.target.value)} fullWidth>
+            <MenuItem value="" disabled>Choose a subject</MenuItem>
+            {snapshot.bank.subjects.map(subject => <MenuItem key={subject.id} value={subject.id}>{subject.name}</MenuItem>)}
+          </TextField>}
+          {mode === 'bulk' && bulkTarget.kind === 'quiz' && <TextField select label="Quiz" value={bulkTarget.quizId ?? ''} disabled={!bulkTarget.subjectId} onChange={event => chooseBulkQuiz(event.target.value)} fullWidth>
+            <MenuItem value="" disabled>Choose a quiz</MenuItem>
+            {bulkQuizzes.map(quiz => <MenuItem key={quiz.id} value={quiz.id}>{quiz.name}</MenuItem>)}
+          </TextField>}
           {mode === 'bulk' && <Alert severity="info">{bulkTargetLabel}</Alert>}
           <TextField label="JSON" value={editor} onChange={event => { setEditor(event.target.value); if (mode === 'bulk') { setPendingBulk(undefined); setIssues([]); setSummary('Draft changed. Validate again before staging.'); } }} multiline minRows={16} maxRows={24} fullWidth InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }} placeholder={mode === 'single' ? 'Select an entity or create a template.' : 'Edit subject, quiz, and item content.'} />
           {mode === 'bulk' && <Typography variant="caption" color="text.secondary">Items need stem, 2–26 choice strings, answer label, and rationale. Optional content fields: verifiedAnswer, answerNote, rationaleMeta, choiceExplanations, pearls, metadata.</Typography>}

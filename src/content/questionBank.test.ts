@@ -5,8 +5,8 @@ describe('canonical question bank', () => {
   it('exposes the versioned bank through indexed repository reads', () => {
     expect(schemaVersion).toBe(4);
     expect(subjects).toHaveLength(13);
-    expect(quizzes).toHaveLength(100);
-    expect(questions).toHaveLength(10396);
+    expect(quizzes).toHaveLength(101);
+    expect(questions).toHaveLength(10496);
     expect(questionBank.listQuestions(quizzes[0].id)).toHaveLength(quizzes[0].questionCount);
   });
 
