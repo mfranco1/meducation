@@ -572,6 +572,11 @@
       "id": "q102",
       "name": "Microbiology & Parasitology Special",
       "subjectId": "s5"
+    },
+    {
+      "id": "q103",
+      "name": "Biochemistry Special",
+      "subjectId": "s2"
     }
   ],
   "questions": [
@@ -266620,6 +266625,2506 @@
       "rationale": "- **A** HBsAg usually disappears during the window period before anti-HBs becomes detectable.\n- **B** HBeAg indicates active viral replication and is not the hallmark marker of the window period.\n- **C** Anti-HBs appears after recovery or vaccination and is absent during the window period.\n- **D** IgM anti-HBc is the only positive serologic marker during the hepatitis B window period.",
       "id": "i10596",
       "quizId": "q102"
+    },
+    {
+      "stem": "Which amino acid is primarily responsible for the UV light absorbance of proteins at 280 nm?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Lysine"
+        },
+        {
+          "id": "B",
+          "text": "Leucine"
+        },
+        {
+          "id": "C",
+          "text": "Valine"
+        },
+        {
+          "id": "D",
+          "text": "Tryptophan"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Lysine has an alkylamine side chain that is non-aromatic which does not absorb at 280 nm.\n- **B** Both Leucine and Valine are branched-chain aliphatic amino acids and cannot absorb UV light at 280 nm.\n- **C** While the ultimobranchial body is associated with the 4th pouch, choice D is still the best answer. The 3rd pouch gives rise to the thymus and inferior parathyroid.\n- **D** Tryptophan has a UV-active side chain because it is an aromatic amino acid with conjugated pi-electron systems. Its indole side chain makes it the strongest UV light absorber at 280 nm, making UV spectrophotometry an important tool in Tryptophan quantification.",
+      "id": "i10597",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What is the basic structural unit of a protein?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Nucleotide"
+        },
+        {
+          "id": "B",
+          "text": "Glycerol"
+        },
+        {
+          "id": "C",
+          "text": "Fatty acid"
+        },
+        {
+          "id": "D",
+          "text": "Amino Acid"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Nucleotides are the structural units of nucleic acids.\n- **B** Glycerol and fatty acids are building blocks of triglycerides and phospholipids.\n- **C** The loose areolar tissue layer allows the scalp proper to glide and is a potential space for infection.\n- **D** Amino acids are the fundamental monomers of proteins, linked by covalent peptide bonds to form polypeptide chains, which then fold to 3d protein structures.",
+      "id": "i10598",
+      "quizId": "q103"
+    },
+    {
+      "stem": "The linear sequence of a chain of amino acids represents which level of protein structure?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Primary"
+        },
+        {
+          "id": "B",
+          "text": "Secondary"
+        },
+        {
+          "id": "C",
+          "text": "Tertiary"
+        },
+        {
+          "id": "D",
+          "text": "Quaternary"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** The primary structure is the fundamental linear sequence of amino acids linked by covalent peptide bonds which dictate how the protein will fold into higher-order structures.\n- **B** This refers to folding patterns of the polypeptide backbone maintained by H-bonding, for example alpha helices or beta sheets.\n- **C** Tertiary structure is the 3d folding of a single polypeptide chain\n- **D** Quaternary structures only exist in proteins with multiple polypeptide subunits, representing the spatial arrangements and interactions of these separate chains.",
+      "id": "i10599",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What unique property makes Glycine different from all other standard amino acids?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It is aromatic"
+        },
+        {
+          "id": "B",
+          "text": "It contains sulfur"
+        },
+        {
+          "id": "C",
+          "text": "It is achiral"
+        },
+        {
+          "id": "D",
+          "text": "It is a secondary amine"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Glycine has no side chain but instead has an -H attached to its alpha carbon.\n- **B** Methionine and cysteine are the two sulfur-containing standard amino acids.\n- **C** Two hydrogen atoms are bonded to its alpha carbon, making it the only achiral (optically inactive) amino acid as it lacks an asymmetric center.\n- **D** Glycine is a primary amine. Proline is the only standard amino acid featuring a cyclic, secondary amine structure.\n\n**Remember:** Chiral carbon has 4 different atoms or group of atoms around it. Glycine's alpha carbon is not chiral (achiral) since two H's (which are similar) are attached around that carbon hence Glycine has no chiral center. All the rest are chiral, and if chiral it will have a nonsuperimposable mirror image (enantiomer).",
+      "id": "i10600",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which reagent is used in the Biuret test to detect the presence of proteins?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Iodine"
+        },
+        {
+          "id": "B",
+          "text": "Benedict’s reagent"
+        },
+        {
+          "id": "C",
+          "text": "Copper sulfate"
+        },
+        {
+          "id": "D",
+          "text": "Ethanol"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Lugol’s iodine is used to detect starch, turning from yellow brown to deep blue-black in the presence of starch polymers.\n- **B** Benedict’s reagent contains copper sulfate, citrate and carbonate and is used to detect reducing sugars.\n- **C** The Biuret test detects the present of peptide bonds, as Cu2+ ions in alkaline conditions coordinate with the nitrogen atoms of peptide bonds, forming a violet-purple complex.\n- **D** Ethanol is used in the emulsion test to detect lipids, as lipids dissolve in ethanol but precipitate out as a cloudy emulsion when water is added.\n\n**METHODS OF QUANTITATION OF TOTAL PROTEINS**\n\n| Test | Principle | Remarks |\n|---|---|---|\n| Kjeldahl procedure | Nitrogen present in the protein is reduced to ammonia (absorbed in acid medium and is measured) | Most specific and accurate method (but test is not rapid - it may take days before results are released) |\n| Biuret method | Cupric ions chelate with peptide bonds of protein in alkaline medium to produce violet color - intensity of color is used to estimate the total protein | Most widely used method (due to its simplicity) - but less sensitive |",
+      "id": "i10601",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which chromatography technique is specifically used to separate proteins based on their molecular weight?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Ion-exchange"
+        },
+        {
+          "id": "B",
+          "text": "Gel filtration"
+        },
+        {
+          "id": "C",
+          "text": "Affinity"
+        },
+        {
+          "id": "D",
+          "text": "Thin-layer"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Ion-exchange chromatography separates proteins based on their net surface charge at a specific pH and uses either an anionic or cationic resin matrix.\n- **B** Gel filtration chromatography, also known as Size-exclusion Chromatography, separates proteins according to their molecular weight and size. Using a column packed with porous polymer beads, large proteins elute first, while small proteins travel through the matrix, slowing them and eluting later.\n- **C** Affinity chromatography utilizes highly specific biochemical interactions like antibody-antigen coupling for accurate separation of proteins.\n- **D** Thin-layer chromatography separates small organic compounds based on their relative polarities and differences in partition between a stationary phase (usually silica on a thin film) and a mobile solvent phase.",
+      "id": "i10602",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which chromatography technique is used to separate proteins based on their surface charges?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Ion-exchange"
+        },
+        {
+          "id": "B",
+          "text": "Gel filtration"
+        },
+        {
+          "id": "C",
+          "text": "Affinity"
+        },
+        {
+          "id": "D",
+          "text": "Thin-layer"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Ion-exchange chromatography separates proteins based on their net surface charge at a specific pH using either an anionic or a cationic resin matrix. Cation exchangers use negatively charged beads to bind positive proteins, while anion columns bind negative proteins.\n- **B** Gel filtration chromatography separates proteins according to their molecular weight and size.\n- **C** Affinity chromatography utilizes highly specific biochemical interactions like antibody-antigen coupling for accurate separation of proteins.\n- **D** Thin-layer chromatography separates small organic compounds based on their relative polarities and differences in partition between a stationary phase (usually silica on a thin film) and a mobile solvent phase.",
+      "id": "i10603",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What is the utility of dialysis in protein chemistry?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Denaturation"
+        },
+        {
+          "id": "B",
+          "text": "Molecular weight determination"
+        },
+        {
+          "id": "C",
+          "text": "Substance removal"
+        },
+        {
+          "id": "D",
+          "text": "Breaking peptide bonds"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Dialysis may protect against denaturation by removing substances that alter the natural folding of proteins.\n- **B** Quantitative molecular weight determination requires chromatography techniques like Gel Filtration chromatography or SDS-PAGE.\n- **C** Dialysis is a separation technique used to remove small unwanted molecules (e.g. salts, dyes, impurities) from a solution containing proteins. The sample is placed in a bag made of a semipermeable membrane where small molecules freely diffuse across the membrane while large proteins remain trapped inside.\n- **D** Dialysis is a physical diffusion process and is not a chemical or enzymatic technique used to cleave peptide bonds.",
+      "id": "i10604",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which type of bond links two sugar units to form a disaccharide?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glycosidic"
+        },
+        {
+          "id": "B",
+          "text": "Peptide"
+        },
+        {
+          "id": "C",
+          "text": "Hydrogen"
+        },
+        {
+          "id": "D",
+          "text": "Phosphodiester"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** A glycosidic bond is a specific type of covalent bond that joins a carbohydrate molecule to another to form disaccharides. It is formed when the anomeric carbon of a monosaccharide reacts with a hydroxyl group of another monosaccharide in a condensation reaction.\n- **B** This is a covalent bond connecting the carboxyl group of an amino acid to the amino group of another, forming the structural backbone of proteins.\n- **C** This is a non-covalent electrostatic interaction between H and an electronegative atom which stabilizes secondary protein structures and DNA base pairs.\n- **D** A phosphodiester bond is a covalent bond connecting the 3’ carbon of a sugar molecule of the 5’ carbon of another, forming the backbone of nucleic acids like DNA and RNA.",
+      "id": "i10605",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following is a sign of Vitamin A toxicity?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Night blindness"
+        },
+        {
+          "id": "B",
+          "text": "Hepatosplenomegaly"
+        },
+        {
+          "id": "C",
+          "text": "Scurvy"
+        },
+        {
+          "id": "D",
+          "text": "Xerophthalmia"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** This is a manifestation of Vitamin A deficiency, not toxicity. The lack of precursors to retinal impairs regeneration of pigments in rod cells, hence manifestation of light blindness.\n- **B** Chronic hypervitaminosis A leads to toxic accumulation of substrates within hepatic Ito cells which store fat-soluble vitamins. This causes hepatosplenomegaly, and eventually cirrhosis.\n- **C** This is caused by severe deficiency of Vitamin C, disrupting collagen synthesis.\n- **D** This is another manifestation of Vitamin A deficiency, not toxicity, where these is abnormal dryness of the conjunctive and cornea.",
+      "id": "i10606",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which vitamin supplementation is the initial treatment of choice for Measles",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Vitamin A"
+        },
+        {
+          "id": "B",
+          "text": "Vitamin B1"
+        },
+        {
+          "id": "C",
+          "text": "Vitamin B12"
+        },
+        {
+          "id": "D",
+          "text": "Vitamin C"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Vitamin A supplementation is recommended for all children diagnosed with acute measles, as measles virus infection depletes systemic Vitamin A, impairing epithelial integrity and suppresses immune function. Administering high doses of Vitamin A protects the mucosal surfaces and lowers incidence of severe complications like diarrhea and viral pneumonia.\n- **B** Thiamine is a cofactor of carbohydrate metabolism enzymes like pyruvate dehydrogenase but plays no role in acute measles management.\n- **C** Cobalamin is essential for DNA synthesis and myelin maintenance but does not impact the course of rubeola infection.\n- **D** Vitamin C is crucial for collagen synthesis and acts as an antioxidant, but us not an established therapy for reducing measles-specific mortality or complications.",
+      "id": "i10607",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A 42-year-old chronic alcoholic presents with a severe, hyperpigmented, and scaling rash forming a distinct collar-like pattern around his lower neck. A deficiency in which of the following vitamins is responsible for this patient's clinical presentation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Thiamine"
+        },
+        {
+          "id": "B",
+          "text": "Riboflavin"
+        },
+        {
+          "id": "C",
+          "text": "Niacin"
+        },
+        {
+          "id": "D",
+          "text": "Pyridoxine"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Thiamine deficiency may lead to Beriberi or Wernicke-Korsakoff syndrome and will not present with Casal’s necklace.\n- **B** Riboflavin deficiency causes cheilosis, angular stomatitis, and corneal neovascularization, and not dermatitis on the neck.\n- **C** The lower neck rash is known as Casal’s necklace, which is a pathognomonic sign of pellagra caused by severe Vitamin B3 deficiency. Pellagra classically manifests as “4Ds”: dermatitis, dementia, diarrhea, and untimely death.\n- **D** Vitamin B6 deficiency primarily manifests as sideroblastic anemia.",
+      "id": "i10608",
+      "quizId": "q103"
+    },
+    {
+      "stem": "During a community health screening in a resource-limited setting, a medical team evaluates children for acute protein-energy malnutrition. Which of the following anthropometric measurements provides the most reliable and sensitive assessment of a child's recent nutritional status?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Height-for-age"
+        },
+        {
+          "id": "B",
+          "text": "MUAC"
+        },
+        {
+          "id": "C",
+          "text": "Head circumference"
+        },
+        {
+          "id": "D",
+          "text": "BMI"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** This index measures linear growth and is used to identify stunting, a chronic marker of malnutrition rather than acute nutritional changes.\n- **B** Mid-upper arm circumference (MUAC) is a very useful field screening tool for assessing recent, acute nutritional status (wasting) in children aged 6 to 59 months. Because skeletal muscle mass and subcutaneous fat stores in the upper arm deplete rapidly during sudden nutritional deprivation, MUAC values drop quickly, making it highly sensitive to immediate changes.\n- **C** Head circumference is used to track brain development and cranial growth of infants up to 2 ages.\n- **D** BMI is less specific for rapid, isolated shifts in lean muscle mass comparted to MUAC.",
+      "id": "i10609",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A 14-month-old emaciated infant presents with an elderly facial appearance and a near-total loss of subcutaneous fat. No pitting edema is noted. Which of the following is the hallmark manifestation of this child's condition?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Pitting edema"
+        },
+        {
+          "id": "B",
+          "text": "Severe muscle wasting"
+        },
+        {
+          "id": "C",
+          "text": "Hyperpigmentation"
+        },
+        {
+          "id": "D",
+          "text": "Hepatomegaly"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Pitting edema is a hallmark sign of Kwashiorkor, where decreased hepatic albumin synthesis reduces intravascular oncotic pressure.\n- **B** Marasmus is a severe form of protein-energy malnutrition caused by total caloric deficiency. Since the body lacks an energy source, it breaks down its own subcutaneous fat and skeletal muscles to salvage energy and preserve essential organ function. This results in the presentation of severe muscle wasting, loss of subcutaneous fat, and wrinkled face appearance.\n- **C** Hyperpigmented, flay skin lesions are features of Kwashiorkor.\n- **D** Hepatomegaly from to steatosis occurs in Kwashiorkor due to the lack of apolipoproteins that usually export triglycerides from the liver.",
+      "id": "i10610",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Basal Energy Expenditure (BEE) is measured in laboratory settings using:",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Indirect calorimetry"
+        },
+        {
+          "id": "B",
+          "text": "Waist circumference"
+        },
+        {
+          "id": "C",
+          "text": "Body Mass Index"
+        },
+        {
+          "id": "D",
+          "text": "Skinfold thickness"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Basal Energy Expenditure is the theoretical minimum number of needed to sustain physiologic functions while completely at rest. Indirect calorimetry is the standard laboratory method to determine BEE where precise measurement of the O2 used and CO2 produced allows clinicians to calculate and derive the exact substrate utilization and caloric expenditure.\n- **B** This is an anthropometric measurement used to assess visceral adiposity and is not helpful in determining the metabolic energy expenditure.\n- **C** BMI is the ratio of weight to height squared that is used to classify individuals into broad weight categories.\n- **D** Using calipers at specific anatomic sites, the total body fate percentage may be estimated using this technique, but not metabolic energy accounting.",
+      "id": "i10611",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What is the most abundant mineral found in the human body in terms of mass?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Sodium"
+        },
+        {
+          "id": "B",
+          "text": "Potassium"
+        },
+        {
+          "id": "C",
+          "text": "Calcium"
+        },
+        {
+          "id": "D",
+          "text": "Magnesium"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Sodium is the major extracellular cation, providing osmotic pressure, fluid balance, and the ability to trigger action potentials.\n- **B** Potassium is the primary intracellular cation crucial for maintaining the resting membrane potential of cells.\n- **C** Calcium is the most abundant mineral in the body, accounting for 1.5-2% of the total body weight. Around 99% of body calcium is stored as hydroxyapatite crystals in our skeleton, while the 1% resides in extracellular fluid and soft tissues.\n- **D** Magnesium is an essential intracellular cation and a cofactor for many enzymatic reactions.",
+      "id": "i10612",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A molecular biology research team aims to introduce a precise, targeted double-strand break into a specific genomic locus to disrupt an oncogene. Which of the following laboratory tools is primarily used to achieve this goal??",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Northern Blot"
+        },
+        {
+          "id": "B",
+          "text": "Western Blot"
+        },
+        {
+          "id": "C",
+          "text": "CRISPR-Cas9"
+        },
+        {
+          "id": "D",
+          "text": "ELISA"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Northern blot is used to detect and quantify specific RNA sequences within a sample but cannot modify or edit DNA.\n- **B** Western blot is an immunoelectrophoretic method used to detect, analyze, and quantify specific proteins using labelled antibodies, but cannot edit DNA.\n- **C** CRISPR-Cas9 is a genome-editing tool that uses a guide RNA to direct a Cas9 nuclease to a specific DNA sequence. The nuclease then creates a targeted double-stranded break, allowing genes to be modified or disrupted during cellular repair.\n- **D** ELISA is an immunodiagnostic assay designed to detect and quantify soluble substances like proteins and antibodies and has no gene-editing capabilities.",
+      "id": "i10613",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which amino acid is the primary carrier of ammonia from skeletal muscle to liver?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Alanine"
+        },
+        {
+          "id": "B",
+          "text": "Glutathione"
+        },
+        {
+          "id": "C",
+          "text": "Aspartate"
+        },
+        {
+          "id": "D",
+          "text": "Glycine"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Alanine is the primary carrier of ammonia from skeletal muscles via the glucose-alanine cycle, while glutamine shuttle ammonia from most peripheral tissues. Pyruvate generated from glycolysis is first transaminated to form alanine, which then travels to the liver where it is converted back to pyruvate, dropping off the nitrogen to enter the urea cycle.\n- **B** Glutathione is a tripeptide (not an amino acid) with serves as an antioxidant and not as a carrier molecule for nitrogen transport.\n- **C** While aspartate enters the urea cycle directly to provide the second nitrogen of urea, it is not the primary carrier of ammonia from peripheral tissues.\n- **D** Glycine is not a primary transporter of nitrogen from peripheral tissues, but instead is involved in heme and purine anabolism.",
+      "id": "i10614",
+      "quizId": "q103"
+    },
+    {
+      "stem": "An experimental model demonstrates high blood glucose levels despite normal plasma insulin concentrations. This finding suggests a functional impairment in which of the following types of membrane transport mechanisms?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Carrier-mediated transport"
+        },
+        {
+          "id": "B",
+          "text": "Primary active transport"
+        },
+        {
+          "id": "C",
+          "text": "Passive diffusion"
+        },
+        {
+          "id": "D",
+          "text": "Osmosis"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Glucose undergoes carrier-mediated transport via GLUT proteins to cross cell membranes. Insulin mobilizes GLUT4 carriers to the surface of skeletal and fat cells, hence elevated blood glucose levels despite normal insulin levels suggest dysfunctional carrier translocation.\n- **B** This mechanism consumes ATP to pump solutes against a gradient, unlike glucose uptake which relies on facilitated carrier transport.\n- **C** This refers to unassisted movement of small nonpolar molecules across the lipid bilayer. Glucose, being a large polar molecule, cannot cross membranes via simple diffusion.\n- **D** This refers to the movement of water across a semipermeable membrane toward high solute regions.",
+      "id": "i10615",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Why is the Influenza vaccine required annually?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Antigenic variation"
+        },
+        {
+          "id": "B",
+          "text": "IgG decay"
+        },
+        {
+          "id": "C",
+          "text": "Bacterial contamination"
+        },
+        {
+          "id": "D",
+          "text": "Toxicity"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** The influenza virus undergoes continuous antigenic variation via antigenic drifts and shifts, altering viral epitopes and allowing the virus to evade existing neutralizing antibodies, making annual vaccine reformulations necessary.\n- **B** While normal antibody levels decline over time, if the virus does not mutate through antigenic shifts and drifts, immune memory cells should still confer protection.\n- **C** This is an industrial/manufacturing safety factor and not a biologic driver for repeated vaccinations, and modern vaccine manufacture enforce strict protocols to prevent contamination.\n- **D** The yearly schedule is an adaptive response to viral mutation and not to toxic components in vaccines.",
+      "id": "i10616",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Functional oxygen saturation (SaO2) refers to the percentage of hemoglobin binding sites occupied by oxygen in arterial blood. Which of the following conditions will NOT show a significant difference SaO2 from a normal, non-pathogenic state?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Methemoglobinemia"
+        },
+        {
+          "id": "B",
+          "text": "Sulfhemoglobinemia"
+        },
+        {
+          "id": "C",
+          "text": "Iron Deficiency Anemia"
+        },
+        {
+          "id": "D",
+          "text": "Carboxyhemoglobinemia"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Oxidation of iron from ferrous (Fe2+) to ferric (Fe3+) state prevents oxygen binding, altering the measured saturation and decreasing pulse oximetry readings.\n- **B** Integration of sulfur into the heme during lowers the affinity of hemoglobin for oxygen, lowing the functional oxygen saturation.\n- **C** In iron deficiency anemia, the total amount of hemoglobin is reduced, but the hemoglobin molecules synthesized are structurally normal and fully saturated, hence the functional oxygen saturation remains normal.\n- **D** Carbon monoxide has an affinity for hemoglobin orders of magnitudes higher than that of oxygen, outcompeting O2 and occupying the heme binding sites, decreasing SaO2 in the process.",
+      "id": "i10617",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following laboratory or clinical features is NOT a classic finding associated with Thalassemia?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Dark urine"
+        },
+        {
+          "id": "B",
+          "text": "Delayed growth"
+        },
+        {
+          "id": "C",
+          "text": "Hepatosplenomegaly"
+        },
+        {
+          "id": "D",
+          "text": "Increased Total Iron Binding Capacity"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Chronic intravascular and extravascular hemolysis leads to hyperbilirubinemia which may present as dark or tea-colored urine.\n- **B** Severe forms of thalassemia like Beta-thalassemia major cause profound tissue hypoxia due to the lack of functional hemoglobin, which may impair normal physical development, leading to delayed growth and skeletal deformities.\n- **C** Chronic hemolysis may overwork the splenic macrophages which clear damaged RBCs. The body may attempt to compensate for this through extramedullary hematopoiesis in the liver and spleen causing hepatosplenomegaly.\n- **D** Increased TIBC is a hallmark for IDA as the liver maximize iron transport. In thalassemia however, iron levels are normal or elevated due to hemolysis and ineffective erythropoiesis. However, transferring binding sites are still saturated, in thalassemia leading to normal (or decreased) TIBC levels.",
+      "id": "i10618",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Where do T cells undergo their maturation, selection, and functional differentiation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Thymus"
+        },
+        {
+          "id": "B",
+          "text": "Bone Marrow"
+        },
+        {
+          "id": "C",
+          "text": "Spleen"
+        },
+        {
+          "id": "D",
+          "text": "Lymph nodes"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** T-cell precursors migrate from the bone marrow to the thymus for complete maturation, and in the thymus will they express T-cell receptors, gain surface markers, and undergo selection to ensure self-tolerance and functionality.\n- **B** The bone marrow is the primary site of hematopoiesis where all immune cells originate, and where B cells mature. However, it only produces immature T-cell precursors.\n- **C** The sleep filters blood-borne pathogens and houses mature, circulating lymphocytes rather than primary lymphocyte development.\n- **D** These are lymphoid structures where mature, naïve T cells encounter antigens and undergo clonal expansion.\n\n**IMMUNE SYSTEM ORGANS**\n\n| Primary immune system organs | Secondary immune system organs |\n|---|---|\n| Site of immune cell production and maturation; bone marrow - production of all WBCs; maturation of B cells; thymus - maturation of T cells | Site of interaction between antigens and immune cells; spleen, lymph nodes, tonsils, Peyer patches |\n\n**PRIMARY IMMUNE SYSTEM ORGANS:** Thymus - site of T-cell differentiation and maturation. Bone marrow - site of B-cell differentiation; site of production of all WBCs.",
+      "id": "i10619",
+      "quizId": "q103"
+    },
+    {
+      "stem": "MHC Class II molecules present antigens primarily to:",
+      "choices": [
+        {
+          "id": "A",
+          "text": "CD4+ T cells"
+        },
+        {
+          "id": "B",
+          "text": "CD8+ T cells"
+        },
+        {
+          "id": "C",
+          "text": "NK cells"
+        },
+        {
+          "id": "D",
+          "text": "Plasma cells"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** MHC Class II molecules are expressed on antigen-presenting cells, and present processed exogenous antigens specifically to CD4+ helper T cells.\n- **B** CD8+ cytotoxic T cells interact specifically with MHC I complexes which present intracellular antigens found on all nucleated cells.\n- **C** NL cells are lymphocytes part of the innate immune system that destroy cells lacking sufficient MHC Class I expression.\n- **D** These are differentiated antibody-secreting B cells. They do not receive antigen presentation from MHC Class II complexes.\n\n| Parameter | MHC Class I | MHC Class II |\n|---|---|---|\n| Genetic loci | HLA-A; HLA-B; HLA-C | HLA-DP; HLA-DQ; HLA-DR |\n| Cells that express MHC class on their cell membrane surface | All nucleated cells; all APCs; platelets; BUT RBCs do not express MHC I | APCs only |\n| Function | Present endogenous antigens (viral or cytosolic proteins) to CD8+ cytotoxic T cells | Present exogenous antigens (bacterial proteins) to CD4+ helper T cells |\n\n**Clinical Correlates:** APCs have BOTH MHC Class I AND MHC Class II molecules. **Mnemonic: Rule of 8:** MHC II x CD4 = 8; MHC I x CD8 = 8.",
+      "id": "i10620",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A mutation preventing the cell surface expression of MHC Class II molecules will directly impair which of the following?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Cytotoxicity"
+        },
+        {
+          "id": "B",
+          "text": "Helper T-cell activation"
+        },
+        {
+          "id": "C",
+          "text": "Phagocytosis"
+        },
+        {
+          "id": "D",
+          "text": "NK cell surveillance"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Cytotoxic T-cell activity depends of antigen presentation via MHC Class I molecules, and its direct activation is unaffected by a lack of MHC Class II.\n- **B** MHC Class II molecules display exogenous antigens exclusively to CD4+ helper T cells. If this interaction fails, naïve helper T cells cannot be activated, halting downstream immune processes like cytokine production and antibody isotype switching.\n- **C** This is driven by macrophages and neutrophils and does not require MHC Class II expression to function.\n- **D** NK cells inspect tissues for the downregulation/absence of MHC Class I complexes, and are blind to MHC class II absence.",
+      "id": "i10621",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A neonate presents with non-resolving pulmonary infection. Cytology shows extreme lack of B cells and immunoassay shows global deficiency in all classes of immunoglobulins. What is true about this disease?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Impaired class switching"
+        },
+        {
+          "id": "B",
+          "text": "X-linked dominant mechanism"
+        },
+        {
+          "id": "C",
+          "text": "BTK mutation"
+        },
+        {
+          "id": "D",
+          "text": "Plasma cell maturation arrest"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Impaired class-switching is the cause if Hyper-IgM syndrome where there are normal or elevated levels of B cells and high levels of IgM.\n- **B** Bruton agammaglobulinemia is inherited in an X-linked recessive pattern.\n- **C** This presentation is consistence with X-linked (Bruton) Agammaglobulinemia (XLA), caused by a defect in the Bruton Tyrosine Kinase (BTK) gene. This halts B-cell development at the pre-B cell stage, resulting in an extreme absence of peripheral B cells and leading to global immunoglobulin deficiency.\n- **D** The maturation blockage occurs at the pre-B cell stage in the bone marrow, and not in the terminal plasma cell stage.",
+      "id": "i10622",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following hemoglobin variants is the most abundant in a normal, healthy neonate at the time of birth?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "HbF"
+        },
+        {
+          "id": "B",
+          "text": "HbA"
+        },
+        {
+          "id": "C",
+          "text": "HbA2"
+        },
+        {
+          "id": "D",
+          "text": "HbH"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Fetal hemoglobin (HbF) is the primary hemoglobin during the fetal period because its lower affinity for 2,3-BPG allows it to bind oxygen with higher affinity than maternal HbA, facilitating oxygen transfer across the placenta. It remains the most abundant hemoglobin variant at birth before gradually shifting to adult hemoglobin (HbA) over the first six months of life.\n- **B** Adult hemoglobin (HbA) does not become the predominant hemoglobin variant until the infant reaches around 6 months of age.\n- **C** HbA2 is a minor adult hemoglobin variant present in trace amounts at birth.\n- **D** HbH is a pathological tetramer from excess beta chains in the setting of three-alpha-globin gene deletion in alpha thalassemia intermedia.",
+      "id": "i10623",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following causes a RIGHTWARD shift in the Oxygen-Dissociation Curve??",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Acidosis"
+        },
+        {
+          "id": "B",
+          "text": "Hypothermia"
+        },
+        {
+          "id": "C",
+          "text": "Fetal hemoglobin production"
+        },
+        {
+          "id": "D",
+          "text": "Low 2,3-BPG"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** An increase in hydrogen ion concentration stabilizes the T low-affinity state of hemoglobin, shifting the dissociation curve to the right, promoting oxygen unloading to tissues.\n- **B** Decreased temperature stabilizes the R high-affinity state of hemoglobin, locking O2 into the heme complex ad shifting the curve to the left.\n- **C** HbF cannot efficiently bind 2,3-BPG, giving it a higher oxygen affinity than HbA, shifting the curve leftward.\n- **D** 2,3-BPG stabilizes the low affinity state, therefore its decrease allows hemoglobin to shift to the high affinity relaxed state, moving the curve leftward.",
+      "id": "i10624",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following anthropometric measures is the best indicator for long-term nutritional status?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "MUAC"
+        },
+        {
+          "id": "B",
+          "text": "Weight-for-height"
+        },
+        {
+          "id": "C",
+          "text": "Height-for-age"
+        },
+        {
+          "id": "D",
+          "text": "BMI"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** MUAC is a field-screening tool to identify acute malnutrition and wasting in young children. It determines immediate muscle and subcutaneous fat loss rather than long-term growth restrictions.\n- **B** Weight-for-height evaluates the body mass relative to length, and measures acute, short-term malnutrition. A low weight-for-height score indicates wasting, reflecting recent weight loss due to starvation or illness.\n- **C** Heigh-for-age reflects linear bone growth and serves as an indicator for chronic malnutrition. A low height-for-age indicates stunting, signifying cumulative, sustained nutritional deficits or recurrent illness over an extended period.\n- **D** BMI assesses weight relative to the square of the height and is used for broad categorization of weight.\n\n**GROWTH FAILURE IN CHILDREN ASSOCIATED WITH MALNUTRITION**\n\nThere are 2 types of growth failure associated with malnutrition: *stunting* and *wasting*.\n\n| | WASTING | STUNTING |\n|---|---|---|\n| Definition | Refers to thinness | Refers to shortness |\n| Form of malnutrition | Reflects acute malnutrition | Reflects chronic malnutrition |\n| Best indicator | Weight-for-height/length | Height/length-for-age |",
+      "id": "i10625",
+      "quizId": "q103"
+    },
+    {
+      "stem": "In a patient with Bare Lymphocyte Syndrome Type II (MHC II deficiency), there is a noted failure of Cytotoxic T cells (CD8+) to clear intracellular infections despite the presence of MHC I. What is the primary biochemical/immunological reason for this failure?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "MHC II is required for the direct lysis of virally infected cells by CD8+T cells"
+        },
+        {
+          "id": "B",
+          "text": "MHC II is needed for cross-presentation to prime naive CD8+ T cells via Dendritic Cells"
+        },
+        {
+          "id": "C",
+          "text": "MHC II deficiency leads to the total absence of the CD8+ co-receptor on T cells"
+        },
+        {
+          "id": "D",
+          "text": "MHC II is the primary ligand for the T-cell receptor on all mature T-lymphocytes"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Fully mature cytotoxic CD8+ T cells recognize and destroy target somatic cells by binding exclusively to antigen fragments presented on MHC I, not MHC II.\n- **B** Activating naïve CD8+ T cells require a dendritic cell to present an antigen on MHC I while simultaneously presenting on MHC II to CD4+ T helper cells. This CD4+ interaction provides the essential co-stimulation needed to “license” and expand the CD8+ cytotoxic response. Without MHC II as in the case, this critical helper signal is lost, leaving CD8+ cells unprimed and dysfunctional.\n- **C** MHC II deficiency selectively impairs the positive selection and maturation of CD4+ T cells in the thymus, while development and surface expression of the CD8+ co-receptor remain entirely intact.\n- **D** MHC molecules exhibit strict specificity where MHC II binds exclusively to CD4+ T cells whereas MHC I is the dedicated ligand for CD8+ T cells.",
+      "id": "i10626",
+      "quizId": "q103"
+    },
+    {
+      "stem": "CRISPR-Cas9 technology has revolutionized genome technology. As of 2024-2026, which of the following represents the most advanced and clinically validated application of this technology in humans?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Creating designer hormones for endocrine therapy"
+        },
+        {
+          "id": "B",
+          "text": "Conferring enhanced athletic performance via gene doping"
+        },
+        {
+          "id": "C",
+          "text": "Cut out nucleic acid segments responsible for genetic diseases"
+        },
+        {
+          "id": "D",
+          "text": "Enhancing cognitive capacity through neural editing"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Recombinant hormones are efficiently produced using bacterial plasmid cloning systems and do not require mammalian genome editing.\n- **B** Using gene editing platforms for sports is medically unvalidated and is strictly prohibited by regulatory authorities.\n- **C** CRISPR-Cas9 is clinically validated to treat certain severe monogenic diseases. A recent example is CASGEVY, an approved therapy that uses a single guide RNA and Cas9 endonuclease to disrupt the BCL11A gene enhancer in hematopoietic stem cells, reactivating fetal hemoglobin (HbF) to cure severe sickle cell disease.\n- **D** Polygenic complex human traits like cognition cannot be edited by current CRISPR technology.",
+      "id": "i10627",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A researcher observes that a specific globular protein reaches its peak solubility at a pH of 4.0. Based on the relationship between net molecular charge and protein solubility, which of the following is correct regarding the protein's isoelectric point (pI)?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Isoelectric point is near the pH 4"
+        },
+        {
+          "id": "B",
+          "text": "Isoelectric point is far from pH 4"
+        },
+        {
+          "id": "C",
+          "text": "Isoelectric point is near physiologic pH"
+        },
+        {
+          "id": "D",
+          "text": "Isoelectric point is equal to pH 4"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** If the pI is near pH 4.0, the net surface charge would approach zero, decreasing intermolecular repulsion and causing the proteins to aggregate and precipitate out.\n- **B** The isoelectric point (pI) is the pH where the protein’s net charge is zero, minimizing its solubility due the lack of electrostatic repulsion. Because this protein achieves peak solubility at pH 4.0, it must carry a high net charge at that environment, meaning its pI should be far away.\n- **C** While pI could theoretically be 7.4, this choice states it as a definitive absolute which is an incorrect deduction compared to the more encompassing statement implied by Choice B.\n- **D** If the pI is exactly 4.0, the protein would carry zero net charge, causing it to precipitate out of the solution.",
+      "id": "i10628",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following is the most commonly used technique for targeted, routine DNA sequencing?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Sanger sequencing"
+        },
+        {
+          "id": "B",
+          "text": "Immunohistochemistry"
+        },
+        {
+          "id": "C",
+          "text": "Northern blotting"
+        },
+        {
+          "id": "D",
+          "text": "Western blotting"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Sanger sequencing is the first technique developed to determine the sequence of proteins. It utilizes chain-terminating dideoxynucleoside triphosphates to generate fluorescently labeled DNA fragments that are sequenced by capillary electrophoresis.\n- **B** IHC utilizes labeled antibodies to detect antigens within tissues samples but cannot perform nucleotide sequencing.\n- **C** Northern blotting is a laboratory technique used to detect, analyze, and quantify specific RNA fragments within a sample, but cannot provide nucleotide sequence data.\n- **D** Western blotting uses gel electrophoresis and antibody probes to detect and quantify proteins from a mixture based on molecular weight.\n\n**SNOW DROP:** Southern - DNA; Northern - RNA; Western - Protein.\n\nReaction mixture: primer, template, dNTPs, DNA polymerase. Primer elongation and chain termination → capillary gel separation of DNA fragments → detection of fluorophores → sequence analysis done by computers.",
+      "id": "i10629",
+      "quizId": "q103"
+    },
+    {
+      "stem": "All of the following are associated with Vitamin A deficiency EXCEPT?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Teratogenicity"
+        },
+        {
+          "id": "B",
+          "text": "Nyctalopia"
+        },
+        {
+          "id": "C",
+          "text": "Delayed growth"
+        },
+        {
+          "id": "D",
+          "text": "Xerophthalmia"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Teratogenicity is a classic complication of Vitamin A toxicity, particularly from synthetic retinoids like isotretinoin, and not caused by its deficiency.\n- **B** Night blindness is the earliest clinical manifestation of Vitamin A deficiency as it is an essential component of rhodopsin responsible for low-light vision.\n- **C** Vitamin A and its metabolite retinoic acid function as transcription factors required for normal cellular differentiation, bone remodeling, and immune function, hence failure to thrive is a systemic feature of chronic Vitamin A deficiency.\n- **D** Severe dryness of the conjunctiva (xerophthalmia) is a sign of Vitamin A deficiency as this vitamin is essential for maintaining the differentiation of specialized epithelial tissues.",
+      "id": "i10630",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following best describes the biochemical consequence of elevated Hepcidin on iron homeostasis?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It increases the activity of DcytB to promote iron reduction"
+        },
+        {
+          "id": "B",
+          "text": "It degrades Ferroportin, preventing the export and subsequent oxidation of Fe2+"
+        },
+        {
+          "id": "C",
+          "text": "It directly binds to Transferrin to prevent Fe3+ binding"
+        },
+        {
+          "id": "D",
+          "text": "It increases renal excretion of iron"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Duodenal cytochrome B is an membrane enzyme that converts dietary Fe3+ to Fe2+ for uptake by DMT-1. It is regulated not by hepcidin, but by hypoxia and Fe deficiency.\n- **B** Hepcidin is an acute-phase reactant that acts as the master regulator of iron absorption and mobilization. It binds to ferroportin, the cellular iron exporter, inducing its internalization and degradation. This effectively traps iron intracellularly as ferritin, preventing its release, driving anemia in chronic diseases.\n- **C** Hepcidin decreases systemic iron availability by degrading the exporter ferroportin and does not interact with Transferrin.\n- **D** The body has no active mechanism for the excretion of iron through the kidneys, as iron balance is regulated through intestinal absorption and cellular trapping.",
+      "id": "i10631",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which specific component in breastmilk is essential for protecting the infant against enteric and respiratory pathogens?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Secretory IgA"
+        },
+        {
+          "id": "B",
+          "text": "Alpha-lactalbumin"
+        },
+        {
+          "id": "C",
+          "text": "Casein"
+        },
+        {
+          "id": "D",
+          "text": "Lactoferrin"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Secretory IgA is the primary immunologic protein in breastmilk, providing passive mucosal immunity of the infant’s respiratory and GI tract by blocking the attachment and invasion of enteric and respiratory pathogens.\n- **B** This is the predominant whey protein in human milk, acting as a source of essential amino acids rather than providing direct mucosal protection.\n- **C** Casein is a structural protein whose primary function is to release calcium, phosphate, and amino acids to optimize digestion.\n- **D** Lactoferrin is an iron-binding glycoprotein that provides non-specific antimicrobial defense by sequestering free ferric ions, starving iron-dependent bacteria of a nutrient for growth.",
+      "id": "i10632",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which amino acid is most likely responsible for alpha helix structural disruptions due to its rigid, cyclic amine side chain?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glycine"
+        },
+        {
+          "id": "B",
+          "text": "Proline"
+        },
+        {
+          "id": "C",
+          "text": "Alanine"
+        },
+        {
+          "id": "D",
+          "text": "Leucine"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Tryptophan is the largest amino acid. Its characteristic side chain is –CH₂–indole, consisting of a benzene ring fused to a five-membered nitrogen-containing pyrrole ring, collectively called an indole ring.\n- **B** Proline contains a unique cyclic side chain that bonds back to its own amino group, creating a rigid ring (imino group) that causes steric hindrance, physically kinking the peptide backbone.\n- **C** Alanine has a simple methyl side chain that can fit easily into the regular backbone and is a strong alpha-helix stabilizer.\n- **D** Leucine readily integrates into alpha helices without causing structural kinks or disruptions.\n\n**PROLINE**\n\n- Not an amino, but an imino acid.\n- Interrupts α-helices in globular proteins.",
+      "id": "i10633",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following statements correctly identifies a key difference in the source of atoms between the purine and pyrimidine rings?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Aspartate provides the majority of the atoms for the purine ring"
+        },
+        {
+          "id": "B",
+          "text": "Glycine is a major contributor to the pyrimidine ring structure"
+        },
+        {
+          "id": "C",
+          "text": "Aspartate contributes nearly the entire carbon-nitrogen skeleton of the pyrimidine ring"
+        },
+        {
+          "id": "D",
+          "text": "Glutamine provides all the nitrogen atoms for both rings"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Aspartate only provides a single nitrogen atom to the 9-membered purine ring.\n- **B** Glycine contributes three atoms to the purine ring, and is not involved in the structure of the pyrimidine ring.\n- **C** A single molecule of aspartate contributes three carbons and one nitrogen, making up 2/3 of the entire 6-membered ring structure.\n- **D** Glutamine provides the 2 amide nitrogens for the purine ring, and a nitrogen for the pyrimidine ring.\n\n**Sources of the Individual Atoms in the Purine Ring:** Aspartate, CO₂, glycine, glutamine, N¹⁰-formyl-tetrahydrofolate.\n\n**Sources of the Individual Atoms in the Pyrimidine Ring:** Amide nitrogen (R-group) of glutamine, aspartate, CO₂.",
+      "id": "i10634",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Franco, a 27-year-old male student presents with megaloblastic anemia with ataxic gait. Which mechanism causes this neurological presentation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Failed hematopoietic DNA methylation"
+        },
+        {
+          "id": "B",
+          "text": "Methylmalonyl-CoA buildup disrupting myelin"
+        },
+        {
+          "id": "C",
+          "text": "Folate deficiency impairing neurotransmitters"
+        },
+        {
+          "id": "D",
+          "text": "Homocysteine accumulation damaging neurons"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** This describes the mechanism behind the hemotologic finding of megaloblastic anemia in B12 and folate deficiencies, and not the neurologic presentation.\n- **B** The patient has subacute combined degeneration (SCD) of the spinal cord, a classic complication of Vitamin B12 deficiency. Without Vitamin B12 as a required cofactor for methylmalonyl-CoA mutase, methylmalonyl CoA accumulates and substitute for malonyl CoA during lipogenesis, leading to abnormal, branched chain fatty acids that destabilize the myelin sheaths of the dorsal column and lateral corticospinal tracts.\n- **C** Folate deficiency leads to megaloblastic anemia, but pure folate deficiency does not present with neurological deficits or demyelination seen in cobalamin deficiency,\n- **D** Homocysteine levels rise in both folate and B12 deficiencies because both are needed for methionine synthase activity. This increases thrombotic risks, but us not the primary reason for the neurologic manifestation in SCD.",
+      "id": "i10635",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following complement system types requires antigen-antibody complexes for activation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Alternative"
+        },
+        {
+          "id": "B",
+          "text": "Classical"
+        },
+        {
+          "id": "C",
+          "text": "Lectin"
+        },
+        {
+          "id": "D",
+          "text": "All of the above"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** The alternative pathway is antibody-independent, and is amplified by direct binding to foreign cell surface molecules like bacterial endotoxins.\n- **B** The classical pathway is antibody-dependent. It is triggered when the C1 complex binds directly to the Fc region of IgM or IgG antibodies that are already bound to their specific antigens.\n- **C** The lectin pathway is antibody-dependent and is activated when circulating mannose-binding lectin recognizes and binds directly to mannose residues on the surface proteins and carbohydrates of microorganisms.\n- **D** Only the classical pathway requires formation of antigen-antibody complexes to initiate its own cascade.\n\n| PATHWAY | TRIGGER(S) |\n|---|---|\n| Classic | Mediated by IgM (stronger), IgG |\n| Alternative | Mediated by microbe surface molecules |\n| Lectin | Mediated by mannose on microbial surface |",
+      "id": "i10636",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following hexose sugars differs from D-glucose in stereochemical configuration at only the carbon-4 position?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Galactose"
+        },
+        {
+          "id": "B",
+          "text": "Fructose"
+        },
+        {
+          "id": "C",
+          "text": "Allose"
+        },
+        {
+          "id": "D",
+          "text": "Mannose"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** The question asks for the C4 epimer of glucose. Epimers are stereoisomers that differ in configuration (chirality) only at one specific chiral carbon.\n- **B** Fructose is a ketose counterpart of glucose which is an aldose. They differ in the position of their carbonyl group and not on the chirality of a single carbon.\n- **C** Allose is the C3 epimer of Glucose, not the C4 epimer.\n- **D** Mannose is the C2 epimer of glucose.",
+      "id": "i10637",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What is TRUE about the peptide bond?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Occurs most commonly in the cis configuration"
+        },
+        {
+          "id": "B",
+          "text": "Is ionized at physiologic pH"
+        },
+        {
+          "id": "C",
+          "text": "Is stable to heating in strong acids"
+        },
+        {
+          "id": "D",
+          "text": "Has a partial double-bond character"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** The peptide bond exists almost exclusively in the trans configuration which minimizes steric clash between the R-group side chains of adjacent amino acids.\n- **B** The peptide bond is uncharged but polar. The carbonyl oxygen carries a partial negative charge, while the amide nitrogren carries a partial positive charge, but neither groups gain nor lose protons at physiologic conditions.\n- **C** Heating a protein in strong acids may be able to hydrolyze peptide bonds, breaking the peptide chain into its constituent amino acids.\n- **D** The peptide bond shares electrons among the carbonyl oxygen, carbonyl carbon, and amide nitrogen, achieving resonance stabilization and giving the peptide bond a partial double bond character.\n\n**PRIMARY STRUCTURE**\n\n- Determined by the amino acid sequence of a protein.\n- Peptide bonds attach the α-amino group of one amino to the α-carbonyl group of another.\n\n**PEPTIDE BONDS**\n\n- Partial double-bond character (represents 1.5 bonds).\n- Rigid and planar.\n- Trans-configuration (generally).\n- Disrupted by hydrolysis through prolonged exposure to a strong acid or base at elevated temperatures.",
+      "id": "i10638",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What protein aggregates are known to accumulate in Alzheimer’s disease?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Beta-amyloid"
+        },
+        {
+          "id": "B",
+          "text": "Alpha-synuclein"
+        },
+        {
+          "id": "C",
+          "text": "Prion protein"
+        },
+        {
+          "id": "D",
+          "text": "TDP-43"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Alzheimer’s disease is histologically characterized by two hallmark protein aggregates: extracellular plaques composed of beta-amyloid peptides and intracellular neurofibrillary tangles composed of hyperphosphorylated tau proteins.\n- **B** Alpha-synuclein is a soluble protein that misfolds and aggregates into inclusions called Lewy bodies, which are defining feature of Parkinson’s Disease and Lewy Body Dementia.\n- **C** Misfolded prion proteins aggregate to cause spongiform encephalopathies such as Creutzfeldt-Jakob Disease (CJD) in humans.\n- **D** TDP-43 aggregates are highly pathologic markers in neurons of patients with Frontotemporal Lobar Degeneration (FTLD) and Amyotrophic Lateral Sclerosis (ALS).",
+      "id": "i10639",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Alfonso, a 27/M, was preparing for a bodybuilding competition and has been consuming raw egg whites to meet his protein requirements. However, after 4 months into this diet, he developed dermatitis, alopecia, diarrhea, and abdominal pain. A deficiency in which vitamin is causing him to experience these symptoms?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Vitamin B7"
+        },
+        {
+          "id": "B",
+          "text": "Vitamin B6"
+        },
+        {
+          "id": "C",
+          "text": "Vitamin B5"
+        },
+        {
+          "id": "D",
+          "text": "Vitamin B3"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Raw egg whites contain Avidin, a heat-labile glycoprotein that binds to Biotin (Vitamin B7), preventing its intestinal absorption. Biotin is a cofactor for carboxylation enzymes, and chronic raw egg white ingestion leads to dermatitis, alopecia, and enteritis.\n- **B** Pyridoxine deficiency causes peripheral neuropathy, sideroblastic anemia, and seizures. It does not interact with avidin nor is affected by raw egg consumption.\n- **C** Pantothenic acid is an essential component of coenzyme A, and its deficiency presents as peripheral paresthesia and GI distress rather than dermatitis or alopecia.\n- **D** Niacin deficiency causes Pellagra which is characterized by dermatitis, diarrhea, and dementia, and has no interactions with avidin or raw egg components.",
+      "id": "i10640",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which condition results from a type I collagen defect that results in the inability to form triple helices?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Menkes disease"
+        },
+        {
+          "id": "B",
+          "text": "Marfan syndrome"
+        },
+        {
+          "id": "C",
+          "text": "Osteogenesis imperfecta"
+        },
+        {
+          "id": "D",
+          "text": "Cystic fibrosis"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Menkes disease is a X-linked genetic disorder that affects copper levels in the body due to the mutation of ATP7A gene and presents with copper deficiency, neurologic symptoms, and kinky or steely hair.\n- **B** Marfan syndrome is a defect in the FBN1 gene which codes for fibrillin-1, a scaffold for elastin and not a biosynthetic failure of Type 1 collagen.\n- **C** Osteogenesis imperfecta is a Type 1 collagen defect usually caused by mutations that replace glycine with bulkier amino acids. Since glycine is required at every third position to efficiently pack the collagen strands, its absence prevents triple helix formation, leading to brittle bones, blue sclerae, and early hearing loss.\n- **D** Cystic fibrosis is caused by mutant CFTR chloride channels, leading to thick viscous pulmonary and pancreatic mucus.",
+      "id": "i10641",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Melatonin, a hormone crucial for regulating sleep-wake cycles, is derived from which amino acid?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "W"
+        },
+        {
+          "id": "B",
+          "text": "Y"
+        },
+        {
+          "id": "C",
+          "text": "T"
+        },
+        {
+          "id": "D",
+          "text": "G"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Tryptophan (Trp, W) is the amino acid precursor to niacin, serotonin, and melatonin.\n- **B** Tyrosine (Tyr, Y) is the precursor amino acid to L-dopa, dopamine, norepinephrine and epinephrine.\n- **C** Threonine (Thr, T) is a polar, uncharged amino acid that does not serve as a precursor for neurotransmitters.\n- **D** Glycine (Gly, G) serves as a key precursor for porphyrins, purines, and creatin, but does not participate in the synthesis of indoleamins like melatonin.\n\n**TRYPTOPHAN**\n\n- Has the largest side chain.\n- Precursor for melatonin, serotonin, niacin.\n- **Mnemonic — TRYPTOPHAN DERIVATIVES:** TRYp Mo Siya, ‘No? Tryptophan Melatonin Serotonin Niacin. *Think of a large benzene ring “phan” = fan or pamaypay.*",
+      "id": "i10642",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following statements are TRUE?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "The R form of hemoglobin has low oxygen affinity"
+        },
+        {
+          "id": "B",
+          "text": "The T form of hemoglobin has high oxygen affinity"
+        },
+        {
+          "id": "C",
+          "text": "Both are true"
+        },
+        {
+          "id": "D",
+          "text": "Neither are true"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** The R (relaxed) form of hemoglobin has high oxygen affinity. This form is stabilized by oxygenation and high pH (low H+).\n- **B** The T (tense) form of hemoglobin has low oxygen affinity. This state is stabilized by deoxygenation and allosteric promotrs of tissue delivery like high H+, high CO2, , high 2,3-BPG, and high temperature.\n- **C** Both statements A and B are exactly reversed.\n- **D** Neither of the statements are true.",
+      "id": "i10643",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Angelo started calorie counting to manage his weight and food intake. During breakfast, he consumes 10 g of carbohydrates, 10 g of protein, and 10 g of fat. What is the total caloric intake (in kcal) generated from this meal?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "160 kcal"
+        },
+        {
+          "id": "B",
+          "text": "170 kcal"
+        },
+        {
+          "id": "C",
+          "text": "180 kcal"
+        },
+        {
+          "id": "D",
+          "text": "190 kcal"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **B** To calculate the total energy in kcal, apply the following conversion factors:\n  - 1 g carbohydrates = 4 kcal\n  - 1 g protein = 4 kcal\n  - 1 g fat = 9 kcal\n  - 1 g alcohol = 7 kcal.\n\n  This gives 40 kcal form carbohydrates, 40 kcal from protein, and 90 kcal from fat, totaling to 170 kcal for the meal.\n- **A, C, D** See choice B. Possible sources of miscalculation include misremembering or switching conversion factors for the food groups, or arithmetic errors.",
+      "id": "i10644",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Type IV collagen is an essential structural component of the basement membrane. Which of the following conditions is caused by an inherited genetic mutation in this collagen type, rather than an autoimmune attack?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Alport syndrome"
+        },
+        {
+          "id": "B",
+          "text": "Goodpasture syndrome"
+        },
+        {
+          "id": "C",
+          "text": "Marfan syndrome"
+        },
+        {
+          "id": "D",
+          "text": "Ehlers-Danlos syndrome"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Alport syndrome is an inherited Type IV collagen defect weakening the basement membrane, leading to hereditary nephritis, sensorineural hearing loss, and ocular dysfunction.\n- **B** Goodpasture syndrome also affects Type IV collagen, but is an autoimmune disease from autoantibodies attacking the basement membrane, leading to hematuria and hemoptysis.\n- **C** Marfan syndrome is an inherited defect in fibrillin-1 and not a basement membrane disorder.\n- **D** EDS disrupts the synthesis of Types I, III, or V collagen, rather than the Type IV collagen in basement membranes.\n\n**ALPORT SYNDROME VS. GOODPASTURE SYNDROME**\n\n| | Alport syndrome | Goodpasture syndrome |\n|---|---|---|\n| Defective collagen | Type IV collagen fiber | Type IV collagen fiber |\n| Clinical presentation | Gross hematuria; ocular lesions; hearing loss | Gross hematuria; hemoptysis |\n| Pathogenesis | X-linked pattern genetic disorder | Anti-GBM autoantibodies; autoimmune disorder |\n\n**Remember:** Al-FOUR-th syndrome involves Type 4 collagen. The glomerular and cochlear basement membranes are also affected. **Clinical Correlate:** In a patient with gross hematuria and hemoptysis, always think of a pulmonary-renal syndrome that could cause this presentation.",
+      "id": "i10645",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which part of the Electron Transport Chain is specifically inhibited by Cyanide?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "NADH:Ubiquinone Oxidoreductase"
+        },
+        {
+          "id": "B",
+          "text": "Succinate:Ubiquinone Oxidoreductase"
+        },
+        {
+          "id": "C",
+          "text": "Cytochrome bc1 Complex"
+        },
+        {
+          "id": "D",
+          "text": "Cytochrome c Oxidase"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Also known as Complex I, this enzyme complex is inhibited by substances like rotenone, metformin, and some barbiturates.\n- **B** Complex II is the entry point for electrons from FAHD2, and also acts as a TCA cycle enzyme (succinate dehydrogenase). It is inhibited by compounds like malonic acid.\n- **C** Complex III transfers electrons from ubiquinol to cytochrome c, and is inhibited by antimycin A.\n- **D** Cyanide is a toxin that binds irreversibly to the ferric ion in complex IV, halting the final step of the electron transport chain, leading to proton gradient collapse, ATP synthesis failure, and a shift to anaerobic glycolysis.\n\n| Complex | Inhibitor |\n|---|---|\n| Complex I - NADH dehydrogenase (NADH:CoQ oxidoreductase) | Barbiturates; Piericidin A; Amytal; Rotenone |\n| Complex II - Succinate dehydrogenase | Malonate; Carboxin; TTFA |\n| Complex III - Cytochrome b-c1 complex (CoQ:c1 oxidoreductase) | Antimycin A; Dimercaprol |\n| Complex IV - Cytochrome c oxidase | Cyanide; Carbon monoxide; Sodium Azide; Hydrogen Sulfide |",
+      "id": "i10646",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What is the reduced form of the final electron acceptor in the mitochondrial Electron Transport Chain?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "NAD+"
+        },
+        {
+          "id": "B",
+          "text": "FAD"
+        },
+        {
+          "id": "C",
+          "text": "Molecular oxygen"
+        },
+        {
+          "id": "D",
+          "text": "Water"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** These are oxidized forms of the electron carriers that feed the ETC, and not the final acceptors.\n- **B** Complex II is the entry point for electrons from FAHD2, and also acts as a TCA cycle enzyme (succinate dehydrogenase). It is inhibited by compounds like malonic acid.\n- **C** Molecular oxygen (O2) is the final electron acceptor itself but in the oxidized form.\n- **D** The final electron acceptor in the mitochondrial ETC is molecular oxygen. Oxygen then accepts the electrons from the chain with free protons, hence will be reduced to water.",
+      "id": "i10647",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following is NOT a direct component of the Electron Transport Chain?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Ubiquinol"
+        },
+        {
+          "id": "B",
+          "text": "ATP Synthase"
+        },
+        {
+          "id": "C",
+          "text": "Cytochrome c"
+        },
+        {
+          "id": "D",
+          "text": "G6PD"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Ubiquinol is the reduced form of coenzyme Q, a lipid-soluble electron carrier that shuttles electrons from Complexes I and II to Complex III.\n- **B** ATP synthase is an integral protein complex that couples the electrochemical proton gradient with driving the synthesis of ATP.\n- **C** Cytochrome c is a water-soluble membrane protein that acts as a mobile electron carrier to transport electrons between Complex III and IV.\n- **D** G6PD is the rate-limiting enzyme of the Pentose Phosphate Pathway, a cytosolic group of reactions. It oxidizes glucose-6-phosphate to 6-phosphogluconolactone, generating NADPH to serve as an antioxidant, but has no role in the ETC.",
+      "id": "i10648",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which step in the TCA cycle involves production of GTP?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Succinyl-CoA to succinate"
+        },
+        {
+          "id": "B",
+          "text": "Isocitrate to alpha-ketoglutarate"
+        },
+        {
+          "id": "C",
+          "text": "Malate to oxaloacetate"
+        },
+        {
+          "id": "D",
+          "text": "Fumarate to Malate"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** This is catalyzed by succinyl-CoA synthetase (succinate thiokinase), where the cleavage of the high-energy thioester bond provides the free energy required to drive the phosphorylation of GDP to GTP, making this the only step in the TCA that generates a high-energy nucleoside triphosphate via substrate level phosphorylation.\n- **B** This is catalyzed by isocitrate dehydrogenase, which generates NADH and releases carbon dioxide, but does not generate GTP.\n- **C** This is catalyzed by malate dehydrogenase, oxidizing malate to regenerate oxaloacetate, yielding a molecule of NADH.\n- **D** This is a hydration reaction catalyzed by fumarase and does not produce any energy carrier or reduced cofactors.\n\n**TCA cycle:** Acetyl-CoA + oxaloacetate → citrate (citrate synthase) → isocitrate (cis-aconitase) → α-ketoglutarate (isocitrate dehydrogenase; NAD⁺ → NADH; CO₂) → succinyl-CoA (α-ketoglutarate dehydrogenase; NAD⁺ → NADH; CO₂) → succinate (succinyl-CoA synthetase; GDP + Pi → GTP) → fumarate (succinate dehydrogenase / complex II; FAD → FADH₂) → malate (fumarase) → oxaloacetate (malate dehydrogenase; NAD⁺ → NADH).",
+      "id": "i10649",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following enzymatic reactions represents the primary irreversible, rate-limiting step of glycolysis?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glucose to Glucose-6-phosphate"
+        },
+        {
+          "id": "B",
+          "text": "Fructose-6-phosphate to Fructose-1,6-bisphosphate"
+        },
+        {
+          "id": "C",
+          "text": "3-Phosphoglycerate to 2-Phosphoglycerate"
+        },
+        {
+          "id": "D",
+          "text": "Glucose-6-phosphate to Fructose-6-phosphate"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** This reaction is catalyzed by hexokinase or glucokinase and is irreversible as it traps glucose inside the cell. It is not the rate-limiting step of glycolysis because G6P can still be shunted to pentose phosphate pathway or glycogenesis.\n- **B** This step is catalyzed by phosphofructokinase-1, and is the absolute committed, rate-limiting, and primary irreversible step of glycolysis. It consumes ATP to commit the carbohydrate to the downstream processes, hence it is heavily regulated by many allosteric factors.\n- **C** Catalyzed by phosphoglycerate mutase, it is a reversible isomerization step in the second phase of glycolysis, not a regulatory step.\n- **D** Catalyzed by phosphoglucose isomerase, it is a reversible step in the first phase of glycolysis and does not serve as a rate-limiting reaction.",
+      "id": "i10650",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following metabolic alterations occurs as a direct result of impaired mitochondrial oxidative phosphorylation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Increased ATP production"
+        },
+        {
+          "id": "B",
+          "text": "Increased lactate production"
+        },
+        {
+          "id": "C",
+          "text": "Increased oxygen consumption"
+        },
+        {
+          "id": "D",
+          "text": "Decreased NADH levels"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Oxidative phosphorylation is the cell’s primary mechanism of efficient energy production, generating 30-32 ATPs per glucose molecule, and impairing this process causes a profound decrease in ATP production.\n- **B** When oxidative phosphorylation is impaired, the ETC cannot receive electrons, NADH builds up relative to NAD+, depleting the oxidized form, and the cell shifts to anaerobic metabolism to regenerate the NAD+ required for glycolysis. This converts pyruvate to lactate, increasing the likelihood for lactic acidosis.\n- **C** Since ETC is dysfunctional, the final transfer of electrons to oxygen stops, decreasing oxygen consumption.\n- **D** Since ETC is stalled, NADH cannot be converted by complex I back to NAD+, leading to pooling of NADH in the cell.",
+      "id": "i10651",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following molecules CANNOT be used as a precursor for gluconeogenesis?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glycerol"
+        },
+        {
+          "id": "B",
+          "text": "Alanine"
+        },
+        {
+          "id": "C",
+          "text": "Lactate"
+        },
+        {
+          "id": "D",
+          "text": "Acetyl CoA"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Glycerol may be phosphorylated into glycerol-3-phosphate and oxidized into dihydroxyacetone phosphate, an intermediate of gluconeogenesis.\n- **B** Alanine may be transaminated by alanine aminotransferase to form pyruvate, the substrate for gluconeogenesis.\n- **C** Lactate dehydrogenase can oxidize lactate into pyruvate, a gluconeogenetic substrate.\n- **D** Humans cannot convert acetyl-CoA into glucose, as the formation of acetyl-CoA from pyruvate by the pyruvate dehydrogenase complex is a completely irreversible process.",
+      "id": "i10652",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which metabolic pathway is responsible for the conversion of acetyl-CoA into β-hydroxybutyric acid?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glycogenesis"
+        },
+        {
+          "id": "B",
+          "text": "Ketogenesis"
+        },
+        {
+          "id": "C",
+          "text": "Lipolysis"
+        },
+        {
+          "id": "D",
+          "text": "Gluconeogenesis"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** This refers to the synthesis of glycogen from glucose in well-fed states.\n- **B** This hepatic pathway produces ketone bodies during starvation, fasting, or uncontrolled diabetes. Two acetyl CoA units first condense to acetoacetate, which is then reduced to beta-hydroxybutyric acid, the most abundant ketone body in the blood.\n- **C** Lipolysis is the catabolic breakdown of triacylglycerols in adipose tissue to free fatty acids and glycerol by hormone sensitive lipase.\n- **D** This metabolic pathway synthesizes new glucose from precursors like lactate, alanine, and glycerol during starvation.",
+      "id": "i10653",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following describes the primary biochemical role of 5-phosphoribosyl-1-pyrophosphate (PRPP) in nucleotide metabolism",
+      "choices": [
+        {
+          "id": "A",
+          "text": "It serves as an activated ribose 5-phosphate donor."
+        },
+        {
+          "id": "B",
+          "text": "It acts as an intermediate in uric acid degradation."
+        },
+        {
+          "id": "C",
+          "text": "It functions as a carrier for urea transport."
+        },
+        {
+          "id": "D",
+          "text": "It facilitates the conversion of ammonia to urea."
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** PRPP is synthesized from ribose-5-phosphate and ATP and acts as an essential sugar donor providing the phosphoribosyl backbone for the synthesis of purine and pyrimidine units.\n- **B** PRPP is an anabolic building block and plays no role in the catabolism of purines.\n- **C** PRPP is a completely intracellular intermediate used for nucleotide anabolism.\n- **D** Nitrogen detoxification happens in the urea cycle using substrates like ornithine and carbamoyl phosphate, not PRPP.",
+      "id": "i10654",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What is the primary end-product of anaerobic glycolysis in humans?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Pyruvate"
+        },
+        {
+          "id": "B",
+          "text": "Acetyl-CoA"
+        },
+        {
+          "id": "C",
+          "text": "Lactic acid"
+        },
+        {
+          "id": "D",
+          "text": "Ethanol"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Pyruvate is the end-produce of aerobic glycolysis, where it is transported to the mitochondria for further oxidation,\n- **B** Conversion of pyruvate into acetyl-CoA by pyruvate dehydrogenase occurs in strictly aerobic conditions.\n- **C** In anaerobic conditions, glycolysis must still generate ATP to power the cell to generate NAD+ from NADH to push this pathway forward. Therefore, lactate dehydrogenase must convert pyruvate into lactic acid, converting NADH back to NAD+ to ensure that the payoff phase can still produce ATP via substrate-level phosphorylation.\n- **D** Ethanol is a fermentation byproduct of microorganisms such as yeast, not of humans.\n\n**Anaerobic Glycolysis:** Pyruvate → lactate (lactate dehydrogenase). **Fermentation:** Pyruvate → ethanol (pyruvate decarboxylase). **Gluconeogenesis:** Pyruvate → oxaloacetate (pyruvate carboxylase). **Citric Acid Cycle:** Pyruvate → acetyl CoA (pyruvate dehydrogenase).",
+      "id": "i10655",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Julian, a 54-year-old male with poorly controlled type 2 diabetes mellitus exhibits marked fasting hyperinsulinemia. Which of the following hepatic metabolic pathways remains actively stimulated by this elevated serum hormone level?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glycogenesis"
+        },
+        {
+          "id": "B",
+          "text": "Gluconeogenesis"
+        },
+        {
+          "id": "C",
+          "text": "Ketogenesis"
+        },
+        {
+          "id": "D",
+          "text": "Proteolysis"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** In T2DM, the pancreas compensates for peripheral tissue insulin resistance by producing excess insulin levels. High insulin levels make the liver partially responsive to this anabolic signal, activating glycogen synthase by dephosphorylation, promoting the storage of excess glucose as glycogen,\n- **B** This is downregulated by insulin.\n- **C** This is a non-covalent electrostatic interaction between H and an electronegative atom which stabilizes secondary protein structures and DNA base pairs.\n- **D** This catabolic process is activated by the anabolic actions of insulin.",
+      "id": "i10656",
+      "quizId": "q103"
+    },
+    {
+      "stem": "In Crigler-Najjar Syndrome Type I, which form of bilirubin is elevated?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Conjugated"
+        },
+        {
+          "id": "B",
+          "text": "Unconjugated"
+        },
+        {
+          "id": "C",
+          "text": "Stercobilin"
+        },
+        {
+          "id": "D",
+          "text": "Biliverdin"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Conjugated bilirubin cannot be formed due to the lack of enzymatic activity responsible for its synthesis.\n- **B** Crigler-Najjar Syndrome Type 1 is an autosomal recessive disorder characterized by the absence of UGTA1 enzyme activity responsible for transferring glucuronic acid unit to lipid-soluble unconjugated bilirubin, converting it into water-soluble conjugated bilirubin. Without this, unconjugated bilirubin builds up, which may cross the blood-brain barrier and deposit in the central nervous system.\n- **C** Stercobilin is the pigment from the intestinal bacterial breakdown of conjugated bilirubin, giving feces its brown color. Since no conjugated bilirubin reaches the gut, stercobilin production drops, resulting in acholic stools.\n- **D** Biliverdin is the pigment produced after macrophages degrade the heme ring.\n\n**MNEMONIC — Hyperbilirubinemia Syndromes**\n\n| UNCONJUGATED | Conjugated/DIRECT |\n|---|---|\n| Crigler-Najjar | Dubin-Johnson |\n| Gilbert | Rotor |",
+      "id": "i10657",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A 32-year-old cachectic female is hospitalized and initiated on nutritional rehabilitation. Within 48 hours, she develops profound muscle weakness and cardiac arrhythmias. Which of the following initial hormonal shifts directly triggers the intracellular metabolic shifts responsible for this presentation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glucagon surge"
+        },
+        {
+          "id": "B",
+          "text": "Massive Insulin release"
+        },
+        {
+          "id": "C",
+          "text": "Ketogenesis"
+        },
+        {
+          "id": "D",
+          "text": "Cortisol spike"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Glucagon is elevated during starvation and refeeding suppresses its secretion.\n- **B** During prolonged starvation, the body relies on catabolism, hence the low baseline insulin levels. When carbohydrates are suddenly introduced, the rise in blood glucose triggers an insulin spike, shifting the body from primarily catabolic state to an anabolic state. This drives a massive influx of glucose, phosphorus, potassium, and magnesium into the cell, depleting their amounts in the serum, which is characteristic of Refeeding Syndrome.\n- **C** Ketogenesis is active during prolonged fasting, and the insulin surge shuts it down.\n- **D** Cortisol helps maintain glucose levels during stress and fasting, but does not cause electrolyte shifts as in the case.",
+      "id": "i10658",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A 24-year-old female presents to the emergency department with severe, poorly localized abdominal pain, vomiting, and anxiety. Physical examination reveals no skin rashes or blisters. Her urine is noted to darken significantly to a reddish-brown color upon standing. Which best characterizes this patient's condition?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Acute intermittent porphyria (AIP)"
+        },
+        {
+          "id": "B",
+          "text": "Porphyria cutanea tarda (PCT)"
+        },
+        {
+          "id": "C",
+          "text": "Erythropoietic protoporphyria (EPP)"
+        },
+        {
+          "id": "D",
+          "text": "Variegate porphyria (VP)"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** AIP is an autosomal dominant disorder caused by deficiency in porphobilinogen deaminase (aka hydroxymethylbilane synthase). This leads to the accumulation of upstream porphyrin precursors porphobilinogen (PBG) and delta-aminolevulinic acid (ALA) in the blood and urine. When the urine of patients with AIP is exposed to light and air, PBG spontaneously polymerizes into porphobilin, leading to a dark, wine-red color. Since ALA and PBG are not yet cyclic intermediates, they do not absorb light or generate radicals in the skin, hence the patient does not experience cutaneous photosensitivity.\n- **B** PCT is caused by a uroporphyrinogen decarboxylase deficiency and presents with dark tea-colored urine with severe cutaneous photosensitivity characterized by blistering and hyperpigmentation.\n- **C** EPP involves deficiency of the ferrochelatase enzyme, leading to immediate painful cutaneous photosensitivity upon sun exposure, but not with dark urine.\n- **D** Variegate porphyria results from protophorphyrinogen oxidase deficiency, characteristically presenting with neurologic deficits, dark urine, and blistering skin photosensitivity.\n\n| Enzyme | Type of porphyria |\n|---|---|\n| δ-Aminolevulinic acid synthase | X-linked protoporphyria |\n| α-Aminolevulinic acid dehydratase | ALAD porphyria |\n| Porphobilinogen deaminase | Acute intermittent porphyria |\n| Uroporphyrinogen III synthase | Congenital erythropoietic porphyria |\n| Uroporphyrinogen decarboxylase | Porphyria cutanea tarda, hepatoerythropoietic porphyria |\n| Coproporphyrinogen oxidase | Hereditary coproporphyria |\n| Protoporphyrinogen oxidase | Variegate porphyria |\n| Ferrochelatase | Erythropoietic protoporphyria |\n\nGlycine & Succinyl CoA → δ-Aminolevulinic Acid → Porphobilinogen → Hydroxymethylbilane → Uroporphyrinogen III → Coproporphyrinogen III → Protoporphyrinogen IX → Protoporphyrin IX → Heme. A nonenzymatic branch forms Uroporphyrinogen I → Coproporphyrinogen I.",
+      "id": "i10659",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following enzymes is deficient in alkaptonuria, leading to ochronosis?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Phenylalanine hydroxylase"
+        },
+        {
+          "id": "B",
+          "text": "Homogentisate oxidase"
+        },
+        {
+          "id": "C",
+          "text": "Tyrosinase"
+        },
+        {
+          "id": "D",
+          "text": "Uroporphyrinogen decarboxylase (UROD)"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** This is responsible for the conversion of phenylalanine to tyrosine, and its deficiency results to Phenylketonuria, presenting with symptoms such as intellectual disability, microcephaly, and musty body odor and urine.\n- **B** Alkaptonuria is an autosomal recessive deficiency of homogentisate oxidase in tyrosine catabolism. Homogentisic acid accumulates and polymerizes into a dark pigment that deposits in cartilage and connective tissues (ochronosis), causing scleral spots, bluish-black ear cartilage, and urine that darkens upon standing.\n- **C** Tyrosinase deficiency impairs melanin synthesis, causing oculocutaneous albinism.\n- **D** UROD deficiency causes Porphyria Cutanea Tarda (PCT) and presents with blistering cutaneous photosensitivity and tea-colored urine.",
+      "id": "i10660",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following elements or structures is NOT involved in transcriptional modification or regulation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Ribosomal binding sites"
+        },
+        {
+          "id": "B",
+          "text": "Promoters"
+        },
+        {
+          "id": "C",
+          "text": "Enhancers"
+        },
+        {
+          "id": "D",
+          "text": "Introns"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Ribosomal binding sites (e.g. Shine Dalgarno sequence, Kozak sequence) are features of the mRNA involved only in translation. They facilitate recruitment and binding of the ribosome to the final mRNA transcript to initiate protein synthesis.\n- **B** Promoters are DNA sequences located upstream of a gene where RNA polymerase and transcription factors bind to initiate transcription.\n- **C** Enhancers are regulatory DNA sequences that bind transcription factors to modify the transcription of a specific gene.\n- **D** Introns are non-coding regions of a gene transcribed into pre-mRNA and must be removed via splicing.",
+      "id": "i10661",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Black pigment gallstones are commonly seen in patients with?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Hypercholesterolemia"
+        },
+        {
+          "id": "B",
+          "text": "Chronic hemolysis"
+        },
+        {
+          "id": "C",
+          "text": "Obesity"
+        },
+        {
+          "id": "D",
+          "text": "High-fat diets"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **B** Black pigment gallstones are due to chronic intravascular or extravascular hemolysis. RBC destruction leads to high bilirubin levels in the blood.\n- **A, C, D** These risk factors promote the formation of cholesterol gallstones which is the most common type, causing biliary cholesterol supersaturation and crystallization.",
+      "id": "i10662",
+      "quizId": "q103"
+    },
+    {
+      "stem": "What is the first step in amino acid catabolism which involves transfer of an -NH2 group to a ketoacid?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Deamination"
+        },
+        {
+          "id": "B",
+          "text": "Transamination"
+        },
+        {
+          "id": "C",
+          "text": "Hydroxylation"
+        },
+        {
+          "id": "D",
+          "text": "Methylation"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Oxidative deamination occurs after transamination, where the amino group from glutamate is released as free ammonia for urea synthesis.\n- **B** Transamination is the first step of the catabolism of most amino acids. Catalyzed by aminotransferases it involves the transfer of an alpha-amino group from an amino acid to an alpha-ketoacid acceptor (e.g. alpha-ketoglutarate), allowing the shuttling of nitrogen into the urea cycle.\n- **C** Hydroxylation involves adding a hydroxyl group (-OH) to an amino acid, not a general initial mechanism for removing nitrogen.\n- **D** Methylation is the transfer of a methyl group (-CH3) by carriers like S-adenosylmethionine (SAM) and is used in the modification of amino acids and epigenetic regulation rather than the initial breakdown of amino acid backbones.\n\n**FIRST PHASE OF AMINO ACID CATABOLISM — STEP 1: TRANSAMINATION**\n\n- Amino acids transfer their α-amino group to α-ketoglutarate, resulting in the formation of glutamate; exceptions: lysine, threonine, proline, hydroxyproline.\n- **Enzyme:** Aminotransferase. **Coenzyme:** Pyridoxal phosphate.\n- **ALT:** Alanine + α-ketoglutarate → pyruvate + glutamate.\n- **AST:** Glutamate + oxaloacetate → aspartate + α-ketoglutarate.",
+      "id": "i10663",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Under normal aerobic conditions, which of the following molecules serves as the primary fuel source to sustain the continuous pumping action of the myocardium??",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glucose"
+        },
+        {
+          "id": "B",
+          "text": "Glycogen"
+        },
+        {
+          "id": "C",
+          "text": "Fatty acids"
+        },
+        {
+          "id": "D",
+          "text": "Ketone bodies"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Oxidation of glucose accounts for only 15-30% of myocardial energy production in normal conditions. In periods of hypoxia or ischemia, the heart will shift to anaerobic glycolysis for its metabolic energy demands.\n- **B** Glycogen is a minor carbohydrate reserve within cardiac myocytes and is not the primary fuel for normal conditions.\n- **C** Under normal aerobic conditions, the resting myocardium relies on aerobic metabolism for its energy demands, utilizing long chain fatty acids via beta-oxidation. This reliance on lipids allows the heart to conserve glucose for other important tissues while utilizing a concentrated energy source in fatty acids.\n- **D** Ketone bodies are utilized during prolonged starvation and are not the primary fuel during normal baseline conditions.",
+      "id": "i10664",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Elevated serum levels of which of the following lipid components pose the highest direct risk for the development of atherosclerosis?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Chylomicrons"
+        },
+        {
+          "id": "B",
+          "text": "LDL"
+        },
+        {
+          "id": "C",
+          "text": "HDL"
+        },
+        {
+          "id": "D",
+          "text": "VLDL remnants"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Chylomicrons are large complexes that transport dietary triglycerides from the intestines to peripheral tissues which cannot easily penetrate the arterial endothelial wall to initiate atherogenesis.\n- **B** Low-density lipoproteins carry the majority of cholesterol in the blood. When LDL levels are chronically elevated, they cross the endothelial barrier in arteries where they are oxidized. This then triggers an inflammatory cascade, leading to formation of foam cells and fatty streak development, driving atherosclerosis.\n- **C** Since HDLs mediate reverse cholesterol transport, high levels are protecting against atherosclerosis.\n- **D** While VLDL remnants are pro-atherogenic, total circulating LDL is still the primary clinical risk factor for atherosclerotic plaque formation.",
+      "id": "i10665",
+      "quizId": "q103"
+    },
+    {
+      "stem": "During the initial seconds of an intense, short-duration exercise sprint, the rate of ATP consumption by skeletal muscle exceeds the capacity of cellular respiration. Which of the following intracellular molecules serves as a rapid, anaerobic energy reservoir to regenerate ATP during these bursts of maximal effort?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Creatine Phosphate"
+        },
+        {
+          "id": "B",
+          "text": "Myoglobin"
+        },
+        {
+          "id": "C",
+          "text": "Lactate"
+        },
+        {
+          "id": "D",
+          "text": "Alanine"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Creatine phosphate acts as an immediate high-energy reservoir in muscle tissue. During the initial moments of explosive maximal effort, creatine kinase transfers a phosphate group from creatine phosphate to ADP, regenerating ATP.\n- **B** Myoglobin is an intracellular hemeprotein that stores and releases oxygen during aerobic exertion but does not directly regenerate ATP in the process.\n- **C** Lactate is a byproduct in the effort to regenerate NAD+ to drive substrate level phosphorylation and is not used in rapid ATP regeneration.\n- **D** Alanine shuttles nitrogen from skeletal muscles to the liver to regenerate glucose via gluconeogenesis but cannot be used for fast regeneration of ATP during explosive activity.",
+      "id": "i10666",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following agents is responsible for deconjugating and converting bilirubin into urobilinogen within the intestine?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Heme oxygenase"
+        },
+        {
+          "id": "B",
+          "text": "Biliverdin reductase"
+        },
+        {
+          "id": "C",
+          "text": "Gut Flora"
+        },
+        {
+          "id": "D",
+          "text": "Glucuronosyltransferase"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Found in splenic macrophages, this enzyme catalyzes the initial, rate-limiting step of heme catabolism, cleaving the porphyrin ring to yield free iron, carbon monoxide, and biliverdin.\n- **B** This cytosolic macrophage enzyme facilitates the second step of heme breakdown, reducing green biliverdin to yellow, unconjugated biliverdin.\n- **C** Colonic bacteria produce enzymes that deconjugate bilirubin and reduce it to urobilinogen, which is then reabsorbed into the enterohepatic circulation, oxidized into stercobilin, or excreted in the kidneys as urobilin.\n- **D** Seen in hepatocytes, this functions to attach glucuronic acid to unconjugated bilirubin, making it water-soluble.\n\n**Heme breakdown:** Heme → biliverdin (*heme oxygenase*) → bilirubin (*biliverdin reductase*) → urobilinogen (*glucuronic acid removed by bacteria in intestine*) → stercobilin; enterohepatic circulation via portal system.",
+      "id": "i10667",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A neonate presents with micrognathic facies, pathologic cardiac murmurs, and cleft lip and palate. Genetic testing confirms 22q11.2 microdeletion. Which of the following serum abnormalities is most expected in this patient.",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Hypernatremia"
+        },
+        {
+          "id": "B",
+          "text": "Hyperkalemia"
+        },
+        {
+          "id": "C",
+          "text": "Hypocalcemia"
+        },
+        {
+          "id": "D",
+          "text": "Hypomagnesemia"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Sodium levels are unaffected by the pharyngeal pouch development failures in DiGeorge syndrome.\n- **B** Potassium regulation relies on aldosterone and renal excretion, with no pathophysiologic relation to a 22q11.2 deletion.\n- **C** In DiGeorge syndrome, 22q11.2 microdeletion results in the abnormal development of the 3rd to 4th pharyngeal pouches, causing parathyroid hypoplasia, deficient PTH production, and systemic hypocalcemia.\n- **D** Magnesium is not inherently affected in DiGeorge syndrome, but serial monitoring is required because hypomagnesemia can exacerbate hypocalcemia\n\n**MNEMONIC — DiGeorge Syndrome: CATCH-22**\n\n- Cardiac defects\n- Abnormal facies\n- Thymic aplasia\n- Cleft lip and palate\n- Hypocalcemia\n- 22q11.2 microdeletion",
+      "id": "i10668",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following intracellular molecules acts as the primary endogenous reducing agent that scavenge free radicals within myocardial tissue?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glutathione"
+        },
+        {
+          "id": "B",
+          "text": "Vitamin K"
+        },
+        {
+          "id": "C",
+          "text": "ATP"
+        },
+        {
+          "id": "D",
+          "text": "Glucose"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Reduced glutathione is the primary intracellular oxidant in cardiac myocytes. Glutathione peroxidase uses reduced glutathione to neutralize hydrogen peroxide into water, protecting the myocardium from free-radical damage and ischemia-reperfusion injury.\n- **B** This vitamin is an essential cofactor in the gamma-carboxylation of coagulation factions X, IX, VII, II in the liver and does not function as an antioxidant.\n- **C** ATP serves as the energy currency for myocardial contraction and has no reducing capability.\n- **D** While glucose may be shunted to the pentose phosphate pathway to regenerate glutathione, glucose itself is not an antioxidant.\n\n**REACTIVE OXYGEN SPECIES**\n\n- Unstable products that are formed as a byproduct of the ETC, when molecular oxygen (O₂) is partially reduced: superoxide (O₂⁻), hydrogen peroxide (H₂O₂), hydroxyl radical (OH·).\n- Produced by neutrophils to kill bacteria.\n- Increased during reperfusion injury: react with lipids to cause peroxidation and disruption of cell membranes; denatures and precipitates proteins and other substrates.\n- Defenses against ROS accumulation: catalase (2H₂O₂ → 2H₂O + O₂), peroxidase (H₂O₂ + AH₂ → 2H₂O + A), superoxide dismutase (O₂⁻ + O₂⁻ + 2H⁺ → H₂O₂ + O₂).\n- Glucose 6-phosphate → 6-phosphoglucono-δ-lactone through G6PD (NADP⁺ → NADPH + H⁺); glutathione reductase and glutathione peroxidase recycle GSH/GSSG and reduce peroxide to water.",
+      "id": "i10669",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which part of the cell is the primary site that produces Reactive Oxygen Species (ROS)?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Lysosome"
+        },
+        {
+          "id": "B",
+          "text": "Golgi Apparatus"
+        },
+        {
+          "id": "C",
+          "text": "Endoplasmic Reticulum"
+        },
+        {
+          "id": "D",
+          "text": "Mitochondria"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Lysosomes use enzymatic hydrolases to degrade macromolecular waste and do not contain the electron transport chain machinery for substantial ROS generation.\n- **B** This organelle is specialized for modifying, sorting, and packaging proteins for secretion and plays no major role in the generation of metabolic free radicals.\n- **C** The ER generates minor amounts of ROS during cytochrome p450 drug detoxification, but its total output is still way below mitochondrial ROS output.\n- **D** The mitochondria serve as the principal source of physiological ROS. During the electron transport chain, electrons leak from Complex I and III, directly reducing molecular oxygen to superoxide radicals.",
+      "id": "i10670",
+      "quizId": "q103"
+    },
+    {
+      "stem": "In the fasted state, which metabolic process is upregulated in the liver?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Glycogenesis"
+        },
+        {
+          "id": "B",
+          "text": "Fatty acid synthesis"
+        },
+        {
+          "id": "C",
+          "text": "Gluconeogenesis"
+        },
+        {
+          "id": "D",
+          "text": "Protein synthesis"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Glycogen synthesis is an anabolic pathway activated by insulin in the well-fed state to store excess glucose.\n- **B** Lipogenesis is stimulated by insulin during states of energy surplus when acetyl-CoA levels are high.\n- **C** In a fasted state, the elevated levels glucagon relative to insulin triggers cAMP cascades that upregulate gluconeogenic enzymes, driving the liver to synthesize de novo glucose from non-carbohydrate precursors to maintain normal blood glucose levels.\n- **D** Protein synthesis is an energy-intensive anabolic process that is active in the fed state.",
+      "id": "i10671",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A patient presents with skin blistering on sun-exposed areas and urine that darkens upon standing. Which of the following is the most likely diagnosis?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Acute Intermittent Porphyria (AIP)"
+        },
+        {
+          "id": "B",
+          "text": "Porphyria Cutanea Tarda (PCT)"
+        },
+        {
+          "id": "C",
+          "text": "Erythropoietic Protophophyria (EPP)"
+        },
+        {
+          "id": "D",
+          "text": "Lead poisoning"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** AIP is an early pathway defect affecting porphobilinogen deaminase activity. The accumulated precursors turn urine dark but does not cause photosensitivity, presenting instead with neurovisceral symptoms.\n- **B** PCT is caused by uropophyrinogen decarboxylase deficiency. Accumulated urophorphyrins spill into the urine causing the change in color, and deposit in the skin where they react with UV to cause blistering cutaneous photosensitivity.\n- **C** EPP reflects ferrochelatase deficiency, causing painful cutaneous photosensitivity. However, the accumulated protophorphyrin is lipophilic and is excreted through bile and feces, thereby not causing dark urine.\n- **D** Lead inactivates ALAD and ferrochelatase, causing GI distress, anemia, and neurologic issues. IT does not present with the UV-induced blistering of PCT.",
+      "id": "i10672",
+      "quizId": "q103"
+    },
+    {
+      "stem": "While the first nitrogen atom enters the urea cycle as free ammonia, which specific biomolecule acts as the direct donor of the second nitrogen atom?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Alanine"
+        },
+        {
+          "id": "B",
+          "text": "Aspartate"
+        },
+        {
+          "id": "C",
+          "text": "Glutamine"
+        },
+        {
+          "id": "D",
+          "text": "Glutamate"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Alanine serves as the principal carrier of nitrogen from skeletal muscle to the liver, and once within hepatocytes, it undergoes transamination to glutamate, meaning it does not directly enter the urea cycle.\n- **B** The second nitrogen atom of the urea cycle is directly donated by aspartate. Catalyzed by the enzyme argininosuccinate synthetase coupled with ATP hydrolysis, aspartate is condensed with citrulline to form argininosuccinate.\n- **C** Glutamine functions as a transported of ammonia in the bloodstream, and once in the liver, glutaminase cleaves it into glutamate and free ammonia, providing the first nitrogen atom of the urea cycle and not the second.\n- **D** Its conversion to aspartate by aspartate aminotransferase is necessary to supply the second nitrogen, hence it does not serve as its direct donor.",
+      "id": "i10673",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Pocholo, a 16-year-old gymnast with Type 1 Diabetes Mellitus is performing a high-intensity floor routine lasting 90 seconds. Which of the following substances serves as the primary metabolic fuel for ATP production during this specific type of anaerobic, high-intensity exercise?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Creatine phosphate"
+        },
+        {
+          "id": "B",
+          "text": "Glucose"
+        },
+        {
+          "id": "C",
+          "text": "Glycogen"
+        },
+        {
+          "id": "D",
+          "text": "Lactate"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Phosphocreatine provides ATP for bursts of maximal exertion via the phosphagen system, but these stores are exhausted within the first 10 seconds of exercise.\n- **B** Serum glucose is a critical fuel during prolonged, aerobic exercise, but during a high-intensity exercise for a short period, GLUT-4-mediated uptake is far too slow to match the rate of intramuscular glycogen breakdown.\n- **C** High-intensity efforts lasting beyond 10 seconds rely primarily on anaerobic glycolysis powered by intramuscular glycogenolysis. This pathway rapidly supplies glucose-1-phosphate, bypassing slower membrane transport systems required for blood glucose to meet the immediate energy demands.\n- **D** Lactate is the end-product and not the substrate of anaerobic glycolysis that is produced to regenerate NAD+.\n\n**MUSCLE DURING EXERCISE**\n\n- **100-meter sprint:** The major sources of energy are creatine phosphate (first 4–5 sec) and then anaerobic glycolysis, using muscle glycogen as the source of glucose.\n- **Marathon:** The major source of energy is aerobic metabolism, using blood glucose and free fatty acids, derived from breakdown of triacylglycerol from adipose tissue.",
+      "id": "i10674",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following epigenetic phenomena most likely will promote protein translation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Methylation of CpG islands"
+        },
+        {
+          "id": "B",
+          "text": "Inactivation of CYP450 enzymes"
+        },
+        {
+          "id": "C",
+          "text": "Acetylation of histone tails"
+        },
+        {
+          "id": "D",
+          "text": "Nucleosomal deacetylation"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Adding methyl groups to cytosine bases in CpG islands within promoter regions condenses chromatin structure and blocks transcription factor binding, silencing gene expression and inhibits downstream protein translation.\n- **B** This impairs phase I hepatic drug clearance, but does not primarily concern epigenetics.\n- **C** Histone acetylation neutralizes the positive charges on lysines, relaxing the tight heterochromatin into a transcriptionally active euchromatin state, opening the structure to allow RNA polymerase and promoting transcription and subsequent protein translation.\n- **D** Removing acetyl groups restores the positive charge on nucleosomal proteins, causing the DNA to wrap tightly into a condensed, transcriptionally silent state (heterochromatin), inhibiting downstream translation.",
+      "id": "i10675",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Martin, a 32-year-old male presents with xanthomas on his Achilles tendons and a strong family history of early-onset myocardial infarction. Laboratory results reveal significantly elevated LDL cholesterol with normal triglycerides. Which familial lipoproteinemia is the most likely diagnosis?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Familial Hyperchylomicronemia"
+        },
+        {
+          "id": "B",
+          "text": "Familial Hypercholesterolemia"
+        },
+        {
+          "id": "C",
+          "text": "Familial Hypertriglyceridemia"
+        },
+        {
+          "id": "D",
+          "text": "Familial Dysbetalipoprotinemia"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Type I hyperlipoproteinemia is caused by lipoprotein lipase or apo C-II deficiency, leading to presentation of hypertriglyceridemia, eruptive xanthoma and acute pancreatitis, rather than isolated LDL or tendon xanthomas.\n- **B** This case is a classic presentation of Familial hypercholesterolemia (Type IIa), an autosomal dominant defect on the LDL receptor or apo B-100. This prevents hepatic clearance of LDL, leading to isolated, severe elevations in serum cholesterol. The excess LDL deposits on tissues, causing the pathognomonic Achilles tendon xanthomas and premature CAD.\n- **C** Type IV dyslipidemia is characterized by overproduction of VLDL, leading to an isolated elevation of serum triglycerides, and is not associated with tendon xanthomas not premature atherosclerosis.\n- **D** Type III dyslipidemia is caused by a defect in apo E, preventing normal hepatic uptake of chylomicron remnants and IDL, causing concurrent elevation of cholesterol and triglycerides and presenting as palmar xanthomas.\n\n**HYPERLIPOPROTEINEMIAS**\n\n| Disease | Defect | Clinical presentation |\n|---|---|---|\n| Type I Familial Lipoprotein Lipase Deficiency | Deficiency in lipoprotein lipase or apo C-II | High TAG (from elevated chylomicrons), low LDL, low HDL; xanthomas, recurrent pancreatitis, hepatosplenomegaly; no increased risk of coronary disease |\n| Type IIa Familial hypercholesterolemia | Defective LDL receptor | High LDL and high cholesterol; atherosclerosis and coronary disease; cholesterol may also accumulate in tendons as xanthomas, in the cornea (corneal arcus) and around the eye (xanthelasmas) |\n| Type III Familial dysbetalipoproteinemia | Abnormal apo E | Hypercholesterolemia; xanthomas; atherosclerosis |\n| Type IV Familial hypertriacylglycerolemia | Over-production of VLDL | High VLDL and high cholesterol; subnormal LDL and HDL; associated with coronary disease, type 2 DM (glucose intolerance, hyperinsulinemia), obesity, alcoholism |\n| Familial Lipoprotein (a) Excess | Elevated Lp(a), which is nearly identical to LDL | Atherosclerosis leading to coronary disease; thrombosis due to inhibition of fibrinolysis |\n| Familial hyperalphalipoproteinemia | High HDL | Rare; beneficial to health and longevity |",
+      "id": "i10676",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Alexis, a severely malnourished male patient was hospitalized and was started on aggressive enteral nutrition. Within 48 hours, he develops hypophosphatemia and edema. All of the following biochemical processes are expected to occur during this phase EXCEPT:",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Continued ketogenesis"
+        },
+        {
+          "id": "B",
+          "text": "Glycogen resynthesis"
+        },
+        {
+          "id": "C",
+          "text": "Insulin spike"
+        },
+        {
+          "id": "D",
+          "text": "Cellular uptake of potassium and magnesium"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** The patient is presenting with Refeeding Syndrome. Ingesting carbohydrates triggers a massive insulin surge, shifting out the body from a starved, catabolic state to an anabolic state. Insulin inhibits hormone-sensitive lipase, stopping lipolysis and downregulates hepatic ketogenesis, decreasing ketone body production.\n- **B** The insulin spike activates glycogen synthase, driving hepatic and skeletal muscle glycogenesis from the newly available glucose substrates.\n- **C** Introduction of high amounts on carbohydrates increases blood sugar levels, triggering pancreatic beta cells to release a massive insulin surge to initiate glucose uptake.\n- **D** Insulin stimulates the Na+/K+ pump, forcing potassium into cells. Concurrently, the sudden shift to intracellular carbohydrate metabolism traps phosphate and magnesium inside the cells, leading to hypokalemia, hypophosphatemia, and hypomagnesemia.",
+      "id": "i10677",
+      "quizId": "q103"
+    },
+    {
+      "stem": "A female patient presents to the Outpatient Department with mild jaundice and headache after starting a new diet. She is clinically stable. A peripheral blood smear reveals microcytic, fragmented RBCs. Her sister is currently on dialysis. What is the most appropriate management?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Oral iron supplementation"
+        },
+        {
+          "id": "B",
+          "text": "EPO therapy"
+        },
+        {
+          "id": "C",
+          "text": "Observation and avoidance of triggers"
+        },
+        {
+          "id": "D",
+          "text": "Aggressive IV hydration"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** The case presents a hemolytic disorder, and in hemolytic states, iron is recycled by the reticuloendothelial system, hence iron supplementation may be unnecessary and may even cause secondary iron overload.\n- **B** Erythropoietin may be indicated for chronic anemia of renal or bone marrow origin. The family history of kidney disease may be a distractor, as the main trigger for the symptoms still remains to be the change in diet.\n- **C** The patient presents with a mild hemolysis secondary to a change in diet, which puts G6PD deficiency as one of the top differentials for this case. Since the patient is clinically stable, management is purely supportive which mainly centers on observation and active avoidance of the triggers.\n- **D** IV hydration is reserved for severe acute intravascular hemolytic cases to prevent acute tubular necrosis and is unnecessary for a clinically stable patient with mild jaundice.",
+      "id": "i10678",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Chemical analysis of a DNA sample from a patient with cutaneous photosensitivity and rashes reveals the formation of 4-membered ring structures between adjacent pyrimidine units. Which of the following repair mechanisms is primarily responsible for identifying and removing this specific type of lesion?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Base Excision Repair"
+        },
+        {
+          "id": "B",
+          "text": "Nucleotide Excision Repair"
+        },
+        {
+          "id": "C",
+          "text": "Mismatch Repair"
+        },
+        {
+          "id": "D",
+          "text": "Non-homologous end joining"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** BER corrects single-base alterations using DNA glycosylases, processing small, non-helix-distorting modifications rather than bulky pyrimidine dimers.\n- **B** The 4-membered rings describe UV-induced cyclobutane pyrimidine dimers. Nucleotide Excision Repair is the pathway that cleaves and removes these bulky lesions, and an inherited defect in this mechanism causes Xeroderma Pigmentosum which presents with severe sunburns, rashes,, and increased risk in developing skin malignancies.\n- **C** Mismatch repair repairs base-to-base mismatches and insertion/deletion loops that escape the DNA polymerase proofreading during replication. Deficiency in MMR do not impair the clearance of UV-induced photoproducts like pyrimidine dimers.\n- **D** Defective NHEJ presents as severe combined immunodeficiency rather than the classic cutaneous UV sensitivity seen in Xeroderma Pigmentosum.\n\n| DNA lesion | Cause | Repair mechanism | Disease |\n|---|---|---|---|\n| Mismatched strand | Errors that escaped proofreading | Mismatch repair: Erroneous nucleotides in daughter strand excised; DNA polymerase synthesizes new DNA, ligase seals the nick | Hereditary nonpolyposis colon cancer (*Lynch syndrome*) |\n| Pyrimidine dimers (Usually thymine) | Exposure to UV light | Nucleotide excision repair: UV-specific endonuclease recognizes the dimer, and removes the damaged strand; DNA polymerase synthesizes new DNA, ligase seals the nick | Xeroderma pigmentosum |\n| Base alterations (e.g., cytosine to uracil, or guanine to xanthine) | Spontaneous or deaminating compounds | Base excision repair: Abnormal bases recognized and removed by specific glycosylases, leaving an AP site; excision and gap-filling as above | MUTYH-associated polyposis |\n| Double strand breaks | Ionizing radiation; free radicals; anti-tumor drugs | Non-homologous end joining: Results in loss of DNA; Homologous recombination: Less prone to error | SCID; breast cancer susceptibility 1 and 2 |\n\n2 thymines → UVA → Cyclobutane dimer.",
+      "id": "i10679",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Pierre, a 28-year-old mountain climber ascending Mount Tibidabo adapts to the new environment by increasing the production of a specific allosteric modulator found in his red blood cells. This molecule is derived from a certain glycolytic intermediate. Which class of enzyme catalyzes this specific conversion?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Oxidoreductase"
+        },
+        {
+          "id": "B",
+          "text": "Hydrolase"
+        },
+        {
+          "id": "C",
+          "text": "Kinase"
+        },
+        {
+          "id": "D",
+          "text": "Mutase"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Oxidoreductases catalyze electron transfers and redox reactions. The conversion of 1,3-BPG to 2,3-BPG involves only structural rearrangement, and not changes in oxidation states.\n- **B** Hydrolases use water to cleave chemical bonds, and not rearrangement reactions such as in the case.\n- **C** Kinases transfer phosphate groups to and from high-energy molecules like ATP.\n- **D** Chronic high-altitude hypoxia triggers RBCs to upregulate 2,3-bisphosphoglycerate synthesis (2,3-BPG) via the Rapoport-Leubering shunt to promote tissue O2 unloading. 2,3-BPG is synthesized directly from 1,3-BPG, a glycolytic intermediate, by bisphosphoglycerate mutase, an enzyme which catalyzes internal intra-molecular transfer a phosphate group from carbon 1 to 2.\n\n**2,3-BISPHOSPHOGLYCERATE**\n\n- Found in RBCs where the reaction catalyzed by phosphoglycerate kinase is bypassed.\n- Rapoport-Luebering shunt pathway.\n- 1,3-BPG → 2,3-BPG. *Enzyme: Bisphosphoglycerate mutase.*\n- 2,3-bisphosphoglycerate → 3-phosphoglycerate. *Enzyme: 2,3-bisphosphoglycerate phosphatase.*",
+      "id": "i10680",
+      "quizId": "q103"
+    },
+    {
+      "stem": "The subunits of porphyrin complexes are interconnected at their alpha-carbon atoms through which bridges?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Phosphoanhydride"
+        },
+        {
+          "id": "B",
+          "text": "Phosphoester"
+        },
+        {
+          "id": "C",
+          "text": "Glycosidic"
+        },
+        {
+          "id": "D",
+          "text": "Methyne"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Phosphoanhydride bonds are high-energy linkages formed between phosphate groups in molecules such as ATP.\n- **B** Phosphester bonds link a phosphate group to a carbon-containing alcohol group, forming the structural backbone of nucleic acids.\n- **C** Glycosidic bonds are covalent linkages connecting a carbohydrate molecule to another group.\n- **D** Porphyrins are cyclic compounds formed by the linkage of four pyrrole rings interconnected at their alpha-carbon atoms via four methyne (-CH=) bridges.",
+      "id": "i10681",
+      "quizId": "q103"
+    },
+    {
+      "stem": "In clinical chemistry, which enzyme is utilized in automated test strips to measure blood and urine glucose levels by converting glucose into gluconic acid and hydrogen peroxide?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Dismutase"
+        },
+        {
+          "id": "B",
+          "text": "Hydrogenase"
+        },
+        {
+          "id": "C",
+          "text": "Polymerase"
+        },
+        {
+          "id": "D",
+          "text": "Oxidase"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Dismutases catalyze disproportionation reactions to generate antioxidant molecules but are not diagnostic tools for sugar detection.\n- **B** Hydrogenases catalyze the redox reaction of molecular hydrogen (H2), and play no role in clinical diagnostic assays.\n- **C** Polymerases join nucleotide subunits together to generate long chains of nucleic acids during replication or transcription.\n- **D** Glucose oxidase is highly specific for beta-D-glucose, oxidizing it to gluconic acid while reducing ambient oxygen to hydrogen peroxide (H2O2). In test strips the generated peroxide is measured electrochemically to produce a signal directly proportional to blood glucose levels.",
+      "id": "i10682",
+      "quizId": "q103"
+    },
+    {
+      "stem": "When a metallic ion is bound to an enzyme, this component is referred to as a/n:",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Apoenzyme"
+        },
+        {
+          "id": "B",
+          "text": "Coenzyme"
+        },
+        {
+          "id": "C",
+          "text": "Cofactor"
+        },
+        {
+          "id": "D",
+          "text": "Holoenzyme"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** An apoenzyme is the purely protein portion of an enzyme that requires a cofactor. Because the essential non-protein component is absent, an apoenzyme is catalytically inactive.\n- **B** A coenzyme s a specific subtype of cofactors referring to small inorganic non-protein molecules that transiently bind to the enzyme (vs inorganic metallic ions).\n- **C** A cofactor is a non-protein molecule or ion that is required for an enzyme to carry out its catalytic activity. They are broadly divided into inorganic metal ions (e.g. Zn2+, Mg2+), and organic molecules.\n- **D** A holoenzyme refers to the complete, active, and functional enzyme complex, representing the combined protein component (apoenzyme) with the required non-protein component (cofactor or coenzyme).",
+      "id": "i10683",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which GLUT transporter is mainly present in the neurons and serves as a high-affinity glucose transporter in the central nervous system?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "GLUT 2"
+        },
+        {
+          "id": "B",
+          "text": "GLUT 3"
+        },
+        {
+          "id": "C",
+          "text": "GLUT 4"
+        },
+        {
+          "id": "D",
+          "text": "GLUT 5"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** GLUT 2 is found in liver, pancreatic beta cells, and the basolateral membrane of renal and intestinal epithelia, which features a low Km and serves as a metabolic sensor for insulin release and glucose storage.\n- **B** GLUT 3 is the transporter primarily found in neurons and acts as a high-affinity glucose transporter in the central nervous system, ensuring a continuous and adequate supply of glucose to meet the energy demands of neurons.\n- **C** GLUT 4 is the only insulin-dependent glucose transport primarily located in skeletal muscle and adipose tissue, responding to insulin signaling ang exercise.\n- **D** GLUT 5 serves as a fructose transporter located on the apical membrane of enterocytes in the small intestine and spermatozoa.",
+      "id": "i10684",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Mitochondrial acetyl-CoA cannot directly cross the inner mitochondrial membrane into the cytosol for fatty acid synthesis. Which TCA cycle intermediate shuttles these acetyl groups into the cytosol?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Succinyl-CoA"
+        },
+        {
+          "id": "B",
+          "text": "Citrate"
+        },
+        {
+          "id": "C",
+          "text": "Malate"
+        },
+        {
+          "id": "D",
+          "text": "Oxaloacetate"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Succinyl-CoA is a TCA intermediate used in heme synthesis and cannot cross the inner mitochondrial membrane.\n- **B** Acetyl-CoA is trapped in the mitochondria, but lipogenesis occurs in the cytosol. Mitochondrial acetyl CoA condenses with oxaloacetate to form citrate, which exits to the cytosol. The enzyme ATP-citrate lyase cleaves citate back to acetyl-CoA for fatty acid synthesis.\n- **C** Malate helps return oxaloacetate carbons to the mitochondria. Its decarboxylation by malic enzyme generates NADPH for lipogenesis, but malate dose not shuttle acetyl groups out of the mitochondria.\n- **D** Oxaloacetate condenses with acetyl-CoA to create citrate, but oxaloacetate cannot directly cross the inner mitochondrial membrane on its own.",
+      "id": "i10685",
+      "quizId": "q103"
+    },
+    {
+      "stem": "The breakdown of fatty acids occurs by repeating a four-step cycle in the mitochondrial matrix. The following are standard enzymatic steps in the beta oxidation pathway EXCEPT FOR:",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Oxidation"
+        },
+        {
+          "id": "B",
+          "text": "Hydration"
+        },
+        {
+          "id": "C",
+          "text": "Condensation"
+        },
+        {
+          "id": "D",
+          "text": "Thiolysis"
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Oxidation occurs twice per cycle of beta oxidation, producing FADH2 in the first, and NADH in the second.\n- **B** This is the second step in each cycle, with enoyl-CoA hydratase adding a water molecule across the formed double bond of the intermediate.\n- **C** Condensation is the first step of fatty acid synthesis (Code ReDRed), not breakdown. The mnemonic OHOT effectively summarizes the iterative sequence: Oxidation, Hydration, Oxidation, and Thiolysis.\n- **D** This is the fourth step within each cycle, where an acetyl-CoA and a shortened fatty acid are released.",
+      "id": "i10686",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Krabbe’s Disease manifests with irritability, developmental delay, and severe demyelination. Which of the following lysosomal enzymes is deficient in this condition?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Beta-Glucosidase"
+        },
+        {
+          "id": "B",
+          "text": "Beta-Galactosidase"
+        },
+        {
+          "id": "C",
+          "text": "Ceramidase"
+        },
+        {
+          "id": "D",
+          "text": "Hexosaminidase A"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Deficiency in beta-glucosidase (glucocerebrosidase) causes Gaucher’s Disease. Lipid accumulation within macrophages leads to hepatosplenomegaly and bone crises.\n- **B** Krabbe’s Disease is an autosomal recessive lysosomal storage disease caused by a deficiency in galactocerebrosidase (beta-galactosidase), leading to oligodendrocyte loss and severe demyelination of the central and peripheral nervous system.\n- **C** Ceramidase deficiency causes Farber disease which presents with a triad of joint involvement, subcutaneous nodules, and a hoarse cry.\n- **D** Deficiency in Hexosaminidase A causes Tay-Sachs disease which presents with neurodegeneration and a cherry red macular spot but without hepatosplenomegaly.",
+      "id": "i10687",
+      "quizId": "q103"
+    },
+    {
+      "stem": "How many cycles of beta-oxidation are required for the complete oxidation of one molecule of palmitic acid (a saturated 16-carbon fatty acid), and how many acetyl-CoA molecules are produced?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "7 cycles, 7 acetyl-CoA"
+        },
+        {
+          "id": "B",
+          "text": "7 cycles, 8 acetyl-CoA"
+        },
+        {
+          "id": "C",
+          "text": "8 cycles, 8 acetyl-CoA"
+        },
+        {
+          "id": "D",
+          "text": "8 cycles, 9 acetyl-CoA"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** This correctly identifies the number of cycles but fails to account the two molecules of ATP produced in the final cleavage.\n- **B** An even-chain fatty acid with n carbons yields n/2 acetyl-CoA molecules after [(n/2)-1] cycles of beta-oxidation. For palmitic acid (C16:0), this results in 8 molecules of acetyl-CoA through seven cycles.\n- **C** Correct number of acetyl-CoA molecules, but only 7 “cuts” are needed to yield these number of 2C units.\n- **D** Nine 2-carbon acetyl CoA molecules cannot be derived from a 16-carbon fatty acid.",
+      "id": "i10688",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Regarding enzyme kinetics, which of the following statements accurately describes the Michaelis-Menten constant (Km)?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Km is equal to the substrate concentration at maximum reaction velocity Vmax."
+        },
+        {
+          "id": "B",
+          "text": "Km represents the maximum velocity of an enzyme-catalyzed reaction."
+        },
+        {
+          "id": "C",
+          "text": "A lower Km indicates higher substrate affinity."
+        },
+        {
+          "id": "D",
+          "text": "Km is not affected by enzyme inhibitors."
+        }
+      ],
+      "answer": "C",
+      "rationale": "- **A** Km corresponds to the concentration at half-maximal velocity (1/2 Vmax) of an enzyme, not at Vmax.\n- **B** Km does not represent the maximum velocity, but instead the concentration at half-maximal velocity. It’s units therefore are concentration units.\n- **C** A lower Km value indicates that the enzyme requires less substrate to be saturated, reflecting a higher affinity for that substrate.\n- **D** Km is altered by specific inhibitors. For example, competitive inhibitors compete with the substrate for the active site, increasing the apparent Km, implying that more substrate is needed to reach ½ Vmax.",
+      "id": "i10689",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Andersen disease is characterized by a deficiency in what enzyme?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Branching enzyme"
+        },
+        {
+          "id": "B",
+          "text": "Debranching enzyme"
+        },
+        {
+          "id": "C",
+          "text": "Muscle phosphorylase"
+        },
+        {
+          "id": "D",
+          "text": "Liver phosphorylase"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** Andersen disease (GSD IV) is a deficiency in the branching enzyme. Normal glycogen synthesis is dysfunctional, leading to accumulation of long, unbranched glycogen polymers that accumulate in tissues, triggering infantile liver cirrhosis.\n- **B** Cori disease (GSD III) is a deficiency in the debranching enzyme. It results in the accumulation of limit dextrins, and presents with hepatomegaly and fasting hypoglycemia without early onset fatal cirrhosis.\n- **C** The deficiency in muscle glycogen phosphorylase in McArdle Disease (GSD V) leads to prevention of glycogenolysis, and presents as exercise-induced cramps, muscle fatigue, and post-exertional myoglobinuria.\n- **D** Hers Disease (GSD VI) is a deficiency in liver glycogen phosphorylase and presents as mild fasting hypoglycemia and hepatomegaly that improves with age.\n\n| Name | Deficiency | Clinical features |\n|---|---|---|\n| Ia Von Gierke disease | Glucose-6-phosphatase | ↑ Glycogen in liver and renal tubule cells, hypoglycemia, lactic acidosis, ketosis, hyperlipemia |\n| II Pompe disease | Lysosomal acid maltase | ↑ Glycogen in lysosomes; juvenile onset: hypotonia, death from heart failure by age 2; adult onset: muscle dystrophy |\n| IIIa Cori disease | Debranching enzyme | Fasting hypoglycemia, hepatomegaly in infancy, ↑ limit dextrin, muscle weakness |\n| IV Andersen disease | Branching enzyme | Hepatosplenomegaly, ↑ polysaccharide with few branch points, death from heart or liver failure before age 5 |\n| V McArdle syndrome | Muscle phosphorylase | Poor exercise tolerance, muscle cramps and myoglobinuria but no lactic acidosis, ↑ muscle glycogen |\n| VI Hers disease | Liver phosphorylase | Hepatomegaly, mild hypoglycemia |",
+      "id": "i10690",
+      "quizId": "q103"
+    },
+    {
+      "stem": "On a Lineweaver-Burk plot, adding an enzyme inhibitor leaves the y-intercept unchanged but shifts the x-intercept closer to the origin. What type of inhibition does this describe?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Competitive inhibition"
+        },
+        {
+          "id": "B",
+          "text": "Noncompetitive inhibition"
+        },
+        {
+          "id": "C",
+          "text": "Uncompetitive inhibition"
+        },
+        {
+          "id": "D",
+          "text": "Mixed inhibition"
+        }
+      ],
+      "answer": "A",
+      "rationale": "- **A** The y intercept represents 1/Vmax and the x-intercept represents -1/Km. Because competitive inhibitors may be outcompeted by excess substrate, Vmax remains unchanged and the y-intercept stays constant, while the Km increases, moving it closer to 0.\n- **B** Non-competitive inhibitors bond to an allosteric site, decreasing Vmax while leaving Km unchanged. On the LB plot, this causes the line to change slope but have an unchanged x-intercept.\n- **C** Uncompetitive inhibitors bind only to the enzyme-substrate complex, decreasing both Vmax and Km, yielding parallel lines on the LB plot.\n- **D** Mixed inhibitors can bond to both the free enzyme and the ES complex, altering Vmax and Km unequally, leading to an intersection of the inhibited and uninhibited plots to intersect at a point away from the x- and y- axes.",
+      "id": "i10691",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Jiggy, a 28-year-old medical student, experiences severe facial flushing, a throbbing headache, and tachycardia within minutes of consuming a single serving of alcohol. A genetic variant causing a deficiency in which of the following mitochondrial enzymes explains his presentation?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Alcohol dehydrogenase"
+        },
+        {
+          "id": "B",
+          "text": "Aldehyde dehydrogenase"
+        },
+        {
+          "id": "C",
+          "text": "Cytochrome P450 (CYP2E1)"
+        },
+        {
+          "id": "D",
+          "text": "Catalase"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Deficiency in alcohol dehydrogenase slows the production of the toxic intermediate, delaying intoxication rather than causing an acute flush.\n- **B** Ethanol is oxidized to the toxic acetaldehyde, which is normally cleared by aldehyde dehydrogenase enzyme activity. An inherited deficiency in aldehyde dehydrogenase causes acetaldehyde accumulation immediately after drinking, causing histamine and catecholamine leading to headache, flushing and tachycardia.\n- **C** CYP2E1 is part of the microsomal ethanol oxidizing system, and is induced in heavy, chronic alcohol intake instead of in acute cases.\n- **D** Catalase is a peroxisomal pathway enzyme for ROS neutralization and not for alcohol clearance.\n\n**METABOLISM OF ALCOHOL**\n\n- Alcohol is metabolized in the liver by two oxidation reactions:\n  1. Ethanol → Acetaldehyde. *Enzyme: Alcohol Dehydrogenase.*\n  2. Acetaldehyde → Acetate. *Enzyme: Aldehyde dehydrogenase.* *Inhibitor: Disulfiram.*\n- Acetaldehyde causes flushing, tachycardia, hyperventilation, and nausea.\n- Both reactions lead to accumulation of NADH.\n- **Microsomal ethanol oxidation system:**\n  - Alternate pathway for ethanol metabolism induced in chronic alcoholics.\n  - Has a much higher Km for ethanol, utilized when ethanol concentrations are high.\n  - Occurs in the smooth endoplasmic reticulum and requires CYP2E1 from cytochrome P450 family of enzymes.\n- Acetate → Acetyl-CoA. *Enzyme: Acetate-CoA ligase (ACSL); ATP → ADP + Pi.*",
+      "id": "i10692",
+      "quizId": "q103"
+    },
+    {
+      "stem": "The pyruvate dehydrogenase (PDH) complex requires five distinct cofactors to convert pyruvate into acetyl-CoA. A deficiency in which of the following vitamins would directly impair this complex by preventing the synthesis of Coenzyme A (CoA)?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Thiamine"
+        },
+        {
+          "id": "B",
+          "text": "Riboflavin"
+        },
+        {
+          "id": "C",
+          "text": "Niacin"
+        },
+        {
+          "id": "D",
+          "text": "Pantothenic acid"
+        }
+      ],
+      "answer": "D",
+      "rationale": "- **A** Vitamin B1 is the precursor for thiamine pyrophosphate (TPP) which serves as a PDH cofactor responsible for the initial decarboxylation of pyruvate.\n- **B** Vitamin B2 is the precursor for FAD, a tightly bound prosthetic group on the E3 subunit of PDH.\n- **C** Niacin is the precursor for NAD+, the final electron acceptor of the complex which leaves as NADH.\n- **D** Vitamin B5 is the essential vitamin precursor for Coenzyme A. In the PDH complex, CoA acts as a receiver the acetyl group from pyruvate, generating acetyl-CoA which then proceeds to the TCA cycle.\n\n**PYRUVATE → ACETYL COA**\n\n*Enzyme: Pyruvate dehydrogenase complex (PDC).*\n\n- **Coenzymes:** Thiamine pyrophosphate (from vitamin B1); FAD (from vitamin B2); NAD+ (from vitamin B3); Coenzyme A (contains pantothenic acid) (from vitamin B5); lipoic acid (antioxidant).\n- Arsenic can inhibit pyruvate dehydrogenase by binding to lipoic acid, making it inactive.",
+      "id": "i10693",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Which of the following pancreatic endopeptidases preferentially cleaves peptide bonds at the carboxyl side of basic amino acids, specifically lysine and arginine?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Carboxypeptidase A"
+        },
+        {
+          "id": "B",
+          "text": "Trypsin"
+        },
+        {
+          "id": "C",
+          "text": "Chymotrypsin"
+        },
+        {
+          "id": "D",
+          "text": "Carboxypeptidase B"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Carboxypeptidases are ectopeptidases, meaning they cleave amino acids from the free C terminus and not internal peptide bonds. This variant cleaves external hydrophobic or aromatic amino acids.\n- **B** Trypsin is an enzyme with an acidic aspartate residue in its active site, allowing it to cleave internal peptide bonds on the carboxyl side of positively charged, basic amino acids like lysine and arginine.\n- **C** Chymotrypsin is an endopeptidase that is selective for uncharged aromatic amino acids like tyrosine, phenylalanine, and tryptophan.\n- **D** Carboxypeptidase B is an ectopeptidase that targets basic residues like arginine and lysine from the free C terminus unlike endopeptidases such as Trypsin.\n\n**ACTIONS OF PANCREATIC PROTEASES**\n\n- **Endopeptidase:** cleaves proteins only at internal bonds within the peptide chain.\n- **Ectopeptidase:** cleaves single AAs from the end of a peptide chain.\n\n| Protease | Action |\n|---|---|\n| Trypsin | Endopeptidase specific at sites of basic AAs |\n| Chymotrypsin | Endopeptidases specific at sites of neutral AAs |\n| Elastase | Endopeptidases specific at sites of neutral AAs |\n| Carboxypeptidase A | Ectopeptidase specific at neutral AA at C-terminus |\n| Carboxypeptidase B | Ectopeptidase specific at basic AA at C-terminus |",
+      "id": "i10694",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Mucopolysaccharidoses are hereditary lysosomal storage diseases caused by the defective breakdown of glycosaminoglycans. Which of the following mucopolysaccharidoses is uniquely distinguished from the others by the absence of corneal clouding?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Hurler syndrome"
+        },
+        {
+          "id": "B",
+          "text": "Hunter syndrome"
+        },
+        {
+          "id": "C",
+          "text": "Niemann-Pick disease"
+        },
+        {
+          "id": "D",
+          "text": "Von Gierke disease"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** Hurler syndrome is an autosomal recessive deficiency of alpha-L-iduronidase, which presents with developmental delay, coarse facial features, hepatosplenomegaly, and progressive corneal clouding.\n- **B** Hunter syndrome is an X-linked recessive deficiency of iduronate-2-sulfatase and is classically distinguished from Hurler syndrome by the notable aggression and distinct absence of corneal clouding.\n- **C** This is not an MPS, but a sphingolipidosis caused by a deficiency in sphingomyelinase.\n- **D** This is a glycogen storage disease caused by glycose-6-phosphatase deficiency and does not present with any corneal pathology.\n\n**LIPID ACCUMULATION DISORDERS — MUCOPOLYSACCHARIDOSES**\n\n| Disorder | Enzyme deficiency | GAGs affected | Clinical presentation |\n|---|---|---|---|\n| Hurler Syndrome* (MPS-I) | α-L-Iduronidase | Dermatan sulfate; heparan sulfate | Mental retardation; coarse facial features; hepatosplenomegaly; corneal clouding; death in childhood |\n| Hunter Syndrome* (MPS-II) | Iduronate sulfatase | Dermatan sulfate; heparan sulfate | Mental retardation; similar to Hurler, but no corneal clouding and is X-linked |\n| Sanfilippo Syndrome (MPS-III) | A: Heparan sulfate-N-sulfatase; B: α-N-Acetylglucosaminidase; C: α-Glucosaminidase N-acetyl-transferase; D: N-Acetylglucosamine 6-sulfatase | Heparan sulfate | Mental retardation; hyperactivity |\n| Morquio Syndrome* (MPS-IV) | A: Galactose-6-sulfatase; B: β-galactosidase | A: Keratan and chondroitin-6-sulfate; B: Keratan sulfate | Skeletal dysplasia and short stature; odontoid hypoplasia; corneal clouding; no CNS involvement |\n| Sly Syndrome (MPS-VII) | β-glucuronidase | Dermatan sulfate; heparan sulfate; chondroitin sulfate | Mental retardation; corneal clouding; hepatosplenomegaly; skeletal dysplasia and short stature |\n\n**Keypoints:** Important disorders are marked by an asterisk.\n\n- Glycosaminoglycans are normally degraded in lysosomes. If there’s an enzyme deficiency, the GAGs will accumulate.\n- All are autosomal recessive except for Hunter Syndrome (X-linked recessive).\n- Hunter is similar to Hurler, except Hunter has no corneal clouding (Mnemonic: Hunter needs sharp vision to target X).\n- All have mental retardation except for Morquio Syndrome.",
+      "id": "i10695",
+      "quizId": "q103"
+    },
+    {
+      "stem": "Although NADH and NADPH are structurally similar electron carriers, they serve distinct roles in cellular metabolism. Which of the following statements best describes the primary functional difference between these two coenzymes?",
+      "choices": [
+        {
+          "id": "A",
+          "text": "NADH is utilized in reductive anabolic pathways, while NADPH drives oxidative catabolic pathways"
+        },
+        {
+          "id": "B",
+          "text": "NADH is utilized in oxidative catabolic pathways, while NADPH drives anabolic pathways"
+        },
+        {
+          "id": "C",
+          "text": "NADH acts exclusively in the mitochondria, while NADPH functions exclusively in the cytosol"
+        },
+        {
+          "id": "D",
+          "text": "NADH shuttles electrons during lipogenesis, while NADPH enters the electron transport chain"
+        }
+      ],
+      "answer": "B",
+      "rationale": "- **A** This is wrong because it reverses the roles of NADH and NADPH. See choice B.\n- **B** NADH is generated during catabolism to supply electrons to the ETC for ATP production, while NADPH serves as a reducing agent to drive anabolic pathways like lipogenesis and steroidogenesis.\n- **C** NADH is also produced in the cytosol during glycolysis and is not exclusively a mitochondrial substrate.\n- **D** NADH shuttles electrons during lipogenesis and therefore also enters the electron transport chain",
+      "id": "i10696",
+      "quizId": "q103"
     }
   ]
 }
