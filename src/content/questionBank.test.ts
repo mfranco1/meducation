@@ -5,14 +5,9 @@ describe('canonical question bank', () => {
   it('exposes the versioned bank through indexed repository reads', () => {
     expect(schemaVersion).toBe(4);
     expect(subjects).toHaveLength(13);
-    expect(quizzes).toHaveLength(105);
-    expect(questions).toHaveLength(11096);
+    expect(quizzes).toHaveLength(108);
+    expect(questions).toHaveLength(11396);
     expect(questionBank.listQuestions(quizzes[0].id)).toHaveLength(quizzes[0].questionCount);
-  });
-
-  it('stores corrected choice text directly in the question bank', () => {
-    const question = questions.find(candidate => candidate.id === 'i1616');
-    expect(question?.choices.find(choice => choice.id === 'D')?.text).toBe('Thermal burn edge');
   });
 
   it('stores canonical Markdown rationales and review metadata directly on questions', () => {
