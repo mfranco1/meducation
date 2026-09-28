@@ -61,3 +61,29 @@ describe('read-only quiz browse session', () => {
     expect(result.current.view).toMatchObject({ page: 'quiz-browse', index: 0 });
   });
 });
+
+describe('quiz exit destinations', () => {
+  it('leaves an active quiz for Dashboard after saving its current question', () => {
+    const { result, writes } = setup();
+
+    act(() => result.current.resumeQuiz(quiz));
+    writes.saveActive.mockClear();
+    act(() => result.current.leaveQuiz('dashboard'));
+
+    expect(result.current.view).toEqual({ page: 'dashboard' });
+    expect(writes.saveActive).toHaveBeenCalledOnce();
+    expect(writes.clearActive).not.toHaveBeenCalled();
+  });
+
+  it('aborts an active quiz and opens Dashboard', () => {
+    const { result, writes } = setup();
+
+    act(() => result.current.resumeQuiz(quiz));
+    writes.saveActive.mockClear();
+    act(() => result.current.abortQuiz('dashboard'));
+
+    expect(result.current.view).toEqual({ page: 'dashboard' });
+    expect(writes.clearActive).toHaveBeenCalledWith(quiz.id);
+    expect(writes.saveActive).not.toHaveBeenCalled();
+  });
+});

@@ -10,6 +10,8 @@ import {
 import type { Attempt, AttemptRepository, CompletedAttempt, FeedbackMode, Quiz, QuizRepository, Subject } from '../../domain/types';
 import { subjectForQuiz, type View } from '../navigation';
 
+export type QuizExitDestination = 'subject' | 'dashboard';
+
 interface QuizSession {
   view: View;
   completedAttempts: CompletedAttempt[];
@@ -20,8 +22,8 @@ interface QuizSession {
   leaveBrowse: () => void;
   checkpoint: (attempt: Attempt, index?: number) => void;
   finishQuiz: () => void;
-  leaveQuiz: () => void;
-  abortQuiz: () => void;
+  leaveQuiz: (destination?: QuizExitDestination) => void;
+  abortQuiz: (destination?: QuizExitDestination) => void;
   showDashboard: () => void;
   showSubject: (subject: Subject) => void;
   showQuizSubject: (quiz: Quiz) => void;
@@ -86,17 +88,19 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     setView({ page: 'results', quiz: view.quiz, attempt: complete });
   };
 
-  const leaveQuiz = () => {
+  const leaveQuiz = (destination: QuizExitDestination = 'subject') => {
     if (view.page !== 'quiz') return;
     const question = questionBank.listQuestions(view.quiz.id)[view.index];
     attempts.saveActive(pauseAttempt({ ...view.attempt, currentQuestionId: question.id }));
-    showQuizSubject(view.quiz);
+    if (destination === 'dashboard') setView({ page: 'dashboard' });
+    else showQuizSubject(view.quiz);
   };
 
-  const abortQuiz = () => {
+  const abortQuiz = (destination: QuizExitDestination = 'subject') => {
     if (view.page !== 'quiz') return;
     attempts.clearActive(view.quiz.id);
-    showQuizSubject(view.quiz);
+    if (destination === 'dashboard') setView({ page: 'dashboard' });
+    else showQuizSubject(view.quiz);
   };
 
   useEffect(() => {

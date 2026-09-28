@@ -13,7 +13,7 @@ import { QuizScreen } from './screens/QuizScreen';
 import { QuizBrowseScreen } from './screens/QuizBrowseScreen';
 import { ResultsScreen } from './screens/ResultsScreen';
 import { SubjectScreen } from './screens/SubjectScreen';
-import { useQuizSession } from './session/useQuizSession';
+import { useQuizSession, type QuizExitDestination } from './session/useQuizSession';
 
 const attemptRepository = new LocalAttemptRepository();
 
@@ -26,6 +26,7 @@ function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
 export default function App() {
   const session = useQuizSession(questionBank, attemptRepository);
   const [exitOpen, setExitOpen] = useState(false);
+  const [exitDestination, setExitDestination] = useState<QuizExitDestination>('subject');
   const subjectStats = useMemo<SubjectStat[]>(
     () => subjectStatsFor(questionBank, attemptRepository, session.completedAttempts),
     [session.completedAttempts, session.view.page],
@@ -45,9 +46,17 @@ export default function App() {
     subjectId,
   );
 
+  const requestQuizExit = (destination: QuizExitDestination) => {
+    setExitDestination(destination);
+    setExitOpen(true);
+  };
+  const closeExitDialog = () => {
+    setExitOpen(false);
+    setExitDestination('subject');
+  };
   const handleHeaderNavigation = () => {
-    if (session.view.page === 'quiz') setExitOpen(true);
-    else if (session.view.page === 'quiz-browse') session.leaveBrowse();
+    if (session.view.page === 'quiz') requestQuizExit('dashboard');
+    else if (session.view.page === 'quiz-browse') session.showDashboard();
     else session.showDashboard();
   };
   const leaveResults = () => {
@@ -58,9 +67,9 @@ export default function App() {
     <AppHeader onNavigateHome={handleHeaderNavigation} />
     {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} onSelectSubject={session.showSubject} />}
     {session.view.page === 'subject' && <SubjectScreen subject={session.view.subject} progress={progressForSubject(session.view.subject.id)} onBack={session.showDashboard} onResumeQuiz={session.resumeQuiz} onStartQuiz={session.startQuiz} onBrowseQuiz={session.browseQuiz} />}
-    {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => setExitOpen(true)} />}
+    {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => requestQuizExit('subject')} />}
     {session.view.page === 'quiz-browse' && <QuizBrowseScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onNavigate={session.navigateBrowse} onDone={session.leaveBrowse} />}
     {session.view.page === 'results' && <><ResultReviewWarning quiz={session.view.quiz} /><ResultsScreen {...session.view} questions={questions} onBack={leaveResults} /></>}
-    <ExitQuizDialog open={exitOpen} onClose={() => setExitOpen(false)} onLeave={() => { session.leaveQuiz(); setExitOpen(false); }} onAbort={() => { session.abortQuiz(); setExitOpen(false); }} />
+    <ExitQuizDialog open={exitOpen} onClose={closeExitDialog} onLeave={() => { session.leaveQuiz(exitDestination); closeExitDialog(); }} onAbort={() => { session.abortQuiz(exitDestination); closeExitDialog(); }} />
   </Box>;
 }
