@@ -31,7 +31,7 @@ export function QuizSetupDialog({ open, quiz, onClose, onStart, onBrowse }: Quiz
           <ToggleButton value="immediate">Fast Feedback</ToggleButton><ToggleButton value="exam">Exam Mode</ToggleButton><ToggleButton value="browse">Browse Answers</ToggleButton>
         </ToggleButtonGroup>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>{mode === 'immediate' ? 'Selecting an answer locks it and shows the explanation right away.' : mode === 'exam' ? 'Answers remain hidden until you finish and submit the entire test.' : 'Browse every question with the correct answer and explanation shown. Nothing is recorded.'}</Typography>
-        <Button fullWidth variant="contained" size="large" sx={{ mt: 4 }} onClick={() => mode === 'browse' ? onBrowse(quiz) : onStart(quiz, mode)}>{mode === 'browse' ? 'Open quiz' : 'Begin quiz'}</Button>
+        <Button fullWidth variant="contained" size="large" sx={{ mt: 4 }} onClick={() => mode === 'browse' ? onBrowse(quiz) : onStart(quiz, mode)}>{mode === 'browse' ? 'Open quiz' : 'Begin Quiz'}</Button>
       </CardContent></Card>
     </DialogContent>
   </Dialog>;
