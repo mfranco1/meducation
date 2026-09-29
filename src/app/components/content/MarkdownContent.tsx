@@ -1,17 +1,26 @@
 import { Box, Link, Typography } from '@mui/material';
 import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
+import { isAllowedImageUrl, richContentSanitizeSchema, transformRichContentUrl } from '../../../content/richContentPolicy';
 
 export type MarkdownVariant = 'stem' | 'explanation' | 'inline';
+export type MarkdownContentKind = 'restricted' | 'rich';
 
-const externalUrl = /^(?:https?:|mailto:)/i;
+function ContentImage({ src, alt }: { src?: string; alt?: string }) {
+  if (!src || !isAllowedImageUrl(src)) return null;
+  return <Box component="img" src={src} alt={alt ?? ''} loading="lazy" sx={{ display: 'block', maxWidth: '100%', height: 'auto', maxHeight: 520, my: 2, borderRadius: 1 }} />;
+}
 
-export function MarkdownContent({ markdown, variant = 'explanation' }: { markdown: string; variant?: MarkdownVariant }) {
+export function MarkdownContent({ markdown, variant = 'explanation', contentKind = 'restricted' }: { markdown: string; variant?: MarkdownVariant; contentKind?: MarkdownContentKind }) {
   const inline = variant === 'inline';
+  const rich = contentKind === 'rich';
   return <ReactMarkdown
-    skipHtml
+    skipHtml={!rich}
     remarkPlugins={[remarkGfm]}
-    urlTransform={url => externalUrl.test(url) ? url : ''}
+    rehypePlugins={rich ? [[rehypeRaw, { tagfilter: true }], [rehypeSanitize, richContentSanitizeSchema]] : []}
+    urlTransform={transformRichContentUrl}
     components={{
       p: ({ children }) => inline
         ? <>{children}</>
@@ -25,6 +34,7 @@ export function MarkdownContent({ markdown, variant = 'explanation' }: { markdow
       blockquote: ({ children }) => <Box component="blockquote" sx={{ m: 0, my: 1.5, pl: 2, borderLeft: '3px solid', borderColor: 'primary.light', color: 'text.secondary' }}>{children}</Box>,
       table: ({ children }) => <Box sx={{ my: 2, overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}><Box component="table" sx={{ width: '100%', minWidth: 440, borderCollapse: 'collapse', '& th, & td': { p: 1.25, textAlign: 'left', verticalAlign: 'top', borderBottom: '1px solid', borderColor: 'divider' }, '& th': { bgcolor: 'action.hover', fontWeight: 800 }, '& tr:last-child td': { borderBottom: 0 } }}>{children}</Box></Box>,
       a: ({ href, children }) => href ? <Link href={href} target="_blank" rel="noopener noreferrer" underline="hover">{children}</Link> : <>{children}</>,
+      img: ({ src, alt }) => rich ? <ContentImage src={src} alt={alt} /> : null,
       code: ({ children }) => <Box component="code" sx={{ px: .5, py: .15, borderRadius: .5, bgcolor: 'action.hover', fontFamily: 'monospace', fontSize: '.9em' }}>{children}</Box>,
       pre: ({ children }) => <Box component="pre" sx={{ my: 1.5, p: 1.5, overflowX: 'auto', borderRadius: 1, bgcolor: 'action.hover' }}>{children}</Box>,
       hr: () => <Box component="hr" sx={{ my: 2, border: 0, borderTop: '1px solid', borderColor: 'divider' }} />,

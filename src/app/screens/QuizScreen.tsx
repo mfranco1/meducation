@@ -91,7 +91,7 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
-            <MarkdownContent markdown={question.stem} variant="stem" />
+            <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
             <IconButton size="small" aria-label={response.flagged ? 'Remove question flag' : 'Flag question'} sx={{ p: 0, mt: .5, flexShrink: 0 }} onClick={toggleFlag}>{response.flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}</IconButton>
           </Stack>
           <RadioGroup value={response.selectedChoiceId ?? ''} onChange={(_, choice) => select(choice)} sx={{ mt: 3, gap: 1.25 }}>

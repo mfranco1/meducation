@@ -65,7 +65,7 @@ describe('subject quiz action', () => {
     const dialog = screen.getByRole('dialog', { name: quiz.name });
     expect(dialog).toBeVisible();
     expect(within(dialog).getByText(quiz.name)).toBeVisible();
-    expect(within(dialog).getByRole('button', { name: 'Begin quiz' })).toBeVisible();
+    expect(within(dialog).getByRole('button', { name: 'Begin Quiz' })).toBeVisible();
   });
 
   it('starts a selected mode and resets it when setup is reopened', () => {
@@ -74,7 +74,7 @@ describe('subject quiz action', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
     fireEvent.click(screen.getByRole('button', { name: 'Exam Mode' }));
     expect(screen.getByText('Answers remain hidden until you finish and submit the entire test.')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Begin quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'exam');
 
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
@@ -85,7 +85,7 @@ describe('subject quiz action', () => {
     const { onStartQuiz } = renderSubject({});
 
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Begin quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
     expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate');
   });

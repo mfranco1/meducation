@@ -7,7 +7,7 @@ import { QuizBrowseScreen } from './QuizBrowseScreen';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
-  { id: 'q1', quizId: quiz.id, stem: 'Question one', choices: [{ id: 'A', text: 'First choice' }, { id: 'B', text: 'Second choice' }], verifiedAnswer: 'B', rationale: 'Explanation one', metadata: {} },
+  { id: 'q1', quizId: quiz.id, stem: 'Question one <img src="/content/question.png" alt="Question diagram">', choices: [{ id: 'A', text: 'First choice' }, { id: 'B', text: 'Second choice' }], verifiedAnswer: 'B', rationale: 'Explanation one\n\n![Explanation diagram](/content/explanation.png)', metadata: {} },
   { id: 'q2', quizId: quiz.id, stem: 'Question two', choices: [{ id: 'A', text: 'Third choice' }, { id: 'B', text: 'Fourth choice' }], answer: 'A', rationale: 'Explanation two', rationaleMeta: { answerReviewNote: 'Check this source key' }, choiceExplanations: { A: 'Choice detail' }, metadata: {} },
 ];
 
@@ -25,6 +25,8 @@ describe('quiz answer browser', () => {
     expect(screen.getByText('Question one')).toBeVisible();
     expect(screen.getByText('Second choice')).toBeVisible();
     expect(screen.getByText('Explanation one')).toBeVisible();
+    expect(screen.getByRole('img', { name: 'Question diagram' })).toBeVisible();
+    expect(screen.getByRole('img', { name: 'Explanation diagram' })).toBeVisible();
     expect(screen.queryByRole('radio')).toBeNull();
     expect(screen.queryByRole('button', { name: /Flag/ })).toBeNull();
     expect(screen.queryByText('Time')).toBeNull();

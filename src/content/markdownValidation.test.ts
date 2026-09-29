@@ -12,9 +12,16 @@ describe('canonical Markdown validation', () => {
     expect(validateQuestionMarkdown([{ ...question, rationale: '| Finding | Value |\n| - | - |\n| BP | 140/90 |', rationaleMeta: { provenance: 'ai_draft_reviewed', reviewedAt: '2026-09-20', reviewNote: 'Reviewed against the source question.' } }])).toEqual([]);
   });
 
-  it('rejects raw HTML, unsafe links, and images', () => {
-    const issues = validateQuestionMarkdown([{ ...question, stem: '<b>Unsafe</b>', rationale: '[bad](javascript:alert(1))\n\n![image](https://example.com/image.png)' }]);
-    expect(issues.filter(issue => issue.level === 'error')).toHaveLength(4);
+  it('accepts basic HTML and local images in stems and rationales', () => {
+    const issues = validateQuestionMarkdown([{ ...question, stem: 'H<sub>2</sub>O <img src="/content/diagram.png" alt="Diagram">', rationale: '![Nerve diagram](/content/nerve.png)' }]);
+    expect(issues.filter(issue => issue.level === 'error')).toEqual([]);
+  });
+
+  it('rejects unsafe HTML, image URLs, and restricted source markup', () => {
+    const issues = validateQuestionMarkdown([{ ...question, stem: '<script>alert(1)</script><img src="/content/image.png" alt="diagram" onerror="alert(1)">', rationale: '[bad](javascript:alert(1))\n\n![](/content/image.png)', rationaleMeta: { sources: '<img src="/content/source.png" alt="source">' } }]);
+    expect(issues.filter(issue => issue.level === 'error')).toHaveLength(5);
+    expect(issues.map(issue => issue.message)).toContain('stem contains unsupported HTML element <script>');
+    expect(issues.map(issue => issue.message)).toContain('sources contains raw HTML');
   });
 
   it('requires reviewed AI rationale metadata', () => {

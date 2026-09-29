@@ -119,9 +119,9 @@ describe('admin change-set processor', () => {
 
     const unsafeMarkdown = previewChangeSet(bank(), grouped(
       { existingId: 's1' },
-      [{ quiz: { existingId: 'q1' }, items: [{ ...item('i2'), stem: '<img src=x>' }] }],
+      [{ quiz: { existingId: 'q1' }, items: [{ ...item('i2'), stem: '<img src="javascript:alert(1)" alt="Unsafe">' }] }],
     ));
-    expect(unsafeMarkdown.issues.some(issue => issue.level === 'error' && issue.questionId === 'i2' && issue.message.includes('raw HTML'))).toBe(true);
+    expect(unsafeMarkdown.issues.some(issue => issue.level === 'error' && issue.questionId === 'i2' && issue.message.includes('unsupported image URL'))).toBe(true);
   });
 
   it('rejects nested parent IDs and malformed grouped envelopes with JSON paths', () => {

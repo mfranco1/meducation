@@ -33,7 +33,7 @@ export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }:
     <LinearProgress variant="determinate" value={(index + 1) / questions.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-          <MarkdownContent markdown={question.stem} variant="stem" />
+          <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
           <Stack spacing={1.25} sx={{ mt: 3 }}>
             {question.choices.map(choice => {
               const correct = hasCorrectChoice && choice.id === correctAnswer;
