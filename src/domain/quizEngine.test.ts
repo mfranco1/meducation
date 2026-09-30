@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'; import { blankResponse, commitAnswer, elapsedTimeFor, isPerfectScore, normalizeResponseForFeedbackMode, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
+import { describe, expect, it } from 'vitest'; import { blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, normalizeResponseForFeedbackMode, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
 const question: Question={id:'i1',quizId:'q1',stem:'Stem',choices:[{id:'A',text:'A'},{id:'B',text:'B'}],verifiedAnswer:'B',rationale:'Rationale',metadata:{}};
 const attempt=(selectedChoiceId?:string):Attempt=>({id:'a',quizId:'q1',subjectId:'s1',feedbackMode:'exam',startedAt:new Date(1000).toISOString(),responses:selectedChoiceId?{i1:{questionId:'i1',selectedChoiceId,flagged:true,locked:false,timeMs:0}}:{}});
 describe('quiz engine',()=>{it('scores correct, incorrect, and unanswered responses',()=>{expect(scoreAttempt(attempt('B'),[question],3000)).toMatchObject({correct:1,incorrect:0,unanswered:0,percentage:100,elapsedMs:2000});expect(scoreAttempt(attempt('A'),[question],3000).incorrect).toBe(1);expect(scoreAttempt(attempt(),[question],3000).unanswered).toBe(1)});it('finds a saved question checkpoint and falls back to the first question',()=>{const second={...question,id:'q2'};expect(questionIndexFor([question,second],'q2')).toBe(1);expect(questionIndexFor([question,second],'missing')).toBe(0);expect(questionIndexFor([question,second])).toBe(0)});});
@@ -26,6 +26,24 @@ describe('answer selection',()=>{
   it('keeps an exam-mode response editable',()=>{const selected=selectChoice(blankResponse('q1'),'A','exam');expect(selected).toMatchObject({selectedChoiceId:'A',locked:false});expect(selectChoice(selected,'B','exam').selectedChoiceId).toBe('B');});
   it('does not change a locked response',()=>{const locked={...blankResponse('q1'),selectedChoiceId:'A',locked:true};expect(selectChoice(locked,'B','immediate')).toBe(locked);});
   it('locks a selected legacy immediate-mode response',()=>{const legacy={...blankResponse('q1'),selectedChoiceId:'B'};expect(normalizeResponseForFeedbackMode(legacy,'immediate')).toMatchObject({selectedChoiceId:'B',locked:true});expect(normalizeResponseForFeedbackMode(legacy,'exam')).toBe(legacy);});
+});
+describe('Fast Feedback completion',()=>{
+  const questions = [question, { ...question, id: 'q2' }];
+  const locked = (id: string) => ({ questionId: id, selectedChoiceId: 'B', flagged: false, locked: true, timeMs: 0 });
+  it('requires every canonical question to have a selected locked response, regardless of answer order',()=>{
+    const partial: Attempt = { ...attempt(), feedbackMode: 'immediate', responses: { q2: locked('q2') } };
+    expect(isFullyAnsweredFastFeedback(partial, questions)).toBe(false);
+    expect(isFullyAnsweredFastFeedback({ ...partial, responses: { i1: locked('i1'), q2: locked('q2') } }, questions)).toBe(true);
+  });
+  it('does not treat Exam Mode or an empty question list as completed Fast Feedback',()=>{
+    const completeExam: Attempt = { ...attempt(), responses: { i1: locked('i1'), q2: locked('q2') } };
+    expect(isFullyAnsweredFastFeedback(completeExam, questions)).toBe(false);
+    expect(isFullyAnsweredFastFeedback({ ...completeExam, feedbackMode: 'immediate' }, [])).toBe(false);
+  });
+  it('does not treat a locked response without a selected choice as answered',()=>{
+    const malformed: Attempt = { ...attempt(), feedbackMode: 'immediate', responses: { i1: { ...blankResponse('i1'), locked: true }, q2: locked('q2') } };
+    expect(isFullyAnsweredFastFeedback(malformed, questions)).toBe(false);
+  });
 });
 describe('celebration streaks',()=>{
   const immediateAttempt = (): Attempt => ({ ...attempt(), feedbackMode: 'immediate' });

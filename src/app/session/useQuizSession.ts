@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  isFullyAnsweredFastFeedback,
   normalizeResponseForFeedbackMode,
   pauseAttempt,
   questionIndexFor,
@@ -40,7 +41,10 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     if (view.page !== 'quiz') return;
     const bank = questionBank.listQuestions(view.quiz.id);
     const index = nextIndex ?? view.index;
-    const checkpointed = { ...next, currentQuestionId: bank[index]?.id };
+    const withCheckpoint = { ...next, currentQuestionId: bank[index]?.id };
+    const checkpointed = isFullyAnsweredFastFeedback(withCheckpoint, bank)
+      ? pauseAttempt(withCheckpoint)
+      : withCheckpoint;
     attempts.saveActive(checkpointed);
     setView({ ...view, attempt: checkpointed, index });
   };
@@ -48,9 +52,12 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   const resumeQuiz = (quiz: Quiz) => {
     const existing = attempts.getActive(quiz.id);
     if (!existing) return;
-    const resumed = resumeAttempt(existing);
+    const questions = questionBank.listQuestions(quiz.id);
+    const resumed = isFullyAnsweredFastFeedback(existing, questions)
+      ? pauseAttempt(existing)
+      : resumeAttempt(existing);
     attempts.saveActive(resumed);
-    setView({ page: 'quiz', quiz, attempt: resumed, index: questionIndexFor(questionBank.listQuestions(quiz.id), resumed.currentQuestionId) });
+    setView({ page: 'quiz', quiz, attempt: resumed, index: questionIndexFor(questions, resumed.currentQuestionId) });
   };
 
   const startQuiz = (quiz: Quiz, mode: FeedbackMode) => {

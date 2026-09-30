@@ -114,3 +114,35 @@ describe('quiz submission confirmation', () => {
     expect(onFinish).not.toHaveBeenCalled();
   });
 });
+
+describe('paused Fast Feedback stopwatch', () => {
+  it('stays frozen while a fully answered quiz remains navigable', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-09-30T00:00:00.000Z'));
+    const responses = Object.fromEntries(questions.map(question => [question.id, {
+      questionId: question.id, selectedChoiceId: 'B', flagged: false, locked: true, timeMs: 0,
+    }]));
+    function ReviewHarness() {
+      const [attempt, setAttempt] = useState<Attempt>({
+        ...startingAttempt,
+        elapsedMs: 42_000,
+        timerStartedAt: undefined,
+        responses,
+      });
+      const [index, setIndex] = useState(0);
+      return <ThemeProvider theme={theme}><QuizScreen
+        quiz={quiz} attempt={attempt} index={index} questions={questions}
+        onCheckpoint={(next, nextIndex) => { setAttempt(next); if (nextIndex !== undefined) setIndex(nextIndex); }}
+        onFinish={() => {}} onRequestExit={() => {}}
+      /></ThemeProvider>;
+    }
+    render(<ReviewHarness />);
+
+    expect(screen.getByText('00:42')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    act(() => vi.advanceTimersByTime(5_000));
+    expect(screen.getByText('Question 2 of 7')).toBeInTheDocument();
+    expect(screen.getByText('00:42')).toBeInTheDocument();
+    vi.useRealTimers();
+  });
+});

@@ -39,6 +39,14 @@ export const normalizeResponseForFeedbackMode = (response: QuestionResponse, fee
   if (feedbackMode !== 'immediate' || !response.selectedChoiceId || response.locked) return response;
   return { ...response, locked: true };
 };
+export function isFullyAnsweredFastFeedback(attempt: Attempt, questions: Question[]): boolean {
+  return attempt.feedbackMode === 'immediate'
+    && questions.length > 0
+    && questions.every(question => {
+      const response = attempt.responses[question.id];
+      return Boolean(response?.selectedChoiceId && response.locked);
+    });
+}
 export const questionIndexFor = (questions: Question[], questionId?: string) => {
   const index = questionId ? questions.findIndex(question => question.id === questionId) : -1;
   return index >= 0 ? index : 0;
