@@ -17,7 +17,7 @@ export function ResultsScreen({ quiz, attempt, questions, onBack }: { quiz: Quiz
   return <>
     <CelebrationOverlay open={perfectCelebrationOpen} title={perfectCelebration.title} message={perfectCelebration.message} variant={perfectCelebration.variant} onComplete={() => setPerfectCelebrationOpen(false)} />
     <Container maxWidth="md" sx={{ py: 7 }}>
-    <Stack alignItems="center" textAlign="center"><ResultsScoreHero key={attempt.id} percentage={score.percentage} /><Typography color="text.secondary">{score.correct} correct · {score.incorrect} incorrect · {score.unanswered} unanswered</Typography></Stack>
+    <Stack alignItems="center" textAlign="center"><ResultsScoreHero key={attempt.id} percentage={score.percentage} /><Typography color="text.secondary" sx={{ mt: 1 }}>{score.correct} correct · {score.incorrect} incorrect · {score.unanswered} unanswered</Typography></Stack>
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 5 }}>
       <StatCard label="Total time" value={formatDuration(score.elapsedMs)} variant="results" />
       <StatCard label="Average / question" value={formatDuration(score.total ? score.elapsedMs / score.total : 0)} variant="results" />

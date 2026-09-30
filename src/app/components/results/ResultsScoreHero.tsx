@@ -47,17 +47,17 @@ export function ResultsScoreHero({ percentage }: { percentage: number }) {
   return <Box sx={{ display: 'grid', justifyItems: 'center', textAlign: 'center' }}>
     <Box sx={{ position: 'relative', width: { xs: 200, sm: 220 }, aspectRatio: '1 / 1', display: 'grid', placeItems: 'center' }}>
       <svg aria-hidden="true" viewBox="0 0 100 100" width="100%" height="100%" style={{ position: 'absolute', inset: 0 }}>
-        <circle cx="50" cy="50" r="45" fill="none" stroke={theme.palette.grey[300]} strokeWidth="4" pathLength="100" />
+        <circle data-testid="score-ring-track" cx="50" cy="50" r="47" fill="none" stroke={theme.palette.grey[300]} strokeWidth="4" pathLength="100" />
         {showArc && <circle
           data-testid="score-ring-arc"
-          cx="50" cy="50" r="45" fill="none" stroke={theme.palette.primary.main} strokeWidth="4" strokeLinecap="butt"
+          cx="50" cy="50" r="47" fill="none" stroke={theme.palette.primary.main} strokeWidth="4" strokeLinecap="butt"
           pathLength="100" strokeDasharray="100" strokeDashoffset={dashOffset}
           transform="rotate(-90 50 50)"
         />}
       </svg>
-      <Box sx={{ position: 'relative', display: 'grid', justifyItems: 'center', px: 2 }}>
-        <Typography component="h2" variant="overline" color="primary.main" fontWeight={800}>Quiz complete</Typography>
-        <Typography aria-hidden="true" data-testid="score-percentage" variant="h2" sx={{ fontVariantNumeric: 'tabular-nums', lineHeight: 1.15, minWidth: '3.2ch' }}>{displayedScore}%</Typography>
+      <Box sx={{ position: 'relative', display: 'grid', justifyItems: 'center', width: '100%', boxSizing: 'border-box', px: 2 }}>
+        <Typography component="h2" variant="overline" color="primary.main" fontWeight={800} sx={{ width: '100%', textAlign: 'center' }}>Quiz complete</Typography>
+        <Typography aria-hidden="true" data-testid="score-percentage" variant="h2" sx={{ width: '100%', textAlign: 'center', fontVariantNumeric: 'tabular-nums', lineHeight: 1.15, whiteSpace: 'nowrap' }}>{displayedScore}%</Typography>
       </Box>
     </Box>
     <Box component="span" sx={{ border: 0, clip: 'rect(0 0 0 0)', clipPath: 'inset(50%)', height: 1, margin: -1, overflow: 'hidden', padding: 0, position: 'absolute', whiteSpace: 'nowrap', width: 1 }}>

@@ -49,6 +49,7 @@ afterEach(() => vi.restoreAllMocks());
 describe('ResultsScoreHero', () => {
   it('counts up and fills the ring from one animation value', () => {
     const { rerender } = render(<ResultsScoreHero key="attempt-1" percentage={67} />);
+    expect(screen.getByTestId('score-ring-track')).toHaveAttribute('r', '47');
     expect(screen.getByTestId('score-percentage')).toHaveTextContent('0%');
     expect(screen.queryByTestId('score-ring-arc')).toBeNull();
     expect(screen.getByText('Final score: 67%.')).toBeInTheDocument();
@@ -80,6 +81,7 @@ describe('ResultsScoreHero', () => {
     frameAt(1600);
     expect(screen.getByTestId('score-percentage')).toHaveTextContent('100%');
     expect(screen.getByTestId('score-ring-arc')).toHaveAttribute('stroke-dashoffset', '0');
+    expect(screen.getByTestId('score-percentage')).toHaveStyle({ width: '100%', textAlign: 'center', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' });
   });
 
   it('shows the final value immediately with reduced motion, including when enabled mid-animation', () => {

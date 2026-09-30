@@ -35,6 +35,7 @@ describe('results score hero', () => {
     expect(screen.getByRole('heading', { name: 'Quiz complete' })).toBeVisible();
     expect(screen.getByText('Final score: 67%.')).toBeInTheDocument();
     expect(screen.getByText('2 correct · 1 incorrect · 0 unanswered')).toBeVisible();
+    expect(screen.getByText('2 correct · 1 incorrect · 0 unanswered')).toHaveStyle({ marginTop: '8px' });
     expect(screen.getByText('Total time')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Back to quizzes' }));
     expect(onBack).toHaveBeenCalledOnce();

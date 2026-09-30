@@ -64,6 +64,8 @@ Results no longer shows the green check above its completion label. The label an
 - Added `ResultsScoreHero` with a theme-colored SVG ring and percentage counter driven from one 600ms eased requestAnimationFrame value. It starts at 12 o’clock, keeps 0% empty, and handles 100% as a complete ring.
 - Removed the green check from the Results header. Preserved result counts, statistics, topic breakdown, navigation, and exact-count perfect-test celebrations.
 - The visible counter is hidden from assistive technology; the final score is exposed as stable screen-reader text. Reduced-motion preference shows the final value and cancels an active animation.
+- The centered text area fills the ring's available inner width, with centered text alignment and tabular numerals, so digit-width changes from `0%` through `100%` do not shift the score off center.
+- Following browser review, increased both SVG circle radii from 45 to 47 viewBox units while retaining the 4-unit stroke and outer sizing. A focused regression assertion checks the radius.
 - Added deterministic tests for 0%, 67%, 100%, intermediate synchronization, unchanged rerenders, reduced-motion changes, and frame cancellation. Added Results integration coverage for the score hero, result summary, navigation, and existing celebration rules.
 - Updated `docs/design-system.md`, `docs/architecture.md`, and `docs/testing.md`.
 - Focused Results tests passed (2 files, 7 tests).
@@ -71,3 +73,6 @@ Results no longer shows the green check above its completion label. The label an
 - `npm run build` passed; Vite reported the existing large validation chunk warning.
 - `git diff --check` passed.
 - Automated rendering, accessibility markup, responsive sizing rules, and motion behavior are covered. Manual visual inspection at desktop/mobile viewport sizes was not performed.
+- After the score-centering refinement, focused Results tests passed again (2 files, 7 tests), the production build passed, and the in-app browser showed the 5% score centered in its ring.
+- After the radius adjustment, focused Results tests passed again (2 files, 7 tests), the production build passed, and the in-app browser showed the enlarged ring with the score centered.
+- Added an 8px top margin to the score summary beneath the ring. Focused Results tests passed (2 files, 7 tests), the build passed, and the browser showed the added breathing room.
