@@ -1,4 +1,3 @@
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import { Box, Button, Card, CardContent, Container, LinearProgress, Stack, Typography } from '@mui/material';
 import { useState } from 'react';
 import { performanceBy } from '../../analytics/analytics';
@@ -8,6 +7,7 @@ import { formatDuration } from '../format';
 import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
 import { perfectTestCelebration } from '../components/celebration/celebrationCatalog';
 import { StatCard } from '../components/StatCard';
+import { ResultsScoreHero } from '../components/results/ResultsScoreHero';
 
 export function ResultsScreen({ quiz, attempt, questions, onBack }: { quiz: Quiz; attempt: CompletedAttempt; questions: Question[]; onBack: () => void }) {
   const score = attempt.score;
@@ -17,7 +17,7 @@ export function ResultsScreen({ quiz, attempt, questions, onBack }: { quiz: Quiz
   return <>
     <CelebrationOverlay open={perfectCelebrationOpen} title={perfectCelebration.title} message={perfectCelebration.message} variant={perfectCelebration.variant} onComplete={() => setPerfectCelebrationOpen(false)} />
     <Container maxWidth="md" sx={{ py: 7 }}>
-    <Stack alignItems="center" textAlign="center"><CheckCircleRoundedIcon color="success" sx={{ fontSize: 50 }} /><Typography variant="overline" color="primary.main" fontWeight={800} sx={{ mt: 1 }}>Quiz complete</Typography><Typography variant="h2">{score.percentage}%</Typography><Typography color="text.secondary">{score.correct} correct · {score.incorrect} incorrect · {score.unanswered} unanswered</Typography></Stack>
+    <Stack alignItems="center" textAlign="center"><ResultsScoreHero key={attempt.id} percentage={score.percentage} /><Typography color="text.secondary">{score.correct} correct · {score.incorrect} incorrect · {score.unanswered} unanswered</Typography></Stack>
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 5 }}>
       <StatCard label="Total time" value={formatDuration(score.elapsedMs)} variant="results" />
       <StatCard label="Average / question" value={formatDuration(score.total ? score.elapsedMs / score.total : 0)} variant="results" />

@@ -1,6 +1,6 @@
 import { ThemeProvider } from '@mui/material';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { theme } from '../theme';
 import { ResultsScreen } from './ResultsScreen';
 import type { CompletedAttempt, Quiz } from '../../domain/types';
@@ -25,5 +25,18 @@ describe('perfect-test celebration', () => {
     expect(screen.queryByRole('status')).toBeNull();
     rerender(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attemptFor(0, 0, 100)} questions={[]} onBack={() => {}} /></ThemeProvider>);
     expect(screen.queryByRole('status')).toBeNull();
+  });
+});
+
+describe('results score hero', () => {
+  it('shows the score ring in place of the check and preserves the result summary and back action', () => {
+    const onBack = vi.fn();
+    render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attemptFor(2, 3, 67)} questions={[]} onBack={onBack} /></ThemeProvider>);
+    expect(screen.getByRole('heading', { name: 'Quiz complete' })).toBeVisible();
+    expect(screen.getByText('Final score: 67%.')).toBeInTheDocument();
+    expect(screen.getByText('2 correct · 1 incorrect · 0 unanswered')).toBeVisible();
+    expect(screen.getByText('Total time')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to quizzes' }));
+    expect(onBack).toHaveBeenCalledOnce();
   });
 });
