@@ -1,0 +1,40 @@
+name: Checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.lock
+      - name: Install backend environment
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r backend/requirements-dev.lock
+          .venv/bin/python -m pip install --no-deps -e backend
+      - name: Check Python style and types
+        run: |
+          .venv/bin/ruff check backend/src backend/tests
+          .venv/bin/mypy backend/src
+      - name: Test backend
+        run: .venv/bin/python -m pytest backend/tests -q
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: npm run validate:content
+      - run: npm run build

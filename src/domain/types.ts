@@ -18,7 +18,7 @@ export interface Question {
   rationale: string; rationaleMeta?: RationaleMetadata; choiceExplanations?: Record<string, string>; pearls?: string[]; metadata: QuestionMetadata;
 }
 export interface Subject { id: string; name: string; accent: string }
-export interface Quiz { id: string; subjectId: string; name: string; questionCount: number }
+export interface Quiz { id: string; subjectId: string; name: string; questionCount: number; questionIds?: string[] }
 export interface QuestionResponse { questionId: string; selectedChoiceId?: string; flagged: boolean; locked: boolean; timeMs: number }
 export interface CelebrationProgress { correctStreak: number; awardedStreakMilestones: StreakMilestone[] }
 export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; elapsedMs?: number; timerStartedAt?: string; currentQuestionId?: string; completedAt?: string; celebrationProgress?: CelebrationProgress; responses: Record<string, QuestionResponse> }

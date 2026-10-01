@@ -42,3 +42,9 @@ Enter the change reason in the **Reason** field. Choose **Validate**, inspect th
 The local tool is enabled only for development by default. It is not authentication or authorization and must not be exposed as a production write surface before the separate backend/security work.
 
 The current schema version is `4`. Add a deliberate migration, semantic parity check, and validation coverage before changing the stored shape. Compatibility code is temporary and should be removed after every in-scope browser profile has migrated.
+
+## Read-only content API
+
+The FastAPI service reads `src/content/questionBank.generated.json` directly; the checked-in file remains canonical. Start it from the repository root using the project-root `.venv` as described in `backend/README.md`. On startup it validates schema-v4 records and keeps an indexed read snapshot. It exposes subject and quiz catalogs plus ordered per-quiz questions. Content responses include a SHA-256 bank revision; the learner pins its catalog revision while it runs and asks for matching question content. A changed bank returns a conflict so reload can fetch a consistent catalog. Restart the service after replacing canonical JSON. The service does not edit the file, accept admin change sets, or persist attempts. Keep the existing reviewed export, JSON replacement, and `npm run validate:content` workflow.
+
+The learner uses `VITE_CONTENT_SOURCE=api` by default and Vite proxies `/api` to the local FastAPI server. Set `VITE_CONTENT_SOURCE=local` to select the existing bundled JSON adapter for offline development. Once a quiz's questions are loaded, answering, scoring, checkpoints, completion, and history remain in the browser. Fetching a quiz not yet loaded requires the API in API mode. `/admin.html` remains available through the development server and is omitted from a normal production build. Set `VITE_BUILD_ADMIN=true` when building only when an explicitly bundled admin editor is needed.

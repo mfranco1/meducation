@@ -82,7 +82,11 @@ export function quizProgressForSubject(
       completionCount: attempts.completionCount(quiz.id),
       latestScore: latest?.percentage,
       trend: trendFor(latest, scores),
-      currentQuestion: active ? questionIndexFor(questionBank.listQuestions(quiz.id), active.currentQuestionId) + 1 : undefined,
+      currentQuestion: active
+        ? quiz.questionIds
+          ? Math.max(0, quiz.questionIds.indexOf(active.currentQuestionId ?? '')) + 1
+          : questionIndexFor(questionBank.listQuestions(quiz.id), active.currentQuestionId) + 1
+        : undefined,
     };
   });
   return sortQuizProgressByRecentActivity(progress, quizId => attempts.latestActivityAt(quizId));
