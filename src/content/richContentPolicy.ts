@@ -31,6 +31,7 @@ export const approvedImageOrigins = new Set(
 export const richContentSanitizeSchema: Schema = {
   tagNames: [...richHtmlTagNames],
   attributes: {
+    code: [['className', 'language-math', 'math-inline', 'math-display']],
     a: ['href', 'title'],
     img: ['src', 'alt', 'title', 'width', 'height'],
     input: [['type', 'checkbox'], ['disabled', true], ['checked', true]],

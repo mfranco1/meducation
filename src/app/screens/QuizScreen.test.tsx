@@ -35,6 +35,19 @@ function renderQuizForSubmission({ attempt = startingAttempt, onFinish = vi.fn()
 }
 
 describe('quiz streak celebrations', () => {
+  it('renders a LaTeX stem and revealed rationale in Fast Feedback', () => {
+    const mathQuestion: Question = {
+      ...questions[0], stem: 'Calculate $x^2$.', rationale: 'Use $x^2+y^2=z^2$.',
+    };
+    const answeredAttempt: Attempt = {
+      ...startingAttempt,
+      responses: { q1: { questionId: 'q1', selectedChoiceId: 'B', flagged: false, locked: true, timeMs: 0 } },
+    };
+    render(<ThemeProvider theme={theme}><QuizScreen quiz={quiz} attempt={answeredAttempt} index={0} questions={[mathQuestion]} onCheckpoint={() => {}} onFinish={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
+    expect(document.querySelectorAll('.katex')).toHaveLength(2);
+    expect(document.querySelectorAll('.katex-mathml annotation')).toHaveLength(2);
+  });
+
   it('shows 3-in-a-row, resets after an error, and shows it again after a rebuilt streak', () => {
     vi.useFakeTimers();
     render(<QuizHarness />);

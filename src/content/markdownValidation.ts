@@ -1,14 +1,16 @@
 import { unified } from 'unified';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
+import katex from 'katex';
 import type { Question } from '../domain/types';
 import { allowedRawHtmlAttributes, isAllowedImageUrl, isAllowedLinkUrl, richHtmlTags, type RichContentField } from './richContentPolicy';
 import type { ValidationIssue } from './validate';
+import { remarkMathPlugin } from './remarkMathPolicy';
 
 type ContentField = RichContentField | 'sources';
-type MarkdownNode = { type?: string; url?: string; alt?: string | null; value?: string; children?: MarkdownNode[] };
+type MarkdownNode = { type?: string; url?: string; alt?: string | null; value?: string; lang?: string | null; children?: MarkdownNode[] };
 
-const markdownParser = unified().use(remarkParse).use(remarkGfm);
+const markdownParser = unified().use(remarkParse).use(remarkGfm).use(remarkMathPlugin);
 const htmlTag = /<\/?([a-zA-Z][\w:-]*)([^>]*)>/g;
 const htmlAttribute = /([^\s=/>]+)(?:\s*=\s*("[^"]*"|'[^']*'|[^\s"'=<>`]+))?/g;
 
@@ -56,6 +58,13 @@ function markdownIssues(markdown: string, field: ContentField, questionId: strin
       if (!rich) issues.push({ level: 'error', questionId, message: `${field} contains raw HTML` });
       else issues.push(...rawHtmlIssues(node.value ?? '', field, questionId));
     }
+    if ((node.type === 'inlineMath' || node.type === 'math' || (node.type === 'code' && node.lang === 'math')) && rich) {
+      try {
+        katex.renderToString(node.value ?? '', { throwOnError: true, trust: false, maxSize: 10, maxExpand: 1000 });
+      } catch (error) {
+        issues.push({ level: 'error', questionId, message: `${field} contains invalid LaTeX: ${error instanceof Error ? error.message : 'unsupported expression'}` });
+      }
+    }
     if (node.type === 'image') {
       if (!rich) issues.push({ level: 'error', questionId, message: `${field} contains an image; images are not allowed in canonical content` });
       else {
@@ -67,7 +76,7 @@ function markdownIssues(markdown: string, field: ContentField, questionId: strin
     node.children?.forEach(visit);
   };
   try {
-    visit(markdownParser.parse(markdown) as MarkdownNode);
+    visit(markdownParser.runSync(markdownParser.parse(markdown)) as MarkdownNode);
   } catch (error) {
     issues.push({ level: 'error', questionId, message: `${field} cannot be parsed as Markdown: ${error instanceof Error ? error.message : 'unknown error'}` });
   }
