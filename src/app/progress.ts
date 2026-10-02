@@ -1,5 +1,6 @@
 import { mostRecentScore, scoreTrend } from '../analytics/analytics';
-import type { Attempt, AttemptRepository, CompletedAttempt, Quiz, QuizRepository, RecentScore, Subject } from '../domain/types';
+import type { Attempt, Quiz, QuizRepository, RecentScore, Subject } from '../domain/types';
+import type { ProgressState } from '../persistence/progressCodec';
 import { questionIndexFor } from '../domain/quizEngine';
 import { sortQuizProgressByRecentActivity } from './quizProgress';
 
@@ -22,10 +23,29 @@ export interface SubjectStat {
   trend?: ReturnType<typeof scoreTrend>;
 }
 
-function scoresForQuiz(completedAttempts: CompletedAttempt[], quizId: string): RecentScore[] {
-  return completedAttempts
-    .filter(attempt => attempt.quizId === quizId)
-    .map(attempt => ({ percentage: attempt.score.percentage, completedAt: attempt.completedAt }));
+export interface ProgressView {
+  snapshot: ProgressState;
+  scoresByQuiz: ReadonlyMap<string, RecentScore[]>;
+  scoresBySubject: ReadonlyMap<string, RecentScore[]>;
+  activityAt: Readonly<Record<string, string>>;
+}
+
+export function createProgressView(snapshot: ProgressState): ProgressView {
+  const scoresByQuiz = new Map<string, RecentScore[]>();
+  const scoresBySubject = new Map<string, RecentScore[]>();
+  for (const attempt of snapshot.completed) {
+    const score = { percentage: attempt.score.percentage, completedAt: attempt.completedAt };
+    const quizScores = scoresByQuiz.get(attempt.quizId) ?? [];
+    quizScores.push(score);
+    scoresByQuiz.set(attempt.quizId, quizScores);
+    const subjectScores = scoresBySubject.get(attempt.subjectId) ?? [];
+    subjectScores.push(score);
+    scoresBySubject.set(attempt.subjectId, subjectScores);
+  }
+  const activityAt = { ...snapshot.activity };
+  for (const [quizId, attempt] of Object.entries(snapshot.active)) activityAt[quizId] ??= attempt.startedAt;
+  for (const [quizId, latest] of Object.entries(snapshot.latestScores)) activityAt[quizId] ??= latest.completedAt;
+  return { snapshot, scoresByQuiz, scoresBySubject, activityAt };
 }
 
 function trendFor(latest: RecentScore | undefined, scores: RecentScore[]) {
@@ -37,27 +57,24 @@ function trendFor(latest: RecentScore | undefined, scores: RecentScore[]) {
 
 export function subjectStatsFor(
   questionBank: QuizRepository,
-  attempts: AttemptRepository,
-  completedAttempts: CompletedAttempt[],
+  progress: ProgressView,
   membership?: { id: string; quizIds: string[] }[],
 ): SubjectStat[] {
   const quizIdsBySubject = new Map(membership?.map(item => [item.id, item.quizIds]));
   return questionBank.listSubjects().map(subject => {
     const quizIds = quizIdsBySubject?.get(subject.id) ?? questionBank.listQuizzes(subject.id).map(quiz => quiz.id);
-    const activeQuizIds = quizIds.filter(quizId => attempts.getActive(quizId) !== undefined);
+    const activeQuizIds = quizIds.filter(quizId => progress.snapshot.active[quizId] !== undefined);
     const recentQuizScores = quizIds
-      .map(quizId => attempts.latestScore(quizId))
+      .map(quizId => progress.snapshot.latestScores[quizId])
       .filter((score): score is RecentScore => score !== undefined);
     const latest = mostRecentScore(recentQuizScores);
-    const subjectScores = completedAttempts
-      .filter(attempt => attempt.subjectId === subject.id)
-      .map(attempt => ({ percentage: attempt.score.percentage, completedAt: attempt.completedAt }));
+    const subjectScores = progress.scoresBySubject.get(subject.id) ?? [];
     return {
       subject,
       quizCount: quizIds.length,
       activeQuizCount: activeQuizIds.length,
       latestActiveAt: activeQuizIds
-        .map(quizId => attempts.latestActivityAt(quizId))
+        .map(quizId => progress.activityAt[quizId])
         .filter((at): at is string => at !== undefined)
         .sort()
         .at(-1),
@@ -70,18 +87,17 @@ export function subjectStatsFor(
 
 export function quizProgressForSubject(
   questionBank: QuizRepository,
-  attempts: AttemptRepository,
-  completedAttempts: CompletedAttempt[],
+  progressView: ProgressView,
   subjectId: string,
 ): QuizProgress[] {
   const progress = questionBank.listQuizzes(subjectId).map(quiz => {
-    const active = attempts.getActive(quiz.id);
-    const latest = attempts.latestScore(quiz.id);
-    const scores = scoresForQuiz(completedAttempts, quiz.id);
+    const active = progressView.snapshot.active[quiz.id];
+    const latest = progressView.snapshot.latestScores[quiz.id];
+    const scores = progressView.scoresByQuiz.get(quiz.id) ?? [];
     return {
       quiz,
       active,
-      completionCount: attempts.completionCount(quiz.id),
+      completionCount: progressView.snapshot.completionCounts[quiz.id] ?? 0,
       latestScore: latest?.percentage,
       trend: trendFor(latest, scores),
       currentQuestion: active
@@ -91,5 +107,5 @@ export function quizProgressForSubject(
         : undefined,
     };
   });
-  return sortQuizProgressByRecentActivity(progress, quizId => attempts.latestActivityAt(quizId));
+  return sortQuizProgressByRecentActivity(progress, quizId => progressView.activityAt[quizId]);
 }

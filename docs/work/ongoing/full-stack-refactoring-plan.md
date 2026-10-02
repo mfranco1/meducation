@@ -1,7 +1,7 @@
 # Full-stack code quality review and staged refactoring plan
 
 Reviewed: 2026-10-02.
-Status: Stages 1–3 complete; paused before Stage 4.
+Status: Stages 1–4 complete; paused before Stage 5.
 
 ## Scope and conclusion
 
@@ -73,7 +73,7 @@ Each stage should be independently reviewable. Retain canonical JSON unchanged t
 - [x] Stage 1 — establish boundary regression fixtures. Add malformed storage, interrupted completion, repeated completion, API DTO/membership, and cross-language validation fixtures. Record unsupported cases as deliberate expected failures until their implementing stage, while keeping CI green. Establish the storage/content compatibility policy. Exit: fixtures and migration/recovery design recorded; no production behavior change.
 - [x] Stage 2 — strengthen contracts and backend seams. Add decoders and shared fixture parity, type nested metadata, complete/inject the Python protocol, add indexes and explicit response DTO construction, move conditional checks before body assembly. Exit: malformed data rejected consistently; API fields, revisions, ordering, and optional-field behavior preserved.
 - [x] Stage 3 — harden persistence and attempt compatibility. Add codecs/migrations and error results, implement idempotent completion with active removal, attach content identity to new attempts, and implement the agreed legacy/changed-content recovery. Exit: simulated storage failures preserve prior valid state; repeat completion does not inflate totals; migrated history and durable summaries match; incompatible content is not silently scored.
-- [ ] Stage 4 — optimize progress reads. Expose cached immutable snapshots and subscriptions; remove migration writes from getters; aggregate attempts and activity once per refresh. Exit: dashboard and subject statistics retain current behavior, storage reads stop scaling per quiz, and invalidation/multi-tab behavior is tested.
+- [x] Stage 4 — optimize progress reads. Expose cached immutable snapshots and subscriptions; remove migration writes from getters; aggregate attempts and activity once per refresh. Exit: dashboard and subject statistics retain current behavior, storage reads stop scaling per quiz, and invalidation/multi-tab behavior is tested.
 - [ ] Stage 5 — simplify frontend loading and screen composition. Extract HTTP transport/decoders/cache and quiz-launch coordinator, inject dependencies, retain cancellation/deduplication/retry semantics, then lazy-load rich screens and add visible boot/chunk failure recovery. Exit: existing loading tests plus stale-request/reconfiguration cases pass; initial transfer improves without unacceptable first-quiz delay.
 - [ ] Stage 6 — modularize admin editing. Move workflows behind commands, unify busy/error states, split cohesive panels, profile and then optimize snapshot/undo costs where justified. Exit: preview/stage/undo/import/export integration tests pass, stale work cannot apply, and unedited export remains byte-identical.
 - [ ] Stage 7 — enforce standards and close integration gaps. Introduce scoped lint/format enforcement, semantic theme tokens, backend negative tests and browser smoke coverage; finish the existing progressive-loading browser checks; update architecture/testing docs and record measured changes. Exit: all checks pass, pending manual checks are explicitly resolved, and this tracker moves to `docs/work/done` only after implementation is complete.
@@ -132,3 +132,11 @@ New active attempts capture ordered scoring-content identity and the bank revisi
 A synthetic worst-case history of 200 completed attempts with 300 answered questions each serialized to 5,957,653 bytes in the current envelope. Browser storage limits vary, and a nearly full v1 store may not have room for a retained v2 copy during migration. The repository reports quota failure without partial state or deleting legacy keys. Storage footprint and read amplification deserve attention in Stage 4; do not silently discard historical responses to fit a quota.
 
 Stage 3 verification: `npm test` passed 219 tests across 34 files; `npm run build`, `npm run validate:content`, and `git diff --check` passed. The build retains its existing large-chunk warning and content validation retains its existing answer-review warnings. Backend code was unchanged, so backend checks were not repeated in this stage.
+
+## Stage 4 result: cached progress reads
+
+`LocalAttemptRepository` now exposes a stable, deeply frozen progress snapshot and a subscription. Its getters share the cached state instead of rereading and parsing the storage envelope for each quiz. Reads do not write migration data. Successful local commits publish a new snapshot; relevant cross-tab `storage` events invalidate the cache and notify subscribers. React consumes it with `useSyncExternalStore`. A cross-tab refresh changes displayed progress but retains the original editing revision, so the stale tab still refuses its next write.
+
+`createProgressView` groups retained scores by quiz and subject and derives activity fallbacks once per snapshot. Dashboard and subject selectors read the grouped view and durable summaries. This removes repeated history filters and per-quiz storage reads while preserving subject membership, trends, activity ordering, and resume position. The session no longer keeps a second completed-history state.
+
+Stage 4 verification: `npm test` passed 221 tests across 35 files; `npm run build`, `npm run validate:content`, and `git diff --check` passed. Snapshot tests verify stable identity, no reads or migration writes across repeated getters, local and cross-tab invalidation, and stale-save rejection. The existing large-chunk and answer-review warnings remain. The Stage 3 simultaneous cross-tab write race and worst-case browser quota limit remain; neither is solved by read caching.

@@ -1,10 +1,11 @@
 import type { Attempt, AttemptRepository, CompletedAttempt, RecentScore } from '../domain/types';
-import { decodeLegacy, decodeProgress, progressKey, type ProgressState, type StoragePort } from './progressCodec';
+import { decodeLegacy, decodeProgress, legacyKeys, progressKey, type ProgressState, type StoragePort } from './progressCodec';
 
 const completedAttemptLimit = 200;
 const unavailableMessage = 'Progress could not be saved. Check browser storage and try again.';
 const conflictMessage = 'Progress changed in another tab. Reload this page before continuing.';
 const corruptMessage = 'Saved progress could not be read safely. The original browser data has been kept.';
+const progressStorageKeys = new Set<string>([progressKey, ...Object.values(legacyKeys)]);
 
 export class PersistenceError extends Error {
   constructor(readonly kind: 'unavailable' | 'conflict' | 'corrupt', message: string) {
@@ -17,10 +18,21 @@ function latestTimestamp(...timestamps: Array<string | undefined>): string | und
   return timestamps.filter((value): value is string => value !== undefined).sort().at(-1);
 }
 
+function freezeProgress<T>(value: T): T {
+  if (value && typeof value === 'object' && !Object.isFrozen(value)) {
+    for (const child of Object.values(value)) freezeProgress(child);
+    Object.freeze(value);
+  }
+  return value;
+}
+
 export class LocalAttemptRepository implements AttemptRepository {
   private observedStorage?: StoragePort;
   private observedRevision: string | null | undefined;
   private storageError?: string;
+  private cachedState?: ProgressState;
+  private readonly listeners = new Set<() => void>();
+  private listening = false;
 
   constructor(private readonly suppliedStorage?: StoragePort) {}
 
@@ -30,6 +42,7 @@ export class LocalAttemptRepository implements AttemptRepository {
       this.observedStorage = storage;
       this.observedRevision = undefined;
       this.storageError = undefined;
+      this.cachedState = undefined;
     }
     return storage;
   }
@@ -37,6 +50,7 @@ export class LocalAttemptRepository implements AttemptRepository {
   private state(): ProgressState {
     try {
       const storage = this.storage();
+      if (this.cachedState) return this.cachedState;
       const raw = storage.getItem(progressKey);
       if (raw !== null) {
         let parsed: unknown;
@@ -45,20 +59,43 @@ export class LocalAttemptRepository implements AttemptRepository {
         if (!state) {
           this.storageError = corruptMessage;
           if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
-          return decodeLegacy(storage);
+          return this.cachedState = freezeProgress(decodeLegacy(storage));
         }
         if (this.observedRevision === undefined) this.observedRevision = state.revision;
         this.storageError = undefined;
-        return state;
+        return this.cachedState = freezeProgress(state);
       }
       if (this.observedRevision === undefined) this.observedRevision = null;
       this.storageError = undefined;
-      return decodeLegacy(storage);
+      return this.cachedState = freezeProgress(decodeLegacy(storage));
     } catch {
       this.storageError = unavailableMessage;
-      return decodeLegacy({ getItem: () => null, setItem: () => undefined });
+      return this.cachedState = freezeProgress(decodeLegacy({ getItem: () => null, setItem: () => undefined }));
     }
   }
+
+  getSnapshot = (): ProgressState => this.state();
+
+  private readonly onStorage = (event: StorageEvent) => {
+    if (event.key !== null && !progressStorageKeys.has(event.key)) return;
+    this.cachedState = undefined;
+    for (const listener of this.listeners) listener();
+  };
+
+  subscribe = (listener: () => void): (() => void) => {
+    this.listeners.add(listener);
+    if (!this.listening && typeof window !== 'undefined') {
+      window.addEventListener('storage', this.onStorage);
+      this.listening = true;
+    }
+    return () => {
+      this.listeners.delete(listener);
+      if (this.listening && this.listeners.size === 0) {
+        window.removeEventListener('storage', this.onStorage);
+        this.listening = false;
+      }
+    };
+  };
 
   getStorageError(): string | undefined {
     return this.storageError;
@@ -79,6 +116,8 @@ export class LocalAttemptRepository implements AttemptRepository {
       storage.setItem(progressKey, serialized);
       if (storage.getItem(progressKey) !== serialized) throw new PersistenceError('unavailable', unavailableMessage);
       this.observedRevision = next.revision;
+      this.cachedState = freezeProgress(next);
+      for (const listener of this.listeners) listener();
     } catch (error) {
       if (error instanceof PersistenceError) throw error;
       throw new PersistenceError('unavailable', unavailableMessage);

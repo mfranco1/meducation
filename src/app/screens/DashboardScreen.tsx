@@ -9,7 +9,7 @@ import { ContentLoadFailure } from '../components/ContentLoadFailure';
 
 export type { SubjectStat } from '../dashboard';
 
-export function DashboardScreen({ attempts, subjectStats, averageLatest, personalLowest, personalLowestSubject, loading = false, retrying = false, statsLoading = false, activeAttempts = false, error, onRetry = () => undefined, onSelectSubject }: { attempts: CompletedAttempt[]; subjectStats: SubjectStat[]; averageLatest?: number; personalLowest?: number; personalLowestSubject?: string; loading?: boolean; retrying?: boolean; statsLoading?: boolean; activeAttempts?: boolean; error?: Error; onRetry?: () => void; onSelectSubject: (subject: Subject) => void }) {
+export function DashboardScreen({ attempts, subjectStats, averageLatest, personalLowest, personalLowestSubject, loading = false, retrying = false, statsLoading = false, activeAttempts = false, error, onRetry = () => undefined, onSelectSubject }: { attempts: readonly CompletedAttempt[]; subjectStats: SubjectStat[]; averageLatest?: number; personalLowest?: number; personalLowestSubject?: string; loading?: boolean; retrying?: boolean; statsLoading?: boolean; activeAttempts?: boolean; error?: Error; onRetry?: () => void; onSelectSubject: (subject: Subject) => void }) {
   return <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 } }}>
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
       <StatCard label="Completed quizzes" value={attempts.length} />

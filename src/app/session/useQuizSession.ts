@@ -17,7 +17,6 @@ export type QuizExitDestination = 'subject' | 'dashboard';
 
 interface QuizSession {
   view: View;
-  completedAttempts: CompletedAttempt[];
   persistenceError?: string;
   pendingResume?: { quiz: Quiz; reason: 'legacy' | 'changed' };
   clearPersistenceError: () => void;
@@ -39,7 +38,6 @@ interface QuizSession {
 
 export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRepository): QuizSession {
   const [view, setView] = useState<View>({ page: 'dashboard' });
-  const [completedAttempts, setCompletedAttempts] = useState(() => attempts.list());
   const [persistenceError, setPersistenceError] = useState<string | undefined>(() => attempts.getStorageError?.());
   const [pendingResume, setPendingResume] = useState<{ quiz: Quiz; reason: 'legacy' | 'changed' }>();
   const persist = (write: () => void): boolean => {
@@ -50,7 +48,6 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     }
   };
   const subjects = questionBank.listSubjects();
-  const refreshCompletedAttempts = () => setCompletedAttempts(attempts.list());
   const showQuizSubject = (quiz: Quiz) => setView({ page: 'subject', subject: subjectForQuiz(subjects, quiz) });
 
   const checkpoint = (next: Attempt, nextIndex?: number) => {
@@ -121,7 +118,6 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
       score: scoreAttempt(paused, questionBank.listQuestions(view.quiz.id)),
     };
     if (!persist(() => attempts.saveCompleted(complete))) return;
-    refreshCompletedAttempts();
     setView({ page: 'results', quiz: view.quiz, attempt: complete });
   };
 
@@ -161,7 +157,6 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
 
   return {
     view,
-    completedAttempts,
     persistenceError,
     pendingResume,
     clearPersistenceError: () => setPersistenceError(undefined),

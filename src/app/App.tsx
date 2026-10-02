@@ -9,7 +9,7 @@ import { ScreenTransition } from './components/ScreenTransition';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
 import { ResumeContentDialog } from './components/quiz/ResumeContentDialog';
 import type { SubjectStat } from './progress';
-import { quizProgressForSubject, subjectStatsFor } from './progress';
+import { createProgressView, quizProgressForSubject, subjectStatsFor } from './progress';
 import { screenIdentity } from './navigation';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { QuizScreen } from './screens/QuizScreen';
@@ -29,6 +29,8 @@ function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
 export default function App() {
   const questionBank = runtimeQuestionBank;
   const contentSnapshotVersion = useSyncExternalStore(questionBank.subscribe, questionBank.getSnapshot);
+  const progressSnapshot = useSyncExternalStore(attemptRepository.subscribe, attemptRepository.getSnapshot);
+  const progressView = useMemo(() => createProgressView(progressSnapshot), [progressSnapshot]);
   useEffect(() => { void loadRuntimeContent().catch(() => undefined); }, []);
   const session = useQuizSession(questionBank, attemptRepository);
   const [exitOpen, setExitOpen] = useState(false);
@@ -42,8 +44,8 @@ export default function App() {
   const catalogState = questionBank.getCatalogState();
   const catalogError = questionBank.getCatalogError();
   const subjectStats = useMemo<SubjectStat[]>(
-    () => subjectStatsFor(questionBank, attemptRepository, session.completedAttempts, summaries),
-    [questionBank, session.completedAttempts, session.view.page, contentSnapshotVersion],
+    () => subjectStatsFor(questionBank, progressView, summaries),
+    [questionBank, progressView, contentSnapshotVersion],
   );
   const subjectLatestScores = subjectStats.map(stat => stat.latest).filter((score): score is number => score !== undefined);
   const averageLatest = averageScore(subjectLatestScores);
@@ -84,8 +86,7 @@ export default function App() {
 
   const progressForSubject = (subjectId: string) => quizProgressForSubject(
     questionBank,
-    attemptRepository,
-    session.completedAttempts,
+    progressView,
     subjectId,
   );
 
@@ -114,7 +115,7 @@ export default function App() {
     {session.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error" onClose={session.clearPersistenceError}>{session.persistenceError}</Alert></Container>}
     {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
     <ScreenTransition screenId={screenIdentity(session.view)}>
-    {session.view.page === 'dashboard' && <DashboardScreen attempts={session.completedAttempts} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} loading={catalogState === 'idle' || catalogState === 'loading'} retrying={catalogState === 'retrying'} statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'} activeAttempts={attemptRepository.hasActiveAttempts()} error={catalogState === 'error' ? catalogError : undefined} onRetry={() => void questionBank.ensureSubjects().catch(() => undefined)} onSelectSubject={selectSubject} />}
+    {session.view.page === 'dashboard' && <DashboardScreen attempts={progressSnapshot.completed} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} loading={catalogState === 'idle' || catalogState === 'loading'} retrying={catalogState === 'retrying'} statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'} activeAttempts={Object.keys(progressSnapshot.active).length > 0} error={catalogState === 'error' ? catalogError : undefined} onRetry={() => void questionBank.ensureSubjects().catch(() => undefined)} onSelectSubject={selectSubject} />}
     {currentSubject && <SubjectScreen subject={currentSubject} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={questionBank.getQuizState(currentSubject.id) === 'idle' || questionBank.getQuizState(currentSubject.id) === 'loading'} retrying={questionBank.getQuizState(currentSubject.id) === 'retrying'} error={questionBank.getQuizError(currentSubject.id)} questionError={contentError} onRetry={() => questionBank.getQuizError(currentSubject.id) instanceof ContentLoadError && (questionBank.getQuizError(currentSubject.id) as ContentLoadError).kind === 'revision' ? window.location.reload() : void questionBank.ensureQuizzes(currentSubject.id).catch(() => undefined)} onRetryQuestions={retryContent} onBack={() => { navigationGeneration.current++; cancelPendingQuestionLoads(); setContentError(undefined); session.showDashboard(); }} onResumeQuiz={quiz => loadQuizContent(quiz, () => session.resumeQuiz(quiz))} onStartQuiz={(quiz, mode) => loadQuizContent(quiz, () => session.startQuiz(quiz, mode))} onBrowseQuiz={quiz => loadQuizContent(quiz, () => session.browseQuiz(quiz))} />}
     {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => requestQuizExit('subject')} />}
     {session.view.page === 'quiz-browse' && <QuizBrowseScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onNavigate={session.navigateBrowse} onDone={session.leaveBrowse} />}
