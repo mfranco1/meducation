@@ -1,0 +1,25 @@
+{
+  "base": {
+    "schemaVersion": 4,
+    "subjects": [{ "id": "s1", "name": "Anatomía", "accent": "#123456" }],
+    "quizzes": [{ "id": "q1", "subjectId": "s1", "name": "Café Quiz" }],
+    "questions": [{
+      "id": "i1",
+      "quizId": "q1",
+      "stem": "What is π?",
+      "choices": [{ "id": "A", "text": "Three" }, { "id": "B", "text": "About 3.14" }],
+      "answer": "A",
+      "verifiedAnswer": "B",
+      "rationale": "π is approximately 3.14."
+    }]
+  },
+  "cases": [
+    { "id": "valid_unicode_and_provenance", "change": "none", "valid": true },
+    { "id": "duplicate_question_id", "change": "duplicate_question", "valid": false },
+    { "id": "unknown_quiz_reference", "change": "unknown_quiz", "valid": false },
+    { "id": "unsupported_schema", "change": "schema_version", "valid": false },
+    { "id": "invalid_provided_answer_with_verified_answer", "change": "provided_answer", "valid": false, "gap": "frontend" },
+    { "id": "invalid_choice_label", "change": "choice_label", "valid": false, "gap": "frontend" },
+    { "id": "incomplete_review_provenance", "change": "review_provenance", "valid": false, "gap": "frontend" }
+  ]
+}

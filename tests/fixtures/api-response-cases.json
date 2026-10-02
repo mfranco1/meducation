@@ -1,0 +1,21 @@
+{
+  "subjects": {
+    "revision": "revision-1",
+    "subjects": [{ "id": "s1", "name": "Subject", "accent": "#123456", "quizCount": 1, "quizIds": ["q1"] }]
+  },
+  "quizzes": {
+    "revision": "revision-1",
+    "quizzes": [{ "id": "q1", "subjectId": "s1", "name": "Quiz", "questionCount": 1, "questionIds": ["i1"] }]
+  },
+  "questions": {
+    "revision": "revision-1",
+    "questions": [{
+      "id": "i1",
+      "quizId": "q1",
+      "stem": "Question",
+      "choices": [{ "id": "A", "text": "One" }, { "id": "B", "text": "Two" }],
+      "answer": "A",
+      "rationale": "Explanation"
+    }]
+  }
+}
