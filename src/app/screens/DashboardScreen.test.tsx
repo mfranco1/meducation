@@ -33,11 +33,19 @@ describe('dashboard catalog states', () => {
   it('replaces statistics and subject skeletons with section failures and shared retries', () => {
     const onRetry = vi.fn();
     render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} error={new Error('The request took too long. Try again or come back later.')} onRetry={onRetry} onSelectSubject={() => {}} /></ThemeProvider>);
-    expect(screen.getByText('Failed to load statistics')).toBeVisible();
-    expect(screen.getByText('Failed to load subjects')).toBeVisible();
+    expect(screen.getByText('Unable to load statistics')).toBeVisible();
+    expect(screen.getByText('Unable to load subjects')).toBeVisible();
     expect(screen.queryByRole('status', { name: 'Loading subjects' })).toBeNull();
     fireEvent.click(screen.getAllByRole('button', { name: 'Retry' })[0]);
     expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps shimmer skeletons visible during automatic retries without reconnecting copy', () => {
+    render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} retrying onSelectSubject={() => {}} /></ThemeProvider>);
+    expect(screen.getByRole('status', { name: 'Retrying subjects' })).toBeVisible();
+    expect(screen.queryByText('Reconnecting…')).toBeNull();
+    expect(screen.getAllByRole('status', { name: 'Retrying subjects' })).toHaveLength(1);
+    expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);
   });
 });
 

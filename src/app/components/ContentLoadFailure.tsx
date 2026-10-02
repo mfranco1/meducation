@@ -1,15 +1,21 @@
-import { Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import { Button, Stack, Typography } from '@mui/material';
 import { ContentLoadError } from '../../content/runtimeQuestionBank';
+
+function learnerMessage(error?: Error) {
+  if (!(error instanceof ContentLoadError)) return 'Please try again or come back later.';
+  if (error.kind === 'revision') return 'The available content has changed. Reload to continue with the latest version.';
+  if (error.kind === 'network') return 'Check your connection and try again.';
+  if (error.kind === 'timeout') return 'This is taking longer than expected. Please try again later.';
+  return 'Please try again or come back later.';
+}
 
 export function ContentLoadFailure({ title, error, onRetry }: { title: string; error?: Error; onRetry: () => void }) {
   const revisionConflict = error instanceof ContentLoadError && error.kind === 'revision';
-  return <Card variant="outlined" role="alert" sx={{ bgcolor: 'background.paper', borderColor: 'divider', height: '100%' }}>
-    <CardContent>
-      <Stack spacing={1.5} alignItems="flex-start">
-        <Typography variant="h6" sx={{ fontWeight: 700 }}>{title}</Typography>
-        <Typography color="text.secondary" variant="body2">{error?.message ?? 'Please try again or come back later.'}</Typography>
-        <Button variant="contained" onClick={onRetry}>{revisionConflict ? 'Reload content' : 'Retry'}</Button>
-      </Stack>
-    </CardContent>
-  </Card>;
+  return <Stack role="alert" spacing={0.5} alignItems="flex-start" sx={{ py: 1 }}>
+    <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>{title.replace(/^Failed to load/, 'Unable to load')}</Typography>
+    <Typography color="text.secondary" variant="body2">{learnerMessage(error)}</Typography>
+    <Button variant="text" size="small" onClick={onRetry} sx={{ minHeight: 44, minWidth: 44, px: 0.5, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }}>
+      {revisionConflict ? 'Reload content' : 'Retry'}
+    </Button>
+  </Stack>;
 }

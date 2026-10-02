@@ -1,6 +1,6 @@
 # Progressive dashboard and subject loading
 
-Status: dashboard statistics, shimmer, and timeout/error recovery implemented. Automated checks and live outage/retry verification passed; remaining browser and accessibility checks are tracked below.
+Status: dashboard statistics, shimmer, configurable automatic retries, and the simplified failure presentation implemented. Automated verification passed; remaining browser, responsive, and accessibility checks are tracked below.
 Created: 2026-10-02.
 Updated: 2026-10-02.
 
@@ -24,11 +24,33 @@ The backend loads the canonical JSON and caches its revision once per snapshot. 
 ## Target loading flow
 
 1. Mount the header, dashboard layout, section headings, and locally available statistics without waiting for HTTP responses.
-2. Request `/api/v1/subjects` once. Replace subject skeletons with cards and calculated subject progress when this response arrives.
+2. Start one deduplicated `/api/v1/subjects` loading operation. Replace subject skeletons with cards and calculated subject progress when this response arrives. Only transient failures may cause additional HTTP attempts under the bounded retry policy below.
 3. On subject selection, navigate immediately. Show the subject title and back navigation while fetching only `/api/v1/subjects/{id}/quizzes`.
 4. On start, resume, or Browse Answers, fetch only that quiz's questions, with visible loading feedback before entering the content screen.
 5. Reuse successful content in memory for the current bank revision. Revisiting a loaded subject or quiz does not repeat its request.
-6. If a request fails or times out, replace that resource's placeholders with a section-specific failure state. Retry loads that resource again with a fresh timeout; successful sections remain usable.
+6. If a request fails transiently or times out, retry automatically with bounded exponential backoff. Show a quiet reconnecting state while retries remain. Once retries are exhausted, or the failure is not retryable, replace that resource's placeholders with a simple section-specific message and action. Manual Retry starts a new bounded loading operation; successful sections remain usable.
+
+### Automatic retry policy
+
+Use one content-client policy for subjects, quiz catalogs, and questions. Keep the existing 15-second timeout for each individual HTTP attempt, including response-body reading. Backoff waiting is separate from that timeout.
+
+- Default to **3 automatic retries after the initial attempt**, for at most 4 HTTP attempts per loading operation. Setting the limit to `0` disables automatic retries.
+- Configure the policy through `VITE_CONTENT_MAX_RETRIES` (default `3`, integer `0`–`5`), `VITE_CONTENT_RETRY_BASE_DELAY_MS` (default `1000`), and `VITE_CONTENT_RETRY_MAX_DELAY_MS` (default `8000`). Read and validate these once in a typed configuration module. Require positive, finite delay values, base no greater than maximum, and maximum no greater than 30 seconds. Invalid settings use documented defaults and produce a developer log. These are build-time settings; changing them requires restarting Vite or rebuilding.
+- For retry number `n`, starting at `1`, calculate `ceiling = min(maxDelayMs, baseDelayMs * 2^(n - 1))`. Wait a random duration between half that ceiling and the ceiling to spread concurrent retries. With default settings, the delay ranges are 0.5–1, 1–2, and 2–4 seconds. Inject timing/randomness for deterministic tests.
+- Retry network failures, request timeouts, and HTTP `408`, `429`, `500`, `502`, `503`, and `504`. Do not automatically retry other HTTP failures, malformed or incomplete content, or revision conflicts. Revision conflicts retain the explicit Reload content action.
+- Honor a valid `Retry-After` header on `429` or `503`, using the later of the indicated delay and the calculated backoff. If the indicated delay exceeds the configured maximum, stop automatic retries and show the terminal message rather than sending a request too early. Support both seconds and HTTP-date values; invalid values fall back to backoff.
+- Keep one shared in-flight operation per resource across requests and backoff waits. Subjects and statistics share one operation and budget. Repeated clicks, subscriptions, and StrictMode must not create independent retry chains.
+- Stop on success, exhaustion, a nonretryable failure, or cancellation. Manual Retry creates a fresh budget only after the previous operation settles; it reuses successful caches and never starts an automatic loop after exhaustion.
+
+### Failure presentation
+
+Replace the current failure component's outer Card/CardContent with an unframed, reusable message group. It may appear inside an existing stat or quiz card, or directly within a section. Use a short heading, muted explanatory sentence, and a small text-style action in the theme's primary accent. Use existing typography and spacing; add no error panel background, border, shadow, large illustration, or nested card.
+
+Final messages should identify the affected content: “Unable to load subjects”, “Unable to load statistics”, “Unable to load quizzes”, or “Unable to load questions”. Use calm copy such as “Please try again or come back later.” For network failures, “Check your connection and try again.” is appropriate; for exhausted timeouts, “This is taking longer than expected. Please try again later.” is appropriate. Use Retry for recoverable failures and Reload content for a revision conflict.
+
+During automatic retries, keep the affected shimmer skeletons visible so they communicate that loading is still in progress. Do not add reconnecting copy or flash terminal failure messages between attempts. Keep the local completed count, section titles, and navigation available. Do not show attempt counters or countdowns in the learner UI.
+
+Never render raw `Error.message`, HTTP status codes, exception names, URLs, response bodies, stack traces, or instructions to restart/update the backend. Map typed failure categories to approved user copy. Preserve technical detail in structured developer logs only: resource type, API path without sensitive query values, failure category/status, attempt number, next delay, and whether the retry budget was exhausted. Do not log question content or saved learner data.
 
 ### Statistics dependency
 
@@ -133,15 +155,15 @@ Acceptance: all loading placeholders use the same shimmer treatment. Reduced-mot
 - [x] Centralize the existing 15-second request timeout in the content client and apply it consistently to subject metadata, quiz catalogs, and quiz questions. Keep the timeout active through response-body reading, and clear timeout resources when the operation settles.
 - [x] Distinguish timeout, network failure, HTTP error, malformed response, and revision conflict internally. Present understandable section-specific text rather than raw browser exceptions.
 - [x] Explicitly handle `idle`, `loading`, `ready`, and `error` in each screen. A timeout transitions to `error`, removes skeletons/progress indicators, and releases in-flight request guards.
-- [x] Build one reusable failure presentation using the existing MUI theme: a warm neutral card, clear heading, brief explanation, and a consistently styled primary `Retry` button with visible focus treatment. Avoid custom colors or unrelated retry styles per screen.
+- [x] Build the initial reusable failure card and primary Retry button. Stage 12 supersedes this presentation with an unframed message group and text-style action.
 - [x] Use headings such as “Failed to load subjects”, “Failed to load statistics”, “Failed to load quizzes”, and “Failed to load questions”. For timeouts, explain “The request took too long. Try again or come back later.”
 - [x] Place failures where the missing content belongs: subject grid, dependent stat cards, selected subject's quiz list, or the pending quiz launch area. Keep titles, local completed count, and back/home navigation usable.
 - [x] Retry only the failed dependency with a fresh request and timeout. Clear its previous error, restore its loading presentation, deduplicate repeated clicks, and reuse other successful caches. A shared subject/statistics dependency must not produce duplicate requests.
 - [x] Keep revision conflicts on the explicit `Reload content` path rather than repeatedly retrying an incompatible revision. Preserve local attempts during recovery.
 - [x] Ignore obsolete completions and errors after navigation or a newer request generation. A failed or timed-out question request must not start an attempt, run its timer, update activity, or launch a stale selection.
-- [x] Avoid automatic retry loops. Keep Retry available for transient failures and include the option to return later in explanatory text.
+- [x] Initially avoid automatic retry loops. Stage 11 supersedes this policy with bounded automatic retries; unlimited retry loops remain prohibited.
 
-Acceptance: a backend request that never finishes shows the appropriate failure message after 15 seconds, with no remaining skeleton for that resource. Retry can recover after the backend becomes available. Failures in one resource do not blank the app or mutate local progress.
+Initial acceptance: a backend request that never finishes shows the appropriate failure message after 15 seconds, with no remaining skeleton for that resource. Stages 11–13 change this to a 15-second deadline per attempt, a reconnecting state during bounded retries, and a final failure once the retry budget is exhausted. Failures in one resource do not blank the app or mutate local progress.
 
 ## Stage 10 — Follow-up verification and documentation
 
@@ -150,14 +172,51 @@ Acceptance: a backend request that never finishes shows the appropriate failure 
 - [ ] Use controlled requests and timers to verify subject/statistics, quiz, and question timeouts; assert placeholders disappear, appropriate failure text appears, and Retry sends one fresh request and recovers.
 - [ ] Cover immediate network/HTTP failures, malformed responses, repeated retry clicks, and revision conflicts using the same failure presentation.
 - [ ] Verify shimmer with normal motion preferences and static placeholders with reduced motion. Check loading/error announcements and keyboard access to Retry.
-- [ ] Verify pending question requests cannot create or change attempts on failure, timeout, cancellation through navigation, or late completion.
+- [x] Verify a question request canceled through app navigation cannot create an attempt or enter the quiz after late completion. Direct attempt/timer state remains unchanged because launch callbacks run only after content resolves and the navigation generation still matches.
 - [ ] Complete the outstanding throttled-browser, mobile/desktop, local-mode, and outage/recovery checks from Stage 6. Record request counts and transfer measurements before claiming a performance improvement.
 - [x] Run relevant frontend/backend tests, type-check/build, and static checks; update architecture, design, product, and testing documentation to describe the final behavior.
-- [ ] Move this tracker to `docs/work/done` after the follow-up implementation and verification are complete.
+- [ ] Move this tracker to `docs/work/done` after the follow-up implementation, new Stages 11–13, and verification are complete.
+
+## Stage 11 — Bounded automatic loading retries
+
+- [x] Add the typed, validated retry configuration described above and document the environment variables in the existing development configuration example.
+- [x] Centralize retry classification, exponential backoff with jitter, and Retry-After handling in the content client. Apply them to subjects, quiz catalogs, and questions without changing domain or persistence logic.
+- [x] Keep a 15-second deadline per HTTP attempt. Clear each attempt's timeout before scheduling another attempt; make backoff waits cancellable and release timer/request resources when the operation settles.
+- [x] Expose an observable retrying phase within the existing resource loading model, including question launches, so React updates during backoff without treating it as a final error or a successful empty result.
+- [x] Keep deduplication guards active throughout retries and waiting. Use one catalog operation for both subjects and statistics; manual Retry cannot overlap a pending automatic retry.
+- [x] Cancel abandoned question-launch retry chains on navigation. Prevent canceled requests from updating caches or deleting a newer operation's guards.
+- [x] Keep quiz attempts, timers, scores, and activity unchanged until valid questions load and the current launch is still selected.
+- [x] Log technical failures and retry decisions with sanitized resource paths and no response content.
+
+Acceptance: a transient failure can recover automatically within the configured budget. Defaults allow no more than 4 HTTP attempts per operation; `0` retries performs exactly one attempt. Exhaustion stops all retry timers and exposes manual Retry. Successful cached resources are not fetched again.
+
+## Stage 12 — Simple, professional failure and reconnecting states
+
+- [x] Refactor `ContentLoadFailure` into an unframed message group that works inside an existing card or directly in a section. Remove its Card/CardContent wrapper.
+- [x] Use the existing warm theme, compact typography, muted supporting text, and a primary text-style Retry/Reload content action with visible keyboard focus and an adequate touch target.
+- [x] Add a small shared reconnecting presentation for automatic retry waits. Stop skeleton shimmer after the first failed attempt; retain section structure and avoid displaying final failures until retries stop.
+- [x] Map typed failure categories to approved, section-specific copy. Remove direct rendering of error messages and all learner-facing error codes or backend/development instructions.
+- [x] Apply the same treatment to dependent dashboard statistics, the subjects section, the selected subject's quiz list, and question launches. Preserve unrelated successful content and local completed statistics.
+- [x] Use a polite live status during retries and a concise accessible announcement for the final failure. Avoid repeated announcements on every retry, focus movement, and nested alert regions. Keep Retry keyboard accessible.
+
+Acceptance: all resources use the same restrained message/action treatment, with no added failure cards. A backend response such as HTTP 503 is visible only in developer logs; the learner sees approved copy. Navigation remains available during retries and failure.
+
+## Stage 13 — Retry and failure verification
+
+- [x] Use fake timers and injected randomness to verify configured attempt limits, `0` retries, delay doubling/capping/jitter, invalid configuration, and per-attempt timeout/body-reading behavior.
+- [x] Verify retryable network/HTTP failures, immediate termination for nonretryable or malformed responses, revision-conflict reload behavior, and Retry-After seconds/date/invalid/excessive values.
+- [x] Test recovery during an automatic retry, exhaustion, fresh manual budgets, shared catalog deduplication, and cache reuse. Assert no requests occur after the budget stops.
+- [x] Test cancellation during backoff and navigation, then verify an obsolete question response cannot populate the question cache, create an attempt, or navigate into the quiz.
+- [x] Add presentation tests for reconnecting versus final failure, removal of skeletons during retries, simple layout, and consistent Retry/Reload content actions.
+- [x] Feed representative HTTP codes, raw exception messages, and backend instructions into the failure flow. Assert details are absent from rendered UI and raw exception details are absent from logs.
+- [ ] Verify narrow/desktop layouts, reduced motion, keyboard focus/touch targets, loading announcements, and live backend outage followed by automatic recovery or exhaustion plus manual recovery.
+- [x] Run relevant frontend tests and production type-check/build; update architecture, product, design, testing, and configuration documentation.
+
+Acceptance: retry behavior is deterministic under tests, bounded in the browser, and free of stale navigation or persistence side effects. Final messages are clean, accessible, and contain no technical diagnostics.
 
 ## Implementation references
 
-Verification on 2026-10-02: 155 frontend tests, production type-check/build, and 4 backend tests passed. The client tests cover a stalled subject request and response body, quiz and question timeouts, retries, invalid membership, and cached statistics before any subject selection. A live browser session confirmed that the dashboard requests only subjects until a subject is opened, and that an unavailable backend produces section failures that recover through Retry. Throttled transfer measurements and the remaining manual responsive/accessibility checks are still pending, so this tracker remains ongoing.
+Verification on 2026-10-02: 172 frontend tests, production type-check/build, question-bank validation, and 4 backend tests passed. The retry tests cover configurable limits, exponential delay and jitter, Retry-After, network/HTTP failures, timeout through body reading, deduplication, exhaustion, manual retry, cancellation, and safe learner-facing copy. Responsive browser, keyboard/screen-reader, and live automatic recovery checks remain pending, so this tracker remains ongoing.
 
 Primary files: `src/main.tsx`, `src/content/runtimeQuestionBank.ts`, `src/app/App.tsx`, `src/app/progress.ts`, dashboard/subject screens and cards, and `backend/src/meducation_api/main.py` plus its JSON repository.
 
