@@ -1,6 +1,7 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { commitAnswer } from '../../domain/quizEngine';
+import { contentSignature } from '../../domain/contentSignature';
 import type { Attempt, AttemptRepository, Question, Quiz, QuizRepository } from '../../domain/types';
 import { useQuizSession } from './useQuizSession';
 
@@ -10,7 +11,7 @@ const questions: Question[] = [
   { id: 'q1', quizId: quiz.id, stem: 'One', choices: [{ id: 'A', text: 'A' }], verifiedAnswer: 'A', rationale: '', metadata: {} },
   { id: 'q2', quizId: quiz.id, stem: 'Two', choices: [{ id: 'A', text: 'A' }], verifiedAnswer: 'A', rationale: '', metadata: {} },
 ];
-const activeAttempt: Attempt = { id: 'saved', quizId: quiz.id, subjectId: subject.id, feedbackMode: 'exam', startedAt: '2026-09-20T00:00:00.000Z', responses: {} };
+const activeAttempt: Attempt = { id: 'saved', quizId: quiz.id, subjectId: subject.id, feedbackMode: 'exam', startedAt: '2026-09-20T00:00:00.000Z', contentSignature: contentSignature(questions), responses: {} };
 
 afterEach(() => vi.useRealTimers());
 
@@ -89,6 +90,45 @@ describe('quiz exit destinations', () => {
     expect(result.current.view).toEqual({ page: 'dashboard' });
     expect(writes.clearActive).toHaveBeenCalledWith(quiz.id);
     expect(writes.saveActive).not.toHaveBeenCalled();
+  });
+});
+
+describe('saved content and storage recovery', () => {
+  it('requires an explicit restart for a legacy active attempt and keeps it when cancelled', () => {
+    const { result, attempts, writes } = setup();
+    vi.mocked(attempts.getActive).mockReturnValue({ ...activeAttempt, contentSignature: undefined });
+
+    act(() => result.current.resumeQuiz(quiz));
+    expect(result.current.pendingResume?.reason).toBe('legacy');
+    expect(result.current.view.page).toBe('dashboard');
+    expect(writes.saveActive).not.toHaveBeenCalled();
+    act(() => result.current.cancelPendingResume());
+    expect(result.current.pendingResume).toBeUndefined();
+    expect(writes.saveActive).not.toHaveBeenCalled();
+
+    act(() => result.current.resumeQuiz(quiz));
+    act(() => result.current.restartPendingResume());
+    expect(writes.saveActive).toHaveBeenCalledWith(expect.objectContaining({
+      contentSignature: contentSignature(questions), feedbackMode: 'exam', responses: {},
+    }));
+    expect(result.current.view.page).toBe('quiz');
+  });
+
+  it('blocks resume when scoring-relevant content changed', () => {
+    const { result, attempts, writes } = setup();
+    vi.mocked(attempts.getActive).mockReturnValue({ ...activeAttempt, contentSignature: 'old-content' });
+    act(() => result.current.resumeQuiz(quiz));
+    expect(result.current.pendingResume?.reason).toBe('changed');
+    expect(writes.saveActive).not.toHaveBeenCalled();
+  });
+
+  it('keeps the quiz open and reports a failed completion write', () => {
+    const { result, writes } = setup();
+    act(() => result.current.startQuiz(quiz, 'exam'));
+    writes.saveCompleted.mockImplementation(() => { throw new Error('Quota exceeded'); });
+    act(() => result.current.finishQuiz());
+    expect(result.current.view.page).toBe('quiz');
+    expect(result.current.persistenceError).toMatch(/could not be saved/i);
   });
 });
 

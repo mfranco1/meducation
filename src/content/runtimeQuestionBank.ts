@@ -129,6 +129,7 @@ export class RuntimeQuestionBank implements QuizRepository {
 
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener); };
   getSnapshot = () => this.snapshotVersion;
+  contentRevision = () => this.revision || undefined;
   private notify() { this.snapshotVersion++; this.listeners.forEach(listener => listener()); }
   getCatalogState() { return this.catalogState; }
   getCatalogError() { return this.catalogError; }
@@ -165,6 +166,7 @@ export class RuntimeQuestionBank implements QuizRepository {
   configureLocal(subjects: Subject[], quizzes: Quiz[], questions: Question[]) {
     this.cancelQuestionLoads();
     this.source = 'local';
+    this.revision = '';
     this.subjects = subjects;
     this.summaries = subjects.map(subject => {
       const subjectQuizzes = quizzes.filter(quiz => quiz.subjectId === subject.id);

@@ -1,7 +1,7 @@
 # Full-stack code quality review and staged refactoring plan
 
 Reviewed: 2026-10-02.
-Status: Stages 1–2 complete; Stage 3 has not started.
+Status: Stages 1–3 complete; paused before Stage 4.
 
 ## Scope and conclusion
 
@@ -72,7 +72,7 @@ Each stage should be independently reviewable. Retain canonical JSON unchanged t
 - [x] Stage 0 — inspect implementation and document baseline/findings.
 - [x] Stage 1 — establish boundary regression fixtures. Add malformed storage, interrupted completion, repeated completion, API DTO/membership, and cross-language validation fixtures. Record unsupported cases as deliberate expected failures until their implementing stage, while keeping CI green. Establish the storage/content compatibility policy. Exit: fixtures and migration/recovery design recorded; no production behavior change.
 - [x] Stage 2 — strengthen contracts and backend seams. Add decoders and shared fixture parity, type nested metadata, complete/inject the Python protocol, add indexes and explicit response DTO construction, move conditional checks before body assembly. Exit: malformed data rejected consistently; API fields, revisions, ordering, and optional-field behavior preserved.
-- [ ] Stage 3 — harden persistence and attempt compatibility. Add codecs/migrations and error results, implement idempotent completion with active removal, attach content identity to new attempts, and implement the agreed legacy/changed-content recovery. Exit: simulated storage failures preserve prior valid state; repeat completion does not inflate totals; migrated history and durable summaries match; incompatible content is not silently scored.
+- [x] Stage 3 — harden persistence and attempt compatibility. Add codecs/migrations and error results, implement idempotent completion with active removal, attach content identity to new attempts, and implement the agreed legacy/changed-content recovery. Exit: simulated storage failures preserve prior valid state; repeat completion does not inflate totals; migrated history and durable summaries match; incompatible content is not silently scored.
 - [ ] Stage 4 — optimize progress reads. Expose cached immutable snapshots and subscriptions; remove migration writes from getters; aggregate attempts and activity once per refresh. Exit: dashboard and subject statistics retain current behavior, storage reads stop scaling per quiz, and invalidation/multi-tab behavior is tested.
 - [ ] Stage 5 — simplify frontend loading and screen composition. Extract HTTP transport/decoders/cache and quiz-launch coordinator, inject dependencies, retain cancellation/deduplication/retry semantics, then lazy-load rich screens and add visible boot/chunk failure recovery. Exit: existing loading tests plus stale-request/reconfiguration cases pass; initial transfer improves without unacceptable first-quiz delay.
 - [ ] Stage 6 — modularize admin editing. Move workflows behind commands, unify busy/error states, split cohesive panels, profile and then optimize snapshot/undo costs where justified. Exit: preview/stage/undo/import/export integration tests pass, stale work cannot apply, and unedited export remains byte-identical.
@@ -122,3 +122,13 @@ The Python bank has typed rationale/question metadata, rejects explicit null opt
 Contract coverage now includes Unicode revision parity, answer provenance, duplicate/unknown IDs, malformed metadata and explanations, noncontiguous questions, exact API membership, response counts/order, and sparse optional-field output. The frontend API DTO suite also covers blank stems and duplicate choices. No canonical question record or browser attempt data was changed. Stage 3 begins with the still-unresolved storage fixtures and the compatibility policy above.
 
 Stage 2 verification: `npm test` passed 210 tests across 33 files; `npm run build` and `npm run validate:content` passed; backend pytest passed 27 tests; Ruff and mypy passed. The existing build chunk-size warning, content answer-review warnings, and TestClient deprecation warning remain. `git diff --check` passed. The three Stage 3 storage tests remain marked as expected failures.
+
+## Stage 3 result: recoverable browser progress
+
+`LocalAttemptRepository` now writes one validated `meducation.progress.v2` envelope. It reads the six legacy keys, preserves valid records and durable summaries, and leaves those keys untouched. A failed first write leaves legacy progress readable. Completion removes the matching active attempt in the same write as history and summaries; a durable attempt-ID index makes repeat completion idempotent after the 200-entry history is pruned. Corrupt v2 data is not overwritten, and storage/quota errors leave the quiz open with a visible message.
+
+New active attempts capture ordered scoring-content identity and the bank revision. Legacy or changed-content attempts require the learner to choose whether to restart; cancellation preserves the saved attempt. A repository instance detects an intervening write from another tab and refuses its stale save. Browser storage events naturally publish the new envelope to other tabs, but this stage does not subscribe to them or provide an atomic lock. The simultaneous read/write race remains a documented limit; Stage 4 handles reactive updates.
+
+A synthetic worst-case history of 200 completed attempts with 300 answered questions each serialized to 5,957,653 bytes in the current envelope. Browser storage limits vary, and a nearly full v1 store may not have room for a retained v2 copy during migration. The repository reports quota failure without partial state or deleting legacy keys. Storage footprint and read amplification deserve attention in Stage 4; do not silently discard historical responses to fit a quota.
+
+Stage 3 verification: `npm test` passed 219 tests across 34 files; `npm run build`, `npm run validate:content`, and `git diff --check` passed. The build retains its existing large-chunk warning and content validation retains its existing answer-review warnings. Backend code was unchanged, so backend checks were not repeated in this stage.

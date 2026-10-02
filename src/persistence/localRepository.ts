@@ -1,23 +1,16 @@
 import type { Attempt, AttemptRepository, CompletedAttempt, RecentScore } from '../domain/types';
+import { decodeLegacy, decodeProgress, progressKey, type ProgressState, type StoragePort } from './progressCodec';
 
-const completedKey = 'meducation.completed-attempts.v1';
-const completionCountsKey = 'meducation.completion-counts.v1';
-const lowestScoresKey = 'meducation.lowest-scores.v1';
-const latestScoresKey = 'meducation.latest-scores.v1';
-const activeKey = 'meducation.active-attempts.v1';
-const activityKey = 'meducation.quiz-activity.v1';
 const completedAttemptLimit = 200;
+const unavailableMessage = 'Progress could not be saved. Check browser storage and try again.';
+const conflictMessage = 'Progress changed in another tab. Reload this page before continuing.';
+const corruptMessage = 'Saved progress could not be read safely. The original browser data has been kept.';
 
-function read<T>(key: string, fallback: T): T {
-  try {
-    return JSON.parse(localStorage.getItem(key) ?? '') as T;
-  } catch {
-    return fallback;
+export class PersistenceError extends Error {
+  constructor(readonly kind: 'unavailable' | 'conflict' | 'corrupt', message: string) {
+    super(message);
+    this.name = 'PersistenceError';
   }
-}
-
-function write<T>(key: string, value: T): void {
-  localStorage.setItem(key, JSON.stringify(value));
 }
 
 function latestTimestamp(...timestamps: Array<string | undefined>): string | undefined {
@@ -25,100 +18,128 @@ function latestTimestamp(...timestamps: Array<string | undefined>): string | und
 }
 
 export class LocalAttemptRepository implements AttemptRepository {
-  list() {
-    return read<CompletedAttempt[]>(completedKey, []);
+  private observedStorage?: StoragePort;
+  private observedRevision: string | null | undefined;
+  private storageError?: string;
+
+  constructor(private readonly suppliedStorage?: StoragePort) {}
+
+  private storage(): StoragePort {
+    const storage = this.suppliedStorage ?? localStorage;
+    if (storage !== this.observedStorage) {
+      this.observedStorage = storage;
+      this.observedRevision = undefined;
+      this.storageError = undefined;
+    }
+    return storage;
   }
 
-  private completionCounts() {
-    if (localStorage.getItem(completionCountsKey) !== null) return read<Record<string, number>>(completionCountsKey, {});
-    const counts = this.list().reduce<Record<string, number>>((total, attempt) => ({
-      ...total,
-      [attempt.quizId]: (total[attempt.quizId] ?? 0) + 1,
-    }), {});
-    write(completionCountsKey, counts);
-    return counts;
-  }
-
-  completionCount(quizId: string) {
-    return this.completionCounts()[quizId] ?? 0;
-  }
-
-  private lowestScores() {
-    if (localStorage.getItem(lowestScoresKey) !== null) return read<Record<string, number>>(lowestScoresKey, {});
-    const scores = this.list().reduce<Record<string, number>>((total, attempt) => {
-      const lowest = total[attempt.quizId];
-      total[attempt.quizId] = lowest === undefined ? attempt.score.percentage : Math.min(lowest, attempt.score.percentage);
-      return total;
-    }, {});
-    write(lowestScoresKey, scores);
-    return scores;
-  }
-
-  lowestScore(quizId: string) {
-    return this.lowestScores()[quizId];
-  }
-
-  private latestScores() {
-    if (localStorage.getItem(latestScoresKey) !== null) return read<Record<string, RecentScore>>(latestScoresKey, {});
-    const scores = this.list().reduce<Record<string, RecentScore>>((total, attempt) => {
-      const existing = total[attempt.quizId];
-      if (!existing || attempt.completedAt > existing.completedAt) {
-        total[attempt.quizId] = { percentage: attempt.score.percentage, completedAt: attempt.completedAt };
+  private state(): ProgressState {
+    try {
+      const storage = this.storage();
+      const raw = storage.getItem(progressKey);
+      if (raw !== null) {
+        let parsed: unknown;
+        try { parsed = JSON.parse(raw) as unknown; } catch { parsed = undefined; }
+        const state = decodeProgress(parsed);
+        if (!state) {
+          this.storageError = corruptMessage;
+          if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
+          return decodeLegacy(storage);
+        }
+        if (this.observedRevision === undefined) this.observedRevision = state.revision;
+        this.storageError = undefined;
+        return state;
       }
-      return total;
-    }, {});
-    write(latestScoresKey, scores);
-    return scores;
+      if (this.observedRevision === undefined) this.observedRevision = null;
+      this.storageError = undefined;
+      return decodeLegacy(storage);
+    } catch {
+      this.storageError = unavailableMessage;
+      return decodeLegacy({ getItem: () => null, setItem: () => undefined });
+    }
   }
 
-  latestScore(quizId: string) {
-    return this.latestScores()[quizId];
+  getStorageError(): string | undefined {
+    return this.storageError;
   }
 
-  latestActivityAt(quizId: string) {
-    const recorded = read<Record<string, string>>(activityKey, {})[quizId];
-    return recorded ?? latestTimestamp(this.getActive(quizId)?.startedAt, this.latestScore(quizId)?.completedAt);
+  private commit(change: (state: ProgressState) => ProgressState | undefined): void {
+    const state = this.state();
+    if (this.storageError) throw new PersistenceError(this.storageError === corruptMessage ? 'corrupt' : 'unavailable', this.storageError);
+    try {
+      const storage = this.storage();
+      const raw = storage.getItem(progressKey);
+      const current = raw === null ? null : decodeProgress(JSON.parse(raw) as unknown)?.revision ?? 'corrupt';
+      if (current !== this.observedRevision) throw new PersistenceError('conflict', conflictMessage);
+      const next = change(state);
+      if (!next) return;
+      next.revision = crypto.randomUUID();
+      const serialized = JSON.stringify(next);
+      storage.setItem(progressKey, serialized);
+      if (storage.getItem(progressKey) !== serialized) throw new PersistenceError('unavailable', unavailableMessage);
+      this.observedRevision = next.revision;
+    } catch (error) {
+      if (error instanceof PersistenceError) throw error;
+      throw new PersistenceError('unavailable', unavailableMessage);
+    }
   }
 
-  getActive(quizId: string) {
-    return read<Record<string, Attempt>>(activeKey, {})[quizId];
+  list(): CompletedAttempt[] { return this.state().completed; }
+  completionCount(quizId: string): number { return this.state().completionCounts[quizId] ?? 0; }
+  lowestScore(quizId: string): number | undefined { return this.state().lowestScores[quizId]; }
+  latestScore(quizId: string): RecentScore | undefined { return this.state().latestScores[quizId]; }
+
+  latestActivityAt(quizId: string): string | undefined {
+    const state = this.state();
+    return state.activity[quizId] ?? latestTimestamp(state.active[quizId]?.startedAt, state.latestScores[quizId]?.completedAt);
   }
 
-  hasActiveAttempts() { return Object.keys(read<Record<string, Attempt>>(activeKey, {})).length > 0; }
+  getActive(quizId: string): Attempt | undefined { return this.state().active[quizId]; }
+  hasActiveAttempts(): boolean { return Object.keys(this.state().active).length > 0; }
 
-  private recordActivity(quizId: string, at = new Date().toISOString()) {
-    write(activityKey, { ...read<Record<string, string>>(activityKey, {}), [quizId]: at });
-  }
-
-  saveActive(attempt: Attempt) {
-    write(activeKey, { ...read<Record<string, Attempt>>(activeKey, {}), [attempt.quizId]: attempt });
-    this.recordActivity(attempt.quizId);
-  }
-
-  clearActive(quizId: string) {
-    const values = read<Record<string, Attempt>>(activeKey, {});
-    delete values[quizId];
-    write(activeKey, values);
-  }
-
-  saveCompleted(attempt: CompletedAttempt) {
-    const counts = this.completionCounts();
-    const lowestScores = this.lowestScores();
-    const latestScores = this.latestScores();
-    const currentLatest = latestScores[attempt.quizId];
-    const latest = !currentLatest || attempt.completedAt >= currentLatest.completedAt
-      ? { percentage: attempt.score.percentage, completedAt: attempt.completedAt }
-      : currentLatest;
-
-    write(completedKey, [attempt, ...this.list()].slice(0, completedAttemptLimit));
-    write(completionCountsKey, { ...counts, [attempt.quizId]: (counts[attempt.quizId] ?? 0) + 1 });
-    write(lowestScoresKey, {
-      ...lowestScores,
-      [attempt.quizId]: lowestScores[attempt.quizId] === undefined
-        ? attempt.score.percentage
-        : Math.min(lowestScores[attempt.quizId], attempt.score.percentage),
+  saveActive(attempt: Attempt): void {
+    this.commit(state => {
+      if (state.completedIds[attempt.id]) throw new PersistenceError('conflict', conflictMessage);
+      return {
+        ...state,
+        active: { ...state.active, [attempt.quizId]: attempt },
+        activity: { ...state.activity, [attempt.quizId]: new Date().toISOString() },
+      };
     });
-    write(latestScoresKey, { ...latestScores, [attempt.quizId]: latest });
-    this.recordActivity(attempt.quizId, attempt.completedAt);
+  }
+
+  clearActive(quizId: string): void {
+    this.commit(state => {
+      if (!state.active[quizId]) return undefined;
+      const active = { ...state.active };
+      delete active[quizId];
+      return { ...state, active };
+    });
+  }
+
+  saveCompleted(attempt: CompletedAttempt): void {
+    this.commit(state => {
+      const active = { ...state.active };
+      const removedActive = active[attempt.quizId]?.id === attempt.id;
+      if (removedActive) delete active[attempt.quizId];
+      if (state.completedIds[attempt.id]) return removedActive ? { ...state, active } : undefined;
+      const historical = { ...attempt };
+      delete historical.contentSignature;
+      const previousLatest = state.latestScores[attempt.quizId];
+      const latest = !previousLatest || attempt.completedAt >= previousLatest.completedAt
+        ? { percentage: attempt.score.percentage, completedAt: attempt.completedAt }
+        : previousLatest;
+      return {
+        ...state,
+        active,
+        completed: [historical, ...state.completed].slice(0, completedAttemptLimit),
+        completedIds: { ...state.completedIds, [attempt.id]: true },
+        completionCounts: { ...state.completionCounts, [attempt.quizId]: (state.completionCounts[attempt.quizId] ?? 0) + 1 },
+        lowestScores: { ...state.lowestScores, [attempt.quizId]: Math.min(state.lowestScores[attempt.quizId] ?? 100, attempt.score.percentage) },
+        latestScores: { ...state.latestScores, [attempt.quizId]: latest },
+        activity: { ...state.activity, [attempt.quizId]: attempt.completedAt },
+      };
+    });
   }
 }

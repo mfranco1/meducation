@@ -8,7 +8,9 @@ import {
   scoreAttempt,
   updateResponse,
 } from '../../domain/quizEngine';
+import { contentSignature } from '../../domain/contentSignature';
 import type { Attempt, AttemptRepository, CompletedAttempt, FeedbackMode, Quiz, QuizRepository, Subject } from '../../domain/types';
+import { PersistenceError } from '../../persistence/localRepository';
 import { subjectForQuiz, type View } from '../navigation';
 
 export type QuizExitDestination = 'subject' | 'dashboard';
@@ -16,6 +18,11 @@ export type QuizExitDestination = 'subject' | 'dashboard';
 interface QuizSession {
   view: View;
   completedAttempts: CompletedAttempt[];
+  persistenceError?: string;
+  pendingResume?: { quiz: Quiz; reason: 'legacy' | 'changed' };
+  clearPersistenceError: () => void;
+  cancelPendingResume: () => void;
+  restartPendingResume: () => void;
   resumeQuiz: (quiz: Quiz) => void;
   startQuiz: (quiz: Quiz, mode: FeedbackMode) => void;
   browseQuiz: (quiz: Quiz) => void;
@@ -33,6 +40,15 @@ interface QuizSession {
 export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRepository): QuizSession {
   const [view, setView] = useState<View>({ page: 'dashboard' });
   const [completedAttempts, setCompletedAttempts] = useState(() => attempts.list());
+  const [persistenceError, setPersistenceError] = useState<string | undefined>(() => attempts.getStorageError?.());
+  const [pendingResume, setPendingResume] = useState<{ quiz: Quiz; reason: 'legacy' | 'changed' }>();
+  const persist = (write: () => void): boolean => {
+    try { write(); setPersistenceError(undefined); return true; }
+    catch (error) {
+      setPersistenceError(error instanceof PersistenceError ? error.message : 'Progress could not be saved. Try again.');
+      return false;
+    }
+  };
   const subjects = questionBank.listSubjects();
   const refreshCompletedAttempts = () => setCompletedAttempts(attempts.list());
   const showQuizSubject = (quiz: Quiz) => setView({ page: 'subject', subject: subjectForQuiz(subjects, quiz) });
@@ -45,7 +61,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     const checkpointed = isFullyAnsweredFastFeedback(withCheckpoint, bank)
       ? pauseAttempt(withCheckpoint)
       : withCheckpoint;
-    attempts.saveActive(checkpointed);
+    if (!persist(() => attempts.saveActive(checkpointed))) return;
     setView({ ...view, attempt: checkpointed, index });
   };
 
@@ -53,22 +69,37 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     const existing = attempts.getActive(quiz.id);
     if (!existing) return;
     const questions = questionBank.listQuestions(quiz.id);
+    const signature = contentSignature(questions);
+    if (!existing.contentSignature || existing.contentSignature !== signature) {
+      setPendingResume({ quiz, reason: existing.contentSignature ? 'changed' : 'legacy' });
+      return;
+    }
     const resumed = isFullyAnsweredFastFeedback(existing, questions)
       ? pauseAttempt(existing)
       : resumeAttempt(existing);
-    attempts.saveActive(resumed);
+    if (!persist(() => attempts.saveActive(resumed))) return;
     setView({ page: 'quiz', quiz, attempt: resumed, index: questionIndexFor(questions, resumed.currentQuestionId) });
   };
 
-  const startQuiz = (quiz: Quiz, mode: FeedbackMode) => {
+  const beginQuiz = (quiz: Quiz, mode: FeedbackMode): boolean => {
     const now = new Date().toISOString();
+    const questions = questionBank.listQuestions(quiz.id);
     const attempt: Attempt = {
       id: crypto.randomUUID(), quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: mode,
       startedAt: now, elapsedMs: 0, timerStartedAt: now,
-      currentQuestionId: questionBank.listQuestions(quiz.id)[0]?.id, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, responses: {},
+      currentQuestionId: questions[0]?.id, contentSignature: contentSignature(questions), contentRevision: questionBank.contentRevision?.(),
+      celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, responses: {},
     };
-    attempts.saveActive(attempt);
+    if (!persist(() => attempts.saveActive(attempt))) return false;
     setView({ page: 'quiz', quiz, attempt, index: 0 });
+    return true;
+  };
+  const startQuiz = (quiz: Quiz, mode: FeedbackMode) => { void beginQuiz(quiz, mode); };
+  const restartPendingResume = () => {
+    if (!pendingResume) return;
+    const existing = attempts.getActive(pendingResume.quiz.id);
+    if (!existing) { setPendingResume(undefined); return; }
+    if (beginQuiz(pendingResume.quiz, existing.feedbackMode)) setPendingResume(undefined);
   };
 
   const browseQuiz = (quiz: Quiz) => setView({ page: 'quiz-browse', quiz, index: 0 });
@@ -89,8 +120,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
       completedAt: new Date().toISOString(),
       score: scoreAttempt(paused, questionBank.listQuestions(view.quiz.id)),
     };
-    attempts.saveCompleted(complete);
-    attempts.clearActive(view.quiz.id);
+    if (!persist(() => attempts.saveCompleted(complete))) return;
     refreshCompletedAttempts();
     setView({ page: 'results', quiz: view.quiz, attempt: complete });
   };
@@ -98,21 +128,24 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   const leaveQuiz = (destination: QuizExitDestination = 'subject') => {
     if (view.page !== 'quiz') return;
     const question = questionBank.listQuestions(view.quiz.id)[view.index];
-    attempts.saveActive(pauseAttempt({ ...view.attempt, currentQuestionId: question.id }));
+    if (!persist(() => attempts.saveActive(pauseAttempt({ ...view.attempt, currentQuestionId: question.id })))) return;
     if (destination === 'dashboard') setView({ page: 'dashboard' });
     else showQuizSubject(view.quiz);
   };
 
   const abortQuiz = (destination: QuizExitDestination = 'subject') => {
     if (view.page !== 'quiz') return;
-    attempts.clearActive(view.quiz.id);
+    if (!persist(() => attempts.clearActive(view.quiz.id))) return;
     if (destination === 'dashboard') setView({ page: 'dashboard' });
     else showQuizSubject(view.quiz);
   };
 
   useEffect(() => {
     if (view.page !== 'quiz') return;
-    const pauseOnPageHide = () => attempts.saveActive(pauseAttempt(view.attempt));
+    const pauseOnPageHide = () => {
+      try { attempts.saveActive(pauseAttempt(view.attempt)); }
+      catch { console.error('Progress could not be saved while leaving the page.'); }
+    };
     window.addEventListener('pagehide', pauseOnPageHide);
     return () => window.removeEventListener('pagehide', pauseOnPageHide);
   }, [attempts, view]);
@@ -129,6 +162,11 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   return {
     view,
     completedAttempts,
+    persistenceError,
+    pendingResume,
+    clearPersistenceError: () => setPersistenceError(undefined),
+    cancelPendingResume: () => setPendingResume(undefined),
+    restartPendingResume,
     resumeQuiz,
     startQuiz,
     browseQuiz,
