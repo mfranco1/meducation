@@ -45,6 +45,7 @@ describe('dashboard catalog states', () => {
     expect(screen.getByRole('status', { name: 'Retrying subjects' })).toBeVisible();
     expect(screen.queryByText('Reconnecting…')).toBeNull();
     expect(screen.getAllByRole('status', { name: 'Retrying subjects' })).toHaveLength(1);
+    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);
   });
 });

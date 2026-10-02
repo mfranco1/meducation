@@ -88,4 +88,35 @@ describe('progressive dashboard statistics', () => {
     expect(localStorage.getItem('meducation.active-attempts.v1')).toBeNull();
     expect(runtimeQuestionBank.listQuestions(quiz.id)).toEqual([]);
   });
+
+  it('leaves persisted progress unchanged when question loading fails', async () => {
+    const subject = { id: 's-failure', name: 'Test Subject', accent: '#b9511b' };
+    const quiz = { id: 'q-failure', subjectId: subject.id, name: 'Test Quiz', questionCount: 1, questionIds: ['i-failure'] };
+    runtimeQuestionBank.configureApi({ revision: 'rev-failure-app', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }, [
+      { revision: 'rev-failure-app', quizzes: [quiz] },
+    ]);
+    const attempts = new LocalAttemptRepository();
+    attempts.saveCompleted(completed(quiz.id, subject.id, 80));
+    const progressKeys = [
+      'meducation.active-attempts.v1',
+      'meducation.completed-attempts.v1',
+      'meducation.completion-counts.v1',
+      'meducation.latest-scores.v1',
+      'meducation.lowest-scores.v1',
+      'meducation.quiz-activity.v1',
+    ];
+    const before = progressKeys.map(key => localStorage.getItem(key));
+    const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404, headers: { get: () => null } });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Open Test Subject' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Retake quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+
+    expect(await screen.findByText('Unable to load questions')).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(progressKeys.map(key => localStorage.getItem(key))).toEqual(before);
+    expect(runtimeQuestionBank.listQuestions(quiz.id)).toEqual([]);
+  });
 });

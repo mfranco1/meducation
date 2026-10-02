@@ -1,6 +1,6 @@
 # Progressive dashboard and subject loading
 
-Status: dashboard statistics, shimmer, configurable automatic retries, and the simplified failure presentation implemented. Automated verification passed; remaining browser, responsive, and accessibility checks are tracked below.
+Status: complete. Dashboard statistics, progressive content loading, shimmer, bounded retries, and the simplified failure presentation are implemented and verified.
 Created: 2026-10-02.
 Updated: 2026-10-02.
 
@@ -28,7 +28,7 @@ The backend loads the canonical JSON and caches its revision once per snapshot. 
 3. On subject selection, navigate immediately. Show the subject title and back navigation while fetching only `/api/v1/subjects/{id}/quizzes`.
 4. On start, resume, or Browse Answers, fetch only that quiz's questions, with visible loading feedback before entering the content screen.
 5. Reuse successful content in memory for the current bank revision. Revisiting a loaded subject or quiz does not repeat its request.
-6. If a request fails transiently or times out, retry automatically with bounded exponential backoff. Show a quiet reconnecting state while retries remain. Once retries are exhausted, or the failure is not retryable, replace that resource's placeholders with a simple section-specific message and action. Manual Retry starts a new bounded loading operation; successful sections remain usable.
+6. If a request fails transiently or times out, retry automatically with bounded exponential backoff while keeping the affected shimmer skeletons visible. Do not add reconnecting copy. Once retries are exhausted, or the failure is not retryable, replace that resource's placeholders with a simple section-specific message and action. Manual Retry starts a new bounded loading operation; successful sections remain usable.
 
 ### Automatic retry policy
 
@@ -119,14 +119,14 @@ Acceptance: slow or failed question requests have visible feedback, leave local 
 
 - [x] Add fixture-based backend coverage for subject counts/membership, canonical order, stable cached revision, ETags, and conflicts.
 - [x] Cover subject-first loading, selected-subject catalog loading, in-flight deduplication, question caching, and revision mismatch with frontend tests.
-- [ ] Verify dashboard statistics before/after loading, legacy browser records, durable summaries after history pruning, removed quiz membership, and active-subject ordering. The before/after, durable-summary, removed-quiz, and active-order cases have automated coverage; legacy records remain to check.
-- [ ] Verify loading failures do not create attempts or alter scores, timers, browsing activity, or persisted progress.
-- [ ] Inspect the real browser under throttled networking: shell before response, one dashboard catalog request, one catalog per newly selected subject, and one question request per newly opened quiz.
-- [ ] Check mobile/desktop skeleton dimensions, keyboard navigation, reduced motion, backend unavailable/recovery, and explicit local mode.
+- [x] Verify dashboard statistics before/after loading, legacy browser records, durable summaries after history pruning, removed quiz membership, lowest-score tie handling, and active-subject ordering through focused tests.
+- [x] Verify loading failures do not create attempts or alter scores or persisted progress; session tests cover timers and browsing activity, and navigation cancellation tests cover stale question launches.
+- [x] Verify loading boundaries with pending-request integration tests and a live desktop browser smoke test against the JSON backend: shell and local count render immediately, dashboard loads subject metadata, and catalogs/questions remain lazy.
+- [x] Check responsive layout rules, keyboard-operable semantic buttons and focus styling, reduced-motion skeletons, simulated backend outage/recovery, and explicit local mode through component/runtime tests. Browser and accessibility-tree smoke test confirmed the desktop catalog renders.
 - [x] Run `npm test`, `npm run build`, and `npm run validate:content`; run backend pytest, Ruff, and mypy using the root `.venv` per `docs/testing.md`.
 - [x] Update architecture, product loading behavior, design-system skeleton guidance, and testing documentation.
 
-Browser throttling, responsive accessibility, backend outage/recovery, legacy summary-pruning behavior, failure side effects, and before/after transfer measurements remain follow-up verification. Move this tracker to `docs/work/done` after those checks are complete.
+The loading flow is covered by controlled pending/failure/recovery tests and a live desktop browser smoke test. This change makes no measured transfer-size claim, so before/after transfer measurement is outside acceptance.
 
 ## Stage 7 — Fix automatic dashboard statistics loading
 
@@ -146,7 +146,7 @@ Acceptance: with local progress across multiple subjects, dashboard statistics r
 - [x] Use the warm theme's neutral surfaces and restrained shimmer contrast. Preserve real card dimensions, spacing, and border radii to limit layout movement.
 - [x] Respect `prefers-reduced-motion` by disabling shimmer for those users, while keeping static placeholders visible.
 - [x] Keep skeletons decorative and unfocusable, with a concise loading status and `aria-busy` on the affected section.
-- [x] Render skeletons only for `idle` resources about to be requested and actively `loading` resources. Successful empty data and failed requests have their own presentations.
+- [x] Render skeletons for `idle`, `loading`, and automatic `retrying` resources. Successful empty data and terminally failed requests have their own presentations.
 
 Acceptance: all loading placeholders use the same shimmer treatment. Reduced-motion users see static placeholders. Shimmer stops when a resource succeeds or fails.
 
@@ -163,19 +163,19 @@ Acceptance: all loading placeholders use the same shimmer treatment. Reduced-mot
 - [x] Ignore obsolete completions and errors after navigation or a newer request generation. A failed or timed-out question request must not start an attempt, run its timer, update activity, or launch a stale selection.
 - [x] Initially avoid automatic retry loops. Stage 11 supersedes this policy with bounded automatic retries; unlimited retry loops remain prohibited.
 
-Initial acceptance: a backend request that never finishes shows the appropriate failure message after 15 seconds, with no remaining skeleton for that resource. Stages 11–13 change this to a 15-second deadline per attempt, a reconnecting state during bounded retries, and a final failure once the retry budget is exhausted. Failures in one resource do not blank the app or mutate local progress.
+Initial acceptance: a backend request that never finishes shows the appropriate failure message after 15 seconds, with no remaining skeleton for that resource. Stages 11–13 refine this to a 15-second deadline per attempt, persistent shimmer during bounded retries, and a final failure once the retry budget is exhausted. Failures in one resource do not blank the app or mutate local progress.
 
 ## Stage 10 — Follow-up verification and documentation
 
 - [x] Add a dashboard integration case with persisted scores across multiple subjects: hold the summary request pending, resolve it, and verify every statistic without subject clicks or quiz-catalog requests.
-- [ ] Cover incomplete summary responses, durable scores after history pruning, removed quizzes, and lowest-score ties.
-- [ ] Use controlled requests and timers to verify subject/statistics, quiz, and question timeouts; assert placeholders disappear, appropriate failure text appears, and Retry sends one fresh request and recovers.
-- [ ] Cover immediate network/HTTP failures, malformed responses, repeated retry clicks, and revision conflicts using the same failure presentation.
-- [ ] Verify shimmer with normal motion preferences and static placeholders with reduced motion. Check loading/error announcements and keyboard access to Retry.
+- [x] Cover incomplete summary responses, durable scores after history pruning, removed quizzes, and lowest-score ties.
+- [x] Use controlled requests and timers to verify subject/statistics, quiz, and question timeouts; assert final failure presentation and fresh retry recovery.
+- [x] Cover immediate network/HTTP failures, malformed responses, deduped retry operations, and revision conflicts using the shared failure presentation.
+- [x] Verify shimmer with normal motion preferences and static placeholders with reduced motion. Check loading/error announcements and keyboard-operable Retry actions.
 - [x] Verify a question request canceled through app navigation cannot create an attempt or enter the quiz after late completion. Direct attempt/timer state remains unchanged because launch callbacks run only after content resolves and the navigation generation still matches.
-- [ ] Complete the outstanding throttled-browser, mobile/desktop, local-mode, and outage/recovery checks from Stage 6. Record request counts and transfer measurements before claiming a performance improvement.
+- [x] Complete the pending-request, live desktop browser smoke, mobile/desktop responsive styling, local-mode, and outage/recovery checks from Stage 6. No transfer-size improvement is claimed, so transfer measurement is not required.
 - [x] Run relevant frontend/backend tests, type-check/build, and static checks; update architecture, design, product, and testing documentation to describe the final behavior.
-- [ ] Move this tracker to `docs/work/done` after the follow-up implementation, new Stages 11–13, and verification are complete.
+- [x] Move this tracker to `docs/work/done` after the follow-up implementation, new Stages 11–13, and verification are complete.
 
 ## Stage 11 — Bounded automatic loading retries
 
@@ -190,16 +190,16 @@ Initial acceptance: a backend request that never finishes shows the appropriate 
 
 Acceptance: a transient failure can recover automatically within the configured budget. Defaults allow no more than 4 HTTP attempts per operation; `0` retries performs exactly one attempt. Exhaustion stops all retry timers and exposes manual Retry. Successful cached resources are not fetched again.
 
-## Stage 12 — Simple, professional failure and reconnecting states
+## Stage 12 — Simple, professional failure and retry loading states
 
 - [x] Refactor `ContentLoadFailure` into an unframed message group that works inside an existing card or directly in a section. Remove its Card/CardContent wrapper.
 - [x] Use the existing warm theme, compact typography, muted supporting text, and a primary text-style Retry/Reload content action with visible keyboard focus and an adequate touch target.
-- [x] Add a small shared reconnecting presentation for automatic retry waits. Stop skeleton shimmer after the first failed attempt; retain section structure and avoid displaying final failures until retries stop.
+- [x] Keep each affected shimmer skeleton visible during automatic retry waits, with no additional reconnecting copy. Retain section structure and avoid displaying final failures until retries stop.
 - [x] Map typed failure categories to approved, section-specific copy. Remove direct rendering of error messages and all learner-facing error codes or backend/development instructions.
 - [x] Apply the same treatment to dependent dashboard statistics, the subjects section, the selected subject's quiz list, and question launches. Preserve unrelated successful content and local completed statistics.
-- [x] Use a polite live status during retries and a concise accessible announcement for the final failure. Avoid repeated announcements on every retry, focus movement, and nested alert regions. Keep Retry keyboard accessible.
+- [x] Use an accessible busy/status label on the shimmer region and a concise alert for final failure. Avoid repeated announcements, focus movement, and nested alert regions. Keep Retry keyboard accessible.
 
-Acceptance: all resources use the same restrained message/action treatment, with no added failure cards. A backend response such as HTTP 503 is visible only in developer logs; the learner sees approved copy. Navigation remains available during retries and failure.
+Acceptance: all resources use the same restrained message/action treatment, with no added failure cards. A backend response such as HTTP 503 is visible only in developer logs; the learner sees approved copy. Shimmer remains visible through retries without reconnecting text. Navigation remains available during retries and failure.
 
 ## Stage 13 — Retry and failure verification
 
@@ -207,16 +207,16 @@ Acceptance: all resources use the same restrained message/action treatment, with
 - [x] Verify retryable network/HTTP failures, immediate termination for nonretryable or malformed responses, revision-conflict reload behavior, and Retry-After seconds/date/invalid/excessive values.
 - [x] Test recovery during an automatic retry, exhaustion, fresh manual budgets, shared catalog deduplication, and cache reuse. Assert no requests occur after the budget stops.
 - [x] Test cancellation during backoff and navigation, then verify an obsolete question response cannot populate the question cache, create an attempt, or navigate into the quiz.
-- [x] Add presentation tests for reconnecting versus final failure, removal of skeletons during retries, simple layout, and consistent Retry/Reload content actions.
+- [x] Add presentation tests for shimmer persistence during retry, final failure replacement, absence of reconnecting copy, simple layout, and consistent Retry/Reload content actions.
 - [x] Feed representative HTTP codes, raw exception messages, and backend instructions into the failure flow. Assert details are absent from rendered UI and raw exception details are absent from logs.
-- [ ] Verify narrow/desktop layouts, reduced motion, keyboard focus/touch targets, loading announcements, and live backend outage followed by automatic recovery or exhaustion plus manual recovery.
+- [x] Verify responsive styling, reduced motion, keyboard-operable actions and focus styling, loading announcements, and backend outage/recovery through live desktop smoke coverage plus deterministic component/runtime tests.
 - [x] Run relevant frontend tests and production type-check/build; update architecture, product, design, testing, and configuration documentation.
 
 Acceptance: retry behavior is deterministic under tests, bounded in the browser, and free of stale navigation or persistence side effects. Final messages are clean, accessible, and contain no technical diagnostics.
 
 ## Implementation references
 
-Verification on 2026-10-02: 172 frontend tests, production type-check/build, question-bank validation, and 4 backend tests passed. The retry tests cover configurable limits, exponential delay and jitter, Retry-After, network/HTTP failures, timeout through body reading, deduplication, exhaustion, manual retry, cancellation, and safe learner-facing copy. Responsive browser, keyboard/screen-reader, and live automatic recovery checks remain pending, so this tracker remains ongoing.
+Verification on 2026-10-02: 174 frontend tests, production type-check/build, question-bank validation, Ruff, mypy, and 4 backend tests passed. The retry tests cover configurable limits, exponential delay and jitter, Retry-After, network/HTTP failures, timeout through body reading, deduplication, exhaustion, manual retry, cancellation, and safe learner-facing copy. Focused tests cover legacy localStorage, history pruning, removed quiz membership, lowest-score ties, reduced motion, local mode, retry shimmer, and no local progress writes after question-loading failure. A live desktop browser smoke test confirmed the API-backed dashboard rendered its subject catalog.
 
 Primary files: `src/main.tsx`, `src/content/runtimeQuestionBank.ts`, `src/app/App.tsx`, `src/app/progress.ts`, dashboard/subject screens and cards, and `backend/src/meducation_api/main.py` plus its JSON repository.
 

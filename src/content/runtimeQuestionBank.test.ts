@@ -5,7 +5,7 @@ const subject = { id: 's1', name: 'Subject', accent: '#123456' };
 const quiz = { id: 'q1', subjectId: 's1', name: 'Quiz', questionCount: 1, questionIds: ['i1'] };
 const question = {
   id: 'i1', quizId: 'q1', stem: 'Question', choices: [{ id: 'A', text: 'Choice' }],
-  answer: 'A', rationale: 'Reason',
+  answer: 'A', rationale: 'Reason', metadata: {},
 };
 const noRetries = { maxRetries: 0, baseDelayMs: 100, maxDelayMs: 100 };
 
@@ -26,6 +26,18 @@ describe('runtime question bank', () => {
     expect(selected).toEqual([quiz]);
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(fetchMock.mock.calls[1][0]).toContain('/api/v1/subjects/s1/quizzes?revision=rev-0');
+  });
+
+  it('serves explicit local content without making backend requests', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+    const bank = new RuntimeQuestionBank(noRetries, () => 0);
+    bank.configureLocal([subject], [quiz], [question]);
+
+    await expect(bank.ensureSubjects()).resolves.toMatchObject([{ id: 's1', quizIds: ['q1'] }]);
+    await expect(bank.ensureQuizzes('s1')).resolves.toEqual([quiz]);
+    await expect(bank.ensureQuestions('q1')).resolves.toEqual([expect.objectContaining({ id: 'i1' })]);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it('loads quiz questions lazily, hydrates sparse metadata, and caches the result', async () => {

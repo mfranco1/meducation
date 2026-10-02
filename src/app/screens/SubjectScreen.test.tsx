@@ -49,7 +49,7 @@ describe('subject quiz action', () => {
     expect(screen.getByRole('status', { name: 'Retrying quizzes' })).toBeVisible();
     expect(screen.queryByText('Reconnecting…')).toBeNull();
     expect(screen.getAllByRole('status', { name: 'Retrying quizzes' })).toHaveLength(1);
-    expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);
+    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
   });
 
   it('labels a never-started quiz as Start quiz', () => {
