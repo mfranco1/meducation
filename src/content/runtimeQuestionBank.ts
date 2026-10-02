@@ -1,10 +1,9 @@
 import type { Question, Quiz, QuizRepository, Subject } from '../domain/types';
 import { contentRetryPolicy, isRetryableStatus, retryAfterMs, retryDelayMs, type RetryPolicy } from './retryPolicy';
 import { logContentDiagnostic } from './contentLogger';
+import { isQuestionList, isQuizCatalog, isSubjectCatalog, responseRevision, type QuizCatalogResponse, type SubjectSummary } from './apiDecoders';
 
-interface QuizResponse { revision: string; quizzes: Quiz[] }
-interface QuestionResponse { revision: string; questions: Question[] }
-export interface SubjectSummary extends Subject { quizCount: number; quizIds: string[] }
+export type { SubjectSummary } from './apiDecoders';
 type SubjectCatalogRecord = Subject & Partial<Pick<SubjectSummary, 'quizCount' | 'quizIds'>>;
 type ResourceState = 'idle' | 'loading' | 'retrying' | 'ready' | 'error';
 export type ContentErrorKind = 'timeout' | 'network' | 'http' | 'invalid' | 'revision' | 'cancelled';
@@ -107,32 +106,6 @@ export async function getJsonWithRetry<T>(
   }
 }
 
-function validSubjectCatalog(value: unknown): value is { revision: string; subjects: SubjectSummary[] } {
-  if (!value || typeof value !== 'object') return false;
-  const catalog = value as Record<string, unknown>;
-  return typeof catalog.revision === 'string' && Array.isArray(catalog.subjects) && catalog.subjects.every(subject => {
-    if (!subject || typeof subject !== 'object') return false;
-    const item = subject as Record<string, unknown>;
-    return typeof item.id === 'string' && typeof item.name === 'string' && typeof item.accent === 'string'
-      && Number.isInteger(item.quizCount) && (item.quizCount as number) >= 0
-      && Array.isArray(item.quizIds) && item.quizIds.length === item.quizCount
-      && item.quizIds.every((id: unknown) => typeof id === 'string');
-  });
-}
-
-function validQuizCatalog(value: unknown, revision: string, subjectId: string): value is QuizResponse {
-  if (!value || typeof value !== 'object') return false;
-  const catalog = value as Record<string, unknown>;
-  return catalog.revision === revision && Array.isArray(catalog.quizzes) && catalog.quizzes.every(quiz => {
-    if (!quiz || typeof quiz !== 'object') return false;
-    const item = quiz as Record<string, unknown>;
-    return typeof item.id === 'string' && item.subjectId === subjectId && typeof item.name === 'string'
-      && Number.isInteger(item.questionCount) && (item.questionCount as number) > 0
-      && Array.isArray(item.questionIds) && item.questionIds.length === item.questionCount
-      && item.questionIds.every((id: unknown) => typeof id === 'string');
-  });
-}
-
 export class RuntimeQuestionBank implements QuizRepository {
   private subjects: Subject[] = [];
   private quizzes: Quiz[] = [];
@@ -165,7 +138,7 @@ export class RuntimeQuestionBank implements QuizRepository {
   getQuestionRetryAttempt(quizId: string) { return this.questionRetryAttempts.get(quizId) ?? 0; }
   listSubjectSummaries() { return this.summaries; }
 
-  configureApi(subjectResponse: { revision: string; subjects: SubjectCatalogRecord[] }, quizResponses: QuizResponse[] = []) {
+  configureApi(subjectResponse: { revision: string; subjects: SubjectCatalogRecord[] }, quizResponses: QuizCatalogResponse[] = []) {
     this.cancelQuestionLoads();
     this.source = 'api';
     this.revision = subjectResponse.revision;
@@ -226,7 +199,7 @@ export class RuntimeQuestionBank implements QuizRepository {
       policy: this.retryPolicy, random: this.random,
       onRetry: retry => { this.catalogState = 'retrying'; this.catalogRetryAttempt = retry; this.notify(); },
     }).then(response => {
-      if (!validSubjectCatalog(response)) throw new ContentLoadError('invalid', 'The subject catalog is missing quiz membership. Restart or update the backend, then retry.');
+      if (!isSubjectCatalog(response)) throw new ContentLoadError('invalid', 'The subject catalog is missing quiz membership. Restart or update the backend, then retry.');
       this.revision = response.revision;
       this.subjects = response.subjects;
       this.summaries = response.subjects;
@@ -262,9 +235,10 @@ export class RuntimeQuestionBank implements QuizRepository {
           policy: this.retryPolicy, random: this.random,
           onRetry: retry => { this.quizStates.set(subjectId, 'retrying'); this.quizRetryAttempts.set(subjectId, retry); this.notify(); },
         });
-        if (!response || typeof response !== 'object' || typeof (response as QuizResponse).revision !== 'string') throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
-        if ((response as QuizResponse).revision !== this.revision) throw revisionError();
-        if (!validQuizCatalog(response, this.revision, subjectId)) throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
+        if (responseRevision(response) === undefined) throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
+        if (responseRevision(response) !== this.revision) throw revisionError();
+        const expectedQuizIds = this.summaries.find(subject => subject.id === subjectId)?.quizIds;
+        if (!expectedQuizIds || !isQuizCatalog(response, subjectId, expectedQuizIds)) throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
         this.quizzes = [...this.quizzes.filter(quiz => quiz.subjectId !== subjectId), ...response.quizzes];
         this.quizStates.set(subjectId, 'ready'); this.notify();
         return response.quizzes;
@@ -299,12 +273,11 @@ export class RuntimeQuestionBank implements QuizRepository {
       })
       .then(payload => {
         if (controller.signal.aborted) throw genericFailure('cancelled');
-        if (!payload || typeof payload !== 'object' || typeof (payload as QuestionResponse).revision !== 'string') throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
-        if ((payload as QuestionResponse).revision !== this.revision) throw revisionError();
-        if (!payload || typeof payload !== 'object' || !Array.isArray((payload as QuestionResponse).questions) || (payload as QuestionResponse).questions.length === 0) throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
-        const questionsPayload = (payload as QuestionResponse).questions;
-        if (questionsPayload.some(question => !question || typeof question.id !== 'string' || question.quizId !== quizId || !Array.isArray(question.choices))) throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
-        const questions = questionsPayload.map(question => ({ ...question, metadata: question.metadata ?? {} }));
+        if (responseRevision(payload) === undefined) throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
+        if (responseRevision(payload) !== this.revision) throw revisionError();
+        const expectedQuestionIds = this.quizzes.find(quiz => quiz.id === quizId)?.questionIds;
+        if (!expectedQuestionIds || !isQuestionList(payload, quizId, expectedQuestionIds)) throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
+        const questions = payload.questions.map(question => ({ ...question, metadata: question.metadata ?? {} }));
         this.questionsByQuiz.set(quizId, questions);
         this.questionStates.set(quizId, 'ready');
         this.notify();

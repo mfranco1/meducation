@@ -4,7 +4,7 @@ import { ContentLoadError, getJsonWithRetry, RuntimeQuestionBank, runtimeQuestio
 const subject = { id: 's1', name: 'Subject', accent: '#123456' };
 const quiz = { id: 'q1', subjectId: 's1', name: 'Quiz', questionCount: 1, questionIds: ['i1'] };
 const question = {
-  id: 'i1', quizId: 'q1', stem: 'Question', choices: [{ id: 'A', text: 'Choice' }],
+  id: 'i1', quizId: 'q1', stem: 'Question', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }],
   answer: 'A', rationale: 'Reason', metadata: {},
 };
 const noRetries = { maxRetries: 0, baseDelayMs: 100, maxDelayMs: 100 };
@@ -43,7 +43,7 @@ describe('runtime question bank', () => {
   it('loads quiz questions lazily, hydrates sparse metadata, and caches the result', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
-      json: async () => ({ revision: 'rev-1', questions: [question] }),
+      json: async () => ({ revision: 'rev-1', questions: [{ ...question, metadata: undefined }] }),
     });
     vi.stubGlobal('fetch', fetchMock);
     runtimeQuestionBank.configureApi({ revision: 'rev-1', subjects: [subject] }, [
@@ -152,7 +152,7 @@ describe('runtime question bank', () => {
     bank.configureApi({ revision: 'rev-7', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'rev-7', quizzes: [quiz] }]);
     const fetchMock = vi.fn()
       .mockImplementationOnce(() => new Promise(() => undefined))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-7', questions: [question] }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-7', questions: [{ ...question, metadata: undefined }] }) });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {

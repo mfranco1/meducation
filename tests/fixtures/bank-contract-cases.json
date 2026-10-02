@@ -15,11 +15,24 @@
   },
   "cases": [
     { "id": "valid_unicode_and_provenance", "change": "none", "valid": true },
+    { "id": "valid_nested_metadata", "change": "valid_metadata", "valid": true },
     { "id": "duplicate_question_id", "change": "duplicate_question", "valid": false },
     { "id": "unknown_quiz_reference", "change": "unknown_quiz", "valid": false },
     { "id": "unsupported_schema", "change": "schema_version", "valid": false },
-    { "id": "invalid_provided_answer_with_verified_answer", "change": "provided_answer", "valid": false, "gap": "frontend" },
-    { "id": "invalid_choice_label", "change": "choice_label", "valid": false, "gap": "frontend" },
-    { "id": "incomplete_review_provenance", "change": "review_provenance", "valid": false, "gap": "frontend" }
+    { "id": "invalid_provided_answer_with_verified_answer", "change": "provided_answer", "valid": false },
+    { "id": "invalid_choice_label", "change": "choice_label", "valid": false },
+    { "id": "incomplete_review_provenance", "change": "review_provenance", "valid": false },
+    { "id": "unknown_metadata_field", "change": "metadata_unknown_field", "valid": false },
+    { "id": "invalid_metadata_tags", "change": "metadata_tags", "valid": false },
+    { "id": "unknown_rationale_provenance", "change": "rationale_provenance", "valid": false },
+    { "id": "noncontiguous_question_order", "change": "noncontiguous", "valid": false },
+    { "id": "unknown_verified_answer", "change": "verified_answer", "valid": false },
+    { "id": "unknown_choice_explanation", "change": "choice_explanation", "valid": false },
+    { "id": "explicit_null_optional_field", "change": "null_metadata", "valid": false },
+    { "id": "blank_subject_name", "change": "blank_subject", "valid": false },
+    { "id": "blank_quiz_name", "change": "blank_quiz", "valid": false },
+    { "id": "invalid_choice_explanation_value", "change": "choice_explanation_value", "valid": false },
+    { "id": "invalid_pearls", "change": "pearls", "valid": false },
+    { "id": "unknown_stored_question_field", "change": "extra_question_field", "valid": false }
   ]
 }

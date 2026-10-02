@@ -17,6 +17,7 @@ Use `rationaleMeta.provenance: 'source_migrated'` when a stored source rationale
 When the answer key or question context is uncertain, `rationaleMeta.answerReviewNote` carries the explanation. The learner sees that note and the feedback status says the key is under review; the original `answer` remains unchanged. Such entries still require answer verification before their quiz scores can be treated as final.
 
 `metadata` is omitted when no classification is known. Do not store default `difficulty: 'unknown'`, a duplicate discipline label, or an empty metadata object.
+Optional fields are omitted rather than stored as `null`. The bank loader and authoring validator reject unknown nested metadata keys and malformed values. API responses preserve omitted optional fields; the browser hydrates a missing `metadata` field only after checking the response.
 
 ## Admin change sets
 

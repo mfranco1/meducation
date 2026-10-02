@@ -1,7 +1,7 @@
 # Full-stack code quality review and staged refactoring plan
 
 Reviewed: 2026-10-02.
-Status: Stage 1 complete; Stage 2 has not started.
+Status: Stages 1–2 complete; Stage 3 has not started.
 
 ## Scope and conclusion
 
@@ -71,7 +71,7 @@ Each stage should be independently reviewable. Retain canonical JSON unchanged t
 
 - [x] Stage 0 — inspect implementation and document baseline/findings.
 - [x] Stage 1 — establish boundary regression fixtures. Add malformed storage, interrupted completion, repeated completion, API DTO/membership, and cross-language validation fixtures. Record unsupported cases as deliberate expected failures until their implementing stage, while keeping CI green. Establish the storage/content compatibility policy. Exit: fixtures and migration/recovery design recorded; no production behavior change.
-- [ ] Stage 2 — strengthen contracts and backend seams. Add decoders and shared fixture parity, type nested metadata, complete/inject the Python protocol, add indexes and explicit response DTO construction, move conditional checks before body assembly. Exit: malformed data rejected consistently; API fields, revisions, ordering, and optional-field behavior preserved.
+- [x] Stage 2 — strengthen contracts and backend seams. Add decoders and shared fixture parity, type nested metadata, complete/inject the Python protocol, add indexes and explicit response DTO construction, move conditional checks before body assembly. Exit: malformed data rejected consistently; API fields, revisions, ordering, and optional-field behavior preserved.
 - [ ] Stage 3 — harden persistence and attempt compatibility. Add codecs/migrations and error results, implement idempotent completion with active removal, attach content identity to new attempts, and implement the agreed legacy/changed-content recovery. Exit: simulated storage failures preserve prior valid state; repeat completion does not inflate totals; migrated history and durable summaries match; incompatible content is not silently scored.
 - [ ] Stage 4 — optimize progress reads. Expose cached immutable snapshots and subscriptions; remove migration writes from getters; aggregate attempts and activity once per refresh. Exit: dashboard and subject statistics retain current behavior, storage reads stop scaling per quiz, and invalidation/multi-tab behavior is tested.
 - [ ] Stage 5 — simplify frontend loading and screen composition. Extract HTTP transport/decoders/cache and quiz-launch coordinator, inject dependencies, retain cancellation/deduplication/retry semantics, then lazy-load rich screens and add visible boot/chunk failure recovery. Exit: existing loading tests plus stale-request/reconfiguration cases pass; initial transfer improves without unacceptable first-quiz delay.
@@ -112,3 +112,13 @@ Added `tests/fixtures/storage-boundary-cases.json` and `src/persistence/storageB
 ### Stage 1 verification
 
 The focused frontend suite passed 18 tests across three files, including 10 deliberately marked expected failures. The shared backend contract suite passed eight tests. The complete frontend suite passed 192 tests across 33 files; the backend suite passed 12 tests. TypeScript/build, content validation, Ruff, and mypy passed. The build retains its existing large-chunk warning, and backend tests retain their existing TestClient deprecation warning. The expected failures specify future behavior; they do not mean the current production code already satisfies it.
+
+## Stage 2 result: content contracts and backend seam
+
+`src/content/apiDecoders.ts` now checks subject membership, quiz and question order/counts, compact IDs, ownership, choice labels, answer references, and sparse nested metadata before API content is cached. `RuntimeQuestionBank` keeps revision conflicts separate from invalid payloads. Its existing retry and cancellation behavior is unchanged. The authoring validator now checks source and verified answers independently, choice labels, reviewed-draft provenance, nested value types, and unknown stored fields. The shared stored-bank cases run as ordinary passing assertions in TypeScript and Python; the seven Stage 1 content expected failures have been removed. The three storage expected failures remain for Stage 3.
+
+The Python bank has typed rationale/question metadata, rejects explicit null optional fields and blank names, and indexes subjects and quizzes. Routes use the complete `QuestionBankRepository` protocol through an injected factory. They construct Pydantic response DTOs explicitly, preserve omitted optional fields, and check revision/ETag conditions before building bodies. A repository spy confirms that 304 and 409 responses do not enumerate subjects. The JSON adapter remains read-only and preserves canonical array order and revision calculation.
+
+Contract coverage now includes Unicode revision parity, answer provenance, duplicate/unknown IDs, malformed metadata and explanations, noncontiguous questions, exact API membership, response counts/order, and sparse optional-field output. The frontend API DTO suite also covers blank stems and duplicate choices. No canonical question record or browser attempt data was changed. Stage 3 begins with the still-unresolved storage fixtures and the compatibility policy above.
+
+Stage 2 verification: `npm test` passed 210 tests across 33 files; `npm run build` and `npm run validate:content` passed; backend pytest passed 27 tests; Ruff and mypy passed. The existing build chunk-size warning, content answer-review warnings, and TestClient deprecation warning remain. `git diff --check` passed. The three Stage 3 storage tests remain marked as expected failures.

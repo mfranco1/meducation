@@ -17,7 +17,15 @@ FIXTURES = json.loads(
 def bank_for(change: str) -> dict:
     bank = copy.deepcopy(FIXTURES["base"])
     question = bank["questions"][0]
-    if change == "duplicate_question":
+    if change == "valid_metadata":
+        question["metadata"] = {"topic": "Anatomy", "tags": ["reviewed"]}
+        question["rationaleMeta"] = {
+            "sources": "Reference",
+            "provenance": "ai_draft_reviewed",
+            "reviewedAt": "2026-10-02",
+            "reviewNote": "Checked",
+        }
+    elif change == "duplicate_question":
         bank["questions"].append(copy.deepcopy(question))
     elif change == "unknown_quiz":
         question["quizId"] = "q9"
@@ -29,6 +37,32 @@ def bank_for(change: str) -> dict:
         question["choices"][0]["id"] = "a"
     elif change == "review_provenance":
         question["rationaleMeta"] = {"provenance": "ai_draft_reviewed"}
+    elif change == "metadata_unknown_field":
+        question["metadata"] = {"discipline": "Anatomy"}
+    elif change == "metadata_tags":
+        question["metadata"] = {"tags": [2]}
+    elif change == "rationale_provenance":
+        question["rationaleMeta"] = {"provenance": "unreviewed"}
+    elif change == "noncontiguous":
+        bank["quizzes"].append({"id": "q2", "subjectId": "s1", "name": "Second quiz"})
+        bank["questions"].append({**copy.deepcopy(question), "id": "i2", "quizId": "q2"})
+        bank["questions"].append({**copy.deepcopy(question), "id": "i3"})
+    elif change == "verified_answer":
+        question["verifiedAnswer"] = "Z"
+    elif change == "choice_explanation":
+        question["choiceExplanations"] = {"Z": "Unknown choice"}
+    elif change == "null_metadata":
+        question["metadata"] = None
+    elif change == "blank_subject":
+        bank["subjects"][0]["name"] = "  "
+    elif change == "blank_quiz":
+        bank["quizzes"][0]["name"] = "  "
+    elif change == "choice_explanation_value":
+        question["choiceExplanations"] = {"A": 2}
+    elif change == "pearls":
+        question["pearls"] = [2]
+    elif change == "extra_question_field":
+        question["legacyHint"] = "obsolete"
     return bank
 
 

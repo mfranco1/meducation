@@ -4,13 +4,20 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Protocol
+from typing import Any, Literal, Protocol
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 
 class StoredModel(BaseModel):
     model_config = ConfigDict(extra="forbid", populate_by_name=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def reject_explicit_null(cls, value: Any) -> Any:
+        if isinstance(value, dict) and any(item is None for item in value.values()):
+            raise ValueError("Optional stored fields must be omitted, not null.")
+        return value
 
 
 class Subject(StoredModel):
@@ -30,6 +37,23 @@ class Choice(StoredModel):
     text: str
 
 
+class RationaleMetadata(StoredModel):
+    sources: str | None = None
+    answerReviewNote: str | None = None
+    provenance: Literal["source_migrated", "ai_draft_reviewed"] | None = None
+    reviewedAt: str | None = None
+    reviewNote: str | None = None
+
+
+class QuestionMetadata(StoredModel):
+    topic: str | None = None
+    subtopic: str | None = None
+    system: str | None = None
+    difficulty: Literal["easy", "medium", "hard"] | None = None
+    questionType: str | None = None
+    tags: list[str] | None = None
+
+
 class Question(StoredModel):
     id: str
     quizId: str
@@ -39,10 +63,10 @@ class Question(StoredModel):
     verifiedAnswer: str | None = None
     answerNote: str | None = None
     rationale: str
-    rationaleMeta: dict[str, Any] | None = None
+    rationaleMeta: RationaleMetadata | None = None
     choiceExplanations: dict[str, str] | None = None
     pearls: list[str] | None = None
-    metadata: dict[str, Any] | None = None
+    metadata: QuestionMetadata | None = None
 
 
 class Bank(StoredModel):
@@ -64,6 +88,10 @@ class Bank(StoredModel):
             raise ValueError("Quiz IDs must use the compact q-number format.")
         if any(re.fullmatch(r"i[1-9]\d*", item.id) is None for item in self.questions):
             raise ValueError("Question IDs must use the compact i-number format.")
+        if any(not item.name.strip() for item in self.subjects):
+            raise ValueError("Subject names must not be empty.")
+        if any(not item.name.strip() for item in self.quizzes):
+            raise ValueError("Quiz names must not be empty.")
         subject_ids = {item.id for item in self.subjects}
         quiz_ids = {item.id for item in self.quizzes}
         if any(item.subjectId not in subject_ids for item in self.quizzes):
@@ -107,21 +135,18 @@ class Bank(StoredModel):
                 raise ValueError(
                     f"Question {question.id} has an explanation for an unknown choice."
                 )
-            meta = question.rationaleMeta or {}
-            if meta.get("provenance") == "ai_draft_reviewed" and not (
-                meta.get("reviewedAt") and meta.get("reviewNote")
+            meta = question.rationaleMeta
+            if meta is not None and meta.provenance == "ai_draft_reviewed" and not (
+                meta.reviewedAt and meta.reviewNote
             ):
                 raise ValueError(
                     f"Question {question.id} has incomplete reviewed-draft provenance."
                 )
             metadata = question.metadata
-            if metadata:
-                if "discipline" in metadata or metadata.get("difficulty") == "unknown":
-                    raise ValueError(
-                        f"Question {question.id} stores redundant or default metadata."
-                    )
-                if not any(bool(value) for value in metadata.values()):
-                    raise ValueError(f"Question {question.id} stores an empty metadata object.")
+            if metadata is not None and not any(
+                bool(value) for value in metadata.model_dump(exclude_none=True).values()
+            ):
+                raise ValueError(f"Question {question.id} stores an empty metadata object.")
         if any(count == 0 for count in question_counts.values()):
             raise ValueError("Every quiz must contain at least one question.")
         return self
@@ -137,6 +162,10 @@ class QuestionBankRepository(Protocol):
     def revision(self) -> str: ...
 
     def list_subjects(self) -> list[Subject]: ...
+
+    def has_subject(self, subject_id: str) -> bool: ...
+
+    def subject_quiz_summary(self, subject_id: str) -> tuple[int, list[str]]: ...
 
     def list_quizzes(self, subject_id: str) -> list[tuple[Quiz, int]]: ...
 
@@ -165,6 +194,8 @@ class JsonQuestionBankRepository:
             self._quizzes_by_subject[quiz.subjectId].append(
                 (quiz, len(self._questions_by_quiz[quiz.id]))
             )
+        self._subjects_by_id = {subject.id: subject for subject in self.bank.subjects}
+        self._quizzes_by_id = {quiz.id: quiz for quiz in self.bank.quizzes}
         serialized = json.dumps(self.raw, ensure_ascii=False, allow_nan=False, indent=2) + "\n"
         self._revision = f"sha256-{hashlib.sha256(serialized.encode('utf-8')).hexdigest()}"
 
@@ -189,14 +220,15 @@ class JsonQuestionBankRepository:
     def list_subjects(self) -> list[Subject]:
         return list(self.bank.subjects)
 
+    def has_subject(self, subject_id: str) -> bool:
+        return subject_id in self._subjects_by_id
+
     def list_quizzes(self, subject_id: str) -> list[tuple[Quiz, int]]:
         return list(self._quizzes_by_subject.get(subject_id, []))
 
     def get_quiz(self, quiz_id: str) -> tuple[Quiz, int] | None:
-        for quiz in self.bank.quizzes:
-            if quiz.id == quiz_id:
-                return quiz, len(self._questions_by_quiz[quiz_id])
-        return None
+        quiz = self._quizzes_by_id.get(quiz_id)
+        return (quiz, len(self._questions_by_quiz[quiz_id])) if quiz is not None else None
 
     def list_questions(self, quiz_id: str) -> list[Question]:
         return list(self._questions_by_quiz.get(quiz_id, []))

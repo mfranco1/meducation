@@ -1,6 +1,7 @@
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Callable
 from contextlib import asynccontextmanager
-from typing import Any
+from pathlib import Path
+from typing import cast
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
@@ -10,6 +11,7 @@ from pydantic import BaseModel
 from meducation_api.repositories.question_bank import (
     JsonQuestionBankRepository,
     Question,
+    QuestionBankRepository,
     Quiz,
     Subject,
 )
@@ -46,12 +48,15 @@ class QuestionListResponse(BaseModel):
     questions: list[Question]
 
 
-def create_app(settings: Settings | None = None) -> FastAPI:
+def create_app(
+    settings: Settings | None = None,
+    repository_factory: Callable[[Path], QuestionBankRepository] = JsonQuestionBankRepository,
+) -> FastAPI:
     config = settings or Settings()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        app.state.bank = JsonQuestionBankRepository(config.bank_path)
+        app.state.bank = repository_factory(config.bank_path)
         yield
         app.state.bank = None
 
@@ -63,15 +68,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         allow_headers=["If-None-Match", "If-Match", "Content-Type"],
     )
 
-    def repository(request: Request) -> JsonQuestionBankRepository:
+    def repository(request: Request) -> QuestionBankRepository:
         bank = getattr(request.app.state, "bank", None)
         if bank is None:
             raise HTTPException(status_code=503, detail={"code": "content_not_ready"})
-        return bank
+        return cast(QuestionBankRepository, bank)
 
     def content_response(
-        payload: dict[str, Any],
-        bank: JsonQuestionBankRepository,
+        build_payload: Callable[[], BaseModel],
+        bank: QuestionBankRepository,
         request: Request,
         revision: str | None,
     ) -> Response:
@@ -83,7 +88,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         headers = {"ETag": etag, "Cache-Control": "no-cache"}
         if request.headers.get("if-none-match") == etag:
             return Response(status_code=304, headers=headers)
-        return JSONResponse(content=payload, headers=headers)
+        return JSONResponse(content=build_payload().model_dump(exclude_unset=True), headers=headers)
+
+    def subject_catalog(bank: QuestionBankRepository) -> SubjectCatalogResponse:
+        subjects: list[SubjectSummary] = []
+        for subject in bank.list_subjects():
+            count, ids = bank.subject_quiz_summary(subject.id)
+            subjects.append(SubjectSummary(**subject.model_dump(), quizCount=count, quizIds=ids))
+        return SubjectCatalogResponse(revision=bank.revision, subjects=subjects)
+
+    def catalog_quiz(bank: QuestionBankRepository, quiz: Quiz, count: int) -> CatalogQuiz:
+        return CatalogQuiz(
+            **quiz.model_dump(),
+            questionCount=count,
+            questionIds=bank.list_question_ids(quiz.id),
+        )
 
     @app.get("/health/live", include_in_schema=False)
     def live() -> dict[str, str]:
@@ -98,38 +117,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/v1/subjects", response_model=SubjectCatalogResponse)
     def list_subjects(request: Request, revision: str | None = None) -> Response:
         bank = repository(request)
-        return content_response(
-            {
-                "revision": bank.revision,
-                "subjects": [
-                    {
-                        **item.model_dump(),
-                        "quizCount": bank.subject_quiz_summary(item.id)[0],
-                        "quizIds": bank.subject_quiz_summary(item.id)[1],
-                    }
-                    for item in bank.list_subjects()
-                ],
-            },
-            bank,
-            request,
-            revision,
-        )
+        return content_response(lambda: subject_catalog(bank), bank, request, revision)
 
     @app.get("/api/v1/subjects/{subject_id}/quizzes", response_model=QuizCatalogResponse)
     def list_quizzes(subject_id: str, request: Request, revision: str | None = None) -> Response:
         bank = repository(request)
-        if not any(subject.id == subject_id for subject in bank.list_subjects()):
+        if not bank.has_subject(subject_id):
             raise HTTPException(status_code=404, detail={"code": "subject_not_found"})
-        quizzes = [
-            {
-                **quiz.model_dump(),
-                "questionCount": count,
-                "questionIds": bank.list_question_ids(quiz.id),
-            }
-            for quiz, count in bank.list_quizzes(subject_id)
-        ]
         return content_response(
-            {"revision": bank.revision, "quizzes": quizzes}, bank, request, revision
+            lambda: QuizCatalogResponse(
+                revision=bank.revision,
+                quizzes=[catalog_quiz(bank, quiz, count) for quiz, count in bank.list_quizzes(subject_id)],
+            ),
+            bank, request, revision,
         )
 
     @app.get("/api/v1/quizzes/{quiz_id}", response_model=QuizDetailResponse)
@@ -139,15 +139,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if found is None:
             raise HTTPException(status_code=404, detail={"code": "quiz_not_found"})
         quiz, count = found
-        payload = {
-            "revision": bank.revision,
-            "quiz": {
-                **quiz.model_dump(),
-                "questionCount": count,
-                "questionIds": bank.list_question_ids(quiz_id),
-            },
-        }
-        return content_response(payload, bank, request, revision)
+        return content_response(
+            lambda: QuizDetailResponse(revision=bank.revision, quiz=catalog_quiz(bank, quiz, count)),
+            bank, request, revision,
+        )
 
     @app.get(
         "/api/v1/quizzes/{quiz_id}/questions",
@@ -158,9 +153,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         bank = repository(request)
         if bank.get_quiz(quiz_id) is None:
             raise HTTPException(status_code=404, detail={"code": "quiz_not_found"})
-        questions = [item.model_dump(exclude_unset=True) for item in bank.list_questions(quiz_id)]
         return content_response(
-            {"revision": bank.revision, "questions": questions}, bank, request, revision
+            lambda: QuestionListResponse(revision=bank.revision, questions=bank.list_questions(quiz_id)),
+            bank, request, revision,
         )
 
     return app

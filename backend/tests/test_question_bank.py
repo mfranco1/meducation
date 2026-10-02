@@ -100,3 +100,45 @@ def test_canonical_bank_loads() -> None:
     assert bank.bank.subjects
     assert bank.bank.quizzes
     assert bank.bank.questions
+
+
+def test_injected_repository_skips_payload_build_for_conditional_response(
+    tmp_path, bank_data: dict
+) -> None:
+    bank_path = tmp_path / "bank.json"
+    bank_path.write_text(json.dumps(bank_data, indent=2) + "\n", encoding="utf-8")
+
+    class CountingRepository(JsonQuestionBankRepository):
+        subject_reads = 0
+
+        def list_subjects(self):
+            self.subject_reads += 1
+            return super().list_subjects()
+
+    repository = CountingRepository(bank_path)
+    app = create_app(Settings(bank_path=bank_path), repository_factory=lambda _: repository)
+    with TestClient(app) as client:
+        first = client.get("/api/v1/subjects")
+        assert first.status_code == 200
+        assert repository.subject_reads == 1
+        cached = client.get("/api/v1/subjects", headers={"If-None-Match": first.headers["etag"]})
+        assert cached.status_code == 304
+        assert repository.subject_reads == 1
+        conflict = client.get(
+            "/api/v1/subjects?revision=stale", headers={"If-None-Match": first.headers["etag"]}
+        )
+        assert conflict.status_code == 409
+        assert repository.subject_reads == 1
+
+
+def test_sparse_nested_metadata_is_preserved_in_api_response(tmp_path, bank_data: dict) -> None:
+    bank_path = tmp_path / "bank.json"
+    bank_data["questions"][0]["rationaleMeta"] = {"sources": "Reference"}
+    bank_data["questions"][0]["metadata"] = {"topic": "Anatomy"}
+    bank_path.write_text(json.dumps(bank_data, indent=2) + "\n", encoding="utf-8")
+    app = create_app(Settings(bank_path=bank_path))
+    with TestClient(app) as client:
+        question = client.get("/api/v1/quizzes/q1/questions").json()["questions"][0]
+        assert question["rationaleMeta"] == {"sources": "Reference"}
+        assert question["metadata"] == {"topic": "Anatomy"}
+        assert "answerNote" not in question
