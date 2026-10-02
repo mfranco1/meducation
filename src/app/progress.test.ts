@@ -50,6 +50,24 @@ describe('learner progress selectors', () => {
     expect(stats[1]).toMatchObject({ quizCount: 1, activeQuizCount: 0 });
   });
 
+  it('derives dashboard statistics from subject membership before quiz catalogs load', () => {
+    const unloaded: QuizRepository = { ...bank, listQuizzes: () => [] };
+    const stats = subjectStatsFor(unloaded, attempts, history, [
+      { id: 's1', quizIds: ['q1', 'q2'] }, { id: 's2', quizIds: ['q3'] },
+    ]);
+    expect(stats[0]).toMatchObject({ quizCount: 2, activeQuizCount: 1, latest: 80, trend: 'increase' });
+    expect(stats[0].latestActiveAt).toBe('2026-09-03T00:00:00.000Z');
+  });
+
+  it('keeps durable latest scores after history pruning and excludes removed quizzes', () => {
+    const unloaded: QuizRepository = { ...bank, listQuizzes: () => [] };
+    const retained = subjectStatsFor(unloaded, attempts, [], [{ id: 's1', quizIds: ['q1'] }, { id: 's2', quizIds: [] }]);
+    expect(retained[0]).toMatchObject({ quizCount: 1, latest: 80 });
+    expect(retained[0].trend).toBeUndefined();
+    const removed = subjectStatsFor(unloaded, attempts, [], [{ id: 's1', quizIds: ['q2'] }, { id: 's2', quizIds: [] }]);
+    expect(removed[0].latest).toBeUndefined();
+  });
+
   it('orders subject quizzes by activity and carries resume position', () => {
     const progress = quizProgressForSubject(bank, attempts, history, 's1');
     expect(progress.map(item => item.quiz.id)).toEqual(['q2', 'q1']);

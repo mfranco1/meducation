@@ -165,6 +165,8 @@ class JsonQuestionBankRepository:
             self._quizzes_by_subject[quiz.subjectId].append(
                 (quiz, len(self._questions_by_quiz[quiz.id]))
             )
+        serialized = json.dumps(self.raw, ensure_ascii=False, allow_nan=False, indent=2) + "\n"
+        self._revision = f"sha256-{hashlib.sha256(serialized.encode('utf-8')).hexdigest()}"
 
     def _load(self) -> None:
         try:
@@ -178,9 +180,11 @@ class JsonQuestionBankRepository:
 
     @property
     def revision(self) -> str:
-        serialized = json.dumps(self.raw, ensure_ascii=False, allow_nan=False, indent=2) + "\n"
-        digest = hashlib.sha256(serialized.encode("utf-8")).hexdigest()
-        return f"sha256-{digest}"
+        return self._revision
+
+    def subject_quiz_summary(self, subject_id: str) -> tuple[int, list[str]]:
+        quizzes = self._quizzes_by_subject.get(subject_id, [])
+        return len(quizzes), [quiz.id for quiz, _ in quizzes]
 
     def list_subjects(self) -> list[Subject]:
         return list(self.bank.subjects)

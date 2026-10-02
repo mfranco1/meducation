@@ -5,15 +5,18 @@ import type { FeedbackMode, Quiz, Subject } from '../../domain/types';
 import { ScoreTrendIndicator } from '../components/ScoreTrendIndicator';
 import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
 import type { QuizProgress } from '../progress';
+import { ContentLoadFailure } from '../components/ContentLoadFailure';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 export type { QuizProgress } from '../progress';
 
-export function SubjectScreen({ subject, progress, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz }: { subject: Subject; progress: QuizProgress[]; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void }) {
+export function SubjectScreen({ subject, progress, loading = false, loadingQuizIds = new Set<string>(), error, questionError, onRetry = () => undefined, onRetryQuestions = () => undefined, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz }: { subject: Subject; progress: QuizProgress[]; loading?: boolean; loadingQuizIds?: Set<string>; error?: Error; questionError?: Error; onRetry?: () => void; onRetryQuestions?: () => void; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
 
   return <Container maxWidth="md" sx={{ py: 5 }}>
     <Button startIcon={<ArrowBackRoundedIcon />} onClick={onBack} color="inherit">All subjects</Button>
     <Typography variant="h3" sx={{ mt: 3, mb: 4 }}>{subject.name}</Typography>
-    <Stack spacing={2}>{progress.map(({ quiz, active, completionCount, latestScore, trend, currentQuestion }) => <Card key={quiz.id}><CardContent>
+    {questionError && <Box sx={{ mb: 3 }}><ContentLoadFailure title="Failed to load questions" error={questionError} onRetry={onRetryQuestions} /></Box>}
+    {error ? <ContentLoadFailure title="Failed to load quizzes" error={error} onRetry={onRetry} /> : loading ? <Stack role="status" spacing={2} aria-busy="true" aria-label="Loading quizzes">{Array.from({ length: 4 }, (_, index) => <LoadingSkeleton key={index} variant="rounded" height={92} />)}</Stack> : <Stack spacing={2}>{progress.map(({ quiz, active, completionCount, latestScore, trend, currentQuestion }) => <Card key={quiz.id}><CardContent>
       <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} spacing={2}>
         <Box><Typography variant="h6">{quiz.name}</Typography>
           <Typography variant="body2" color="text.secondary">{active ? `Resume from question ${currentQuestion} of ${quiz.questionCount}` : `${quiz.questionCount} questions`}</Typography>
@@ -22,9 +25,9 @@ export function SubjectScreen({ subject, progress, onBack, onResumeQuiz, onStart
             {latestScore !== undefined && <Chip label={<Box component="span" sx={{ alignItems: 'center', display: 'inline-flex', gap: .75 }}>Latest score {latestScore}%{trend && <ScoreTrendIndicator trend={trend} />}</Box>} size="small" variant="outlined" />}
           </Stack>}
         </Box>
-        <Button variant="contained" onClick={() => active ? onResumeQuiz(quiz) : setSetupQuiz(quiz)}>{active ? 'Resume quiz' : completionCount > 0 ? 'Retake quiz' : 'Start quiz'}</Button>
+        <Button variant="contained" disabled={loadingQuizIds.has(quiz.id)} onClick={() => active ? onResumeQuiz(quiz) : setSetupQuiz(quiz)}>{loadingQuizIds.has(quiz.id) ? 'Loading questions…' : active ? 'Resume quiz' : completionCount > 0 ? 'Retake quiz' : 'Start quiz'}</Button>
       </Stack>
-    </CardContent></Card>)}</Stack>
+    </CardContent></Card>)}{progress.length === 0 && <Typography color="text.secondary">No quizzes are available in this subject yet.</Typography>}</Stack>}
     {setupQuiz && <QuizSetupDialog open quiz={setupQuiz} onClose={() => setSetupQuiz(null)} onStart={(quiz, mode) => { onStartQuiz(quiz, mode); setSetupQuiz(null); }} onBrowse={quiz => { onBrowseQuiz(quiz); setSetupQuiz(null); }} />}
   </Container>;
 }

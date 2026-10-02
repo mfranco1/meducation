@@ -1,6 +1,6 @@
 import { ThemeProvider } from '@mui/material';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
 import { theme } from '../theme';
 import { activeSubjectStats, type SubjectStat } from '../dashboard';
 import { DashboardScreen } from './DashboardScreen';
@@ -18,6 +18,26 @@ describe('dashboard headings', () => {
 
     expect(screen.queryByRole('heading', { name: 'Subjects' })).toBeNull();
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
+  });
+});
+
+describe('dashboard catalog states', () => {
+  it('shows local completion count and loading placeholders before the catalog arrives', () => {
+    render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} loading statsLoading onSelectSubject={() => {}} /></ThemeProvider>);
+    expect(screen.getByText('Completed quizzes')).toBeVisible();
+    expect(screen.getByText('0')).toBeVisible();
+    expect(screen.getByRole('status', { name: 'Loading subjects' })).toBeVisible();
+    expect(screen.queryByText('No subjects are available yet.')).toBeNull();
+  });
+
+  it('replaces statistics and subject skeletons with section failures and shared retries', () => {
+    const onRetry = vi.fn();
+    render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} error={new Error('The request took too long. Try again or come back later.')} onRetry={onRetry} onSelectSubject={() => {}} /></ThemeProvider>);
+    expect(screen.getByText('Failed to load statistics')).toBeVisible();
+    expect(screen.getByText('Failed to load subjects')).toBeVisible();
+    expect(screen.queryByRole('status', { name: 'Loading subjects' })).toBeNull();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Retry' })[0]);
+    expect(onRetry).toHaveBeenCalledTimes(1);
   });
 });
 

@@ -47,6 +47,10 @@ def test_json_repository_preserves_order_and_revision(tmp_path, bank_data: dict)
     )
     repository = JsonQuestionBankRepository(bank_path)
     assert repository.list_quizzes("s1")[0][1] == 1
+    revision = repository.revision
+    assert repository.subject_quiz_summary("s1") == (1, ["q1"])
+    repository.raw["unused-test-mutation"] = True
+    assert repository.revision == revision
     question = repository.list_questions("q1")[0]
     assert [choice.id for choice in question.choices] == ["A", "B"]
     assert question.answer == "A"
@@ -71,6 +75,8 @@ def test_content_api_and_revision_conflicts(tmp_path, bank_data: dict) -> None:
         assert subjects.status_code == 200
         assert subjects.headers["etag"].startswith('"sha256-')
         revision = subjects.json()["revision"]
+        assert subjects.json()["subjects"][0]["quizCount"] == 1
+        assert subjects.json()["subjects"][0]["quizIds"] == ["q1"]
         quizzes = client.get("/api/v1/subjects/s1/quizzes")
         assert quizzes.json()["quizzes"][0]["questionCount"] == 1
         assert quizzes.json()["quizzes"][0]["questionIds"] == ["i1"]

@@ -32,6 +32,15 @@ function renderSubject(progress: Partial<QuizProgress>) {
 }
 
 describe('subject quiz action', () => {
+  it('shows a quiz failure with retry in place of loading placeholders', () => {
+    const onRetry = vi.fn();
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} progress={[]} error={new Error('The request took too long. Try again or come back later.')} onRetry={onRetry} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+    expect(screen.getByText('Failed to load quizzes')).toBeVisible();
+    expect(screen.queryByRole('status', { name: 'Loading quizzes' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(1);
+  });
+
   it('labels a never-started quiz as Start quiz', () => {
     renderSubject({});
 

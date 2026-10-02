@@ -39,12 +39,14 @@ export function subjectStatsFor(
   questionBank: QuizRepository,
   attempts: AttemptRepository,
   completedAttempts: CompletedAttempt[],
+  membership?: { id: string; quizIds: string[] }[],
 ): SubjectStat[] {
+  const quizIdsBySubject = new Map(membership?.map(item => [item.id, item.quizIds]));
   return questionBank.listSubjects().map(subject => {
-    const quizzes = questionBank.listQuizzes(subject.id);
-    const activeQuizzes = quizzes.filter(quiz => attempts.getActive(quiz.id) !== undefined);
-    const recentQuizScores = quizzes
-      .map(quiz => attempts.latestScore(quiz.id))
+    const quizIds = quizIdsBySubject?.get(subject.id) ?? questionBank.listQuizzes(subject.id).map(quiz => quiz.id);
+    const activeQuizIds = quizIds.filter(quizId => attempts.getActive(quizId) !== undefined);
+    const recentQuizScores = quizIds
+      .map(quizId => attempts.latestScore(quizId))
       .filter((score): score is RecentScore => score !== undefined);
     const latest = mostRecentScore(recentQuizScores);
     const subjectScores = completedAttempts
@@ -52,10 +54,10 @@ export function subjectStatsFor(
       .map(attempt => ({ percentage: attempt.score.percentage, completedAt: attempt.completedAt }));
     return {
       subject,
-      quizCount: quizzes.length,
-      activeQuizCount: activeQuizzes.length,
-      latestActiveAt: activeQuizzes
-        .map(quiz => attempts.latestActivityAt(quiz.id))
+      quizCount: quizIds.length,
+      activeQuizCount: activeQuizIds.length,
+      latestActiveAt: activeQuizIds
+        .map(quizId => attempts.latestActivityAt(quizId))
         .filter((at): at is string => at !== undefined)
         .sort()
         .at(-1),

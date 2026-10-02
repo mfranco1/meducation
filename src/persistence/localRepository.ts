@@ -84,6 +84,8 @@ export class LocalAttemptRepository implements AttemptRepository {
     return read<Record<string, Attempt>>(activeKey, {})[quizId];
   }
 
+  hasActiveAttempts() { return Object.keys(read<Record<string, Attempt>>(activeKey, {})).length > 0; }
+
   private recordActivity(quizId: string, at = new Date().toISOString()) {
     write(activityKey, { ...read<Record<string, string>>(activityKey, {}), [quizId]: at });
   }

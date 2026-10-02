@@ -16,9 +16,14 @@ from meducation_api.repositories.question_bank import (
 from meducation_api.settings import Settings
 
 
+class SubjectSummary(Subject):
+    quizCount: int
+    quizIds: list[str]
+
+
 class SubjectCatalogResponse(BaseModel):
     revision: str
-    subjects: list[Subject]
+    subjects: list[SubjectSummary]
 
 
 class CatalogQuiz(Quiz):
@@ -96,7 +101,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return content_response(
             {
                 "revision": bank.revision,
-                "subjects": [item.model_dump() for item in bank.list_subjects()],
+                "subjects": [
+                    {
+                        **item.model_dump(),
+                        "quizCount": bank.subject_quiz_summary(item.id)[0],
+                        "quizIds": bank.subject_quiz_summary(item.id)[1],
+                    }
+                    for item in bank.list_subjects()
+                ],
             },
             bank,
             request,

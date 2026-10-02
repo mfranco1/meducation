@@ -1,5 +1,7 @@
 # Testing
 
+Progressive loading coverage verifies that dashboard mount requests only subjects, subject selection requests only that subject's quizzes, and quiz launch requests its questions. Check wave shimmer and reduced motion, section-specific skeletons and failures, 15-second timeout through body reading, deduplicated requests, retry after failure, and stale navigation while requests are pending. Incomplete subject membership must cause a catalog failure; complete membership must calculate all dashboard scores before any subject click. Dashboard score selectors must preserve durable summaries when completed history is pruned and use canonical subject membership. Verify subject summary count and ID order against the loaded quiz catalog, and confirm the content revision hash stays the same for a loaded snapshot.
+
 Screen transition tests cover initial render, changes between stable top-level screen identities, and same-screen updates that preserve mounted screen state. Verify question index and attempt progress do not affect quiz screen identity. Check reduced-motion behavior and confirm the header and global dialogs remain outside the animated screen boundary.
 
 Results score hero tests cover initial, intermediate, and final synchronized ring and counter values; 0% and 100%; reduced motion on load and mid-animation; rerenders; and animation cleanup. Results integration coverage preserves score summaries, navigation, and exact-count perfect-test celebration behavior.
