@@ -1,7 +1,7 @@
 # Full-stack code quality review and staged refactoring plan
 
 Reviewed: 2026-10-02.
-Status: Stages 1–5 complete; paused before Stage 6.
+Status: Stages 1–6 complete; paused before Stage 7.
 
 ## Scope and conclusion
 
@@ -75,7 +75,7 @@ Each stage should be independently reviewable. Retain canonical JSON unchanged t
 - [x] Stage 3 — harden persistence and attempt compatibility. Add codecs/migrations and error results, implement idempotent completion with active removal, attach content identity to new attempts, and implement the agreed legacy/changed-content recovery. Exit: simulated storage failures preserve prior valid state; repeat completion does not inflate totals; migrated history and durable summaries match; incompatible content is not silently scored.
 - [x] Stage 4 — optimize progress reads. Expose cached immutable snapshots and subscriptions; remove migration writes from getters; aggregate attempts and activity once per refresh. Exit: dashboard and subject statistics retain current behavior, storage reads stop scaling per quiz, and invalidation/multi-tab behavior is tested.
 - [x] Stage 5 — simplify frontend loading and screen composition. Extract HTTP transport/decoders/cache and quiz-launch coordinator, inject dependencies, retain cancellation/deduplication/retry semantics, then lazy-load rich screens and add visible boot/chunk failure recovery. Exit: existing loading tests plus stale-request/reconfiguration cases pass; initial transfer improves without unacceptable first-quiz delay.
-- [ ] Stage 6 — modularize admin editing. Move workflows behind commands, unify busy/error states, split cohesive panels, profile and then optimize snapshot/undo costs where justified. Exit: preview/stage/undo/import/export integration tests pass, stale work cannot apply, and unedited export remains byte-identical.
+- [x] Stage 6 — modularize admin editing. Move workflows behind commands, unify busy/error states, split cohesive panels, profile and then optimize snapshot/undo costs where justified. Exit: preview/stage/undo/import/export integration tests pass, stale work cannot apply, and unedited export remains byte-identical.
 - [ ] Stage 7 — enforce standards and close integration gaps. Introduce scoped lint/format enforcement, semantic theme tokens, backend negative tests and browser smoke coverage; finish the existing progressive-loading browser checks; update architecture/testing docs and record measured changes. Exit: all checks pass, pending manual checks are explicitly resolved, and this tracker moves to `docs/work/done` only after implementation is complete.
 
 Suggested sequencing: stages 1–3 first for correctness; stages 4–5 for learner efficiency; stage 6 for authoring maintainability; stage 7 for final enforcement. Add narrowly relevant regression tests throughout, not only at the end.
@@ -150,3 +150,11 @@ Quiz, Browse Answers, and Results screens now load on demand. Quiz and Browse ch
 The preceding build's initial `learner` + `App` JavaScript was about 351.60 kB gzip (105.24 + 246.36). Stage 5 builds emit about 155.58 kB gzip initially (118.91 + 36.67), a 56% reduction. The rich common chunk is 189.86 kB gzip and QuizScreen is 6.98 kB gzip when needed. Functional tests confirm the first quiz appears after its questions load and the attempt is saved; real-browser first-quiz timing under slower networks remains for Stage 7, so bundle sizes alone are not treated as a latency benchmark.
 
 Stage 5 verification: `npm test` passed 229 tests across 37 files; `npm run validate:content`, `npm run build`, and `git diff --check` passed. Tests cover reconfiguration races at all three content levels, launch cancellation/deduplication/retry, lazy quiz integration, and visible boot/chunk recovery. The build still warns about the deferred rich common chunk, and content validation retains existing answer-review warnings.
+
+## Stage 6 result: admin editing commands and bounded snapshots
+
+`useAdminEditor` now owns selection, draft editing, preview/stage, bulk add, import, delete, undo, reset, and export commands. It serializes asynchronous commands, reports busy/error states, and invalidates a pending preview when the draft or its destination changes. `AdminApp` composes separate navigation and status panels. The local gateway retains a validated preview for applying the same change set at the same revision, keeps previous immutable bank references for undo, and caps undo history at ten batches. Reset still discards all staged work. Neither the canonical bank nor learner-facing code changed.
+
+An initial full-bank profile of an unchanged subject update measured about 9.4 s to preview and 9.7 s to apply because validation ran twice. An isolated profile after the change measured 14.2 s to preview, 0.27 s to apply, and 0.36 s to undo. These timings are indicative and not directly comparable across machine load; the second validation is eliminated. Preview still validates all 11,687 questions on the main thread and can pause the admin UI. A worker or incremental validator would require a separate correctness and cost assessment.
+
+Stage 6 verification: the frontend suite passed 234 tests across 38 files with two workers, including controller stage/export/undo, bulk validation/stage, import preview/stage, stale-preview and duplicate-command tests, plus bounded history. `npm run validate:content` passed with existing answer-review warnings. The unedited canonical bank serialized byte-for-byte to the checked-in JSON (16,456,246 bytes). `npm run build` and `git diff --check` passed; the existing deferred rich-chunk warning remains.

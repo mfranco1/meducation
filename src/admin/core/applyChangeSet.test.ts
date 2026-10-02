@@ -166,4 +166,18 @@ describe('admin change-set processor', () => {
     expect(afterUndo?.bank).toEqual(source);
     expect(gateway.appliedOperations()).toEqual([]);
   });
+
+  it('bounds undo history while retaining all staged operations for export', async () => {
+    const gateway = new InMemoryQuestionBankGateway(bank());
+    for (let index = 1; index <= 12; index++) {
+      const snapshot = await gateway.load();
+      await gateway.apply({ ...changeSet([{ op: 'subject.update', id: 's1', value: { ...snapshot.bank.subjects[0], name: `Subject ${index}` } }]), base: { bankSchemaVersion: 4, revision: snapshot.revision } });
+    }
+    expect(gateway.appliedOperations()).toHaveLength(12);
+    for (let index = 0; index < 10; index++) expect(await gateway.undo()).toBeDefined();
+    expect((await gateway.load()).bank.subjects[0].name).toBe('Subject 2');
+    expect(gateway.appliedOperations()).toHaveLength(2);
+    expect(await gateway.undo()).toBeUndefined();
+    expect((await gateway.reset()).bank).toEqual(bank());
+  });
 });
