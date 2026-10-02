@@ -119,4 +119,25 @@ describe('progressive dashboard statistics', () => {
     expect(progressKeys.map(key => localStorage.getItem(key))).toEqual(before);
     expect(runtimeQuestionBank.listQuestions(quiz.id)).toEqual([]);
   });
+  it('loads the quiz screen after its questions arrive and keeps the attempt in browser storage', async () => {
+    const subject = { id: 's1', name: 'Lazy Subject', accent: '#b9511b' };
+    const quiz = { id: 'q1', subjectId: subject.id, name: 'Lazy Quiz', questionCount: 1, questionIds: ['i1'] };
+    runtimeQuestionBank.configureApi({ revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }, [
+      { revision: 'rev-lazy', quizzes: [quiz] },
+    ]);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({
+      revision: 'rev-lazy', questions: [{ id: 'i1', quizId: quiz.id, stem: 'Lazy question stem', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }], answer: 'A', rationale: 'Explanation' }],
+    }) }));
+
+    render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Open Lazy Subject' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+
+    expect(await screen.findByText('Lazy question stem', undefined, { timeout: 10_000 })).toBeVisible();
+    expect(screen.getByText('Question 1 of 1')).toBeVisible();
+    expect(new LocalAttemptRepository().getActive(quiz.id)).toBeDefined();
+  }, 15_000);
+
+
 });

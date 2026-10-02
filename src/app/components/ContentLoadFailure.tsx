@@ -1,5 +1,5 @@
 import { Button, Stack, Typography } from '@mui/material';
-import { ContentLoadError } from '../../content/runtimeQuestionBank';
+import { ContentLoadError } from '../../content/contentTransport';
 
 function learnerMessage(error?: Error) {
   if (!(error instanceof ContentLoadError)) return 'Please try again or come back later.';

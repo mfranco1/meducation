@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { theme } from './app/theme';
 import { runtimeQuestionBank } from './content/runtimeQuestionBank';
+import { BootFailure } from './app/components/BootFailure';
 
 const root = createRoot(document.getElementById('root')!);
 const render = (content: ReactNode) => root.render(
@@ -23,6 +24,7 @@ async function boot() {
     render(<App />);
   } catch (error) {
     console.error('Application could not start.', error);
+    render(<BootFailure />);
   }
 }
 

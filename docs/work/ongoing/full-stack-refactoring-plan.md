@@ -1,7 +1,7 @@
 # Full-stack code quality review and staged refactoring plan
 
 Reviewed: 2026-10-02.
-Status: Stages 1–4 complete; paused before Stage 5.
+Status: Stages 1–5 complete; paused before Stage 6.
 
 ## Scope and conclusion
 
@@ -74,7 +74,7 @@ Each stage should be independently reviewable. Retain canonical JSON unchanged t
 - [x] Stage 2 — strengthen contracts and backend seams. Add decoders and shared fixture parity, type nested metadata, complete/inject the Python protocol, add indexes and explicit response DTO construction, move conditional checks before body assembly. Exit: malformed data rejected consistently; API fields, revisions, ordering, and optional-field behavior preserved.
 - [x] Stage 3 — harden persistence and attempt compatibility. Add codecs/migrations and error results, implement idempotent completion with active removal, attach content identity to new attempts, and implement the agreed legacy/changed-content recovery. Exit: simulated storage failures preserve prior valid state; repeat completion does not inflate totals; migrated history and durable summaries match; incompatible content is not silently scored.
 - [x] Stage 4 — optimize progress reads. Expose cached immutable snapshots and subscriptions; remove migration writes from getters; aggregate attempts and activity once per refresh. Exit: dashboard and subject statistics retain current behavior, storage reads stop scaling per quiz, and invalidation/multi-tab behavior is tested.
-- [ ] Stage 5 — simplify frontend loading and screen composition. Extract HTTP transport/decoders/cache and quiz-launch coordinator, inject dependencies, retain cancellation/deduplication/retry semantics, then lazy-load rich screens and add visible boot/chunk failure recovery. Exit: existing loading tests plus stale-request/reconfiguration cases pass; initial transfer improves without unacceptable first-quiz delay.
+- [x] Stage 5 — simplify frontend loading and screen composition. Extract HTTP transport/decoders/cache and quiz-launch coordinator, inject dependencies, retain cancellation/deduplication/retry semantics, then lazy-load rich screens and add visible boot/chunk failure recovery. Exit: existing loading tests plus stale-request/reconfiguration cases pass; initial transfer improves without unacceptable first-quiz delay.
 - [ ] Stage 6 — modularize admin editing. Move workflows behind commands, unify busy/error states, split cohesive panels, profile and then optimize snapshot/undo costs where justified. Exit: preview/stage/undo/import/export integration tests pass, stale work cannot apply, and unedited export remains byte-identical.
 - [ ] Stage 7 — enforce standards and close integration gaps. Introduce scoped lint/format enforcement, semantic theme tokens, backend negative tests and browser smoke coverage; finish the existing progressive-loading browser checks; update architecture/testing docs and record measured changes. Exit: all checks pass, pending manual checks are explicitly resolved, and this tracker moves to `docs/work/done` only after implementation is complete.
 
@@ -140,3 +140,13 @@ Stage 3 verification: `npm test` passed 219 tests across 34 files; `npm run buil
 `createProgressView` groups retained scores by quiz and subject and derives activity fallbacks once per snapshot. Dashboard and subject selectors read the grouped view and durable summaries. This removes repeated history filters and per-quiz storage reads while preserving subject membership, trends, activity ordering, and resume position. The session no longer keeps a second completed-history state.
 
 Stage 4 verification: `npm test` passed 221 tests across 35 files; `npm run build`, `npm run validate:content`, and `git diff --check` passed. Snapshot tests verify stable identity, no reads or migration writes across repeated getters, local and cross-tab invalidation, and stale-save rejection. The existing large-chunk and answer-review warnings remain. The Stage 3 simultaneous cross-tab write race and worst-case browser quota limit remain; neither is solved by read caching.
+
+## Stage 5 result: loading boundaries and deferred rich screens
+
+`contentTransport.ts` now owns HTTP timeout, retry, cancellation, and safe diagnostics; `RuntimeQuestionBank` accepts an injected transport. The existing API decoders remain the unknown-data boundary, and `runtimeContentCache.ts` indexes loaded subjects, quizzes, and ordered questions. A generation guard prevents late subject, quiz, or question responses from an earlier revision/source from replacing current content. `useQuizLaunch` owns question-load deduplication, navigation cancellation, and retry behavior through an injected loader.
+
+Quiz, Browse Answers, and Results screens now load on demand. Quiz and Browse chunks begin preloading alongside their question request, and Results preloads while a quiz is active. The app shows a loading state and a reload action if a screen chunk fails; bootstrap also shows a reload action if the App import fails. No canonical content, attempts, scoring rules, or backend code changed.
+
+The preceding build's initial `learner` + `App` JavaScript was about 351.60 kB gzip (105.24 + 246.36). Stage 5 builds emit about 155.58 kB gzip initially (118.91 + 36.67), a 56% reduction. The rich common chunk is 189.86 kB gzip and QuizScreen is 6.98 kB gzip when needed. Functional tests confirm the first quiz appears after its questions load and the attempt is saved; real-browser first-quiz timing under slower networks remains for Stage 7, so bundle sizes alone are not treated as a latency benchmark.
+
+Stage 5 verification: `npm test` passed 229 tests across 37 files; `npm run validate:content`, `npm run build`, and `git diff --check` passed. Tests cover reconfiguration races at all three content levels, launch cancellation/deduplication/retry, lazy quiz integration, and visible boot/chunk recovery. The build still warns about the deferred rich common chunk, and content validation retains existing answer-review warnings.

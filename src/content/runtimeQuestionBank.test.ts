@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ContentLoadError, getJsonWithRetry, RuntimeQuestionBank, runtimeQuestionBank } from './runtimeQuestionBank';
+import type { JsonTransport } from './contentTransport';
 
 const subject = { id: 's1', name: 'Subject', accent: '#123456' };
 const quiz = { id: 'q1', subjectId: 's1', name: 'Quiz', questionCount: 1, questionIds: ['i1'] };
@@ -295,5 +296,47 @@ describe('runtime question bank', () => {
     })).rejects.toMatchObject({ kind: 'http', status: 429 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it('ignores an old subject response after switching to local content', async () => {
+    let resolveOld!: (value: unknown) => void;
+    const pending = new Promise<unknown>(resolve => { resolveOld = resolve; });
+    const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
+    const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
+    const oldRequest = bank.ensureSubjects();
+    bank.configureLocal([subject], [quiz], [question]);
+    resolveOld({ revision: 'old', subjects: [{ ...subject, quizCount: 0, quizIds: [] }] });
+    await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(bank.listSubjectSummaries()[0].quizIds).toEqual(['q1']);
+    expect(bank.getCatalogState()).toBe('ready');
+  });
+
+  it('ignores an old quiz catalog after a new revision is configured', async () => {
+    let resolveOld!: (value: unknown) => void;
+    const pending = new Promise<unknown>(resolve => { resolveOld = resolve; });
+    const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
+    const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
+    bank.configureApi({ revision: 'old', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
+    const oldRequest = bank.ensureQuizzes('s1');
+    await vi.waitFor(() => expect(bank.getQuizState('s1')).toBe('loading'));
+    const replacement = { ...quiz, id: 'q2', questionIds: ['i2'] };
+    bank.configureApi({ revision: 'new', subjects: [{ ...subject, quizCount: 1, quizIds: ['q2'] }] }, [{ revision: 'new', quizzes: [replacement] }]);
+    resolveOld({ revision: 'old', quizzes: [quiz] });
+    await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(bank.listQuizzes('s1')).toEqual([replacement]);
+    expect(bank.getQuizState('s1')).toBe('ready');
+  });
+
+  it('does not cache old questions after reconfiguration', async () => {
+    let resolveOld!: (value: unknown) => void;
+    const pending = new Promise<unknown>(resolve => { resolveOld = resolve; });
+    const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
+    const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
+    bank.configureApi({ revision: 'old', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'old', quizzes: [quiz] }]);
+    const oldRequest = bank.ensureQuestions('q1');
+    bank.configureLocal([subject], [quiz], []);
+    resolveOld({ revision: 'old', questions: [question] });
+    await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
+    expect(bank.listQuestions('q1')).toEqual([]);
   });
 });
