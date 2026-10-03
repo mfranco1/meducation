@@ -142,3 +142,60 @@ def test_sparse_nested_metadata_is_preserved_in_api_response(tmp_path, bank_data
         assert question["rationaleMeta"] == {"sources": "Reference"}
         assert question["metadata"] == {"topic": "Anatomy"}
         assert "answerNote" not in question
+
+
+@pytest.mark.parametrize(
+    ("path", "code"),
+    [
+        ("/api/v1/subjects/s-missing/quizzes", "subject_not_found"),
+        ("/api/v1/quizzes/q-missing", "quiz_not_found"),
+        ("/api/v1/quizzes/q-missing/questions", "quiz_not_found"),
+    ],
+)
+def test_missing_catalog_resources_return_specific_404(
+    tmp_path, bank_data: dict, path: str, code: str
+) -> None:
+    bank_path = tmp_path / "bank.json"
+    bank_path.write_text(json.dumps(bank_data) + "\n", encoding="utf-8")
+    with TestClient(create_app(Settings(bank_path=bank_path))) as client:
+        response = client.get(path)
+        assert response.status_code == 404
+        assert response.json() == {"detail": {"code": code}}
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/api/v1/subjects",
+        "/api/v1/subjects/s1/quizzes",
+        "/api/v1/quizzes/q1",
+        "/api/v1/quizzes/q1/questions",
+    ],
+)
+def test_all_content_routes_reject_stale_revision_and_if_match(
+    tmp_path, bank_data: dict, path: str
+) -> None:
+    bank_path = tmp_path / "bank.json"
+    bank_path.write_text(json.dumps(bank_data) + "\n", encoding="utf-8")
+    with TestClient(create_app(Settings(bank_path=bank_path))) as client:
+        for response in (
+            client.get(f"{path}?revision=stale"),
+            client.get(path, headers={"If-Match": '"stale"'}),
+        ):
+            assert response.status_code == 409
+            assert response.json() == {"detail": {"code": "content_revision_changed"}}
+        current = client.get(path)
+        assert current.status_code == 200
+        assert client.get(path, headers={"If-None-Match": current.headers["etag"]}).status_code == 304
+
+
+def test_invalid_bank_fails_startup_and_unstarted_app_reports_unready(tmp_path, bank_data: dict) -> None:
+    bank_path = tmp_path / "bank.json"
+    bank_path.write_text(json.dumps({**bank_data, "questions": []}) + "\n", encoding="utf-8")
+    app = create_app(Settings(bank_path=bank_path))
+    with pytest.raises(RuntimeError, match="Canonical question bank could not be loaded"), TestClient(app):
+        pass
+
+    # Without a successful lifespan, the route must not claim the bank is ready.
+    client = TestClient(create_app(Settings(bank_path=bank_path)))
+    assert client.get("/health/ready").status_code == 503

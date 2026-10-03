@@ -38,12 +38,17 @@ export default function App() {
   useEffect(() => { if (session.view.page === 'quiz') preloadResultsScreen(); }, [session.view.page]);
   const [exitOpen, setExitOpen] = useState(false);
   const [exitDestination, setExitDestination] = useState<QuizExitDestination>('subject');
-  const summaries = questionBank.listSubjectSummaries();
+  const summaries = useMemo(
+    () => questionBank.listSubjectSummaries(),
+    // The external-store version invalidates a catalog whose array identity is not stable.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [questionBank, contentSnapshotVersion],
+  );
   const catalogState = questionBank.getCatalogState();
   const catalogError = questionBank.getCatalogError();
   const subjectStats = useMemo<SubjectStat[]>(
     () => subjectStatsFor(questionBank, progressView, summaries),
-    [questionBank, progressView, contentSnapshotVersion],
+    [questionBank, progressView, summaries],
   );
   const subjectLatestScores = subjectStats.map(stat => stat.latest).filter((score): score is number => score !== undefined);
   const averageLatest = averageScore(subjectLatestScores);

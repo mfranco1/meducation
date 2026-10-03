@@ -1,6 +1,6 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import { Alert, Box, Button, Card, CardContent, Container, IconButton, LinearProgress, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Container, IconButton, LinearProgress, Stack, Typography, useTheme } from '@mui/material';
 import { useRef, useState } from 'react';
 import { answerFor } from '../../domain/quizEngine';
 import type { Question, Quiz } from '../../domain/types';
@@ -19,6 +19,7 @@ interface QuizBrowseScreenProps {
 }
 
 export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }: QuizBrowseScreenProps) {
+  const theme = useTheme();
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const question = questions[index];
   if (!question) return <Container maxWidth="md" sx={{ py: 4 }}><Alert severity="warning">This quiz has no questions to browse.</Alert><Button sx={{ mt: 2 }} onClick={onDone}>Done</Button></Container>;
@@ -37,7 +38,7 @@ export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }:
           <Stack spacing={1.25} sx={{ mt: 3 }}>
             {question.choices.map(choice => {
               const correct = hasCorrectChoice && choice.id === correctAnswer;
-              return <Box key={choice.id} sx={{ border: '1px solid', borderColor: correct ? 'success.main' : '#e8dfd9', bgcolor: correct ? '#e4f2e9' : 'background.paper', borderRadius: 1, p: 1.5 }}>
+              return <Box key={choice.id} sx={{ border: '1px solid', borderColor: correct ? 'success.main' : theme.palette.feedback.choiceBorder, bgcolor: correct ? theme.palette.feedback.correct.surface : 'background.paper', borderRadius: 1, p: 1.5 }}>
                 <Stack direction="row" spacing={1} alignItems="flex-start">
                   <Typography component="span" fontWeight={700} sx={{ flexShrink: 0 }}>{choice.id}.</Typography>
                   <Box sx={{ minWidth: 0, flex: 1 }}><MarkdownContent markdown={choice.text} variant="inline" /></Box>
@@ -46,7 +47,7 @@ export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }:
             })}
           </Stack>
           {!hasCorrectChoice
-            ? <Box sx={{ mt: 3 }}><Alert severity="warning" sx={{ mb: 2 }}>Answer unavailable</Alert><ExplanationContent question={question} />{question.pearls?.map(pearl => <Box key={pearl} sx={{ mt: 2.5, maxWidth: '72ch', p: 1.5, borderRadius: 2, bgcolor: '#f7dfcf' }}><Typography variant="subtitle2" color="primary.dark">High-yield pearl</Typography><Typography sx={{ mt: .5, lineHeight: 1.65 }}>{pearl}</Typography></Box>)}</Box>
+            ? <Box sx={{ mt: 3 }}><Alert severity="warning" sx={{ mb: 2 }}>Answer unavailable</Alert><ExplanationContent question={question} />{question.pearls?.map(pearl => <Box key={pearl} sx={{ mt: 2.5, maxWidth: '72ch', p: 1.5, borderRadius: 2, bgcolor: 'primary.light' }}><Typography variant="subtitle2" color="primary.dark">High-yield pearl</Typography><Typography sx={{ mt: .5, lineHeight: 1.65 }}>{pearl}</Typography></Box>)}</Box>
             : <FeedbackPanel question={question} selectedChoiceId={correctAnswer} />}
           {Object.keys(question.choiceExplanations ?? {}).length > 0 && <Box sx={{ mt: 3 }}>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>Choice explanations</Typography>

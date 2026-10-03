@@ -3,7 +3,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import FlagIcon from '@mui/icons-material/Flag';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Card, CardContent, Container, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Container, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, Typography, useTheme } from '@mui/material';
 import { MarkdownContent } from '../components/content/MarkdownContent';
 import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../domain/types';
@@ -29,7 +29,8 @@ interface QuizScreenProps {
 
 interface CorrectAnswerBurst { questionId: string; choiceId: string; eventId: number }
 
-export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFinish, onRequestExit }: QuizScreenProps) {
+export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, onRequestExit }: QuizScreenProps) {
+  const theme = useTheme();
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
   const [celebrationQueue, setCelebrationQueue] = useState<CelebrationEvent[]>([]);
@@ -98,9 +99,9 @@ export function QuizScreen({ quiz, attempt, index, questions, onCheckpoint, onFi
             {question.choices.map(choice => {
               const selected = response.selectedChoiceId === choice.id;
               const correct = isCorrect(question, choice.id);
-              const state = feedback && !answerUnderReview ? correct ? '#e4f2e9' : selected ? '#fae9e6' : undefined : undefined;
+              const state = feedback && !answerUnderReview ? correct ? theme.palette.feedback.correct.surface : selected ? theme.palette.feedback.incorrect.surface : undefined : undefined;
               const showCorrectAnswerBurst = correctAnswerBurst?.questionId === question.id && correctAnswerBurst.choiceId === choice.id;
-              return <Box key={choice.id} sx={{ position: 'relative', isolation: 'isolate', overflow: 'visible', border: '1px solid', borderColor: selected ? 'primary.main' : '#e8dfd9', bgcolor: state, borderRadius: 1, p: .5 }}>
+              return <Box key={choice.id} sx={{ position: 'relative', isolation: 'isolate', overflow: 'visible', border: '1px solid', borderColor: selected ? 'primary.main' : theme.palette.feedback.choiceBorder, bgcolor: state, borderRadius: 1, p: .5 }}>
                 {showCorrectAnswerBurst && <RadiatingCircles key={correctAnswerBurst.eventId} particleCount={5} durationMs={900} horizontalSpread={14} verticalSpread={17} particleSize={7} />}
                 <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography component="div" sx={{ py: .8 }}><b>{choice.id}.</b> <MarkdownContent markdown={choice.text} variant="inline" /></Typography>} sx={{ m: 0, width: '100%', position: 'relative', zIndex: 1 }} />
               </Box>;

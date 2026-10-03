@@ -1,7 +1,7 @@
 # Full-stack code quality review and staged refactoring plan
 
 Reviewed: 2026-10-02.
-Status: Stages 1–6 complete; paused before Stage 7.
+Status: Complete; all seven implementation stages verified on 2026-10-03.
 
 ## Scope and conclusion
 
@@ -76,7 +76,7 @@ Each stage should be independently reviewable. Retain canonical JSON unchanged t
 - [x] Stage 4 — optimize progress reads. Expose cached immutable snapshots and subscriptions; remove migration writes from getters; aggregate attempts and activity once per refresh. Exit: dashboard and subject statistics retain current behavior, storage reads stop scaling per quiz, and invalidation/multi-tab behavior is tested.
 - [x] Stage 5 — simplify frontend loading and screen composition. Extract HTTP transport/decoders/cache and quiz-launch coordinator, inject dependencies, retain cancellation/deduplication/retry semantics, then lazy-load rich screens and add visible boot/chunk failure recovery. Exit: existing loading tests plus stale-request/reconfiguration cases pass; initial transfer improves without unacceptable first-quiz delay.
 - [x] Stage 6 — modularize admin editing. Move workflows behind commands, unify busy/error states, split cohesive panels, profile and then optimize snapshot/undo costs where justified. Exit: preview/stage/undo/import/export integration tests pass, stale work cannot apply, and unedited export remains byte-identical.
-- [ ] Stage 7 — enforce standards and close integration gaps. Introduce scoped lint/format enforcement, semantic theme tokens, backend negative tests and browser smoke coverage; finish the existing progressive-loading browser checks; update architecture/testing docs and record measured changes. Exit: all checks pass, pending manual checks are explicitly resolved, and this tracker moves to `docs/work/done` only after implementation is complete.
+- [x] Stage 7 — enforce standards and close integration gaps. Introduce scoped lint/format enforcement, semantic theme tokens, backend negative tests and browser smoke coverage; finish the existing progressive-loading browser checks; update architecture/testing docs and record measured changes. Exit: all checks pass, pending manual checks are explicitly resolved, and this tracker moves to `docs/work/done` only after implementation is complete.
 
 Suggested sequencing: stages 1–3 first for correctness; stages 4–5 for learner efficiency; stage 6 for authoring maintainability; stage 7 for final enforcement. Add narrowly relevant regression tests throughout, not only at the end.
 
@@ -158,3 +158,13 @@ Stage 5 verification: `npm test` passed 229 tests across 37 files; `npm run vali
 An initial full-bank profile of an unchanged subject update measured about 9.4 s to preview and 9.7 s to apply because validation ran twice. An isolated profile after the change measured 14.2 s to preview, 0.27 s to apply, and 0.36 s to undo. These timings are indicative and not directly comparable across machine load; the second validation is eliminated. Preview still validates all 11,687 questions on the main thread and can pause the admin UI. A worker or incremental validator would require a separate correctness and cost assessment.
 
 Stage 6 verification: the frontend suite passed 234 tests across 38 files with two workers, including controller stage/export/undo, bulk validation/stage, import preview/stage, stale-preview and duplicate-command tests, plus bounded history. `npm run validate:content` passed with existing answer-review warnings. The unedited canonical bank serialized byte-for-byte to the checked-in JSON (16,456,246 bytes). `npm run build` and `git diff --check` passed; the existing deferred rich-chunk warning remains.
+
+## Stage 7 result: standards and browser integration
+
+ESLint now checks all frontend source and the core React Hooks rules. The eight findings in the initial lint run were fixed; the catalog's external-store version has one documented dependency-rule exception so subject statistics remain memoized. Prettier checks the new browser/configuration files and theme, leaving unrelated screen formatting untouched. The theme now owns semantic correct, incorrect, and answer-under-review colors shared by quiz choices, feedback, and Browse Answers. Vitest moved to version 5 to remove the two moderate development-dependency advisories; `npm audit` reports zero vulnerabilities.
+
+Backend negative tests cover missing subjects/quizzes, stale revision and `If-Match` handling on every content route, conditional 304 responses, startup failure for an invalid bank, and readiness before startup. The browser smoke suite uses the production Vite build, a test-only two-question bank served by the real FastAPI adapter, and Chromium. It exercises answer persistence across reload, resume, completion, Browse Answers, an intercepted outage followed by keyboard Retry against the live API, pending loading announcements, reduced-motion skeletons, narrow layout, and local KaTeX font loading. These checks resolve the progressive-loading browser follow-ups for this plan. CI runs lint, formatting, unit/content/build checks, backend checks, and the Chromium smoke suite.
+
+On this machine, the production-preview fixture showed its first quiz screen 416 ms after **Begin Quiz** on the local connection and 1,348 ms with 150 ms latency and 200 kB/s throttling. Those numbers include lazy screen loading for a tiny test bank and are not production-user latency estimates; no transfer-size improvement is attributed to Stage 7. The final initial `learner` + `App` chunks total about 155.72 kB gzip (119.02 + 36.70), essentially unchanged from Stage 5.
+
+Stage 7 verification: 234 frontend tests across 38 files, 35 backend tests, four Chromium smoke tests, TypeScript/production build, canonical content validation (11,687 questions / 111 quizzes), ESLint, scoped Prettier, Ruff, mypy, dependency audit, and `git diff --check` passed. The canonical JSON was not changed. Existing answer-review warnings, the deferred rich-chunk build warning, and the TestClient deprecation warning remain. No manual browser check from this plan is outstanding; deployed-network measurements remain outside this local refactor.

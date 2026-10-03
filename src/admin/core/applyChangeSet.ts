@@ -1,4 +1,4 @@
-import type { StoredQuestion, StoredQuestionBank, StoredQuiz, StoredSubject } from '../../content/schema';
+import type { StoredQuestion, StoredQuestionBank, StoredQuiz } from '../../content/schema';
 import type { ValidationIssue } from '../../content/validate';
 import { cloneBank } from './serializeBank';
 import { validateAdminBank } from './validateAdminBank';

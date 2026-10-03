@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 4,
+  "subjects": [{ "id": "s1", "name": "Browser Test Subject", "accent": "#b9511b" }],
+  "quizzes": [{ "id": "q1", "subjectId": "s1", "name": "Browser Test Quiz" }],
+  "questions": [
+    {
+      "id": "i1",
+      "quizId": "q1",
+      "stem": "What is $2+2$?",
+      "choices": [
+        { "id": "A", "text": "Four" },
+        { "id": "B", "text": "Five" }
+      ],
+      "answer": "A",
+      "rationale": "**Four** is the sum of two and two."
+    },
+    {
+      "id": "i2",
+      "quizId": "q1",
+      "stem": "Which choice names the heart?",
+      "choices": [
+        { "id": "A", "text": "Lung" },
+        { "id": "B", "text": "Heart" }
+      ],
+      "answer": "B",
+      "rationale": "The heart pumps blood."
+    }
+  ]
+}

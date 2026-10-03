@@ -133,8 +133,7 @@ export class RuntimeQuestionBank implements QuizRepository {
     if (pending) return pending;
     if (this.source === 'local') return this.listQuizzes(subjectId);
     const generation = this.generation;
-    let request!: Promise<Quiz[]>;
-    request = (async () => {
+    const request: Promise<Quiz[]> = (async () => {
       try {
         await this.ensureSubjects();
         if (generation !== this.generation) throw genericFailure('cancelled');
@@ -157,9 +156,11 @@ export class RuntimeQuestionBank implements QuizRepository {
         this.quizStates.set(subjectId, 'error');
         this.quizErrors.set(subjectId, error instanceof Error ? error : new Error('Could not load quizzes.'));
         this.notify(); throw error;
-      } finally { if (this.pendingCatalogs.get(subjectId) === request) this.pendingCatalogs.delete(subjectId); }
+      }
     })();
     this.pendingCatalogs.set(subjectId, request);
+    const clearPending = () => { if (this.pendingCatalogs.get(subjectId) === request) this.pendingCatalogs.delete(subjectId); };
+    void request.then(clearPending, clearPending);
     return request;
   }
   private readonly quizRetryAttempts = new Map<string, number>();

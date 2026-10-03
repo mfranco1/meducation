@@ -6,7 +6,11 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "test": "vitest run",
+    "test": "vitest run --maxWorkers=2",
+    "lint": "eslint src",
+    "format:check": "prettier --check .prettierrc.json eslint.config.mjs playwright.config.ts e2e src/app/theme.ts",
+    "pretest:e2e": "VITE_CONTENT_MAX_RETRIES=0 npm run build",
+    "test:e2e": "playwright test",
     "validate:content": "tsx scripts/validate-question-bank.ts",
     "audit:explanations": "tsx scripts/audit-explanations.ts"
   },
@@ -30,16 +34,23 @@
     "unified": "^11.0.5"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.63.0",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.10",
     "@types/react-dom": "^19.1.7",
     "@vitejs/plugin-react": "^5.0.2",
+    "eslint": "^10.12.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^30.1.0",
+    "prettier": "^3.9.9",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
+    "typescript-eslint": "^8.71.0",
     "vite": "^7.1.3",
-    "vitest": "^3.2.4"
+    "vitest": "^5.0.3"
   }
 }

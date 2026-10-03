@@ -1,2 +1,65 @@
 import { createTheme } from '@mui/material/styles';
-export const theme = createTheme({ palette: { mode: 'light', primary: { main: '#b9511b', dark: '#853812', light: '#f7dfcf' }, background: { default: '#fbf8f5', paper: '#fffdfb' }, text: { primary: '#27211e', secondary: '#766a63' }, success: { main: '#2f7a55' }, error: { main: '#b73b32' } }, shape: { borderRadius: 14 }, typography: { fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif', h3: { fontWeight: 750, letterSpacing: '-.045em' }, h4: { fontWeight: 720, letterSpacing: '-.035em' }, h5: { fontWeight: 700 }, button: { textTransform: 'none', fontWeight: 700 } }, components: { MuiCard: { styleOverrides: { root: { border: '1px solid #eee5df', boxShadow: '0 3px 14px rgba(70, 38, 20, .045)' } } }, MuiButton: { styleOverrides: { root: { borderRadius: 10, padding: '9px 16px' } } } } });
+
+interface FeedbackTone {
+  surface: string;
+  border: string;
+  separator: string;
+}
+
+interface FeedbackPalette {
+  correct: FeedbackTone;
+  incorrect: FeedbackTone;
+  review: FeedbackTone;
+  choiceBorder: string;
+}
+
+declare module '@mui/material/styles' {
+  interface Palette {
+    feedback: FeedbackPalette;
+  }
+  interface PaletteOptions {
+    feedback?: FeedbackPalette;
+  }
+}
+
+export const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: { main: '#b9511b', dark: '#853812', light: '#f7dfcf' },
+    background: { default: '#fbf8f5', paper: '#fffdfb' },
+    text: { primary: '#27211e', secondary: '#766a63' },
+    success: { main: '#2f7a55' },
+    error: { main: '#b73b32' },
+    feedback: {
+      correct: { surface: '#e4f2e9', border: '#b9dec6', separator: '#cce6d5' },
+      incorrect: {
+        surface: '#fae9e6',
+        border: '#f0c6bf',
+        separator: '#f3d3cd',
+      },
+      review: { surface: '#fff4dd', border: '#e9cf98', separator: '#f0dcaf' },
+      choiceBorder: '#e8dfd9',
+    },
+  },
+  shape: { borderRadius: 14 },
+  typography: {
+    fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    h3: { fontWeight: 750, letterSpacing: '-.045em' },
+    h4: { fontWeight: 720, letterSpacing: '-.035em' },
+    h5: { fontWeight: 700 },
+    button: { textTransform: 'none', fontWeight: 700 },
+  },
+  components: {
+    MuiCard: {
+      styleOverrides: {
+        root: {
+          border: '1px solid #eee5df',
+          boxShadow: '0 3px 14px rgba(70, 38, 20, .045)',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: { root: { borderRadius: 10, padding: '9px 16px' } },
+    },
+  },
+});

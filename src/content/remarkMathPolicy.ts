@@ -11,7 +11,7 @@ import { visit } from 'unist-util-visit';
  */
 export const remarkMathWithCurrency: Plugin<[], Root> = function mathWithCurrency() {
   remarkMath.call(this, { singleDollarTextMath: true });
-  return (tree, file) => {
+  return tree => {
     visit(tree, ['inlineMath', 'math'], (node, index, parent) => {
       if (index === undefined || !parent || !node.position) return;
       const value = (node as RootContent & { value: string }).value;

@@ -9,7 +9,7 @@ import { perfectTestCelebration } from '../components/celebration/celebrationCat
 import { StatCard } from '../components/StatCard';
 import { ResultsScoreHero } from '../components/results/ResultsScoreHero';
 
-export function ResultsScreen({ quiz, attempt, questions, onBack }: { quiz: Quiz; attempt: CompletedAttempt; questions: Question[]; onBack: () => void }) {
+export function ResultsScreen({ attempt, questions, onBack }: { quiz: Quiz; attempt: CompletedAttempt; questions: Question[]; onBack: () => void }) {
   const score = attempt.score;
   const rows = performanceBy(questions, [attempt], 'topic');
   const [perfectCelebrationOpen, setPerfectCelebrationOpen] = useState(() => isPerfectScore(score));

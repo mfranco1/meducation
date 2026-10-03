@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   isFullyAnsweredFastFeedback,
   normalizeResponseForFeedbackMode,
@@ -40,17 +40,17 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   const [view, setView] = useState<View>({ page: 'dashboard' });
   const [persistenceError, setPersistenceError] = useState<string | undefined>(() => attempts.getStorageError?.());
   const [pendingResume, setPendingResume] = useState<{ quiz: Quiz; reason: 'legacy' | 'changed' }>();
-  const persist = (write: () => void): boolean => {
+  const persist = useCallback((write: () => void): boolean => {
     try { write(); setPersistenceError(undefined); return true; }
     catch (error) {
       setPersistenceError(error instanceof PersistenceError ? error.message : 'Progress could not be saved. Try again.');
       return false;
     }
-  };
+  }, []);
   const subjects = questionBank.listSubjects();
   const showQuizSubject = (quiz: Quiz) => setView({ page: 'subject', subject: subjectForQuiz(subjects, quiz) });
 
-  const checkpoint = (next: Attempt, nextIndex?: number) => {
+  const checkpoint = useCallback((next: Attempt, nextIndex?: number) => {
     if (view.page !== 'quiz') return;
     const bank = questionBank.listQuestions(view.quiz.id);
     const index = nextIndex ?? view.index;
@@ -60,7 +60,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
       : withCheckpoint;
     if (!persist(() => attempts.saveActive(checkpointed))) return;
     setView({ ...view, attempt: checkpointed, index });
-  };
+  }, [view, questionBank, attempts, persist]);
 
   const resumeQuiz = (quiz: Quiz) => {
     const existing = attempts.getActive(quiz.id);
@@ -153,7 +153,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     if (!response) return;
     const normalized = normalizeResponseForFeedbackMode(response, view.attempt.feedbackMode);
     if (normalized !== response) checkpoint(updateResponse(view.attempt, normalized));
-  }, [questionBank, view]);
+  }, [questionBank, view, checkpoint]);
 
   return {
     view,

@@ -1,4 +1,4 @@
-import type { Question, Quiz, QuizRepository, Subject } from '../domain/types';
+import type { Question, Quiz, QuizRepository } from '../domain/types';
 import generated from './questionBank.generated.json';
 import type { StoredQuestionBank } from './schema';
 
