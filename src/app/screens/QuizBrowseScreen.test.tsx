@@ -24,6 +24,7 @@ describe('quiz answer browser', () => {
 
     expect(screen.getByText('Question one')).toBeVisible();
     expect(screen.getByText('Second choice')).toBeVisible();
+    expect(screen.getByText(/Correct answer/)).toBeVisible();
     expect(screen.getByText('Explanation one')).toBeVisible();
     expect(screen.getByRole('img', { name: 'Question diagram' })).toBeVisible();
     expect(screen.getByRole('img', { name: 'Explanation diagram' })).toBeVisible();
@@ -61,5 +62,6 @@ describe('quiz answer browser', () => {
     expect(screen.getByText('Answer unavailable')).toBeVisible();
     expect(screen.queryByText('Second choice')).toBeVisible();
     expect(screen.getByText('Explanation one')).toBeVisible();
+    expect(screen.queryByText(/Correct answer/)).toBeNull();
   });
 });

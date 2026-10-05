@@ -13,6 +13,16 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await expect(page.getByText('What is')).toBeVisible();
   await expect(page.locator('.katex')).toBeVisible();
   const firstQuizMs = Date.now() - firstQuizStart;
+  await testInfo.attach('main-quiz-desktop.png', {
+    body: await page.screenshot({ path: testInfo.outputPath('main-quiz-desktop.png') }),
+    contentType: 'image/png',
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await testInfo.attach('main-quiz-mobile.png', {
+    body: await page.screenshot({ path: testInfo.outputPath('main-quiz-mobile.png') }),
+    contentType: 'image/png',
+  });
+  await page.setViewportSize({ width: 1280, height: 720 });
   await testInfo.attach('first-quiz-ms.txt', {
     body: String(firstQuizMs),
     contentType: 'text/plain',
@@ -38,12 +48,22 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();
   await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
   await expect(page.getByRole('radio')).toHaveCount(0);
+  await testInfo.attach('browse-desktop.png', {
+    body: await page.screenshot({ path: testInfo.outputPath('browse-desktop.png') }),
+    contentType: 'image/png',
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await testInfo.attach('browse-mobile.png', {
+    body: await page.screenshot({ path: testInfo.outputPath('browse-mobile.png') }),
+    contentType: 'image/png',
+  });
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Done' }).click();
   await expect(page.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
 });
 
-test('Exam Mode submission offers a one-time read-only review', async ({ page }) => {
+test('Exam Mode submission offers a one-time read-only review', async ({ page }, testInfo) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await page.getByRole('button', { name: 'Start quiz' }).click();
@@ -56,6 +76,17 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page })
   await page.getByRole('button', { name: 'Submit' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
   await page.getByRole('button', { name: 'Review results' }).click();
+  await expect(page.getByLabel(/Final time:/)).toBeVisible();
+  await testInfo.attach('review-desktop.png', {
+    body: await page.screenshot({ path: testInfo.outputPath('review-desktop.png') }),
+    contentType: 'image/png',
+  });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await testInfo.attach('review-mobile.png', {
+    body: await page.screenshot({ path: testInfo.outputPath('review-mobile.png') }),
+    contentType: 'image/png',
+  });
+  await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.getByRole('button', { name: 'Wrong questions, 1' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Flagged questions, 1' })).toBeVisible();
   await page.getByRole('button', { name: 'Wrong questions, 1' }).click();
@@ -66,14 +97,14 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page })
   await expect(
     page.getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }),
   ).toBeVisible();
-  await expect(page.getByText('Correct answer')).toBeVisible();
+  await expect(page.getByText(/Correct answer/)).toBeVisible();
   await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
   await page.getByRole('button', { name: 'Leave review' }).click();
   await expect(page.getByRole('dialog', { name: 'Leave review?' })).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Keep reviewing', exact: true }).last().click();
   await expect(page.getByText('What is')).toBeVisible();
   await page.getByRole('button', { name: 'Leave review' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Leave review' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Leave', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Review results' })).toHaveCount(0);
 });

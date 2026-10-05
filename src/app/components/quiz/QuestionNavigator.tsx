@@ -89,12 +89,12 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
   </Stack>;
 }
 
-function QuestionTile({ item, current, onClick, tileRef }: { item: QuestionNavigationItem; current: boolean; onClick: () => void; tileRef?: Ref<HTMLButtonElement> }) {
-  const status = [item.wrong ? 'answered incorrectly' : item.answered ? 'answered' : 'unanswered', item.flagged ? 'flagged' : undefined].filter(Boolean).join(', ');
+export function QuestionTile({ item, current, onClick, tileRef, showAnswerStatus = true }: { item: QuestionNavigationItem; current: boolean; onClick: () => void; tileRef?: Ref<HTMLButtonElement>; showAnswerStatus?: boolean }) {
+  const status = showAnswerStatus ? [item.wrong ? 'answered incorrectly' : item.answered ? 'answered' : 'unanswered', item.flagged ? 'flagged' : undefined].filter(Boolean).join(', ') : '';
   return <ButtonBase
     ref={tileRef}
     onClick={onClick}
-    aria-label={`Question ${item.number}, ${status}${current ? ', current question' : ''}`}
+    aria-label={`Question ${item.number}${status ? `, ${status}` : ''}${current ? ', current question' : ''}`}
     aria-current={current ? 'step' : undefined}
     sx={{
       aspectRatio: '1 / 1',

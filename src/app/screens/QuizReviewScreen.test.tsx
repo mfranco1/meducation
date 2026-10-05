@@ -21,10 +21,11 @@ describe('QuizReviewScreen', () => {
     const onExit = vi.fn();
     render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={questions} onNavigate={() => {}} onRequestExit={onExit} /></ThemeProvider>);
     expect(screen.getByText('Incorrect')).toBeVisible();
-    expect(screen.getByText('Your answer')).toBeVisible();
-    expect(screen.getByText('Correct answer')).toBeVisible();
+    expect(screen.getByText(/Your answer/)).toBeVisible();
+    expect(screen.getByText(/Correct answer/)).toBeVisible();
     expect(screen.getByText('Why B is right.')).toBeVisible();
     expect(screen.queryByRole('radio')).toBeNull();
+    expect(screen.getByRole('img', { name: 'Flagged question' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Leave review' }));
     expect(onExit).toHaveBeenCalledOnce();
   });
@@ -32,7 +33,9 @@ describe('QuizReviewScreen', () => {
   it('labels unanswered responses and keeps the final duration static', () => {
     render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={1} questions={questions} onNavigate={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
     expect(screen.getByText('Unanswered')).toBeVisible();
-    expect(screen.getByText('Final time: 00:04')).toBeVisible();
+    expect(screen.getByLabelText('Final time: 00:04')).toBeVisible();
+    expect(screen.getByText(/Correct answer/)).toBeVisible();
+    expect(screen.queryByText(/Your answer/)).toBeNull();
   });
 
   it('shows All, Wrong, and Flagged filters and retains the chosen filter during navigation', () => {
