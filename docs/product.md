@@ -1,5 +1,9 @@
 # Product behavior
 
+## Exam results review
+
+After an Exam Mode submission, the results screen offers **Review results** beside **Back to quizzes**. Review is a read-only view of every submitted answer, its revealed status, and available explanations. The back arrow, Done action, and header logo require confirmation before leaving. Confirmed exit ends that attempt's transient review while retaining its saved score.
+
 Saved tests include a per-quiz content identity. If an unfinished test was saved before identity tracking, or its questions or answers changed, Resume explains that the old question snapshot is unavailable and offers an explicit restart on current content. Keeping the saved test leaves it untouched. Progress writes report browser storage failures without advancing to a success screen; a stale tab asks for a reload before further edits. Learners should use one editing tab per test.
 
 The app shell and dashboard render before content requests finish. The subject catalog fills the dashboard first; each subject's quiz catalog loads when selected, and question details load when the learner starts, resumes, or browses a quiz. Shimmer skeletons reserve the shape of unloaded cards and score values. The completed count remains available from local history immediately; subject-based average and lowest scores resolve automatically once the small subject-to-quiz membership catalog arrives, without opening a subject. If that catalog is incomplete, statistics show a failure instead of silently using unloaded quiz catalogs. A transient network failure, timeout, or selected server response receives up to three automatic retries by default, with exponential backoff and jitter; a 15-second timeout applies to each request attempt. Shimmer skeletons remain visible during retry waits. After retries stop, a simple inline message and Retry action appear. Technical details remain in developer logs. Loading failures do not change saved attempts.

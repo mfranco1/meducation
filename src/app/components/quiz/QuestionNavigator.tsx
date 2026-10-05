@@ -43,10 +43,15 @@ interface QuestionNavigatorProps {
   filter: QuestionNavigatorFilter;
   onFilterChange: (filter: QuestionNavigatorFilter) => void;
   onNavigate: (index: number) => void;
+  revealAnswers?: boolean;
 }
 
-export function QuestionNavigator({ questions, attempt, currentIndex, filter, onFilterChange, onNavigate }: QuestionNavigatorProps) {
-  const items = questionNavigationItems(questions, attempt);
+export function QuestionNavigator({ questions, attempt, currentIndex, filter, onFilterChange, onNavigate, revealAnswers = false }: QuestionNavigatorProps) {
+  const items = questions.map((question, index) => {
+    const response = attempt.responses[question.id];
+    const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
+    return { index, number: index + 1, answered: Boolean(response?.selectedChoiceId), flagged: Boolean(response?.flagged), wrong: (attempt.feedbackMode === 'immediate' || revealAnswers) && Boolean(response?.selectedChoiceId && !answerUnderReview && !isCorrect(question, response.selectedChoiceId)) };
+  });
   const visibleItems = filterQuestionNavigationItems(items, filter);
   const unanswered = items.filter(item => !item.answered).length;
   const flagged = items.filter(item => item.flagged).length;

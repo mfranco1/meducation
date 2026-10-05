@@ -5,6 +5,7 @@ export type View =
   | { page: 'subject'; subject: Subject }
   | { page: 'quiz'; quiz: Quiz; attempt: Attempt; index: number }
   | { page: 'quiz-browse'; quiz: Quiz; index: number }
+  | { page: 'quiz-review'; quiz: Quiz; attempt: CompletedAttempt; index: number }
   | { page: 'results'; quiz: Quiz; attempt: CompletedAttempt };
 
 export function screenIdentity(view: View): string {
@@ -13,6 +14,7 @@ export function screenIdentity(view: View): string {
     case 'subject': return `subject:${view.subject.id}`;
     case 'quiz': return `quiz:${view.quiz.id}:${view.attempt.id}`;
     case 'quiz-browse': return `quiz-browse:${view.quiz.id}`;
+    case 'quiz-review': return `quiz-review:${view.quiz.id}:${view.attempt.id}`;
     case 'results': return `results:${view.attempt.id}`;
   }
 }

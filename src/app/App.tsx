@@ -9,12 +9,13 @@ import { AppHeader } from './components/AppHeader';
 import { ScreenTransition } from './components/ScreenTransition';
 import { ScreenLoadBoundary } from './components/ScreenLoadBoundary';
 import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
+import { LeaveReviewDialog } from './components/quiz/LeaveReviewDialog';
 import { ResumeContentDialog } from './components/quiz/ResumeContentDialog';
 import type { SubjectStat } from './progress';
 import { createProgressView, quizProgressForSubject, subjectStatsFor } from './progress';
 import { screenIdentity } from './navigation';
 import { DashboardScreen } from './screens/DashboardScreen';
-import { QuizScreen, QuizBrowseScreen, ResultsScreen, preloadBrowseScreen, preloadQuizScreen, preloadResultsScreen } from './lazyScreens';
+import { QuizScreen, QuizBrowseScreen, QuizReviewScreen, ResultsScreen, preloadBrowseScreen, preloadQuizScreen, preloadResultsScreen, preloadReviewScreen } from './lazyScreens';
 import { SubjectScreen } from './screens/SubjectScreen';
 import { useQuizSession, type QuizExitDestination } from './session/useQuizSession';
 import { useQuizLaunch } from './session/useQuizLaunch';
@@ -38,6 +39,8 @@ export default function App() {
   useEffect(() => { if (session.view.page === 'quiz') preloadResultsScreen(); }, [session.view.page]);
   const [exitOpen, setExitOpen] = useState(false);
   const [exitDestination, setExitDestination] = useState<QuizExitDestination>('subject');
+  const [reviewExitOpen, setReviewExitOpen] = useState(false);
+  const [reviewExitDestination, setReviewExitDestination] = useState<QuizExitDestination>('subject');
   const summaries = useMemo(
     () => questionBank.listSubjectSummaries(),
     // The external-store version invalidates a catalog whose array identity is not stable.
@@ -78,9 +81,18 @@ export default function App() {
     setExitOpen(false);
     setExitDestination('subject');
   };
+  const requestReviewExit = (destination: QuizExitDestination) => {
+    setReviewExitDestination(destination);
+    setReviewExitOpen(true);
+  };
+  const closeReviewExitDialog = () => {
+    setReviewExitOpen(false);
+    setReviewExitDestination('subject');
+  };
   const handleHeaderNavigation = () => {
     cancel();
     if (session.view.page === 'quiz') requestQuizExit('dashboard');
+    else if (session.view.page === 'quiz-review') requestReviewExit('dashboard');
     else if (session.view.page === 'quiz-browse') session.showDashboard();
     else session.showDashboard();
   };
@@ -98,10 +110,12 @@ export default function App() {
     {currentSubject && <SubjectScreen subject={currentSubject} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={questionBank.getQuizState(currentSubject.id) === 'idle' || questionBank.getQuizState(currentSubject.id) === 'loading'} retrying={questionBank.getQuizState(currentSubject.id) === 'retrying'} error={questionBank.getQuizError(currentSubject.id)} questionError={contentError} onRetry={() => questionBank.getQuizError(currentSubject.id) instanceof ContentLoadError && (questionBank.getQuizError(currentSubject.id) as ContentLoadError).kind === 'revision' ? window.location.reload() : void questionBank.ensureQuizzes(currentSubject.id).catch(() => undefined)} onRetryQuestions={retryContent} onBack={() => { cancel(); session.showDashboard(); }} onResumeQuiz={quiz => { preloadQuizScreen(); launch(quiz, () => session.resumeQuiz(quiz)); }} onStartQuiz={(quiz, mode) => { preloadQuizScreen(); launch(quiz, () => session.startQuiz(quiz, mode)); }} onBrowseQuiz={quiz => { preloadBrowseScreen(); launch(quiz, () => session.browseQuiz(quiz)); }} />}
     {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => requestQuizExit('subject')} />}
     {session.view.page === 'quiz-browse' && <QuizBrowseScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onNavigate={session.navigateBrowse} onDone={session.leaveBrowse} />}
-    {session.view.page === 'results' && <><ResultReviewWarning quiz={session.view.quiz} /><ResultsScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onBack={leaveResults} /></>}
+    {session.view.page === 'quiz-review' && <QuizReviewScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onNavigate={session.navigateReview} onRequestExit={() => requestReviewExit('subject')} />}
+    {session.view.page === 'results' && <><ResultReviewWarning quiz={session.view.quiz} /><ResultsScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onBack={leaveResults} onReview={() => { preloadReviewScreen(); session.reviewResults(); }} /></>}
     </ScreenLoadBoundary>
     </ScreenTransition>
     <ExitQuizDialog open={exitOpen} onClose={closeExitDialog} onLeave={() => { session.leaveQuiz(exitDestination); closeExitDialog(); }} onAbort={() => { session.abortQuiz(exitDestination); closeExitDialog(); }} />
+    <LeaveReviewDialog open={reviewExitOpen} onClose={closeReviewExitDialog} onLeave={() => { session.leaveReview(reviewExitDestination); closeReviewExitDialog(); }} />
     <ResumeContentDialog open={Boolean(session.pendingResume)} reason={session.pendingResume?.reason} onCancel={session.cancelPendingResume} onRestart={session.restartPendingResume} />
   </Box>;
 }

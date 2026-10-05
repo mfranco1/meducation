@@ -43,6 +43,30 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await expect(page.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
 });
 
+test('Exam Mode submission offers a one-time read-only review', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: 'Exam Mode' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
+  await page.getByRole('radio', { name: /A\. Four/ }).check();
+  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('radio', { name: /A\. Lung/ }).check();
+  await page.getByRole('button', { name: 'Submit' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
+  await page.getByRole('button', { name: 'Review results' }).click();
+  await expect(page.getByText('Correct answer')).toBeVisible();
+  await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
+  await page.getByRole('button', { name: 'Leave review' }).click();
+  await expect(page.getByRole('dialog', { name: 'Leave review?' })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Keep reviewing' }).click();
+  await expect(page.getByText('What is')).toBeVisible();
+  await page.getByRole('button', { name: 'Leave review' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Leave review' }).click();
+  await expect(page.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Review results' })).toHaveCount(0);
+});
+
 test('failed catalog request recovers by keyboard Retry on a narrow reduced-motion screen', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

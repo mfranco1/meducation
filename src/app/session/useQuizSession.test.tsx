@@ -67,6 +67,36 @@ describe('read-only quiz browse session', () => {
   });
 });
 
+describe('Exam Mode results review', () => {
+  it('opens only from newly completed Exam Mode results and never writes progress while reviewing', () => {
+    const { result, writes } = setup();
+    act(() => result.current.startQuiz(quiz, 'exam'));
+    act(() => result.current.finishQuiz());
+    expect(result.current.view.page).toBe('results');
+    const completedWrites = writes.saveCompleted.mock.calls.length;
+
+    act(() => result.current.reviewResults());
+    expect(result.current.view).toMatchObject({ page: 'quiz-review', index: 0 });
+    act(() => result.current.navigateReview(99));
+    expect(result.current.view).toMatchObject({ page: 'quiz-review', index: 1 });
+    act(() => result.current.leaveReview());
+    expect(result.current.view).toEqual({ page: 'subject', subject });
+    expect(writes.saveCompleted).toHaveBeenCalledTimes(completedWrites);
+    expect(writes.saveActive).toHaveBeenCalledTimes(1);
+
+    act(() => result.current.reviewResults());
+    expect(result.current.view.page).toBe('subject');
+  });
+
+  it('does not open review for Fast Feedback results', () => {
+    const { result } = setup();
+    act(() => result.current.startQuiz(quiz, 'immediate'));
+    act(() => result.current.finishQuiz());
+    act(() => result.current.reviewResults());
+    expect(result.current.view.page).toBe('results');
+  });
+});
+
 describe('quiz exit destinations', () => {
   it('leaves an active quiz for Dashboard after saving its current question', () => {
     const { result, writes } = setup();

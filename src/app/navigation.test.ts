@@ -32,4 +32,12 @@ describe('screenIdentity', () => {
     expect(screenIdentity(dashboard)).toBe('dashboard');
     expect(screenIdentity(subject)).toBe('subject:medicine');
   });
+
+  it('keeps an Exam Mode review mounted while changing questions', () => {
+    const quiz = { id: 'quiz', subjectId: 'medicine', name: 'Quiz', questionCount: 2 };
+    const attempt = { id: 'attempt', quizId: 'quiz', subjectId: 'medicine', feedbackMode: 'exam' as const, startedAt: 'now', completedAt: 'later', responses: {}, score: { correct: 0, incorrect: 0, unanswered: 2, total: 2, percentage: 0, elapsedMs: 0 } };
+    const review: View = { page: 'quiz-review', quiz, attempt, index: 0 };
+    expect(screenIdentity(review)).toBe('quiz-review:quiz:attempt');
+    expect(screenIdentity({ ...review, index: 1 })).toBe(screenIdentity(review));
+  });
 });

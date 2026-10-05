@@ -2,6 +2,8 @@
 
 ## Learner navigation and progress
 
+Exam-results review carries the just-completed attempt in transient navigation state. It reveals its responses without repository writes and is discarded after a confirmed exit.
+
 `screenIdentity` in `src/app/navigation.ts` defines stable top-level destinations without including per-question progress or timer updates. `ScreenTransition` in `src/app/components/ScreenTransition.tsx` applies the shared entry animation at the composition boundary in `App.tsx`; the header and global exit dialog remain outside it. Screen content is replaced immediately, and reduced-motion preferences disable the animation.
 
 `ResultsScoreHero` owns the decorative ring and score counter. A single request-animation-frame timeline drives both from the stored result percentage, while `ResultsScreen` remains responsible for the result summary and exact-score celebration.
