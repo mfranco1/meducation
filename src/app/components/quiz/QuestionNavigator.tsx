@@ -6,7 +6,8 @@ import { isCorrect } from '../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../domain/types';
 import { useScrollCurrentQuestion } from './useScrollCurrentQuestion';
 
-export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'flagged';
+export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'wrong' | 'flagged';
+export type QuestionNavigatorFilterSet = 'quiz' | 'review';
 
 export interface QuestionNavigationItem {
   index: number;
@@ -16,7 +17,7 @@ export interface QuestionNavigationItem {
   wrong: boolean;
 }
 
-export function questionNavigationItems(questions: Question[], attempt: Attempt): QuestionNavigationItem[] {
+export function questionNavigationItems(questions: Question[], attempt: Attempt, revealAnswers = false): QuestionNavigationItem[] {
   return questions.map((question, index) => {
     const response = attempt.responses[question.id];
     const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
@@ -25,13 +26,14 @@ export function questionNavigationItems(questions: Question[], attempt: Attempt)
       number: index + 1,
       answered: Boolean(response?.selectedChoiceId),
       flagged: Boolean(response?.flagged),
-      wrong: attempt.feedbackMode === 'immediate' && Boolean(response?.locked && response.selectedChoiceId && !answerUnderReview && !isCorrect(question, response.selectedChoiceId)),
+      wrong: (attempt.feedbackMode === 'immediate' || revealAnswers) && Boolean(response?.selectedChoiceId && (revealAnswers || response.locked) && !answerUnderReview && !isCorrect(question, response.selectedChoiceId)),
     };
   });
 }
 
 export function filterQuestionNavigationItems(items: QuestionNavigationItem[], filter: QuestionNavigatorFilter) {
   if (filter === 'unanswered') return items.filter(item => !item.answered);
+  if (filter === 'wrong') return items.filter(item => item.wrong);
   if (filter === 'flagged') return items.filter(item => item.flagged);
   return items;
 }
@@ -44,17 +46,15 @@ interface QuestionNavigatorProps {
   onFilterChange: (filter: QuestionNavigatorFilter) => void;
   onNavigate: (index: number) => void;
   revealAnswers?: boolean;
+  filterSet?: QuestionNavigatorFilterSet;
 }
 
-export function QuestionNavigator({ questions, attempt, currentIndex, filter, onFilterChange, onNavigate, revealAnswers = false }: QuestionNavigatorProps) {
-  const items = questions.map((question, index) => {
-    const response = attempt.responses[question.id];
-    const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
-    return { index, number: index + 1, answered: Boolean(response?.selectedChoiceId), flagged: Boolean(response?.flagged), wrong: (attempt.feedbackMode === 'immediate' || revealAnswers) && Boolean(response?.selectedChoiceId && !answerUnderReview && !isCorrect(question, response.selectedChoiceId)) };
-  });
+export function QuestionNavigator({ questions, attempt, currentIndex, filter, onFilterChange, onNavigate, revealAnswers = false, filterSet = 'quiz' }: QuestionNavigatorProps) {
+  const items = questionNavigationItems(questions, attempt, revealAnswers);
   const visibleItems = filterQuestionNavigationItems(items, filter);
   const unanswered = items.filter(item => !item.answered).length;
   const flagged = items.filter(item => item.flagged).length;
+  const wrong = items.filter(item => item.wrong).length;
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentTileRef = useRef<HTMLButtonElement>(null);
 
@@ -69,15 +69,21 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
       aria-label="Filter questions"
       onChange={(_, value: QuestionNavigatorFilter | null) => { if (value) onFilterChange(value); }}
     >
-      <ToggleButton value="all" aria-label={`All questions, ${items.length}`}>All</ToggleButton>
-      <ToggleButton value="unanswered" aria-label={`Unanswered questions, ${unanswered}`}>Open</ToggleButton>
-      <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged</ToggleButton>
+      {filterSet === 'review' ? <>
+        <ToggleButton value="all" aria-label={`All questions, ${items.length}`}>All</ToggleButton>
+        <ToggleButton value="wrong" aria-label={`Wrong questions, ${wrong}`}>Wrong</ToggleButton>
+        <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged</ToggleButton>
+      </> : <>
+        <ToggleButton value="all" aria-label={`All questions, ${items.length}`}>All</ToggleButton>
+        <ToggleButton value="unanswered" aria-label={`Unanswered questions, ${unanswered}`}>Open</ToggleButton>
+        <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged</ToggleButton>
+      </>}
     </ToggleButtonGroup>
     <Box ref={scrollAreaRef} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: .75 }}>
       {visibleItems.length ? <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1 }}>
         {visibleItems.map(item => <QuestionTile key={item.index} item={item} current={item.index === currentIndex} tileRef={item.index === currentIndex ? currentTileRef : undefined} onClick={() => onNavigate(item.index)} />)}
       </Box> : <Box sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
-        <Typography variant="body2" color="text.secondary">{filter === 'flagged' ? 'No flagged questions.' : 'No unanswered questions.'}</Typography>
+        <Typography variant="body2" color="text.secondary">{filter === 'flagged' ? 'No flagged questions.' : filter === 'wrong' ? 'No wrong answers.' : 'No unanswered questions.'}</Typography>
       </Box>}
     </Box>
   </Stack>;

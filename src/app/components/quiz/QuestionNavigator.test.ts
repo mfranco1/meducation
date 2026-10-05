@@ -23,9 +23,10 @@ describe('question navigator items', () => {
     ]);
   });
 
-  it('filters by unanswered and flagged while preserving original indexes', () => {
+  it('filters by unanswered, wrong, and flagged while preserving original indexes', () => {
     const items = questionNavigationItems(questions, examAttempt);
     expect(filterQuestionNavigationItems(items, 'unanswered').map(item => item.index)).toEqual([1, 2]);
+    expect(filterQuestionNavigationItems(items, 'wrong').map(item => item.index)).toEqual([]);
     expect(filterQuestionNavigationItems(items, 'flagged').map(item => item.index)).toEqual([0, 1]);
     expect(filterQuestionNavigationItems(items, 'all')).toEqual(items);
   });
@@ -43,5 +44,27 @@ describe('question navigator items', () => {
     const keyedQuestions = questions.map(question => ({ ...question, answer: question.id === 'i1' ? 'B' : question.id === 'i3' ? 'C' : undefined }));
 
     expect(questionNavigationItems(keyedQuestions, immediateAttempt).map(item => item.wrong)).toEqual([true, false, false]);
+  });
+
+  it('reveals wrong Exam Mode answers only when explicitly requested and excludes unanswered or uncertain keys', () => {
+    const reviewQuestions = [
+      { ...questions[0], answer: 'B' },
+      { ...questions[1], answer: 'A' },
+      { ...questions[2], answer: 'B', rationaleMeta: { answerReviewNote: 'Check this key' } },
+    ];
+    const submitted: Attempt = {
+      ...examAttempt,
+      responses: {
+        i1: { questionId: 'i1', selectedChoiceId: 'A', flagged: true, locked: false, timeMs: 0 },
+        i2: { questionId: 'i2', selectedChoiceId: 'A', flagged: false, locked: false, timeMs: 0 },
+        i3: { questionId: 'i3', selectedChoiceId: 'A', flagged: true, locked: false, timeMs: 0 },
+      },
+    };
+
+    expect(questionNavigationItems(reviewQuestions, submitted).map(item => item.wrong)).toEqual([false, false, false]);
+    const revealed = questionNavigationItems(reviewQuestions, submitted, true);
+    expect(revealed.map(item => item.wrong)).toEqual([true, false, false]);
+    expect(filterQuestionNavigationItems(revealed, 'wrong').map(item => item.index)).toEqual([0]);
+    expect(filterQuestionNavigationItems(revealed, 'flagged').map(item => item.index)).toEqual([0, 2]);
   });
 });

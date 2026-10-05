@@ -37,7 +37,7 @@ export function QuizReviewScreen({ quiz, attempt, index, questions, onNavigate, 
   const hasCorrectChoice = correctAnswer !== undefined && question.choices.some(choice => choice.id === correctAnswer);
   const status = !selectedChoiceId ? 'Unanswered' : answerUnderReview ? 'Answer key under review' : isCorrect(question, selectedChoiceId) ? 'Correct' : 'Incorrect';
   const statusTone = !selectedChoiceId || answerUnderReview ? 'warning.main' : isCorrect(question, selectedChoiceId) ? 'success.main' : 'error.main';
-  const navigator = <QuestionNavigator questions={questions} attempt={attempt} currentIndex={index} filter={navigatorFilter} onFilterChange={setNavigatorFilter} onNavigate={target => { onNavigate(target); setNavigatorOpen(false); }} revealAnswers />;
+  const navigator = <QuestionNavigator questions={questions} attempt={attempt} currentIndex={index} filter={navigatorFilter} onFilterChange={setNavigatorFilter} onNavigate={target => { onNavigate(target); setNavigatorOpen(false); }} revealAnswers filterSet="review" />;
 
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
     <IconButton aria-label="Leave review" onClick={onRequestExit} sx={{ p: .5, mb: .5 }}><ArrowBackRoundedIcon /></IconButton>

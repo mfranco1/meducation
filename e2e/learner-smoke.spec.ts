@@ -49,12 +49,23 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page })
   await page.getByRole('button', { name: 'Start quiz' }).click();
   await page.getByRole('button', { name: 'Exam Mode' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
-  await page.getByRole('radio', { name: /A\. Four/ }).check();
+  await page.getByRole('radio', { name: /B\. Five/ }).check();
+  await page.getByRole('button', { name: 'Flag question' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('radio', { name: /A\. Lung/ }).check();
+  await page.getByRole('radio', { name: /B\. Heart/ }).check();
   await page.getByRole('button', { name: 'Submit' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
   await page.getByRole('button', { name: 'Review results' }).click();
+  await expect(page.getByRole('button', { name: 'Wrong questions, 1' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Flagged questions, 1' })).toBeVisible();
+  await page.getByRole('button', { name: 'Wrong questions, 1' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }),
+  ).toBeVisible();
+  await page.getByRole('button', { name: 'Flagged questions, 1' }).click();
+  await expect(
+    page.getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }),
+  ).toBeVisible();
   await expect(page.getByText('Correct answer')).toBeVisible();
   await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
   await page.getByRole('button', { name: 'Leave review' }).click();
