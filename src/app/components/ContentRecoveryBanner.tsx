@@ -16,12 +16,11 @@ function useRetrySeconds(retryAt?: number) {
   return seconds;
 }
 
-export function ContentRecoveryBanner({ error, retrying = false, busy = false, retryAt, retryAfterAt, testId = 'content-recovery-banner', title = 'We can’t load your stats and subjects right now.', description = 'Your saved quiz history is safe. Please try again.', onRetry }: {
+export function ContentRecoveryBanner({ error, retrying = false, busy = false, retryAt, testId = 'content-recovery-banner', title = 'We can’t load your stats and subjects right now.', description = 'Your saved quiz history is safe. Please try again.', onRetry }: {
   error?: Error;
   retrying?: boolean;
   busy?: boolean;
   retryAt?: number;
-  retryAfterAt?: number;
   testId?: string;
   title?: string;
   description?: string;
@@ -29,12 +28,11 @@ export function ContentRecoveryBanner({ error, retrying = false, busy = false, r
 }) {
   const [manualRetryPending, setManualRetryPending] = useState(false);
   const seconds = useRetrySeconds(retryAt);
-  const retryAvailable = retryAfterAt === undefined || Date.now() >= retryAfterAt;
   const reload = (error as ContentLoadError | undefined)?.kind === 'revision';
   const detail = reload ? 'Reload to continue with the latest available content.'
     : busy ? 'Retrying…' : retrying ? seconds && seconds > 0 ? `Trying again in ${seconds}s…` : 'Retrying…'
       : description;
-  const disabled = busy || manualRetryPending || (retrying && (!retryAvailable || retryAt === undefined));
+  const disabled = busy || manualRetryPending || retrying;
   const handleRetry = () => {
     setManualRetryPending(true);
     const pending = onRetry();
@@ -52,7 +50,7 @@ export function ContentRecoveryBanner({ error, retrying = false, busy = false, r
           <Box component="span" aria-live="off">{detail}</Box>
         </Typography>
         <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={handleRetry} disabled={disabled} sx={{ minHeight: 44, whiteSpace: 'nowrap' }}>
-          {reload ? 'Reload' : busy || manualRetryPending ? 'Retrying...' : retrying ? retryAvailable ? 'Retry now' : 'Retrying…' : 'Retry'}
+          {reload ? 'Reload' : busy || manualRetryPending || retrying ? 'Retrying...' : 'Retry'}
         </Button>
       </Stack>
     </Container>

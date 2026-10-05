@@ -14,7 +14,7 @@ export function SubjectScreen({ subject, progress, loading = false, retrying = f
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
 
   return <>
-    {recovery?.failed && <ContentRecoveryBanner error={error} retrying={recovery.retrying} busy={recovery.busy} retryAt={recovery.retryAt} retryAfterAt={recovery.retryAfterAt} title={`We can’t load quizzes for ${subject.name} right now.`} description="Your saved quiz history is safe. Please try again." onRetry={onRetry} />}
+    {recovery?.failed && <ContentRecoveryBanner error={error} retrying={recovery.retrying} busy={recovery.busy} retryAt={recovery.retryAt} title={`We can’t load quizzes for ${subject.name} right now.`} description="Your saved quiz history is safe. Please try again." onRetry={onRetry} />}
     <Container maxWidth="md" sx={{ py: 5 }}>
     <Button startIcon={<ArrowBackRoundedIcon />} onClick={onBack} color="inherit">All subjects</Button>
     <Typography variant="h3" sx={{ mt: 3, mb: 4 }}>{subject.name}</Typography>

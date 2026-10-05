@@ -20,17 +20,22 @@ describe('ContentRecoveryBanner', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it('keeps Retry now disabled until the pending retry request settles', async () => {
+  it('keeps automatic retries disabled and restores manual Retry when the request fails', async () => {
     let finishRetry!: () => void;
     const onRetry = vi.fn(() => new Promise<void>(resolve => { finishRetry = resolve; }));
-    render(<ThemeProvider theme={theme}><ContentRecoveryBanner retrying retryAt={Date.now() + 5_000} onRetry={onRetry} /></ThemeProvider>);
+    const { rerender } = render(<ThemeProvider theme={theme}><ContentRecoveryBanner retrying retryAt={Date.now() + 5_000} onRetry={onRetry} /></ThemeProvider>);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Retry now' }));
+    expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Retrying...' }));
+    expect(onRetry).not.toHaveBeenCalled();
+
+    rerender(<ThemeProvider theme={theme}><ContentRecoveryBanner error={new Error('offline')} onRetry={onRetry} /></ThemeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
     expect(onRetry).toHaveBeenCalledOnce();
 
     act(() => finishRetry());
-    expect(await screen.findByRole('button', { name: 'Retry now' })).toBeEnabled();
+    expect(await screen.findByRole('button', { name: 'Retry' })).toBeEnabled();
   });
 
   it('derives its countdown from the retry deadline and cleans up its timer', () => {
@@ -45,18 +50,16 @@ describe('ContentRecoveryBanner', () => {
     expect(vi.getTimerCount()).toBe(0);
   });
 
-  it('keeps retry disabled until Retry-After elapses, then enables a manual advance', () => {
+  it('keeps the button disabled throughout automatic backoff', () => {
     vi.useFakeTimers();
     const onRetry = vi.fn();
     const now = Date.now();
-    render(<ThemeProvider theme={theme}><ContentRecoveryBanner retrying retryAt={now + 5_000} retryAfterAt={now + 1_000} onRetry={onRetry} /></ThemeProvider>);
-    const retry = screen.getByRole('button', { name: 'Retrying…' });
+    render(<ThemeProvider theme={theme}><ContentRecoveryBanner retrying retryAt={now + 5_000} onRetry={onRetry} /></ThemeProvider>);
+    const retry = screen.getByRole('button', { name: 'Retrying...' });
     expect(retry).toBeDisabled();
     act(() => vi.advanceTimersByTime(1_000));
-    const retryNow = screen.getByRole('button', { name: 'Retry now' });
-    expect(retryNow).toBeEnabled();
-    fireEvent.click(retryNow);
-    expect(onRetry).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
+    expect(onRetry).not.toHaveBeenCalled();
   });
 
   it('uses safe revision copy and disables the action while a request is active', () => {

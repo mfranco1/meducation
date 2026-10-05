@@ -47,10 +47,11 @@ describe('subject quiz action', () => {
 
   it('keeps shimmer quiz skeletons visible during automatic retries without reconnecting copy', () => {
     render(<ThemeProvider theme={theme}><SubjectScreen
-      subject={subject} progress={[]} retrying onBack={() => {}} onResumeQuiz={() => {}}
+      subject={subject} progress={[]} retrying recovery={{ failed: true, retryAt: Date.now() + 5_000, retrying: true, busy: false }} onBack={() => {}} onResumeQuiz={() => {}}
       onStartQuiz={() => {}} onBrowseQuiz={() => {}}
     /></ThemeProvider>);
     expect(screen.getByRole('status', { name: 'Retrying quizzes' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
     expect(screen.queryByText('Reconnecting…')).toBeNull();
     expect(screen.getAllByRole('status', { name: 'Retrying quizzes' })).toHaveLength(1);
     expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
