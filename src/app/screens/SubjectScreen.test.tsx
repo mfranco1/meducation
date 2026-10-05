@@ -32,11 +32,15 @@ function renderSubject(progress: Partial<QuizProgress>) {
 }
 
 describe('subject quiz action', () => {
-  it('shows a quiz failure with retry in place of loading placeholders', () => {
+  it('keeps shimmer placeholders and exposes one full-width recovery banner after failure', () => {
     const onRetry = vi.fn();
-    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} progress={[]} error={new Error('The request took too long. Try again or come back later.')} onRetry={onRetry} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
-    expect(screen.getByText('Unable to load quizzes')).toBeVisible();
-    expect(screen.queryByRole('status', { name: 'Loading quizzes' })).toBeNull();
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} progress={[]} error={new Error('raw backend detail')} recovery={{ failed: true, retrying: false, busy: false }} onRetry={onRetry} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+    expect(screen.getByRole('region', { name: 'Content recovery' })).toBeVisible();
+    expect(screen.getByRole('alert')).toHaveTextContent(`We can’t load quizzes for ${subject.name} right now.`);
+    expect(screen.queryByText('raw backend detail')).toBeNull();
+    expect(document.querySelectorAll('.MuiSkeleton-root')).toHaveLength(4);
+    expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
+    expect(screen.getAllByRole('button', { name: 'Retry' })).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });

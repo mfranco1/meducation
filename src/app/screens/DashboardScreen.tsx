@@ -1,46 +1,15 @@
-import { useEffect, useState } from 'react';
 import { Box, Button, Container, Stack, Typography } from '@mui/material';
-import CloudOffRoundedIcon from '@mui/icons-material/CloudOffRounded';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import type { CompletedAttempt, Subject } from '../../domain/types';
-import type { ContentLoadError } from '../../content/contentTransport';
 import { activeSubjectStats, type SubjectStat } from '../dashboard';
 import { ActiveSubjectCarousel } from '../components/ActiveSubjectCarousel';
 import { StatCard } from '../components/StatCard';
 import { SubjectCard } from '../components/SubjectCard';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
+import { ContentRecoveryBanner } from '../components/ContentRecoveryBanner';
 
 export type { SubjectStat } from '../dashboard';
-
-function useRetrySeconds(retryAt?: number) {
-  const [seconds, setSeconds] = useState<number | undefined>();
-  useEffect(() => {
-    const update = () => setSeconds(retryAt === undefined ? undefined : Math.max(0, Math.ceil((retryAt - Date.now()) / 1000)));
-    update();
-    if (retryAt === undefined) return;
-    const timer = window.setInterval(update, 250);
-    return () => window.clearInterval(timer);
-  }, [retryAt]);
-  return seconds;
-}
-
-function SharedFailureBanner({ error, retrying, retryAt, onRetry }: { error?: Error; retrying: boolean; retryAt?: number; onRetry: () => void }) {
-  const seconds = useRetrySeconds(retryAt);
-  const reload = (error as ContentLoadError | undefined)?.kind === 'revision';
-  const detail = reload ? 'Reload to continue with the latest available content.'
-    : retrying ? seconds && seconds > 0 ? `Trying again in ${seconds}s…` : 'Retrying…'
-      : 'Your saved quiz history is safe. Please try again.';
-  return <Box role="alert" data-testid="dashboard-error-banner" sx={{ width: '100%', borderBottom: '1px solid', borderColor: 'warning.light', bgcolor: '#fff7ed' }}>
-    <Container maxWidth="lg"><Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} spacing={1.25} sx={{ py: 1.5 }}>
-    <CloudOffRoundedIcon color="primary" aria-hidden="true" />
-    <Typography variant="body2" sx={{ flex: 1 }}><Box component="span" sx={{ fontWeight: 800 }}>{reload ? 'Content has changed.' : 'We can’t load your stats and subjects right now.'}</Box> {detail}</Typography>
-    <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={onRetry} sx={{ minHeight: 44, whiteSpace: 'nowrap' }}>
-      {reload ? 'Reload' : retrying ? 'Retrying...' : 'Retry'}
-    </Button>
-    </Stack></Container>
-  </Box>;
-}
 
 function StatFailure({ label, onRetry }: { label: string; onRetry: () => void }) {
   return <StatCard label={label} value="—" footer={<Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
@@ -69,7 +38,7 @@ export function DashboardScreen({ attempts, subjectStats, averageLatest, persona
   const statsFailure = !sharedError && statsError;
   const subjectsFailure = !sharedError && subjectsError;
   return <>
-    {(sharedError || retrying) && <SharedFailureBanner error={sharedError} retrying={retrying} retryAt={retryAt} onRetry={onRetry} />}
+    {(sharedError || retrying) && <ContentRecoveryBanner testId="dashboard-error-banner" error={sharedError} retrying={retrying} retryAt={retryAt} onRetry={onRetry} />}
     <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 } }}>
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
       <StatCard label="Completed quizzes" value={attempts.length} />

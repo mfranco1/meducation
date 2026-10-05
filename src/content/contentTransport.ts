@@ -30,7 +30,7 @@ export interface JsonTransport {
     signal?: AbortSignal;
     policy?: RetryPolicy;
     random?: () => number;
-    onRetry?: (retryNumber: number, delayMs: number) => void;
+    onRetry?: (retryNumber: number, delayMs: number, retryAfterMs?: number) => void;
     onAttempt?: () => void;
     getRetryNowSignal?: () => AbortSignal | undefined;
   }): Promise<T>;
@@ -42,7 +42,7 @@ export async function getJsonWithRetry<T>(
     signal?: AbortSignal;
     policy?: RetryPolicy;
     random?: () => number;
-    onRetry?: (retryNumber: number, delayMs: number) => void;
+    onRetry?: (retryNumber: number, delayMs: number, retryAfterMs?: number) => void;
     onAttempt?: () => void;
     getRetryNowSignal?: () => AbortSignal | undefined;
   } = {},
@@ -107,7 +107,7 @@ export async function getJsonWithRetry<T>(
         ...(delay === undefined ? {} : { nextDelayMs: delay }),
       });
       if (delay === undefined) throw failure;
-      options.onRetry?.(retryNumber, delay);
+      options.onRetry?.(retryNumber, delay, serverDelay);
       if (timeoutId !== undefined) { clearTimeout(timeoutId); timeoutId = undefined; }
       await waitForRetry(delay, options.signal, options.getRetryNowSignal?.());
     } finally {

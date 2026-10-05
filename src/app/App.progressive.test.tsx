@@ -55,6 +55,38 @@ describe('progressive dashboard statistics', () => {
     expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/subjects');
   });
 
+  it('recovers a failed subject quiz catalog without changing saved progress', async () => {
+    const subject = { id: 's1', name: 'Recovery Subject', accent: '#b9511b' };
+    const quiz = { id: 'q1', subjectId: subject.id, name: 'Recovery Quiz', questionCount: 1, questionIds: ['i1'] };
+    runtimeQuestionBank.configureApi({ revision: 'rev-subject-recovery', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] });
+    const attempts = new LocalAttemptRepository();
+    attempts.saveCompleted(completed(quiz.id, subject.id, 80));
+    const progressKeys = [
+      'meducation.active-attempts.v1',
+      'meducation.completed-attempts.v1',
+      'meducation.completion-counts.v1',
+      'meducation.latest-scores.v1',
+      'meducation.lowest-scores.v1',
+      'meducation.quiz-activity.v1',
+    ];
+    const before = progressKeys.map(key => localStorage.getItem(key));
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 404, headers: { get: () => null } })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-subject-recovery', quizzes: [quiz] }) });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Open Recovery Subject' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('We can’t load quizzes for Recovery Subject right now.');
+    expect(screen.getAllByRole('button', { name: 'Retry' })).toHaveLength(1);
+    expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(await screen.findByRole('button', { name: 'Retake quiz' })).toBeVisible();
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(progressKeys.map(key => localStorage.getItem(key))).toEqual(before);
+    expect(fetchMock.mock.calls.every(([url]) => !String(url).includes('/questions'))).toBe(true);
+  });
+
   it('cancels a pending question launch on navigation without creating an attempt', async () => {
     const subject = { id: 's-cancel', name: 'Test Subject', accent: '#b9511b' };
     const quiz = { id: 'q-cancel', subjectId: subject.id, name: 'Test Quiz', questionCount: 1, questionIds: ['i-cancel'] };

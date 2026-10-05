@@ -46,7 +46,7 @@ describe('dashboard catalog states', () => {
 
   it('keeps the existing shimmer skeletons during automatic retries', () => {
     render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} retrying onSelectSubject={() => {}} /></ThemeProvider>);
-    expect(screen.getByRole('alert')).toHaveTextContent('Retrying');
+    expect(screen.getByText('Retrying…')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Retry now' })).toBeVisible();
     expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);

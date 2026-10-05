@@ -232,6 +232,64 @@ describe('runtime question bank', () => {
     } finally { vi.useRealTimers(); }
   });
 
+  it('tracks independent subject retries and can advance only one pending catalog', async () => {
+    const secondSubject = { id: 's2', name: 'Second', accent: '#654321' };
+    const bank = new RuntimeQuestionBank({ maxRetries: 1, baseDelayMs: 10_000, maxDelayMs: 10_000 }, () => 0);
+    bank.configureApi({ revision: 'rev-subjects', subjects: [
+      { ...subject, quizCount: 1, quizIds: ['q1'] },
+      { ...secondSubject, quizCount: 1, quizIds: ['q2'] },
+    ] });
+    const response = (id: string, subjectId: string, questionId: string) => ({ ok: true, json: async () => ({ revision: 'rev-subjects', quizzes: [{ id, subjectId, name: 'Quiz', questionCount: 1, questionIds: [questionId] }] }) });
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError('offline'))
+      .mockRejectedValueOnce(new TypeError('offline'))
+      .mockResolvedValueOnce(response('q1', 's1', 'i1'))
+      .mockResolvedValueOnce(response('q2', 's2', 'i2'));
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers();
+    try {
+      const first = bank.ensureQuizzes('s1');
+      const second = bank.ensureQuizzes('s2');
+      await vi.waitFor(() => {
+        expect(bank.getQuizRecovery('s1').retrying).toBe(true);
+        expect(bank.getQuizRecovery('s2').retrying).toBe(true);
+      });
+      expect(bank.getQuizRecovery('s1').retryAt).toBeDefined();
+      expect(bank.getQuizRecovery('s2').retryAt).toBeDefined();
+      expect(bank.retryQuizNow('s1')).toBe(true);
+      await expect(first).resolves.toHaveLength(1);
+      expect(bank.getQuizState('s1')).toBe('ready');
+      expect(bank.getQuizRecovery('s1').failed).toBe(false);
+      expect(bank.getQuizState('s2')).toBe('retrying');
+      expect(bank.getQuizRecovery('s2').failed).toBe(true);
+      expect(fetchMock).toHaveBeenCalledTimes(3);
+      expect(bank.retryQuizNow('s2')).toBe(true);
+      await expect(second).resolves.toHaveLength(1);
+      expect(bank.getQuizState('s2')).toBe('ready');
+      expect(fetchMock).toHaveBeenCalledTimes(4);
+    } finally { vi.useRealTimers(); }
+  });
+
+  it('keeps Retry-After as the minimum manual retry deadline for subject catalogs', async () => {
+    const bank = new RuntimeQuestionBank({ maxRetries: 1, baseDelayMs: 5_000, maxDelayMs: 5_000 }, () => 0);
+    bank.configureApi({ revision: 'rev-retry-after', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 503, headers: { get: () => '1' } })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-retry-after', quizzes: [{ ...quiz, questionIds: ['i1'] }] }) });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers();
+    try {
+      const pending = bank.ensureQuizzes('s1');
+      await vi.waitFor(() => expect(bank.getQuizRecovery('s1').retrying).toBe(true));
+      expect(bank.retryQuizNow('s1')).toBe(false);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      await vi.advanceTimersByTimeAsync(1_000);
+      expect(bank.retryQuizNow('s1')).toBe(true);
+      await expect(pending).resolves.toHaveLength(1);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+    } finally { vi.useRealTimers(); }
+  });
+
   it('keeps raw network exception details out of developer log fields', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('socket ECONNREFUSED private detail')));
@@ -290,7 +348,7 @@ describe('runtime question bank', () => {
         policy: { maxRetries: 1, baseDelayMs: 500, maxDelayMs: 3000 }, random: () => 0, onRetry,
       });
       await vi.advanceTimersByTimeAsync(0);
-      expect(onRetry).toHaveBeenCalledWith(1, 2000);
+      expect(onRetry).toHaveBeenCalledWith(1, 2000, 2000);
       await vi.advanceTimersByTimeAsync(1999);
       expect(retryingFetch).toHaveBeenCalledTimes(1);
       await vi.advanceTimersByTimeAsync(1);

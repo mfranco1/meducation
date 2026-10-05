@@ -25,6 +25,10 @@ export class RuntimeQuestionBank implements QuizRepository {
   private catalogRetryNow?: AbortController;
   private readonly quizStates = new Map<string, ResourceState>();
   private readonly quizErrors = new Map<string, Error>();
+  private readonly quizRecovery = new Set<string>();
+  private readonly quizRetryAt = new Map<string, number>();
+  private readonly quizRetryAfterAt = new Map<string, number>();
+  private readonly quizRetryNow = new Map<string, AbortController>();
   private readonly pendingCatalogs = new Map<string, Promise<Quiz[]>>();
   private listeners = new Set<() => void>();
   private snapshotVersion = 0;
@@ -52,6 +56,22 @@ export class RuntimeQuestionBank implements QuizRepository {
   }
   getQuizState(subjectId: string) { return this.quizStates.get(subjectId) ?? 'idle'; }
   getQuizError(subjectId: string) { return this.quizErrors.get(subjectId); }
+  getQuizRecovery(subjectId: string) {
+    return {
+      failed: this.quizRecovery.has(subjectId),
+      retryAt: this.quizRetryAt.get(subjectId),
+      retryAfterAt: this.quizRetryAfterAt.get(subjectId),
+      retrying: this.quizStates.get(subjectId) === 'retrying',
+      busy: this.quizRecovery.has(subjectId) && this.quizStates.get(subjectId) === 'loading',
+    };
+  }
+  retryQuizNow(subjectId: string) {
+    if (this.quizStates.get(subjectId) !== 'retrying' || Date.now() < (this.quizRetryAfterAt.get(subjectId) ?? 0)) return false;
+    const pendingRetry = this.quizRetryNow.get(subjectId);
+    this.quizRetryNow.set(subjectId, new AbortController());
+    pendingRetry?.abort();
+    return true;
+  }
   getQuestionState(quizId: string) { return this.questionStates.get(quizId) ?? (this.cache.hasQuestions(quizId) ? 'ready' : 'idle'); }
   getQuestionRetryAttempt(quizId: string) { return this.questionRetryAttempts.get(quizId) ?? 0; }
   listSubjectSummaries() { return this.summaries; }
@@ -71,7 +91,7 @@ export class RuntimeQuestionBank implements QuizRepository {
     this.catalogState = 'ready';
     this.catalogError = undefined;
     this.catalogRetryAt = undefined;
-    this.quizStates.clear(); this.quizErrors.clear(); this.quizRetryAttempts.clear(); this.pendingCatalogs.clear();
+    this.quizStates.clear(); this.quizErrors.clear(); this.quizRetryAttempts.clear(); this.quizRecovery.clear(); this.quizRetryAt.clear(); this.quizRetryAfterAt.clear(); this.quizRetryNow.clear(); this.pendingCatalogs.clear();
     for (const response of quizResponses) {
       const subjectId = response.quizzes[0]?.subjectId;
       if (subjectId) this.quizStates.set(subjectId, 'ready');
@@ -94,7 +114,7 @@ export class RuntimeQuestionBank implements QuizRepository {
     this.catalogState = 'ready';
     this.catalogError = undefined;
     this.catalogRetryAt = undefined;
-    this.quizStates.clear(); this.quizErrors.clear(); this.quizRetryAttempts.clear(); this.pendingCatalogs.clear();
+    this.quizStates.clear(); this.quizErrors.clear(); this.quizRetryAttempts.clear(); this.quizRecovery.clear(); this.quizRetryAt.clear(); this.quizRetryAfterAt.clear(); this.quizRetryNow.clear(); this.pendingCatalogs.clear();
     for (const subject of subjects) this.quizStates.set(subject.id, 'ready');
     this.pending.clear();
     this.questionStates.clear(); this.questionRetryAttempts.clear();
@@ -152,10 +172,22 @@ export class RuntimeQuestionBank implements QuizRepository {
       try {
         await this.ensureSubjects();
         if (generation !== this.generation) throw genericFailure('cancelled');
-        this.quizStates.set(subjectId, 'loading'); this.quizErrors.delete(subjectId); this.quizRetryAttempts.set(subjectId, 0); this.notify();
+        this.quizStates.set(subjectId, 'loading'); this.quizErrors.delete(subjectId); this.quizRetryAttempts.set(subjectId, 0); this.quizRetryAt.delete(subjectId); this.quizRetryAfterAt.delete(subjectId);
+        this.quizRetryNow.set(subjectId, new AbortController()); this.notify();
         const response = await this.transport.get<unknown>(`/api/v1/subjects/${encodeURIComponent(subjectId)}/quizzes?revision=${encodeURIComponent(this.revision)}`, {
           policy: this.retryPolicy, random: this.random,
-          onRetry: retry => { if (generation !== this.generation) return; this.quizStates.set(subjectId, 'retrying'); this.quizRetryAttempts.set(subjectId, retry); this.notify(); },
+          getRetryNowSignal: () => this.quizRetryNow.get(subjectId)?.signal,
+          onAttempt: () => { if (generation !== this.generation) return; if (this.quizRecovery.has(subjectId) && this.quizStates.get(subjectId) === 'retrying') { this.quizStates.set(subjectId, 'loading'); this.quizRetryAt.delete(subjectId); this.notify(); } },
+          onRetry: (retry, delayMs, retryAfterMs) => {
+            if (generation !== this.generation) return;
+            this.quizRecovery.add(subjectId);
+            this.quizStates.set(subjectId, 'retrying');
+            this.quizRetryAttempts.set(subjectId, retry);
+            this.quizRetryAt.set(subjectId, Date.now() + delayMs);
+            if (retryAfterMs === undefined) this.quizRetryAfterAt.delete(subjectId);
+            else this.quizRetryAfterAt.set(subjectId, Date.now() + retryAfterMs);
+            this.notify();
+          },
         });
         if (generation !== this.generation) throw genericFailure('cancelled');
         if (responseRevision(response) === undefined) throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
@@ -163,12 +195,14 @@ export class RuntimeQuestionBank implements QuizRepository {
         const expectedQuizIds = this.summaries.find(subject => subject.id === subjectId)?.quizIds;
         if (!expectedQuizIds || !isQuizCatalog(response, subjectId, expectedQuizIds)) throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
         this.cache.setQuizzes(subjectId, response.quizzes);
-        this.quizStates.set(subjectId, 'ready'); this.notify();
+        this.quizStates.set(subjectId, 'ready'); this.quizRecovery.delete(subjectId); this.quizRetryAt.delete(subjectId); this.quizRetryAfterAt.delete(subjectId); this.quizRetryNow.delete(subjectId); this.notify();
         return response.quizzes;
       } catch (error) {
         if (generation !== this.generation) throw genericFailure('cancelled');
         if (error instanceof ContentLoadError && error.kind === 'cancelled') throw error;
         this.quizStates.set(subjectId, 'error');
+        this.quizRecovery.add(subjectId);
+        this.quizRetryAt.delete(subjectId);
         this.quizErrors.set(subjectId, error instanceof Error ? error : new Error('Could not load quizzes.'));
         this.notify(); throw error;
       }

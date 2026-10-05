@@ -133,6 +133,52 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
 
+test('subject quiz failure keeps the full-width banner and original shimmer placeholders through recovery', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  let failures = 0;
+  await page.route(/\/api\/v1\/subjects\/[^/]+\/quizzes/, async (route) => {
+    if (failures++ === 0)
+      await route.fulfill({
+        status: 404,
+        contentType: 'application/json',
+        body: '{"detail":"private backend detail"}',
+      });
+    else await route.continue();
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+
+  const banner = page.getByTestId('content-recovery-banner');
+  await expect(banner).toBeVisible();
+  await expect(banner.getByRole('alert')).toContainText('We can’t load quizzes for Browser Test Subject right now.');
+  await expect(banner).not.toContainText('private backend detail');
+  await expect(page.locator('.MuiSkeleton-wave')).toHaveCount(4);
+  await page.waitForTimeout(200);
+  const bounds = await page.evaluate(() => {
+    const header = document.querySelector('header')!.getBoundingClientRect();
+    const recovery = document.querySelector('[data-testid="content-recovery-banner"]')!.getBoundingClientRect();
+    return {
+      headerBottom: header.bottom,
+      top: recovery.top,
+      left: recovery.left,
+      right: recovery.right,
+      width: window.innerWidth,
+    };
+  });
+  expect(bounds.top).toBe(bounds.headerBottom);
+  expect(bounds.left).toBe(0);
+  expect(bounds.right).toBe(bounds.width);
+
+  const retry = banner.getByRole('button', { name: 'Retry' });
+  await retry.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Start quiz' })).toBeVisible();
+  expect(failures).toBe(2);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+});
+
 test('pending catalog stays accessible and static with reduced motion', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
