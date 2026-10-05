@@ -123,7 +123,7 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
     else await route.continue();
   });
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Unable to load subjects' })).toBeVisible();
+  await expect(page.getByRole('alert')).toContainText('We can’t load your stats and subjects right now.');
   const retry = page.getByRole('button', { name: 'Retry' }).first();
   await retry.focus();
   await expect(retry).toBeFocused();

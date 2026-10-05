@@ -13,12 +13,15 @@ const timeoutMs = 15_000;
 export const genericFailure = (kind: ContentErrorKind, status?: number, retryAfter?: string | null) =>
   new ContentLoadError(kind, 'The content request could not be completed.', status, retryAfter);
 
-function waitForRetry(delayMs: number, signal?: AbortSignal) {
+function waitForRetry(delayMs: number, signal?: AbortSignal, retryNowSignal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
     if (signal?.aborted) return reject(genericFailure('cancelled'));
-    const timer = setTimeout(() => { signal?.removeEventListener('abort', abort); resolve(); }, delayMs);
-    const abort = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); reject(genericFailure('cancelled')); };
+    const finish = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); retryNowSignal?.removeEventListener('abort', retryNow); resolve(); };
+    const timer = setTimeout(finish, delayMs);
+    const abort = () => { clearTimeout(timer); signal?.removeEventListener('abort', abort); retryNowSignal?.removeEventListener('abort', retryNow); reject(genericFailure('cancelled')); };
+    const retryNow = () => finish();
     signal?.addEventListener('abort', abort, { once: true });
+    retryNowSignal?.addEventListener('abort', retryNow, { once: true });
   });
 }
 
@@ -28,6 +31,8 @@ export interface JsonTransport {
     policy?: RetryPolicy;
     random?: () => number;
     onRetry?: (retryNumber: number, delayMs: number) => void;
+    onAttempt?: () => void;
+    getRetryNowSignal?: () => AbortSignal | undefined;
   }): Promise<T>;
 }
 
@@ -38,11 +43,14 @@ export async function getJsonWithRetry<T>(
     policy?: RetryPolicy;
     random?: () => number;
     onRetry?: (retryNumber: number, delayMs: number) => void;
+    onAttempt?: () => void;
+    getRetryNowSignal?: () => AbortSignal | undefined;
   } = {},
 ): Promise<T> {
   const policy = options.policy ?? contentRetryPolicy;
   for (let attempt = 0; ; attempt++) {
     if (options.signal?.aborted) throw genericFailure('cancelled');
+    options.onAttempt?.();
     const controller = new AbortController();
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let parentAborted = false;
@@ -101,7 +109,7 @@ export async function getJsonWithRetry<T>(
       if (delay === undefined) throw failure;
       options.onRetry?.(retryNumber, delay);
       if (timeoutId !== undefined) { clearTimeout(timeoutId); timeoutId = undefined; }
-      await waitForRetry(delay, options.signal);
+      await waitForRetry(delay, options.signal, options.getRetryNowSignal?.());
     } finally {
       if (timeoutId !== undefined) clearTimeout(timeoutId);
       options.signal?.removeEventListener('abort', abortFromParent);

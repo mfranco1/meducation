@@ -214,6 +214,24 @@ describe('runtime question bank', () => {
     } finally { vi.useRealTimers(); }
   });
 
+  it('can advance a catalog backoff without creating a second request chain', async () => {
+    const bank = new RuntimeQuestionBank({ maxRetries: 1, baseDelayMs: 10_000, maxDelayMs: 10_000 }, () => 0);
+    const fetchMock = vi.fn()
+      .mockRejectedValueOnce(new TypeError('offline'))
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-now', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }) });
+    vi.stubGlobal('fetch', fetchMock);
+    vi.useFakeTimers();
+    try {
+      const pending = bank.ensureSubjects();
+      await vi.waitFor(() => expect(bank.getCatalogState()).toBe('retrying'));
+      expect(bank.getCatalogRetryAt()).toBeDefined();
+      expect(bank.retryCatalogNow()).toBe(true);
+      await expect(pending).resolves.toHaveLength(1);
+      expect(fetchMock).toHaveBeenCalledTimes(2);
+      expect(bank.getCatalogState()).toBe('ready');
+    } finally { vi.useRealTimers(); }
+  });
+
   it('keeps raw network exception details out of developer log fields', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('socket ECONNREFUSED private detail')));

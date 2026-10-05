@@ -30,21 +30,24 @@ describe('dashboard catalog states', () => {
     expect(screen.queryByText('No subjects are available yet.')).toBeNull();
   });
 
-  it('replaces statistics and subject skeletons with section failures and shared retries', () => {
+  it('keeps cards and subject placeholders under one shared failure banner', () => {
     const onRetry = vi.fn();
     render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} error={new Error('The request took too long. Try again or come back later.')} onRetry={onRetry} onSelectSubject={() => {}} /></ThemeProvider>);
-    expect(screen.getByText('Unable to load statistics')).toBeVisible();
-    expect(screen.getByText('Unable to load subjects')).toBeVisible();
-    expect(screen.queryByRole('status', { name: 'Loading subjects' })).toBeNull();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Retry' })[0]);
+    expect(screen.getByRole('alert')).toHaveTextContent('We can’t load your stats and subjects right now.');
+    expect(screen.getByTestId('dashboard-error-banner').parentElement?.querySelector('.MuiContainer-root')).toBeVisible();
+    expect(screen.getByTestId('dashboard-error-banner').parentElement?.firstElementChild).toBe(screen.getByTestId('dashboard-error-banner'));
+    expect(screen.getByText('Average')).toBeVisible();
+    expect(screen.getByText('Lowest')).toBeVisible();
+    expect(screen.queryByText('Couldn’t load subjects')).toBeNull();
+    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps shimmer skeletons visible during automatic retries without reconnecting copy', () => {
+  it('keeps the existing shimmer skeletons during automatic retries', () => {
     render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} retrying onSelectSubject={() => {}} /></ThemeProvider>);
-    expect(screen.getByRole('status', { name: 'Retrying subjects' })).toBeVisible();
-    expect(screen.queryByText('Reconnecting…')).toBeNull();
-    expect(screen.getAllByRole('status', { name: 'Retrying subjects' })).toHaveLength(1);
+    expect(screen.getByRole('alert')).toHaveTextContent('Retrying');
+    expect(screen.getByRole('button', { name: 'Retry now' })).toBeVisible();
     expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);
   });
