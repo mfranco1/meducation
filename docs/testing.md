@@ -1,5 +1,7 @@
 # Testing
 
+Toast coverage verifies keyed updates, finite and persistent lifetimes, manual close, position and action options, keyboard access, and portal layering. Question-load failure integration checks safe copy, no inline subject failure block, persistence across navigation, stale cancellation suppression, and unchanged saved progress. Browser coverage checks the bottom-right toast at desktop and mobile widths, manual dismissal, wrapping, reduced motion, and modal layering.
+
 For quiz-screen presentation changes, compare desktop and mobile Browser fixture captures of the active quiz, Browse Answers, and results review. Confirm that the active quiz stays visually unchanged, the read-only modes keep choices noninteractive, and review correctly labels submitted, correct, unanswered, flagged, unavailable-key, and key-under-review states. Keep first-quiz timing measurement before screenshot capture.
 
 Browser progress coverage exercises v1-to-v2 migration without deleting original keys, malformed-state protection, quota failure with no partial completion, duplicate completion after history pruning, and a stale second repository instance. Session tests verify legacy/changed-content restart choice and that a failed write leaves the current quiz open. The revision check is optimistic rather than a cross-tab transaction; verify the sequential stale-tab behavior and keep the truly simultaneous race documented until a locking strategy is available.

@@ -2,6 +2,8 @@
 
 ## Exam results review
 
+When a selected quiz's questions cannot be loaded, the subject screen does not show an inline failure card. A persistent error toast appears at the bottom right with learner-safe guidance and the quiz name. It stays open across navigation and later successful loads until the learner closes it; retry by returning to the quiz action. The failure does not alter saved progress.
+
 Browse Answers and results review follow the active quiz's question layout and navigation placement while keeping answers read-only. Browse identifies the available correct answer and lets the learner exit directly. Review marks the submitted selection with a checked radio indicator and uses green highlighting for the revealed correct answer (with accessible selection and correctness labels), shows the final elapsed time without running a timer, and displays submitted flags without allowing changes. If an answer or explanation is unavailable, the screen says so explicitly. Review still requires confirmation before exit.
 
 After an Exam Mode submission, the results screen offers **Review results** beside **Back to quizzes**. Review is a read-only view of every submitted answer, its revealed status, and available explanations. The back arrow, Done action, and header logo require confirmation before leaving. Confirmed exit ends that attempt's transient review while retaining its saved score.

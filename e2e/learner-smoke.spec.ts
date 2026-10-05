@@ -197,6 +197,38 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
 
+test('failed question loading shows a persistent bottom-right toast that can be closed', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.route(/\/api\/v1\/quizzes\/[^/]+\/questions/, (route) =>
+    route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: '{"detail":"private backend detail"}',
+    }),
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
+
+  const toast = page.getByRole('alert');
+  await expect(toast).toContainText('Unable to load questions');
+  await expect(toast).toContainText('Browser Test Quiz');
+  await expect(toast).not.toContainText('private backend detail');
+  await expect(page.getByRole('button', { name: 'Start quiz' })).toBeEnabled();
+  const box = await toast.boundingBox();
+  expect(box).not.toBeNull();
+  expect(box!.x + box!.width).toBeGreaterThan(370);
+  expect(box!.y + box!.height).toBeGreaterThan(800);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await page.getByRole('button', { name: 'All subjects' }).click();
+  await expect(toast).toBeVisible();
+  await page.getByRole('button', { name: 'Close notification' }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('alert')).toHaveCount(0);
+});
+
 test('pending catalog stays accessible and static with reduced motion', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

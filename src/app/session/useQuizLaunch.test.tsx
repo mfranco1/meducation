@@ -1,6 +1,5 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ContentLoadError } from '../../content/contentTransport';
 import type { Question, Quiz } from '../../domain/types';
 import { useQuizLaunch } from './useQuizLaunch';
 
@@ -32,18 +31,27 @@ describe('quiz launch coordinator', () => {
     expect(result.current.loadingQuizIds.size).toBe(0);
   });
 
-  it('retries an ordinary failure and reloads for a revision conflict', async () => {
-    const loader = { ensureQuestions: vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]).mockRejectedValueOnce(new ContentLoadError('revision', 'changed')), cancelQuestionLoads: vi.fn() };
+  it('reports only the current failure and allows a fresh launch to recover', async () => {
+    const loader = { ensureQuestions: vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]), cancelQuestionLoads: vi.fn() };
     const action = vi.fn();
-    const reload = vi.fn();
-    const { result } = renderHook(() => useQuizLaunch(loader, reload));
+    const onFailure = vi.fn();
+    const { result } = renderHook(() => useQuizLaunch(loader, onFailure));
     act(() => result.current.launch(quiz, action));
-    await waitFor(() => expect(result.current.contentError).toBeDefined());
-    act(() => result.current.retryContent());
+    await waitFor(() => expect(onFailure).toHaveBeenCalledWith({ quiz, error: expect.objectContaining({ message: 'offline' }) }));
+    expect(result.current.loadingQuizIds.size).toBe(0);
+    act(() => result.current.launch(quiz, action));
     await waitFor(() => expect(action).toHaveBeenCalledOnce());
-    act(() => result.current.launch(quiz, action));
-    await waitFor(() => expect(result.current.contentError).toBeInstanceOf(ContentLoadError));
-    act(() => result.current.retryContent());
-    expect(reload).toHaveBeenCalledOnce();
+    expect(onFailure).toHaveBeenCalledOnce();
+  });
+
+  it('does not report a failure arriving after navigation cancellation', async () => {
+    let reject!: (error: Error) => void;
+    const loader = { ensureQuestions: vi.fn(() => new Promise<Question[]>((_, fail) => { reject = fail; })), cancelQuestionLoads: vi.fn() };
+    const onFailure = vi.fn();
+    const { result } = renderHook(() => useQuizLaunch(loader, onFailure));
+    act(() => result.current.launch(quiz, vi.fn()));
+    act(() => result.current.cancel());
+    await act(async () => reject(new Error('stale')));
+    expect(onFailure).not.toHaveBeenCalled();
   });
 });

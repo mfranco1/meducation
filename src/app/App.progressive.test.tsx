@@ -68,6 +68,7 @@ describe('progressive dashboard statistics', () => {
       'meducation.latest-scores.v1',
       'meducation.lowest-scores.v1',
       'meducation.quiz-activity.v1',
+      'meducation.progress.v2',
     ];
     const before = progressKeys.map(key => localStorage.getItem(key));
     const fetchMock = vi.fn()
@@ -146,7 +147,16 @@ describe('progressive dashboard statistics', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Retake quiz' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
-    expect(await screen.findByText('Unable to load questions')).toBeVisible();
+    const questionFailure = await screen.findByRole('alert');
+    expect(questionFailure).toHaveTextContent('Unable to load questions');
+    expect(questionFailure).toHaveTextContent('Test Quiz: Please try again or come back later.');
+    expect(screen.queryByText('Unable to load questions', { selector: 'h3' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Close notification' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
+    expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
+    expect(screen.getByRole('alert')).toHaveTextContent('Test Quiz: Please try again or come back later.');
+    fireEvent.click(screen.getByRole('button', { name: 'Close notification' }));
+    expect(screen.queryByRole('alert')).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(progressKeys.map(key => localStorage.getItem(key))).toEqual(before);
     expect(runtimeQuestionBank.listQuestions(quiz.id)).toEqual([]);
