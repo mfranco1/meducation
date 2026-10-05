@@ -1,6 +1,6 @@
 # Testing
 
-Toast coverage verifies keyed updates, finite and persistent lifetimes, manual close, position and action options, keyboard access, and portal layering. Question-load failure integration checks safe copy, no inline subject failure block, persistence across navigation, stale cancellation suppression, and unchanged saved progress. Browser coverage checks the bottom-right toast at desktop and mobile widths, manual dismissal, wrapping, reduced motion, and modal layering.
+Toast coverage verifies keyed updates, finite and persistent lifetimes, manual close, position and action options, global versus screen-scoped navigation, timed exit removal, reduced motion, keyboard access, and portal layering. Question-load failure integration checks safe copy, no inline subject failure block, persistence within its screen, dismissal on navigation and refresh, stale cancellation suppression, and unchanged saved progress. Browser coverage checks the bottom-right toast at desktop and mobile widths, close behavior, wrapping, reduced motion, and modal layering.
 
 For quiz-screen presentation changes, compare desktop and mobile Browser fixture captures of the active quiz, Browse Answers, and results review. Confirm that the active quiz stays visually unchanged, the read-only modes keep choices noninteractive, and review correctly labels submitted, correct, unanswered, flagged, unavailable-key, and key-under-review states. Keep first-quiz timing measurement before screenshot capture.
 

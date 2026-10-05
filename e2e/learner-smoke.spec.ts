@@ -223,9 +223,12 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   expect(box!.y + box!.height).toBeGreaterThan(800);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   await page.getByRole('button', { name: 'All subjects' }).click();
-  await expect(toast).toBeVisible();
-  await page.getByRole('button', { name: 'Close notification' }).focus();
-  await page.keyboard.press('Enter');
+  await expect(toast).toHaveCount(0);
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
+  await expect(page.getByRole('alert')).toBeVisible();
+  await page.reload();
   await expect(page.getByRole('alert')).toHaveCount(0);
 });
 

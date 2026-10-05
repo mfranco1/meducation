@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Alert, Container, LinearProgress } from '@mui/material';
 import { loadRuntimeContent, runtimeQuestionBank } from '../content/runtimeQuestionBank';
 import { ContentLoadError } from '../content/contentTransport';
@@ -40,8 +40,10 @@ function LearnerApp() {
   useEffect(() => { void loadRuntimeContent().catch(() => undefined); }, []);
   const session = useQuizSession(questionBank, attemptRepository);
   const { loadingQuizIds, launch, cancel } = useQuizLaunch(questionBank, ({ quiz, error }) => {
-    toast.show({ id: `question-load-${quiz.id}`, title: 'Unable to load questions', message: <>{quiz.name}: {contentLoadMessage(error)}</>, severity: 'error', position: 'bottom-right', ttlMs: null, closeButton: true, dismissPolicy: 'manual' });
+    toast.show({ id: `question-load-${quiz.id}`, title: 'Unable to load questions', message: <>{quiz.name}: {contentLoadMessage(error)}</>, severity: 'error', position: 'bottom-right', ttlMs: null, closeButton: true, dismissPolicy: 'manual', scope: { type: 'screen', key: `subject:${quiz.subjectId}` } });
   });
+  const currentScreenKey = screenIdentity(session.view);
+  useLayoutEffect(() => { toast.notifyNavigation(currentScreenKey); }, [toast, currentScreenKey]);
   useEffect(() => { if (session.view.page === 'quiz') preloadResultsScreen(); }, [session.view.page]);
   const [exitOpen, setExitOpen] = useState(false);
   const [exitDestination, setExitDestination] = useState<QuizExitDestination>('subject');

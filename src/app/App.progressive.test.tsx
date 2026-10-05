@@ -154,8 +154,7 @@ describe('progressive dashboard statistics', () => {
     expect(screen.getByRole('button', { name: 'Close notification' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
-    expect(screen.getByRole('alert')).toHaveTextContent('Test Quiz: Please try again or come back later.');
-    fireEvent.click(screen.getByRole('button', { name: 'Close notification' }));
+    await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
     expect(screen.queryByRole('alert')).toBeNull();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(progressKeys.map(key => localStorage.getItem(key))).toEqual(before);
