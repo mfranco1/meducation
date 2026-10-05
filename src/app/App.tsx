@@ -116,15 +116,15 @@ export default function App() {
     <ScreenTransition screenId={screenIdentity(session.view)}>
     <ScreenLoadBoundary key={screenIdentity(session.view)} loadingLabel={loadingLabel} onLoadingChange={setScreenLoading}>
     {session.view.page === 'dashboard' && <DashboardScreen attempts={progressSnapshot.completed} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} loading={catalogState === 'idle' || catalogState === 'loading'} retrying={catalogState === 'retrying'} statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'} activeAttempts={Object.keys(progressSnapshot.active).length > 0} error={catalogState === 'error' ? catalogError : undefined} retryAt={questionBank.getCatalogRetryAt()} onRetry={() => {
-      if (catalogError instanceof ContentLoadError && catalogError.kind === 'revision') window.location.reload();
-      else if (catalogState === 'retrying') questionBank.retryCatalogNow();
-      else void questionBank.ensureSubjects().catch(() => undefined);
+      if (catalogError instanceof ContentLoadError && catalogError.kind === 'revision') { window.location.reload(); return; }
+      if (catalogState === 'retrying') questionBank.retryCatalogNow();
+      return questionBank.ensureSubjects().then(() => undefined, () => undefined);
     }} onSelectSubject={selectSubject} />}
     {currentSubject && <SubjectScreen subject={currentSubject} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} questionError={contentError} onRetry={() => {
-      if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') window.location.reload();
-      else if (currentQuizRecovery?.busy) return;
-      else if (currentQuizState === 'retrying') { questionBank.retryQuizNow(currentSubject.id); return; }
-      else void questionBank.ensureQuizzes(currentSubject.id).catch(() => undefined);
+      if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') { window.location.reload(); return; }
+      if (currentQuizRecovery?.busy) return;
+      if (currentQuizState === 'retrying') questionBank.retryQuizNow(currentSubject.id);
+      return questionBank.ensureQuizzes(currentSubject.id).then(() => undefined, () => undefined);
     }} onRetryQuestions={retryContent} onBack={() => { cancel(); session.showDashboard(); }} onResumeQuiz={quiz => { preloadQuizScreen(); launch(quiz, () => session.resumeQuiz(quiz)); }} onStartQuiz={(quiz, mode) => { preloadQuizScreen(); launch(quiz, () => session.startQuiz(quiz, mode)); }} onBrowseQuiz={quiz => { preloadBrowseScreen(); launch(quiz, () => session.browseQuiz(quiz)); }} />}
     {session.view.page === 'quiz' && <QuizScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => requestQuizExit('subject')} />}
     {session.view.page === 'quiz-browse' && <QuizBrowseScreen {...session.view} questions={questionBank.listQuestions(session.view.quiz.id)} onNavigate={session.navigateBrowse} onDone={session.leaveBrowse} />}

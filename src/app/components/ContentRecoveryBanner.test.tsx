@@ -7,6 +7,32 @@ import { ContentRecoveryBanner } from './ContentRecoveryBanner';
 afterEach(() => vi.useRealTimers());
 
 describe('ContentRecoveryBanner', () => {
+  it('switches to a disabled pending state immediately after a manual retry click', () => {
+    const onRetry = vi.fn();
+    render(<ThemeProvider theme={theme}><ContentRecoveryBanner error={new Error('offline')} onRetry={onRetry} /></ThemeProvider>);
+    const retry = screen.getByRole('button', { name: 'Retry' });
+
+    fireEvent.click(retry);
+
+    expect(onRetry).toHaveBeenCalledOnce();
+    expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Retrying...' }));
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('keeps Retry now disabled until the pending retry request settles', async () => {
+    let finishRetry!: () => void;
+    const onRetry = vi.fn(() => new Promise<void>(resolve => { finishRetry = resolve; }));
+    render(<ThemeProvider theme={theme}><ContentRecoveryBanner retrying retryAt={Date.now() + 5_000} onRetry={onRetry} /></ThemeProvider>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry now' }));
+    expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
+    expect(onRetry).toHaveBeenCalledOnce();
+
+    act(() => finishRetry());
+    expect(await screen.findByRole('button', { name: 'Retry now' })).toBeEnabled();
+  });
+
   it('derives its countdown from the retry deadline and cleans up its timer', () => {
     vi.useFakeTimers();
     const retryAt = Date.now() + 5_000;

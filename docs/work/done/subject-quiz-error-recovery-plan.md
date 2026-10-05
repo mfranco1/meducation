@@ -78,7 +78,7 @@ Acceptance: quiz fetch failure produces one banner and retains the existing load
 - [x] Update `docs/product.md`, `docs/design-system.md`, `docs/architecture.md`, and `docs/testing.md` to describe the subject banner and per-subject recovery metadata.
 - [x] Record check results and move this tracker to `docs/work/done` after implementation and verification are complete.
 
-Verification: `npm test` passed (40 files, 254 tests); `npm run test:e2e` passed (6 browser tests); the production build/type-check, lint, formatting check, and `git diff --check` passed. The build reports the existing large-chunk advisory for the timer bundle.
+Verification: `npm test` passed (40 files, 256 tests); `npm run test:e2e` passed (6 browser tests); the production build/type-check, lint, formatting check, and `git diff --check` passed. The build reports the existing large-chunk advisory for the timer bundle.
 
 ## Completion criteria
 

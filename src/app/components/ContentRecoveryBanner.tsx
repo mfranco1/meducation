@@ -25,15 +25,23 @@ export function ContentRecoveryBanner({ error, retrying = false, busy = false, r
   testId?: string;
   title?: string;
   description?: string;
-  onRetry: () => void;
+  onRetry: () => void | Promise<void>;
 }) {
+  const [manualRetryPending, setManualRetryPending] = useState(false);
   const seconds = useRetrySeconds(retryAt);
   const retryAvailable = retryAfterAt === undefined || Date.now() >= retryAfterAt;
   const reload = (error as ContentLoadError | undefined)?.kind === 'revision';
   const detail = reload ? 'Reload to continue with the latest available content.'
     : busy ? 'Retrying…' : retrying ? seconds && seconds > 0 ? `Trying again in ${seconds}s…` : 'Retrying…'
       : description;
-  const disabled = busy || (retrying && (!retryAvailable || retryAt === undefined));
+  const disabled = busy || manualRetryPending || (retrying && (!retryAvailable || retryAt === undefined));
+  const handleRetry = () => {
+    setManualRetryPending(true);
+    const pending = onRetry();
+    if (pending && typeof pending.then === 'function') {
+      void pending.then(() => setManualRetryPending(false), () => setManualRetryPending(false));
+    }
+  };
 
   return <Box role="region" aria-label="Content recovery" data-testid={testId} sx={{ width: '100%', borderBottom: '1px solid', borderColor: 'warning.light', bgcolor: '#fff7ed' }}>
     <Container maxWidth="lg">
@@ -43,8 +51,8 @@ export function ContentRecoveryBanner({ error, retrying = false, busy = false, r
           <Box component="span" role="alert" sx={{ fontWeight: 800 }}>{reload ? 'Content has changed.' : title}</Box>{' '}
           <Box component="span" aria-live="off">{detail}</Box>
         </Typography>
-        <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={onRetry} disabled={disabled} sx={{ minHeight: 44, whiteSpace: 'nowrap' }}>
-          {reload ? 'Reload' : busy ? 'Retrying…' : retrying ? retryAvailable ? 'Retry now' : 'Retrying…' : 'Retry'}
+        <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={handleRetry} disabled={disabled} sx={{ minHeight: 44, whiteSpace: 'nowrap' }}>
+          {reload ? 'Reload' : busy || manualRetryPending ? 'Retrying...' : retrying ? retryAvailable ? 'Retry now' : 'Retrying…' : 'Retry'}
         </Button>
       </Stack>
     </Container>

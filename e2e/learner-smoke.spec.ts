@@ -113,6 +113,10 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   let failures = 0;
+  let releaseRetry!: () => void;
+  const retryResponse = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
   await page.route('**/api/v1/subjects', async (route) => {
     if (failures++ === 0)
       await route.fulfill({
@@ -120,7 +124,10 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
         contentType: 'application/json',
         body: '{"detail":"temporary"}',
       });
-    else await route.continue();
+    else {
+      await retryResponse;
+      await route.continue();
+    }
   });
   await page.goto('/');
   await expect(page.getByRole('alert')).toContainText('We can’t load your stats and subjects right now.');
@@ -128,6 +135,8 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
   await retry.focus();
   await expect(retry).toBeFocused();
   await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
+  releaseRetry();
   await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
   expect(failures).toBe(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
@@ -138,6 +147,10 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   let failures = 0;
+  let releaseRetry!: () => void;
+  const retryResponse = new Promise<void>((resolve) => {
+    releaseRetry = resolve;
+  });
   await page.route(/\/api\/v1\/subjects\/[^/]+\/quizzes/, async (route) => {
     if (failures++ === 0)
       await route.fulfill({
@@ -145,7 +158,10 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
         contentType: 'application/json',
         body: '{"detail":"private backend detail"}',
       });
-    else await route.continue();
+    else {
+      await retryResponse;
+      await route.continue();
+    }
   });
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
@@ -174,6 +190,8 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
   const retry = banner.getByRole('button', { name: 'Retry' });
   await retry.focus();
   await page.keyboard.press('Enter');
+  await expect(banner.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
+  releaseRetry();
   await expect(page.getByRole('button', { name: 'Start quiz' })).toBeVisible();
   expect(failures).toBe(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);

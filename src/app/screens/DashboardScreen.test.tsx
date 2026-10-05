@@ -44,6 +44,24 @@ describe('dashboard catalog states', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps the shared banner mounted and disables Retry while a manual request loads', () => {
+    const onRetry = vi.fn();
+    const view = render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} error={new Error('offline')} onRetry={onRetry} onSelectSubject={() => {}} /></ThemeProvider>);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
+    expect(onRetry).toHaveBeenCalledOnce();
+
+    view.rerender(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} loading onSelectSubject={() => {}} /></ThemeProvider>);
+    expect(screen.getByTestId('dashboard-error-banner')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
+    expect(screen.getAllByText('Average')).toHaveLength(1);
+    expect(screen.getAllByText('Lowest')).toHaveLength(1);
+
+    view.rerender(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} onSelectSubject={() => {}} /></ThemeProvider>);
+    expect(screen.queryByTestId('dashboard-error-banner')).toBeNull();
+  });
+
   it('keeps the existing shimmer skeletons during automatic retries', () => {
     render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[]} retrying onSelectSubject={() => {}} /></ThemeProvider>);
     expect(screen.getByText('Retrying…')).toBeVisible();
