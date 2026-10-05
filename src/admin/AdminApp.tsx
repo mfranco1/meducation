@@ -3,6 +3,8 @@ import {
   Alert, Box, Button, Container, Divider, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography,
 } from '@mui/material';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { AppShell } from '../app/components/AppShell';
+import { ScreenLoading } from '../app/components/ScreenLoading';
 import { storedQuestionBank } from '../content/questionBank';
 import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
@@ -36,25 +38,25 @@ export function AdminApp() {
         ? `${bulkSubject.name} / ${bulkQuiz.name}`
         : bulkSubject?.name ?? 'Choose a subject and quiz';
 
-  if (!localAdminEnabled) return <Container maxWidth="sm" sx={{ py: 8 }}><Alert severity="warning">The JSON content admin is disabled in production builds. It is not an authentication mechanism.</Alert></Container>;
-  if (!snapshot) return <Container sx={{ py: 8 }}>{loadError ? <Alert severity="error">{loadError}</Alert> : <Typography>Loading canonical question bank…</Typography>}</Container>;
+  const header = <Box component="header" sx={{ py: 1.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}>
+    <Container maxWidth={false}><Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={1.5}>
+      <Stack direction="row" alignItems="center" spacing={1.5}>
+        <Stack direction="row" alignItems="center" spacing={.75} sx={{ color: 'text.primary', fontSize: 20, letterSpacing: '-.04em', fontWeight: 700 }}><MenuBookRoundedIcon sx={{ color: 'primary.main' }} /><Box component="span"><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Box></Stack>
+        <Typography variant="body2" color="text.secondary">Admin</Typography>
+      </Stack>
+      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+        <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>Changes stay local until export.</Typography>
+        <Button size="small" disabled={!snapshot || Boolean(busy)} onClick={() => importFileRef.current?.click()}>Import</Button>
+        <Button size="small" color="success" variant="contained" disabled={!snapshot || Boolean(busy) || !hasAppliedChanges} onClick={exportFiles}>Export</Button>
+        <input ref={importFileRef} type="file" accept="application/json,.json" hidden onChange={event => { void importChangeSetFile(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} />
+      </Stack>
+    </Stack></Container>
+  </Box>;
 
-  return <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
-    <Box component="header" sx={{ py: 1.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}>
-      <Container maxWidth={false}><Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={1.5}>
-        <Stack direction="row" alignItems="center" spacing={1.5}>
-          <Stack direction="row" alignItems="center" spacing={.75} sx={{ color: 'text.primary', fontSize: 20, letterSpacing: '-.04em', fontWeight: 700 }}><MenuBookRoundedIcon sx={{ color: 'primary.main' }} /><Box component="span"><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Box></Stack>
-          <Typography variant="body2" color="text.secondary">Admin</Typography>
-        </Stack>
-        <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-          <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>Changes stay local until export.</Typography>
-          <Button size="small" disabled={Boolean(busy)} onClick={() => importFileRef.current?.click()}>Import</Button>
-          <Button size="small" color="success" variant="contained" disabled={Boolean(busy) || !hasAppliedChanges} onClick={exportFiles}>Export</Button>
-          <input ref={importFileRef} type="file" accept="application/json,.json" hidden onChange={event => { void importChangeSetFile(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} />
-        </Stack>
-      </Stack></Container>
-    </Box>
-    <Container maxWidth={false} sx={{ py: 2 }}>
+  return <AppShell header={header} busy={Boolean(localAdminEnabled && !snapshot && !loadError)}>
+    {!localAdminEnabled ? <Container maxWidth="sm" sx={{ py: 8 }}><Alert severity="warning">The JSON content admin is disabled in production builds. It is not an authentication mechanism.</Alert></Container>
+      : !snapshot ? loadError ? <Container sx={{ py: 8 }}><Alert severity="error">{loadError}</Alert></Container> : <ScreenLoading label="Loading question bank…" />
+        : <Container maxWidth={false} sx={{ py: 2 }}>
     <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
       <AdminNavigatorPanel bank={snapshot.bank} selection={selection} selectedSubjectId={selectedSubject?.id} selectedQuizId={selectedQuiz?.id} filter={filter} setFilter={setFilter} loadEntity={loadEntity} loadNew={loadNew} />
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
@@ -89,5 +91,6 @@ export function AdminApp() {
       </Paper>
       <AdminStatusPanel bank={snapshot.bank} issues={issues} questionPaths={pendingBulk?.questionPaths} summary={summary} dirty={dirty} exported={exported} busy={busy} />
     </Stack>
-    </Container></Box>;
+        </Container>}
+  </AppShell>;
 }

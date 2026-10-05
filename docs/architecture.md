@@ -6,6 +6,8 @@ Exam-results review carries the just-completed attempt in transient navigation s
 
 `screenIdentity` in `src/app/navigation.ts` defines stable top-level destinations without including per-question progress or timer updates. `ScreenTransition` in `src/app/components/ScreenTransition.tsx` applies the shared entry animation at the composition boundary in `App.tsx`; the header and global exit dialog remain outside it. Screen content is replaced immediately, and reduced-motion preferences disable the animation.
 
+`AppShell` keeps the learner header visible during the entry module import and lazy screen suspension. `ScreenLoading` supplies the centered accessible pending presentation; `ScreenLoadBoundary` owns suspense fallback and lazy screen failure recovery. Content receives a brief opacity entry only when the fallback was committed. The admin uses the same shell and loading presentation for its local bank snapshot wait. Resource-specific catalog skeletons and question-launch indicators remain in their screens.
+
 `ResultsScoreHero` owns the decorative ring and score counter. A single request-animation-frame timeline drives both from the stored result percentage, while `ResultsScreen` remains responsible for the result summary and exact-score celebration.
 
 Dashboard subject summaries live in `src/app/dashboard.ts`. `App.tsx` composes the existing quiz and attempt repositories into those summaries; presentation components receive the resulting data and never read local storage. The active-subject carousel filters and orders only summaries that have saved active attempts, and `embla-carousel-react` owns its responsive scrolling, looping, and drag behavior.

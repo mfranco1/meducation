@@ -26,6 +26,9 @@ export function ScreenTransition({ screenId, children }: { screenId: string; chi
     key={screenId}
     data-animated={shouldAnimate ? 'true' : 'false'}
     sx={{
+      flex: 1,
+      display: 'flex',
+      flexDirection: 'column',
       position: 'relative',
       animation: shouldAnimate ? `${enter} ${screenTransitionDurationMs}ms ${screenTransitionEasing} both` : 'none',
       '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
