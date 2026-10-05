@@ -19,7 +19,7 @@ export function ReadOnlyChoiceList({ question, selectedChoiceId, correctChoiceId
       const marked = mode === 'browse' ? correct : selected;
       const incorrectSelection = selected && !correct && !answerUnderReview;
       const labels = [selected && 'Your answer', correct && 'Correct answer'].filter(Boolean).join(' · ');
-      return <Box key={choice.id} role="listitem" sx={{
+      return <Box key={choice.id} role="listitem" aria-label={labels || undefined} sx={{
         border: '1px solid',
         borderColor: selected ? 'primary.main' : theme.palette.feedback.choiceBorder,
         bgcolor: correct ? theme.palette.feedback.correct.surface : incorrectSelection ? theme.palette.feedback.incorrect.surface : 'background.paper',
@@ -27,12 +27,11 @@ export function ReadOnlyChoiceList({ question, selectedChoiceId, correctChoiceId
         p: .5,
       }}>
         <Stack direction="row" alignItems="center" sx={{ minWidth: 0 }}>
-          <Box aria-hidden="true" sx={{ width: 42, height: 42, flexShrink: 0, display: 'grid', placeItems: 'center', color: marked ? 'primary.main' : 'text.secondary' }}>
+          <Box aria-hidden="true" sx={{ width: 42, height: 42, flexShrink: 0, display: 'grid', placeItems: 'center', color: correct ? 'success.main' : marked ? 'primary.main' : 'text.secondary' }}>
             {marked ? <RadioButtonCheckedIcon sx={{ fontSize: 21 }} /> : <RadioButtonUncheckedIcon sx={{ fontSize: 21 }} />}
           </Box>
           <Typography component="div" sx={{ py: .8, minWidth: 0, lineHeight: 1.5 }}>
             <b>{choice.id}.</b> <MarkdownContent markdown={choice.text} variant="inline" />
-            {labels && <Typography component="span" variant="caption" sx={{ ml: 1, fontWeight: 700, color: 'text.secondary', whiteSpace: 'normal' }}>({labels})</Typography>}
           </Typography>
         </Stack>
       </Box>;

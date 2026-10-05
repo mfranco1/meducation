@@ -55,6 +55,13 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
   const unanswered = items.filter(item => !item.answered).length;
   const flagged = items.filter(item => item.flagged).length;
   const wrong = items.filter(item => item.wrong).length;
+  const filters = [
+    { value: 'all', label: 'All', accessibleLabel: `All questions, ${items.length}` },
+    filterSet === 'review'
+      ? { value: 'wrong', label: 'Wrong', accessibleLabel: `Wrong questions, ${wrong}` }
+      : { value: 'unanswered', label: 'Open', accessibleLabel: `Unanswered questions, ${unanswered}` },
+    { value: 'flagged', label: 'Flagged', accessibleLabel: `Flagged questions, ${flagged}` },
+  ];
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentTileRef = useRef<HTMLButtonElement>(null);
 
@@ -69,15 +76,7 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
       aria-label="Filter questions"
       onChange={(_, value: QuestionNavigatorFilter | null) => { if (value) onFilterChange(value); }}
     >
-      {filterSet === 'review' ? <>
-        <ToggleButton value="all" aria-label={`All questions, ${items.length}`}>All</ToggleButton>
-        <ToggleButton value="wrong" aria-label={`Wrong questions, ${wrong}`}>Wrong</ToggleButton>
-        <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged</ToggleButton>
-      </> : <>
-        <ToggleButton value="all" aria-label={`All questions, ${items.length}`}>All</ToggleButton>
-        <ToggleButton value="unanswered" aria-label={`Unanswered questions, ${unanswered}`}>Open</ToggleButton>
-        <ToggleButton value="flagged" aria-label={`Flagged questions, ${flagged}`}>Flagged</ToggleButton>
-      </>}
+      {filters.map(item => <ToggleButton key={item.value} value={item.value} aria-label={item.accessibleLabel}>{item.label}</ToggleButton>)}
     </ToggleButtonGroup>
     <Box ref={scrollAreaRef} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: .75 }}>
       {visibleItems.length ? <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1 }}>

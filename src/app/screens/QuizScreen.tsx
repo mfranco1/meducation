@@ -103,7 +103,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
               const showCorrectAnswerBurst = correctAnswerBurst?.questionId === question.id && correctAnswerBurst.choiceId === choice.id;
               return <Box key={choice.id} sx={{ position: 'relative', isolation: 'isolate', overflow: 'visible', border: '1px solid', borderColor: selected ? 'primary.main' : theme.palette.feedback.choiceBorder, bgcolor: state, borderRadius: 1, p: .5 }}>
                 {showCorrectAnswerBurst && <RadiatingCircles key={correctAnswerBurst.eventId} particleCount={5} durationMs={900} horizontalSpread={14} verticalSpread={17} particleSize={7} />}
-                <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio />} label={<Typography component="div" sx={{ py: .8 }}><b>{choice.id}.</b> <MarkdownContent markdown={choice.text} variant="inline" /></Typography>} sx={{ m: 0, width: '100%', position: 'relative', zIndex: 1 }} />
+                <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio sx={feedback && !answerUnderReview && correct ? { color: 'success.main', '&.Mui-checked, &.Mui-disabled': { color: 'success.main' } } : undefined} />} label={<Typography component="div" sx={{ py: .8 }}><b>{choice.id}.</b> <MarkdownContent markdown={choice.text} variant="inline" /></Typography>} sx={{ m: 0, width: '100%', position: 'relative', zIndex: 1 }} />
               </Box>;
             })}
           </RadioGroup>

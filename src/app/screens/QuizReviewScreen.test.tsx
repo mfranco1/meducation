@@ -21,8 +21,10 @@ describe('QuizReviewScreen', () => {
     const onExit = vi.fn();
     render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={questions} onNavigate={() => {}} onRequestExit={onExit} /></ThemeProvider>);
     expect(screen.getByText('Incorrect')).toBeVisible();
-    expect(screen.getByText(/Your answer/)).toBeVisible();
-    expect(screen.getByText(/Correct answer/)).toBeVisible();
+    expect(screen.getByRole('listitem', { name: /Your answer/ })).toBeVisible();
+    expect(screen.queryByText(/Your answer/)).toBeNull();
+    expect(screen.getByRole('listitem', { name: /Correct answer/ })).toBeVisible();
+    expect(screen.queryByText(/Correct answer/)).toBeNull();
     expect(screen.getByText('Why B is right.')).toBeVisible();
     expect(screen.queryByRole('radio')).toBeNull();
     expect(screen.getByRole('img', { name: 'Flagged question' })).toBeVisible();
@@ -34,7 +36,8 @@ describe('QuizReviewScreen', () => {
     render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={1} questions={questions} onNavigate={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
     expect(screen.getByText('Unanswered')).toBeVisible();
     expect(screen.getByLabelText('Final time: 00:04')).toBeVisible();
-    expect(screen.getByText(/Correct answer/)).toBeVisible();
+    expect(screen.getByRole('listitem', { name: /Correct answer/ })).toBeVisible();
+    expect(screen.queryByText(/Correct answer/)).toBeNull();
     expect(screen.queryByText(/Your answer/)).toBeNull();
   });
 

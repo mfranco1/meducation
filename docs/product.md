@@ -2,7 +2,7 @@
 
 ## Exam results review
 
-Browse Answers and results review follow the active quiz's question layout and navigation placement while keeping answers read-only. Browse identifies the available correct answer and lets the learner exit directly. Review labels both the submitted selection and correct answer, shows the final elapsed time without running a timer, and displays submitted flags without allowing changes. If an answer or explanation is unavailable, the screen says so explicitly. Review still requires confirmation before exit.
+Browse Answers and results review follow the active quiz's question layout and navigation placement while keeping answers read-only. Browse identifies the available correct answer and lets the learner exit directly. Review marks the submitted selection with a checked radio indicator and uses green highlighting for the revealed correct answer (with accessible selection and correctness labels), shows the final elapsed time without running a timer, and displays submitted flags without allowing changes. If an answer or explanation is unavailable, the screen says so explicitly. Review still requires confirmation before exit.
 
 After an Exam Mode submission, the results screen offers **Review results** beside **Back to quizzes**. Review is a read-only view of every submitted answer, its revealed status, and available explanations. The back arrow, Done action, and header logo require confirmation before leaving. Confirmed exit ends that attempt's transient review while retaining its saved score.
 
