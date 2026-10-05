@@ -59,7 +59,7 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page })
   await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
   await page.getByRole('button', { name: 'Leave review' }).click();
   await expect(page.getByRole('dialog', { name: 'Leave review?' })).toBeVisible();
-  await page.getByRole('dialog').getByRole('button', { name: 'Keep reviewing' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Keep reviewing', exact: true }).last().click();
   await expect(page.getByText('What is')).toBeVisible();
   await page.getByRole('button', { name: 'Leave review' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Leave review' }).click();
