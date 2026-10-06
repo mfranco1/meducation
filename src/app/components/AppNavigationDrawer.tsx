@@ -27,7 +27,7 @@ export function AppNavigationDrawer({ active, currentPage, onNavigate, disabled 
         aria-label={label}
         aria-current={currentPage === section ? 'page' : undefined}
         onClick={() => select(section)}
-        sx={{ width: '100%', minHeight: 48, px: compact ? 0 : 1.5, borderRadius: 2, display: 'flex', justifyContent: compact ? 'center' : 'flex-start', gap: 1.5, color: current ? 'primary.dark' : 'text.secondary', bgcolor: current ? 'rgba(185,81,27,.1)' : 'transparent', '&:hover': { bgcolor: current ? 'rgba(185,81,27,.14)' : 'action.hover' }, '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }}
+        sx={{ width: '100%', minHeight: 48, px: compact ? 0 : 1.5, borderRadius: '10px', display: 'flex', justifyContent: compact ? 'center' : 'flex-start', gap: 1.5, color: current ? 'primary.dark' : 'text.secondary', bgcolor: current ? 'rgba(185,81,27,.1)' : 'transparent', '&:hover, &:active': { bgcolor: current ? 'rgba(185,81,27,.1)' : 'transparent' }, '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }}
       >
         <Box aria-hidden="true" sx={{ display: 'flex', color: current ? 'primary.main' : 'inherit' }}>{icon}</Box>
         {!compact && <Box component="span" sx={{ fontWeight: current ? 700 : 600, whiteSpace: 'nowrap' }}>{label}</Box>}
@@ -38,12 +38,14 @@ export function AppNavigationDrawer({ active, currentPage, onNavigate, disabled 
   const contents = (overlay = false) => {
     const compact = overlay ? false : (!desktop || !expanded);
     const width = overlay ? 240 : desktop && expanded ? 240 : 64;
-    return <Box component="nav" aria-label="Main navigation" sx={{ width, height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', p: compact ? 1 : 2, gap: 1, bgcolor: 'background.paper', borderRight: '1px solid #eee5df', overflowX: 'hidden' }}>
+    return <Box component="nav" aria-label="Main navigation" sx={{ width, height: '100%', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', px: compact ? 1 : 2, py: 2, gap: 1, bgcolor: 'background.paper', borderRight: '1px solid #eee5df', overflowX: 'hidden' }}>
     <AppBrand compact={compact} onClick={() => select('quizzes')} />
     <Tooltip title={compact ? 'Expand navigation' : ''} placement="right">
-      <IconButton disabled={disabled} aria-label={compact ? 'Expand navigation' : 'Collapse navigation'} aria-expanded={overlay || (desktop && expanded)} aria-controls={`learner-navigation-items${overlay ? '-overlay' : ''}`} onClick={() => setExpanded(value => !value)} sx={{ alignSelf: compact ? 'center' : 'flex-end' }}>
-        {compact ? <MenuRoundedIcon /> : <MenuOpenRoundedIcon />}
-      </IconButton>
+      <Box sx={{ height: 48, flex: '0 0 48px', display: 'flex', alignItems: 'center', justifyContent: compact ? 'center' : 'flex-end', px: 1 }}>
+        <IconButton disabled={disabled} aria-label={compact ? 'Expand navigation' : 'Collapse navigation'} aria-expanded={overlay || (desktop && expanded)} aria-controls={`learner-navigation-items${overlay ? '-overlay' : ''}`} onClick={() => setExpanded(value => !value)} sx={{ '&:hover, &:active': { bgcolor: 'transparent' } }}>
+          {compact ? <MenuRoundedIcon /> : <MenuOpenRoundedIcon />}
+        </IconButton>
+      </Box>
     </Tooltip>
     <Box id={`learner-navigation-items${overlay ? '-overlay' : ''}`} sx={{ display: 'flex', flexDirection: 'column', gap: .5 }}>
       {item('quizzes', 'Quizzes', <QuizRoundedIcon />, active === 'quizzes', compact)}

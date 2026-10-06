@@ -66,9 +66,30 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
 test('left navigation switches dashboards in collapsed and mobile layouts', async ({ page }, testInfo) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Meducation, go to Quizzes' })).toBeVisible();
-  await page.getByRole('button', { name: 'Collapse navigation' }).click();
+  const brand = page.getByRole('button', { name: 'Meducation, go to Quizzes' });
+  await expect(brand).toBeVisible();
+  const quizzesButton = page.getByRole('button', { name: 'Quizzes', exact: true });
+  const quizzesTopExpanded = (await quizzesButton.boundingBox())!.y;
+  const brandRadius = await brand.evaluate((element) => getComputedStyle(element).borderRadius);
+  expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
+  const collapseButton = page.getByRole('button', { name: 'Collapse navigation' });
+  const noHoverChange = async (button: typeof brand) => {
+    const before = await button.evaluate((element) => getComputedStyle(element).backgroundColor);
+    await button.hover();
+    const after = await button.evaluate((element) => getComputedStyle(element).backgroundColor);
+    expect(after).toBe(before);
+  };
+  await noHoverChange(brand);
+  await noHoverChange(collapseButton);
+  await noHoverChange(quizzesButton);
+  await collapseButton.click();
   await expect(page.getByRole('button', { name: 'Expand navigation' })).toHaveAttribute('aria-expanded', 'false');
+  expect((await quizzesButton.boundingBox())!.y).toBe(quizzesTopExpanded);
+  expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
+  const expandButton = page.getByRole('button', { name: 'Expand navigation' });
+  await noHoverChange(brand);
+  await noHoverChange(quizzesButton);
+  await noHoverChange(expandButton);
   await testInfo.attach('navigation-desktop-collapsed.png', {
     body: await page.screenshot({ path: testInfo.outputPath('navigation-desktop-collapsed.png') }),
     contentType: 'image/png',

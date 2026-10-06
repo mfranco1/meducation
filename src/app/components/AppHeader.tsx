@@ -7,7 +7,7 @@ export function AppBrand({ onClick, compact = false }: { onClick?: () => void; c
     {!compact && <Box component="span"><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Box>}
   </Stack>;
   return onClick
-    ? <Button aria-label="Meducation, go to Quizzes" onClick={onClick} sx={{ minWidth: 0, p: 1, justifyContent: compact ? 'center' : 'flex-start', color: 'text.primary' }}>{brand}</Button>
+    ? <Button disableRipple aria-label="Meducation, go to Quizzes" onClick={onClick} sx={{ minWidth: 0, width: '100%', height: 48, boxSizing: 'border-box', p: 1, borderRadius: '10px', justifyContent: compact ? 'center' : 'flex-start', color: 'text.primary', bgcolor: 'transparent', '&:hover, &:active': { bgcolor: 'transparent' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }}>{brand}</Button>
     : brand;
 }
 
