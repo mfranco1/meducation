@@ -47,7 +47,9 @@ test('a failed flashcard deck request recovers with keyboard Retry', async ({ pa
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
 });
 
-test('flashcards browse, resume, and finish without quiz analytics', async ({ page }, testInfo) => {
+test('flashcards browse, resume an imported fixture deck, and finish without quiz analytics', async ({
+  page,
+}, testInfo) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();

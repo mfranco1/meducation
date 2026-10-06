@@ -1,6 +1,6 @@
 # Direct subject decks and flashcard bulk JSON
 
-Status: Stage 1 (steps 1–4) is complete and verified. Waiting for the user's go signal before beginning Stage 2 (steps 5–6).
+Status: Complete. Stages 1 and 2 are implemented and verified.
 
 ## Goal and scope
 
@@ -122,9 +122,9 @@ Consider a focused `FlashcardBulkAddDialog` and pure `flashcardBulkAddDraft.ts` 
 - [x] **2. Existing API and runtime:** update Python models, repository protocol/indexes, response DTOs/routes, TypeScript API decoders, and local/API runtime setup. Keep existing route paths; subject catalogs return `{ revision, decks }`, with deck `subjectId`. Subject summaries retain deck membership/counts and empty-deck IDs. Preserve strict membership/order validation, ETags, 409/reload handling, cancellation, deduplication, retry, and safe errors. Release frontend and service together and reload old clients; no mixed-contract compatibility layer is planned.
 - [x] **3. Learner simplification:** remove topic filters, labels, counts, callbacks, and navigation/session state. Subjects list decks directly; study/back/finish return to the subject. Preserve Continue Studying, activity ordering, saved-card resume, empty-deck disabling, failed-load recovery, and quiz exit confirmations.
 - [x] **4. Admin hierarchy:** show subject → deck → card, create decks directly under subjects, and update move/reorder/cascade controls and selection handling. Preserve staged snapshots, bounded Undo, change reasons, shared-subject guards, paired imports, and export replay parity.
-- [ ] **5. Bulk parser/compiler:** add both contextual draft contracts, templates, strict path diagnostics, ID allocation, operation compilation, full-candidate validation, and preview snapshot checks. Test the three requested import scenarios and mixed empty/populated decks.
-- [ ] **6. Bulk UI:** connect paste/file input, preview, atomic Stage, batch Undo, stale-preview invalidation, and draft guards to the existing admin workspace.
-- [ ] **7. Verification and documentation:** update current schema/product/architecture/content-management/design/testing docs, fixtures, and acceptance coverage. Keep completed historical trackers as historical records; this plan supersedes their flashcard topic design. Move this tracker to `docs/work/done` only after implementation and required checks pass.
+- [x] **5. Bulk parser/compiler:** add both contextual draft contracts, templates, strict path diagnostics, ID allocation, operation compilation, full-candidate validation, and preview snapshot checks. Test the three requested import scenarios and mixed empty/populated decks.
+- [x] **6. Bulk UI:** connect paste/file input, preview, atomic Stage, batch Undo, stale-preview invalidation, and draft guards to the existing admin workspace.
+- [x] **7. Verification and documentation:** update the active flashcard schema/content-management/testing documentation and admin/learner browser acceptance coverage. Keep completed historical trackers as historical records; this plan supersedes their flashcard topic design. Move this tracker to `docs/work/done` after implementation and required checks pass.
 
 Steps 1–4 are a coherent cross-layer migration; do not ship an intermediate application with mismatched storage/API contracts. Steps 5–6 build on the simplified hierarchy.
 
@@ -140,4 +140,4 @@ Run `npm run lint`, `npm run format:check`, `npm test`, `npm run validate:conten
 
 The work is complete when there is no active flashcard topic contract or UI, decks belong directly to shared subjects, all three bulk creation modes stage atomically and replay exactly, saved deck positions survive the hierarchy migration, and required checks pass.
 
-Planning verification: inspected current docs, contracts, learner/admin implementations, API models/routes, scripts, and tests. This change adds only a plan; implementation checks above remain pending.
+Stage 2 verification: `npm test` (61 files, 352 tests), `npm run lint`, Prettier on changed files, `npm run validate:content`, `npm run build`, `VITE_BUILD_ADMIN=true npm run build`, `npm run test:e2e` (11 tests), `npm run test:e2e:admin` (2 tests), and `git diff --check` all pass. Content validation reports 11,687 questions and an empty canonical flashcard bank; the quiz content remains untouched. Both Vite builds complete with the existing large-chunk advisory (learner Markdown bundle and admin bundle).

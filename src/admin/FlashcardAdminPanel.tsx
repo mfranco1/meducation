@@ -13,12 +13,7 @@ import {
   Typography,
 } from '@mui/material';
 import { storedFlashcardBank, serializeFlashcardBank, flashcardContentRevision } from '../content/flashcardBank';
-import type {
-  StoredFlashcardBank,
-  StoredFlashcardDeck,
-  StoredFlashcard,
-  StoredQuestionBank,
-} from '../content/schema';
+import type { StoredFlashcardBank, StoredFlashcardDeck, StoredFlashcard, StoredQuestionBank } from '../content/schema';
 import { validateFlashcardBank } from '../content/flashcardValidation';
 import type { Subject } from '../domain/types';
 import { storedQuestionBank } from '../content/questionBank';
@@ -34,6 +29,8 @@ import { replayCoordinatedContentChangeSet } from './core/coordinatedContentChan
 import { parseChangeSet } from './core/changeSetSchema';
 import { serializeBank } from './core/serializeBank';
 import type { AdminChangeSet } from './core/types';
+import { FlashcardBulkAddDialog, type FlashcardBulkPreviewSnapshot } from './FlashcardBulkAddDialog';
+import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
 
 type Kind = 'deck' | 'card';
 type Selected = { kind: Kind; id: string } | undefined;
@@ -92,6 +89,11 @@ export function FlashcardAdminPanel({
   const [importFileError, setImportFileError] = useState<string>();
   const importFileRef = useRef<HTMLInputElement>(null);
   const [dirty, setDirty] = useState(false);
+  const [bulkDraftDirty, setBulkDraftDirty] = useState(false);
+  const [bulkDestination, setBulkDestination] = useState<{
+    context: FlashcardBulkAddContext;
+    label: string;
+  }>();
   const [loadedEditor, setLoadedEditor] = useState('');
   const [busy, setBusy] = useState(false);
   const generation = useRef(0);
@@ -115,14 +117,14 @@ export function FlashcardAdminPanel({
   }, [subjectSnapshot, exportContext]);
   useEffect(() => {
     const protectDraft = (event: BeforeUnloadEvent) => {
-      if (dirty || editorDirty) {
+      if (dirty || editorDirty || bulkDraftDirty) {
         event.preventDefault();
         event.returnValue = '';
       }
     };
     addEventListener('beforeunload', protectDraft);
     return () => removeEventListener('beforeunload', protectDraft);
-  }, [dirty, editorDirty]);
+  }, [dirty, editorDirty, bulkDraftDirty]);
   const decksBySubject = useMemo(
     () =>
       bank.decks.reduce<Record<string, StoredFlashcardDeck[]>>(
@@ -170,6 +172,49 @@ export function FlashcardAdminPanel({
       setIssues([error instanceof Error ? error.message : 'Unable to stage this operation.']);
       return undefined;
     }
+  };
+  const commitBulkOperations = (
+    batch: readonly FlashcardAdminOperation[],
+    snapshot: FlashcardBulkPreviewSnapshot,
+  ): string | undefined => {
+    if (!bulkDestination) return 'The bulk destination is no longer selected. Open the batch again.';
+    if (
+      snapshot.bankJson !== serializeFlashcardBank(bank) ||
+      snapshot.subjectSnapshot !== subjectSnapshot ||
+      snapshot.destination !== JSON.stringify(bulkDestination.context) ||
+      snapshot.reason !== reason ||
+      snapshot.exportContext !== exportContext
+    )
+      return 'The workspace changed after preview. Preview the batch again.';
+    try {
+      const candidate = applyFlashcardOperations(bank, subjects, batch);
+      generation.current++;
+      setPendingImport(undefined);
+      remember();
+      setOperations((items) => [...items, ...structuredClone(batch)]);
+      setBank(candidate);
+      onBankChange(candidate);
+      setDirty(true);
+      setIssues([]);
+      setSelection(undefined);
+      setEditor('');
+      setLoadedEditor('');
+      setBulkDestination(undefined);
+      setBulkDraftDirty(false);
+    } catch (error) {
+      return error instanceof Error ? error.message : 'Unable to stage the bulk flashcard batch.';
+    }
+    return undefined;
+  };
+  const openBulk = (context: FlashcardBulkAddContext, label: string) => {
+    if (busy || externalBusy || !discardDraft()) return;
+    if (editorDirty) {
+      setSelection(undefined);
+      setEditor('');
+      setLoadedEditor('');
+    }
+    setBulkDraftDirty(false);
+    setBulkDestination({ context, label });
   };
   const create = (kind: Kind, parentId: string) => {
     if (kind === 'deck') load({ kind, id: '' }, { id: makeId('d'), subjectId: parentId, name: 'New deck' });
@@ -224,10 +269,12 @@ export function FlashcardAdminPanel({
     const rows = selection.kind === 'deck' ? candidate.decks : candidate.cards;
     const row = rows.find((item) => item.id === selection.id);
     if (!row) return;
-    const parentId = selection.kind === 'deck' && 'subjectId' in row ? row.subjectId : 'deckId' in row ? row.deckId : '';
-    const hasSameParent = (item: typeof row) => selection.kind === 'deck'
-      ? 'subjectId' in item && item.subjectId === parentId
-      : 'deckId' in item && item.deckId === parentId;
+    const parentId =
+      selection.kind === 'deck' && 'subjectId' in row ? row.subjectId : 'deckId' in row ? row.deckId : '';
+    const hasSameParent = (item: typeof row) =>
+      selection.kind === 'deck'
+        ? 'subjectId' in item && item.subjectId === parentId
+        : 'deckId' in item && item.deckId === parentId;
     const siblings = rows.map((item, index) => ({ item, index })).filter(({ item }) => hasSameParent(item));
     const siblingPosition = siblings.findIndex(({ item }) => item.id === selection.id);
     const target = siblings[siblingPosition + direction];
@@ -479,31 +526,47 @@ export function FlashcardAdminPanel({
             {subjects.map((subject) => (
               <Box key={subject.id}>
                 <ListItemText primary={subject.name} secondary={subject.id} />
-                <Button size="small" onClick={() => create('deck', subject.id)}>
-                  Add deck
-                </Button>
+                <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                  <Button size="small" onClick={() => create('deck', subject.id)}>
+                    Add deck
+                  </Button>
+                  <Button
+                    size="small"
+                    onClick={() => openBulk({ kind: 'subject', subjectId: subject.id }, subject.name)}
+                  >
+                    Bulk add decks
+                  </Button>
+                </Stack>
                 {decksBySubject[subject.id]?.map((deck) => (
-                      <Box key={deck.id} sx={{ pl: 2 }}>
-                        <ListItemButton
-                          selected={selection?.kind === 'deck' && selection.id === deck.id}
-                          onClick={() => load({ kind: 'deck', id: deck.id }, deck)}
-                        >
-                          <ListItemText primary={deck.name} secondary={`${cardsByDeck[deck.id]?.length ?? 0} cards`} />
-                        </ListItemButton>
-                        <Button size="small" onClick={() => create('card', deck.id)}>
-                          Add card
-                        </Button>
-                        {cardsByDeck[deck.id]?.map((card) => (
-                          <ListItemButton
-                            key={card.id}
-                            sx={{ pl: 4 }}
-                            selected={selection?.kind === 'card' && selection.id === card.id}
-                            onClick={() => load({ kind: 'card', id: card.id }, card)}
-                          >
-                            <ListItemText primary={card.front.slice(0, 50)} secondary="Card" />
-                          </ListItemButton>
-                        ))}
-                      </Box>
+                  <Box key={deck.id} sx={{ pl: 2 }}>
+                    <ListItemButton
+                      selected={selection?.kind === 'deck' && selection.id === deck.id}
+                      onClick={() => load({ kind: 'deck', id: deck.id }, deck)}
+                    >
+                      <ListItemText primary={deck.name} secondary={`${cardsByDeck[deck.id]?.length ?? 0} cards`} />
+                    </ListItemButton>
+                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                      <Button size="small" onClick={() => create('card', deck.id)}>
+                        Add card
+                      </Button>
+                      <Button
+                        size="small"
+                        onClick={() => openBulk({ kind: 'deck', deckId: deck.id }, `${subject.name} / ${deck.name}`)}
+                      >
+                        Bulk add cards
+                      </Button>
+                    </Stack>
+                    {cardsByDeck[deck.id]?.map((card) => (
+                      <ListItemButton
+                        key={card.id}
+                        sx={{ pl: 4 }}
+                        selected={selection?.kind === 'card' && selection.id === card.id}
+                        onClick={() => load({ kind: 'card', id: card.id }, card)}
+                      >
+                        <ListItemText primary={card.front.slice(0, 50)} secondary="Card" />
+                      </ListItemButton>
+                    ))}
+                  </Box>
                 ))}
               </Box>
             ))}
@@ -635,6 +698,26 @@ export function FlashcardAdminPanel({
           )}
         </Stack>
       </Paper>
+      {bulkDestination && (
+        <FlashcardBulkAddDialog
+          open
+          context={bulkDestination.context}
+          destinationLabel={bulkDestination.label}
+          bank={bank}
+          subjects={subjects}
+          reason={reason}
+          onReasonChange={(value) => {
+            generation.current++;
+            setReason(value);
+            if (operations.length) setDirty(true);
+          }}
+          exportContext={exportContext}
+          busy={busy || externalBusy}
+          onClose={() => setBulkDestination(undefined)}
+          onDraftDirtyChange={setBulkDraftDirty}
+          onStage={commitBulkOperations}
+        />
+      )}
     </Stack>
   );
 }

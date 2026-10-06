@@ -8,14 +8,14 @@ The relationship chain is `card.deckId → deck.subjectId → subject.id`. A dec
 
 ```ts
 interface StoredFlashcardDeck {
-  id: string;        // stable opaque ID prefixed with d
+  id: string; // stable opaque ID prefixed with d
   subjectId: string; // existing shared subject ID
   name: string;
   description?: string;
 }
 
 interface StoredFlashcard {
-  id: string;        // stable opaque ID prefixed with f
+  id: string; // stable opaque ID prefixed with f
   deckId: string;
   front: string;
   back: string;
@@ -38,9 +38,15 @@ Card `front` and `back` use the same restricted rich Markdown, HTML, image, URL,
 
 ## Schema v1 migration
 
-`migrateFlashcardBankV1` builds a v2 candidate from a v1 bank without modifying the input or canonical file. It resolves each old deck's `topicId` to the topic's `subjectId`, preserves deck/card IDs, content, and array order, removes topics, and returns a report of removed topics and mapped decks. Orphan topic or subject references fail. Review the report and candidate before replacing the canonical bank. The checked-in bank is already schema v2.
+`migrateFlashcardBankV1` builds a v2 candidate from a v1 bank without modifying the input or canonical file. It resolves each old deck's `topicId` to the topic's `subjectId`, preserves deck/card IDs, content, and array order, removes topics, and returns a report of removed topics, mapped decks, and duplicate-name warnings. Orphan topic or subject references fail. Review the report and candidate before replacing the canonical bank. The checked-in bank is already schema v2.
 
 The runtime accepts v2 only. Flashcard change sets use version 2 and schema-v2 revisions; v1 flashcard change sets require replay against their matching v1 bank/tooling followed by candidate migration. Quiz schema and change sets are unaffected.
+
+## Admin bulk JSON
+
+The local admin accepts content-only JSON from the selected destination. For a deck, use `{ "cards": [...] }`, where each card requires non-empty `front` and `back` strings and may include `sources` and `reviewNote`. For a subject, use `{ "decks": [...] }`, where each deck requires a non-empty `name` and may include `description` and `cards`; omitted or empty `cards` creates an empty deck. Nested cards use the same fields as cards added to an existing deck.
+
+The admin rejects unknown fields, IDs, parent references, null values, blank required text, invalid Markdown, and empty top-level batches with JSON-path diagnostics. It allocates IDs, previews the ordered candidate and warnings, then stages all records as one undoable batch. Editing the draft or changing the bank, subjects, destination, reason, or coordinated export context makes the preview stale. Paste JSON into the editor or load a `.json` file; technical change-set import remains a separate workflow.
 
 ## PostgreSQL mapping
 

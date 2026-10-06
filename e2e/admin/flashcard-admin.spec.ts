@@ -3,6 +3,7 @@ import { mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
 test('stages deck and card CRUD and previews an exported replay', async ({ page }, testInfo) => {
+  test.setTimeout(60_000);
   const downloads: import('@playwright/test').Download[] = [];
   page.on('download', (download) => downloads.push(download));
   await page.goto('/admin.html');
@@ -101,4 +102,106 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   await expect(page.getByText('Temporary shared subject', { exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
+});
+
+test('bulk adds cards, decks, and nested cards through preview, one-step undo, and change-set replay', async ({
+  page,
+}, testInfo) => {
+  const downloads: import('@playwright/test').Download[] = [];
+  page.on('download', (download) => downloads.push(download));
+  await page.goto('/admin.html');
+  await expect(page.getByText('Admin', { exact: true })).toBeVisible({ timeout: 30_000 });
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+
+  await page.getByRole('button', { name: 'Bulk add decks' }).first().click();
+  await page.getByRole('textbox', { name: 'Bulk JSON' }).fill(
+    JSON.stringify({
+      decks: [
+        { name: 'Empty bulk deck' },
+        {
+          name: 'Nested bulk deck',
+          cards: [
+            { front: 'Nested question one', back: 'Nested answer one' },
+            { front: 'Nested question two', back: 'Nested answer two' },
+          ],
+        },
+      ],
+    }),
+  );
+  await page.getByRole('button', { name: 'Preview' }).click();
+  const preview = page.getByRole('region', { name: 'Bulk add preview' });
+  await expect(preview).toContainText('2 deck(s)');
+  await expect(preview).toContainText('Nested question two');
+  await page.getByRole('button', { name: 'Stage batch' }).click();
+  await expect(page.getByRole('button', { name: 'Empty bulk deck 0 cards' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Nested bulk deck 2 cards' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Bulk add cards' }).nth(1).click();
+  const cardBatch = JSON.stringify({
+    cards: [{ front: 'Appended question', back: 'Appended answer', reviewNote: 'Reviewed' }],
+  });
+  await page
+    .locator('input[type="file"]')
+    .last()
+    .setInputFiles({
+      name: 'cards.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(cardBatch),
+    });
+  await expect(page.getByRole('textbox', { name: 'Bulk JSON' })).toHaveValue(cardBatch);
+  await page.getByRole('button', { name: 'Preview' }).click();
+  await expect(page.getByRole('region', { name: 'Bulk add preview' })).toContainText('Appended question');
+  await page.getByRole('button', { name: 'Stage batch' }).click();
+  await expect(page.getByRole('button', { name: 'Nested bulk deck 3 cards' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Export flashcard JSON and change set' }).click();
+  await expect.poll(() => downloads.length).toBe(2);
+  const changeSetDownload = downloads.find((item) => item.suggestedFilename() === 'flashcard-bank-change-set.json');
+  expect(changeSetDownload).toBeDefined();
+  const changeSetPath = testInfo.outputPath('flashcard-bulk-change-set.json');
+  await mkdir(dirname(changeSetPath), { recursive: true });
+  await changeSetDownload!.saveAs(changeSetPath);
+  const exported = JSON.parse(await readFile(changeSetPath, 'utf8')) as { operations: Array<{ op: string }> };
+  expect(exported.operations.map((operation) => operation.op)).toEqual([
+    'deck.create',
+    'deck.create',
+    'card.create',
+    'card.create',
+    'card.create',
+  ]);
+
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Nested bulk deck 2 cards' })).toBeVisible();
+  await page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('Discard every staged');
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await page.getByRole('button', { name: 'Import change set' }).click();
+  await page.locator('input[type="file"]').last().setInputFiles(changeSetPath);
+  await expect(page.getByText('Import preview')).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Resulting flashcard bank' })).toContainText('Appended answer');
+  await page.getByRole('button', { name: 'Stage import' }).click();
+  await expect(page.getByRole('button', { name: 'Empty bulk deck 0 cards' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Nested bulk deck 3 cards' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Bulk add decks' }).first().click();
+  await page.getByRole('textbox', { name: 'Bulk JSON' }).fill(
+    JSON.stringify({
+      decks: [
+        { name: 'Valid draft deck' },
+        { name: 'Invalid nested deck', cards: [{ front: '<script>bad</script>', back: 'Safe' }] },
+      ],
+    }),
+  );
+  await page.getByRole('button', { name: 'Preview' }).click();
+  await expect(page.getByText(/\$\.decks\[1\]\.cards\[0\].*unsupported HTML/)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Stage batch' })).toBeDisabled();
+  await page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('Discard the unstaged bulk JSON draft');
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: 'Cancel' }).click();
+  await expect(page.getByRole('button', { name: 'Empty bulk deck 0 cards' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /Valid draft deck/ })).toHaveCount(0);
 });

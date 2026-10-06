@@ -286,4 +286,121 @@ describe('FlashcardAdminPanel', () => {
     expect(screen.getByRole('alert')).toHaveTextContent('unknown subject');
     expect(screen.queryByText('Invalid')).toBeNull();
   });
+
+  it('previews and stages multiple cards as one undoable batch', async () => {
+    let bank: StoredFlashcardBank = structuredClone(storedFlashcardBank);
+    const onBankChange = vi.fn((value: StoredFlashcardBank) => {
+      bank = value;
+    });
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardAdminPanel {...props} onBankChange={onBankChange} />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    stageRecord({ id: 'd-bulk-cards', subjectId: 's1', name: 'Bulk cards destination' });
+    fireEvent.click(screen.getByRole('button', { name: 'Bulk add cards' }));
+    const json = screen.getByRole('textbox', { name: 'Bulk JSON' });
+    fireEvent.change(json, {
+      target: {
+        value: JSON.stringify({
+          cards: [
+            { front: '**First**', back: 'Answer one', sources: 'A source' },
+            { front: 'Second', back: 'Answer two', reviewNote: 'Check this later' },
+          ],
+        }),
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(await screen.findByRole('region', { name: 'Bulk add preview' })).toHaveTextContent('2 card(s)');
+    expect(screen.getByRole('region', { name: 'Bulk add preview' })).toHaveTextContent('Check this later');
+    fireEvent.click(screen.getByRole('button', { name: 'Stage batch' }));
+    await waitFor(() => expect(bank.cards).toHaveLength(2));
+    expect(onBankChange).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(bank.decks.map((deck) => deck.id)).toEqual(['d-bulk-cards']);
+    expect(bank.cards).toEqual([]);
+  });
+
+  it('stages empty and recursively populated decks for a selected subject atomically', async () => {
+    let bank: StoredFlashcardBank = structuredClone(storedFlashcardBank);
+    const onBankChange = vi.fn((value: StoredFlashcardBank) => {
+      bank = value;
+    });
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardAdminPanel {...props} onBankChange={onBankChange} />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'Bulk add decks' })[0]);
+    fireEvent.change(screen.getByRole('textbox', { name: 'Bulk JSON' }), {
+      target: {
+        value: JSON.stringify({
+          decks: [
+            { name: 'Empty deck', description: 'No cards yet', cards: [] },
+            {
+              name: 'Nested deck',
+              cards: [
+                { front: 'Question one', back: 'Answer one' },
+                { front: 'Question two', back: 'Answer two' },
+              ],
+            },
+          ],
+        }),
+      },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    const preview = await screen.findByRole('region', { name: 'Bulk add preview' });
+    expect(preview).toHaveTextContent('2 deck(s)');
+    expect(preview).toHaveTextContent('2 card(s)');
+    expect(preview).toHaveTextContent('Empty deck');
+    expect(preview).toHaveTextContent('Question two');
+    fireEvent.click(screen.getByRole('button', { name: 'Stage batch' }));
+    await waitFor(() => expect(bank.decks).toHaveLength(2));
+    expect(bank.decks.map((deck) => deck.name)).toEqual(['Empty deck', 'Nested deck']);
+    expect(bank.decks[0].description).toBe('No cards yet');
+    expect(bank.cards.map((card) => card.front)).toEqual(['Question one', 'Question two']);
+    expect(onBankChange).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(bank.decks).toEqual([]);
+    expect(bank.cards).toEqual([]);
+  });
+
+  it('rejects an invalid nested card without partial staging and invalidates stale previews', async () => {
+    let bank: StoredFlashcardBank = structuredClone(storedFlashcardBank);
+    const onBankChange = vi.fn((value: StoredFlashcardBank) => {
+      bank = value;
+    });
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardAdminPanel {...props} onBankChange={onBankChange} />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'Bulk add decks' })[0]);
+    const json = screen.getByRole('textbox', { name: 'Bulk JSON' });
+    fireEvent.change(json, {
+      target: {
+        value: JSON.stringify({
+          decks: [{ name: 'Would be valid', cards: [{ front: '<script>bad</script>', back: 'Safe' }] }],
+        }),
+      },
+    });
+    const unload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(unload);
+    expect(unload.defaultPrevented).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(await screen.findByText(/\$\.decks\[0\]\.cards\[0\].*unsupported HTML/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Stage batch' })).toBeDisabled();
+    expect(bank.decks).toEqual([]);
+    expect(bank.cards).toEqual([]);
+    expect(onBankChange).not.toHaveBeenCalled();
+
+    fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Valid deck' }] }) } });
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    expect(await screen.findByRole('region', { name: 'Bulk add preview' })).toBeVisible();
+    fireEvent.change(screen.getByRole('textbox', { name: 'Change reason' }), { target: { value: 'Updated reason' } });
+    expect(await screen.findByText(/changed\. Preview again before staging/)).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Stage batch' })).toBeDisabled();
+  });
 });

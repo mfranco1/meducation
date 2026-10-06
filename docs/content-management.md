@@ -2,7 +2,7 @@
 
 `src/content/questionBank.generated.json` is the canonical content store for the application. It is a schema-v4 JSON database containing compact subject, quiz, and question identifiers, final choice text, answer provenance, display-ready GFM stems and rationales, rationale metadata, and answer-review notes.
 
-Flashcard content lives in the separate schema-v2 `src/content/flashcardBank.generated.json` file. Read [the flashcard schema](flashcard-schema.md) before editing it. Decks reference existing subject IDs directly; do not copy or recreate subjects in the flashcard bank. `npm run validate:content` checks both banks and their shared-subject references. The local-only Flashcards section in `/admin.html` stages deck and card CRUD in memory and exports the bank plus a reasoned version-2 change set. It does not write repository files or provide access control. Review exports before replacing the canonical file and restart the content service after replacement.
+Flashcard content lives in the separate schema-v2 `src/content/flashcardBank.generated.json` file. Read [the flashcard schema](flashcard-schema.md) before editing it. Decks reference existing subject IDs directly; do not copy or recreate subjects in the flashcard bank. `npm run validate:content` checks both banks and their shared-subject references. The local-only Flashcards section in `/admin.html` stages single-record edits and bulk JSON additions for cards, decks, or decks with nested cards. All additions are previewed and staged atomically in memory; the editor exports the bank plus a reasoned version-2 change set. It does not write repository files or provide access control. Review exports before replacing the canonical file and restart the content service after replacement.
 
 Flashcard staging and replay use the same structural, Markdown/HTML/image/math validation as canonical validation. Duplicate sibling names are warnings; IDs remain authoritative. Unstaged record edits are protected when changing selection or leaving the page. Export retains the staged workspace: use Reset or Undo before importing another change set. Undo and reset in either authoring section refuse to create dangling shared-subject references.
 
@@ -31,15 +31,19 @@ Example content-only draft for a new subject and quiz:
 ```json
 {
   "subject": { "name": "Pearls" },
-  "quizzes": [{
-    "name": "Pearls Practice Test 1",
-    "items": [{
-      "stem": "Question stem",
-      "choices": ["First choice", "Second choice"],
-      "answer": "A",
-      "rationale": "Why A is correct"
-    }]
-  }]
+  "quizzes": [
+    {
+      "name": "Pearls Practice Test 1",
+      "items": [
+        {
+          "stem": "Question stem",
+          "choices": ["First choice", "Second choice"],
+          "answer": "A",
+          "rationale": "Why A is correct"
+        }
+      ]
+    }
+  ]
 }
 ```
 
