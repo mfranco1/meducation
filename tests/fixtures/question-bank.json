@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 4,
+  "subjects": [
+    {
+      "id": "s1",
+      "name": "Subject One",
+      "accent": "#123456"
+    },
+    {
+      "id": "s2",
+      "name": "Subject Two",
+      "accent": "#654321"
+    }
+  ],
+  "quizzes": [
+    {
+      "id": "q1",
+      "subjectId": "s1",
+      "name": "First quiz"
+    },
+    {
+      "id": "q2",
+      "subjectId": "s2",
+      "name": "Other subject quiz"
+    },
+    {
+      "id": "q3",
+      "subjectId": "s1",
+      "name": "Second quiz"
+    }
+  ],
+  "questions": [
+    {
+      "id": "i1",
+      "quizId": "q1",
+      "stem": "A **reviewed** question",
+      "choices": [
+        {
+          "id": "A",
+          "text": "Provided answer"
+        },
+        {
+          "id": "B",
+          "text": "Verified answer"
+        }
+      ],
+      "answer": "A",
+      "verifiedAnswer": "B",
+      "rationale": "The **verified** answer preserves the original key.",
+      "rationaleMeta": {
+        "provenance": "ai_draft_reviewed",
+        "reviewedAt": "2026-10-06",
+        "reviewNote": "Reviewed fixture rationale.",
+        "answerReviewNote": "The provided key requires review.",
+        "sources": "Fixture reference."
+      },
+      "metadata": {
+        "topic": "Fixture topic"
+      }
+    },
+    {
+      "id": "i3",
+      "quizId": "q1",
+      "stem": "Second question in the first quiz",
+      "choices": [
+        {
+          "id": "A",
+          "text": "One"
+        },
+        {
+          "id": "B",
+          "text": "Two"
+        }
+      ],
+      "answer": "B",
+      "rationale": "Second rationale."
+    },
+    {
+      "id": "i2",
+      "quizId": "q2",
+      "stem": "Other subject question",
+      "choices": [
+        {
+          "id": "A",
+          "text": "One"
+        },
+        {
+          "id": "B",
+          "text": "Two"
+        }
+      ],
+      "answer": "A",
+      "rationale": "Other subject rationale."
+    },
+    {
+      "id": "i4",
+      "quizId": "q3",
+      "stem": "Question in the second quiz",
+      "choices": [
+        {
+          "id": "A",
+          "text": "One"
+        },
+        {
+          "id": "B",
+          "text": "Two"
+        }
+      ],
+      "answer": "A",
+      "rationale": "Second quiz rationale."
+    }
+  ]
+}

@@ -2,6 +2,15 @@ import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 
+// Unit tests exercise the real adapters against fixed, small banks. The standalone
+// validate:content command validates authored banks without this Vitest setup.
+vi.mock('../content/questionBank.generated.json', async () => ({
+  default: (await import('../../tests/fixtures/question-bank.json')).default,
+}));
+vi.mock('../content/flashcardBank.generated.json', async () => ({
+  default: (await import('../../tests/fixtures/flashcard-bank-contract.json')).default.bank,
+}));
+
 const matchMedia = (matches = false) => vi.fn().mockImplementation((query: string) => ({
   matches,
   media: query,

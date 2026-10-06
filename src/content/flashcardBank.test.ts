@@ -13,10 +13,18 @@ describe('flashcard content adapter', () => {
     expect(repository.listSubjects()[0].deckIds).toEqual(['d-empty', 'd-cranial', 'd-extra']);
     expect(repository.listCards('d-cranial').map(card => card.id)).toEqual(['f-1', 'f-2']);
   });
-  it('exposes shared quiz subjects and empty ordered catalogs', () => {
-    expect(flashcardRepository.listSubjects()).toHaveLength(13);
-    expect(flashcardRepository.listDecks('s1')).toEqual([]);
-    expect(flashcardRepository.listCards('d1')).toEqual([]);
+  it('indexes populated and empty catalogs under shared subjects', () => {
+    expect(flashcardRepository.listSubjects().map(subject => [subject.id, subject.deckCount, subject.emptyDeckIds])).toEqual([
+      ['s1', 2, ['d-empty']], ['s2', 0, []],
+    ]);
+    expect(flashcardRepository.listDecks('s1').map(deck => [deck.id, deck.cardCount])).toEqual([
+      ['d-cranial', 2], ['d-empty', 0],
+    ]);
+    expect(flashcardRepository.listCards('d-cranial')).toEqual(fixture.bank.cards);
+    expect(flashcardRepository.listDecks('s2')).toEqual([]);
+    expect(flashcardRepository.listCards('d-empty')).toEqual([]);
+    expect(flashcardRepository.listDecks('missing')).toEqual([]);
+    expect(flashcardRepository.listCards('missing')).toEqual([]);
   });
 
   it('serializes deterministically and derives a SHA-256 revision', async () => {

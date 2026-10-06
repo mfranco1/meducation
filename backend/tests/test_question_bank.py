@@ -102,14 +102,6 @@ def test_content_api_and_revision_conflicts(bank_settings: Settings) -> None:
         )
 
 
-def test_canonical_bank_loads() -> None:
-    bank = JsonQuestionBankRepository(Settings().bank_path)
-    assert bank.bank.schemaVersion == 4
-    assert bank.bank.subjects
-    assert bank.bank.quizzes
-    assert bank.bank.questions
-
-
 def test_injected_repository_skips_payload_build_for_conditional_response(
     bank_settings: Settings,
 ) -> None:
