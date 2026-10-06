@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 import { QuizScreen } from './QuizScreen';
 import type { Attempt, Question, Quiz } from '../../domain/types';
 

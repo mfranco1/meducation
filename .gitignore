@@ -4,8 +4,8 @@ dist/
 tn-pdfs
 content/
 !src/content/
-!src/app/components/content/
-!src/app/components/content/*.tsx
+!src/shared/ui/content/
+!src/shared/ui/content/*.tsx
 
 # Local language-tool caches
 __pycache__/

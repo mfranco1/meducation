@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Attempt, FeedbackMode, Quiz } from '../../domain/types';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 import { SubjectScreen, type QuizProgress } from './SubjectScreen';
 
 const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };

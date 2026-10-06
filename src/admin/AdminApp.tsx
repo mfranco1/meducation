@@ -3,8 +3,8 @@ import {
   Alert, Box, Button, Container, Divider, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography,
 } from '@mui/material';
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import { AppShell } from '../app/components/AppShell';
-import { ScreenLoading } from '../app/components/ScreenLoading';
+import { AppShell } from '../shared/ui/shell/AppShell';
+import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
 import { storedQuestionBank } from '../content/questionBank';
 import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';

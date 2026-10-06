@@ -1,5 +1,5 @@
 import { Alert, Box, Typography } from '@mui/material';
-import { MarkdownContent } from '../content/MarkdownContent';
+import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import type { Question } from '../../../domain/types';
 
 export function ExplanationContent({ question }: { question: Question }) {

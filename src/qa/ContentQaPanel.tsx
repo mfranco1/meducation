@@ -2,7 +2,7 @@ import { Alert, Box, Card, CardContent, Chip, Container, Stack, Typography } fro
 import { questions, quizzes, storedQuestionBank, subjects } from '../content/questionBank';
 import { validateQuestionBank, validateStoredQuestionBank } from '../content/validate';
 import { validateQuestionMarkdown } from '../content/markdownValidation';
-import { MarkdownContent } from '../app/components/content/MarkdownContent';
+import { MarkdownContent } from '../shared/ui/content/MarkdownContent';
 
 /** Development-only inspection screen: visit `/#content-qa`. Source data remains edited in content files. */
 export function ContentQaPanel() {

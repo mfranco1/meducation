@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppNavigationDrawer } from './AppNavigationDrawer';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 
 describe('AppNavigationDrawer', () => {
   it('shows the logo and the two labelled destinations in the expanded drawer', () => {

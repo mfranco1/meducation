@@ -1,7 +1,7 @@
 import { Component, type ReactNode, Suspense, useEffect } from 'react';
 import { Alert, Button, Container } from '@mui/material';
 import { LoadedScreenContent, ScreenLoading } from './ScreenLoading';
-import { screenTransitionDurationMs } from './ScreenTransition';
+import { screenTransitionDurationMs } from '../transitions/ScreenTransition';
 
 function LoadingFallback({ label, onShown }: { label: string; onShown: () => void }) {
   useEffect(() => onShown(), [onShown]);

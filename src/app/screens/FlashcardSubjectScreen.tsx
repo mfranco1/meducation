@@ -5,8 +5,8 @@ import type { FlashcardCheckpoint } from '../../domain/flashcardStudy';
 import type { FlashcardDeckSummary, FlashcardCatalogResponse } from '../../content/flashcardApiDecoders';
 import { decksForSubject } from '../flashcards';
 import { SubjectBrowseLayout } from '../components/SubjectBrowseLayout';
-import { ContentRecoveryBanner } from '../components/ContentRecoveryBanner';
-import { LoadingSkeleton } from '../components/LoadingSkeleton';
+import { ContentRecoveryBanner } from '../../shared/ui/loading/ContentRecoveryBanner';
+import { LoadingSkeleton } from '../../shared/ui/loading/LoadingSkeleton';
 
 export function FlashcardSubjectScreen({ subject, catalog, checkpoints, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck }: {
   subject: Subject;

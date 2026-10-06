@@ -2,7 +2,7 @@ import FlagIcon from '@mui/icons-material/Flag';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { useEffect, useRef, useState } from 'react';
 import { Box, Card, CardContent, Container, FormControlLabel, IconButton, Radio, RadioGroup, Stack, Typography, useTheme } from '@mui/material';
-import { MarkdownContent } from '../components/content/MarkdownContent';
+import { MarkdownContent } from '../../shared/ui/content/MarkdownContent';
 import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../domain/types';
 import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
@@ -11,10 +11,10 @@ import { RadiatingCircles } from '../components/celebration/RadiatingCircles';
 import { shouldTriggerCorrectAnswerBurst } from '../components/celebration/correctAnswerBurst';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
-import { QuestionNavigationLayout } from '../components/quiz/QuestionNavigationLayout';
+import { QuestionNavigationLayout } from '../../shared/ui/study/QuestionNavigationLayout';
 import { Stopwatch } from '../components/quiz/Stopwatch';
 import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
-import { StudyHeader, StudyNavigationFooter } from '../components/study/StudyHeader';
+import { StudyHeader, StudyNavigationFooter } from '../../shared/ui/study/StudyHeader';
 
 interface QuizScreenProps {
   quiz: Quiz;

@@ -8,7 +8,7 @@
     "build": "tsc -b && vite build",
     "test": "vitest run --maxWorkers=2",
     "lint": "eslint src",
-    "format:check": "prettier --check .prettierrc.json eslint.config.mjs playwright.config.ts e2e src/app/theme.ts",
+    "format:check": "prettier --check .prettierrc.json eslint.config.mjs playwright.config.ts e2e src/shared/theme.ts",
     "pretest:e2e": "VITE_CONTENT_MAX_RETRIES=0 npm run build",
     "test:e2e": "playwright test",
     "test:e2e:admin": "playwright test --config=playwright.admin.config.ts",

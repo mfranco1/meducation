@@ -1,6 +1,6 @@
 import { Button, Stack, Typography } from '@mui/material';
-import { ContentLoadError } from '../../content/contentTransport';
-import { contentLoadMessage } from './notifications/notificationMessages';
+import { ContentLoadError } from '../../../content/contentTransport';
+import { contentLoadMessage } from './notificationMessages';
 
 export function ContentLoadFailure({ title, error, onRetry }: { title: string; error?: Error; onRetry: () => void }) {
   const revisionConflict = error instanceof ContentLoadError && error.kind === 'revision';

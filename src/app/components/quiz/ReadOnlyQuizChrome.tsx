@@ -1,7 +1,7 @@
 import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import { Stack, Typography } from '@mui/material';
 import { formatDuration } from '../../format';
-import { StudyHeader, StudyNavigationFooter } from '../study/StudyHeader';
+import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/StudyHeader';
 
 export function ReadOnlyQuizHeader({ index, total, mode, exitLabel, onExit, finalTimeMs }: {
   index: number;

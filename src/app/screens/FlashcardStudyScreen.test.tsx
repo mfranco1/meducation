@@ -3,7 +3,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FlashcardCard } from '../../domain/types';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 import { FlashcardStudyScreen } from './FlashcardStudyScreen';
 
 const deck = { id: 'd1', subjectId: 's1', name: 'Brachial plexus', cardCount: 2, cardIds: ['f1', 'f2'] };

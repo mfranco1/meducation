@@ -2,12 +2,12 @@ import { StrictMode } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { CssBaseline, ThemeProvider } from '@mui/material';
-import { theme } from './app/theme';
+import { theme } from './shared/theme';
 import { runtimeQuestionBank } from './content/runtimeQuestionBank';
-import { BootFailure } from './app/components/BootFailure';
-import { AppShell } from './app/components/AppShell';
+import { BootFailure } from './shared/ui/loading/BootFailure';
+import { AppShell } from './shared/ui/shell/AppShell';
 import { AppNavigationDrawer } from './app/components/AppNavigationDrawer';
-import { ScreenLoading } from './app/components/ScreenLoading';
+import { ScreenLoading } from './shared/ui/loading/ScreenLoading';
 
 const root = createRoot(document.getElementById('root')!);
 const render = (content: ReactNode) => root.render(

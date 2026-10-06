@@ -3,7 +3,7 @@ import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import { Box, ButtonBase, Drawer, Tooltip, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { AppBrand } from './AppHeader';
+import { AppBrand } from '../../shared/ui/shell/AppHeader';
 import { DrawerEdgeToggle } from './drawer/DrawerEdgeToggle';
 import { DrawerSurface } from './drawer/DrawerSurface';
 import {

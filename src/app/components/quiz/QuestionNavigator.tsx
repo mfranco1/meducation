@@ -2,8 +2,8 @@ import { useRef, type Ref } from 'react';
 import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { isCorrect } from '../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../domain/types';
-import { useScrollCurrentQuestion } from './useScrollCurrentQuestion';
-import { StudyNavigatorTile } from '../study/StudyNavigatorTile';
+import { useScrollCurrentQuestion } from '../../../shared/ui/study/useScrollCurrentQuestion';
+import { StudyNavigatorTile } from '../../../shared/ui/study/StudyNavigatorTile';
 
 export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'wrong' | 'flagged';
 export type QuestionNavigatorFilterSet = 'quiz' | 'review';

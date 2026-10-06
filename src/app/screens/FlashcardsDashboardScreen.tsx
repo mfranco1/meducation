@@ -1,8 +1,8 @@
 import { Box, Chip, Stack, Typography } from '@mui/material';
 import type { Subject } from '../../domain/types';
 import type { FlashcardDashboardSubject } from '../flashcards';
-import { ContentRecoveryBanner } from '../components/ContentRecoveryBanner';
-import { LoadingSkeleton } from '../components/LoadingSkeleton';
+import { ContentRecoveryBanner } from '../../shared/ui/loading/ContentRecoveryBanner';
+import { LoadingSkeleton } from '../../shared/ui/loading/LoadingSkeleton';
 import { StudyDashboardLayout } from '../components/StudyDashboardLayout';
 import { StudyItemCarousel } from '../components/StudyItemCarousel';
 import { SubjectCard } from '../components/SubjectCard';

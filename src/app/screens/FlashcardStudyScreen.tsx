@@ -3,10 +3,10 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FlashcardCard } from '../../domain/types';
 import type { FlashcardDeckSummary } from '../../content/flashcardApiDecoders';
 import type { FlashcardNavigatorFilter } from '../../domain/flashcardStudy';
-import { StudyHeader, StudyNavigationFooter } from '../components/study/StudyHeader';
+import { StudyHeader, StudyNavigationFooter } from '../../shared/ui/study/StudyHeader';
 import { FlashcardNavigator } from '../components/study/FlashcardNavigator';
 import { FlashcardStudyCard } from '../components/study/FlashcardStudyCard';
-import { QuestionNavigationLayout } from '../components/quiz/QuestionNavigationLayout';
+import { QuestionNavigationLayout } from '../../shared/ui/study/QuestionNavigationLayout';
 
 export function FlashcardStudyScreen({ deck, cards, index, revealed, openedCardIds = [], flaggedCardIds = [], saving = false, persistenceError, onReveal, onToggleFlag = () => undefined, onNavigate, onPrevious, onNext, onSaveAndExit, onFinish }: {
   deck: FlashcardDeckSummary;

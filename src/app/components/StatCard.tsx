@@ -1,6 +1,6 @@
 import { Card, CardContent, Chip, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
-import { LoadingSkeleton } from './LoadingSkeleton';
+import { LoadingSkeleton } from '../../shared/ui/loading/LoadingSkeleton';
 
 interface StatCardProps {
   label: string;

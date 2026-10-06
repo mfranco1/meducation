@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
-import { theme } from '../app/theme';
+import { theme } from '../shared/theme';
 import { storedQuestionBank } from '../content/questionBank';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema';
 import { revisionForBank } from './core/serializeBank';

@@ -1,6 +1,6 @@
 import { Box, Stack, Typography } from '@mui/material';
 import type { Question } from '../../../domain/types';
-import { MarkdownContent } from '../content/MarkdownContent';
+import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 
 export function ChoiceExplanations({ question }: { question: Question }) {
   if (!Object.keys(question.choiceExplanations ?? {}).length) return null;

@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { act, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { theme } from '../../theme';
+import { theme } from '../../../shared/theme';
 import { CelebrationOverlay } from './CelebrationOverlay';
 import { RadiatingCircles } from './RadiatingCircles';
 

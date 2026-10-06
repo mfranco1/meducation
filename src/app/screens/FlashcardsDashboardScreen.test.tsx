@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FlashcardsDashboardScreen } from './FlashcardsDashboardScreen';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 
 describe('FlashcardsDashboardScreen', () => {
   it('renders the shared dashboard frame without quiz analytics', () => {

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Box, Button, Container, Stack, Typography } from '@mui/material';
 import CloudOffRoundedIcon from '@mui/icons-material/CloudOffRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import type { ContentLoadError } from '../../content/contentTransport';
+import type { ContentLoadError } from '../../../content/contentTransport';
 
 function useRetrySeconds(retryAt?: number) {
   const [seconds, setSeconds] = useState<number | undefined>();

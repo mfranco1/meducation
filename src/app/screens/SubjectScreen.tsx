@@ -4,9 +4,9 @@ import type { FeedbackMode, Quiz, Subject } from '../../domain/types';
 import { ScoreTrendIndicator } from '../components/ScoreTrendIndicator';
 import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
 import type { QuizProgress } from '../progress';
-import { ContentLoadFailure } from '../components/ContentLoadFailure';
-import { ContentRecoveryBanner } from '../components/ContentRecoveryBanner';
-import { LoadingSkeleton } from '../components/LoadingSkeleton';
+import { ContentLoadFailure } from '../../shared/ui/loading/ContentLoadFailure';
+import { ContentRecoveryBanner } from '../../shared/ui/loading/ContentRecoveryBanner';
+import { LoadingSkeleton } from '../../shared/ui/loading/LoadingSkeleton';
 import { SubjectBrowseLayout } from '../components/SubjectBrowseLayout';
 export type { QuizProgress } from '../progress';
 

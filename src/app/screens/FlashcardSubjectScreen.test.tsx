@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FlashcardCatalogResponse } from '../../content/flashcardApiDecoders';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 import { FlashcardSubjectScreen } from './FlashcardSubjectScreen';
 
 const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b' };

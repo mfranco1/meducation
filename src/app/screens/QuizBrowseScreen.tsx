@@ -4,12 +4,12 @@ import { answerFor } from '../../domain/quizEngine';
 import type { Question, Quiz } from '../../domain/types';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { ChoiceExplanations } from '../components/feedback/ChoiceExplanations';
-import { MarkdownContent } from '../components/content/MarkdownContent';
-import { QuestionNavigationLayout } from '../components/quiz/QuestionNavigationLayout';
+import { MarkdownContent } from '../../shared/ui/content/MarkdownContent';
+import { QuestionNavigationLayout } from '../../shared/ui/study/QuestionNavigationLayout';
 import { QuestionTile } from '../components/quiz/QuestionNavigator';
 import { ReadOnlyChoiceList } from '../components/quiz/ReadOnlyChoiceList';
 import { ReadOnlyQuizFooter, ReadOnlyQuizHeader } from '../components/quiz/ReadOnlyQuizChrome';
-import { useScrollCurrentQuestion } from '../components/quiz/useScrollCurrentQuestion';
+import { useScrollCurrentQuestion } from '../../shared/ui/study/useScrollCurrentQuestion';
 
 interface QuizBrowseScreenProps {
   quiz: Quiz;

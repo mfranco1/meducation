@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 import { activeSubjectStats, type SubjectStat } from '../dashboard';
 import { DashboardScreen } from './DashboardScreen';
 

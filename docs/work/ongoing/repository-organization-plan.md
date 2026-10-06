@@ -1,6 +1,6 @@
 # Repository organization plan
 
-Created: 2026-10-06. Status: Stage 1 complete; waiting for the user's signal to begin Stage 2.
+Created: 2026-10-06. Status: Stage 2 complete; waiting for the user's signal to begin Stage 3.
 
 ## Goal and recommendation
 
@@ -128,13 +128,23 @@ Verification: 38 local documentation links resolved; frontend lint/formatting pa
 
 ## Stage 2 — Establish shared UI ownership
 
-- [ ] Move `theme.ts` to `src/shared/theme.ts`; update learner/admin entry imports and the explicit formatter scope.
-- [ ] Move genuinely shared `AppShell`, `AppHeader`, loading/failure presentation, rich-content renderer, and reusable notification UI into focused `shared/ui` subdirectories, with colocated tests.
-- [ ] Move shared study framing such as `StudyHeader`, `StudyNavigatorTile`, and `QuestionNavigationLayout` together where their actual consumers justify it. Keep quiz-only choice, feedback, and question-control components owned by quizzes.
-- [ ] Keep learner drawer/navigation policy in `app`; place pure reusable drawer presentation in shared UI only when reuse warrants it. Keep domain-specific notification-message mapping outside generic toast presentation.
-- [ ] Update admin and QA imports so they no longer obtain generic UI through learner composition. Check static and dynamic imports, test mocks, stylesheet references, and documentation.
+- [x] Move `theme.ts` to `src/shared/theme.ts`; update learner/admin entry imports and the explicit formatter scope.
+- [x] Move genuinely shared `AppShell`, `AppHeader`, loading/failure presentation, rich-content renderer, and reusable notification UI into focused `shared/ui` subdirectories, with colocated tests.
+- [x] Move shared study framing such as `StudyHeader`, `StudyNavigatorTile`, and `QuestionNavigationLayout` together where their actual consumers justify it. Keep quiz-only choice, feedback, and question-control components owned by quizzes.
+- [x] Keep learner drawer/navigation policy in `app`; place pure reusable drawer presentation in shared UI only when reuse warrants it. Keep domain-specific notification-message mapping outside generic toast presentation.
+- [x] Update admin and QA imports so they no longer obtain generic UI through learner composition. Check static and dynamic imports, test mocks, stylesheet references, and documentation.
 
 Exit gate: shared UI imports no app or feature modules; learner, admin, and QA retain their presentation and loading behavior. Risk: medium, because bootstrap imports affect initial bundles. Dependency: Stage 1.
+
+Completed 2026-10-07. Moved the exact 24 files from the Stage 0 manifest (including colocated tests) into `src/shared/theme.ts` and `src/shared/ui/{shell,loading,transitions,notifications,content,study}`. Updated 39 consuming source/test modules and 67 import specifiers. The shared scroll hook moved with study framing; the loading boundary's transition-duration dependency moved to shared transitions. Safe content-error messages live with loading presentation, while generic notifications remain independent of content-error mapping. Learner drawer policy/helpers and feature-specific controls stay in their existing locations for Stage 3.
+
+Updated the formatter's theme path, Markdown-renderer ignore exceptions, README layout, architecture, and testing guidance. Admin and QA now import shared presentation directly. No forwarders, barrels, component APIs, UI markup/styles, or behavior were introduced or changed. An import-aware comparison confirms that source changes are exactly the planned moves and import replacements; all 812 source import/export/dynamic-import edges preserve the original module graph after path mapping. Shared modules (including their tests) have no app, feature, or admin imports. Moved source is unignored, and both canonical banks plus the dependency lock retain their baseline hashes.
+
+Verification: lint and scoped formatting passed; 61 frontend test files / 363 tests passed; content validation passed with the same 32 answer-review warnings; learner and optional-admin builds passed, including TypeScript checking; all 11 learner and 2 admin Chromium tests passed. Explicit canonical local mode still launches a quiz with zero API requests/page errors. The development QA entry renders the existing math fixture correctly. Desktop/mobile learner/admin captures were inspected; seven of eight additional PNG captures match Stage 0 byte-for-byte, while the mobile flashcard-admin capture differs in transient button shading with unchanged content/layout.
+
+Both build modes retain identical asset filenames, chunk sets, and raw/gzip sizes to Stage 0: 15 learner JS/CSS assets totaling 1,270,975 raw bytes and 18 optional-admin assets totaling 15,535,827 raw bytes. Default production output still omits `admin.html`; the opt-in build includes it. Lazy quiz, browse, review, results, and flashcard-study boundaries, local KaTeX assets, and API startup content behavior remain intact. First-quiz samples were 405 ms locally and 2,069 ms under the existing throttled fixture; these are characterization samples, not performance guarantees. Existing large-chunk and test-tool advisories remain.
+
+Raw move, graph, bundle, browser, and capture evidence is under `/private/tmp/meducation-organization-stage-2/`. Backend code and contracts were unchanged, so Stage 0/1's backend checks remain the baseline. Stage 3 has not started.
 
 ## Stage 3 — Group learner code by feature
 

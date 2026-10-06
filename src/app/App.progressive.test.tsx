@@ -4,7 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CompletedAttempt } from '../domain/types';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import App from './App';
-import { theme } from './theme';
+import { theme } from '../shared/theme';
 import { runtimeQuestionBank } from '../content/runtimeQuestionBank';
 
 function completed(quizId: string, subjectId: string, percentage: number): CompletedAttempt {

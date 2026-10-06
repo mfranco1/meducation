@@ -4,7 +4,7 @@ import { afterEach, expect, it, vi } from 'vitest';
 import { runtimeQuestionBank } from '../content/runtimeQuestionBank';
 import { runtimeFlashcardBank } from '../content/runtimeFlashcardBank';
 import App from './App';
-import { theme } from './theme';
+import { theme } from '../shared/theme';
 
 afterEach(() => vi.unstubAllGlobals());
 

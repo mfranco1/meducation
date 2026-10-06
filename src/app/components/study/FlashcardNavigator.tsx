@@ -2,8 +2,8 @@ import { Box, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { useRef } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
 import { filterFlashcardIndices, type FlashcardNavigatorFilter } from '../../../domain/flashcardStudy';
-import { useScrollCurrentQuestion } from '../quiz/useScrollCurrentQuestion';
-import { StudyNavigatorEmpty, StudyNavigatorTile } from './StudyNavigatorTile';
+import { useScrollCurrentQuestion } from '../../../shared/ui/study/useScrollCurrentQuestion';
+import { StudyNavigatorEmpty, StudyNavigatorTile } from '../../../shared/ui/study/StudyNavigatorTile';
 
 export function FlashcardNavigator({ cards, currentIndex, openedCardIds, flaggedCardIds, filter, onFilterChange, onNavigate }: {
   cards: readonly FlashcardCard[]; currentIndex: number; openedCardIds: readonly string[]; flaggedCardIds: readonly string[]; filter: FlashcardNavigatorFilter; onFilterChange: (filter: FlashcardNavigatorFilter) => void; onNavigate: (index: number) => void;

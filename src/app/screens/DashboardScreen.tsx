@@ -9,8 +9,8 @@ import { StatCard } from '../components/StatCard';
 import { QuizSubjectCard } from '../components/QuizSubjectCard';
 import { SubjectGrid } from '../components/SubjectGrid';
 import { StudyDashboardLayout } from '../components/StudyDashboardLayout';
-import { LoadingSkeleton } from '../components/LoadingSkeleton';
-import { ContentRecoveryBanner } from '../components/ContentRecoveryBanner';
+import { LoadingSkeleton } from '../../shared/ui/loading/LoadingSkeleton';
+import { ContentRecoveryBanner } from '../../shared/ui/loading/ContentRecoveryBanner';
 
 export type { SubjectStat } from '../dashboard';
 

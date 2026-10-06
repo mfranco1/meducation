@@ -3,10 +3,10 @@ import { Alert, Box, Button, Card, CardContent, Container, Stack } from '@mui/ma
 import { useEffect, useState } from 'react';
 import { answerFor, isCorrect } from '../../domain/quizEngine';
 import type { CompletedAttempt, Question, Quiz } from '../../domain/types';
-import { MarkdownContent } from '../components/content/MarkdownContent';
+import { MarkdownContent } from '../../shared/ui/content/MarkdownContent';
 import { ChoiceExplanations } from '../components/feedback/ChoiceExplanations';
 import { FeedbackPanel, type ReadOnlyFeedbackStatus } from '../components/feedback/FeedbackPanel';
-import { QuestionNavigationLayout } from '../components/quiz/QuestionNavigationLayout';
+import { QuestionNavigationLayout } from '../../shared/ui/study/QuestionNavigationLayout';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { ReadOnlyChoiceList } from '../components/quiz/ReadOnlyChoiceList';
 import { ReadOnlyQuizFooter, ReadOnlyQuizHeader } from '../components/quiz/ReadOnlyQuizChrome';

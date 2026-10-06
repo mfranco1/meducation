@@ -4,7 +4,7 @@ import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { Box, ButtonBase, Card, CardContent, IconButton } from '@mui/material';
 import { useLayoutEffect, useRef } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
-import { MarkdownContent } from '../content/MarkdownContent';
+import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 
 export function FlashcardStudyCard({ card, revealed, flagged, onReveal, onToggleFlag }: {
   card: FlashcardCard; revealed: boolean; flagged: boolean; onReveal: () => void; onToggleFlag: () => void;

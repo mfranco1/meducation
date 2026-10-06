@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { CompletedAttempt, Question, Quiz } from '../../domain/types';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 import { QuizReviewScreen } from './QuizReviewScreen';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', name: 'Quiz', questionCount: 2 };

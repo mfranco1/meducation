@@ -1,7 +1,7 @@
 import { act, render, screen } from '@testing-library/react';
 import { ThemeProvider } from '@mui/material/styles';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { theme } from '../../theme';
+import { theme } from '../../../shared/theme';
 import { ResultsScoreHero, scoreAnimationDuration, scoreAnimationProgress, scoreRingColor } from './ResultsScoreHero';
 
 let frames: Map<number, FrameRequestCallback>;

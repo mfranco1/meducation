@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { theme } from '../theme';
+import { theme } from '../../shared/theme';
 import { ResultsScreen } from './ResultsScreen';
 import type { CompletedAttempt, Quiz } from '../../domain/types';
 

@@ -1,8 +1,8 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ContentLoadError } from '../../content/runtimeQuestionBank';
-import { theme } from '../theme';
+import { ContentLoadError } from '../../../content/runtimeQuestionBank';
+import { theme } from '../../theme';
 import { ContentLoadFailure } from './ContentLoadFailure';
 
 describe('content load failure', () => {

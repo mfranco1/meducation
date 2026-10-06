@@ -2,7 +2,7 @@ import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 import type { Question } from '../../../domain/types';
-import { MarkdownContent } from '../content/MarkdownContent';
+import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 
 export function ReadOnlyChoiceList({ question, selectedChoiceId, correctChoiceId, answerUnderReview = false, mode }: {
   question: Question;
