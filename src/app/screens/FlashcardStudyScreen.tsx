@@ -1,62 +1,76 @@
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import { Alert, Box, Button, Card, CardContent, Container, Stack, Typography } from '@mui/material';
-import { useLayoutEffect, useRef } from 'react';
+import { Alert, Box, Container } from '@mui/material';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FlashcardCard } from '../../domain/types';
 import type { FlashcardDeckSummary } from '../../content/flashcardApiDecoders';
-import { MarkdownContent } from '../components/content/MarkdownContent';
+import type { FlashcardNavigatorFilter } from '../../domain/flashcardStudy';
+import { StudyHeader, StudyNavigationFooter } from '../components/study/StudyHeader';
+import { FlashcardNavigator } from '../components/study/FlashcardNavigator';
+import { FlashcardStudyCard } from '../components/study/FlashcardStudyCard';
+import { QuestionNavigationLayout } from '../components/quiz/QuestionNavigationLayout';
 
-export function FlashcardStudyScreen({ deck, cards, index, revealed, saving = false, persistenceError, onReveal, onPrevious, onNext, onSaveAndExit, onFinish }: {
+export function FlashcardStudyScreen({ deck, cards, index, revealed, openedCardIds = [], flaggedCardIds = [], saving = false, persistenceError, onReveal, onToggleFlag = () => undefined, onNavigate, onPrevious, onNext, onSaveAndExit, onFinish }: {
   deck: FlashcardDeckSummary;
   cards: readonly FlashcardCard[];
   index: number;
   revealed: boolean;
+  openedCardIds?: readonly string[];
+  flaggedCardIds?: readonly string[];
   saving?: boolean;
   persistenceError?: string;
   onReveal: () => void;
+  onToggleFlag?: (cardId: string) => void;
+  onNavigate?: (index: number) => void;
   onPrevious: () => void;
   onNext: () => void;
   onSaveAndExit: () => void;
   onFinish: () => void;
 }) {
-  const nextButtonRef = useRef<HTMLButtonElement>(null);
-  const finishButtonRef = useRef<HTMLButtonElement>(null);
+  const [navigatorOpen, setNavigatorOpen] = useState(false);
+  const [filter, setFilter] = useState<FlashcardNavigatorFilter>('all');
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const finishRef = useRef<HTMLButtonElement>(null);
   const advanceHadFocus = useRef(false);
   const card = cards[index];
-  const last = Boolean(card && index >= cards.length - 1);
+  const last = Boolean(card && index === cards.length - 1);
+
   useLayoutEffect(() => {
     if (last && advanceHadFocus.current) {
-      finishButtonRef.current?.focus();
+      finishRef.current?.focus();
       advanceHadFocus.current = false;
     }
   }, [index, last]);
+
+  useEffect(() => {
+    const handleSpace = (event: KeyboardEvent) => {
+      if (event.code !== 'Space' || event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      const target = event.target;
+      if (target instanceof HTMLElement && (target.isContentEditable || target.closest('button, a, input, textarea, select, [role="button"], [role="dialog"], [aria-modal="true"]'))) return;
+      if (document.querySelector('[role="dialog"], [aria-modal="true"]')) return;
+      if (event.repeat) { event.preventDefault(); return; }
+      event.preventDefault();
+      if (!revealed) {
+        onReveal();
+      } else if (index < cards.length - 1) {
+        advanceHadFocus.current = false;
+        onNext();
+      }
+    };
+    window.addEventListener('keydown', handleSpace);
+    return () => window.removeEventListener('keydown', handleSpace);
+  }, [cards.length, index, onNext, onReveal, revealed]);
+
   if (!card) return null;
-  return <Container maxWidth="md" sx={{ py: { xs: 3, sm: 5 } }}>
-    {persistenceError && <Alert severity="error" sx={{ mb: 2 }}>{persistenceError}</Alert>}
-    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ mb: 3 }}>
-      <Box>
-        <Typography variant="h5" component="h1" sx={{ fontWeight: 800 }}>{deck.name}</Typography>
-        <Typography color="text.secondary">Card {index + 1} of {cards.length}</Typography>
-      </Box>
-      <Button startIcon={<ArrowBackRoundedIcon />} onClick={onSaveAndExit} disabled={saving}>Save and exit</Button>
-    </Stack>
-    <Card variant="outlined" sx={{ minHeight: { xs: 300, sm: 380 }, display: 'flex' }}>
-      <CardContent sx={{ p: { xs: 2.5, sm: 4 }, width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <Typography variant="overline" color="text.secondary" sx={{ mb: 2 }}>{revealed ? 'Back' : 'Front'}</Typography>
-        <Box aria-live="polite" sx={{ flex: 1, '& .katex-display': { maxWidth: '100%' } }}>
-          <MarkdownContent markdown={revealed ? card.back : card.front} variant="stem" contentKind="rich" />
-        </Box>
-        {revealed && card.sources && <Typography variant="caption" color="text.secondary" sx={{ mt: 2 }}>Source: <MarkdownContent markdown={card.sources} variant="inline" /></Typography>}
-        <Stack direction="row" justifyContent="center" sx={{ mt: 3 }}>
-          {!revealed && <Button variant="contained" onClick={onReveal}>Reveal answer</Button>}
-          {revealed && <Button variant="outlined" onClick={onReveal}>Show front</Button>}
-        </Stack>
-      </CardContent>
-    </Card>
-    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 3 }}>
-      <Button onClick={onPrevious} disabled={index === 0 || saving}>Previous</Button>
-      {last
-        ? <Button ref={finishButtonRef} color="success" variant="contained" onClick={onFinish} disabled={saving}>Finish deck</Button>
-        : <Button ref={nextButtonRef} variant="contained" onClick={() => { advanceHadFocus.current = document.activeElement === nextButtonRef.current; onNext(); }} disabled={saving}>Next</Button>}
-    </Stack>
+  const navigate = (target: number) => {
+    onNavigate?.(target);
+    setNavigatorOpen(false);
+  };
+  return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
+    <Box component="h1" sx={{ position: 'absolute', left: 0, top: 0, width: '1px', height: '1px', p: 0, m: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>{deck.name}</Box>
+    {persistenceError && <Alert severity="error" role="alert" sx={{ mb: 2 }}>{persistenceError}</Alert>}
+    <StudyHeader itemLabel="Card" index={index} total={cards.length} exitLabel="Save and exit deck" onExit={onSaveAndExit} disabled={saving} />
+    <QuestionNavigationLayout navigator={<FlashcardNavigator cards={cards} currentIndex={index} openedCardIds={openedCardIds} flaggedCardIds={flaggedCardIds} filter={filter} onFilterChange={setFilter} onNavigate={navigate} />} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)} itemLabel="Cards">
+      <FlashcardStudyCard card={card} revealed={revealed} flagged={flaggedCardIds.includes(card.id)} onReveal={onReveal} onToggleFlag={() => onToggleFlag(card.id)} />
+      <StudyNavigationFooter index={index} total={cards.length} onPrevious={onPrevious} onNext={() => { advanceHadFocus.current = document.activeElement === nextRef.current; onNext(); }} onFinish={onFinish} finishLabel="Finish deck" disabled={saving} finishColor="success" nextButtonRef={nextRef} finishButtonRef={finishRef} />
+    </QuestionNavigationLayout>
   </Container>;
 }

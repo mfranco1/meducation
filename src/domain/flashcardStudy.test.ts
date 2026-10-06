@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { checkpointForCard, flashcardContentSignature, nextFlashcardIndex, previousFlashcardIndex, resolveFlashcardLaunch, validateFlashcardCheckpoint } from './flashcardStudy';
+import { checkpointForCard, filterFlashcardIndices, flashcardContentSignature, nextFlashcardIndex, previousFlashcardIndex, resolveFlashcardLaunch, toggleFlashcardId, validateFlashcardCheckpoint } from './flashcardStudy';
 import type { FlashcardCard } from './types';
 
 const cards: FlashcardCard[] = [
@@ -47,5 +47,13 @@ describe('flashcard study rules', () => {
     expect(nextFlashcardIndex(0, 2)).toBe(1);
     expect(nextFlashcardIndex(1, 2)).toBe(1);
     expect(previousFlashcardIndex(7, 2)).toBe(0);
+  });
+
+  it('filters in canonical order and toggles opened and flagged IDs independently', () => {
+    expect(filterFlashcardIndices(cards, ['f2'], ['f1'], 'unopened')).toEqual([0]);
+    expect(filterFlashcardIndices(cards, ['f2'], ['f1'], 'flagged')).toEqual([0]);
+    expect(filterFlashcardIndices(cards, [], [], 'all')).toEqual([0, 1]);
+    expect(toggleFlashcardId(['f1'], 'f2')).toEqual(['f1', 'f2']);
+    expect(toggleFlashcardId(['f1', 'f2'], 'f1')).toEqual(['f2']);
   });
 });

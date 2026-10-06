@@ -8,6 +8,7 @@ import {
   nextFlashcardIndex,
   previousFlashcardIndex,
   resolveFlashcardLaunch,
+  toggleFlashcardId,
 } from '../../domain/flashcardStudy';
 import {
   FlashcardPersistenceError,
@@ -113,9 +114,8 @@ export function useFlashcardSession(
           return;
         }
         const cardId = choice.cardId;
-        if (
-          !runPersistence(() => repository.saveCheckpoint(checkpointForCard(deck.id, cards, cardId, contentSignature)))
-        )
+        const saved = choice.kind === 'resume' ? repository.getCheckpoint(deck.id) : undefined;
+        if (!runPersistence(() => repository.saveCheckpoint(checkpointForCard(deck.id, cards, cardId, contentSignature, undefined, saved?.openedCardIds, saved?.flaggedCardIds))))
           return;
         signature.current = contentSignature;
         setView({
@@ -164,7 +164,7 @@ export function useFlashcardSession(
       if (!card) return;
       if (
         !runPersistence(() =>
-          repository.saveCheckpoint(checkpointForCard(view.deck.id, cards, card.id, signature.current)),
+          repository.saveCheckpoint(checkpointForCard(view.deck.id, cards, card.id, signature.current, undefined, repository.getCheckpoint(view.deck.id)?.openedCardIds, repository.getCheckpoint(view.deck.id)?.flaggedCardIds)),
         )
       )
         return;
@@ -180,12 +180,29 @@ export function useFlashcardSession(
     if (view.page === 'flashcards-study') moveTo(nextFlashcardIndex(view.index, view.deck.cardCount));
   }, [moveTo, view]);
   const toggleReveal = useCallback(
-    () =>
-      setView((current) =>
-        current.page === 'flashcards-study' ? { ...current, revealed: !current.revealed } : current,
-      ),
-    [],
+    () => {
+      if (view.page !== 'flashcards-study') return;
+      const checkpoint = repository.getCheckpoint(view.deck.id);
+      if (!view.revealed && !checkpoint?.openedCardIds.includes(loader.listCards(view.deck.id)[view.index]?.id ?? '')) {
+        const cards = loader.listCards(view.deck.id);
+        const card = cards[view.index];
+        if (!card || !runPersistence(() => repository.saveCheckpoint(checkpointForCard(view.deck.id, cards, card.id, signature.current, undefined, toggleFlashcardId(checkpoint?.openedCardIds ?? [], card.id), checkpoint?.flaggedCardIds)))) return;
+      }
+      setView(current => current.page === 'flashcards-study' ? { ...current, revealed: !current.revealed } : current);
+    },
+    [loader, repository, runPersistence, view],
   );
+
+  const toggleFlag = useCallback((cardId: string) => {
+    if (view.page !== 'flashcards-study') return;
+    const cards = loader.listCards(view.deck.id);
+    if (!cards.some(card => card.id === cardId) || !cards[view.index]) return;
+    const checkpoint = repository.getCheckpoint(view.deck.id);
+    if (!runPersistence(() => repository.saveCheckpoint(checkpointForCard(view.deck.id, cards, cards[view.index].id, signature.current, undefined, checkpoint?.openedCardIds, toggleFlashcardId(checkpoint?.flaggedCardIds ?? [], cardId))))) return;
+  }, [loader, repository, runPersistence, view]);
+
+  const openedCardIds = view.page === 'flashcards-study' ? repository.getCheckpoint(view.deck.id)?.openedCardIds ?? [] : [];
+  const flaggedCardIds = view.page === 'flashcards-study' ? repository.getCheckpoint(view.deck.id)?.flaggedCardIds ?? [] : [];
 
   const saveAndExit = useCallback(() => {
     if (view.page !== 'flashcards-study') return true;
@@ -197,7 +214,7 @@ export function useFlashcardSession(
     }
     if (
       !runPersistence(() =>
-        repository.saveCheckpoint(checkpointForCard(view.deck.id, cards, card.id, signature.current)),
+        repository.saveCheckpoint(checkpointForCard(view.deck.id, cards, card.id, signature.current, undefined, repository.getCheckpoint(view.deck.id)?.openedCardIds, repository.getCheckpoint(view.deck.id)?.flaggedCardIds)),
       )
     )
       return false;
@@ -225,6 +242,10 @@ export function useFlashcardSession(
     previous,
     next,
     toggleReveal,
+    toggleFlag,
+    navigateTo: moveTo,
+    openedCardIds,
+    flaggedCardIds,
     saveAndExit,
     finish,
     cancelLaunch,

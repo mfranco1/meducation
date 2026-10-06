@@ -93,17 +93,36 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.locator('.katex')).toHaveCount(2);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
+    .toBe(true);
   const studyScreenshot = testInfo.outputPath('flashcard-study-mobile.png');
   await page.screenshot({ path: studyScreenshot });
   await testInfo.attach('flashcard-study-mobile.png', { path: studyScreenshot, contentType: 'image/png' });
   await page.setViewportSize({ width: 1280, height: 720 });
+  await page.getByRole('button', { name: 'Card 2, unopened' }).click();
+  await expect(page.getByText('Card 2 of 2')).toBeVisible();
+  await page.getByRole('button', { name: 'Card 1, unopened' }).click();
+  await page.getByRole('heading', { name: /What forms the brachial plexus/ }).click();
+  await page.keyboard.press('Space');
+  await page.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' }).click();
+  await page.getByRole('button', { name: 'Flag card' }).click();
+  await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toBeVisible();
+  await page.getByRole('button', { name: 'Hidden cards, 1' }).click();
+  await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Card 2, unopened' })).toBeVisible();
+  await page.getByRole('button', { name: 'All cards, 2' }).click();
+  await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toBeVisible();
+  await page.getByRole('button', { name: 'Flagged cards, 1' }).click();
+  await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toBeVisible();
+  await page.getByRole('button', { name: 'All cards, 2' }).click();
+  await page.getByRole('button', { name: 'Card 1, opened, flagged' }).click();
   const nextButton = page.getByRole('button', { name: 'Next' });
   await nextButton.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Finish deck' })).toBeFocused();
-  await page.getByRole('button', { name: 'Save and exit' }).click();
+  await page.getByRole('button', { name: 'Save and exit deck' }).click();
   await expect(page.getByRole('button', { name: 'Resume deck' })).toBeVisible();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Topic' })).toHaveCount(0);
@@ -114,6 +133,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Resume deck' }).click();
   await expect(page.getByText('What is the terminal nerve of the posterior cord?')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toBeVisible();
   await page.getByRole('button', { name: 'Reveal answer' }).click();
   await expect(page.getByText('The axillary nerve, n. axillaris.')).toBeVisible();
   await page.getByRole('button', { name: 'Finish deck' }).click();

@@ -205,7 +205,7 @@ function LearnerApp() {
     {view.page === 'quiz-browse' && <QuizBrowseScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onNavigate={session.navigateBrowse} onDone={session.leaveBrowse} />}
     {view.page === 'quiz-review' && <QuizReviewScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onNavigate={session.navigateReview} onRequestExit={() => requestReviewExit('subject')} />}
     {view.page === 'results' && <><ResultReviewWarning quiz={view.quiz} /><ResultsScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onBack={leaveResults} onReview={() => { preloadReviewScreen(); session.reviewResults(); }} /></>}
-    {view.page === 'flashcards-study' && <FlashcardStudyScreen {...view} cards={runtimeFlashcardBank.listCards(view.deck.id)} persistenceError={flashcards.persistenceError} onReveal={flashcards.toggleReveal} onPrevious={flashcards.previous} onNext={flashcards.next} onSaveAndExit={flashcards.saveAndExit} onFinish={flashcards.finish} />}
+    {view.page === 'flashcards-study' && <FlashcardStudyScreen {...view} cards={runtimeFlashcardBank.listCards(view.deck.id)} openedCardIds={flashcards.openedCardIds} flaggedCardIds={flashcards.flaggedCardIds} persistenceError={flashcards.persistenceError} onReveal={flashcards.toggleReveal} onToggleFlag={flashcards.toggleFlag} onNavigate={flashcards.navigateTo} onPrevious={flashcards.previous} onNext={flashcards.next} onSaveAndExit={flashcards.saveAndExit} onFinish={flashcards.finish} />}
     </ScreenLoadBoundary>
     </ScreenTransition>
     <ExitQuizDialog open={exitOpen} onClose={closeExitDialog} onLeave={() => { session.leaveQuiz(exitDestination); closeExitDialog(); }} onAbort={() => { session.abortQuiz(exitDestination); closeExitDialog(); }} />

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FlashcardPersistenceError, LocalFlashcardProgressRepository } from './localFlashcardProgressRepository';
-import { flashcardProgressKey } from './flashcardProgressCodec';
+import { flashcardProgressKey, legacyFlashcardProgressKey } from './flashcardProgressCodec';
 import type { StoragePort } from './progressCodec';
 
 function storagePort(): StoragePort {
@@ -11,7 +11,7 @@ function storagePort(): StoragePort {
 describe('local flashcard progress repository', () => {
   it('keeps snapshots stable and frozen without exposing caller-owned checkpoints', () => {
     const repository = new LocalFlashcardProgressRepository(storagePort());
-    const checkpoint = { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z' };
+    const checkpoint = { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: ['f1'], flaggedCardIds: ['f2'] };
     repository.saveCheckpoint(checkpoint);
     const snapshot = repository.getSnapshot();
     checkpoint.currentCardId = 'f2';
@@ -20,10 +20,11 @@ describe('local flashcard progress repository', () => {
     expect(Object.isFrozen(snapshot)).toBe(true);
     expect(Object.isFrozen(snapshot.checkpoints)).toBe(true);
     expect(Object.isFrozen(snapshot.checkpoints.d1)).toBe(true);
+    expect(Object.isFrozen(snapshot.checkpoints.d1.openedCardIds)).toBe(true);
   });
   it('retries a temporarily unavailable storage read without losing saved checkpoints', () => {
     const storage = storagePort();
-    const stored = { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z' };
+    const stored = { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] };
     new LocalFlashcardProgressRepository(storage).saveCheckpoint(stored);
     let unavailable = true;
     const repository = new LocalFlashcardProgressRepository({
@@ -38,8 +39,8 @@ describe('local flashcard progress repository', () => {
   });
   it('stores independent checkpoints and clears a finished deck', () => {
     const repository = new LocalFlashcardProgressRepository(storagePort());
-    repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z' });
-    repository.saveCheckpoint({ deckId: 'd2', currentCardId: 'f8', contentSignature: 'sig2', updatedAt: '2026-10-06T00:01:00.000Z' });
+    repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    repository.saveCheckpoint({ deckId: 'd2', currentCardId: 'f8', contentSignature: 'sig2', updatedAt: '2026-10-06T00:01:00.000Z', openedCardIds: [], flaggedCardIds: [] });
     expect(repository.getCheckpoint('d1')?.currentCardId).toBe('f2');
     expect(Object.keys(repository.getSnapshot().checkpoints)).toEqual(['d1', 'd2']);
     repository.clearCheckpoint('d1');
@@ -47,13 +48,25 @@ describe('local flashcard progress repository', () => {
     expect(repository.getCheckpoint('d2')?.currentCardId).toBe('f8');
   });
 
+  it('reads legacy positions as unopened and writes v2 only on the next successful checkpoint', () => {
+    const legacy = { schemaVersion: 1, revision: 'legacy-rev', checkpoints: { d1: { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z' } } };
+    const storage = storagePort();
+    storage.setItem(legacyFlashcardProgressKey, JSON.stringify(legacy));
+    const repository = new LocalFlashcardProgressRepository(storage);
+    expect(repository.getCheckpoint('d1')).toMatchObject({ openedCardIds: [], flaggedCardIds: [] });
+    expect(storage.getItem(flashcardProgressKey)).toBeNull();
+    repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:01:00.000Z', openedCardIds: ['f1'], flaggedCardIds: ['f2'] });
+    expect(JSON.parse(storage.getItem(flashcardProgressKey)!)).toMatchObject({ schemaVersion: 2, checkpoints: { d1: { openedCardIds: ['f1'], flaggedCardIds: ['f2'] } } });
+    expect(storage.getItem(legacyFlashcardProgressKey)).toBe(JSON.stringify(legacy));
+  });
+
   it('detects stale writers and preserves corrupt storage for recovery', () => {
     const storage = storagePort();
     const first = new LocalFlashcardProgressRepository(storage);
     const second = new LocalFlashcardProgressRepository(storage);
     first.getSnapshot(); second.getSnapshot();
-    first.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z' });
-    expect(() => second.saveCheckpoint({ deckId: 'd2', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z' }))
+    first.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    expect(() => second.saveCheckpoint({ deckId: 'd2', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] }))
       .toThrowError(expect.objectContaining({ kind: 'conflict' }));
 
     const corruptStorage = storagePort();
@@ -68,7 +81,7 @@ describe('local flashcard progress repository', () => {
   it('reports browser storage write failures without caching a false save', () => {
     const storage: StoragePort = { getItem: () => null, setItem: () => { throw new Error('quota'); } };
     const repository = new LocalFlashcardProgressRepository(storage);
-    expect(() => repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z' }))
+    expect(() => repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] }))
       .toThrowError(FlashcardPersistenceError);
     expect(repository.getCheckpoint('d1')).toBeUndefined();
   });

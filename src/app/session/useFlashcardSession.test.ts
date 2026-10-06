@@ -197,6 +197,21 @@ describe('flashcard session controller', () => {
     expect(repository.getCheckpoint('d1')).toBeUndefined();
   });
 
+  it('persists opened and flagged cards across jumps and resume, while hiding answers after navigation', async () => {
+    const { result, repository } = setup();
+    await act(async () => { await result.current.launchDeck(deck, subject); });
+    act(() => result.current.toggleReveal());
+    act(() => result.current.toggleFlag('f2'));
+    act(() => result.current.navigateTo(1));
+    expect(result.current.view).toMatchObject({ page: 'flashcards-study', index: 1, revealed: false });
+    expect(result.current.openedCardIds).toEqual(['f1']);
+    expect(result.current.flaggedCardIds).toEqual(['f2']);
+    act(() => result.current.saveAndExit());
+    await act(async () => { await result.current.launchDeck(deck, subject); });
+    expect(result.current.view).toMatchObject({ page: 'flashcards-study', index: 1, revealed: false });
+    expect(repository.getCheckpoint('d1')).toMatchObject({ openedCardIds: ['f1'], flaggedCardIds: ['f2'] });
+  });
+
   it('preserves a changed-content checkpoint on cancel and on failed restart', async () => {
     const { result, repository, setFailWrites } = setup();
     const old = checkpointForCard('d1', cards, 'f2', 'sha256-old');

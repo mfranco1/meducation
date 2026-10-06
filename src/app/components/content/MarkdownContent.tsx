@@ -16,7 +16,7 @@ function ContentImage({ src, alt }: { src?: string; alt?: string }) {
   return <Box component="img" src={src} alt={alt ?? ''} loading="lazy" sx={{ display: 'block', maxWidth: '100%', height: 'auto', maxHeight: 520, my: 2, borderRadius: 1 }} />;
 }
 
-export function MarkdownContent({ markdown, variant = 'explanation', contentKind = 'restricted' }: { markdown: string; variant?: MarkdownVariant; contentKind?: MarkdownContentKind }) {
+export function MarkdownContent({ markdown, variant = 'explanation', contentKind = 'restricted', align = 'left', fontWeight }: { markdown: string; variant?: MarkdownVariant; contentKind?: MarkdownContentKind; align?: 'left' | 'center'; fontWeight?: number }) {
   const inline = variant === 'inline';
   const rich = contentKind === 'rich';
   return <ReactMarkdown
@@ -27,17 +27,17 @@ export function MarkdownContent({ markdown, variant = 'explanation', contentKind
     components={{
       p: ({ children }) => inline
         ? <>{children}</>
-        : <Typography variant={variant === 'stem' ? 'h5' : 'body1'} sx={{ lineHeight: variant === 'stem' ? 1.45 : 1.75, fontSize: variant === 'explanation' ? { xs: '1rem', sm: '1.0625rem' } : undefined, '& + &': { mt: 1.25 }, '& .katex-display': { maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden', textAlign: 'left' } }}>{children}</Typography>,
-      h1: ({ children }) => <Typography variant={variant === 'stem' ? 'h5' : 'h6'} component="h2" sx={{ mt: 2, mb: 1, fontWeight: 800 }}>{children}</Typography>,
-      h2: ({ children }) => <Typography variant="h6" component="h3" sx={{ mt: 2, mb: 1, fontWeight: 800 }}>{children}</Typography>,
-      h3: ({ children }) => <Typography variant="subtitle1" component="h4" sx={{ mt: 1.75, mb: .75, fontWeight: 800 }}>{children}</Typography>,
+        : <Typography variant={variant === 'stem' ? 'h5' : 'body1'} sx={{ lineHeight: variant === 'stem' ? 1.45 : 1.75, fontSize: variant === 'explanation' ? { xs: '1rem', sm: '1.0625rem' } : undefined, textAlign: align, fontWeight, '& + &': { mt: 1.25 }, '& .katex-display': { maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden', textAlign: align } }}>{children}</Typography>,
+      h1: ({ children }) => <Typography variant={variant === 'stem' ? 'h5' : 'h6'} component="h2" sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}>{children}</Typography>,
+      h2: ({ children }) => <Typography variant="h6" component="h3" sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}>{children}</Typography>,
+      h3: ({ children }) => <Typography variant="subtitle1" component="h4" sx={{ mt: 1.75, mb: .75, fontWeight: 800, textAlign: align }}>{children}</Typography>,
       ul: ({ children }) => <Box component="ul" sx={{ my: 1.25, pl: 3, '& li + li': { mt: .65 } }}>{children}</Box>,
       ol: ({ children }) => <Box component="ol" sx={{ my: 1.25, pl: 3, '& li + li': { mt: .65 } }}>{children}</Box>,
-      li: ({ children }) => <Typography component="li" sx={{ lineHeight: 1.7 }}>{children}</Typography>,
+      li: ({ children }) => <Typography component="li" sx={{ lineHeight: 1.7, fontWeight }}>{children}</Typography>,
       blockquote: ({ children }) => <Box component="blockquote" sx={{ m: 0, my: 1.5, pl: 2, borderLeft: '3px solid', borderColor: 'primary.light', color: 'text.secondary' }}>{children}</Box>,
       table: ({ children }) => <Box sx={{ my: 2, overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}><Box component="table" sx={{ width: '100%', minWidth: 440, borderCollapse: 'collapse', '& th, & td': { p: 1.25, textAlign: 'left', verticalAlign: 'top', borderBottom: '1px solid', borderColor: 'divider' }, '& th': { bgcolor: 'action.hover', fontWeight: 800 }, '& tr:last-child td': { borderBottom: 0 } }}>{children}</Box></Box>,
       a: ({ href, children }) => href ? <Link href={href} target="_blank" rel="noopener noreferrer" underline="hover">{children}</Link> : <>{children}</>,
-      img: ({ src, alt }) => rich ? <ContentImage src={src} alt={alt} /> : null,
+      img: ({ src, alt }) => rich ? <Box sx={{ display: align === 'center' ? 'flex' : undefined, justifyContent: 'center' }}><ContentImage src={src} alt={alt} /></Box> : null,
       code: ({ children, className }) => className?.split(/\s+/).some(name => name.startsWith('math-') || name === 'language-math')
         ? <code className={className}>{children}</code>
         : <Box component="code" sx={{ px: .5, py: .15, borderRadius: .5, bgcolor: 'action.hover', fontFamily: 'monospace', fontSize: '.9em' }}>{children}</Box>,

@@ -1,10 +1,9 @@
-import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
-import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
 import { useRef, type Ref } from 'react';
-import { Box, ButtonBase, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { isCorrect } from '../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../domain/types';
 import { useScrollCurrentQuestion } from './useScrollCurrentQuestion';
+import { StudyNavigatorTile } from '../study/StudyNavigatorTile';
 
 export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'wrong' | 'flagged';
 export type QuestionNavigatorFilterSet = 'quiz' | 'review';
@@ -88,30 +87,7 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
   </Stack>;
 }
 
-export function QuestionTile({ item, current, onClick, tileRef, showAnswerStatus = true }: { item: QuestionNavigationItem; current: boolean; onClick: () => void; tileRef?: Ref<HTMLButtonElement>; showAnswerStatus?: boolean }) {
+export function QuestionTile({ item, current, onClick, tileRef, showAnswerStatus = true, itemLabel = 'Question' }: { item: QuestionNavigationItem; current: boolean; onClick: () => void; tileRef?: Ref<HTMLButtonElement>; showAnswerStatus?: boolean; itemLabel?: string }) {
   const status = showAnswerStatus ? [item.wrong ? 'answered incorrectly' : item.answered ? 'answered' : 'unanswered', item.flagged ? 'flagged' : undefined].filter(Boolean).join(', ') : '';
-  return <ButtonBase
-    ref={tileRef}
-    onClick={onClick}
-    aria-label={`Question ${item.number}${status ? `, ${status}` : ''}${current ? ', current question' : ''}`}
-    aria-current={current ? 'step' : undefined}
-    sx={{
-      aspectRatio: '1 / 1',
-      width: '100%',
-      borderRadius: 1,
-      position: 'relative',
-      border: '1px solid',
-      borderColor: current ? 'primary.main' : item.answered ? '#e6b18d' : '#d9dfe7',
-      bgcolor: item.answered ? 'primary.light' : '#fffdfb',
-      color: item.answered ? '#853812' : '#4e5e73',
-      fontWeight: 750,
-      boxShadow: current ? '0 0 0 3px rgba(185, 81, 27, .18)' : 'none',
-      '&:hover': { bgcolor: item.answered ? '#efc7ac' : '#f7dfcf' },
-      '&:focus-visible': { outline: '3px solid #b9511b', outlineOffset: 2 },
-    }}
-  >
-    {item.number}
-    {item.flagged && <FlagRoundedIcon aria-hidden sx={{ position: 'absolute', top: 3, right: 3, fontSize: 13, color: 'error.main' }} />}
-    {item.wrong && <ErrorRoundedIcon aria-hidden sx={{ position: 'absolute', right: 3, bottom: 3, fontSize: 14, color: 'error.main' }} />}
-  </ButtonBase>;
+  return <StudyNavigatorTile number={item.number} label={itemLabel} current={current} highlighted={item.answered} flagged={item.flagged} wrong={item.wrong} status={status} onClick={onClick} tileRef={tileRef} />;
 }

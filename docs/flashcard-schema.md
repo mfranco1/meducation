@@ -52,7 +52,7 @@ The admin rejects unknown fields, IDs, parent references, null values, blank req
 
 The normalized mapping is `subjects(id, name, accent, position)`, `decks(id, subject_id, name, description, position)`, and `flashcards(id, deck_id, front, back, sources, review_note, position)`. The `subjects` table is shared with quizzes. Foreign keys are indexed and parent deletes are restricted by default; explicit admin cascades are transactional and report affected child records.
 
-Learner checkpoints are not content. They belong in a separate progress repository and, eventually, a user-scoped table keyed by `(user_id, deck_id)` with current card ID, content signature, and update time. They must not be written into this canonical bank. Removing topics does not change deck IDs or ordered study content, so existing saved deck positions remain valid.
+Learner checkpoints are not content. They belong in a separate progress repository and, eventually, a user-scoped table keyed by `(user_id, deck_id)` with current card ID, content signature, update time, and opened/flagged card IDs. They must not be written into this canonical bank. The local progress envelope is schema v2; it reads v1 position checkpoints in memory as having no opened or flagged cards, retains their legacy bytes, and writes v2 on the next successful checkpoint. Malformed v2 state is preserved and surfaced for recovery. Older application builds cannot read the v2 key. Removing topics does not change deck IDs or ordered study content, so existing saved deck positions remain valid.
 
 ## Validation
 

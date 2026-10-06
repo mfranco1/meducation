@@ -1,5 +1,5 @@
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../domain/flashcardStudy';
-import { decodeFlashcardProgress, flashcardProgressKey } from './flashcardProgressCodec';
+import { decodeFlashcardProgress, flashcardProgressKey, legacyFlashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
 import type { StoragePort } from './progressCodec';
 
 const unavailableMessage = 'Flashcard progress could not be saved. Check browser storage and try again.';
@@ -7,7 +7,11 @@ const conflictMessage = 'Flashcard progress changed in another tab. Reload this 
 const corruptMessage = 'Saved flashcard progress could not be read safely. The original browser data has been kept.';
 
 function freezeProgress(state: FlashcardProgressState): FlashcardProgressState {
-  Object.values(state.checkpoints).forEach((checkpoint) => Object.freeze(checkpoint));
+  Object.values(state.checkpoints).forEach((checkpoint) => {
+    Object.freeze(checkpoint.openedCardIds);
+    Object.freeze(checkpoint.flaggedCardIds);
+    Object.freeze(checkpoint);
+  });
   Object.freeze(state.checkpoints);
   return Object.freeze(state);
 }
@@ -46,30 +50,23 @@ export class LocalFlashcardProgressRepository {
     try {
       const storage = this.storage();
       if (this.cached && this.storageError !== unavailableMessage) return this.cached;
-      const raw = storage.getItem(flashcardProgressKey);
-      if (raw !== null) {
-        let parsed: unknown;
-        try {
-          parsed = JSON.parse(raw) as unknown;
-        } catch {
-          parsed = undefined;
-        }
-        const state = decodeFlashcardProgress(parsed);
-        if (!state) {
-          this.storageError = corruptMessage;
-          if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
-          return (this.cached = freezeProgress({ schemaVersion: 1, revision: 'corrupt', checkpoints: {} }));
-        }
-        if (this.observedRevision === undefined) this.observedRevision = state.revision;
+      const state = loadFlashcardProgress(storage);
+      if (state) {
+        this.observedRevision ??= state.revision;
         this.storageError = undefined;
         return (this.cached = freezeProgress(state));
       }
-      if (this.observedRevision === undefined) this.observedRevision = null;
+      if (storage.getItem(flashcardProgressKey) !== null || storage.getItem(legacyFlashcardProgressKey) !== null) {
+          this.storageError = corruptMessage;
+          if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
+          return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'corrupt', checkpoints: {} }));
+      }
+      this.observedRevision ??= 'initial';
       this.storageError = undefined;
-      return (this.cached = freezeProgress({ schemaVersion: 1, revision: 'initial', checkpoints: {} }));
+      return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'initial', checkpoints: {} }));
     } catch {
       this.storageError = unavailableMessage;
-      return (this.cached ??= freezeProgress({ schemaVersion: 1, revision: 'unavailable', checkpoints: {} }));
+      return (this.cached ??= freezeProgress({ schemaVersion: 2, revision: 'unavailable', checkpoints: {} }));
     }
   }
 
@@ -80,7 +77,7 @@ export class LocalFlashcardProgressRepository {
   }
 
   private readonly onStorage = (event: StorageEvent) => {
-    if (event.key !== null && event.key !== flashcardProgressKey) return;
+    if (event.key !== null && event.key !== flashcardProgressKey && event.key !== legacyFlashcardProgressKey) return;
     this.cached = undefined;
     this.listeners.forEach((listener) => listener());
   };
@@ -109,9 +106,7 @@ export class LocalFlashcardProgressRepository {
       );
     try {
       const storage = this.storage();
-      const raw = storage.getItem(flashcardProgressKey);
-      const current =
-        raw === null ? null : (decodeFlashcardProgress(JSON.parse(raw) as unknown)?.revision ?? 'corrupt');
+      const current = loadFlashcardProgress(storage)?.revision ?? 'corrupt';
       if (current !== this.observedRevision) throw new FlashcardPersistenceError('conflict', conflictMessage);
       const next = change(state);
       if (!next) return;
@@ -134,7 +129,7 @@ export class LocalFlashcardProgressRepository {
   saveCheckpoint(checkpoint: FlashcardCheckpoint) {
     this.commit((state) => ({
       ...state,
-      checkpoints: { ...state.checkpoints, [checkpoint.deckId]: { ...checkpoint } },
+      checkpoints: { ...state.checkpoints, [checkpoint.deckId]: { ...checkpoint, openedCardIds: [...checkpoint.openedCardIds], flaggedCardIds: [...checkpoint.flaggedCardIds] } },
     }));
   }
 

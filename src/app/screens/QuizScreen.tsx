@@ -1,9 +1,7 @@
-import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import FlagIcon from '@mui/icons-material/Flag';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { useEffect, useRef, useState } from 'react';
-import { Box, Button, Card, CardContent, Container, FormControlLabel, IconButton, LinearProgress, Radio, RadioGroup, Stack, Typography, useTheme } from '@mui/material';
+import { Box, Card, CardContent, Container, FormControlLabel, IconButton, Radio, RadioGroup, Stack, Typography, useTheme } from '@mui/material';
 import { MarkdownContent } from '../components/content/MarkdownContent';
 import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../domain/types';
@@ -16,6 +14,7 @@ import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/q
 import { QuestionNavigationLayout } from '../components/quiz/QuestionNavigationLayout';
 import { Stopwatch } from '../components/quiz/Stopwatch';
 import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
+import { StudyHeader, StudyNavigationFooter } from '../components/study/StudyHeader';
 
 interface QuizScreenProps {
   quiz: Quiz;
@@ -86,9 +85,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
   const celebration = celebrationQueue[0];
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
     {celebration && <CelebrationOverlay key={celebration.id} open title={celebration.title} message={celebration.message} variant={celebration.variant} onComplete={() => setCelebrationQueue(queue => queue.slice(1))} />}
-    <IconButton aria-label="Leave test" onClick={onRequestExit} sx={{ p: .5, mb: .5 }}><ArrowBackRoundedIcon /></IconButton>
-    <Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="body2" color="text.secondary">Question {index + 1} of {questions.length}</Typography><Stopwatch attempt={attempt} /></Stack>
-    <LinearProgress variant="determinate" value={(index + 1) / questions.length * 100} sx={{ mt: 1.5, height: 7, borderRadius: 5 }} />
+    <StudyHeader itemLabel="Question" index={index} total={questions.length} exitLabel="Leave test" onExit={onRequestExit} trailing={<Stopwatch attempt={attempt} />} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
@@ -109,12 +106,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
           </RadioGroup>
           {feedback && <FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} />}
         </CardContent></Card>
-        <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ mt: 3 }}><Stack direction="row" spacing={1}>
-          <Button startIcon={<ArrowBackRoundedIcon />} disabled={index === 0} onClick={() => navigateToQuestion(index - 1)}>Previous</Button>
-          {index === questions.length - 1
-            ? <Button variant="contained" onClick={requestSubmit}>{attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'}</Button>
-            : <Button endIcon={<ArrowForwardRoundedIcon />} onClick={() => navigateToQuestion(index + 1)}>{feedback ? 'Continue' : 'Next'}</Button>}
-        </Stack></Stack>
+        <StudyNavigationFooter index={index} total={questions.length} onPrevious={() => navigateToQuestion(index - 1)} onNext={() => navigateToQuestion(index + 1)} onFinish={requestSubmit} finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'} nextLabel={feedback ? 'Continue' : 'Next'} />
     </QuestionNavigationLayout>
     <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
   </Container>;
