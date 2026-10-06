@@ -55,6 +55,20 @@ The local tool is enabled only for development by default. It is not authenticat
 
 The current schema version is `4`. Add a deliberate migration, semantic parity check, and validation coverage before changing the stored shape. Compatibility code is temporary and should be removed after every in-scope browser profile has migrated.
 
+## Local source material and generated output
+
+The tracked `src/content/questionBank.generated.json` and `src/content/flashcardBank.generated.json` are authoritative, versioned records. Their `.generated` suffix is historical: do not treat them as disposable output or replace them from old extraction artifacts. The repository includes everything needed to validate and serve these banks.
+
+Other content folders are intentionally ignored by Git and are not included in a clone or Git-based backup:
+
+- Root `content/` contains historical extracted records and review reports, plus the current `content/explanation-audit.json` output from `npm run audit:explanations`. That command runs from the repository root and overwrites its audit report. The audit is reproducible from canonical content; historical extraction/review material has no current tracked regeneration pipeline, so retain it separately if needed for provenance or future source review.
+- `tn-pdfs/` holds private original PDF sources and ancillary material. Current runtime code does not read it. Keep an appropriate separate backup before moving or deleting these files; a canonical bank does not replace its source documents.
+- `public/content/` contains a legacy question-bank manifest and quiz shards. The current local/API adapters do not read that manifest. Vite still copies files in `public/` into `dist/`, so local builds with these ignored assets differ from builds of a clean checkout. They are not canonical and have no current tracked regeneration command. Retain them until their provenance and any external URL consumers have been reviewed; do not silently remove them while organizing source.
+
+New runtime media referenced by canonical rich content should have an explicit tracked asset or publishing workflow, rather than being placed among ignored legacy shards. Record its URL and lifecycle in the reviewed content change.
+
+Build/test outputs (`dist/`, coverage, browser results), virtual environments, Python caches, and `*.egg-info/` package metadata are also ignored. They can be regenerated through the documented install, build, and test workflows. Back up irreplaceable private sources and review history separately; Git protects only tracked files.
+
 ## Read-only content API
 
 The FastAPI service reads `src/content/questionBank.generated.json` directly; the checked-in file remains canonical. Start it from the repository root using the project-root `.venv` as described in `backend/README.md`. On startup it validates schema-v4 records and keeps an indexed read snapshot. It exposes subject and quiz catalogs plus ordered per-quiz questions. Content responses include a SHA-256 bank revision; the learner pins its catalog revision while it runs and asks for matching question content. A changed bank returns a conflict so reload can fetch a consistent catalog. Restart the service after replacing canonical JSON. The service does not edit the file, accept admin change sets, or persist attempts. Keep the existing reviewed export, JSON replacement, and `npm run validate:content` workflow.

@@ -40,5 +40,7 @@ Interactive API documentation is available at `/docs` in development.
 On Windows, activate `.venv\Scripts\Activate.ps1` and use `python -m pip ...`
 and `python -m uvicorn ...` from the repository root.
 
-On Windows, activate `.venv\Scripts\Activate.ps1` and use `python -m pip ...`
-and `python -m uvicorn ...` from the repository root.
+Python installation may generate `backend/src/meducation_api.egg-info/` metadata.
+It is ignored build output and should not be committed. The package source,
+`pyproject.toml`, and requirements locks are tracked; installing the package
+regenerates its metadata.
