@@ -5,7 +5,7 @@ import type { FlashcardCard } from '../../domain/types';
 import { theme } from '../theme';
 import { FlashcardStudyScreen } from './FlashcardStudyScreen';
 
-const deck = { id: 'd1', topicId: 't1', name: 'Brachial plexus', cardCount: 2, cardIds: ['f1', 'f2'] };
+const deck = { id: 'd1', subjectId: 's1', name: 'Brachial plexus', cardCount: 2, cardIds: ['f1', 'f2'] };
 const cards: FlashcardCard[] = [
   { id: 'f1', deckId: 'd1', front: 'What forms the **cords**?', back: 'The axillary artery.' },
   { id: 'f2', deckId: 'd1', front: 'Second front', back: 'Second back' },

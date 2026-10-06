@@ -14,7 +14,7 @@ import {
   type FlashcardDeckSummary,
   type FlashcardSubjectSummary,
 } from './flashcardApiDecoders';
-import type { StoredFlashcard, StoredFlashcardTopic } from './schema';
+import type { StoredFlashcard } from './schema';
 
 type ResourceState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -68,9 +68,6 @@ export class RuntimeFlashcardBank {
   getSubjectCatalog(subjectId: string) {
     return this.catalogs.get(subjectId);
   }
-  listTopics(subjectId: string): StoredFlashcardTopic[] {
-    return this.catalogs.get(subjectId)?.topics ?? [];
-  }
   listDecks(subjectId: string): FlashcardDeckSummary[] {
     return this.catalogs.get(subjectId)?.decks ?? [];
   }
@@ -83,7 +80,6 @@ export class RuntimeFlashcardBank {
 
   configureLocal(
     subjects: FlashcardSubjectSummary[],
-    topics: StoredFlashcardTopic[],
     decks: FlashcardDeckSummary[],
     cards: StoredFlashcard[],
   ) {
@@ -97,33 +93,19 @@ export class RuntimeFlashcardBank {
     this.pending.clear();
     this.states.clear();
     this.errors.clear();
-    const topicsBySubject = new Map<string, StoredFlashcardTopic[]>();
-    const subjectByTopic = new Map<string, string>();
     const decksBySubject = new Map<string, FlashcardDeckSummary[]>();
-    const deckCounts = new Map<string, number>();
-    for (const topic of topics) {
-      const siblings = topicsBySubject.get(topic.subjectId) ?? [];
-      siblings.push(topic);
-      topicsBySubject.set(topic.subjectId, siblings);
-      subjectByTopic.set(topic.id, topic.subjectId);
-    }
     for (const deck of decks) {
-      const subjectId = subjectByTopic.get(deck.topicId);
-      if (!subjectId) continue;
-      const siblings = decksBySubject.get(subjectId) ?? [];
+      const siblings = decksBySubject.get(deck.subjectId) ?? [];
       siblings.push(deck);
-      decksBySubject.set(subjectId, siblings);
-      deckCounts.set(deck.topicId, (deckCounts.get(deck.topicId) ?? 0) + 1);
+      decksBySubject.set(deck.subjectId, siblings);
       this.decksById.set(deck.id, deck);
       this.cards.set(deck.id, []);
       this.states.set(`cards:${deck.id}`, 'ready');
     }
     for (const card of cards) this.cards.get(card.deckId)?.push(card);
     for (const subject of subjects) {
-      const subjectTopics = topicsBySubject.get(subject.id) ?? [];
       this.catalogs.set(subject.id, {
         revision: 'local',
-        topics: subjectTopics.map((topic) => ({ ...topic, deckCount: deckCounts.get(topic.id) ?? 0 })),
         decks: decksBySubject.get(subject.id) ?? [],
       });
       this.states.set(`catalog:${subject.id}`, 'ready');
@@ -179,7 +161,7 @@ export class RuntimeFlashcardBank {
   async ensureSubjectCatalog(subjectId: string): Promise<FlashcardCatalogResponse> {
     const cached = this.catalogs.get(subjectId);
     if (cached) return cached;
-    if (this.source === 'local') return { revision: 'local', topics: [], decks: [] };
+    if (this.source === 'local') return { revision: 'local', decks: [] };
     const key = `catalog:${subjectId}`;
     const existing = this.pending.get(key) as Promise<FlashcardCatalogResponse> | undefined;
     if (existing) return existing;
@@ -197,8 +179,8 @@ export class RuntimeFlashcardBank {
       .then((payload) => {
         if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
         const subject = this.subjects.find((item) => item.id === subjectId);
-        if (!subject || !isFlashcardCatalog(payload, subjectId, subject.topicCount, subject.deckCount))
-          throw new ContentLoadError('invalid', 'The flashcard topic catalog is incomplete. Retry later.');
+        if (!subject || !isFlashcardCatalog(payload, subjectId, subject.deckCount))
+          throw new ContentLoadError('invalid', 'The flashcard deck catalog is incomplete. Retry later.');
         if (!payload.decks.every((deck, index) => deck.id === subject.deckIds[index]))
           throw new ContentLoadError('invalid', 'The flashcard decks do not match the subject catalog.');
         if (subject.emptyDeckIds !== undefined) {
@@ -220,7 +202,7 @@ export class RuntimeFlashcardBank {
           !(error instanceof ContentLoadError && error.kind === 'cancelled')
         ) {
           this.states.set(key, 'error');
-          this.errors.set(key, error instanceof Error ? error : new Error('Could not load flashcard topics.'));
+          this.errors.set(key, error instanceof Error ? error : new Error('Could not load flashcard decks.'));
           this.notify();
         }
         throw error;
@@ -298,7 +280,6 @@ export async function loadRuntimeFlashcardSubjects() {
   if (import.meta.env.VITE_CONTENT_SOURCE === 'local') {
     const local = await import('./flashcardBank');
     const subjects = local.flashcardRepository.listSubjects();
-    const topics = local.storedFlashcardBank.topics;
     const decks = local.flashcardRepository
       .listSubjects()
       .flatMap((subject) =>
@@ -306,14 +287,14 @@ export async function loadRuntimeFlashcardSubjects() {
           .listDecks(subject.id)
           .map((deck) => ({
             id: deck.id,
-            topicId: deck.topicId,
+            subjectId: deck.subjectId,
             name: deck.name,
             ...(deck.description ? { description: deck.description } : {}),
             cardCount: deck.cardCount,
             cardIds: deck.cardIds,
           })),
       );
-    runtimeFlashcardBank.configureLocal(subjects, topics, decks, local.storedFlashcardBank.cards);
+    runtimeFlashcardBank.configureLocal(subjects, decks, local.storedFlashcardBank.cards);
     return;
   }
   await runtimeFlashcardBank.ensureSubjects();

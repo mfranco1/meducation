@@ -13,6 +13,7 @@
     "test:e2e": "playwright test",
     "test:e2e:admin": "playwright test --config=playwright.admin.config.ts",
     "validate:content": "tsx scripts/validate-question-bank.ts",
+    "migrate:flashcard-bank:v1": "tsx scripts/migrate-flashcard-bank-v1.ts",
     "audit:explanations": "tsx scripts/audit-explanations.ts"
   },
   "dependencies": {

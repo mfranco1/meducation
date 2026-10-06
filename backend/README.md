@@ -2,8 +2,8 @@
 
 The FastAPI service reads `src/content/questionBank.generated.json` as the
 canonical schema-v4 quiz bank and `src/content/flashcardBank.generated.json` as
-the canonical flashcard bank. Flashcard topics reference the quiz bank's shared
-subjects. It serves read-only content; attempts, checkpoints, and scoring remain
+the canonical flashcard bank. Flashcard decks reference the quiz bank's shared
+subjects directly. It serves read-only content; attempts, checkpoints, and scoring remain
 in the browser.
 
 From the repository root, create the isolated environment if it does not exist:
@@ -30,7 +30,7 @@ the editor, set `VITE_BUILD_ADMIN=true` when running the Vite build.
 
 On startup the service validates and indexes both banks together, including
 flashcard references to shared subjects. The flashcard API exposes subject
-inventory, a selected subject's topics and deck summaries, and one deck's
+inventory, a selected subject's deck summaries, and one deck's
 ordered cards under `/api/v1/flashcards`. Flashcard responses use a separate
 revision that also changes when shared subject records change. Restart the
 service after replacing either canonical file. The API never writes or modifies

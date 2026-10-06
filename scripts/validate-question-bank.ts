@@ -13,4 +13,4 @@ const issues = [
 ];
 issues.forEach(issue => console.log(`${issue.level.toUpperCase()}${issue.questionId ? ` [${issue.questionId}]` : ''}: ${issue.message}`));
 if (issues.some(issue => issue.level === 'error')) process.exitCode = 1;
-else console.log(`Content valid: ${questions.length} questions across ${quizzes.length} quizzes; ${storedFlashcardBank.cards.length} flashcards across ${storedFlashcardBank.decks.length} decks and ${storedFlashcardBank.topics.length} topics for ${flashcardRepository.listSubjects().length} shared subjects.`);
+else console.log(`Content valid: ${questions.length} questions across ${quizzes.length} quizzes; ${storedFlashcardBank.cards.length} flashcards across ${storedFlashcardBank.decks.length} decks for ${flashcardRepository.listSubjects().length} shared subjects.`);

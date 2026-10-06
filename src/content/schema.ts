@@ -34,15 +34,9 @@ export interface StoredQuestionBank {
   questions: StoredQuestion[];
 }
 
-export interface StoredFlashcardTopic {
-  id: string;
-  subjectId: string;
-  name: string;
-}
-
 export interface StoredFlashcardDeck {
   id: string;
-  topicId: string;
+  subjectId: string;
   name: string;
   description?: string;
 }
@@ -50,8 +44,7 @@ export interface StoredFlashcardDeck {
 export type StoredFlashcard = FlashcardCard;
 
 export interface StoredFlashcardBank {
-  schemaVersion: 1;
-  topics: StoredFlashcardTopic[];
+  schemaVersion: 2;
   decks: StoredFlashcardDeck[];
   cards: StoredFlashcard[];
 }

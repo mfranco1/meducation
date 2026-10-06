@@ -237,15 +237,9 @@ class JsonQuestionBankRepository:
         return [question.id for question in self._questions_by_quiz.get(quiz_id, [])]
 
 
-class FlashcardTopic(StoredModel):
-    id: str
-    subjectId: str
-    name: str
-
-
 class FlashcardDeck(StoredModel):
     id: str
-    topicId: str
+    subjectId: str
     name: str
     description: str | None = None
 
@@ -261,37 +255,29 @@ class Flashcard(StoredModel):
 
 class FlashcardBank(StoredModel):
     schemaVersion: int = Field(strict=True)
-    topics: list[FlashcardTopic]
     decks: list[FlashcardDeck]
     cards: list[Flashcard]
 
     @model_validator(mode="after")
     def validate_relationships(self) -> FlashcardBank:
-        if self.schemaVersion != 1:
+        if self.schemaVersion != 2:
             raise ValueError(f"Unsupported flashcard bank schema version: {self.schemaVersion}")
-        Bank._unique_ids("topic", [item.id for item in self.topics])
         Bank._unique_ids("deck", [item.id for item in self.decks])
         Bank._unique_ids("flashcard", [item.id for item in self.cards])
-        for prefix, records in (("t", self.topics), ("d", self.decks), ("f", self.cards)):
+        for prefix, records in (("d", self.decks), ("f", self.cards)):
             if any(re.fullmatch(rf"{prefix}[a-zA-Z0-9-]+", item.id) is None for item in records):
                 raise ValueError(f"Flashcard IDs must use the {prefix} prefix.")
-        if any(not item.name.strip() for item in self.topics):
-            raise ValueError("Topic names must not be empty.")
         if any(not item.name.strip() for item in self.decks):
             raise ValueError("Deck names must not be empty.")
         if any(not item.front.strip() or not item.back.strip() for item in self.cards):
             raise ValueError("Flashcard faces must not be empty.")
-        topic_ids = {item.id for item in self.topics}
         deck_ids = {item.id for item in self.decks}
-        if any(item.topicId not in topic_ids for item in self.decks):
-            raise ValueError("A deck references an unknown topic.")
         if any(item.deckId not in deck_ids for item in self.cards):
             raise ValueError("A flashcard references an unknown deck.")
         return self
 
 
 class FlashcardSubjectSummary(Subject):
-    topicCount: int
     deckCount: int
     deckIds: list[str]
     emptyDeckIds: list[str]
@@ -305,7 +291,7 @@ class FlashcardCatalogRepository(Protocol):
 
     def list_subjects(self) -> list[FlashcardSubjectSummary]: ...
 
-    def list_catalog(self, subject_id: str) -> tuple[list[FlashcardTopic], list[tuple[FlashcardDeck, int]]]: ...
+    def list_catalog(self, subject_id: str) -> list[tuple[FlashcardDeck, int]]: ...
 
     def has_deck(self, deck_id: str) -> bool: ...
 
@@ -320,21 +306,15 @@ class JsonFlashcardCatalogRepository:
         self.bank: FlashcardBank
         self._load()
         subject_ids = {subject.id for subject in subjects}
-        if any(topic.subjectId not in subject_ids for topic in self.bank.topics):
+        if any(deck.subjectId not in subject_ids for deck in self.bank.decks):
             raise RuntimeError("Canonical flashcard bank references a subject missing from the question bank.")
-        self._topics_by_subject: dict[str, list[FlashcardTopic]] = {item.id: [] for item in subjects}
-        for topic in self.bank.topics:
-            self._topics_by_subject[topic.subjectId].append(topic)
-        self._decks_by_topic: dict[str, list[tuple[FlashcardDeck, int]]] = {item.id: [] for item in self.bank.topics}
         self._decks_by_subject: dict[str, list[tuple[FlashcardDeck, int]]] = {item.id: [] for item in subjects}
-        subject_by_topic = {topic.id: topic.subjectId for topic in self.bank.topics}
         self._deck_by_id: dict[str, FlashcardDeck] = {}
         self._cards_by_deck: dict[str, list[Flashcard]] = {item.id: [] for item in self.bank.decks}
         for card in self.bank.cards:
             self._cards_by_deck[card.deckId].append(card)
         for deck in self.bank.decks:
-            self._decks_by_topic[deck.topicId].append((deck, len(self._cards_by_deck[deck.id])))
-            self._decks_by_subject[subject_by_topic[deck.topicId]].append((deck, len(self._cards_by_deck[deck.id])))
+            self._decks_by_subject[deck.subjectId].append((deck, len(self._cards_by_deck[deck.id])))
             self._deck_by_id[deck.id] = deck
         self._subjects_by_id = {subject.id: subject for subject in subjects}
         serialized = json.dumps(self.raw, ensure_ascii=False, allow_nan=False, indent=2) + "\n"
@@ -344,7 +324,7 @@ class JsonFlashcardCatalogRepository:
             allow_nan=False,
             separators=(",", ":"),
         )
-        revision_payload = f"flashcards-v1\n{subject_serialized}\n{serialized}"
+        revision_payload = f"flashcards-v2\n{subject_serialized}\n{serialized}"
         self._revision = f"sha256-{hashlib.sha256(revision_payload.encode('utf-8')).hexdigest()}"
 
     def _load(self) -> None:
@@ -367,16 +347,13 @@ class JsonFlashcardCatalogRepository:
     def list_subjects(self) -> list[FlashcardSubjectSummary]:
         return [FlashcardSubjectSummary(
             **subject.model_dump(),
-            topicCount=len(self._topics_by_subject[subject.id]),
             deckCount=len(self._decks_by_subject[subject.id]),
             deckIds=[deck.id for deck, _ in self._decks_by_subject[subject.id]],
             emptyDeckIds=[deck.id for deck, count in self._decks_by_subject[subject.id] if count == 0],
         ) for subject in self.subjects]
 
-    def list_catalog(self, subject_id: str) -> tuple[list[FlashcardTopic], list[tuple[FlashcardDeck, int]]]:
-        topics = list(self._topics_by_subject.get(subject_id, []))
-        decks = list(self._decks_by_subject.get(subject_id, []))
-        return topics, decks
+    def list_catalog(self, subject_id: str) -> list[tuple[FlashcardDeck, int]]:
+        return list(self._decks_by_subject.get(subject_id, []))
 
     def has_deck(self, deck_id: str) -> bool:
         return deck_id in self._deck_by_id

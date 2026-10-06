@@ -181,7 +181,6 @@ function LearnerApp() {
       subject={currentFlashcardSubject}
       catalog={runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id)}
       checkpoints={flashcards.progress.checkpoints}
-      selectedTopicId={view.page === 'flashcards-subject' ? view.topicId : undefined}
       loading={['idle', 'loading'].includes(runtimeFlashcardBank.getState(`catalog:${currentFlashcardSubject.id}`))}
       error={runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`) ?? flashcards.launchError}
       errorKind={flashcards.launchError ? 'cards' : 'catalog'}
@@ -191,13 +190,12 @@ function LearnerApp() {
         if (error instanceof ContentLoadError && error.kind === 'revision') { window.location.reload(); return; }
         if (flashcards.launchErrorDeckId) {
           const deck = runtimeFlashcardBank.getDeck(flashcards.launchErrorDeckId);
-          if (deck) return flashcards.launchDeck(deck, currentFlashcardSubject, view.page === 'flashcards-subject' ? view.topicId : undefined);
+          if (deck) return flashcards.launchDeck(deck, currentFlashcardSubject);
         }
         return runtimeFlashcardBank.ensureSubjectCatalog(currentFlashcardSubject.id).then(() => undefined, () => undefined);
       }}
       onBack={() => { runtimeFlashcardBank.cancel(`catalog:${currentFlashcardSubject.id}`); flashcards.showDashboard(); }}
-      onSelectTopic={topicId => flashcards.showSubject(currentFlashcardSubject, topicId)}
-      onSelectDeck={deck => { void flashcards.launchDeck(deck, currentFlashcardSubject, view.page === 'flashcards-subject' ? view.topicId : undefined); }}
+      onSelectDeck={deck => { void flashcards.launchDeck(deck, currentFlashcardSubject); }}
     />}
     {currentSubject && <SubjectScreen subject={currentSubject} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
       if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') { window.location.reload(); return; }

@@ -2,25 +2,18 @@ import { expect, test } from '@playwright/test';
 import { mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
 
-test('stages topic, deck, and card CRUD and previews an exported replay', async ({ page }, testInfo) => {
+test('stages deck and card CRUD and previews an exported replay', async ({ page }, testInfo) => {
   const downloads: import('@playwright/test').Download[] = [];
   page.on('download', (download) => downloads.push(download));
   await page.goto('/admin.html');
   await expect(page.getByText('Admin', { exact: true })).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Flashcards' }).click();
 
-  await page.getByRole('button', { name: 'Add topic' }).first().click();
-  const editor = page.getByRole('textbox', { name: 'Record JSON' });
-  const topic = JSON.parse(await editor.inputValue()) as { id: string; subjectId: string; name: string };
-  expect(topic.subjectId).toBe('s1');
-  await editor.fill(JSON.stringify({ ...topic, name: 'Admin browser topic' }, null, 2));
-  await page.getByRole('button', { name: 'Stage record' }).click();
-  await expect(page.getByRole('button', { name: 'Admin browser topic Topic' })).toBeVisible();
-
   await page.getByRole('button', { name: 'Add deck' }).first().click();
+  const editor = page.getByRole('textbox', { name: 'Record JSON' });
   const deckEditor = page.getByRole('textbox', { name: 'Record JSON' });
-  const deck = JSON.parse(await deckEditor.inputValue()) as { id: string; topicId: string; name: string };
-  expect(deck.topicId).toBe(topic.id);
+  const deck = JSON.parse(await deckEditor.inputValue()) as { id: string; subjectId: string; name: string };
+  expect(deck.subjectId).toBe('s1');
   await deckEditor.fill(JSON.stringify({ ...deck, name: 'Admin browser deck' }, null, 2));
   await page.getByRole('button', { name: 'Stage record' }).click();
   await expect(page.getByRole('button', { name: /Admin browser deck/ })).toBeVisible();
@@ -41,7 +34,7 @@ test('stages topic, deck, and card CRUD and previews an exported replay', async 
   await mkdir(dirname(changeSetPath), { recursive: true });
   await changeSetDownload!.saveAs(changeSetPath);
   const exported = JSON.parse(await readFile(changeSetPath, 'utf8')) as { operations: Array<{ op: string }> };
-  expect(exported.operations.map((operation) => operation.op)).toEqual(['topic.create', 'deck.create', 'card.create']);
+  expect(exported.operations.map((operation) => operation.op)).toEqual(['deck.create', 'card.create']);
 
   await expect(page.getByRole('button', { name: 'Reset' })).toBeEnabled();
   await page.getByRole('button', { name: 'Reset' }).click();
@@ -106,7 +99,6 @@ test('stages topic, deck, and card CRUD and previews an exported replay', async 
   });
   await page.getByRole('button', { name: 'Reset both banks' }).click();
   await expect(page.getByText('Temporary shared subject', { exact: true })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Admin browser topic Topic' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
 });

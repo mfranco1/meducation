@@ -3,8 +3,8 @@ import type { FlashcardDeckSummary } from '../content/flashcardApiDecoders';
 
 export type FlashcardsView =
   | { page: 'flashcards' }
-  | { page: 'flashcards-subject'; subject: Subject; topicId?: string }
-  | { page: 'flashcards-study'; subject: Subject; topicId?: string; deck: FlashcardDeckSummary; index: number; revealed: boolean };
+  | { page: 'flashcards-subject'; subject: Subject }
+  | { page: 'flashcards-study'; subject: Subject; deck: FlashcardDeckSummary; index: number; revealed: boolean };
 
 export type QuizSessionView =
   | { page: 'dashboard' }

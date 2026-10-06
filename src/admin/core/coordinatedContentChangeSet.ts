@@ -35,8 +35,7 @@ export async function replayCoordinatedContentChangeSet(
   if (parsed.changeSet.base.revision !== (await revisionForBank(quizBank)))
     throw new Error('The coordinated quiz change set is based on stale content.');
   const candidate = previewChangeSet(quizBank, parsed.changeSet, {
-    schemaVersion: 1,
-    topics: [],
+    schemaVersion: 2,
     decks: [],
     cards: [],
   });

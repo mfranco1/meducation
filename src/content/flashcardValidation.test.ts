@@ -19,10 +19,10 @@ describe('shared flashcard authoring validation', () => {
     );
   });
 
-  it('warns on duplicate sibling names without confusing identity or other parents', () => {
+  it('warns on duplicate deck names within a subject without confusing identity across subjects', () => {
     const bank = structuredClone(fixture.bank) as StoredFlashcardBank;
-    bank.topics.push({ id: 't-dupe', subjectId: 's1', name: ' neuroanatomy ' });
-    bank.topics.push({ id: 't-other', subjectId: 's2', name: 'Neuroanatomy' });
+    bank.decks.push({ id: 'd-dupe', subjectId: 's1', name: ' Cranial nerves ' });
+    bank.decks.push({ id: 'd-other', subjectId: 's2', name: 'Cranial nerves' });
     const warnings = validateFlashcardBank(bank, fixture.subjects);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject({ level: 'warning', message: expect.stringContaining('Duplicate sibling name') });

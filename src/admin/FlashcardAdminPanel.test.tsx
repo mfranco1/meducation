@@ -26,13 +26,13 @@ function stageRecord(value: object) {
 
 async function importFile() {
   const operations: FlashcardAdminOperation[] = [
-    { op: 'topic.create', value: { id: 't-import', subjectId: 's1', name: 'Imported topic' } },
+    { op: 'deck.create', value: { id: 'd-import', subjectId: 's1', name: 'Imported deck' } },
   ];
   const result = applyFlashcardOperations(storedFlashcardBank, props.subjects, operations);
   const subjectRevision = await sha256Text(JSON.stringify(props.subjects));
   const changeSet: FlashcardAdminChangeSet = {
-    changeSetVersion: 1,
-    base: { schemaVersion: 1, revision: await flashcardContentRevision(storedFlashcardBank), subjectRevision },
+    changeSetVersion: 2,
+    base: { schemaVersion: 2, revision: await flashcardContentRevision(storedFlashcardBank), subjectRevision },
     resultRevision: await flashcardContentRevision(result, props.subjects),
     resultSubjectRevision: subjectRevision,
     reason: 'Reviewed import',
@@ -89,7 +89,7 @@ describe('FlashcardAdminPanel', () => {
     };
     const resultSubjects = quizBank.subjects.slice(1);
     const operations: FlashcardAdminOperation[] = [
-      { op: 'topic.create', value: { id: 't-paired', subjectId: 's2', name: 'Paired topic' } },
+      { op: 'deck.create', value: { id: 'd-paired', subjectId: 's2', name: 'Paired deck' } },
     ];
     const result = applyFlashcardOperations(storedFlashcardBank, resultSubjects, operations);
     const quizChangeSet = {
@@ -99,15 +99,15 @@ describe('FlashcardAdminPanel', () => {
       operations: [{ op: 'subject.delete', id: 's1', cascade: true }],
     };
     const flashcardChangeSet = {
-      changeSetVersion: 1,
+      changeSetVersion: 2,
       base: {
-        schemaVersion: 1,
+        schemaVersion: 2,
         revision: await flashcardContentRevision(storedFlashcardBank, quizBank.subjects),
         subjectRevision: await sha256Text(JSON.stringify(quizBank.subjects)),
       },
       resultRevision: await flashcardContentRevision(result, resultSubjects),
       resultSubjectRevision: await sha256Text(JSON.stringify(resultSubjects)),
-      reason: 'Reviewed paired topic',
+      reason: 'Reviewed paired deck',
       operations,
     };
     const file = {
@@ -136,7 +136,7 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Stage import' }));
     await waitFor(() => expect(onBankChange).toHaveBeenCalledWith(result));
     expect(stage).toHaveBeenLastCalledWith(quizChangeSet, result);
-    expect(screen.getByRole('button', { name: 'Paired topic Topic' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Paired deck 0 cards' })).toBeVisible();
   });
   it('invalidates an imported preview after shared subjects change', async () => {
     const { container, rerender } = render(
@@ -155,7 +155,7 @@ describe('FlashcardAdminPanel', () => {
       </ThemeProvider>,
     );
     expect(screen.queryByRole('button', { name: 'Stage import' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Imported topic Topic' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Imported deck 0 cards' })).toBeNull();
   });
 
   it('restores the exact imported operation history on undo and can export it again', async () => {
@@ -169,17 +169,17 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [await importFile()] } });
     await screen.findByText('Import preview');
     fireEvent.click(screen.getByRole('button', { name: 'Stage import' }));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add topic' })[0]);
-    stageRecord({ id: 't-after-import', subjectId: 's1', name: 'Later topic' });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    stageRecord({ id: 'd-after-import', subjectId: 's1', name: 'Later deck' });
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(screen.queryByRole('button', { name: 'Later topic Topic' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Imported topic Topic' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Later deck 0 cards' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Imported deck 0 cards' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Export flashcard JSON and change set' }));
     await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
     expect(screen.queryByText(/does not reproduce/)).toBeNull();
     expect(screen.getByRole('textbox', { name: 'Record JSON' })).toHaveValue('');
   });
-  it('exports reproducible reorder operations for interleaved parents and retains reset after export', async () => {
+  it('exports reproducible reorder operations for decks and retains reset after export', async () => {
     let bank!: StoredFlashcardBank;
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => {});
     vi.stubGlobal('URL', { createObjectURL: () => 'blob:test', revokeObjectURL: () => {} });
@@ -193,16 +193,12 @@ describe('FlashcardAdminPanel', () => {
         />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add topic' })[0]);
-    stageRecord({ id: 't1', subjectId: 's1', name: 'Topic One' });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add topic' })[0]);
-    stageRecord({ id: 't2', subjectId: 's1', name: 'Topic Two' });
     fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
-    stageRecord({ id: 'd1', topicId: 't1', name: 'Deck One' });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[1]);
-    stageRecord({ id: 'd-other', topicId: 't2', name: 'Other Deck' });
+    stageRecord({ id: 'd1', subjectId: 's1', name: 'Deck One' });
     fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
-    stageRecord({ id: 'd2', topicId: 't1', name: 'Deck Two' });
+    stageRecord({ id: 'd-other', subjectId: 's2', name: 'Other Deck' });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    stageRecord({ id: 'd2', subjectId: 's1', name: 'Deck Two' });
     fireEvent.click(screen.getByRole('button', { name: 'Move up' }));
     expect(bank.decks.map((deck) => deck.id)).toEqual(['d2', 'd1', 'd-other']);
     fireEvent.click(screen.getByRole('button', { name: 'Export flashcard JSON and change set' }));
@@ -223,10 +219,8 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add topic' })[0]);
-    stageRecord({ id: 't1', subjectId: 's1', name: 'Topic' });
     fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
-    stageRecord({ id: 'd1', topicId: 't1', name: 'Deck' });
+    stageRecord({ id: 'd1', subjectId: 's1', name: 'Deck' });
     fireEvent.click(screen.getByRole('button', { name: 'Add card' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Record JSON' }), {
       target: { value: JSON.stringify({ id: 'f1', deckId: 'd1', front: '<script>alert(1)</script>', back: 'Back' }) },
@@ -242,14 +236,14 @@ describe('FlashcardAdminPanel', () => {
     expect(screen.queryByRole('button', { name: /alert.*Card/ })).toBeNull();
   });
 
-  it('guards flashcard undo when restoring a topic would reference a removed subject', () => {
+  it('guards flashcard undo when restoring a deck would reference a removed subject', () => {
     const { rerender } = render(
       <ThemeProvider theme={theme}>
         <FlashcardAdminPanel {...props} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add topic' })[0]);
-    stageRecord({ id: 't1', subjectId: 's1', name: 'Topic' });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    stageRecord({ id: 'd1', subjectId: 's1', name: 'Deck' });
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     rerender(
       <ThemeProvider theme={theme}>
@@ -258,35 +252,35 @@ describe('FlashcardAdminPanel', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(screen.getByText(/unknown subject/).closest('[role="alert"]')).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Topic Topic' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Deck 0 cards' })).toBeNull();
   });
-  it('creates and stages a topic under an authoritative shared subject', () => {
+  it('creates and stages a deck under an authoritative shared subject', () => {
     render(
       <ThemeProvider theme={theme}>
         <FlashcardAdminPanel {...props} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add topic' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
     const editor = screen.getByRole('textbox', { name: 'Record JSON' });
-    const topic = JSON.parse((editor as HTMLTextAreaElement).value) as { id: string; subjectId: string; name: string };
-    expect(topic.id).toMatch(/^t-/);
-    expect(topic.subjectId).toBe('s1');
-    fireEvent.change(editor, { target: { value: JSON.stringify({ ...topic, name: 'Test topic' }, null, 2) } });
+    const deck = JSON.parse((editor as HTMLTextAreaElement).value) as { id: string; subjectId: string; name: string };
+    expect(deck.id).toMatch(/^d-/);
+    expect(deck.subjectId).toBe('s1');
+    fireEvent.change(editor, { target: { value: JSON.stringify({ ...deck, name: 'Test deck' }, null, 2) } });
     fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
-    expect(screen.getByText('Test topic')).toBeVisible();
+    expect(screen.getByText('Test deck')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Export flashcard JSON and change set' })).toBeEnabled();
   });
 
-  it('rejects a topic that references an unknown shared subject', () => {
+  it('rejects a deck that references an unknown shared subject', () => {
     render(
       <ThemeProvider theme={theme}>
         <FlashcardAdminPanel {...props} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add topic' })[0]);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
     const editor = screen.getByRole('textbox', { name: 'Record JSON' });
     fireEvent.change(editor, {
-      target: { value: JSON.stringify({ id: 't-invalid', subjectId: 'missing', name: 'Invalid' }) },
+      target: { value: JSON.stringify({ id: 'd-invalid', subjectId: 'missing', name: 'Invalid' }) },
     });
     fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
     expect(screen.getByRole('alert')).toHaveTextContent('unknown subject');

@@ -18,8 +18,8 @@ describe('admin editor workflows', () => {
   it('stages coordinated snapshots and preserves a declined quiz draft', async () => {
     const source = bank();
     source.subjects.push({ id: 's2', name: 'Second', accent: '#222222' });
-    const originalCards: StoredFlashcardBank = { schemaVersion: 1, topics: [{ id: 't1', subjectId: 's1', name: 'Topic' }], decks: [], cards: [] };
-    const movedCards: StoredFlashcardBank = { ...originalCards, topics: [{ ...originalCards.topics[0], subjectId: 's2' }] };
+    const originalCards: StoredFlashcardBank = { schemaVersion: 2, decks: [{ id: 'd1', subjectId: 's1', name: 'Deck' }], cards: [] };
+    const movedCards: StoredFlashcardBank = { ...originalCards, decks: [{ ...originalCards.decks[0], subjectId: 's2' }] };
     const gateway = new InMemoryQuestionBankGateway(source, originalCards);
     const confirm = vi.fn().mockReturnValue(false);
     const { result } = renderHook(() => useAdminEditor(gateway, { confirm }));

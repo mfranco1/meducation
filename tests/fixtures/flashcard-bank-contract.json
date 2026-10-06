@@ -4,14 +4,10 @@
     { "id": "s2", "name": "Subject Two", "accent": "#654321" }
   ],
   "bank": {
-    "schemaVersion": 1,
-    "topics": [
-      { "id": "t-neuro", "subjectId": "s1", "name": "Neuroanatomy" },
-      { "id": "t-empty", "subjectId": "s1", "name": "Empty topic" }
-    ],
+    "schemaVersion": 2,
     "decks": [
-      { "id": "d-cranial", "topicId": "t-neuro", "name": "Cranial nerves" },
-      { "id": "d-empty", "topicId": "t-empty", "name": "No cards yet" }
+      { "id": "d-cranial", "subjectId": "s1", "name": "Cranial nerves" },
+      { "id": "d-empty", "subjectId": "s1", "name": "No cards yet" }
     ],
     "cards": [
       {

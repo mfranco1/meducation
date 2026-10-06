@@ -127,33 +127,19 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, subjects:
   const issue = (message: string, id?: string) => issues.push({ level: 'error', message, ...(id ? { questionId: id } : {}) });
   const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
   if (!object(bank)) return [{ level: 'error', message: 'Flashcard bank must be an object' }];
-  if (bank.schemaVersion !== 1) issue(`Unsupported flashcard bank schema version: ${bank.schemaVersion}`);
-  if (Object.keys(bank).some(key => !['schemaVersion', 'topics', 'decks', 'cards'].includes(key))) issue('Flashcard bank stores an unknown field');
-  if (!Array.isArray(bank.topics) || !Array.isArray(bank.decks) || !Array.isArray(bank.cards)) {
-    issue('Flashcard bank must contain topic, deck, and card arrays');
+  if (bank.schemaVersion !== 2) issue(`Unsupported flashcard bank schema version: ${bank.schemaVersion}`);
+  if (Object.keys(bank).some(key => !['schemaVersion', 'decks', 'cards'].includes(key))) issue('Flashcard bank stores an unknown field');
+  if (!Array.isArray(bank.decks) || !Array.isArray(bank.cards)) {
+    issue('Flashcard bank must contain deck and card arrays');
     return issues;
   }
 
   const subjectIds = new Set(subjects.map(subject => subject.id));
-  const topicIds = new Set<string>();
   const deckIds = new Set<string>();
   const cardIds = new Set<string>();
-  const topicKeys = new Set(['id', 'subjectId', 'name']);
-  const deckKeys = new Set(['id', 'topicId', 'name', 'description']);
+  const deckKeys = new Set(['id', 'subjectId', 'name', 'description']);
   const cardKeys = new Set(['id', 'deckId', 'front', 'back', 'sources', 'reviewNote']);
-  const topicsById = new Map<string, StoredFlashcardBank['topics'][number]>();
   const decksById = new Map<string, StoredFlashcardBank['decks'][number]>();
-
-  bank.topics.forEach(topic => {
-    if (!object(topic)) { issue('Topic record must be an object'); return; }
-    if (Object.keys(topic).some(key => !topicKeys.has(key))) issue('Topic stores an unknown field', topic.id);
-    if (typeof topic.id !== 'string' || !/^t[a-zA-Z0-9-]+$/.test(topic.id)) issue('Topic ID must use the t prefix', topic.id);
-    if (typeof topic.id !== 'string' || !topic.id || topicIds.has(topic.id)) { issue('Missing or duplicate topic ID', topic.id); return; }
-    topicIds.add(topic.id);
-    topicsById.set(topic.id, topic);
-    if (typeof topic.subjectId !== 'string' || !subjectIds.has(topic.subjectId)) issue('Topic references an unknown subject', topic.id);
-    if (typeof topic.name !== 'string' || !topic.name.trim()) issue('Topic name must not be empty', topic.id);
-  });
 
   bank.decks.forEach(deck => {
     if (!object(deck)) { issue('Deck record must be an object'); return; }
@@ -162,7 +148,7 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, subjects:
     if (typeof deck.id !== 'string' || !deck.id || deckIds.has(deck.id)) { issue('Missing or duplicate deck ID', deck.id); return; }
     deckIds.add(deck.id);
     decksById.set(deck.id, deck);
-    if (typeof deck.topicId !== 'string' || !topicsById.has(deck.topicId)) issue('Deck references an unknown topic', deck.id);
+    if (typeof deck.subjectId !== 'string' || !subjectIds.has(deck.subjectId)) issue('Deck references an unknown subject', deck.id);
     if (typeof deck.name !== 'string' || !deck.name.trim()) issue('Deck name must not be empty', deck.id);
     if (deck.description !== undefined && typeof deck.description !== 'string') issue('Invalid deck description', deck.id);
   });
@@ -184,7 +170,7 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, subjects:
 
 export function validateFlashcardSubjectReferences(bank: StoredFlashcardBank, subjects: Subject[]): ValidationIssue[] {
   const subjectIds = new Set(subjects.map(subject => subject.id));
-  return bank.topics
-    .filter(topic => !subjectIds.has(topic.subjectId))
-    .map(topic => ({ level: 'error' as const, message: `Topic ${topic.id} references an unknown subject ${topic.subjectId}.` }));
+  return bank.decks
+    .filter(deck => !subjectIds.has(deck.subjectId))
+    .map(deck => ({ level: 'error' as const, message: `Deck ${deck.id} references an unknown subject ${deck.subjectId}.` }));
 }

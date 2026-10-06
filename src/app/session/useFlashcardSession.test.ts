@@ -10,7 +10,7 @@ const cards = [
   { id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' },
   { id: 'f2', deckId: 'd1', front: 'Second', back: 'Answer' },
 ];
-const deck: FlashcardDeckSummary = { id: 'd1', topicId: 't1', name: 'Deck', cardCount: 2, cardIds: ['f1', 'f2'] };
+const deck: FlashcardDeckSummary = { id: 'd1', subjectId: 's1', name: 'Deck', cardCount: 2, cardIds: ['f1', 'f2'] };
 function deferred<T>() {
   let resolve!: (value: T) => void;
   const promise = new Promise<T>((done) => {
@@ -30,7 +30,7 @@ function setup() {
   });
   const loader = { ensureCards: vi.fn(async () => cards), listCards: vi.fn(() => cards), cancel: vi.fn() };
   const hook = renderHook(() => useFlashcardSession(loader, repository));
-  act(() => hook.result.current.showSubject(subject, 't1'));
+  act(() => hook.result.current.showSubject(subject));
   return {
     ...hook,
     loader,
@@ -112,7 +112,7 @@ describe('flashcard session controller', () => {
     expect(repository.getCheckpoint('d1')).toBeUndefined();
     setFailWrites(false);
     await act(async () => {
-      await result.current.launchDeck(deck, subject, 't1');
+      await result.current.launchDeck(deck, subject);
     });
     expect(result.current.view.page).toBe('flashcards-study');
     expect(result.current.persistenceError).toBeUndefined();
@@ -122,7 +122,7 @@ describe('flashcard session controller', () => {
   it('blocks next, exit, and finish on failed writes, retaining the study position for retry', async () => {
     const { result, repository, setFailWrites } = setup();
     await act(async () => {
-      await result.current.launchDeck(deck, subject, 't1');
+      await result.current.launchDeck(deck, subject);
     });
     act(() => result.current.toggleReveal());
     setFailWrites(true);
@@ -138,7 +138,7 @@ describe('flashcard session controller', () => {
     act(() => result.current.next());
     expect(result.current.view).toMatchObject({ index: 1, revealed: false });
     act(() => result.current.finish());
-    expect(result.current.view).toMatchObject({ page: 'flashcards-subject', topicId: 't1' });
+    expect(result.current.view).toMatchObject({ page: 'flashcards-subject', subject });
     expect(repository.getCheckpoint('d1')).toBeUndefined();
   });
 
@@ -147,13 +147,13 @@ describe('flashcard session controller', () => {
     const old = checkpointForCard('d1', cards, 'f2', 'sha256-old');
     act(() => repository.saveCheckpoint(old));
     await act(async () => {
-      await result.current.launchDeck(deck, subject, 't1');
+      await result.current.launchDeck(deck, subject);
     });
     expect(result.current.pendingRestart?.reason).toBe('changed-content');
     act(() => result.current.cancelRestart());
     expect(repository.getCheckpoint('d1')).toEqual(old);
     await act(async () => {
-      await result.current.launchDeck(deck, subject, 't1');
+      await result.current.launchDeck(deck, subject);
     });
     setFailWrites(true);
     act(() => result.current.confirmRestart());

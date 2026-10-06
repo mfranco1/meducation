@@ -13,7 +13,6 @@ from meducation_api.repositories.question_bank import (
     FlashcardCatalogRepository,
     FlashcardDeck,
     FlashcardSubjectSummary,
-    FlashcardTopic,
     JsonFlashcardCatalogRepository,
     JsonQuestionBankRepository,
     Question,
@@ -59,10 +58,6 @@ class FlashcardSubjectListResponse(BaseModel):
     subjects: list[FlashcardSubjectSummary]
 
 
-class FlashcardTopicSummary(FlashcardTopic):
-    deckCount: int
-
-
 class FlashcardDeckSummary(FlashcardDeck):
     cardCount: int
     cardIds: list[str]
@@ -70,7 +65,6 @@ class FlashcardDeckSummary(FlashcardDeck):
 
 class FlashcardCatalogResponse(BaseModel):
     revision: str
-    topics: list[FlashcardTopicSummary]
     decks: list[FlashcardDeckSummary]
 
 
@@ -176,13 +170,9 @@ def create_app(
             raise HTTPException(status_code=404, detail={"code": "subject_not_found"})
 
         def build_catalog() -> FlashcardCatalogResponse:
-            topics, decks = bank.list_catalog(subject_id)
-            deck_counts: dict[str, int] = {}
-            for deck, _ in decks:
-                deck_counts[deck.topicId] = deck_counts.get(deck.topicId, 0) + 1
+            decks = bank.list_catalog(subject_id)
             return FlashcardCatalogResponse(
                 revision=bank.revision,
-                topics=[FlashcardTopicSummary(**topic.model_dump(), deckCount=deck_counts.get(topic.id, 0)) for topic in topics],
                 decks=[FlashcardDeckSummary(**deck.model_dump(exclude_none=True), cardCount=count, cardIds=[card.id for card in bank.list_cards(deck.id)]) for deck, count in decks],
             )
 

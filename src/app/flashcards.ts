@@ -4,7 +4,6 @@ import type { FlashcardDeckSummary, FlashcardSubjectSummary } from '../content/f
 
 export interface FlashcardDashboardSubject {
   subject: Subject;
-  topicCount: number;
   deckCount: number;
   activeDeckCount: number;
   latestActiveAt?: string;
@@ -16,7 +15,6 @@ export function flashcardDashboardSubjects(subjects: readonly FlashcardSubjectSu
     const active = subject.deckIds.filter(deckId => !emptyDeckIds.has(deckId)).map(deckId => progress.checkpoints[deckId]).filter((checkpoint): checkpoint is FlashcardCheckpoint => checkpoint !== undefined);
     return {
       subject: { id: subject.id, name: subject.name, accent: subject.accent },
-      topicCount: subject.topicCount,
       deckCount: subject.deckCount,
       activeDeckCount: active.length,
       latestActiveAt: active.map(checkpoint => checkpoint.updatedAt).sort().at(-1),
@@ -31,9 +29,8 @@ export function activeFlashcardSubjects(subjects: FlashcardDashboardSubject[]): 
     .map(({ subject }) => subject);
 }
 
-export function decksForSubject(decks: readonly FlashcardDeckSummary[], checkpoints: Readonly<Record<string, FlashcardCheckpoint>>, topicId?: string): FlashcardDeckSummary[] {
-  return decks.filter(deck => topicId === undefined || deck.topicId === topicId)
-    .map((deck, index) => ({ deck, index }))
+export function decksForSubject(decks: readonly FlashcardDeckSummary[], checkpoints: Readonly<Record<string, FlashcardCheckpoint>>): FlashcardDeckSummary[] {
+  return decks.map((deck, index) => ({ deck, index }))
     .sort((left, right) => {
       const leftTime = checkpoints[left.deck.id]?.updatedAt;
       const rightTime = checkpoints[right.deck.id]?.updatedAt;

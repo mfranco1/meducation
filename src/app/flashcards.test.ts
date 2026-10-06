@@ -4,9 +4,9 @@ import type { FlashcardProgressState } from '../domain/flashcardStudy';
 import type { FlashcardDeckSummary, FlashcardSubjectSummary } from '../content/flashcardApiDecoders';
 
 const subjects: FlashcardSubjectSummary[] = [
-  { id: 's1', name: 'One', accent: '#111', topicCount: 1, deckCount: 2, deckIds: ['d1', 'd2'] },
-  { id: 's2', name: 'Two', accent: '#222', topicCount: 1, deckCount: 1, deckIds: ['d3'] },
-  { id: 's3', name: 'Three', accent: '#333', topicCount: 0, deckCount: 0, deckIds: [] },
+  { id: 's1', name: 'One', accent: '#111', deckCount: 2, deckIds: ['d1', 'd2'] },
+  { id: 's2', name: 'Two', accent: '#222', deckCount: 1, deckIds: ['d3'] },
+  { id: 's3', name: 'Three', accent: '#333', deckCount: 0, deckIds: [] },
 ];
 const progress: FlashcardProgressState = {
   schemaVersion: 1, revision: 'r', checkpoints: {
@@ -15,9 +15,9 @@ const progress: FlashcardProgressState = {
   },
 };
 const decks = [
-  { id: 'd1', topicId: 't1', name: 'One', cardCount: 1, cardIds: ['f1'] },
-  { id: 'd2', topicId: 't1', name: 'Two', cardCount: 1, cardIds: ['f2'] },
-  { id: 'd3', topicId: 't2', name: 'Three', cardCount: 1, cardIds: ['f3'] },
+  { id: 'd1', subjectId: 's1', name: 'One', cardCount: 1, cardIds: ['f1'] },
+  { id: 'd2', subjectId: 's1', name: 'Two', cardCount: 1, cardIds: ['f2'] },
+  { id: 'd3', subjectId: 's2', name: 'Three', cardCount: 1, cardIds: ['f3'] },
 ] as FlashcardDeckSummary[];
 
 describe('flashcard dashboard and deck selectors', () => {
@@ -43,9 +43,9 @@ describe('flashcard dashboard and deck selectors', () => {
     expect(activeFlashcardSubjects(oneActive).map(item => item.subject.id)).toEqual(['s1']);
   });
 
-  it('filters by topic and puts resumed decks first while retaining canonical order for ties', () => {
-    const ordered = decksForSubject(decks, progress.checkpoints, 't1');
+  it('lists subject decks and puts resumed decks first while retaining canonical order for ties', () => {
+    const ordered = decksForSubject(decks.filter(deck => deck.subjectId === 's1'), progress.checkpoints);
     expect(ordered.map(deck => deck.id)).toEqual(['d1', 'd2']);
-    expect(decksForSubject(decks, {}, 't1').map(deck => deck.id)).toEqual(['d1', 'd2']);
+    expect(decksForSubject(decks.filter(deck => deck.subjectId === 's1'), {}).map(deck => deck.id)).toEqual(['d1', 'd2']);
   });
 });

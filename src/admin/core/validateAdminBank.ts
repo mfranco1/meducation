@@ -10,11 +10,11 @@ export function validateAdminBank(bank: StoredQuestionBank, flashcards: StoredFl
   const quizzes: Quiz[] = bank.quizzes.map(quiz => ({ ...quiz, questionCount: questionCount.get(quiz.id) ?? 0 }));
   const questions: Question[] = bank.questions.map(question => ({ ...question, metadata: question.metadata ?? {} }));
   const subjectIds = new Set(bank.subjects.map(subject => subject.id));
-  const danglingFlashcardSubjects = new Set(flashcards.topics.map(topic => topic.subjectId).filter(id => !subjectIds.has(id)));
+  const danglingFlashcardSubjects = new Set(flashcards.decks.map(deck => deck.subjectId).filter(id => !subjectIds.has(id)));
   return [
     ...validateStoredQuestionBank(bank),
     ...validateQuestionBank(bank.subjects, quizzes, questions),
     ...validateQuestionMarkdown(questions),
-    ...[...danglingFlashcardSubjects].map(subjectId => ({ level: 'error' as const, message: `Subject ${subjectId} is still referenced by flashcard topics; move or remove those topics first.` })),
+    ...[...danglingFlashcardSubjects].map(subjectId => ({ level: 'error' as const, message: `Subject ${subjectId} is still referenced by flashcard decks; move or remove those decks first.` })),
   ];
 }

@@ -16,8 +16,8 @@ describe('FlashcardsDashboardScreen', () => {
   it('shows a continue carousel and all-subject grid without score metadata', () => {
     const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b' };
     render(<ThemeProvider theme={theme}><FlashcardsDashboardScreen
-      subjects={[{ subject, topicCount: 2, deckCount: 4, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
-      activeSubjects={[{ subject, topicCount: 2, deckCount: 4, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
+      subjects={[{ subject, deckCount: 4, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
+      activeSubjects={[{ subject, deckCount: 4, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
       onRetry={vi.fn()} onSelectSubject={vi.fn()}
     /></ThemeProvider>);
     expect(screen.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();

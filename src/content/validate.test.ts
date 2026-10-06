@@ -41,9 +41,8 @@ describe('question bank validation', () => {
 describe('flashcard bank validation', () => {
   const subjects = [{ id: 's1', name: 'Subject', accent: '#123456' }];
   const bank: StoredFlashcardBank = {
-    schemaVersion: 1,
-    topics: [{ id: 't-neuro', subjectId: 's1', name: 'Neuro' }],
-    decks: [{ id: 'd-basics', topicId: 't-neuro', name: 'Basics' }],
+    schemaVersion: 2,
+    decks: [{ id: 'd-basics', subjectId: 's1', name: 'Basics' }],
     cards: [{ id: 'f-one', deckId: 'd-basics', front: '**Front**', back: 'Back' }],
   };
 
@@ -54,15 +53,14 @@ describe('flashcard bank validation', () => {
   it('rejects orphan references, invalid prefixes, empty fields, and unknown keys', () => {
     const invalid = {
       ...bank,
-      topics: [{ ...bank.topics[0], subjectId: 's404', extra: true }],
-      decks: [{ ...bank.decks[0], topicId: 't404', name: '  ' }],
+      decks: [{ ...bank.decks[0], subjectId: 's404', name: '  ', extra: true }],
       cards: [{ ...bank.cards[0], id: 'card', deckId: 'd404', front: ' ', back: 'Back' }],
     } as unknown as StoredFlashcardBank;
     const messages = validateStoredFlashcardBank(invalid, subjects).map(issue => issue.message);
     expect(messages).toEqual(expect.arrayContaining([
       expect.stringContaining('unknown field'),
       expect.stringContaining('unknown subject'),
-      expect.stringContaining('unknown topic'),
+      expect.stringContaining('unknown subject'),
       expect.stringContaining('unknown deck'),
       expect.stringContaining('must not be empty'),
       expect.stringContaining('prefix'),

@@ -16,7 +16,6 @@ import { storedFlashcardBank, serializeFlashcardBank, flashcardContentRevision }
 import type {
   StoredFlashcardBank,
   StoredFlashcardDeck,
-  StoredFlashcardTopic,
   StoredFlashcard,
   StoredQuestionBank,
 } from '../content/schema';
@@ -36,7 +35,7 @@ import { parseChangeSet } from './core/changeSetSchema';
 import { serializeBank } from './core/serializeBank';
 import type { AdminChangeSet } from './core/types';
 
-type Kind = 'topic' | 'deck' | 'card';
+type Kind = 'deck' | 'card';
 type Selected = { kind: Kind; id: string } | undefined;
 const clone = (bank: StoredFlashcardBank): StoredFlashcardBank => structuredClone(bank);
 const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
@@ -124,18 +123,10 @@ export function FlashcardAdminPanel({
     addEventListener('beforeunload', protectDraft);
     return () => removeEventListener('beforeunload', protectDraft);
   }, [dirty, editorDirty]);
-  const topicsBySubject = useMemo(
-    () =>
-      bank.topics.reduce<Record<string, StoredFlashcardTopic[]>>(
-        (groups, topic) => ((groups[topic.subjectId] ??= []).push(topic), groups),
-        {},
-      ),
-    [bank],
-  );
-  const decksByTopic = useMemo(
+  const decksBySubject = useMemo(
     () =>
       bank.decks.reduce<Record<string, StoredFlashcardDeck[]>>(
-        (groups, deck) => ((groups[deck.topicId] ??= []).push(deck), groups),
+        (groups, deck) => ((groups[deck.subjectId] ??= []).push(deck), groups),
         {},
       ),
     [bank],
@@ -181,8 +172,7 @@ export function FlashcardAdminPanel({
     }
   };
   const create = (kind: Kind, parentId: string) => {
-    if (kind === 'topic') load({ kind, id: '' }, { id: makeId('t'), subjectId: parentId, name: 'New topic' });
-    if (kind === 'deck') load({ kind, id: '' }, { id: makeId('d'), topicId: parentId, name: 'New deck' });
+    if (kind === 'deck') load({ kind, id: '' }, { id: makeId('d'), subjectId: parentId, name: 'New deck' });
     if (kind === 'card')
       load({ kind, id: '' }, { id: makeId('f'), deckId: parentId, front: 'Question', back: 'Answer' });
   };
@@ -218,13 +208,7 @@ export function FlashcardAdminPanel({
   const remove = (kind: Kind, id: string) => {
     if (!discardDraft()) return;
     let operation: FlashcardAdminOperation;
-    if (kind === 'topic') {
-      const decks = bank.decks.filter((deck) => deck.topicId === id);
-      const deckIds = new Set(decks.map((deck) => deck.id));
-      const count = bank.cards.filter((card) => deckIds.has(card.deckId)).length;
-      if (decks.length && !window.confirm(`Delete this topic, ${decks.length} deck(s), and ${count} card(s)?`)) return;
-      operation = { op: 'topic.delete', id, cascade: true };
-    } else if (kind === 'deck') {
+    if (kind === 'deck') {
       const count = bank.cards.filter((card) => card.deckId === id).length;
       if (count && !window.confirm(`Delete this deck and its ${count} card(s)?`)) return;
       operation = { op: 'deck.delete', id, cascade: true };
@@ -237,28 +221,13 @@ export function FlashcardAdminPanel({
   const reorder = (direction: -1 | 1) => {
     if (!selection) return;
     const candidate = clone(bank);
-    const rows =
-      selection.kind === 'topic' ? candidate.topics : selection.kind === 'deck' ? candidate.decks : candidate.cards;
+    const rows = selection.kind === 'deck' ? candidate.decks : candidate.cards;
     const row = rows.find((item) => item.id === selection.id);
     if (!row) return;
-    const parentId =
-      selection.kind === 'topic'
-        ? 'subjectId' in row
-          ? row.subjectId
-          : ''
-        : selection.kind === 'deck'
-          ? 'topicId' in row
-            ? row.topicId
-            : ''
-          : 'deckId' in row
-            ? row.deckId
-            : '';
-    const hasSameParent = (item: typeof row) =>
-      selection.kind === 'topic'
-        ? 'subjectId' in item && item.subjectId === parentId
-        : selection.kind === 'deck'
-          ? 'topicId' in item && item.topicId === parentId
-          : 'deckId' in item && item.deckId === parentId;
+    const parentId = selection.kind === 'deck' && 'subjectId' in row ? row.subjectId : 'deckId' in row ? row.deckId : '';
+    const hasSameParent = (item: typeof row) => selection.kind === 'deck'
+      ? 'subjectId' in item && item.subjectId === parentId
+      : 'deckId' in item && item.deckId === parentId;
     const siblings = rows.map((item, index) => ({ item, index })).filter(({ item }) => hasSameParent(item));
     const siblingPosition = siblings.findIndex(({ item }) => item.id === selection.id);
     const target = siblings[siblingPosition + direction];
@@ -359,8 +328,8 @@ export function FlashcardAdminPanel({
         return;
       }
       const changeSet = {
-        changeSetVersion: 1,
-        base: { schemaVersion: 1, revision: baseRevision, subjectRevision: baseSubjectRevision },
+        changeSetVersion: 2,
+        base: { schemaVersion: 2, revision: baseRevision, subjectRevision: baseSubjectRevision },
         resultRevision: nextRevision,
         resultSubjectRevision,
         reason,
@@ -510,21 +479,10 @@ export function FlashcardAdminPanel({
             {subjects.map((subject) => (
               <Box key={subject.id}>
                 <ListItemText primary={subject.name} secondary={subject.id} />
-                <Button size="small" onClick={() => create('topic', subject.id)}>
-                  Add topic
+                <Button size="small" onClick={() => create('deck', subject.id)}>
+                  Add deck
                 </Button>
-                {topicsBySubject[subject.id]?.map((topic) => (
-                  <Box key={topic.id} sx={{ pl: 2 }}>
-                    <ListItemButton
-                      selected={selection?.kind === 'topic' && selection.id === topic.id}
-                      onClick={() => load({ kind: 'topic', id: topic.id }, topic)}
-                    >
-                      <ListItemText primary={topic.name} secondary="Topic" />
-                    </ListItemButton>
-                    <Button size="small" onClick={() => create('deck', topic.id)}>
-                      Add deck
-                    </Button>
-                    {decksByTopic[topic.id]?.map((deck) => (
+                {decksBySubject[subject.id]?.map((deck) => (
                       <Box key={deck.id} sx={{ pl: 2 }}>
                         <ListItemButton
                           selected={selection?.kind === 'deck' && selection.id === deck.id}
@@ -546,8 +504,6 @@ export function FlashcardAdminPanel({
                           </ListItemButton>
                         ))}
                       </Box>
-                    ))}
-                  </Box>
                 ))}
               </Box>
             ))}
@@ -557,7 +513,7 @@ export function FlashcardAdminPanel({
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
         <Stack spacing={2}>
           <Typography variant="h6">
-            {selection ? `${selection.id ? 'Edit' : 'Create'} ${selection.kind}` : 'Select a topic, deck, or card'}
+            {selection ? `${selection.id ? 'Edit' : 'Create'} ${selection.kind}` : 'Select a deck or card'}
           </Typography>
           <TextField
             label="Reason"

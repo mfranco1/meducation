@@ -10,7 +10,7 @@ afterEach(() => vi.unstubAllGlobals());
 
 it('shows unreadable saved progress on the dashboard before a deck is opened', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-corrupt', subjects: [] });
-  runtimeFlashcardBank.configureLocal([], [], [], []);
+  runtimeFlashcardBank.configureLocal([], [], []);
   const setItem = vi.fn();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => (key === 'meducation.flashcards.progress.v1' ? '{broken' : null),
@@ -29,9 +29,8 @@ it('shows unreadable saved progress on the dashboard before a deck is opened', a
 it('shows a visible persistence error when a deck cannot be launched', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-quota', subjects: [] });
   runtimeFlashcardBank.configureLocal(
-    [{ id: 's1', name: 'Flash subject', accent: '#123456', topicCount: 1, deckCount: 1, deckIds: ['d1'] }],
-    [{ id: 't1', subjectId: 's1', name: 'Topic' }],
-    [{ id: 'd1', topicId: 't1', name: 'Test deck', cardCount: 1, cardIds: ['f1'] }],
+    [{ id: 's1', name: 'Flash subject', accent: '#123456', deckCount: 1, deckIds: ['d1'] }],
+    [{ id: 'd1', subjectId: 's1', name: 'Test deck', cardCount: 1, cardIds: ['f1'] }],
     [{ id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' }],
   );
   vi.stubGlobal(

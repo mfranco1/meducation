@@ -2,11 +2,10 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { RuntimeFlashcardBank } from './runtimeFlashcardBank';
 import type { JsonTransport } from './contentTransport';
 
-const subjects = [{ id: 's1', name: 'Subject', accent: '#123456', topicCount: 1, deckCount: 1, deckIds: ['d-neuro'] }];
+const subjects = [{ id: 's1', name: 'Subject', accent: '#123456', deckCount: 1, deckIds: ['d-neuro'] }];
 const catalog = {
   revision: 'rev-1',
-  topics: [{ id: 't-neuro', subjectId: 's1', name: 'Neuro', deckCount: 1 }],
-  decks: [{ id: 'd-neuro', topicId: 't-neuro', name: 'Neuro basics', cardCount: 1, cardIds: ['f-1'] }],
+  decks: [{ id: 'd-neuro', subjectId: 's1', name: 'Neuro basics', cardCount: 1, cardIds: ['f-1'] }],
 };
 const cards = { revision: 'rev-1', cards: [{ id: 'f-1', deckId: 'd-neuro', front: 'Front', back: 'Back' }] };
 const noRetries = { maxRetries: 0, baseDelayMs: 100, maxDelayMs: 100 };

@@ -21,7 +21,6 @@ export interface PendingDeckRestart {
   cards: FlashcardCard[];
   signature: string;
   reason: 'missing-card' | 'changed-content';
-  topicId?: string;
 }
 
 export const flashcardProgressRepository = new LocalFlashcardProgressRepository();
@@ -84,17 +83,17 @@ export function useFlashcardSession(
   }, [cancelLaunch]);
 
   const showSubject = useCallback(
-    (subject: Subject, topicId?: string) => {
+    (subject: Subject) => {
       cancelLaunch();
       setPendingRestart(undefined);
       setLaunchErrorDeckId(undefined);
-      setView({ page: 'flashcards-subject', subject, ...(topicId ? { topicId } : {}) });
+      setView({ page: 'flashcards-subject', subject });
     },
     [cancelLaunch],
   );
 
   const launchDeck = useCallback(
-    async (deck: FlashcardDeckSummary, subject: Subject, topicId?: string) => {
+    async (deck: FlashcardDeckSummary, subject: Subject) => {
       if (launching.current?.deckId === deck.id) return;
       cancelLaunch();
       const token = Symbol(deck.id);
@@ -109,7 +108,7 @@ export function useFlashcardSession(
         const choice = resolveFlashcardLaunch(deck.id, cards, contentSignature, repository.getCheckpoint(deck.id));
         if (choice.kind === 'empty') return;
         if (choice.kind === 'restart-required') {
-          setPendingRestart({ deck, subject, cards, signature: contentSignature, reason: choice.reason, topicId });
+          setPendingRestart({ deck, subject, cards, signature: contentSignature, reason: choice.reason });
           return;
         }
         const cardId = choice.cardId;
@@ -121,7 +120,6 @@ export function useFlashcardSession(
         setView({
           page: 'flashcards-study',
           subject,
-          ...(topicId ? { topicId } : {}),
           deck,
           index: choice.kind === 'resume' ? choice.index : 0,
           revealed: false,
@@ -143,7 +141,7 @@ export function useFlashcardSession(
 
   const confirmRestart = useCallback(() => {
     if (!pendingRestart) return;
-    const { deck, subject, cards, signature: contentSignature, topicId } = pendingRestart;
+    const { deck, subject, cards, signature: contentSignature } = pendingRestart;
     const cardId = cards[0]?.id;
     if (!cardId) {
       setPendingRestart(undefined);
@@ -153,7 +151,7 @@ export function useFlashcardSession(
       return;
     signature.current = contentSignature;
     setPendingRestart(undefined);
-    setView({ page: 'flashcards-study', subject, ...(topicId ? { topicId } : {}), deck, index: 0, revealed: false });
+    setView({ page: 'flashcards-study', subject, deck, index: 0, revealed: false });
   }, [pendingRestart, repository, runPersistence]);
 
   const cancelRestart = useCallback(() => setPendingRestart(undefined), []);
@@ -203,14 +201,14 @@ export function useFlashcardSession(
       )
     )
       return false;
-    showSubject(view.subject, view.topicId);
+    showSubject(view.subject);
     return true;
   }, [loader, repository, runPersistence, showSubject, view]);
 
   const finish = useCallback(() => {
     if (view.page !== 'flashcards-study') return;
     if (!runPersistence(() => repository.clearCheckpoint(view.deck.id))) return;
-    showSubject(view.subject, view.topicId);
+    showSubject(view.subject);
   }, [repository, runPersistence, showSubject, view]);
 
   const clearLaunchError = useCallback(() => {

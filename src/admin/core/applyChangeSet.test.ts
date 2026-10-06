@@ -23,21 +23,21 @@ describe('admin change-set processor', () => {
     const gateway = new InMemoryQuestionBankGateway(bank());
     const base = await gateway.load();
     await gateway.apply({ ...changeSet([{ op: 'subject.create', value: { id: 's2', name: 'New', accent: '#222222' } }]), base: { bankSchemaVersion: 4, revision: base.revision } });
-    gateway.setFlashcardBank({ schemaVersion: 1, topics: [{ id: 't-new', subjectId: 's2', name: 'Topic' }], decks: [], cards: [] });
+    gateway.setFlashcardBank({ schemaVersion: 2, decks: [{ id: 'd-new', subjectId: 's2', name: 'Deck' }], cards: [] });
     await expect(gateway.undo()).rejects.toThrow('unknown subject');
     await expect(gateway.reset()).rejects.toThrow('unknown subject');
     expect((await gateway.load()).bank.subjects.map(subject => subject.id)).toEqual(['s1', 's2']);
     expect(gateway.appliedOperations()).toHaveLength(1);
-    gateway.setFlashcardBank({ schemaVersion: 1, topics: [], decks: [], cards: [] });
+    gateway.setFlashcardBank({ schemaVersion: 2, decks: [], cards: [] });
     expect((await gateway.undo())?.bank).toEqual(bank());
   });
   it('validates shared subjects against the staged flashcard bank snapshot', async () => {
-    const flashcards: StoredFlashcardBank = { schemaVersion: 1, topics: [{ id: 't1', subjectId: 's1', name: 'Topic' }], decks: [], cards: [] };
+    const flashcards: StoredFlashcardBank = { schemaVersion: 2, decks: [{ id: 'd1', subjectId: 's1', name: 'Deck' }], cards: [] };
     const gateway = new InMemoryQuestionBankGateway({ ...bank(), quizzes: [], questions: [] }, flashcards);
     const snapshot = await gateway.load();
     const removal: AdminChangeSet = { ...changeSet([{ op: 'subject.delete', id: 's1', cascade: true }]), base: { bankSchemaVersion: 4, revision: snapshot.revision } };
     expect((await gateway.preview(removal)).issues.some(issue => issue.level === 'error')).toBe(true);
-    gateway.setFlashcardBank({ schemaVersion: 1, topics: [], decks: [], cards: [] });
+    gateway.setFlashcardBank({ schemaVersion: 2, decks: [], cards: [] });
     expect((await gateway.preview(removal)).issues.some(issue => issue.level === 'error')).toBe(false);
   });
 
@@ -70,15 +70,14 @@ describe('admin change-set processor', () => {
     expect(accepted.summary).toMatchObject({ deletes: 1, cascadedQuizzes: 1, cascadedQuestions: 1 });
   });
 
-  it('blocks deleting a quiz subject while any flashcard topic references it, including cascade', () => {
+  it('blocks deleting a quiz subject while any flashcard deck references it, including cascade', () => {
     const flashcards: StoredFlashcardBank = {
-      schemaVersion: 1,
-      topics: [{ id: 't1', subjectId: 's1', name: 'Shared subject topic' }],
-      decks: [],
+      schemaVersion: 2,
+      decks: [{ id: 'd1', subjectId: 's1', name: 'Shared subject deck' }],
       cards: [],
     };
     const preview = previewChangeSet(bank(), changeSet([{ op: 'subject.delete', id: 's1', cascade: true }]), flashcards);
-    expect(preview.issues).toContainEqual(expect.objectContaining({ level: 'error', message: expect.stringContaining('referenced by flashcard topics') }));
+    expect(preview.issues).toContainEqual(expect.objectContaining({ level: 'error', message: expect.stringContaining('referenced by flashcard decks') }));
   });
 
   it('moves a question into a destination quiz segment', () => {

@@ -35,7 +35,7 @@ def write_json(path, value: dict) -> None:
 
 
 def test_flashcard_bank_rejects_bad_schema_and_references(flashcard_bank: dict) -> None:
-    invalid_version = {**flashcard_bank, "schemaVersion": 2}
+    invalid_version = {**flashcard_bank, "schemaVersion": 1}
     with pytest.raises(ValidationError, match="Unsupported flashcard bank schema"):
         FlashcardBank.model_validate(invalid_version)
     invalid_ref = copy.deepcopy(flashcard_bank)
@@ -57,17 +57,14 @@ def test_flashcard_repository_preserves_order_and_checks_shared_subjects(tmp_pat
 
     subjects = JsonQuestionBankRepository(quiz_path).list_subjects()
     repository = JsonFlashcardCatalogRepository(flashcard_path, subjects)
-    assert repository.revision == "sha256-a601a3fb3815d69a237aabff72005a5b286b3de3e04e12d918c1611a8104bd10"
-    assert [(topic.id, topic.name) for topic in repository.list_catalog("s1")[0]] == [
-        ("t-neuro", "Neuroanatomy"), ("t-empty", "Empty topic")
-    ]
-    assert [(deck.id, count) for deck, count in repository.list_catalog("s1")[1]] == [
+    assert repository.revision == "sha256-4b107698325e06033184db9da6e921c6f07ee50837fc539bca72fc1addfcc8b9"
+    assert [(deck.id, count) for deck, count in repository.list_catalog("s1")] == [
         ("d-cranial", 2), ("d-empty", 0)
     ]
     assert [card.id for card in repository.list_cards("d-cranial")] == ["f-1", "f-2"]
     assert [subject.deckCount for subject in repository.list_subjects()] == [2, 0]
     broken = copy.deepcopy(flashcard_bank)
-    broken["topics"][0]["subjectId"] = "s-unknown"
+    broken["decks"][0]["subjectId"] = "s-unknown"
     write_json(flashcard_path, broken)
     with pytest.raises(RuntimeError, match="subject missing"):
         JsonFlashcardCatalogRepository(flashcard_path, subjects)
@@ -92,12 +89,12 @@ def test_flashcard_catalog_keeps_canonical_interleaved_deck_order(tmp_path, quiz
 
     quiz_path, flashcard_path = tmp_path / "quiz.json", tmp_path / "flashcards.json"
     flashcard_bank["decks"].reverse()
-    flashcard_bank["decks"].append({"id": "d-extra", "topicId": "t-empty", "name": "Extra"})
+    flashcard_bank["decks"].append({"id": "d-extra", "subjectId": "s1", "name": "Extra"})
     write_json(quiz_path, quiz_bank)
     write_json(flashcard_path, flashcard_bank)
     repository = JsonFlashcardCatalogRepository(flashcard_path, JsonQuestionBankRepository(quiz_path).list_subjects())
     expected = ["d-empty", "d-cranial", "d-extra"]
-    assert [deck.id for deck, _ in repository.list_catalog("s1")[1]] == expected
+    assert [deck.id for deck, _ in repository.list_catalog("s1")] == expected
     assert repository.list_subjects()[0].deckIds == expected
 
 
@@ -117,8 +114,9 @@ def test_flashcard_api_catalog_cards_revision_and_missing_routes(tmp_path, quiz_
 
         catalog = client.get(f"/api/v1/flashcards/subjects/s1/catalog?revision={revision}")
         assert catalog.status_code == 200
-        assert [topic["id"] for topic in catalog.json()["topics"]] == ["t-neuro", "t-empty"]
+        assert set(catalog.json()) == {"revision", "decks"}
         assert [deck["cardCount"] for deck in catalog.json()["decks"]] == [2, 0]
+        assert [deck["subjectId"] for deck in catalog.json()["decks"]] == ["s1", "s1"]
         cards = client.get(f"/api/v1/flashcards/decks/d-cranial/cards?revision={revision}")
         assert [card["id"] for card in cards.json()["cards"]] == ["f-1", "f-2"]
         assert catalog.json()["decks"][0]["cardIds"] == ["f-1", "f-2"]

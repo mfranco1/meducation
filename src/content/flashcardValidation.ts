@@ -8,10 +8,7 @@ export function validateFlashcardBank(bank: StoredFlashcardBank, subjects: reado
   const structural = validateStoredFlashcardBank(bank, [...subjects]);
   if (structural.some((issue) => issue.level === 'error')) return structural;
   const warnings: ValidationIssue[] = [];
-  for (const records of [
-    bank.topics.map((topic) => [topic.subjectId, topic.name]),
-    bank.decks.map((deck) => [deck.topicId, deck.name]),
-  ]) {
+  for (const records of [bank.decks.map((deck) => [deck.subjectId, deck.name])]) {
     const seen = new Set<string>();
     for (const [parent, name] of records) {
       const key = JSON.stringify([parent, name.trim().toLocaleLowerCase()]);

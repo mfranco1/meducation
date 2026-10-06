@@ -18,14 +18,13 @@ const quizzes: StoredQuestionBank = {
   questions: [],
 };
 const flashcards: StoredFlashcardBank = {
-  schemaVersion: 1,
-  topics: [{ id: 't1', subjectId: 's1', name: 'Topic' }],
-  decks: [{ id: 'd1', topicId: 't1', name: 'Deck' }],
+  schemaVersion: 2,
+  decks: [{ id: 'd1', subjectId: 's1', name: 'Deck' }],
   cards: [{ id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' }],
 };
 async function bundle(): Promise<CoordinatedContentChangeSet> {
   const subjects = quizzes.subjects.filter((subject) => subject.id !== 's1');
-  const operations = [{ op: 'topic.update' as const, id: 't1', value: { id: 't1', subjectId: 's2', name: 'Topic' } }];
+  const operations = [{ op: 'deck.update' as const, id: 'd1', value: { id: 'd1', subjectId: 's2', name: 'Deck' } }];
   const result = applyFlashcardOperations(flashcards, subjects, operations);
   return {
     bundleVersion: 1,
@@ -36,9 +35,9 @@ async function bundle(): Promise<CoordinatedContentChangeSet> {
       operations: [{ op: 'subject.delete', id: 's1', cascade: true }],
     },
     flashcards: {
-      changeSetVersion: 1,
+      changeSetVersion: 2,
       base: {
-        schemaVersion: 1,
+        schemaVersion: 2,
         revision: await flashcardContentRevision(flashcards, quizzes.subjects),
         subjectRevision: await sha256Text(JSON.stringify(quizzes.subjects)),
       },
@@ -55,7 +54,7 @@ describe('coordinated content import', () => {
     const gateway = new InMemoryQuestionBankGateway(quizzes, flashcards);
     const initial = await gateway.load();
     const moved = structuredClone(flashcards);
-    moved.topics[0].subjectId = 's3';
+    moved.decks[0].subjectId = 's3';
     await gateway.applyCoordinated(
       {
         changeSetVersion: 1,
@@ -76,7 +75,7 @@ describe('coordinated content import', () => {
     expect(await gateway.resetCoordinated(flashcards)).toEqual(initial);
     expect(gateway.appliedOperations()).toEqual([]);
     expect(await gateway.undo()).toBeUndefined();
-    // The restored topic protects the original subject again.
+    // The restored deck protects the original subject again.
     expect(
       (
         await gateway.preview({
@@ -96,12 +95,12 @@ describe('coordinated content import', () => {
     );
     const result = await replayCoordinatedContentChangeSet(quizzes, flashcards, input);
     expect(result.quizzes.subjects.map((subject) => subject.id)).toEqual(['s2']);
-    expect(result.flashcards.topics[0].subjectId).toBe('s2');
+    expect(result.flashcards.decks[0].subjectId).toBe('s2');
     expect(result.flashcards.cards).toEqual(flashcards.cards);
     const gateway = new InMemoryQuestionBankGateway(quizzes, flashcards);
     const staged = await gateway.applyCoordinated(result.quizChangeSet, result.flashcards);
     expect(staged.bank).toEqual(result.quizzes);
-    // The committed topic now protects s2 in later ordinary quiz edits.
+    // The committed deck now protects s2 in later ordinary quiz edits.
     const deletion = {
       ...input.quizzes,
       base: { bankSchemaVersion: 4 as const, revision: staged.revision },
