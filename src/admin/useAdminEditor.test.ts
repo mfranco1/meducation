@@ -38,6 +38,11 @@ describe('admin editor workflows', () => {
     act(() => result.current.markCoordinatedExport());
     expect(result.current.dirty).toBe(false);
     expect(result.current.exported).toBe(true);
+    await act(async () => { await result.current.resetCoordinatedWorkspace(originalCards); });
+    expect(result.current.snapshot?.bank).toEqual(source);
+    expect(result.current.hasAppliedChanges).toBe(false);
+    expect(result.current.dirty).toBe(false);
+    expect(result.current.exported).toBe(false);
   });
   it('stages, exports, and undoes a record edit without changing the initial export bytes', async () => {
     const source = bank();

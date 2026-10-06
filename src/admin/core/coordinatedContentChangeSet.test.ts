@@ -51,6 +51,41 @@ async function bundle(): Promise<CoordinatedContentChangeSet> {
 }
 
 describe('coordinated content import', () => {
+  it('resets a subject replacement atomically when neither independent reset is valid', async () => {
+    const gateway = new InMemoryQuestionBankGateway(quizzes, flashcards);
+    const initial = await gateway.load();
+    const moved = structuredClone(flashcards);
+    moved.topics[0].subjectId = 's3';
+    await gateway.applyCoordinated(
+      {
+        changeSetVersion: 1,
+        base: { bankSchemaVersion: 4, revision: initial.revision },
+        reason: 'Replace subject',
+        operations: [
+          { op: 'subject.create', value: { id: 's3', name: 'Three', accent: '#333333' } },
+          { op: 'subject.delete', id: 's1', cascade: true },
+        ],
+      },
+      moved,
+    );
+    const staged = await gateway.load();
+    await expect(gateway.reset()).rejects.toThrow();
+    expect(() => applyFlashcardOperations(flashcards, staged.bank.subjects, [])).toThrow();
+    await expect(gateway.resetCoordinated(moved)).rejects.toThrow();
+    expect(await gateway.load()).toEqual(staged);
+    expect(await gateway.resetCoordinated(flashcards)).toEqual(initial);
+    expect(gateway.appliedOperations()).toEqual([]);
+    expect(await gateway.undo()).toBeUndefined();
+    // The restored topic protects the original subject again.
+    expect(
+      (
+        await gateway.preview({
+          ...(await bundle()).quizzes,
+          base: { bankSchemaVersion: 4, revision: initial.revision },
+        })
+      ).issues.some((issue) => issue.level === 'error'),
+    ).toBe(true);
+  });
   it('replays and stages the final pair when both separate intermediate imports are invalid', async () => {
     const input = await bundle();
     expect(previewChangeSet(quizzes, input.quizzes, flashcards).issues.some((issue) => issue.level === 'error')).toBe(

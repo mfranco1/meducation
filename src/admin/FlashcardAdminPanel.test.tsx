@@ -50,6 +50,36 @@ const props = {
 };
 
 describe('FlashcardAdminPanel', () => {
+  it('confirms a paired reset, preserves drafts on failure, and clears them only on success', async () => {
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    const onResetPaired = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Reset unavailable'))
+      .mockResolvedValueOnce(undefined);
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardAdminPanel
+          {...props}
+          subjects={props.subjects.slice(0, 1)}
+          quizChangesStaged
+          onResetPaired={onResetPaired}
+        />
+      </ThemeProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Record JSON' });
+    fireEvent.change(editor, { target: { value: 'Unstaged draft' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Reset both banks' }));
+    expect(onResetPaired).not.toHaveBeenCalled();
+    expect(editor).toHaveValue('Unstaged draft');
+    confirm.mockReturnValue(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Reset both banks' }));
+    expect(await screen.findByText('Reset unavailable')).toBeVisible();
+    expect(editor).toHaveValue('Unstaged draft');
+    fireEvent.click(screen.getByRole('button', { name: 'Reset both banks' }));
+    await waitFor(() => expect(editor).toHaveValue(''));
+    expect(onResetPaired).toHaveBeenLastCalledWith(storedFlashcardBank);
+    expect(screen.queryByText('Reset unavailable')).toBeNull();
+  });
   it('previews a coordinated bundle and stages both snapshots through the atomic callback', async () => {
     const quizBank: StoredQuestionBank = {
       schemaVersion: 4,
@@ -97,7 +127,9 @@ describe('FlashcardAdminPanel', () => {
       </ThemeProvider>,
     );
     fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [file] } });
-    expect((await screen.findByRole('textbox', { name: 'Paired quiz change set' }) as HTMLTextAreaElement).value).toContain('subject.delete');
+    expect(
+      ((await screen.findByRole('textbox', { name: 'Paired quiz change set' })) as HTMLTextAreaElement).value,
+    ).toContain('subject.delete');
     fireEvent.click(screen.getByRole('button', { name: 'Stage import' }));
     expect(await screen.findByText('Workspace changed')).toBeVisible();
     expect(onBankChange).not.toHaveBeenCalled();

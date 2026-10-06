@@ -8,6 +8,24 @@ import { theme } from './theme';
 
 afterEach(() => vi.unstubAllGlobals());
 
+it('shows unreadable saved progress on the dashboard before a deck is opened', async () => {
+  runtimeQuestionBank.configureApi({ revision: 'rev-corrupt', subjects: [] });
+  runtimeFlashcardBank.configureLocal([], [], [], []);
+  const setItem = vi.fn();
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => (key === 'meducation.flashcards.progress.v1' ? '{broken' : null),
+    setItem,
+  });
+  render(
+    <ThemeProvider theme={theme}>
+      <App />
+    </ThemeProvider>,
+  );
+  fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
+  expect(await screen.findByRole('alert')).toHaveTextContent('original browser data has been kept');
+  expect(setItem).not.toHaveBeenCalled();
+});
+
 it('shows a visible persistence error when a deck cannot be launched', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-quota', subjects: [] });
   runtimeFlashcardBank.configureLocal(

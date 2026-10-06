@@ -9,6 +9,7 @@ export interface AdminQuestionBankGateway {
   preview(changeSet: AdminChangeSet): Promise<AdminPreviewSummary>;
   apply(changeSet: AdminChangeSet): Promise<AdminBankSnapshot>;
   applyCoordinated?(changeSet: AdminChangeSet, flashcards: StoredFlashcardBank): Promise<AdminBankSnapshot>;
+  resetCoordinated?(flashcards: StoredFlashcardBank): Promise<AdminBankSnapshot>;
   undo(): Promise<AdminBankSnapshot | undefined>;
   reset(): Promise<AdminBankSnapshot>;
   appliedOperations(): AdminChangeSet['operations'];

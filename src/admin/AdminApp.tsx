@@ -25,6 +25,7 @@ export function AdminApp() {
     stageSingle, validateBulkDraft, stageValidatedBulk, importChangeSetFile,
     stageImportedChangeSet, stageDelete, undo, reset, exportFiles,
     stageCoordinatedImport,
+    resetCoordinatedWorkspace,
     markCoordinatedExport,
   } = useAdminEditor(gateway);
   const importFileRef = useRef<HTMLInputElement>(null);
@@ -67,7 +68,7 @@ export function AdminApp() {
     </Stack>
     <Box sx={{ display: section === 'flashcards' ? 'block' : 'none' }}><FlashcardAdminPanel subjects={snapshot.bank.subjects} onBankChange={bank => gateway.setFlashcardBank(bank)} quizRevision={snapshot.revision} originalQuizRevision={originalRevision} quizChangesStaged={hasAppliedChanges}
       quizBank={snapshot.bank} quizChangeSet={hasAppliedChanges ? { changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: originalRevision }, reason, operations: gateway.appliedOperations() } : undefined}
-      onStagePairedImport={stageCoordinatedImport} onPairedExport={markCoordinatedExport} externalBusy={Boolean(busy)} /></Box>
+      onStagePairedImport={stageCoordinatedImport} onResetPaired={resetCoordinatedWorkspace} onPairedExport={markCoordinatedExport} externalBusy={Boolean(busy)} /></Box>
     {section === 'quizzes' &&
     <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
       <AdminNavigatorPanel bank={snapshot.bank} selection={selection} selectedSubjectId={selectedSubject?.id} selectedQuizId={selectedQuiz?.id} filter={filter} setFilter={setFilter} loadEntity={loadEntity} loadNew={loadNew} />

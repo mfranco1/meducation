@@ -318,6 +318,20 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     } finally { busyRef.current = false; setBusy(undefined); }
   };
 
+  const resetCoordinatedWorkspace = async (flashcards: StoredFlashcardBank) => {
+    if (busyRef.current) throw new Error('Wait for the current quiz authoring command to finish.');
+    if (!gateway.resetCoordinated) throw new Error('This authoring adapter does not support coordinated reset.');
+    busyRef.current = true;
+    setBusy('Coordinated reset');
+    try {
+      const next = await gateway.resetCoordinated(flashcards);
+      invalidateDraft();
+      setSnapshot(next); setDirty(false); setExported(false); setEditor('');
+      setSelection({ kind: 'subject' }); setBulkContext(undefined); setIssues([]);
+      setSummary('Both content banks were reset to bundled canonical content.');
+    } finally { busyRef.current = false; setBusy(undefined); }
+  };
+
   return {
     snapshot, originalRevision, selection, mode, editor, reason, issues, summary,
     dirty, exported, filter, setFilter, pendingBulk, importedChangeSet,
@@ -325,6 +339,7 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     loadEntity, loadNew, chooseBulkTarget, chooseBulkSubject, chooseBulkQuiz,
     showSingle, editRecord, editReason,
     stageCoordinatedImport,
+    resetCoordinatedWorkspace,
     markCoordinatedExport: () => { setDirty(false); setExported(true); setSummary('Downloaded the coordinated content bundle and both canonical bank snapshots.'); },
     stageSingle: () => runCommand('Stage', stageSingle),
     validateBulkDraft: () => runCommand('Validation', validateBulkDraft),

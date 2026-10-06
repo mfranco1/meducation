@@ -58,6 +58,7 @@ export function FlashcardAdminPanel({
   quizBank,
   quizChangeSet,
   onStagePairedImport,
+  onResetPaired,
   onPairedExport,
   externalBusy = false,
 }: {
@@ -69,6 +70,7 @@ export function FlashcardAdminPanel({
   quizBank?: StoredQuestionBank;
   quizChangeSet?: AdminChangeSet;
   onStagePairedImport?: (changeSet: AdminChangeSet, flashcards: StoredFlashcardBank) => Promise<void>;
+  onResetPaired?: (flashcards: StoredFlashcardBank) => Promise<void>;
   onPairedExport?: () => void;
   externalBusy?: boolean;
 }) {
@@ -291,16 +293,10 @@ export function FlashcardAdminPanel({
     setLoadedEditor('');
     setIssues([]);
   };
-  const reset = () => {
-    if ((dirty || editorDirty) && !window.confirm('Discard every staged and unstaged flashcard change?')) return;
-    const initial = clone(storedFlashcardBank);
-    const errors = validateFlashcardBank(initial, subjects).filter((issue) => issue.level === 'error');
-    if (errors.length) {
-      setIssues(errors.map((issue) => issue.message));
-      return;
-    }
+  const clearWorkspace = (initial: StoredFlashcardBank) => {
     generation.current++;
     setPendingImport(undefined);
+    setImportFileError(undefined);
     setBank(initial);
     onBankChange(initial);
     setHistory([]);
@@ -310,6 +306,33 @@ export function FlashcardAdminPanel({
     setEditor('');
     setLoadedEditor('');
     setIssues([]);
+  };
+  const reset = () => {
+    if ((dirty || editorDirty) && !window.confirm('Discard every staged and unstaged flashcard change?')) return;
+    const initial = clone(storedFlashcardBank);
+    const errors = validateFlashcardBank(initial, subjects).filter((issue) => issue.level === 'error');
+    if (errors.length) {
+      setIssues(errors.map((issue) => issue.message));
+      return;
+    }
+    clearWorkspace(initial);
+  };
+  const resetBoth = async () => {
+    if (
+      !onResetPaired ||
+      !window.confirm('Discard all staged changes and editor drafts in BOTH Quizzes and Flashcards?')
+    )
+      return;
+    setBusy(true);
+    try {
+      const initial = clone(storedFlashcardBank);
+      await onResetPaired(initial);
+      clearWorkspace(initial);
+    } catch (error) {
+      setIssues([error instanceof Error ? error.message : 'Unable to reset both content banks.']);
+    } finally {
+      setBusy(false);
+    }
   };
   const exportFiles = async () => {
     if (editorDirty) {
@@ -595,6 +618,7 @@ export function FlashcardAdminPanel({
             <Button disabled={!operations.length && !editorDirty} onClick={reset}>
               Reset
             </Button>
+            {onResetPaired && quizChangesStaged && <Button onClick={() => void resetBoth()}>Reset both banks</Button>}
             <Button variant="outlined" color="success" disabled={!dirty} onClick={() => void exportFiles()}>
               Export flashcard JSON and change set
             </Button>

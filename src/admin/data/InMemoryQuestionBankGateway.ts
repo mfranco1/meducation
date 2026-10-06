@@ -99,6 +99,17 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
 
   async reset(): Promise<AdminBankSnapshot> {
     this.assertSharedSubjects(this.initial);
+    return this.resetToInitial();
+  }
+
+  async resetCoordinated(flashcards: StoredFlashcardBank): Promise<AdminBankSnapshot> {
+    const errors = validateFlashcardBank(flashcards, this.initial.subjects).filter(issue => issue.level === 'error');
+    if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
+    this.flashcards = structuredClone(flashcards);
+    return this.resetToInitial();
+  }
+
+  private resetToInitial(): Promise<AdminBankSnapshot> {
     this.bank = cloneBank(this.initial);
     this.history = [];
     this.operationLengths = [];

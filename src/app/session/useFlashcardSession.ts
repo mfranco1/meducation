@@ -102,9 +102,9 @@ export function useFlashcardSession(
       setLoadingDeckId(deck.id);
       setLaunchErrorDeckId(undefined);
       try {
-      const cards = await loader.ensureCards(deck.id);
-      if (launching.current?.token !== token) return;
-      const contentSignature = await flashcardContentSignature(cards);
+        const cards = await loader.ensureCards(deck.id);
+        if (launching.current?.token !== token) return;
+        const contentSignature = await flashcardContentSignature(cards);
         if (launching.current?.token !== token) return;
         const choice = resolveFlashcardLaunch(deck.id, cards, contentSignature, repository.getCheckpoint(deck.id));
         if (choice.kind === 'empty') return;
@@ -225,7 +225,7 @@ export function useFlashcardSession(
     loadingDeckId,
     launchErrorDeckId,
     launchError,
-    persistenceError,
+    persistenceError: persistenceError ?? repository.getStorageError(),
     showDashboard,
     showSubject,
     launchDeck,

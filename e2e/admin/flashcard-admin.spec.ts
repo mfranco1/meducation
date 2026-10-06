@@ -90,4 +90,23 @@ test('stages topic, deck, and card CRUD and previews an exported replay', async 
   };
   expect(content.cards.find((item) => item.id === card.id)?.back).toBe('Updated admin back');
   expect(content.cards.find((item) => item.id === secondCard.id)?.deckId).toBe(secondDeck.id);
+
+  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await page.getByRole('button', { name: 'Add', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Subject', exact: true }).click();
+  const quizEditor = page.getByRole('textbox', { name: 'JSON', exact: true });
+  const newSubject = JSON.parse(await quizEditor.inputValue()) as { id: string; name: string; accent: string };
+  await quizEditor.fill(JSON.stringify({ ...newSubject, name: 'Temporary shared subject' }));
+  await page.getByRole('button', { name: 'Stage', exact: true }).click();
+  await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+  await expect(page.getByText('Temporary shared subject', { exact: true })).toBeVisible();
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('BOTH Quizzes and Flashcards');
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: 'Reset both banks' }).click();
+  await expect(page.getByText('Temporary shared subject', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Admin browser topic Topic' })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Undo', exact: true })).toBeDisabled();
 });

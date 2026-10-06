@@ -68,7 +68,7 @@ function move<K extends Kind>(bank: StoredFlashcardBank, kind: K, id: string, af
 /** Applies the complete batch to a clone and only returns it after all references validate. */
 export function applyFlashcardOperations(source: StoredFlashcardBank, subjects: readonly Subject[], operations: readonly FlashcardAdminOperation[]): StoredFlashcardBank {
   const bank = clone(source);
-  for (const original of operations) {
+  for (const original of structuredClone(operations)) {
     const operation = original as unknown as { op: string; value?: StoredFlashcardTopic | StoredFlashcardDeck | StoredFlashcard; id?: string; afterId?: string; cascade?: true; first?: true };
     const [kind, action] = operation.op.split('.') as [Kind, string];
     const items = bank[keyFor(kind)] as Array<{ id: string }>;

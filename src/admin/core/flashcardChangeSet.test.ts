@@ -42,6 +42,15 @@ describe('flashcard admin change sets', () => {
     expect(source.decks.map(deck => deck.id)).toEqual(['d-one', 'd-two']);
   });
 
+  it('does not share mutable records between operations and validated results', () => {
+    const value = { id: 't-new', subjectId: 's1', name: 'Reviewed' };
+    const result = applyFlashcardOperations(source, storedQuestionBank.subjects, [{ op: 'topic.create', value }]);
+    value.subjectId = 'missing';
+    expect(result.topics.at(-1)?.subjectId).toBe('s1');
+    result.topics.at(-1)!.name = 'Edited result';
+    expect(value.name).toBe('Reviewed');
+  });
+
   it('requires explicit cascades and rolls failed mixed batches back', () => {
     expect(() => applyFlashcardOperations(source, storedQuestionBank.subjects, [{ op: 'deck.delete', id: 'd-one' }])).toThrow('explicit cascade');
     expect(() => applyFlashcardOperations(source, storedQuestionBank.subjects, [
