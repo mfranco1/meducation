@@ -72,7 +72,27 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   const quizzesTopExpanded = (await quizzesButton.boundingBox())!.y;
   const brandRadius = await brand.evaluate((element) => getComputedStyle(element).borderRadius);
   expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
-  const collapseButton = page.getByRole('button', { name: 'Collapse navigation' });
+  const edgeToggle = page.getByTestId('drawer-edge-toggle').first();
+  const arrow = edgeToggle.locator('.drawer-edge-toggle-arrow');
+  const orientation = async () =>
+    arrow.evaluate((element) => {
+      const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
+      return { a: matrix.a, d: matrix.d };
+    });
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(orientation).toEqual({ a: 1, d: 1 });
+  const hoverEdge = async (y: number) => {
+    const bounds = (await edgeToggle.boundingBox())!;
+    await edgeToggle.hover({ position: { x: bounds.width / 2, y } });
+    await expect
+      .poll(() => edgeToggle.evaluate((element) => getComputedStyle(element, '::before').opacity))
+      .toBe('0.55');
+  };
+  await hoverEdge(12);
+  const edgeBounds = (await edgeToggle.boundingBox())!;
+  await hoverEdge(edgeBounds.height - 12);
+  await page.mouse.move(300, 300);
+  await expect.poll(() => edgeToggle.evaluate((element) => getComputedStyle(element, '::before').opacity)).toBe('0');
   const noHoverChange = async (button: typeof brand) => {
     const before = await button.evaluate((element) => getComputedStyle(element).backgroundColor);
     await button.hover();
@@ -80,16 +100,38 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
     expect(after).toBe(before);
   };
   await noHoverChange(brand);
-  await noHoverChange(collapseButton);
+  await noHoverChange(edgeToggle);
   await noHoverChange(quizzesButton);
-  await collapseButton.click();
-  await expect(page.getByRole('button', { name: 'Expand navigation' })).toHaveAttribute('aria-expanded', 'false');
+  await edgeToggle.click({ position: { x: 6, y: 96 } });
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
+  await expect.poll(orientation).toEqual({ a: -1, d: -1 });
+  const aside = page.getByLabel('Meducation navigation');
+  await expect.poll(async () => (await aside.boundingBox())?.width).toBe(64);
   expect((await quizzesButton.boundingBox())!.y).toBe(quizzesTopExpanded);
   expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
-  const expandButton = page.getByRole('button', { name: 'Expand navigation' });
   await noHoverChange(brand);
   await noHoverChange(quizzesButton);
-  await noHoverChange(expandButton);
+  await noHoverChange(edgeToggle);
+  await edgeToggle.click({ position: { x: 6, y: 12 } });
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(async () => (await aside.boundingBox())?.width).toBe(240);
+  await edgeToggle.click({ position: { x: 6, y: edgeBounds.height - 12 } });
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
+  await expect.poll(async () => (await aside.boundingBox())?.width).toBe(64);
+  await expect.poll(orientation).toEqual({ a: -1, d: -1 });
+  await edgeToggle.focus();
+  await page.keyboard.press('Enter');
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
+  await page.keyboard.press('Space');
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await edgeToggle.click({ position: { x: 6, y: 96 } });
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect.poll(orientation).toEqual({ a: 1, d: 1 });
+  expect(await arrow.evaluate((element) => getComputedStyle(element).transitionProperty)).toBe('none');
+  await edgeToggle.click({ position: { x: 6, y: 96 } });
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
+  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await testInfo.attach('navigation-desktop-collapsed.png', {
     body: await page.screenshot({ path: testInfo.outputPath('navigation-desktop-collapsed.png') }),
     contentType: 'image/png',
@@ -100,20 +142,38 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
 
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.getByRole('button', { name: 'Expand navigation' }).click();
+  await page.getByTestId('drawer-edge-toggle').first().click();
   const navigationDialog = page.getByRole('presentation').last();
   await expect(navigationDialog).toBeVisible();
   const mobileDrawer = page.locator('.MuiDrawer-paper').last();
   await expect(mobileDrawer).toHaveCSS('width', '240px');
   await expect.poll(async () => (await mobileDrawer.boundingBox())?.x).toBe(0);
+  const overlayToggle = page.getByTestId('drawer-edge-toggle').last();
+  await overlayToggle.click({ position: { x: 6, y: 12 } });
+  await expect(navigationDialog).toBeHidden();
+  await expect(page.getByTestId('drawer-edge-toggle').first()).toHaveAttribute('aria-expanded', 'false');
+  await page.getByTestId('drawer-edge-toggle').first().click();
+  const reopenedDialog = page.getByRole('presentation').last();
+  await expect(reopenedDialog).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(reopenedDialog).toBeHidden();
+  await page.getByTestId('drawer-edge-toggle').first().click();
+  const backdropDialog = page.getByRole('presentation').last();
+  await expect(backdropDialog).toBeVisible();
+  await page.mouse.click(380, 40);
+  await expect(backdropDialog).toBeHidden();
+  await page.getByTestId('drawer-edge-toggle').first().click();
+  const screenshotDialog = page.getByRole('presentation').last();
+  await expect(screenshotDialog).toBeVisible();
+  await expect.poll(async () => (await page.locator('.MuiDrawer-paper').last().boundingBox())?.x).toBe(0);
   await testInfo.attach('navigation-mobile-expanded.png', {
     body: await page.screenshot({ path: testInfo.outputPath('navigation-mobile-expanded.png') }),
     contentType: 'image/png',
   });
   await page.keyboard.press('Escape');
-  await expect(navigationDialog).toBeHidden();
-  await expect(page.getByRole('button', { name: 'Expand navigation' })).toBeFocused();
-  await page.getByRole('button', { name: 'Expand navigation' }).click();
+  await expect(screenshotDialog).toBeHidden();
+  await expect(page.getByTestId('drawer-edge-toggle').first()).toBeFocused();
+  await page.getByTestId('drawer-edge-toggle').first().click();
   await page.getByRole('button', { name: 'Flashcards' }).last().click();
   await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Flashcards' }).first()).toHaveAttribute('aria-current', 'page');
