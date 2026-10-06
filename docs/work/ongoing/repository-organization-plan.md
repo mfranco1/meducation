@@ -1,6 +1,6 @@
 # Repository organization plan
 
-Created: 2026-10-06. Status: Stage 2 complete; waiting for the user's signal to begin Stage 3.
+Created: 2026-10-06. Status: Stage 3 complete; waiting for the user's signal to begin Stage 4.
 
 ## Goal and recommendation
 
@@ -148,14 +148,102 @@ Raw move, graph, bundle, browser, and capture evidence is under `/private/tmp/me
 
 ## Stage 3 — Group learner code by feature
 
-- [ ] Move quiz screens, quiz/feedback/results components, `useQuizSession`, `useQuizLaunch`, and quiz-specific selectors under `features/quizzes`, moving tests with each module. Keep composition and navigation in `app`.
-- [ ] Move flashcard screens, `FlashcardStudyCard`, `FlashcardNavigator`, `useFlashcardSession`, and flashcard selectors under `features/flashcards`.
-- [ ] Classify `dashboard.ts`, `progress.ts`, `quizProgress.ts`, `flashcards.ts`, `format.ts`, dashboard layouts/cards, and celebration modules by actual imports. Put feature-specific code with its feature; share only the code both features actually use.
-- [ ] Resolve feature-to-app type dependencies before enforcing direction. Keep navigation wiring in app; pass callbacks or define narrow feature-owned destination contracts rather than importing `app/navigation` into features.
-- [ ] Keep `lazyScreens.tsx` in composition and preserve its dynamic imports/preload behavior. Avoid a feature-wide barrel that eagerly imports screens or canonical banks.
-- [ ] Complete quiz and flashcard moves as separate reviewable changes, preserving DOM, state ownership, behavior, and exported semantics.
+- [x] Move quiz screens, quiz/feedback/results components, `useQuizSession`, `useQuizLaunch`, and quiz-specific selectors under `features/quizzes`, moving tests with each module. Keep composition and navigation in `app`.
+- [x] Move flashcard screens, `FlashcardStudyCard`, `FlashcardNavigator`, `useFlashcardSession`, and flashcard selectors under `features/flashcards`.
+- [x] Classify `dashboard.ts`, `progress.ts`, `quizProgress.ts`, `flashcards.ts`, `format.ts`, dashboard layouts/cards, and celebration modules by actual imports. Put feature-specific code with its feature; share only the code both features actually use.
+- [x] Resolve feature-to-app type dependencies before enforcing direction. Keep navigation wiring in app; pass callbacks or define narrow feature-owned destination contracts rather than importing `app/navigation` into features.
+- [x] Keep `lazyScreens.tsx` in composition and preserve its dynamic imports/preload behavior. Avoid a feature-wide barrel that eagerly imports screens or canonical banks.
+- [x] Complete quiz and flashcard moves as separate reviewable changes, preserving DOM, state ownership, behavior, and exported semantics.
 
 Exit gate: app composes features; features do not import app or one another; existing navigation, saved attempts/checkpoints, and feature tests pass. Risk: medium. Dependency: Stage 2.
+
+Completed 2026-10-07. Moved 65 files with 149 import replacements: quiz screens, controls, feedback, results, celebrations, statistics, formatting, session hooks, and selectors now belong to `src/features/quizzes`; flashcard screens, study controls, session hooks, and selectors belong to `src/features/flashcards`. Tests moved with their modules. Five catalog layouts reused by both features live under `src/shared/ui/catalog`. App retains composition, screen identity, lazy/preload wiring, and learner drawer policy.
+
+Each feature owns its unchanged session view contract in `session/navigation.ts`. The quiz-to-subject lookup and its two existing tests moved to quizzes; screen identity and its tests stay in app. This intentional test split increases test files from 61 to 62 while preserving all 363 tests. No component APIs, UI markup/styles, storage operations, IDs, content, dependency versions, or screen loading behavior changed. Quiz and flashcard move groups are listed separately below for review; no commits or PRs were created.
+
+Verification: lint and scoped formatting passed; all 62 frontend test files / 363 tests passed; content validation passed with the existing 32 answer-review warnings; learner and enabled optional-admin builds passed, including TypeScript checking; all 11 learner and 2 admin Chromium flows passed. Saved quiz attempts, flashcard checkpoints, keyboard controls, mobile navigation, Browse Answers, Exam review, and recovery flows remain covered. Initial concurrent verification hit two unit-test timeouts and one admin overall timeout; isolated reruns passed without changing tests, timeouts, or application code.
+
+Import-aware verification confirms all moved code is unchanged apart from import specifiers; navigation contracts, lookup, screen identity, and test bodies were extracted verbatim. The other 806 source import/export/dynamic-import edges retain the mapped module graph. Shared modules import no app, features, or admin; features import no app, admin, or sibling features. Both canonical banks and the dependency lock retain their baseline hashes; moved files are unignored and old paths are absent. README, current architecture, and testing guidance now describe the actual owners; historical trackers and the Stage 0 snapshot retain their historical paths.
+
+Both production modes preserve their chunk sets and exact raw asset sizes: 15 learner assets totaling 1,270,975 bytes; 18 optional-admin assets totaling 15,535,827 bytes. Hash filenames changed after relocation, with total gzip differences of +24 / +21 bytes respectively. Default output still excludes admin; the opt-in output includes it. All five lazy screen imports/preload functions remain in app composition, and no eager canonical-bank or authoring imports were introduced.
+
+Canonical local mode still shows 13 subjects and launches a quiz with zero API requests or page errors. The isolated QA fixture renders math and reports no structural errors. Desktop/mobile quiz, flashcard, and admin captures were inspected. After waiting for fonts and rendering to settle, six of eight additional canonical/QA PNG captures match Stage 2 byte-for-byte; the two flashcard-admin captures differ in button hover/transition shading with unchanged layout and content. Temporary verification servers were stopped. Existing large-chunk and test-tool advisories remain. Backend code/contracts were unchanged; Stage 0/1 backend checks remain the baseline.
+
+Raw move manifests, original modules, navigation/graph verification, builds, tests, browser traces, and captures are under `/private/tmp/meducation-organization-stage-3/`. Stage 4 has not started.
+
+### Stage 3 quizzes move manifest
+
+- `src/app/components/ActiveSubjectCarousel.test.tsx` → `src/features/quizzes/components/ActiveSubjectCarousel.test.tsx`
+- `src/app/components/ActiveSubjectCarousel.tsx` → `src/features/quizzes/components/ActiveSubjectCarousel.tsx`
+- `src/app/components/QuizSubjectCard.tsx` → `src/features/quizzes/components/QuizSubjectCard.tsx`
+- `src/app/components/ScoreTrendIndicator.tsx` → `src/features/quizzes/components/ScoreTrendIndicator.tsx`
+- `src/app/components/StatCard.tsx` → `src/features/quizzes/components/StatCard.tsx`
+- `src/app/components/celebration/CelebrationOverlay.tsx` → `src/features/quizzes/components/celebration/CelebrationOverlay.tsx`
+- `src/app/components/celebration/RadiatingCircles.tsx` → `src/features/quizzes/components/celebration/RadiatingCircles.tsx`
+- `src/app/components/celebration/celebrationCatalog.ts` → `src/features/quizzes/components/celebration/celebrationCatalog.ts`
+- `src/app/components/celebration/celebrationPresentation.test.tsx` → `src/features/quizzes/components/celebration/celebrationPresentation.test.tsx`
+- `src/app/components/celebration/correctAnswerBurst.test.ts` → `src/features/quizzes/components/celebration/correctAnswerBurst.test.ts`
+- `src/app/components/celebration/correctAnswerBurst.ts` → `src/features/quizzes/components/celebration/correctAnswerBurst.ts`
+- `src/app/components/feedback/ChoiceExplanations.tsx` → `src/features/quizzes/components/feedback/ChoiceExplanations.tsx`
+- `src/app/components/feedback/ExplanationContent.tsx` → `src/features/quizzes/components/feedback/ExplanationContent.tsx`
+- `src/app/components/feedback/FeedbackPanel.tsx` → `src/features/quizzes/components/feedback/FeedbackPanel.tsx`
+- `src/app/components/quiz/ExitQuizDialog.tsx` → `src/features/quizzes/components/quiz/ExitQuizDialog.tsx`
+- `src/app/components/quiz/LeaveReviewDialog.tsx` → `src/features/quizzes/components/quiz/LeaveReviewDialog.tsx`
+- `src/app/components/quiz/QuestionNavigator.test.ts` → `src/features/quizzes/components/quiz/QuestionNavigator.test.ts`
+- `src/app/components/quiz/QuestionNavigator.tsx` → `src/features/quizzes/components/quiz/QuestionNavigator.tsx`
+- `src/app/components/quiz/QuizSetupDialog.tsx` → `src/features/quizzes/components/quiz/QuizSetupDialog.tsx`
+- `src/app/components/quiz/ReadOnlyChoiceList.tsx` → `src/features/quizzes/components/quiz/ReadOnlyChoiceList.tsx`
+- `src/app/components/quiz/ReadOnlyQuizChrome.tsx` → `src/features/quizzes/components/quiz/ReadOnlyQuizChrome.tsx`
+- `src/app/components/quiz/ResumeContentDialog.tsx` → `src/features/quizzes/components/quiz/ResumeContentDialog.tsx`
+- `src/app/components/quiz/Stopwatch.tsx` → `src/features/quizzes/components/quiz/Stopwatch.tsx`
+- `src/app/components/quiz/SubmitQuizDialog.tsx` → `src/features/quizzes/components/quiz/SubmitQuizDialog.tsx`
+- `src/app/components/results/ResultsScoreHero.test.tsx` → `src/features/quizzes/components/results/ResultsScoreHero.test.tsx`
+- `src/app/components/results/ResultsScoreHero.tsx` → `src/features/quizzes/components/results/ResultsScoreHero.tsx`
+- `src/app/dashboard.ts` → `src/features/quizzes/selectors/dashboard.ts`
+- `src/app/format.ts` → `src/features/quizzes/format.ts`
+- `src/app/progress.test.ts` → `src/features/quizzes/selectors/progress.test.ts`
+- `src/app/progress.ts` → `src/features/quizzes/selectors/progress.ts`
+- `src/app/quizProgress.test.ts` → `src/features/quizzes/selectors/quizProgress.test.ts`
+- `src/app/quizProgress.ts` → `src/features/quizzes/selectors/quizProgress.ts`
+- `src/app/screens/DashboardScreen.test.tsx` → `src/features/quizzes/screens/DashboardScreen.test.tsx`
+- `src/app/screens/DashboardScreen.tsx` → `src/features/quizzes/screens/DashboardScreen.tsx`
+- `src/app/screens/QuizBrowseScreen.test.tsx` → `src/features/quizzes/screens/QuizBrowseScreen.test.tsx`
+- `src/app/screens/QuizBrowseScreen.tsx` → `src/features/quizzes/screens/QuizBrowseScreen.tsx`
+- `src/app/screens/QuizReviewScreen.test.tsx` → `src/features/quizzes/screens/QuizReviewScreen.test.tsx`
+- `src/app/screens/QuizReviewScreen.tsx` → `src/features/quizzes/screens/QuizReviewScreen.tsx`
+- `src/app/screens/QuizScreen.test.tsx` → `src/features/quizzes/screens/QuizScreen.test.tsx`
+- `src/app/screens/QuizScreen.tsx` → `src/features/quizzes/screens/QuizScreen.tsx`
+- `src/app/screens/ResultsScreen.test.tsx` → `src/features/quizzes/screens/ResultsScreen.test.tsx`
+- `src/app/screens/ResultsScreen.tsx` → `src/features/quizzes/screens/ResultsScreen.tsx`
+- `src/app/screens/SubjectScreen.test.tsx` → `src/features/quizzes/screens/SubjectScreen.test.tsx`
+- `src/app/screens/SubjectScreen.tsx` → `src/features/quizzes/screens/SubjectScreen.tsx`
+- `src/app/session/useQuizLaunch.test.tsx` → `src/features/quizzes/session/useQuizLaunch.test.tsx`
+- `src/app/session/useQuizLaunch.ts` → `src/features/quizzes/session/useQuizLaunch.ts`
+- `src/app/session/useQuizSession.test.tsx` → `src/features/quizzes/session/useQuizSession.test.tsx`
+- `src/app/session/useQuizSession.ts` → `src/features/quizzes/session/useQuizSession.ts`
+
+### Stage 3 flashcards move manifest
+
+- `src/app/components/study/FlashcardNavigator.tsx` → `src/features/flashcards/components/FlashcardNavigator.tsx`
+- `src/app/components/study/FlashcardStudyCard.tsx` → `src/features/flashcards/components/FlashcardStudyCard.tsx`
+- `src/app/flashcards.test.ts` → `src/features/flashcards/selectors/flashcards.test.ts`
+- `src/app/flashcards.ts` → `src/features/flashcards/selectors/flashcards.ts`
+- `src/app/screens/FlashcardStudyScreen.test.tsx` → `src/features/flashcards/screens/FlashcardStudyScreen.test.tsx`
+- `src/app/screens/FlashcardStudyScreen.tsx` → `src/features/flashcards/screens/FlashcardStudyScreen.tsx`
+- `src/app/screens/FlashcardSubjectScreen.test.tsx` → `src/features/flashcards/screens/FlashcardSubjectScreen.test.tsx`
+- `src/app/screens/FlashcardSubjectScreen.tsx` → `src/features/flashcards/screens/FlashcardSubjectScreen.tsx`
+- `src/app/screens/FlashcardsDashboardScreen.test.tsx` → `src/features/flashcards/screens/FlashcardsDashboardScreen.test.tsx`
+- `src/app/screens/FlashcardsDashboardScreen.tsx` → `src/features/flashcards/screens/FlashcardsDashboardScreen.tsx`
+- `src/app/session/useFlashcardSession.test.ts` → `src/features/flashcards/session/useFlashcardSession.test.ts`
+- `src/app/session/useFlashcardSession.ts` → `src/features/flashcards/session/useFlashcardSession.ts`
+
+### Stage 3 shared move manifest
+
+- `src/app/components/StudyDashboardLayout.tsx` → `src/shared/ui/catalog/StudyDashboardLayout.tsx`
+- `src/app/components/StudyItemCarousel.tsx` → `src/shared/ui/catalog/StudyItemCarousel.tsx`
+- `src/app/components/SubjectBrowseLayout.tsx` → `src/shared/ui/catalog/SubjectBrowseLayout.tsx`
+- `src/app/components/SubjectCard.tsx` → `src/shared/ui/catalog/SubjectCard.tsx`
+- `src/app/components/SubjectGrid.tsx` → `src/shared/ui/catalog/SubjectGrid.tsx`
 
 ## Stage 4 — Organize content and maintenance tools
 

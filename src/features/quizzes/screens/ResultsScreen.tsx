@@ -1,0 +1,33 @@
+import { Box, Button, Card, CardContent, Container, LinearProgress, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
+import { performanceBy } from '../../../analytics/analytics';
+import { isPerfectScore } from '../../../domain/quizEngine';
+import type { CompletedAttempt, Question, Quiz } from '../../../domain/types';
+import { formatDuration } from '../format';
+import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
+import { perfectTestCelebration } from '../components/celebration/celebrationCatalog';
+import { StatCard } from '../components/StatCard';
+import { ResultsScoreHero } from '../components/results/ResultsScoreHero';
+
+export function ResultsScreen({ attempt, questions, onBack, onReview }: { quiz: Quiz; attempt: CompletedAttempt; questions: Question[]; onBack: () => void; onReview?: () => void }) {
+  const score = attempt.score;
+  const rows = performanceBy(questions, [attempt], 'topic');
+  const [perfectCelebrationOpen, setPerfectCelebrationOpen] = useState(() => isPerfectScore(score));
+  const perfectCelebration = perfectTestCelebration();
+  return <>
+    <CelebrationOverlay open={perfectCelebrationOpen} title={perfectCelebration.title} message={perfectCelebration.message} variant={perfectCelebration.variant} onComplete={() => setPerfectCelebrationOpen(false)} />
+    <Container maxWidth="md" sx={{ py: 7 }}>
+    <Stack alignItems="center" textAlign="center"><ResultsScoreHero key={attempt.id} percentage={score.percentage} /><Typography color="text.secondary" sx={{ mt: 1 }}>{score.correct} correct · {score.incorrect} incorrect · {score.unanswered} unanswered</Typography></Stack>
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 5 }}>
+      <StatCard label="Total time" value={formatDuration(score.elapsedMs)} variant="results" />
+      <StatCard label="Average / question" value={formatDuration(score.total ? score.elapsedMs / score.total : 0)} variant="results" />
+      <StatCard label="Score" value={`${score.correct} / ${score.total}`} variant="results" />
+    </Stack>
+    {rows.length > 0 && <Card sx={{ mt: 3 }}><CardContent><Typography variant="h6">Performance by topic</Typography>{rows.map(row => <Box key={row.label} sx={{ mt: 2 }}><Stack direction="row" justifyContent="space-between"><Typography>{row.label}</Typography><Typography fontWeight={700}>{row.correct}/{row.total} · {row.percentage}%</Typography></Stack><LinearProgress variant="determinate" value={row.percentage} sx={{ mt: .75 }} /></Box>)}</CardContent></Card>}
+    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 4 }}>
+      {attempt.feedbackMode === 'exam' && onReview && <Button variant="contained" onClick={onReview}>Review results</Button>}
+      <Button variant={attempt.feedbackMode === 'exam' && onReview ? 'outlined' : 'contained'} onClick={onBack}>Back to quizzes</Button>
+    </Stack>
+    </Container>
+  </>;
+}

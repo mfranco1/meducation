@@ -79,8 +79,9 @@ Question text, choice order, answer provenance, rationales, and reviewed explana
 
 ## Project layout
 
-- `src/app/` — screens and session flow
-- `src/shared/` — theme and reusable shell, loading, study, notification, and rich-content presentation
+- `src/app/` — composition, navigation, lazy screens, and learner drawer
+- `src/features/` — quiz and flashcard screens, components, sessions, and selectors
+- `src/shared/` — theme and reusable shell, loading, catalog, study, notification, and rich-content presentation
 - `src/admin/` — local staged content editor
 - `src/domain/` — quiz types and rules
 - `src/content/` — canonical banks, validation, local/API adapters, and rich-content policies

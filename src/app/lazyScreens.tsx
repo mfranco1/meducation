@@ -1,10 +1,10 @@
 import { lazy } from 'react';
 
-const quizModule = () => import('./screens/QuizScreen');
-const browseModule = () => import('./screens/QuizBrowseScreen');
-const resultsModule = () => import('./screens/ResultsScreen');
-const reviewModule = () => import('./screens/QuizReviewScreen');
-const flashcardStudyModule = () => import('./screens/FlashcardStudyScreen');
+const quizModule = () => import('../features/quizzes/screens/QuizScreen');
+const browseModule = () => import('../features/quizzes/screens/QuizBrowseScreen');
+const resultsModule = () => import('../features/quizzes/screens/ResultsScreen');
+const reviewModule = () => import('../features/quizzes/screens/QuizReviewScreen');
+const flashcardStudyModule = () => import('../features/flashcards/screens/FlashcardStudyScreen');
 
 export const QuizScreen = lazy(async () => ({ default: (await quizModule()).QuizScreen }));
 export const QuizBrowseScreen = lazy(async () => ({ default: (await browseModule()).QuizBrowseScreen }));

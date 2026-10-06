@@ -10,23 +10,23 @@ import { AppNavigationDrawer, type LearnerSection } from './components/AppNaviga
 import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenTransition } from '../shared/ui/transitions/ScreenTransition';
 import { ScreenLoadBoundary } from '../shared/ui/loading/ScreenLoadBoundary';
-import { ExitQuizDialog } from './components/quiz/ExitQuizDialog';
-import { LeaveReviewDialog } from './components/quiz/LeaveReviewDialog';
-import { ResumeContentDialog } from './components/quiz/ResumeContentDialog';
+import { ExitQuizDialog } from '../features/quizzes/components/quiz/ExitQuizDialog';
+import { LeaveReviewDialog } from '../features/quizzes/components/quiz/LeaveReviewDialog';
+import { ResumeContentDialog } from '../features/quizzes/components/quiz/ResumeContentDialog';
 import { ToastProvider, useToast } from '../shared/ui/notifications/ToastProvider';
 import { contentLoadMessage } from '../shared/ui/loading/notificationMessages';
-import type { SubjectStat } from './progress';
-import { createProgressView, quizProgressForSubject, subjectStatsFor } from './progress';
+import type { SubjectStat } from '../features/quizzes/selectors/progress';
+import { createProgressView, quizProgressForSubject, subjectStatsFor } from '../features/quizzes/selectors/progress';
 import { screenIdentity, type View } from './navigation';
-import { DashboardScreen } from './screens/DashboardScreen';
+import { DashboardScreen } from '../features/quizzes/screens/DashboardScreen';
 import { QuizScreen, QuizBrowseScreen, QuizReviewScreen, ResultsScreen, FlashcardStudyScreen, preloadBrowseScreen, preloadQuizScreen, preloadResultsScreen, preloadReviewScreen, preloadFlashcardStudyScreen } from './lazyScreens';
-import { SubjectScreen } from './screens/SubjectScreen';
-import { FlashcardsDashboardScreen } from './screens/FlashcardsDashboardScreen';
-import { FlashcardSubjectScreen } from './screens/FlashcardSubjectScreen';
-import { useQuizSession, type QuizExitDestination } from './session/useQuizSession';
-import { useQuizLaunch } from './session/useQuizLaunch';
-import { useFlashcardSession } from './session/useFlashcardSession';
-import { activeFlashcardSubjects, flashcardDashboardSubjects } from './flashcards';
+import { SubjectScreen } from '../features/quizzes/screens/SubjectScreen';
+import { FlashcardsDashboardScreen } from '../features/flashcards/screens/FlashcardsDashboardScreen';
+import { FlashcardSubjectScreen } from '../features/flashcards/screens/FlashcardSubjectScreen';
+import { useQuizSession, type QuizExitDestination } from '../features/quizzes/session/useQuizSession';
+import { useQuizLaunch } from '../features/quizzes/session/useQuizLaunch';
+import { useFlashcardSession } from '../features/flashcards/session/useFlashcardSession';
+import { activeFlashcardSubjects, flashcardDashboardSubjects } from '../features/flashcards/selectors/flashcards';
 
 const attemptRepository = new LocalAttemptRepository();
 
