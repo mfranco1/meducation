@@ -6,7 +6,7 @@ import { theme } from './app/theme';
 import { runtimeQuestionBank } from './content/runtimeQuestionBank';
 import { BootFailure } from './app/components/BootFailure';
 import { AppShell } from './app/components/AppShell';
-import { AppHeader } from './app/components/AppHeader';
+import { AppNavigationDrawer } from './app/components/AppNavigationDrawer';
 import { ScreenLoading } from './app/components/ScreenLoading';
 
 const root = createRoot(document.getElementById('root')!);
@@ -23,12 +23,12 @@ async function boot() {
       render(<ContentQaPanel />);
       return;
     }
-    render(<AppShell header={<AppHeader />} busy><ScreenLoading label="Loading Meducation…" /></AppShell>);
+    render(<AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />} busy><ScreenLoading label="Loading Meducation…" /></AppShell>);
     const { default: App } = await import('./app/App');
     render(<App />);
   } catch (error) {
     console.error('Application could not start.', error);
-    render(<AppShell header={<AppHeader />}><BootFailure /></AppShell>);
+    render(<AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />}><BootFailure /></AppShell>);
   }
 }
 

@@ -63,6 +63,56 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await expect(page.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
 });
 
+test('left navigation switches dashboards in collapsed and mobile layouts', async ({ page }, testInfo) => {
+  await page.goto('/');
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Meducation, go to Quizzes' })).toBeVisible();
+  await page.getByRole('button', { name: 'Collapse navigation' }).click();
+  await expect(page.getByRole('button', { name: 'Expand navigation' })).toHaveAttribute('aria-expanded', 'false');
+  await testInfo.attach('navigation-desktop-collapsed.png', {
+    body: await page.screenshot({ path: testInfo.outputPath('navigation-desktop-collapsed.png') }),
+    contentType: 'image/png',
+  });
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
+
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole('button', { name: 'Expand navigation' }).click();
+  const navigationDialog = page.getByRole('presentation').last();
+  await expect(navigationDialog).toBeVisible();
+  const mobileDrawer = page.locator('.MuiDrawer-paper').last();
+  await expect(mobileDrawer).toHaveCSS('width', '240px');
+  await expect.poll(async () => (await mobileDrawer.boundingBox())?.x).toBe(0);
+  await testInfo.attach('navigation-mobile-expanded.png', {
+    body: await page.screenshot({ path: testInfo.outputPath('navigation-mobile-expanded.png') }),
+    contentType: 'image/png',
+  });
+  await page.keyboard.press('Escape');
+  await expect(navigationDialog).toBeHidden();
+  await expect(page.getByRole('button', { name: 'Expand navigation' })).toBeFocused();
+  await page.getByRole('button', { name: 'Expand navigation' }).click();
+  await page.getByRole('button', { name: 'Flashcards' }).last().click();
+  await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Flashcards' }).first()).toHaveAttribute('aria-current', 'page');
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+
+  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
+  await expect(page.getByText('Question 1 of 2')).toBeVisible();
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  await expect(page.getByRole('dialog', { name: 'Leave or Abort this Test?' })).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Leave', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await page.getByRole('button', { name: 'Resume quiz' }).click();
+  await expect(page.getByText('Question 1 of 2')).toBeVisible();
+});
+
 test('Exam Mode submission offers a one-time read-only review', async ({ page }, testInfo) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
@@ -173,19 +223,20 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
   await expect(page.locator('.MuiSkeleton-wave')).toHaveCount(4);
   await page.waitForTimeout(200);
   const bounds = await page.evaluate(() => {
-    const header = document.querySelector('header')!.getBoundingClientRect();
+    const main = document.querySelector('main')!.getBoundingClientRect();
     const recovery = document.querySelector('[data-testid="content-recovery-banner"]')!.getBoundingClientRect();
     return {
-      headerBottom: header.bottom,
+      mainTop: main.top,
+      mainLeft: main.left,
+      mainRight: main.right,
       top: recovery.top,
       left: recovery.left,
       right: recovery.right,
-      width: window.innerWidth,
     };
   });
-  expect(bounds.top).toBe(bounds.headerBottom);
-  expect(bounds.left).toBe(0);
-  expect(bounds.right).toBe(bounds.width);
+  expect(bounds.top).toBe(bounds.mainTop);
+  expect(bounds.left).toBe(bounds.mainLeft);
+  expect(bounds.right).toBe(bounds.mainRight);
 
   const retry = banner.getByRole('button', { name: 'Retry' });
   await retry.focus();

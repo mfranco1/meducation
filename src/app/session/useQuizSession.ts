@@ -13,7 +13,7 @@ import type { Attempt, AttemptRepository, CompletedAttempt, FeedbackMode, Quiz, 
 import { PersistenceError } from '../../persistence/localRepository';
 import { subjectForQuiz, type View } from '../navigation';
 
-export type QuizExitDestination = 'subject' | 'dashboard';
+export type QuizExitDestination = 'subject' | 'dashboard' | 'flashcards';
 
 interface QuizSession {
   view: View;
@@ -35,6 +35,7 @@ interface QuizSession {
   leaveQuiz: (destination?: QuizExitDestination) => void;
   abortQuiz: (destination?: QuizExitDestination) => void;
   showDashboard: () => void;
+  showFlashcards: () => void;
   showSubject: (subject: Subject) => void;
   showQuizSubject: (quiz: Quiz) => void;
 }
@@ -124,6 +125,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   const leaveReview = (destination: QuizExitDestination = 'subject') => {
     if (view.page !== 'quiz-review') return;
     if (destination === 'dashboard') setView({ page: 'dashboard' });
+    else if (destination === 'flashcards') setView({ page: 'flashcards' });
     else showQuizSubject(view.quiz);
   };
 
@@ -144,6 +146,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     const question = questionBank.listQuestions(view.quiz.id)[view.index];
     if (!persist(() => attempts.saveActive(pauseAttempt({ ...view.attempt, currentQuestionId: question.id })))) return;
     if (destination === 'dashboard') setView({ page: 'dashboard' });
+    else if (destination === 'flashcards') setView({ page: 'flashcards' });
     else showQuizSubject(view.quiz);
   };
 
@@ -151,6 +154,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     if (view.page !== 'quiz') return;
     if (!persist(() => attempts.clearActive(view.quiz.id))) return;
     if (destination === 'dashboard') setView({ page: 'dashboard' });
+    else if (destination === 'flashcards') setView({ page: 'flashcards' });
     else showQuizSubject(view.quiz);
   };
 
@@ -193,6 +197,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     leaveQuiz,
     abortQuiz,
     showDashboard: () => setView({ page: 'dashboard' }),
+    showFlashcards: () => setView({ page: 'flashcards' }),
     showSubject: subject => setView({ page: 'subject', subject }),
     showQuizSubject,
   };

@@ -31,6 +31,7 @@ describe('screenIdentity', () => {
     const subject: View = { page: 'subject', subject: { id: 'medicine', name: 'Medicine', accent: '' } };
     expect(screenIdentity(dashboard)).toBe('dashboard');
     expect(screenIdentity(subject)).toBe('subject:medicine');
+    expect(screenIdentity({ page: 'flashcards' })).toBe('flashcards');
   });
 
   it('keeps an Exam Mode review mounted while changing questions', () => {

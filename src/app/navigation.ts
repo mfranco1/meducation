@@ -2,6 +2,7 @@ import type { Attempt, CompletedAttempt, Quiz, Subject } from '../domain/types';
 
 export type View =
   | { page: 'dashboard' }
+  | { page: 'flashcards' }
   | { page: 'subject'; subject: Subject }
   | { page: 'quiz'; quiz: Quiz; attempt: Attempt; index: number }
   | { page: 'quiz-browse'; quiz: Quiz; index: number }
@@ -11,6 +12,7 @@ export type View =
 export function screenIdentity(view: View): string {
   switch (view.page) {
     case 'dashboard': return 'dashboard';
+    case 'flashcards': return 'flashcards';
     case 'subject': return `subject:${view.subject.id}`;
     case 'quiz': return `quiz:${view.quiz.id}:${view.attempt.id}`;
     case 'quiz-browse': return `quiz-browse:${view.quiz.id}`;

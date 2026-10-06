@@ -121,6 +121,31 @@ describe('quiz exit destinations', () => {
     expect(writes.clearActive).toHaveBeenCalledWith(quiz.id);
     expect(writes.saveActive).not.toHaveBeenCalled();
   });
+
+  it('saves an active quiz before leaving for Flashcards and clears it on abort', () => {
+    const { result, writes } = setup();
+    act(() => result.current.resumeQuiz(quiz));
+    writes.saveActive.mockClear();
+    act(() => result.current.leaveQuiz('flashcards'));
+    expect(result.current.view).toEqual({ page: 'flashcards' });
+    expect(writes.saveActive).toHaveBeenCalledOnce();
+
+    act(() => result.current.resumeQuiz(quiz));
+    act(() => result.current.abortQuiz('flashcards'));
+    expect(result.current.view).toEqual({ page: 'flashcards' });
+    expect(writes.clearActive).toHaveBeenCalledWith(quiz.id);
+  });
+
+  it('can leave read-only results review for Flashcards without changing the completed record', () => {
+    const { result, writes } = setup();
+    act(() => result.current.startQuiz(quiz, 'exam'));
+    act(() => result.current.finishQuiz());
+    const completedWrites = writes.saveCompleted.mock.calls.length;
+    act(() => result.current.reviewResults());
+    act(() => result.current.leaveReview('flashcards'));
+    expect(result.current.view).toEqual({ page: 'flashcards' });
+    expect(writes.saveCompleted).toHaveBeenCalledTimes(completedWrites);
+  });
 });
 
 describe('saved content and storage recovery', () => {

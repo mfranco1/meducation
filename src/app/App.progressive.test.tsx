@@ -179,6 +179,15 @@ describe('progressive dashboard statistics', () => {
     expect(screen.getByText('Question 1 of 1')).toBeVisible();
     expect(new LocalAttemptRepository().getActive(quiz.id)).toBeDefined();
   }, 15_000);
-
-
+  it('navigates between Quizzes and the Flashcards placeholder without changing progress', async () => {
+    runtimeQuestionBank.configureApi({ revision: 'rev-nav', subjects: [] });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-nav', subjects: [] }) }));
+    render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
+    expect(screen.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Flashcards' })).toHaveAttribute('aria-current', 'page');
+    fireEvent.click(screen.getByRole('button', { name: 'Quizzes' }));
+    expect(await screen.findByRole('heading', { name: 'All Subjects' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Quizzes' })).toHaveAttribute('aria-current', 'page');
+  });
 });

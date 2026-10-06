@@ -1,5 +1,9 @@
 # Product behavior
 
+## Learner section navigation
+
+The learner shell has a collapsible left navigation with **Quizzes** and **Flashcards**. Quizzes opens the existing subject dashboard; Flashcards opens a work-in-progress dashboard. The Meducation brand returns to Quizzes. Desktop navigation starts expanded, while narrow screens keep an icon rail and open an overlay drawer for labels. Navigation from an active quiz or results review retains the existing confirmation and persistence rules.
+
 ## Exam results review
 
 When a selected quiz's questions cannot be loaded, the subject screen does not show an inline failure card. A persistent error toast appears at the bottom right with learner-safe guidance and the quiz name. It stays open through updates on that subject screen until the learner closes it or navigates away; retry by returning to the quiz action. The failure does not alter saved progress. Other notifications can be configured to persist across in-app navigation.

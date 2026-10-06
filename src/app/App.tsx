@@ -5,7 +5,7 @@ import { ContentLoadError } from '../content/contentTransport';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { averageScore, lowestRecentScore } from '../analytics/analytics';
 import type { Quiz, Subject } from '../domain/types';
-import { AppHeader } from './components/AppHeader';
+import { AppNavigationDrawer, type LearnerSection } from './components/AppNavigationDrawer';
 import { AppShell } from './components/AppShell';
 import { ScreenTransition } from './components/ScreenTransition';
 import { ScreenLoadBoundary } from './components/ScreenLoadBoundary';
@@ -20,6 +20,7 @@ import { screenIdentity } from './navigation';
 import { DashboardScreen } from './screens/DashboardScreen';
 import { QuizScreen, QuizBrowseScreen, QuizReviewScreen, ResultsScreen, preloadBrowseScreen, preloadQuizScreen, preloadResultsScreen, preloadReviewScreen } from './lazyScreens';
 import { SubjectScreen } from './screens/SubjectScreen';
+import { FlashcardsDashboardScreen } from './screens/FlashcardsDashboardScreen';
 import { useQuizSession, type QuizExitDestination } from './session/useQuizSession';
 import { useQuizLaunch } from './session/useQuizLaunch';
 
@@ -101,12 +102,13 @@ function LearnerApp() {
     setReviewExitOpen(false);
     setReviewExitDestination('subject');
   };
-  const handleHeaderNavigation = () => {
+  const handleNavigation = (section: LearnerSection) => {
     cancel();
-    if (session.view.page === 'quiz') requestQuizExit('dashboard');
-    else if (session.view.page === 'quiz-review') requestReviewExit('dashboard');
-    else if (session.view.page === 'quiz-browse') session.showDashboard();
-    else session.showDashboard();
+    const destination = section === 'quizzes' ? 'dashboard' : 'flashcards';
+    if (session.view.page === 'quiz') requestQuizExit(destination);
+    else if (session.view.page === 'quiz-review') requestReviewExit(destination);
+    else if (section === 'quizzes') session.showDashboard();
+    else session.showFlashcards();
   };
   const leaveResults = () => {
     if (session.view.page === 'results') session.showQuizSubject(session.view.quiz);
@@ -117,7 +119,9 @@ function LearnerApp() {
       : session.view.page === 'quiz-review' ? 'Loading review…'
         : session.view.page === 'results' ? 'Loading results…' : 'Loading…';
 
-  return <AppShell header={<AppHeader onNavigateHome={handleHeaderNavigation} />} busy={screenLoading}>
+  const activeSection = session.view.page === 'flashcards' ? 'flashcards' : 'quizzes';
+  const currentPage = session.view.page === 'dashboard' ? 'quizzes' : session.view.page === 'flashcards' ? 'flashcards' : undefined;
+  return <AppShell sidebar={<AppNavigationDrawer active={activeSection} currentPage={currentPage} onNavigate={handleNavigation} />} busy={screenLoading}>
     {session.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error" onClose={session.clearPersistenceError}>{session.persistenceError}</Alert></Container>}
     {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
     <ScreenTransition screenId={screenIdentity(session.view)}>
@@ -127,6 +131,7 @@ function LearnerApp() {
       if (catalogState === 'retrying') questionBank.retryCatalogNow();
       return questionBank.ensureSubjects().then(() => undefined, () => undefined);
     }} onSelectSubject={selectSubject} />}
+    {session.view.page === 'flashcards' && <FlashcardsDashboardScreen />}
     {currentSubject && <SubjectScreen subject={currentSubject} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
       if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') { window.location.reload(); return; }
       if (currentQuizRecovery?.busy) return;
