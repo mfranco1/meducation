@@ -1,5 +1,4129 @@
 {
   "schemaVersion": 2,
-  "decks": [],
-  "cards": []
+  "decks": [
+    {
+      "id": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "subjectId": "s9",
+      "name": "Basic Principles of Pharmacology",
+      "description": "Pharmacodynamics, pharmacokinetics, drug kinetics, teratogens, and clinical trials"
+    },
+    {
+      "id": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "subjectId": "s9",
+      "name": "Autonomic Pharmacology",
+      "description": "Cholinergic and adrenergic agonists and antagonists, neuromuscular blockers, and related toxicity"
+    },
+    {
+      "id": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "subjectId": "s9",
+      "name": "Cardiovascular Pharmacology",
+      "description": "Antihypertensives, antianginals, heart failure drugs, antiarrhythmics, diuretics, and lipid-lowering agents"
+    },
+    {
+      "id": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "subjectId": "s9",
+      "name": "Autacoids and Respiratory Pharmacology",
+      "description": "Serotonin, histamine, prostaglandins, asthma drugs, and respiratory agents"
+    },
+    {
+      "id": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "subjectId": "s9",
+      "name": "CNS Pharmacology",
+      "description": "Neurotransmitters, antidepressants, antipsychotics, antiepileptics, Parkinson drugs, sedatives, anesthetics, opioids, and drugs of abuse"
+    },
+    {
+      "id": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "subjectId": "s9",
+      "name": "Hematology, NSAIDs, DMARDs and Gout",
+      "description": "Anticoagulants, antiplatelets, fibrinolytics, iron, growth factors, NSAIDs, DMARDs, and gout drugs"
+    },
+    {
+      "id": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "subjectId": "s9",
+      "name": "Endocrine Pharmacology",
+      "description": "Pituitary, reproductive hormones, thyroid, adrenal, diabetes, calcium and bone drugs"
+    },
+    {
+      "id": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "subjectId": "s9",
+      "name": "Antibiotics, Antimycobacterials and Antifungals",
+      "description": "Antibacterial agents, antituberculosis and antileprosy drugs, and antifungals"
+    },
+    {
+      "id": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "subjectId": "s9",
+      "name": "Antivirals, Antiparasitics and Antiseptics",
+      "description": "Antiviral and antiretroviral drugs, antimalarials, antiprotozoals, anthelmintics, and STI treatments"
+    },
+    {
+      "id": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "subjectId": "s9",
+      "name": "Cancer Chemotherapy",
+      "description": "Chemotherapeutic agents, toxicities, rescue agents, regimens, and targeted therapies"
+    },
+    {
+      "id": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "subjectId": "s9",
+      "name": "Gastrointestinal Pharmacology",
+      "description": "Antacids, acid suppressants, laxatives, antiemetics, antidiarrheals, IBS, IBD, and hepatobiliary agents"
+    },
+    {
+      "id": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "subjectId": "s9",
+      "name": "Immunopharmacology",
+      "description": "Immunosuppressants, immune potentiators, and monoclonal antibodies"
+    },
+    {
+      "id": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "subjectId": "s9",
+      "name": "Toxicology",
+      "description": "Antidotes, chelating agents, and heavy metal and organic toxin syndromes"
+    }
+  ],
+  "cards": [
+    {
+      "id": "f-3da93111-9c54-45d7-bd61-2f916ce011d5",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Any substance that changes biologic function through its chemical actions",
+      "back": "Drug"
+    },
+    {
+      "id": "f-570ed3b5-e82b-483d-9d13-9ca40d19f2ea",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Rank drug-receptor bonds from strongest to weakest.",
+      "back": "Covalent > Electrostatic > Hydrophobic. The stronger the bond, the more irreversible the binding."
+    },
+    {
+      "id": "f-5c7700cb-9d74-4517-b1b2-a9f99fc77438",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "The study of how drugs act on the body (mechanisms of action, receptor interactions, effects)",
+      "back": "Pharmacodynamics"
+    },
+    {
+      "id": "f-bfc13b90-d1f8-421a-bf7c-442c0c90ca2e",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "The study of how the body acts on a drug (absorption, distribution, metabolism, excretion)",
+      "back": "Pharmacokinetics"
+    },
+    {
+      "id": "f-2319a1cd-34f4-4554-8be9-a49b3416efb8",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Specific molecules in a biologic system with which drugs interact to produce changes",
+      "back": "Receptors (the recognition site is the specific binding region)"
+    },
+    {
+      "id": "f-852e7bf7-7ec6-437f-ab5b-9e992a219e59",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "A molecule or system that translates the drug-receptor interaction into a change in cellular activity",
+      "back": "Effector (e.g., ion channels, enzymes, G-proteins)"
+    },
+    {
+      "id": "f-6f6acced-e75e-4e24-974c-88a22f583861",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Maximum effect an agonist can produce regardless of dose",
+      "back": "Emax (maximal efficacy). Higher efficacy means greater intrinsic activity."
+    },
+    {
+      "id": "f-6e659b02-b8a3-4fe6-8a8d-d1ebaede763d",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Amount of drug required to produce a given effect",
+      "back": "Potency"
+    },
+    {
+      "id": "f-fe4eb015-c578-4a92-acb9-9bb131968a50",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Efficacy is determined mainly by what?",
+      "back": "The nature of the receptor and its associated effector system"
+    },
+    {
+      "id": "f-20d14122-f198-4680-aed9-4049a65f45dd",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Potency is determined mainly by what?",
+      "back": "The affinity of the receptor for the drug"
+    },
+    {
+      "id": "f-eddfd487-fc35-49a3-9cde-fe3429a20519",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Graph of dose or drug concentration versus fraction of the population that responds at each dose",
+      "back": "Quantal dose-response curve"
+    },
+    {
+      "id": "f-0d47757f-63bb-4c9d-b46d-809e2c0478df",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Graph of dose or drug concentration versus response",
+      "back": "Graded dose-response curve"
+    },
+    {
+      "id": "f-2e2b48ad-0200-4d8f-a396-0762e8224390",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Formula for therapeutic index",
+      "back": "Therapeutic index = TD50 / ED50. A larger value means a wider safety margin."
+    },
+    {
+      "id": "f-10d1154c-ebec-47da-8117-4c5ea6cd1c82",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Components of a graded dose-response curve",
+      "back": "Emax (efficacy) and EC50 (potency)"
+    },
+    {
+      "id": "f-46b3e90c-dc70-467b-9e8d-0617beeeac26",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Components of a quantal dose-response curve",
+      "back": "ED50 (median effective dose), TD50 (median toxic dose), LD50 (median lethal dose)"
+    },
+    {
+      "id": "f-4b7d77ba-c261-4c4f-88c4-3c3e87921274",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Drugs with a narrow therapeutic index (mnemonic: Amp, Ang sikip if Car Farin, PaPaLit Daw Tayo ng Van)",
+      "back": "Amphotericin B, Aminoglycosides, Carbamazepine, Warfarin, Phenobarbital, Phenytoin, Lithium, Digoxin, Theophylline, Vancomycin"
+    },
+    {
+      "id": "f-d94eacad-badf-4f37-9902-7e4525828eb6",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Narrow therapeutic index drugs (mnemonic: Warning! These Drugs Are Lethal)",
+      "back": "Warfarin, Theophylline, Digoxin, Antiepileptic drugs, Lithium"
+    },
+    {
+      "id": "f-d964e9e7-adff-45d8-8376-e3d1e76434cd",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "A drug capable of fully activating the effector system when it binds to the receptor",
+      "back": "Full agonist"
+    },
+    {
+      "id": "f-8f45536d-e2e8-498f-b4e0-d5c8f5179743",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "In the presence of a full agonist, this drug type acts as an antagonist.",
+      "back": "Partial agonist"
+    },
+    {
+      "id": "f-86505025-30d1-4f5b-9c82-b421674360c5",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "A drug that blocks or dampens the response to an agonist",
+      "back": "Antagonist"
+    },
+    {
+      "id": "f-67962a5d-179e-45b1-a3f9-975099b66ffa",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Example of a physiologic antagonist",
+      "back": "Histamine and epinephrine. They bind to different receptors that produce opposite effects."
+    },
+    {
+      "id": "f-eda07aba-393d-4222-8164-81d6c1803d03",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Antagonist that interacts directly with the drug to remove it or prevent it from reaching its target",
+      "back": "Chemical antagonist (directly binds the drug molecule)"
+    },
+    {
+      "id": "f-bd2b08b6-37d3-4a8e-a3a4-b729ad3f76c1",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Antagonist that binds the same receptor as the agonist",
+      "back": "Pharmacologic antagonist"
+    },
+    {
+      "id": "f-c6777129-0db2-41d8-97e1-688cb7a82af1",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Antagonist that competes with the agonist for the primary binding site. Effect on the dose-response curve?",
+      "back": "Competitive (reversible) antagonist. Rightward shift of the curve with unchanged Emax (surmountable with more agonist)."
+    },
+    {
+      "id": "f-66793b48-c146-4fa5-ad4c-73a2d9e78d81",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Antagonist that binds irreversibly (usually covalent) to the receptor. Effect on the dose-response curve?",
+      "back": "Non-competitive (irreversible) antagonist. Downward shift of Emax."
+    },
+    {
+      "id": "f-50119164-f71e-429d-b1e5-4fbffddd5815",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Enzyme kinetics: increased Km, no change in Vmax",
+      "back": "Competitive inhibitor"
+    },
+    {
+      "id": "f-e5554216-0281-483b-822c-2c3eb9b647dc",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Enzyme kinetics: no change in Km, decreased Vmax",
+      "back": "Non-competitive inhibitor"
+    },
+    {
+      "id": "f-22dd6d14-28cc-420a-9b22-4b0b6ca332d7",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Properties of drugs that favor absorption (mnemonic LUNA)",
+      "back": "Lipid soluble, Unionized, Neutral, Absorbed"
+    },
+    {
+      "id": "f-9fbf9e29-cfe9-40de-9af7-2eb340482850",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Fraction of an administered drug that reaches the systemic circulation",
+      "back": "Bioavailability"
+    },
+    {
+      "id": "f-ec3a0ef3-d5c3-4415-8c5e-512f2a670866",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Steady state is reached after how many half-lives?",
+      "back": "3 to 4 half-lives"
+    },
+    {
+      "id": "f-0b477c5b-08e5-4b52-b65c-f0a518a0c75a",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Route with no absorption phase (100% bioavailability)",
+      "back": "Intravenous"
+    },
+    {
+      "id": "f-37611978-d775-4b6a-8e24-088a6321da55",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "In an acidic environment, what happens to absorption and excretion of a weak acid?",
+      "back": "Absorption increases, excretion decreases (the weak acid stays un-ionized)."
+    },
+    {
+      "id": "f-3803b15a-54e3-4859-a06c-1e9d7d81ec67",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "In an acidic environment, what happens to absorption and excretion of a weak base?",
+      "back": "Absorption decreases, excretion increases (the weak base becomes ionized and trapped)."
+    },
+    {
+      "id": "f-76d9d950-4145-450e-aade-cd619645d495",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Three major factors affecting absorption",
+      "back": "1. Route of administration 2. Blood flow 3. Concentration"
+    },
+    {
+      "id": "f-fddb6f57-62fb-4b34-88e1-a06911d4ecf9",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Plasma protein to which basic drugs bind",
+      "back": "Alpha-1 acid glycoprotein"
+    },
+    {
+      "id": "f-73bb5747-bc44-4485-8269-31a28a2dac78",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Plasma protein to which acidic drugs bind",
+      "back": "Albumin"
+    },
+    {
+      "id": "f-29ad8af7-b141-4ade-9ed8-06e203b8323f",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Key phase I reactions",
+      "back": "Oxidation, reduction, hydrolysis"
+    },
+    {
+      "id": "f-9987f88c-9615-4c44-a2ed-95b8ca701dea",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Key phase II reactions",
+      "back": "Glucuronidation, acetylation, sulfation, methylation"
+    },
+    {
+      "id": "f-486df18e-9457-4be3-a2ae-7a50bda181c5",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "CYP inducers (mnemonic: PRC! G, aral na!)",
+      "back": "Phenytoin, Rifampicin, Carbamazepine, Chronic alcohol, Griseofulvin (also barbiturates and St. John's wort)"
+    },
+    {
+      "id": "f-2b9168af-aa52-49c7-9459-ae8828aa7398",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "CYP inhibitors (mnemonic: SICKFACES.COM)",
+      "back": "Sodium valproate, Isoniazid, Cimetidine, Ketoconazole, Fluconazole, Amiodarone, Alcohol (acute), Chloramphenicol, Erythromycin, Sulfonamides, Ciprofloxacin, Omeprazole, Metronidazole"
+    },
+    {
+      "id": "f-ba5e64f8-9734-46ae-a634-b63935147de3",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "A constant fraction of drug is eliminated per unit time and enzymes are not saturated",
+      "back": "First-order kinetics"
+    },
+    {
+      "id": "f-d867eced-6b78-45fc-b589-585cc99d2632",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "A constant amount of drug is eliminated per unit time because of enzyme saturation",
+      "back": "Zero-order kinetics"
+    },
+    {
+      "id": "f-17aca898-f5e8-459e-a226-947c79e1fbc9",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Maintenance dose formula",
+      "back": "(Clearance x desired plasma concentration) / Bioavailability"
+    },
+    {
+      "id": "f-f9e719d3-e49a-43ac-ad4b-2dbef436d9af",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Volume of distribution formula",
+      "back": "Vd = Amount of drug in the body / Plasma drug concentration"
+    },
+    {
+      "id": "f-b8b47346-362f-4284-b316-55e38966538b",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Loading dose formula",
+      "back": "Loading dose = (Vd x desired plasma concentration) / Bioavailability"
+    },
+    {
+      "id": "f-da9b1c46-53de-41af-b938-145b0dfc9635",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Drugs with zero-order elimination kinetics (mnemonic: WHAT PET)",
+      "back": "Warfarin, Heparin, Aspirin, Tolbutamide, Phenytoin, Ethanol, Theophylline. Most important: PEA (Phenytoin, Ethanol, Aspirin)."
+    },
+    {
+      "id": "f-2705aa11-21c3-40e6-9371-d766e2f86739",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Most important pharmacokinetic parameter in defining a rational steady-state dosage regimen",
+      "back": "Clearance"
+    },
+    {
+      "id": "f-af932262-2664-4084-84d1-103f17df4e57",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Clearance formula",
+      "back": "CL = Rate of elimination / Plasma concentration"
+    },
+    {
+      "id": "f-8b8ef932-dc14-49ca-91f1-fd64bc020c97",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Toxin associated with moldy peanuts or rice and hepatocellular carcinoma",
+      "back": "Aflatoxins"
+    },
+    {
+      "id": "f-7407d9f6-bfdb-43cf-8792-1078ea183b03",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Toxin in PVC pipe factories associated with liver angiosarcoma",
+      "back": "Vinyl chloride"
+    },
+    {
+      "id": "f-48122ca0-8f2c-4309-aae6-c4903a9294e1",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Teratogen causing phocomelia (seal limbs)",
+      "back": "Thalidomide"
+    },
+    {
+      "id": "f-b5548375-4815-4d14-96e6-0d261c3d7199",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Teratogen causing tooth discoloration",
+      "back": "Tetracyclines"
+    },
+    {
+      "id": "f-cd5d3aa6-722d-4d35-afb7-318eb9cfd913",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Teratogen causing aplasia cutis congenita",
+      "back": "Methimazole"
+    },
+    {
+      "id": "f-045f93c8-ed28-43bb-a5b4-e732befbe16b",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Teratogen causing Ebstein anomaly",
+      "back": "Lithium"
+    },
+    {
+      "id": "f-65779975-faf2-471b-83bb-139450064e6b",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Teratogen causing vaginal clear cell adenocarcinoma",
+      "back": "Diethylstilbestrol (DES)"
+    },
+    {
+      "id": "f-0534610b-40f7-4e5b-a3a9-ed8236ce8b6c",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Warfarin teratogenicity per trimester",
+      "back": "1st: chondrodysplasia punctata (nasal hypoplasia). 2nd: CNS malformations. 3rd: bleeding diatheses."
+    },
+    {
+      "id": "f-a4b3bf7c-f72c-43d7-ab30-7a6d01edfc0c",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Legacy FDA pregnancy category: no human studies and safe in animals, or safe in humans but unsafe in animals",
+      "back": "Category B"
+    },
+    {
+      "id": "f-55e6bb0b-9af9-40ae-bd11-c7a2c1877d79",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Legacy FDA pregnancy category: unsafe in humans and animals, but benefits may outweigh risks. Examples?",
+      "back": "Category D. Examples: ACE inhibitors, some anticonvulsants."
+    },
+    {
+      "id": "f-48450389-1c3a-4973-b1e8-60f251be2d44",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Clinical trial phase that mainly tests efficacy in a small population with the disease",
+      "back": "Phase 2"
+    },
+    {
+      "id": "f-9ecab27b-f84f-479f-8280-b769403a5d67",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Clinical trial phase that mainly tests safety in healthy volunteers",
+      "back": "Phase 1"
+    },
+    {
+      "id": "f-82939990-442e-414c-bf5b-37cdaa9b87c7",
+      "deckId": "d-c0b1fc99-6936-490a-9a9f-40bbfaa502ee",
+      "front": "Post-marketing surveillance corresponds to which clinical trial phase?",
+      "back": "Phase 4"
+    },
+    {
+      "id": "f-00ccf3ef-74e6-440f-920d-754a0ef01325",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Cholinergic toxicity mnemonic: DUMBELLS",
+      "back": "Diarrhea/diaphoresis, Urination, Miosis, Bradycardia (or tachycardia if nicotinic), Emesis, Lacrimation, Lethargy, Salivation"
+    },
+    {
+      "id": "f-60ad0372-76b7-4615-91ee-463f1bde5509",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Anticholinergic toxicity mnemonic (Alice in Wonderland)",
+      "back": "Hot as a hare (hyperthermia), Dry as a bone (decreased secretions), Red as a beet (cutaneous vasodilation), Blind as a bat (cycloplegia, mydriasis), Mad as a hatter (CNS toxicity)"
+    },
+    {
+      "id": "f-ab71125d-dd8e-4444-befd-d6ad51169b06",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Muscarinic agonist causing detrusor contraction, used for urinary retention",
+      "back": "Bethanechol"
+    },
+    {
+      "id": "f-6d0814ac-6d2b-4623-919c-41b7ed8d1757",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drugs that relax the detrusor and are used for urinary incontinence",
+      "back": "Muscarinic antagonists (oxybutynin) and the beta-3 agonist mirabegron"
+    },
+    {
+      "id": "f-0e1e176b-da21-4586-b41c-5f959528e45f",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug class that relaxes the bladder neck and prostate, used for BPH",
+      "back": "Alpha-1 blockers (tamsulosin, prazosin)"
+    },
+    {
+      "id": "f-1ea8511a-c8d8-4325-98d5-ec4ac79a14a6",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug used in postoperative and diabetic bladder neuropathy",
+      "back": "Bethanechol"
+    },
+    {
+      "id": "f-72da8044-16f8-4af1-866c-2127f1786a7f",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug inhibiting the choline transporter, blocking acetylcholine synthesis",
+      "back": "Hemicholinium"
+    },
+    {
+      "id": "f-427bc303-0a7d-4d7a-9169-c06f8f0572d6",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug inhibiting vesicular storage of acetylcholine",
+      "back": "Vesamicol"
+    },
+    {
+      "id": "f-3a4db229-5349-42c9-9c70-7b48ccc57042",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug inhibiting acetylcholine release at the neuromuscular junction",
+      "back": "Botulinum toxin"
+    },
+    {
+      "id": "f-b06e770c-c5f3-4d08-a488-790faa47a30e",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug inhibiting vesicular storage of catecholamines",
+      "back": "Reserpine"
+    },
+    {
+      "id": "f-c50e18a8-2487-4389-b316-8a7b4702f6b9",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drugs inhibiting degradation of acetylcholine into choline and acetate",
+      "back": "Acetylcholinesterase inhibitors (carbamates, organophosphates)"
+    },
+    {
+      "id": "f-96c8aa93-cd83-4776-b101-c039ddb811bd",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Mechanism of action of succinylcholine",
+      "back": "Depolarizing neuromuscular blocker"
+    },
+    {
+      "id": "f-9dc7d676-1558-42ee-9233-9cf6a7085eb3",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Enzyme that degrades succinylcholine",
+      "back": "Butyrylcholinesterase (pseudocholinesterase)"
+    },
+    {
+      "id": "f-b6cde0d5-e1a8-4617-8bd4-76aef84ebff5",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Agent used in the Tensilon test for myasthenia gravis",
+      "back": "Edrophonium"
+    },
+    {
+      "id": "f-dd4b440a-1525-420e-9122-9205a1baf0f1",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug of choice for myasthenia gravis. Does it cross the BBB?",
+      "back": "Pyridostigmine (preferred over neostigmine). Quaternary amines do not cross the BBB."
+    },
+    {
+      "id": "f-71502697-8803-4545-91cb-795d66ca2b93",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drugs that can worsen myasthenia gravis",
+      "back": "Nondepolarizing neuromuscular blockers and aminoglycosides (also fluoroquinolones and macrolides)"
+    },
+    {
+      "id": "f-a7906f66-8afa-4232-a79d-4a3bea2ea183",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Muscarinic agonist that triggers lacrimal and salivary secretion, used in glaucoma and xerostomia (Sjogren)",
+      "back": "Pilocarpine"
+    },
+    {
+      "id": "f-85129900-789f-48d8-9ec4-b1ac2f495a23",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Direct cholinergic used in the bronchial challenge test for asthma",
+      "back": "Methacholine"
+    },
+    {
+      "id": "f-633ba2c3-7043-4ffb-94d6-be43db1c723f",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Cholinergic agonists susceptible to degradation by AChE",
+      "back": "Acetylcholine and methacholine"
+    },
+    {
+      "id": "f-21c28e42-dede-433a-b6a2-bcb50267f008",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Cholinergic agonists with nicotinic action",
+      "back": "Acetylcholine and carbachol"
+    },
+    {
+      "id": "f-74f39abe-f832-4bd9-9d24-818126d70b63",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Treatment for muscarinic toxicity from agonist overdose or Amanita muscaria mushrooms",
+      "back": "Atropine"
+    },
+    {
+      "id": "f-cd5586de-5c17-4e5a-b6de-70b1cefee595",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Treatment of organophosphate poisoning",
+      "back": "Pralidoxime to regenerate AChE, and atropine to manage muscarinic symptoms"
+    },
+    {
+      "id": "f-b7863eef-8968-4593-ac42-96c7b83c79ca",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Treatment for atropine poisoning. Why does it work centrally?",
+      "back": "Physostigmine, a tertiary amine that crosses the BBB"
+    },
+    {
+      "id": "f-e30c7a60-154d-47c7-98ef-7765437c4418",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Alzheimer disease treatment",
+      "back": "Acetylcholinesterase inhibitors: donepezil, galantamine, rivastigmine. NMDA antagonist: memantine."
+    },
+    {
+      "id": "f-517314b7-c3db-430e-aa4a-e92c956427e3",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Prototype muscarinic antagonist",
+      "back": "Atropine"
+    },
+    {
+      "id": "f-1fced0bb-ba29-4c56-ac94-369d240a5c08",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Antimuscarinic that blocks all muscarinic receptors and is used for motion sickness",
+      "back": "Scopolamine"
+    },
+    {
+      "id": "f-33ce7254-680a-4058-a360-6de20932f9fc",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Muscarinic blockers used for asthma and COPD",
+      "back": "Ipratropium and tiotropium (tiotropium is more selective for M3 and longer acting)"
+    },
+    {
+      "id": "f-5c2ef0d7-60c3-4fc3-b855-2687277a9ab3",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Competitive Nn (ganglionic) blocker, obsolete antihypertensive causing postural hypotension",
+      "back": "Hexamethonium"
+    },
+    {
+      "id": "f-3bfc7652-8a74-4124-b44f-224e19cdc795",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Epinephrine dose: ACLS vs anaphylaxis",
+      "back": "ACLS: 1 mg of 1:10,000 IV. Anaphylaxis: 1 mg/mL (1:1000) IM."
+    },
+    {
+      "id": "f-f5513372-b8e3-48b4-a0de-de25bfd19386",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Alpha-1 selective agonist that can activate beta receptors at very high concentrations",
+      "back": "Phenylephrine"
+    },
+    {
+      "id": "f-44e8835e-390f-4495-9dfd-b604beb08057",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Treatment for alpha-1 agonist overdose",
+      "back": "Phentolamine (reversible alpha blocker)"
+    },
+    {
+      "id": "f-0463044b-6afb-476a-bd50-e626faa02fe2",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Alpha-2 agonist known to cause rebound hypertension on abrupt withdrawal",
+      "back": "Clonidine"
+    },
+    {
+      "id": "f-017aed0d-0a93-4fbf-8637-01b0fec6a0da",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug that inhibits catecholamine synthesis by inhibiting tyrosine hydroxylase",
+      "back": "Metyrosine"
+    },
+    {
+      "id": "f-14f7860c-d900-4e80-9eb7-eab1d2adcd7d",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Alpha agonist decongestants (-ZOLINEs) that can cause rebound nasal congestion",
+      "back": "Oxymetazoline, tetrahydrozoline"
+    },
+    {
+      "id": "f-b0f6044c-8168-43b4-94a6-885fe5efa8fe",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Nonselective beta-1, beta-2, beta-3 agonist. Adverse effects?",
+      "back": "Isoproterenol. Cardiovascular disturbance, arrhythmia."
+    },
+    {
+      "id": "f-3212fded-2303-4000-a4ae-68808f8186a1",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Indirect-acting sympathomimetics used in ADHD",
+      "back": "Methylphenidate (modafinil is used off-label)"
+    },
+    {
+      "id": "f-2c24bf5a-0aaf-4989-951b-a21cda890b97",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Dietary substance in cured meats that can cause hypertensive crisis with MAO inhibitors",
+      "back": "Tyramine"
+    },
+    {
+      "id": "f-47d94bce-8bb5-43dc-b538-be72ead9f5f2",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Beta-1 agonist used for cardiogenic shock",
+      "back": "Dobutamine"
+    },
+    {
+      "id": "f-600e5a95-6a39-4969-a2a8-9a596f489d50",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Side effects of beta-2 agonists (salbutamol, terbutaline, formoterol)",
+      "back": "Tachycardia, tremors, nervousness, restlessness"
+    },
+    {
+      "id": "f-ace13adc-443f-48c8-b6a7-c04e9699ade2",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "General adverse effects of alpha blockers",
+      "back": "Orthostatic hypotension and reflex tachycardia (can trigger arrhythmias and MI)"
+    },
+    {
+      "id": "f-c0ef420a-63d3-4ba3-9986-a8fd184c8b9a",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Irreversible alpha blocker used for pheochromocytoma",
+      "back": "Phenoxybenzamine"
+    },
+    {
+      "id": "f-7a860067-a464-4ec9-b9c9-fff7b0a886ff",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Reversible nonselective alpha blocker",
+      "back": "Phentolamine"
+    },
+    {
+      "id": "f-7705da21-de07-4ebd-97cc-427fb83b22bc",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Most selective alpha-1A blocker for prostatic smooth muscle",
+      "back": "Tamsulosin"
+    },
+    {
+      "id": "f-e4303550-0743-4f06-9ce1-92dc987c4973",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Beta blockers with combined alpha and beta blockade",
+      "back": "Carvedilol, labetalol, bucindolol"
+    },
+    {
+      "id": "f-faabcb8d-0298-4535-a45b-52f7049be2a7",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Beta blockers can cause severe hypotension or bradycardia when combined with which drug class?",
+      "back": "Calcium channel blockers (especially non-dihydropyridines)"
+    },
+    {
+      "id": "f-bb48d198-ca81-4624-9f50-dcaa5cea414d",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Cardioselective (beta-1) blockers (mnemonic: Celip 1st! B selective about your MAN, BABE)",
+      "back": "Celiprolol, Metoprolol, Atenolol, Nebivolol, Betaxolol, Acebutolol, Bisoprolol, Esmolol"
+    },
+    {
+      "id": "f-56b2867b-fefa-4fbb-bd08-4b9cb1b2f9cb",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Beta blocker lacking local anesthetic effect, used as eye drops",
+      "back": "Timolol"
+    },
+    {
+      "id": "f-55a0267b-4e35-4d7c-a421-c9166d5e8391",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Shortest and longest acting beta blockers",
+      "back": "Shortest: esmolol. Longest: nadolol."
+    },
+    {
+      "id": "f-4f29fd04-38ce-4378-b98c-22f5e09e69ef",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Beta blocker that increases nitric oxide production",
+      "back": "Nebivolol"
+    },
+    {
+      "id": "f-6d273ef0-626f-45ec-84b2-5de39790eef7",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Drug of choice for beta blocker toxicity",
+      "back": "Glucagon"
+    },
+    {
+      "id": "f-e4bde301-3cc2-47a6-a66a-e26dfebdcb6f",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Prostaglandin analogues used in glaucoma. Mechanism?",
+      "back": "Latanoprost, bimatoprost. They increase aqueous humor outflow."
+    },
+    {
+      "id": "f-620831b3-782a-4700-a724-0d335a088ab1",
+      "deckId": "d-a7016731-0893-4e6b-9074-9976e6c1afd7",
+      "front": "Glaucoma drugs that decrease aqueous humor production",
+      "back": "Beta antagonists, alpha-2 agonists, carbonic anhydrase inhibitors (osmotic agents lower intraocular pressure acutely)"
+    },
+    {
+      "id": "f-801f9cb8-b976-4eb4-9b15-b9851bbd7e95",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "First-line antihypertensives",
+      "back": "ACE inhibitors/ARBs, calcium channel blockers, thiazide diuretics"
+    },
+    {
+      "id": "f-ba149668-33d7-4882-a2ce-faa572adfc14",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Side effects of ACE inhibitors (-PRILs)",
+      "back": "Cough (most common), angioedema (most serious), hyperkalemia"
+    },
+    {
+      "id": "f-bafb49af-eafd-463c-8af2-f8d533487c2b",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Contraindications of ACE inhibitors",
+      "back": "Pregnancy and bilateral renal artery stenosis"
+    },
+    {
+      "id": "f-845909aa-4d61-4f35-bea1-e42094f4f535",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Examples of ARBs (-SARTANs)",
+      "back": "Losartan, candesartan, valsartan, telmisartan, irbesartan"
+    },
+    {
+      "id": "f-e331a75a-c179-4f4e-947d-f0d51870608a",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "ARB with added PPAR-gamma agonist activity, beneficial in insulin resistance",
+      "back": "Telmisartan"
+    },
+    {
+      "id": "f-e760397b-bee8-4ae0-8f02-3fcd45ce301e",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Mechanism of action of thiazide diuretics",
+      "back": "Inhibit the Na+/Cl- cotransporter in the distal convoluted tubule"
+    },
+    {
+      "id": "f-893ae4b9-aeb1-4d5f-89cd-e28e55fbc130",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Side effects of thiazides (mnemonic HYPER-GLUC)",
+      "back": "HyperGlycemia, HyperLipidemia, HyperUricemia, HyperCalcemia. Also hypokalemic metabolic alkalosis and dilutional hyponatremia."
+    },
+    {
+      "id": "f-9779922a-9211-4cff-8f5f-3ad1fca0a8df",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Mechanism of action of loop diuretics",
+      "back": "Inhibit the Na+/K+/2Cl- cotransporter in the thick ascending limb"
+    },
+    {
+      "id": "f-6b4b7a11-6991-4513-a634-66107e47e139",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Loop diuretic that is not a sulfonamide",
+      "back": "Ethacrynic acid"
+    },
+    {
+      "id": "f-9799ea39-1385-459a-8798-06bd34f7a7c2",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Side effects of loop diuretics (mnemonic OH DANG)",
+      "back": "Ototoxicity, Hypokalemia, Dehydration, Allergy to sulfa, Nephritis (interstitial), Gout"
+    },
+    {
+      "id": "f-64a86dc8-e34c-4816-85e6-bfef4a6cb2d7",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "CCBs block which type of calcium channel?",
+      "back": "L-type calcium channels"
+    },
+    {
+      "id": "f-99e5fc67-8705-4781-86aa-039426ed91ab",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Two types of CCBs and examples",
+      "back": "Dihydropyridines (-DIPINEs): nifedipine, amlodipine, felodipine, nicardipine. Non-dihydropyridines: verapamil and diltiazem."
+    },
+    {
+      "id": "f-f59bffff-4edf-428e-8075-c66393794f05",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Side effects of CCBs",
+      "back": "Constipation (especially verapamil), pretibial edema (common with DHPs), gingival hyperplasia (amlodipine, verapamil)"
+    },
+    {
+      "id": "f-fc7da64f-967c-4b03-b53d-f09468db8e71",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Antihypertensive that can cause hemolytic anemia and is used in pregnancy",
+      "back": "Methyldopa"
+    },
+    {
+      "id": "f-3d3532be-5dcb-4a7b-b26d-5ba951ec60a0",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Antihypertensive class with first-dose syncope and orthostatic hypotension",
+      "back": "Alpha blockers (-zosin)"
+    },
+    {
+      "id": "f-baa51d6f-33ef-4164-919e-933b80f9b4e1",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Can beta blockers be given in acute or chronic heart failure?",
+      "back": "Chronic HF only. Do not start in acute decompensated HF."
+    },
+    {
+      "id": "f-275fe21d-2504-42ef-a3e6-b2f2b82fdd74",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Drug that causes rebound hypertension or hypertensive urgency if stopped abruptly",
+      "back": "Clonidine"
+    },
+    {
+      "id": "f-01b932f3-bd5e-41a5-b89b-ef61b30904c0",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Hydralazine: mechanism and uses",
+      "back": "Alters intracellular Ca2+ metabolism causing arteriolar vasodilation. Used in pre-eclampsia and hypertension."
+    },
+    {
+      "id": "f-47db7ce8-451b-44e9-bfdc-36fd37f7b02b",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Side effects of hydralazine",
+      "back": "Drug-induced lupus, reflex tachycardia, headache. Severe psychiatric depression and suicidal ideation have been reported."
+    },
+    {
+      "id": "f-05e44d6e-88b2-418b-8ac7-d0b35892ac64",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Mechanism of action of minoxidil and diazoxide",
+      "back": "Open K+ channels in vascular smooth muscle"
+    },
+    {
+      "id": "f-14768ea9-7a1f-436a-a873-21738b30e510",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Mechanism of action of aliskiren",
+      "back": "Direct renin inhibitor"
+    },
+    {
+      "id": "f-25f92f2d-47d4-443a-afbd-477525277a6e",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Treatment of Prinzmetal (variant) angina",
+      "back": "CCBs and nitrates (diltiazem is a drug of choice)"
+    },
+    {
+      "id": "f-ab0a16f7-f315-467e-aded-8e629484f29f",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "D1 receptor agonist used to increase renal blood flow",
+      "back": "Fenoldopam"
+    },
+    {
+      "id": "f-ef781b5a-34ce-46fd-915b-c6b3e501ba02",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "First-line therapy for stable angina",
+      "back": "Beta blockers (-OLOLs)"
+    },
+    {
+      "id": "f-0fa00390-9a45-4c15-9c94-a416dd85ab6b",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Nitrates combined with this drug class cause dangerous hypotension",
+      "back": "PDE-5 inhibitors (sildenafil)"
+    },
+    {
+      "id": "f-ff7a7432-06bf-402e-a098-129ac2cf5dcb",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Treatment of methemoglobinemia",
+      "back": "Low-dose methylene blue"
+    },
+    {
+      "id": "f-854286f1-dce8-4292-829c-84a262554042",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Alternating tolerance and loss of tolerance due to occupational nitrate exposure",
+      "back": "Monday disease"
+    },
+    {
+      "id": "f-6760d095-284b-45a2-b39a-acc9f58f9277",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Drugs for hypertension in pregnancy (mnemonic Hi, MeLaNi)",
+      "back": "Hydralazine, Methyldopa, Labetalol, Nifedipine"
+    },
+    {
+      "id": "f-22fd818e-e6ca-478e-b66e-06d93d632fe3",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Components of a cyanide antidote kit",
+      "back": "Inhaled amyl nitrite, IV sodium nitrite, IV sodium thiosulfate"
+    },
+    {
+      "id": "f-490db927-37d4-4c3b-ad8f-ef1ab1ca80ca",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Ranolazine: mechanism, side effect, use",
+      "back": "Reduces late Na+ current into myocardial cells. Causes QT prolongation. Used for chronic angina prophylaxis."
+    },
+    {
+      "id": "f-feca4906-5f30-4fcb-9ce4-032eb8cbaed8",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Antianginal that shifts metabolism from fatty acid oxidation to glucose oxidation",
+      "back": "Trimetazidine"
+    },
+    {
+      "id": "f-b252c6b1-4b36-47ce-9ee9-2ca685355225",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Mechanism of action of ivabradine",
+      "back": "Selectively inhibits If (funny) channels in the SA node, lowering heart rate"
+    },
+    {
+      "id": "f-52d03f8e-0405-43b5-baf9-a649b08e1ddb",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Nitrate with longer half-life and no first-pass effect",
+      "back": "Isosorbide mononitrate (ISMN)"
+    },
+    {
+      "id": "f-536faf7a-a368-4994-a9df-9ca15d964595",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Cornerstone drugs in heart failure with reduced EF",
+      "back": "ACE inhibitor/ARB (or ARNI), beta blockers, mineralocorticoid receptor antagonists, SGLT2 inhibitors"
+    },
+    {
+      "id": "f-e802a03c-d7a3-4025-a8b7-aa9af4ce61bb",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Key beta blockers for heart failure",
+      "back": "Bisoprolol, carvedilol, metoprolol succinate (reduce progression of chronic HF)"
+    },
+    {
+      "id": "f-9eb23ffa-ee02-4e03-ac9c-27c2f3319677",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Enzyme that degrades atrial and brain natriuretic peptide. Which drug inhibits it?",
+      "back": "Neprilysin; inhibited by sacubitril"
+    },
+    {
+      "id": "f-4b45ce01-767a-46db-9776-01e103b1efa2",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Side effects of SGLT2 inhibitors (empagliflozin, dapagliflozin)",
+      "back": "Genital mycotic infections, UTI, volume depletion and dizziness, euglycemic ketoacidosis, Fournier gangrene"
+    },
+    {
+      "id": "f-07668acd-73d9-41d8-9653-5ad7bab0c182",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Most common ECG finding in digoxin toxicity",
+      "back": "Premature ventricular contractions (PVCs)"
+    },
+    {
+      "id": "f-5e09aac7-18ce-491b-bd95-850e4714550f",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Mechanism of each Vaughan Williams class (mnemonic NaBaKlaCa)",
+      "back": "Class 1: Na channel blockers. Class 2: beta blockers. Class 3: K channel blockers. Class 4: Ca channel blockers."
+    },
+    {
+      "id": "f-fd2a114a-2e9c-4e38-87fc-b57c58dbdaf4",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Effect of Class 1 antiarrhythmics on action potential duration",
+      "back": "1A: prolong. 1B: shorten. 1C: no effect."
+    },
+    {
+      "id": "f-c4373d89-8606-49ea-98b0-0c792c1def2f",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Class 1A antiarrhythmic with cinchonism",
+      "back": "Quinidine"
+    },
+    {
+      "id": "f-f73bc895-43bb-4e34-99aa-3d1ad8e645c4",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Class 1B antiarrhythmic with agranulocytosis",
+      "back": "Tocainide"
+    },
+    {
+      "id": "f-d237a858-9924-4cad-afdb-650a7c07f8bd",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Class 1B antiarrhythmic with least cardiotoxicity and significant first-pass effect",
+      "back": "Lidocaine"
+    },
+    {
+      "id": "f-270c0a4a-56c0-43b1-890f-ea886c75d8d0",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Antiarrhythmic class contraindicated post-MI",
+      "back": "Class 1C"
+    },
+    {
+      "id": "f-820b879a-ab5f-47c4-b771-63dcd0aa9b2c",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Most efficacious antiarrhythmic drug",
+      "back": "Amiodarone"
+    },
+    {
+      "id": "f-ec0d5874-329f-4063-9ca9-88ae187846db",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Side effects of amiodarone",
+      "back": "Corneal microdeposits, blue-gray skin discoloration, thyroid dysfunction (hyper or hypo), paresthesia, tremor, pulmonary fibrosis, hepatotoxicity, teratogenicity"
+    },
+    {
+      "id": "f-caeb22a9-8cf2-4d24-8eae-feb4144ac46d",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Antiarrhythmic classes that can cause torsades de pointes",
+      "back": "Class 1A and Class 3"
+    },
+    {
+      "id": "f-a8b3dc24-f800-4cc0-ae1c-6e0197fec4aa",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Drug of choice for torsades de pointes",
+      "back": "Magnesium sulfate (hypotension and bradycardia if given too fast IV)"
+    },
+    {
+      "id": "f-6eb4d6eb-f0d2-4e6a-a4ae-4087566a7055",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Drug of choice for paroxysmal or narrow-complex SVT. Side effect?",
+      "back": "Adenosine. Sense of impending doom; half-life about 15 seconds."
+    },
+    {
+      "id": "f-c6139ca3-f9be-4377-bc2d-95599c28e50c",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Common side effect of spironolactone",
+      "back": "Gynecomastia (also hyperkalemia)"
+    },
+    {
+      "id": "f-4544ffba-dbb6-40f2-8d38-19414abaf827",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Drug used in central diabetes insipidus and von Willebrand disease",
+      "back": "Desmopressin (V2 agonist)"
+    },
+    {
+      "id": "f-30d05de3-098a-415e-85cd-13d79805c54a",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Diuretic causing normal anion gap (hyperchloremic) metabolic acidosis",
+      "back": "Carbonic anhydrase inhibitors (acetazolamide)"
+    },
+    {
+      "id": "f-d31bacd1-40b2-417f-b94e-7bcf704d5420",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Potassium-sparing diuretics that block ENaC",
+      "back": "Amiloride and triamterone"
+    },
+    {
+      "id": "f-779ce9f6-9ae6-40fe-b25b-107533856742",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "V1 and V2 receptor antagonists used in SIADH",
+      "back": "-vaptans: conivaptan and tolvaptan"
+    },
+    {
+      "id": "f-41a5007d-f8a6-4fb8-9aed-c8b9dc91bc48",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Mechanism of statins",
+      "back": "Competitive inhibition of HMG-CoA reductase"
+    },
+    {
+      "id": "f-1d6d7426-4962-482c-8fc9-b47af48a5f76",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Common adverse effects of statins",
+      "back": "Hepatotoxicity, myopathy, rhabdomyolysis"
+    },
+    {
+      "id": "f-a9031c3a-8509-4ee2-9b58-71e78cf730ef",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Drug of choice for hypertriglyceridemia",
+      "back": "Fibrates"
+    },
+    {
+      "id": "f-5b3304a7-61a0-487c-bfe0-c901e011d5d5",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Fibrates plus resins increase risk of what?",
+      "back": "Cholelithiasis"
+    },
+    {
+      "id": "f-572cfc67-c55b-45de-8111-e9cb9aebd45b",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Statins plus resins cause what interaction?",
+      "back": "Impaired statin absorption"
+    },
+    {
+      "id": "f-c06bb64b-64bf-49e8-b6b3-c9eaa70866f5",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Statins plus fibrates increase risk of what?",
+      "back": "Myopathy and rhabdomyolysis"
+    },
+    {
+      "id": "f-2ae77eb9-ff71-408d-98d9-4d03c090c90a",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Examples of high-intensity statin therapy",
+      "back": "Atorvastatin 40-80 mg and rosuvastatin 20-40 mg"
+    },
+    {
+      "id": "f-c745ed7f-1d83-4858-8cdc-c7e7623c0986",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Agent best at increasing HDL. Notable side effects?",
+      "back": "Niacin. Flushing, hyperuricemia, hyperglycemia."
+    },
+    {
+      "id": "f-3f03b9da-c057-44ba-bfd2-7ae8a450103f",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Niacin-induced flushing is reduced by which drug?",
+      "back": "Aspirin (prostaglandin-mediated flushing)"
+    },
+    {
+      "id": "f-3d725445-ff60-4099-ba14-56121d38a18f",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Side effects of bile acid binding resins",
+      "back": "Steatorrhea and malabsorption of fat-soluble vitamins (vitamin K)"
+    },
+    {
+      "id": "f-a5283a70-63bc-4d26-b38d-22f7685d0772",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Mechanism of fibrates",
+      "back": "Activate PPAR-alpha"
+    },
+    {
+      "id": "f-c49ad895-e7b9-4dc2-929a-ddc544c6d36a",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Drug classes that control rate in atrial arrhythmias",
+      "back": "Class II (beta blockers such as metoprolol, propranolol) and Class IV (non-dihydropyridine CCBs: verapamil, diltiazem)"
+    },
+    {
+      "id": "f-f0869988-53ca-4716-9a26-c4f07e64a3ad",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Drug classes that control rhythm in atrial arrhythmias",
+      "back": "Class I (flecainide, propafenone) and Class III (amiodarone, sotalol)"
+    },
+    {
+      "id": "f-229c3bc5-8171-4a24-ad58-4f0ae033ee8f",
+      "deckId": "d-e763983c-b280-486a-a8bc-12d27f0fe183",
+      "front": "Antiarrhythmic with the most mechanisms of action",
+      "back": "Amiodarone (Class I, II, III, and IV effects)"
+    },
+    {
+      "id": "f-36357c47-c547-4215-b5f7-c4b94cd9f56f",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Endogenous molecules with powerful pharmacologic effects that do not fall into the traditional autonomic groups",
+      "back": "Autacoids. Histamine and serotonin are the most important amine autacoids."
+    },
+    {
+      "id": "f-d31d07e9-6467-45bd-b3bc-d8b8a1ccac7d",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "5-HT1B/1D agonists, drug of choice for acute migraine. Side effect?",
+      "back": "Triptans (sumatriptan, naratriptan). Chest pain or tightness."
+    },
+    {
+      "id": "f-c22348a3-7e04-47da-8d9a-1412cf1d8e21",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Ergot compounds act on which receptor?",
+      "back": "5-HT2A (ergotamine, ergonovine)"
+    },
+    {
+      "id": "f-9851459a-8496-4038-820b-79ece0d72a67",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Ergot compound selective for uterine muscle",
+      "back": "Ergonovine"
+    },
+    {
+      "id": "f-2d803c95-4450-46fe-a268-83b3b7514272",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "5-HT3 antagonists: use and side effects",
+      "back": "-SETRONs. Chemotherapy-induced and postoperative nausea and vomiting. Constipation and QT prolongation."
+    },
+    {
+      "id": "f-89cb0b90-0bc0-45ef-b62e-658fda44ac5e",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "5-HT4 partial agonist for IBS with constipation",
+      "back": "Tegaserod"
+    },
+    {
+      "id": "f-7d74f05a-d652-4287-a6ff-438887d7a6cb",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Cause of ergotism (St. Anthony's fire)",
+      "back": "Ergot alkaloids: vasospasm leading to gangrene plus hallucinations"
+    },
+    {
+      "id": "f-faa41a10-ebcc-4fdd-a843-c0e43be4131a",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Classic demonstration of the histamine effect",
+      "back": "Triple response of Lewis: wheal, flush, and flare"
+    },
+    {
+      "id": "f-7d5fe1f1-1d9d-44f9-b627-0ae40126a2d4",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Receptor responsible for allergic reactions",
+      "back": "H1 receptor"
+    },
+    {
+      "id": "f-5a8333ef-88b4-41ed-9dea-5c5e199fba45",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Major side effect of first-generation H1 blockers",
+      "back": "Sedation (diphenhydramine, brompheniramine); also anticholinergic effects"
+    },
+    {
+      "id": "f-fd732b65-79d8-4db8-b741-dd9eb9107b58",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Second-generation H1 blockers",
+      "back": "Cetirizine, levocetirizine, loratadine, fexofenadine (astemizole and terfenadine were withdrawn for QT prolongation). Less sedating, minimal BBB penetration."
+    },
+    {
+      "id": "f-08b861c4-f61a-4a8c-b2db-6cf435977801",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "H2 blocker with side effect of gynecomastia",
+      "back": "Cimetidine"
+    },
+    {
+      "id": "f-2d69073c-dc34-4e8e-a6c8-96b1a55c326c",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "H3 antagonist used for balance disorders and Meniere disease",
+      "back": "Betahistine"
+    },
+    {
+      "id": "f-2309d5f6-5868-4ea0-8bb1-dff6d4d38a71",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "PGE1 analog for NSAID-induced ulcers. Teratogenic effect?",
+      "back": "Misoprostol. Moebius sequence; also causes uterine contraction."
+    },
+    {
+      "id": "f-d82fdda2-2c77-4f2d-b080-bffc1f2bf7f5",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "PGE1 analog used to maintain PDA and treat erectile dysfunction",
+      "back": "Alprostadil"
+    },
+    {
+      "id": "f-e3e8d918-32b5-4aa4-9d57-a5f69b0a58bb",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "PGE2 analog used for cervical ripening and labor induction",
+      "back": "Dinoprostone (higher doses cause uterine contraction)"
+    },
+    {
+      "id": "f-6869fad3-34d4-4dd1-aec3-52882038edaf",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "PGF2-alpha analog used for postpartum hemorrhage",
+      "back": "Carboprost"
+    },
+    {
+      "id": "f-fa12335b-d34c-4703-9135-eb56109f6eb7",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "PGF2-alpha analog that permanently darkens iris color",
+      "back": "Latanoprost"
+    },
+    {
+      "id": "f-ca3d7ce6-fa91-4815-82a8-9e149582caee",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "PGI2 analog used for pulmonary hypertension",
+      "back": "Epoprostenol"
+    },
+    {
+      "id": "f-2dfc9d34-4312-4544-b553-22e8bd9530cc",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "First-line for acute asthma per latest GINA (anti-inflammatory reliever)",
+      "back": "Formoterol plus inhaled corticosteroid (fast-onset long-acting beta-2 agonist)"
+    },
+    {
+      "id": "f-04cdb3ac-e81a-46bc-b573-5a84d03a5270",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Quick-acting asthma reliever. Adverse effects?",
+      "back": "Short-acting beta-2 agonists (salbutamol, albuterol). Tremor, tachycardia."
+    },
+    {
+      "id": "f-61574656-2aa9-4387-b686-d0a273cc602d",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Drug class associated with increased asthma mortality when used alone",
+      "back": "Long-acting beta-2 agonists (LABA)"
+    },
+    {
+      "id": "f-2be89680-adc7-4bdc-ad40-aff425447734",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Methylxanthines: mechanism",
+      "back": "Inhibit PDE, increase cAMP, causing bronchodilation (also adenosine antagonism)"
+    },
+    {
+      "id": "f-43b9d2c7-9c24-4672-ac4f-c5d470e97498",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Antidote for theophylline overdose",
+      "back": "Beta blockers (to treat tachyarrhythmias)"
+    },
+    {
+      "id": "f-840f57b7-187c-48d2-97eb-701fb658d3eb",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Drug of choice for asthma prophylaxis. Mechanism?",
+      "back": "Corticosteroids. Inhibit phospholipase A2 (via lipocortin)."
+    },
+    {
+      "id": "f-75679179-0cbd-4495-9fa3-d9e9c2ba8ade",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Advice to minimize oropharyngeal candidiasis with inhaled steroids",
+      "back": "Rinse the mouth and gargle after every use"
+    },
+    {
+      "id": "f-24cfc58c-4fc3-4305-b3b5-b29612a9795b",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "5-lipoxygenase inhibitor and its side effects",
+      "back": "Zileuton. Flu-like syndrome, transaminitis."
+    },
+    {
+      "id": "f-222a782f-a274-4747-aec0-50535e2cb24a",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Leukotriene receptor blockers",
+      "back": "Montelukast and zafirlukast"
+    },
+    {
+      "id": "f-f4b9778b-babf-401a-b0a5-5b72f77e9a2d",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Mast cell stabilizers",
+      "back": "Cromolyn, nedocromil, lodoxamide"
+    },
+    {
+      "id": "f-2b3e44ce-38b7-4921-868f-cfee6b902239",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Black box warning of montelukast",
+      "back": "Serious neuropsychiatric effects"
+    },
+    {
+      "id": "f-76d2e08c-8dee-4976-b48e-a402fdb674ae",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Anti-IgE antibody used in severe asthma",
+      "back": "Omalizumab"
+    },
+    {
+      "id": "f-b81d7581-a08b-422d-a51e-966ebd8c1af2",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Mechanism of N-acetylcysteine as a mucolytic",
+      "back": "Breaks disulfide bonds in mucus"
+    },
+    {
+      "id": "f-8012adee-8bb0-411b-986a-5a397f8541ee",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Two major classes of antitussives",
+      "back": "Centrally acting (opioid, non-opioid) and peripherally acting"
+    },
+    {
+      "id": "f-d2aad3cc-7738-49ee-a1ec-7b30247c67c0",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Non-opioid centrally acting antitussive",
+      "back": "Butamirate"
+    },
+    {
+      "id": "f-a103566a-08bd-464e-bfb8-d3611781551b",
+      "deckId": "d-84a45abf-2b1c-478a-bbf0-7f3ad11d8a3c",
+      "front": "Mechanism of guaifenesin (expectorant)",
+      "back": "Irritates gastric vagal receptors, increasing respiratory tract secretions"
+    },
+    {
+      "id": "f-165d088c-5e7b-4593-a85e-be969a100c3c",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Main excitatory neurotransmitters in the CNS",
+      "back": "Glutamate and aspartate"
+    },
+    {
+      "id": "f-7ac3a0f8-a25a-4eb8-809b-0a5682c3bad1",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Main inhibitory neurotransmitters",
+      "back": "Brain: GABA. Spinal cord: glycine. Others: taurine, beta-alanine."
+    },
+    {
+      "id": "f-dba798c6-33e5-4001-a920-0001acfa614d",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Predominant CNS catecholamine, with a role in motivation and reward",
+      "back": "Dopamine"
+    },
+    {
+      "id": "f-cbbddb3c-d1ea-4659-8210-41803f85b37d",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Neurotransmitter located mostly in the ventral posterior hypothalamus for arousal, body temperature, and vascular dynamics",
+      "back": "Histamine"
+    },
+    {
+      "id": "f-b2fa996e-6d48-4f22-b582-52d9d33859b3",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Neurotransmitter with roles in mood, depression, anxiety, and phobia",
+      "back": "Serotonin (5-HT)"
+    },
+    {
+      "id": "f-ba4658a0-3e93-4571-b45b-473dad9757b6",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Uses of bupropion",
+      "back": "Antidepressant and smoking cessation"
+    },
+    {
+      "id": "f-e7b83347-ef72-45c4-ab7b-22adf1b7d627",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Mechanism of bupropion",
+      "back": "Norepinephrine and dopamine reuptake inhibitor"
+    },
+    {
+      "id": "f-af891354-5504-4473-9dca-918e9036023a",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Features of serotonin syndrome (mnemonic FAT CHD)",
+      "back": "Fever, Agitation, Tremor, Clonus, Hyperreflexia, Diaphoresis"
+    },
+    {
+      "id": "f-94043264-7777-4dcd-8dfa-cb250069730c",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drug of choice for major depressive disorder",
+      "back": "SSRIs"
+    },
+    {
+      "id": "f-a27afcee-e424-4cfd-9942-a146aa350261",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Common SSRIs",
+      "back": "Fluoxetine, paroxetine, citalopram, escitalopram, sertraline"
+    },
+    {
+      "id": "f-8e553097-8472-4b42-8fae-460fc7a36d9d",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Treatment of serotonin syndrome",
+      "back": "Stop offending drugs, sedate with benzodiazepines, supportive care (intubate and ventilate if needed), and give cyproheptadine (5-HT2 blocker)"
+    },
+    {
+      "id": "f-e5c58bd5-a560-44a5-b9a7-9572fa943048",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Black box warning of SSRIs",
+      "back": "Increased risk of suicidal ideation in patients younger than 25 years"
+    },
+    {
+      "id": "f-c9124567-9119-4e7a-ba00-d1887a8102c4",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "SSRI with QT prolongation",
+      "back": "Citalopram"
+    },
+    {
+      "id": "f-ba3e0705-3fd0-4a78-9a83-ea4a8edd53b3",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antidepressants with more antihistamine, alpha-blocking, and anticholinergic effects than SNRIs",
+      "back": "Tricyclic antidepressants (TCAs)"
+    },
+    {
+      "id": "f-684fd60c-fffa-4d1d-b2a3-1d3c78918fce",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drug class that inhibits neuronal reuptake of serotonin and norepinephrine, with use in chronic pain",
+      "back": "SNRIs (e.g., venlafaxine, duloxetine)"
+    },
+    {
+      "id": "f-e74d70be-966d-4bbe-b3c4-e8f6f57a8123",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "3 Cs of TCA overdose",
+      "back": "Coma, Convulsions, Cardiotoxicity (arrhythmias, cardiomyopathy). Treat with sodium bicarbonate."
+    },
+    {
+      "id": "f-d5637699-248a-45c3-b315-11100dec6184",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "MAO form present in dopamine and norepinephrine neurons (brain, gut, placenta, liver)",
+      "back": "MAO-A"
+    },
+    {
+      "id": "f-61c29173-8266-4561-beda-8b762ee913ec",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Rapid hypertension and sympathetic symptoms when MAO inhibitors are taken with aged cheese, red wine, or pickled vegetables",
+      "back": "Tyramine (hypertensive) crisis"
+    },
+    {
+      "id": "f-d5f74846-9f9c-4dd3-a504-8b4f92fb6990",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Selective MAO-B inhibitors used in Parkinson disease",
+      "back": "Selegiline and rasagiline"
+    },
+    {
+      "id": "f-8d3d1b5d-bd07-49f5-be41-df439cb1ecc4",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Black box warning of nefazodone",
+      "back": "Hepatotoxicity"
+    },
+    {
+      "id": "f-277eb90a-3a85-4edd-8e09-ca8fff383f73",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drugs that can cause priapism (mnemonic: Tigas PeniS Qo, AyaW Bumaba)",
+      "back": "Trazodone, Papaverine, Sildenafil, Quetiapine, Alprostadil, Warfarin, Bupropion"
+    },
+    {
+      "id": "f-eaae397e-0387-4105-9ee6-76080e700e95",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Adverse effects of low-potency typical antipsychotics (chlorpromazine, thioridazine): ANTI-HAM",
+      "back": "Antihistamine (sedation, weight gain), Antiadrenergic (hypotension, failure of ejaculation), Antimuscarinic (dry mouth, urinary retention, constipation)"
+    },
+    {
+      "id": "f-8262f666-3356-4002-9f88-5e73ca26e32a",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Adverse effects of high-potency typical antipsychotics (haloperidol, fluphenazine)",
+      "back": "Extrapyramidal symptoms"
+    },
+    {
+      "id": "f-3816e835-6702-4748-9bee-50a72657c3c6",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Five black box warnings of clozapine",
+      "back": "1. Severe neutropenia/agranulocytosis 2. Orthostatic hypotension, bradycardia, syncope 3. Seizures 4. Myocarditis and cardiomyopathy 5. Increased mortality in elderly patients with dementia-related psychosis"
+    },
+    {
+      "id": "f-c906cf35-0e4b-45bd-9f00-f2cffe639d11",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Clozapine is the drug of choice for what?",
+      "back": "Treatment-refractory schizophrenia and schizophrenia with suicidality"
+    },
+    {
+      "id": "f-eb495848-2583-4474-939f-67cfb25120d8",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drugs with agranulocytosis as a serious side effect",
+      "back": "Clozapine, PTU, methimazole, tocainide (also carbamazepine)"
+    },
+    {
+      "id": "f-c2f8f196-bd6b-4f70-b6c4-f941834bab43",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Eye side effects of low-potency typical antipsychotics",
+      "back": "Chlorpromazine: corneal deposits. Thioridazine: pigmentary retinopathy."
+    },
+    {
+      "id": "f-0033719e-c4bb-4039-a6f1-8581be1244d8",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antipsychotics with greater 5-HT2A than D2 affinity",
+      "back": "Atypical (second-generation) antipsychotics"
+    },
+    {
+      "id": "f-da48c5a5-3331-44cb-906f-106e89d5c2d9",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antipsychotics with the highest weight gain",
+      "back": "Clozapine and olanzapine"
+    },
+    {
+      "id": "f-49edf84a-bca0-40ab-999c-b3b11c1933a9",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antipsychotic with high risk of sedation. Other side effects?",
+      "back": "Quetiapine. Cataracts, priapism, QT prolongation."
+    },
+    {
+      "id": "f-329ede8c-57db-4af4-a88a-68a80546aec0",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antipsychotics with the highest propensity for hyperprolactinemia",
+      "back": "Risperidone and paliperidone"
+    },
+    {
+      "id": "f-237e699d-456b-4601-9946-d298639ec767",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Atypical antipsychotic with the lowest risk of weight gain",
+      "back": "Ziprasidone (but causes QT prolongation)"
+    },
+    {
+      "id": "f-012e6794-add9-49ae-9aa8-a7e3b1445754",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antipsychotic with the lowest risk of hyperprolactinemia. Mechanism?",
+      "back": "Aripiprazole, a partial D2 agonist"
+    },
+    {
+      "id": "f-0ce7b491-8dc9-4785-8068-261abadfedde",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drug used for acute mania and for prevention in bipolar disorder",
+      "back": "Lithium (very narrow therapeutic index)"
+    },
+    {
+      "id": "f-f6223fc6-674d-4513-9551-935ded33c92b",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drugs that increase lithium levels",
+      "back": "NSAIDs, ACE inhibitors, thiazide and other diuretics"
+    },
+    {
+      "id": "f-9b60730a-b5e2-434d-9123-5081f02925a4",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Teratogenic effect of lithium",
+      "back": "Ebstein anomaly (atrialization of the right ventricle)"
+    },
+    {
+      "id": "f-7d0ce8ee-7e61-4b81-af7e-0d5f3fc05567",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Preferred benzodiazepine as anticonvulsant maintenance",
+      "back": "Clonazepam"
+    },
+    {
+      "id": "f-16b60f6d-f32a-4c3e-aec0-bfb24671bc31",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Single most effective agent for Parkinson disease",
+      "back": "Levodopa-carbidopa"
+    },
+    {
+      "id": "f-9e188bb7-eb4c-4056-952b-8515e12f565a",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Mechanism of carbidopa",
+      "back": "Inhibits peripheral dopa decarboxylase, preventing peripheral metabolism of levodopa"
+    },
+    {
+      "id": "f-42ae6b31-62ce-4a76-95b8-51d12dc99807",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "COMT inhibitors",
+      "back": "Tolcapone (central and peripheral) and entacapone (peripheral)"
+    },
+    {
+      "id": "f-3b15e158-4c19-4308-9ccb-2fd771bb3bee",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Fluctuations in motor response to levodopa. Drug of choice for off periods?",
+      "back": "On-off phenomenon. Apomorphine."
+    },
+    {
+      "id": "f-b34f4a15-3ba5-4390-9d64-1e783e2d1635",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Duration of levodopa benefit becomes progressively shorter. Management?",
+      "back": "Wearing-off phenomenon. Add a COMT inhibitor, MAO-B inhibitor, or dopamine agonist."
+    },
+    {
+      "id": "f-4e8245fd-85cb-4260-9005-b4230cbe5503",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Examples of dopamine agonists",
+      "back": "Ergot: bromocriptine, pergolide, cabergoline. Non-ergot: pramipexole, ropinirole."
+    },
+    {
+      "id": "f-a15e63e9-30bb-48d7-9e3f-6bfa1fdc8f35",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drugs that can cause livedo reticularis (mnemonic: A man reads FHM and GQ)",
+      "back": "Amantadine, Hydroxyurea, Minocycline, Gemcitabine, Quinidine"
+    },
+    {
+      "id": "f-ebb38002-ec4d-446b-9ddf-cc369d6da005",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antiviral used for parkinsonism",
+      "back": "Amantadine"
+    },
+    {
+      "id": "f-b217ed50-0647-468b-b543-077ed3712af6",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Anticholinergics for extrapyramidal symptoms and parkinsonism",
+      "back": "Benztropine, trihexyphenidyl, biperiden"
+    },
+    {
+      "id": "f-1d750ac5-41cf-4af6-a83f-c7362c5f157f",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Mechanism of benzodiazepines",
+      "back": "Positive allosteric modulators of GABA-A that increase the frequency of Cl- channel opening"
+    },
+    {
+      "id": "f-a251b5c8-fba2-433e-8b9d-83dd06684bee",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Benzodiazepines not metabolized by CYP (mnemonic: TOL)",
+      "back": "Temazepam, oxazepam, lorazepam"
+    },
+    {
+      "id": "f-47656c6f-9dfd-4825-88c7-b0d6f5abc190",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Short-acting benzodiazepines (mnemonic: little TOM)",
+      "back": "Triazolam, oxazepam, midazolam"
+    },
+    {
+      "id": "f-d2f4c62a-4536-4c55-ae1d-a976119205fe",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Benzodiazepines used for status epilepticus",
+      "back": "Midazolam, diazepam, lorazepam"
+    },
+    {
+      "id": "f-37604b16-9527-44f4-b731-dd5c3ec19cd7",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Benzodiazepine used for alcohol withdrawal",
+      "back": "Chlordiazepoxide"
+    },
+    {
+      "id": "f-aaf48a86-c47b-40b4-8680-193ce07bd5fe",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Treatment for benzodiazepine overdose",
+      "back": "Flumazenil"
+    },
+    {
+      "id": "f-28416584-adcb-4c85-96de-928d8d699ea5",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drug of choice for neonatal seizures",
+      "back": "Phenobarbital"
+    },
+    {
+      "id": "f-72d6b70e-48fd-4fcb-b33b-48f8e6cc0f72",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Phenobarbital derivative used for essential tremor",
+      "back": "Primidone"
+    },
+    {
+      "id": "f-0865e6f0-8b42-482d-8a5b-fcd42ce491ae",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Barbiturate used for induction of anesthesia",
+      "back": "Thiopental"
+    },
+    {
+      "id": "f-63789949-a088-447f-92dd-538842286252",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Novel sedative-hypnotics used in insomnia that are faster and safer",
+      "back": "Z-drugs: zolpidem, zaleplon, eszopiclone"
+    },
+    {
+      "id": "f-bec9e6ca-6d49-4cef-b8e5-7a8767d1776a",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "First-line treatment for generalized anxiety disorder",
+      "back": "Psychotherapy with or without an SSRI (e.g., sertraline)"
+    },
+    {
+      "id": "f-d14e74d2-c196-4f93-a753-4899488e2e91",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Alcohol that creates toxic formate causing visual disturbance, coma, and seizures",
+      "back": "Methanol (wood alcohol)"
+    },
+    {
+      "id": "f-e5ac1d51-18cb-492b-808a-d7da9a70a6a7",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Alcohol that creates toxic aldehydes and oxalate causing kidney damage and severe acidosis",
+      "back": "Ethylene glycol (antifreeze)"
+    },
+    {
+      "id": "f-b8c6fc7d-5242-4861-a2a7-46881f1ca2ba",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Treatment of methanol and ethylene glycol poisoning",
+      "back": "Fomepizole (alcohol dehydrogenase inhibitor). Ethanol is no longer first line."
+    },
+    {
+      "id": "f-479e14c7-e078-4395-b280-6a1a1b9f0e48",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Mechanism of disulfiram",
+      "back": "Aldehyde dehydrogenase inhibitor"
+    },
+    {
+      "id": "f-a2388e21-e1d3-421e-85c3-4bb66ad79627",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antiepileptic CYP inducer with gingival hyperplasia, nystagmus, and fetal hydantoin syndrome",
+      "back": "Phenytoin"
+    },
+    {
+      "id": "f-0cca36c8-f647-4d78-a617-3696319b71ec",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antiepileptic that is a drug of choice for trigeminal neuralgia. Adverse effects?",
+      "back": "Carbamazepine. Rash, SJS, diplopia and ataxia (most common), SIADH, megaloblastic anemia, aplastic anemia."
+    },
+    {
+      "id": "f-93c657ad-f785-45b4-8efd-06d515d8ff3b",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Most teratogenic antiepileptic, a CYP inhibitor causing weight gain, hepatotoxicity, and pancreatitis",
+      "back": "Valproic acid"
+    },
+    {
+      "id": "f-7bffd6e4-1702-44ee-8e15-0b26604a7b0c",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Black box warning of lamotrigine",
+      "back": "Life-threatening rash (SJS/TEN). Hemophagocytic lymphohistiocytosis has also been reported."
+    },
+    {
+      "id": "f-bea3312e-3fc1-4ef8-bcd6-b2884967a540",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Well-tolerated AED with many anti-seizure mechanisms and weak carbonic anhydrase inhibition",
+      "back": "Topiramate (can cause angle closure glaucoma, kidney stones, weight loss)"
+    },
+    {
+      "id": "f-afbd2731-6433-44df-a54d-c94acd775ca3",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antiepileptic associated with aplastic anemia and hepatic failure",
+      "back": "Felbamate"
+    },
+    {
+      "id": "f-3576eb25-116c-4199-8384-adf926c9e7e1",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drug of choice for absence seizures. Mechanism?",
+      "back": "Ethosuximide. Reduces current through T-type calcium channels."
+    },
+    {
+      "id": "f-bf40cef8-59a8-48a3-95c1-bfafe7d155c3",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "AED that irreversibly inhibits GABA transaminase. Major adverse effect?",
+      "back": "Vigabatrin. Permanent vision loss."
+    },
+    {
+      "id": "f-8abe74eb-c34b-4b7a-97e5-5671cee0b541",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drugs of choice for postherpetic neuralgia",
+      "back": "Gabapentin and pregabalin"
+    },
+    {
+      "id": "f-71304964-81dd-4c88-944b-44e84f675cdd",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Mechanism of gabapentinoids",
+      "back": "Block alpha-2-delta subunit of voltage-gated Ca2+ channels, decreasing glutamate release"
+    },
+    {
+      "id": "f-e8d419f4-69db-4be8-8bbd-33f6f2c67c8d",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "AED that selectively binds synaptic vesicle protein 2A (SV2A)",
+      "back": "Levetiracetam (favorable adverse effect profile, minimal drug interactions)"
+    },
+    {
+      "id": "f-32b5b659-a51c-4445-915c-ab0cde5baf58",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Most commonly used first-line IV anesthetic",
+      "back": "Propofol"
+    },
+    {
+      "id": "f-c0fee1fb-c021-48f4-9f93-b20e1d263eda",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "IV anesthetic reserved for patients at risk of hypotension or MI",
+      "back": "Etomidate"
+    },
+    {
+      "id": "f-f02393c8-4b60-4166-8da9-952952190e14",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "IV anesthetic best for asthmatics and for children undergoing short, painful procedures",
+      "back": "Ketamine"
+    },
+    {
+      "id": "f-2349cf3e-f7b9-4db7-b562-dbb241a2a107",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "IV anesthetics with analgesic properties",
+      "back": "Ketamine (and opioids). Propofol and etomidate lack significant analgesia."
+    },
+    {
+      "id": "f-1656ceca-9bbf-4e2d-8fc1-c805b7c0f591",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Best measure of potency of inhaled anesthetics",
+      "back": "Minimum alveolar concentration (MAC). MAC is inversely proportional to potency (lower MAC, higher potency)."
+    },
+    {
+      "id": "f-df3f8530-a642-41eb-a862-50044df6dcd8",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Inhaled anesthetic with the lowest and the highest MAC",
+      "back": "Lowest: methoxyflurane. Highest: nitrous oxide."
+    },
+    {
+      "id": "f-cfe91aeb-2312-41dd-aab9-982a3f811d70",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Inhaled anesthetic that can cause megaloblastic anemia and can increase ICP",
+      "back": "Nitrous oxide"
+    },
+    {
+      "id": "f-362eb2dc-46ed-4c8d-b055-ee70464d8ac2",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Pungent inhaled anesthetics not suitable for induction or for asthmatics",
+      "back": "Desflurane, enflurane, isoflurane"
+    },
+    {
+      "id": "f-45e27399-26ee-4bc8-b7bf-d96c2031972d",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Volatile anesthetic that can cause coronary steal syndrome",
+      "back": "Isoflurane"
+    },
+    {
+      "id": "f-b7b57bdf-cdca-4509-9483-a40bc7af5950",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Non-pungent inhaled anesthetics best for asthmatics",
+      "back": "Sevoflurane (and halothane)"
+    },
+    {
+      "id": "f-a0ff8825-c74c-4b14-bf61-51ecba133454",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Inhaled anesthetics with the highest propensity for reflex tachycardia",
+      "back": "Desflurane and isoflurane"
+    },
+    {
+      "id": "f-48021f84-799f-4e9f-8c3c-56c215f94181",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Inhaled anesthetic associated with fulminant hepatic failure",
+      "back": "Halothane (halothane hepatitis)"
+    },
+    {
+      "id": "f-8e98ec6f-9b2d-476f-9a5d-ee86ea3bc822",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Most commonly used inhaled anesthetic in children. Nephrotoxic metabolite?",
+      "back": "Sevoflurane. Compound A is nephrotoxic."
+    },
+    {
+      "id": "f-e8d6b3b3-e875-42f5-9b75-5fd22f83ad04",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Inhaled anesthetic that lowers seizure threshold",
+      "back": "Enflurane"
+    },
+    {
+      "id": "f-3dad414b-e180-4664-a3e2-a07db53c0f3c",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Memory aid for ester local anesthetics",
+      "back": "Esters have only one 'i' in their names: tetracaine, procaine, benzocaine. Amides have two 'i's (lidocaine, bupivacaine)."
+    },
+    {
+      "id": "f-2fc1a401-83ce-4ca2-a742-9b5650745b05",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Neuromuscular blocker that undergoes Hofmann elimination yielding laudanosine (seizures)",
+      "back": "Atracurium (cisatracurium also undergoes Hofmann elimination)"
+    },
+    {
+      "id": "f-26da59e6-0e53-4e52-961d-dfa3ab52fe9c",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Rapid, potent opioid that can be given transdermally. Characteristic adverse effect?",
+      "back": "Fentanyl. Truncal (chest wall) rigidity."
+    },
+    {
+      "id": "f-7a5ffe9b-0231-4026-9dba-791d57af321d",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Most commonly used amide local anesthetic",
+      "back": "Lidocaine"
+    },
+    {
+      "id": "f-19901da4-8d9b-41c4-a411-080254d10051",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Most cardiotoxic amide local anesthetic",
+      "back": "Bupivacaine (ventricular arrhythmias if given IV)"
+    },
+    {
+      "id": "f-be574532-d0a0-4eeb-83c9-9634ee6983aa",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drugs used in lethal injection (mnemonic: PaPoThayin kita)",
+      "back": "Pancuronium, potassium chloride, thiopental"
+    },
+    {
+      "id": "f-37f66be9-f4b8-4452-b4f2-2a7afdd25a2a",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Reversal agent for rocuronium",
+      "back": "Sugammadex"
+    },
+    {
+      "id": "f-329f4555-9276-4b66-b89a-343e69a156e1",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "GABA-B agonist that facilitates spinal inhibition of motor neurons",
+      "back": "Baclofen"
+    },
+    {
+      "id": "f-3978f4b3-cea4-45b3-85dd-a03db392d3ec",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drug for malignant hyperthermia",
+      "back": "Dantrolene"
+    },
+    {
+      "id": "f-04e73cfe-8ec1-4d68-885b-6df330823d95",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Opioids with the shortest and longest half-lives",
+      "back": "Shortest: remifentanil (3 to 4 min). Longest: buprenorphine (long duration of action)."
+    },
+    {
+      "id": "f-7467f7ff-d1e5-4b24-9bb3-3db83aa61085",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drug responsible for the majority of opioid overdose deaths in the US",
+      "back": "Fentanyl"
+    },
+    {
+      "id": "f-05d6ea12-c871-4110-aa60-9f1f3c55363b",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Drug of choice for opioid overdose",
+      "back": "Naloxone"
+    },
+    {
+      "id": "f-877b2b70-3c39-4551-b642-23a1b558e872",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Recreational drug that inhibits reuptake of dopamine, norepinephrine, and serotonin",
+      "back": "Cocaine"
+    },
+    {
+      "id": "f-7fbb3cc8-b5fc-467d-b8c5-12aa08394804",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Recreational hallucinogens with vivid visual hallucinations",
+      "back": "LSD and psilocybin"
+    },
+    {
+      "id": "f-36a9c195-5a6a-4564-a0a3-fad162ea1d6d",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Reversal agent for nondepolarizing neuromuscular blockers",
+      "back": "Neostigmine (usually with an antimuscarinic to blunt muscarinic effects)"
+    },
+    {
+      "id": "f-d56d8dd4-936b-4d86-b146-867424af49ac",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "NMDA antagonist causing dissociative anesthesia and amnesia",
+      "back": "Ketamine"
+    },
+    {
+      "id": "f-f71afc53-2d2f-4cc2-9898-ada045320381",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Recreational drug considered the most dangerous hallucinogen",
+      "back": "Phencyclidine (PCP)"
+    },
+    {
+      "id": "f-e0f4f7c6-8ae1-497c-865c-e9842854ac6d",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Antipsychotic that requires frequent CBC monitoring because of agranulocytosis risk",
+      "back": "Clozapine"
+    },
+    {
+      "id": "f-9a380dec-dcd2-4023-94ab-df3005fdffad",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Neuroleptic malignant syndrome: triad, cause, treatment",
+      "back": "Fever, rigidity, autonomic instability. Caused by dopamine antagonists (e.g., haloperidol). Treat with dantrolene or bromocriptine."
+    },
+    {
+      "id": "f-0c9bd4e2-893d-4481-a397-9b04ff575830",
+      "deckId": "d-1e7cbaa0-9b72-444e-83d0-36c7da26d458",
+      "front": "Malignant hyperthermia: triggers, mechanism, treatment",
+      "back": "Triggered by volatile anesthetics (not nitrous oxide) and succinylcholine in patients with RYR1 mutations. Treat with dantrolene."
+    },
+    {
+      "id": "f-9c7b8367-32c7-47b3-8938-db64f85127d1",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Protein that stores iron in the liver, spleen, and bone marrow",
+      "back": "Ferritin"
+    },
+    {
+      "id": "f-f37f43af-1d61-4dab-a447-ac4f641d2aad",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Treatment for iron toxicity",
+      "back": "Deferoxamine (IV). Deferasirox and deferiprone (oral)."
+    },
+    {
+      "id": "f-9fbda493-c84a-481a-a05c-149c5f0f70ec",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "EPO activates which pathway in erythroid progenitors?",
+      "back": "JAK2-STAT pathway"
+    },
+    {
+      "id": "f-23f95e00-e713-49e0-b940-56bd0d152f2e",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Growth factor targets: epoetin alfa, filgrastim, oprelvekin",
+      "back": "Epoetin alfa: erythroid. Filgrastim: myeloid (neutrophils). Oprelvekin: megakaryocyte (platelets)."
+    },
+    {
+      "id": "f-e363789b-42b7-4f61-83c4-96e987d04b0b",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Steps of hemostasis",
+      "back": "1. Vasoconstriction 2. Platelet plug formation 3. Clot formation via coagulation cascade 4. Fibrous organization"
+    },
+    {
+      "id": "f-efde46bb-0a1f-4e06-bdec-52e09b978a1f",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Side effects of aspirin",
+      "back": "GI distress, tinnitus, hypersensitivity, high anion gap metabolic acidosis, nephrotoxicity"
+    },
+    {
+      "id": "f-5c750e89-96c4-4f4f-adf9-009587633091",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Samter triad",
+      "back": "Aspirin sensitivity, asthma, nasal polyps"
+    },
+    {
+      "id": "f-be1a203e-5bb2-486a-8220-660ed8b719a6",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "GP IIb/IIIa inhibitors used as antiplatelets",
+      "back": "Abciximab, eptifibatide, tirofiban"
+    },
+    {
+      "id": "f-fd22eda3-d5c1-4131-b700-e839e99ac9c4",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "ADP (P2Y12) inhibitors used as antiplatelets",
+      "back": "Clopidogrel, ticlopidine, prasugrel, ticagrelor"
+    },
+    {
+      "id": "f-d0d91147-21ad-489b-8fcf-bfd489bc8cda",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Serious side effect of ticlopidine",
+      "back": "Thrombotic thrombocytopenic purpura (also neutropenia)"
+    },
+    {
+      "id": "f-4efe1f1b-152d-498d-b346-8191d59f529b",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Mechanism and use of cilostazol",
+      "back": "PDE-III inhibitor. Used for intermittent claudication."
+    },
+    {
+      "id": "f-53a3eb17-6650-49e4-82db-a01d83413dce",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Antidote to heparin toxicity",
+      "back": "Protamine sulfate"
+    },
+    {
+      "id": "f-ee0688c2-8177-4358-b9d0-6ea1bba96564",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Antidote to warfarin toxicity",
+      "back": "Vitamin K (slow) and fresh frozen plasma or prothrombin complex concentrate (fast)"
+    },
+    {
+      "id": "f-53862954-64bf-43fc-9b2b-c84ffc12f755",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Parameter monitored with heparin",
+      "back": "aPTT"
+    },
+    {
+      "id": "f-a0d507fe-ad05-406e-86f4-4fe4a9a48089",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Parameter monitored with warfarin",
+      "back": "PT/INR"
+    },
+    {
+      "id": "f-e1678503-bd59-455b-8802-fcac99ecfcb1",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "How is warfarin-induced skin necrosis prevented?",
+      "back": "Heparin-warfarin bridging (early loss of protein C and S causes a transient hypercoagulable state)"
+    },
+    {
+      "id": "f-61fbc136-469e-48a5-8858-96deafe850d6",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Monoclonal antibody used for reversal of dabigatran",
+      "back": "Idarucizumab"
+    },
+    {
+      "id": "f-943071d8-d569-480d-95c4-1303bf175c71",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Antidote to fibrinolytics",
+      "back": "Aminocaproic acid or tranexamic acid"
+    },
+    {
+      "id": "f-d29212ca-9620-4c5c-8a60-22de98814d5d",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Drugs that bind directly to the active site of thrombin",
+      "back": "Direct thrombin inhibitors (-RUDINs such as bivalirudin and argatroban; dabigatran is oral)"
+    },
+    {
+      "id": "f-02a307f7-0d3a-44d6-8d3b-c45eaca64875",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Direct factor Xa inhibitors",
+      "back": "Rivaroxaban, apixaban, edoxaban"
+    },
+    {
+      "id": "f-d1dada2d-9c3b-4100-8983-d738cc819065",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Major adverse effect and contraindications of fibrinolytics",
+      "back": "Bleeding (especially intracranial hemorrhage). Contraindicated in active bleeding or recent hemorrhagic stroke."
+    },
+    {
+      "id": "f-ef540f65-81fb-4793-b14c-5fb645407e7f",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Optimal timing of fibrinolytic therapy",
+      "back": "As early as possible. Best outcomes within 3 hours (stroke window up to 4.5 hours; MI benefit extends to 12 hours)."
+    },
+    {
+      "id": "f-cf418e41-ad36-48b9-b03e-fea7e5e3d5b5",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Mechanism of tranexamic acid",
+      "back": "Lysine analog that competitively inhibits plasminogen activation, preventing fibrinolysis"
+    },
+    {
+      "id": "f-27c0bdc6-9a34-478d-b851-22e8ac9d31d6",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Fetal risks of NSAID use in the 3rd trimester",
+      "back": "Premature closure of the ductus arteriosus and oligohydramnios"
+    },
+    {
+      "id": "f-54b6a4d9-f47e-47ae-86b2-74c57e741801",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Analgesic-antipyretic with weak COX-1 and COX-2 inhibition",
+      "back": "Paracetamol (acetaminophen)"
+    },
+    {
+      "id": "f-e8714be6-7f4a-4b79-933a-2925b29ecae5",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Toxic metabolite causing liver injury in paracetamol overdose",
+      "back": "NAPQI, formed by CYP2E1 oxidation and depleting glutathione"
+    },
+    {
+      "id": "f-8128315c-643a-4525-b877-62631783b853",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Antidote for paracetamol overdose",
+      "back": "N-acetylcysteine. Hepatotoxicity risk rises with single ingestions above about 150 mg/kg; LFTs may rise with 4 g."
+    },
+    {
+      "id": "f-73d5d9c8-1f77-40a2-9fb7-88b5f25d1a1f",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Serious complication of giving aspirin to children with viral infections",
+      "back": "Reye syndrome (hepatic encephalopathy and fatty liver)"
+    },
+    {
+      "id": "f-f9ebf44d-9b83-4d48-aadd-731f07ea3046",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Mechanism of aspirin",
+      "back": "Irreversible inhibition of COX-1 and COX-2, blocking thromboxane A2"
+    },
+    {
+      "id": "f-8ba0808b-f010-4bc6-a7b2-da91bba8b8e4",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "How do aspirin effects vary by dose?",
+      "back": "Low dose: antiplatelet. Intermediate: analgesic and antipyretic. High dose: anti-inflammatory."
+    },
+    {
+      "id": "f-4f0f7d50-d858-48cd-8204-650bac722715",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Duration of aspirin's antiplatelet effect",
+      "back": "8 to 10 days (lifespan of the platelet)"
+    },
+    {
+      "id": "f-3f3f88cb-9690-4ace-be3b-8d86659025a7",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Mechanism of tramadol",
+      "back": "Weak mu-opioid agonist plus serotonin and norepinephrine reuptake inhibition. No anti-inflammatory effect."
+    },
+    {
+      "id": "f-99c4d7b1-957e-45c9-ad34-b026b64b7ff9",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "NSAID marketed as a single enantiomer with more favorable CV risk",
+      "back": "Naproxen"
+    },
+    {
+      "id": "f-a5fb2ab5-6617-4c01-8110-b6411311ae0e",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "NSAID used for closure of a PDA",
+      "back": "Indomethacin (inhibits prostaglandin synthesis)"
+    },
+    {
+      "id": "f-db802f4e-e932-4de7-a638-ca81d1ad572d",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Main use of ketorolac",
+      "back": "Potent analgesic for moderate to severe postsurgical pain, limited to 5 days or less because of GI and renal toxicity. Minimal anti-inflammatory effect."
+    },
+    {
+      "id": "f-59933dda-19da-4f3a-9937-0f9daf1e4278",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Major adverse effect of rofecoxib and valdecoxib (COX-2 inhibitors)",
+      "back": "Increased risk of MI and stroke"
+    },
+    {
+      "id": "f-0774fce7-107f-48d8-bce7-928038d9e0d3",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "How do etodolac and meloxicam differ from other NSAIDs?",
+      "back": "Relatively COX-2 selective, causing fewer GI symptoms than nonselective NSAIDs"
+    },
+    {
+      "id": "f-72f6f249-1762-4fc1-a7db-f76c73e4780c",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Non-analgesic benefit of nonselective NSAIDs",
+      "back": "Decreased polyp formation in familial adenomatous polyposis (FAP)"
+    },
+    {
+      "id": "f-28a7ec43-d877-497a-9435-1e4590ea5b1b",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Reversible vs irreversible xanthine oxidase inhibitors",
+      "back": "Febuxostat (non-purine) is reversible. Allopurinol (purine analog, acts via oxypurinol) is irreversible."
+    },
+    {
+      "id": "f-aab837b3-a73e-4bf0-a96a-e97b3862dcc5",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Adverse effects of allopurinol",
+      "back": "GI upset, hypersensitivity (SJS, associated with HLA-B*5801), bone marrow suppression. Adjust dose in renal insufficiency."
+    },
+    {
+      "id": "f-74c5d917-ee1e-4eeb-8d70-5e4ff3bfda20",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Black box warning for febuxostat",
+      "back": "Increased risk of cardiovascular death and all-cause mortality"
+    },
+    {
+      "id": "f-d1a72e0c-8208-4453-8821-bbe96ab465e7",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Uricosuric agents",
+      "back": "Probenecid and lesinurad"
+    },
+    {
+      "id": "f-9cdaad1d-6438-479a-85f4-35da85a5a067",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "DMARD of choice for rheumatoid arthritis",
+      "back": "Methotrexate (dihydrofolate reductase inhibitor)"
+    },
+    {
+      "id": "f-3573195b-2437-4e41-91cc-a1581b47041c",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "CTLA4 fusion protein for severe RA",
+      "back": "Abatacept (T-cell costimulation modulator)"
+    },
+    {
+      "id": "f-4b1b71ae-d2bc-478d-b0f7-a8461e0460bc",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Mechanism of action of anakinra",
+      "back": "IL-1 receptor antagonist"
+    },
+    {
+      "id": "f-5f519d8b-7e20-4a5c-af3f-2eaa447ec501",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Anti-CD20 antibody that interferes with B lymphocytes",
+      "back": "Rituximab"
+    },
+    {
+      "id": "f-df0a539c-88d4-4769-ae33-1c00dbf8882c",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Nephrotoxic immunosuppressant used in transplantation",
+      "back": "Cyclosporine"
+    },
+    {
+      "id": "f-2a466e57-cdf3-4877-ba1b-f58d486717b1",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "DMARDs and biologics can reactivate which latent infection?",
+      "back": "Tuberculosis (screen before starting)"
+    },
+    {
+      "id": "f-2be4491b-a612-42c3-908a-9eab98021580",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "TNF-alpha inhibitors",
+      "back": "Certolizumab, etanercept, golimumab, adalimumab, infliximab"
+    },
+    {
+      "id": "f-bd925341-c530-4241-b477-93cfc997adb2",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Most common side effects of methotrexate",
+      "back": "Nausea and stomatitis (also myelosuppression and hepatotoxicity)"
+    },
+    {
+      "id": "f-6d2f2e31-65e6-47de-9687-452c38ab60fc",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Drugs that reduce inflammation during an acute gout attack",
+      "back": "Colchicine, NSAIDs, glucocorticoids"
+    },
+    {
+      "id": "f-7923fe3c-bb6f-49c1-aa9c-42b36169b6ab",
+      "deckId": "d-15702d8f-4368-451a-9715-0d426d01dd33",
+      "front": "Mechanism of colchicine",
+      "back": "Inhibits microtubule assembly. Best given within 36 hours of attack onset."
+    },
+    {
+      "id": "f-5f16e67d-3bcf-460b-8f21-88f0e9f2e57a",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Hormones secreted by the posterior pituitary",
+      "back": "Vasopressin (ADH) and oxytocin. Both are potent vasoconstrictors."
+    },
+    {
+      "id": "f-098cca4c-541b-4d2b-b912-89d40630d3ee",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Desmopressin: mechanism and uses",
+      "back": "V2 agonist. Central diabetes insipidus (not nephrogenic), von Willebrand disease, hemophilia A."
+    },
+    {
+      "id": "f-a3836c39-1d71-4071-82a4-d9508cf4e8cb",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Drugs that increase renal water excretion and are used in SIADH",
+      "back": "ADH antagonists: conivaptan, tolvaptan, lixivaptan"
+    },
+    {
+      "id": "f-08f0dd55-b4d0-4f2f-90f5-d4efc3789918",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Complication of overly rapid correction of hyponatremia",
+      "back": "Central pontine myelinolysis (osmotic demyelination)"
+    },
+    {
+      "id": "f-6ed000b7-a0a3-4bb8-9b4b-f922cf112185",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Recombinant GH that stimulates IGF-1 release",
+      "back": "Somatropin"
+    },
+    {
+      "id": "f-432f026e-0b39-4428-a2a0-5facf2eeb907",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Acromegaly drug that blocks the GH receptor",
+      "back": "Pegvisomant"
+    },
+    {
+      "id": "f-0b0ce763-9c44-45fd-8836-9c5beb39b134",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Most widely used somatostatin analog",
+      "back": "Octreotide (much more potent than somatostatin in GH inhibition)"
+    },
+    {
+      "id": "f-96fa7f1f-8496-4fd8-8aa2-b944e5b6f635",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Dopamine agonists for hyperprolactinemia",
+      "back": "Cabergoline (drug of choice), bromocriptine, pergolide. Use caution in patients with a history of psychotic illness."
+    },
+    {
+      "id": "f-dd8ec9ea-ac52-4e04-b341-0f3be737eb76",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "GnRH agonist suffix and example",
+      "back": "-RELIN (goserelin, buserelin). Leuprolide is an exception to the suffix."
+    },
+    {
+      "id": "f-b391106f-1aaa-4eea-b6dc-e69aa90a13a7",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Continuous vs pulsatile GnRH agonist administration",
+      "back": "Continuous: suppresses gonadal function after an initial flare (antifertility, prostate cancer). Pulsatile: promotes gonadal function and fertility."
+    },
+    {
+      "id": "f-da8017ca-7478-472c-9c37-b3ef83fccfec",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "GnRH antagonist suffix and key action",
+      "back": "-RELIX (cetrorelix, ganirelix). Suppress the LH surge to prevent premature ovulation in assisted fertility."
+    },
+    {
+      "id": "f-e2197557-899e-4152-a75d-9035c5de8eb2",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Initial rise in LH and FSH from short-term GnRH agonist stimulation before receptor downregulation",
+      "back": "Flare effect"
+    },
+    {
+      "id": "f-66b210d9-23f2-43ef-8094-1e9948165e32",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Most commonly used estrogen in HRT and contraception. Adverse effects?",
+      "back": "Ethinyl estradiol. VTE, breast cancer."
+    },
+    {
+      "id": "f-f86b5807-a46f-43c6-ab41-773a42ec3f84",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Progestins with high androgenic activity",
+      "back": "Norethindrone, norethisterone, levonorgestrel, medroxyprogesterone"
+    },
+    {
+      "id": "f-b8ce09c3-4f6c-4b85-8c7c-bbcffea2af17",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Progestins with antiandrogenic activity (mnemonic: Classy Dolls Don't grow beards)",
+      "back": "Cyproterone, drospirenone, dienogest"
+    },
+    {
+      "id": "f-051feb33-3bc0-42f2-93ed-02077213b0ad",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Progestin-only oral pill that reliably inhibits ovulation",
+      "back": "Desogestrel"
+    },
+    {
+      "id": "f-4c1505a5-fd43-41b4-8a74-62bc2b4c3cc9",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Long-acting IM depot contraceptive. Black box warning?",
+      "back": "Medroxyprogesterone acetate (DMPA). Reduced bone density."
+    },
+    {
+      "id": "f-c990e331-d7d7-4026-a7b3-89ceff8f01bc",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Emergency contraception options",
+      "back": "Ulipristal (up to 120 hours after unprotected intercourse) and levonorgestrel (up to 72 hours)"
+    },
+    {
+      "id": "f-4b93a510-07a7-45cf-aaa2-c453c766cbc0",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Agent with estrogenic, progestogenic, and androgenic activity used in postmenopausal HRT",
+      "back": "Tibolone"
+    },
+    {
+      "id": "f-39b467d0-9bcc-4005-a3ea-bb2182610a19",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Progesterone antagonist used as an abortifacient (with misoprostol) and in Cushing syndrome",
+      "back": "Mifepristone. Adverse effects: bleeding, cramping."
+    },
+    {
+      "id": "f-231f5a93-7399-4e47-ad05-862a8f8f6da4",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "SERM that is an antagonist at breast and an agonist at bone, uterus, and liver",
+      "back": "Tamoxifen. Endometrial hyperplasia and cancer, VTE."
+    },
+    {
+      "id": "f-fe625f4e-6da7-4435-8256-39e3db77db26",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "SERM that is an antagonist at breast and uterus and an agonist at bone and liver",
+      "back": "Raloxifene"
+    },
+    {
+      "id": "f-cdf3a6d5-711a-4738-979b-7dd52d781580",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Full estrogen receptor antagonist",
+      "back": "Fulvestrant"
+    },
+    {
+      "id": "f-0cc826b2-6071-4a7b-82f5-b56320160729",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Partial estrogen agonist at the pituitary that stimulates ovulation (PCOS)",
+      "back": "Clomiphene. Ovarian enlargement, multiple pregnancies."
+    },
+    {
+      "id": "f-b67fdbee-1638-47ba-8073-6fb10a6a9ecc",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Partial agonist at PR, AR, and GR used in endometriosis. Side effects?",
+      "back": "Danazol. Acne, hirsutism, hepatic dysfunction."
+    },
+    {
+      "id": "f-d4e0dc69-2501-4e68-b745-45644b0433fa",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Drug with dual antiandrogen action: competes with DHT at the androgen receptor and reduces 17-alpha-hydroxylase activity",
+      "back": "Spironolactone"
+    },
+    {
+      "id": "f-77af8028-5d69-4d28-b81c-b9e64cb75f5b",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Antifungal that at higher doses inhibits 17-alpha-hydroxylase and CYP11A1, blocking steroidogenesis",
+      "back": "Ketoconazole (side effect: gynecomastia)"
+    },
+    {
+      "id": "f-1b3f3b74-7fcc-4d0c-872c-fe79544accdf",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "5-alpha-reductase inhibitors. Teratogenic risk?",
+      "back": "Finasteride and dutasteride (-ASTERIDEs). Hypospadias in a male fetus; pregnant women should not handle crushed tablets."
+    },
+    {
+      "id": "f-9cde4539-4f85-4e3a-a955-260aa3dfdde9",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Iodine excess causing hypothyroidism",
+      "back": "Wolff-Chaikoff effect"
+    },
+    {
+      "id": "f-dbb0fda5-149b-4f43-9313-578a4393e5a2",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Iodine causing hyperthyroidism in patients with iodine deficiency",
+      "back": "Jod-Basedow phenomenon"
+    },
+    {
+      "id": "f-9dc7e3fb-6cd4-4e08-ae38-be86f45e7176",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Drugs that can cause hyperthyroidism (mnemonic: CAM)",
+      "back": "Clofibrate (iodine-containing agents), amiodarone, methadone"
+    },
+    {
+      "id": "f-c6bb5056-43d1-4951-8e66-3b7470597ee4",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Drugs that inhibit peripheral conversion of T4 to T3",
+      "back": "Propylthiouracil, propranolol, hydrocortisone (glucocorticoids)"
+    },
+    {
+      "id": "f-0b970555-4171-42ff-b2ef-e10fe395d801",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Mainstay of treatment for postpartum hyperthyroidism",
+      "back": "Methimazole"
+    },
+    {
+      "id": "f-627b62d7-1faf-4461-8be4-20cab6675973",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Drug of choice for hyperthyroidism in the first trimester",
+      "back": "PTU (inhibits TPO and peripheral T4 to T3 conversion)"
+    },
+    {
+      "id": "f-aa3fed5a-5b01-4e09-a7f9-efe51f03a6d1",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Black box warning of PTU",
+      "back": "Acute fulminant hepatitis"
+    },
+    {
+      "id": "f-3e2e424e-3ac1-401d-b082-540c21d44546",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Nonsurgical permanent cure for thyrotoxicosis. Adverse effects?",
+      "back": "Radioactive iodine (I-131). Permanent hypothyroidism, sore throat, sialadenitis. Contraindicated in pregnancy and breastfeeding."
+    },
+    {
+      "id": "f-8dcf0c96-e74b-42a2-981e-1896c1a0542e",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "High-concentration iodides (Lugol solution, SSKI): effects",
+      "back": "Inhibit uptake, organification, and proteolysis, and decrease gland size. Adverse effects: angioedema, iodism."
+    },
+    {
+      "id": "f-415cb47f-fc37-4275-9d3d-d703cb5c0ba2",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Thyroid storm treatment regimen",
+      "back": "PTU + propranolol + iodide + steroid"
+    },
+    {
+      "id": "f-60cb369b-6eb7-4061-bec8-b79572305599",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Medical emergency representing the end state of untreated hypothyroidism",
+      "back": "Myxedema coma"
+    },
+    {
+      "id": "f-d6d3a9a1-3387-4aa1-a5f5-946147f646ed",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Treatment of myxedema coma",
+      "back": "IV levothyroxine loading dose (300 to 400 mcg), then 50 to 100 mcg daily, plus IV hydrocortisone"
+    },
+    {
+      "id": "f-075a6e48-81de-4ac2-914d-400a0cdfbad5",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Prototype glucocorticoid and prototype mineralocorticoid",
+      "back": "Cortisol and aldosterone"
+    },
+    {
+      "id": "f-3b1f9de6-b66c-4470-9609-3010510b6cfa",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Glucocorticoids with no mineralocorticoid activity",
+      "back": "Dexamethasone, betamethasone, triamcinolone"
+    },
+    {
+      "id": "f-c0530653-7e82-48e4-86d3-ee8cf9288c22",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Corticosteroid with the highest mineralocorticoid activity",
+      "back": "Fludrocortisone"
+    },
+    {
+      "id": "f-02f01d56-7a55-456f-a68c-ffb4e0859931",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Medications used in Addison disease",
+      "back": "Hydrocortisone plus fludrocortisone"
+    },
+    {
+      "id": "f-e1af60ac-a4bb-48fe-aa26-8a10b37d2cb9",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Steroid of choice for cerebral edema",
+      "back": "Dexamethasone"
+    },
+    {
+      "id": "f-edffcd5b-a9fa-48c3-816f-7a1a2e6dc91b",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Oral glucocorticoid for acute asthma or COPD exacerbations",
+      "back": "Prednisone or prednisolone"
+    },
+    {
+      "id": "f-70c91a10-db70-4990-ae78-3d3604e7011e",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Glucocorticoid used to promote fetal lung maturity",
+      "back": "Betamethasone (or dexamethasone)"
+    },
+    {
+      "id": "f-bf8a99c6-7e01-450a-ae95-32609b76f7c3",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Diagnostic agent for adrenal function and the anti-adrenal drug usable in pregnant women with Cushing syndrome",
+      "back": "Metyrapone (11-beta-hydroxylase inhibitor)"
+    },
+    {
+      "id": "f-270bd160-bb39-40e4-8626-8e95060ce608",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Only IV treatment available for severe Cushing syndrome",
+      "back": "Etomidate"
+    },
+    {
+      "id": "f-1639f21d-d0b1-4889-906e-129745d3ffc9",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Rapid-acting insulins and duration",
+      "back": "Lispro, aspart, glulisine. About 3 to 5 hours."
+    },
+    {
+      "id": "f-80d2345d-923f-4a58-a46d-53aaae839016",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Short-acting insulin",
+      "back": "Regular insulin, duration about 5 to 8 hours"
+    },
+    {
+      "id": "f-ed3478e6-33d4-4be7-a691-a446e13fec79",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Intermediate-acting insulin",
+      "back": "NPH, duration about 18 to 24 hours"
+    },
+    {
+      "id": "f-43e24265-2557-4eca-8baf-c16ac17f4a19",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Ultra-long-acting insulins",
+      "back": "Degludec, glargine, detemir. Duration of 24 hours or more."
+    },
+    {
+      "id": "f-40b24e4b-ca4d-4478-8c2b-471760749386",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Adverse effects of insulin",
+      "back": "Hypoglycemia and hypokalemia (also weight gain and lipodystrophy)"
+    },
+    {
+      "id": "f-d028052b-1693-4903-822a-5abcc6f5aea4",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Insulin secretagogues: mechanism and limitation",
+      "back": "Sulfonylureas and meglitinides close K-ATP channels, triggering insulin release. Ineffective in patients lacking functional pancreatic beta cells."
+    },
+    {
+      "id": "f-0bdb5b38-ea6d-4020-819a-5125e32afcd8",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Insulin sensitizers",
+      "back": "Biguanides (metformin) and thiazolidinediones (-glitazones)"
+    },
+    {
+      "id": "f-6784e1c0-3085-4030-9ad6-4ad0ccf05a6e",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Alpha-glucosidase inhibitors: action",
+      "back": "Delay intestinal carbohydrate absorption (acarbose, miglitol). Adverse effects: flatulence, diarrhea."
+    },
+    {
+      "id": "f-4ba6e7dd-c64c-4476-a6ff-ea9e5a8174d7",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "SGLT2 inhibitors: action",
+      "back": "Increase urinary glucose excretion (-flozins)"
+    },
+    {
+      "id": "f-1fe0c041-65f4-42f8-b740-a0e9d0375bab",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Incretin-based antidiabetic agents",
+      "back": "GLP-1 agonists and DPP-4 inhibitors. They increase insulin, decrease glucagon, and promote satiety."
+    },
+    {
+      "id": "f-36f60df5-7e42-4914-abe9-ca6f782ba603",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "GLP-1 agonists: examples and key adverse effects",
+      "back": "Semaglutide, liraglutide, exenatide, tirzepatide (dual GIP/GLP-1). Weight loss; acute pancreatitis is the most feared adverse effect."
+    },
+    {
+      "id": "f-66f9c78e-ad3e-49d0-909c-7236d7c9474d",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "First-line drug for type 2 diabetes. Adverse effects?",
+      "back": "Metformin. Most common: GI disturbance. Most serious: lactic acidosis."
+    },
+    {
+      "id": "f-d91b6869-080a-48c1-ae0d-a7a5d408e55b",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Thiazolidinedione that reduces macrovascular events",
+      "back": "Pioglitazone (adverse effects: fluid retention, heart failure, fractures)"
+    },
+    {
+      "id": "f-d0c3fdfe-0e65-4b9f-8190-a4c289befcf3",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Antidiabetic class that increases risk of Fournier gangrene",
+      "back": "SGLT2 inhibitors (empagliflozin, dapagliflozin, canagliflozin)"
+    },
+    {
+      "id": "f-dc53f7aa-f397-4c3b-8787-acf8ca01a9ea",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Recombinant PTH with net bone formation. Adverse effect?",
+      "back": "Teriparatide. Osteosarcoma (limit use to about 2 years)."
+    },
+    {
+      "id": "f-33e2ecd1-8ad5-42e6-a22b-b88353b4bbe3",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Vitamin D3 and D2",
+      "back": "D3: cholecalciferol (natural form). D2: ergocalciferol (plant-derived)."
+    },
+    {
+      "id": "f-1e7c1d0a-50c6-4e86-a61e-b6946969e467",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Topical vitamin D analog used for psoriasis",
+      "back": "Calcipotriene (calcipotriol)"
+    },
+    {
+      "id": "f-5a6a1a73-fc10-4908-9a6e-b723c8e0cdf9",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Calcitonin: action, use, side effects",
+      "back": "Inhibits bone resorption. Used in Paget disease of bone and hypercalcemia. Rhinitis, nausea, vomiting, facial flushing, tingling."
+    },
+    {
+      "id": "f-4378c2b5-1cbb-4369-85c8-1dc368d5cf70",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Bisphosphonates: mechanism, examples, adverse effects",
+      "back": "Decrease osteoclast activity. Alendronate, etidronate, ibandronate, zoledronate. Esophagitis and osteonecrosis of the jaw."
+    },
+    {
+      "id": "f-916538a3-6033-46fc-8d14-58388fdc8b74",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Denosumab: mechanism, dosing, adverse effect",
+      "back": "Binds RANKL, inhibiting bone resorption. Given subcutaneously every 6 months. Osteonecrosis of the jaw."
+    },
+    {
+      "id": "f-d7fc4fa0-5b71-4c8d-95aa-e4416e8f4203",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Strontium ranelate: action and adverse effect",
+      "back": "Increases osteoblast activity and decreases osteoclast activity. Increased cardiovascular risk."
+    },
+    {
+      "id": "f-1cccd9ae-b71a-408d-b6c4-4cae5f3f5d68",
+      "deckId": "d-8a8d531e-bb30-49fe-a766-a207bd9a9282",
+      "front": "Phosphate binder used in CKD hyperphosphatemia",
+      "back": "Sevelamer"
+    },
+    {
+      "id": "f-d61585a2-def2-42bd-8055-3e200e501ef1",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for syphilis. Adverse effects?",
+      "back": "Penicillin G (IV or benzathine IM). Hypersensitivity, GI upset, cross-reactivity."
+    },
+    {
+      "id": "f-2bc5ad25-18e0-4795-a2c7-b34b0400853e",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Oral narrow-spectrum penicillin",
+      "back": "Penicillin V"
+    },
+    {
+      "id": "f-77fb556a-94a4-4567-997f-d8ea1c4dc4b1",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Penicillins inactivated by beta-lactamase",
+      "back": "Narrow spectrum (penicillin G/V), extended spectrum (ampicillin, amoxicillin), and anti-pseudomonal penicillins (piperacillin, ticarcillin, carbenicillin), unless combined with an inhibitor"
+    },
+    {
+      "id": "f-8fd963ca-1681-42fd-a1d8-de87b3978f42",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Spectrum of first-generation cephalosporins (mnemonic: PEcK FIRST)",
+      "back": "Proteus mirabilis, Escherichia coli, Klebsiella pneumoniae (plus gram-positive cocci)"
+    },
+    {
+      "id": "f-9fb80daf-813d-4ae5-b8db-dc695aa7c825",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Spectrum of second-generation cephalosporins (mnemonic: HEN PECKS)",
+      "back": "Haemophilus influenzae, Enterobacter aerogenes, Neisseria spp., Proteus mirabilis, E. coli, Klebsiella pneumoniae, Serratia marcescens"
+    },
+    {
+      "id": "f-8b9b2bd6-fbbe-4893-966d-10c1a75bfae3",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Cephalosporins causing a disulfiram-like reaction",
+      "back": "Cefometazole, cefamandole, cefotetan, cefoperazone"
+    },
+    {
+      "id": "f-de66fe0e-afa6-46c9-a4cf-fa9806b0d102",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Cephalosporins that do NOT penetrate the BBB",
+      "back": "Cefoperazone and cefixime (also the first-generation agents; ceftriaxone, cefotaxime, and cefuroxime do penetrate)"
+    },
+    {
+      "id": "f-8e7c284a-96f3-4b32-8f03-77e221950a50",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for gonorrhea",
+      "back": "Ceftriaxone (parenteral). Cefixime is an oral third-generation option."
+    },
+    {
+      "id": "f-1d47c8e4-8d4b-452f-b14f-894f97dccfee",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Cephalosporin of choice for surgical prophylaxis",
+      "back": "Cefazolin"
+    },
+    {
+      "id": "f-ec09c815-683f-41cc-8781-c230e3deecf9",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Cephalosporin active against MRSA",
+      "back": "Ceftaroline (fifth generation)"
+    },
+    {
+      "id": "f-5a3b7047-668b-4bbb-8f71-53ae8aff7731",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Third-generation cephalosporin with very good antipseudomonal activity",
+      "back": "Ceftazidime"
+    },
+    {
+      "id": "f-66567108-882c-4fc9-b18c-609291298b88",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Fourth-generation cephalosporins",
+      "back": "Cefepime and cefpirome"
+    },
+    {
+      "id": "f-b963705d-9f22-4622-ab59-05eff20658a5",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Mechanism of action of carbapenems",
+      "back": "Bind penicillin-binding proteins (PBPs) and inhibit transpeptidation, blocking bacterial cell wall synthesis"
+    },
+    {
+      "id": "f-eeca0c49-cb57-409a-902f-79143c98dec0",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Most notable adverse effect of imipenem among carbapenems",
+      "back": "Seizures (CNS toxicity: confusion, encephalopathy)"
+    },
+    {
+      "id": "f-7779d721-f8d8-48ec-bbc7-70b74de23465",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Beta-lactamase inhibitors are most active against which type of beta-lactamase?",
+      "back": "Plasmid-encoded beta-lactamases (e.g., in gonococci, streptococci, E. coli, H. influenzae)"
+    },
+    {
+      "id": "f-22c99bfc-89ce-4d79-9a10-450a69834ebf",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Mechanism of action of glycopeptides",
+      "back": "Bind the D-Ala-D-Ala terminus of peptidoglycan precursors, inhibiting transglycosylation"
+    },
+    {
+      "id": "f-25c483cf-4f75-4045-89bc-78db608710af",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for MRSA. Adverse effects?",
+      "back": "Vancomycin. Red man syndrome, nephrotoxicity, ototoxicity."
+    },
+    {
+      "id": "f-2b9a4363-95a1-47b5-878f-ad3d7b64a1b6",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Antibiotic limited to topical use because of marked nephrotoxicity",
+      "back": "Bacitracin (active against gram-positive organisms)"
+    },
+    {
+      "id": "f-01387f4a-98de-4b7a-93d6-437e0508d108",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Adverse effect of daptomycin",
+      "back": "Myopathy (monitor CK)"
+    },
+    {
+      "id": "f-1a0c1b0b-39e8-4fc7-8506-d69a563f4f22",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Single 3-g dose for uncomplicated lower UTI in women. Safe in pregnancy?",
+      "back": "Fosfomycin. Yes."
+    },
+    {
+      "id": "f-5a14eb85-7ea3-480f-a048-f976389fe210",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "True or false: beta-lactam antibiotics are bactericidal",
+      "back": "True"
+    },
+    {
+      "id": "f-e362c898-91c4-4f6f-8958-f6b3aa92d070",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Uses of aztreonam",
+      "back": "Gram-negative aerobes, including in penicillin-allergic patients"
+    },
+    {
+      "id": "f-ec9b98e5-3984-4697-ac92-5943e2f924fd",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Protein synthesis inhibitors that are bactericidal (all others are bacteriostatic)",
+      "back": "Aminoglycosides, streptogramins, and chloramphenicol against Haemophilus, Bacteroides, Neisseria, and Streptococcus pneumoniae"
+    },
+    {
+      "id": "f-c2ba83b0-e912-4e75-a391-6e536a9864d7",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "30S ribosomal subunit inhibitors",
+      "back": "Aminoglycosides and tetracyclines"
+    },
+    {
+      "id": "f-1be4fc9e-11d5-4482-baff-8c03effd8375",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Tetracyclines that need no renal dose adjustment",
+      "back": "Doxycycline and tigecycline"
+    },
+    {
+      "id": "f-195d20fa-0d7d-4000-9cd9-f46d11ab23f0",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Backup antibiotic for bacterial meningitis and Salmonella. Adverse effects?",
+      "back": "Chloramphenicol (50S inhibitor). Aplastic anemia and gray baby syndrome."
+    },
+    {
+      "id": "f-16275b4c-a269-4482-bc55-a458cc57888c",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Macrolides: uses and drug of choice in penicillin allergy",
+      "back": "Erythromycin and azithromycin (50S inhibitors). Community-acquired pneumonia, pertussis, corynebacteria, chlamydia."
+    },
+    {
+      "id": "f-58d54f51-ebe4-4d66-9c63-02e5d017c5d5",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug for anaerobic infections above the diaphragm",
+      "back": "Clindamycin"
+    },
+    {
+      "id": "f-6a40914c-dfde-4188-a896-f5fcb4a32c55",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug for anaerobic infections below the diaphragm",
+      "back": "Metronidazole"
+    },
+    {
+      "id": "f-1afb49c7-a954-443a-bec4-b867228c1b70",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Aminoglycoside with the widest spectrum, active against Pseudomonas and TB",
+      "back": "Amikacin (narrow therapeutic window)"
+    },
+    {
+      "id": "f-d5297c2d-dd0b-4b70-b876-5847d942d9b7",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Most ototoxic and most vestibulotoxic aminoglycosides (mnemonic: Si KAN ay bingi, kaya na out of balance sa Singapore)",
+      "back": "Ototoxic (cochlear): kanamycin, amikacin, neomycin. Vestibulotoxic: streptomycin, gentamicin."
+    },
+    {
+      "id": "f-235e1718-6eea-4cda-978a-0edd976cda44",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Most nephrotoxic aminoglycosides (mnemonic: Naka NGT yung may kidney disease)",
+      "back": "Neomycin, gentamicin, tobramycin"
+    },
+    {
+      "id": "f-ad2feae4-cb82-4850-8875-17b76063a055",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Aminoglycoside with the most skin reactions",
+      "back": "Neomycin"
+    },
+    {
+      "id": "f-d774bceb-684a-4721-be28-d88ce3040c87",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Treatment of pseudomembranous colitis",
+      "back": "Oral vancomycin, fidaxomicin, or metronidazole"
+    },
+    {
+      "id": "f-a8715ec5-0f62-4948-9829-824877d12222",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for community-acquired MRSA",
+      "back": "Clindamycin"
+    },
+    {
+      "id": "f-cf1010e3-ef4e-429c-a7b9-ada0d6814c0f",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for hospital-acquired MRSA",
+      "back": "Vancomycin"
+    },
+    {
+      "id": "f-179592b3-441c-4f81-a224-7e48e3453095",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Treatment for VRSA",
+      "back": "Linezolid and quinupristin-dalfopristin"
+    },
+    {
+      "id": "f-26a7ace6-24ac-4e71-ba3e-83779aa0ee20",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug used for drug-resistant gonorrhea",
+      "back": "Spectinomycin"
+    },
+    {
+      "id": "f-8b0c91fa-8910-4d54-82ee-f43b63ab2083",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for Rickettsiae, Borrelia, Rocky Mountain spotted fever, and Lyme disease",
+      "back": "Tetracyclines (doxycycline)"
+    },
+    {
+      "id": "f-98eb3af4-456e-43cd-a52f-c828ae8ab5f7",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Short-acting sulfonamides",
+      "back": "Sulfacytine, sulfisoxazole, sulfamethizole"
+    },
+    {
+      "id": "f-508ba36c-6fce-4125-8249-6673c8156f5c",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Long-acting sulfonamide",
+      "back": "Sulfadoxine"
+    },
+    {
+      "id": "f-eab1796d-8141-4458-9641-20719c526b8d",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Antifolate combination with synergy from sequential blockade of folate synthesis",
+      "back": "Trimethoprim plus sulfamethoxazole (co-trimoxazole)"
+    },
+    {
+      "id": "f-c0444f1f-82e3-43cc-96fd-d04c52b6c860",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Fluoroquinolones: mechanism and adverse effects",
+      "back": "Inhibit topoisomerase II (DNA gyrase) in gram-negatives and topoisomerase IV in gram-positives. Tendinitis, tendon rupture, arthropathy."
+    },
+    {
+      "id": "f-f2b5ea5c-af48-4ae1-95b7-aa5484a6bcdc",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Bactericidal anti-TB drugs",
+      "back": "Isoniazid and rifampicin; pyrazinamide on actively dividing Mtb"
+    },
+    {
+      "id": "f-d19f4f7b-882b-4502-9723-00f7e2a3ce41",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Single most important anti-TB drug. Mechanism?",
+      "back": "Isoniazid (H). Inhibits mycolic acid synthesis."
+    },
+    {
+      "id": "f-f200dcd8-7069-432a-aaae-40916f947c3c",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Vitamin given to prevent isoniazid neurotoxicity",
+      "back": "Pyridoxine (vitamin B6)"
+    },
+    {
+      "id": "f-9d24596e-c74f-4589-9590-40fc8821954b",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "The Rs of rifampicin",
+      "back": "RNA polymerase inhibitor, Red-orange body fluids, Rapid development of resistance, Revs up cytochrome P450 (inducer)"
+    },
+    {
+      "id": "f-ed8a3e1c-6158-4482-b35d-c7bc503bd51c",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Anti-TB drug causing a flu-like syndrome",
+      "back": "Rifampicin (R)"
+    },
+    {
+      "id": "f-5b79cadc-70d9-4c4e-8ca9-ff49bb9bf3c6",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Most hepatotoxic anti-TB drug. Other side effect?",
+      "back": "Pyrazinamide (Z). Asymptomatic hyperuricemia. It is the sterilizing agent in the first 2 months of therapy."
+    },
+    {
+      "id": "f-44fc67da-5fb1-4738-8d7f-596c585627fb",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Anti-TB drug that inhibits arabinosyl transferase. Side effect?",
+      "back": "Ethambutol (E). Visual disturbances (optic neuritis)."
+    },
+    {
+      "id": "f-46b9e6ef-10c4-4fdc-8e64-9d573ceefda9",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Definition of mono-resistant TB",
+      "back": "Resistance to 1 drug"
+    },
+    {
+      "id": "f-e18db99e-3791-4a21-b596-c48012bfc27b",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Definition of poly-resistant TB",
+      "back": "Resistance to more than 1 drug but not both isoniazid and rifampicin"
+    },
+    {
+      "id": "f-171145a4-565d-4526-9fe6-22231213b6c4",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Definition of MDR-TB",
+      "back": "Resistance to at least isoniazid and rifampicin"
+    },
+    {
+      "id": "f-1e7eb494-4d41-45d1-81fb-642b95a3ce99",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Definition of XDR-TB",
+      "back": "MDR plus a fluoroquinolone plus an injectable second-line drug"
+    },
+    {
+      "id": "f-379fd1a0-1737-49b2-b8ee-f70011ce8431",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug that binds guanine bases in bacterial DNA, causing red-to-brown skin discoloration",
+      "back": "Clofazimine (phenazine dye)"
+    },
+    {
+      "id": "f-ddbba879-65b8-4bb9-a8d3-b69383c2b3d2",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Most active drug against M. leprae. Mechanism?",
+      "back": "Dapsone. Inhibits folic acid synthesis."
+    },
+    {
+      "id": "f-10d29bac-7f9f-4122-8203-f6a7d4ee6ed5",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Paucibacillary leprosy regimen (1 to 5 skin lesions)",
+      "back": "Dapsone (daily) plus rifampicin (monthly)"
+    },
+    {
+      "id": "f-363ecd47-274e-412a-96b5-cdc178c99cd4",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Multibacillary leprosy regimen (more than 5 skin lesions)",
+      "back": "Dapsone (daily) plus rifampicin (monthly) plus clofazimine (daily)"
+    },
+    {
+      "id": "f-cca09ff9-e3af-4142-b6ae-94d9c1d7f76e",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for Pneumocystis jirovecii pneumonia and nocardiosis",
+      "back": "Co-trimoxazole"
+    },
+    {
+      "id": "f-8c96caeb-c4b7-4d09-94f3-7e9a30fdfc7f",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Adverse effect of mafenide acetate",
+      "back": "Metabolic acidosis (carbonic anhydrase inhibition)"
+    },
+    {
+      "id": "f-02e59a9d-81f3-4097-b9e6-dc20c9414ab1",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for severe systemic fungal infections with the widest antifungal spectrum. Mechanism?",
+      "back": "Amphotericin B (a polyene). Binds ergosterol."
+    },
+    {
+      "id": "f-977f64a7-f8fc-485a-86ff-7880a186ab86",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for treatment and secondary prophylaxis of cryptococcal meningitis",
+      "back": "Fluconazole (after induction with amphotericin B plus flucytosine)"
+    },
+    {
+      "id": "f-cba78a46-17d1-44f3-b870-cae849f34736",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Use and side effect of ketoconazole",
+      "back": "Dermatophytosis and candidiasis. Gynecomastia."
+    },
+    {
+      "id": "f-eaf4d627-cc16-4f18-850e-857f35843366",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Antifungal that interferes with fungal microtubules and is taken with fatty food",
+      "back": "Griseofulvin"
+    },
+    {
+      "id": "f-f6e0d9db-abd4-46e2-9e57-25815ddb9afc",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Antifungal for oropharyngeal, esophageal, and vaginal candidiasis (swish and swallow, or suppository)",
+      "back": "Nystatin (forms artificial pores)"
+    },
+    {
+      "id": "f-f0ee2674-d3c5-4791-b4e3-5a553f1b4368",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "More effective antifungal than griseofulvin for onychomycosis",
+      "back": "Terbinafine"
+    },
+    {
+      "id": "f-68aee192-40ee-4099-8974-2ebeeaf01fa8",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Drug of choice for systemic blastomycosis, histoplasmosis, and sporotrichosis",
+      "back": "Itraconazole"
+    },
+    {
+      "id": "f-b1c941e1-28b6-4f8d-ad9a-f22c1902ba34",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Main use of flucytosine",
+      "back": "Cryptococcosis (in combination with amphotericin B)"
+    },
+    {
+      "id": "f-b0de9194-71a5-4088-b5f0-6db1ab1decea",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Mechanism of flucytosine",
+      "back": "Inhibits DNA and RNA synthesis (thymidylate synthase inhibition via 5-FU)"
+    },
+    {
+      "id": "f-7134ebbc-c770-4556-baaf-c88808d42e35",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Mechanism of terbinafine",
+      "back": "Inhibits squalene epoxidase"
+    },
+    {
+      "id": "f-57e30ffc-d455-41b1-871d-6b7935dabac1",
+      "deckId": "d-c4ebf2a6-dfd6-47d9-8ba5-841dd96e3ecf",
+      "front": "Mechanism of azole antifungals",
+      "back": "Inhibit 14-alpha-demethylase (CYP450), blocking ergosterol synthesis"
+    },
+    {
+      "id": "f-9de4d836-1b6e-4960-a383-452d2f07ccbf",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Primary drugs for CMV",
+      "back": "Ganciclovir and valganciclovir"
+    },
+    {
+      "id": "f-68f55ccc-1fcd-4636-b1eb-8a44e17673cf",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Primary drug for HSV and VZV",
+      "back": "Acyclovir"
+    },
+    {
+      "id": "f-d108d4e8-6333-4270-878c-dde2d717adcd",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Mechanism of acyclovir",
+      "back": "Activated by viral thymidine kinase to a form that inhibits viral DNA polymerase"
+    },
+    {
+      "id": "f-9e0881a9-0316-4a22-bfa7-9c728e756f45",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Main use of foscarnet",
+      "back": "Acyclovir-resistant HSV and CMV retinitis"
+    },
+    {
+      "id": "f-cd07b971-135e-435c-acc1-b74710ed6fbc",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Primary drug for influenza",
+      "back": "Oseltamivir"
+    },
+    {
+      "id": "f-3ee19c6b-d7c9-4b7c-b452-2c67d7a2af15",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Most active drug against CMV (prophylaxis in transplant)",
+      "back": "Letermovir"
+    },
+    {
+      "id": "f-8e108924-b5fe-4948-9145-d3de8a8be237",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "HIV protease inhibitors and adverse effects",
+      "back": "Indinavir, ritonavir, saquinavir, lopinavir, atazanavir, darunavir (-NAVIR). Fat redistribution syndrome, hyperlipidemia, insulin resistance."
+    },
+    {
+      "id": "f-eb622b12-1615-4aae-b65f-25637cc34bcb",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "CCR5 receptor antagonist (entry inhibitor)",
+      "back": "Maraviroc"
+    },
+    {
+      "id": "f-3fcf30da-4f06-4cf0-8779-5463c869694e",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Antiretroviral causing lactic acidosis with hepatic steatosis",
+      "back": "NRTIs, especially stavudine"
+    },
+    {
+      "id": "f-e485cd21-913b-42ea-b16c-a5f43c206b8e",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "NRTI with pancreatitis as a side effect",
+      "back": "Didanosine"
+    },
+    {
+      "id": "f-99474288-ae58-4384-9f31-c8faf69d86c5",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "NRTIs with peripheral neuropathy as a side effect",
+      "back": "Stavudine, zalcitabine"
+    },
+    {
+      "id": "f-c490cabb-60b0-4ef0-9412-2f14c450caf6",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "NRTI with bone marrow suppression as a side effect",
+      "back": "Zidovudine"
+    },
+    {
+      "id": "f-af8f5523-eb25-4368-bbd1-2057622253c7",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Use of ibalizumab",
+      "back": "Multidrug-resistant HIV (CD4-directed post-attachment inhibitor)"
+    },
+    {
+      "id": "f-cb4fb4d6-973d-4ae5-a8d7-9f4860b75b54",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drugs active against both HBV and HIV",
+      "back": "Lamivudine and tenofovir (NRTIs)"
+    },
+    {
+      "id": "f-a25b80bd-1a05-45fb-a429-20eec8640023",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "HIV patient with chronic watery diarrhea: pathogen and treatment",
+      "back": "Cryptosporidium parvum. Nitazoxanide."
+    },
+    {
+      "id": "f-add1f1c5-fdae-4481-9f46-9bdcefa09ebe",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Most common pneumonia in HIV patients and its drug of choice",
+      "back": "Pneumocystis jirovecii. Co-trimoxazole (TMP-SMX)."
+    },
+    {
+      "id": "f-90ab2561-ff0f-4385-84dd-434a67100d56",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Opportunistic meningitis in HIV and treatment sequence",
+      "back": "Cryptococcus neoformans. Amphotericin B plus flucytosine for the first 2 weeks, then oral fluconazole."
+    },
+    {
+      "id": "f-4de79012-2c00-4211-abef-0a5d6f917860",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Preferred anti-TB drug in HIV patients on protease inhibitors",
+      "back": "Rifabutin (weaker CYP inducer than rifampicin)"
+    },
+    {
+      "id": "f-b0370854-98e6-4b74-ab5b-18f88c129949",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Agent that inhibits bacterial growth in vitro and in vivo (applied to living tissue)",
+      "back": "Antiseptic"
+    },
+    {
+      "id": "f-1d1efdf6-4062-4f53-b5c7-5fa5a6b007d8",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Agent that kills microorganisms on inanimate environments",
+      "back": "Disinfectant"
+    },
+    {
+      "id": "f-fea878ea-354f-4a43-b1d0-7883f5928874",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Mechanism of mupirocin",
+      "back": "Inhibits staphylococcal isoleucyl tRNA synthetase"
+    },
+    {
+      "id": "f-40a56dbe-398e-46a2-a268-521edab2231f",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "UV irradiation exposure time needed",
+      "back": "Less than 25 minutes for most bacteria; up to about 1 hour for C. difficile"
+    },
+    {
+      "id": "f-75fc541e-520d-4e51-ab1c-d405645e1947",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Primary antimalarial that prevents heme polymerization into hemozoin",
+      "back": "Chloroquine"
+    },
+    {
+      "id": "f-fd858a5e-9f16-432f-88db-6f3d2c061cfe",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Antimalarial associated with blackwater fever and cinchonism",
+      "back": "Quinine"
+    },
+    {
+      "id": "f-740abb6f-d6d6-4171-bd23-d313183454c1",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug that eradicates hypnozoites of P. vivax and P. ovale (radical cure)",
+      "back": "Primaquine (check G6PD status first)"
+    },
+    {
+      "id": "f-27346430-9973-4717-ba01-4cd982e6920f",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Prophylaxis in chloroquine-resistant areas",
+      "back": "Mefloquine or atovaquone-proguanil (Malarone)"
+    },
+    {
+      "id": "f-a47a6b3a-2943-47fa-94b0-961b4c83ff71",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for uncomplicated falciparum malaria in the Philippines",
+      "back": "Artemether-lumefantrine (Co-Artem)"
+    },
+    {
+      "id": "f-5cfa67d3-bb5d-409b-87de-d8145dcfbe64",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Luminal agents for asymptomatic E. histolytica cyst carriers (mnemonic: DIP in the lumen)",
+      "back": "Diloxanide (drug of choice), Iodoquinol, Paromomycin"
+    },
+    {
+      "id": "f-e0f3bfa8-53f9-4563-a5e8-f50534fa3573",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for leishmaniasis",
+      "back": "Sodium stibogluconate"
+    },
+    {
+      "id": "f-16f03422-e9a3-43e3-b0e9-de932144186b",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drugs for prophylaxis and treatment of toxoplasmosis",
+      "back": "Sulfadiazine plus pyrimethamine, or pyrimethamine plus clindamycin"
+    },
+    {
+      "id": "f-6f127a32-316d-4e85-a817-bd18ac8fecc7",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug for Pneumocystis prophylaxis and treatment",
+      "back": "Co-trimoxazole"
+    },
+    {
+      "id": "f-5ff7266a-5ad5-43e5-9567-3a7999e9fb14",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for CNS stage of West African sleeping sickness",
+      "back": "Eflornithine"
+    },
+    {
+      "id": "f-613ebf39-06ad-4970-9a75-5ec3dabcd252",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for CNS stage of East African sleeping sickness",
+      "back": "Melarsoprol"
+    },
+    {
+      "id": "f-3c176489-f32e-4cc7-af31-8a99085ed48f",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for blood stage of West African sleeping sickness",
+      "back": "Pentamidine"
+    },
+    {
+      "id": "f-af799954-16f3-4d1e-a1fb-59e4c79284a1",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for blood stage of East (Rhodesiense) African sleeping sickness",
+      "back": "Suramin"
+    },
+    {
+      "id": "f-37cdcd41-e7e7-4320-a326-e0a179373f9f",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drugs for American trypanosomiasis (Chagas disease)",
+      "back": "Nifurtimox and benznidazole"
+    },
+    {
+      "id": "f-97bbd260-4176-40f6-a71b-44c86fd5ef5c",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Mechanism of praziquantel",
+      "back": "Increases membrane permeability to calcium, causing spastic paralysis"
+    },
+    {
+      "id": "f-fe4a0d85-23fe-45ad-8e31-5902448d4789",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Mechanism of niclosamide",
+      "back": "Uncouples oxidative phosphorylation and activates ATPases"
+    },
+    {
+      "id": "f-ff593601-16d5-4434-8f2a-dac50f3c1ec6",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Mechanism of albendazole, mebendazole, thiabendazole",
+      "back": "Inhibit microtubule assembly (bind beta-tubulin)"
+    },
+    {
+      "id": "f-b1286556-3d2a-49c9-8361-9f5d3376a3a7",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Mechanism of diethylcarbamazine",
+      "back": "Immobilizes microfilariae"
+    },
+    {
+      "id": "f-9fd1f73d-2bc7-4a70-ba64-6b69855e190c",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Mechanism of ivermectin",
+      "back": "Intensifies GABA-mediated neurotransmission (glutamate-gated Cl- channels), causing paralysis of the parasite"
+    },
+    {
+      "id": "f-7752847e-ab4c-4af9-8a32-054f8a7c062f",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Mechanism of piperazine",
+      "back": "Blocks ACh at the myoneural junction"
+    },
+    {
+      "id": "f-e5933453-6a28-4210-bc12-e45ef494eec7",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for trematodes and cestodes",
+      "back": "Praziquantel"
+    },
+    {
+      "id": "f-3f9ea1a3-4059-4b32-bc94-bc176e4140f2",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for ascariasis, hookworm, cysticercosis, and hydatid disease",
+      "back": "Albendazole"
+    },
+    {
+      "id": "f-1a762df1-5af8-40e2-9dc8-8dbd871ba175",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for whipworm",
+      "back": "Mebendazole"
+    },
+    {
+      "id": "f-f138789b-2eaa-41ff-943b-c3d028462c55",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for pinworm",
+      "back": "Pyrantel pamoate or mebendazole"
+    },
+    {
+      "id": "f-fbe86db5-5bdd-4d2b-832c-7645bca7891c",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for filariasis and eye worm disease",
+      "back": "Diethylcarbamazine"
+    },
+    {
+      "id": "f-a86a29a2-fd11-4021-8c60-0f67f7876b76",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for strongyloidiasis and onchocerciasis",
+      "back": "Ivermectin"
+    },
+    {
+      "id": "f-a9b37106-5ffa-49b1-adaf-bd64eece4c04",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for Haemophilus ducreyi (chancroid)",
+      "back": "Azithromycin"
+    },
+    {
+      "id": "f-12619ccb-fe30-4fd2-beec-f243c941e669",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for lymphogranuloma venereum",
+      "back": "Doxycycline"
+    },
+    {
+      "id": "f-e1a05f65-b126-4afd-a8d2-fef85d0f552e",
+      "deckId": "d-d0969857-a2ef-42ee-b868-54a8fe75af0a",
+      "front": "Drug of choice for donovanosis (granuloma inguinale)",
+      "back": "Azithromycin"
+    },
+    {
+      "id": "f-2f7b40c2-b752-48b8-a1e0-7ee83760338e",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Drugs that are cytotoxic at any point in the cell cycle and target both dividing and non-dividing cells",
+      "back": "Cell cycle nonspecific drugs (CCNS)"
+    },
+    {
+      "id": "f-cc88691b-3196-4aa9-82fa-04be032b893a",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Drugs most effective in a specific phase of the cell cycle and targeting only actively dividing cells",
+      "back": "Cell cycle specific drugs (CCS)"
+    },
+    {
+      "id": "f-9f36c9b0-92d5-49a6-806b-e968459a4cfe",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Drugs causing pulmonary fibrosis (mnemonic: BBBAN Me)",
+      "back": "Bleomycin, Bromocriptine, Busulfan, Amiodarone, Nitrofurantoin, Methotrexate"
+    },
+    {
+      "id": "f-c658b010-eba0-4be1-875c-f54b630cfd63",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo drug causing oxidative damage to nucleotides and accumulation of cells in G2. Use?",
+      "back": "Bleomycin. Germ cell tumors."
+    },
+    {
+      "id": "f-047f1f74-756c-4c7b-8002-f969e172ff62",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo drug causing peripheral neuropathy",
+      "back": "Vincristine"
+    },
+    {
+      "id": "f-5ab06389-7ba5-4460-add5-f114f2381874",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo drugs causing ototoxicity and nephrotoxicity",
+      "back": "Cisplatin (and to a lesser degree carboplatin)"
+    },
+    {
+      "id": "f-a2e02977-3e76-4260-a2dd-ec5a24a9f20b",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo drug causing hemorrhagic cystitis",
+      "back": "Cyclophosphamide (also ifosfamide)"
+    },
+    {
+      "id": "f-6903c5f4-0f0d-429c-a78d-9e0b35752607",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo and biologic drugs causing cardiotoxicity",
+      "back": "Doxorubicin and trastuzumab"
+    },
+    {
+      "id": "f-1589ecc2-0369-4526-83fc-c98a317125f5",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Rescue therapy for methotrexate toxicity",
+      "back": "Leucovorin (folinic acid)"
+    },
+    {
+      "id": "f-95b73ad7-cfd3-4267-9335-15142b482278",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Rescue therapy for cyclophosphamide toxicity",
+      "back": "Mesna"
+    },
+    {
+      "id": "f-12334b8e-7b81-4af5-b446-7044361555ad",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Rescue therapy for doxorubicin toxicity",
+      "back": "Dexrazoxane"
+    },
+    {
+      "id": "f-43ab3690-49c0-4986-af19-fc9f5b0efa6c",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Rescue therapy for cisplatin toxicity",
+      "back": "Amifostine"
+    },
+    {
+      "id": "f-b053ad0b-31c8-4998-9150-700bb47746f2",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Methotrexate: mechanism, toxicities, rescue",
+      "back": "Folate antagonist (DHFR inhibitor). Myelosuppression and mucositis. Rescue with leucovorin."
+    },
+    {
+      "id": "f-db263b8e-e7d0-4c01-98c7-0ffc913598a4",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo regimen for testicular cancer",
+      "back": "BEP: Bleomycin, Etoposide, Cisplatin"
+    },
+    {
+      "id": "f-5a25634b-0dcb-489b-bb85-0fcd669cc34b",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo regimen for Hodgkin lymphoma",
+      "back": "ABVD: Doxorubicin (Adriamycin), Bleomycin, Vinblastine, Dacarbazine"
+    },
+    {
+      "id": "f-47513292-9dbd-417d-bd4f-cd797265f836",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo regimen for non-Hodgkin lymphoma",
+      "back": "CHOP: Cyclophosphamide, Doxorubicin (hydroxydaunorubicin), Vincristine (Oncovin), Prednisone (plus rituximab for B-cell lymphoma)"
+    },
+    {
+      "id": "f-8a84e57c-9a90-43c2-8e33-f5e7ac83a707",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo regimens for colorectal cancer",
+      "back": "FOLFOX (Leucovorin, 5-FU, Oxaliplatin) and FOLFIRI (Leucovorin, 5-FU, Irinotecan)"
+    },
+    {
+      "id": "f-1fc9a98f-9381-4a99-a68c-657e0c008f5c",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Tingling, painful, symmetric erythema of the hands and feet caused by 5-FU, capecitabine, or doxorubicin",
+      "back": "Hand-foot syndrome (palmar-plantar erythrodysesthesia)"
+    },
+    {
+      "id": "f-3efc6ea0-5e5b-4146-bb9c-f1a07f9c639b",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Chemo agents for brain tumors (nitrosoureas)",
+      "back": "Carmustine and lomustine (lipophilic, cross the BBB)"
+    },
+    {
+      "id": "f-fd8a32ed-f692-4b99-b6c2-f2860d93c537",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Drugs that bind beta-tubulin, prevent microtubule assembly, and arrest cells in metaphase",
+      "back": "Vinca alkaloids (vincristine, vinblastine). Act in M phase."
+    },
+    {
+      "id": "f-9bb864f7-e055-40da-a796-a5638202db74",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Cardiac toxicity of doxorubicin and daunorubicin",
+      "back": "Acute: arrhythmias and pericarditis-myocarditis syndrome. Chronic: dilated cardiomyopathy and CHF."
+    },
+    {
+      "id": "f-2ac6010f-32dc-49ab-af59-237f20ebb94e",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Targeted drug against BCR-ABL tyrosine kinase and c-kit",
+      "back": "Imatinib (CML, GIST)"
+    },
+    {
+      "id": "f-2b990e9a-1ea1-43b4-9473-b7d7481b29c9",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "EGFR tyrosine kinase inhibitor used in non-small cell lung cancer",
+      "back": "Erlotinib"
+    },
+    {
+      "id": "f-3f6ef600-1368-4e68-9646-2c4a584e98d0",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Monoclonal antibody against HER2/neu",
+      "back": "Trastuzumab"
+    },
+    {
+      "id": "f-d3a5cef9-3abd-47e6-a75e-0d628fe95ef1",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Monoclonal antibody against CD20 on B cells. Risk?",
+      "back": "Rituximab. Progressive multifocal leukoencephalopathy (JC virus)."
+    },
+    {
+      "id": "f-3284d2df-7796-402f-90cc-d21d0350a2da",
+      "deckId": "d-88cfb7fe-e7c2-4c3a-b486-524c5bdd22ea",
+      "front": "Monoclonal antibody against VEGF-A. Adverse effect and other use?",
+      "back": "Bevacizumab. Increased bleeding risk, impaired wound healing. Also used in wet AMD."
+    },
+    {
+      "id": "f-a0341a15-945a-49e7-87a8-ea8d7e7e7112",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Antacid that neutralizes stomach acid and causes diarrhea",
+      "back": "Magnesium hydroxide"
+    },
+    {
+      "id": "f-5e2c3548-8da0-4d64-84a4-de6e5042446d",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Antacid that neutralizes stomach acid and causes constipation",
+      "back": "Aluminum hydroxide"
+    },
+    {
+      "id": "f-e83d704f-a83d-47c1-a4aa-130ab30ff23a",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "H2 blocker that suppresses nocturnal acid. Adverse effect?",
+      "back": "Cimetidine. Gynecomastia (also CYP inhibition)."
+    },
+    {
+      "id": "f-e31b6816-0efa-4084-a5d3-6f18977a1b2e",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Drug of choice for PUD and Zollinger-Ellison syndrome. Mechanism?",
+      "back": "Omeprazole (a PPI). Irreversible blockade of H+/K+ ATPase, suppressing meal-stimulated and nocturnal acid."
+    },
+    {
+      "id": "f-8dae1bd5-3969-4c29-bd02-311bf78e2c46",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Mucosal protectants",
+      "back": "Sucralfate and bismuth subsalicylate"
+    },
+    {
+      "id": "f-518660b5-6491-4767-b756-5b3cb407a93b",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Prokinetic and antiemetic that is the drug of choice for diabetic gastroparesis",
+      "back": "Metoclopramide (also domperidone)"
+    },
+    {
+      "id": "f-a8d81024-716d-4cd3-ac31-6dbb93bf8c58",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "PPI with the fewest drug-drug interactions",
+      "back": "Pantoprazole"
+    },
+    {
+      "id": "f-3f840b05-2197-4837-8099-6e904ac405be",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Osmotic laxative also used to lower ammonia in hepatic encephalopathy",
+      "back": "Lactulose"
+    },
+    {
+      "id": "f-27e55980-12d8-4214-a0d0-62c481a44920",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Stimulant laxatives. Adverse effect?",
+      "back": "Senna and bisacodyl. Melanosis coli."
+    },
+    {
+      "id": "f-c727a939-ff2d-4bff-9417-f87142122d61",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Antiemetics that block the chemoreceptor trigger zone and enteric 5-HT3 receptors. Most commonly used?",
+      "back": "5-HT3 antagonists. Ondansetron."
+    },
+    {
+      "id": "f-52445d82-081c-4e05-8298-f1d67574cf40",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Opioid antispasmodic that is the drug of choice for noninfectious diarrhea. Adverse effect?",
+      "back": "Loperamide. Paralytic ileus (especially in children)."
+    },
+    {
+      "id": "f-beb1bfea-857b-417c-bedf-c6ea247c4162",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Drugs for inflammatory bowel disease (5-ASA agents)",
+      "back": "Mesalamine and sulfasalazine"
+    },
+    {
+      "id": "f-33e804ef-33e0-4720-8c65-239594e911c9",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Mechanism of bismuth subsalicylate",
+      "back": "Forms a protective coating on ulcerated tissue"
+    },
+    {
+      "id": "f-502cc358-41ba-4e85-8c7f-52c87d80f979",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Mechanism of psyllium",
+      "back": "Bulk-forming laxative"
+    },
+    {
+      "id": "f-888fc136-4e02-4dd6-9b19-3a399052cbac",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "H. pylori triple therapy (mnemonic: ACO)",
+      "back": "Amoxicillin (or metronidazole), Clarithromycin, Omeprazole (or another PPI)"
+    },
+    {
+      "id": "f-ec731723-a1f7-46a1-a6fa-5352344f9b11",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "H. pylori quadruple therapy (mnemonic: TOMB)",
+      "back": "Tetracycline, Omeprazole (or another PPI), Metronidazole, Bismuth subsalicylate"
+    },
+    {
+      "id": "f-f0fe3df3-c438-4856-bbc3-fbebafcc4808",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Antibiotic used in bowel preparation or as a prokinetic because it binds the motilin receptor",
+      "back": "Erythromycin"
+    },
+    {
+      "id": "f-ff1fdf5b-804e-4921-ae96-8808902aa5ca",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "5-HT3 antagonist for women with severe IBS with diarrhea. Rare complications?",
+      "back": "Alosetron. Severe constipation and ischemic colitis."
+    },
+    {
+      "id": "f-47dae384-f182-4e4c-bc95-74118c736239",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Laxative that activates type 2 chloride channels in the small intestine, for women with IBS with constipation",
+      "back": "Lubiprostone"
+    },
+    {
+      "id": "f-89757e2c-bd36-41a7-b727-34c14dc0a8c5",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "IBS-C drug that binds and activates guanylyl cyclase-C",
+      "back": "Linaclotide"
+    },
+    {
+      "id": "f-461b95a4-7963-478c-89c5-329602d455c3",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "First-line immunomodulator for mild to moderate IBD",
+      "back": "Mesalamine (5-ASA)"
+    },
+    {
+      "id": "f-55d88c30-d09a-48a0-9e31-f4af9332445e",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Drugs for IBD flares not controlled by 5-ASA",
+      "back": "Corticosteroids (budesonide, hydrocortisone), TNF antagonists (infliximab, certolizumab), cyclosporine"
+    },
+    {
+      "id": "f-a4674a6a-cba0-4735-ab29-986ea01644dc",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Bile acid used to dissolve small cholesterol gallstones in symptomatic patients who cannot undergo surgery",
+      "back": "Ursodiol (ursodeoxycholic acid)"
+    },
+    {
+      "id": "f-a1c0c25a-90da-4452-8728-d3b2847eaee6",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Mucosal protectant that scavenges free radicals and activates COX-2 genes",
+      "back": "Rebamipide"
+    },
+    {
+      "id": "f-81318c47-0ee1-430a-812d-4eeafcd4da6d",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Prokinetic that inhibits dopamine (D2) and acetylcholinesterase to enhance GI motility",
+      "back": "Itopride"
+    },
+    {
+      "id": "f-a6bcd0e2-1840-4bbb-bd62-74baae9dffee",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Antisecretory antidiarrheal that inhibits enkephalinase",
+      "back": "Racecadotril. Increases endogenous opioids, decreasing water and electrolyte secretion into the intestine."
+    },
+    {
+      "id": "f-5c6b845e-fb4b-4697-a87c-75affa05f1f5",
+      "deckId": "d-59c3364e-9911-49fe-b27f-8507af5b10ff",
+      "front": "Hepatoprotectant used as supportive therapy for liver disorders",
+      "back": "Silymarin"
+    },
+    {
+      "id": "f-163f7392-3701-4bb2-88bd-d7273df0d74c",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Immune potentiators",
+      "back": "Aldesleukin (IL-2) and interferons"
+    },
+    {
+      "id": "f-5a56ce39-8717-4f40-a1a7-2d7cfe57f742",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Cyclosporine: mechanism",
+      "back": "Calcineurin inhibitor (via cyclophilin) that blocks IL-2 transcription and T-cell activation"
+    },
+    {
+      "id": "f-5fe4e5af-96b1-4faf-92ad-b4f102299e45",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Calcineurin inhibitor that binds FK-binding protein (FKBP)",
+      "back": "Tacrolimus"
+    },
+    {
+      "id": "f-a644ec1e-152d-4007-9401-e800f42d56cb",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Immunosuppressant that binds FKBP but inhibits mTOR",
+      "back": "Sirolimus (rapamycin)"
+    },
+    {
+      "id": "f-07875401-5e44-499d-92a6-2a2cc9e3e421",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Immunosuppressant that inhibits IMP dehydrogenase. Side effects?",
+      "back": "Mycophenolate mofetil. Reversible myelosuppression and increased risk of CMV infection."
+    },
+    {
+      "id": "f-7f2ce5e0-c19c-4d04-8613-c8b8201df583",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Drug used for erythema nodosum leprosum, SLE, and AIDS wasting. Teratogenic effect?",
+      "back": "Thalidomide. Phocomelia (limb deformities)."
+    },
+    {
+      "id": "f-93db61bd-a979-4cb5-a576-3e9a533c5005",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibodies targeting IL-17 (mnemonic: SE-venteen)",
+      "back": "Ixekizumab and secukinumab. Used in psoriasis and ankylosing spondylitis."
+    },
+    {
+      "id": "f-9569bfd2-c20b-417b-9376-9dd1591f42ff",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibody targeting IL-12 and IL-23 (mnemonic: 1,2,2,3! Go USTe!)",
+      "back": "Ustekinumab. Used in psoriasis and psoriatic arthritis."
+    },
+    {
+      "id": "f-c89b4dd5-42e3-4990-839c-b82474b806c9",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibody targeting IL-5",
+      "back": "Mepolizumab. Used in severe eosinophilic asthma and Churg-Strauss syndrome."
+    },
+    {
+      "id": "f-d9014140-eaea-47b7-b54e-c005d9522b48",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibody against CD20 on B cells. Serious side effect?",
+      "back": "Rituximab. Progressive multifocal leukoencephalopathy."
+    },
+    {
+      "id": "f-60826f0d-cfc3-45e8-9a64-ec13774e3e81",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibody used for HER2-positive breast and gastric cancers. Side effect?",
+      "back": "Trastuzumab. Dilated cardiomyopathy."
+    },
+    {
+      "id": "f-93423dfe-7817-4792-a8a2-079051438c15",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Anti-VEGF antibody that inhibits angiogenesis. Side effect?",
+      "back": "Bevacizumab. Increased bleeding risk."
+    },
+    {
+      "id": "f-e553260d-50de-4da5-b94b-09922b1bc080",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Anti-EGFR antibodies used in colorectal and head and neck cancers. Side effect?",
+      "back": "Cetuximab and panitumumab. Acneiform rash."
+    },
+    {
+      "id": "f-13a89656-6458-4d20-b983-3810668d2b60",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibody targeting CD38 (multiple myeloma)",
+      "back": "Daratumumab"
+    },
+    {
+      "id": "f-aa91a4f3-1d02-4ec9-a6fb-8f8e64e5324c",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Checkpoint inhibitors that block PD-1/PD-L1 interaction",
+      "back": "Nivolumab (and pembrolizumab) block PD-1; atezolizumab blocks PD-L1"
+    },
+    {
+      "id": "f-98b57203-4129-47aa-b2cb-0a7c09832b88",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibody targeting SLAMF7 (multiple myeloma)",
+      "back": "Elotuzumab"
+    },
+    {
+      "id": "f-1442cea1-297c-499c-bc72-7ad27d664a6b",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "CTLA-4 fusion protein used for severe RA",
+      "back": "Abatacept"
+    },
+    {
+      "id": "f-e07b0b64-2474-4509-a802-78dccda8256e",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "GP IIb/IIIa receptor antagonist used in angioplasty and ACS",
+      "back": "Abciximab"
+    },
+    {
+      "id": "f-f6cb2b03-517b-4834-997f-018122b3cd7a",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibody that targets CD2 and was used for psoriasis (withdrawn)",
+      "back": "Alefacept"
+    },
+    {
+      "id": "f-69c72551-792a-42a3-bd76-ea9f3e9e4059",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Anti-CTLA-4 antibody that prolongs T-cell activation, used in melanoma",
+      "back": "Ipilimumab"
+    },
+    {
+      "id": "f-66fa2505-e3a0-4a77-9cab-8123170db149",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Anti-IgE antibody used in severe asthma",
+      "back": "Omalizumab"
+    },
+    {
+      "id": "f-5015a37b-9218-4f74-9463-d4b65817c635",
+      "deckId": "d-3e4bbe84-ac08-4076-bf5f-0d40901381c9",
+      "front": "Antibody against the RSV F surface protein",
+      "back": "Palivizumab"
+    },
+    {
+      "id": "f-8c26c053-a114-4b78-8009-bbe9dccce4ca",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Molecule with more than 2 electronegative groups that forms stable coordinate complexes with multivalent cationic metal atoms",
+      "back": "Chelating agent (chelator)"
+    },
+    {
+      "id": "f-194315f2-fc4b-4e4b-9b34-3e25908a408b",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Acetaminophen antidote",
+      "back": "N-acetylcysteine"
+    },
+    {
+      "id": "f-6c888951-0060-44ad-afd5-a73318a58acf",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Cholinesterase inhibitor antidote",
+      "back": "Atropine (plus pralidoxime for organophosphates)"
+    },
+    {
+      "id": "f-5f1d7fe7-fe79-4f80-bc9f-47b4362dc4da",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Antidote for quinidine and TCA toxicity",
+      "back": "Sodium bicarbonate"
+    },
+    {
+      "id": "f-293612eb-a678-4292-a553-d4c798c7ee21",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Iron toxicity antidote",
+      "back": "Deferoxamine"
+    },
+    {
+      "id": "f-e8a0d895-efde-4f91-9a0e-5632ac20cc37",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Organophosphate antidote",
+      "back": "Pralidoxime (with atropine)"
+    },
+    {
+      "id": "f-ebacbd04-764b-42f3-be15-ade680fcff34",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Carbon monoxide poisoning antidote",
+      "back": "100% oxygen (hyperbaric oxygen in severe cases)"
+    },
+    {
+      "id": "f-8f0c7ddc-3625-49b5-9502-88f0d5d41ad1",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Naloxone is the antidote to which poison?",
+      "back": "Opioids"
+    },
+    {
+      "id": "f-e4dbc0e0-1bd7-483a-bb50-8735f1274c06",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Hydroxocobalamin is the antidote to which poison?",
+      "back": "Cyanide"
+    },
+    {
+      "id": "f-b374ae41-bbef-4037-854b-23e5c3c55514",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Glucagon is the antidote to which poison?",
+      "back": "Beta-adrenoceptor blockers"
+    },
+    {
+      "id": "f-7957e456-dc46-448b-855a-05a7edc3de63",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Chelator for acute arsenic and mercury poisoning and chronic lead poisoning",
+      "back": "Dimercaprol (BAL)"
+    },
+    {
+      "id": "f-3f793749-c690-47a2-8767-04c557515323",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Oral chelator for lead poisoning, especially in children, and an alternative to dimercaprol",
+      "back": "Succimer. Used when blood lead is above 45 mcg/dL."
+    },
+    {
+      "id": "f-35ed77f1-d286-4df0-b672-4a8d4dcc5eb6",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Chelator used for copper toxicity (Wilson disease)",
+      "back": "Penicillamine"
+    },
+    {
+      "id": "f-d1bfe88e-56bd-4081-b9e1-f74673d401f4",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Chelator primarily used for chronic or severe lead poisoning",
+      "back": "Calcium disodium EDTA"
+    },
+    {
+      "id": "f-35623f12-8ba0-43fe-b19b-333f5ba400c3",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Chelator used for iron toxicity",
+      "back": "Deferoxamine"
+    },
+    {
+      "id": "f-0f044e16-1310-49f1-a017-f837d9248fb7",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Penicillamine adverse effects",
+      "back": "Nephrotoxicity (proteinuria), pancytopenia, drug-induced lupus, hemolytic anemia"
+    },
+    {
+      "id": "f-96550ea2-5f46-4273-ad8e-9e9ee53d14e6",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Succimer adverse effects",
+      "back": "GI upset, rash, transient transaminase elevation, mercaptan-like odor"
+    },
+    {
+      "id": "f-85b53afa-6c3e-4f32-824b-e1de6d134b0d",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Common sources of organic mercury exposure",
+      "back": "Seed dressings and fungicides; fish or grains contaminated with methylmercury"
+    },
+    {
+      "id": "f-57a0443d-930e-4916-b83c-af5ec8ada3ab",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Disease associated with methylmercury poisoning",
+      "back": "Minamata disease"
+    },
+    {
+      "id": "f-dddfdb69-eb0e-48e9-b0fe-c7a4922b4a38",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Manifestations of Minamata disease",
+      "back": "Cerebral palsy, deafness, blindness, intellectual disability"
+    },
+    {
+      "id": "f-cf5b473b-5e27-40d0-a0ab-1975fdc00b2a",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Common source of organic lead (tetraethyl or tetramethyl lead) exposure",
+      "back": "Accidental ingestion of antiknock gasoline additives"
+    },
+    {
+      "id": "f-c747fd33-5728-4e4d-954e-7a704ee646dc",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "CNS manifestations of organic lead poisoning",
+      "back": "Hallucinations, headache, irritability, convulsions, coma"
+    },
+    {
+      "id": "f-aa1133a6-a0d5-4975-85f0-3c254ddae4cd",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Metal worker with dark urine and anemia: which toxin?",
+      "back": "Arsine gas (causes hemolysis)"
+    },
+    {
+      "id": "f-6ad718b2-efe9-4ea5-aec3-2d94b38d1de4",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Form of arsenic associated with the greatest toxicity",
+      "back": "Trivalent arsenic"
+    },
+    {
+      "id": "f-f0e2e12d-ae91-48a8-8515-3c25efaded79",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Acute lead toxicity presentation",
+      "back": "Abdominal colic (lead colic), acute encephalopathy (CNS changes), high mortality"
+    },
+    {
+      "id": "f-a25ac3e3-593a-4423-9ced-149d46a9d1af",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Chronic lead toxicity presentation",
+      "back": "Peripheral neuropathy (wrist drop), tremor, anorexia, anemia. In children: growth retardation and developmental delay."
+    },
+    {
+      "id": "f-c520ce57-0801-404a-9aa3-18ef6ef8f2fd",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Garlicky odor, severe GI discomfort, and rice-water stools",
+      "back": "Acute arsenic toxicity"
+    },
+    {
+      "id": "f-40364970-1193-4ad1-a498-217c40851547",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Mees lines, milk-and-roses complexion, hair loss, bone marrow depression",
+      "back": "Chronic arsenic toxicity"
+    },
+    {
+      "id": "f-3462ca8c-9045-45cc-acea-d23d24d7afc5",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Life-threatening hemorrhagic gastroenteritis followed by renal failure",
+      "back": "Acute mercury toxicity"
+    },
+    {
+      "id": "f-fc6c4ff5-9793-4dda-ada8-9341ac943428",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Loosening of gums and teeth, GI disturbances, neurologic and behavioral changes (erethism)",
+      "back": "Chronic mercury toxicity"
+    },
+    {
+      "id": "f-6d23354d-178b-4fed-8361-1e2ecaa51a0e",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Manifestation of chronic iron toxicity",
+      "back": "Hemosiderosis or hemochromatosis"
+    },
+    {
+      "id": "f-4a1c8ef3-63fc-404a-9a6e-539bfbb7a04e",
+      "deckId": "d-1af6d39b-5485-4bd7-b758-d192172a3d94",
+      "front": "Manifestations of acute iron toxicity",
+      "back": "Early: vomiting, GI bleeding, lethargy, gray cyanosis. Late: severe GI necrosis, pneumonitis, jaundice, seizures, coma."
+    }
+  ]
 }

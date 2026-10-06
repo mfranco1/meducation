@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { StoredQuestionBank } from '../../content/schema';
-import { previewChangeSet } from './applyChangeSet';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema';
+import { previewChangeSet as previewWithBank } from './applyChangeSet';
 import { compileBulkAddDraft, parseBulkAddDraft } from './bulkAddDraft';
 import { bulkAddTemplate } from './templates';
 
@@ -10,6 +10,9 @@ const bank = (): StoredQuestionBank => ({
   quizzes: [{ id: 'q1', subjectId: 's1', name: 'Quiz' }],
   questions: [{ id: 'i1', quizId: 'q1', stem: 'Stem', choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }], answer: 'A', rationale: 'Rationale' }],
 });
+const emptyFlashcardBank: StoredFlashcardBank = { schemaVersion: 2, decks: [], cards: [] };
+const previewChangeSet: typeof previewWithBank = (source, changeSet, flashcards = emptyFlashcardBank) =>
+  previewWithBank(source, changeSet, flashcards);
 const revision = 'sha256-current';
 const item = (stem: string, extra: Record<string, unknown> = {}) => ({ stem, choices: ['Choice A', 'Choice B'], answer: 'B', rationale: 'Reason B', ...extra });
 

@@ -13,6 +13,7 @@ const bank = (): StoredQuestionBank => ({
   quizzes: [{ id: 'q1', subjectId: 's1', name: 'Quiz' }],
   questions: [{ id: 'i1', quizId: 'q1', stem: 'Stem', choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }], answer: 'A', rationale: 'Rationale' }],
 });
+const emptyFlashcardBank: StoredFlashcardBank = { schemaVersion: 2, decks: [], cards: [] };
 
 describe('admin editor workflows', () => {
   it('stages coordinated snapshots and preserves a declined quiz draft', async () => {
@@ -46,7 +47,7 @@ describe('admin editor workflows', () => {
   });
   it('stages, exports, and undoes a record edit without changing the initial export bytes', async () => {
     const source = bank();
-    const gateway = new InMemoryQuestionBankGateway(source);
+    const gateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
     const downloads = vi.fn();
     const { result } = renderHook(() => useAdminEditor(gateway, { download: downloads }));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
@@ -68,7 +69,7 @@ describe('admin editor workflows', () => {
   });
 
   it('invalidates a pending preview when the draft changes and serializes commands', async () => {
-    const delegate = new InMemoryQuestionBankGateway(bank());
+    const delegate = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
     let release!: () => void;
     const gate = new Promise<void>(resolve => { release = resolve; });
     const gateway: AdminQuestionBankGateway = {
@@ -94,7 +95,7 @@ describe('admin editor workflows', () => {
   });
 
   it('previews an imported change set before explicitly staging it', async () => {
-    const gateway = new InMemoryQuestionBankGateway(bank());
+    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
     const { result } = renderHook(() => useAdminEditor(gateway));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
     const changeSet: AdminChangeSet = {
@@ -112,7 +113,7 @@ describe('admin editor workflows', () => {
   });
 
   it('validates a bulk draft, exposes generated IDs, and stages only after confirmation', async () => {
-    const gateway = new InMemoryQuestionBankGateway(bank());
+    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
     const { result } = renderHook(() => useAdminEditor(gateway));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
     act(() => result.current.chooseBulkTarget('newSubject'));

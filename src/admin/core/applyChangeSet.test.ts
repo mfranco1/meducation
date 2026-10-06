@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema';
-import { previewChangeSet } from './applyChangeSet';
+import { previewChangeSet as previewWithBank } from './applyChangeSet';
 import { parseChangeSet } from './changeSetSchema';
 import { serializeBank } from './serializeBank';
 import type { AdminChangeSet, ContentAddOperation } from './types';
@@ -12,6 +12,9 @@ const bank = (): StoredQuestionBank => ({
   quizzes: [{ id: 'q1', subjectId: 's1', name: 'Quiz' }],
   questions: [{ id: 'i1', quizId: 'q1', stem: 'Stem', choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }], answer: 'A', rationale: 'Rationale' }],
 });
+const emptyFlashcardBank: StoredFlashcardBank = { schemaVersion: 2, decks: [], cards: [] };
+const previewChangeSet: typeof previewWithBank = (source, changeSet, flashcards = emptyFlashcardBank) =>
+  previewWithBank(source, changeSet, flashcards);
 const changeSet = (operations: AdminChangeSet['operations']): AdminChangeSet => ({ changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: 'test' }, reason: 'Test change', operations });
 const item = (id: string, stem = `Stem ${id}`) => ({ id, stem, choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }], answer: 'A', rationale: `Rationale ${id}` });
 const grouped = (subject: ContentAddOperation['subject'], quizzes: ContentAddOperation['quizzes']): AdminChangeSet => ({
@@ -20,7 +23,7 @@ const grouped = (subject: ContentAddOperation['subject'], quizzes: ContentAddOpe
 
 describe('admin change-set processor', () => {
   it('blocks quiz undo/reset when staged flashcards reference a newly added subject', async () => {
-    const gateway = new InMemoryQuestionBankGateway(bank());
+    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
     const base = await gateway.load();
     await gateway.apply({ ...changeSet([{ op: 'subject.create', value: { id: 's2', name: 'New', accent: '#222222' } }]), base: { bankSchemaVersion: 4, revision: base.revision } });
     gateway.setFlashcardBank({ schemaVersion: 2, decks: [{ id: 'd-new', subjectId: 's2', name: 'Deck' }], cards: [] });
@@ -174,14 +177,14 @@ describe('admin change-set processor', () => {
     expect(legacy.errors).toEqual([]);
 
     const source = bank();
-    const firstGateway = new InMemoryQuestionBankGateway(source);
+    const firstGateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
     const base = await firstGateway.load();
     const groupedSet = { ...grouped({ create: { id: 's2', name: 'Pearls', accent: '#bc531e' } }, [{ quiz: { create: { id: 'q2', name: 'New quiz' } }, items: [item('i2'), item('i3')] }]), base: { bankSchemaVersion: 4 as const, revision: base.revision } };
     await firstGateway.apply(groupedSet);
     const exportedOperations = firstGateway.appliedOperations();
     expect(exportedOperations).toEqual(groupedSet.operations);
 
-    const replayGateway = new InMemoryQuestionBankGateway(source);
+    const replayGateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
     const replayBase = await replayGateway.load();
     await replayGateway.apply({ ...groupedSet, base: { ...groupedSet.base, revision: replayBase.revision } });
     expect(serializeBank((await replayGateway.load()).bank)).toBe(serializeBank((await firstGateway.load()).bank));
@@ -189,7 +192,7 @@ describe('admin change-set processor', () => {
 
   it('undoes exactly one staged grouped batch', async () => {
     const source = bank();
-    const gateway = new InMemoryQuestionBankGateway(source);
+    const gateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
     const base = await gateway.load();
     const batch = { ...grouped({ existingId: 's1' }, [{ quiz: { existingId: 'q1' }, items: [item('i2')] }]), base: { bankSchemaVersion: 4 as const, revision: base.revision } };
     await gateway.apply(batch);
@@ -200,7 +203,7 @@ describe('admin change-set processor', () => {
   });
 
   it('bounds undo history while retaining all staged operations for export', async () => {
-    const gateway = new InMemoryQuestionBankGateway(bank());
+    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
     for (let index = 1; index <= 12; index++) {
       const snapshot = await gateway.load();
       await gateway.apply({ ...changeSet([{ op: 'subject.update', id: 's1', value: { ...snapshot.bank.subjects[0], name: `Subject ${index}` } }]), base: { bankSchemaVersion: 4, revision: snapshot.revision } });

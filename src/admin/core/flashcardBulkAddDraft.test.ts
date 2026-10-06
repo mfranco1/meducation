@@ -59,12 +59,12 @@ describe('flashcard bulk add drafts', () => {
       'card.create',
       'card.create',
     ]);
-    expect(compiled.compiled?.candidate.decks.map((deck) => deck.name)).toEqual(['Empty deck', 'Populated deck']);
-    expect(compiled.compiled?.candidate.cards.map((card) => [card.front, card.back])).toEqual([
+    expect(compiled.compiled?.candidate.decks.slice(source.decks.length).map((deck) => deck.name)).toEqual(['Empty deck', 'Populated deck']);
+    expect(compiled.compiled?.candidate.cards.slice(source.cards.length).map((card) => [card.front, card.back])).toEqual([
       ['**One**', 'Answer one'],
       ['Two', 'Answer two'],
     ]);
-    expect(compiled.compiled?.candidate.cards[0]).toMatchObject({ sources: 'Source', reviewNote: 'Review later' });
+    expect(compiled.compiled?.candidate.cards[source.cards.length]).toMatchObject({ sources: 'Source', reviewNote: 'Review later' });
     expect(compiled.compiled?.generatedIds).toEqual(['d-deck-one', 'd-deck-two', 'f-card-one', 'f-card-two']);
     expect(source).toEqual(storedFlashcardBank);
     expect(applyFlashcardOperations(source, storedQuestionBank.subjects, compiled.compiled!.operations)).toEqual(
@@ -163,7 +163,7 @@ describe('flashcard bulk add drafts', () => {
         return () => `duplicate-${id++}`;
       })(),
     );
-    expect(compiled.compiled?.candidate.decks).toHaveLength(2);
+    expect(compiled.compiled?.candidate.decks).toHaveLength(storedFlashcardBank.decks.length + 2);
     expect(compiled.diagnostics).toEqual([
       expect.objectContaining({
         level: 'warning',
