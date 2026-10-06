@@ -41,7 +41,7 @@ export function FlashcardStudyCard({ card, revealed, flagged, onReveal, onToggle
             if (target.closest('a, button, input, textarea, select, [role="button"]') || window.getSelection()?.toString()) return;
             onReveal();
           }} sx={{ gridArea: '1 / 1', transform: 'rotateY(180deg)', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', minHeight: 190, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', gap: 2, p: { xs: 2.5, sm: 3 }, borderRadius: 1, bgcolor: 'primary.main', color: '#fff', textAlign: 'center', cursor: revealed ? 'pointer' : 'default', '&:focus-visible': { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 3 }, '& a': { color: 'inherit' }, '& img': { marginInline: 'auto' } }}>
-            <Box sx={{ width: '100%', textAlign: 'center', '& .katex-display': { maxWidth: '100%', textAlign: 'center' }, '& ul, & ol': { display: 'inline-block', textAlign: 'left' }, '& table': { marginInline: 'auto' } }}>
+            <Box sx={{ width: '100%', textAlign: 'center', fontWeight: 700, '& .katex-display': { maxWidth: '100%', textAlign: 'center' }, '& ul, & ol': { display: 'inline-block', textAlign: 'left' }, '& table': { marginInline: 'auto' } }}>
               <MarkdownContent markdown={card.back} variant="explanation" contentKind="rich" align="center" fontWeight={700} />
             </Box>
             {card.sources && <Box sx={{ width: '100%', color: 'inherit', opacity: .85, '& a': { color: 'inherit' } }}><strong>Source: </strong><MarkdownContent markdown={card.sources} variant="inline" /></Box>}

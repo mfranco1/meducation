@@ -44,12 +44,19 @@ describe('FlashcardStudyScreen', () => {
   it('renders long Markdown, a safe local diagram, and LaTeX without truncating the face', () => {
     const longText = 'Detailed anatomy content. '.repeat(120);
     const richCards: FlashcardCard[] = [{
-      id: 'f-rich', deckId: 'd1', front: `${longText}\n\n![Nerve diagram](/content/nerve.png)\n\n$$x^2$$`, back: '**Answer** <em>with HTML</em>\n\n$$y^2$$\n\n<script>unsafe()</script>',
+      id: 'f-rich', deckId: 'd1', front: `${longText}\n\n![Nerve diagram](/content/nerve.png)\n\n$$x^2$$`, back: `${longText}\n\n**Answer** <em>with HTML</em>\n\n$$y^2$$\n\n<script>unsafe()</script>`,
     }];
-    render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={{ ...deck, cardCount: 1, cardIds: ['f-rich'] }} cards={richCards} index={0} revealed onReveal={vi.fn()} onPrevious={vi.fn()} onNext={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);
+    const props = { deck: { ...deck, cardCount: 1, cardIds: ['f-rich'] }, cards: richCards, index: 0, onReveal: vi.fn(), onPrevious: vi.fn(), onNext: vi.fn(), onSaveAndExit: vi.fn(), onFinish: vi.fn() };
+    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed={false} /></ThemeProvider>);
     expect(document.body.textContent).toContain('Detailed anatomy content.');
     const renderedFace = Array.from(document.querySelectorAll('h5, p')).map(element => element.textContent ?? '').find(text => text.includes('Detailed anatomy content.'));
     expect(renderedFace?.length).toBeGreaterThan(longText.length - 2);
+    expect(screen.getByRole('group', { name: 'Hidden flashcard answer' }).textContent?.length).toBeGreaterThan(longText.length);
+    const revealFace = screen.getByRole('button', { name: 'Reveal answer' });
+    const hiddenAnswerFace = screen.getByRole('group', { name: 'Hidden flashcard answer' }).lastElementChild;
+    expect(window.getComputedStyle(revealFace).gridArea).toBe(window.getComputedStyle(hiddenAnswerFace!).gridArea);
+    expect(window.getComputedStyle(hiddenAnswerFace!.firstElementChild!).maxHeight).not.toBe('600px');
+    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed /></ThemeProvider>);
     expect(screen.getByRole('img', { name: 'Nerve diagram' })).toHaveAttribute('src', '/content/nerve.png');
     expect(document.querySelector('.katex')).toBeInTheDocument();
     expect(screen.getByText('Answer')).toBeInTheDocument();
