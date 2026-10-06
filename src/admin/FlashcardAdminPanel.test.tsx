@@ -14,6 +14,11 @@ import {
   type FlashcardAdminOperation,
 } from './core/flashcardChangeSet';
 
+// Authoring workflows start from a fixed empty catalog, including import/export replay.
+vi.mock('../content/flashcardBank.generated.json', async () => ({
+  default: (await import('../../tests/fixtures/empty-flashcard-bank.json')).default,
+}));
+
 afterEach(() => {
   vi.restoreAllMocks();
   vi.unstubAllGlobals();

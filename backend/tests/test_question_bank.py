@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
@@ -31,6 +32,15 @@ def bank_data() -> dict:
     }
 
 
+@pytest.fixture
+def bank_settings(tmp_path: Path, bank_data: dict) -> Settings:
+    bank_path = tmp_path / "bank.json"
+    bank_path.write_text(json.dumps(bank_data, indent=2) + "\n", encoding="utf-8")
+    # Quiz request tests must not pair their subject fixture with canonical flashcards.
+    flashcard_path = Path(__file__).resolve().parents[2] / "tests/fixtures/empty-flashcard-bank.json"
+    return Settings(bank_path=bank_path, flashcard_bank_path=flashcard_path)
+
+
 def test_bank_rejects_invalid_version_and_answer(bank_data: dict) -> None:
     wrong_version = {**bank_data, "schemaVersion": 3}
     with pytest.raises(ValueError, match="Unsupported question bank schema"):
@@ -61,10 +71,8 @@ def test_json_repository_preserves_order_and_revision(tmp_path, bank_data: dict)
     )
 
 
-def test_content_api_and_revision_conflicts(tmp_path, bank_data: dict) -> None:
-    bank_path = tmp_path / "bank.json"
-    bank_path.write_text(json.dumps(bank_data, indent=2) + "\n", encoding="utf-8")
-    app = create_app(Settings(bank_path=bank_path))
+def test_content_api_and_revision_conflicts(bank_settings: Settings) -> None:
+    app = create_app(bank_settings)
     with TestClient(app) as client:
         assert client.get("/health/live").json() == {"status": "live"}
         assert client.get("/health/ready").json() == {"status": "ready"}
@@ -103,11 +111,8 @@ def test_canonical_bank_loads() -> None:
 
 
 def test_injected_repository_skips_payload_build_for_conditional_response(
-    tmp_path, bank_data: dict
+    bank_settings: Settings,
 ) -> None:
-    bank_path = tmp_path / "bank.json"
-    bank_path.write_text(json.dumps(bank_data, indent=2) + "\n", encoding="utf-8")
-
     class CountingRepository(JsonQuestionBankRepository):
         subject_reads = 0
 
@@ -115,8 +120,8 @@ def test_injected_repository_skips_payload_build_for_conditional_response(
             self.subject_reads += 1
             return super().list_subjects()
 
-    repository = CountingRepository(bank_path)
-    app = create_app(Settings(bank_path=bank_path), repository_factory=lambda _: repository)
+    repository = CountingRepository(bank_settings.bank_path)
+    app = create_app(bank_settings, repository_factory=lambda _: repository)
     with TestClient(app) as client:
         first = client.get("/api/v1/subjects")
         assert first.status_code == 200
@@ -131,12 +136,13 @@ def test_injected_repository_skips_payload_build_for_conditional_response(
         assert repository.subject_reads == 1
 
 
-def test_sparse_nested_metadata_is_preserved_in_api_response(tmp_path, bank_data: dict) -> None:
-    bank_path = tmp_path / "bank.json"
+def test_sparse_nested_metadata_is_preserved_in_api_response(
+    bank_settings: Settings, bank_data: dict
+) -> None:
     bank_data["questions"][0]["rationaleMeta"] = {"sources": "Reference"}
     bank_data["questions"][0]["metadata"] = {"topic": "Anatomy"}
-    bank_path.write_text(json.dumps(bank_data, indent=2) + "\n", encoding="utf-8")
-    app = create_app(Settings(bank_path=bank_path))
+    bank_settings.bank_path.write_text(json.dumps(bank_data, indent=2) + "\n", encoding="utf-8")
+    app = create_app(bank_settings)
     with TestClient(app) as client:
         question = client.get("/api/v1/quizzes/q1/questions").json()["questions"][0]
         assert question["rationaleMeta"] == {"sources": "Reference"}
@@ -153,11 +159,9 @@ def test_sparse_nested_metadata_is_preserved_in_api_response(tmp_path, bank_data
     ],
 )
 def test_missing_catalog_resources_return_specific_404(
-    tmp_path, bank_data: dict, path: str, code: str
+    bank_settings: Settings, path: str, code: str
 ) -> None:
-    bank_path = tmp_path / "bank.json"
-    bank_path.write_text(json.dumps(bank_data) + "\n", encoding="utf-8")
-    with TestClient(create_app(Settings(bank_path=bank_path))) as client:
+    with TestClient(create_app(bank_settings)) as client:
         response = client.get(path)
         assert response.status_code == 404
         assert response.json() == {"detail": {"code": code}}
@@ -173,11 +177,9 @@ def test_missing_catalog_resources_return_specific_404(
     ],
 )
 def test_all_content_routes_reject_stale_revision_and_if_match(
-    tmp_path, bank_data: dict, path: str
+    bank_settings: Settings, path: str
 ) -> None:
-    bank_path = tmp_path / "bank.json"
-    bank_path.write_text(json.dumps(bank_data) + "\n", encoding="utf-8")
-    with TestClient(create_app(Settings(bank_path=bank_path))) as client:
+    with TestClient(create_app(bank_settings)) as client:
         for response in (
             client.get(f"{path}?revision=stale"),
             client.get(path, headers={"If-Match": '"stale"'}),
@@ -189,13 +191,16 @@ def test_all_content_routes_reject_stale_revision_and_if_match(
         assert client.get(path, headers={"If-None-Match": current.headers["etag"]}).status_code == 304
 
 
-def test_invalid_bank_fails_startup_and_unstarted_app_reports_unready(tmp_path, bank_data: dict) -> None:
-    bank_path = tmp_path / "bank.json"
-    bank_path.write_text(json.dumps({**bank_data, "questions": []}) + "\n", encoding="utf-8")
-    app = create_app(Settings(bank_path=bank_path))
+def test_invalid_bank_fails_startup_and_unstarted_app_reports_unready(
+    bank_settings: Settings, bank_data: dict
+) -> None:
+    bank_settings.bank_path.write_text(
+        json.dumps({**bank_data, "questions": []}) + "\n", encoding="utf-8"
+    )
+    app = create_app(bank_settings)
     with pytest.raises(RuntimeError, match="Canonical question bank could not be loaded"), TestClient(app):
         pass
 
     # Without a successful lifespan, the route must not claim the bank is ready.
-    client = TestClient(create_app(Settings(bank_path=bank_path)))
+    client = TestClient(create_app(bank_settings))
     assert client.get("/health/ready").status_code == 503
