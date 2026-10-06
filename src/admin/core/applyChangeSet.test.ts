@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { StoredQuestionBank } from '../../content/schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema';
 import { previewChangeSet } from './applyChangeSet';
 import { parseChangeSet } from './changeSetSchema';
 import { serializeBank } from './serializeBank';
@@ -19,6 +19,16 @@ const grouped = (subject: ContentAddOperation['subject'], quizzes: ContentAddOpe
 });
 
 describe('admin change-set processor', () => {
+  it('validates shared subjects against the staged flashcard bank snapshot', async () => {
+    const flashcards: StoredFlashcardBank = { schemaVersion: 1, topics: [{ id: 't1', subjectId: 's1', name: 'Topic' }], decks: [], cards: [] };
+    const gateway = new InMemoryQuestionBankGateway({ ...bank(), quizzes: [], questions: [] }, flashcards);
+    const snapshot = await gateway.load();
+    const removal: AdminChangeSet = { ...changeSet([{ op: 'subject.delete', id: 's1', cascade: true }]), base: { bankSchemaVersion: 4, revision: snapshot.revision } };
+    expect((await gateway.preview(removal)).issues.some(issue => issue.level === 'error')).toBe(true);
+    gateway.setFlashcardBank({ schemaVersion: 1, topics: [], decks: [], cards: [] });
+    expect((await gateway.preview(removal)).issues.some(issue => issue.level === 'error')).toBe(false);
+  });
+
   it('applies a mixed create batch while preserving question grouping', () => {
     const preview = previewChangeSet(bank(), changeSet([
       { op: 'subject.create', value: { id: 's2', name: 'Second', accent: '#222222' } },
@@ -46,6 +56,17 @@ describe('admin change-set processor', () => {
     const accepted = previewChangeSet(bank(), changeSet([{ op: 'subject.delete', id: 's1', cascade: true }]));
     expect(accepted.issues.filter(issue => issue.level === 'error')).toEqual([]);
     expect(accepted.summary).toMatchObject({ deletes: 1, cascadedQuizzes: 1, cascadedQuestions: 1 });
+  });
+
+  it('blocks deleting a quiz subject while any flashcard topic references it, including cascade', () => {
+    const flashcards: StoredFlashcardBank = {
+      schemaVersion: 1,
+      topics: [{ id: 't1', subjectId: 's1', name: 'Shared subject topic' }],
+      decks: [],
+      cards: [],
+    };
+    const preview = previewChangeSet(bank(), changeSet([{ op: 'subject.delete', id: 's1', cascade: true }]), flashcards);
+    expect(preview.issues).toContainEqual(expect.objectContaining({ level: 'error', message: expect.stringContaining('referenced by flashcard topics') }));
   });
 
   it('moves a question into a destination quiz segment', () => {

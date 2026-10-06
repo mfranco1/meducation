@@ -1,8 +1,10 @@
 # Meducation content API
 
 The FastAPI service reads `src/content/questionBank.generated.json` as the
-canonical schema-v4 bank. It serves read-only quiz content; attempts and scoring
-remain in the browser.
+canonical schema-v4 quiz bank and `src/content/flashcardBank.generated.json` as
+the canonical flashcard bank. Flashcard topics reference the quiz bank's shared
+subjects. It serves read-only content; attempts, checkpoints, and scoring remain
+in the browser.
 
 From the repository root, create the isolated environment if it does not exist:
 
@@ -15,7 +17,7 @@ python3.14 -m venv .venv
 
 For configuration overrides, copy `backend/.env.example` to `backend/.env` and
 edit it there. The default bank path already points to the canonical repository
-file.
+file. `MEDUCATION_FLASHCARD_BANK_PATH` overrides the flashcard file path.
 
 Set `VITE_CONTENT_SOURCE=api` (the default) and run the Vite app separately.
 Vite proxies `/api` to `http://127.0.0.1:8000`. Production hosting must route
@@ -26,8 +28,13 @@ existing local JSON adapter. The local admin editor is available at `/admin.html
 in the development server; normal production builds omit it. To explicitly build
 the editor, set `VITE_BUILD_ADMIN=true` when running the Vite build.
 
-On startup the service validates and indexes the bank. Restart the service after
-replacing the canonical file. The API never writes or modifies bank content.
+On startup the service validates and indexes both banks together, including
+flashcard references to shared subjects. The flashcard API exposes subject
+inventory, a selected subject's topics and deck summaries, and one deck's
+ordered cards under `/api/v1/flashcards`. Flashcard responses use a separate
+revision that also changes when shared subject records change. Restart the
+service after replacing either canonical file. The API never writes or modifies
+bank content.
 Interactive API documentation is available at `/docs` in development.
 
 On Windows, activate `.venv\Scripts\Activate.ps1` and use `python -m pip ...`

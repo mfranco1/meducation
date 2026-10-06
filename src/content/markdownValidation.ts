@@ -103,3 +103,13 @@ export function validateQuestionMarkdown(questions: Question[]): ValidationIssue
   }
   return issues;
 }
+
+export function validateFlashcardMarkdown(cards: Array<{ id: string; front: string; back: string; sources?: string }>): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  for (const card of cards) {
+    if (typeof card.front === 'string' && card.front.trim()) issues.push(...markdownIssues(card.front, 'stem', card.id));
+    if (typeof card.back === 'string' && card.back.trim()) issues.push(...markdownIssues(card.back, 'rationale', card.id));
+    if (typeof card.sources === 'string' && card.sources.trim()) issues.push(...markdownIssues(card.sources, 'sources', card.id));
+  }
+  return issues;
+}

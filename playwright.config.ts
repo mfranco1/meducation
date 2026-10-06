@@ -4,6 +4,7 @@ const e2eApiPort = process.env.MEDUCATION_E2E_API_PORT ?? '8765';
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: '**/admin/**',
   fullyParallel: false,
   retries: 0,
   reporter: 'list',
@@ -14,7 +15,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: `MEDUCATION_BANK_PATH=e2e/fixtures/bank.json .venv/bin/uvicorn meducation_api.main:app --host 127.0.0.1 --port ${e2eApiPort}`,
+      command: `MEDUCATION_BANK_PATH=e2e/fixtures/bank.json MEDUCATION_FLASHCARD_BANK_PATH=e2e/fixtures/flashcard-bank.json .venv/bin/uvicorn meducation_api.main:app --host 127.0.0.1 --port ${e2eApiPort}`,
       url: `http://127.0.0.1:${e2eApiPort}/health/ready`,
       reuseExistingServer: false,
       timeout: 60_000,

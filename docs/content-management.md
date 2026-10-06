@@ -2,6 +2,8 @@
 
 `src/content/questionBank.generated.json` is the canonical content store for the application. It is a schema-v4 JSON database containing compact subject, quiz, and question identifiers, final choice text, answer provenance, display-ready GFM stems and rationales, rationale metadata, and answer-review notes.
 
+Flashcard content lives in the separate versioned `src/content/flashcardBank.generated.json` file. Read [the flashcard schema](flashcard-schema.md) before editing it. Topics reference the existing subject IDs; do not copy or recreate subjects in the flashcard bank. `npm run validate:content` checks both banks and their shared-subject references. The local-only Flashcards section in `/admin.html` stages topic, deck, and card CRUD in memory and exports the bank plus a reasoned change set. It does not write repository files or provide access control. Review exports before replacing the canonical file and restart the content service after replacement.
+
 When editing content:
 
 1. Preserve established subject, quiz, and question IDs, canonical question ordering, and choice IDs. Subject IDs use `s*`, quiz IDs use `q*`, and question IDs use `i*`. Question display numbers are derived from one-based position within a quiz; do not add a stored question number.

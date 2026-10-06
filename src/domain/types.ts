@@ -18,6 +18,7 @@ export interface Question {
   rationale: string; rationaleMeta?: RationaleMetadata; choiceExplanations?: Record<string, string>; pearls?: string[]; metadata: QuestionMetadata;
 }
 export interface Subject { id: string; name: string; accent: string }
+export interface FlashcardCard { id: string; deckId: string; front: string; back: string; sources?: string; reviewNote?: string }
 export interface Quiz { id: string; subjectId: string; name: string; questionCount: number; questionIds?: string[] }
 export interface QuestionResponse { questionId: string; selectedChoiceId?: string; flagged: boolean; locked: boolean; timeMs: number }
 export interface CelebrationProgress { correctStreak: number; awardedStreakMilestones: StreakMilestone[] }

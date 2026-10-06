@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import {
   Alert, Box, Button, Container, Divider, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography,
 } from '@mui/material';
@@ -10,13 +10,15 @@ import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
 import { InMemoryQuestionBankGateway } from './data/InMemoryQuestionBankGateway';
 import { useAdminEditor } from './useAdminEditor';
+import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 
 const gateway = new InMemoryQuestionBankGateway(storedQuestionBank);
 const localAdminEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_LOCAL_ADMIN === 'true';
 
 export function AdminApp() {
+  const [section, setSection] = useState<'quizzes' | 'flashcards'>('quizzes');
   const {
-    snapshot, selection, mode, editor, reason, issues, summary, dirty, exported,
+    snapshot, originalRevision, selection, mode, editor, reason, issues, summary, dirty, exported,
     filter, setFilter, pendingBulk, importedChangeSet, bulkTarget, busy, loadError,
     selectedQuiz, selectedSubject, hasAppliedChanges, loadEntity, loadNew,
     chooseBulkTarget, chooseBulkSubject, chooseBulkQuiz, showSingle, editRecord, editReason,
@@ -57,6 +59,12 @@ export function AdminApp() {
     {!localAdminEnabled ? <Container maxWidth="sm" sx={{ py: 8 }}><Alert severity="warning">The JSON content admin is disabled in production builds. It is not an authentication mechanism.</Alert></Container>
       : !snapshot ? loadError ? <Container sx={{ py: 8 }}><Alert severity="error">{loadError}</Alert></Container> : <ScreenLoading label="Loading question bank…" />
         : <Container maxWidth={false} sx={{ py: 2 }}>
+    <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+      <Button variant={section === 'quizzes' ? 'contained' : 'outlined'} onClick={() => setSection('quizzes')}>Quizzes</Button>
+      <Button variant={section === 'flashcards' ? 'contained' : 'outlined'} onClick={() => setSection('flashcards')}>Flashcards</Button>
+    </Stack>
+    <Box sx={{ display: section === 'flashcards' ? 'block' : 'none' }}><FlashcardAdminPanel subjects={snapshot.bank.subjects} onBankChange={bank => gateway.setFlashcardBank(bank)} quizRevision={snapshot.revision} originalQuizRevision={originalRevision} quizChangesStaged={hasAppliedChanges} /></Box>
+    {section === 'quizzes' &&
     <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
       <AdminNavigatorPanel bank={snapshot.bank} selection={selection} selectedSubjectId={selectedSubject?.id} selectedQuizId={selectedQuiz?.id} filter={filter} setFilter={setFilter} loadEntity={loadEntity} loadNew={loadNew} />
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
@@ -90,7 +98,7 @@ export function AdminApp() {
         </Stack>
       </Paper>
       <AdminStatusPanel bank={snapshot.bank} issues={issues} questionPaths={pendingBulk?.questionPaths} summary={summary} dirty={dirty} exported={exported} busy={busy} />
-    </Stack>
+    </Stack>}
         </Container>}
   </AppShell>;
 }

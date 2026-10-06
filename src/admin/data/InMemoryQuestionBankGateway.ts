@@ -1,4 +1,6 @@
 import type { StoredQuestionBank } from '../../content/schema';
+import type { StoredFlashcardBank } from '../../content/schema';
+import { storedFlashcardBank } from '../../content/flashcardBank';
 import { previewChangeSet } from '../core/applyChangeSet';
 import { cloneBank, revisionForBank } from '../core/serializeBank';
 import type { AdminBankSnapshot, AdminChangeSet } from '../core/types';
@@ -14,11 +16,15 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   private operations: AdminChangeSet['operations'] = [];
   private revision?: string;
   private lastPreview?: { key: string; revision: string; bank: StoredQuestionBank; result: AdminPreviewSummary };
+  private flashcards: StoredFlashcardBank;
 
-  constructor(bank: StoredQuestionBank) {
+  constructor(bank: StoredQuestionBank, flashcards: StoredFlashcardBank = storedFlashcardBank) {
     this.initial = cloneBank(bank);
     this.bank = cloneBank(bank);
+    this.flashcards = structuredClone(flashcards);
   }
+
+  setFlashcardBank(bank: StoredFlashcardBank): void { this.flashcards = structuredClone(bank); this.lastPreview = undefined; }
 
   private async snapshot(): Promise<AdminBankSnapshot> {
     return { bank: cloneBank(this.bank), revision: await this.currentRevision() };
@@ -41,7 +47,7 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
       issues: this.lastPreview.result.issues.map(issue => ({ ...issue })),
       summary: { ...this.lastPreview.result.summary },
     };
-    const preview = previewChangeSet(this.bank, changeSet);
+    const preview = previewChangeSet(this.bank, changeSet, this.flashcards);
     const result = { issues: preview.issues, summary: preview.summary };
     this.lastPreview = preview.issues.some(issue => issue.level === 'error') ? undefined
       : { key, revision: current, bank: preview.bank, result };

@@ -1,0 +1,27 @@
+{
+  "subjects": [
+    { "id": "s1", "name": "Subject One", "accent": "#123456" },
+    { "id": "s2", "name": "Subject Two", "accent": "#654321" }
+  ],
+  "bank": {
+    "schemaVersion": 1,
+    "topics": [
+      { "id": "t-neuro", "subjectId": "s1", "name": "Neuroanatomy" },
+      { "id": "t-empty", "subjectId": "s1", "name": "Empty topic" }
+    ],
+    "decks": [
+      { "id": "d-cranial", "topicId": "t-neuro", "name": "Cranial nerves" },
+      { "id": "d-empty", "topicId": "t-empty", "name": "No cards yet" }
+    ],
+    "cards": [
+      {
+        "id": "f-1",
+        "deckId": "d-cranial",
+        "front": "CN **I** — $n. olfactorius$",
+        "back": "Olfactory",
+        "sources": "Reviewed anatomy reference."
+      },
+      { "id": "f-2", "deckId": "d-cranial", "front": "CN II", "back": "Optic" }
+    ]
+  }
+}

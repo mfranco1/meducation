@@ -179,7 +179,7 @@ describe('progressive dashboard statistics', () => {
     expect(screen.getByText('Question 1 of 1')).toBeVisible();
     expect(new LocalAttemptRepository().getActive(quiz.id)).toBeDefined();
   }, 15_000);
-  it('navigates between Quizzes and the Flashcards placeholder without changing progress', async () => {
+  it('navigates between quiz and flashcard dashboards without changing quiz progress', async () => {
     runtimeQuestionBank.configureApi({ revision: 'rev-nav', subjects: [] });
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-nav', subjects: [] }) }));
     render(<ThemeProvider theme={theme}><App /></ThemeProvider>);

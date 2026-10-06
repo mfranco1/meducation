@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "topics": [{ "id": "t-browser", "subjectId": "s1", "name": "Upper limb" }],
+  "decks": [{ "id": "d-browser", "topicId": "t-browser", "name": "Browser Test Deck" }],
+  "cards": [
+    {
+      "id": "f-browser-1",
+      "deckId": "d-browser",
+      "front": "What forms the brachial plexus from $C5$ to $T1$?",
+      "back": "The anterior rami of C5–T1."
+    },
+    {
+      "id": "f-browser-2",
+      "deckId": "d-browser",
+      "front": "What is the terminal nerve of the posterior cord?",
+      "back": "The axillary nerve, *n. axillaris*."
+    }
+  ]
+}

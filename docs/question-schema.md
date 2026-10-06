@@ -2,6 +2,8 @@
 
 `src/content/questionBank.generated.json` has `schemaVersion: 4` and top-level `subjects`, `quizzes`, and `questions` collections. IDs are compact, type-prefixed strings: subjects use `s*`, quizzes use `q*`, and questions use `i*`. `Quiz.subjectId` is the only stored subject relationship; a question stores `quizId` but not a redundant subject ID. Questions are grouped by quiz in canonical array order, which is their one-based learner display number and the future database `position` value.
 
+The `subjects` collection is also the authoritative subject registry for flashcards. Flashcard topics reference these stable subject IDs from the separate `flashcardBank.generated.json`; do not duplicate subjects there. Existing `question.metadata.topic` remains optional descriptive text and has not been migrated into normalized topic records.
+
 Each question has a stable ID, canonical GFM `stem`, ordered `choices`, answer provenance (`answer`, optional `verifiedAnswer`, and optional note), a required GFM `rationale`, optional `rationaleMeta`, and sparse optional metadata. Runtime scoring prefers `verifiedAnswer`, then `answer`. `answerSource` is not stored: a verified answer indicates verified provenance, otherwise the provided answer is used. `questionCount` is derived from the indexed questions and is not stored on a quiz.
 
 Question text and choice order are canonical once recorded. Make content corrections directly in the record, review them carefully, and preserve their rationale in the relevant provenance or review field. Never regenerate IDs casually. IDs are opaque database identifiers; do not derive subject, quiz, ordering, or display meaning from them.

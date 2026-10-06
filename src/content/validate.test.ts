@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { StoredQuestionBank } from './schema';
-import { validateQuestionBank, validateStoredQuestionBank } from './validate';
+import type { StoredFlashcardBank, StoredQuestionBank } from './schema';
+import { validateQuestionBank, validateStoredFlashcardBank, validateStoredQuestionBank } from './validate';
 
 describe('question bank validation', () => {
   it('detects duplicate IDs and invalid answers', () => {
@@ -34,6 +34,38 @@ describe('question bank validation', () => {
       expect.stringContaining('legacy sourceAnswer'),
       expect.stringContaining('derived question count'),
       expect.stringContaining('unknown field'),
+    ]));
+  });
+});
+
+describe('flashcard bank validation', () => {
+  const subjects = [{ id: 's1', name: 'Subject', accent: '#123456' }];
+  const bank: StoredFlashcardBank = {
+    schemaVersion: 1,
+    topics: [{ id: 't-neuro', subjectId: 's1', name: 'Neuro' }],
+    decks: [{ id: 'd-basics', topicId: 't-neuro', name: 'Basics' }],
+    cards: [{ id: 'f-one', deckId: 'd-basics', front: '**Front**', back: 'Back' }],
+  };
+
+  it('accepts normalized parent references and shared subject IDs', () => {
+    expect(validateStoredFlashcardBank(bank, subjects)).toEqual([]);
+  });
+
+  it('rejects orphan references, invalid prefixes, empty fields, and unknown keys', () => {
+    const invalid = {
+      ...bank,
+      topics: [{ ...bank.topics[0], subjectId: 's404', extra: true }],
+      decks: [{ ...bank.decks[0], topicId: 't404', name: '  ' }],
+      cards: [{ ...bank.cards[0], id: 'card', deckId: 'd404', front: ' ', back: 'Back' }],
+    } as unknown as StoredFlashcardBank;
+    const messages = validateStoredFlashcardBank(invalid, subjects).map(issue => issue.message);
+    expect(messages).toEqual(expect.arrayContaining([
+      expect.stringContaining('unknown field'),
+      expect.stringContaining('unknown subject'),
+      expect.stringContaining('unknown topic'),
+      expect.stringContaining('unknown deck'),
+      expect.stringContaining('must not be empty'),
+      expect.stringContaining('prefix'),
     ]));
   });
 });

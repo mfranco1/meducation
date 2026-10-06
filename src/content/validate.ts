@@ -1,5 +1,5 @@
 import type { Question, Quiz, Subject } from '../domain/types';
-import type { StoredQuestionBank } from './schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from './schema';
 
 export interface ValidationIssue {
   level: 'error' | 'warning';
@@ -120,4 +120,71 @@ export function validateStoredQuestionBank(bank: StoredQuestionBank): Validation
     if (!Object.values(metadata).some(value => Array.isArray(value) ? value.length > 0 : Boolean(value))) error('Question stores an empty metadata object');
   });
   return issues;
+}
+
+export function validateStoredFlashcardBank(bank: StoredFlashcardBank, subjects: Subject[]): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const issue = (message: string, id?: string) => issues.push({ level: 'error', message, ...(id ? { questionId: id } : {}) });
+  const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
+  if (!object(bank)) return [{ level: 'error', message: 'Flashcard bank must be an object' }];
+  if (bank.schemaVersion !== 1) issue(`Unsupported flashcard bank schema version: ${bank.schemaVersion}`);
+  if (Object.keys(bank).some(key => !['schemaVersion', 'topics', 'decks', 'cards'].includes(key))) issue('Flashcard bank stores an unknown field');
+  if (!Array.isArray(bank.topics) || !Array.isArray(bank.decks) || !Array.isArray(bank.cards)) {
+    issue('Flashcard bank must contain topic, deck, and card arrays');
+    return issues;
+  }
+
+  const subjectIds = new Set(subjects.map(subject => subject.id));
+  const topicIds = new Set<string>();
+  const deckIds = new Set<string>();
+  const cardIds = new Set<string>();
+  const topicKeys = new Set(['id', 'subjectId', 'name']);
+  const deckKeys = new Set(['id', 'topicId', 'name', 'description']);
+  const cardKeys = new Set(['id', 'deckId', 'front', 'back', 'sources', 'reviewNote']);
+  const topicsById = new Map<string, StoredFlashcardBank['topics'][number]>();
+  const decksById = new Map<string, StoredFlashcardBank['decks'][number]>();
+
+  bank.topics.forEach(topic => {
+    if (!object(topic)) { issue('Topic record must be an object'); return; }
+    if (Object.keys(topic).some(key => !topicKeys.has(key))) issue('Topic stores an unknown field', topic.id);
+    if (typeof topic.id !== 'string' || !/^t[a-zA-Z0-9-]+$/.test(topic.id)) issue('Topic ID must use the t prefix', topic.id);
+    if (typeof topic.id !== 'string' || !topic.id || topicIds.has(topic.id)) { issue('Missing or duplicate topic ID', topic.id); return; }
+    topicIds.add(topic.id);
+    topicsById.set(topic.id, topic);
+    if (typeof topic.subjectId !== 'string' || !subjectIds.has(topic.subjectId)) issue('Topic references an unknown subject', topic.id);
+    if (typeof topic.name !== 'string' || !topic.name.trim()) issue('Topic name must not be empty', topic.id);
+  });
+
+  bank.decks.forEach(deck => {
+    if (!object(deck)) { issue('Deck record must be an object'); return; }
+    if (Object.keys(deck).some(key => !deckKeys.has(key))) issue('Deck stores an unknown field', deck.id);
+    if (typeof deck.id !== 'string' || !/^d[a-zA-Z0-9-]+$/.test(deck.id)) issue('Deck ID must use the d prefix', deck.id);
+    if (typeof deck.id !== 'string' || !deck.id || deckIds.has(deck.id)) { issue('Missing or duplicate deck ID', deck.id); return; }
+    deckIds.add(deck.id);
+    decksById.set(deck.id, deck);
+    if (typeof deck.topicId !== 'string' || !topicsById.has(deck.topicId)) issue('Deck references an unknown topic', deck.id);
+    if (typeof deck.name !== 'string' || !deck.name.trim()) issue('Deck name must not be empty', deck.id);
+    if (deck.description !== undefined && typeof deck.description !== 'string') issue('Invalid deck description', deck.id);
+  });
+
+  bank.cards.forEach(card => {
+    if (!object(card)) { issue('Card record must be an object'); return; }
+    if (Object.keys(card).some(key => !cardKeys.has(key))) issue('Card stores an unknown field', card.id);
+    if (typeof card.id !== 'string' || !/^f[a-zA-Z0-9-]+$/.test(card.id)) issue('Card ID must use the f prefix', card.id);
+    if (typeof card.id !== 'string' || !card.id || cardIds.has(card.id)) { issue('Missing or duplicate card ID', card.id); return; }
+    cardIds.add(card.id);
+    if (typeof card.deckId !== 'string' || !decksById.has(card.deckId)) issue('Card references an unknown deck', card.id);
+    if (typeof card.front !== 'string' || !card.front.trim()) issue('Card front must not be empty', card.id);
+    if (typeof card.back !== 'string' || !card.back.trim()) issue('Card back must not be empty', card.id);
+    if (card.sources !== undefined && typeof card.sources !== 'string') issue('Invalid card sources', card.id);
+    if (card.reviewNote !== undefined && typeof card.reviewNote !== 'string') issue('Invalid card review note', card.id);
+  });
+  return issues;
+}
+
+export function validateFlashcardSubjectReferences(bank: StoredFlashcardBank, subjects: Subject[]): ValidationIssue[] {
+  const subjectIds = new Set(subjects.map(subject => subject.id));
+  return bank.topics
+    .filter(topic => !subjectIds.has(topic.subjectId))
+    .map(topic => ({ level: 'error' as const, message: `Topic ${topic.id} references an unknown subject ${topic.subjectId}.` }));
 }

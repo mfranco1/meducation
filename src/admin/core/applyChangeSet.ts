@@ -1,7 +1,8 @@
-import type { StoredQuestion, StoredQuestionBank, StoredQuiz } from '../../content/schema';
+import type { StoredFlashcardBank, StoredQuestion, StoredQuestionBank, StoredQuiz } from '../../content/schema';
 import type { ValidationIssue } from '../../content/validate';
 import { cloneBank } from './serializeBank';
 import { validateAdminBank } from './validateAdminBank';
+import { storedFlashcardBank } from '../../content/flashcardBank';
 import type { AdminChangePreview, AdminChangeSet, AdminOperation, ContentAddOperation } from './types';
 
 class OperationError extends Error {}
@@ -154,7 +155,7 @@ function applyContentAdd(bank: StoredQuestionBank, operation: ContentAddOperatio
   });
 }
 
-export function previewChangeSet(bank: StoredQuestionBank, changeSet: AdminChangeSet): AdminChangePreview {
+export function previewChangeSet(bank: StoredQuestionBank, changeSet: AdminChangeSet, flashcards: StoredFlashcardBank = storedFlashcardBank): AdminChangePreview {
   const next = cloneBank(bank);
   const result = summary();
   const issues: ValidationIssue[] = [];
@@ -166,5 +167,5 @@ export function previewChangeSet(bank: StoredQuestionBank, changeSet: AdminChang
     catch (error) { issues.push({ level: 'error', message: `Operation ${index + 1}: ${error instanceof Error ? error.message : 'Unknown failure'}` }); }
   });
   if (issues.some(issue => issue.level === 'error')) return { bank, issues, summary: result };
-  return { bank: next, issues: validateAdminBank(next), summary: result };
+  return { bank: next, issues: validateAdminBank(next, flashcards), summary: result };
 }

@@ -11,12 +11,12 @@ import {
 import { contentSignature } from '../../domain/contentSignature';
 import type { Attempt, AttemptRepository, CompletedAttempt, FeedbackMode, Quiz, QuizRepository, Subject } from '../../domain/types';
 import { PersistenceError } from '../../persistence/localRepository';
-import { subjectForQuiz, type View } from '../navigation';
+import { subjectForQuiz, type QuizSessionView } from '../navigation';
 
 export type QuizExitDestination = 'subject' | 'dashboard' | 'flashcards';
 
 interface QuizSession {
-  view: View;
+  view: QuizSessionView;
   persistenceError?: string;
   pendingResume?: { quiz: Quiz; reason: 'legacy' | 'changed' };
   clearPersistenceError: () => void;
@@ -41,7 +41,7 @@ interface QuizSession {
 }
 
 export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRepository): QuizSession {
-  const [view, setView] = useState<View>({ page: 'dashboard' });
+  const [view, setView] = useState<QuizSessionView>({ page: 'dashboard' });
   const [persistenceError, setPersistenceError] = useState<string | undefined>(() => attempts.getStorageError?.());
   const [pendingResume, setPendingResume] = useState<{ quiz: Quiz; reason: 'legacy' | 'changed' }>();
   const persist = useCallback((write: () => void): boolean => {

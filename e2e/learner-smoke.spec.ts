@@ -1,5 +1,46 @@
 import { expect, test } from '@playwright/test';
 
+test('flashcards browse, filter, resume, and finish without quiz analytics', async ({ page }, testInfo) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await testInfo.attach('flashcards-dashboard-desktop.png', {
+    body: await page.screenshot(),
+    contentType: 'image/png',
+  });
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByText('Upper limb · 2 cards')).toBeVisible();
+  await testInfo.attach('flashcard-subject-desktop.png', { body: await page.screenshot(), contentType: 'image/png' });
+  const studyButton = page.getByRole('button', { name: 'Study deck' });
+  await studyButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('Card 1 of 2')).toBeVisible();
+  await expect(page.locator('.katex')).toHaveCount(2);
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await testInfo.attach('flashcard-study-mobile.png', { body: await page.screenshot(), contentType: 'image/png' });
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const nextButton = page.getByRole('button', { name: 'Next' });
+  await nextButton.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByText('Card 2 of 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Finish deck' })).toBeFocused();
+  await page.getByRole('button', { name: 'Save and exit' }).click();
+  await expect(page.getByRole('button', { name: 'Resume deck' })).toBeVisible();
+  await expect(page.getByText('Card 2 of 2')).toBeVisible();
+  await page.getByRole('button', { name: 'Resume deck' }).click();
+  await expect(page.getByText('What is the terminal nerve of the posterior cord?')).toBeVisible();
+  await page.getByRole('button', { name: 'Reveal answer' }).click();
+  await expect(page.getByText('The axillary nerve, n. axillaris.')).toBeVisible();
+  await page.getByRole('button', { name: 'Finish deck' }).click();
+  await expect(page.getByRole('button', { name: 'Study deck' })).toBeVisible();
+  await page.getByRole('button', { name: 'All subjects' }).click();
+  await expect(page.getByRole('heading', { name: 'Continue Studying' })).toHaveCount(0);
+  await expect(page.getByText(/score|average|completed quizzes/i)).toHaveCount(0);
+});
+
 test('API-backed quiz survives reload, completes, and opens Browse Answers', async ({ page }, testInfo) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();

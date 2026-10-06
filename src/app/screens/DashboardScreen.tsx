@@ -1,4 +1,4 @@
-import { Box, Button, Container, Stack, Typography } from '@mui/material';
+import { Box, Button, Stack, Typography } from '@mui/material';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import { useEffect, useRef, useState } from 'react';
@@ -6,7 +6,9 @@ import type { CompletedAttempt, Subject } from '../../domain/types';
 import { activeSubjectStats, type SubjectStat } from '../dashboard';
 import { ActiveSubjectCarousel } from '../components/ActiveSubjectCarousel';
 import { StatCard } from '../components/StatCard';
-import { SubjectCard } from '../components/SubjectCard';
+import { QuizSubjectCard } from '../components/QuizSubjectCard';
+import { SubjectGrid } from '../components/SubjectGrid';
+import { StudyDashboardLayout } from '../components/StudyDashboardLayout';
 import { LoadingSkeleton } from '../components/LoadingSkeleton';
 import { ContentRecoveryBanner } from '../components/ContentRecoveryBanner';
 
@@ -20,9 +22,9 @@ function StatFailure({ label, onRetry }: { label: string; onRetry: () => void })
 }
 
 function SubjectPlaceholders({ dashed = false }: { dashed?: boolean }) {
-  return <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 2 }}>
+  return <SubjectGrid>
     {Array.from({ length: 6 }, (_, index) => <Box key={index} sx={dashed ? { border: '1px dashed', borderColor: 'divider', borderRadius: 1, p: 3 } : undefined}><LoadingSkeleton variant="rounded" height={dashed ? 58 : 112} /></Box>)}
-  </Box>;
+  </SubjectGrid>;
 }
 
 function SubjectFailure({ onRetry }: { onRetry: () => void }) {
@@ -52,20 +54,20 @@ export function DashboardScreen({ attempts, subjectStats, averageLatest, persona
   const sharedRecovery = Boolean(sharedError || retrying || manualRetryPending);
   return <>
     {sharedRecovery && <ContentRecoveryBanner testId="dashboard-error-banner" error={sharedError} retrying={retrying} busy={manualRetryPending && loading} retryAt={retryAt} onRetry={handleRetry} />}
-    <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 } }}>
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
+    <StudyDashboardLayout summary={<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
       <StatCard label="Completed quizzes" value={attempts.length} />
       {sharedRecovery ? <><StatCard label="Average" value={null} /><StatCard label="Lowest" value={null} /></>
         : statsFailure ? <><StatFailure label="Average" onRetry={onRetry} /><StatFailure label="Lowest" onRetry={onRetry} /></>
           : <><StatCard label="Average" value={statsLoading ? null : averageLatest === undefined ? '—' : `${averageLatest}%`} />
             <StatCard badge={statsLoading ? undefined : personalLowestSubject} label="Lowest" value={statsLoading ? null : personalLowest === undefined ? '—' : `${personalLowest}%`} /></>}
-    </Stack>
-    {(loading || retrying || sharedError || manualRetryPending) && activeAttempts && <Box sx={{ mb: 3 }} role="status" aria-busy={!sharedError} aria-label={retrying ? 'Retrying active subjects' : 'Loading active subjects'}><LoadingSkeleton variant="rounded" height={122} /></Box>}
-    {!loading && !sharedError && !subjectsFailure && !retrying && !manualRetryPending && <ActiveSubjectCarousel subjects={activeSubjectStats(subjectStats)} onSelectSubject={onSelectSubject} />}
-    <Typography variant="h6" sx={{ fontWeight: 800, mb: 1.5 }}>All Subjects</Typography>
-    {sharedRecovery ? <SubjectPlaceholders /> : subjectsFailure ? <SubjectFailure onRetry={onRetry} /> : loading ? <Box role="status" aria-busy="true" aria-label="Loading subjects"><SubjectPlaceholders /></Box> : subjectStats.length === 0 ? <Typography color="text.secondary">No subjects are available yet.</Typography> : <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(230px,1fr))', gap: 2 }}>
-      {subjectStats.map(stat => <SubjectCard key={stat.subject.id} stat={stat} onSelect={onSelectSubject} />)}
-    </Box>}
-    </Container>
+    </Stack>} continueStudying={(loading || retrying || sharedError || manualRetryPending) && activeAttempts
+      ? <Box sx={{ mb: 3 }} role="status" aria-busy={!sharedError} aria-label={retrying ? 'Retrying active subjects' : 'Loading active subjects'}><LoadingSkeleton variant="rounded" height={122} /></Box>
+      : !loading && !sharedError && !subjectsFailure && !retrying && !manualRetryPending
+        ? <ActiveSubjectCarousel subjects={activeSubjectStats(subjectStats)} onSelectSubject={onSelectSubject} />
+        : null}>
+      {sharedRecovery ? <SubjectPlaceholders /> : subjectsFailure ? <SubjectFailure onRetry={onRetry} /> : loading ? <Box role="status" aria-busy="true" aria-label="Loading subjects"><SubjectPlaceholders /></Box> : subjectStats.length === 0 ? <Typography color="text.secondary">No subjects are available yet.</Typography> : <SubjectGrid>
+        {subjectStats.map(stat => <QuizSubjectCard key={stat.subject.id} stat={stat} onSelect={onSelectSubject} />)}
+      </SubjectGrid>}
+    </StudyDashboardLayout>
   </>;
 }

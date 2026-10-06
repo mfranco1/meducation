@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     )
 
     bank_path: Path = REPOSITORY_ROOT / "src/content/questionBank.generated.json"
+    flashcard_bank_path: Path = REPOSITORY_ROOT / "src/content/flashcardBank.generated.json"
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
 
     @property

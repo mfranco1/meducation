@@ -1,13 +1,28 @@
 import { ThemeProvider } from '@mui/material';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { FlashcardsDashboardScreen } from './FlashcardsDashboardScreen';
 import { theme } from '../theme';
 
 describe('FlashcardsDashboardScreen', () => {
-  it('announces the dashboard and work in progress status', () => {
-    render(<ThemeProvider theme={theme}><FlashcardsDashboardScreen /></ThemeProvider>);
+  it('renders the shared dashboard frame without quiz analytics', () => {
+    render(<ThemeProvider theme={theme}><FlashcardsDashboardScreen subjects={[]} activeSubjects={[]} onRetry={vi.fn()} onSelectSubject={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
-    expect(screen.getByText('Work in progress. Your flashcards dashboard is coming soon.')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
+    expect(screen.getByText('No subjects are available yet.')).toBeVisible();
+    expect(screen.queryByText(/score|average|completed quizzes/i)).not.toBeInTheDocument();
+  });
+
+  it('shows a continue carousel and all-subject grid without score metadata', () => {
+    const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b' };
+    render(<ThemeProvider theme={theme}><FlashcardsDashboardScreen
+      subjects={[{ subject, topicCount: 2, deckCount: 4, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
+      activeSubjects={[{ subject, topicCount: 2, deckCount: 4, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
+      onRetry={vi.fn()} onSelectSubject={vi.fn()}
+    /></ThemeProvider>);
+    expect(screen.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();
+    expect(screen.getAllByRole('button', { name: 'Open Anatomy' })).toHaveLength(2);
+    expect(screen.getByText('4 decks')).toBeVisible();
+    expect(screen.queryByText(/score/i)).not.toBeInTheDocument();
   });
 });

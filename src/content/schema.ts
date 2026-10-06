@@ -1,4 +1,4 @@
-import type { Choice, QuestionMetadata, RationaleMetadata } from '../domain/types';
+import type { Choice, FlashcardCard, QuestionMetadata, RationaleMetadata } from '../domain/types';
 
 export interface StoredSubject {
   id: string;
@@ -32,4 +32,26 @@ export interface StoredQuestionBank {
   subjects: StoredSubject[];
   quizzes: StoredQuiz[];
   questions: StoredQuestion[];
+}
+
+export interface StoredFlashcardTopic {
+  id: string;
+  subjectId: string;
+  name: string;
+}
+
+export interface StoredFlashcardDeck {
+  id: string;
+  topicId: string;
+  name: string;
+  description?: string;
+}
+
+export type StoredFlashcard = FlashcardCard;
+
+export interface StoredFlashcardBank {
+  schemaVersion: 1;
+  topics: StoredFlashcardTopic[];
+  decks: StoredFlashcardDeck[];
+  cards: StoredFlashcard[];
 }
