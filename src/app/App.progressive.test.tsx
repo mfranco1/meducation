@@ -175,7 +175,7 @@ describe('progressive dashboard statistics', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Start quiz' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
-    expect(await screen.findByText('Lazy question stem', undefined, { timeout: 10_000 })).toBeVisible();
+    await waitFor(() => expect(screen.getByText('Lazy question stem')).toBeVisible(), { timeout: 10_000 });
     expect(screen.getByText('Question 1 of 1')).toBeVisible();
     expect(new LocalAttemptRepository().getActive(quiz.id)).toBeDefined();
   }, 15_000);
