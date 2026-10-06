@@ -13,10 +13,12 @@ const cards = [
 const deck: FlashcardDeckSummary = { id: 'd1', subjectId: 's1', name: 'Deck', cardCount: 2, cardIds: ['f1', 'f2'] };
 function deferred<T>() {
   let resolve!: (value: T) => void;
-  const promise = new Promise<T>((done) => {
+  let reject!: (error: Error) => void;
+  const promise = new Promise<T>((done, fail) => {
     resolve = done;
+    reject = fail;
   });
-  return { promise, resolve };
+  return { promise, resolve, reject };
 }
 function setup() {
   const values = new Map<string, string>();
@@ -58,7 +60,60 @@ describe('flashcard session controller', () => {
     expect(loader.cancel).toHaveBeenCalledWith('cards:d1');
     expect(result.current.view.page).toBe('flashcards');
     expect(repository.getCheckpoint('d1')).toBeUndefined();
-    expect(result.current.launchErrorDeckId).toBeUndefined();
+    expect(result.current.loadingDeckId).toBeUndefined();
+  });
+
+  it('reports a current deck failure once and leaves progress unchanged for an action retry', async () => {
+    const onFailure = vi.fn();
+    const values = new Map<string, string>();
+    const repository = new LocalFlashcardProgressRepository({
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => values.set(key, value),
+    });
+    const loader = {
+      ensureCards: vi.fn().mockRejectedValue(new Error('fetch failed')),
+      listCards: vi.fn(() => cards),
+      cancel: vi.fn(),
+    };
+    const { result } = renderHook(() => useFlashcardSession(loader, repository, onFailure));
+    act(() => result.current.showSubject(subject));
+    await act(async () => {
+      await result.current.launchDeck(deck, subject);
+    });
+    expect(onFailure).toHaveBeenCalledOnce();
+    expect(onFailure).toHaveBeenCalledWith({
+      deck,
+      subject,
+      error: expect.objectContaining({ message: 'fetch failed' }),
+    });
+    expect(result.current.view.page).toBe('flashcards-subject');
+    expect(result.current.loadingDeckId).toBeUndefined();
+    expect(repository.getCheckpoint('d1')).toBeUndefined();
+    loader.ensureCards.mockResolvedValueOnce(cards);
+    await act(async () => {
+      await result.current.launchDeck(deck, subject);
+    });
+    expect(result.current.view.page).toBe('flashcards-study');
+    expect(onFailure).toHaveBeenCalledOnce();
+  });
+
+  it('does not report a failure from an abandoned launch', async () => {
+    const onFailure = vi.fn();
+    const pending = deferred<typeof cards>();
+    const loader = { ensureCards: vi.fn(() => pending.promise), listCards: vi.fn(() => cards), cancel: vi.fn() };
+    const repository = new LocalFlashcardProgressRepository({ getItem: () => null, setItem: vi.fn() });
+    const { result } = renderHook(() => useFlashcardSession(loader, repository, onFailure));
+    act(() => result.current.showSubject(subject));
+    let launch!: Promise<void>;
+    act(() => {
+      launch = result.current.launchDeck(deck, subject);
+    });
+    act(() => result.current.showDashboard());
+    await act(async () => {
+      pending.reject(new Error('stale failure'));
+      await launch.catch(() => undefined);
+    });
+    expect(onFailure).not.toHaveBeenCalled();
   });
 
   it('deduplicates the current launch and makes the latest deck selection win', async () => {

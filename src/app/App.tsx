@@ -44,7 +44,9 @@ function LearnerApp() {
   const progressView = useMemo(() => createProgressView(progressSnapshot), [progressSnapshot]);
   useEffect(() => { void loadRuntimeContent().catch(() => undefined); }, []);
   const session = useQuizSession(questionBank, attemptRepository);
-  const flashcards = useFlashcardSession();
+  const flashcards = useFlashcardSession(undefined, undefined, ({ deck, subject, error }) => {
+    toast.show({ id: `flashcard-load-${deck.id}`, title: 'Unable to load deck', message: <>{deck.name}: {contentLoadMessage(error)}</>, severity: 'error', position: 'bottom-right', ttlMs: null, closeButton: true, dismissPolicy: 'manual', scope: { type: 'screen', key: `flashcards-subject:${subject.id}` } });
+  });
   const flashcardContentVersion = useSyncExternalStore(runtimeFlashcardBank.subscribe, runtimeFlashcardBank.getSnapshot);
   const flashcardSubjects = runtimeFlashcardBank.listSubjects();
   const flashcardDashboardData = useMemo(
@@ -158,6 +160,7 @@ function LearnerApp() {
     {session.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error" onClose={session.clearPersistenceError}>{session.persistenceError}</Alert></Container>}
     {activeSection === 'flashcards' && view.page !== 'flashcards-study' && flashcards.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error">{flashcards.persistenceError}</Alert></Container>}
     {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
+    {currentFlashcardSubject && flashcards.loadingDeckId && <LinearProgress aria-label="Loading flashcard deck" />}
     <ScreenTransition screenId={screenIdentity(view)}>
     <ScreenLoadBoundary key={screenIdentity(view)} loadingLabel={loadingLabel} onLoadingChange={setScreenLoading}>
     {session.view.page === 'dashboard' && <DashboardScreen attempts={progressSnapshot.completed} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} loading={catalogState === 'idle' || catalogState === 'loading'} retrying={catalogState === 'retrying'} statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'} activeAttempts={Object.keys(progressSnapshot.active).length > 0} error={catalogState === 'error' ? catalogError : undefined} retryAt={questionBank.getCatalogRetryAt()} onRetry={() => {
@@ -182,16 +185,11 @@ function LearnerApp() {
       catalog={runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id)}
       checkpoints={flashcards.progress.checkpoints}
       loading={['idle', 'loading'].includes(runtimeFlashcardBank.getState(`catalog:${currentFlashcardSubject.id}`))}
-      error={runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`) ?? flashcards.launchError}
-      errorKind={flashcards.launchError ? 'cards' : 'catalog'}
+      error={runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`)}
       loadingDeckId={flashcards.loadingDeckId}
       onRetry={() => {
-        const error = runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`) ?? (flashcards.launchErrorDeckId ? runtimeFlashcardBank.getError(`cards:${flashcards.launchErrorDeckId}`) : undefined);
+        const error = runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`);
         if (error instanceof ContentLoadError && error.kind === 'revision') { window.location.reload(); return; }
-        if (flashcards.launchErrorDeckId) {
-          const deck = runtimeFlashcardBank.getDeck(flashcards.launchErrorDeckId);
-          if (deck) return flashcards.launchDeck(deck, currentFlashcardSubject);
-        }
         return runtimeFlashcardBank.ensureSubjectCatalog(currentFlashcardSubject.id).then(() => undefined, () => undefined);
       }}
       onBack={() => { runtimeFlashcardBank.cancel(`catalog:${currentFlashcardSubject.id}`); flashcards.showDashboard(); }}

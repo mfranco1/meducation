@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardContent, Chip, Skeleton, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
 import { useMemo } from 'react';
 import type { Subject } from '../../domain/types';
 import type { FlashcardCheckpoint } from '../../domain/flashcardStudy';
@@ -6,14 +6,14 @@ import type { FlashcardDeckSummary, FlashcardCatalogResponse } from '../../conte
 import { decksForSubject } from '../flashcards';
 import { SubjectBrowseLayout } from '../components/SubjectBrowseLayout';
 import { ContentRecoveryBanner } from '../components/ContentRecoveryBanner';
+import { LoadingSkeleton } from '../components/LoadingSkeleton';
 
-export function FlashcardSubjectScreen({ subject, catalog, checkpoints, loading = false, error, errorKind = 'catalog', loadingDeckId, onRetry, onBack, onSelectDeck }: {
+export function FlashcardSubjectScreen({ subject, catalog, checkpoints, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck }: {
   subject: Subject;
   catalog?: FlashcardCatalogResponse;
   checkpoints: Readonly<Record<string, FlashcardCheckpoint>>;
   loading?: boolean;
   error?: Error;
-  errorKind?: 'catalog' | 'cards';
   loadingDeckId?: string;
   onRetry: () => void | Promise<void>;
   onBack: () => void;
@@ -21,9 +21,9 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, loading 
 }) {
   const decks = useMemo(() => decksForSubject(catalog?.decks ?? [], checkpoints), [catalog?.decks, checkpoints]);
   return <>
-    {error && <ContentRecoveryBanner title={errorKind === 'cards' ? 'We can’t load this deck right now.' : `We can’t load flashcard decks for ${subject.name} right now.`} description="Your saved deck positions are safe. Please try again." error={error} onRetry={onRetry} />}
+    {error && <ContentRecoveryBanner title={`We can’t load flashcard decks for ${subject.name} right now.`} description="Your saved deck positions are safe. Please try again." error={error} onRetry={onRetry} />}
     <SubjectBrowseLayout subjectName={subject.name} onBack={onBack}>
-      {error || loading ? <Stack spacing={2} role="status" aria-busy={loading} aria-label={loading ? 'Loading flashcard decks' : undefined}>{Array.from({ length: 4 }, (_, index) => <Skeleton key={index} variant="rounded" height={92} />)}</Stack>
+      {error || loading ? <Stack spacing={2} role={loading ? 'status' : undefined} aria-busy={loading} aria-hidden={!loading} aria-label={loading ? 'Loading flashcard decks' : undefined}>{Array.from({ length: 4 }, (_, index) => <LoadingSkeleton key={index} variant="rounded" height={92} />)}</Stack>
         : decks.length === 0 ? <Typography color="text.secondary">No flashcard decks are available in this subject yet.</Typography>
           : <Stack spacing={2}>{decks.map(deck => <FlashcardDeckRow key={deck.id} deck={deck} checkpoints={checkpoints} loading={loadingDeckId === deck.id} onSelect={() => onSelectDeck(deck)} />)}</Stack>}
     </SubjectBrowseLayout>

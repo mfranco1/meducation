@@ -30,18 +30,34 @@ test('abandoned flashcard loads do not reopen study or create progress', async (
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
 });
 
-test('a failed flashcard deck request recovers with keyboard Retry', async ({ page }) => {
-  await page.route('**/api/v1/flashcards/decks/d-browser/cards*', (route) =>
-    route.fulfill({ status: 503, body: '{}' }),
-  );
+test('a failed flashcard deck request shows a toast and recovers through the deck action', async ({ page }) => {
+  let releaseFailure!: () => void;
+  const holdFailure = new Promise<void>((resolve) => {
+    releaseFailure = resolve;
+  });
+  let requestStarted!: () => void;
+  const started = new Promise<void>((resolve) => {
+    requestStarted = resolve;
+  });
+  await page.route('**/api/v1/flashcards/decks/d-browser/cards*', async (route) => {
+    requestStarted();
+    await holdFailure;
+    await route.fulfill({ status: 503, body: '{}' });
+  });
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await page.getByRole('button', { name: 'Study deck' }).click();
-  await expect(page.getByText('We can’t load this deck right now.')).toBeVisible();
+  await started;
+  await expect(page.getByRole('progressbar', { name: 'Loading flashcard deck' })).toBeVisible();
+  releaseFailure();
+  await expect(page.getByRole('progressbar', { name: 'Loading flashcard deck' })).toHaveCount(0);
+  await expect(page.getByRole('alert')).toContainText('Unable to load deck');
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Deck' })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v1'))).toBeNull();
   await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
-  const retry = page.getByRole('button', { name: 'Retry', exact: true });
+  const retry = page.getByRole('button', { name: 'Study deck', exact: true });
   await retry.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
@@ -52,7 +68,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
 }, testInfo) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
-  await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
   const dashboardScreenshot = testInfo.outputPath('flashcards-dashboard-desktop.png');
   await expect(page.getByTestId('screen-transition')).toHaveCSS('opacity', '1');
@@ -255,7 +271,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
     contentType: 'image/png',
   });
   await page.getByRole('button', { name: 'Flashcards' }).click();
-  await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
 
@@ -293,7 +309,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await expect(page.getByTestId('drawer-edge-toggle').first()).toBeFocused();
   await page.getByTestId('drawer-edge-toggle').first().click();
   await page.getByRole('button', { name: 'Flashcards' }).last().click();
-  await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Flashcards' }).first()).toHaveAttribute('aria-current', 'page');
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 
@@ -305,7 +321,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await expect(page.getByRole('dialog', { name: 'Leave or Abort this Test?' })).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Leave', exact: true }).click();
-  await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await page.getByRole('button', { name: 'Resume quiz' }).click();

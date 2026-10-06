@@ -23,6 +23,12 @@ export interface PendingDeckRestart {
   reason: 'missing-card' | 'changed-content';
 }
 
+export interface FlashcardLoadFailure {
+  deck: FlashcardDeckSummary;
+  subject: Subject;
+  error: Error;
+}
+
 export const flashcardProgressRepository = new LocalFlashcardProgressRepository();
 
 type FlashcardLoader = Pick<typeof runtimeFlashcardBank, 'ensureCards' | 'listCards' | 'cancel'>;
@@ -30,12 +36,11 @@ type FlashcardLoader = Pick<typeof runtimeFlashcardBank, 'ensureCards' | 'listCa
 export function useFlashcardSession(
   loader: FlashcardLoader = runtimeFlashcardBank,
   repository = flashcardProgressRepository,
+  onFailure?: (failure: FlashcardLoadFailure) => void,
 ) {
   const [view, setView] = useState<FlashcardsView>({ page: 'flashcards' });
   const [pendingRestart, setPendingRestart] = useState<PendingDeckRestart>();
   const [loadingDeckId, setLoadingDeckId] = useState<string>();
-  const [launchErrorDeckId, setLaunchErrorDeckId] = useState<string>();
-  const [launchError, setLaunchError] = useState<Error>();
   const [persistenceError, setPersistenceError] = useState<string>();
   const launching = useRef<{ deckId: string; token: symbol } | undefined>(undefined);
   const signature = useRef('');
@@ -46,8 +51,6 @@ export function useFlashcardSession(
     launching.current = undefined;
     if (pending) loader.cancel(`cards:${pending.deckId}`);
     setLoadingDeckId(undefined);
-    setLaunchErrorDeckId(undefined);
-    setLaunchError(undefined);
     setPendingRestart(undefined);
   }, [loader]);
 
@@ -86,7 +89,6 @@ export function useFlashcardSession(
     (subject: Subject) => {
       cancelLaunch();
       setPendingRestart(undefined);
-      setLaunchErrorDeckId(undefined);
       setView({ page: 'flashcards-subject', subject });
     },
     [cancelLaunch],
@@ -99,7 +101,6 @@ export function useFlashcardSession(
       const token = Symbol(deck.id);
       launching.current = { deckId: deck.id, token };
       setLoadingDeckId(deck.id);
-      setLaunchErrorDeckId(undefined);
       try {
         const cards = await loader.ensureCards(deck.id);
         if (launching.current?.token !== token) return;
@@ -126,8 +127,7 @@ export function useFlashcardSession(
         });
       } catch (error) {
         if (launching.current?.token === token) {
-          setLaunchErrorDeckId(deck.id);
-          setLaunchError(error instanceof Error ? error : new Error('Could not open this deck.'));
+          onFailure?.({ deck, subject, error: error instanceof Error ? error : new Error('Please try again or come back later.') });
         }
       } finally {
         if (launching.current?.token === token) {
@@ -136,7 +136,7 @@ export function useFlashcardSession(
         }
       }
     },
-    [cancelLaunch, loader, repository, runPersistence],
+    [cancelLaunch, loader, onFailure, repository, runPersistence],
   );
 
   const confirmRestart = useCallback(() => {
@@ -211,18 +211,11 @@ export function useFlashcardSession(
     showSubject(view.subject);
   }, [repository, runPersistence, showSubject, view]);
 
-  const clearLaunchError = useCallback(() => {
-    setLaunchErrorDeckId(undefined);
-    setLaunchError(undefined);
-  }, []);
-
   return {
     view,
     progress,
     pendingRestart,
     loadingDeckId,
-    launchErrorDeckId,
-    launchError,
     persistenceError: persistenceError ?? repository.getStorageError(),
     showDashboard,
     showSubject,
@@ -234,7 +227,6 @@ export function useFlashcardSession(
     toggleReveal,
     saveAndExit,
     finish,
-    clearLaunchError,
     cancelLaunch,
   };
 }

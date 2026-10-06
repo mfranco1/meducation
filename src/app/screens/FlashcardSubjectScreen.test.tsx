@@ -34,4 +34,21 @@ describe('FlashcardSubjectScreen', () => {
     render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={{ ...catalog, decks: [catalog.decks[1]] }} checkpoints={{}} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('button', { name: 'No cards yet' })).toBeDisabled();
   });
+
+  it('uses shared shimmer rows during catalog loading and retains them after catalog failure', () => {
+    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} loading onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    expect(screen.getByRole('status', { name: 'Loading flashcard decks' })).toHaveAttribute('aria-busy', 'true');
+    expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
+    rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} error={new Error('unavailable')} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    expect(screen.getByRole('alert')).toHaveTextContent('We can’t load flashcard decks for Anatomy right now.');
+    expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
+  });
+
+  it('keeps the deck list available while a deck launch is loading', () => {
+    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} loadingDeckId="d1" onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    expect(screen.getByRole('heading', { name: 'Brachial plexus' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Loading deck…' })).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: 'Study deck' })).toHaveLength(1);
+  });
 });
