@@ -70,6 +70,12 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await expect(brand).toBeVisible();
   const quizzesButton = page.getByRole('button', { name: 'Quizzes', exact: true });
   const quizzesTopExpanded = (await quizzesButton.boundingBox())!.y;
+  const separator = page.getByTestId('drawer-brand-separator');
+  const brandBounds = (await brand.boundingBox())!;
+  const expandedSeparatorBounds = (await separator.boundingBox())!;
+  expect(expandedSeparatorBounds.y + expandedSeparatorBounds.height / 2).toBeCloseTo(
+    (brandBounds.y + brandBounds.height + quizzesTopExpanded) / 2,
+  );
   const brandRadius = await brand.evaluate((element) => getComputedStyle(element).borderRadius);
   expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
   const edgeToggle = page.getByTestId('drawer-edge-toggle').first();
@@ -108,6 +114,11 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   const aside = page.getByLabel('Meducation navigation');
   await expect.poll(async () => (await aside.boundingBox())?.width).toBe(64);
   expect((await quizzesButton.boundingBox())!.y).toBe(quizzesTopExpanded);
+  const collapsedSeparatorBounds = (await separator.boundingBox())!;
+  expect(collapsedSeparatorBounds.y + collapsedSeparatorBounds.height / 2).toBeCloseTo(
+    (brandBounds.y + brandBounds.height + quizzesTopExpanded) / 2,
+  );
+  expect(collapsedSeparatorBounds.width).toBeLessThan(expandedSeparatorBounds.width);
   expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
   await noHoverChange(brand);
   await noHoverChange(quizzesButton);

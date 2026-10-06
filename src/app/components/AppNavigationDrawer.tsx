@@ -6,7 +6,11 @@ import { useTheme } from '@mui/material/styles';
 import { AppBrand } from './AppHeader';
 import { DrawerEdgeToggle } from './drawer/DrawerEdgeToggle';
 import { DrawerSurface } from './drawer/DrawerSurface';
-import { learnerDrawerCollapsedWidth, learnerDrawerExpandedWidth } from './drawer/drawerDimensions';
+import {
+  learnerDrawerCollapsedWidth,
+  learnerDrawerEdgeToggleOffset,
+  learnerDrawerExpandedWidth,
+} from './drawer/drawerDimensions';
 
 export type LearnerSection = 'quizzes' | 'flashcards';
 
@@ -77,6 +81,24 @@ export function AppNavigationDrawer({
     const contentId = `learner-navigation-items${overlay ? '-overlay' : ''}`;
     return (
       <DrawerSurface
+        separator={
+          <Box
+            data-testid="drawer-brand-separator"
+            aria-hidden="true"
+            sx={{
+              position: 'absolute',
+              top: `${learnerDrawerEdgeToggleOffset}px`,
+              left: compact ? 8 : 16,
+              right: 20,
+              height: '1px',
+              transform: 'translateY(-50%)',
+              bgcolor: '#eee5df',
+              opacity: 0.8,
+              pointerEvents: 'none',
+              zIndex: 1,
+            }}
+          />
+        }
         edgeToggle={
           <DrawerEdgeToggle
             expanded={overlay || (desktop && expanded)}

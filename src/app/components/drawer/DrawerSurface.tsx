@@ -1,7 +1,15 @@
 import type { ReactNode } from 'react';
 import { Box } from '@mui/material';
 
-export function DrawerSurface({ children, edgeToggle }: { children: ReactNode; edgeToggle?: ReactNode }) {
+export function DrawerSurface({
+  children,
+  edgeToggle,
+  separator,
+}: {
+  children: ReactNode;
+  edgeToggle?: ReactNode;
+  separator?: ReactNode;
+}) {
   return (
     <Box sx={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
       <Box
@@ -16,6 +24,7 @@ export function DrawerSurface({ children, edgeToggle }: { children: ReactNode; e
       >
         {children}
       </Box>
+      {separator}
       {edgeToggle}
     </Box>
   );
