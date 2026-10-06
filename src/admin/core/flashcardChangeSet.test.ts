@@ -12,6 +12,22 @@ const source: StoredFlashcardBank = {
 };
 
 describe('flashcard admin change sets', () => {
+  it('updates and moves entities across parents with stable IDs and parent-scoped ordering', () => {
+    const updated = applyFlashcardOperations(source, storedQuestionBank.subjects, [
+      { op: 'topic.update', id: 't-two', value: { id: 't-two', subjectId: 's2', name: 'Moved topic' } },
+      { op: 'deck.update', id: 'd-two', value: { id: 'd-two', topicId: 't-two', name: 'Moved deck' } },
+      { op: 'card.create', value: { id: 'f-two', deckId: 'd-two', front: 'Second front', back: 'Second back' } },
+      { op: 'card.update', id: 'f-one', value: { ...source.cards[0], deckId: 'd-two', back: 'Reviewed' } },
+      { op: 'card.move', id: 'f-two', first: true },
+    ]);
+    expect(updated.topics[1].subjectId).toBe('s2');
+    expect(updated.decks[1].topicId).toBe('t-two');
+    expect(updated.cards.map(card => card.id)).toEqual(['f-two', 'f-one']);
+    expect(updated.cards[1]).toMatchObject({ deckId: 'd-two', front: 'Front', back: 'Reviewed' });
+    expect(() => applyFlashcardOperations(source, storedQuestionBank.subjects, [{ op: 'deck.create', value: { id: 'd-new', topicId: 't-two', name: 'New' }, afterId: 'd-one' }])).toThrow('another parent');
+    expect(() => applyFlashcardOperations(source, storedQuestionBank.subjects, [{ op: 'card.update', id: 'f-one', value: { ...source.cards[0], id: 'f-renamed' } }])).toThrow('IDs cannot be changed');
+    expect(() => applyFlashcardOperations(source, storedQuestionBank.subjects, [{ op: 'card.update', id: 'f-one', value: { ...source.cards[0], front: '<script>bad</script>' } }])).toThrow('unsupported HTML');
+  });
   it('replays create, move, and explicit cascade operations in canonical order', () => {
     const operations: FlashcardAdminOperation[] = [
       { op: 'topic.create', value: { id: 't-three', subjectId: 's1', name: 'Third' }, afterId: 't-one' },

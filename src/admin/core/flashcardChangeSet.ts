@@ -1,7 +1,8 @@
 import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck, StoredFlashcardTopic } from '../../content/schema';
 import type { Subject } from '../../domain/types';
-import { validateStoredFlashcardBank } from '../../content/validate';
+import { validateFlashcardBank } from '../../content/flashcardValidation';
 import { flashcardContentRevision } from '../../content/flashcardBank';
+import { sha256Text } from '../../domain/contentDigest';
 
 type Kind = 'topic' | 'deck' | 'card';
 type EntityFor<K extends Kind> = K extends 'topic' ? StoredFlashcardTopic : K extends 'deck' ? StoredFlashcardDeck : StoredFlashcard;
@@ -103,7 +104,7 @@ export function applyFlashcardOperations(source: StoredFlashcardBank, subjects: 
       items.splice(index, 1);
     } else throw new Error(`Unsupported flashcard operation ${operation.op}.`);
   }
-  const errors = validateStoredFlashcardBank(bank, [...subjects]).filter(issue => issue.level === 'error');
+  const errors = validateFlashcardBank(bank, subjects).filter(issue => issue.level === 'error');
   if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
   return bank;
 }
@@ -130,10 +131,8 @@ export function isFlashcardAdminChangeSet(value: unknown): value is FlashcardAdm
 }
 
 export async function replayFlashcardAdminChangeSet(source: StoredFlashcardBank, baseSubjects: readonly Subject[], changeSet: FlashcardAdminChangeSet, resultSubjects: readonly Subject[] = baseSubjects): Promise<StoredFlashcardBank> {
-  const subjectHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(baseSubjects)));
-  const subjectRevision = `sha256-${[...new Uint8Array(subjectHash)].map(byte => byte.toString(16).padStart(2, '0')).join('')}`;
-  const resultSubjectHash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(JSON.stringify(resultSubjects)));
-  const resultSubjectRevision = `sha256-${[...new Uint8Array(resultSubjectHash)].map(byte => byte.toString(16).padStart(2, '0')).join('')}`;
+  const subjectRevision = await sha256Text(JSON.stringify(baseSubjects));
+  const resultSubjectRevision = await sha256Text(JSON.stringify(resultSubjects));
   const revision = await flashcardContentRevision(source, [...baseSubjects]);
   if (revision !== changeSet.base.revision || subjectRevision !== changeSet.base.subjectRevision) throw new Error('This flashcard change set is based on stale content.');
   const result = applyFlashcardOperations(source, resultSubjects, changeSet.operations);

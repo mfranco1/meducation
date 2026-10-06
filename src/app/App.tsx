@@ -120,6 +120,8 @@ function LearnerApp() {
   };
   const handleNavigation = (section: LearnerSection) => {
     cancel();
+    flashcards.cancelLaunch();
+    runtimeFlashcardBank.cancelAll();
     const destination = section === 'quizzes' ? 'dashboard' : 'flashcards';
     if (session.view.page === 'quiz') {
       if (destination === 'flashcards') { flashcards.showDashboard(); void loadRuntimeFlashcardSubjects().catch(() => undefined); }
@@ -154,6 +156,7 @@ function LearnerApp() {
   const currentPage = view.page === 'dashboard' ? 'quizzes' : view.page === 'flashcards' ? 'flashcards' : undefined;
   return <AppShell sidebar={<AppNavigationDrawer active={activeSection} currentPage={currentPage} onNavigate={handleNavigation} />} busy={screenLoading}>
     {session.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error" onClose={session.clearPersistenceError}>{session.persistenceError}</Alert></Container>}
+    {activeSection === 'flashcards' && view.page !== 'flashcards-study' && flashcards.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error">{flashcards.persistenceError}</Alert></Container>}
     {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
     <ScreenTransition screenId={screenIdentity(view)}>
     <ScreenLoadBoundary key={screenIdentity(view)} loadingLabel={loadingLabel} onLoadingChange={setScreenLoading}>
@@ -180,8 +183,8 @@ function LearnerApp() {
       checkpoints={flashcards.progress.checkpoints}
       selectedTopicId={view.page === 'flashcards-subject' ? view.topicId : undefined}
       loading={['idle', 'loading'].includes(runtimeFlashcardBank.getState(`catalog:${currentFlashcardSubject.id}`))}
-      error={runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`) ?? (flashcards.launchErrorDeckId ? runtimeFlashcardBank.getError(`cards:${flashcards.launchErrorDeckId}`) : undefined)}
-      errorKind={flashcards.launchErrorDeckId && runtimeFlashcardBank.getError(`cards:${flashcards.launchErrorDeckId}`) ? 'cards' : 'catalog'}
+      error={runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`) ?? flashcards.launchError}
+      errorKind={flashcards.launchError ? 'cards' : 'catalog'}
       loadingDeckId={flashcards.loadingDeckId}
       onRetry={() => {
         const error = runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`) ?? (flashcards.launchErrorDeckId ? runtimeFlashcardBank.getError(`cards:${flashcards.launchErrorDeckId}`) : undefined);

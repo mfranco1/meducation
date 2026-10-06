@@ -1,13 +1,22 @@
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../domain/flashcardStudy';
-import { decodeFlashcardProgress, flashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
+import { decodeFlashcardProgress, flashcardProgressKey } from './flashcardProgressCodec';
 import type { StoragePort } from './progressCodec';
 
 const unavailableMessage = 'Flashcard progress could not be saved. Check browser storage and try again.';
 const conflictMessage = 'Flashcard progress changed in another tab. Reload this page before continuing.';
 const corruptMessage = 'Saved flashcard progress could not be read safely. The original browser data has been kept.';
 
+function freezeProgress(state: FlashcardProgressState): FlashcardProgressState {
+  Object.values(state.checkpoints).forEach((checkpoint) => Object.freeze(checkpoint));
+  Object.freeze(state.checkpoints);
+  return Object.freeze(state);
+}
+
 export class FlashcardPersistenceError extends Error {
-  constructor(readonly kind: 'unavailable' | 'conflict' | 'corrupt', message: string) {
+  constructor(
+    readonly kind: 'unavailable' | 'conflict' | 'corrupt',
+    message: string,
+  ) {
     super(message);
     this.name = 'FlashcardPersistenceError';
   }
@@ -36,38 +45,44 @@ export class LocalFlashcardProgressRepository {
   private state(): FlashcardProgressState {
     try {
       const storage = this.storage();
-      if (this.cached) return this.cached;
+      if (this.cached && this.storageError !== unavailableMessage) return this.cached;
       const raw = storage.getItem(flashcardProgressKey);
       if (raw !== null) {
         let parsed: unknown;
-        try { parsed = JSON.parse(raw) as unknown; } catch { parsed = undefined; }
+        try {
+          parsed = JSON.parse(raw) as unknown;
+        } catch {
+          parsed = undefined;
+        }
         const state = decodeFlashcardProgress(parsed);
         if (!state) {
           this.storageError = corruptMessage;
           if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
-          return this.cached = { schemaVersion: 1, revision: 'corrupt', checkpoints: {} };
+          return (this.cached = freezeProgress({ schemaVersion: 1, revision: 'corrupt', checkpoints: {} }));
         }
         if (this.observedRevision === undefined) this.observedRevision = state.revision;
         this.storageError = undefined;
-        return this.cached = state;
+        return (this.cached = freezeProgress(state));
       }
       if (this.observedRevision === undefined) this.observedRevision = null;
       this.storageError = undefined;
-      return this.cached = loadFlashcardProgress(storage)!;
+      return (this.cached = freezeProgress({ schemaVersion: 1, revision: 'initial', checkpoints: {} }));
     } catch {
       this.storageError = unavailableMessage;
-      return this.cached ??= { schemaVersion: 1, revision: 'unavailable', checkpoints: {} };
+      return (this.cached ??= freezeProgress({ schemaVersion: 1, revision: 'unavailable', checkpoints: {} }));
     }
   }
 
   getSnapshot = () => this.state();
   getStorageError = () => this.storageError;
-  getCheckpoint(deckId: string) { return this.state().checkpoints[deckId]; }
+  getCheckpoint(deckId: string) {
+    return this.state().checkpoints[deckId];
+  }
 
   private readonly onStorage = (event: StorageEvent) => {
     if (event.key !== null && event.key !== flashcardProgressKey) return;
     this.cached = undefined;
-    this.listeners.forEach(listener => listener());
+    this.listeners.forEach((listener) => listener());
   };
 
   subscribe = (listener: () => void) => {
@@ -87,21 +102,29 @@ export class LocalFlashcardProgressRepository {
 
   private commit(change: (state: FlashcardProgressState) => FlashcardProgressState | undefined) {
     const state = this.state();
-    if (this.storageError) throw new FlashcardPersistenceError(this.storageError === corruptMessage ? 'corrupt' : 'unavailable', this.storageError);
+    if (this.storageError)
+      throw new FlashcardPersistenceError(
+        this.storageError === corruptMessage ? 'corrupt' : 'unavailable',
+        this.storageError,
+      );
     try {
       const storage = this.storage();
       const raw = storage.getItem(flashcardProgressKey);
-      const current = raw === null ? null : decodeFlashcardProgress(JSON.parse(raw) as unknown)?.revision ?? 'corrupt';
+      const current =
+        raw === null ? null : (decodeFlashcardProgress(JSON.parse(raw) as unknown)?.revision ?? 'corrupt');
       if (current !== this.observedRevision) throw new FlashcardPersistenceError('conflict', conflictMessage);
       const next = change(state);
       if (!next) return;
       next.revision = crypto.randomUUID();
+      if (!decodeFlashcardProgress(next))
+        throw new FlashcardPersistenceError('corrupt', 'Invalid flashcard progress was not saved.');
       const serialized = JSON.stringify(next);
       storage.setItem(flashcardProgressKey, serialized);
-      if (storage.getItem(flashcardProgressKey) !== serialized) throw new FlashcardPersistenceError('unavailable', unavailableMessage);
+      if (storage.getItem(flashcardProgressKey) !== serialized)
+        throw new FlashcardPersistenceError('unavailable', unavailableMessage);
       this.observedRevision = next.revision;
-      this.cached = next;
-      this.listeners.forEach(listener => listener());
+      this.cached = freezeProgress(next);
+      this.listeners.forEach((listener) => listener());
     } catch (error) {
       if (error instanceof FlashcardPersistenceError) throw error;
       throw new FlashcardPersistenceError('unavailable', unavailableMessage);
@@ -109,11 +132,14 @@ export class LocalFlashcardProgressRepository {
   }
 
   saveCheckpoint(checkpoint: FlashcardCheckpoint) {
-    this.commit(state => ({ ...state, checkpoints: { ...state.checkpoints, [checkpoint.deckId]: checkpoint } }));
+    this.commit((state) => ({
+      ...state,
+      checkpoints: { ...state.checkpoints, [checkpoint.deckId]: { ...checkpoint } },
+    }));
   }
 
   clearCheckpoint(deckId: string) {
-    this.commit(state => {
+    this.commit((state) => {
       if (!state.checkpoints[deckId]) return undefined;
       const checkpoints = { ...state.checkpoints };
       delete checkpoints[deckId];

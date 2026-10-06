@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { StoredQuestionBank } from '../content/schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema';
 import { serializeBank } from './core/serializeBank';
 import type { AdminChangeSet } from './core/types';
 import type { AdminQuestionBankGateway } from './data/AdminQuestionBankGateway';
@@ -15,6 +15,30 @@ const bank = (): StoredQuestionBank => ({
 });
 
 describe('admin editor workflows', () => {
+  it('stages coordinated snapshots and preserves a declined quiz draft', async () => {
+    const source = bank();
+    source.subjects.push({ id: 's2', name: 'Second', accent: '#222222' });
+    const originalCards: StoredFlashcardBank = { schemaVersion: 1, topics: [{ id: 't1', subjectId: 's1', name: 'Topic' }], decks: [], cards: [] };
+    const movedCards: StoredFlashcardBank = { ...originalCards, topics: [{ ...originalCards.topics[0], subjectId: 's2' }] };
+    const gateway = new InMemoryQuestionBankGateway(source, originalCards);
+    const confirm = vi.fn().mockReturnValue(false);
+    const { result } = renderHook(() => useAdminEditor(gateway, { confirm }));
+    await waitFor(() => expect(result.current.snapshot).toBeDefined());
+    const changeSet: AdminChangeSet = { changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: result.current.snapshot!.revision }, reason: 'Move shared content', operations: [{ op: 'subject.delete', id: 's1', cascade: true }] };
+    act(() => result.current.editRecord('Unstaged quiz draft'));
+    await act(async () => { await expect(result.current.stageCoordinatedImport(changeSet, movedCards)).rejects.toThrow('draft was kept'); });
+    expect(result.current.editor).toBe('Unstaged quiz draft');
+    expect(result.current.snapshot?.bank).toEqual(source);
+    confirm.mockReturnValue(true);
+    await act(async () => { await result.current.stageCoordinatedImport(changeSet, movedCards); });
+    expect(result.current.snapshot?.bank.subjects.map(subject => subject.id)).toEqual(['s2']);
+    expect(result.current.hasAppliedChanges).toBe(true);
+    expect(result.current.dirty).toBe(true);
+    expect(result.current.editor).toBe('');
+    act(() => result.current.markCoordinatedExport());
+    expect(result.current.dirty).toBe(false);
+    expect(result.current.exported).toBe(true);
+  });
   it('stages, exports, and undoes a record edit without changing the initial export bytes', async () => {
     const source = bank();
     const gateway = new InMemoryQuestionBankGateway(source);

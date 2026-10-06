@@ -1,17 +1,80 @@
 import { expect, test } from '@playwright/test';
 
+test('abandoned flashcard loads do not reopen study or create progress', async ({ page }) => {
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
+  let requested!: () => void;
+  const requestedPromise = new Promise<void>((resolve) => {
+    requested = resolve;
+  });
+  await page.route('**/api/v1/flashcards/decks/d-browser/cards*', async (route) => {
+    requested();
+    await held;
+    await route.continue().catch(() => undefined);
+  });
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await page.getByRole('button', { name: 'Study deck' }).click();
+  await requestedPromise;
+  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  release();
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v1'))).toBeNull();
+  await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await page.getByRole('button', { name: 'Study deck' }).click();
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+});
+
+test('a failed flashcard deck request recovers with keyboard Retry', async ({ page }) => {
+  await page.route('**/api/v1/flashcards/decks/d-browser/cards*', (route) =>
+    route.fulfill({ status: 503, body: '{}' }),
+  );
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await page.getByRole('button', { name: 'Study deck' }).click();
+  await expect(page.getByText('We can’t load this deck right now.')).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v1'))).toBeNull();
+  await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
+  const retry = page.getByRole('button', { name: 'Retry', exact: true });
+  await retry.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+});
+
 test('flashcards browse, filter, resume, and finish without quiz analytics', async ({ page }, testInfo) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await expect(page.getByRole('heading', { name: 'Flashcards' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
+  const dashboardScreenshot = testInfo.outputPath('flashcards-dashboard-desktop.png');
+  await expect(page.getByTestId('screen-transition')).toHaveCSS('opacity', '1');
+  await page.screenshot({ path: dashboardScreenshot });
   await testInfo.attach('flashcards-dashboard-desktop.png', {
-    body: await page.screenshot(),
+    path: dashboardScreenshot,
     contentType: 'image/png',
   });
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
   await expect(page.getByText('Upper limb · 2 cards')).toBeVisible();
-  await testInfo.attach('flashcard-subject-desktop.png', { body: await page.screenshot(), contentType: 'image/png' });
+  await expect(page.getByRole('combobox', { name: 'Topic' })).toContainText('All Topics');
+  const subjectScreenshot = testInfo.outputPath('flashcard-subject-desktop.png');
+  await expect(page.getByTestId('screen-transition')).toHaveCSS('opacity', '1');
+  await page.screenshot({ path: subjectScreenshot });
+  await testInfo.attach('flashcard-subject-desktop.png', { path: subjectScreenshot, contentType: 'image/png' });
+  await page.getByRole('combobox', { name: 'Topic' }).click();
+  await page.getByRole('option', { name: 'Review later (0)' }).click();
+  await expect(page.getByText('No decks are available in this topic yet.')).toBeVisible();
+  await page.getByRole('combobox', { name: 'Topic' }).click();
+  await page.getByRole('option', { name: 'All Topics', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Study deck' })).toBeVisible();
+  await page.getByRole('combobox', { name: 'Topic' }).click();
+  await page.getByRole('option', { name: 'Upper limb (1)' }).click();
   const studyButton = page.getByRole('button', { name: 'Study deck' });
   await studyButton.focus();
   await page.keyboard.press('Enter');
@@ -20,7 +83,9 @@ test('flashcards browse, filter, resume, and finish without quiz analytics', asy
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
-  await testInfo.attach('flashcard-study-mobile.png', { body: await page.screenshot(), contentType: 'image/png' });
+  const studyScreenshot = testInfo.outputPath('flashcard-study-mobile.png');
+  await page.screenshot({ path: studyScreenshot });
+  await testInfo.attach('flashcard-study-mobile.png', { path: studyScreenshot, contentType: 'image/png' });
   await page.setViewportSize({ width: 1280, height: 720 });
   const nextButton = page.getByRole('button', { name: 'Next' });
   await nextButton.focus();
@@ -29,6 +94,12 @@ test('flashcards browse, filter, resume, and finish without quiz analytics', asy
   await expect(page.getByRole('button', { name: 'Finish deck' })).toBeFocused();
   await page.getByRole('button', { name: 'Save and exit' }).click();
   await expect(page.getByRole('button', { name: 'Resume deck' })).toBeVisible();
+  await expect(page.getByText('Card 2 of 2')).toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Topic' })).toContainText('Upper limb (1)');
+  await page.reload();
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  await expect(page.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Resume deck' }).click();
   await expect(page.getByText('What is the terminal nerve of the posterior cord?')).toBeVisible();

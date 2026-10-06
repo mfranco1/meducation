@@ -24,6 +24,8 @@ export function AdminApp() {
     chooseBulkTarget, chooseBulkSubject, chooseBulkQuiz, showSingle, editRecord, editReason,
     stageSingle, validateBulkDraft, stageValidatedBulk, importChangeSetFile,
     stageImportedChangeSet, stageDelete, undo, reset, exportFiles,
+    stageCoordinatedImport,
+    markCoordinatedExport,
   } = useAdminEditor(gateway);
   const importFileRef = useRef<HTMLInputElement>(null);
   const bulkSubjectId = bulkTarget.kind === 'newSubject' ? undefined : bulkTarget.subjectId;
@@ -63,7 +65,9 @@ export function AdminApp() {
       <Button variant={section === 'quizzes' ? 'contained' : 'outlined'} onClick={() => setSection('quizzes')}>Quizzes</Button>
       <Button variant={section === 'flashcards' ? 'contained' : 'outlined'} onClick={() => setSection('flashcards')}>Flashcards</Button>
     </Stack>
-    <Box sx={{ display: section === 'flashcards' ? 'block' : 'none' }}><FlashcardAdminPanel subjects={snapshot.bank.subjects} onBankChange={bank => gateway.setFlashcardBank(bank)} quizRevision={snapshot.revision} originalQuizRevision={originalRevision} quizChangesStaged={hasAppliedChanges} /></Box>
+    <Box sx={{ display: section === 'flashcards' ? 'block' : 'none' }}><FlashcardAdminPanel subjects={snapshot.bank.subjects} onBankChange={bank => gateway.setFlashcardBank(bank)} quizRevision={snapshot.revision} originalQuizRevision={originalRevision} quizChangesStaged={hasAppliedChanges}
+      quizBank={snapshot.bank} quizChangeSet={hasAppliedChanges ? { changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: originalRevision }, reason, operations: gateway.appliedOperations() } : undefined}
+      onStagePairedImport={stageCoordinatedImport} onPairedExport={markCoordinatedExport} externalBusy={Boolean(busy)} /></Box>
     {section === 'quizzes' &&
     <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="stretch">
       <AdminNavigatorPanel bank={snapshot.bank} selection={selection} selectedSubjectId={selectedSubject?.id} selectedQuizId={selectedQuiz?.id} filter={filter} setFilter={setFilter} loadEntity={loadEntity} loadNew={loadNew} />

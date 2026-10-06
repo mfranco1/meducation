@@ -87,6 +87,20 @@ def test_flashcard_revision_changes_when_shared_subject_metadata_changes(tmp_pat
     assert JsonFlashcardCatalogRepository(flashcard_path, changed).revision != original
 
 
+def test_flashcard_catalog_keeps_canonical_interleaved_deck_order(tmp_path, quiz_bank: dict, flashcard_bank: dict) -> None:
+    from meducation_api.repositories.question_bank import JsonQuestionBankRepository
+
+    quiz_path, flashcard_path = tmp_path / "quiz.json", tmp_path / "flashcards.json"
+    flashcard_bank["decks"].reverse()
+    flashcard_bank["decks"].append({"id": "d-extra", "topicId": "t-empty", "name": "Extra"})
+    write_json(quiz_path, quiz_bank)
+    write_json(flashcard_path, flashcard_bank)
+    repository = JsonFlashcardCatalogRepository(flashcard_path, JsonQuestionBankRepository(quiz_path).list_subjects())
+    expected = ["d-empty", "d-cranial", "d-extra"]
+    assert [deck.id for deck, _ in repository.list_catalog("s1")[1]] == expected
+    assert repository.list_subjects()[0].deckIds == expected
+
+
 def test_flashcard_api_catalog_cards_revision_and_missing_routes(tmp_path, quiz_bank: dict, flashcard_bank: dict) -> None:
     quiz_path = tmp_path / "quiz.json"
     flashcard_path = tmp_path / "flashcards.json"

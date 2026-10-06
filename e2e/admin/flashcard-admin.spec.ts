@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 import { mkdir, readFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
+import { dirname } from 'node:path';
 
 test('stages topic, deck, and card CRUD and previews an exported replay', async ({ page }, testInfo) => {
   const downloads: import('@playwright/test').Download[] = [];
@@ -43,10 +43,51 @@ test('stages topic, deck, and card CRUD and previews an exported replay', async 
   const exported = JSON.parse(await readFile(changeSetPath, 'utf8')) as { operations: Array<{ op: string }> };
   expect(exported.operations.map((operation) => operation.op)).toEqual(['topic.create', 'deck.create', 'card.create']);
 
+  await expect(page.getByRole('button', { name: 'Reset' })).toBeEnabled();
+  await page.getByRole('button', { name: 'Reset' }).click();
   await page.getByRole('button', { name: 'Import change set' }).click();
   await page.locator('input[type="file"]').last().setInputFiles(changeSetPath);
   await expect(page.getByText('Import preview')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Resulting flashcard bank' })).toContainText('Admin back');
   await page.getByRole('button', { name: 'Stage import' }).click();
   await expect(page.getByRole('button', { name: 'Export flashcard JSON and change set' })).toBeEnabled();
+
+  await page.getByRole('button', { name: /Admin front Card/ }).click();
+  await editor.fill(JSON.stringify({ ...card, front: 'Admin front', back: 'Updated admin back' }, null, 2));
+  await page.getByRole('button', { name: 'Stage record' }).click();
+  await page.getByRole('button', { name: 'Add card' }).first().click();
+  const secondCard = JSON.parse(await editor.inputValue()) as typeof card;
+  await editor.fill(JSON.stringify({ ...secondCard, front: 'Second front', back: 'Second back' }, null, 2));
+  await page.getByRole('button', { name: 'Stage record' }).click();
+  await page.getByRole('button', { name: 'Move up' }).click();
+  await page.getByRole('button', { name: 'Add deck' }).first().click();
+  const secondDeck = JSON.parse(await editor.inputValue()) as typeof deck;
+  await editor.fill(JSON.stringify({ ...secondDeck, name: 'Destination deck' }, null, 2));
+  await page.getByRole('button', { name: 'Stage record' }).click();
+  await page.getByRole('button', { name: /Second front Card/ }).click();
+  await editor.fill(
+    JSON.stringify({ ...secondCard, deckId: secondDeck.id, front: 'Second front', back: 'Second back' }, null, 2),
+  );
+  await page.getByRole('button', { name: 'Stage record' }).click();
+  await expect(page.getByRole('button', { name: 'Destination deck 1 cards' })).toBeVisible();
+
+  await page.getByRole('button', { name: /Admin browser deck/ }).click();
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('1 card(s)');
+    await dialog.accept();
+  });
+  await page.getByRole('button', { name: 'Delete', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Admin front Card/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Undo', exact: true }).click();
+  await expect(page.getByRole('button', { name: /Admin front Card/ })).toBeVisible();
+  await page.getByRole('button', { name: 'Export flashcard JSON and change set' }).click();
+  await expect.poll(() => downloads.length).toBe(4);
+  const finalBank = downloads.filter((item) => item.suggestedFilename() === 'flashcardBank.generated.json').at(-1)!;
+  const finalBankPath = testInfo.outputPath('final-flashcard-bank.json');
+  await finalBank.saveAs(finalBankPath);
+  const content = JSON.parse(await readFile(finalBankPath, 'utf8')) as {
+    cards: Array<{ id: string; deckId: string; back: string }>;
+  };
+  expect(content.cards.find((item) => item.id === card.id)?.back).toBe('Updated admin back');
+  expect(content.cards.find((item) => item.id === secondCard.id)?.deckId).toBe(secondDeck.id);
 });

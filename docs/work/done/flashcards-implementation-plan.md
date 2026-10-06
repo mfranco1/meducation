@@ -1,6 +1,6 @@
 # Flashcards dashboard, normalized content, and admin implementation plan
 
-Status: implementation complete; normalized content, learner workflow, API delivery, local admin CRUD/import/export, and validation are implemented.
+Status: implementation and automated acceptance checks complete after a corrective audit; manual assistive-technology release QA remains unverified. See [audit findings](flashcards-implementation-audit.md).
 Created: 2026-10-06.
 
 ## Outcome and scope
@@ -193,7 +193,7 @@ Gate: end-to-end start → reveal → advance → exit → reload → resume →
 - [x] Require explicit cascades for deleting nonempty decks/topics and show affected counts. Block subject removal while topics reference it; deliberately deleting/moving topics first allows the coordinated quiz subject change.
 - [x] Coordinate staged subject and flashcard snapshots for validation. Switching authoring sections retains staged edits.
 - [x] Export `flashcardBank.generated.json` plus a reasoned operation change set. Flashcard-only changes do not export a rewritten quiz bank; a manifest identifies revisions when shared subjects are also staged.
-- [x] Add a typed operation replay validator and an import-preview/stage flow that checks flashcard and subject base/result revisions, validates final foreign keys, and rejects stale imports. Shared-subject changes must be imported/staged as the matching pair of change sets.
+- [x] Add a typed operation replay validator and an import-preview/stage flow that checks flashcard and subject base/result revisions, validates final foreign keys, and rejects stale imports. Shared-subject changes are exported in a coordinated bundle and imported/staged atomically as a validated pair, including subject removal with topic relocation.
 - [x] Keep admin local and omitted from normal production builds.
 
 Gate: author a topic/deck with cards, edit/move/reorder it, export/reload, and delete with explicit cascade. Invalid mixed batches roll back fully; stale imports/previews fail without mutation; quiz editing remains operational.
@@ -204,15 +204,15 @@ Gate: author a topic/deck with cards, edit/move/reorder it, export/reload, and d
 - [x] Add shared TypeScript/Python flashcard contract fixtures, including optional fields, foreign keys, ordering, and revision parity; both implementations derive `sha256-a601a3…a8104bd10` for the same fixture snapshot.
 - [x] Extend Playwright fixtures and flows for study/resume/finish, topic selection, and coexistence with saved quizzes. Existing retry/cancellation/changed-content guarantees have focused runtime and repository tests; a dedicated admin browser test covers CRUD staging and exported replay preview.
 - [x] Check mobile/desktop layouts, keyboard access, accessible role/label queries, reduced motion, long card content, math/images, and zero/one/many active subjects through component and browser coverage. Playwright artifacts capture dashboard, subject, and mobile study layouts.
-- [x] Run final `npm run lint`, `npm run format:check`, `npm test`, `npm run validate:content`, and default plus admin-enabled `npm run build`. `npm run test:e2e` passed all nine learner tests including flashcard study/resume/finish, mobile study view, reduced motion, keyboard focus transfer, math rendering, and layout screenshots; `npm run test:e2e:admin` passed its CRUD/export replay workflow.
+- [x] Run final `npm run lint`, `npm run format:check`, `npm test`, `npm run validate:content`, and default plus admin-enabled `npm run build`. `npm run test:e2e` passed all eleven learner tests including flashcard study/resume/finish, mobile study view, reduced motion, keyboard focus transfer, math rendering, and layout screenshots; `npm run test:e2e:admin` passed its CRUD/export replay workflow.
 - [x] For backend changes, run `.venv/bin/python -m pytest backend/tests -q`, `.venv/bin/ruff check backend/src backend/tests`, and `.venv/bin/mypy backend/src`.
 - [x] Verify default production build excludes admin, explicitly enabled admin builds, API/local adapters agree, and existing canonical quiz content/provenance/IDs/order remain unchanged. Run `git diff --check`.
 - [x] Update architecture, product, design-system, content-management, testing, and flashcard-schema docs; point question-schema docs to shared subjects without implying existing quiz topics were migrated.
 - [x] Complete the dedicated admin browser workflow, record final findings, and move this tracker to `docs/work/done`.
 
-Current verification record: 301 frontend tests pass, `npm run test:e2e` passes all 9 learner tests, `npm run test:e2e:admin` passes the admin CRUD/export replay workflow, backend pytest passes 39 tests, Ruff and mypy pass, lint and format checks pass, and content validation passes with 0 canonical flashcards (13 shared subjects). Default and admin-enabled builds succeed; `git diff --check` passes and `questionBank.generated.json` is unchanged. TypeScript and Python produce the same revision for the shared contract fixture. Builds retain the repository's >500 kB chunk warning; the admin-enabled bundle includes the existing question-authoring content.
+Current verification record (after corrective audit): 332 frontend tests across 58 files pass, `npm run test:e2e` passes all 11 learner tests (the flashcard filter/resume/layout flow was rerun after its final UI correction), `npm run test:e2e:admin` passes the expanded create/update/move/reorder/cascade-delete/undo/export replay workflow, backend pytest passes 40 tests, Ruff and mypy pass, lint and format checks pass, and content validation passes with 0 canonical flashcards (13 shared subjects). Default and admin-enabled builds succeed; `git diff --check` passes and `questionBank.generated.json` is unchanged. TypeScript and Python produce the same revision for the shared contract fixture. Builds retain the repository's >500 kB chunk warning; the admin-enabled bundle includes the existing question-authoring content.
 
-Gate: all required checks pass and the entire learner/admin workflow is reviewable without production infrastructure changes.
+Gate: all automated checks pass and the entire learner/admin workflow is reviewable without production infrastructure changes. Manual VoiceOver/NVDA verification is not established by role/label or keyboard tests. No instrumented coverage percentage or production-scale benchmark was measured. Real reviewed flashcard content remains intentionally deferred.
 
 ## Suggested delivery sequence
 

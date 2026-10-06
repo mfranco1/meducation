@@ -294,6 +294,7 @@ class FlashcardSubjectSummary(Subject):
     topicCount: int
     deckCount: int
     deckIds: list[str]
+    emptyDeckIds: list[str]
 
 
 class FlashcardCatalogRepository(Protocol):
@@ -325,12 +326,15 @@ class JsonFlashcardCatalogRepository:
         for topic in self.bank.topics:
             self._topics_by_subject[topic.subjectId].append(topic)
         self._decks_by_topic: dict[str, list[tuple[FlashcardDeck, int]]] = {item.id: [] for item in self.bank.topics}
+        self._decks_by_subject: dict[str, list[tuple[FlashcardDeck, int]]] = {item.id: [] for item in subjects}
+        subject_by_topic = {topic.id: topic.subjectId for topic in self.bank.topics}
         self._deck_by_id: dict[str, FlashcardDeck] = {}
         self._cards_by_deck: dict[str, list[Flashcard]] = {item.id: [] for item in self.bank.decks}
         for card in self.bank.cards:
             self._cards_by_deck[card.deckId].append(card)
         for deck in self.bank.decks:
             self._decks_by_topic[deck.topicId].append((deck, len(self._cards_by_deck[deck.id])))
+            self._decks_by_subject[subject_by_topic[deck.topicId]].append((deck, len(self._cards_by_deck[deck.id])))
             self._deck_by_id[deck.id] = deck
         self._subjects_by_id = {subject.id: subject for subject in subjects}
         serialized = json.dumps(self.raw, ensure_ascii=False, allow_nan=False, indent=2) + "\n"
@@ -364,13 +368,14 @@ class JsonFlashcardCatalogRepository:
         return [FlashcardSubjectSummary(
             **subject.model_dump(),
             topicCount=len(self._topics_by_subject[subject.id]),
-            deckCount=sum(len(self._decks_by_topic[topic.id]) for topic in self._topics_by_subject[subject.id]),
-            deckIds=[deck.id for topic in self._topics_by_subject[subject.id] for deck, _ in self._decks_by_topic[topic.id]],
+            deckCount=len(self._decks_by_subject[subject.id]),
+            deckIds=[deck.id for deck, _ in self._decks_by_subject[subject.id]],
+            emptyDeckIds=[deck.id for deck, count in self._decks_by_subject[subject.id] if count == 0],
         ) for subject in self.subjects]
 
     def list_catalog(self, subject_id: str) -> tuple[list[FlashcardTopic], list[tuple[FlashcardDeck, int]]]:
         topics = list(self._topics_by_subject.get(subject_id, []))
-        decks = [deck for topic in topics for deck in self._decks_by_topic[topic.id]]
+        decks = list(self._decks_by_subject.get(subject_id, []))
         return topics, decks
 
     def has_deck(self, deck_id: str) -> bool:

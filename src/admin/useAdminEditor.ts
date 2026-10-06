@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import type { StoredQuestionBank } from '../content/schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema';
 import type { ValidationIssue } from '../content/validate';
 import { parseChangeSet } from './core/changeSetSchema';
 import { compileBulkAddDraft, type BulkAddContext } from './core/bulkAddDraft';
@@ -306,12 +306,26 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
   const editRecord = (value: string) => { invalidateDraft(); setEditor(value); if (mode === 'bulk') { setIssues([]); setSummary('Draft changed. Validate again before staging.'); } };
   const editReason = (value: string) => { invalidateDraft(); setReason(value); if (mode === 'bulk') { setIssues([]); setSummary('Reason changed. Validate again before staging.'); } };
 
+  const stageCoordinatedImport = async (changeSet: AdminChangeSet, flashcards: StoredFlashcardBank) => {
+    if (busyRef.current) throw new Error('Wait for the current quiz authoring command to finish.');
+    if (!gateway.applyCoordinated) throw new Error('This authoring adapter does not support coordinated imports.');
+    if (editor.trim() && !confirmAction('Discard the current quiz editor draft and stage the reviewed coordinated import?')) throw new Error('The coordinated import was not staged; the quiz editor draft was kept.');
+    busyRef.current = true; setBusy('Coordinated import');
+    try {
+      const next = await gateway.applyCoordinated(changeSet, flashcards);
+      invalidateDraft(); setSnapshot(next); setReason(changeSet.reason); setDirty(true); setExported(false);
+      setSelection({ kind: 'subject' }); setEditor(''); setIssues([]); setSummary('The validated quiz and flashcard snapshots were staged together.');
+    } finally { busyRef.current = false; setBusy(undefined); }
+  };
+
   return {
     snapshot, originalRevision, selection, mode, editor, reason, issues, summary,
     dirty, exported, filter, setFilter, pendingBulk, importedChangeSet,
     bulkContext, bulkTarget, busy, loadError, selectedQuiz, selectedSubject, hasAppliedChanges,
     loadEntity, loadNew, chooseBulkTarget, chooseBulkSubject, chooseBulkQuiz,
     showSingle, editRecord, editReason,
+    stageCoordinatedImport,
+    markCoordinatedExport: () => { setDirty(false); setExported(true); setSummary('Downloaded the coordinated content bundle and both canonical bank snapshots.'); },
     stageSingle: () => runCommand('Stage', stageSingle),
     validateBulkDraft: () => runCommand('Validation', validateBulkDraft),
     stageValidatedBulk: () => runCommand('Stage', stageValidatedBulk),

@@ -14,6 +14,27 @@ const noRetries = { maxRetries: 0, baseDelayMs: 100, maxDelayMs: 100 };
 afterEach(() => vi.unstubAllGlobals());
 
 describe('runtime flashcard bank', () => {
+  it('rejects a same-count catalog with substituted deck identities', async () => {
+    const transport = { get: vi.fn().mockResolvedValueOnce({ revision: 'rev-1', subjects }).mockResolvedValueOnce({ ...catalog, decks: [{ ...catalog.decks[0], id: 'd-other' }] }) };
+    const bank = new RuntimeFlashcardBank(noRetries, transport);
+    await bank.ensureSubjects();
+    await expect(bank.ensureSubjectCatalog('s1')).rejects.toMatchObject({ kind: 'invalid' });
+    expect(bank.getDeck('d-other')).toBeUndefined();
+  });
+
+  it('ignores an aborted transport failure after a replacement request succeeds', async () => {
+    let rejectFirst!: (reason: Error) => void;
+    const transport = { get: vi.fn().mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectFirst = reject; })).mockResolvedValueOnce({ revision: 'rev-1', subjects }) };
+    const bank = new RuntimeFlashcardBank(noRetries, transport);
+    const first = bank.ensureSubjects();
+    const rejection = expect(first).rejects.toThrow('Aborted');
+    bank.cancel('subjects');
+    await bank.ensureSubjects();
+    rejectFirst(new Error('Aborted'));
+    await rejection;
+    expect(bank.getState('subjects')).toBe('ready');
+    expect(bank.getError('subjects')).toBeUndefined();
+  });
   it('loads shared subjects first, then the selected catalog and cards on demand', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-1', subjects }) })

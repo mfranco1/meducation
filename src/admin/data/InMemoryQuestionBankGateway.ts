@@ -2,6 +2,8 @@ import type { StoredQuestionBank } from '../../content/schema';
 import type { StoredFlashcardBank } from '../../content/schema';
 import { storedFlashcardBank } from '../../content/flashcardBank';
 import { previewChangeSet } from '../core/applyChangeSet';
+import { validateFlashcardSubjectReferences } from '../../content/validate';
+import { validateFlashcardBank } from '../../content/flashcardValidation';
 import { cloneBank, revisionForBank } from '../core/serializeBank';
 import type { AdminBankSnapshot, AdminChangeSet } from '../core/types';
 import type { AdminPreviewSummary, AdminQuestionBankGateway } from './AdminQuestionBankGateway';
@@ -59,10 +61,24 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
     if (preview.issues.some(issue => issue.level === 'error')) throw new Error(preview.issues.map(issue => issue.message).join(' '));
     const validated = this.lastPreview;
     if (!validated) throw new Error('Validated preview is unavailable.');
+    return this.commit(validated.bank, changeSet);
+  }
+
+  async applyCoordinated(changeSet: AdminChangeSet, flashcards: StoredFlashcardBank): Promise<AdminBankSnapshot> {
+    if (changeSet.base.revision !== await this.currentRevision()) throw new Error('The coordinated import is based on stale quiz content.');
+    const preview = previewChangeSet(this.bank, changeSet, flashcards);
+    const errors = [...preview.issues, ...validateFlashcardBank(flashcards, preview.bank.subjects)].filter(issue => issue.level === 'error');
+    if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
+    // Both validated snapshots become visible in the same synchronous commit.
+    this.flashcards = structuredClone(flashcards);
+    return this.commit(preview.bank, changeSet);
+  }
+
+  private commit(bank: StoredQuestionBank, changeSet: AdminChangeSet): Promise<AdminBankSnapshot> {
     this.history.push(this.bank);
     this.operationLengths.push(this.operations.length);
     if (this.history.length > undoLimit) { this.history.shift(); this.operationLengths.shift(); }
-    this.bank = validated.bank;
+    this.bank = bank;
     this.operations.push(...changeSet.operations);
     this.revision = undefined;
     this.lastPreview = undefined;
@@ -70,8 +86,10 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   }
 
   async undo(): Promise<AdminBankSnapshot | undefined> {
-    const previous = this.history.pop();
+    const previous = this.history.at(-1);
     if (!previous) return undefined;
+    this.assertSharedSubjects(previous);
+    this.history.pop();
     this.bank = previous;
     this.operations = this.operations.slice(0, this.operationLengths.pop() ?? 0);
     this.revision = undefined;
@@ -80,6 +98,7 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   }
 
   async reset(): Promise<AdminBankSnapshot> {
+    this.assertSharedSubjects(this.initial);
     this.bank = cloneBank(this.initial);
     this.history = [];
     this.operationLengths = [];
@@ -90,4 +109,9 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   }
 
   appliedOperations(): AdminChangeSet['operations'] { return [...this.operations]; }
+
+  private assertSharedSubjects(candidate: StoredQuestionBank) {
+    const errors = validateFlashcardSubjectReferences(this.flashcards, candidate.subjects);
+    if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
+  }
 }

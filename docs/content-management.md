@@ -4,6 +4,10 @@
 
 Flashcard content lives in the separate versioned `src/content/flashcardBank.generated.json` file. Read [the flashcard schema](flashcard-schema.md) before editing it. Topics reference the existing subject IDs; do not copy or recreate subjects in the flashcard bank. `npm run validate:content` checks both banks and their shared-subject references. The local-only Flashcards section in `/admin.html` stages topic, deck, and card CRUD in memory and exports the bank plus a reasoned change set. It does not write repository files or provide access control. Review exports before replacing the canonical file and restart the content service after replacement.
 
+Flashcard staging and replay use the same structural, Markdown/HTML/image/math validation as canonical validation. Duplicate sibling names are warnings; IDs remain authoritative. Unstaged record edits are protected when changing selection or leaving the page. Export retains the staged workspace: use Reset or Undo before importing another change set. Undo and reset in either authoring section refuse to create dangling shared-subject references.
+
+When quiz changes are also staged, exporting from Flashcards downloads both canonical banks, both operation change sets, a replacement manifest, and `content-change-set-bundle.json`. Import that bundle through Flashcards to preview and stage the final pair atomically. This allows moving/deleting topics together with removing their old subject without an invalid intermediate state. Start paired imports from reset workspaces; stale base/result revisions or invalid final references reject the entire pair. Review the paired quiz operation preview as well as the resulting flashcard bank before staging. Keep canonical bank replacements together and restart the read-only content service afterwards.
+
 When editing content:
 
 1. Preserve established subject, quiz, and question IDs, canonical question ordering, and choice IDs. Subject IDs use `s*`, quiz IDs use `q*`, and question IDs use `i*`. Question display numbers are derived from one-based position within a quiz; do not add a stored question number.

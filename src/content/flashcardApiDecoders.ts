@@ -1,7 +1,7 @@
 import type { Subject } from '../domain/types';
 import type { StoredFlashcard, StoredFlashcardDeck, StoredFlashcardTopic } from './schema';
 
-export interface FlashcardSubjectSummary extends Subject { topicCount: number; deckCount: number; deckIds: string[] }
+export interface FlashcardSubjectSummary extends Subject { topicCount: number; deckCount: number; deckIds: string[]; emptyDeckIds?: string[] }
 export interface FlashcardDeckSummary extends StoredFlashcardDeck { cardCount: number; cardIds: string[] }
 export interface FlashcardSubjectResponse { revision: string; subjects: FlashcardSubjectSummary[] }
 export interface FlashcardCatalogResponse {
@@ -20,13 +20,16 @@ const onlyKeys = (value: RecordValue, allowed: string[]) => Object.keys(value).e
 export function isFlashcardSubjectResponse(value: unknown): value is FlashcardSubjectResponse {
   if (!record(value) || !nonempty(value.revision) || !Array.isArray(value.subjects)) return false;
   const subjectIds: string[] = [];
+  const allDeckIds: string[] = [];
   return value.subjects.every((subject: unknown) => {
-    if (!record(subject) || !onlyKeys(subject, ['id', 'name', 'accent', 'topicCount', 'deckCount', 'deckIds'])) return false;
+    if (!record(subject) || !onlyKeys(subject, ['id', 'name', 'accent', 'topicCount', 'deckCount', 'deckIds', 'emptyDeckIds'])) return false;
     if (!nonempty(subject.id) || !/^s[1-9]\d*$/.test(subject.id) || !nonempty(subject.name) || typeof subject.accent !== 'string') return false;
     if (!Number.isInteger(subject.topicCount) || (subject.topicCount as number) < 0 || !Number.isInteger(subject.deckCount) || (subject.deckCount as number) < 0 || !Array.isArray(subject.deckIds) || !subject.deckIds.every((id: unknown) => typeof id === 'string' && /^d[a-zA-Z0-9-]+$/.test(id)) || subject.deckIds.length !== subject.deckCount || !unique(subject.deckIds as string[])) return false;
     subjectIds.push(subject.id);
+    if (subject.emptyDeckIds !== undefined && (!Array.isArray(subject.emptyDeckIds) || !subject.emptyDeckIds.every((id: unknown) => typeof id === 'string' && (subject.deckIds as string[]).includes(id)) || !unique(subject.emptyDeckIds as string[]))) return false;
+    allDeckIds.push(...subject.deckIds as string[]);
     return true;
-  }) && unique(subjectIds);
+  }) && unique(subjectIds) && unique(allDeckIds);
 }
 
 export function isFlashcardCatalog(value: unknown, subjectId: string, expectedTopicCount?: number, expectedDeckCount?: number): value is FlashcardCatalogResponse {

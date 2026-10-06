@@ -40,6 +40,10 @@ jobs:
       - run: npm test
       - run: npm run validate:content
       - run: npm run build
+      - name: Build the optional local admin entry
+        run: npm run build
+        env:
+          VITE_BUILD_ADMIN: 'true'
 
   browser-smoke:
     runs-on: ubuntu-latest
@@ -62,3 +66,4 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      - run: npm run test:e2e:admin

@@ -49,6 +49,8 @@ The normalized mapping is `subjects(id, name, accent, position)`, `topics(id, su
 
 Learner checkpoints are not content. They belong in a separate progress repository and, eventually, a user-scoped table keyed by `(user_id, deck_id)` with current card ID, content signature, and update time. They must not be written into this canonical bank.
 
+The v1 progress signature is a bounded SHA-256 digest over ordered card IDs and canonical study content. Compute it once per launch and reuse it during navigation. Matching early-v1 serialized-content signatures are upgraded when resumed. Activity timestamps use canonical UTC ISO strings. Catalog DTOs may include `emptyDeckIds` to omit emptied decks from Continue Studying while retaining their original checkpoints.
+
 ## Validation
 
 Run `npm run validate:content` to validate both canonical banks and cross-bank subject references. Do not edit the generated flashcard JSON without reviewing stable IDs, parent relationships, order, rich content, and the corresponding authoring change set.

@@ -12,7 +12,8 @@ export interface FlashcardDashboardSubject {
 
 export function flashcardDashboardSubjects(subjects: readonly FlashcardSubjectSummary[], progress: FlashcardProgressState): FlashcardDashboardSubject[] {
   return subjects.map(subject => {
-    const active = subject.deckIds.map(deckId => progress.checkpoints[deckId]).filter((checkpoint): checkpoint is FlashcardCheckpoint => checkpoint !== undefined);
+    const emptyDeckIds = new Set(subject.emptyDeckIds ?? []);
+    const active = subject.deckIds.filter(deckId => !emptyDeckIds.has(deckId)).map(deckId => progress.checkpoints[deckId]).filter((checkpoint): checkpoint is FlashcardCheckpoint => checkpoint !== undefined);
     return {
       subject: { id: subject.id, name: subject.name, accent: subject.accent },
       topicCount: subject.topicCount,

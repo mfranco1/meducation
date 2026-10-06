@@ -26,8 +26,8 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, selected
     {error && <ContentRecoveryBanner title={errorKind === 'cards' ? 'We can’t load this deck right now.' : `We can’t load flashcard topics for ${subject.name} right now.`} description="Your saved deck positions are safe. Please try again." error={error} onRetry={onRetry} />}
     <SubjectBrowseLayout subjectName={subject.name} onBack={onBack}>
       {catalog && catalog.topics.length > 0 && <FormControl size="small" sx={{ minWidth: 220, mb: 3 }}>
-        <InputLabel id="flashcard-topic-filter-label">Topic</InputLabel>
-        <Select labelId="flashcard-topic-filter-label" label="Topic" value={selectedTopicId ?? ''} onChange={event => onSelectTopic(event.target.value || undefined)}>
+        <InputLabel id="flashcard-topic-filter-label" shrink>Topic</InputLabel>
+        <Select displayEmpty labelId="flashcard-topic-filter-label" label="Topic" value={selectedTopicId ?? ''} onChange={event => onSelectTopic(event.target.value || undefined)}>
           <MenuItem value="">All Topics</MenuItem>
           {catalog.topics.map(topic => <MenuItem key={topic.id} value={topic.id}>{topic.name} ({topic.deckCount})</MenuItem>)}
         </Select>

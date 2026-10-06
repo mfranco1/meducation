@@ -21,6 +21,12 @@ const decks = [
 ] as FlashcardDeckSummary[];
 
 describe('flashcard dashboard and deck selectors', () => {
+  it('excludes removed or emptied decks from activity while retaining their checkpoints', () => {
+    const withEmptyDeck = subjects.map(subject => ({ ...subject, emptyDeckIds: subject.id === 's1' ? ['d1'] : [] }));
+    const state = { ...progress, checkpoints: { d1: progress.checkpoints.d1, 'd-removed': { ...progress.checkpoints.d3, deckId: 'd-removed' } } };
+    expect(activeFlashcardSubjects(flashcardDashboardSubjects(withEmptyDeck, state))).toEqual([]);
+    expect(Object.keys(state.checkpoints)).toEqual(['d1', 'd-removed']);
+  });
   it('keeps every canonical subject and orders only active subjects by saved activity', () => {
     const summaries = flashcardDashboardSubjects(subjects, progress);
     expect(summaries.map(item => item.subject.id)).toEqual(['s1', 's2', 's3']);
