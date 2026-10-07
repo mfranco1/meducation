@@ -1,12 +1,12 @@
 # Repository cleanup plan
 
-Created: 2026-10-07. Status: Stage 5 complete; awaiting authorization for Stage 6. Stop after every stage and wait for the user's go signal before starting the next stage.
+Created: 2026-10-07. Status: Complete. Each implementation stage stopped at its agreed gate; the user authorized every continuation.
 
 ## Goal and scope
 
 Remove demonstrably unused files, exports, dependencies, generated residue, and repeated implementation. Reduce maintenance and build payload without changing product behavior, canonical content, stored progress, or supported authoring workflows. Follow the existing ownership boundaries rather than reorganizing the repository again.
 
-This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1, 2, 3, 4, and 5 individually. For Stage 5 the user explicitly confirmed manual verification that legacy/backward compatibility is no longer needed. Wait for authorization before Stage 6. Follow the stage-gate convention in [work tracking](../README.md).
+This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1, 2, 3, 4, 5, and 6 individually. For Stage 5 the user explicitly confirmed manual verification that legacy/backward compatibility is no longer needed. Stage 6 closes this cleanup. Follow the stage-gate convention in [work tracking](../README.md).
 
 ## Findings from the initial inspection
 
@@ -218,14 +218,32 @@ Stage 5 is complete with no failing checks. Retired formats are intentionally un
 
 Risk: low. Dependency: all applicable stages complete or explicitly retained/deferred.
 
-- [ ] Run `npm run lint`, `npm run format:check`, `npm run test:architecture`, `npm test`, `npm run validate:content`, and `npm run build`.
-- [ ] Run `VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build`; confirm the default build omits admin and the optional build includes it.
-- [ ] For changed runtime/shared/admin code, run learner and admin browser suites sequentially. Exercise explicit local mode and development content QA if their imports/assets changed. Follow `docs/testing-regressions.md` for affected flows.
-- [ ] For backend/shared contract/revision changes, run `.venv/bin/python -m pytest backend/tests -q`, `.venv/bin/ruff check backend/src backend/tests`, and `.venv/bin/mypy backend/src`.
-- [ ] Compare canonical hashes, export/revision parity, media inventory, lazy chunks, tracked bytes/files, source duplication removed, and production output sizes against Stage 0. Rebuild the same mode for comparisons; cache deletion and minification are not source-code reduction.
-- [ ] Run `git diff --check`, review every deletion, record failures/advisories and deferred items, and move this tracker to `docs/work/done/` only after the implementation scope and checks are complete.
+- [x] Verify `npm run lint`, `npm run format:check`, `npm run test:architecture`, `npm test`, `npm run validate:content`, and `npm run build` against the final source. Reuse passing Stage 5 results where source is unchanged; run additional build modes needed for comparison.
+- [x] Run `VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build`; confirm the default build omits admin and the optional build includes it.
+- [x] For changed runtime/shared/admin code, run learner and admin browser suites sequentially. Exercise explicit local mode and development content QA if their imports/assets changed. Follow `docs/testing-regressions.md` for affected flows.
+- [x] For backend/shared contract/revision changes, run `.venv/bin/python -m pytest backend/tests -q`, `.venv/bin/ruff check backend/src backend/tests`, and `.venv/bin/mypy backend/src`.
+- [x] Compare canonical hashes, export/revision parity, media inventory, lazy chunks, tracked bytes/files, source duplication removed, and production output sizes against Stage 0. Rebuild the same mode for comparisons; cache deletion and minification are not source-code reduction.
+- [x] Run `git diff --check`, review every deletion, record failures/advisories and deferred items, and move this tracker to `docs/work/done/` only after the implementation scope and checks are complete.
 
 Success means verified unnecessary material is gone, repeated behavior has fewer owners, and supported workflows still work. It does not require an arbitrary file-count target or a large rewrite.
+
+### Stage 6 execution record
+
+Reviewed the complete cleanup diff against `aaaefa47342f8e6cc3ddd314dcbc286f4e964468`. The final implementation is the user-committed revision `aa3c14f780da9c816e474a851764170300905aa1`, with a clean working tree at the start of closeout. No source, fixture, dependency, or configuration changed after Stage 5 verification; this stage changes and relocates only the tracker. Reused the passing final Stage 5 evidence for 61 frontend files / 356 tests, 10 architecture tests, lint/formatting, content validation, 39 Python tests/Ruff/mypy, all 11 learner browser tests and both admin browser tests, plus the two strengthened current-key browser cases. The suites were not repeated merely for closeout. The source/build distinction and the Stage 3 initial timeouts followed by an unchanged isolated passing run remain documented above.
+
+The enabled production editor build already passed with the correct README flags at 82 files / 16,725,445 bytes. To compare the optional output fairly against Stage 0, rebuilt with its original `VITE_BUILD_ADMIN=true VITE_ENABLE_ADMIN=true` settings: 81 files / 16,608,637 bytes versus 179 files / 31,144,430 bytes, a reduction of 14,535,793 bytes (46.67%). This deliberately uses the old unrecognized runtime flag only to reproduce the baseline's disabled-editor mode; the supported enabled command remains `VITE_ENABLE_LOCAL_ADMIN=true`. The enabled and disabled editor modes must not be compared as cleanup savings.
+
+The unchanged Stage 5 retry-disabled learner build is directly comparable with Stage 0: 76 files / 2,342,987 bytes versus 175 files / 16,878,968 bytes, a reduction of 14,535,981 bytes (86.12%). Exactly 14,533,514 bytes of that reduction comes from the 99 explicitly authorized legacy public JSON deletions; the remaining 2,467 bytes reflects source changes. Also rebuilt ordinary `npm run build` for the final checkout with normal retry defaults: 76 files / 2,342,959 bytes, with no admin entry, the favicon, and all 59 KaTeX assets. The final output is the ordinary learner build, not optional admin output.
+
+Both canonical hashes match Stage 0 byte-for-byte, protecting content, order, IDs, and provenance. Both build modes preserve the favicon and all 59 KaTeX assets and exclude the obsolete public tree. The default entry excludes admin; the import graph has no forbidden edges, runtime cycles, or eager learner banks/validators. API/local/QA content delivery and rendering contracts retain their tests; local/QA imports and media were not changed, so an additional manual local/QA run was not warranted. Revision parity and authoring export/replay remain covered by the final unit, Python, and admin browser evidence. Every resolved lockfile package entry is identical to the baseline; only the unused root dependency declaration was removed.
+
+Reviewed every tracked deletion: the v1 migration CLI/helper and their retired five-test file. The 99 ignored public JSON files and disposable cache paths were separately inventoried and owner-authorized in Stage 1. There are no remaining exact duplicate nonempty tracked files. Twelve unnecessary export names and one direct dependency declaration were retired; six demonstrated duplicate implementations gained a single owner. Distinct repository state machines, current schema/API/storage/authoring tests, installed environments, private PDF/extraction sources, and completed history remain intentionally retained. No requested implementation item remains deferred.
+
+Excluding the execution tracker, tracked implementation/tooling fell by 11,713 bytes, tests/fixtures by 5,843 bytes, and current guides/configuration by 2,484 bytes: 20,040 fewer maintained bytes. The projected tracked inventory remains 312 files after the two shared helpers, three migration-file deletions, and new tracker balance out. Full tracked bytes are 18,753,170; the execution record itself adds 45,297 bytes. Thus the tracked byte total grows due to preserved progress history even while implementation and build payload shrink. Cache savings are temporary and are not added to source/build savings.
+
+Final checks and closeout measurements are under `/private/tmp/meducation-cleanup/stage-6/`; preceding stage logs remain alongside them. These temporary logs are not a durable private-content backup. Existing large Vite chunk, Vitest environment-cost, TestClient deprecation, browser environment, and 32 answer-review advisories remain; no required check is failing. The completed tracker is at `docs/work/done/repository-cleanup-plan.md`; final build, links, and whitespace are verified. No commit, push, deployment, history rewrite, browser storage purge, or canonical rewrite was part of this cleanup.
+
+Stage 6 closes the staged cleanup. All requested stages are complete.
 
 ## Planning verification
 
