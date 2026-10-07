@@ -1,5 +1,7 @@
 # Test performance investigation
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Scope: measure slow tests and suite overhead, explain the causes, and propose a fix. Keep the existing CI fixture fixes and canonical content intact.
 
 - [x] Inspect existing run summaries, configuration, and validation code.

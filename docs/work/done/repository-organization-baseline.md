@@ -1,5 +1,7 @@
 # Repository organization — Stage 0 baseline
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Captured: 2026-10-06 (Asia/Manila). Starting commit: `e4e07944f354966a7b8f67d678ad58d472e39a05`.
 
 Status: Stage 0 complete; waiting for the user's signal to begin Stage 1. This stage records the migration baseline; it makes no runtime or canonical-content changes.

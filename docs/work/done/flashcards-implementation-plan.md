@@ -1,5 +1,7 @@
 # Flashcards dashboard, normalized content, and admin implementation plan
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Status: implementation and automated acceptance checks complete after a corrective audit; manual assistive-technology release QA remains unverified. See [audit findings](flashcards-implementation-audit.md).
 Created: 2026-10-06.
 Final follow-up: [final audit and verification](flashcards-final-audit.md) records 336 passing frontend tests and the additional storage/recovery fixes.

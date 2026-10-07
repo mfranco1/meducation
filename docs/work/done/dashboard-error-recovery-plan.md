@@ -1,5 +1,7 @@
 # Dashboard error recovery implementation plan
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Status: implemented and verified with focused tests, lint, formatting, and TypeScript build checks.
 
 ## Goal

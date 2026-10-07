@@ -1,5 +1,7 @@
 # Show latest quiz score with trend
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 ## Status
 
 Complete

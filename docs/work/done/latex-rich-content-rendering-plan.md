@@ -1,5 +1,7 @@
 # LaTeX support in quiz stems and rationales
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Status: implemented; validation and automated checks passed. See completion record at the end.
 
 ## Outcome and boundaries

@@ -1,5 +1,7 @@
 # Full-stack code quality review and staged refactoring plan
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Reviewed: 2026-10-02.
 Status: Complete; all seven implementation stages verified on 2026-10-03.
 

@@ -1,0 +1,60 @@
+{
+  "stage6OnlyDocumentationChanged": true,
+  "canonical": {
+    "src/content/questionBank.generated.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+    "src/content/flashcardBank.generated.json": "cbec278cddfd655fe4f01d1112ac62fd94e1de090ddbffaf7159d640b5f98b04"
+  },
+  "frozenBaselineUnchanged": true,
+  "bundleParity": {
+    "learner": {
+      "assets": 15,
+      "rawBytes": 1270975
+    },
+    "admin": {
+      "assets": 18,
+      "rawBytes": 15535827
+    }
+  },
+  "localDocumentationLinks": 100,
+  "movedPathsVerified": 122,
+  "emptyPlaceholderDirectories": 0,
+  "checks": {
+    "frontend": 363,
+    "backend": 39,
+    "architecture": 10,
+    "learnerBrowser": 11,
+    "adminBrowser": 2
+  },
+  "adminInitialOverallTimeoutResolvedByUnchangedIsolatedRerun": true,
+  "archived": true,
+  "finalizedDate": "2026-10-07",
+  "gates": {
+    "lint": "passed",
+    "format:check": "passed",
+    "test:architecture": "passed",
+    "test": "passed",
+    "validate:content": "passed",
+    "learnerBuild": "passed",
+    "enabledAdminBuild": "passed",
+    "pytest": "passed",
+    "ruff": "passed",
+    "mypy": "passed",
+    "learnerBrowser": "passed",
+    "adminBrowser": "passed",
+    "documentationLinks": "passed",
+    "diffWhitespace": "passed"
+  },
+  "cleanup": {
+    "temporaryStageWorkspacesRemoved": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6
+    ],
+    "generatedBuildOutputRemoved": true,
+    "preexistingDevelopmentServersAndTestArtifactsRetained": true
+  }
+}

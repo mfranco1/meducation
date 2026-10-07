@@ -74,6 +74,8 @@ Before making significant changes:
 
 Do not rewrite working code solely to impose a preferred architecture.
 
+Follow the [repository ownership and checked dependency boundaries](docs/architecture.md#repository-ownership) when placing or importing modules.
+
 ## Documentation
 
 Use the repository documentation as the source of truth for details:

@@ -1,5 +1,7 @@
 # Maintainability and reuse refactor plan
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 ## Completion (2026-09-16)
 
 Implemented the application and content-module restructuring described below. `App.tsx` is now a composition layer; screens, reusable feedback and quiz components, and the session coordinator own their respective responsibilities. Explanation loading, parsing, and source-preserving formatting are separate modules. The PDF builder delegates output writing to a dedicated module. Source-derived content, answer provenance, stable IDs, and localStorage keys were not changed.

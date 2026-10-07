@@ -1,6 +1,6 @@
 # 0001 — Repository ownership and dependency boundaries
 
-Date: 2026-10-06. Status: accepted for staged implementation.
+Date: 2026-10-06. Status: implemented on 2026-10-07.
 
 ## Context
 
@@ -31,4 +31,4 @@ Avoid broad barrels, speculative shared components, empty directories, and subdi
 
 ## Implementation
 
-Follow [the organization tracker](../work/ongoing/repository-organization-plan.md) and [Stage 0 baseline](../work/ongoing/repository-organization-baseline.md). Complete one stage, record its verification, and wait for the user's signal before beginning the next. Reassess this decision if package ownership or deployment boundaries materially change.
+All stages are implemented and verified. See the [completed organization tracker](../work/done/repository-organization-plan.md), [frozen Stage 0 baseline](../work/done/repository-organization-baseline.md), and [current ownership and enforcement rules](../architecture.md#repository-ownership). Reassess this decision if package ownership or deployment boundaries materially change.

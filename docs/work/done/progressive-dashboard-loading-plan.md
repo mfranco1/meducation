@@ -1,5 +1,7 @@
 # Progressive dashboard and subject loading
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Status: complete. Dashboard statistics, progressive content loading, shimmer, bounded retries, and the simplified failure presentation are implemented and verified.
 Created: 2026-10-02.
 Updated: 2026-10-02.

@@ -1,6 +1,8 @@
 # Repository organization plan
 
-Created: 2026-10-06. Status: Stage 5 complete; waiting for the user's signal to begin Stage 6.
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
+Created: 2026-10-06. Status: Stage 6 complete; all stages implemented and verified on 2026-10-07.
 
 ## Goal and recommendation
 
@@ -336,14 +338,28 @@ There were no application/shared/content-loader/entry moves or backend changes, 
 
 ## Stage 6 — Make documentation maintainable and close the migration
 
-- [ ] Restructure architecture documentation around current boundaries, data flow, composition, and deployment modes. Link to detailed pages only when their size warrants a separate file.
-- [ ] Restructure testing documentation around commands, suite ownership, fixtures, and behavior requirements. Keep historical execution detail in completed trackers while preserving current regression obligations.
-- [ ] Record the final ownership/dependency rules in architecture guidance and link them from AGENTS.md rather than duplicating a full tree there.
-- [ ] Search all tracked source/config/docs for moved paths; fix current references and annotate historical trackers where necessary without rewriting their historical claims.
-- [ ] Remove temporary forwarding modules introduced during migration, confirm no empty placeholder directories or duplicate canonical copies, and record final verification below.
-- [ ] Move this tracker to `docs/work/done` only after all implementation gates pass.
+- [x] Restructure architecture documentation around current boundaries, data flow, composition, and deployment modes. Link to detailed pages only when their size warrants a separate file.
+- [x] Restructure testing documentation around commands, suite ownership, fixtures, and behavior requirements. Keep historical execution detail in completed trackers while preserving current regression obligations.
+- [x] Record the final ownership/dependency rules in architecture guidance and link them from AGENTS.md rather than duplicating a full tree there.
+- [x] Search all tracked source/config/docs for moved paths; fix current references and annotate historical trackers where necessary without rewriting their historical claims.
+- [x] Remove temporary forwarding modules introduced during migration, confirm no empty placeholder directories or duplicate canonical copies, and record final verification below.
+- [x] Move this tracker to `docs/work/done` only after all implementation gates pass.
 
 Exit gate: clear source of truth for each area, clean verification, unchanged canonical content and persistence contracts, and no outstanding migration shims. Risk: low. Dependency: Stage 5.
+
+Completed 2026-10-07. Architecture now starts with repository ownership and checked dependency direction, followed by canonical content, composition, progress/storage, API data flow, authoring, and entry/deployment modes. AGENTS links to these rules rather than copying the tree. Testing now owns execution commands, suite ownership, fixture policy, and verification selection; its linked regression reference preserves current behavioral obligations in named checklists. The docs index and work-tracking guide distinguish current guidance from execution history.
+
+Scanned tracked source, configuration, and docs against all 122 Stage 2–4 move paths: all old locations are absent, all destinations exist, and current references contain no stale moved paths. Annotated 29 historical trackers without rewriting their stage-specific claims. No migration forwarding modules were introduced. Removed the confirmed empty `src/components` and `src/pages` directories; source/script/docs ownership directories contain no empty placeholders. There are exactly two authoritative canonical JSON files at their original paths, with no duplicate canonical copies. Private source/extraction/asset material was retained.
+
+Final verification: lint, scoped formatting, 10 architecture tests, 62 frontend test files / 363 tests, 39 backend tests, Ruff, mypy, full-corpus validation, learner and enabled optional-admin builds, all 11 learner browser flows, and both admin browser flows passed. The first admin run hit its existing 60-second overall timeout during final paired reset, after successful CRUD/export/replay steps; an unchanged isolated full-suite rerun passed. No test time limits or application behavior were changed. Existing 32 answer-review warnings, large-chunk advisory, Starlette deprecation, Vitest performance advisory, and browser color-environment warnings remain.
+
+All Stage 6 application, backend, tooling, configuration, fixture, and dependency files match their entry hashes. Both canonical banks retain the Stage 0 hashes; this preserves content, IDs/order/provenance and, with unchanged runtime source, persistence/API/export contracts. Learner and admin bundle manifests match Stage 5 exactly: 15 learner assets / 1,270,975 raw bytes, and 18 optional-admin assets / 15,535,827 raw bytes. Default production omits admin; the opt-in build includes it. Frozen Stage 0 JSON is unchanged apart from its archive location. Final local documentation file/heading links and whitespace checks passed.
+
+Archived this tracker and both Stage 0 baseline files together under `docs/work/done`; the decision record links to their completed evidence and current architecture. All organization stages are complete. No commits or PRs were created. Raw final verification evidence is under `/private/tmp/meducation-organization-stage-6/`.
+
+## Finalization and cleanup
+
+Finalized 2026-10-07. The completion audit reconfirmed all recorded gates, unchanged protected files, bundle parity, archived trackers, and valid documentation links. No implementation items remain. The compact [final verification record](repository-organization-verification.json) is retained beside this tracker. Removed the task-owned temporary Stage 0–6 workspaces and generated `dist/` output; historical temporary evidence paths above no longer exist. Preserved preexisting development servers, browser-test artifacts, installed dependencies, and private content/source material. The final documentation changes remain uncommitted.
 
 ## Validation and rollback for every stage
 

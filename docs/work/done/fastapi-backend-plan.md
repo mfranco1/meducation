@@ -1,5 +1,7 @@
 # FastAPI backend implementation plan
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Created: 2026-10-01. Status: complete (2026-10-01).
 
 ## Goal and scope

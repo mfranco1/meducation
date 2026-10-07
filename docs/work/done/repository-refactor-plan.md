@@ -1,5 +1,7 @@
 # Repository refactor plan
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 Status: implemented (2026-09-23). The completed refactor preserved quiz behavior, canonical content, persistence formats, wording, layout, styles, and themes.
 
 ## Current baseline and constraints

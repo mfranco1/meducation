@@ -7,9 +7,9 @@ Start with the repository [README](../README.md) for frontend setup, default API
 - **Understand the application:** [product behavior](product.md) describes learner flows; [architecture](architecture.md) explains composition, domain/content/storage boundaries, loading, and authoring.
 - **Edit or review content:** [content management](content-management.md) covers staged authoring, exports, validation, provenance, and [ignored local material](content-management.md#local-source-material-and-generated-output). [Question schema](question-schema.md) and [flashcard schema](flashcard-schema.md) define the canonical contracts.
 - **Change the UI:** [design system](design-system.md) owns theme, accessibility, responsive study layouts, feedback, and loading conventions. Preserve source wording while changing presentation.
-- **Verify a change:** [testing](testing.md) covers frontend, backend, content, and browser checks, fixture ownership, and regression requirements.
-- **Understand repository rules:** [AGENTS.md](../AGENTS.md) defines the invariants and contribution policy. [Architecture decisions](decisions/) record consequential choices; distinguish their planned implementation from the current architecture.
-- **Follow active work:** [ongoing trackers](work/ongoing/) record implementation status and stage gates. [Completed trackers](work/done/) preserve history; their past paths and counts are not the current specification.
+- **Verify a change:** [testing](testing.md) covers frontend, backend, content, and browser checks, fixture ownership, and [detailed regression requirements](testing-regressions.md).
+- **Understand repository rules:** [AGENTS.md](../AGENTS.md) defines the invariants and contribution policy. [Architecture decisions](decisions/) record consequential choices; read their status alongside the current architecture.
+- **Follow active work:** [work tracking](work/README.md) explains where to create ongoing trackers and record stage gates. [Completed trackers](work/done/) preserve history; their past paths and counts are not the current specification.
 
 ## Keep guidance consistent
 

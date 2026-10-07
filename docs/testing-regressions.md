@@ -1,0 +1,169 @@
+# Regression requirements
+
+Use this reference when changing the corresponding behavior. [Testing](testing.md) owns commands, fixture policy, suite ownership, and handoff checks. These are current regression obligations; past execution results belong in [completed work](work/done/).
+
+## Navigation and shared presentation
+
+### Drawer and destination navigation
+
+- Learner navigation tests cover expanded and collapsed drawer content, accessible names and dashboard current-page semantics, destination selection, dashboard copy, and stable screen identity.
+- Session and App tests cover Flashcards routing and the active quiz/review exit confirmations, including persisted leave, abort, and failed writes.
+- `DrawerEdgeToggle` tests verify one accessible button, state, callback, disabled behavior, and ripple absence.
+- Browser coverage checks arrow direction, edge clicks at multiple heights, hover line and background behavior, Enter/Space, reduced motion, mobile overlay/escape/backdrop handling, focus restoration, and drawer geometry; recovery banner geometry is measured against the main region beside the rail.
+
+### Notifications
+
+- Toast coverage verifies keyed updates, finite and persistent lifetimes, manual close, position and action options, global versus screen-scoped navigation, timed exit removal, reduced motion, keyboard access, and portal layering.
+- Question-load failure integration checks safe copy, no inline subject failure block, persistence within its screen, dismissal on navigation and refresh, stale cancellation suppression, and unchanged saved progress.
+- Browser coverage checks the bottom-right toast at desktop and mobile widths, close behavior, wrapping, reduced motion, and modal layering.
+
+### Screen transitions
+
+- Screen transition tests cover initial render, changes between stable top-level screen identities, and same-screen updates that preserve mounted screen state.
+- Verify question index and attempt progress do not affect quiz screen identity.
+- Check reduced-motion behavior and confirm the header and global dialogs remain outside the animated screen boundary.
+
+## Quiz behavior and progress
+
+### Read-only quiz presentation
+
+- For quiz-screen presentation changes, compare desktop and mobile browser fixture captures of the active quiz, Browse Answers, and results review.
+- Confirm that the active quiz stays visually unchanged, the read-only modes keep choices noninteractive, and review correctly labels submitted, correct, unanswered, flagged, unavailable-key, and key-under-review states.
+- Keep first-quiz timing measurement before screenshot capture.
+
+### Progress writes and migration
+
+- Browser progress coverage exercises v1-to-v2 migration without deleting original keys, malformed-state protection, quota failure with no partial completion, duplicate completion after history pruning, and a stale second repository instance.
+- Session tests verify legacy/changed-content restart choice and that a failed write leaves the current quiz open.
+- The revision check is optimistic rather than a cross-tab transaction; verify the sequential stale-tab behavior and keep the truly simultaneous race documented until a locking strategy is available.
+
+### Snapshots and selectors
+
+- Snapshot tests verify stable identity and no additional storage reads across repeated getters, no migration write during reads, a new frozen snapshot and subscriber notification after local writes, and invalidation after a cross-tab `storage` event.
+- Selectors should group retained history once per snapshot while preserving subject membership, scores after pruning, trends, activity ordering, and resume position.
+
+### Results and Exam review
+
+- Results score hero tests cover initial, fast-phase, settling-phase, and final synchronized ring, counter, and color values; curve bounds, monotonicity, and join continuity; threshold color blending; 0%, low scores, invalid input, and 100%; reduced motion on load and mid-animation; rerenders, target changes, and animation cleanup.
+- Results integration coverage preserves score summaries, navigation, and exact-count perfect-test celebration behavior.
+- Exam Mode result coverage must verify the transient review action, revealed correct/incorrect/unanswered responses and explanations, read-only controls, confirmation on every in-app exit, and no review re-entry after a confirmed leave.
+- Review navigator coverage must check All/Wrong/Flagged membership, counts, empty states, retained filter state, and preserved active-quiz All/Open/Flagged behavior.
+- Inspect the animation in a browser at mobile and desktop widths to confirm its pacing, color contrast, and reduced-motion presentation.
+
+### Active subjects
+
+Dashboard active-subject work must cover empty, single-subject, filtering, recent-activity ordering, wraparound navigation, and card selection states.
+
+## Flashcard behavior and progress
+
+### Content, launch, and bulk additions
+
+- Flashcard coverage verifies schema-v1 candidate migration, shared-subject references, direct subject/deck/card ordering, revision parity, independent progress storage, subject activity selectors, empty-deck handling, safe card rendering, reveal/navigation/finish behavior, and staged admin creation plus validation.
+- Subject tests cover the shared shimmer and catalog recovery; session/App/browser tests cover deck-launch progress, safe screen-scoped failure toast, retained deck rows, and retry through Study/Resume without creating progress on failure.
+- Bulk-add coverage checks all three contextual JSON shapes, mixed empty and populated decks, rich-content validation with nested paths, generated-ID stability, preview staleness, source immutability, atomic rollback, one-step Undo, and replay parity.
+- The learner Playwright flow uses `e2e/fixtures/flashcard-bank.json` with the separate `MEDUCATION_FLASHCARD_BANK_PATH`; it studies, saves, resumes, finishes, and checks the dashboard without quiz analytics.
+- Run `npm run test:e2e:admin` for the dedicated Vite dev-server authoring flow, which creates records, imports bulk JSON from paste and file, previews/stages batches, verifies one-step Undo, and replays the exported v2 change set.
+- The frontend flashcard admin panel suite and backend quiz request tests use `tests/fixtures/empty-flashcard-bank.json` as an explicit baseline.
+- Authored canonical flashcards are validated by the content gate; adding decks or cards must not change those tests’ starting catalog.
+
+### Study presentation and keyboard controls
+
+- Flashcard study regression coverage also verifies schema-v1 progress reads into schema v2 without rewriting legacy bytes, opened/flagged ID persistence, canonical All/Hidden/Flagged navigation, centered rich faces, icon-only concealed branding, answer-sized shared flip faces, bold rich answers, click-to-hide, and the Space reveal/advance rhythm through the final card.
+- Keyboard tests cover the final explicit Finish action, while the browser flow checks the Hidden empty state and study/resume interactions.
+- Shared study chrome must retain active quiz, Browse, and Review labels, timer placement, footer behavior, and keyboard focus.
+- Browser checks should cover a narrow screen and long rich answer without page overflow.
+
+### Checkpoint recovery and authoring parity
+
+- Flashcard regressions cover migration preserving IDs/content/order and rejecting orphan references, abandoned/concurrent launches, unmount cancellation, fresh checkpoints after delayed loads, failed launch/restart/navigation/finish writes, bounded digest storage and early-v1 progress compatibility, frozen stable snapshots, temporary storage recovery, invalid timestamps, exact catalog membership, and canonical ordering across subjects.
+- Admin tests cover rich-content rejection, unstaged draft guards, reorder/export replay parity, imported-history undo, stale subject previews, legacy change-set rejection, and shared-subject protection during undo/reset in both authoring sections.
+- Coordinated bundle tests verify atomic paired staging when individual imports would require invalid intermediate subjects, stale revision rejection, invalid-pair rollback, and quiz-draft protection.
+- Browser flows cover direct deck listing, reload/resume, abandoned loads, keyboard Retry, and admin update/move/reorder/cascade-delete/undo/export.
+- CI runs learner and admin browser suites and both production build modes.
+
+## Loading and recovery
+
+### Learner browser flows
+
+The suite checks quiz start, answer persistence across reload, resume, completion, Browse Answers, first-quiz timing on a local connection and a throttled 150 ms / 200 kB/s connection, an intercepted outage followed by keyboard Retry against the live API, and a pending catalog with reduced motion at mobile width.
+
+### Launch and lazy screens
+
+- Content-loading tests cover an injected transport, retry/backoff behavior, deduplication, and stale subject, quiz, and question responses after reconfiguration.
+- Launch tests verify duplicate clicks, cancellation followed by a fresh launch, ordinary retry, and revision-conflict reload.
+- The App integration test confirms that a lazy quiz screen appears after questions load and the active attempt is saved.
+- Screen and boot failures must show a visible reload action.
+- When a lazy screen is held pending, verify the header remains visible, the accessible status replaces with content, and the main busy state clears.
+- Cover destination-specific copy, reduced-motion presentation, and no overlapping entry animations when a displayed suspense fallback resolves.
+- Bootstrap should render the shell before the App import resolves; the admin should retain its header while the local bank snapshot is pending.
+- Compare initial and quiz-route production chunk sizes when changing lazy boundaries; the Chromium smoke test records local-fixture first-quiz timing after Begin Quiz; measure production latency separately before making performance claims.
+
+### Catalogs, transport, and retries
+
+- Progressive loading coverage verifies that dashboard mount requests only subjects, subject selection requests only that subject's quizzes, and quiz launch requests its questions.
+- Check wave shimmer and reduced motion, section-specific skeletons and failures, the 15-second deadline through response-body reading, deduplicated requests, and stale navigation while requests are pending.
+- The content retry client must cover configurable retry limits, exponential backoff and jitter, HTTP retry classification, Retry-After seconds and dates, timeout per attempt, exhaustion, manual retry, cancellation during requests and backoff, advancing catalog backoffs, and no stale completion after cancellation.
+- Dashboard tests must verify a shared catalog failure produces one banner while statistics cards and subject placeholders remain, and that independent failures stay inside their own regions.
+- Subject catalog tests must verify a selected subject failure uses the shared full-width banner, retains four shimmering quiz placeholders, and recovers only that subject without progress writes; include concurrent subject retry isolation and Retry-After protection.
+- Failure presentation tests must verify keyboard accessible buttons and that raw exceptions and status codes never appear in learner UI.
+- Incomplete subject membership must cause a catalog failure; complete membership must calculate all dashboard scores before any subject click.
+- Dashboard score selectors must preserve durable summaries when completed history is pruned and use canonical subject membership.
+- Verify subject summary count and ID order against the loaded quiz catalog, and confirm the content revision hash stays the same for a loaded snapshot.
+
+## Content contracts and rendering
+
+### Schema, rendering, and session changes
+
+- Add fixture-based tests for every question-bank schema, content edge case, Markdown feature, or scoring behavior.
+- Rich-content changes cover GFM, inline and display LaTeX, currency/delimiter ambiguity, invalid commands, HTML and math sanitization order, MathML accessibility, approved raw HTML and Markdown images in stems/rationales, responsive equations/images, disallowed elements and attributes, unsafe URLs, and restricted sources/choices.
+- Verify mixed content in QuizScreen, Browse Answers, and QA preview, plus narrow-screen equation overflow and local font loading in a real browser.
+- When changing session behavior, cover start, resume, checkpoint, leave, abort, and finish using repository interfaces.
+- When changing canonical content, verify compact stable IDs, the `question.quizId -> quiz.subjectId` relationship, answer references, GFM stems/rationales, rationale metadata, and deterministic per-quiz array ordering.
+- For a future schema migration, add a dedicated, one-time candidate and parity check rather than reviving an old migration script.
+
+### Read-only API contracts
+
+- For the read-only content API, run `.venv/bin/python -m pytest backend/tests -q`, `.venv/bin/ruff check backend/src backend/tests`, and `.venv/bin/mypy backend/src`.
+- Cover fixture-based schema-v4 load and revision parity, invalid IDs/references/answers, subject and quiz ordering, omitted optional metadata, ETags/revision conflicts, not-found responses, and startup readiness.
+- Use fixture files for request tests so no test can mutate the canonical bank.
+- Frontend content integration must cover API catalog loading, lazy question fetch and caching, retry/error states, a bank revision changing between catalog and question fetch, Browse Answers, both scoring modes, and local attempt resume/completion staying in localStorage.
+- Run the existing `npm test`, `npm run validate:content`, and `npm run build` checks before handoff.
+- GitHub Actions runs the backend and frontend checks in `.github/workflows/checks.yml`.
+
+### Shared contract cases
+
+- `tests/fixtures/bank-contract-cases.json` runs through both TypeScript and Python validators; keep new stored-bank edge cases in that shared set.
+- `src/content/api/apiContract.test.ts` covers the separate API DTO boundary, including membership and question order.
+- Storage boundary fixtures must remain ordinary passing tests.
+
+## Authoring and replay
+
+### Operations and serialization
+
+- For admin tooling, add core fixture tests for every change-set operation, stale revisions, relative insertion, moves, explicit cascades, rollback of an invalid mixed batch, and deterministic serialization.
+- Verify an unedited bank round-trips byte-for-byte, exported JSON passes `npm run validate:content` when substituted in a disposable checkout, and the separate `/admin.html` entry remains disabled in a normal production build.
+
+### Controller and stale previews
+
+- Exercise the admin controller through stage/export/undo and import-preview/stage flows.
+- Hold a preview open, change the draft, and assert that the old preview cannot apply.
+- Check duplicate command requests while busy.
+- Profile preview, apply, and undo against the full canonical bank before changing gateway memory or validation behavior.
+
+### Grouped additions
+
+Grouped version-2 `content.add` tests must cover new subjects with multiple quizzes and item lists, additions under existing subjects/quizzes, inherited parent IDs, duplicate IDs, ownership mismatches, nested-field diagnostics, item ordering, version-1 compatibility, rollback, undo, and replay of the exported grouped change set to the same flat canonical bank.
+
+### Bulk draft compilation
+
+- Content-only bulk-draft tests must cover each destination template, reject change-set and ID fields, compile choice strings into ordered A–Z choices, allocate stable IDs, preserve provided and verified answers distinctly, reject stale snapshots and empty reasons, and confirm that the exact compiled change set is used for preview and staging.
+- Imported legacy/grouped change sets remain a separate read-only preview flow.
+
+### Isolation and coordinated reset
+
+- Final-audit regressions verify immediate visibility of unreadable flashcard progress without overwriting stored bytes, isolation between operation inputs and validated flashcard records, and coordinated reset of replaced subjects with rejection/rollback of invalid reset candidates.
+- Component tests cover cancel/failure/retry of the combined reset; the admin browser workflow verifies that it clears both sections and their undo history.
+
+## Accessibility and measurement limits
+
+Accessible role/label queries, keyboard/focus tests, reduced-motion checks, and captured mobile/desktop layouts are automated. They do not establish real VoiceOver/NVDA behavior; manual assistive-technology testing remains a release QA item. No instrumented line/branch coverage percentage or broad production-load benchmark is claimed. The fixed digest-size regression and indexed lookup design address the observed storage and lookup costs; browser timing is measured only for the specified local fixtures.

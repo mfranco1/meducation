@@ -1,5 +1,7 @@
 # JSON question bank source-of-truth migration plan
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 ## Completion (2026-09-20)
 
 Implemented the migration. `src/content/questionBank.generated.json` is now schema version 1 and contains the final corrected choices plus all 121 reviewed explanations and 32 answer-review notes directly on question records. It no longer contains PDF paths or PDF-ingestion status. `questionBank.ts` is the sole JSON repository adapter and builds indexes plus derived question counts.

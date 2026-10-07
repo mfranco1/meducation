@@ -1,5 +1,7 @@
 # Rich question content rendering plan
 
+> Historical record: paths and check results below describe their implementation stage. See [current architecture](../../architecture.md) for present ownership; retain these historical claims.
+
 ## Goal and scope
 
 Render basic embedded HTML and images in canonical question `stem` and `rationale` strings while preserving existing GFM behavior. Keep choices, choice explanations, and rationale sources on their current restricted Markdown policy. Keep the schema at version 4 and the current canonical bank unchanged; this feature does not require an S3 integration or a content migration.
