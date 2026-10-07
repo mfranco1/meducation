@@ -186,15 +186,58 @@ describe('flashcard session controller', () => {
     act(() => {
       expect(result.current.saveAndExit()).toBe(false);
     });
+    setFailWrites(false);
+    act(() => result.current.navigateTo(1));
+    setFailWrites(true);
     act(() => result.current.finish());
     expect(result.current.view.page).toBe('flashcards-study');
     expect(repository.getCheckpoint('d1')).toBeDefined();
     setFailWrites(false);
-    act(() => result.current.next());
-    expect(result.current.view).toMatchObject({ index: 1, revealed: false });
     act(() => result.current.finish());
     expect(result.current.view).toMatchObject({ page: 'flashcards-subject', subject });
     expect(repository.getCheckpoint('d1')).toBeUndefined();
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
+  });
+
+  it('counts only explicit final-card finishes and counts later sessions separately', async () => {
+    const { result, repository } = setup();
+    await act(async () => { await result.current.launchDeck(deck, subject); });
+    act(() => result.current.finish());
+    expect(result.current.view.page).toBe('flashcards-study');
+    expect(repository.getSnapshot().completionCounts).toEqual({});
+    act(() => result.current.navigateTo(1));
+    act(() => result.current.saveAndExit());
+    expect(repository.getSnapshot().completionCounts).toEqual({});
+    await act(async () => { await result.current.launchDeck(deck, subject); });
+    act(() => result.current.navigateTo(1));
+    act(() => result.current.finish());
+    const staleFinish = result.current.finish;
+    act(() => staleFinish());
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
+    await act(async () => { await result.current.launchDeck(deck, subject); });
+    act(() => result.current.navigateTo(1));
+    act(() => result.current.finish());
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 2 });
+  });
+
+  it('retains prior completions when the learner restarts changed content and finishes it', async () => {
+    const { result, repository, loader } = setup();
+    await act(async () => { await result.current.launchDeck(deck, subject); });
+    act(() => result.current.navigateTo(1));
+    act(() => result.current.finish());
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
+
+    const changedCards = [{ ...cards[0], back: 'Updated answer' }, cards[1]];
+    const changedDeck = { ...deck, cardIds: changedCards.map(card => card.id) };
+    const oldCheckpoint = checkpointForCard('d1', cards, 'f1', await flashcardContentSignature(cards));
+    act(() => repository.saveCheckpoint(oldCheckpoint));
+    loader.ensureCards.mockResolvedValueOnce(changedCards);
+    await act(async () => { await result.current.launchDeck(changedDeck, subject); });
+    expect(result.current.pendingRestart?.reason).toBe('changed-content');
+    act(() => result.current.confirmRestart());
+    act(() => result.current.navigateTo(1));
+    act(() => result.current.finish());
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 2 });
   });
 
   it('persists opened and flagged cards across jumps and resume, while hiding answers after navigation', async () => {

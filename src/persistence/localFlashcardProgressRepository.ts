@@ -12,6 +12,7 @@ function freezeProgress(state: FlashcardProgressState): FlashcardProgressState {
     Object.freeze(checkpoint.flaggedCardIds);
     Object.freeze(checkpoint);
   });
+  Object.freeze(state.completionCounts);
   Object.freeze(state.checkpoints);
   return Object.freeze(state);
 }
@@ -59,14 +60,14 @@ export class LocalFlashcardProgressRepository {
       if (storage.getItem(flashcardProgressKey) !== null) {
           this.storageError = corruptMessage;
           if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
-          return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'corrupt', checkpoints: {} }));
+          return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'corrupt', checkpoints: {}, completionCounts: {} }));
       }
       this.observedRevision ??= 'initial';
       this.storageError = undefined;
-      return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'initial', checkpoints: {} }));
+      return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'initial', checkpoints: {}, completionCounts: {} }));
     } catch {
       this.storageError = unavailableMessage;
-      return (this.cached ??= freezeProgress({ schemaVersion: 2, revision: 'unavailable', checkpoints: {} }));
+      return (this.cached ??= freezeProgress({ schemaVersion: 2, revision: 'unavailable', checkpoints: {}, completionCounts: {} }));
     }
   }
 
@@ -139,6 +140,22 @@ export class LocalFlashcardProgressRepository {
       const checkpoints = { ...state.checkpoints };
       delete checkpoints[deckId];
       return { ...state, checkpoints };
+    });
+  }
+
+  completeDeck(deckId: string) {
+    this.commit((state) => {
+      if (!state.checkpoints[deckId]) return undefined;
+      const count = state.completionCounts[deckId] ?? 0;
+      if (!Number.isSafeInteger(count) || count >= Number.MAX_SAFE_INTEGER)
+        throw new FlashcardPersistenceError('corrupt', 'Deck completion count is invalid and was not saved.');
+      const checkpoints = { ...state.checkpoints };
+      delete checkpoints[deckId];
+      return {
+        ...state,
+        checkpoints,
+        completionCounts: { ...state.completionCounts, [deckId]: count + 1 },
+      };
     });
   }
 }

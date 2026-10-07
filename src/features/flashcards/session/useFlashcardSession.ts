@@ -224,9 +224,11 @@ export function useFlashcardSession(
 
   const finish = useCallback(() => {
     if (view.page !== 'flashcards-study') return;
-    if (!runPersistence(() => repository.clearCheckpoint(view.deck.id))) return;
+    const cards = loader.listCards(view.deck.id);
+    if (!cards.length || view.index !== cards.length - 1 || !repository.getCheckpoint(view.deck.id)) return;
+    if (!runPersistence(() => repository.completeDeck(view.deck.id))) return;
     showSubject(view.subject);
-  }, [repository, runPersistence, showSubject, view]);
+  }, [loader, repository, runPersistence, showSubject, view]);
 
   return {
     view,

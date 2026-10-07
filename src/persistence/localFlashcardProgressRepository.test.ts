@@ -21,6 +21,7 @@ describe('local flashcard progress repository', () => {
     expect(Object.isFrozen(snapshot.checkpoints)).toBe(true);
     expect(Object.isFrozen(snapshot.checkpoints.d1)).toBe(true);
     expect(Object.isFrozen(snapshot.checkpoints.d1.openedCardIds)).toBe(true);
+    expect(Object.isFrozen(snapshot.completionCounts)).toBe(true);
   });
   it('retries a temporarily unavailable storage read without losing saved checkpoints', () => {
     const storage = storagePort();
@@ -37,15 +38,47 @@ describe('local flashcard progress repository', () => {
     repository.clearCheckpoint('d1');
     expect(repository.getCheckpoint('d1')).toBeUndefined();
   });
-  it('stores independent checkpoints and clears a finished deck', () => {
+  it('counts finished decks once and clears only their checkpoints', () => {
     const repository = new LocalFlashcardProgressRepository(storagePort());
     repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
     repository.saveCheckpoint({ deckId: 'd2', currentCardId: 'f8', contentSignature: 'sig2', updatedAt: '2026-10-06T00:01:00.000Z', openedCardIds: [], flaggedCardIds: [] });
     expect(repository.getCheckpoint('d1')?.currentCardId).toBe('f2');
     expect(Object.keys(repository.getSnapshot().checkpoints)).toEqual(['d1', 'd2']);
-    repository.clearCheckpoint('d1');
+    repository.completeDeck('d1');
     expect(repository.getCheckpoint('d1')).toBeUndefined();
     expect(repository.getCheckpoint('d2')?.currentCardId).toBe('f8');
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
+    repository.completeDeck('d1');
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
+    repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:02:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    repository.completeDeck('d1');
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 2 });
+    expect(repository.getSnapshot().checkpoints.d2).toBeDefined();
+    repository.clearCheckpoint('d2');
+    expect(repository.getSnapshot().completionCounts).toEqual({ d1: 2 });
+  });
+
+  it('persists completion counts across repository instances and publishes only committed completions', () => {
+    const storage = storagePort();
+    const first = new LocalFlashcardProgressRepository(storage);
+    first.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    let notifications = 0;
+    first.subscribe(() => notifications++);
+    first.completeDeck('d1');
+    expect(notifications).toBe(1);
+    expect(new LocalFlashcardProgressRepository(storage).getSnapshot().completionCounts).toEqual({ d1: 1 });
+
+    const values = new Map<string, string>();
+    let rejectWrites = false;
+    const failing = new LocalFlashcardProgressRepository({
+      getItem: key => values.get(key) ?? null,
+      setItem: (key, value) => { if (rejectWrites) throw new Error('Quota'); values.set(key, value); },
+    });
+    failing.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    rejectWrites = true;
+    expect(() => failing.completeDeck('d1')).toThrowError(FlashcardPersistenceError);
+    expect(failing.getSnapshot().completionCounts).toEqual({});
+    expect(failing.getCheckpoint('d1')).toBeDefined();
   });
 
   it('detects stale writers and preserves corrupt storage for recovery', () => {

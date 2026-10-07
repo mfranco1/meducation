@@ -11,11 +11,18 @@ const state = { schemaVersion: 2, revision: 'revision', checkpoints: { d1: check
 
 describe('flashcard progress envelope', () => {
   it('accepts opened and flagged IDs and rejects unsupported schemas and duplicated card content', () => {
-    expect(decodeFlashcardProgress(state)).toEqual(state);
+    expect(decodeFlashcardProgress(state)).toEqual({ ...state, completionCounts: {} });
     expect(decodeFlashcardProgress({ ...state, schemaVersion: 1 })).toBeUndefined();
     expect(
       decodeFlashcardProgress({ ...state, checkpoints: { d1: { ...checkpoint, front: 'Content' } } }),
     ).toBeUndefined();
+  });
+
+  it('normalizes old v2 saves and validates stable deck completion counts', () => {
+    expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 2, d2: 0 } })).toEqual({ ...state, completionCounts: { d1: 2, d2: 0 } });
+    for (const completionCounts of [{ ' ': 1 }, { d1: -1 }, { d1: 1.5 }, { d1: Number.MAX_SAFE_INTEGER + 1 }, []]) {
+      expect(decodeFlashcardProgress({ ...state, completionCounts })).toBeUndefined();
+    }
   });
 
   it('rejects ownership mismatches and invalid or noncanonical activity timestamps', () => {
@@ -35,7 +42,7 @@ describe('flashcard progress envelope', () => {
       getItem: (key: string) => { reads.push(key); return null; },
       setItem: () => { throw new Error('Reads must not write'); },
     };
-    expect(loadFlashcardProgress(storage)).toEqual({ schemaVersion: 2, revision: 'initial', checkpoints: {} });
+    expect(loadFlashcardProgress(storage)).toEqual({ schemaVersion: 2, revision: 'initial', checkpoints: {}, completionCounts: {} });
     expect(reads).toEqual([flashcardProgressKey]);
   });
 });

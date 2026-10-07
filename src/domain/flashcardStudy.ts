@@ -14,6 +14,7 @@ export interface FlashcardProgressState {
   schemaVersion: 2;
   revision: string;
   checkpoints: Record<string, FlashcardCheckpoint>;
+  completionCounts: Record<string, number>;
 }
 
 function serializedStudyContent(cards: readonly FlashcardCard[]): string {

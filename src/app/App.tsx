@@ -184,6 +184,7 @@ function LearnerApp() {
       subject={currentFlashcardSubject}
       catalog={runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id)}
       checkpoints={flashcards.progress.checkpoints}
+      completionCounts={flashcards.progress.completionCounts}
       loading={['idle', 'loading'].includes(runtimeFlashcardBank.getState(`catalog:${currentFlashcardSubject.id}`))}
       error={runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`)}
       loadingDeckId={flashcards.loadingDeckId}

@@ -8,10 +8,11 @@ import { SubjectBrowseLayout } from '../../../shared/ui/catalog/SubjectBrowseLay
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
 import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
 
-export function FlashcardSubjectScreen({ subject, catalog, checkpoints, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck }: {
+export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completionCounts, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck }: {
   subject: Subject;
   catalog?: FlashcardCatalogResponse;
   checkpoints: Readonly<Record<string, FlashcardCheckpoint>>;
+  completionCounts: Readonly<Record<string, number>>;
   loading?: boolean;
   error?: Error;
   loadingDeckId?: string;
@@ -25,12 +26,12 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, loading 
     <SubjectBrowseLayout subjectName={subject.name} onBack={onBack}>
       {error || loading ? <Stack spacing={2} role={loading ? 'status' : undefined} aria-busy={loading} aria-hidden={!loading} aria-label={loading ? 'Loading flashcard decks' : undefined}>{Array.from({ length: 4 }, (_, index) => <LoadingSkeleton key={index} variant="rounded" height={92} />)}</Stack>
         : decks.length === 0 ? <Typography color="text.secondary">No flashcard decks are available in this subject yet.</Typography>
-          : <Stack spacing={2}>{decks.map(deck => <FlashcardDeckRow key={deck.id} deck={deck} checkpoints={checkpoints} loading={loadingDeckId === deck.id} onSelect={() => onSelectDeck(deck)} />)}</Stack>}
+          : <Stack spacing={2}>{decks.map(deck => <FlashcardDeckRow key={deck.id} deck={deck} checkpoints={checkpoints} completionCount={completionCounts[deck.id] ?? 0} loading={loadingDeckId === deck.id} onSelect={() => onSelectDeck(deck)} />)}</Stack>}
     </SubjectBrowseLayout>
   </>;
 }
 
-function FlashcardDeckRow({ deck, checkpoints, loading, onSelect }: { deck: FlashcardDeckSummary; checkpoints: Readonly<Record<string, FlashcardCheckpoint>>; loading: boolean; onSelect: () => void }) {
+function FlashcardDeckRow({ deck, checkpoints, completionCount, loading, onSelect }: { deck: FlashcardDeckSummary; checkpoints: Readonly<Record<string, FlashcardCheckpoint>>; completionCount: number; loading: boolean; onSelect: () => void }) {
   const checkpoint = checkpoints[deck.id];
   const index = checkpoint ? deck.cardIds.indexOf(checkpoint.currentCardId) : -1;
   const disabled = deck.cardCount === 0 || loading;
@@ -39,7 +40,10 @@ function FlashcardDeckRow({ deck, checkpoints, loading, onSelect }: { deck: Flas
       <Box>
         <Typography variant="h6">{deck.name}</Typography>
         <Typography variant="body2" color="text.secondary">{deck.cardCount} {deck.cardCount === 1 ? 'card' : 'cards'}</Typography>
-        {checkpoint && index >= 0 && <Chip label={`Card ${index + 1} of ${deck.cardCount}`} size="small" variant="outlined" sx={{ mt: 1 }} />}
+        {(completionCount > 0 || (checkpoint && index >= 0)) && <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mt: 1 }}>
+          {completionCount > 0 && <Chip label={`Completed ${completionCount} ${completionCount === 1 ? 'time' : 'times'}`} size="small" variant="outlined" />}
+          {checkpoint && index >= 0 && <Chip label={`Card ${index + 1} of ${deck.cardCount}`} size="small" variant="outlined" />}
+        </Stack>}
       </Box>
       <Button variant="contained" disabled={disabled} onClick={onSelect}>
         {loading ? 'Loading deck…' : deck.cardCount === 0 ? 'No cards yet' : checkpoint ? 'Resume deck' : 'Study deck'}

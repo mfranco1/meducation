@@ -9,6 +9,8 @@ const onlyKeys = (value: Record<string, unknown>, allowed: string[]) =>
   Object.keys(value).every((key) => allowed.includes(key));
 const timestamp = (value: unknown): value is string =>
   typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
+const validCompletionCounts = (value: unknown): value is Record<string, number> =>
+  record(value) && Object.entries(value).every(([deckId, count]) => nonempty(deckId) && typeof count === 'number' && Number.isSafeInteger(count) && count >= 0);
 
 function validCheckpoint(value: unknown, deckId: string): value is FlashcardCheckpoint {
   return (
@@ -27,7 +29,7 @@ function validCheckpoint(value: unknown, deckId: string): value is FlashcardChec
 export function decodeFlashcardProgress(value: unknown): FlashcardProgressState | undefined {
   if (
     !record(value) ||
-    !onlyKeys(value, ['schemaVersion', 'revision', 'checkpoints']) ||
+    !onlyKeys(value, ['schemaVersion', 'revision', 'checkpoints', 'completionCounts']) ||
     value.schemaVersion !== 2 ||
     !nonempty(value.revision) ||
     !record(value.checkpoints)
@@ -35,12 +37,13 @@ export function decodeFlashcardProgress(value: unknown): FlashcardProgressState 
     return undefined;
   if (Object.entries(value.checkpoints).some(([deckId, checkpoint]) => !validCheckpoint(checkpoint, deckId)))
     return undefined;
-  return value as unknown as FlashcardProgressState;
+  if (value.completionCounts !== undefined && !validCompletionCounts(value.completionCounts)) return undefined;
+  return { ...value, completionCounts: value.completionCounts ?? {} } as unknown as FlashcardProgressState;
 }
 
 export function loadFlashcardProgress(storage: StoragePort): FlashcardProgressState | undefined {
   const raw = storage.getItem(flashcardProgressKey);
-  if (raw === null) return { schemaVersion: 2, revision: 'initial', checkpoints: {} };
+  if (raw === null) return { schemaVersion: 2, revision: 'initial', checkpoints: {}, completionCounts: {} };
   try {
     return decodeFlashcardProgress(JSON.parse(raw) as unknown);
   } catch {

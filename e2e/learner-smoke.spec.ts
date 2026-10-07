@@ -150,9 +150,29 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.getByRole('button', { name: 'Reveal answer' }).click();
   await expect(page.getByText('The axillary nerve, n. axillaris.')).toBeVisible();
   await page.getByRole('button', { name: 'Finish deck' }).click();
+  await expect(page.getByText('Completed 1 time')).toBeVisible();
+  await page.setViewportSize({ width: 390, height: 844 });
+  await expect(page.getByText('Completed 1 time')).toBeVisible();
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
+    .toBe(true);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.reload();
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await expect(page.getByText('Completed 1 time')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Study deck' })).toBeVisible();
+  await page.getByRole('button', { name: 'Study deck' }).click();
+  await page.getByRole('button', { name: 'Card 2, unopened' }).click();
+  await page.getByRole('button', { name: 'Finish deck' }).click();
+  await expect(page.getByText('Completed 2 times')).toBeVisible();
+  await page.getByRole('button', { name: 'Study deck' }).click();
+  await page.getByRole('button', { name: 'Card 2, unopened' }).click();
+  await page.getByRole('button', { name: 'Save and exit deck' }).click();
+  await expect(page.getByText('Completed 2 times')).toBeVisible();
+  await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'All subjects' }).click();
-  await expect(page.getByRole('heading', { name: 'Continue Studying' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();
   await expect(page.getByText(/score|average|completed quizzes/i)).toHaveCount(0);
 });
 
