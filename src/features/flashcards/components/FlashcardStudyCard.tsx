@@ -23,7 +23,7 @@ export function FlashcardStudyCard({ card, revealed, flagged, onReveal, onToggle
   return <Card variant="outlined" sx={{ minHeight: { xs: 390, sm: 460 }, display: 'flex', overflow: 'visible' }}>
     <CardContent sx={{ p: { xs: 2.5, sm: 4 }, width: '100%', display: 'flex', flexDirection: 'column' }}>
       <Box sx={{ position: 'relative', display: 'grid', placeItems: 'center', flex: 1, minHeight: 145, px: { xs: 2, sm: 4 }, py: 3 }}>
-        <IconButton aria-label={flagged ? 'Remove card flag' : 'Flag card'} aria-pressed={flagged} onClick={onToggleFlag} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }}>
+        <IconButton disableRipple aria-label={flagged ? 'Remove card flag' : 'Flag card'} aria-pressed={flagged} onClick={onToggleFlag} sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1, bgcolor: 'transparent', '&:hover': { bgcolor: 'transparent' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }}>
           {flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}
         </IconButton>
         <Box aria-live="polite" sx={{ width: '100%', textAlign: 'center', '& .katex-display': { maxWidth: '100%' } }}>

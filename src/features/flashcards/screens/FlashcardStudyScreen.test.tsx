@@ -30,6 +30,24 @@ describe('FlashcardStudyScreen', () => {
     expect(onFinish).toHaveBeenCalledOnce();
   });
 
+  it('renders multi-paragraph fronts and backs vertically and keeps the flag button quiet', () => {
+    const multiBlock: FlashcardCard[] = [{ id: 'f-blocks', deckId: 'd1', front: 'Front one.\n\nFront two.', back: 'Back one.\n\nBack two.' }];
+    const props = { deck: { ...deck, cardCount: 1, cardIds: ['f-blocks'] }, cards: multiBlock, index: 0, onReveal: vi.fn(), onToggleFlag: vi.fn(), onPrevious: vi.fn(), onNext: vi.fn(), onSaveAndExit: vi.fn(), onFinish: vi.fn() };
+    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed={false} /></ThemeProvider>);
+    const frontOne = screen.getByText('Front one.');
+    const frontTwo = screen.getByText('Front two.');
+    expect(frontOne.parentElement?.parentElement).toBe(frontTwo.parentElement?.parentElement);
+    const flag = screen.getByRole('button', { name: 'Flag card' });
+    expect(flag.querySelector('.MuiTouchRipple-root')).toBeNull();
+    fireEvent.click(flag);
+    expect(props.onToggleFlag).toHaveBeenCalledOnce();
+
+    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed /></ThemeProvider>);
+    const backOne = screen.getByText('Back one.');
+    const backTwo = screen.getByText('Back two.');
+    expect(backOne.parentElement?.parentElement).toBe(backTwo.parentElement?.parentElement);
+  });
+
   it('hides an opened card when its face is clicked, while preserving answer links', () => {
     const onReveal = vi.fn();
     const linkedCards: FlashcardCard[] = [{ id: 'f-link', deckId: 'd1', front: 'Prompt', back: 'A bold answer with [a source](https://example.com).' }];

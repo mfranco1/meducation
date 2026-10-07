@@ -35,6 +35,22 @@ function renderQuizForSubmission({ attempt = startingAttempt, onFinish = vi.fn()
 }
 
 describe('quiz streak celebrations', () => {
+  it('keeps multiple stem blocks in the question column beside the flag', () => {
+    const multiBlockQuestion: Question = {
+      ...questions[0], stem: 'First paragraph.\n\nSecond paragraph.\n\n- First item\n- Second item',
+    };
+    render(<ThemeProvider theme={theme}><QuizScreen quiz={quiz} attempt={startingAttempt} index={0} questions={[multiBlockQuestion]} onCheckpoint={() => {}} onFinish={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
+    const first = screen.getByText('First paragraph.');
+    const second = screen.getByText('Second paragraph.');
+    const list = screen.getByRole('list');
+    const stemColumn = first.closest('.MuiBox-root');
+    expect(stemColumn).toContainElement(second);
+    expect(stemColumn).toContainElement(list);
+    const flag = screen.getByRole('button', { name: 'Flag question' });
+    expect(flag).toBeVisible();
+    expect(flag.querySelector('.MuiTouchRipple-root')).toBeNull();
+  });
+
   it('renders a LaTeX stem and revealed rationale in Fast Feedback', () => {
     const mathQuestion: Question = {
       ...questions[0], stem: 'Calculate $x^2$.', rationale: 'Use $x^2+y^2=z^2$.',

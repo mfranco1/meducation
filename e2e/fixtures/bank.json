@@ -6,7 +6,7 @@
     {
       "id": "i1",
       "quizId": "q1",
-      "stem": "What is $2+2$?",
+      "stem": "What is $2+2$?\n\nAdditional context for the question.\n\n- First detail\n- Second detail",
       "choices": [
         { "id": "A", "text": "Four" },
         { "id": "B", "text": "Five" }

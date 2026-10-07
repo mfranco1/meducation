@@ -91,6 +91,11 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 1 of 2')).toBeVisible();
   await expect(page.locator('.katex')).toHaveCount(2);
+  const cardFlag = page.getByRole('button', { name: 'Flag card' });
+  const cardFlagBackground = await cardFlag.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await cardFlag.hover();
+  await expect(cardFlag).toHaveCSS('background-color', cardFlagBackground);
+  await expect(cardFlag.locator('.MuiTouchRipple-root')).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await expect
@@ -163,12 +168,29 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByText('What is')).toBeVisible();
   await expect(page.locator('.katex')).toBeVisible();
+  const questionFlag = page.getByRole('button', { name: 'Flag question' });
+  const questionFlagBackground = await questionFlag.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await questionFlag.hover();
+  await expect(questionFlag).toHaveCSS('background-color', questionFlagBackground);
+  await expect(questionFlag.locator('.MuiTouchRipple-root')).toHaveCount(0);
+  const firstParagraph = page.locator('h5').filter({ hasText: 'What is' }).first();
+  const secondParagraph = page.getByRole('heading', { name: 'Additional context for the question.' });
+  const stemList = page.getByRole('list');
+  await expect(firstParagraph).toBeVisible();
+  await expect(secondParagraph).toBeVisible();
+  await expect(stemList).toBeVisible();
+  expect((await secondParagraph.boundingBox())!.y).toBeGreaterThan((await firstParagraph.boundingBox())!.y);
+  expect((await stemList.boundingBox())!.y).toBeGreaterThan((await secondParagraph.boundingBox())!.y);
   const firstQuizMs = Date.now() - firstQuizStart;
   await testInfo.attach('main-quiz-desktop.png', {
     body: await page.screenshot({ path: testInfo.outputPath('main-quiz-desktop.png') }),
     contentType: 'image/png',
   });
   await page.setViewportSize({ width: 390, height: 844 });
+  expect((await secondParagraph.boundingBox())!.y).toBeGreaterThan((await firstParagraph.boundingBox())!.y);
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
+    .toBe(true);
   await testInfo.attach('main-quiz-mobile.png', {
     body: await page.screenshot({ path: testInfo.outputPath('main-quiz-mobile.png') }),
     contentType: 'image/png',

@@ -43,7 +43,7 @@ export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequ
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
       <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
-          <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
+          <Box sx={{ flex: 1, minWidth: 0 }}><MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" /></Box>
           {attempt.responses[question.id]?.flagged && <Box role="img" aria-label="Flagged question" sx={{ flexShrink: 0, mt: .5, color: 'primary.main', lineHeight: 0 }}><FlagIcon /></Box>}
         </Stack>
         <ReadOnlyChoiceList question={question} selectedChoiceId={selectedChoiceId} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} answerUnderReview={answerUnderReview} mode="review" />

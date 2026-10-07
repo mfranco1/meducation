@@ -17,6 +17,19 @@ const attempt: CompletedAttempt = {
 };
 
 describe('QuizReviewScreen', () => {
+  it('keeps multi-paragraph stems in one column beside the optional flag', () => {
+    const multiBlockQuestions = [{ ...questions[0], stem: 'First paragraph.\n\nSecond paragraph.' }];
+    const unflaggedAttempt = { ...attempt, responses: { q1: { ...attempt.responses.q1, flagged: false } } };
+    const { rerender } = render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={unflaggedAttempt} index={0} questions={multiBlockQuestions} onNavigate={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
+    const first = screen.getByText('First paragraph.');
+    const second = screen.getByText('Second paragraph.');
+    expect(first.parentElement?.parentElement).toBe(second.parentElement?.parentElement);
+    expect(screen.queryByRole('img', { name: 'Flagged question' })).toBeNull();
+
+    rerender(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={multiBlockQuestions} onNavigate={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
+    expect(screen.getByRole('img', { name: 'Flagged question' })).toBeVisible();
+  });
+
   it('reveals the submitted incorrect choice, correct answer, and explanation without answer controls', () => {
     const onExit = vi.fn();
     render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={questions} onNavigate={() => {}} onRequestExit={onExit} /></ThemeProvider>);
