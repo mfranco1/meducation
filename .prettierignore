@@ -9,7 +9,6 @@ backend/requirements*.lock
 # Private source material and reproducible tool output
 content/**
 tn-pdfs/**
-public/content/**
 node_modules/**
 dist/**
 .venv/**

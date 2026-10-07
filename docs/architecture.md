@@ -17,7 +17,7 @@ Keep one frontend package and the existing Python package. Root HTML entry point
 - `scripts/content`: validation/audit CLIs; `scripts/migrations`: candidate-producing migrations; `scripts/architecture`: shared dependency policy and tooling.
 - Colocated tests belong to their module. `src/test` supplies test setup; `tests/fixtures` holds shared contracts; `e2e` holds browser workflows and their fixture banks. See [suite ownership](testing.md#suite-ownership-and-fixtures).
 
-Avoid broad barrels, forwarding modules, speculative shared layers, and empty placeholder directories. Maintenance scripts are outside the application graph. Ignored private PDFs, extraction data, and legacy public assets have separate [backup requirements](content-management.md#local-source-material-and-generated-output).
+Avoid broad barrels, forwarding modules, speculative shared layers, and empty placeholder directories. Maintenance scripts are outside the application graph. Ignored private PDFs and extraction data have separate [backup requirements](content-management.md#local-source-material-and-generated-output).
 
 ## Checked dependency boundaries
 

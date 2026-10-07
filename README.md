@@ -95,6 +95,6 @@ Question text, choice order, answer provenance, rationales, and reviewed explana
 - `e2e/` — learner and admin browser tests
 - `docs/` — architecture, product, content, design, and testing guidance
 
-Start with the [documentation index](docs/README.md) for contributor workflows. Ignored private sources, audit reports, and legacy public assets have distinct lifecycles; see [local-file guidance](docs/content-management.md#local-source-material-and-generated-output).
+Start with the [documentation index](docs/README.md) for contributor workflows. Ignored private sources and audit reports have distinct lifecycles; see [local-file guidance](docs/content-management.md#local-source-material-and-generated-output).
 
 The app does not call a generative AI service at runtime. Explanations are bundled static content.

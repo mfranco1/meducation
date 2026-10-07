@@ -63,9 +63,10 @@ Other content folders are intentionally ignored by Git and are not included in a
 
 - Root `content/` contains historical extracted records and review reports, plus the current `content/explanation-audit.json` output from `npm run audit:explanations`. That command runs from the repository root and overwrites its audit report. The audit is reproducible from canonical content; historical extraction/review material has no current tracked regeneration pipeline, so retain it separately if needed for provenance or future source review.
 - `tn-pdfs/` holds private original PDF sources and ancillary material. Current runtime code does not read it. Keep an appropriate separate backup before moving or deleting these files; a canonical bank does not replace its source documents.
-- `public/content/` contains a legacy question-bank manifest and quiz shards. The current local/API adapters do not read that manifest. Vite still copies files in `public/` into `dist/`, so local builds with these ignored assets differ from builds of a clean checkout. They are not canonical and have no current tracked regeneration command. Retain them until their provenance and any external URL consumers have been reviewed; do not silently remove them while organizing source.
 
-New runtime media referenced by canonical rich content should have an explicit tracked asset or publishing workflow, rather than being placed among ignored legacy shards. Record its URL and lifecycle in the reviewed content change.
+`public/` contains tracked assets copied into production builds. The unused legacy question-bank manifest and quiz shards formerly under `public/content/` were removed after the owner confirmed they had no external consumers. The current local/API adapters read the canonical banks directly; do not recreate a parallel manifest/shard store. New media under `public/content/` is trackable and must follow the reviewed asset workflow below.
+
+New runtime media referenced by canonical rich content should have an explicit tracked asset or publishing workflow, rather than being placed among ignored historical extraction files. Record its URL and lifecycle in the reviewed content change.
 
 Build/test outputs (`dist/`, coverage, browser results), virtual environments, Python caches, and `*.egg-info/` package metadata are also ignored. They can be regenerated through the documented install, build, and test workflows. Back up irreplaceable private sources and review history separately; Git protects only tracked files.
 
