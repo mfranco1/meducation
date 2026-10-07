@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 
 export const screenTransitionDurationMs = 170;
-export const screenTransitionEasing = 'cubic-bezier(0.2, 0, 0, 1)';
+const screenTransitionEasing = 'cubic-bezier(0.2, 0, 0, 1)';
 
 const enter = keyframes`
   from { opacity: 0; top: 6px; }

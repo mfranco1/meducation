@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { ContentLoadError, getJsonWithRetry, RuntimeQuestionBank, runtimeQuestionBank } from './runtimeQuestionBank';
-import type { JsonTransport } from './contentTransport';
+import { RuntimeQuestionBank, runtimeQuestionBank } from './runtimeQuestionBank';
+import { ContentLoadError, getJsonWithRetry, type JsonTransport } from './contentTransport';
 
 const subject = { id: 's1', name: 'Subject', accent: '#123456' };
 const quiz = { id: 'q1', subjectId: 's1', name: 'Quiz', questionCount: 1, questionIds: ['i1'] };

@@ -9,7 +9,7 @@ import { visit } from 'unist-util-visit';
  * otherwise turn the intervening prose into a formula. Restore those bounded
  * money spans to literal source text. Explicit operators/TeX remain math.
  */
-export const remarkMathWithCurrency: Plugin<[], Root> = function mathWithCurrency() {
+export const remarkMathPlugin: Plugin<[], Root> = function mathWithCurrency() {
   remarkMath.call(this, { singleDollarTextMath: true });
   return tree => {
     visit(tree, ['inlineMath', 'math'], (node, index, parent) => {
@@ -26,5 +26,3 @@ export const remarkMathWithCurrency: Plugin<[], Root> = function mathWithCurrenc
     });
   };
 };
-
-export const remarkMathPlugin = remarkMathWithCurrency;

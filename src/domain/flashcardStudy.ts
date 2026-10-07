@@ -33,10 +33,6 @@ export function validateFlashcardCheckpoint(checkpoint: FlashcardCheckpoint, dec
   return matches ? 'valid' : 'changed-content';
 }
 
-export function initialFlashcardCardId(cards: readonly FlashcardCard[]): string | undefined {
-  return cards[0]?.id;
-}
-
 export type FlashcardLaunch =
   | { kind: 'empty' }
   | { kind: 'start'; cardId: string }

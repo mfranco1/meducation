@@ -21,7 +21,7 @@ export const richHtmlTags = new Set<string>(richHtmlTagNames);
 const appEnvironment = (import.meta.env as { VITE_CONTENT_IMAGE_ORIGINS?: string } | undefined)?.VITE_CONTENT_IMAGE_ORIGINS;
 const scriptEnvironment = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CONTENT_IMAGE_ORIGINS;
 
-export const approvedImageOrigins = new Set(
+const approvedImageOrigins = new Set(
   (appEnvironment ?? scriptEnvironment ?? '')
     .split(',')
     .map(origin => origin.trim().replace(/\/$/, ''))

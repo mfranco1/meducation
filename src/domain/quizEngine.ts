@@ -1,6 +1,6 @@
 import type { Attempt, AttemptScore, CelebrationProgress, FeedbackMode, Question, QuestionResponse, StreakMilestone } from './types';
 
-export const STREAK_MILESTONES: readonly StreakMilestone[] = [3, 5, 10, 25, 50];
+const STREAK_MILESTONES: readonly StreakMilestone[] = [3, 5, 10, 25, 50];
 
 export const answerFor = (question: Question) => question.verifiedAnswer ?? question.answer;
 export const isCorrect = (question: Question, selected?: string) => selected !== undefined && selected === answerFor(question);
@@ -9,7 +9,7 @@ export const selectChoice = (response: QuestionResponse, choiceId: string, feedb
   if (response.locked) return response;
   return { ...response, selectedChoiceId: choiceId, locked: feedbackMode === 'immediate' };
 };
-export const celebrationProgressFor = (attempt: Attempt): CelebrationProgress => ({
+const celebrationProgressFor = (attempt: Attempt): CelebrationProgress => ({
   correctStreak: attempt.celebrationProgress?.correctStreak ?? 0,
   awardedStreakMilestones: attempt.celebrationProgress?.awardedStreakMilestones ?? [],
 });

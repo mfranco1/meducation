@@ -4,9 +4,6 @@ import { isQuestionList, isQuizCatalog, isSubjectCatalog, responseRevision, type
 import { browserJsonTransport, ContentLoadError, genericFailure, revisionError, type JsonTransport } from './contentTransport';
 import { RuntimeContentCache } from './runtimeContentCache';
 
-export { ContentLoadError, getJsonWithRetry } from './contentTransport';
-export type { ContentErrorKind } from './contentTransport';
-export type { SubjectSummary } from './apiDecoders';
 type SubjectCatalogRecord = Subject & Partial<Pick<SubjectSummary, 'quizCount' | 'quizIds'>>;
 type ResourceState = 'idle' | 'loading' | 'retrying' | 'ready' | 'error';
 

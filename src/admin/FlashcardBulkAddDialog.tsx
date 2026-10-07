@@ -37,7 +37,7 @@ interface Preview {
   key: string;
 }
 
-export function flashcardBulkPreviewKey(
+function flashcardBulkPreviewKey(
   bank: StoredFlashcardBank,
   subjects: readonly Subject[],
   context: FlashcardBulkAddContext,

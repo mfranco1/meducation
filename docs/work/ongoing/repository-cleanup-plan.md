@@ -1,12 +1,12 @@
 # Repository cleanup plan
 
-Created: 2026-10-07. Status: Stage 1 complete; waiting for the user's go signal for Stage 2. Stop after every stage and wait for the user's go signal before starting the next stage.
+Created: 2026-10-07. Status: Stage 2 complete; waiting for the user's go signal for Stage 3. Stop after every stage and wait for the user's go signal before starting the next stage.
 
 ## Goal and scope
 
 Remove demonstrably unused files, exports, dependencies, generated residue, and repeated implementation. Reduce maintenance and build payload without changing product behavior, canonical content, stored progress, or supported authoring workflows. Follow the existing ownership boundaries rather than reorganizing the repository again.
 
-This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stage 1. Wait for authorization before Stage 2. Follow the stage-gate convention in [work tracking](../README.md).
+This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1 and 2 individually. Wait for authorization before Stage 3. Follow the stage-gate convention in [work tracking](../README.md).
 
 ## Findings from the initial inspection
 
@@ -102,13 +102,29 @@ Stage 1 is complete with no deferred items or failing checks. Stage 2 has not st
 
 Risk: low to medium. Dependency: Stage 0; independent of unresolved archival items.
 
-- [ ] Trace unused modules, symbols, forwarding exports, styles, fixtures, and scripts against every entry point. Check `runtimeQuestionBank.ts` forwarding exports as candidates; remove only exports with no supported consumers or update callers to the owning module where that simplifies dependencies.
-- [ ] Audit every package against application imports, side-effect imports, tooling, config, and CI. No package is currently confirmed unused. Markdown, sanitization, math, Emotion/MUI, and carousel dependencies require consumer checks before removal.
-- [ ] Remove confirmed unused declarations and files in small batches. Delete an associated test only when its behavior has ceased to exist or equivalent coverage is demonstrated elsewhere.
-- [ ] Remove confirmed unused packages using the package manager and update the lockfile together. Keep runtime and development dependency categories accurate; avoid unrelated upgrades or lockfile churn.
-- [ ] Review the flashcard v1 migration CLI only after locating remaining v1 source/export workflows. Retain it unless retirement is established; do not confuse an infrequently used migration with dead code.
+- [x] Trace unused modules, symbols, forwarding exports, styles, fixtures, and scripts against every entry point. Check `runtimeQuestionBank.ts` forwarding exports as candidates; remove only exports with no supported consumers or update callers to the owning module where that simplifies dependencies.
+- [x] Audit every package against application imports, side-effect imports, tooling, config, and CI. Markdown, sanitization, math, Emotion/MUI, and carousel dependencies require consumer checks before removal.
+- [x] Remove confirmed unused declarations and files in small batches. Delete an associated test only when its behavior has ceased to exist or equivalent coverage is demonstrated elsewhere.
+- [x] Remove confirmed unused direct package declarations using the package manager and update the lockfile together. Keep runtime and development dependency categories accurate; avoid unrelated upgrades or lockfile churn.
+- [x] Review the flashcard v1 migration CLI only after locating remaining v1 source/export workflows. Retain it unless retirement is established; do not confuse an infrequently used migration with dead code.
 
 Exit gate: each deletion has recorded reachability evidence; frontend checks and affected browser/Python checks pass. A scan finding no removable dependency is an acceptable result.
+
+### Stage 2 execution record
+
+Re-ran the resolver/import inventory across application, maintenance, and browser code, plus unused-local/parameter diagnostics for the app compilation; no orphaned implementation module or unused local declaration was found. An AST export inventory plus source/script/browser/documentation consumer searches identified eight runtime implementation names with no outside references. Type contracts describing component props, stored/API payloads, and public return values were retained. No fixture or test was deleted.
+
+Removed the unreferenced `initialFlashcardCardId` function: it had no caller or test, and `resolveFlashcardLaunch` already owns first-card selection. Made six implementation details private to their modules: `flashcardBulkPreviewKey`, `approvedImageOrigins`, `STREAK_MILESTONES`, `celebrationProgressFor`, the default `flashcardProgressRepository` instance, and `screenTransitionEasing`. Their behavior and consumers within each module are unchanged.
+
+Removed the redundant `remarkMathWithCurrency` export/alias by exposing the same named plugin function directly as the existing `remarkMathPlugin` contract. Removed four forwarding exports from `runtimeQuestionBank.ts`: `ContentLoadError`, `getJsonWithRetry`, `ContentErrorKind`, and `SubjectSummary`. Both affected tests now import transport members from `contentTransport.ts`; production callers already used the owning module. In total, 12 unnecessary export names were removed while preserving every consumed contract.
+
+Removed the direct `remark-rehype` dependency using `npm uninstall remark-rehype --ignore-scripts --no-audit --no-fund --offline`. Only one root declaration in each of `package.json` and `package-lock.json` changed. Every resolved dependency entry remains identical, including `remark-rehype@11.1.2` required by `react-markdown`. This reduces redundant dependency ownership rather than installed bytes. Other dependencies have source, tooling, type, or peer consumers and were retained.
+
+The v1 flashcard migration CLI remains supported by the documented v1 bank/change-set recovery workflow in the flashcard schema and content-management guide. No evidence establishes that all legacy source/export workflows are retired, so the CLI, helper, and existing migration tests remain.
+
+Verification completed: lint/architecture, formatting, all 10 architecture tests, all 62 frontend test files / 363 tests, full content validation, and all 11 learner plus both admin browser tests passed. Content validation has the same 32 review warnings and unchanged canonical hashes/corpus counts. Both TypeScript/production build modes passed: default at 76 files / 2,345,448 bytes, optional admin at 80 files / 16,610,910 bytes. Both retain the favicon and all 59 KaTeX assets; only the optional mode includes `admin.html`. Output totals are six bytes below Stage 1 in each mode; this stage's benefit is smaller maintenance/API surface, not material bundle savings. AST comparison confirms exactly 12 removed export names, and the follow-up static scan has no remaining unreferenced runtime implementation export candidates. Resolved-package parity, canonical hashes, tracker links, and diff whitespace checks pass. Existing Vite chunk, Vitest environment-cost, and browser environment advisories remain. Evidence is under `/private/tmp/meducation-cleanup/stage-2/`.
+
+Stage 2 is complete with no failing checks. Supported type contracts and legacy migration tooling were retained intentionally. Stage 3 has not started. Waiting for the user's go signal.
 
 ## Stage 3 — Consolidate small, proven implementation duplicates
 

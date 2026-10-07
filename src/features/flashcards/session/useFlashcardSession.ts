@@ -30,7 +30,7 @@ export interface FlashcardLoadFailure {
   error: Error;
 }
 
-export const flashcardProgressRepository = new LocalFlashcardProgressRepository();
+const flashcardProgressRepository = new LocalFlashcardProgressRepository();
 
 type FlashcardLoader = Pick<typeof runtimeFlashcardBank, 'ensureCards' | 'listCards' | 'cancel'>;
 
