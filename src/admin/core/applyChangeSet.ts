@@ -1,8 +1,8 @@
-import type { StoredFlashcardBank, StoredQuestion, StoredQuestionBank, StoredQuiz } from '../../content/schema';
-import type { ValidationIssue } from '../../content/validate';
+import type { StoredFlashcardBank, StoredQuestion, StoredQuestionBank, StoredQuiz } from '../../content/schema/schema';
+import type { ValidationIssue } from '../../content/validation/validate';
 import { cloneBank } from './serializeBank';
 import { validateAdminBank } from './validateAdminBank';
-import { storedFlashcardBank } from '../../content/flashcardBank';
+import { storedFlashcardBank } from '../../content/local/flashcardBank';
 import type { AdminChangePreview, AdminChangeSet, AdminOperation, ContentAddOperation } from './types';
 
 class OperationError extends Error {}

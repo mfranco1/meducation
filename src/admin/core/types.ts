@@ -1,5 +1,5 @@
-import type { StoredQuestion, StoredQuestionBank, StoredQuiz, StoredSubject } from '../../content/schema';
-import type { ValidationIssue } from '../../content/validate';
+import type { StoredQuestion, StoredQuestionBank, StoredQuiz, StoredSubject } from '../../content/schema/schema';
+import type { ValidationIssue } from '../../content/validation/validate';
 
 export type AdminOperation =
   | { op: 'subject.create'; value: StoredSubject; afterId?: string }

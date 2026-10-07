@@ -1,8 +1,8 @@
-import type { Subject } from '../domain/types';
-import { sha256Text } from '../domain/contentDigest';
-import generated from './flashcardBank.generated.json';
+import type { Subject } from '../../domain/types';
+import { sha256Text } from '../../domain/contentDigest';
+import generated from '../flashcardBank.generated.json';
 import { subjects } from './questionBank';
-import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck } from './schema';
+import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck } from '../schema/schema';
 
 export interface FlashcardDeckSummary extends StoredFlashcardDeck {
   subject: Subject;

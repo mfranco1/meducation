@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { CssBaseline, ThemeProvider } from '@mui/material';
 import { theme } from './shared/theme';
-import { runtimeQuestionBank } from './content/runtimeQuestionBank';
+import { runtimeQuestionBank } from './content/api/runtimeQuestionBank';
 import { BootFailure } from './shared/ui/loading/BootFailure';
 import { AppShell } from './shared/ui/shell/AppShell';
 import { AppNavigationDrawer } from './app/components/AppNavigationDrawer';
@@ -17,7 +17,7 @@ const render = (content: ReactNode) => root.render(
 async function boot() {
   try {
     if (import.meta.env.DEV && location.hash === '#content-qa') {
-      const local = await import('./content/questionBank');
+      const local = await import('./content/local/questionBank');
       runtimeQuestionBank.configureLocal(local.subjects, local.quizzes, local.questions);
       const { ContentQaPanel } = await import('./qa/ContentQaPanel');
       render(<ContentQaPanel />);

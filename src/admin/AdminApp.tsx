@@ -5,7 +5,7 @@ import {
 import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
-import { storedQuestionBank } from '../content/questionBank';
+import { storedQuestionBank } from '../content/local/questionBank';
 import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
 import { InMemoryQuestionBankGateway } from './data/InMemoryQuestionBankGateway';

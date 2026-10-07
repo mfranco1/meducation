@@ -2,10 +2,10 @@ import { unified } from 'unified';
 import remarkGfm from 'remark-gfm';
 import remarkParse from 'remark-parse';
 import katex from 'katex';
-import type { Question } from '../domain/types';
-import { allowedRawHtmlAttributes, isAllowedImageUrl, isAllowedLinkUrl, richHtmlTags, type RichContentField } from './richContentPolicy';
+import type { Question } from '../../domain/types';
+import { allowedRawHtmlAttributes, isAllowedImageUrl, isAllowedLinkUrl, richHtmlTags, type RichContentField } from '../richText/richContentPolicy';
 import type { ValidationIssue } from './validate';
-import { remarkMathPlugin } from './remarkMathPolicy';
+import { remarkMathPlugin } from '../richText/remarkMathPolicy';
 
 type ContentField = RichContentField | 'sources';
 type MarkdownNode = { type?: string; url?: string; alt?: string | null; value?: string; lang?: string | null; children?: MarkdownNode[] };

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
-import type { FlashcardDeckSummary } from '../../../content/flashcardApiDecoders';
-import { runtimeFlashcardBank } from '../../../content/runtimeFlashcardBank';
+import type { FlashcardDeckSummary } from '../../../content/api/flashcardApiDecoders';
+import { runtimeFlashcardBank } from '../../../content/api/runtimeFlashcardBank';
 import type { FlashcardCard, Subject } from '../../../domain/types';
 import {
   checkpointForCard,

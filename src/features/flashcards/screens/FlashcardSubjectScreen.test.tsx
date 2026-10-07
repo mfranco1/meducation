@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { FlashcardCatalogResponse } from '../../../content/flashcardApiDecoders';
+import type { FlashcardCatalogResponse } from '../../../content/api/flashcardApiDecoders';
 import { theme } from '../../../shared/theme';
 import { FlashcardSubjectScreen } from './FlashcardSubjectScreen';
 

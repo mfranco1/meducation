@@ -1,7 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve, basename } from 'node:path';
-import { migrateFlashcardBankV1 } from '../src/content/flashcardMigration.ts';
-import { subjects } from '../src/content/questionBank.ts';
+import { migrateFlashcardBankV1 } from './flashcardMigration.ts';
+import { subjects } from '../../src/content/local/questionBank.ts';
 
 const inputPath = process.argv[2];
 if (!inputPath) {

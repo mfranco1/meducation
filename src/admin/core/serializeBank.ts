@@ -1,4 +1,4 @@
-import type { StoredQuestionBank } from '../../content/schema';
+import type { StoredQuestionBank } from '../../content/schema/schema';
 
 /** Canonical JSON formatting used for snapshots, downloads, and revision input. */
 export function serializeBank(bank: StoredQuestionBank): string {

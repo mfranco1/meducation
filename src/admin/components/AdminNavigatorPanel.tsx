@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Box, Button, Divider, List, ListItemButton, ListItemText, Menu, MenuItem, Paper, Stack, TextField, Typography } from '@mui/material';
-import type { StoredQuestionBank } from '../../content/schema';
+import type { StoredQuestionBank } from '../../content/schema/schema';
 import type { EntityKind, Selection } from '../useAdminEditor';
 
 interface Props {

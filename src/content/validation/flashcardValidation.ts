@@ -1,5 +1,5 @@
-import type { Subject } from '../domain/types';
-import type { StoredFlashcardBank } from './schema';
+import type { Subject } from '../../domain/types';
+import type { StoredFlashcardBank } from '../schema/schema';
 import { validateFlashcardMarkdown } from './markdownValidation';
 import { validateStoredFlashcardBank, type ValidationIssue } from './validate';
 

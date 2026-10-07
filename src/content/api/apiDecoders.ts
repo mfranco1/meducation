@@ -1,4 +1,4 @@
-import type { Question, Quiz, Subject } from '../domain/types';
+import type { Question, Quiz, Subject } from '../../domain/types';
 
 export interface SubjectSummary extends Subject { quizCount: number; quizIds: string[] }
 export interface SubjectCatalogResponse { revision: string; subjects: SubjectSummary[] }

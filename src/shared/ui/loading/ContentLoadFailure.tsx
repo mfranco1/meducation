@@ -1,5 +1,5 @@
 import { Button, Stack, Typography } from '@mui/material';
-import { ContentLoadError } from '../../../content/contentTransport';
+import { ContentLoadError } from '../../../content/api/contentTransport';
 import { contentLoadMessage } from './notificationMessages';
 
 export function ContentLoadFailure({ title, error, onRetry }: { title: string; error?: Error; onRetry: () => void }) {

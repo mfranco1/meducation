@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { StoredFlashcardBank, StoredQuestionBank } from './schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../schema/schema';
 import { validateQuestionBank, validateStoredFlashcardBank, validateStoredQuestionBank } from './validate';
 
 describe('question bank validation', () => {

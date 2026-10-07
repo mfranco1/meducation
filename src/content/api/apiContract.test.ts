@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import fixtures from '../../tests/fixtures/api-response-cases.json';
+import fixtures from '../../../tests/fixtures/api-response-cases.json';
 import { isQuestionList, isQuizCatalog } from './apiDecoders';
 import { RuntimeQuestionBank } from './runtimeQuestionBank';
 

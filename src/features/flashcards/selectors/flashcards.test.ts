@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { activeFlashcardSubjects, decksForSubject, flashcardDashboardSubjects } from './flashcards';
 import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
-import type { FlashcardDeckSummary, FlashcardSubjectSummary } from '../../../content/flashcardApiDecoders';
+import type { FlashcardDeckSummary, FlashcardSubjectSummary } from '../../../content/api/flashcardApiDecoders';
 
 const subjects: FlashcardSubjectSummary[] = [
   { id: 's1', name: 'One', accent: '#111', deckCount: 2, deckIds: ['d1', 'd2'] },

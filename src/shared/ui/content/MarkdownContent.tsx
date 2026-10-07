@@ -4,8 +4,8 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
-import { isAllowedImageUrl, richContentSanitizeSchema, transformRichContentUrl } from '../../../content/richContentPolicy';
-import { remarkMathPlugin } from '../../../content/remarkMathPolicy';
+import { isAllowedImageUrl, richContentSanitizeSchema, transformRichContentUrl } from '../../../content/richText/richContentPolicy';
+import { remarkMathPlugin } from '../../../content/richText/remarkMathPolicy';
 import 'katex/dist/katex.min.css';
 
 export type MarkdownVariant = 'stem' | 'explanation' | 'inline';

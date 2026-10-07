@@ -1,5 +1,5 @@
 import type { Subject } from '../../../domain/types';
-import type { FlashcardDeckSummary } from '../../../content/flashcardApiDecoders';
+import type { FlashcardDeckSummary } from '../../../content/api/flashcardApiDecoders';
 
 export type FlashcardsView =
   | { page: 'flashcards' }

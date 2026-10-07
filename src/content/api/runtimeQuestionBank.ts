@@ -1,4 +1,4 @@
-import type { Question, Quiz, QuizRepository, Subject } from '../domain/types';
+import type { Question, Quiz, QuizRepository, Subject } from '../../domain/types';
 import { contentRetryPolicy, type RetryPolicy } from './retryPolicy';
 import { isQuestionList, isQuizCatalog, isSubjectCatalog, responseRevision, type QuizCatalogResponse, type SubjectSummary } from './apiDecoders';
 import { browserJsonTransport, ContentLoadError, genericFailure, revisionError, type JsonTransport } from './contentTransport';
@@ -276,7 +276,7 @@ export const runtimeQuestionBank = new RuntimeQuestionBank();
 
 export async function loadRuntimeContent() {
   if (import.meta.env.VITE_CONTENT_SOURCE === 'local') {
-    const local = await import('./questionBank');
+    const local = await import('../local/questionBank');
     runtimeQuestionBank.configureLocal(local.subjects, local.quizzes, local.questions);
     return;
   }

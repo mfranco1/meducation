@@ -1,4 +1,4 @@
-import type { StoredQuestionBank, StoredSubject } from '../../content/schema';
+import type { StoredQuestionBank, StoredSubject } from '../../content/schema/schema';
 import type { AdminChangeSet, ContentAddOperation, GroupedQuestionInput, GroupedQuizAdd, GroupedSubjectRef } from './types';
 
 export type BulkAddContext =

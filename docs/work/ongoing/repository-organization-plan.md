@@ -1,6 +1,6 @@
 # Repository organization plan
 
-Created: 2026-10-06. Status: Stage 3 complete; waiting for the user's signal to begin Stage 4.
+Created: 2026-10-06. Status: Stage 4 complete; waiting for the user's signal to begin Stage 5.
 
 ## Goal and recommendation
 
@@ -247,14 +247,64 @@ Raw move manifests, original modules, navigation/graph verification, builds, tes
 
 ## Stage 4 — Organize content and maintenance tools
 
-- [ ] Move `schema.ts` into `content/schema`; group bank validators under `content/validation` and policies under `content/richText`. Keep the renderer in shared UI and policies independent of React.
-- [ ] Move `questionBank.ts` and `flashcardBank.ts` into `content/local`; group runtime repositories/cache, decoders, transport, retry, and logger under `content/api`. Keep shared content utilities at the lowest appropriate boundary after inspecting their consumers.
-- [ ] Preserve lazy local-bank imports: API-mode startup must not gain an eager import of the full canonical JSON or authoring validation pipeline.
-- [ ] Move validation/audit entry scripts to `scripts/content`. Move the flashcard migration entry and its pure migration implementation/tests to a clearly development-only home under `scripts/migrations`; adjust test discovery and TypeScript checking as needed.
-- [ ] Preserve public npm command names. Update script paths, `import.meta.url`/filesystem-relative paths, tests, mocks, backend references if applicable, and docs in the same change.
-- [ ] Keep authoritative JSON paths unchanged. Do not merge the two banks, regenerate records, or consolidate the independent Python and TypeScript validators; their contract fixtures provide parity.
+- [x] Move `schema.ts` into `content/schema`; group bank validators under `content/validation` and policies under `content/richText`. Keep the renderer in shared UI and policies independent of React.
+- [x] Move `questionBank.ts` and `flashcardBank.ts` into `content/local`; group runtime repositories/cache, decoders, transport, retry, and logger under `content/api`. Keep shared content utilities at the lowest appropriate boundary after inspecting their consumers.
+- [x] Preserve lazy local-bank imports: API-mode startup must not gain an eager import of the full canonical JSON or authoring validation pipeline.
+- [x] Move validation/audit entry scripts to `scripts/content`. Move the flashcard migration entry and its pure migration implementation/tests to a clearly development-only home under `scripts/migrations`; adjust test discovery and TypeScript checking as needed.
+- [x] Preserve public npm command names. Update script paths, `import.meta.url`/filesystem-relative paths, tests, mocks, backend references if applicable, and docs in the same change.
+- [x] Keep authoritative JSON paths unchanged. Do not merge the two banks, regenerate records, or consolidate the independent Python and TypeScript validators; their contract fixtures provide parity.
 
 Exit gate: both banks have identical baseline hashes; validation, cross-runtime contracts, migration candidate generation, local/API loading, QA, and admin replay pass. Risk: medium-high, due to path and bundle sensitivity. Dependency: Stage 3.
+
+Completed 2026-10-07. Moved 33 modules/scripts/tests with 126 import replacements across 43 consuming modules. Stored contracts now live in `content/schema`, validators in `content/validation`, JSON adapters in `content/local`, delivery/cache/retry/decoder modules in `content/api`, and rendering policies in `content/richText`. The canonical banks remain at their original root paths. The migration CLI, pure helper, and five existing tests live together in `scripts/migrations`; no application module imports maintenance code. Validation/audit CLIs live in `scripts/content`, with unchanged npm command names and output locations.
+
+Added ignore exceptions for tracked maintenance scripts and updated current README/architecture/content-management/testing references. The lint command now explicitly includes the relocated migration helper/tests to retain their existing CI coverage without expanding the general lint scope. Existing Vitest discovery finds all 62 test files / 363 tests, and the existing Node TypeScript project already includes the relocated migration code/tests; no test or compiler configuration changes were necessary. Moved code differs only in import specifiers; there are no forwarding modules, new dependencies, or content edits.
+
+Verification: lint (including retained migration coverage), scoped formatting, all 62 frontend test files / 363 tests, content validation, and both TypeScript/production build modes passed. Backend cross-runtime checks passed: 39 tests, Ruff, and mypy. All 11 learner and 2 admin Chromium flows passed, including saved attempts/checkpoints, canceled loads, retry/recovery, keyboard/mobile navigation, Browse Answers, Exam review, bulk authoring, paired reset, undo, and export replay. Content validation retains the existing 32 answer-review warnings; existing large-chunk and test-tool advisories remain.
+
+The import-aware verifier confirms that all 829 source/script import/export/dynamic-import edges preserve the original graph after mapping moved paths. All source/script changes are import-only. Both canonical banks and the dependency lock retain their baseline hashes. Maintenance code is unignored, and no application module imports the relocated migration/scripts. Runtime content imports no presentation, shared modules import no app/features/admin, and the local-adapter dynamic imports remain lazy. Canonical bank paths, API routes/revisions, fixtures, storage contracts, report paths, and export filenames were preserved. No forwarding modules or compiler/test configuration changes were needed.
+
+Both production bundle manifests are identical to Stage 3, including asset filenames, raw/gzip sizes, and HTML entry sets: 15 learner assets totaling 1,270,975 raw bytes; 18 optional-admin assets totaling 15,535,827 bytes. Default production output omits admin; the opt-in build includes it. Explicit canonical local mode shows 13 subjects and launches a quiz with zero API requests/page errors. QA still renders the existing math fixture and reports no structural errors. All eight additional desktop/mobile canonical/admin/QA captures match Stage 3 byte-for-byte; the mobile flashcard study browser capture was inspected. Temporary verification servers were stopped.
+
+CLI verification ran all three unchanged public npm commands. The audit reports 11,687 questions at its existing output path; its pre-existing ignored report was restored byte-for-byte after verification. Migration of an isolated legacy fixture creates the expected v2 candidate and relationship report beside the input, preserves record IDs/order/rich text and input bytes, refuses to overwrite either existing output (exit 1), and retains missing-input usage behavior (exit 2). The five original migration regression tests also passed. No canonical replacements were performed.
+
+The exact 33-file manifest is below; original modules, graph/hash verification, CLI candidates/reports, builds, tests, browser traces, and captures are under `/private/tmp/meducation-organization-stage-4/`. Historical trackers and the Stage 0 snapshot retain their historical paths. Stage 5 has not started.
+
+### Stage 4 move manifest
+
+- `src/content/apiContract.test.ts` → `src/content/api/apiContract.test.ts`
+- `src/content/apiDecoders.ts` → `src/content/api/apiDecoders.ts`
+- `src/content/bankContract.test.ts` → `src/content/validation/bankContract.test.ts`
+- `src/content/contentLogger.ts` → `src/content/api/contentLogger.ts`
+- `src/content/contentTransport.ts` → `src/content/api/contentTransport.ts`
+- `src/content/flashcardApiDecoders.test.ts` → `src/content/api/flashcardApiDecoders.test.ts`
+- `src/content/flashcardApiDecoders.ts` → `src/content/api/flashcardApiDecoders.ts`
+- `src/content/flashcardBank.test.ts` → `src/content/local/flashcardBank.test.ts`
+- `src/content/flashcardBank.ts` → `src/content/local/flashcardBank.ts`
+- `src/content/flashcardMigration.test.ts` → `scripts/migrations/flashcardMigration.test.ts`
+- `src/content/flashcardMigration.ts` → `scripts/migrations/flashcardMigration.ts`
+- `src/content/flashcardValidation.test.ts` → `src/content/validation/flashcardValidation.test.ts`
+- `src/content/flashcardValidation.ts` → `src/content/validation/flashcardValidation.ts`
+- `src/content/markdownValidation.test.ts` → `src/content/validation/markdownValidation.test.ts`
+- `src/content/markdownValidation.ts` → `src/content/validation/markdownValidation.ts`
+- `src/content/questionBank.test.ts` → `src/content/local/questionBank.test.ts`
+- `src/content/questionBank.ts` → `src/content/local/questionBank.ts`
+- `src/content/remarkMathPolicy.ts` → `src/content/richText/remarkMathPolicy.ts`
+- `src/content/retryPolicy.test.ts` → `src/content/api/retryPolicy.test.ts`
+- `src/content/retryPolicy.ts` → `src/content/api/retryPolicy.ts`
+- `src/content/richContentPolicy.test.ts` → `src/content/richText/richContentPolicy.test.ts`
+- `src/content/richContentPolicy.ts` → `src/content/richText/richContentPolicy.ts`
+- `src/content/runtimeContentCache.ts` → `src/content/api/runtimeContentCache.ts`
+- `src/content/runtimeFlashcardBank.test.ts` → `src/content/api/runtimeFlashcardBank.test.ts`
+- `src/content/runtimeFlashcardBank.ts` → `src/content/api/runtimeFlashcardBank.ts`
+- `src/content/runtimeQuestionBank.test.ts` → `src/content/api/runtimeQuestionBank.test.ts`
+- `src/content/runtimeQuestionBank.ts` → `src/content/api/runtimeQuestionBank.ts`
+- `src/content/schema.ts` → `src/content/schema/schema.ts`
+- `src/content/validate.test.ts` → `src/content/validation/validate.test.ts`
+- `src/content/validate.ts` → `src/content/validation/validate.ts`
+- `scripts/audit-explanations.ts` → `scripts/content/audit-explanations.ts`
+- `scripts/migrate-flashcard-bank-v1.ts` → `scripts/migrations/migrate-flashcard-bank-v1.ts`
+- `scripts/validate-question-bank.ts` → `scripts/content/validate-question-bank.ts`
 
 ## Stage 5 — Enforce boundaries and coherent tooling
 

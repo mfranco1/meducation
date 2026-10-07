@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
 import { previewChangeSet as previewWithBank } from './applyChangeSet';
 import { parseChangeSet } from './changeSetSchema';
 import { serializeBank } from './serializeBank';

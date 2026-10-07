@@ -1,5 +1,5 @@
-import type { Subject } from '../domain/types';
-import type { StoredFlashcard, StoredFlashcardDeck } from './schema';
+import type { Subject } from '../../domain/types';
+import type { StoredFlashcard, StoredFlashcardDeck } from '../schema/schema';
 
 export interface FlashcardSubjectSummary extends Subject {
   deckCount: number;

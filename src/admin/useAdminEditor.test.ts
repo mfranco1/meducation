@@ -1,6 +1,6 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema/schema';
 import { serializeBank } from './core/serializeBank';
 import type { AdminChangeSet } from './core/types';
 import type { AdminQuestionBankGateway } from './data/AdminQuestionBankGateway';

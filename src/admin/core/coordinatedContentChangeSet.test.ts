@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
 import { sha256Text } from '../../domain/contentDigest';
-import { flashcardContentRevision } from '../../content/flashcardBank';
+import { flashcardContentRevision } from '../../content/local/flashcardBank';
 import { applyFlashcardOperations, replayFlashcardAdminChangeSet } from './flashcardChangeSet';
 import { replayCoordinatedContentChangeSet, type CoordinatedContentChangeSet } from './coordinatedContentChangeSet';
 import { previewChangeSet } from './applyChangeSet';

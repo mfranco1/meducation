@@ -1,7 +1,7 @@
 import { Alert, Box, Container } from '@mui/material';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
-import type { FlashcardDeckSummary } from '../../../content/flashcardApiDecoders';
+import type { FlashcardDeckSummary } from '../../../content/api/flashcardApiDecoders';
 import type { FlashcardNavigatorFilter } from '../../../domain/flashcardStudy';
 import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/StudyHeader';
 import { FlashcardNavigator } from '../components/FlashcardNavigator';

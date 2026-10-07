@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { storedQuestionBank } from '../../content/questionBank';
-import { storedFlashcardBank } from '../../content/flashcardBank';
+import { storedQuestionBank } from '../../content/local/questionBank';
+import { storedFlashcardBank } from '../../content/local/flashcardBank';
 import {
   compileFlashcardBulkAddDraft,
   flashcardBulkAddTemplate,

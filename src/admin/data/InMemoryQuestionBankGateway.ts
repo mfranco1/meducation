@@ -1,9 +1,9 @@
-import type { StoredQuestionBank } from '../../content/schema';
-import type { StoredFlashcardBank } from '../../content/schema';
-import { storedFlashcardBank } from '../../content/flashcardBank';
+import type { StoredQuestionBank } from '../../content/schema/schema';
+import type { StoredFlashcardBank } from '../../content/schema/schema';
+import { storedFlashcardBank } from '../../content/local/flashcardBank';
 import { previewChangeSet } from '../core/applyChangeSet';
-import { validateFlashcardSubjectReferences } from '../../content/validate';
-import { validateFlashcardBank } from '../../content/flashcardValidation';
+import { validateFlashcardSubjectReferences } from '../../content/validation/validate';
+import { validateFlashcardBank } from '../../content/validation/flashcardValidation';
 import { cloneBank, revisionForBank } from '../core/serializeBank';
 import type { AdminBankSnapshot, AdminChangeSet } from '../core/types';
 import type { AdminPreviewSummary, AdminQuestionBankGateway } from './AdminQuestionBankGateway';

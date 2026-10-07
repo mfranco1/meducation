@@ -1,8 +1,8 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { runtimeQuestionBank } from '../content/runtimeQuestionBank';
-import { runtimeFlashcardBank } from '../content/runtimeFlashcardBank';
+import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
+import { runtimeFlashcardBank } from '../content/api/runtimeFlashcardBank';
 import App from './App';
 import { theme } from '../shared/theme';
 

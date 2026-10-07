@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { questionBank, questions, quizzes, schemaVersion, subjects } from './questionBank';
-import fixture from '../../tests/fixtures/question-bank.json';
-import type { StoredQuestionBank } from './schema';
-import { validateQuestionBank, validateStoredQuestionBank } from './validate';
+import fixture from '../../../tests/fixtures/question-bank.json';
+import type { StoredQuestionBank } from '../schema/schema';
+import { validateQuestionBank, validateStoredQuestionBank } from '../validation/validate';
 
 describe('question bank adapter', () => {
   it('exposes the versioned bank through indexed repository reads', () => {

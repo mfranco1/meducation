@@ -1,4 +1,4 @@
-import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
 import { previewChangeSet } from './applyChangeSet';
 import { parseChangeSet } from './changeSetSchema';
 import {

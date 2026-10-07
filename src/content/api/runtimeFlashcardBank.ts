@@ -14,7 +14,7 @@ import {
   type FlashcardDeckSummary,
   type FlashcardSubjectSummary,
 } from './flashcardApiDecoders';
-import type { StoredFlashcard } from './schema';
+import type { StoredFlashcard } from '../schema/schema';
 
 type ResourceState = 'idle' | 'loading' | 'ready' | 'error';
 
@@ -278,7 +278,7 @@ export const runtimeFlashcardBank = new RuntimeFlashcardBank();
 
 export async function loadRuntimeFlashcardSubjects() {
   if (import.meta.env.VITE_CONTENT_SOURCE === 'local') {
-    const local = await import('./flashcardBank');
+    const local = await import('../local/flashcardBank');
     const subjects = local.flashcardRepository.listSubjects();
     const decks = local.flashcardRepository
       .listSubjects()

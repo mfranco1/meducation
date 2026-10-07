@@ -1,8 +1,8 @@
 import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import { Alert, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress } from '@mui/material';
-import { loadRuntimeContent, runtimeQuestionBank } from '../content/runtimeQuestionBank';
-import { loadRuntimeFlashcardSubjects, runtimeFlashcardBank } from '../content/runtimeFlashcardBank';
-import { ContentLoadError } from '../content/contentTransport';
+import { loadRuntimeContent, runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
+import { loadRuntimeFlashcardSubjects, runtimeFlashcardBank } from '../content/api/runtimeFlashcardBank';
+import { ContentLoadError } from '../content/api/contentTransport';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { averageScore, lowestRecentScore } from '../analytics/analytics';
 import type { Quiz, Subject } from '../domain/types';

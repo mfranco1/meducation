@@ -1,4 +1,4 @@
-import type { Question, Quiz, Subject } from '../domain/types';
+import type { Question, Quiz, Subject } from '../../domain/types';
 
 /** Indexed, revision-scoped content. Request lifecycle stays with RuntimeQuestionBank. */
 export class RuntimeContentCache {

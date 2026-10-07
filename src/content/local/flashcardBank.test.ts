@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createFlashcardRepository, flashcardContentRevision, flashcardRepository, serializeFlashcardBank, storedFlashcardBank } from './flashcardBank';
-import type { StoredFlashcardBank, StoredSubject } from './schema';
-import fixture from '../../tests/fixtures/flashcard-bank-contract.json';
+import type { StoredFlashcardBank, StoredSubject } from '../schema/schema';
+import fixture from '../../../tests/fixtures/flashcard-bank-contract.json';
 
 describe('flashcard content adapter', () => {
   it('keeps canonical deck order when subject membership is interleaved', () => {

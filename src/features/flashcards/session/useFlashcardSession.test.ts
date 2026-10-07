@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { FlashcardDeckSummary } from '../../../content/flashcardApiDecoders';
+import type { FlashcardDeckSummary } from '../../../content/api/flashcardApiDecoders';
 import { checkpointForCard, flashcardContentSignature } from '../../../domain/flashcardStudy';
 import { LocalFlashcardProgressRepository } from '../../../persistence/localFlashcardProgressRepository';
 import { useFlashcardSession } from './useFlashcardSession';

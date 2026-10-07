@@ -1,4 +1,4 @@
-import { ContentLoadError } from '../../../content/contentTransport';
+import { ContentLoadError } from '../../../content/api/contentTransport';
 
 export function contentLoadMessage(error?: Error) {
   if (!(error instanceof ContentLoadError)) return 'Please try again or come back later.';

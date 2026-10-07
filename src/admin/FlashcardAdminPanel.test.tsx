@@ -3,10 +3,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 import { theme } from '../shared/theme';
-import { storedQuestionBank } from '../content/questionBank';
-import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema';
+import { storedQuestionBank } from '../content/local/questionBank';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema/schema';
 import { revisionForBank } from './core/serializeBank';
-import { flashcardContentRevision, storedFlashcardBank } from '../content/flashcardBank';
+import { flashcardContentRevision, storedFlashcardBank } from '../content/local/flashcardBank';
 import { sha256Text } from '../domain/contentDigest';
 import {
   applyFlashcardOperations,

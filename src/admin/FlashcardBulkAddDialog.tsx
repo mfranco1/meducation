@@ -12,8 +12,8 @@ import {
   Typography,
 } from '@mui/material';
 import type { Subject } from '../domain/types';
-import type { StoredFlashcardBank } from '../content/schema';
-import { serializeFlashcardBank } from '../content/flashcardBank';
+import type { StoredFlashcardBank } from '../content/schema/schema';
+import { serializeFlashcardBank } from '../content/local/flashcardBank';
 import {
   compileFlashcardBulkAddDraft,
   flashcardBulkAddTemplate,

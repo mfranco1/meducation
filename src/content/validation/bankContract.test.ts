@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import fixtures from '../../tests/fixtures/bank-contract-cases.json';
-import type { Question, Quiz } from '../domain/types';
-import { revisionForBank } from '../admin/core/serializeBank';
-import type { StoredQuestionBank } from './schema';
+import fixtures from '../../../tests/fixtures/bank-contract-cases.json';
+import type { Question, Quiz } from '../../domain/types';
+import { revisionForBank } from '../../admin/core/serializeBank';
+import type { StoredQuestionBank } from '../schema/schema';
 import { validateQuestionBank, validateStoredQuestionBank } from './validate';
 
 type Change = typeof fixtures.cases[number]['change'];

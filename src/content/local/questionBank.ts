@@ -1,6 +1,6 @@
-import type { Question, Quiz, QuizRepository } from '../domain/types';
-import generated from './questionBank.generated.json';
-import type { StoredQuestionBank } from './schema';
+import type { Question, Quiz, QuizRepository } from '../../domain/types';
+import generated from '../questionBank.generated.json';
+import type { StoredQuestionBank } from '../schema/schema';
 
 const bank = generated as unknown as StoredQuestionBank;
 export const storedQuestionBank = bank;

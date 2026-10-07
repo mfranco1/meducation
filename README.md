@@ -84,10 +84,11 @@ Question text, choice order, answer provenance, rationales, and reviewed explana
 - `src/shared/` — theme and reusable shell, loading, catalog, study, notification, and rich-content presentation
 - `src/admin/` — local staged content editor
 - `src/domain/` — quiz types and rules
-- `src/content/` — canonical banks, validation, local/API adapters, and rich-content policies
+- `src/content/` — canonical banks and schema, validation, local, API, and rich-text modules
 - `src/persistence/` — browser storage implementation
 - `src/analytics/` — score summaries
-- `scripts/` — content validation and audit tools
+- `scripts/content/` — content validation and audit tools
+- `scripts/migrations/` — candidate-producing migrations and their tests
 - `backend/` — read-only FastAPI content delivery
 - `tests/fixtures/` — shared content/storage contracts
 - `e2e/` — learner and admin browser tests

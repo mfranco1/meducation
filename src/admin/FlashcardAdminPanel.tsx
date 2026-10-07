@@ -12,11 +12,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { storedFlashcardBank, serializeFlashcardBank, flashcardContentRevision } from '../content/flashcardBank';
-import type { StoredFlashcardBank, StoredFlashcardDeck, StoredFlashcard, StoredQuestionBank } from '../content/schema';
-import { validateFlashcardBank } from '../content/flashcardValidation';
+import { storedFlashcardBank, serializeFlashcardBank, flashcardContentRevision } from '../content/local/flashcardBank';
+import type { StoredFlashcardBank, StoredFlashcardDeck, StoredFlashcard, StoredQuestionBank } from '../content/schema/schema';
+import { validateFlashcardBank } from '../content/validation/flashcardValidation';
 import type { Subject } from '../domain/types';
-import { storedQuestionBank } from '../content/questionBank';
+import { storedQuestionBank } from '../content/local/questionBank';
 import { sha256Text } from '../domain/contentDigest';
 import {
   applyFlashcardOperations,

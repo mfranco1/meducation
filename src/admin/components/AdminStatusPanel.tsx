@@ -1,6 +1,6 @@
 import { List, ListItemText, Paper, Stack, Typography } from '@mui/material';
-import type { StoredQuestionBank } from '../../content/schema';
-import type { ValidationIssue } from '../../content/validate';
+import type { StoredQuestionBank } from '../../content/schema/schema';
+import type { ValidationIssue } from '../../content/validation/validate';
 
 interface Props {
   bank: StoredQuestionBank;

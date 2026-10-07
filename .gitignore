@@ -4,6 +4,8 @@ dist/
 tn-pdfs
 content/
 !src/content/
+!scripts/content/
+!scripts/content/*.ts
 !src/shared/ui/content/
 !src/shared/ui/content/*.tsx
 

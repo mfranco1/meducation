@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { validateFlashcardBank } from './flashcardValidation';
-import type { StoredFlashcardBank } from './schema';
-import fixture from '../../tests/fixtures/flashcard-bank-contract.json';
+import type { StoredFlashcardBank } from '../schema/schema';
+import fixture from '../../../tests/fixtures/flashcard-bank-contract.json';
 
 describe('shared flashcard authoring validation', () => {
   it('rejects invalid card HTML, image URLs, math, and restricted sources', () => {

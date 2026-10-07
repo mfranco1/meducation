@@ -1,4 +1,4 @@
-import type { StoredQuestionBank } from '../../content/schema';
+import type { StoredQuestionBank } from '../../content/schema/schema';
 import type { BulkAddContext, BulkAddDraft } from './bulkAddDraft';
 
 function nextId(bank: StoredQuestionBank, prefix: 's' | 'q' | 'i'): string {

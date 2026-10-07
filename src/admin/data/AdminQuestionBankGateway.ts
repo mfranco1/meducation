@@ -1,5 +1,5 @@
 import type { AdminBankSnapshot, AdminChangePreview, AdminChangeSet } from '../core/types';
-import type { StoredFlashcardBank } from '../../content/schema';
+import type { StoredFlashcardBank } from '../../content/schema/schema';
 
 export type AdminPreviewSummary = Pick<AdminChangePreview, 'issues' | 'summary'>;
 

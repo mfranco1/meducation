@@ -1,5 +1,5 @@
-import type { Question, Quiz, Subject } from '../domain/types';
-import type { StoredFlashcardBank, StoredQuestionBank } from './schema';
+import type { Question, Quiz, Subject } from '../../domain/types';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../schema/schema';
 
 export interface ValidationIssue {
   level: 'error' | 'warning';

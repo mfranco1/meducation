@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema';
-import type { ValidationIssue } from '../content/validate';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema/schema';
+import type { ValidationIssue } from '../content/validation/validate';
 import { parseChangeSet } from './core/changeSetSchema';
 import { compileBulkAddDraft, type BulkAddContext } from './core/bulkAddDraft';
 import { serializeBank } from './core/serializeBank';

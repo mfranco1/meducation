@@ -1,6 +1,6 @@
 import type { Subject } from '../../../domain/types';
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../../../domain/flashcardStudy';
-import type { FlashcardDeckSummary, FlashcardSubjectSummary } from '../../../content/flashcardApiDecoders';
+import type { FlashcardDeckSummary, FlashcardSubjectSummary } from '../../../content/api/flashcardApiDecoders';
 
 export interface FlashcardDashboardSubject {
   subject: Subject;

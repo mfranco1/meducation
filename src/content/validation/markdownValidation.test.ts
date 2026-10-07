@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { Question } from '../domain/types';
+import type { Question } from '../../domain/types';
 import { validateQuestionMarkdown } from './markdownValidation';
 
 const question: Question = {

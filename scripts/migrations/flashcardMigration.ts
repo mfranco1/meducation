@@ -1,7 +1,7 @@
-import type { Subject } from '../domain/types';
-import type { StoredFlashcardBank } from './schema';
-import { validateFlashcardBank } from './flashcardValidation';
-import type { ValidationIssue } from './validate';
+import type { Subject } from '../../src/domain/types';
+import type { StoredFlashcardBank } from '../../src/content/schema/schema';
+import { validateFlashcardBank } from '../../src/content/validation/flashcardValidation';
+import type { ValidationIssue } from '../../src/content/validation/validate';
 
 interface LegacyTopic {
   id: string;

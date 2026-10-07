@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { migrateFlashcardBankV1 } from './flashcardMigration';
-import { checkpointForCard, flashcardContentSignature, resolveFlashcardLaunch } from '../domain/flashcardStudy';
+import { checkpointForCard, flashcardContentSignature, resolveFlashcardLaunch } from '../../src/domain/flashcardStudy';
 import fixture from '../../tests/fixtures/flashcard-bank-contract.json';
 
 describe('flashcard schema migration', () => {

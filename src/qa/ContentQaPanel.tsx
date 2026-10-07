@@ -1,7 +1,7 @@
 import { Alert, Box, Card, CardContent, Chip, Container, Stack, Typography } from '@mui/material';
-import { questions, quizzes, storedQuestionBank, subjects } from '../content/questionBank';
-import { validateQuestionBank, validateStoredQuestionBank } from '../content/validate';
-import { validateQuestionMarkdown } from '../content/markdownValidation';
+import { questions, quizzes, storedQuestionBank, subjects } from '../content/local/questionBank';
+import { validateQuestionBank, validateStoredQuestionBank } from '../content/validation/validate';
+import { validateQuestionMarkdown } from '../content/validation/markdownValidation';
 import { MarkdownContent } from '../shared/ui/content/MarkdownContent';
 
 /** Development-only inspection screen: visit `/#content-qa`. Source data remains edited in content files. */

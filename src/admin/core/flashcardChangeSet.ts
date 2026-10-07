@@ -1,7 +1,7 @@
-import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck } from '../../content/schema';
+import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck } from '../../content/schema/schema';
 import type { Subject } from '../../domain/types';
-import { validateFlashcardBank } from '../../content/flashcardValidation';
-import { flashcardContentRevision } from '../../content/flashcardBank';
+import { validateFlashcardBank } from '../../content/validation/flashcardValidation';
+import { flashcardContentRevision } from '../../content/local/flashcardBank';
 import { sha256Text } from '../../domain/contentDigest';
 
 type Kind = 'deck' | 'card';

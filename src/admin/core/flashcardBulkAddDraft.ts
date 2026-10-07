@@ -1,6 +1,6 @@
 import type { Subject } from '../../domain/types';
-import { validateFlashcardBank } from '../../content/flashcardValidation';
-import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck } from '../../content/schema';
+import { validateFlashcardBank } from '../../content/validation/flashcardValidation';
+import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck } from '../../content/schema/schema';
 import type { FlashcardAdminOperation } from './flashcardChangeSet';
 
 export type FlashcardBulkAddContext = { kind: 'subject'; subjectId: string } | { kind: 'deck'; deckId: string };

@@ -1,4 +1,4 @@
-import type { StoredQuestion, StoredQuiz, StoredSubject } from '../../content/schema';
+import type { StoredQuestion, StoredQuiz, StoredSubject } from '../../content/schema/schema';
 import type { AdminChangeSet, AdminOperation } from './types';
 
 type RecordValue = Record<string, unknown>;

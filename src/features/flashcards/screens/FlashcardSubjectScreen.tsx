@@ -2,7 +2,7 @@ import { Box, Button, Card, CardContent, Chip, Stack, Typography } from '@mui/ma
 import { useMemo } from 'react';
 import type { Subject } from '../../../domain/types';
 import type { FlashcardCheckpoint } from '../../../domain/flashcardStudy';
-import type { FlashcardDeckSummary, FlashcardCatalogResponse } from '../../../content/flashcardApiDecoders';
+import type { FlashcardDeckSummary, FlashcardCatalogResponse } from '../../../content/api/flashcardApiDecoders';
 import { decksForSubject } from '../selectors/flashcards';
 import { SubjectBrowseLayout } from '../../../shared/ui/catalog/SubjectBrowseLayout';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';

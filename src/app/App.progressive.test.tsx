@@ -5,7 +5,7 @@ import type { CompletedAttempt } from '../domain/types';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import App from './App';
 import { theme } from '../shared/theme';
-import { runtimeQuestionBank } from '../content/runtimeQuestionBank';
+import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
 
 function completed(quizId: string, subjectId: string, percentage: number): CompletedAttempt {
   const at = '2026-10-02T00:00:00.000Z';

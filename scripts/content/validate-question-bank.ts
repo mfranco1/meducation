@@ -1,8 +1,8 @@
-import { questions, quizzes, schemaVersion, storedQuestionBank, subjects } from '../src/content/questionBank.ts';
-import { flashcardRepository, storedFlashcardBank } from '../src/content/flashcardBank.ts';
-import { validateQuestionMarkdown } from '../src/content/markdownValidation.ts';
-import { validateFlashcardBank } from '../src/content/flashcardValidation.ts';
-import { validateQuestionBank, validateStoredQuestionBank } from '../src/content/validate.ts';
+import { questions, quizzes, schemaVersion, storedQuestionBank, subjects } from '../../src/content/local/questionBank.ts';
+import { flashcardRepository, storedFlashcardBank } from '../../src/content/local/flashcardBank.ts';
+import { validateQuestionMarkdown } from '../../src/content/validation/markdownValidation.ts';
+import { validateFlashcardBank } from '../../src/content/validation/flashcardValidation.ts';
+import { validateQuestionBank, validateStoredQuestionBank } from '../../src/content/validation/validate.ts';
 
 const issues = [
   ...(schemaVersion === 4 ? [] : [{ level: 'error' as const, message: `Unsupported question bank schema version: ${schemaVersion}` }]),

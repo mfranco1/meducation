@@ -1,4 +1,4 @@
-import type { Choice, FlashcardCard, QuestionMetadata, RationaleMetadata } from '../domain/types';
+import type { Choice, FlashcardCard, QuestionMetadata, RationaleMetadata } from '../../domain/types';
 
 export interface StoredSubject {
   id: string;

@@ -1,8 +1,8 @@
 import type { Question, Quiz } from '../../domain/types';
-import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema';
-import { validateQuestionMarkdown } from '../../content/markdownValidation';
-import { validateQuestionBank, validateStoredQuestionBank, type ValidationIssue } from '../../content/validate';
-import { storedFlashcardBank } from '../../content/flashcardBank';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
+import { validateQuestionMarkdown } from '../../content/validation/markdownValidation';
+import { validateQuestionBank, validateStoredQuestionBank, type ValidationIssue } from '../../content/validation/validate';
+import { storedFlashcardBank } from '../../content/local/flashcardBank';
 
 export function validateAdminBank(bank: StoredQuestionBank, flashcards: StoredFlashcardBank = storedFlashcardBank): ValidationIssue[] {
   const questionCount = new Map<string, number>();
