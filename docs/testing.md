@@ -44,6 +44,7 @@ The learner npm pretest builds production output with automatic retries disabled
 - `tests/fixtures/bank-contract-cases.json` is shared by TypeScript and Python stored-bank validators. Add cross-runtime edge cases there. `src/content/api/apiContract.test.ts` owns the separate API DTO contract.
 - `backend/tests` uses explicit fixture paths for repository/request behavior; it must never mutate canonical banks.
 - `e2e` covers production learner flows and the separate development authoring flow. Its populated flashcard fixture is selected through `MEDUCATION_FLASHCARD_BANK_PATH`.
+- Admin browser tests intercept the Vite flashcard JSON module with `tests/fixtures/flashcard-bank-contract.json` before navigation, keeping initial loading, reset, and replay on one populated baseline. Deck actions are scoped to the test-created deck; exports must preserve fixture cards.
 - Architecture tests under `scripts/architecture` use Node's test runner and are excluded from Vitest to avoid duplicate execution.
 
 Use small versioned fixtures for schema, relationships, canonical ordering, sparse metadata, provenance, rendering safety, revision/serialization parity, scoring, and persistence. Do not assert production record counts or individual authored records in unit tests. Adding canonical flashcards must not change fixture-based starting catalogs.

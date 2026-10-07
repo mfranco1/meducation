@@ -1,6 +1,26 @@
 import { expect, test } from '@playwright/test';
 import { mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
+import type { StoredFlashcardBank } from '../../src/content/schema/schema';
+
+const flashcardFixture = JSON.parse(
+  await readFile(new URL('../../tests/fixtures/flashcard-bank-contract.json', import.meta.url), 'utf8'),
+) as { bank: StoredFlashcardBank };
+
+// Keep authoring flows independent of the size and ordering of authored content.
+// Serve the same populated baseline to every importer, including reset/replay.
+test.beforeEach(async ({ page }) => {
+  await page.route(/\/src\/content\/flashcardBank\.generated\.json(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      body: `export default ${JSON.stringify(flashcardFixture.bank)};`,
+    }),
+  );
+});
+
+function deckRow(page: import('@playwright/test').Page, name: string) {
+  return page.getByRole('button', { name: new RegExp(`^${name} \\d+ cards$`) }).locator('..');
+}
 
 test('stages deck and card CRUD and previews an exported replay', async ({ page }, testInfo) => {
   test.setTimeout(60_000);
@@ -19,7 +39,7 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   await page.getByRole('button', { name: 'Stage record' }).click();
   await expect(page.getByRole('button', { name: /Admin browser deck/ })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Add card' }).first().click();
+  await deckRow(page, 'Admin browser deck').getByRole('button', { name: 'Add card', exact: true }).click();
   const cardEditor = page.getByRole('textbox', { name: 'Record JSON' });
   const card = JSON.parse(await cardEditor.inputValue()) as { id: string; deckId: string; front: string; back: string };
   expect(card.deckId).toBe(deck.id);
@@ -49,7 +69,7 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   await page.getByRole('button', { name: /Admin front Card/ }).click();
   await editor.fill(JSON.stringify({ ...card, front: 'Admin front', back: 'Updated admin back' }, null, 2));
   await page.getByRole('button', { name: 'Stage record' }).click();
-  await page.getByRole('button', { name: 'Add card' }).first().click();
+  await deckRow(page, 'Admin browser deck').getByRole('button', { name: 'Add card', exact: true }).click();
   const secondCard = JSON.parse(await editor.inputValue()) as typeof card;
   await editor.fill(JSON.stringify({ ...secondCard, front: 'Second front', back: 'Second back' }, null, 2));
   await page.getByRole('button', { name: 'Stage record' }).click();
@@ -84,6 +104,9 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   };
   expect(content.cards.find((item) => item.id === card.id)?.back).toBe('Updated admin back');
   expect(content.cards.find((item) => item.id === secondCard.id)?.deckId).toBe(secondDeck.id);
+  for (const fixtureCard of flashcardFixture.bank.cards) {
+    expect(content.cards.find((item) => item.id === fixtureCard.id)).toEqual(fixtureCard);
+  }
 
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Add', exact: true }).click();
@@ -136,7 +159,7 @@ test('bulk adds cards, decks, and nested cards through preview, one-step undo, a
   await expect(page.getByRole('button', { name: 'Empty bulk deck 0 cards' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Nested bulk deck 2 cards' })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Bulk add cards' }).nth(1).click();
+  await deckRow(page, 'Nested bulk deck').getByRole('button', { name: 'Bulk add cards', exact: true }).click();
   const cardBatch = JSON.stringify({
     cards: [{ front: 'Appended question', back: 'Appended answer', reviewNote: 'Reviewed' }],
   });
