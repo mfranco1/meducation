@@ -7,6 +7,7 @@ import { serializeBank } from './core/serializeBank';
 import { bulkAddTemplate, newQuestion, newQuiz, newSubject } from './core/templates';
 import type { AdminChangeSet } from './core/types';
 import type { AdminQuestionBankGateway } from './data/AdminQuestionBankGateway';
+import { downloadJson } from './downloadJson';
 
 export type EntityKind = 'subject' | 'quiz' | 'question';
 export type Selection = { kind: EntityKind; id?: string; parentId?: string };
@@ -26,18 +27,10 @@ export type BulkTarget =
   | { kind: 'subject'; subjectId?: string }
   | { kind: 'quiz'; subjectId?: string; quizId?: string };
 
-function download(filename: string, content: string) {
-  const anchor = document.createElement('a');
-  anchor.href = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(anchor.href);
-}
-
 /** Owns the mutable state shared by all admin editing workflows. */
 export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { confirm?: (message: string) => boolean; download?: (filename: string, content: string) => void } = {}) {
   const confirmAction = options.confirm ?? ((message: string) => window.confirm(message));
-  const downloadFile = options.download ?? download;
+  const downloadFile = options.download ?? downloadJson;
   const [snapshot, setSnapshot] = useState<{ bank: StoredQuestionBank; revision: string }>();
   const [originalRevision, setOriginalRevision] = useState('');
   const [selection, setSelection] = useState<Selection>({ kind: 'subject' });

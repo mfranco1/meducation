@@ -31,18 +31,12 @@ import { serializeBank } from './core/serializeBank';
 import type { AdminChangeSet } from './core/types';
 import { FlashcardBulkAddDialog, type FlashcardBulkPreviewSnapshot } from './FlashcardBulkAddDialog';
 import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
+import { downloadJson } from './downloadJson';
 
 type Kind = 'deck' | 'card';
 type Selected = { kind: Kind; id: string } | undefined;
 const clone = (bank: StoredFlashcardBank): StoredFlashcardBank => structuredClone(bank);
 const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
-const download = (filename: string, contents: string) => {
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(new Blob([contents], { type: 'application/json' }));
-  link.download = filename;
-  link.click();
-  URL.revokeObjectURL(link.href);
-};
 
 /** Local-only authoring workspace. It exports reviewed JSON; it never writes canonical files. */
 export function FlashcardAdminPanel({
@@ -398,16 +392,16 @@ export function FlashcardAdminPanel({
         setIssues(['The workspace changed during export. Export the current snapshot again.']);
         return;
       }
-      download('flashcardBank.generated.json', serializeFlashcardBank(bank));
-      download('flashcard-bank-change-set.json', `${JSON.stringify(changeSet, null, 2)}\n`);
+      downloadJson('flashcardBank.generated.json', serializeFlashcardBank(bank));
+      downloadJson('flashcard-bank-change-set.json', `${JSON.stringify(changeSet, null, 2)}\n`);
       if (quizChangesStaged && quizBank && quizChangeSet) {
-        download('questionBank.generated.json', serializeBank(quizBank));
-        download('question-bank-change-set.json', `${JSON.stringify(quizChangeSet, null, 2)}\n`);
-        download(
+        downloadJson('questionBank.generated.json', serializeBank(quizBank));
+        downloadJson('question-bank-change-set.json', `${JSON.stringify(quizChangeSet, null, 2)}\n`);
+        downloadJson(
           'content-change-set-bundle.json',
           `${JSON.stringify({ bundleVersion: 1, quizzes: quizChangeSet, flashcards: changeSet }, null, 2)}\n`,
         );
-        download(
+        downloadJson(
           'content-export-manifest.json',
           `${JSON.stringify({ manifestVersion: 1, coordinated: true, files: ['questionBank.generated.json', 'flashcardBank.generated.json'], quizBank: { baseRevision: originalQuizRevision, resultRevision: quizRevision }, flashcards: { resultRevision: nextRevision }, replaceTogether: true }, null, 2)}\n`,
         );

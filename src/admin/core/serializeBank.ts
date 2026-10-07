@@ -1,4 +1,5 @@
 import type { StoredQuestionBank } from '../../content/schema/schema';
+import { sha256Text } from '../../domain/contentDigest';
 
 /** Canonical JSON formatting used for snapshots, downloads, and revision input. */
 export function serializeBank(bank: StoredQuestionBank): string {
@@ -6,9 +7,7 @@ export function serializeBank(bank: StoredQuestionBank): string {
 }
 
 export async function revisionForBank(bank: StoredQuestionBank): Promise<string> {
-  const bytes = new TextEncoder().encode(serializeBank(bank));
-  const digest = await crypto.subtle.digest('SHA-256', bytes);
-  return `sha256-${Array.from(new Uint8Array(digest)).map(value => value.toString(16).padStart(2, '0')).join('')}`;
+  return sha256Text(serializeBank(bank));
 }
 
 export function cloneBank(bank: StoredQuestionBank): StoredQuestionBank {

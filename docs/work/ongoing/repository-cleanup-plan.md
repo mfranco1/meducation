@@ -1,12 +1,12 @@
 # Repository cleanup plan
 
-Created: 2026-10-07. Status: Stage 2 complete; waiting for the user's go signal for Stage 3. Stop after every stage and wait for the user's go signal before starting the next stage.
+Created: 2026-10-07. Status: Stage 3 complete; awaiting authorization for Stage 4. Stop after every stage and wait for the user's go signal before starting the next stage.
 
 ## Goal and scope
 
 Remove demonstrably unused files, exports, dependencies, generated residue, and repeated implementation. Reduce maintenance and build payload without changing product behavior, canonical content, stored progress, or supported authoring workflows. Follow the existing ownership boundaries rather than reorganizing the repository again.
 
-This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1 and 2 individually. Wait for authorization before Stage 3. Follow the stage-gate convention in [work tracking](../README.md).
+This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1, 2, and 3 individually. Wait for authorization before Stage 4. Follow the stage-gate convention in [work tracking](../README.md).
 
 ## Findings from the initial inspection
 
@@ -130,13 +130,29 @@ Stage 2 is complete with no failing checks. Supported type contracts and legacy 
 
 Risk: medium. Dependency: Stage 2.
 
-- [ ] Make `revisionForBank` reuse `sha256Text(serializeBank(bank))` from the existing domain digest helper. Preserve the serialized bytes, trailing newline, hexadecimal format, and `sha256-` prefix; verify TypeScript/Python revision parity.
-- [ ] Replace the two identical browser JSON download implementations with one admin-owned helper. Preserve filenames, bytes, MIME type, URL cleanup, and the injectable download function used by editor tests. Keep browser side effects outside admin core.
-- [ ] Share identical primitive API guards (`record`, `nonempty`, `unique`, `onlyKeys`) within `src/content/api` if doing so removes meaningful repetition. Preserve each response contract's existing strictness and ordering rules; quiz and flashcard envelope validation currently differ.
-- [ ] Review repeated bulk-draft/editor logic only for truly identical pure operations. Keep distinct quiz/flashcard data models and coordinated export rules explicit.
-- [ ] Leave the two runtime repositories separate unless a narrow helper demonstrably reduces complexity while preserving cancellation, stale-generation rejection, request deduplication, retry-now behavior, and revision pinning. Avoid a generic repository framework.
+- [x] Make `revisionForBank` reuse `sha256Text(serializeBank(bank))` from the existing domain digest helper. Preserve the serialized bytes, trailing newline, hexadecimal format, and `sha256-` prefix; verify TypeScript/Python revision parity.
+- [x] Replace the two identical browser JSON download implementations with one admin-owned helper. Preserve filenames, bytes, MIME type, URL cleanup, and the injectable download function used by editor tests. Keep browser side effects outside admin core.
+- [x] Share identical primitive API guards (`record`, `nonempty`, `unique`, `onlyKeys`) within `src/content/api` if doing so removes meaningful repetition. Preserve each response contract's existing strictness and ordering rules; quiz and flashcard envelope validation currently differ.
+- [x] Review repeated bulk-draft/editor logic only for truly identical pure operations. Keep distinct quiz/flashcard data models and coordinated export rules explicit.
+- [x] Leave the two runtime repositories separate unless a narrow helper demonstrably reduces complexity while preserving cancellation, stale-generation rejection, request deduplication, retry-now behavior, and revision pinning. Avoid a generic repository framework.
 
 Exit gate: fewer duplicated implementations and no extra speculative layers; relevant contract, export/replay, race/retry tests and browser suites pass. Keep this stage separate from formatting-only changes.
+
+### Stage 3 execution record
+
+`revisionForBank` now delegates to the existing domain `sha256Text` helper using the unchanged `serializeBank(bank)` string. The serializer, property order, indentation, trailing newline, UTF-8 input, hexadecimal format, and `sha256-` prefix remain unchanged. The shared Unicode revision fixture retains its fixed TypeScript/Python digest.
+
+Added `src/admin/downloadJson.ts` and replaced the two browser download implementations with it. The helper preserves JSON MIME type, filenames, payload bytes, anchor click, and object-URL revocation. Quiz editor tests can still inject `options.download`; browser side effects remain in admin presentation, outside core/data.
+
+Added `src/content/api/jsonGuards.ts` with the four identical decoder primitives. Both API decoders import these while retaining their own payload validation, metadata, IDs, ordering, counts, and envelope strictness. Four duplicated guard definitions, one duplicate downloader, and one duplicate digest implementation now each have a single owner. The five original files plus the two new helpers contain 590 fewer source bytes in total.
+
+Reviewed the quiz/flashcard bulk parsers and editors. They differ in draft shapes, ID allocation (compact numeric quiz IDs versus flashcard UUIDs), error accumulation, empty-deck support, subject guards, and coordinated export/import behavior. The reused downloader is the demonstrated common operation; no generic editor/parser layer was introduced. Runtime repositories already share the transport but expose different retry/recovery contracts, so their lifecycle state machines remain separate.
+
+Verification completed: lint/architecture, formatting (including both new helper files), all 10 architecture tests, content validation, all 39 backend tests/Ruff/mypy, and all 11 learner plus both admin browser tests passed. The initial full unit run passed 360 tests and timed out on three tests at the existing five-second limit while other heavy verification jobs were active; no assertion failures occurred. An isolated rerun of the same `npm test` command and unchanged test configuration passed all 62 files / 363 tests. Both attempts are retained in the temporary evidence directory. No timeout settings or tests were changed.
+
+Both TypeScript/production build modes passed: default at 76 files / 2,345,345 bytes, optional admin at 81 files / 16,611,093 bytes. Compared with Stage 2, the default output is 103 bytes smaller and optional-admin output is 183 bytes larger, including a new 199-byte shared digest chunk. The benefit is fewer implementation owners, not meaningful bundle savings. Both modes preserve the favicon and all 59 KaTeX assets, exclude obsolete public content, and include admin only in the optional mode. Content validation retains the same corpus counts and 32 review warnings. Both canonical hashes, the fixed Unicode revision contract, and diff whitespace checks pass. Existing chunk-size, Vitest environment-cost, TestClient, and browser environment advisories remain. Evidence is under `/private/tmp/meducation-cleanup/stage-3/`.
+
+Stage 3 is complete with no outstanding failing checks. Stage 4 has not started. Waiting for the user's go signal.
 
 ## Stage 4 — Reduce redundant tests, configuration, and current documentation
 

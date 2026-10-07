@@ -1,16 +1,12 @@
 import type { Question, Quiz, Subject } from '../../domain/types';
+import { nonempty, onlyKeys, record, unique } from './jsonGuards';
 
 export interface SubjectSummary extends Subject { quizCount: number; quizIds: string[] }
 export interface SubjectCatalogResponse { revision: string; subjects: SubjectSummary[] }
 export interface QuizCatalogResponse { revision: string; quizzes: Quiz[] }
 export interface QuestionListResponse { revision: string; questions: Question[] }
 
-type JsonRecord = Record<string, unknown>;
-const record = (value: unknown): value is JsonRecord => typeof value === 'object' && value !== null && !Array.isArray(value);
-const nonempty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
 const optionalString = (value: unknown) => value === undefined || typeof value === 'string';
-const onlyKeys = (value: JsonRecord, keys: string[]) => Object.keys(value).every(key => keys.includes(key));
-const unique = (ids: string[]) => new Set(ids).size === ids.length;
 const sameOrder = (actual: string[], expected: string[]) => actual.length === expected.length && actual.every((id, index) => id === expected[index]);
 const ids = (value: unknown, pattern: RegExp): value is string[] => Array.isArray(value)
   && value.every((id: unknown) => typeof id === 'string' && pattern.test(id)) && unique(value);

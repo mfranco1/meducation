@@ -1,5 +1,6 @@
 import type { Subject } from '../../domain/types';
 import type { StoredFlashcard, StoredFlashcardDeck } from '../schema/schema';
+import { nonempty, onlyKeys, record, unique } from './jsonGuards';
 
 export interface FlashcardSubjectSummary extends Subject {
   deckCount: number;
@@ -22,13 +23,6 @@ export interface FlashcardListResponse {
   revision: string;
   cards: StoredFlashcard[];
 }
-
-type RecordValue = Record<string, unknown>;
-const record = (value: unknown): value is RecordValue =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-const nonempty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-const unique = (values: string[]) => new Set(values).size === values.length;
-const onlyKeys = (value: RecordValue, allowed: string[]) => Object.keys(value).every((key) => allowed.includes(key));
 
 export function isFlashcardSubjectResponse(value: unknown): value is FlashcardSubjectResponse {
   if (
