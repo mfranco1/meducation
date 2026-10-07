@@ -122,6 +122,99 @@ describe('FlashcardStudyScreen', () => {
     expect(onFinish).not.toHaveBeenCalled();
   });
 
+  it('uses unmodified arrow keys for bounded previous and next navigation', () => {
+    const onPrevious = vi.fn(); const onNext = vi.fn(); const onFinish = vi.fn();
+    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={vi.fn()} onPrevious={onPrevious} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={onFinish} /></ThemeProvider>);
+
+    const leftAtStart = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true });
+    fireEvent(window, leftAtStart);
+    expect(leftAtStart.defaultPrevented).toBe(true);
+    expect(onPrevious).not.toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNext).toHaveBeenCalledOnce();
+
+    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={1} revealed onReveal={vi.fn()} onPrevious={onPrevious} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={onFinish} /></ThemeProvider>);
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNext).toHaveBeenCalledOnce();
+    expect(onFinish).not.toHaveBeenCalled();
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    expect(onPrevious).toHaveBeenCalledOnce();
+
+    for (const modifiers of [{ shiftKey: true }, { ctrlKey: true }, { altKey: true }, { metaKey: true }, { repeat: true }, { isComposing: true }]) {
+      fireEvent.keyDown(window, { key: 'ArrowLeft', ...modifiers });
+    }
+    fireEvent.keyDown(window, { key: 'x' });
+    expect(onPrevious).toHaveBeenCalledOnce();
+    expect(onNext).toHaveBeenCalledOnce();
+  });
+
+  it('lets arrow keys work on ordinary buttons while preserving editable and arrow-widget behavior', () => {
+    const onNext = vi.fn();
+    render(<ThemeProvider theme={theme}><><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={vi.fn()} onPrevious={vi.fn()} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /><input aria-label="Card note" /><div role="tablist"><button role="tab">Tab</button></div><a href="#source">Source link</a></></ThemeProvider>);
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Reveal answer' }), { key: 'ArrowRight' });
+    expect(onNext).toHaveBeenCalledOnce();
+    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Card note' }), { key: 'ArrowRight' });
+    fireEvent.keyDown(screen.getByRole('tab'), { key: 'ArrowRight' });
+    fireEvent.keyDown(screen.getByRole('link', { name: 'Source link' }), { key: 'ArrowRight' });
+    expect(onNext).toHaveBeenCalledOnce();
+  });
+
+  it('ignores arrow shortcuts while saving or when an event was already handled', () => {
+    const onNext = vi.fn();
+    const props = { deck, cards, index: 0, revealed: false, onReveal: vi.fn(), onPrevious: vi.fn(), onNext, onSaveAndExit: vi.fn(), onFinish: vi.fn() };
+    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} saving /></ThemeProvider>);
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNext).not.toHaveBeenCalled();
+
+    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} /></ThemeProvider>);
+    const alreadyHandled = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true });
+    alreadyHandled.preventDefault();
+    fireEvent(window, alreadyHandled);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('suspends arrow shortcuts while a modal is open and ignores them for a one-card deck', () => {
+    const onPrevious = vi.fn(); const onNext = vi.fn();
+    const singleDeck = { ...deck, cardCount: 1, cardIds: ['f1'] };
+    const { rerender } = render(<ThemeProvider theme={theme}><><FlashcardStudyScreen deck={singleDeck} cards={[cards[0]]} index={0} revealed={false} onReveal={vi.fn()} onPrevious={onPrevious} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /><div role="dialog" aria-modal="true">Open dialog</div></></ThemeProvider>);
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onPrevious).not.toHaveBeenCalled();
+    expect(onNext).not.toHaveBeenCalled();
+
+    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={singleDeck} cards={[cards[0]]} index={0} revealed={false} onReveal={vi.fn()} onPrevious={onPrevious} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onPrevious).not.toHaveBeenCalled();
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('moves focus from Next to Finish when ArrowRight advances from a focused Next button', () => {
+    const onFinish = vi.fn();
+    function FocusedDeck() {
+      const [index, setIndex] = useState(0);
+      return <FlashcardStudyScreen deck={deck} cards={cards} index={index} revealed={false} onReveal={vi.fn()} onPrevious={vi.fn()} onNext={() => setIndex(1)} onSaveAndExit={vi.fn()} onFinish={onFinish} />;
+    }
+    render(<ThemeProvider theme={theme}><FocusedDeck /></ThemeProvider>);
+    const next = screen.getByRole('button', { name: 'Next' });
+    next.focus();
+    fireEvent.keyDown(next, { key: 'ArrowRight' });
+    expect(screen.getByRole('button', { name: 'Finish' })).toHaveFocus();
+    expect(onFinish).not.toHaveBeenCalled();
+  });
+
+  it('suspends arrow shortcuts while the Cards drawer is open and restores them when closed', async () => {
+    const onNext = vi.fn();
+    render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={vi.fn()} onPrevious={vi.fn()} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNext).not.toHaveBeenCalled();
+    fireEvent.click(document.querySelector('.MuiBackdrop-root')!);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNext).toHaveBeenCalledOnce();
+  });
+
   it('opens the Cards drawer and closes it after an arbitrary jump', async () => {
     const onNavigate = vi.fn();
     render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={vi.fn()} onNavigate={onNavigate} onPrevious={vi.fn()} onNext={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);

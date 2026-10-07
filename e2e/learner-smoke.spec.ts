@@ -92,6 +92,11 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 1 of 2')).toBeVisible();
   await expect(page.locator('.katex')).toHaveCount(2);
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('Card 2 of 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByText('Card 1 of 2')).toBeVisible();
   const cardFlag = page.getByRole('button', { name: 'Flag card' });
   const cardFlagBackground = await cardFlag.evaluate((element) => getComputedStyle(element).backgroundColor);
   await cardFlag.hover();
@@ -136,6 +141,13 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Finish' })).toBeFocused();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('Card 2 of 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Finish' })).toBeVisible();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByText('Card 1 of 2')).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Save and exit deck' }).click();
   await expect(page.getByRole('button', { name: 'Resume deck' })).toBeVisible();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();

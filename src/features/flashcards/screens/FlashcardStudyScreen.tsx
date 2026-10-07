@@ -8,6 +8,13 @@ import { FlashcardNavigator } from '../components/FlashcardNavigator';
 import { FlashcardStudyCard } from '../components/FlashcardStudyCard';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
 
+function hasOpenModal() {
+  return Array.from(document.querySelectorAll<HTMLElement>('[aria-modal="true"]')).some((modal) => {
+    const style = window.getComputedStyle(modal);
+    return style.visibility !== 'hidden' && style.display !== 'none';
+  });
+}
+
 export function FlashcardStudyScreen({ deck, cards, index, revealed, openedCardIds = [], flaggedCardIds = [], saving = false, persistenceError, onReveal, onToggleFlag = () => undefined, onNavigate, onPrevious, onNext, onSaveAndExit, onFinish }: {
   deck: FlashcardDeckSummary;
   cards: readonly FlashcardCard[];
@@ -41,23 +48,37 @@ export function FlashcardStudyScreen({ deck, cards, index, revealed, openedCardI
   }, [index, last]);
 
   useEffect(() => {
-    const handleSpace = (event: KeyboardEvent) => {
-      if (event.code !== 'Space' || event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const isSpace = event.code === 'Space';
+      const isPrevious = event.key === 'ArrowLeft';
+      const isNext = event.key === 'ArrowRight';
+      if ((!isSpace && !isPrevious && !isNext) || event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+      if (saving || !card || navigatorOpen || hasOpenModal()) return;
       const target = event.target;
-      if (target instanceof HTMLElement && (target.isContentEditable || target.closest('button, a, input, textarea, select, [role="button"], [role="dialog"], [aria-modal="true"]'))) return;
-      if (document.querySelector('[role="dialog"], [aria-modal="true"]')) return;
+      if (target instanceof HTMLElement) {
+        if (target.isContentEditable || target.closest('[contenteditable="true"], input, textarea, select, a, [aria-modal="true"]')) return;
+        if (isSpace && target.closest('button, [role="button"]')) return;
+        if ((isPrevious || isNext) && target.closest('[role="tablist"], [role="tab"], [role="slider"], [role="spinbutton"], [role="menu"], [role="menubar"], [role="menuitem"], [role="listbox"], [role="option"], [role="tree"], [role="treeitem"], [role="grid"], [role="radiogroup"]')) return;
+      }
       if (event.repeat) { event.preventDefault(); return; }
       event.preventDefault();
-      if (!revealed) {
+      if (isPrevious) {
+        if (index > 0) onPrevious();
+      } else if (isNext) {
+        if (index < cards.length - 1) {
+          advanceHadFocus.current = document.activeElement === nextRef.current;
+          onNext();
+        }
+      } else if (!revealed) {
         onReveal();
       } else if (index < cards.length - 1) {
         advanceHadFocus.current = false;
         onNext();
       }
     };
-    window.addEventListener('keydown', handleSpace);
-    return () => window.removeEventListener('keydown', handleSpace);
-  }, [cards.length, index, onNext, onReveal, revealed]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [card, cards.length, index, navigatorOpen, onNext, onPrevious, onReveal, revealed, saving]);
 
   if (!card) return null;
   const navigate = (target: number) => {
