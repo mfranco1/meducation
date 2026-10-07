@@ -36,11 +36,7 @@ Array order is canonical within each parent: deck order within a subject and car
 
 Card `front` and `back` use the same restricted rich Markdown, HTML, image, URL, and math policy as quiz stems and rationales. `sources` uses the restricted source Markdown policy. `reviewNote` is plain text. The learner renders both faces using the shared sanitized Markdown renderer. Quiz `metadata.topic` remains free text and is not a foreign key to the flashcard hierarchy.
 
-## Schema v1 migration
-
-`migrateFlashcardBankV1` builds a v2 candidate from a v1 bank without modifying the input or canonical file. It resolves each old deck's `topicId` to the topic's `subjectId`, preserves deck/card IDs, content, and array order, removes topics, and returns a report of removed topics, mapped decks, and duplicate-name warnings. Orphan topic or subject references fail. Review the report and candidate before replacing the canonical bank. The checked-in bank is already schema v2.
-
-The runtime accepts v2 only. Flashcard change sets use version 2 and schema-v2 revisions; v1 flashcard change sets require replay against their matching v1 bank/tooling followed by candidate migration. Quiz schema and change sets are unaffected.
+The runtime and authoring change sets accept version 2 only. The completed schema-v1 migration tool has been retired.
 
 ## Admin bulk JSON
 
@@ -52,7 +48,7 @@ The admin rejects unknown fields, IDs, parent references, null values, blank req
 
 The normalized mapping is `subjects(id, name, accent, position)`, `decks(id, subject_id, name, description, position)`, and `flashcards(id, deck_id, front, back, sources, review_note, position)`. The `subjects` table is shared with quizzes. Foreign keys are indexed and parent deletes are restricted by default; explicit admin cascades are transactional and report affected child records.
 
-Learner checkpoints are not content. They belong in a separate progress repository and, eventually, a user-scoped table keyed by `(user_id, deck_id)` with current card ID, content signature, update time, and opened/flagged card IDs. They must not be written into this canonical bank. The local progress envelope is schema v2; it reads v1 position checkpoints in memory as having no opened or flagged cards, retains their legacy bytes, and writes v2 on the next successful checkpoint. Malformed v2 state is preserved and surfaced for recovery. Older application builds cannot read the v2 key. Removing topics does not change deck IDs or ordered study content, so existing saved deck positions remain valid.
+Learner checkpoints are not content. They belong in a separate progress repository and, eventually, a user-scoped table keyed by `(user_id, deck_id)` with current card ID, content signature, update time, and opened/flagged card IDs. They must not be written into this canonical bank. The local progress envelope is schema v2 under `meducation.flashcards.progress.v2`; only this key is read. Checkpoints contain a SHA-256 content signature and opened/flagged ID arrays. Serialized-content signatures and v1 checkpoints are no longer supported. Malformed current state is preserved and surfaced for recovery.
 
 ## Validation
 

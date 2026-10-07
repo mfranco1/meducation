@@ -81,14 +81,14 @@ function contentAddErrors(value: unknown, path: string): string[] {
 
 export function parseChangeSet(value: unknown): { changeSet?: AdminChangeSet; errors: string[] } {
   if (!has(value) || !allowed(value, ['changeSetVersion', 'base', 'reason', 'operations'])) return { errors: ['Change set must be an object with only changeSetVersion, base, reason, and operations.'] };
-  if (value.changeSetVersion !== 1 && value.changeSetVersion !== 2) return { errors: ['Unsupported change-set version.'] };
+  if (value.changeSetVersion !== 2) return { errors: ['Unsupported change-set version.'] };
   if (!has(value.base) || !allowed(value.base, ['bankSchemaVersion', 'revision']) || value.base.bankSchemaVersion !== 4 || !string(value.base.revision)) return { errors: ['Change set base must contain bankSchemaVersion: 4 and a revision.'] };
   if (!string(value.reason) || !value.reason.trim()) return { errors: ['Change set reason is required.'] };
   if (!Array.isArray(value.operations) || !value.operations.length) return { errors: ['Change set requires at least one operation.'] };
   const errors = value.operations.flatMap((candidate, index) => {
     const path = `operations[${index}]`;
     if (has(candidate) && candidate.op === 'content.add') {
-      return value.changeSetVersion === 2 ? contentAddErrors(candidate, path) : [`${path}: content.add requires changeSetVersion 2.`];
+      return contentAddErrors(candidate, path);
     }
     return operation(candidate) ? [] : [`${path} has an invalid shape or unsupported field.`];
   });

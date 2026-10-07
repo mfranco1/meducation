@@ -31,15 +31,15 @@ Use this reference when changing the corresponding behavior. [Testing](testing.m
 - Confirm that the active quiz stays visually unchanged, the read-only modes keep choices noninteractive, and review correctly labels submitted, correct, unanswered, flagged, unavailable-key, and key-under-review states.
 - Keep first-quiz timing measurement before screenshot capture.
 
-### Progress writes and migration
+### Progress writes and recovery
 
-- Browser progress coverage exercises v1-to-v2 migration without deleting original keys, malformed-state protection, quota failure with no partial completion, duplicate completion after history pruning, and a stale second repository instance.
-- Session tests verify legacy/changed-content restart choice and that a failed write leaves the current quiz open.
+- Browser progress coverage exercises current-v2 reads/writes without consulting retired keys, malformed-state protection, quota failure with no partial completion, duplicate completion after history pruning, and a stale second repository instance.
+- Session tests verify changed-content restart choice and that a failed write leaves the current quiz open.
 - The revision check is optimistic rather than a cross-tab transaction; verify the sequential stale-tab behavior and keep the truly simultaneous race documented until a locking strategy is available.
 
 ### Snapshots and selectors
 
-- Snapshot tests verify stable identity and no additional storage reads across repeated getters, no migration write during reads, a new frozen snapshot and subscriber notification after local writes, and invalidation after a cross-tab `storage` event.
+- Snapshot tests verify stable identity and no additional storage reads across repeated getters, no write during reads, a new frozen snapshot and subscriber notification after local writes, and invalidation after a cross-tab `storage` event.
 - Selectors should group retained history once per snapshot while preserving subject membership, scores after pruning, trends, activity ordering, and resume position.
 
 ### Results and Exam review
@@ -58,7 +58,7 @@ Dashboard active-subject work must cover empty, single-subject, filtering, recen
 
 ### Content, launch, and bulk additions
 
-- Flashcard coverage verifies schema-v1 candidate migration, shared-subject references, direct subject/deck/card ordering, revision parity, independent progress storage, subject activity selectors, empty-deck handling, safe card rendering, reveal/navigation/finish behavior, and staged admin creation plus validation.
+- Flashcard coverage verifies shared-subject references, direct subject/deck/card ordering, revision parity, independent progress storage, subject activity selectors, empty-deck handling, safe card rendering, reveal/navigation/finish behavior, and staged admin creation plus validation.
 - Subject tests cover the shared shimmer and catalog recovery; session/App/browser tests cover deck-launch progress, safe screen-scoped failure toast, retained deck rows, and retry through Study/Resume without creating progress on failure.
 - Bulk-add coverage checks all three contextual JSON shapes, mixed empty and populated decks, rich-content validation with nested paths, generated-ID stability, preview staleness, source immutability, atomic rollback, one-step Undo, and replay parity.
 - The learner Playwright flow uses `e2e/fixtures/flashcard-bank.json` with the separate `MEDUCATION_FLASHCARD_BANK_PATH`; it studies, saves, resumes, finishes, and checks the dashboard without quiz analytics.
@@ -68,14 +68,14 @@ Dashboard active-subject work must cover empty, single-subject, filtering, recen
 
 ### Study presentation and keyboard controls
 
-- Flashcard study regression coverage also verifies schema-v1 progress reads into schema v2 without rewriting legacy bytes, opened/flagged ID persistence, canonical All/Hidden/Flagged navigation, centered rich faces, icon-only concealed branding, answer-sized shared flip faces, bold rich answers, click-to-hide, and the Space reveal/advance rhythm through the final card.
+- Flashcard study regression coverage also verifies current-v2 progress reads, opened/flagged ID persistence, canonical All/Hidden/Flagged navigation, centered rich faces, icon-only concealed branding, answer-sized shared flip faces, bold rich answers, click-to-hide, and the Space reveal/advance rhythm through the final card.
 - Keyboard tests cover the final explicit Finish action, while the browser flow checks the Hidden empty state and study/resume interactions.
 - Shared study chrome must retain active quiz, Browse, and Review labels, timer placement, footer behavior, and keyboard focus.
 - Browser checks should cover a narrow screen and long rich answer without page overflow.
 
 ### Checkpoint recovery and authoring parity
 
-- Flashcard regressions cover migration preserving IDs/content/order and rejecting orphan references, abandoned/concurrent launches, unmount cancellation, fresh checkpoints after delayed loads, failed launch/restart/navigation/finish writes, bounded digest storage and early-v1 progress compatibility, frozen stable snapshots, temporary storage recovery, invalid timestamps, exact catalog membership, and canonical ordering across subjects.
+- Flashcard regressions cover stable IDs/content/order and rejection of orphan references, abandoned/concurrent launches, unmount cancellation, fresh checkpoints after delayed loads, failed launch/restart/navigation/finish writes, bounded digest storage and rejection of serialized-content signatures, frozen stable snapshots, temporary storage recovery, invalid timestamps, exact catalog membership, and canonical ordering across subjects.
 - Admin tests cover rich-content rejection, unstaged draft guards, reorder/export replay parity, imported-history undo, stale subject previews, legacy change-set rejection, and shared-subject protection during undo/reset in both authoring sections.
 - Coordinated bundle tests verify atomic paired staging when individual imports would require invalid intermediate subjects, stale revision rejection, invalid-pair rollback, and quiz-draft protection.
 - Browser flows cover direct deck listing, reload/resume, abandoned loads, keyboard Retry, and admin update/move/reorder/cascade-delete/undo/export.
@@ -152,12 +152,12 @@ The suite checks quiz start, answer persistence across reload, resume, completio
 
 ### Grouped additions
 
-Grouped version-2 `content.add` tests must cover new subjects with multiple quizzes and item lists, additions under existing subjects/quizzes, inherited parent IDs, duplicate IDs, ownership mismatches, nested-field diagnostics, item ordering, version-1 compatibility, rollback, undo, and replay of the exported grouped change set to the same flat canonical bank.
+Grouped version-2 `content.add` tests must cover new subjects with multiple quizzes and item lists, additions under existing subjects/quizzes, inherited parent IDs, duplicate IDs, ownership mismatches, nested-field diagnostics, item ordering, unsupported-version rejection, rollback, undo, and replay of the exported grouped change set to the same flat canonical bank.
 
 ### Bulk draft compilation
 
 - Content-only bulk-draft tests must cover each destination template, reject change-set and ID fields, compile choice strings into ordered A–Z choices, allocate stable IDs, preserve provided and verified answers distinctly, reject stale snapshots and empty reasons, and confirm that the exact compiled change set is used for preview and staging.
-- Imported legacy/grouped change sets remain a separate read-only preview flow.
+- Imported version-2 change sets remain a separate read-only preview flow.
 
 ### Isolation and coordinated reset
 

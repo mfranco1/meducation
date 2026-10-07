@@ -1,7 +1,6 @@
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../domain/flashcardStudy';
 import type { StoragePort } from './progressCodec';
 
-export const legacyFlashcardProgressKey = 'meducation.flashcards.progress.v1';
 export const flashcardProgressKey = 'meducation.flashcards.progress.v2';
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -41,16 +40,7 @@ export function decodeFlashcardProgress(value: unknown): FlashcardProgressState 
 
 export function loadFlashcardProgress(storage: StoragePort): FlashcardProgressState | undefined {
   const raw = storage.getItem(flashcardProgressKey);
-  if (raw === null) {
-    const legacy = storage.getItem(legacyFlashcardProgressKey);
-    if (legacy === null) return { schemaVersion: 2, revision: 'initial', checkpoints: {} };
-    try {
-      const old = JSON.parse(legacy) as Record<string, unknown>;
-      if (old.schemaVersion !== 1 || typeof old.revision !== 'string' || !record(old.checkpoints)) return undefined;
-      const checkpoints = Object.fromEntries(Object.entries(old.checkpoints).map(([id, item]) => [id, record(item) ? { ...item, openedCardIds: [], flaggedCardIds: [] } : item]));
-      return decodeFlashcardProgress({ schemaVersion: 2, revision: `migrated:${old.revision}`, checkpoints });
-    } catch { return undefined; }
-  }
+  if (raw === null) return { schemaVersion: 2, revision: 'initial', checkpoints: {} };
   try {
     return decodeFlashcardProgress(JSON.parse(raw) as unknown);
   } catch {

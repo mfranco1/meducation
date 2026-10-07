@@ -1,5 +1,5 @@
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../domain/flashcardStudy';
-import { decodeFlashcardProgress, flashcardProgressKey, legacyFlashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
+import { decodeFlashcardProgress, flashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
 import type { StoragePort } from './progressCodec';
 
 const unavailableMessage = 'Flashcard progress could not be saved. Check browser storage and try again.';
@@ -56,7 +56,7 @@ export class LocalFlashcardProgressRepository {
         this.storageError = undefined;
         return (this.cached = freezeProgress(state));
       }
-      if (storage.getItem(flashcardProgressKey) !== null || storage.getItem(legacyFlashcardProgressKey) !== null) {
+      if (storage.getItem(flashcardProgressKey) !== null) {
           this.storageError = corruptMessage;
           if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
           return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'corrupt', checkpoints: {} }));
@@ -77,7 +77,7 @@ export class LocalFlashcardProgressRepository {
   }
 
   private readonly onStorage = (event: StorageEvent) => {
-    if (event.key !== null && event.key !== flashcardProgressKey && event.key !== legacyFlashcardProgressKey) return;
+    if (event.key !== null && event.key !== flashcardProgressKey) return;
     this.cached = undefined;
     this.listeners.forEach((listener) => listener());
   };

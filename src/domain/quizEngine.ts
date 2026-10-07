@@ -1,4 +1,4 @@
-import type { Attempt, AttemptScore, CelebrationProgress, FeedbackMode, Question, QuestionResponse, StreakMilestone } from './types';
+import type { Attempt, AttemptScore, FeedbackMode, Question, QuestionResponse, StreakMilestone } from './types';
 
 const STREAK_MILESTONES: readonly StreakMilestone[] = [3, 5, 10, 25, 50];
 
@@ -9,17 +9,13 @@ export const selectChoice = (response: QuestionResponse, choiceId: string, feedb
   if (response.locked) return response;
   return { ...response, selectedChoiceId: choiceId, locked: feedbackMode === 'immediate' };
 };
-const celebrationProgressFor = (attempt: Attempt): CelebrationProgress => ({
-  correctStreak: attempt.celebrationProgress?.correctStreak ?? 0,
-  awardedStreakMilestones: attempt.celebrationProgress?.awardedStreakMilestones ?? [],
-});
 export function commitAnswer(attempt: Attempt, question: Question, choiceId: string): { attempt: Attempt; streakMilestone?: StreakMilestone } {
   const current = attempt.responses[question.id] ?? blankResponse(question.id);
   const selected = selectChoice(current, choiceId, attempt.feedbackMode);
   const selectedAttempt = updateResponse(attempt, selected);
   if (attempt.feedbackMode !== 'immediate' || current.locked) return { attempt: selectedAttempt };
 
-  const progress = celebrationProgressFor(attempt);
+  const progress = attempt.celebrationProgress;
   const correct = isCorrect(question, choiceId);
   const correctStreak = correct ? progress.correctStreak + 1 : 0;
   const awardedStreakMilestones = correct ? progress.awardedStreakMilestones : [];
@@ -35,10 +31,6 @@ export function commitAnswer(attempt: Attempt, question: Question, choiceId: str
     streakMilestone: milestone,
   };
 }
-export const normalizeResponseForFeedbackMode = (response: QuestionResponse, feedbackMode: FeedbackMode): QuestionResponse => {
-  if (feedbackMode !== 'immediate' || !response.selectedChoiceId || response.locked) return response;
-  return { ...response, locked: true };
-};
 export function isFullyAnsweredFastFeedback(attempt: Attempt, questions: Question[]): boolean {
   return attempt.feedbackMode === 'immediate'
     && questions.length > 0
@@ -53,7 +45,7 @@ export const questionIndexFor = (questions: Question[], questionId?: string) => 
 };
 export function updateResponse(attempt: Attempt, response: QuestionResponse): Attempt { return { ...attempt, responses: { ...attempt.responses, [response.questionId]: response } }; }
 export function elapsedTimeFor(attempt: Attempt, nowMs = Date.now()): number {
-  const accumulatedMs = attempt.elapsedMs ?? Math.max(0, nowMs - new Date(attempt.startedAt).getTime());
+  const accumulatedMs = attempt.elapsedMs;
   if (!attempt.timerStartedAt) return accumulatedMs;
   return accumulatedMs + Math.max(0, nowMs - new Date(attempt.timerStartedAt).getTime());
 }

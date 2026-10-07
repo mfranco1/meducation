@@ -8,7 +8,7 @@ const questions: Question[] = [
   { id: 'i3', quizId: 'q1', stem: 'Three', choices: [], rationale: 'R', metadata: {} },
 ];
 const examAttempt: Attempt = {
-  id: 'a', quizId: 'q1', subjectId: 's1', feedbackMode: 'exam', startedAt: new Date().toISOString(), responses: {
+  id: 'a', quizId: 'q1', subjectId: 's1', feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: new Date().toISOString(), responses: {
     i1: { questionId: 'i1', selectedChoiceId: 'A', flagged: true, locked: false, timeMs: 0 },
     i2: { questionId: 'i2', flagged: true, locked: false, timeMs: 0 },
   },

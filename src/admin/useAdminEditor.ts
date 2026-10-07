@@ -111,7 +111,7 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
       const operation: unknown = creating
         ? { op: `${selection.kind}.create`, value }
         : { op: `${selection.kind}.update`, id: selection.id, value };
-      const parsed = parseChangeSet({ changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason, operations: [operation] });
+      const parsed = parseChangeSet({ changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason, operations: [operation] });
       if (!parsed.changeSet) { setIssues(parsed.errors.map(message => ({ level: 'error', message }))); return undefined; }
       return parsed.changeSet;
     } catch { setIssues([{ level: 'error', message: 'Record JSON is invalid.' }]); return undefined; }
@@ -268,7 +268,7 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     const cascade = selection.kind !== 'question' && confirmAction('Cascade deletion to all child records? Cancel to reject this delete.');
     if (selection.kind !== 'question' && !cascade) return;
     if (!confirmAction(`Stage deletion of ${selection.kind} ${selection.id}?`)) return;
-    const parsed = parseChangeSet({ changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason, operations: [{ op: `${selection.kind}.delete`, id: selection.id, ...(cascade ? { cascade: true } : {}) }] });
+    const parsed = parseChangeSet({ changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason, operations: [{ op: `${selection.kind}.delete`, id: selection.id, ...(cascade ? { cascade: true } : {}) }] });
     if (!parsed.changeSet) { setIssues(parsed.errors.map(message => ({ level: 'error', message }))); return; }
     const preview = await gateway.preview(parsed.changeSet);
     if (!isCurrent()) return;

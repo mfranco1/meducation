@@ -15,7 +15,7 @@ const bank = (): StoredQuestionBank => ({
 const emptyFlashcardBank: StoredFlashcardBank = { schemaVersion: 2, decks: [], cards: [] };
 const previewChangeSet: typeof previewWithBank = (source, changeSet, flashcards = emptyFlashcardBank) =>
   previewWithBank(source, changeSet, flashcards);
-const changeSet = (operations: AdminChangeSet['operations']): AdminChangeSet => ({ changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: 'test' }, reason: 'Test change', operations });
+const changeSet = (operations: AdminChangeSet['operations']): AdminChangeSet => ({ changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: 'test' }, reason: 'Test change', operations });
 const item = (id: string, stem = `Stem ${id}`) => ({ id, stem, choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }], answer: 'A', rationale: `Rationale ${id}` });
 const grouped = (subject: ContentAddOperation['subject'], quizzes: ContentAddOperation['quizzes']): AdminChangeSet => ({
   changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: 'test' }, reason: 'Grouped add', operations: [{ op: 'content.add', subject, quizzes }],
@@ -172,9 +172,9 @@ describe('admin change-set processor', () => {
     expect(empty.errors[0]).toContain('operations[0].quizzes must be a non-empty array');
   });
 
-  it('keeps version-1 import working and replays grouped export to the identical flat bank', async () => {
+  it('rejects version-1 import and replays grouped export to the identical flat bank', async () => {
     const legacy = parseChangeSet({ changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: 'legacy' }, reason: 'Legacy', operations: [{ op: 'question.create', value: { ...item('i2'), quizId: 'q1' } }] });
-    expect(legacy.errors).toEqual([]);
+    expect(legacy.errors).toEqual(['Unsupported change-set version.']);
 
     const source = bank();
     const firstGateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);

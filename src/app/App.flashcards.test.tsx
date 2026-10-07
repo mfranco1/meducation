@@ -13,7 +13,7 @@ it('shows unreadable saved progress on the dashboard before a deck is opened', a
   runtimeFlashcardBank.configureLocal([], [], []);
   const setItem = vi.fn();
   vi.stubGlobal('localStorage', {
-    getItem: (key: string) => (key === 'meducation.flashcards.progress.v1' ? '{broken' : null),
+    getItem: (key: string) => (key === 'meducation.flashcards.progress.v2' ? '{broken' : null),
     setItem,
   });
   render(

@@ -27,10 +27,7 @@ export async function flashcardContentSignature(cards: readonly FlashcardCard[])
 
 export function validateFlashcardCheckpoint(checkpoint: FlashcardCheckpoint, deckId: string, cards: readonly FlashcardCard[], signature: string): 'valid' | 'missing-card' | 'changed-content' {
   if (checkpoint.deckId !== deckId || !cards.some(card => card.id === checkpoint.currentCardId)) return 'missing-card';
-  // Early v1 checkpoints used serialized content. A successful resume rewrites them as a digest.
-  const matches = checkpoint.contentSignature === signature
-    || (checkpoint.contentSignature.startsWith('[') && checkpoint.contentSignature === serializedStudyContent(cards));
-  return matches ? 'valid' : 'changed-content';
+  return checkpoint.contentSignature === signature ? 'valid' : 'changed-content';
 }
 
 export type FlashcardLaunch =

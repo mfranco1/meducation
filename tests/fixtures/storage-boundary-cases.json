@@ -1,12 +1,4 @@
 {
-  "legacyActive": {
-    "id": "attempt-q1",
-    "quizId": "q1",
-    "subjectId": "s1",
-    "feedbackMode": "exam",
-    "startedAt": "2026-09-20T00:00:00.000Z",
-    "responses": {}
-  },
   "completed": {
     "id": "attempt-q1",
     "quizId": "q1",
@@ -15,10 +7,42 @@
     "startedAt": "2026-09-20T00:00:00.000Z",
     "completedAt": "2026-09-20T00:05:00.000Z",
     "responses": {},
-    "score": { "correct": 1, "incorrect": 0, "unanswered": 0, "total": 1, "percentage": 100, "elapsedMs": 300000 }
+    "score": {
+      "correct": 1,
+      "incorrect": 0,
+      "unanswered": 0,
+      "total": 1,
+      "percentage": 100,
+      "elapsedMs": 300000
+    },
+    "elapsedMs": 300000,
+    "celebrationProgress": {
+      "correctStreak": 0,
+      "awardedStreakMilestones": []
+    }
   },
   "invalidStoredValues": [
-    { "id": "malformed_json", "value": "{broken" },
-    { "id": "valid_json_wrong_shape", "value": "{\"wrong\":\"shape\"}" }
-  ]
+    {
+      "id": "malformed_json",
+      "value": "{broken"
+    },
+    {
+      "id": "valid_json_wrong_shape",
+      "value": "{\"wrong\":\"shape\"}"
+    }
+  ],
+  "active": {
+    "id": "attempt-q1",
+    "quizId": "q1",
+    "subjectId": "s1",
+    "feedbackMode": "exam",
+    "startedAt": "2026-09-20T00:00:00.000Z",
+    "responses": {},
+    "elapsedMs": 0,
+    "celebrationProgress": {
+      "correctStreak": 0,
+      "awardedStreakMilestones": []
+    },
+    "contentSignature": "fixture-content"
+  }
 }

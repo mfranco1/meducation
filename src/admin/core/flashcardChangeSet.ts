@@ -121,8 +121,6 @@ export function applyFlashcardOperations(
 export function isFlashcardAdminChangeSet(value: unknown): value is FlashcardAdminChangeSet {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
   const candidate = value as Record<string, unknown>;
-  if (candidate.changeSetVersion === 1)
-    throw new Error('Flashcard change sets must be migrated to schema version 2 before import.');
   if (!only(candidate, ['changeSetVersion', 'base', 'resultRevision', 'resultSubjectRevision', 'reason', 'operations']))
     return false;
   if (

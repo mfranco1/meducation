@@ -14,7 +14,7 @@ function completed(quizId: string, subjectId: string, percentage: number): Compl
     quizId,
     subjectId,
     feedbackMode: 'exam',
-    startedAt: at,
+    elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: at,
     completedAt: at,
     responses: {},
     score: { correct: 1, incorrect: 0, unanswered: 0, total: 1, percentage, elapsedMs: 0 },
@@ -82,12 +82,6 @@ describe('progressive dashboard statistics', () => {
     const attempts = new LocalAttemptRepository();
     attempts.saveCompleted(completed(quiz.id, subject.id, 80));
     const progressKeys = [
-      'meducation.active-attempts.v1',
-      'meducation.completed-attempts.v1',
-      'meducation.completion-counts.v1',
-      'meducation.latest-scores.v1',
-      'meducation.lowest-scores.v1',
-      'meducation.quiz-activity.v1',
       'meducation.progress.v2',
     ];
     const before = progressKeys.map((key) => localStorage.getItem(key));
@@ -146,7 +140,7 @@ describe('progressive dashboard statistics', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
-    expect(localStorage.getItem('meducation.active-attempts.v1')).toBeNull();
+    expect(new LocalAttemptRepository().getActive(quiz.id)).toBeUndefined();
 
     await act(async () =>
       resolveQuestions({
@@ -160,7 +154,7 @@ describe('progressive dashboard statistics', () => {
       }),
     );
     expect(screen.queryByRole('heading', { name: 'Test Quiz' })).toBeNull();
-    expect(localStorage.getItem('meducation.active-attempts.v1')).toBeNull();
+    expect(new LocalAttemptRepository().getActive(quiz.id)).toBeUndefined();
     expect(runtimeQuestionBank.listQuestions(quiz.id)).toEqual([]);
   });
 
@@ -179,14 +173,7 @@ describe('progressive dashboard statistics', () => {
     );
     const attempts = new LocalAttemptRepository();
     attempts.saveCompleted(completed(quiz.id, subject.id, 80));
-    const progressKeys = [
-      'meducation.active-attempts.v1',
-      'meducation.completed-attempts.v1',
-      'meducation.completion-counts.v1',
-      'meducation.latest-scores.v1',
-      'meducation.lowest-scores.v1',
-      'meducation.quiz-activity.v1',
-    ];
+    const progressKeys = ['meducation.progress.v2'];
     const before = progressKeys.map((key) => localStorage.getItem(key));
     const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 404, headers: { get: () => null } });
     vi.stubGlobal('fetch', fetchMock);

@@ -98,7 +98,7 @@ describe('FlashcardAdminPanel', () => {
     ];
     const result = applyFlashcardOperations(storedFlashcardBank, resultSubjects, operations);
     const quizChangeSet = {
-      changeSetVersion: 1,
+      changeSetVersion: 2,
       base: { bankSchemaVersion: 4, revision: await revisionForBank(quizBank) },
       reason: 'Shared subject cleanup',
       operations: [{ op: 'subject.delete', id: 's1', cascade: true }],

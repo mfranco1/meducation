@@ -30,14 +30,14 @@ describe('flashcard study rules', () => {
     expect(() => checkpointForCard('d2', cards, 'f1', signature)).toThrow('does not belong');
   });
 
-  it('stores only a bounded digest and accepts matching early-v1 checkpoints', async () => {
+  it('stores only a bounded digest and rejects serialized-content checkpoints', async () => {
     const longCards = [{ ...cards[0], front: 'Long medical content '.repeat(20_000) }];
     const signature = await flashcardContentSignature(longCards);
     expect(signature).toMatch(/^sha256-[a-f0-9]{64}$/);
     expect(JSON.stringify(checkpointForCard('d1', longCards, 'f1', signature)).length).toBeLessThan(250);
     const oldSignature = JSON.stringify(longCards.map(card => [card.id, card.front, card.back, null, null]));
     const legacy = checkpointForCard('d1', longCards, 'f1', oldSignature);
-    expect(validateFlashcardCheckpoint(legacy, 'd1', longCards, signature)).toBe('valid');
+    expect(validateFlashcardCheckpoint(legacy, 'd1', longCards, signature)).toBe('changed-content');
     const changed = [{ ...longCards[0], back: 'Changed' }];
     expect(validateFlashcardCheckpoint(legacy, 'd1', changed, await flashcardContentSignature(changed))).toBe('changed-content');
   });

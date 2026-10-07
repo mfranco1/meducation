@@ -88,7 +88,6 @@ Question text, choice order, answer provenance, rationales, and reviewed explana
 - `src/persistence/` — browser storage implementation
 - `src/analytics/` — score summaries
 - `scripts/content/` — content validation and audit tools
-- `scripts/migrations/` — candidate-producing migrations and their tests
 - `scripts/architecture/` — dependency policy, graph checks, and tooling regression tests
 - `backend/` — read-only FastAPI content delivery
 - `tests/fixtures/` — shared content/storage contracts

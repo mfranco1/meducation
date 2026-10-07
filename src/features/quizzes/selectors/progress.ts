@@ -42,10 +42,7 @@ export function createProgressView(snapshot: ProgressState): ProgressView {
     subjectScores.push(score);
     scoresBySubject.set(attempt.subjectId, subjectScores);
   }
-  const activityAt = { ...snapshot.activity };
-  for (const [quizId, attempt] of Object.entries(snapshot.active)) activityAt[quizId] ??= attempt.startedAt;
-  for (const [quizId, latest] of Object.entries(snapshot.latestScores)) activityAt[quizId] ??= latest.completedAt;
-  return { snapshot, scoresByQuiz, scoresBySubject, activityAt };
+  return { snapshot, scoresByQuiz, scoresBySubject, activityAt: snapshot.activity };
 }
 
 function trendFor(latest: RecentScore | undefined, scores: RecentScore[]) {

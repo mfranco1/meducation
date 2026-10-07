@@ -2,11 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fixtures from '../../tests/fixtures/storage-boundary-cases.json';
 import type { Attempt, CompletedAttempt } from '../domain/types';
 import { LocalAttemptRepository, PersistenceError } from './localRepository';
-import { progressKey } from './progressCodec';
-
-const completedKey = 'meducation.completed-attempts.v1';
-const countsKey = 'meducation.completion-counts.v1';
-const activeKey = 'meducation.active-attempts.v1';
+import { emptyProgress, progressKey } from './progressCodec';
 
 describe('browser storage boundary fixtures', () => {
   const values = new Map<string, string>();
@@ -27,30 +23,54 @@ describe('browser storage boundary fixtures', () => {
   });
   afterEach(() => vi.unstubAllGlobals());
 
-  it('reads a legacy active attempt without a content revision', () => {
-    values.set(activeKey, JSON.stringify({ q1: fixtures.legacyActive }));
-    expect(new LocalAttemptRepository().getActive('q1')).toEqual(fixtures.legacyActive);
+  it('reads current progress without consulting or rewriting retired keys', () => {
+    const state = { ...emptyProgress(), active: { q1: fixtures.active } };
+    values.set(progressKey, JSON.stringify(state));
+    const reads = vi.spyOn(localStorage, 'getItem');
+    const writes = vi.spyOn(localStorage, 'setItem');
+    expect(new LocalAttemptRepository().getActive('q1')).toEqual(fixtures.active);
+    expect(reads.mock.calls.map(([key]) => key)).toEqual([progressKey]);
+    expect(writes).not.toHaveBeenCalled();
   });
 
-  it('falls back for malformed completed history JSON', () => {
-    values.set(completedKey, fixtures.invalidStoredValues[0].value);
+  it('falls back for malformed progress JSON', () => {
+    values.set(progressKey, fixtures.invalidStoredValues[0].value);
     expect(new LocalAttemptRepository().list()).toEqual([]);
   });
 
-  it('rejects valid JSON with the wrong completed-history shape', () => {
-    values.set(completedKey, fixtures.invalidStoredValues[1].value);
+  it('rejects valid JSON with the wrong progress shape', () => {
+    values.set(progressKey, fixtures.invalidStoredValues[1].value);
     expect(new LocalAttemptRepository().list()).toEqual([]);
+  });
+
+  it.each(['elapsedMs', 'celebrationProgress', 'contentSignature'])('rejects active records without current %s data', (field) => {
+    const active: Record<string, unknown> = { ...fixtures.active };
+    delete active[field];
+    const raw = JSON.stringify({ ...emptyProgress(), active: { q1: active } });
+    values.set(progressKey, raw);
+    const repository = new LocalAttemptRepository();
+    expect(repository.getActive('q1')).toBeUndefined();
+    expect(repository.getStorageError()).toContain('kept');
+    expect(() => repository.saveActive(fixtures.active as Attempt)).toThrow(PersistenceError);
+    expect(values.get(progressKey)).toBe(raw);
+  });
+
+  it('rejects unlocked selected Fast Feedback responses instead of normalizing them', () => {
+    const active = { ...fixtures.active, feedbackMode: 'immediate', responses: {
+      i1: { questionId: 'i1', selectedChoiceId: 'A', flagged: false, locked: false, timeMs: 0 },
+    } };
+    const raw = JSON.stringify({ ...emptyProgress(), active: { q1: active } });
+    values.set(progressKey, raw);
+    const repository = new LocalAttemptRepository();
+    expect(repository.getActive('q1')).toBeUndefined();
+    expect(repository.getStorageError()).toContain('kept');
+    expect(values.get(progressKey)).toBe(raw);
   });
 
   it('does not expose a partial completion when storage is full', () => {
-    const active = fixtures.legacyActive as Attempt;
+    const active = fixtures.active as Attempt;
     const completed = fixtures.completed as CompletedAttempt;
-    values.set(activeKey, JSON.stringify({ q1: active }));
-    values.set(completedKey, '[]');
-    values.set(countsKey, '{}');
-    values.set('meducation.lowest-scores.v1', '{}');
-    values.set('meducation.latest-scores.v1', '{}');
-    values.set('meducation.quiz-activity.v1', '{}');
+    values.set(progressKey, JSON.stringify({ ...emptyProgress(), active: { q1: active } }));
     const before = new Map(values);
     failKey = progressKey;
 
@@ -67,37 +87,6 @@ describe('browser storage boundary fixtures', () => {
     expect(repository.list()).toHaveLength(1);
   });
 
-  it('migrates valid legacy summaries without changing legacy keys', () => {
-    values.set(completedKey, JSON.stringify([fixtures.completed]));
-    values.set(countsKey, JSON.stringify({ q1: 300 }));
-    values.set('meducation.lowest-scores.v1', JSON.stringify({ q1: 20 }));
-    values.set('meducation.latest-scores.v1', JSON.stringify({ q1: { percentage: 75, completedAt: '2026-09-22T00:00:00.000Z' } }));
-    const legacy = new Map(values);
-    const repository = new LocalAttemptRepository();
-    expect(repository.completionCount('q1')).toBe(300);
-    repository.saveActive({ ...fixtures.legacyActive, id: 'new-active' } as Attempt);
-
-    for (const [key, value] of legacy) expect(values.get(key)).toBe(value);
-    expect(values.has(progressKey)).toBe(true);
-    const reopened = new LocalAttemptRepository();
-    expect(reopened.completionCount('q1')).toBe(300);
-    expect(reopened.lowestScore('q1')).toBe(20);
-    expect(reopened.latestScore('q1')?.percentage).toBe(75);
-    expect(reopened.getActive('q1')?.id).toBe('new-active');
-  });
-
-  it('keeps legacy data usable after a failed migration', () => {
-    values.set(activeKey, JSON.stringify({ q1: fixtures.legacyActive }));
-    failKey = progressKey;
-    const repository = new LocalAttemptRepository();
-    expect(() => repository.saveActive({ ...fixtures.legacyActive, id: 'replacement' } as Attempt)).toThrow(PersistenceError);
-    expect(values.has(progressKey)).toBe(false);
-    expect(new LocalAttemptRepository().getActive('q1')?.id).toBe(fixtures.legacyActive.id);
-    failKey = undefined;
-    repository.saveActive({ ...fixtures.legacyActive, id: 'replacement' } as Attempt);
-    expect(new LocalAttemptRepository().getActive('q1')?.id).toBe('replacement');
-  });
-
   it('remains idempotent after the completed history is pruned', () => {
     const repository = new LocalAttemptRepository();
     for (let index = 0; index < 205; index++) repository.saveCompleted({ ...fixtures.completed, id: `finished-${index}` } as CompletedAttempt);
@@ -110,19 +99,18 @@ describe('browser storage boundary fixtures', () => {
     const first = new LocalAttemptRepository();
     first.list();
     const second = new LocalAttemptRepository();
-    second.saveActive({ ...fixtures.legacyActive, id: 'second-tab' } as Attempt);
-    expect(() => first.saveActive({ ...fixtures.legacyActive, id: 'first-tab' } as Attempt))
+    second.saveActive({ ...fixtures.active, id: 'second-tab' } as Attempt);
+    expect(() => first.saveActive({ ...fixtures.active, id: 'first-tab' } as Attempt))
       .toThrowError(PersistenceError);
     expect(second.getActive('q1')?.id).toBe('second-tab');
   });
 
   it('does not overwrite an unreadable versioned record', () => {
     values.set(progressKey, '{"schemaVersion":2,"revision":"broken"}');
-    values.set(activeKey, JSON.stringify({ q1: fixtures.legacyActive }));
     const repository = new LocalAttemptRepository();
-    expect(repository.getActive('q1')?.id).toBe(fixtures.legacyActive.id);
+    expect(repository.getActive('q1')).toBeUndefined();
     expect(repository.getStorageError()).toBeDefined();
-    expect(() => repository.saveActive(fixtures.legacyActive as Attempt)).toThrow(PersistenceError);
+    expect(() => repository.saveActive(fixtures.active as Attempt)).toThrow(PersistenceError);
     expect(values.get(progressKey)).toBe('{"schemaVersion":2,"revision":"broken"}');
   });
 });

@@ -29,7 +29,7 @@ async function bundle(): Promise<CoordinatedContentChangeSet> {
   return {
     bundleVersion: 1,
     quizzes: {
-      changeSetVersion: 1,
+      changeSetVersion: 2,
       base: { bankSchemaVersion: 4, revision: await revisionForBank(quizzes) },
       reason: 'Consolidate subjects',
       operations: [{ op: 'subject.delete', id: 's1', cascade: true }],
@@ -57,7 +57,7 @@ describe('coordinated content import', () => {
     moved.decks[0].subjectId = 's3';
     await gateway.applyCoordinated(
       {
-        changeSetVersion: 1,
+        changeSetVersion: 2,
         base: { bankSchemaVersion: 4, revision: initial.revision },
         reason: 'Replace subject',
         operations: [

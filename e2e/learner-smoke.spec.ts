@@ -22,7 +22,7 @@ test('abandoned flashcard loads do not reopen study or create progress', async (
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   release();
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v1'))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v2'))).toBeNull();
   await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
@@ -55,7 +55,7 @@ test('a failed flashcard deck request shows a toast and recovers through the dec
   await expect(page.getByRole('alert')).toContainText('Unable to load deck');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Browser Test Deck' })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v1'))).toBeNull();
+  expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v2'))).toBeNull();
   await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
   const retry = page.getByRole('button', { name: 'Study deck', exact: true });
   await retry.focus();

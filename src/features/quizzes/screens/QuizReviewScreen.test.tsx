@@ -11,7 +11,7 @@ const questions: Question[] = [
   { id: 'q2', quizId: quiz.id, stem: 'Second question', choices: [{ id: 'A', text: 'Answer' }], verifiedAnswer: 'A', rationale: 'Why A is right.', metadata: {} },
 ];
 const attempt: CompletedAttempt = {
-  id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'exam', startedAt: 'now', completedAt: 'later',
+  id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: 'now', completedAt: 'later',
   responses: { q1: { questionId: 'q1', selectedChoiceId: 'A', flagged: true, locked: false, timeMs: 0 } },
   score: { correct: 0, incorrect: 1, unanswered: 1, total: 2, percentage: 0, elapsedMs: 4_000 },
 };

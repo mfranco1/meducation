@@ -18,7 +18,7 @@ const completed = (quizId: string, subjectId: string, percentage: number, comple
   quizId,
   subjectId,
   feedbackMode: 'exam',
-  startedAt: completedAt,
+  elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: completedAt,
   completedAt,
   responses: {},
   score: { correct: 1, incorrect: 0, unanswered: 0, total: 1, percentage, elapsedMs: 0 },
@@ -31,7 +31,7 @@ describe('learner progress selectors', () => {
   ];
   const snapshot: ProgressState = {
     schemaVersion: 2, revision: 'test', completed: history,
-    active: { q2: { id: 'active', quizId: 'q2', subjectId: 's1', feedbackMode: 'exam', startedAt: '2026-09-01T00:00:00.000Z', currentQuestionId: 'i3', responses: {} } },
+    active: { q2: { id: 'active', quizId: 'q2', subjectId: 's1', feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: '2026-09-01T00:00:00.000Z', currentQuestionId: 'i3', responses: {} } },
     completionCounts: { q1: 2 }, lowestScores: {},
     latestScores: { q1: { percentage: 80, completedAt: '2026-09-02T00:00:00.000Z' } },
     activity: { q2: '2026-09-03T00:00:00.000Z' }, completedIds: {},

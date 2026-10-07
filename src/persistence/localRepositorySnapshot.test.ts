@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { Attempt } from '../domain/types';
 import { LocalAttemptRepository, PersistenceError } from './localRepository';
-import { progressKey } from './progressCodec';
+import { emptyProgress, progressKey } from './progressCodec';
 
 const active: Attempt = {
   id: 'attempt', quizId: 'quiz', subjectId: 'subject', feedbackMode: 'exam',
-  startedAt: '2026-10-02T00:00:00.000Z', responses: {},
+  elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: '2026-10-02T00:00:00.000Z', responses: {},
 };
 
 function storageFixture() {
@@ -16,9 +16,9 @@ function storageFixture() {
 }
 
 describe('cached browser progress snapshots', () => {
-  it('reads and decodes once for repeated selectors and never migrates in a getter', () => {
+  it('reads and decodes once for repeated selectors without writing in a getter', () => {
     const storage = storageFixture();
-    storage.values.set('meducation.active-attempts.v1', JSON.stringify({ quiz: active }));
+    storage.values.set(progressKey, JSON.stringify({ ...emptyProgress(), active: { quiz: active } }));
     const repository = new LocalAttemptRepository(storage);
     const first = repository.getSnapshot();
     const reads = storage.getItem.mock.calls.length;

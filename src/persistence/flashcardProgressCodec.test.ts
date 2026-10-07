@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeFlashcardProgress, flashcardProgressKey, legacyFlashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
+import { decodeFlashcardProgress, flashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
 
 const checkpoint = {
   deckId: 'd1',
@@ -29,11 +29,13 @@ describe('flashcard progress envelope', () => {
     }
   });
 
-  it('migrates legacy positions in memory without rewriting the legacy key', () => {
-    const values = new Map([[legacyFlashcardProgressKey, JSON.stringify({ schemaVersion: 1, revision: 'old', checkpoints: { d1: { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: checkpoint.updatedAt } } })]]);
-    const storage = { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value) };
-    expect(loadFlashcardProgress(storage)).toMatchObject({ schemaVersion: 2, revision: 'migrated:old', checkpoints: { d1: { openedCardIds: [], flaggedCardIds: [] } } });
-    expect(values.get(flashcardProgressKey)).toBeUndefined();
-    expect(values.has(legacyFlashcardProgressKey)).toBe(true);
+  it('initializes only the current key without reading or rewriting old storage', () => {
+    const reads: string[] = [];
+    const storage = {
+      getItem: (key: string) => { reads.push(key); return null; },
+      setItem: () => { throw new Error('Reads must not write'); },
+    };
+    expect(loadFlashcardProgress(storage)).toEqual({ schemaVersion: 2, revision: 'initial', checkpoints: {} });
+    expect(reads).toEqual([flashcardProgressKey]);
   });
 });

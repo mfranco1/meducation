@@ -13,7 +13,6 @@
     "test:e2e": "playwright test",
     "test:e2e:admin": "playwright test --config=playwright.admin.config.ts",
     "validate:content": "tsx scripts/content/validate-question-bank.ts",
-    "migrate:flashcard-bank:v1": "tsx scripts/migrations/migrate-flashcard-bank-v1.ts",
     "audit:explanations": "tsx scripts/content/audit-explanations.ts",
     "check:architecture": "node scripts/architecture/check-boundaries.mjs",
     "test:architecture": "node --test scripts/architecture/boundaries.test.mjs"

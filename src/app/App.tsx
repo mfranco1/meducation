@@ -210,7 +210,7 @@ function LearnerApp() {
     </ScreenTransition>
     <ExitQuizDialog open={exitOpen} onClose={closeExitDialog} onLeave={() => { session.leaveQuiz(exitDestination); closeExitDialog(); }} onAbort={() => { session.abortQuiz(exitDestination); closeExitDialog(); }} />
     <LeaveReviewDialog open={reviewExitOpen} onClose={closeReviewExitDialog} onLeave={() => { session.leaveReview(reviewExitDestination); closeReviewExitDialog(); }} />
-    <ResumeContentDialog open={Boolean(session.pendingResume)} reason={session.pendingResume?.reason} onCancel={session.cancelPendingResume} onRestart={session.restartPendingResume} />
+    <ResumeContentDialog open={Boolean(session.pendingResume)} onCancel={session.cancelPendingResume} onRestart={session.restartPendingResume} />
     <Dialog open={Boolean(flashcards.pendingRestart)} onClose={flashcards.cancelRestart} aria-labelledby="flashcard-restart-title">
       <DialogTitle id="flashcard-restart-title">Restart this deck?</DialogTitle>
       <DialogContent>{flashcards.pendingRestart?.reason === 'changed-content'

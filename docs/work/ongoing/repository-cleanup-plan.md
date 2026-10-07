@@ -1,12 +1,12 @@
 # Repository cleanup plan
 
-Created: 2026-10-07. Status: Stage 4 complete; awaiting authorization for Stage 5. Stop after every stage and wait for the user's go signal before starting the next stage.
+Created: 2026-10-07. Status: Stage 5 complete; awaiting authorization for Stage 6. Stop after every stage and wait for the user's go signal before starting the next stage.
 
 ## Goal and scope
 
 Remove demonstrably unused files, exports, dependencies, generated residue, and repeated implementation. Reduce maintenance and build payload without changing product behavior, canonical content, stored progress, or supported authoring workflows. Follow the existing ownership boundaries rather than reorganizing the repository again.
 
-This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1, 2, 3, and 4 individually. Wait for authorization before Stage 5. Follow the stage-gate convention in [work tracking](../README.md).
+This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1, 2, 3, 4, and 5 individually. For Stage 5 the user explicitly confirmed manual verification that legacy/backward compatibility is no longer needed. Wait for authorization before Stage 6. Follow the stage-gate convention in [work tracking](../README.md).
 
 ## Findings from the initial inspection
 
@@ -186,11 +186,33 @@ Stage 4 is complete with no failing checks. Stage 5 has not started. Waiting for
 
 Risk: high. Dependency: evidence of migration, not merely preceding stages passing.
 
-- [ ] Inventory persisted quiz keys and flashcard v1 checkpoints in `src/persistence`, legacy attempt handling in quiz domain/session code, and supported change-set versions in admin core.
-- [ ] Retire a compatibility branch only after all in-scope browser profiles or stored export workflows are accounted for, with a tested migration/recovery path. This cannot be established by repository search alone.
-- [ ] If that evidence is unavailable, explicitly retain the branch and its tests. Complete the rest of cleanup without discarding saved work.
+- [x] Inventory persisted quiz keys, flashcard v1 checkpoints/signatures, legacy quiz timing/response handling, and supported authoring change-set versions.
+- [x] The user explicitly verified manually that legacy/backward compatibility is no longer needed and authorized removal. This supersedes the earlier requirement to retain compatibility without migration evidence. Retire only the identified older formats and tooling; retain current-format validation and recovery.
+- [x] Remove retired readers, signature/timing/response fallback paths, v1 authoring imports, and migration tooling. Update current fixtures, tests, and guides to the supported contracts.
 
-Exit gate: either a separately verified retirement change or a documented retain decision. No storage resets, ID changes, canonical migrations, or silent loss of imported/exported history as routine cleanup.
+Exit gate: separately verify the authorized retirement. No storage resets, ID changes, or canonical migrations. Current v2 progress and v2 authoring/replay must remain supported; older formats are intentionally no longer read/imported.
+
+### Stage 5 execution record
+
+Authorization: the user said “assume no need for legacy or backward compatibility anymore since I've verified that manually.” The repository cannot independently verify browser-profile/export history; this owner confirmation supplies the retirement decision. No further migration or archive was requested, and no browser data was purged. Earlier stages' retain decisions describe the evidence available then and remain in this history.
+
+Removed the six quiz v1 storage keys, their decoder/derived-summary reconstruction, legacy storage-event handling, and the fallback to old keys when current v2 storage is absent or malformed. Missing v2 storage now produces a fresh empty state; corrupt current bytes still block writes and remain untouched. Removed activity fallbacks to start/latest timestamps in both repository and selectors; current writes populate the activity summary.
+
+Removed flashcard v1 key reads and in-memory checkpoint conversion, legacy key subscriptions, and acceptance of copied serialized card content as a signature. Current v2 checkpoints and bounded SHA-256 signatures remain. Kept missing-card/changed-content restart, frozen snapshots, storage recovery, stale-writer protection, and independent quiz/flashcard progress.
+
+Removed quiz response normalization and its session effect, elapsed-time reconstruction from `startedAt`, default celebration-state reconstruction, and the legacy-specific restart dialog branch. Current attempt types require elapsed time and celebration state; the storage boundary requires those fields, response flags/lock/time, and an active content signature. Selected Fast Feedback responses must already be locked. Paused timers, unanswered responses, optional bank revisions, and completed records without active content signatures are current behavior and remain supported. Changed-content restart/cancel and timer pause/resume remain covered.
+
+Quiz authoring now produces and imports change-set version 2 only, including single-record edits/deletes and coordinated imports. Both individual operations and grouped `content.add` remain supported within v2. Removed the v1-only grouped-operation branch and obsolete flashcard migration-message special case; unsupported versions are rejected by current envelope validation. Bundle/manifest version 1 and `/api/v1` are the current contracts, not retired compatibility, and remain unchanged. `source_migrated` rationale provenance remains authoritative content.
+
+Deleted the flashcard-v1 CLI, pure migration helper, and five retired migration tests; removed its package script and now-empty directory. Removed remaining tests that existed solely for retired compatibility, and moved current fixtures to explicit current attempt/envelope shapes. Strengthened the two learner cancellation/failure browser assertions to inspect the current flashcard v2 key instead of the retired v1 key. Updated current schema, architecture, testing, authoring, and layout guidance. Completed trackers and canonical bank bytes remain unchanged.
+
+Verification completed: all 61 frontend files / 356 tests passed in the final full run. Eleven tests solely for retired contracts were removed (including the five-test migration file), and four current-boundary rejection cases were added. Current replay, cancellation, changed-content restart/cancel, timing, scoring, corruption preservation, quota atomicity, pruning/idempotence, snapshots, and stale-writer obligations remain covered. The first intermediate unit run also passed; the full suite was rerun after adding the final Fast Feedback lock guard.
+
+Lint, formatting, all 10 architecture tests, full content validation, and all 39 backend tests/Ruff/mypy passed. Validation has the unchanged 11,687 questions / 111 quizzes and 674 cards / 13 decks, with the same 32 review warnings. Both canonical hashes are unchanged. All 11 learner browser tests passed; the two strengthened current-key checks additionally passed in a focused rerun. Both TypeScript/production build modes passed: retry-disabled learner at 76 files / 2,342,987 bytes and enabled admin at 82 files / 16,725,445 bytes. Both retain the favicon and all 59 KaTeX assets; only the optional mode contains `admin.html`. The enabled admin output is 2,575 bytes below Stage 4 in the same enabled mode. Reviewed implementation/tooling/package-script changes remove 10,800 bytes; tests/fixtures remove a net 5,790 bytes; current guides remove 1,610 bytes, excluding this execution tracker. Three tracked migration files were deleted. All 43 relative documentation links/anchors resolve, retired-symbol consumer searches have no matches, and diff whitespace checks pass. Existing Vite, Vitest, TestClient, and browser environment advisories remain.
+
+Both admin browser tests passed, covering current authoring CRUD, bulk import/staging, one-step undo, and exported change-set replay. Evidence is under `/private/tmp/meducation-cleanup/stage-5/`.
+
+Stage 5 is complete with no failing checks. Retired formats are intentionally unsupported under the owner's explicit authorization; current v2 progress and authoring contracts remain supported. Stage 6 has not started. Waiting for the user's go signal.
 
 ## Stage 6 — Final verification and closeout
 

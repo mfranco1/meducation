@@ -10,7 +10,7 @@ const quiz: Quiz = { id: 'quiz', subjectId: 'subject', name: 'Quiz', questionCou
 const questions: Question[] = Array.from({ length: 7 }, (_, index) => ({
   id: `q${index + 1}`, quizId: quiz.id, stem: `Question ${index + 1}`, choices: [{ id: 'A', text: `Incorrect ${index + 1}` }, { id: 'B', text: `Correct ${index + 1}` }], verifiedAnswer: 'B', rationale: 'Rationale', metadata: {},
 }));
-const startingAttempt: Attempt = { id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'immediate', startedAt: new Date(0).toISOString(), responses: {}, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] } };
+const startingAttempt: Attempt = { id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'immediate', elapsedMs: 0, contentSignature: 'fixture-content', startedAt: new Date(0).toISOString(), responses: {}, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] } };
 
 function QuizHarness() {
   const [attempt, setAttempt] = useState(startingAttempt);

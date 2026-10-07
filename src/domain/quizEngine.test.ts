@@ -1,6 +1,6 @@
-import { describe, expect, it } from 'vitest'; import { blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, normalizeResponseForFeedbackMode, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
+import { describe, expect, it } from 'vitest'; import { blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
 const question: Question={id:'i1',quizId:'q1',stem:'Stem',choices:[{id:'A',text:'A'},{id:'B',text:'B'}],verifiedAnswer:'B',rationale:'Rationale',metadata:{}};
-const attempt=(selectedChoiceId?:string):Attempt=>({id:'a',quizId:'q1',subjectId:'s1',feedbackMode:'exam',startedAt:new Date(1000).toISOString(),responses:selectedChoiceId?{i1:{questionId:'i1',selectedChoiceId,flagged:true,locked:false,timeMs:0}}:{}});
+const attempt=(selectedChoiceId?:string):Attempt=>({id:'a',quizId:'q1',subjectId:'s1',feedbackMode:'exam',contentSignature: 'fixture-content', startedAt:new Date(1000).toISOString(),elapsedMs:0,timerStartedAt:new Date(1000).toISOString(),celebrationProgress:{correctStreak:0,awardedStreakMilestones:[]},responses:selectedChoiceId?{i1:{questionId:'i1',selectedChoiceId,flagged:true,locked:false,timeMs:0}}:{}});
 describe('quiz engine',()=>{it('scores correct, incorrect, and unanswered responses',()=>{expect(scoreAttempt(attempt('B'),[question],3000)).toMatchObject({correct:1,incorrect:0,unanswered:0,percentage:100,elapsedMs:2000});expect(scoreAttempt(attempt('A'),[question],3000).incorrect).toBe(1);expect(scoreAttempt(attempt(),[question],3000).unanswered).toBe(1)});it('finds a saved question checkpoint and falls back to the first question',()=>{const second={...question,id:'q2'};expect(questionIndexFor([question,second],'q2')).toBe(1);expect(questionIndexFor([question,second],'missing')).toBe(0);expect(questionIndexFor([question,second])).toBe(0)});});
 describe('attempt timing',()=>{
   it('accumulates only active quiz sessions',()=>{
@@ -14,18 +14,13 @@ describe('attempt timing',()=>{
     expect(elapsedTimeFor(resumed,12000)).toBe(5500);
     expect(scoreAttempt(resumed,[question],12000).elapsedMs).toBe(5500);
   });
-  it('migrates a legacy saved attempt without resetting its elapsed time',()=>{
-    const legacy=attempt();
-    const resumed=resumeAttempt(legacy,5000);
-    expect(resumed.elapsedMs).toBe(4000);
-    expect(elapsedTimeFor(resumed,7000)).toBe(6000);
-  });
+
 });
 describe('answer selection',()=>{
   it('locks an immediate-mode response as part of selection',()=>{expect(selectChoice(blankResponse('q1'),'B','immediate')).toMatchObject({selectedChoiceId:'B',locked:true});});
   it('keeps an exam-mode response editable',()=>{const selected=selectChoice(blankResponse('q1'),'A','exam');expect(selected).toMatchObject({selectedChoiceId:'A',locked:false});expect(selectChoice(selected,'B','exam').selectedChoiceId).toBe('B');});
   it('does not change a locked response',()=>{const locked={...blankResponse('q1'),selectedChoiceId:'A',locked:true};expect(selectChoice(locked,'B','immediate')).toBe(locked);});
-  it('locks a selected legacy immediate-mode response',()=>{const legacy={...blankResponse('q1'),selectedChoiceId:'B'};expect(normalizeResponseForFeedbackMode(legacy,'immediate')).toMatchObject({selectedChoiceId:'B',locked:true});expect(normalizeResponseForFeedbackMode(legacy,'exam')).toBe(legacy);});
+
 });
 describe('Fast Feedback completion',()=>{
   const questions = [question, { ...question, id: 'q2' }];
@@ -88,12 +83,10 @@ describe('celebration streaks',()=>{
     expect(repeat.streakMilestone).toBeUndefined();
     expect(repeat.attempt.celebrationProgress?.correctStreak).toBe(3);
   });
-  it('does not create a live streak in exam mode and safely defaults legacy progress',()=>{
+  it('does not advance the streak in exam mode',()=>{
     const exam = commitAnswer(attempt(), question, 'B');
     expect(exam.streakMilestone).toBeUndefined();
-    expect(exam.attempt.celebrationProgress).toBeUndefined();
-    const legacy = commitAnswer({ ...immediateAttempt(), celebrationProgress: undefined }, question, 'B');
-    expect(legacy.attempt.celebrationProgress).toMatchObject({ correctStreak: 1, awardedStreakMilestones: [] });
+    expect(exam.attempt.celebrationProgress).toEqual({ correctStreak: 0, awardedStreakMilestones: [] });
   });
 });
 describe('perfect scores',()=>{

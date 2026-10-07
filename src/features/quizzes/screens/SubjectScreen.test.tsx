@@ -12,7 +12,7 @@ const activeAttempt: Attempt = {
   quizId: quiz.id,
   subjectId: subject.id,
   feedbackMode: 'exam',
-  startedAt: '2026-09-21T00:00:00.000Z',
+  elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: '2026-09-21T00:00:00.000Z',
   responses: {},
 };
 

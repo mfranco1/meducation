@@ -27,7 +27,7 @@ export interface ContentAddOperation {
 export type AdminChangeOperation = AdminOperation | ContentAddOperation;
 
 export interface AdminChangeSet {
-  changeSetVersion: 1 | 2;
+  changeSetVersion: 2;
   base: { bankSchemaVersion: 4; revision: string };
   reason: string;
   operations: AdminChangeOperation[];

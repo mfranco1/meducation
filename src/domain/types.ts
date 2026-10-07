@@ -22,7 +22,7 @@ export interface FlashcardCard { id: string; deckId: string; front: string; back
 export interface Quiz { id: string; subjectId: string; name: string; questionCount: number; questionIds?: string[] }
 export interface QuestionResponse { questionId: string; selectedChoiceId?: string; flagged: boolean; locked: boolean; timeMs: number }
 export interface CelebrationProgress { correctStreak: number; awardedStreakMilestones: StreakMilestone[] }
-export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; elapsedMs?: number; timerStartedAt?: string; currentQuestionId?: string; contentSignature?: string; contentRevision?: string; completedAt?: string; celebrationProgress?: CelebrationProgress; responses: Record<string, QuestionResponse> }
+export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; elapsedMs: number; timerStartedAt?: string; currentQuestionId?: string; contentSignature?: string; contentRevision?: string; completedAt?: string; celebrationProgress: CelebrationProgress; responses: Record<string, QuestionResponse> }
 export interface CompletedAttempt extends Attempt { completedAt: string; score: AttemptScore }
 export interface AttemptScore { correct: number; incorrect: number; unanswered: number; total: number; percentage: number; elapsedMs: number }
 export interface RecentScore { percentage: number; completedAt: string }

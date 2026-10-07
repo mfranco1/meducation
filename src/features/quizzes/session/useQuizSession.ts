@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   isFullyAnsweredFastFeedback,
-  normalizeResponseForFeedbackMode,
   pauseAttempt,
   questionIndexFor,
   resumeAttempt,
   scoreAttempt,
-  updateResponse,
 } from '../../../domain/quizEngine';
 import { contentSignature } from '../../../domain/contentSignature';
 import type { Attempt, AttemptRepository, CompletedAttempt, FeedbackMode, Quiz, QuizRepository, Subject } from '../../../domain/types';
@@ -18,7 +16,7 @@ export type QuizExitDestination = 'subject' | 'dashboard' | 'flashcards';
 interface QuizSession {
   view: QuizSessionView;
   persistenceError?: string;
-  pendingResume?: { quiz: Quiz; reason: 'legacy' | 'changed' };
+  pendingResume?: { quiz: Quiz };
   clearPersistenceError: () => void;
   cancelPendingResume: () => void;
   restartPendingResume: () => void;
@@ -43,7 +41,7 @@ interface QuizSession {
 export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRepository): QuizSession {
   const [view, setView] = useState<QuizSessionView>({ page: 'dashboard' });
   const [persistenceError, setPersistenceError] = useState<string | undefined>(() => attempts.getStorageError?.());
-  const [pendingResume, setPendingResume] = useState<{ quiz: Quiz; reason: 'legacy' | 'changed' }>();
+  const [pendingResume, setPendingResume] = useState<{ quiz: Quiz }>();
   const persist = useCallback((write: () => void): boolean => {
     try { write(); setPersistenceError(undefined); return true; }
     catch (error) {
@@ -71,8 +69,8 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     if (!existing) return;
     const questions = questionBank.listQuestions(quiz.id);
     const signature = contentSignature(questions);
-    if (!existing.contentSignature || existing.contentSignature !== signature) {
-      setPendingResume({ quiz, reason: existing.contentSignature ? 'changed' : 'legacy' });
+    if (existing.contentSignature !== signature) {
+      setPendingResume({ quiz });
       return;
     }
     const resumed = isFullyAnsweredFastFeedback(existing, questions)
@@ -167,15 +165,6 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     window.addEventListener('pagehide', pauseOnPageHide);
     return () => window.removeEventListener('pagehide', pauseOnPageHide);
   }, [attempts, view]);
-
-  useEffect(() => {
-    if (view.page !== 'quiz') return;
-    const question = questionBank.listQuestions(view.quiz.id)[view.index];
-    const response = view.attempt.responses[question.id];
-    if (!response) return;
-    const normalized = normalizeResponseForFeedbackMode(response, view.attempt.feedbackMode);
-    if (normalized !== response) checkpoint(updateResponse(view.attempt, normalized));
-  }, [questionBank, view, checkpoint]);
 
   return {
     view,

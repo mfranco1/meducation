@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { FlashcardPersistenceError, LocalFlashcardProgressRepository } from './localFlashcardProgressRepository';
-import { flashcardProgressKey, legacyFlashcardProgressKey } from './flashcardProgressCodec';
+import { flashcardProgressKey } from './flashcardProgressCodec';
 import type { StoragePort } from './progressCodec';
 
 function storagePort(): StoragePort {
@@ -46,18 +46,6 @@ describe('local flashcard progress repository', () => {
     repository.clearCheckpoint('d1');
     expect(repository.getCheckpoint('d1')).toBeUndefined();
     expect(repository.getCheckpoint('d2')?.currentCardId).toBe('f8');
-  });
-
-  it('reads legacy positions as unopened and writes v2 only on the next successful checkpoint', () => {
-    const legacy = { schemaVersion: 1, revision: 'legacy-rev', checkpoints: { d1: { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z' } } };
-    const storage = storagePort();
-    storage.setItem(legacyFlashcardProgressKey, JSON.stringify(legacy));
-    const repository = new LocalFlashcardProgressRepository(storage);
-    expect(repository.getCheckpoint('d1')).toMatchObject({ openedCardIds: [], flaggedCardIds: [] });
-    expect(storage.getItem(flashcardProgressKey)).toBeNull();
-    repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:01:00.000Z', openedCardIds: ['f1'], flaggedCardIds: ['f2'] });
-    expect(JSON.parse(storage.getItem(flashcardProgressKey)!)).toMatchObject({ schemaVersion: 2, checkpoints: { d1: { openedCardIds: ['f1'], flaggedCardIds: ['f2'] } } });
-    expect(storage.getItem(legacyFlashcardProgressKey)).toBe(JSON.stringify(legacy));
   });
 
   it('detects stale writers and preserves corrupt storage for recovery', () => {

@@ -1,21 +1,16 @@
 import type { Attempt, AttemptRepository, CompletedAttempt, RecentScore } from '../domain/types';
-import { decodeLegacy, decodeProgress, legacyKeys, progressKey, type ProgressState, type StoragePort } from './progressCodec';
+import { decodeProgress, emptyProgress, progressKey, type ProgressState, type StoragePort } from './progressCodec';
 
 const completedAttemptLimit = 200;
 const unavailableMessage = 'Progress could not be saved. Check browser storage and try again.';
 const conflictMessage = 'Progress changed in another tab. Reload this page before continuing.';
 const corruptMessage = 'Saved progress could not be read safely. The original browser data has been kept.';
-const progressStorageKeys = new Set<string>([progressKey, ...Object.values(legacyKeys)]);
 
 export class PersistenceError extends Error {
   constructor(readonly kind: 'unavailable' | 'conflict' | 'corrupt', message: string) {
     super(message);
     this.name = 'PersistenceError';
   }
-}
-
-function latestTimestamp(...timestamps: Array<string | undefined>): string | undefined {
-  return timestamps.filter((value): value is string => value !== undefined).sort().at(-1);
 }
 
 function freezeProgress<T>(value: T): T {
@@ -59,7 +54,7 @@ export class LocalAttemptRepository implements AttemptRepository {
         if (!state) {
           this.storageError = corruptMessage;
           if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
-          return this.cachedState = freezeProgress(decodeLegacy(storage));
+          return this.cachedState = freezeProgress(emptyProgress());
         }
         if (this.observedRevision === undefined) this.observedRevision = state.revision;
         this.storageError = undefined;
@@ -67,17 +62,17 @@ export class LocalAttemptRepository implements AttemptRepository {
       }
       if (this.observedRevision === undefined) this.observedRevision = null;
       this.storageError = undefined;
-      return this.cachedState = freezeProgress(decodeLegacy(storage));
+      return this.cachedState = freezeProgress(emptyProgress());
     } catch {
       this.storageError = unavailableMessage;
-      return this.cachedState = freezeProgress(decodeLegacy({ getItem: () => null, setItem: () => undefined }));
+      return this.cachedState = freezeProgress(emptyProgress());
     }
   }
 
   getSnapshot = (): ProgressState => this.state();
 
   private readonly onStorage = (event: StorageEvent) => {
-    if (event.key !== null && !progressStorageKeys.has(event.key)) return;
+    if (event.key !== null && event.key !== progressKey) return;
     this.cachedState = undefined;
     for (const listener of this.listeners) listener();
   };
@@ -130,8 +125,7 @@ export class LocalAttemptRepository implements AttemptRepository {
   latestScore(quizId: string): RecentScore | undefined { return this.state().latestScores[quizId]; }
 
   latestActivityAt(quizId: string): string | undefined {
-    const state = this.state();
-    return state.activity[quizId] ?? latestTimestamp(state.active[quizId]?.startedAt, state.latestScores[quizId]?.completedAt);
+    return this.state().activity[quizId];
   }
 
   getActive(quizId: string): Attempt | undefined { return this.state().active[quizId]; }

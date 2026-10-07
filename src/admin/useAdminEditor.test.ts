@@ -25,7 +25,7 @@ describe('admin editor workflows', () => {
     const confirm = vi.fn().mockReturnValue(false);
     const { result } = renderHook(() => useAdminEditor(gateway, { confirm }));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
-    const changeSet: AdminChangeSet = { changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: result.current.snapshot!.revision }, reason: 'Move shared content', operations: [{ op: 'subject.delete', id: 's1', cascade: true }] };
+    const changeSet: AdminChangeSet = { changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: result.current.snapshot!.revision }, reason: 'Move shared content', operations: [{ op: 'subject.delete', id: 's1', cascade: true }] };
     act(() => result.current.editRecord('Unstaged quiz draft'));
     await act(async () => { await expect(result.current.stageCoordinatedImport(changeSet, movedCards)).rejects.toThrow('draft was kept'); });
     expect(result.current.editor).toBe('Unstaged quiz draft');
@@ -99,7 +99,7 @@ describe('admin editor workflows', () => {
     const { result } = renderHook(() => useAdminEditor(gateway));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
     const changeSet: AdminChangeSet = {
-      changeSetVersion: 1,
+      changeSetVersion: 2,
       base: { bankSchemaVersion: 4, revision: result.current.snapshot!.revision },
       reason: 'Import test',
       operations: [{ op: 'subject.update', id: 's1', value: { ...bank().subjects[0], name: 'Imported' } }],

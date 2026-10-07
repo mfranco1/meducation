@@ -8,6 +8,9 @@ const activeAttempt = (quizId: string, startedAt = '2026-09-20T00:00:00.000Z'): 
   subjectId: 'subject',
   feedbackMode: 'exam',
   startedAt,
+  elapsedMs: 0,
+  celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+  contentSignature: 'fixture-content',
   responses: {},
 });
 
@@ -50,13 +53,4 @@ describe('LocalAttemptRepository quiz activity', () => {
     expect(repository.latestActivityAt('quiz')).toBe('2026-09-22T11:00:00.000Z');
   });
 
-  it('derives activity for existing browser data that lacks an activity summary', () => {
-    localStorage.setItem('meducation.active-attempts.v1', JSON.stringify({ active: activeAttempt('active', '2026-09-21T10:00:00.000Z') }));
-    localStorage.setItem('meducation.latest-scores.v1', JSON.stringify({ completed: { percentage: 75, completedAt: '2026-09-22T11:00:00.000Z' } }));
-    const repository = new LocalAttemptRepository();
-
-    expect(repository.latestActivityAt('active')).toBe('2026-09-21T10:00:00.000Z');
-    expect(repository.latestActivityAt('completed')).toBe('2026-09-22T11:00:00.000Z');
-    expect(repository.latestActivityAt('unused')).toBeUndefined();
-  });
 });

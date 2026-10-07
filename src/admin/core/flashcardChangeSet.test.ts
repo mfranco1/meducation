@@ -91,7 +91,7 @@ describe('flashcard admin change sets', () => {
         operations: [{ op: 'deck.delete', id: 'd-one', cascade: true }],
       }),
     ).toBe(true);
-    expect(() => isFlashcardAdminChangeSet({ changeSetVersion: 1 })).toThrow('migrated to schema version 2');
+    expect(isFlashcardAdminChangeSet({ changeSetVersion: 1 })).toBe(false);
   });
   it('replays only against matching flashcard and subject revisions', async () => {
     const subjects = storedQuestionBank.subjects;
