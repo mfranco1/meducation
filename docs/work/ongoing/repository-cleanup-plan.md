@@ -1,12 +1,12 @@
 # Repository cleanup plan
 
-Created: 2026-10-07. Status: Stage 3 complete; awaiting authorization for Stage 4. Stop after every stage and wait for the user's go signal before starting the next stage.
+Created: 2026-10-07. Status: Stage 4 complete; awaiting authorization for Stage 5. Stop after every stage and wait for the user's go signal before starting the next stage.
 
 ## Goal and scope
 
 Remove demonstrably unused files, exports, dependencies, generated residue, and repeated implementation. Reduce maintenance and build payload without changing product behavior, canonical content, stored progress, or supported authoring workflows. Follow the existing ownership boundaries rather than reorganizing the repository again.
 
-This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1, 2, and 3 individually. Wait for authorization before Stage 4. Follow the stage-gate convention in [work tracking](../README.md).
+This is the step-by-step implementation tracker. Execute stages in order, with one reviewable change per stage (split larger stages by concern). Record actual removals, verification, and remaining candidates here. The user authorized starting cleanup, then explicitly required a stop between stages on 2026-10-07. The user subsequently authorized Stages 1, 2, 3, and 4 individually. Wait for authorization before Stage 5. Follow the stage-gate convention in [work tracking](../README.md).
 
 ## Findings from the initial inspection
 
@@ -158,13 +158,29 @@ Stage 3 is complete with no outstanding failing checks. Stage 4 has not started.
 
 Risk: medium for test removal; low for documentation. Dependency: Stages 2–3.
 
-- [ ] Map overlapping tests to the behavior each uniquely proves before combining cases. Keep schema/API/storage boundaries and cross-runtime parity tests even when their fixture data looks similar.
-- [ ] Reuse fixture builders only within valid ownership boundaries. Keep meaningful differences between unit fixtures, shared Python/TypeScript contracts, and browser workflow fixtures.
-- [ ] Check Vite, Playwright, package scripts, and CI for repeated setup with identical semantics. Consolidate only where it reduces work; retain the separate production learner and development admin workflows and required build modes.
-- [ ] Remove stale current-document statements and link to the owning guide instead of repeating specifications. `DESIGN.md` is already a short pointer, so it offers little cleanup value.
-- [ ] Preserve completed trackers and frozen snapshots under the existing work-history policy. Keep new measurements concise in this tracker rather than creating another large checked-in audit dump.
+- [x] Map overlapping tests to the behavior each uniquely proves before combining cases. Keep schema/API/storage boundaries and cross-runtime parity tests even when their fixture data looks similar.
+- [x] Reuse fixture builders only within valid ownership boundaries. Keep meaningful differences between unit fixtures, shared Python/TypeScript contracts, and browser workflow fixtures.
+- [x] Check Vite, Playwright, package scripts, and CI for repeated setup with identical semantics. Consolidate only where it reduces work; retain the separate production learner and development admin workflows and required build modes.
+- [x] Remove stale current-document statements and link to the owning guide instead of repeating specifications. `DESIGN.md` is already a short pointer, so it offers little cleanup value.
+- [x] Preserve completed trackers and frozen snapshots under the existing work-history policy. Keep new measurements concise in this tracker rather than creating another large checked-in audit dump.
 
 Exit gate: documented commands match scripts/CI; no regression obligation lost; links resolve. Record which duplicate assertion/setup was removed and where its behavior remains covered.
+
+### Stage 4 execution record
+
+Reviewed overlap at the stored-schema, API DTO, local-adapter, retry-policy/runtime, persistence boundary/snapshot, and unit/browser workflow layers. Stored-bank TypeScript/Python cases exercise independent implementations; API cases additionally check hydrated DTO membership/order; local adapters prove indexing and sparse metadata; retry-policy tests prove calculations while runtime tests prove scheduling/cancellation; storage boundary tests prove migration/atomicity while snapshot tests prove identity, notification, and invalidation. Browser workflows retain production loading and real authoring interactions. No complete test was shown redundant. A TypeScript AST inventory of 65 test files found 357 directly declared `it`/`test` callback bodies and no repeated bodies after whitespace normalization; parameterized cases are not counted as individual callbacks by that scan. This supplements manual obligation review rather than proving semantic uniqueness.
+
+Removed one identical `unknown subject` matcher repeated within the same flashcard validation assertion. `arrayContaining` checks membership, so the repeated matcher did not require a second diagnostic. The remaining matcher preserves the unknown-subject obligation alongside the distinct unknown-field, orphan-deck, empty-field, and ID-prefix checks. All test cases and shared fixture bytes remain intact. Existing small test-local builders have different transport/storage semantics; sharing them would add indirection without demonstrated savings.
+
+Reviewed Vite, both Playwright configs, package scripts, ESLint/TypeScript setup, and CI. Learner production preview uses fixture FastAPI and a retry-disabled prebuild; admin uses a separate development server and browser-device setup. Separate CI jobs each require an isolated Python install. These are intentional boundaries, so no shared config layer, extra setup script, or workflow abstraction was introduced.
+
+Consolidated frontend mode/editor setup guidance in the root README by linking to it from architecture, testing, content management, and backend setup. Kept unique retry constraints and content replacement instructions. Corrected stale references to `VITE_ENABLE_ADMIN`: `AdminApp.tsx` actually reads `VITE_ENABLE_LOCAL_ADMIN`, and the README already gives the correct command. Earlier cleanup-stage builds used the unrecognized variable; they established bundling/type-checking and included `admin.html`, but did not establish an enabled production editor. Their historical measurements remain intact; Stage 4 verifies the correct runtime gate. CI intentionally checks admin bundling alone, while the development admin browser suite bypasses the production gate. Completed trackers and frozen snapshots were not edited.
+
+Verification completed: lint, formatting, all 10 architecture tests, and all 62 frontend test files / 363 tests passed. Ordinary TypeScript/production build passed at 76 files / 2,345,317 bytes with no admin entry (normal retry defaults, unlike the learner-suite retry-disabled builds recorded earlier). The enabled production admin build used the README command with `VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true` and passed at 82 files / 16,728,020 bytes. The enabled output is a different runtime mode from earlier disabled-editor measurements, so its size is not a cleanup regression comparison. Both retain all 59 KaTeX assets; the enabled output also verified the favicon.
+
+A temporary Chromium check against production preview confirmed the preceding unrecognized-flag build displays the disabled-editor warning and no Record tab. The correctly enabled build displays the Record tab and Flashcards deck controls, has no disabled warning, and produces no page errors. The temporary preview servers were stopped after checks. No runtime module, configuration, backend implementation, fixture, or canonical content changed in this stage; full development-browser/Python/corpus reruns were unnecessary for the removed matcher and documentation edits. Both canonical SHA-256 hashes remain unchanged. All 31 relative documentation links and anchors resolve, and diff whitespace checks pass. Four current guides contain 563 fewer bytes in total; the repeated test matcher removes a further 49 bytes. This stage's main benefit is removing conflicting setup guidance while retaining regression obligations. Existing Vite chunk-size and Vitest environment-cost advisories remain. Evidence is under `/private/tmp/meducation-cleanup/stage-4/`.
+
+Stage 4 is complete with no failing checks. Stage 5 has not started. Waiting for the user's go signal.
 
 ## Stage 5 — Conditional compatibility retirement
 
@@ -181,7 +197,7 @@ Exit gate: either a separately verified retirement change or a documented retain
 Risk: low. Dependency: all applicable stages complete or explicitly retained/deferred.
 
 - [ ] Run `npm run lint`, `npm run format:check`, `npm run test:architecture`, `npm test`, `npm run validate:content`, and `npm run build`.
-- [ ] Run `VITE_BUILD_ADMIN=true VITE_ENABLE_ADMIN=true npm run build`; confirm the default build omits admin and the optional build includes it.
+- [ ] Run `VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build`; confirm the default build omits admin and the optional build includes it.
 - [ ] For changed runtime/shared/admin code, run learner and admin browser suites sequentially. Exercise explicit local mode and development content QA if their imports/assets changed. Follow `docs/testing-regressions.md` for affected flows.
 - [ ] For backend/shared contract/revision changes, run `.venv/bin/python -m pytest backend/tests -q`, `.venv/bin/ruff check backend/src backend/tests`, and `.venv/bin/mypy backend/src`.
 - [ ] Compare canonical hashes, export/revision parity, media inventory, lazy chunks, tracked bytes/files, source duplication removed, and production output sizes against Stage 0. Rebuild the same mode for comparisons; cache deletion and minification are not source-code reduction.

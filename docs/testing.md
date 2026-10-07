@@ -15,11 +15,7 @@ npm run validate:content
 npm run build
 ```
 
-The build includes TypeScript checking for browser and maintenance code. Test the optional admin build when changing entries, shared UI, authoring, or bundle boundaries:
-
-```sh
-VITE_BUILD_ADMIN=true VITE_ENABLE_ADMIN=true npm run build
-```
+The build includes TypeScript checking for browser and maintenance code. Test the optional admin build when changing entries, shared UI, authoring, or bundle boundaries, using the [enabled production editor command](../README.md#local-content-editor).
 
 The ordinary build must omit `admin.html`; the optional build must include it. Both flags are needed to preview an enabled production editor. Verify initial and quiz-route chunk composition when changing lazy imports: API startup must not eagerly load canonical banks or the validation pipeline.
 

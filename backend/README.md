@@ -19,14 +19,11 @@ For configuration overrides, copy `backend/.env.example` to `backend/.env` and
 edit it there. The default bank path already points to the canonical repository
 file. `MEDUCATION_FLASHCARD_BANK_PATH` overrides the flashcard file path.
 
-Set `VITE_CONTENT_SOURCE=api` (the default) and run the Vite app separately.
-Vite proxies `/api` to `http://127.0.0.1:8000`. Production hosting must route
-the same `/api` prefix to FastAPI. Set
+Run the frontend separately using [frontend setup](../README.md#install-and-run).
+Production API-mode hosting must route `/api` to FastAPI. Set
 `MEDUCATION_BANK_PATH` only when the canonical file is stored at a different
-path. In development, `VITE_CONTENT_SOURCE=local` explicitly selects the
-existing local JSON adapter. The local admin editor is available at `/admin.html`
-in the development server; normal production builds omit it. To explicitly build
-the editor, set `VITE_BUILD_ADMIN=true` when running the Vite build.
+path. The frontend guide also owns [local-content mode](../README.md#local-content-mode)
+and [local editor setup](../README.md#local-content-editor).
 
 On startup the service validates and indexes both banks together, including
 flashcard references to shared subjects. The flashcard API exposes subject

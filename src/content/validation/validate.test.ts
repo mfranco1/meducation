@@ -60,7 +60,6 @@ describe('flashcard bank validation', () => {
     expect(messages).toEqual(expect.arrayContaining([
       expect.stringContaining('unknown field'),
       expect.stringContaining('unknown subject'),
-      expect.stringContaining('unknown subject'),
       expect.stringContaining('unknown deck'),
       expect.stringContaining('must not be empty'),
       expect.stringContaining('prefix'),
