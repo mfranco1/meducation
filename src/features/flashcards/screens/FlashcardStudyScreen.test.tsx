@@ -24,9 +24,11 @@ describe('FlashcardStudyScreen', () => {
     expect(screen.queryByRole('button', { name: 'Hide answer' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reveal answer' })).not.toHaveTextContent('Meducation');
     rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} index={1} revealed={false} /></ThemeProvider>);
-    expect(screen.getByRole('button', { name: 'Finish deck' })).toBeEnabled();
+    const finishButton = screen.getByRole('button', { name: 'Finish' });
+    expect(finishButton).toBeEnabled();
+    expect(finishButton).toHaveClass('MuiButton-containedPrimary');
     rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} index={1} revealed /></ThemeProvider>);
-    fireEvent.click(screen.getByRole('button', { name: 'Finish deck' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Finish' }));
     expect(onFinish).toHaveBeenCalledOnce();
   });
 

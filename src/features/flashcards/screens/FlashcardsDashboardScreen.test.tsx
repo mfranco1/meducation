@@ -17,8 +17,10 @@ describe('FlashcardsDashboardScreen', () => {
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
     expect(screen.getByText('No subjects are available yet.')).toBeVisible();
     expect(screen.getByText('Completed decks')).toBeVisible();
-    expect(screen.getByText('Average')).toBeVisible();
-    expect(screen.getByText('Highest')).toBeVisible();
+    expect(screen.getByText('Average count')).toBeVisible();
+    expect(screen.getByText('Highest count')).toBeVisible();
+    expect(screen.queryByText('All recorded finishes')).not.toBeInTheDocument();
+    expect(screen.queryByText(/decks\/day|since tracking began|one local day/)).not.toBeInTheDocument();
     expect(screen.getAllByText('0.0')).toHaveLength(1);
   });
 

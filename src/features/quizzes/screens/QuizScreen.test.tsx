@@ -107,7 +107,9 @@ describe('quiz submission confirmation', () => {
   it('requires confirmation before Fast Feedback can finish a quiz', () => {
     const onFinish = renderQuizForSubmission();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Finish' }));
+    const finishButton = screen.getByRole('button', { name: 'Finish' });
+    expect(finishButton).toHaveClass('MuiButton-containedPrimary');
+    fireEvent.click(finishButton);
 
     const dialog = screen.getByRole('dialog', { name: 'Submit Test?' });
     expect(dialog).toHaveTextContent('Submitting ends this test and shows your results.');

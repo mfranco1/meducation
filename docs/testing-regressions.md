@@ -72,7 +72,8 @@ Dashboard active-subject work must cover empty, single-subject, filtering, recen
 
 - Flashcard study regression coverage also verifies current-v2 progress reads, opened/flagged ID persistence, canonical All/Hidden/Flagged navigation, centered rich faces, icon-only concealed branding, answer-sized shared flip faces, bold rich answers, click-to-hide, and the Space reveal/advance rhythm through the final card.
 - Keyboard tests cover the final explicit Finish action, while the browser flow checks the Hidden empty state and study/resume interactions.
-- Shared study chrome must retain active quiz, Browse, and Review labels, timer placement, footer behavior, and keyboard focus.
+- The final flashcard action is labelled `Finish` and uses the same primary contained color as quiz Finish/Submit actions; dashboard-stat cards keep their requested labels and render no secondary descriptions.
+- Shared study chrome must retain active quiz, Browse, and Review labels, timer placement, footer behavior, primary finish/submit action color, and keyboard focus.
 - Browser checks should cover a narrow screen and long rich answer without page overflow.
 
 ### Checkpoint recovery and authoring parity

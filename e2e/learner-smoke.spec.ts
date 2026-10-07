@@ -135,7 +135,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await nextButton.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Finish deck' })).toBeFocused();
+  await expect(page.getByRole('button', { name: 'Finish' })).toBeFocused();
   await page.getByRole('button', { name: 'Save and exit deck' }).click();
   await expect(page.getByRole('button', { name: 'Resume deck' })).toBeVisible();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
@@ -150,7 +150,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toBeVisible();
   await page.getByRole('button', { name: 'Reveal answer' }).click();
   await expect(page.getByText('The axillary nerve, n. axillaris.')).toBeVisible();
-  await page.getByRole('button', { name: 'Finish deck' }).click();
+  await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByText('Completed 1 time')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByText('Completed 1 time')).toBeVisible();
@@ -165,7 +165,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByRole('button', { name: 'Study deck' })).toBeVisible();
   await page.getByRole('button', { name: 'Study deck' }).click();
   await page.getByRole('button', { name: 'Card 2, unopened' }).click();
-  await page.getByRole('button', { name: 'Finish deck' }).click();
+  await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByText('Completed 2 times')).toBeVisible();
   await page.getByRole('button', { name: 'Study deck' }).click();
   await page.getByRole('button', { name: 'Card 2, unopened' }).click();
@@ -175,12 +175,12 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.getByRole('button', { name: 'All subjects' }).click();
   await expect(page.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();
   await expect(page.getByText('Completed decks')).toBeVisible();
-  await expect(page.getByText('Average')).toBeVisible();
-  await expect(page.getByText('Highest')).toBeVisible();
+  await expect(page.getByText('Average count')).toBeVisible();
+  await expect(page.getByText('Highest count')).toBeVisible();
   const dashboardStats = page.locator('.MuiCard-root');
   await expect(dashboardStats.filter({ hasText: 'Completed decks' }).getByText('2', { exact: true })).toBeVisible();
-  await expect(dashboardStats.filter({ hasText: 'Average' }).getByText('2.0', { exact: true })).toBeVisible();
-  await expect(dashboardStats.filter({ hasText: 'Highest' }).getByText('2', { exact: true })).toBeVisible();
+  await expect(dashboardStats.filter({ hasText: 'Average count' }).getByText('2.0', { exact: true })).toBeVisible();
+  await expect(dashboardStats.filter({ hasText: 'Highest count' }).getByText('2', { exact: true })).toBeVisible();
   await expect(page.getByText(/score|completed quizzes/i)).toHaveCount(0);
 });
 

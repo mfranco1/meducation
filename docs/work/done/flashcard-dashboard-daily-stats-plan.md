@@ -4,11 +4,11 @@ Status: implemented and verified; one unrelated admin browser test was unstable 
 
 ## Goal and confirmed counting rules
 
-Add three cards above Continue Studying and All Subjects: **Completed decks**, **Average**, and **Highest**, matching the quiz dashboard's responsive stat-card layout.
+Add three cards above Continue Studying and All Subjects: **Completed decks**, **Average count**, and **Highest count**, matching the quiz dashboard's responsive stat-card layout.
 
 The user confirmed that repeat finishes count and that Average includes every calendar day since the first tracked completion, including today and idle days:
 
-- **Completed decks:** total successful Finish deck actions, including repeated study runs of the same deck. Sum the existing durable per-deck `completionCounts`; do not count only distinct deck IDs or depend on the loaded content catalog.
+- **Completed decks:** total successful Finish actions, including repeated study runs of the same deck. Sum the existing durable per-deck `completionCounts`; do not count only distinct deck IDs or depend on the loaded content catalog.
 - **Average:** an exact running average of completions per calendar day since the first completion recorded with daily tracking, including today and days with zero completions. This is a cumulative average, with constant-size aggregate storage; no sliding window or per-day history is needed.
 - **Highest:** the largest completion count reached in any tracked local calendar day, including the unfinished current day. Store one maximum value and update it when today's count exceeds it.
 - A day runs from local 00:00 inclusive to the next local 00:00 exclusive, using the browser/device's local timezone at completion time. A deck started before midnight and finished after midnight belongs to the new day.
@@ -85,7 +85,7 @@ Files: `src/features/quizzes/components/StatCard.tsx`, its current consumers, `s
 
 - [x] Move the existing presentation-only StatCard into shared catalog UI and update quiz DashboardScreen/ResultsScreen imports. Preserve its existing props and visual behavior.
 - [x] Add the three flashcard cards via `StudyDashboardLayout.summary`, with the same row/column breakpoints, spacing, card geometry, label styling, and numeric hierarchy as quizzes.
-- [x] Display labels exactly as requested: Completed decks, Average, Highest. Render integer totals/highs and one-decimal Average with `decks/day` footer units; avoid percentage suffixes.
+- [x] Display labels: Completed decks, Average count, Highest count. Render integer totals/highs and one-decimal Average without secondary descriptions or percentage suffixes.
 - [x] Keep locally available stats visible during subject catalog loading or failure. Preserve the existing recovery banner, Continue Studying carousel, and All Subjects grid.
 - [x] For corrupt or unavailable progress, render unavailable values (`—`) plus the existing learner-safe persistence error; do not show misleading zeros. Valid empty progress displays zero values.
 - [x] Update dashboard and browser expectations that currently prohibit the word Average on flashcards, while retaining checks that quiz scores and quiz analytics never appear there.
@@ -106,7 +106,7 @@ Stage exit: three matching cards appear at the top, remain usable independently 
 
 ## Acceptance criteria
 
-1. The dashboard shows Completed decks, Average, and Highest above the existing carousel/grid in the quiz stat-card style.
+1. The dashboard shows Completed decks, Average count, and Highest count above the existing carousel/grid in the quiz stat-card style, without secondary descriptions.
 2. Repeat finishes contribute to Total and daily counts; Average includes elapsed days with zero completions.
 3. A finish at local 00:00 belongs to the new day; Average refreshes across midnight without requiring a new finish.
 4. Daily data uses constant-size aggregates and one historical maximum, never a day-by-day map or completion-event log.
@@ -131,3 +131,4 @@ Stage exit: three matching cards appear at the top, remain usable independently 
 - `npm run test:e2e`: passed, all 11 learner flows before the final audit assertion was added. The focused flashcard learner flow was rerun afterward and passed with a fixed date, checking Completed decks `2`, Average `2.0`, and Highest `2` after repeated finishes.
 - The daily-stats hook suite covers local midnight, focus, visibility recovery after sleep, and timer cleanup. Focused domain, persistence, dashboard, and hook tests passed (18 tests).
 - `npm run test:e2e:admin`: one test passed; the other timed out at its fixed 60-second limit after the browser session closed during the quiz admin flow's Reset both banks check. A focused rerun and an extended CLI-timeout rerun reproduced the same timeout. This path does not touch the shared stat card or flashcard learner dashboard.
+- Follow-up UI review renamed the two daily card labels to Average count and Highest count, removed all three card descriptions, and aligned the flashcard Finish action with the primary quiz Finish/Submit color. The shared footer no longer allows a success-color override; unit tests cover both quiz and flashcard action colors.

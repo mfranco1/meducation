@@ -70,7 +70,7 @@ export function FlashcardStudyScreen({ deck, cards, index, revealed, openedCardI
     <StudyHeader itemLabel="Card" index={index} total={cards.length} exitLabel="Save and exit deck" onExit={onSaveAndExit} disabled={saving} />
     <QuestionNavigationLayout navigator={<FlashcardNavigator cards={cards} currentIndex={index} openedCardIds={openedCardIds} flaggedCardIds={flaggedCardIds} filter={filter} onFilterChange={setFilter} onNavigate={navigate} />} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)} itemLabel="Cards">
       <FlashcardStudyCard card={card} revealed={revealed} flagged={flaggedCardIds.includes(card.id)} onReveal={onReveal} onToggleFlag={() => onToggleFlag(card.id)} />
-      <StudyNavigationFooter index={index} total={cards.length} onPrevious={onPrevious} onNext={() => { advanceHadFocus.current = document.activeElement === nextRef.current; onNext(); }} onFinish={onFinish} finishLabel="Finish deck" disabled={saving} finishColor="success" nextButtonRef={nextRef} finishButtonRef={finishRef} />
+      <StudyNavigationFooter index={index} total={cards.length} onPrevious={onPrevious} onNext={() => { advanceHadFocus.current = document.activeElement === nextRef.current; onNext(); }} onFinish={onFinish} finishLabel="Finish" disabled={saving} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>
   </Container>;
 }

@@ -16,13 +16,13 @@ export function StudyHeader({ itemLabel, index, total, exitLabel, onExit, disabl
   </>;
 }
 
-export function StudyNavigationFooter({ index, total, onPrevious, onNext, onFinish, finishLabel, nextLabel = 'Next', disabled = false, finishColor = 'primary', nextButtonRef, finishButtonRef }: {
-  index: number; total: number; onPrevious: () => void; onNext: () => void; onFinish: () => void; finishLabel: string; nextLabel?: string; disabled?: boolean; finishColor?: 'primary' | 'success'; nextButtonRef?: MutableRefObject<HTMLButtonElement | null>; finishButtonRef?: MutableRefObject<HTMLButtonElement | null>;
+export function StudyNavigationFooter({ index, total, onPrevious, onNext, onFinish, finishLabel, nextLabel = 'Next', disabled = false, nextButtonRef, finishButtonRef }: {
+  index: number; total: number; onPrevious: () => void; onNext: () => void; onFinish: () => void; finishLabel: string; nextLabel?: string; disabled?: boolean; nextButtonRef?: MutableRefObject<HTMLButtonElement | null>; finishButtonRef?: MutableRefObject<HTMLButtonElement | null>;
 }) {
   return <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ mt: 3 }}><Stack direction="row" spacing={1}>
     <Button startIcon={<ArrowBackRoundedIcon />} disabled={index === 0 || disabled} onClick={onPrevious}>Previous</Button>
     {index === total - 1
-      ? <Button ref={finishButtonRef} variant="contained" color={finishColor} disabled={disabled} onClick={onFinish}>{finishLabel}</Button>
+      ? <Button ref={finishButtonRef} variant="contained" disabled={disabled} onClick={onFinish}>{finishLabel}</Button>
       : <Button ref={nextButtonRef} endIcon={<ArrowForwardRoundedIcon />} disabled={disabled} onClick={onNext}>{nextLabel}</Button>}
   </Stack></Stack>;
 }

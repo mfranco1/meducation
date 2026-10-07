@@ -54,9 +54,9 @@ export function FlashcardsDashboardScreen({
       )}
       <StudyDashboardLayout
         summary={<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
-          <StatCard label="Completed decks" value={metric(stats.completedDecks)} footer={<Typography color="text.secondary" variant="caption">All recorded finishes</Typography>} />
-          <StatCard label="Average" value={metric(stats.averagePerDay.toFixed(1))} footer={<Typography color="text.secondary" variant="caption">decks/day · since tracking began</Typography>} />
-          <StatCard label="Highest" value={metric(stats.highestInDay)} footer={<Typography color="text.secondary" variant="caption">decks in one local day</Typography>} />
+          <StatCard label="Completed decks" value={metric(stats.completedDecks)} />
+          <StatCard label="Average count" value={metric(stats.averagePerDay.toFixed(1))} />
+          <StatCard label="Highest count" value={metric(stats.highestInDay)} />
         </Stack>}
         continueStudying={
           !loading && !error ? (
