@@ -25,6 +25,21 @@ describe('flashcard progress envelope', () => {
     }
   });
 
+  it('accepts the compact daily aggregate and rejects malformed or unsupported history', () => {
+    const dailyStats = { firstDay: '2026-10-01', currentDay: '2026-10-03', currentDayCount: 1, trackedCompletions: 2, highestDailyCount: 1 };
+    expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 2 }, dailyStats })).toMatchObject({ dailyStats, completionCounts: { d1: 2 } });
+    for (const invalid of [
+      { ...dailyStats, currentDay: '2026-02-30' },
+      { ...dailyStats, currentDay: '2026-09-30' },
+      { ...dailyStats, highestDailyCount: 3 },
+      { ...dailyStats, currentDayCount: 0 },
+      { ...dailyStats, unexpected: true },
+    ]) {
+      expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 2 }, dailyStats: invalid })).toBeUndefined();
+    }
+    expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 1 }, dailyStats })).toBeUndefined();
+  });
+
   it('rejects ownership mismatches and invalid or noncanonical activity timestamps', () => {
     for (const invalid of [
       { ...checkpoint, deckId: 'd2' },
@@ -44,5 +59,18 @@ describe('flashcard progress envelope', () => {
     };
     expect(loadFlashcardProgress(storage)).toEqual({ schemaVersion: 2, revision: 'initial', checkpoints: {}, completionCounts: {} });
     expect(reads).toEqual([flashcardProgressKey]);
+  });
+
+  it('normalizes legacy v2 storage without writing or changing its checkpoint data', () => {
+    const writes: string[] = [];
+    const legacy = JSON.stringify(state);
+    const loaded = loadFlashcardProgress({
+      getItem: key => key === flashcardProgressKey ? legacy : null,
+      setItem: (key, value) => writes.push(`${key}:${value}`),
+    });
+    expect(loaded).toEqual({ ...state, completionCounts: {} });
+    expect(loaded?.checkpoints.d1).toEqual(checkpoint);
+    expect(loaded?.dailyStats).toBeUndefined();
+    expect(writes).toEqual([]);
   });
 });

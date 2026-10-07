@@ -58,6 +58,22 @@ describe('local flashcard progress repository', () => {
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 2 });
   });
 
+  it('updates total and constant-size daily statistics in the same completion commit', () => {
+    const storage = storagePort();
+    const repository = new LocalFlashcardProgressRepository(storage);
+    const finish = (deckId: string, cardId: string, at: string) => {
+      repository.saveCheckpoint({ deckId, currentCardId: cardId, contentSignature: 'sig', updatedAt: at, openedCardIds: [], flaggedCardIds: [] });
+      repository.completeDeck(deckId, new Date(at));
+    };
+    finish('d1', 'f1', new Date(2026, 2, 8, 13).toISOString());
+    finish('d2', 'f2', new Date(2026, 2, 8, 14).toISOString());
+    expect(repository.getSnapshot().dailyStats).toEqual({ firstDay: '2026-03-08', currentDay: '2026-03-08', currentDayCount: 2, trackedCompletions: 2, highestDailyCount: 2 });
+    finish('d3', 'f3', new Date(2026, 2, 10, 14).toISOString());
+    expect(repository.getSnapshot().dailyStats).toEqual({ firstDay: '2026-03-08', currentDay: '2026-03-10', currentDayCount: 1, trackedCompletions: 3, highestDailyCount: 2 });
+    expect(JSON.parse(storage.getItem(flashcardProgressKey) ?? '{}').dailyStats).toEqual(repository.getSnapshot().dailyStats);
+    expect(Object.keys(repository.getSnapshot().dailyStats ?? {})).toHaveLength(5);
+  });
+
   it('persists completion counts across repository instances and publishes only committed completions', () => {
     const storage = storagePort();
     const first = new LocalFlashcardProgressRepository(storage);
@@ -78,6 +94,7 @@ describe('local flashcard progress repository', () => {
     rejectWrites = true;
     expect(() => failing.completeDeck('d1')).toThrowError(FlashcardPersistenceError);
     expect(failing.getSnapshot().completionCounts).toEqual({});
+    expect(failing.getSnapshot().dailyStats).toBeUndefined();
     expect(failing.getCheckpoint('d1')).toBeDefined();
   });
 

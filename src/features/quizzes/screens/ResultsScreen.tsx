@@ -6,7 +6,7 @@ import type { CompletedAttempt, Question, Quiz } from '../../../domain/types';
 import { formatDuration } from '../format';
 import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
 import { perfectTestCelebration } from '../components/celebration/celebrationCatalog';
-import { StatCard } from '../components/StatCard';
+import { StatCard } from '../../../shared/ui/catalog/StatCard';
 import { ResultsScoreHero } from '../components/results/ResultsScoreHero';
 
 export function ResultsScreen({ attempt, questions, onBack, onReview }: { quiz: Quiz; attempt: CompletedAttempt; questions: Question[]; onBack: () => void; onReview?: () => void }) {

@@ -1,4 +1,5 @@
 import type { FlashcardCard } from './types';
+import type { FlashcardDailyStats } from './flashcardDailyStats';
 import { sha256Text } from './contentDigest';
 
 export interface FlashcardCheckpoint {
@@ -15,6 +16,7 @@ export interface FlashcardProgressState {
   revision: string;
   checkpoints: Record<string, FlashcardCheckpoint>;
   completionCounts: Record<string, number>;
+  dailyStats?: FlashcardDailyStats;
 }
 
 function serializedStudyContent(cards: readonly FlashcardCard[]): string {

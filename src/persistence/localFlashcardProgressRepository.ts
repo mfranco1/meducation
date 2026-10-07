@@ -1,4 +1,5 @@
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../domain/flashcardStudy';
+import { localDayKey, recordFlashcardDailyCompletion } from '../domain/flashcardDailyStats';
 import { decodeFlashcardProgress, flashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
 import type { StoragePort } from './progressCodec';
 
@@ -143,7 +144,7 @@ export class LocalFlashcardProgressRepository {
     });
   }
 
-  completeDeck(deckId: string) {
+  completeDeck(deckId: string, completedAt = new Date()) {
     this.commit((state) => {
       if (!state.checkpoints[deckId]) return undefined;
       const count = state.completionCounts[deckId] ?? 0;
@@ -151,10 +152,17 @@ export class LocalFlashcardProgressRepository {
         throw new FlashcardPersistenceError('corrupt', 'Deck completion count is invalid and was not saved.');
       const checkpoints = { ...state.checkpoints };
       delete checkpoints[deckId];
+      let dailyStats;
+      try {
+        dailyStats = recordFlashcardDailyCompletion(state.dailyStats, localDayKey(completedAt));
+      } catch {
+        throw new FlashcardPersistenceError('corrupt', 'Deck completion statistics could not be updated safely.');
+      }
       return {
         ...state,
         checkpoints,
         completionCounts: { ...state.completionCounts, [deckId]: count + 1 },
+        dailyStats,
       };
     });
   }

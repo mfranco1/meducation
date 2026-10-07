@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { CompletedAttempt, Subject } from '../../../domain/types';
 import { activeSubjectStats, type SubjectStat } from '../selectors/dashboard';
 import { ActiveSubjectCarousel } from '../components/ActiveSubjectCarousel';
-import { StatCard } from '../components/StatCard';
+import { StatCard } from '../../../shared/ui/catalog/StatCard';
 import { QuizSubjectCard } from '../components/QuizSubjectCard';
 import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardLayout';

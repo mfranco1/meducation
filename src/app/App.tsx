@@ -171,6 +171,8 @@ function LearnerApp() {
     {view.page === 'flashcards' && <FlashcardsDashboardScreen
       subjects={flashcardDashboardData}
       activeSubjects={activeFlashcardSubjectCards}
+      progress={flashcards.progress}
+      progressError={flashcards.persistenceError}
       loading={runtimeFlashcardBank.getState('subjects') === 'idle' || runtimeFlashcardBank.getState('subjects') === 'loading'}
       error={runtimeFlashcardBank.getError('subjects')}
       onRetry={() => loadRuntimeFlashcardSubjects().then(() => undefined, () => undefined)}

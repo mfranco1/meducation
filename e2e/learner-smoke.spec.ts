@@ -66,6 +66,7 @@ test('a failed flashcard deck request shows a toast and recovers through the dec
 test('flashcards browse, resume an imported fixture deck, and finish without quiz analytics', async ({
   page,
 }, testInfo) => {
+  await page.clock.install({ time: new Date(2026, 9, 7, 12) });
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
@@ -173,7 +174,14 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'All subjects' }).click();
   await expect(page.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();
-  await expect(page.getByText(/score|average|completed quizzes/i)).toHaveCount(0);
+  await expect(page.getByText('Completed decks')).toBeVisible();
+  await expect(page.getByText('Average')).toBeVisible();
+  await expect(page.getByText('Highest')).toBeVisible();
+  const dashboardStats = page.locator('.MuiCard-root');
+  await expect(dashboardStats.filter({ hasText: 'Completed decks' }).getByText('2', { exact: true })).toBeVisible();
+  await expect(dashboardStats.filter({ hasText: 'Average' }).getByText('2.0', { exact: true })).toBeVisible();
+  await expect(dashboardStats.filter({ hasText: 'Highest' }).getByText('2', { exact: true })).toBeVisible();
+  await expect(page.getByText(/score|completed quizzes/i)).toHaveCount(0);
 });
 
 test('API-backed quiz survives reload, completes, and opens Browse Answers', async ({ page }, testInfo) => {

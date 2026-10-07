@@ -7,6 +7,9 @@ import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardL
 import { StudyItemCarousel } from '../../../shared/ui/catalog/StudyItemCarousel';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
 import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
+import { StatCard } from '../../../shared/ui/catalog/StatCard';
+import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
+import { useFlashcardDashboardStats } from '../session/useFlashcardDashboardStats';
 
 function SubjectPlaceholders() {
   return (
@@ -21,6 +24,8 @@ function SubjectPlaceholders() {
 export function FlashcardsDashboardScreen({
   subjects,
   activeSubjects,
+  progress,
+  progressError,
   loading = false,
   error,
   onRetry,
@@ -28,11 +33,15 @@ export function FlashcardsDashboardScreen({
 }: {
   subjects: FlashcardDashboardSubject[];
   activeSubjects: FlashcardDashboardSubject[];
+  progress: FlashcardProgressState;
+  progressError?: string;
   loading?: boolean;
   error?: Error;
   onRetry: () => void | Promise<void>;
   onSelectSubject: (subject: Subject) => void;
 }) {
+  const stats = useFlashcardDashboardStats(progress);
+  const metric = (value: string | number) => progressError ? '—' : value;
   return (
     <>
       {error && (
@@ -44,6 +53,11 @@ export function FlashcardsDashboardScreen({
         />
       )}
       <StudyDashboardLayout
+        summary={<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
+          <StatCard label="Completed decks" value={metric(stats.completedDecks)} footer={<Typography color="text.secondary" variant="caption">All recorded finishes</Typography>} />
+          <StatCard label="Average" value={metric(stats.averagePerDay.toFixed(1))} footer={<Typography color="text.secondary" variant="caption">decks/day · since tracking began</Typography>} />
+          <StatCard label="Highest" value={metric(stats.highestInDay)} footer={<Typography color="text.secondary" variant="caption">decks in one local day</Typography>} />
+        </Stack>}
         continueStudying={
           !loading && !error ? (
             <StudyItemCarousel
