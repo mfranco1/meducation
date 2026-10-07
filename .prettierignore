@@ -1,0 +1,18 @@
+# Canonical banks, byte-sensitive fixtures, and dependency/package metadata
+src/content/*.generated.json
+tests/fixtures/**
+e2e/fixtures/**
+package-lock.json
+backend/requirements*.lock
+*.egg-info/**
+
+# Private source material and reproducible tool output
+content/**
+tn-pdfs/**
+public/content/**
+node_modules/**
+dist/**
+.venv/**
+coverage/**
+test-results/**
+playwright-report/**

@@ -12,6 +12,10 @@ export default defineConfig(({ mode }) => {
     server: { proxy: { '/api': 'http://127.0.0.1:8000' } },
     preview: { proxy: { '/api': `http://127.0.0.1:${process.env.MEDUCATION_E2E_API_PORT ?? '8000'}` } },
     build: { rollupOptions: { input } },
-    test: { environment: 'jsdom', setupFiles: './src/test/setup.ts', exclude: [...configDefaults.exclude, 'e2e/**'] },
+    test: {
+      environment: 'jsdom',
+      setupFiles: './src/test/setup.ts',
+      exclude: [...configDefaults.exclude, 'e2e/**', 'scripts/architecture/**'],
+    },
   };
 });

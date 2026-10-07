@@ -1,6 +1,6 @@
 # Repository organization plan
 
-Created: 2026-10-06. Status: Stage 4 complete; waiting for the user's signal to begin Stage 5.
+Created: 2026-10-06. Status: Stage 5 complete; waiting for the user's signal to begin Stage 6.
 
 ## Goal and recommendation
 
@@ -308,15 +308,31 @@ The exact 33-file manifest is below; original modules, graph/hash verification, 
 
 ## Stage 5 — Enforce boundaries and coherent tooling
 
-- [ ] Add file-scoped import restrictions using the existing ESLint stack. Cover relative path variants and any aliases consistently; do not rely on naming conventions alone.
-- [ ] Enforce: domain and analytics cannot import React/MUI, app, features, content adapters, or persistence implementations; storage stays behind repositories; content cannot import UI; shared UI cannot import app/features/admin; features cannot import app/admin/other features; admin core/data cannot import presentation.
-- [ ] Preserve app as the composition root allowed to wire concrete repositories and features. Permit QA/admin to consume shared rendering and content validation deliberately.
-- [ ] Account for dynamic imports and transitive cycles: static import restrictions alone are not a complete dependency graph check. Add a small graph check or focused established tool only if current lint cannot cover the required cases.
-- [ ] Retain relative imports initially. If aliases materially improve cross-boundary readability, configure TypeScript, Vite/Vitest, scripts, and lint together and verify all execution paths; TypeScript `paths` alone is insufficient.
-- [ ] Expand formatting/lint scope incrementally in separate mechanical changes, including relevant scripts/configs. Exclude canonical banks, private source material, generated output, and fixture bytes whose exact representation is significant.
-- [ ] Keep unit/component tests colocated, shared cross-runtime fixtures in `tests/fixtures`, browser fixtures in `e2e/fixtures`, and Python tests in `backend/tests`. Move no tests merely for visual symmetry.
+- [x] Add file-scoped import restrictions using the existing ESLint stack. Cover relative path variants and any aliases consistently; do not rely on naming conventions alone.
+- [x] Enforce: domain and analytics cannot import React/MUI, app, features, content adapters, or persistence implementations; storage stays behind repositories; content cannot import UI; shared UI cannot import app/features/admin; features cannot import app/admin/other features; admin core/data cannot import presentation.
+- [x] Preserve app as the composition root allowed to wire concrete repositories and features. Permit QA/admin to consume shared rendering and content validation deliberately.
+- [x] Account for dynamic imports and transitive cycles: static import restrictions alone are not a complete dependency graph check. Add a small graph check or focused established tool only if current lint cannot cover the required cases.
+- [x] Retain relative imports initially. If aliases materially improve cross-boundary readability, configure TypeScript, Vite/Vitest, scripts, and lint together and verify all execution paths; TypeScript `paths` alone is insufficient.
+- [x] Expand formatting/lint scope incrementally in separate mechanical changes, including relevant scripts/configs. Exclude canonical banks, private source material, generated output, and fixture bytes whose exact representation is significant.
+- [x] Keep unit/component tests colocated, shared cross-runtime fixtures in `tests/fixtures`, browser fixtures in `e2e/fixtures`, and Python tests in `backend/tests`. Move no tests merely for visual symmetry.
 
 Exit gate: CI rejects disallowed dependencies, every documented command resolves, and formatting changes are reviewable separately from moves. Risk: medium. Dependency: Stage 4.
+
+Completed 2026-10-07. Added a local ESLint boundary rule backed by the installed TypeScript resolver and a shared policy in `scripts/architecture/boundaries.mjs`. It checks static imports, re-exports, type imports/queries, CommonJS imports, and literal dynamic imports against resolved repository owners. Alternate relative paths and configured aliases cannot bypass ownership; computed module paths are rejected instead of silently omitted. No new aliases, dependency packages, forwarding modules, or application refactors were introduced.
+
+The rule enforces pure domain/analytics/persistence ownership, content independence from presentation/storage, shared UI independence from app/features/admin, peer-feature isolation, and admin core/data independence from presentation. Feature sessions retain their existing concrete persistence defaults; selectors may consume contract types. Browser storage globals, computed literal properties, destructuring, and property access through aliases are restricted to persistence, with test/helper access allowed. Tests otherwise retain ownership rules. The one narrowly documented existing content-contract-test import of admin serialization is permitted for revision parity; no blanket test exemption allows architectural imports.
+
+`npm run check:architecture` checks 190 source/script modules and 846 imports, rejects runtime cycles including dynamic edges, and follows static learner dependencies to prevent eager canonical-bank/validation loading. Explicit type-only edges are checked for ownership but excluded from runtime-cycle detection. App is included as a startup root because bootstrap deliberately imports it dynamically. App composition and admin/QA rendering/validation access remain supported. The checker analyzes imports, not arbitrary runtime control flow.
+
+`npm run lint` now covers source, all maintenance scripts, ESLint/Vite/Playwright configs, and the graph check. CI also runs `npm run test:architecture`: ten adversarial Node tests cover resolved path variants, type/dynamic imports, peer features, pure-layer UI dependencies, shared/content/admin presentation boundaries, storage access and shadowed variables, alias resolution, unresolved paths, transitive cycles, and eager bank/validator loading. Vitest excludes only the new architecture tool directory so Node tests run once; all migration and existing application tests remain discovered.
+
+Formatting scope expanded incrementally to root JSON/tool configs, maintenance TypeScript/JavaScript, browser TypeScript tests, and the existing theme target. `.prettierignore` protects canonical banks, fixture bytes, dependency locks, private source material, and generated output. The mechanical change reformatted two compiler JSON files and the two content CLIs, alongside formatting the new enforcement/configuration code. Compiler settings are semantically identical; normalized TypeScript ASTs prove the existing CLIs changed only in formatting. Application code, browser tests, and migration logic were not reformatted. Broad source formatting remains a separate future choice. README/current architecture/testing guidance describe the new commands, policy, and exclusions.
+
+Verification: expanded lint, formatter, ten architecture tests, all 62 application test files / 363 tests, content validation, both TypeScript/production builds, and whitespace checks passed. An isolated temporary two-module cycle caused the public `npm run lint` command to exit 1 with a runtime-cycle diagnostic; the probe files were removed and the clean command passed again. Existing unit/fixture behavior and test ownership were preserved; no test files moved in this stage.
+
+All application source and shared/browser fixture bytes remain unchanged from the Stage 5 entry snapshot, including both canonical banks. Dependency versions and lock hashes are unchanged. Both build manifests exactly match Stage 4 in HTML entries, asset hashes/filenames, raw sizes, and gzip sizes: 15 learner assets / 1,270,975 raw bytes; 18 optional-admin assets / 15,535,827 raw bytes. Default production output still excludes admin. The only Vite configuration change beyond formatting excludes Node architecture tests from Vitest; production build configuration is unchanged. Content validation retains the existing 32 answer-review warnings, and existing chunk/test-tool advisories remain.
+
+There were no application/shared/content-loader/entry moves or backend changes, so Stage 4's 13 browser tests, local/API/QA captures, and 39 backend tests remain the behavior baseline; those unchanged suites were not repeated. No temporary servers were started. Raw snapshots, lint/architecture/format verification, cycle-rejection evidence, tests, validation, and build comparisons are under `/private/tmp/meducation-organization-stage-5/`. Stage 6 has not started.
 
 ## Stage 6 — Make documentation maintainable and close the migration
 

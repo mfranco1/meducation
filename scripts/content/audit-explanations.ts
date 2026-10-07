@@ -13,8 +13,8 @@ const patternFor = (rationale: string, sources?: string): Pattern[] => {
   return patterns.length ? patterns : ['plain_prose'];
 };
 
-const subjectIdByQuizId = new Map(quizzes.map(quiz => [quiz.id, quiz.subjectId]));
-const rows = questions.map(question => ({
+const subjectIdByQuizId = new Map(quizzes.map((quiz) => [quiz.id, quiz.subjectId]));
+const rows = questions.map((question) => ({
   id: question.id,
   subjectId: subjectIdByQuizId.get(question.quizId),
   quizId: question.quizId,
@@ -23,6 +23,18 @@ const rows = questions.map(question => ({
   provenance: question.rationaleMeta?.provenance ?? null,
   hasSources: Boolean(question.rationaleMeta?.sources),
 }));
-const report = { generatedAt: new Date().toISOString(), totals: { questions: rows.length, withRationale: rows.filter(row => row.rationaleLength > 0).length, withSources: rows.filter(row => row.hasSources).length, aiReviewed: rows.filter(row => row.provenance === 'ai_draft_reviewed').length, answersUnderReview: questions.filter(question => question.rationaleMeta?.answerReviewNote).length }, rows };
+const report = {
+  generatedAt: new Date().toISOString(),
+  totals: {
+    questions: rows.length,
+    withRationale: rows.filter((row) => row.rationaleLength > 0).length,
+    withSources: rows.filter((row) => row.hasSources).length,
+    aiReviewed: rows.filter((row) => row.provenance === 'ai_draft_reviewed').length,
+    answersUnderReview: questions.filter((question) => question.rationaleMeta?.answerReviewNote).length,
+  },
+  rows,
+};
 writeFileSync(resolve('content/explanation-audit.json'), JSON.stringify(report, null, 2) + '\n');
-console.log(`Wrote audit for ${rows.length} questions; ${report.totals.withSources} have source disclosures; ${report.totals.answersUnderReview} answer keys need review.`);
+console.log(
+  `Wrote audit for ${rows.length} questions; ${report.totals.withSources} have source disclosures; ${report.totals.answersUnderReview} answer keys need review.`,
+);
