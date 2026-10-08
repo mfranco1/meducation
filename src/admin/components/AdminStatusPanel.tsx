@@ -15,11 +15,12 @@ interface Props {
 export function AdminStatusPanel({ bank, issues, questionPaths = {}, summary, dirty, exported, busy }: Props) {
   const hasErrors = issues.some(issue => issue.level === 'error');
   const hasWarnings = issues.some(issue => issue.level === 'warning');
+  const statusColor = hasErrors ? 'error.main' : hasWarnings || dirty ? 'warning.dark' : exported ? 'success.main' : 'text.secondary';
   return <Paper variant="outlined" sx={{ width: { lg: 280 }, p: 2, alignSelf: 'flex-start' }} aria-label="Admin status">
     <Stack spacing={1.5}>
       <Typography variant="subtitle2" color="text.secondary">{bank.subjects.length} subjects · {bank.quizzes.length} quizzes · {bank.questions.length} items</Typography>
       {busy && <Typography role="status" variant="body2">{busy}…</Typography>}
-      <Typography fontWeight={700} color={hasErrors ? 'error.main' : hasWarnings || dirty ? 'warning.dark' : 'success.main'}>{hasErrors ? 'Needs attention' : hasWarnings ? 'Review warnings' : dirty ? 'Not exported' : exported ? 'Exported' : 'No changes'}</Typography>
+      <Typography fontWeight={700} color={statusColor}>{hasErrors ? 'Needs attention' : hasWarnings ? 'Review warnings' : dirty ? 'Not exported' : exported ? 'Exported' : 'No changes'}</Typography>
       {summary !== 'Load a record or paste a change set.' && <Typography variant="body2" color="text.secondary">{summary}</Typography>}
       {issues.length > 0 && <List dense disablePadding aria-label="Validation issues">{issues.map((issue, index) => {
         const path = issue.questionId ? questionPaths[issue.questionId] : undefined;

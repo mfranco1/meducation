@@ -200,7 +200,7 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.change(deckPicker, { target: { value: 'Imported deck' } });
     expect(screen.getByRole('option', { name: 'Imported deck · 0 cards' })).toBeVisible();
     fireEvent.click(screen.getByRole('option', { name: 'Imported deck · 0 cards' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Export flashcard JSON and change set' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export flashcards' }));
     await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
     expect(screen.queryByText(/does not reproduce/)).toBeNull();
     expect(screen.getByRole('textbox', { name: 'Record JSON' })).toHaveValue('');
@@ -227,7 +227,7 @@ describe('FlashcardAdminPanel', () => {
     stageRecord({ id: 'd2', subjectId: 's1', name: 'Deck Two' });
     fireEvent.click(screen.getByRole('button', { name: 'Move up' }));
     expect(bank.decks.map((deck) => deck.id)).toEqual(['d2', 'd1', 'd-other']);
-    fireEvent.click(screen.getByRole('button', { name: 'Export flashcard JSON and change set' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export flashcards' }));
     await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
     expect(screen.queryByText(/does not reproduce/)).toBeNull();
     expect(screen.getByRole('button', { name: 'Reset' })).toBeEnabled();
@@ -297,7 +297,7 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.change(deckPicker, { target: { value: 'Test deck' } });
     expect(screen.getByRole('option', { name: 'Test deck · 0 cards' })).toBeVisible();
     fireEvent.click(screen.getByRole('option', { name: 'Test deck · 0 cards' }));
-    expect(screen.getByRole('button', { name: 'Export flashcard JSON and change set' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Export flashcards' })).toBeEnabled();
   });
 
   it('rejects a deck that references an unknown shared subject', () => {
@@ -430,7 +430,7 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Valid deck' }] }) } });
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(await screen.findByRole('region', { name: 'Bulk add preview' })).toBeVisible();
-    fireEvent.change(screen.getByRole('textbox', { name: 'Change reason' }), { target: { value: 'Updated reason' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Reason' }), { target: { value: 'Updated reason' } });
     expect(await screen.findByText(/changed\. Preview again before staging/)).toBeVisible();
     expect(screen.getByRole('button', { name: 'Stage batch' })).toBeDisabled();
   });

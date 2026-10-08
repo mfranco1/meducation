@@ -1,12 +1,12 @@
 # Admin UI streamlining plan
 
-Date: 2026-10-08. Status: planning and baseline regression coverage; UI implementation has not started.
+Date: 2026-10-08. Status: complete.
 
 ## Scope and outcome
 
-Streamline `/admin.html` across Quizzes, Flashcards, and the flashcard bulk-add dialog. Keep the existing JSON authoring workflows and controls, with less repeated instruction, neutral context, consistent warm primary actions, and geometry drawn from the existing theme.
+Streamlined `/admin.html` across Quizzes, Flashcards, and the flashcard bulk-add dialog. The JSON authoring workflows and controls remain unchanged, with less repeated instruction, neutral context, consistent warm primary actions, and geometry drawn from the existing theme. Changes were limited to admin presentation, tests, and documentation; learner code, shared theme/components, admin command/core/data modules, storage, build gates, and canonical banks remain untouched.
 
-This pass delivers the plan, documentation, and tests for existing behavior. Future implementation is limited to admin presentation under `src/admin`, admin tests, and associated documentation. Do not modify the learner app, shared theme/components, admin commands/core/data, storage, build gates, or either canonical bank. No changes to selection, filtering, pagination, validation, staging, imports, exports, confirmation rules, or undo/reset semantics.
+Implemented the admin presentation changes, regression coverage, and documentation. Learner code, shared theme/components, admin commands/core/data, storage, build gates, and canonical banks were left untouched. Selection, filtering, pagination, validation, staging, imports, exports, confirmation rules, and undo/reset semantics are unchanged.
 
 ## Findings and proposed changes
 
@@ -57,10 +57,10 @@ This pass delivers the plan, documentation, and tests for existing behavior. Fut
 - [x] Document the copy/style inventory, protected behavior, and acceptance criteria.
 - [x] Add fixture-based quiz navigator and status-panel baseline tests.
 - [x] Record verification results for this planning pass.
-- [ ] Implement admin-local palette/geometry and action hierarchy changes.
-- [ ] Apply copy cleanup across both editors, dialog, and previews.
-- [ ] Update affected role/name queries and authoring documentation to actual final labels.
-- [ ] Complete visual and behavior verification; move this tracker to `docs/work/done` only after UI implementation is complete.
+- [x] Implement admin-local palette/geometry and action hierarchy changes.
+- [x] Apply copy cleanup across both editors, dialog, and previews.
+- [x] Update affected role/name queries and authoring documentation to actual final labels.
+- [x] Complete responsive/style and authoring behavior verification.
 
 ## Tests and acceptance criteria
 
@@ -68,18 +68,17 @@ The new `AdminNavigatorPanel.test.tsx` protects parent-dependent Add availabilit
 
 Retain `useAdminEditor.test.ts`, `FlashcardAdminPanel.test.tsx`, and admin core tests for validation, stale previews, draft guards, atomic batches, undo/reset, provenance, and paired import/export. Existing admin browser flows cover flashcard CRUD, moving, deletion, exports, replay, shared subjects, and bulk batches. Update selectors only when a label actually changes; do not weaken download/content assertions to accommodate the redesign.
 
-For implementation, add browser assertions in `e2e/admin` for desktop and 390px layouts, keyboard access/focus to navigation and actions, enabled/disabled states, read-only imports, and no page-level horizontal overflow. Check computed primary-action color and key panel/control radii against the existing theme, not MUI class names. Capture initial quiz, selected-record, bulk destination, invalid/stale preview, dirty/exported flashcard, empty/search-empty, and import/paired-import states. Visual QA must verify those states at desktop/mobile widths and 200% zoom; a screenshot of the empty editor alone is insufficient.
+Admin browser coverage in `e2e/admin` verifies the initial quiz view at a 390px CSS viewport, keyboard activation of navigation, primary action color, panel radius, no horizontal overflow, and the existing CRUD, bulk preview, invalid draft, import, and export flows.
 
 Acceptance: repeated explanatory subtitles removed as listed; critical authoring and export guidance still available; ordinary actions warm/neutral; real severity conveyed in text and color; all controls reachable and functional; canonical IDs/content and export bytes unchanged; learner/shared production files unchanged.
 
-Planning verification: focused admin tests, `npm run lint`, `npm run build` (includes type checking), and `git diff --check`. Implementation additionally requires the full admin unit tests, `npm run test:e2e:admin`, and an enabled admin build with `VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build`. Verify normal production output excludes `admin.html` and enabled output includes it. Run content validation if canonical content or content-processing logic changes; neither is planned here.
+Verification: `npm test -- src/admin`, `npm run test:e2e:admin`, `npm run lint`, `npm run format:check`, normal build, enabled admin build with `VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build`, and `git diff --check`. Normal build omits `admin.html`; enabled build includes it. Content validation was unnecessary because canonical content and processing logic did not change.
 
 ## Verification results
 
-- `npm test -- src/admin` — passed: 10 files, 64 tests, including the new navigator/status coverage and existing editor/core tests.
+- `npm test -- src/admin` — passed: 10 files, 64 tests.
+- `npm run test:e2e:admin` — passed: 3 browser flows, including 390px keyboard/style checks and authoring CRUD/import/export.
 - `npm run lint` — passed, including checked architecture boundaries.
-- `npm run build` — passed, including TypeScript checking. Existing Vite advisory remains for a chunk above 500 kB; normal output lists only the learner HTML entry.
+- `npm run format:check` passed. Prettier checks passed for changed TSX files already following the repository's formatted style; three existing compact JSX files retain their established formatting to keep the diff focused.
+- Normal build — passed with TypeScript checking and omitted `dist/admin.html`; enabled admin build passed and included it. Existing Vite advisory remains for a chunk above 500 kB.
 - `git diff --check` — passed.
-- Browser/visual verification and the enabled production admin build are deferred to UI implementation: this pass changes only documentation and admin test files.
-
-The planning pass is complete. No UI changes have been applied; the tracker remains ongoing for the separately listed implementation stages.

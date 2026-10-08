@@ -18,6 +18,29 @@ test.beforeEach(async ({ page }) => {
   );
 });
 
+test('keeps the admin controls themed, keyboard accessible, and within a narrow viewport', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/admin.html');
+  await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toBeVisible({ timeout: 30_000 });
+
+  const navigator = page.locator('main .MuiPaper-root').first();
+  await expect.poll(() => navigator.evaluate((element) => getComputedStyle(element).borderRadius)).toBe('14px');
+  await page.getByRole('button', { name: 'Add', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await page.getByRole('menuitem', { name: 'Subject', exact: true }).focus();
+  await page.keyboard.press('Enter');
+
+  const stage = page.getByRole('button', { name: 'Stage', exact: true });
+  await expect(stage).toBeEnabled();
+  await expect
+    .poll(() => stage.evaluate((element) => getComputedStyle(element).backgroundColor))
+    .toBe('rgb(185, 81, 27)');
+  await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+
+  await stage.focus();
+  await expect(stage).toBeFocused();
+});
+
 async function selectSubject(page: import('@playwright/test').Page, id = 's1') {
   const label = id === 's1' ? 'Anatomy & Histology' : id === 's2' ? 'Biochemistry' : id;
   await page.getByRole('combobox', { name: 'Subject' }).fill(label);
@@ -28,6 +51,10 @@ async function selectDeck(page: import('@playwright/test').Page, name: string) {
   const picker = page.getByRole('combobox', { name: 'Deck' });
   await picker.fill(name);
   await page.getByRole('option', { name: new RegExp(`^${name} ·`) }).click();
+}
+
+async function expectSelectedDeck(page: import('@playwright/test').Page, name: string, cardCount: number) {
+  await expect(page.getByRole('combobox', { name: 'Deck' })).toHaveValue(`${name} · ${cardCount} cards`);
 }
 
 test('stages deck and card CRUD and previews an exported replay', async ({ page }, testInfo) => {
@@ -46,7 +73,7 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   expect(deck.subjectId).toBe('s1');
   await deckEditor.fill(JSON.stringify({ ...deck, name: 'Admin browser deck' }, null, 2));
   await page.getByRole('button', { name: 'Stage record' }).click();
-  await expect(page.getByText('Admin browser deck · 0 cards')).toBeVisible();
+  await expectSelectedDeck(page, 'Admin browser deck', 0);
 
   await page.getByRole('button', { name: 'Add card', exact: true }).click();
   const cardEditor = page.getByRole('textbox', { name: 'Record JSON' });
@@ -56,7 +83,7 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   await page.getByRole('button', { name: 'Stage record' }).click();
   await expect(page.getByRole('button', { name: /Admin front/ })).toBeVisible();
 
-  await page.getByRole('button', { name: 'Export flashcard JSON and change set' }).click();
+  await page.getByRole('button', { name: 'Export flashcards' }).click();
   await expect.poll(() => downloads.length).toBe(2);
   const changeSetDownload = downloads.find((item) => item.suggestedFilename() === 'flashcard-bank-change-set.json');
   expect(changeSetDownload).toBeDefined();
@@ -73,7 +100,7 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   await expect(page.getByText('Import preview')).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Resulting flashcard bank' })).toContainText('Admin back');
   await page.getByRole('button', { name: 'Stage import' }).click();
-  await expect(page.getByRole('button', { name: 'Export flashcard JSON and change set' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: 'Export flashcards' })).toBeEnabled();
 
   await selectSubject(page);
   await selectDeck(page, 'Admin browser deck');
@@ -96,7 +123,7 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
     JSON.stringify({ ...secondCard, deckId: secondDeck.id, front: 'Second front', back: 'Second back' }, null, 2),
   );
   await page.getByRole('button', { name: 'Stage record' }).click();
-  await expect(page.getByText('Destination deck · 1 cards')).toBeVisible();
+  await expectSelectedDeck(page, 'Destination deck', 1);
 
   await selectDeck(page, 'Admin browser deck');
   await page.getByRole('button', { name: 'Edit deck' }).click();
@@ -108,7 +135,7 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   await expect(page.getByRole('button', { name: /Admin front/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
   await expect(page.getByRole('button', { name: /Admin front/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Export flashcard JSON and change set' }).click();
+  await page.getByRole('button', { name: 'Export flashcards' }).click();
   await expect.poll(() => downloads.length).toBe(4);
   const finalBank = downloads.filter((item) => item.suggestedFilename() === 'flashcardBank.generated.json').at(-1)!;
   const finalBankPath = testInfo.outputPath('final-flashcard-bank.json');
@@ -172,7 +199,7 @@ test('bulk adds cards, decks, and nested cards through preview, one-step undo, a
   await expect(preview).toContainText('2 deck(s)');
   await expect(preview).toContainText('Nested question two');
   await page.getByRole('button', { name: 'Stage batch' }).click();
-  await expect(page.getByText('Empty bulk deck · 0 cards')).toBeVisible();
+  await expectSelectedDeck(page, 'Empty bulk deck', 0);
   await selectDeck(page, 'Nested bulk deck');
   await page.getByRole('button', { name: 'Bulk add cards', exact: true }).click();
   const cardBatch = JSON.stringify({
@@ -190,9 +217,9 @@ test('bulk adds cards, decks, and nested cards through preview, one-step undo, a
   await page.getByRole('button', { name: 'Preview' }).click();
   await expect(page.getByRole('region', { name: 'Bulk add preview' })).toContainText('Appended question');
   await page.getByRole('button', { name: 'Stage batch' }).click();
-  await expect(page.getByText('Nested bulk deck · 3 cards')).toBeVisible();
+  await expectSelectedDeck(page, 'Nested bulk deck', 3);
 
-  await page.getByRole('button', { name: 'Export flashcard JSON and change set' }).click();
+  await page.getByRole('button', { name: 'Export flashcards' }).click();
   await expect.poll(() => downloads.length).toBe(2);
   const changeSetDownload = downloads.find((item) => item.suggestedFilename() === 'flashcard-bank-change-set.json');
   expect(changeSetDownload).toBeDefined();
@@ -209,7 +236,7 @@ test('bulk adds cards, decks, and nested cards through preview, one-step undo, a
   ]);
 
   await page.getByRole('button', { name: 'Undo', exact: true }).click();
-  await expect(page.getByText('Nested bulk deck · 2 cards')).toBeVisible();
+  await expectSelectedDeck(page, 'Nested bulk deck', 2);
   await page.once('dialog', async (dialog) => {
     expect(dialog.message()).toContain('Discard every staged');
     await dialog.accept();
@@ -222,9 +249,9 @@ test('bulk adds cards, decks, and nested cards through preview, one-step undo, a
   await page.getByRole('button', { name: 'Stage import' }).click();
   await selectSubject(page);
   await selectDeck(page, 'Empty bulk deck');
-  await expect(page.getByText('Empty bulk deck · 0 cards')).toBeVisible();
+  await expectSelectedDeck(page, 'Empty bulk deck', 0);
   await selectDeck(page, 'Nested bulk deck');
-  await expect(page.getByText('Nested bulk deck · 3 cards')).toBeVisible();
+  await expectSelectedDeck(page, 'Nested bulk deck', 3);
 
   await page.getByRole('button', { name: 'Bulk add decks' }).click();
   await page.getByRole('textbox', { name: 'Bulk JSON' }).fill(
@@ -244,6 +271,6 @@ test('bulk adds cards, decks, and nested cards through preview, one-step undo, a
   });
   await page.getByRole('button', { name: 'Cancel' }).click();
   await selectDeck(page, 'Empty bulk deck');
-  await expect(page.getByText('Empty bulk deck · 0 cards')).toBeVisible();
+  await expectSelectedDeck(page, 'Empty bulk deck', 0);
   await expect(page.getByRole('button', { name: /Valid draft deck/ })).toHaveCount(0);
 });

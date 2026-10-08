@@ -43,16 +43,15 @@ export function AdminApp() {
         ? `${bulkSubject.name} / ${bulkQuiz.name}`
         : bulkSubject?.name ?? 'Choose a subject and quiz';
 
-  const header = <Box component="header" sx={{ py: 1.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}>
+  const header = <Box component="header" sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
     <Container maxWidth={false}><Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={1.5}>
       <Stack direction="row" alignItems="center" spacing={1.5}>
         <Stack direction="row" alignItems="center" spacing={.75} sx={{ color: 'text.primary', fontSize: 20, letterSpacing: '-.04em', fontWeight: 700 }}><MenuBookRoundedIcon sx={{ color: 'primary.main' }} /><Box component="span"><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Box></Stack>
         <Typography variant="body2" color="text.secondary">Admin</Typography>
       </Stack>
-      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-        <Typography variant="caption" color="text.secondary" sx={{ mr: 1 }}>Changes stay local until export.</Typography>
-        <Button size="small" disabled={!snapshot || Boolean(busy)} onClick={() => importFileRef.current?.click()}>Import</Button>
-        <Button size="small" color="success" variant="contained" disabled={!snapshot || Boolean(busy) || !hasAppliedChanges} onClick={exportFiles}>Export</Button>
+      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
+        <Button size="small" disabled={!snapshot || Boolean(busy)} onClick={() => importFileRef.current?.click()}>Import quiz change set</Button>
+        <Button size="small" variant="contained" disabled={!snapshot || Boolean(busy) || !hasAppliedChanges} onClick={exportFiles}>Export quizzes</Button>
         <input ref={importFileRef} type="file" accept="application/json,.json" hidden onChange={event => { void importChangeSetFile(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} />
       </Stack>
     </Stack></Container>
@@ -62,7 +61,7 @@ export function AdminApp() {
     {!localAdminEnabled ? <Container maxWidth="sm" sx={{ py: 8 }}><Alert severity="warning">The JSON content admin is disabled in production builds. It is not an authentication mechanism.</Alert></Container>
       : !snapshot ? loadError ? <Container sx={{ py: 8 }}><Alert severity="error">{loadError}</Alert></Container> : <ScreenLoading label="Loading question bank…" />
         : <Container maxWidth={false} sx={{ py: 2 }}>
-    <Stack direction="row" spacing={1} sx={{ mb: 2 }}>
+    <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
       <Button variant={section === 'quizzes' ? 'contained' : 'outlined'} onClick={() => setSection('quizzes')}>Quizzes</Button>
       <Button variant={section === 'flashcards' ? 'contained' : 'outlined'} onClick={() => setSection('flashcards')}>Flashcards</Button>
     </Stack>
@@ -92,10 +91,15 @@ export function AdminApp() {
             <MenuItem value="" disabled>Choose a quiz</MenuItem>
             {bulkQuizzes.map(quiz => <MenuItem key={quiz.id} value={quiz.id}>{quiz.name}</MenuItem>)}
           </TextField>}
-          {mode === 'bulk' && <Alert severity="info">{bulkTargetLabel}</Alert>}
+          {mode === 'bulk' && <Typography variant="body2" color="text.secondary">Destination · {bulkTargetLabel}</Typography>}
           <TextField label="JSON" value={editor} onChange={event => editRecord(event.target.value)} multiline minRows={16} maxRows={24} fullWidth InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }} placeholder={mode === 'single' ? 'Select an entity or create a template.' : 'Edit subject, quiz, and item content.'} />
-          {mode === 'bulk' && <Typography variant="caption" color="text.secondary">Items need stem, 2–26 choice strings, answer label, and rationale. Optional content fields: verifiedAnswer, answerNote, rationaleMeta, choiceExplanations, pearls, metadata.</Typography>}
-          <Stack direction="row" spacing={1} flexWrap="wrap"><Button variant="contained" disabled={Boolean(busy)} onClick={mode === 'single' ? stageSingle : validateBulkDraft}>{mode === 'single' ? 'Stage' : 'Validate'}</Button>{mode === 'bulk' && pendingBulk && <Button color="success" variant="contained" disabled={Boolean(busy)} onClick={stageValidatedBulk}>Stage</Button>}{mode === 'single' && selection.id && <Button color="error" disabled={Boolean(busy)} onClick={stageDelete}>Delete</Button>}<Divider flexItem orientation="vertical" sx={{ mx: .5 }} /><Button disabled={Boolean(busy) || !hasAppliedChanges} onClick={undo}>Undo</Button><Button disabled={Boolean(busy) || !hasAppliedChanges} onClick={reset}>Reset</Button></Stack>
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+            <Button variant="contained" disabled={Boolean(busy)} onClick={mode === 'single' ? stageSingle : validateBulkDraft}>{mode === 'single' ? 'Stage' : 'Validate'}</Button>
+            {mode === 'bulk' && pendingBulk && <Button variant="contained" disabled={Boolean(busy)} onClick={stageValidatedBulk}>Stage</Button>}
+            {mode === 'single' && selection.id && <Button color="error" disabled={Boolean(busy)} onClick={stageDelete}>Delete</Button>}
+            <Divider flexItem orientation="vertical" sx={{ mx: .5, display: { xs: 'none', sm: 'block' } }} />
+            <Button disabled={Boolean(busy) || !hasAppliedChanges} onClick={undo}>Undo</Button><Button disabled={Boolean(busy) || !hasAppliedChanges} onClick={reset}>Reset</Button>
+          </Stack>
           {pendingBulk && <Alert severity={issues.some(issue => issue.level === 'error') ? 'error' : issues.some(issue => issue.level === 'warning') ? 'warning' : 'success'}>
             <Typography variant="body2">{pendingBulk.generatedIds.length} generated IDs: {pendingBulk.generatedIds.join(', ')}</Typography>
           </Alert>}

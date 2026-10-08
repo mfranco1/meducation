@@ -179,11 +179,11 @@ export function FlashcardBulkAddDialog({
       <DialogTitle id="flashcard-bulk-title">Bulk add {context.kind === 'deck' ? 'cards' : 'decks'}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <Alert severity="info">
-            Destination: {destinationLabel}. IDs and parent references are assigned by the admin.
-          </Alert>
+          <Typography variant="body2" color="text.secondary">
+            Destination · {destinationLabel}
+          </Typography>
           <TextField
-            label="Change reason"
+            label="Reason"
             value={reason}
             onChange={(event) => onReasonChange(event.target.value)}
             required
@@ -251,7 +251,7 @@ export function FlashcardBulkAddDialog({
               The bank, subjects, destination, draft, reason, or export context changed. Preview again before staging.
             </Alert>
           )}
-          {previewCurrent && preview && <PaperPreview preview={preview} context={context} />}
+          {previewCurrent && preview && <PaperPreview preview={preview} />}
         </Stack>
       </DialogContent>
       <DialogActions>
@@ -261,12 +261,7 @@ export function FlashcardBulkAddDialog({
         <Button variant="outlined" onClick={previewDraft} disabled={busy || loadingFile || !reason.trim()}>
           Preview
         </Button>
-        <Button
-          variant="contained"
-          color="success"
-          onClick={stage}
-          disabled={busy || !previewCurrent || errors.length > 0}
-        >
+        <Button variant="contained" onClick={stage} disabled={busy || !previewCurrent || errors.length > 0}>
           Stage batch
         </Button>
       </DialogActions>
@@ -274,7 +269,7 @@ export function FlashcardBulkAddDialog({
   );
 }
 
-function PaperPreview({ preview, context }: { preview: Preview; context: FlashcardBulkAddContext }) {
+function PaperPreview({ preview }: { preview: Preview }) {
   const cardCount = preview.compiled.deckSummaries.reduce((total, deck) => total + deck.cardCount, 0);
   return (
     <Box
@@ -286,9 +281,6 @@ function PaperPreview({ preview, context }: { preview: Preview; context: Flashca
         <Typography variant="h6">
           Preview · {preview.compiled.deckSummaries.length} deck(s) · {cardCount} card(s)
         </Typography>
-        {context.kind === 'deck' && (
-          <Typography variant="body2">Cards will be appended to the selected deck.</Typography>
-        )}
         {preview.compiled.deckSummaries.map((deck) => (
           <Box key={deck.id}>
             <Typography variant="subtitle2">

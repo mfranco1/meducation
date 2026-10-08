@@ -660,10 +660,6 @@ export function FlashcardAdminPanel({
         }}
       >
         <Stack spacing={1} sx={{ minHeight: 0, flex: 1 }}>
-          <Typography variant="h6">Flashcard content</Typography>
-          <Typography variant="caption" color="text.secondary">
-            Subjects come from the quiz subject catalog. Choose a subject and deck to browse cards.
-          </Typography>
           <Autocomplete
             options={[...subjects]}
             value={subjects.find((subject) => subject.id === browseSubjectId) ?? null}
@@ -703,9 +699,6 @@ export function FlashcardAdminPanel({
           {browseSubjectId && !browseDecks.length && <Typography variant="body2">No decks in this subject.</Typography>}
           {browseDeckId && browseDecks.some((deck) => deck.id === browseDeckId) && (
             <>
-              <Typography variant="body2">
-                {browseDecks.find((deck) => deck.id === browseDeckId)?.name} · {deckCards.length} cards
-              </Typography>
               <Stack direction="row" spacing={0.5} flexWrap="wrap">
                 <Button
                   size="small"
@@ -779,6 +772,7 @@ export function FlashcardAdminPanel({
                     key={card.id}
                     selected={selection?.kind === 'card' && selection.id === card.id}
                     onClick={() => load({ kind: 'card', id: card.id }, card)}
+                    sx={{ borderRadius: '10px', mx: 0.5, width: 'calc(100% - 8px)' }}
                   >
                     <ListItemText
                       primary={`${position}. ${card.front}`}
@@ -887,7 +881,7 @@ export function FlashcardAdminPanel({
               ))}
             </Alert>
           )}
-          <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Button variant="contained" disabled={!selection} onClick={stage}>
               Stage record
             </Button>
@@ -904,7 +898,7 @@ export function FlashcardAdminPanel({
             <Button disabled={!selection?.id} onClick={() => reorder(1)}>
               Move down
             </Button>
-            <Divider flexItem orientation="vertical" />
+            <Divider flexItem orientation="vertical" sx={{ mx: 0.5 }} />
             <Button disabled={!history.length} onClick={undo}>
               Undo
             </Button>
@@ -912,8 +906,9 @@ export function FlashcardAdminPanel({
               Reset
             </Button>
             {onResetPaired && quizChangesStaged && <Button onClick={() => void resetBoth()}>Reset both banks</Button>}
-            <Button variant="outlined" color="success" disabled={!dirty} onClick={() => void exportFiles()}>
-              Export flashcard JSON and change set
+            <Divider flexItem orientation="vertical" sx={{ mx: 0.5 }} />
+            <Button variant="outlined" disabled={!dirty} onClick={() => void exportFiles()}>
+              Export flashcards
             </Button>
             <Button onClick={() => importFileRef.current?.click()} disabled={Boolean(operations.length) || editorDirty}>
               Import change set
@@ -964,11 +959,23 @@ export function FlashcardAdminPanel({
             </Paper>
           )}
           {importFileError && <Alert severity="error">{importFileError}</Alert>}
-          {dirty && (
-            <Alert severity="info">
-              Changes are staged in this browser session. Export the JSON and change set, review them, then replace the
-              canonical file.
-            </Alert>
+          {(dirty || quizChangesStaged) && (
+            <Box role="status" sx={{ borderTop: 1, borderColor: 'divider', pt: 1 }}>
+              <Typography variant="body2" fontWeight={700}>
+                {dirty && quizChangesStaged
+                  ? 'Quiz and flashcard changes · not exported'
+                  : dirty
+                    ? 'Flashcard changes · not exported'
+                    : 'Quiz changes staged'}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {dirty && quizChangesStaged
+                  ? 'Export downloads both banks and their change sets with a replacement manifest and content bundle.'
+                  : dirty
+                    ? 'Export the flashcard bank and change set, review both files, then replace the canonical file.'
+                    : 'Export downloads both banks and their change sets with a replacement manifest and content bundle.'}
+              </Typography>
+            </Box>
           )}
         </Stack>
       </Paper>
