@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Autocomplete,
   Alert,
   Box,
   Button,
   Divider,
-  List,
   ListItemButton,
   ListItemText,
   Paper,
@@ -13,7 +13,12 @@ import {
   Typography,
 } from '@mui/material';
 import { storedFlashcardBank, serializeFlashcardBank, flashcardContentRevision } from '../content/local/flashcardBank';
-import type { StoredFlashcardBank, StoredFlashcardDeck, StoredFlashcard, StoredQuestionBank } from '../content/schema/schema';
+import type {
+  StoredFlashcardBank,
+  StoredFlashcardDeck,
+  StoredFlashcard,
+  StoredQuestionBank,
+} from '../content/schema/schema';
 import { validateFlashcardBank } from '../content/validation/flashcardValidation';
 import type { Subject } from '../domain/types';
 import { storedQuestionBank } from '../content/local/questionBank';
@@ -32,6 +37,7 @@ import type { AdminChangeSet } from './core/types';
 import { FlashcardBulkAddDialog, type FlashcardBulkPreviewSnapshot } from './FlashcardBulkAddDialog';
 import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
 import { downloadJson } from './downloadJson';
+import { selectFlashcardPage } from './core/flashcardNavigator';
 
 type Kind = 'deck' | 'card';
 type Selected = { kind: Kind; id: string } | undefined;
@@ -66,11 +72,24 @@ export function FlashcardAdminPanel({
 }) {
   const [bank, setBank] = useState(() => clone(storedFlashcardBank));
   const [selection, setSelection] = useState<Selected>();
+  const [browseSubjectId, setBrowseSubjectId] = useState('');
+  const [browseDeckId, setBrowseDeckId] = useState('');
+  const [cardQuery, setCardQuery] = useState('');
+  const [cardPage, setCardPage] = useState(0);
   const [editor, setEditor] = useState('');
   const [reason, setReason] = useState('Local flashcard content edit');
   const [issues, setIssues] = useState<string[]>([]);
   const [history, setHistory] = useState<
-    Array<{ bank: StoredFlashcardBank; operations: FlashcardAdminOperation[]; reason: string; dirty: boolean }>
+    Array<{
+      bank: StoredFlashcardBank;
+      operations: FlashcardAdminOperation[];
+      reason: string;
+      dirty: boolean;
+      browseSubjectId: string;
+      browseDeckId: string;
+      cardQuery: string;
+      cardPage: number;
+    }>
   >([]);
   const [operations, setOperations] = useState<FlashcardAdminOperation[]>([]);
   const [pendingImport, setPendingImport] = useState<{
@@ -110,6 +129,18 @@ export function FlashcardAdminPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectSnapshot, exportContext]);
   useEffect(() => {
+    if (browseSubjectId && !subjects.some((subject) => subject.id === browseSubjectId)) {
+      setBrowseSubjectId('');
+      setBrowseDeckId('');
+      setCardQuery('');
+      setCardPage(0);
+    } else if (browseDeckId && !bank.decks.some((deck) => deck.id === browseDeckId)) {
+      setBrowseDeckId('');
+      setCardQuery('');
+      setCardPage(0);
+    }
+  }, [bank.decks, browseDeckId, browseSubjectId, subjects]);
+  useEffect(() => {
     const protectDraft = (event: BeforeUnloadEvent) => {
       if (dirty || editorDirty || bulkDraftDirty) {
         event.preventDefault();
@@ -135,14 +166,50 @@ export function FlashcardAdminPanel({
       ),
     [bank],
   );
+  const browseDecks = decksBySubject[browseSubjectId] ?? [];
+  const browseDeck = browseDecks.find((deck) => deck.id === browseDeckId);
+  const deckCards = browseDeck ? (cardsByDeck[browseDeck.id] ?? []) : [];
+  const cardResults = selectFlashcardPage(deckCards, cardQuery, cardPage);
   const remember = () => {
     setHistory((items) =>
-      [...items, { bank: clone(bank), operations: structuredClone(operations), reason, dirty }].slice(-10),
+      [
+        ...items,
+        {
+          bank: clone(bank),
+          operations: structuredClone(operations),
+          reason,
+          dirty,
+          browseSubjectId,
+          browseDeckId,
+          cardQuery,
+          cardPage,
+        },
+      ].slice(-10),
     );
   };
   const discardDraft = () => !editorDirty || window.confirm('Discard the unstaged record edits?');
+  const changeBrowseSubject = (subjectId: string) => {
+    if (subjectId === browseSubjectId || busy || externalBusy || !discardDraft()) return;
+    setBrowseSubjectId(subjectId);
+    setBrowseDeckId('');
+    setCardQuery('');
+    setCardPage(0);
+    setSelection(undefined);
+    setEditor('');
+    setLoadedEditor('');
+  };
+  const changeBrowseDeck = (deckId: string) => {
+    if (deckId === browseDeckId || busy || externalBusy || !discardDraft()) return;
+    setBrowseDeckId(deckId);
+    setCardQuery('');
+    setCardPage(0);
+    setSelection(undefined);
+    setEditor('');
+    setLoadedEditor('');
+  };
   const load = (next: Selected, value: unknown) => {
     if (busy || externalBusy) return;
+    if (next?.id && next.kind === selection?.kind && next.id === selection.id) return;
     if (!discardDraft()) return;
     setSelection(next);
     const text = JSON.stringify(value, null, 2);
@@ -159,6 +226,15 @@ export function FlashcardAdminPanel({
       setOperations((items) => [...items, operation]);
       setBank(candidate);
       onBankChange(candidate);
+      if (!candidate.decks.some((deck) => deck.id === browseDeckId)) {
+        setBrowseDeckId('');
+        setCardQuery('');
+        setCardPage(0);
+      }
+      if (!subjects.some((subject) => subject.id === browseSubjectId)) {
+        setBrowseSubjectId('');
+        setBrowseDeckId('');
+      }
       setDirty(true);
       setIssues([]);
       return candidate;
@@ -195,6 +271,22 @@ export function FlashcardAdminPanel({
       setLoadedEditor('');
       setBulkDestination(undefined);
       setBulkDraftDirty(false);
+      const first = batch.find((operation) => operation.op === 'card.create' || operation.op === 'deck.create');
+      if (first?.op === 'card.create') {
+        const deck = candidate.decks.find((item) => item.id === first.value.deckId);
+        if (deck) setBrowseSubjectId(deck.subjectId);
+        setBrowseDeckId(first.value.deckId);
+        setCardQuery('');
+        const position = candidate.cards
+          .filter((card) => card.deckId === first.value.deckId)
+          .findIndex((card) => card.id === first.value.id);
+        setCardPage(Math.max(0, Math.floor(position / 25)));
+      } else if (first?.op === 'deck.create') {
+        setBrowseSubjectId(first.value.subjectId);
+        setBrowseDeckId(first.value.id);
+        setCardQuery('');
+        setCardPage(0);
+      }
     } catch (error) {
       return error instanceof Error ? error.message : 'Unable to stage the bulk flashcard batch.';
     }
@@ -238,11 +330,28 @@ export function FlashcardAdminPanel({
       ...(selection.id ? { id: selection.id } : {}),
       value,
     } as FlashcardAdminOperation;
-    if (!commitOperation(op)) return;
+    const candidate = commitOperation(op);
+    if (!candidate) return;
     const text = JSON.stringify(value, null, 2);
     setSelection({ kind: selection.kind, id: record.id as string });
     setEditor(text);
     setLoadedEditor(text);
+    if (selection.kind === 'deck') {
+      setBrowseSubjectId(record.subjectId as string);
+      setBrowseDeckId(record.id as string);
+      setCardQuery('');
+      setCardPage(0);
+    } else {
+      const deckId = record.deckId as string;
+      const deck = bank.decks.find((item) => item.id === deckId);
+      if (deck) setBrowseSubjectId(deck.subjectId);
+      setBrowseDeckId(deckId);
+      setCardQuery('');
+      const position = candidate.cards
+        .filter((item) => item.deckId === deckId)
+        .findIndex((item) => item.id === record.id);
+      setCardPage(Math.max(0, Math.floor(position / 25)));
+    }
   };
   const remove = (kind: Kind, id: string) => {
     if (!discardDraft()) return;
@@ -275,11 +384,22 @@ export function FlashcardAdminPanel({
     if (!target) return;
     const afterPosition = direction === -1 ? siblingPosition - 2 : siblingPosition + 1;
     const afterId = siblings[afterPosition]?.item.id;
-    commitOperation({
+    const resultBank = commitOperation({
       op: `${selection.kind}.move`,
       id: selection.id,
       ...(afterId ? { afterId } : { first: true }),
     } as FlashcardAdminOperation);
+    if (resultBank && selection.kind === 'card') {
+      const card = resultBank.cards.find((item) => item.id === selection.id);
+      if (!card) return;
+      const visible = selectFlashcardPage(
+        resultBank.cards.filter((item) => item.deckId === card.deckId),
+        cardQuery,
+        0,
+      ).matches;
+      const position = visible.findIndex(({ card: item }) => item.id === card.id);
+      if (position >= 0) setCardPage(Math.floor(position / 25));
+    }
   };
   const undo = () => {
     if (!discardDraft()) return;
@@ -298,6 +418,16 @@ export function FlashcardAdminPanel({
     setOperations(previous.operations);
     setReason(previous.reason);
     setDirty(previous.dirty);
+    const restoredSubject = subjects.some((subject) => subject.id === previous.browseSubjectId)
+      ? previous.browseSubjectId
+      : '';
+    const restoredDeck = previous.bank.decks.some((deck) => deck.id === previous.browseDeckId)
+      ? previous.browseDeckId
+      : '';
+    setBrowseSubjectId(restoredSubject);
+    setBrowseDeckId(restoredDeck);
+    setCardQuery(restoredDeck ? previous.cardQuery : '');
+    setCardPage(restoredDeck ? previous.cardPage : 0);
     setSelection(undefined);
     setEditor('');
     setLoadedEditor('');
@@ -313,6 +443,10 @@ export function FlashcardAdminPanel({
     setOperations([]);
     setDirty(false);
     setSelection(undefined);
+    setBrowseSubjectId('');
+    setBrowseDeckId('');
+    setCardQuery('');
+    setCardPage(0);
     setEditor('');
     setLoadedEditor('');
     setIssues([]);
@@ -493,6 +627,10 @@ export function FlashcardAdminPanel({
       setSelection(undefined);
       setEditor('');
       setLoadedEditor('');
+      setBrowseSubjectId('');
+      setBrowseDeckId('');
+      setCardQuery('');
+      setCardPage(0);
       setPendingImport(undefined);
     } catch (error) {
       setImportFileError(error instanceof Error ? error.message : 'Unable to stage the coordinated import.');
@@ -510,61 +648,203 @@ export function FlashcardAdminPanel({
       spacing={2}
       alignItems="stretch"
     >
-      <Paper variant="outlined" sx={{ width: { lg: 340 }, p: 2, maxHeight: { lg: '78vh' }, overflow: 'auto' }}>
-        <Stack spacing={1}>
+      <Paper
+        variant="outlined"
+        sx={{
+          width: { lg: 340 },
+          p: 2,
+          maxHeight: { xs: '40dvh', lg: '78vh' },
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
+        <Stack spacing={1} sx={{ minHeight: 0, flex: 1 }}>
           <Typography variant="h6">Flashcard content</Typography>
           <Typography variant="caption" color="text.secondary">
-            Subjects come from the quiz subject catalog.
+            Subjects come from the quiz subject catalog. Choose a subject and deck to browse cards.
           </Typography>
-          <List component="nav" aria-label="Flashcard content navigator" dense>
-            {subjects.map((subject) => (
-              <Box key={subject.id}>
-                <ListItemText primary={subject.name} secondary={subject.id} />
-                <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                  <Button size="small" onClick={() => create('deck', subject.id)}>
-                    Add deck
-                  </Button>
+          <Autocomplete
+            options={[...subjects]}
+            value={subjects.find((subject) => subject.id === browseSubjectId) ?? null}
+            getOptionLabel={(subject) => subject.name}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            onChange={(_, subject) => changeBrowseSubject(subject?.id ?? '')}
+            renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
+          />
+          {browseSubjectId && (
+            <Stack direction="row" spacing={0.5} flexWrap="wrap">
+              <Button size="small" onClick={() => create('deck', browseSubjectId)}>
+                Add deck
+              </Button>
+              <Button
+                size="small"
+                onClick={() =>
+                  openBulk(
+                    { kind: 'subject', subjectId: browseSubjectId },
+                    subjects.find((subject) => subject.id === browseSubjectId)?.name ?? '',
+                  )
+                }
+              >
+                Bulk add decks
+              </Button>
+            </Stack>
+          )}
+          {browseSubjectId && (
+            <Autocomplete
+              options={browseDecks}
+              value={browseDeck ?? null}
+              getOptionLabel={(deck) => `${deck.name} · ${cardsByDeck[deck.id]?.length ?? 0} cards`}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onChange={(_, deck) => changeBrowseDeck(deck?.id ?? '')}
+              renderInput={(params) => <TextField {...params} label="Deck" size="small" />}
+            />
+          )}
+          {browseSubjectId && !browseDecks.length && <Typography variant="body2">No decks in this subject.</Typography>}
+          {browseDeckId && browseDecks.some((deck) => deck.id === browseDeckId) && (
+            <>
+              <Typography variant="body2">
+                {browseDecks.find((deck) => deck.id === browseDeckId)?.name} · {deckCards.length} cards
+              </Typography>
+              <Stack direction="row" spacing={0.5} flexWrap="wrap">
+                <Button
+                  size="small"
+                  onClick={() =>
+                    load(
+                      { kind: 'deck', id: browseDeckId },
+                      browseDecks.find((deck) => deck.id === browseDeckId),
+                    )
+                  }
+                >
+                  Edit deck
+                </Button>
+                <Button size="small" onClick={() => create('card', browseDeckId)}>
+                  Add card
+                </Button>
+                <Button
+                  size="small"
+                  onClick={() =>
+                    openBulk(
+                      { kind: 'deck', deckId: browseDeckId },
+                      `${subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''} / ${browseDecks.find((deck) => deck.id === browseDeckId)?.name ?? ''}`,
+                    )
+                  }
+                >
+                  Bulk add cards
+                </Button>
+              </Stack>
+              <TextField
+                label="Search cards in this deck"
+                value={cardQuery}
+                size="small"
+                onChange={(event) => {
+                  setCardQuery(event.target.value);
+                  setCardPage(0);
+                }}
+              />
+              <Typography variant="caption" aria-live="polite">
+                {cardQuery
+                  ? `${cardResults.matches.length} matches of ${deckCards.length} cards`
+                  : `${deckCards.length} cards`}
+              </Typography>
+              {selection?.kind === 'card' &&
+                selection.id &&
+                bank.cards.some((card) => card.id === selection.id) &&
+                !cardResults.visible.some(({ card }) => card.id === selection.id) && (
                   <Button
                     size="small"
-                    onClick={() => openBulk({ kind: 'subject', subjectId: subject.id }, subject.name)}
+                    onClick={() => {
+                      const card = bank.cards.find((item) => item.id === selection.id);
+                      if (!card) return;
+                      const parent = bank.decks.find((deck) => deck.id === card.deckId);
+                      if (parent) setBrowseSubjectId(parent.subjectId);
+                      setBrowseDeckId(card.deckId);
+                      setCardQuery('');
+                      const position = bank.cards
+                        .filter((item) => item.deckId === card.deckId)
+                        .findIndex((item) => item.id === card.id);
+                      setCardPage(Math.max(0, Math.floor(position / 25)));
+                    }}
                   >
-                    Bulk add decks
+                    Show in list
                   </Button>
-                </Stack>
-                {decksBySubject[subject.id]?.map((deck) => (
-                  <Box key={deck.id} sx={{ pl: 2 }}>
-                    <ListItemButton
-                      selected={selection?.kind === 'deck' && selection.id === deck.id}
-                      onClick={() => load({ kind: 'deck', id: deck.id }, deck)}
+                )}
+              <Box
+                component="nav"
+                aria-label="Flashcards in selected deck"
+                sx={{ overflowY: 'auto', minHeight: 0, flex: 1, maxHeight: { lg: '42vh' } }}
+              >
+                {cardResults.visible.map(({ card, position }) => (
+                  <ListItemButton
+                    key={card.id}
+                    selected={selection?.kind === 'card' && selection.id === card.id}
+                    onClick={() => load({ kind: 'card', id: card.id }, card)}
+                  >
+                    <ListItemText
+                      primary={`${position}. ${card.front}`}
+                      secondary={card.id}
+                      primaryTypographyProps={{
+                        sx: {
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                          overflow: 'hidden',
+                        },
+                      }}
+                    />
+                  </ListItemButton>
+                ))}
+                {!deckCards.length && (
+                  <Typography sx={{ p: 1 }} variant="body2">
+                    No cards in this deck.
+                  </Typography>
+                )}
+                {deckCards.length > 0 && !cardResults.matches.length && (
+                  <Stack spacing={1} sx={{ p: 1 }}>
+                    <Typography variant="body2">No matching cards.</Typography>
+                    <Button
+                      size="small"
+                      onClick={() => {
+                        setCardQuery('');
+                        setCardPage(0);
+                      }}
                     >
-                      <ListItemText primary={deck.name} secondary={`${cardsByDeck[deck.id]?.length ?? 0} cards`} />
-                    </ListItemButton>
-                    <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                      <Button size="small" onClick={() => create('card', deck.id)}>
-                        Add card
+                      Clear search
+                    </Button>
+                  </Stack>
+                )}
+              </Box>
+              {cardResults.matches.length > 0 && (
+                <Stack direction="row" alignItems="center" justifyContent="space-between">
+                  <Typography variant="caption">
+                    {cardResults.rangeStart}–{cardResults.rangeEnd} of {cardResults.matches.length}
+                    {cardQuery ? ` matches · ${deckCards.length} total` : ' cards'}
+                  </Typography>
+                  {cardResults.pageCount > 1 && (
+                    <Stack direction="row">
+                      <Button
+                        size="small"
+                        aria-label="Previous card page"
+                        disabled={!cardResults.page}
+                        onClick={() => setCardPage((page) => Math.max(0, page - 1))}
+                      >
+                        Previous
                       </Button>
                       <Button
                         size="small"
-                        onClick={() => openBulk({ kind: 'deck', deckId: deck.id }, `${subject.name} / ${deck.name}`)}
+                        aria-label="Next card page"
+                        disabled={cardResults.page + 1 >= cardResults.pageCount}
+                        onClick={() => setCardPage((page) => Math.min(cardResults.pageCount - 1, page + 1))}
                       >
-                        Bulk add cards
+                        Next
                       </Button>
                     </Stack>
-                    {cardsByDeck[deck.id]?.map((card) => (
-                      <ListItemButton
-                        key={card.id}
-                        sx={{ pl: 4 }}
-                        selected={selection?.kind === 'card' && selection.id === card.id}
-                        onClick={() => load({ kind: 'card', id: card.id }, card)}
-                      >
-                        <ListItemText primary={card.front.slice(0, 50)} secondary="Card" />
-                      </ListItemButton>
-                    ))}
-                  </Box>
-                ))}
-              </Box>
-            ))}
-          </List>
+                  )}
+                </Stack>
+              )}
+            </>
+          )}
+          {!browseSubjectId && <Typography variant="body2">Choose a subject to begin.</Typography>}
         </Stack>
       </Paper>
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>

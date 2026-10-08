@@ -24,6 +24,20 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+function chooseSubject(subjectId = 's1') {
+  const subject = props.subjects.find((item) => item.id === subjectId)!;
+  fireEvent.click(screen.getAllByTitle('Open')[0]);
+
+  fireEvent.click(screen.getByRole('option', { name: subject.name }));
+}
+
+function clickAddDeck(subjectId = 's1') {
+  const subject = screen.getByRole('combobox', { name: 'Subject' }) as HTMLInputElement;
+  const selected = props.subjects.find((item) => item.id === subjectId)?.name;
+  if (subject.value !== selected) chooseSubject(subjectId);
+  fireEvent.click(screen.getByRole('button', { name: 'Add deck' }));
+}
+
 function stageRecord(value: object) {
   fireEvent.change(screen.getByRole('textbox', { name: 'Record JSON' }), { target: { value: JSON.stringify(value) } });
   fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
@@ -141,7 +155,10 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Stage import' }));
     await waitFor(() => expect(onBankChange).toHaveBeenCalledWith(result));
     expect(stage).toHaveBeenLastCalledWith(quizChangeSet, result);
-    expect(screen.getByRole('button', { name: 'Paired deck 0 cards' })).toBeVisible();
+    chooseSubject('s2');
+    const deckPicker = screen.getByRole('combobox', { name: 'Deck' });
+    fireEvent.change(deckPicker, { target: { value: 'Paired deck' } });
+    expect(screen.getByRole('option', { name: 'Paired deck · 0 cards' })).toBeVisible();
   });
   it('invalidates an imported preview after shared subjects change', async () => {
     const { container, rerender } = render(
@@ -160,7 +177,7 @@ describe('FlashcardAdminPanel', () => {
       </ThemeProvider>,
     );
     expect(screen.queryByRole('button', { name: 'Stage import' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Imported deck 0 cards' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'Imported deck · 0 cards' })).toBeNull();
   });
 
   it('restores the exact imported operation history on undo and can export it again', async () => {
@@ -174,11 +191,15 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [await importFile()] } });
     await screen.findByText('Import preview');
     fireEvent.click(screen.getByRole('button', { name: 'Stage import' }));
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    chooseSubject();
+    clickAddDeck();
     stageRecord({ id: 'd-after-import', subjectId: 's1', name: 'Later deck' });
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(screen.queryByRole('button', { name: 'Later deck 0 cards' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Imported deck 0 cards' })).toBeVisible();
+    const deckPicker = screen.getByRole('combobox', { name: 'Deck' });
+    fireEvent.change(deckPicker, { target: { value: 'Imported deck' } });
+    expect(screen.getByRole('option', { name: 'Imported deck · 0 cards' })).toBeVisible();
+    fireEvent.click(screen.getByRole('option', { name: 'Imported deck · 0 cards' }));
     fireEvent.click(screen.getByRole('button', { name: 'Export flashcard JSON and change set' }));
     await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
     expect(screen.queryByText(/does not reproduce/)).toBeNull();
@@ -198,11 +219,11 @@ describe('FlashcardAdminPanel', () => {
         />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    clickAddDeck();
     stageRecord({ id: 'd1', subjectId: 's1', name: 'Deck One' });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    clickAddDeck();
     stageRecord({ id: 'd-other', subjectId: 's2', name: 'Other Deck' });
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    clickAddDeck();
     stageRecord({ id: 'd2', subjectId: 's1', name: 'Deck Two' });
     fireEvent.click(screen.getByRole('button', { name: 'Move up' }));
     expect(bank.decks.map((deck) => deck.id)).toEqual(['d2', 'd1', 'd-other']);
@@ -224,7 +245,7 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    clickAddDeck();
     stageRecord({ id: 'd1', subjectId: 's1', name: 'Deck' });
     fireEvent.click(screen.getByRole('button', { name: 'Add card' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Record JSON' }), {
@@ -233,7 +254,7 @@ describe('FlashcardAdminPanel', () => {
     const unload = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(unload);
     expect(unload.defaultPrevented).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Deck 0 cards' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Edit deck' }));
     expect(confirm).toHaveBeenCalledWith('Discard the unstaged record edits?');
     expect(screen.getByRole('heading', { name: 'Create card' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
@@ -247,7 +268,7 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    clickAddDeck();
     stageRecord({ id: 'd1', subjectId: 's1', name: 'Deck' });
     fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
     rerender(
@@ -257,7 +278,7 @@ describe('FlashcardAdminPanel', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(screen.getByText(/unknown subject/).closest('[role="alert"]')).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Deck 0 cards' })).toBeNull();
+    expect(screen.queryByRole('option', { name: 'Deck · 0 cards' })).toBeNull();
   });
   it('creates and stages a deck under an authoritative shared subject', () => {
     render(
@@ -265,14 +286,17 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    clickAddDeck();
     const editor = screen.getByRole('textbox', { name: 'Record JSON' });
     const deck = JSON.parse((editor as HTMLTextAreaElement).value) as { id: string; subjectId: string; name: string };
     expect(deck.id).toMatch(/^d-/);
     expect(deck.subjectId).toBe('s1');
     fireEvent.change(editor, { target: { value: JSON.stringify({ ...deck, name: 'Test deck' }, null, 2) } });
     fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
-    expect(screen.getByText('Test deck')).toBeVisible();
+    const deckPicker = screen.getByRole('combobox', { name: 'Deck' });
+    fireEvent.change(deckPicker, { target: { value: 'Test deck' } });
+    expect(screen.getByRole('option', { name: 'Test deck · 0 cards' })).toBeVisible();
+    fireEvent.click(screen.getByRole('option', { name: 'Test deck · 0 cards' }));
     expect(screen.getByRole('button', { name: 'Export flashcard JSON and change set' })).toBeEnabled();
   });
 
@@ -282,7 +306,7 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    clickAddDeck();
     const editor = screen.getByRole('textbox', { name: 'Record JSON' });
     fireEvent.change(editor, {
       target: { value: JSON.stringify({ id: 'd-invalid', subjectId: 'missing', name: 'Invalid' }) },
@@ -302,7 +326,7 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} onBankChange={onBankChange} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add deck' })[0]);
+    clickAddDeck();
     stageRecord({ id: 'd-bulk-cards', subjectId: 's1', name: 'Bulk cards destination' });
     fireEvent.click(screen.getByRole('button', { name: 'Bulk add cards' }));
     const json = screen.getByRole('textbox', { name: 'Bulk JSON' });
@@ -338,7 +362,8 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} onBankChange={onBankChange} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Bulk add decks' })[0]);
+    chooseSubject();
+    fireEvent.click(screen.getByRole('button', { name: 'Bulk add decks' }));
     fireEvent.change(screen.getByRole('textbox', { name: 'Bulk JSON' }), {
       target: {
         value: JSON.stringify({
@@ -382,7 +407,8 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} onBankChange={onBankChange} />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getAllByRole('button', { name: 'Bulk add decks' })[0]);
+    chooseSubject();
+    fireEvent.click(screen.getByRole('button', { name: 'Bulk add decks' }));
     const json = screen.getByRole('textbox', { name: 'Bulk JSON' });
     fireEvent.change(json, {
       target: {
