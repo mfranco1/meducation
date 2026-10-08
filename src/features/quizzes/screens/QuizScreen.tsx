@@ -15,6 +15,7 @@ import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavig
 import { Stopwatch } from '../components/quiz/Stopwatch';
 import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
 import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/StudyHeader';
+import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
 
 interface QuizScreenProps {
   quiz: Quiz;
@@ -37,7 +38,10 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
   const [submitOpen, setSubmitOpen] = useState(false);
   const correctAnswerBurstSequence = useRef(0);
   const submissionRequested = useRef(false);
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const finishRef = useRef<HTMLButtonElement>(null);
   const question = questions[index];
+  useStudyArrowNavigation({ index, total: questions.length, disabled: navigatorOpen || submitOpen, onPrevious: () => navigateToQuestion(index - 1), onNext: () => navigateToQuestion(index + 1), nextButtonRef: nextRef, finishButtonRef: finishRef });
   const savedResponse = attempt.responses[question.id];
   const response = savedResponse ?? blankResponse(question.id);
   const feedback = response.locked && attempt.feedbackMode === 'immediate';
@@ -106,7 +110,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
           </RadioGroup>
           {feedback && <FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} />}
         </CardContent></Card>
-        <StudyNavigationFooter index={index} total={questions.length} onPrevious={() => navigateToQuestion(index - 1)} onNext={() => navigateToQuestion(index + 1)} onFinish={requestSubmit} finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'} nextLabel={feedback ? 'Continue' : 'Next'} />
+        <StudyNavigationFooter index={index} total={questions.length} onPrevious={() => navigateToQuestion(index - 1)} onNext={() => navigateToQuestion(index + 1)} onFinish={requestSubmit} finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'} nextLabel={feedback ? 'Continue' : 'Next'} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>
     <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
   </Container>;

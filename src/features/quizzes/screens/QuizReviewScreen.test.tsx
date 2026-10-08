@@ -17,6 +17,19 @@ const attempt: CompletedAttempt = {
 };
 
 describe('QuizReviewScreen', () => {
+  it('navigates the canonical question order with arrows and does not exit at the right boundary', () => {
+    const onNavigate = vi.fn();
+    const onRequestExit = vi.fn();
+    const view = render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={questions} onNavigate={onNavigate} onRequestExit={onRequestExit} /></ThemeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Flagged questions, 1' }));
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNavigate).toHaveBeenCalledWith(1);
+    view.rerender(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={1} questions={questions} onNavigate={onNavigate} onRequestExit={onRequestExit} /></ThemeProvider>);
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(onRequestExit).not.toHaveBeenCalled();
+  });
+
   it('keeps multi-paragraph stems in one column beside the optional flag', () => {
     const multiBlockQuestions = [{ ...questions[0], stem: 'First paragraph.\n\nSecond paragraph.' }];
     const unflaggedAttempt = { ...attempt, responses: { q1: { ...attempt.responses.q1, flagged: false } } };

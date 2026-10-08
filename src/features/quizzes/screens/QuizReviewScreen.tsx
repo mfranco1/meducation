@@ -1,6 +1,6 @@
 import FlagIcon from '@mui/icons-material/Flag';
 import { Alert, Box, Button, Card, CardContent, Container, Stack } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { answerFor, isCorrect } from '../../../domain/quizEngine';
 import type { CompletedAttempt, Question, Quiz } from '../../../domain/types';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
@@ -10,6 +10,7 @@ import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavig
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { ReadOnlyChoiceList } from '../components/quiz/ReadOnlyChoiceList';
 import { ReadOnlyQuizFooter, ReadOnlyQuizHeader } from '../components/quiz/ReadOnlyQuizChrome';
+import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
 
 interface QuizReviewScreenProps {
   quiz: Quiz;
@@ -23,6 +24,9 @@ interface QuizReviewScreenProps {
 export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequestExit }: QuizReviewScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const finishRef = useRef<HTMLButtonElement>(null);
+  useStudyArrowNavigation({ index, total: questions.length, disabled: navigatorOpen, onPrevious: () => onNavigate(index - 1), onNext: () => onNavigate(index + 1), nextButtonRef: nextRef, finishButtonRef: finishRef });
   const question = questions[index];
   useEffect(() => {
     const warnBeforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
@@ -50,7 +54,7 @@ export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequ
         <FeedbackPanel question={question} selectedChoiceId={selectedChoiceId} readOnlyStatus={status} />
         <ChoiceExplanations question={question} />
       </CardContent></Card>
-      <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onRequestExit} />
+      <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onRequestExit} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>
   </Container>;
 }

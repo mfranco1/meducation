@@ -243,6 +243,11 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   console.info(`First quiz screen after Begin Quiz: ${firstQuizMs} ms (local fixture and API)`);
   await page.getByRole('radio', { name: /A\. Four/ }).check();
   await expect(page.getByText('Correct', { exact: true })).toBeVisible();
+  await questionFlag.focus();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('Question 2 of 2')).toBeVisible();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByText('Question 1 of 2')).toBeVisible();
 
   await page.reload();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
@@ -271,6 +276,10 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
     contentType: 'image/png',
   });
   await page.setViewportSize({ width: 1280, height: 720 });
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('The heart pumps blood.')).toBeVisible();
+  await page.keyboard.press('ArrowLeft');
+  await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Done' }).click();
   await expect(page.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
@@ -453,6 +462,10 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page },
     page.getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }),
   ).toBeVisible();
   await expect(page.getByRole('listitem', { name: 'Correct answer', exact: true })).toBeVisible();
+  await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(page.getByText('The heart pumps blood.')).toBeVisible();
+  await page.keyboard.press('ArrowLeft');
   await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
   await page.getByRole('button', { name: 'Leave review' }).click();
   await expect(page.getByRole('dialog', { name: 'Leave review?' })).toBeVisible();

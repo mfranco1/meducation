@@ -30,6 +30,7 @@ Use this reference when changing the corresponding behavior. [Testing](testing.m
 - For quiz-screen presentation changes, compare desktop and mobile browser fixture captures of the active quiz, Browse Answers, and results review.
 - Confirm that the active quiz stays visually unchanged, the read-only modes keep choices noninteractive, and review correctly labels submitted, correct, unanswered, flagged, unavailable-key, and key-under-review states.
 - Keep first-quiz timing measurement before screenshot capture.
+- Keyboard regressions cover bounded Left/Right navigation in active quiz, Browse Answers, and results review; ordinary buttons allow shortcuts, while answer radios and arrow-operated controls keep native behavior. Checkpoint navigation persists through the active session, read-only views do not write progress, and open drawers/dialogs suspend shortcuts.
 
 ### Progress writes and recovery
 

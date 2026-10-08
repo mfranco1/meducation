@@ -10,6 +10,7 @@ import { QuestionTile } from '../components/quiz/QuestionNavigator';
 import { ReadOnlyChoiceList } from '../components/quiz/ReadOnlyChoiceList';
 import { ReadOnlyQuizFooter, ReadOnlyQuizHeader } from '../components/quiz/ReadOnlyQuizChrome';
 import { useScrollCurrentQuestion } from '../../../shared/ui/study/useScrollCurrentQuestion';
+import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
 
 interface QuizBrowseScreenProps {
   quiz: Quiz;
@@ -21,6 +22,9 @@ interface QuizBrowseScreenProps {
 
 export function QuizBrowseScreen({ index, questions, onNavigate, onDone }: QuizBrowseScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const finishRef = useRef<HTMLButtonElement>(null);
+  useStudyArrowNavigation({ index, total: questions.length, disabled: navigatorOpen, onPrevious: () => onNavigate(index - 1), onNext: () => onNavigate(index + 1), nextButtonRef: nextRef, finishButtonRef: finishRef });
   const question = questions[index];
   if (!question) return <Container maxWidth="md" sx={{ py: 4 }}><Alert severity="warning">This quiz has no questions to browse.</Alert><Button sx={{ mt: 2 }} onClick={onDone}>Done</Button></Container>;
 
@@ -39,7 +43,7 @@ export function QuizBrowseScreen({ index, questions, onNavigate, onDone }: QuizB
             : <FeedbackPanel question={question} selectedChoiceId={correctAnswer} />}
           <ChoiceExplanations question={question} />
         </CardContent></Card>
-        <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onDone} />
+        <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onDone} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>
   </Container>;
 }

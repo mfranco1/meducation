@@ -35,6 +35,20 @@ function renderQuizForSubmission({ attempt = startingAttempt, onFinish = vi.fn()
 }
 
 describe('quiz streak celebrations', () => {
+  it('uses Left and Right for checkpoint navigation without selecting answers or submitting', () => {
+    const onCheckpoint = vi.fn();
+    const onFinish = vi.fn();
+    render(<ThemeProvider theme={theme}><QuizScreen quiz={quiz} attempt={startingAttempt} index={1} questions={questions} onCheckpoint={onCheckpoint} onFinish={onFinish} onRequestExit={() => {}} /></ThemeProvider>);
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    expect(onCheckpoint).toHaveBeenCalledWith(startingAttempt, 0);
+    fireEvent.keyDown(screen.getByRole('radio', { name: /Incorrect 2/ }), { key: 'ArrowRight' });
+    expect(onCheckpoint).toHaveBeenCalledTimes(1);
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onCheckpoint).toHaveBeenLastCalledWith(startingAttempt, 2);
+    expect(onFinish).not.toHaveBeenCalled();
+
+  });
+
   it('keeps multiple stem blocks in the question column beside the flag', () => {
     const multiBlockQuestion: Question = {
       ...questions[0], stem: 'First paragraph.\n\nSecond paragraph.\n\n- First item\n- Second item',

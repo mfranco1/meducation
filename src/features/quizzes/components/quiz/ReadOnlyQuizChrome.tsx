@@ -2,6 +2,7 @@ import TimerOutlinedIcon from '@mui/icons-material/TimerOutlined';
 import { Stack, Typography } from '@mui/material';
 import { formatDuration } from '../../format';
 import { StudyHeader, StudyNavigationFooter } from '../../../../shared/ui/study/StudyHeader';
+import type { MutableRefObject } from 'react';
 
 export function ReadOnlyQuizHeader({ index, total, mode, exitLabel, onExit, finalTimeMs }: {
   index: number;
@@ -17,11 +18,13 @@ export function ReadOnlyQuizHeader({ index, total, mode, exitLabel, onExit, fina
       </Stack> : undefined} />;
 }
 
-export function ReadOnlyQuizFooter({ index, total, onNavigate, onDone }: {
+export function ReadOnlyQuizFooter({ index, total, onNavigate, onDone, nextButtonRef, finishButtonRef }: {
   index: number;
   total: number;
   onNavigate: (index: number) => void;
   onDone: () => void;
+  nextButtonRef?: MutableRefObject<HTMLButtonElement | null>;
+  finishButtonRef?: MutableRefObject<HTMLButtonElement | null>;
 }) {
-  return <StudyNavigationFooter index={index} total={total} onPrevious={() => onNavigate(index - 1)} onNext={() => onNavigate(index + 1)} onFinish={onDone} finishLabel="Done" />;
+  return <StudyNavigationFooter index={index} total={total} onPrevious={() => onNavigate(index - 1)} onNext={() => onNavigate(index + 1)} onFinish={onDone} finishLabel="Done" nextButtonRef={nextButtonRef} finishButtonRef={finishButtonRef} />;
 }

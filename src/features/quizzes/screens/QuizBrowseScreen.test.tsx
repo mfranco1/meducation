@@ -14,11 +14,24 @@ const questions: Question[] = [
 function renderBrowse(index = 0) {
   const onNavigate = vi.fn();
   const onDone = vi.fn();
-  render(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={index} questions={questions} onNavigate={onNavigate} onDone={onDone} /></ThemeProvider>);
-  return { onNavigate, onDone };
+  const view = render(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={index} questions={questions} onNavigate={onNavigate} onDone={onDone} /></ThemeProvider>);
+  return { onNavigate, onDone, rerender: (nextIndex: number) => view.rerender(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={nextIndex} questions={questions} onNavigate={onNavigate} onDone={onDone} /></ThemeProvider>) };
 }
 
 describe('quiz answer browser', () => {
+  it('supports bounded arrow navigation without using the Done action', () => {
+    const { onNavigate, onDone, rerender } = renderBrowse(0);
+    fireEvent.keyDown(window, { key: 'ArrowLeft' });
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(onNavigate).toHaveBeenCalledWith(1);
+    expect(onDone).not.toHaveBeenCalled();
+    rerender(1);
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(onNavigate).toHaveBeenCalledTimes(1);
+    expect(onDone).not.toHaveBeenCalled();
+  });
+
   it('shows the resolved correct choice and explanation immediately without response controls', () => {
     renderBrowse();
 
