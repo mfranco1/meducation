@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import {
   Alert, Box, Button, Container, Divider, MenuItem, Paper, Stack, Tab, Tabs, TextField, Typography,
 } from '@mui/material';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import { AppBrand } from '../shared/ui/brand/AppBrand';
 import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
 import { storedQuestionBank } from '../content/local/questionBank';
@@ -46,7 +46,7 @@ export function AdminApp() {
   const header = <Box component="header" sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
     <Container maxWidth={false}><Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ sm: 'center' }} justifyContent="space-between" spacing={1.5}>
       <Stack direction="row" alignItems="center" spacing={1.5}>
-        <Stack direction="row" alignItems="center" spacing={.75} sx={{ color: 'text.primary', fontSize: 20, letterSpacing: '-.04em', fontWeight: 700 }}><MenuBookRoundedIcon sx={{ color: 'primary.main' }} /><Box component="span"><Box component="span" sx={{ color: 'primary.main' }}>Med</Box>ucation</Box></Stack>
+        <AppBrand />
         <Typography variant="body2" color="text.secondary">Admin</Typography>
       </Stack>
       <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>

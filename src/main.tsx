@@ -8,6 +8,7 @@ import { BootFailure } from './shared/ui/loading/BootFailure';
 import { AppShell } from './shared/ui/shell/AppShell';
 import { AppNavigationDrawer } from './app/components/AppNavigationDrawer';
 import { ScreenLoading } from './shared/ui/loading/ScreenLoading';
+import { brand } from './shared/brand';
 
 const root = createRoot(document.getElementById('root')!);
 const render = (content: ReactNode) => root.render(
@@ -23,7 +24,7 @@ async function boot() {
       render(<ContentQaPanel />);
       return;
     }
-    render(<AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />} busy><ScreenLoading label="Loading Meducation…" /></AppShell>);
+    render(<AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />} busy><ScreenLoading label={`Loading ${brand.name}…`} /></AppShell>);
     const { default: App } = await import('./app/App');
     render(<App />);
   } catch (error) {

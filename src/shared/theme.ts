@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles';
+import { brand } from './brand';
 
 interface FeedbackTone {
   surface: string;
@@ -34,7 +35,7 @@ declare module '@mui/material/styles' {
 export const theme = createTheme({
   palette: {
     mode: 'light',
-    primary: { main: '#b9511b', dark: '#853812', light: '#f7dfcf' },
+    primary: { main: brand.accentColor, dark: '#853812', light: '#f7dfcf' },
     background: { default: '#fbf8f5', paper: '#fffdfb' },
     text: { primary: '#27211e', secondary: '#766a63' },
     success: { main: '#2f7a55' },

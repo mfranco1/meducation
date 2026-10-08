@@ -3,7 +3,8 @@ import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import { Box, ButtonBase, Drawer, Tooltip, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { AppBrand } from '../../shared/ui/shell/AppHeader';
+import { brand } from '../../shared/brand';
+import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { DrawerEdgeToggle } from './drawer/DrawerEdgeToggle';
 import { DrawerSurface } from './drawer/DrawerSurface';
 import {
@@ -126,7 +127,7 @@ export function AppNavigationDrawer({
             borderRight: '1px solid #eee5df',
           }}
         >
-          <AppBrand compact={compact} onClick={() => select('quizzes')} />
+          <AppBrand compact={compact} onClick={() => select('quizzes')} actionLabel="go to Quizzes" />
           <Box aria-hidden="true" sx={{ height: 48, flex: '0 0 48px' }} />
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             {item('quizzes', 'Quizzes', <QuizRoundedIcon />, active === 'quizzes', compact)}
@@ -142,7 +143,7 @@ export function AppNavigationDrawer({
     <>
       <Box
         component="aside"
-        aria-label="Meducation navigation"
+        aria-label={`${brand.name} navigation`}
         sx={{
           width: desktop ? width : learnerDrawerCollapsedWidth,
           flex: '0 0 auto',

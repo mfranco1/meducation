@@ -1,20 +1,14 @@
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
-import { Box, Button, Container, Stack } from '@mui/material';
-
-export function AppBrand({ onClick, compact = false, tone = 'default' }: { onClick?: () => void; compact?: boolean; tone?: 'default' | 'inverse' }) {
-  const brand = <Stack direction="row" alignItems="center" spacing={.75} sx={{ color: tone === 'inverse' ? '#fff' : 'text.primary', fontSize: 20, letterSpacing: '-.04em', fontWeight: 700, justifyContent: compact ? 'center' : 'flex-start' }}>
-    <MenuBookRoundedIcon aria-hidden="true" sx={{ color: tone === 'inverse' ? '#fff' : 'primary.main' }} />
-    {!compact && <Box component="span"><Box component="span" sx={{ color: tone === 'inverse' ? '#fff' : 'primary.main' }}>Med</Box>ucation</Box>}
-  </Stack>;
-  return onClick
-    ? <Button disableRipple aria-label="Meducation, go to Quizzes" onClick={onClick} sx={{ minWidth: 0, width: '100%', height: 48, boxSizing: 'border-box', p: 1, borderRadius: '10px', justifyContent: compact ? 'center' : 'flex-start', color: 'text.primary', bgcolor: 'transparent', '&:hover, &:active': { bgcolor: 'transparent' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }}>{brand}</Button>
-    : brand;
-}
+import { Box, Container, Stack } from '@mui/material';
+import { AppBrand } from '../brand/AppBrand';
 
 export function AppHeader({ onNavigateHome }: { onNavigateHome?: () => void }) {
-  return <Box component="header" sx={{ py: 2.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}>
-    <Container maxWidth="lg"><Stack direction="row" alignItems="center">
-      <AppBrand onClick={onNavigateHome} />
-    </Stack></Container>
-  </Box>;
+  return (
+    <Box component="header" sx={{ py: 2.5, borderBottom: '1px solid #eee5df', bgcolor: 'rgba(255,253,251,.9)' }}>
+      <Container maxWidth="lg">
+        <Stack direction="row" alignItems="center">
+          <AppBrand onClick={onNavigateHome} actionLabel="go to Quizzes" />
+        </Stack>
+      </Container>
+    </Box>
+  );
 }

@@ -2,6 +2,10 @@
 
 This document owns visual and interaction conventions. Use the existing MUI theme, readable question/explanation layouts, semantic lists, responsive spacing, and visible keyboard focus. Preserve canonical wording and meaningful formatting when changing presentation. [Product behavior](product.md) defines quiz modes and save/abort semantics; [architecture](architecture.md) defines implementation boundaries; [content management](content-management.md) and [testing](testing.md) define review and verification requirements.
 
+### Brand identity
+
+Use `src/shared/brand.ts` as the canonical Meducation identity and `src/shared/ui/brand/AppBrand.tsx` or `BrandMark.tsx` for every wordmark or book mark. Do not recreate the mark with an icon package or duplicate the wordmark in a header. Static uses render the brand directly; clickable uses provide an explicit action label and keep navigation callbacks at the call site. Compact marks retain an accessible button name, while the SVG itself is decorative. The Vite branding plugin supplies page titles, theme color, and favicon from this same identity for both HTML entries.
+
 The local flashcard admin navigator scopes cards to one selected subject and deck. Keep the pickers and context actions visible above a bounded, independently scrolling card list; search the selected deck and paginate results in canonical order, 25 per page. Keep the editor draft while searching or changing pages. Changing subject/deck goes through the existing draft-discard guard. At narrow widths, bound the navigator height and let it stack above the editor without horizontal overflow.
 
 ### Admin presentation

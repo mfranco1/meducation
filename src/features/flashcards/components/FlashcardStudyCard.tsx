@@ -1,10 +1,10 @@
 import FlagIcon from '@mui/icons-material/Flag';
 import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
-import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
 import { Box, ButtonBase, Card, CardContent, IconButton } from '@mui/material';
 import { useLayoutEffect, useRef } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
+import { BrandMark } from '../../../shared/ui/brand/BrandMark';
 
 export function FlashcardStudyCard({ card, revealed, flagged, onReveal, onToggleFlag }: {
   card: FlashcardCard; revealed: boolean; flagged: boolean; onReveal: () => void; onToggleFlag: () => void;
@@ -34,7 +34,7 @@ export function FlashcardStudyCard({ card, revealed, flagged, onReveal, onToggle
       <Box sx={{ perspective: 1200, width: '100%' }}>
         <Box key={card.id} role="group" aria-label={revealed ? 'Flashcard answer' : 'Hidden flashcard answer'} aria-live="polite" sx={{ display: 'grid', transformStyle: 'preserve-3d', transform: revealed ? 'rotateY(180deg)' : 'rotateY(0deg)', transition: 'transform 320ms cubic-bezier(.2, .7, .2, 1)', '@media (prefers-reduced-motion: reduce)': { transition: 'none' } }}>
           <ButtonBase ref={revealButton} onClick={onReveal} aria-label="Reveal answer" aria-hidden={revealed} tabIndex={revealed ? -1 : 0} sx={{ gridArea: '1 / 1', zIndex: revealed ? 0 : 1, minHeight: 190, p: 3, borderRadius: 1, bgcolor: 'primary.main', color: '#fff', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', '&:hover': { bgcolor: 'primary.dark' }, '&:focus-visible': { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 3 } }}>
-            <MenuBookRoundedIcon aria-hidden="true" sx={{ fontSize: { xs: 72, sm: 88 }, color: 'common.white' }} />
+            <BrandMark tone="inverse" size={{ xs: 72, sm: 88 }} />
           </ButtonBase>
           <Box ref={answerPanel} role="group" aria-label="Answer revealed. Click to hide or press Space to continue." tabIndex={revealed ? 0 : -1} aria-hidden={!revealed} inert={!revealed} onClick={event => {
             const target = event.target as HTMLElement;
