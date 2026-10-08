@@ -34,7 +34,7 @@ export function FlashcardStudyCard({ card, revealed, flagged, onReveal, onToggle
       <Box sx={{ perspective: 1200, width: '100%' }}>
         <Box key={card.id} role="group" aria-label={revealed ? 'Flashcard answer' : 'Hidden flashcard answer'} aria-live="polite" sx={{ display: 'grid', transformStyle: 'preserve-3d', transform: revealed ? 'rotateY(180deg)' : 'rotateY(0deg)', transition: 'transform 320ms cubic-bezier(.2, .7, .2, 1)', '@media (prefers-reduced-motion: reduce)': { transition: 'none' } }}>
           <ButtonBase ref={revealButton} onClick={onReveal} aria-label="Reveal answer" aria-hidden={revealed} tabIndex={revealed ? -1 : 0} sx={{ gridArea: '1 / 1', zIndex: revealed ? 0 : 1, minHeight: 190, p: 3, borderRadius: 1, bgcolor: 'primary.main', color: '#fff', backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden', '&:hover': { bgcolor: 'primary.dark' }, '&:focus-visible': { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 3 } }}>
-            <BrandMark tone="inverse" size={{ xs: 72, sm: 88 }} />
+            <BrandMark colorMode="white" decorative size={{ xs: 72, sm: 88 }} />
           </ButtonBase>
           <Box ref={answerPanel} role="group" aria-label="Answer revealed. Click to hide or press Space to continue." tabIndex={revealed ? 0 : -1} aria-hidden={!revealed} inert={!revealed} onClick={event => {
             const target = event.target as HTMLElement;

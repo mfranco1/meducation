@@ -7,8 +7,9 @@ export const escapeBrandHtml = (value: string) =>
   value.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 
 export function renderBrandFavicon() {
-  const paths = brand.mark.paths.map((path) => `<path fill="${brand.accentColor}" d="${path}"/>`).join('');
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${brand.mark.viewBox}" role="img" aria-label="${escapeBrandHtml(brand.name)}">${paths}</svg>`;
+  const half = (page: string, side: 'left' | 'right', transform = '') =>
+    `<g class="${side}"${transform ? ` transform="${transform}"` : ''}><path class="page" d="${page}"/><path class="rail" d="${brand.mark.rail}"/></g>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="${escapeBrandHtml(brand.name)}"><style>.left{fill:${brand.palette.light.left}}.right{fill:${brand.palette.light.right}}.rail{fill:none;stroke-width:${brand.mark.smallRailWidth};stroke-linecap:round}.left .rail{stroke:${brand.palette.light.left}}.right .rail{stroke:${brand.palette.light.right}}@media(prefers-color-scheme:dark){.left{fill:${brand.palette.dark.left}}.right{fill:${brand.palette.dark.right}}.left .rail{stroke:${brand.palette.dark.left}}.right .rail{stroke:${brand.palette.dark.right}}}</style><g transform="translate(0 8)">${half(brand.mark.smallPage, 'left')}${half(brand.mark.smallPage, 'right', brand.mark.reflection)}</g></svg>`;
 }
 
 export function transformBrandHtml(html: string, base = '/') {

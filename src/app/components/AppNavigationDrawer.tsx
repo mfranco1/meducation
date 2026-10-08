@@ -127,7 +127,12 @@ export function AppNavigationDrawer({
             borderRight: '1px solid #eee5df',
           }}
         >
-          <AppBrand compact={compact} onClick={() => select('quizzes')} actionLabel="go to Quizzes" />
+          <AppBrand
+            variant={compact ? 'icon' : 'full'}
+            size={compact ? 28 : 184}
+            onClick={() => select('quizzes')}
+            actionLabel="go to Quizzes"
+          />
           <Box aria-hidden="true" sx={{ height: 48, flex: '0 0 48px' }} />
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             {item('quizzes', 'Quizzes', <QuizRoundedIcon />, active === 'quizzes', compact)}

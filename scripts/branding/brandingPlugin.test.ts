@@ -11,12 +11,17 @@ describe('branding HTML and favicon', () => {
     );
   });
 
-  it('renders the same mark paths and accent used by the React logo', () => {
+  it('renders the small mirrored mark with rounded two-color rails', () => {
     const favicon = renderBrandFavicon();
     expect(favicon).toContain(`aria-label="${brand.name}"`);
-    expect(favicon).toContain(`viewBox="${brand.mark.viewBox}"`);
-    expect(favicon.match(/<path /g)).toHaveLength(brand.mark.paths.length);
-    for (const path of brand.mark.paths) expect(favicon).toContain(`fill="${brand.accentColor}" d="${path}"`);
+    expect(favicon).toContain('viewBox="0 0 128 128"');
+    expect(favicon).toContain(brand.mark.smallPage);
+    expect(favicon).toContain(brand.mark.reflection);
+    expect(favicon).toContain('stroke-linecap:round');
+    expect(favicon).toContain(`prefers-color-scheme:dark`);
+    expect(favicon).toContain(brand.palette.light.left);
+    expect(favicon).toContain(brand.palette.light.right);
+    expect(favicon).toContain(brand.palette.dark.left);
   });
 
   it('escapes metadata values before inserting them into HTML', () => {

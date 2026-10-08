@@ -1,40 +1,62 @@
-import { Box, Button, Stack } from '@mui/material';
+import { Button } from '@mui/material';
 import { brand } from '../../brand';
-import { BrandMark } from './BrandMark';
+import {
+  BrandGraphic,
+  type BrandColorMode,
+  type BrandLayout,
+  type BrandOpticalSize,
+  type BrandSize,
+  type BrandTheme,
+  type BrandVariant,
+} from './BrandGraphic';
+
+export type {
+  BrandColorMode,
+  BrandLayout,
+  BrandOpticalSize,
+  BrandSize,
+  BrandTheme,
+  BrandVariant,
+} from './BrandGraphic';
 
 type AppBrandProps = {
+  variant?: BrandVariant;
+  layout?: BrandLayout;
+  size?: BrandSize;
+  className?: string;
+  theme?: BrandTheme;
+  colorMode?: BrandColorMode;
+  opticalSize?: BrandOpticalSize;
+  decorative?: boolean;
   onClick?: () => void;
   actionLabel?: string;
-  compact?: boolean;
-  tone?: 'default' | 'inverse';
 };
 
-export function AppBrand({ onClick, actionLabel, compact = false, tone = 'default' }: AppBrandProps) {
+export function AppBrand({
+  onClick,
+  actionLabel,
+  variant = 'full',
+  layout = 'horizontal',
+  size,
+  className,
+  theme,
+  colorMode,
+  opticalSize,
+  decorative,
+}: AppBrandProps) {
   if (onClick && !actionLabel) throw new Error('A clickable AppBrand requires an actionLabel.');
 
-  const wordmark = (
-    <Stack
-      direction="row"
-      alignItems="center"
-      spacing={0.75}
-      sx={{
-        color: tone === 'inverse' ? '#fff' : 'text.primary',
-        fontSize: 20,
-        letterSpacing: '-.04em',
-        fontWeight: 700,
-        justifyContent: compact ? 'center' : 'flex-start',
-      }}
-    >
-      <BrandMark tone={tone} />
-      {!compact && (
-        <Box component="span">
-          <Box component="span" sx={{ color: tone === 'inverse' ? '#fff' : 'primary.main' }}>
-            {brand.wordmark.emphasis}
-          </Box>
-          {brand.wordmark.remainder}
-        </Box>
-      )}
-    </Stack>
+  const graphic = (
+    <BrandGraphic
+      variant={variant}
+      layout={layout}
+      size={size}
+      className={onClick ? undefined : className}
+      theme={theme}
+      colorMode={colorMode}
+      opticalSize={opticalSize}
+      decorative={onClick ? true : decorative}
+    />
   );
 
   return onClick ? (
@@ -42,6 +64,7 @@ export function AppBrand({ onClick, actionLabel, compact = false, tone = 'defaul
       disableRipple
       aria-label={`${brand.name}, ${actionLabel}`}
       onClick={onClick}
+      className={className}
       sx={{
         minWidth: 0,
         width: '100%',
@@ -49,16 +72,16 @@ export function AppBrand({ onClick, actionLabel, compact = false, tone = 'defaul
         boxSizing: 'border-box',
         p: 1,
         borderRadius: '10px',
-        justifyContent: compact ? 'center' : 'flex-start',
+        justifyContent: variant === 'icon' ? 'center' : 'flex-start',
         color: 'text.primary',
         bgcolor: 'transparent',
         '&:hover, &:active': { bgcolor: 'transparent' },
         '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
       }}
     >
-      {wordmark}
+      {graphic}
     </Button>
   ) : (
-    wordmark
+    graphic
   );
 }
