@@ -111,7 +111,11 @@ describe('FlashcardStudyScreen', () => {
     render(<ThemeProvider theme={theme}><KeyboardDeck /></ThemeProvider>);
 
     fireEvent.keyDown(window, { code: 'Space' });
-    expect(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' })).toBeInTheDocument();
+    const revealedAnswer = screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' });
+    expect(revealedAnswer).toHaveFocus();
+    expect(document.querySelector('[data-space-nav-focus-ring="suppressed"]')).toBeInTheDocument();
+    fireEvent.keyDown(revealedAnswer, { key: 'Tab' });
+    expect(document.querySelector('[data-space-nav-focus-ring="suppressed"]')).not.toBeInTheDocument();
     fireEvent.keyDown(window, { code: 'Space' });
     expect(screen.getByText('Card 2 of 2')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeInTheDocument();

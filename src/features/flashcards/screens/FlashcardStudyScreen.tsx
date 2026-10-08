@@ -10,7 +10,23 @@ import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavig
 import { canHandleStudyShortcut } from '../../../shared/ui/study/studyKeyboard';
 import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
 
-export function FlashcardStudyScreen({ deck, cards, index, revealed, openedCardIds = [], flaggedCardIds = [], saving = false, persistenceError, onReveal, onToggleFlag = () => undefined, onNavigate, onPrevious, onNext, onSaveAndExit, onFinish }: {
+export function FlashcardStudyScreen({
+  deck,
+  cards,
+  index,
+  revealed,
+  openedCardIds = [],
+  flaggedCardIds = [],
+  saving = false,
+  persistenceError,
+  onReveal,
+  onToggleFlag = () => undefined,
+  onNavigate,
+  onPrevious,
+  onNext,
+  onSaveAndExit,
+  onFinish,
+}: {
   deck: FlashcardDeckSummary;
   cards: readonly FlashcardCard[];
   index: number;
@@ -28,21 +44,35 @@ export function FlashcardStudyScreen({ deck, cards, index, revealed, openedCardI
   onFinish: () => void;
 }) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
+  const [suppressCardFocusRing, setSuppressCardFocusRing] = useState(false);
   const [filter, setFilter] = useState<FlashcardNavigatorFilter>('all');
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
   const card = cards[index];
-  const arrowNext = useStudyArrowNavigation({ index, total: cards.length, disabled: saving || !card || navigatorOpen, onPrevious, onNext, nextButtonRef: nextRef, finishButtonRef: finishRef });
+  const arrowNext = useStudyArrowNavigation({
+    index,
+    total: cards.length,
+    disabled: saving || !card || navigatorOpen,
+    onPrevious,
+    onNext,
+    nextButtonRef: nextRef,
+    finishButtonRef: finishRef,
+  });
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const isSpace = event.code === 'Space';
       if (!isSpace || !canHandleStudyShortcut(event, 'space') || saving || !card || navigatorOpen) return;
-      if (event.repeat) { event.preventDefault(); return; }
+      if (event.repeat) {
+        event.preventDefault();
+        return;
+      }
       event.preventDefault();
       if (!revealed) {
+        setSuppressCardFocusRing(true);
         onReveal();
       } else if (index < cards.length - 1) {
+        setSuppressCardFocusRing(true);
         onNext();
       }
     };
@@ -55,13 +85,78 @@ export function FlashcardStudyScreen({ deck, cards, index, revealed, openedCardI
     onNavigate?.(target);
     setNavigatorOpen(false);
   };
-  return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
-    <Box component="h1" sx={{ position: 'absolute', left: 0, top: 0, width: '1px', height: '1px', p: 0, m: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>{deck.name}</Box>
-    {persistenceError && <Alert severity="error" role="alert" sx={{ mb: 2 }}>{persistenceError}</Alert>}
-    <StudyHeader itemLabel="Card" index={index} total={cards.length} exitLabel="Save and exit deck" onExit={onSaveAndExit} disabled={saving} />
-    <QuestionNavigationLayout navigator={<FlashcardNavigator cards={cards} currentIndex={index} openedCardIds={openedCardIds} flaggedCardIds={flaggedCardIds} filter={filter} onFilterChange={setFilter} onNavigate={navigate} />} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)} itemLabel="Cards">
-      <FlashcardStudyCard card={card} revealed={revealed} flagged={flaggedCardIds.includes(card.id)} onReveal={onReveal} onToggleFlag={() => onToggleFlag(card.id)} />
-      <StudyNavigationFooter index={index} total={cards.length} onPrevious={onPrevious} onNext={arrowNext} onFinish={onFinish} finishLabel="Finish" disabled={saving} nextButtonRef={nextRef} finishButtonRef={finishRef} />
-    </QuestionNavigationLayout>
-  </Container>;
+  return (
+    <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
+      <Box
+        component="h1"
+        sx={{
+          position: 'absolute',
+          left: 0,
+          top: 0,
+          width: '1px',
+          height: '1px',
+          p: 0,
+          m: '-1px',
+          overflow: 'hidden',
+          clip: 'rect(0, 0, 0, 0)',
+          whiteSpace: 'nowrap',
+          border: 0,
+        }}
+      >
+        {deck.name}
+      </Box>
+      {persistenceError && (
+        <Alert severity="error" role="alert" sx={{ mb: 2 }}>
+          {persistenceError}
+        </Alert>
+      )}
+      <StudyHeader
+        itemLabel="Card"
+        index={index}
+        total={cards.length}
+        exitLabel="Save and exit deck"
+        onExit={onSaveAndExit}
+        disabled={saving}
+      />
+      <QuestionNavigationLayout
+        navigator={
+          <FlashcardNavigator
+            cards={cards}
+            currentIndex={index}
+            openedCardIds={openedCardIds}
+            flaggedCardIds={flaggedCardIds}
+            filter={filter}
+            onFilterChange={setFilter}
+            onNavigate={navigate}
+          />
+        }
+        open={navigatorOpen}
+        onOpen={() => setNavigatorOpen(true)}
+        onClose={() => setNavigatorOpen(false)}
+        itemLabel="Cards"
+      >
+        <FlashcardStudyCard
+          card={card}
+          revealed={revealed}
+          flagged={flaggedCardIds.includes(card.id)}
+          suppressFocusRing={suppressCardFocusRing}
+          onSuppressFocusRing={() => setSuppressCardFocusRing(true)}
+          onClearFocusRingSuppression={() => setSuppressCardFocusRing(false)}
+          onReveal={onReveal}
+          onToggleFlag={() => onToggleFlag(card.id)}
+        />
+        <StudyNavigationFooter
+          index={index}
+          total={cards.length}
+          onPrevious={onPrevious}
+          onNext={arrowNext}
+          onFinish={onFinish}
+          finishLabel="Finish"
+          disabled={saving}
+          nextButtonRef={nextRef}
+          finishButtonRef={finishRef}
+        />
+      </QuestionNavigationLayout>
+    </Container>
+  );
 }

@@ -91,6 +91,25 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await studyButton.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 1 of 2')).toBeVisible();
+  const concealedFace = page.getByRole('button', { name: 'Reveal answer' });
+  const hiddenAnswerFace = page.locator('[aria-label="Answer revealed. Click to hide or press Space to continue."]');
+  const [concealedBounds, hiddenAnswerBounds] = await Promise.all([
+    concealedFace.boundingBox(),
+    hiddenAnswerFace.boundingBox(),
+  ]);
+  expect(concealedBounds).not.toBeNull();
+  expect(hiddenAnswerBounds).not.toBeNull();
+  expect(Math.abs(concealedBounds!.height - hiddenAnswerBounds!.height)).toBeLessThan(1);
+  const framePaths = await concealedFace
+    .locator('[data-testid="flashcard-frame-decoration"] path')
+    .evaluateAll((paths) =>
+      paths.map((path) => ({ d: path.getAttribute('d'), transform: path.getAttribute('transform') })),
+    );
+  expect(framePaths).toHaveLength(3);
+  expect(framePaths[0].d).toContain(' A ');
+  expect(framePaths[1].d).toBe(framePaths[0].d);
+  expect(framePaths[2].d).toBe(framePaths[0].d);
+  expect(framePaths[1].transform).not.toBe(framePaths[2].transform);
   await expect(page.locator('.katex')).toHaveCount(2);
   await page.keyboard.press('ArrowRight');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
@@ -107,6 +126,11 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
     .toBe(true);
+  await page.setViewportSize({ width: 320, height: 780 });
+  await expect
+    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
+    .toBe(true);
+  await page.setViewportSize({ width: 390, height: 844 });
   const studyScreenshot = testInfo.outputPath('flashcard-study-mobile.png');
   await page.screenshot({ path: studyScreenshot });
   await testInfo.attach('flashcard-study-mobile.png', { path: studyScreenshot, contentType: 'image/png' });
@@ -114,8 +138,20 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.getByRole('button', { name: 'Card 2, unopened' }).click();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Card 1, unopened' }).click();
-  await page.getByRole('heading', { name: /What forms the brachial plexus/ }).click();
+  const firstPrompt = page.getByRole('heading', { name: /What forms the brachial plexus/ });
+  await firstPrompt.click();
   await page.keyboard.press('Space');
+  const revealedFace = page.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' });
+  await expect(revealedFace).toBeFocused();
+  await expect(page.locator('[data-space-nav-focus-ring="suppressed"]')).toHaveCount(1);
+  const reducedMotionState = await revealedFace.evaluate((element) => ({
+    perspective: getComputedStyle(element.parentElement!.parentElement!.parentElement!).perspective,
+    flipDuration: getComputedStyle(element.parentElement!).transitionDuration,
+  }));
+  expect(reducedMotionState).toEqual({ perspective: 'none', flipDuration: '0s' });
+  await page.keyboard.press('Tab');
+  await expect(page.locator('[data-space-nav-focus-ring="suppressed"]')).toHaveCount(0);
+  await revealedFace.focus();
   await page.keyboard.press('Space');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.keyboard.press('Space');
