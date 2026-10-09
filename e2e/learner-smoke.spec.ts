@@ -1,4 +1,21 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Locator } from '@playwright/test';
+
+async function expectEvenFlashcardOutline(decoration: Locator, inset: number) {
+  // Sample the actual browser paths, including every corner: this catches
+  // incorrectly positioned circles even when their declared radii look right.
+  const gaps = await decoration.evaluate((svg) => {
+    const [edge, outline] = Array.from(svg.querySelectorAll('path'));
+    const edgeLength = edge.getTotalLength();
+    const outlineLength = outline.getTotalLength();
+    const edgePoints = Array.from({ length: 4001 }, (_, index) => edge.getPointAtLength((index / 4000) * edgeLength));
+    return Array.from({ length: 201 }, (_, index) => {
+      const point = outline.getPointAtLength((index / 200) * outlineLength);
+      return Math.min(...edgePoints.map((edgePoint) => Math.hypot(point.x - edgePoint.x, point.y - edgePoint.y)));
+    });
+  });
+  expect(Math.min(...gaps)).toBeGreaterThan(inset - 0.1);
+  expect(Math.max(...gaps)).toBeLessThan(inset + 0.1);
+}
 
 test('abandoned flashcard loads do not reopen study or create progress', async ({ page }) => {
   let release!: () => void;
@@ -102,14 +119,19 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   expect(Math.abs(concealedBounds!.height - hiddenAnswerBounds!.height)).toBeLessThan(1);
   const framePaths = await concealedFace
     .locator('[data-testid="flashcard-frame-decoration"] path')
-    .evaluateAll((paths) =>
-      paths.map((path) => ({ d: path.getAttribute('d'), transform: path.getAttribute('transform') })),
-    );
-  expect(framePaths).toHaveLength(3);
-  expect(framePaths[0].d).toContain(' A ');
-  expect(framePaths[1].d).toBe(framePaths[0].d);
-  expect(framePaths[2].d).toBe(framePaths[0].d);
-  expect(framePaths[1].transform).not.toBe(framePaths[2].transform);
+    .evaluateAll((paths) => paths.map((path) => path.getAttribute('d')));
+  const lineRadius = await concealedFace.evaluate((face) =>
+    getComputedStyle(face).getPropertyValue('--flashcard-line-radius').trim(),
+  );
+  expect(framePaths).toHaveLength(2);
+  expect(framePaths[0]).toContain(' A ');
+  expect(framePaths[1]).toContain('A 30.5 30.5');
+  expect(lineRadius).toContain('calc(26px +');
+  expect(lineRadius).toContain('0.28125');
+  const outline = concealedFace.locator('[data-testid="flashcard-frame-decoration"] path[fill="none"]');
+  await expect(outline).toHaveCount(1);
+  await expect(outline).toHaveAttribute('stroke-width', '1.5');
+  await expectEvenFlashcardOutline(concealedFace.locator('[data-testid="flashcard-frame-decoration"]'), 4.5);
   await expect(page.locator('.katex')).toHaveCount(2);
   await page.keyboard.press('ArrowRight');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
@@ -123,6 +145,11 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(cardFlag.locator('.MuiTouchRipple-root')).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await expect(page.locator('[data-testid="flashcard-frame-decoration"] path').nth(1)).toHaveAttribute(
+    'd',
+    /A 21\.375 21\.375/,
+  );
+  await expectEvenFlashcardOutline(page.locator('[data-testid="flashcard-frame-decoration"]').first(), 3.375);
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
     .toBe(true);
@@ -152,6 +179,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.keyboard.press('Tab');
   await expect(page.locator('[data-space-nav-focus-ring="suppressed"]')).toHaveCount(0);
   await revealedFace.focus();
+  await expect(revealedFace).toHaveCSS('outline-color', 'rgb(185, 81, 27)');
   await page.keyboard.press('Space');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.keyboard.press('Space');

@@ -8,7 +8,14 @@ import { BrandMark } from '../../../shared/ui/brand/BrandMark';
 import { FlashcardFaceDecoration } from './FlashcardFaceDecoration';
 
 const cardThickness =
-  'inset 0 1px 0 rgba(255,255,255,.95), 0 1px 0 #e3dbcf, 0 3px 0 #d6cdbf, 0 5px 8px rgba(57,38,22,.10), 0 12px 24px rgba(57,38,22,.10)';
+  'inset 0 1px 0 rgba(255,255,255,.9), 0 1px 0 rgba(118,106,99,.06), 0 3px 8px rgba(57,38,22,.045), 0 8px 16px rgba(57,38,22,.04)';
+
+const frameRadiusStyles = {
+  '--flashcard-frame-radius': { xs: '18px', sm: '26px' },
+  '--flashcard-frame-margin': { xs: '12px', sm: '16px' },
+  '--flashcard-line-inset': 'calc(var(--flashcard-frame-margin) * 0.28125)',
+  '--flashcard-line-radius': 'calc(var(--flashcard-frame-radius) + var(--flashcard-line-inset))',
+};
 
 export function FlashcardStudyCard({
   card,
@@ -149,6 +156,7 @@ export function FlashcardStudyCard({
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: { xs: '22px', sm: '28px' },
+                  ...frameRadiusStyles,
                   bgcolor: 'background.paper',
                   color: '#fff',
                   boxShadow: cardThickness,
@@ -157,7 +165,7 @@ export function FlashcardStudyCard({
                   '&:hover': { bgcolor: 'background.paper' },
                   '&:focus-visible': suppressFocusRing
                     ? { outline: 'none' }
-                    : { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 3 },
+                    : { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 3 },
                 }}
               >
                 <FlashcardFaceDecoration element={frontFace} />
@@ -208,6 +216,7 @@ export function FlashcardStudyCard({
                   border: '1px solid',
                   borderColor: 'divider',
                   borderRadius: { xs: '22px', sm: '28px' },
+                  ...frameRadiusStyles,
                   bgcolor: 'background.paper',
                   boxShadow: cardThickness,
                   color: '#fff',
@@ -215,7 +224,7 @@ export function FlashcardStudyCard({
                   cursor: revealed ? 'pointer' : 'default',
                   '&:focus-visible': suppressFocusRing
                     ? { outline: 'none' }
-                    : { outline: '3px solid', outlineColor: 'text.primary', outlineOffset: 3 },
+                    : { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 3 },
                   '& a': { color: 'inherit' },
                   '& img': { marginInline: 'auto' },
                 }}

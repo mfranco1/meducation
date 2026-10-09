@@ -6,7 +6,7 @@ Status: complete; implementation and relevant regression checks passed.
 
 Restyle only the flipping answer panel in `src/features/flashcards/components/FlashcardStudyCard.tsx`. Keep the prompt, flag, surrounding white study container, header, navigator, and footer in their current positions. Both concealed and revealed faces become one physical-looking card. Preserve all study, keyboard, focus, rich-content, and persistence behavior.
 
-Visual reference: `/Users/noodle.zip/Desktop/Screenshot 2026-10-08 at 22.40.21.png` (attached to the request). It shows a landscape cream card, an orange inset with four inward-curved corner cutouts, a fine cream double outline, and a centered white Meducation book mark. The following numbers are implementation targets estimated from the reference, not sampled measurements.
+Visual reference: `/Users/noodle.zip/Desktop/Screenshot 2026-10-08 at 22.40.21.png` (attached to the request). It shows a landscape cream card, an orange inset with four inward-curved corner cutouts, a fine cream inset outline, and a centered white Meducation book mark. The following numbers are implementation targets estimated from the reference, not sampled measurements.
 
 Do not add suits, ranks, text labels, grain, photographic assets, animation libraries, or pointer-following tilt. Use the existing `BrandMark`; do not redraw the logo. No content-bank, domain, persistence, or backend changes.
 
@@ -18,9 +18,9 @@ Use explicit CSS pixel strings in MUI `sx` for the geometry below: numeric `bord
 - Outer silhouette: `borderRadius: { xs: '22px', sm: '28px' }`, `boxSizing: 'border-box'`, `border: '1px solid'` using the closest existing `theme.palette.background` paper/default tokens. Prefer `background.paper` as the card base and use a subtle CSS gradient between existing paper/default tokens only if it remains visibly warm. Do not introduce new cream hex values when the theme already supplies suitable ones. This is the answer card's perimeter, independent of the unchanged surrounding study container.
 - Orange field: inset `12px` at xs and `16px` at sm and up on all four sides. Fill with `theme.palette.primary.main` (currently `#b9511b`). Keep the fill the same on hover. Use flat ink rather than a strong glossy gradient.
 - Each orange-field corner has a concave quarter-circle cutout with radius `18px` at xs and `26px` at sm and up. The cream paper shows through. These corners curve **inward into the orange**, unlike an ordinary rounded rectangle. The outer cream silhouette still has ordinary convex rounded corners.
-- Draw two fine cream lines following all four straight edges and concave corners of the orange field. Target line widths `1px`, with a `2px` orange gap; keep the outermost line roughly `4px` inside the orange perimeter. Use an existing warm light theme token if it contrasts against the primary orange; otherwise use translucent `background.paper`. Lines must remain crisp and thin at every viewport and answer length.
+- Draw one fine white line following all four straight edges and concave corners of the orange field. Use a `1.5px` line. Derive its inset as `28.125%` of the orange field's outer margin, so it scales with the responsive `12px`/`16px` field inset. Keep it clearly visible on the primary orange while preserving a fine printed look.
 - Concealed face: center the existing `<BrandMark colorMode="white" decorative />` horizontally and vertically. Use size `{ xs: 72, sm: 104 }` CSS pixels. No visible wordmark or reveal label. Preserve the accessible name `Reveal answer`.
-- Revealed face: use exactly the same cream perimeter, orange field, and double outline. Replace the central logo with the existing bold centered answer and source. Keep the existing typography and Markdown renderer; keep sources smaller/subordinate as currently rendered. Text and links remain white. Reserve face padding `{ xs: '40px 32px', sm: '52px 48px' }` so content cannot collide with the corner ornament or outline. Do not shrink long answers to fit.
+- Revealed face: use exactly the same cream perimeter, orange field, and single outline. Replace the central logo with the existing bold centered answer and source. Keep the existing typography and Markdown renderer; keep sources smaller/subordinate as currently rendered. Text and links remain white. Reserve face padding `{ xs: '40px 32px', sm: '52px 48px' }` so content cannot collide with the corner ornament or outline. Do not shrink long answers to fit.
 - Both faces use the same grid cell and stretch to the tallest face. Keep the hidden answer in layout; do not use `display: none` or absolute-position the content. Preserve bounded scrolling for wide math/tables, responsive images, and `minWidth: 0` on relevant grid/content items.
 
 ### Drawing the frame without distorting its corners
@@ -46,7 +46,7 @@ Z
 
 The arc sweep is **0**; using 1 makes conventional rounded corners and does not match the reference. Fill this path orange.
 
-Draw the orange field path once using the concave quarter-circle geometry above. Reuse that exact path for both unfilled outline strokes, scaling each around the SVG viewBox center. For target inset `d`, use scale `(min(width,height)-2d)/min(width,height)`, with `d=4.5px` and `d=7.5px`. Centered scaling keeps every arc continuous and avoids hand-calculated corner joins. Render 1px theme-paper strokes with opacity `0.9`; the two scales provide a narrow orange gap. Clamp scale at zero for exceptionally small cards. Never let the SVG participate in intrinsic sizing or intercept clicks.
+Draw the orange field path once using the concave quarter-circle geometry above. Draw one unfilled white outline path. Set the frame margin and corner radius as responsive CSS variables, define the line inset as `calc(var(--flashcard-frame-margin) * 0.28125)`, and define the line radius as `calc(var(--flashcard-frame-radius) + var(--flashcard-line-inset))`; use the same arithmetic for the numeric SVG path. Keep the circle centers at the original orange-field corners. For outline inset d and enlarged radius r, compute the edge intersection reach as sqrt(r*r - d*d). The top-left arc endpoints are (L+reach,T+d) and (L+d,T+reach); mirror these coordinates for the other corners. This keeps the outline equally spaced from the straight edges and concave arcs. Do not pass inset bounds to the ordinary frame builder: that moves the circle centers. Render a `1.5px` white stroke with opacity `0.95`. Never let the SVG participate in intrinsic sizing or intercept clicks.
 
 ## 2. Subtle physical thickness
 
@@ -54,14 +54,13 @@ Apply this shadow to **each face**, so it rotates with the card. Do not add offs
 
 ```css
 box-shadow:
-  inset 0 1px 0 rgba(255, 255, 255, 0.95),
-  0 1px 0 #e3dbcf,
-  0 3px 0 #d6cdbf,
-  0 5px 8px rgba(57, 38, 22, 0.1),
-  0 12px 24px rgba(57, 38, 22, 0.1);
+  inset 0 1px 0 rgba(255, 255, 255, 0.9),
+  0 1px 0 rgba(118, 106, 99, 0.06),
+  0 3px 8px rgba(57, 38, 22, 0.045),
+  0 8px 16px rgba(57, 38, 22, 0.04);
 ```
 
-The first two exterior layers suggest a 3px paper edge; the blurred layers suggest a small distance above the surface. Treat the listed taupe values as initial visual targets: prefer existing theme neutrals when their contrast against the cream card is clear, and adjust opacity before introducing new palette hex values. Keep scene/lift/rotator overflow visible. Avoid a shadow on the whole white study container. Avoid animating shadows initially: the lift and rotation provide the motion while this fixed shadow stays inexpensive.
+The exterior layers stay soft along the sides and bottom, without a hard paper edge. Treat these taupe values as visual targets: prefer existing theme neutrals when their contrast against the cream card is clear, and adjust opacity before introducing new palette hex values. Keep scene/lift/rotator overflow visible. Avoid a shadow on the whole white study container. Avoid animating shadows initially: the lift and rotation provide the motion while this fixed shadow stays inexpensive.
 
 ## 3. Simple, smooth motion
 
@@ -92,7 +91,7 @@ Under `prefers-reduced-motion: reduce`, disable both transitions and all hover t
 - [x] Add per-face thickness shadows, then the separate lift wrapper and updated flip timing.
 - [x] Preserve behavioral tests in `FlashcardStudyScreen.test.tsx`; the 13-test flashcard screen suite passes and now checks Space focus suppression and Tab restoration.
 - [x] Extend learner browser coverage in `e2e/learner-smoke.spec.ts`: verify both face bounds, continuous shared frame paths, reduced-motion styles, Space/Tab focus behavior, and no horizontal overflow at 320px and 390px. The updated flashcard flow passes; the full learner browser suite also passed before adding these focused assertions.
-- [x] Inspect the rendered card in Chromium and the captured 390px mobile browser flow. The outline paths share the same curved path data with distinct inward scales; visual inspection confirms the lines remain continuous through the corners. Safari/WebKit and 200% zoom were not separately tested.
+- [x] Inspect the rendered card in Chromium and the captured 390px mobile browser flow. The outline uses one inset concave path; its inset radius is calculated from the outer radius in CSS and its corner joins stay continuous. Safari/WebKit and 200% zoom were not separately tested.
 - [x] Run `npm run lint`, `npm run format:check`, `npm run test:architecture`, `npm test`, `npm run validate:content`, and `npm run build` (includes TypeScript checking). `npm run test:e2e` passed all 11 learner tests; `npm run test:e2e:admin` passed all 3 admin tests; the updated flashcard browser flow passed separately after adding the frame/focus assertions. `VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build` passed.
 - [x] Update the flashcard paragraph in `docs/design-system.md` with the paper rim, concave orange frame, thickness, and motion conventions. Update `docs/product.md` only if needed to clarify appearance; behavior remains unchanged.
 - [x] Run `git diff --check` and record verification.
@@ -100,3 +99,9 @@ Under `prefers-reduced-motion: reduce`, disable both transitions and all hover t
 Verification run: all required unit, content, lint, architecture, format, build, learner browser, admin browser, and optional admin build checks passed. Focused flashcard UI coverage passes 13 tests; the full unit suite passes 407 tests across 69 files. Content validation emitted existing answer-review warnings but passed. Vite reported the existing large-chunk advisory. One sandboxed Playwright retry could not bind the fixture server; rerunning the focused browser test with local-server permission passed. Cross-browser Safari/WebKit and 200% zoom were not separately tested.
 
 Acceptance: the concealed answer unmistakably resembles the attached cream-and-orange playing card; both faces feel like opposite sides of the same thin object; the lift is subtle, the flip takes 420ms without bounce, rich content fits, and existing study behavior remains intact.
+
+### Visual refinement follow-up (2026-10-09)
+
+Final corner correction: the cutouts are concave circles centered at the orange field's outer bounds, so their inset outline radius must increase by the inset. The earlier subtraction rule moved the white line toward the paper cutouts. The corrected path retains those original circle centers and computes intersections with the inset straight edges using `sqrt(radius² - inset²)`. A browser regression samples 201 points around the white path and measures their nearest distance to 4001 orange-edge points: the gap stays within 0.1px of its target at desktop and mobile sizes. Both card faces now use the brand-orange keyboard focus ring; Space suppression remains intact. The focused browser flow, 13 flashcard unit tests, TypeScript/build, lint, formatting, and diff whitespace checks pass after this correction.
+
+Responded to browser feedback by softening the side/bottom shadow, reducing the frame to one clearly visible 1.5px white outline, and deriving the outline inset from the responsive orange-field margin. The outline radius is `calc(frame radius + derived inset)`, and its SVG path intersects the inset straight edges with the enlarged circles centered on the original orange corners. Browser coverage verifies one stroked path and matching desktop/mobile radii. The focused flashcard browser flow passes. Unit tests pass (407 tests) and lint, build, formatting, and `git diff --check` pass. A full learner e2e run passed 10 of 11 tests; the unrelated API-backed quiz test timed out waiting for its “Additional context for the question” heading, both in the full run and on isolated retry.

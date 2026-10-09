@@ -4,16 +4,32 @@ import { useTheme } from '@mui/material/styles';
 const SMALL = '(max-width: 599.95px)';
 
 function useFaceSize(element: HTMLElement | null) {
-  const [size, setSize] = useState({ width: 0, height: 0, small: false });
+  const [size, setSize] = useState({
+    width: 0,
+    height: 0,
+    small: false,
+    frameRadius: 0,
+    frameMargin: 0,
+    lineInset: 0,
+  });
 
   useLayoutEffect(() => {
     if (!element) return;
     const media = window.matchMedia(SMALL);
     const updateSize = (width: number, height: number) => {
+      const styles = window.getComputedStyle(element);
+      const frameRadius = Number.parseFloat(styles.getPropertyValue('--flashcard-frame-radius')) || 0;
+      const frameMargin = Number.parseFloat(styles.getPropertyValue('--flashcard-frame-margin')) || 0;
+      const lineInset = frameMargin * 0.28125;
       setSize((current) =>
-        current.width === width && current.height === height && current.small === media.matches
+        current.width === width &&
+        current.height === height &&
+        current.small === media.matches &&
+        current.frameRadius === frameRadius &&
+        current.frameMargin === frameMargin &&
+        current.lineInset === lineInset
           ? current
-          : { width, height, small: media.matches },
+          : { width, height, small: media.matches, frameRadius, frameMargin, lineInset },
       );
     };
     updateSize(element.offsetWidth, element.offsetHeight);
@@ -41,21 +57,19 @@ function useFaceSize(element: HTMLElement | null) {
   return size;
 }
 
-function framePath(left: number, top: number, right: number, bottom: number, radius: number) {
-  return `M ${left + radius} ${top} H ${right - radius} A ${radius} ${radius} 0 0 0 ${right} ${top + radius} V ${bottom - radius} A ${radius} ${radius} 0 0 0 ${right - radius} ${bottom} H ${left + radius} A ${radius} ${radius} 0 0 0 ${left} ${bottom - radius} V ${top + radius} A ${radius} ${radius} 0 0 0 ${left + radius} ${top} Z`;
+function framePath(left: number, top: number, right: number, bottom: number, radius: number, inset = 0) {
+  // Concave cutouts are centered on the original bounds' corners. Intersect
+  // their enlarged circles with the inset straight edges to preserve the gap.
+  const reach = Math.sqrt(Math.max(0, radius * radius - inset * inset));
+  return `M ${left + reach} ${top + inset} H ${right - reach} A ${radius} ${radius} 0 0 0 ${right - inset} ${top + reach} V ${bottom - reach} A ${radius} ${radius} 0 0 0 ${right - reach} ${bottom - inset} H ${left + reach} A ${radius} ${radius} 0 0 0 ${left + inset} ${bottom - reach} V ${top + reach} A ${radius} ${radius} 0 0 0 ${left + reach} ${top + inset} Z`;
 }
 
 export function FlashcardFaceDecoration({ element }: { element: HTMLElement | null }) {
-  const { width, height, small } = useFaceSize(element);
+  const { width, height, small, frameRadius, frameMargin, lineInset } = useFaceSize(element);
   const theme = useTheme();
-  const margin = small ? 12 : 16;
-  const radius = Math.min(small ? 18 : 26, Math.max(4, Math.min(width, height) / 2 - margin));
+  const margin = frameMargin || (small ? 12 : 16);
+  const radius = frameRadius || (small ? 18 : 26);
   const bounds = { left: margin, top: margin, right: width - margin, bottom: height - margin };
-  const centerX = width / 2;
-  const centerY = height / 2;
-  const insetScale = (inset: number) => Math.max(0, (Math.min(width, height) - 2 * inset) / Math.min(width, height));
-  const centeredScale = (scale: number) =>
-    `translate(${centerX} ${centerY}) scale(${scale}) translate(${-centerX} ${-centerY})`;
 
   return (
     <svg
@@ -78,20 +92,11 @@ export function FlashcardFaceDecoration({ element }: { element: HTMLElement | nu
         fill={theme.palette.primary.main}
       />
       <path
-        d={framePath(bounds.left, bounds.top, bounds.right, bounds.bottom, radius)}
+        d={framePath(bounds.left, bounds.top, bounds.right, bounds.bottom, radius + lineInset, lineInset)}
         fill="none"
-        stroke={theme.palette.background.paper}
-        strokeOpacity="0.9"
-        strokeWidth="1"
-        transform={centeredScale(insetScale(4.5))}
-      />
-      <path
-        d={framePath(bounds.left, bounds.top, bounds.right, bounds.bottom, radius)}
-        fill="none"
-        stroke={theme.palette.background.paper}
-        strokeOpacity="0.9"
-        strokeWidth="1"
-        transform={centeredScale(insetScale(7.5))}
+        stroke={theme.palette.common.white}
+        strokeOpacity="0.95"
+        strokeWidth="1.5"
       />
     </svg>
   );
