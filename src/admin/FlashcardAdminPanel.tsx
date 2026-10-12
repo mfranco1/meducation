@@ -44,7 +44,6 @@ import { AdminAddSubjectButton } from './components/AdminAddSubjectButton';
 type Kind = 'deck' | 'card';
 type Selected = { kind: Kind; id: string } | undefined;
 const clone = (bank: StoredFlashcardBank): StoredFlashcardBank => structuredClone(bank);
-const makeId = (prefix: string) => `${prefix}-${crypto.randomUUID()}`;
 
 /** Local-only authoring workspace. It exports reviewed JSON; it never writes canonical files. */
 export function FlashcardAdminPanel({
@@ -61,6 +60,7 @@ export function FlashcardAdminPanel({
   onExportReady,
   onDeleteSubject,
   onAddSubject,
+  onEditSubject,
   onWorkspaceChange,
   externalTransaction,
   undoRequest = 0,
@@ -80,6 +80,7 @@ export function FlashcardAdminPanel({
   onExportReady?: (action: () => void, enabled: boolean) => void;
   onDeleteSubject?: (subjectId: string, subjectName: string) => void;
   onAddSubject?: () => void;
+  onEditSubject?: (subjectId: string, subjectName: string) => void;
   onWorkspaceChange?: (bank: StoredFlashcardBank, operations: FlashcardAdminOperation[], reason: string) => void;
   externalTransaction?: { id: number; bank: StoredFlashcardBank; operations: FlashcardAdminOperation[]; reason: string };
   undoRequest?: number;
@@ -92,7 +93,6 @@ export function FlashcardAdminPanel({
   const [browseDeckId, setBrowseDeckId] = useState('');
   const [cardQuery, setCardQuery] = useState('');
   const [cardPage, setCardPage] = useState(0);
-  const [addAnchor, setAddAnchor] = useState<HTMLElement | null>(null);
   const [actionAnchor, setActionAnchor] = useState<HTMLElement | null>(null);
   const [workspaceAnchor, setWorkspaceAnchor] = useState<HTMLElement | null>(null);
   const [editor, setEditor] = useState('');
@@ -337,11 +337,6 @@ export function FlashcardAdminPanel({
     }
     setBulkDraftDirty(false);
     setBulkDestination({ context, label });
-  };
-  const create = (kind: Kind, parentId: string) => {
-    if (kind === 'deck') load({ kind, id: '' }, { id: makeId('d'), subjectId: parentId, name: 'New deck' });
-    if (kind === 'card')
-      load({ kind, id: '' }, { id: makeId('f'), deckId: parentId, front: 'Question', back: 'Answer' });
   };
   const stage = () => {
     if (!selection) return;
@@ -700,10 +695,12 @@ export function FlashcardAdminPanel({
         sx={{
           width: { lg: 340 },
           p: 2,
+          height: { xs: '40dvh', lg: '78vh' },
           maxHeight: { xs: '40dvh', lg: '78vh' },
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
+          overflow: 'hidden',
         }}
       >
         <Stack spacing={1} sx={{ minHeight: 0, flex: 1 }}>
@@ -717,15 +714,9 @@ export function FlashcardAdminPanel({
           />
           {!browseSubjectId && onAddSubject && <Stack direction="row"><AdminAddSubjectButton onClick={onAddSubject} /></Stack>}
           {browseSubjectId && <Stack direction="row" spacing={0.5}>
-            <Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>Subject actions</Button>
-            <Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
-              <MenuItem onClick={() => { setActionAnchor(null); const subject = subjects.find((item) => item.id === browseSubjectId); if (subject) onDeleteSubject?.(subject.id, subject.name); }}>Delete subject…</MenuItem>
-            </Menu>
-            <Button size="small" aria-haspopup="menu" onClick={(event) => setAddAnchor(event.currentTarget)}>Add</Button>
-            <Menu anchorEl={addAnchor} open={Boolean(addAnchor)} onClose={() => setAddAnchor(null)}>
-              <MenuItem onClick={() => { setAddAnchor(null); create('deck', browseSubjectId); }}>Add deck</MenuItem>
-              <MenuItem onClick={() => { setAddAnchor(null); openBulk({ kind: 'subject', subjectId: browseSubjectId }, subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''); }}>Bulk add decks</MenuItem>
-            </Menu>
+            <Button size="small" onClick={() => openBulk({ kind: 'subject', subjectId: browseSubjectId }, subjects.find((subject) => subject.id === browseSubjectId)?.name ?? '')}>Add</Button>
+            <Button size="small" onClick={() => { const subject = subjects.find((item) => item.id === browseSubjectId); if (subject) onEditSubject?.(subject.id, subject.name); }}>Edit</Button>
+            <Button size="small" color="error" onClick={() => { const subject = subjects.find((item) => item.id === browseSubjectId); if (subject) onDeleteSubject?.(subject.id, subject.name); }}>Delete</Button>
           </Stack>}
           {browseSubjectId && (
             <Autocomplete
@@ -741,16 +732,9 @@ export function FlashcardAdminPanel({
           {browseDeckId && browseDecks.some((deck) => deck.id === browseDeckId) && (
             <>
               <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                <Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>Deck actions</Button>
-                <Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
-                  <MenuItem onClick={() => { setActionAnchor(null); load({ kind: 'deck', id: browseDeckId }, browseDecks.find((deck) => deck.id === browseDeckId)); }}>Edit deck</MenuItem>
-                  <MenuItem onClick={() => { setActionAnchor(null); remove('deck', browseDeckId); }}>Delete deck…</MenuItem>
-                </Menu>
-                <Button size="small" aria-haspopup="menu" onClick={(event) => setAddAnchor(event.currentTarget)}>Add</Button>
-                <Menu anchorEl={addAnchor} open={Boolean(addAnchor)} onClose={() => setAddAnchor(null)}>
-                  <MenuItem onClick={() => { setAddAnchor(null); create('card', browseDeckId); }}>Add card</MenuItem>
-                  <MenuItem onClick={() => { setAddAnchor(null); openBulk({ kind: 'deck', deckId: browseDeckId }, `${subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''} / ${browseDecks.find((deck) => deck.id === browseDeckId)?.name ?? ''}`); }}>Bulk add cards</MenuItem>
-                </Menu>
+                <Button size="small" onClick={() => openBulk({ kind: 'deck', deckId: browseDeckId }, `${subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''} / ${browseDecks.find((deck) => deck.id === browseDeckId)?.name ?? ''}`)}>Add</Button>
+                <Button size="small" onClick={() => load({ kind: 'deck', id: browseDeckId }, browseDecks.find((deck) => deck.id === browseDeckId))}>Edit</Button>
+                <Button size="small" color="error" onClick={() => remove('deck', browseDeckId)}>Delete</Button>
               </Stack>
               <TextField
                 label="Search cards in this deck"
@@ -791,7 +775,7 @@ export function FlashcardAdminPanel({
               <Box
                 component="nav"
                 aria-label="Flashcards in selected deck"
-                sx={{ overflowY: 'auto', minHeight: 0, flex: 1, maxHeight: { lg: '42vh' } }}
+                sx={{ overflowY: 'auto', minHeight: 0, flex: 1 }}
               >
                 {cardResults.visible.map(({ card, position }) => (
                   <ListItemButton
@@ -868,11 +852,10 @@ export function FlashcardAdminPanel({
       </Paper>
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
         <Stack spacing={2}>
-          <Typography variant="h6">
-            {selection ? `${selection.id ? 'Edit' : 'Create'} ${selection.kind}` : 'Select a deck or card'}
-          </Typography>
+          {selection && <Typography variant="h6">{selection.id ? 'Edit' : 'Create'} {selection.kind}</Typography>}
           <TextField
             label="JSON"
+            slotProps={{ inputLabel: { shrink: true } }}
             value={editor}
             onChange={(event) => setEditor(event.target.value)}
             multiline

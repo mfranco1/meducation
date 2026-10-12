@@ -125,7 +125,7 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     setIssues([]);
     setSummary('Content-only template loaded. Edit the JSON, then validate it before staging.');
   };
-  const chooseBulkTarget = (kind: BulkTarget['kind']) => {
+  const chooseBulkTarget = (kind: BulkTarget['kind'], context?: { subjectId?: string; quizId?: string }) => {
     if (!snapshot) return;
     invalidateDraft();
     setMode('bulk');
@@ -137,14 +137,14 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
       return;
     }
     if (kind === 'subject') {
-      const subjectId = selectedSubject?.id;
+      const subjectId = context?.subjectId ?? selectedSubject?.id;
       setBulkTarget({ kind, subjectId });
       if (subjectId) loadBulkTemplate({ kind, subjectId, revision: snapshot.revision });
       else { setBulkContext(undefined); setEditor(''); setSummary('Choose a subject to add quizzes.'); }
       return;
     }
-    const subjectId = selectedSubject?.id;
-    const quizId = selectedQuiz?.id;
+    const subjectId = context?.subjectId ?? selectedSubject?.id;
+    const quizId = context?.quizId ?? selectedQuiz?.id;
     setBulkTarget({ kind, subjectId, quizId });
     if (subjectId && quizId) loadBulkTemplate({ kind, subjectId, quizId, revision: snapshot.revision });
     else { setBulkContext(undefined); setEditor(''); setSummary('Choose a subject and quiz to add items.'); }
