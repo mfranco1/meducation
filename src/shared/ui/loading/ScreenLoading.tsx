@@ -21,16 +21,16 @@ export function ScreenLoading({ label = 'Loading…' }: { label?: string }) {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 1.5,
+        gap: 2,
         color: 'text.secondary',
       }}
     >
-      <AppBrand variant="icon" size={56} decorative />
+      <AppBrand variant="icon" size={{ xs: 80, sm: 96 }} decorative />
       <LinearProgress
         aria-hidden="true"
         sx={{
-          width: 144,
-          height: 4,
+          width: { xs: 'min(208px, calc(100% - 32px))', sm: 240 },
+          height: 6,
           borderRadius: 99,
           bgcolor: 'action.hover',
           '& .MuiLinearProgress-bar': { borderRadius: 99 },
@@ -39,7 +39,11 @@ export function ScreenLoading({ label = 'Loading…' }: { label?: string }) {
           },
         }}
       />
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant="body1"
+        color="text.secondary"
+        sx={{ px: 2, maxWidth: '100%', textAlign: 'center', fontSize: { xs: '1rem', sm: '1.125rem' }, lineHeight: 1.5 }}
+      >
         {label}
       </Typography>
     </Box>

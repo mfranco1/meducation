@@ -1,7 +1,7 @@
 import { Box, Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, type Ref } from 'react';
 
 export type SubjectFilter = 'all' | 'inProgress';
 
@@ -9,10 +9,12 @@ export function SubjectFilterPill({
   value,
   onChange,
   disabled = false,
+  allButtonRef,
 }: {
   value: SubjectFilter;
   onChange: (value: SubjectFilter) => void;
   disabled?: boolean;
+  allButtonRef?: Ref<HTMLButtonElement>;
 }) {
   return (
     <ToggleButtonGroup
@@ -53,7 +55,7 @@ export function SubjectFilterPill({
           ['inProgress', 'In progress'],
         ] as const
       ).map(([filter, label]) => (
-        <ToggleButton key={filter} value={filter} disabled={disabled}>
+        <ToggleButton key={filter} value={filter} disabled={disabled} ref={filter === 'all' ? allButtonRef : undefined}>
           {label}
         </ToggleButton>
       ))}

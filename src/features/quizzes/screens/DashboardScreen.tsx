@@ -14,6 +14,10 @@ import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecover
 import { SubjectCardSkeleton } from '../../../shared/ui/catalog/SubjectCardSkeleton';
 import { SubjectFilterPill, SubjectPagination } from '../../../shared/ui/catalog/SubjectCatalogControls';
 import { useSubjectCatalog } from '../../../shared/ui/catalog/useSubjectCatalog';
+import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
+import { CatalogPageTransition } from '../../../shared/ui/catalog/CatalogPageTransition';
+
+type CatalogPageChange = { id: number; from: SubjectStat[]; resetKey: string; direction: 'next' | 'previous' };
 
 export type { SubjectStat } from '../selectors/dashboard';
 
@@ -135,6 +139,26 @@ export function DashboardScreen({
   };
   const sharedRecovery = Boolean(sharedError || retrying || manualRetryPending);
   const catalog = useSubjectCatalog(subjectStats, (stat) => stat.activeQuizCount > 0);
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const focusAllFilter = useRef(false);
+  const [pageChange, setPageChange] = useState<CatalogPageChange | null>(null);
+  const resetKey = `${catalog.filter}:${subjectStats.map(({ subject }) => subject.id).join(',')}`;
+  const changePage = (page: number) => {
+    if (page === catalog.page) return;
+    setPageChange({
+      id: (pageChange?.id ?? 0) + 1,
+      from: [...catalog.pageItems],
+      resetKey,
+      direction: page > catalog.page ? 'next' : 'previous',
+    });
+    catalog.setPage(page);
+  };
+  useEffect(() => {
+    if (focusAllFilter.current && catalog.filter === 'all') {
+      filterButtonRef.current?.focus();
+      focusAllFilter.current = false;
+    }
+  }, [catalog.filter]);
   return (
     <>
       {sharedRecovery && (
@@ -155,6 +179,7 @@ export function DashboardScreen({
             disabled={
               loading || Boolean(sharedError || retrying || manualRetryPending || subjectsFailure || statsFailure)
             }
+            allButtonRef={filterButtonRef}
           />
         }
         summary={
@@ -209,24 +234,58 @@ export function DashboardScreen({
             <SubjectPlaceholders />
           </Box>
         ) : subjectStats.length === 0 ? (
-          <Typography color="text.secondary">No subjects are available yet.</Typography>
+          <SubjectCatalogEmptyState title="No subjects are available yet." />
+        ) : (statsFailure || sharedError) && catalog.filter === 'inProgress' ? (
+          <Box role="status" aria-live="polite" sx={{ py: 5, textAlign: 'center', color: 'text.secondary' }}>
+            In-progress subjects are unavailable right now.
+          </Box>
         ) : (
           <>
             {catalog.total === 0 ? (
-              <Typography color="text.secondary">No subjects in progress.</Typography>
+              <SubjectCatalogEmptyState
+                title="No subjects in progress"
+                onShowAll={
+                  subjectStats.length > 0
+                    ? () => {
+                        focusAllFilter.current = true;
+                        catalog.setFilter('all');
+                      }
+                    : undefined
+                }
+              />
             ) : (
               <>
-                <SubjectGrid>
-                  {catalog.pageItems.map((stat) => (
-                    <QuizSubjectCard
-                      key={stat.subject.id}
-                      stat={stat}
-                      onSelect={onSelectSubject}
-                      appearance="dashboardGrid"
-                    />
-                  ))}
-                </SubjectGrid>
-                <SubjectPagination page={catalog.page} pageCount={catalog.pageCount} onChange={catalog.setPage} />
+                <CatalogPageTransition
+                  requestId={pageChange?.id ?? 0}
+                  resetKey={resetKey}
+                  direction={pageChange?.direction ?? 'next'}
+                  previousPage={
+                    pageChange?.resetKey === resetKey ? (
+                      <SubjectGrid>
+                        {pageChange.from.map((stat) => (
+                          <QuizSubjectCard
+                            key={stat.subject.id}
+                            stat={stat}
+                            onSelect={onSelectSubject}
+                            appearance="dashboardGrid"
+                          />
+                        ))}
+                      </SubjectGrid>
+                    ) : undefined
+                  }
+                >
+                  <SubjectGrid>
+                    {catalog.pageItems.map((stat) => (
+                      <QuizSubjectCard
+                        key={stat.subject.id}
+                        stat={stat}
+                        onSelect={onSelectSubject}
+                        appearance="dashboardGrid"
+                      />
+                    ))}
+                  </SubjectGrid>
+                </CatalogPageTransition>
+                <SubjectPagination page={catalog.page} pageCount={catalog.pageCount} onChange={changePage} />
               </>
             )}
           </>
