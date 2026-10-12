@@ -91,7 +91,7 @@ Flashcards extend this read-only service using `src/content/flashcardBank.genera
 
 ## Local authoring
 
-`/admin.html` is a separate local-development JSON authoring tool. `useAdminEditor` owns editing commands, state, initial snapshot loading, stale-preview guards, busy/error handling, and the unsaved-change warning. `AdminApp` composes the navigator, editor, and status panels. The tool does not modify the learner UI, browser attempts, or repository files: it stages change sets in memory, validates the entire schema-v4 bank through the same content checks, and downloads a deterministic replacement bank plus its review change set. Its `AdminQuestionBankGateway` is an asynchronous seam; `QuizRepository` remains learner-facing and read-only.
+`/admin.html` is a separate local-development JSON authoring tool. `useAdminEditor` owns editing commands, state, initial snapshot loading, stale-preview guards, busy/error handling, and the unsaved-change warning. `AdminApp` composes the navigator, editor, and status panels. The tool does not modify the learner UI, browser attempts, or repository files: it stages change sets in memory, validates the entire schema-v4 bank through the same content checks, and downloads a deterministic replacement bank plus its review change set. Subject deletion validates quiz and flashcard descendants together, and a paired history snapshot lets one Undo restore both banks. Its `AdminQuestionBankGateway` is an asynchronous seam; `QuizRepository` remains learner-facing and read-only.
 
 ## Entry points and deployment modes
 

@@ -263,12 +263,10 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
       setSummary('Imported change set could not be staged.');
     }
   };
-  const stageDelete = async (isCurrent: () => boolean) => {
-    if (!snapshot || !selection.id) return;
-    const cascade = selection.kind !== 'question' && confirmAction('Cascade deletion to all child records? Cancel to reject this delete.');
-    if (selection.kind !== 'question' && !cascade) return;
-    if (!confirmAction(`Stage deletion of ${selection.kind} ${selection.id}?`)) return;
-    const parsed = parseChangeSet({ changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason, operations: [{ op: `${selection.kind}.delete`, id: selection.id, ...(cascade ? { cascade: true } : {}) }] });
+  const stageDelete = async (isCurrent: () => boolean, target: Selection = selection, changeReason = reason) => {
+    if (!snapshot || !target.id) return;
+    const cascade = target.kind !== 'question';
+    const parsed = parseChangeSet({ changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason: changeReason, operations: [{ op: `${target.kind}.delete`, id: target.id, ...(cascade ? { cascade: true } : {}) }] });
     if (!parsed.changeSet) { setIssues(parsed.errors.map(message => ({ level: 'error', message }))); return; }
     const preview = await gateway.preview(parsed.changeSet);
     if (!isCurrent()) return;
@@ -339,7 +337,7 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     stageValidatedBulk: () => runCommand('Stage', stageValidatedBulk),
     importChangeSetFile: (file?: File) => runCommand('Import', isCurrent => importChangeSetFile(file, isCurrent)),
     stageImportedChangeSet: () => runCommand('Stage', stageImportedChangeSet),
-    stageDelete: () => runCommand('Delete', stageDelete),
+    stageDelete: (target?: Selection, changeReason?: string) => runCommand('Delete', isCurrent => stageDelete(isCurrent, target ?? selection, changeReason ?? reason)),
     undo: () => runCommand('Undo', undo),
     reset: () => runCommand('Reset', reset),
     exportFiles: () => { if (!busyRef.current) exportFiles(); },

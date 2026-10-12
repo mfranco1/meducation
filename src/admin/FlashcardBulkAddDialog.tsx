@@ -270,7 +270,13 @@ export function FlashcardBulkAddDialog({
 }
 
 function PaperPreview({ preview }: { preview: Preview }) {
+  const [deckPage, setDeckPage] = useState(0);
+  const [cardPage, setCardPage] = useState(0);
+  useEffect(() => { setDeckPage(0); setCardPage(0); }, [preview.key]);
   const cardCount = preview.compiled.deckSummaries.reduce((total, deck) => total + deck.cardCount, 0);
+  const deck = preview.compiled.deckSummaries[deckPage];
+  const visibleCards = deck?.cards.slice(cardPage * 25, (cardPage + 1) * 25) ?? [];
+  const pageCount = deck ? Math.max(1, Math.ceil(deck.cards.length / 25)) : 1;
   return (
     <Box
       component="section"
@@ -281,26 +287,29 @@ function PaperPreview({ preview }: { preview: Preview }) {
         <Typography variant="h6">
           Preview · {preview.compiled.deckSummaries.length} deck(s) · {cardCount} card(s)
         </Typography>
-        {preview.compiled.deckSummaries.map((deck) => (
-          <Box key={deck.id}>
-            <Typography variant="subtitle2">
-              {deck.name} · {deck.cardCount} card(s) · {deck.id}
-            </Typography>
-            {deck.cards.map((card, index) => (
+        {deck && <>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="subtitle2">{deck.name} · {deck.cardCount} card(s) · {deck.id}</Typography>
+            {preview.compiled.deckSummaries.length > 1 && <Stack direction="row"><Button size="small" disabled={!deckPage} onClick={() => { setDeckPage((page) => Math.max(0, page - 1)); setCardPage(0); }}>Previous deck</Button><Button size="small" disabled={deckPage + 1 >= preview.compiled.deckSummaries.length} onClick={() => { setDeckPage((page) => Math.min(preview.compiled.deckSummaries.length - 1, page + 1)); setCardPage(0); }}>Next deck</Button></Stack>}
+          </Stack>
+          <Box key={deck.id} sx={{ maxHeight: 360, overflow: 'auto' }}>
+            {visibleCards.map((card, index) => (
               <Typography
                 key={card.id}
                 component="pre"
                 variant="caption"
                 sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', pl: 2, my: 0.5 }}
               >
-                {`${index + 1}. ${card.id}\nFront: ${card.front}\nBack: ${card.back}${card.sources === undefined ? '' : `\nSources: ${card.sources}`}${card.reviewNote === undefined ? '' : `\nReview note: ${card.reviewNote}`}`}
+                {`${cardPage * 25 + index + 1}. ${card.id}\nFront: ${card.front}\nBack: ${card.back}${card.sources === undefined ? '' : `\nSources: ${card.sources}`}${card.reviewNote === undefined ? '' : `\nReview note: ${card.reviewNote}`}`}
               </Typography>
             ))}
           </Box>
-        ))}
+          {deck.cards.length > 25 && <Stack direction="row" alignItems="center" justifyContent="space-between"><Typography variant="caption">{cardPage * 25 + 1}–{Math.min(deck.cards.length, (cardPage + 1) * 25)} of {deck.cards.length} cards</Typography><Stack direction="row"><Button size="small" disabled={!cardPage} onClick={() => setCardPage((page) => Math.max(0, page - 1))}>Previous cards</Button><Button size="small" disabled={cardPage + 1 >= pageCount} onClick={() => setCardPage((page) => Math.min(pageCount - 1, page + 1))}>Next cards</Button></Stack></Stack>}
+        </>}
         <Typography variant="caption" color="text.secondary">
-          Generated IDs: {preview.compiled.generatedIds.join(', ')}
+          Generated IDs · {preview.compiled.generatedIds.length} total. {preview.compiled.generatedIds.slice(0, 10).join(', ')}
         </Typography>
+        {preview.compiled.generatedIds.length > 10 && <details><summary>Review all generated IDs</summary><Typography component="pre" variant="caption" sx={{ maxHeight: 160, overflow: 'auto', whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{preview.compiled.generatedIds.join('\n')}</Typography></details>}
         <Typography variant="caption" color="text.secondary">
           Staging creates one undoable batch containing {preview.compiled.operations.length} operation(s).
         </Typography>

@@ -14,6 +14,7 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   private readonly initial: StoredQuestionBank;
   private bank: StoredQuestionBank;
   private history: StoredQuestionBank[] = [];
+  private flashcardHistory: Array<StoredFlashcardBank | undefined> = [];
   private operationLengths: number[] = [];
   private operations: AdminChangeSet['operations'] = [];
   private revision?: string;
@@ -27,6 +28,7 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   }
 
   setFlashcardBank(bank: StoredFlashcardBank): void { this.flashcards = structuredClone(bank); this.lastPreview = undefined; }
+  getFlashcardBank(): StoredFlashcardBank { return structuredClone(this.flashcards); }
 
   private async snapshot(): Promise<AdminBankSnapshot> {
     return { bank: cloneBank(this.bank), revision: await this.currentRevision() };
@@ -70,14 +72,16 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
     const errors = [...preview.issues, ...validateFlashcardBank(flashcards, preview.bank.subjects)].filter(issue => issue.level === 'error');
     if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
     // Both validated snapshots become visible in the same synchronous commit.
+    const previousFlashcards = structuredClone(this.flashcards);
     this.flashcards = structuredClone(flashcards);
-    return this.commit(preview.bank, changeSet);
+    return this.commit(preview.bank, changeSet, previousFlashcards);
   }
 
-  private commit(bank: StoredQuestionBank, changeSet: AdminChangeSet): Promise<AdminBankSnapshot> {
+  private commit(bank: StoredQuestionBank, changeSet: AdminChangeSet, previousFlashcards?: StoredFlashcardBank): Promise<AdminBankSnapshot> {
     this.history.push(this.bank);
+    this.flashcardHistory.push(previousFlashcards && structuredClone(previousFlashcards));
     this.operationLengths.push(this.operations.length);
-    if (this.history.length > undoLimit) { this.history.shift(); this.operationLengths.shift(); }
+    if (this.history.length > undoLimit) { this.history.shift(); this.flashcardHistory.shift(); this.operationLengths.shift(); }
     this.bank = bank;
     this.operations.push(...changeSet.operations);
     this.revision = undefined;
@@ -91,6 +95,8 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
     this.assertSharedSubjects(previous);
     this.history.pop();
     this.bank = previous;
+    const previousFlashcards = this.flashcardHistory.pop();
+    if (previousFlashcards) this.flashcards = previousFlashcards;
     this.operations = this.operations.slice(0, this.operationLengths.pop() ?? 0);
     this.revision = undefined;
     this.lastPreview = undefined;
@@ -112,6 +118,7 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   private resetToInitial(): Promise<AdminBankSnapshot> {
     this.bank = cloneBank(this.initial);
     this.history = [];
+    this.flashcardHistory = [];
     this.operationLengths = [];
     this.operations = [];
     this.revision = undefined;

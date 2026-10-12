@@ -4,7 +4,8 @@ import {
   Alert,
   Box,
   Button,
-  Divider,
+  Menu,
+  MenuItem,
   ListItemButton,
   ListItemText,
   Paper,
@@ -38,6 +39,7 @@ import { FlashcardBulkAddDialog, type FlashcardBulkPreviewSnapshot } from './Fla
 import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
 import { downloadJson } from './downloadJson';
 import { selectFlashcardPage } from './core/flashcardNavigator';
+import { AdminAddSubjectButton } from './components/AdminAddSubjectButton';
 
 type Kind = 'deck' | 'card';
 type Selected = { kind: Kind; id: string } | undefined;
@@ -56,6 +58,13 @@ export function FlashcardAdminPanel({
   onStagePairedImport,
   onResetPaired,
   onPairedExport,
+  onExportReady,
+  onDeleteSubject,
+  onAddSubject,
+  onWorkspaceChange,
+  externalTransaction,
+  undoRequest = 0,
+  onUndoCoordinated,
   externalBusy = false,
 }: {
   subjects: readonly Subject[];
@@ -68,6 +77,13 @@ export function FlashcardAdminPanel({
   onStagePairedImport?: (changeSet: AdminChangeSet, flashcards: StoredFlashcardBank) => Promise<void>;
   onResetPaired?: (flashcards: StoredFlashcardBank) => Promise<void>;
   onPairedExport?: () => void;
+  onExportReady?: (action: () => void, enabled: boolean) => void;
+  onDeleteSubject?: (subjectId: string, subjectName: string) => void;
+  onAddSubject?: () => void;
+  onWorkspaceChange?: (bank: StoredFlashcardBank, operations: FlashcardAdminOperation[], reason: string) => void;
+  externalTransaction?: { id: number; bank: StoredFlashcardBank; operations: FlashcardAdminOperation[]; reason: string };
+  undoRequest?: number;
+  onUndoCoordinated?: () => Promise<void>;
   externalBusy?: boolean;
 }) {
   const [bank, setBank] = useState(() => clone(storedFlashcardBank));
@@ -76,6 +92,9 @@ export function FlashcardAdminPanel({
   const [browseDeckId, setBrowseDeckId] = useState('');
   const [cardQuery, setCardQuery] = useState('');
   const [cardPage, setCardPage] = useState(0);
+  const [addAnchor, setAddAnchor] = useState<HTMLElement | null>(null);
+  const [actionAnchor, setActionAnchor] = useState<HTMLElement | null>(null);
+  const [workspaceAnchor, setWorkspaceAnchor] = useState<HTMLElement | null>(null);
   const [editor, setEditor] = useState('');
   const [reason, setReason] = useState('Local flashcard content edit');
   const [issues, setIssues] = useState<string[]>([]);
@@ -89,6 +108,7 @@ export function FlashcardAdminPanel({
       browseDeckId: string;
       cardQuery: string;
       cardPage: number;
+      coordinated?: boolean;
     }>
   >([]);
   const [operations, setOperations] = useState<FlashcardAdminOperation[]>([]);
@@ -110,6 +130,8 @@ export function FlashcardAdminPanel({
   const [loadedEditor, setLoadedEditor] = useState('');
   const [busy, setBusy] = useState(false);
   const generation = useRef(0);
+  const undoActionRef = useRef<() => void>(() => undefined);
+  const exportActionRef = useRef<() => Promise<void>>(async () => undefined);
   const subjectSnapshot = JSON.stringify(subjects);
   const latestSubjects = useRef(subjectSnapshot);
   latestSubjects.current = subjectSnapshot;
@@ -187,6 +209,20 @@ export function FlashcardAdminPanel({
       ].slice(-10),
     );
   };
+  useEffect(() => { onWorkspaceChange?.(clone(bank), structuredClone(operations), reason); }, [bank, operations, reason, onWorkspaceChange]);
+  useEffect(() => {
+    if (!externalTransaction || externalTransaction.id === 0) return;
+    remember();
+    setBank(clone(externalTransaction.bank));
+    setOperations(structuredClone(externalTransaction.operations));
+    setReason(externalTransaction.reason);
+    setDirty(true);
+    onBankChange(externalTransaction.bank);
+    setSelection(undefined); setEditor(''); setLoadedEditor(''); setBrowseSubjectId(''); setBrowseDeckId(''); setCardQuery(''); setCardPage(0);
+    // One externally coordinated delete is one flashcard Undo entry.
+    setHistory((items) => { const next = [...items]; const last = next.at(-1); if (last) last.coordinated = true; return next; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalTransaction?.id]);
   const discardDraft = () => !editorDirty || window.confirm('Discard the unstaged record edits?');
   const changeBrowseSubject = (subjectId: string) => {
     if (subjectId === browseSubjectId || busy || externalBusy || !discardDraft()) return;
@@ -405,6 +441,13 @@ export function FlashcardAdminPanel({
     if (!discardDraft()) return;
     const previous = history.at(-1);
     if (!previous) return;
+    if (previous.coordinated && onUndoCoordinated) {
+      void onUndoCoordinated().then(() => {
+        setBank(previous.bank); onBankChange(previous.bank); setOperations(previous.operations); setReason(previous.reason); setDirty(previous.dirty);
+        setHistory((items) => items.slice(0, -1)); setBrowseSubjectId(previous.browseSubjectId); setBrowseDeckId(previous.browseDeckId); setCardQuery(previous.cardQuery); setCardPage(previous.cardPage); setSelection(undefined); setEditor(''); setLoadedEditor('');
+      }).catch((error) => setIssues([error instanceof Error ? error.message : 'Unable to undo the paired deletion.']));
+      return;
+    }
     const errors = validateFlashcardBank(previous.bank, subjects).filter((issue) => issue.level === 'error');
     if (errors.length) {
       setIssues(errors.map((issue) => issue.message));
@@ -433,6 +476,8 @@ export function FlashcardAdminPanel({
     setLoadedEditor('');
     setIssues([]);
   };
+  undoActionRef.current = undo;
+  useEffect(() => { if (undoRequest > 0) undoActionRef.current(); }, [undoRequest]);
   const clearWorkspace = (initial: StoredFlashcardBank) => {
     generation.current++;
     setPendingImport(undefined);
@@ -549,6 +594,8 @@ export function FlashcardAdminPanel({
       setBusy(false);
     }
   };
+  exportActionRef.current = exportFiles;
+  useEffect(() => { onExportReady?.(() => { void exportActionRef.current(); }, dirty || quizChangesStaged); }, [onExportReady, dirty, quizChangesStaged]);
   const previewImport = async (file?: File) => {
     setPendingImport(undefined);
     setImportFileError(undefined);
@@ -668,24 +715,18 @@ export function FlashcardAdminPanel({
             onChange={(_, subject) => changeBrowseSubject(subject?.id ?? '')}
             renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
           />
-          {browseSubjectId && (
-            <Stack direction="row" spacing={0.5} flexWrap="wrap">
-              <Button size="small" onClick={() => create('deck', browseSubjectId)}>
-                Add deck
-              </Button>
-              <Button
-                size="small"
-                onClick={() =>
-                  openBulk(
-                    { kind: 'subject', subjectId: browseSubjectId },
-                    subjects.find((subject) => subject.id === browseSubjectId)?.name ?? '',
-                  )
-                }
-              >
-                Bulk add decks
-              </Button>
-            </Stack>
-          )}
+          {!browseSubjectId && onAddSubject && <Stack direction="row"><AdminAddSubjectButton onClick={onAddSubject} /></Stack>}
+          {browseSubjectId && <Stack direction="row" spacing={0.5}>
+            <Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>Subject actions</Button>
+            <Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
+              <MenuItem onClick={() => { setActionAnchor(null); const subject = subjects.find((item) => item.id === browseSubjectId); if (subject) onDeleteSubject?.(subject.id, subject.name); }}>Delete subject…</MenuItem>
+            </Menu>
+            <Button size="small" aria-haspopup="menu" onClick={(event) => setAddAnchor(event.currentTarget)}>Add</Button>
+            <Menu anchorEl={addAnchor} open={Boolean(addAnchor)} onClose={() => setAddAnchor(null)}>
+              <MenuItem onClick={() => { setAddAnchor(null); create('deck', browseSubjectId); }}>Add deck</MenuItem>
+              <MenuItem onClick={() => { setAddAnchor(null); openBulk({ kind: 'subject', subjectId: browseSubjectId }, subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''); }}>Bulk add decks</MenuItem>
+            </Menu>
+          </Stack>}
           {browseSubjectId && (
             <Autocomplete
               options={browseDecks}
@@ -700,31 +741,16 @@ export function FlashcardAdminPanel({
           {browseDeckId && browseDecks.some((deck) => deck.id === browseDeckId) && (
             <>
               <Stack direction="row" spacing={0.5} flexWrap="wrap">
-                <Button
-                  size="small"
-                  onClick={() =>
-                    load(
-                      { kind: 'deck', id: browseDeckId },
-                      browseDecks.find((deck) => deck.id === browseDeckId),
-                    )
-                  }
-                >
-                  Edit deck
-                </Button>
-                <Button size="small" onClick={() => create('card', browseDeckId)}>
-                  Add card
-                </Button>
-                <Button
-                  size="small"
-                  onClick={() =>
-                    openBulk(
-                      { kind: 'deck', deckId: browseDeckId },
-                      `${subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''} / ${browseDecks.find((deck) => deck.id === browseDeckId)?.name ?? ''}`,
-                    )
-                  }
-                >
-                  Bulk add cards
-                </Button>
+                <Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>Deck actions</Button>
+                <Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
+                  <MenuItem onClick={() => { setActionAnchor(null); load({ kind: 'deck', id: browseDeckId }, browseDecks.find((deck) => deck.id === browseDeckId)); }}>Edit deck</MenuItem>
+                  <MenuItem onClick={() => { setActionAnchor(null); remove('deck', browseDeckId); }}>Delete deck…</MenuItem>
+                </Menu>
+                <Button size="small" aria-haspopup="menu" onClick={(event) => setAddAnchor(event.currentTarget)}>Add</Button>
+                <Menu anchorEl={addAnchor} open={Boolean(addAnchor)} onClose={() => setAddAnchor(null)}>
+                  <MenuItem onClick={() => { setAddAnchor(null); create('card', browseDeckId); }}>Add card</MenuItem>
+                  <MenuItem onClick={() => { setAddAnchor(null); openBulk({ kind: 'deck', deckId: browseDeckId }, `${subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''} / ${browseDecks.find((deck) => deck.id === browseDeckId)?.name ?? ''}`); }}>Bulk add cards</MenuItem>
+                </Menu>
               </Stack>
               <TextField
                 label="Search cards in this deck"
@@ -838,7 +864,6 @@ export function FlashcardAdminPanel({
               )}
             </>
           )}
-          {!browseSubjectId && <Typography variant="body2">Choose a subject to begin.</Typography>}
         </Stack>
       </Paper>
       <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
@@ -847,17 +872,7 @@ export function FlashcardAdminPanel({
             {selection ? `${selection.id ? 'Edit' : 'Create'} ${selection.kind}` : 'Select a deck or card'}
           </Typography>
           <TextField
-            label="Reason"
-            value={reason}
-            onChange={(event) => {
-              generation.current++;
-              setReason(event.target.value);
-              if (operations.length) setDirty(true);
-            }}
-            required
-          />
-          <TextField
-            label="Record JSON"
+            label="JSON"
             value={editor}
             onChange={(event) => setEditor(event.target.value)}
             multiline
@@ -883,36 +898,21 @@ export function FlashcardAdminPanel({
           )}
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Button variant="contained" disabled={!selection} onClick={stage}>
-              Stage record
+              Stage
             </Button>
-            <Button
-              color="error"
-              disabled={!selection?.id}
-              onClick={() => selection && remove(selection.kind, selection.id)}
-            >
-              Delete
-            </Button>
-            <Button disabled={!selection?.id} onClick={() => reorder(-1)}>
-              Move up
-            </Button>
-            <Button disabled={!selection?.id} onClick={() => reorder(1)}>
-              Move down
-            </Button>
-            <Divider flexItem orientation="vertical" sx={{ mx: 0.5 }} />
+            {selection?.id && <><Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>Record actions</Button><Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
+              <MenuItem onClick={() => { setActionAnchor(null); remove(selection.kind, selection.id!); }}>Delete…</MenuItem>
+              {selection.kind === 'card' && <><MenuItem onClick={() => { setActionAnchor(null); reorder(-1); }}>Move up</MenuItem><MenuItem onClick={() => { setActionAnchor(null); reorder(1); }}>Move down</MenuItem></>}
+            </Menu></>}
             <Button disabled={!history.length} onClick={undo}>
               Undo
             </Button>
-            <Button disabled={!operations.length && !editorDirty} onClick={reset}>
-              Reset
-            </Button>
-            {onResetPaired && quizChangesStaged && <Button onClick={() => void resetBoth()}>Reset both banks</Button>}
-            <Divider flexItem orientation="vertical" sx={{ mx: 0.5 }} />
-            <Button variant="outlined" disabled={!dirty} onClick={() => void exportFiles()}>
-              Export flashcards
-            </Button>
-            <Button onClick={() => importFileRef.current?.click()} disabled={Boolean(operations.length) || editorDirty}>
-              Import change set
-            </Button>
+            <Button size="small" aria-haspopup="menu" onClick={(event) => setWorkspaceAnchor(event.currentTarget)}>Workspace</Button>
+            <Menu anchorEl={workspaceAnchor} open={Boolean(workspaceAnchor)} onClose={() => setWorkspaceAnchor(null)}>
+              <MenuItem disabled={!operations.length && !editorDirty} onClick={() => { setWorkspaceAnchor(null); reset(); }}>Reset flashcards</MenuItem>
+              {onResetPaired && quizChangesStaged && <MenuItem onClick={() => { setWorkspaceAnchor(null); void resetBoth(); }}>Reset both banks</MenuItem>}
+              <MenuItem disabled={Boolean(operations.length) || editorDirty} onClick={() => { setWorkspaceAnchor(null); importFileRef.current?.click(); }}>Import change set</MenuItem>
+            </Menu>
             <input
               ref={importFileRef}
               type="file"
@@ -937,6 +937,7 @@ export function FlashcardAdminPanel({
                     value={JSON.stringify(pendingImport.quizChangeSet, null, 2)}
                     multiline
                     minRows={6}
+                    maxRows={12}
                     fullWidth
                     InputProps={{ readOnly: true, sx: { fontFamily: 'monospace', fontSize: 12 } }}
                   />
@@ -946,6 +947,7 @@ export function FlashcardAdminPanel({
                   value={serializeFlashcardBank(pendingImport.bank)}
                   multiline
                   minRows={8}
+                  maxRows={14}
                   fullWidth
                   InputProps={{ readOnly: true, sx: { fontFamily: 'monospace', fontSize: 12 } }}
                 />
