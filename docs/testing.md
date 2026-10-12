@@ -4,6 +4,29 @@ Run checks appropriate to the change and follow the [regression requirements](te
 
 ## Commands
 
+### While developing
+
+Run the changed unit test directly, or start Vitest in watch mode:
+
+```sh
+npm test -- src/domain/quizEngine.test.ts
+npm run test:watch
+```
+
+Choose affected tests using the ownership and regression guidance below. UI, shared content/rendering, persistence, schema, and transport work still needs the browser, backend, and content checks required by the affected-area guidance. A focused command speeds iteration; it does not replace the merge checks.
+
+### Full verification
+
+After Chromium has been installed and the backend development environment is set up, run:
+
+```sh
+npm run verify:full
+```
+
+The runner stops at the first failed step. It runs lint, formatting, architecture tests, the complete unit suite, actual-bank validation, backend Ruff/mypy/pytest, and TypeScript checking. It then creates a fresh learner production bundle with retries disabled, runs the learner browser suite against that bundle, creates the enabled optional admin production bundle, and runs the admin browser suite. Both browser suites use fixture banks; neither changes authored content. The learner bundle has a fresh build before preview starts. The admin build follows learner tests because both builds write to `dist`.
+
+`npm run test:e2e` remains self-contained and builds fresh output with retries disabled before running Chromium. `npm run test:e2e:prepared` skips that build and is intended for `verify:full` immediately after `npm run build:learner:smoke`; do not use it with an old or differently configured `dist`. `npm run test:e2e:admin` runs against Vite's development server and does not need production output.
+
 From the repository root, run the frontend checks:
 
 ```sh
@@ -15,7 +38,7 @@ npm run validate:content
 npm run build
 ```
 
-The build includes TypeScript checking for browser and maintenance code. Test the optional admin build when changing entries, shared UI, authoring, or bundle boundaries, using the [enabled production editor command](../README.md#local-content-editor).
+`npm run build` includes TypeScript checking for browser and maintenance code. `npm run typecheck`, `npm run build:learner`, and `npm run build:admin` are split commands for verification flows that already run TypeScript checking once. The Vite-only admin command enables both the admin entry and the production authoring editor. Test the optional admin build when changing entries, shared UI, authoring, or bundle boundaries, using the [enabled production editor command](../README.md#local-content-editor).
 
 The ordinary build must omit `admin.html`; the optional build must include it. Both flags are needed to preview an enabled production editor. Verify initial and quiz-route chunk composition when changing lazy imports: API startup must not eagerly load canonical banks or the validation pipeline.
 
@@ -40,11 +63,11 @@ The learner npm pretest builds production output with automatic retries disabled
 ## Suite ownership and fixtures
 
 - Vitest tests stay beside their domain, persistence, content, shared UI, feature, and authoring modules. App tests cover composition/navigation/drawer policy; quiz-to-subject lookup tests live with the quiz session contract.
-- `src/test/setup.ts` mocks both canonical JSON imports, including transitive adapter imports, with `tests/fixtures/question-bank.json` and `tests/fixtures/flashcard-bank-contract.json`. The flashcard admin panel overrides its initial catalog with `tests/fixtures/empty-flashcard-bank.json`; backend quiz request tests use the same explicit empty baseline.
+- `src/test/setup.ts` mocks both canonical JSON imports, including transitive adapter imports, with `tests/fixtures/question-bank.json` and `tests/fixtures/flashcard-bank-contract.json`, and installs React Testing Library cleanup, matchMedia, and observer shims. Vitest uses two workers by default; CI calls `npm run test:ci` to make that limit explicit. Four workers varied between a fast pass and a slower failed run on the local machine, so they are not the default. The flashcard admin panel overrides its initial catalog with `tests/fixtures/empty-flashcard-bank.json`; backend quiz request tests use the same explicit empty baseline.
 - `tests/fixtures/bank-contract-cases.json` is shared by TypeScript and Python stored-bank validators. Add cross-runtime edge cases there. `src/content/api/apiContract.test.ts` owns the separate API DTO contract.
 - `backend/tests` uses explicit fixture paths for repository/request behavior; it must never mutate canonical banks.
 - `e2e` covers production learner flows and the separate development authoring flow. Its populated flashcard fixture is selected through `MEDUCATION_FLASHCARD_BANK_PATH`.
-- Admin browser tests intercept the Vite flashcard JSON module with `tests/fixtures/flashcard-bank-contract.json` before navigation, keeping initial loading, reset, and replay on one populated baseline. Deck actions are scoped to the test-created deck; exports must preserve fixture cards.
+- Admin browser tests intercept both canonical bank modules before navigation, using `tests/fixtures/question-bank.json` and `tests/fixtures/flashcard-bank-contract.json`. They retain a fixed populated baseline for loading, reset, replay, and export; exported question records and flashcard records are checked against their fixture contents. Deck actions are scoped to test-created records.
 - Admin quiz navigator/status tests under `src/admin/components` use the small question-bank fixture to protect selection payloads, canonical row order, parent-dependent Add availability, and textual validation/workspace status. UI copy cleanup must retain diagnostic paths and busy feedback; do not lock incidental subtitles or colors into unit tests. The admin browser suite also checks keyboard access, primary-action color, panel radius, and horizontal overflow at 390px.
 - Architecture tests under `scripts/architecture` use Node's test runner and are excluded from Vitest to avoid duplicate execution.
 

@@ -1,7 +1,11 @@
 import { expect, test } from '@playwright/test';
 import { mkdir, readFile } from 'node:fs/promises';
 import { dirname } from 'node:path';
-import type { StoredFlashcardBank } from '../../src/content/schema/schema';
+import type { StoredFlashcardBank, StoredQuestionBank } from '../../src/content/schema/schema';
+
+const questionFixture = JSON.parse(
+  await readFile(new URL('../../tests/fixtures/question-bank.json', import.meta.url), 'utf8'),
+) as StoredQuestionBank;
 
 const flashcardFixture = JSON.parse(
   await readFile(new URL('../../tests/fixtures/flashcard-bank-contract.json', import.meta.url), 'utf8'),
@@ -10,6 +14,12 @@ const flashcardFixture = JSON.parse(
 // Keep authoring flows independent of the size and ordering of authored content.
 // Serve the same populated baseline to every importer, including reset/replay.
 test.beforeEach(async ({ page }) => {
+  await page.route(/\/src\/content\/questionBank\.generated\.json(?:\?.*)?$/, (route) =>
+    route.fulfill({
+      contentType: 'text/javascript',
+      body: `export default ${JSON.stringify(questionFixture)};`,
+    }),
+  );
   await page.route(/\/src\/content\/flashcardBank\.generated\.json(?:\?.*)?$/, (route) =>
     route.fulfill({
       contentType: 'text/javascript',
@@ -42,7 +52,7 @@ test('keeps the admin controls themed, keyboard accessible, and within a narrow 
 });
 
 async function selectSubject(page: import('@playwright/test').Page, id = 's1') {
-  const label = id === 's1' ? 'Anatomy & Histology' : id === 's2' ? 'Biochemistry' : id;
+  const label = questionFixture.subjects.find((subject) => subject.id === id)?.name ?? id;
   await page.getByRole('combobox', { name: 'Subject' }).fill(label);
   await page.getByRole('option', { name: label, exact: true }).click();
 }
@@ -60,7 +70,13 @@ async function expectSelectedDeck(page: import('@playwright/test').Page, name: s
 test('stages deck and card CRUD and previews an exported replay', async ({ page }, testInfo) => {
   test.setTimeout(60_000);
   const downloads: import('@playwright/test').Download[] = [];
-  page.on('download', (download) => downloads.push(download));
+  const quizDownloads: import('@playwright/test').Download[] = [];
+  page.on('download', (download) => {
+    if (['flashcardBank.generated.json', 'flashcard-bank-change-set.json'].includes(download.suggestedFilename())) {
+      downloads.push(download);
+    }
+  });
+  page.on('download', (download) => quizDownloads.push(download));
   await page.goto('/admin.html');
   await expect(page.getByText('Admin', { exact: true })).toBeVisible({ timeout: 30_000 });
   await page.getByRole('button', { name: 'Flashcards' }).click();
@@ -156,6 +172,18 @@ test('stages deck and card CRUD and previews an exported replay', async ({ page 
   const newSubject = JSON.parse(await quizEditor.inputValue()) as { id: string; name: string; accent: string };
   await quizEditor.fill(JSON.stringify({ ...newSubject, name: 'Temporary shared subject' }));
   await page.getByRole('button', { name: 'Stage', exact: true }).click();
+  await page.getByRole('button', { name: 'Export quizzes', exact: true }).click();
+  await expect
+    .poll(
+      () => quizDownloads.filter((download) => download.suggestedFilename() === 'questionBank.generated.json').length,
+    )
+    .toBe(1);
+  const quizBankPath = testInfo.outputPath('question-bank-with-new-subject.json');
+  await quizDownloads
+    .find((download) => download.suggestedFilename() === 'questionBank.generated.json')!
+    .saveAs(quizBankPath);
+  const exportedQuestionBank = JSON.parse(await readFile(quizBankPath, 'utf8')) as StoredQuestionBank;
+  expect(exportedQuestionBank.questions).toEqual(questionFixture.questions);
   await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
   await page.getByRole('combobox', { name: 'Subject' }).fill('Temporary shared subject');
   await expect(page.getByRole('option', { name: 'Temporary shared subject', exact: true })).toBeVisible();

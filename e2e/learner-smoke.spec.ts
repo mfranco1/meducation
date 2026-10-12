@@ -291,7 +291,17 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
     contentType: 'image/png',
   });
   await page.setViewportSize({ width: 390, height: 844 });
-  expect((await secondParagraph.boundingBox())!.y).toBeGreaterThan((await firstParagraph.boundingBox())!.y);
+  await expect(secondParagraph).toBeVisible();
+  const mobileParagraphPositions = await page
+    .locator('h5')
+    .evaluateAll((headings) =>
+      headings.map((heading) => ({ text: heading.textContent, y: heading.getBoundingClientRect().y })),
+    );
+  const mobileFirstParagraphY = mobileParagraphPositions.find(({ text }) => text?.includes('What is'))?.y;
+  const mobileSecondParagraphY = mobileParagraphPositions.find(({ text }) => text?.includes('Additional context'))?.y;
+  expect(mobileFirstParagraphY).toBeDefined();
+  expect(mobileSecondParagraphY).toBeDefined();
+  expect(mobileSecondParagraphY).toBeGreaterThan(mobileFirstParagraphY!);
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
     .toBe(true);
@@ -603,7 +613,7 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
   await expect(banner.getByRole('alert')).toContainText('We can’t load quizzes for Browser Test Subject right now.');
   await expect(banner).not.toContainText('private backend detail');
   await expect(page.locator('.MuiSkeleton-wave')).toHaveCount(4);
-  await page.waitForTimeout(200);
+  await expect(page.getByTestId('screen-transition')).toHaveCSS('top', '0px');
   const bounds = await page.evaluate(() => {
     const main = document.querySelector('main')!.getBoundingClientRect();
     const recovery = document.querySelector('[data-testid="content-recovery-banner"]')!.getBoundingClientRect();
