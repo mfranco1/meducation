@@ -110,24 +110,24 @@ export function FlashcardsDashboardScreen({
         summary={
           <StatCardRow>
             <StatCard
-              label="Completed decks"
+              label="Completed"
               icon={<StyleOutlinedIcon aria-hidden="true" focusable="false" />}
               value={metric(stats.completedDecks)}
-              supportingText="deck finishes"
+              supportingText="decks"
             />
             <StatCard
-              label="Average count"
+              label="Average"
               accessibleLabel="Average flashcard deck finishes per day"
               icon={<BarChartOutlinedIcon aria-hidden="true" focusable="false" />}
               value={metric(averageFormatter.format(stats.averagePerDay))}
-              supportingText="deck finishes / day"
+              supportingText="decks / day"
             />
             <StatCard
-              label="Highest count"
+              label="Highest"
               accessibleLabel="Highest flashcard deck finishes in a day"
               icon={<EmojiEventsOutlinedIcon aria-hidden="true" focusable="false" />}
               value={metric(stats.highestInDay)}
-              supportingText="deck finishes in a day"
+              supportingText="decks finished in a day"
             />
           </StatCardRow>
         }

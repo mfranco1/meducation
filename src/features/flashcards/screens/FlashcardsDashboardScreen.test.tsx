@@ -22,17 +22,17 @@ describe('FlashcardsDashboardScreen', () => {
     expect(screen.queryByRole('heading', { name: 'Flashcards' })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
     expect(screen.getByText('No subjects are available yet.')).toBeVisible();
-    expect(screen.getByText('Completed decks')).toBeVisible();
-    expect(screen.getByText('Average count')).toBeVisible();
-    expect(screen.getByText('Highest count')).toBeVisible();
+    expect(screen.getByText('Completed')).toBeVisible();
+    expect(screen.getByText('Average')).toBeVisible();
+    expect(screen.getByText('Highest')).toBeVisible();
     expect(screen.queryByText('All recorded finishes')).not.toBeInTheDocument();
     expect(screen.queryByText(/decks\/day|since tracking began|one local day/)).not.toBeInTheDocument();
     expect(
       within(screen.getByRole('group', { name: 'Average flashcard deck finishes per day' })).getByText('0'),
     ).toBeVisible();
-    expect(screen.getByText('deck finishes')).toBeVisible();
-    expect(screen.getByText('deck finishes / day')).toBeVisible();
-    expect(screen.getByText('deck finishes in a day')).toBeVisible();
+    expect(screen.getByText('decks')).toBeVisible();
+    expect(screen.getByText('decks / day')).toBeVisible();
+    expect(screen.getByText('decks finished in a day')).toBeVisible();
   });
 
   it('shows a continue carousel and all-subject grid without score metadata', () => {
@@ -73,7 +73,7 @@ describe('FlashcardsDashboardScreen', () => {
     expect(within(grid).getByText('1 in progress')).toBeVisible();
     expect(within(continueRegion).getByText('1 deck in progress')).toBeVisible();
     expect(within(continueRegion).queryByTestId('subject-score-track')).not.toBeInTheDocument();
-    expect(within(screen.getByRole('group', { name: 'Completed decks' })).getByText('3')).toBeVisible();
+    expect(within(screen.getByRole('group', { name: 'Completed' })).getByText('3')).toBeVisible();
     expect(
       within(screen.getByRole('group', { name: 'Average flashcard deck finishes per day' })).getByText('1.5'),
     ).toBeVisible();
