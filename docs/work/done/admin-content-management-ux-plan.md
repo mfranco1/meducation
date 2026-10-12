@@ -1,6 +1,10 @@
 # Admin and content management UX plan
 
-Date: 2026-10-12. Status: implementation in progress.
+Date: 2026-10-12. Status: admin implementation completed and audited.
+
+Audit follow-up: [Admin completeness audit](admin-completeness-audit.md) finishes selected-record deletion and consistent deletion reviews, restores single-record actions, repairs draft/paired-Undo guards, and verifies complete relevant coverage. Its Architecture decisions describe the final smaller implementation where this proposal suggested a new generalized journal or additional framework components.
+
+Follow-up: [Admin panel layout and copy plan](admin-panel-layout-and-copy-plan.md) supersedes this plan's fixed navigator heights, visible modal Reason fields, Record/Bulk add naming, and separate bulk Preview/Stage buttons. Follow that completed plan for the latest requested behavior.
 
 ## Goal and scope
 
@@ -116,7 +120,7 @@ Coordinated Undo must restore both banks and both operation logs as one batch. P
 - [x] 1. Inventory action destinations; add pure quiz paging/search. Replace nested question browsing and the first-200 cutoff; reuse searchable scoped pickers and action menus in both sections.
 - [x] 2. Bound issues, generated IDs, bulk records, and import JSON. Status issues show 10 per page; generated IDs are summarized with a full disclosure; flashcard bulk previews page through one deck and 25 cards at a time; import JSON has bounded editor height.
 - [x] 3. Add the coordinated gateway/history seam for subject deletion across both banks, including paired validation, stale-revision checks, one Undo, and paired export/reset gating.
-- [ ] 4. Add parent/record deletion review and consolidate workspace actions and active-section export. Multi-select item/card deletion remains.
+- [x] 4. Add parent/record deletion review, selected item/card deletion, grouped workspace actions, and active-section export.
 - [x] 5. Update content-management, design-system, architecture, and testing docs. Finish interaction/responsive and regression verification before moving this tracker to `docs/work/done`.
 
 ## Acceptance criteria and verification
@@ -139,9 +143,11 @@ Implementation gates: affected tests, full unit suite, lint, formatting, archite
 
 - The quiz navigator now scopes by subject and quiz, searches full stems/IDs, and paginates all items by 25; the 200-item truncation is removed.
 - Flashcards use Add/parent/record/Workspace menus and the shared header export. Quiz bulk destination buttons are now one selector. Quiz workspace import/reset actions are grouped; Undo stays visible. Flashcard bulk previews show one deck and at most 25 cards, with bounded import JSON.
-- The deletion dialog summarizes quiz descendants and subject deck/card descendants, pages affected identities, and accepts a change reason. Subject deletion applies a paired quiz/flashcard operation and stores a paired undo snapshot in the in-memory gateway.
+- The deletion dialog summarizes quiz descendants and subject deck/card descendants, pages affected identities, and keeps the workspace reason internally. Subject deletion applies a paired quiz/flashcard operation and stores a paired undo snapshot in the in-memory gateway.
 - Validation issues are paged by 10. Generated IDs show a short summary with an expandable full list.
 - Design, content-management, architecture, and testing documentation describe the new paths.
-- Remaining from the agreed plan: multi-select deletion, complete keyboard/mobile review, and regression/browser checks. Lint and architecture verification passed.
+- The audit follow-up completes selected-record deletion, reviewed flashcard deletion, guarded paired Undo, and responsive/keyboard regressions. See that tracker for the complete current verification results.
 
-Verification: final `npm run build` and `npm run lint` passed, including type-checking and architecture boundaries; normal output omits the admin entry. `git diff --check` passed. Existing Vite warning for chunks above 500 kB remains. No unit or browser tests have been run. Canonical banks were not edited.
+Earlier implementation verification: `npm run build` and `npm run lint` passed, including type-checking and architecture boundaries; normal output omits the admin entry. `git diff --check` passed. Existing Vite warning for chunks above 500 kB remains. No unit or browser tests have been run. Canonical banks were not edited.
+
+Final admin verification is recorded in [Admin completeness audit](admin-completeness-audit.md): 474 complete frontend unit tests, 72 admin tests, and 12 admin browser flows passed, along with type-checking, both build modes, lint/architecture, formatting, actual-bank validation, and diff checks. The broader learner browser suite has three separately tracked failures; see [Learner browser regression findings](../ongoing/learner-browser-regression-findings.md). The proposed generalized journal/framework was replaced by the bounded section histories and guarded paired-bank authority documented in the audit.

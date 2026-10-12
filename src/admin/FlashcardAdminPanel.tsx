@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Autocomplete,
+  Checkbox,
   Alert,
   Box,
   Button,
@@ -39,6 +40,10 @@ import { FlashcardBulkAddDialog, type FlashcardBulkPreviewSnapshot } from './Fla
 import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
 import { downloadJson } from './downloadJson';
 import { selectFlashcardPage } from './core/flashcardNavigator';
+import { adminEditorLayout, adminNavigatorLayout } from './components/adminPanelLayout';
+import { AdminRecordSelection, useAdminRecordSelection } from './components/AdminRecordSelection';
+import { AdminIssues } from './components/AdminIssues';
+import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
 import { AdminAddSubjectButton } from './components/AdminAddSubjectButton';
 
 type Kind = 'deck' | 'card';
@@ -62,6 +67,7 @@ export function FlashcardAdminPanel({
   onAddSubject,
   onEditSubject,
   onWorkspaceChange,
+  onDraftChange,
   externalTransaction,
   undoRequest = 0,
   onUndoCoordinated,
@@ -81,18 +87,23 @@ export function FlashcardAdminPanel({
   onDeleteSubject?: (subjectId: string, subjectName: string) => void;
   onAddSubject?: () => void;
   onEditSubject?: (subjectId: string, subjectName: string) => void;
+  onDraftChange?: (dirty: boolean) => void;
   onWorkspaceChange?: (bank: StoredFlashcardBank, operations: FlashcardAdminOperation[], reason: string) => void;
   externalTransaction?: { id: number; bank: StoredFlashcardBank; operations: FlashcardAdminOperation[]; reason: string };
   undoRequest?: number;
-  onUndoCoordinated?: () => Promise<void>;
+  onUndoCoordinated?: (expectedQuizOperations: number) => Promise<void>;
   externalBusy?: boolean;
 }) {
   const [bank, setBank] = useState(() => clone(storedFlashcardBank));
   const [selection, setSelection] = useState<Selected>();
   const [browseSubjectId, setBrowseSubjectId] = useState('');
   const [browseDeckId, setBrowseDeckId] = useState('');
+  const [subjectQuery, setSubjectQuery] = useState<string>();
+  const [deckQuery, setDeckQuery] = useState<string>();
   const [cardQuery, setCardQuery] = useState('');
   const [cardPage, setCardPage] = useState(0);
+  const [deleteRequest, setDeleteRequest] = useState<DeleteRequest>();
+  const [deleteError, setDeleteError] = useState('');
   const [actionAnchor, setActionAnchor] = useState<HTMLElement | null>(null);
   const [workspaceAnchor, setWorkspaceAnchor] = useState<HTMLElement | null>(null);
   const [editor, setEditor] = useState('');
@@ -109,6 +120,7 @@ export function FlashcardAdminPanel({
       cardQuery: string;
       cardPage: number;
       coordinated?: boolean;
+      quizOperationCount?: number;
     }>
   >([]);
   const [operations, setOperations] = useState<FlashcardAdminOperation[]>([]);
@@ -192,12 +204,14 @@ export function FlashcardAdminPanel({
   const browseDeck = browseDecks.find((deck) => deck.id === browseDeckId);
   const deckCards = browseDeck ? (cardsByDeck[browseDeck.id] ?? []) : [];
   const cardResults = selectFlashcardPage(deckCards, cardQuery, cardPage);
-  const remember = () => {
+  const recordSelection = useAdminRecordSelection(JSON.stringify([browseSubjectId, browseDeckId, cardQuery]), deckCards.map(row => row.id));
+  const remember = (coordinated = false, quizOperationCount?: number) => {
     setHistory((items) =>
       [
         ...items,
         {
           bank: clone(bank),
+          coordinated, quizOperationCount,
           operations: structuredClone(operations),
           reason,
           dirty,
@@ -209,10 +223,12 @@ export function FlashcardAdminPanel({
       ].slice(-10),
     );
   };
+  useEffect(() => { onDraftChange?.(editorDirty || bulkDraftDirty); }, [editorDirty, bulkDraftDirty, onDraftChange]);
   useEffect(() => { onWorkspaceChange?.(clone(bank), structuredClone(operations), reason); }, [bank, operations, reason, onWorkspaceChange]);
   useEffect(() => {
     if (!externalTransaction || externalTransaction.id === 0) return;
-    remember();
+    remember(true, quizChangeSet?.operations.length);
+    setBulkDestination(undefined); setBulkDraftDirty(false);
     setBank(clone(externalTransaction.bank));
     setOperations(structuredClone(externalTransaction.operations));
     setReason(externalTransaction.reason);
@@ -253,13 +269,13 @@ export function FlashcardAdminPanel({
     setLoadedEditor(text);
     setIssues([]);
   };
-  const commitOperation = (operation: FlashcardAdminOperation) => {
+  const commitOperations = (batch: FlashcardAdminOperation[]) => {
     try {
-      const candidate = applyFlashcardOperations(bank, subjects, [operation]);
+      const candidate = applyFlashcardOperations(bank, subjects, batch);
       generation.current++;
       setPendingImport(undefined);
       remember();
-      setOperations((items) => [...items, operation]);
+      setOperations((items) => [...items, ...batch]);
       setBank(candidate);
       onBankChange(candidate);
       if (!candidate.decks.some((deck) => deck.id === browseDeckId)) {
@@ -279,6 +295,7 @@ export function FlashcardAdminPanel({
       return undefined;
     }
   };
+  const commitOperation = (operation: FlashcardAdminOperation) => commitOperations([operation]);
   const commitBulkOperations = (
     batch: readonly FlashcardAdminOperation[],
     snapshot: FlashcardBulkPreviewSnapshot,
@@ -384,18 +401,32 @@ export function FlashcardAdminPanel({
       setCardPage(Math.max(0, Math.floor(position / 25)));
     }
   };
+  const createRecord = (kind: Kind) => {
+    const parentId = kind === 'deck' ? browseSubjectId : browseDeckId;
+    if (!parentId) return;
+    const value = kind === 'deck'
+      ? { id: `d-${crypto.randomUUID()}`, subjectId: parentId, name: 'New deck' }
+      : { id: `f-${crypto.randomUUID()}`, deckId: parentId, front: 'Question', back: 'Answer' };
+    load({ kind, id: '' }, value);
+  };
+  const deletionKey = useMemo(() => JSON.stringify([bank, subjects]), [bank, subjects]);
   const remove = (kind: Kind, id: string) => {
+    if (busy || externalBusy) return;
+    const row = kind === 'deck' ? bank.decks.find(row => row.id === id) : bank.cards.find(row => row.id === id);
+    if (!row) return;
+    setDeleteError('');
+    setDeleteRequest({ selection: { kind, id }, label: 'name' in row ? row.name : row.front, reviewKey: deletionKey });
+  };
+  const confirmDelete = () => {
+    if (!deleteRequest || busy || externalBusy) return;
+    if (deleteRequest.reviewKey !== deletionKey) { setDeleteError('The content changed. Cancel and review the deletion again.'); return; }
     if (!discardDraft()) return;
-    let operation: FlashcardAdminOperation;
-    if (kind === 'deck') {
-      const count = bank.cards.filter((card) => card.deckId === id).length;
-      if (count && !window.confirm(`Delete this deck and its ${count} card(s)?`)) return;
-      operation = { op: 'deck.delete', id, cascade: true };
-    } else operation = { op: 'card.delete', id };
-    if (!commitOperation(operation)) return;
-    setSelection(undefined);
-    setEditor('');
-    setLoadedEditor('');
+    const ids = deleteRequest.ids ?? [deleteRequest.selection.id!];
+    const batch = ids.map(id => deleteRequest.selection.kind === 'deck'
+      ? { op: 'deck.delete' as const, id, cascade: true as const }
+      : { op: 'card.delete' as const, id });
+    if (!commitOperations(batch)) { setDeleteError('The deletion failed validation. No changes were staged.'); return; }
+    setDeleteRequest(undefined); recordSelection.clear(); setSelection(undefined); setEditor(''); setLoadedEditor('');
   };
   const reorder = (direction: -1 | 1) => {
     if (!selection) return;
@@ -437,9 +468,9 @@ export function FlashcardAdminPanel({
     const previous = history.at(-1);
     if (!previous) return;
     if (previous.coordinated && onUndoCoordinated) {
-      void onUndoCoordinated().then(() => {
+      void onUndoCoordinated(previous.quizOperationCount ?? 0).then(() => {
         setBank(previous.bank); onBankChange(previous.bank); setOperations(previous.operations); setReason(previous.reason); setDirty(previous.dirty);
-        setHistory((items) => items.slice(0, -1)); setBrowseSubjectId(previous.browseSubjectId); setBrowseDeckId(previous.browseDeckId); setCardQuery(previous.cardQuery); setCardPage(previous.cardPage); setSelection(undefined); setEditor(''); setLoadedEditor('');
+        setHistory((items) => items.slice(0, -1)); setIssues([]); setBrowseSubjectId(previous.browseSubjectId); setBrowseDeckId(previous.browseDeckId); setCardQuery(previous.cardQuery); setCardPage(previous.cardPage); setSelection(undefined); setEditor(''); setLoadedEditor('');
       }).catch((error) => setIssues([error instanceof Error ? error.message : 'Unable to undo the paired deletion.']));
       return;
     }
@@ -660,7 +691,7 @@ export function FlashcardAdminPanel({
         await onStagePairedImport(pendingImport.quizChangeSet, pendingImport.bank);
       }
       generation.current++;
-      remember();
+      remember(Boolean(pendingImport.quizChangeSet), pendingImport.quizChangeSet?.operations.length);
       setBank(pendingImport.bank);
       onBankChange(pendingImport.bank);
       setOperations(pendingImport.changeSet.operations);
@@ -681,35 +712,29 @@ export function FlashcardAdminPanel({
     }
   };
 
+  const siblingRows = selection?.kind === 'deck'
+    ? bank.decks.filter(row => row.subjectId === bank.decks.find(item => item.id === selection.id)?.subjectId)
+    : bank.cards.filter(row => row.deckId === bank.cards.find(item => item.id === selection?.id)?.deckId);
+  const siblingIndex = siblingRows.findIndex(row => row.id === selection?.id);
   return (
     <Stack
       component="fieldset"
       disabled={busy || externalBusy}
-      sx={{ border: 0, p: 0, m: 0 }}
+      sx={{ border: 0, p: 0, m: 0, minWidth: 0, width: '100%' }}
       direction={{ xs: 'column', lg: 'row' }}
       spacing={2}
-      alignItems="stretch"
+      alignItems="flex-start"
     >
-      <Paper
-        variant="outlined"
-        sx={{
-          width: { lg: 340 },
-          p: 2,
-          height: { xs: '40dvh', lg: '78vh' },
-          maxHeight: { xs: '40dvh', lg: '78vh' },
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          overflow: 'hidden',
-        }}
-      >
-        <Stack spacing={1} sx={{ minHeight: 0, flex: 1 }}>
+      <Paper component="section" aria-label="Flashcard navigator" variant="outlined" sx={{ ...adminNavigatorLayout, p: 2 }}>
+        <Stack spacing={1}>
           <Autocomplete
+            inputValue={subjectQuery ?? subjects.find(subject => subject.id === browseSubjectId)?.name ?? ''}
+            onInputChange={(_, value, reason) => { if (reason === 'input') setSubjectQuery(value); }}
             options={[...subjects]}
             value={subjects.find((subject) => subject.id === browseSubjectId) ?? null}
             getOptionLabel={(subject) => subject.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
-            onChange={(_, subject) => changeBrowseSubject(subject?.id ?? '')}
+            onChange={(_, subject) => { changeBrowseSubject(subject?.id ?? ''); setSubjectQuery(undefined); setDeckQuery(undefined); }}
             renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
           />
           {!browseSubjectId && onAddSubject && <Stack direction="row"><AdminAddSubjectButton onClick={onAddSubject} /></Stack>}
@@ -720,11 +745,13 @@ export function FlashcardAdminPanel({
           </Stack>}
           {browseSubjectId && (
             <Autocomplete
+              inputValue={deckQuery ?? (browseDeck ? `${browseDeck.name} · ${cardsByDeck[browseDeck.id]?.length ?? 0} cards` : '')}
+              onInputChange={(_, value, reason) => { if (reason === 'input') setDeckQuery(value); }}
               options={browseDecks}
               value={browseDeck ?? null}
               getOptionLabel={(deck) => `${deck.name} · ${cardsByDeck[deck.id]?.length ?? 0} cards`}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              onChange={(_, deck) => changeBrowseDeck(deck?.id ?? '')}
+              onChange={(_, deck) => { changeBrowseDeck(deck?.id ?? ''); setDeckQuery(undefined); }}
               renderInput={(params) => <TextField {...params} label="Deck" size="small" />}
             />
           )}
@@ -772,14 +799,16 @@ export function FlashcardAdminPanel({
                     Show in list
                   </Button>
                 )}
+              <AdminRecordSelection selection={recordSelection} pageIds={cardResults.visible.map(({ card }) => card.id)} onDelete={ids => { setDeleteError(''); setDeleteRequest({ selection: { kind: 'card', parentId: browseDeckId }, ids, label: `${ids.length} selected cards`, reviewKey: deletionKey }); }} />
               <Box
                 component="nav"
                 aria-label="Flashcards in selected deck"
-                sx={{ overflowY: 'auto', minHeight: 0, flex: 1 }}
+                sx={{ overflowY: 'auto', maxHeight: { xs: '40dvh', lg: '50vh' } }}
               >
                 {cardResults.visible.map(({ card, position }) => (
+                  <Stack key={card.id} direction="row" alignItems="center">
+                  {recordSelection.enabled && <Checkbox size="small" checked={recordSelection.ids.includes(card.id)} onChange={() => recordSelection.toggle(card.id)} slotProps={{ input: { 'aria-label': `Select card ${card.id}` } }} />}
                   <ListItemButton
-                    key={card.id}
                     selected={selection?.kind === 'card' && selection.id === card.id}
                     onClick={() => load({ kind: 'card', id: card.id }, card)}
                     sx={{ borderRadius: '10px', mx: 0.5, width: 'calc(100% - 8px)' }}
@@ -797,6 +826,7 @@ export function FlashcardAdminPanel({
                       }}
                     />
                   </ListItemButton>
+                  </Stack>
                 ))}
                 {!deckCards.length && (
                   <Typography sx={{ p: 1 }} variant="body2">
@@ -850,43 +880,34 @@ export function FlashcardAdminPanel({
           )}
         </Stack>
       </Paper>
-      <Paper variant="outlined" sx={{ flex: 1, p: 2, minWidth: 0 }}>
+      <Paper component="section" aria-label="Flashcard editor" variant="outlined" sx={{ ...adminEditorLayout, p: 2 }}>
         <Stack spacing={2}>
           {selection && <Typography variant="h6">{selection.id ? 'Edit' : 'Create'} {selection.kind}</Typography>}
           <TextField
             label="JSON"
             slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ mt: 1 }}
             value={editor}
             onChange={(event) => setEditor(event.target.value)}
             multiline
             minRows={14}
+            maxRows={24}
             fullWidth
             InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
           />
-          {issues.length > 0 && (
-            <Alert severity="error">
-              <ul>
-                {issues.map((issue) => (
-                  <li key={issue}>{issue}</li>
-                ))}
-              </ul>
-            </Alert>
-          )}
-          {warnings.length > 0 && (
-            <Alert severity="warning">
-              {warnings.map((issue, index) => (
-                <Box key={index}>{issue.message}</Box>
-              ))}
-            </Alert>
-          )}
+          {issues.length > 0 && <Alert severity="error"><AdminIssues issues={issues.map(message => ({ level: 'error', message }))} /></Alert>}
+          {warnings.length > 0 && <Alert severity="warning"><AdminIssues issues={warnings} /></Alert>}
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Button variant="contained" disabled={!selection} onClick={stage}>
               Stage
             </Button>
-            {selection?.id && <><Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>Record actions</Button><Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
-              <MenuItem onClick={() => { setActionAnchor(null); remove(selection.kind, selection.id!); }}>Delete…</MenuItem>
-              {selection.kind === 'card' && <><MenuItem onClick={() => { setActionAnchor(null); reorder(-1); }}>Move up</MenuItem><MenuItem onClick={() => { setActionAnchor(null); reorder(1); }}>Move down</MenuItem></>}
-            </Menu></>}
+            <Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>Record actions</Button><Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
+              <MenuItem disabled={!browseSubjectId} onClick={() => { setActionAnchor(null); createRecord('deck'); }}>New deck</MenuItem>
+              <MenuItem disabled={!browseDeckId} onClick={() => { setActionAnchor(null); createRecord('card'); }}>New card</MenuItem>
+              {selection?.id && <MenuItem onClick={() => { setActionAnchor(null); remove(selection.kind, selection.id); }}>Delete…</MenuItem>}
+              {selection?.id && <MenuItem disabled={siblingIndex <= 0} onClick={() => { setActionAnchor(null); reorder(-1); }}>Move up</MenuItem>}
+              {selection?.id && <MenuItem disabled={siblingIndex < 0 || siblingIndex + 1 >= siblingRows.length} onClick={() => { setActionAnchor(null); reorder(1); }}>Move down</MenuItem>}
+            </Menu>
             <Button disabled={!history.length} onClick={undo}>
               Undo
             </Button>
@@ -917,6 +938,7 @@ export function FlashcardAdminPanel({
                 {pendingImport.quizChangeSet && (
                   <TextField
                     label="Paired quiz change set"
+                    slotProps={{ inputLabel: { shrink: true } }}
                     value={JSON.stringify(pendingImport.quizChangeSet, null, 2)}
                     multiline
                     minRows={6}
@@ -927,6 +949,7 @@ export function FlashcardAdminPanel({
                 )}
                 <TextField
                   label="Resulting flashcard bank"
+                  slotProps={{ inputLabel: { shrink: true } }}
                   value={serializeFlashcardBank(pendingImport.bank)}
                   multiline
                   minRows={8}
@@ -964,6 +987,7 @@ export function FlashcardAdminPanel({
           )}
         </Stack>
       </Paper>
+      <AdminDeleteDialog request={deleteRequest} bank={quizBank ?? { schemaVersion: 4, subjects: [...subjects], quizzes: [], questions: [] }} flashcardBank={bank} currentReviewKey={deletionKey} busy={busy || externalBusy} error={deleteError} onClose={() => setDeleteRequest(undefined)} onConfirm={confirmDelete} />
       {bulkDestination && (
         <FlashcardBulkAddDialog
           open
@@ -972,11 +996,6 @@ export function FlashcardAdminPanel({
           bank={bank}
           subjects={subjects}
           reason={reason}
-          onReasonChange={(value) => {
-            generation.current++;
-            setReason(value);
-            if (operations.length) setDirty(true);
-          }}
           exportContext={exportContext}
           busy={busy || externalBusy}
           onClose={() => setBulkDestination(undefined)}

@@ -110,6 +110,9 @@ describe('admin editor workflows', () => {
     expect(result.current.snapshot?.bank.subjects[0].name).toBe('Subject');
     await act(async () => { await result.current.stageImportedChangeSet(); });
     expect(result.current.snapshot?.bank.subjects[0].name).toBe('Imported');
+    expect(result.current.reason).toBe('Import test');
+    await act(async () => { await result.current.undo(); });
+    expect(result.current.reason).toBe('Local question-bank edit');
   });
 
   it('validates a bulk draft, exposes generated IDs, and stages only after confirmation', async () => {
@@ -128,4 +131,68 @@ describe('admin editor workflows', () => {
     expect(result.current.snapshot?.bank.subjects).toHaveLength(2);
     expect(result.current.snapshot?.bank.questions[1].quizId).toBe('q2');
   });
+  it('preserves a declined draft during browsing and protects it before unload', async () => {
+    const confirm = vi.fn().mockReturnValue(false);
+    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
+    const { result } = renderHook(() => useAdminEditor(gateway, { confirm }));
+    await waitFor(() => expect(result.current.snapshot).toBeDefined());
+    act(() => result.current.loadEntity({ kind: 'question', id: 'i1', parentId: 'q1' }, bank().questions[0]));
+    act(() => result.current.editRecord('Unstaged draft'));
+    act(() => { expect(result.current.browseContext('s1')).toBe(false); result.current.chooseBulkTarget('newSubject'); });
+    expect(result.current.editor).toBe('Unstaged draft');
+    expect(result.current.mode).toBe('single');
+    const unload = new Event('beforeunload', { cancelable: true });
+    window.dispatchEvent(unload);
+    expect(unload.defaultPrevented).toBe(true);
+    confirm.mockReturnValue(true);
+    act(() => { expect(result.current.browseContext('s1', 'q1')).toBe(true); });
+    expect(result.current.editor).toBe('');
+    expect(result.current.selectedQuiz?.id).toBe('q1');
+  });
+
+  it('deletes selected items atomically, rejects stale or wrong-parent selections, and undoes once', async () => {
+    const source = bank();
+    source.quizzes.push({ id: 'q2', subjectId: 's1', name: 'Other quiz' });
+    source.questions.push({ ...source.questions[0], id: 'i2' }, { ...source.questions[0], id: 'i3', quizId: 'q2' }, { ...source.questions[0], id: 'i4' });
+    const gateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
+    const { result } = renderHook(() => useAdminEditor(gateway));
+    await waitFor(() => expect(result.current.snapshot).toBeDefined());
+    const target = { kind: 'question' as const, parentId: 'q1' };
+    await act(async () => { await result.current.stageDelete(target, 'Reviewed selection', ['i1', 'i3']); });
+    expect(result.current.snapshot?.bank).toEqual(source);
+    await act(async () => { await result.current.stageDelete(target, 'Reviewed selection', ['i1', 'i2'], 'stale'); });
+    expect(result.current.snapshot?.bank).toEqual(source);
+    await act(async () => { await result.current.stageDelete(target, 'Reviewed selection', ['i1', 'i2', 'i4'], result.current.snapshot!.revision); });
+    expect(result.current.snapshot?.bank).toEqual(source);
+    expect(result.current.issues[0].message).toContain('no questions');
+    await act(async () => { await result.current.stageDelete(target, 'Reviewed selection', ['i1', 'i2'], result.current.snapshot!.revision); });
+    expect(result.current.issues.filter(issue => issue.level === 'error')).toEqual([]);
+    expect(result.current.snapshot?.bank.questions.map(row => row.id)).toEqual(['i3', 'i4']);
+    expect(gateway.appliedOperations()).toHaveLength(2);
+    await act(async () => { await result.current.undo(); });
+    expect(result.current.snapshot?.bank).toEqual(source);
+    expect(gateway.appliedOperations()).toEqual([]);
+  });
+
+  it('refuses to undo a paired transaction past later quiz edits and restores the exact pair after they are undone', async () => {
+    const source = bank();
+    source.subjects.push({ id: 's2', name: 'Second', accent: '#222222' });
+    const cards: StoredFlashcardBank = { schemaVersion: 2, decks: [{ id: 'd1', subjectId: 's1', name: 'Deck' }], cards: [] };
+    const gateway = new InMemoryQuestionBankGateway(source, cards);
+    const { result } = renderHook(() => useAdminEditor(gateway));
+    await waitFor(() => expect(result.current.snapshot).toBeDefined());
+    await act(async () => { await result.current.stageCoordinatedImport({ changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: result.current.snapshot!.revision }, reason: 'Reviewed deletion', operations: [{ op: 'subject.delete', id: 's1', cascade: true }] }, emptyFlashcardBank); });
+    expect(gateway.coordinatedOperationCount()).toBe(1);
+    act(() => result.current.loadEntity({ kind: 'subject', id: 's2' }, source.subjects[1]));
+    act(() => result.current.editRecord(JSON.stringify({ ...source.subjects[1], name: 'Later edit' })));
+    await act(async () => { await result.current.stageSingle(); });
+    await act(async () => { await expect(result.current.undoCoordinated(1)).rejects.toThrow('Undo later quiz edits'); });
+    expect(result.current.snapshot?.bank.subjects[0].name).toBe('Later edit');
+    expect(gateway.getFlashcardBank()).toEqual(emptyFlashcardBank);
+    await act(async () => { await result.current.undo(); await result.current.undoCoordinated(1); });
+    expect(result.current.snapshot?.bank).toEqual(source);
+    expect(gateway.getFlashcardBank()).toEqual(cards);
+    expect(gateway.coordinatedOperationCount()).toBeUndefined();
+  });
+
 });

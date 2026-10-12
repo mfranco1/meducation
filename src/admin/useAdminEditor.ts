@@ -36,6 +36,8 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
   const [selection, setSelection] = useState<Selection>({ kind: 'subject' });
   const [mode, setMode] = useState<EditorMode>('single');
   const [editor, setEditor] = useState('');
+  const [loadedEditor, setLoadedEditor] = useState('');
+  const editorDirty = editor !== loadedEditor;
   const [reason, setReason] = useState('Local question-bank edit');
   const [issues, setIssues] = useState<ValidationIssue[]>([]);
   const [summary, setSummary] = useState('Load a record or paste a change set.');
@@ -50,6 +52,11 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
   const [loadError, setLoadError] = useState<string>();
   const busyRef = useRef(false);
   const editVersion = useRef(0);
+  const reasonHistory = useRef<Array<{ operationCount: number; reason: string }>>([]);
+  const rememberReason = (operationCount: number) => { reasonHistory.current = [...reasonHistory.current, { operationCount, reason }].slice(-10); };
+  const restoreReason = () => {
+    while (reasonHistory.current.length && gateway.appliedOperations().length <= reasonHistory.current.at(-1)!.operationCount) setReason(reasonHistory.current.pop()!.reason);
+  };
 
   const selectedQuizId = selection.kind === 'quiz' ? selection.id : selection.kind === 'question' ? selection.parentId : undefined;
   const selectedQuiz = snapshot?.bank.quizzes.find(quiz => quiz.id === selectedQuizId);
@@ -57,15 +64,16 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
   const selectedSubject = snapshot?.bank.subjects.find(subject => subject.id === selectedSubjectId);
   const hasAppliedChanges = gateway.appliedOperations().length > 0;
   const invalidateDraft = () => { editVersion.current += 1; setPendingBulk(undefined); setImportedChangeSet(undefined); };
-  const runCommand = async (label: string, action: (isCurrent: () => boolean) => Promise<void>) => {
-    if (busyRef.current) return;
+  const runCommand = async (label: string, action: (isCurrent: () => boolean) => Promise<void | boolean>) => {
+    if (busyRef.current) return false;
     busyRef.current = true;
     setBusy(label);
     const version = editVersion.current;
-    try { await action(() => editVersion.current === version); }
+    try { return await action(() => editVersion.current === version); }
     catch (error) {
       setIssues([{ level: 'error', message: error instanceof Error ? error.message : `${label} failed.` }]);
       setSummary(`${label} failed. No change was staged.`);
+      return false;
     } finally { busyRef.current = false; setBusy(undefined); }
   };
 
@@ -82,17 +90,28 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
 
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => {
-      if (!dirty) return;
+      if (!dirty && !editorDirty) return;
       event.preventDefault();
       event.returnValue = '';
     };
     addEventListener('beforeunload', beforeUnload);
     return () => removeEventListener('beforeunload', beforeUnload);
-  }, [dirty]);
+  }, [dirty, editorDirty]);
 
-  const loadEntity = (next: Selection, value: unknown) => {
+  const discardDraft = () => !editorDirty || confirmAction('Discard the unstaged quiz edits?');
+  const browseContext = (subjectId: string, quizId?: string) => {
+    if (busyRef.current || !discardDraft()) return false;
     invalidateDraft();
-    setSelection(next); setMode('single'); setEditor(JSON.stringify(value, null, 2)); setIssues([]); setSummary('Edit the complete JSON record, then stage it.');
+    setSelection(quizId ? { kind: 'quiz', id: quizId, parentId: subjectId } : { kind: 'subject', id: subjectId || undefined });
+    setEditor(''); setLoadedEditor(''); setMode('single'); setIssues([]);
+    return true;
+  };
+  const loadEntity = (next: Selection, value: unknown) => {
+    if (busyRef.current || !discardDraft()) return false;
+    invalidateDraft();
+    const text = JSON.stringify(value, null, 2);
+    setSelection(next); setMode('single'); setEditor(text); setLoadedEditor(text); setIssues([]); setSummary('');
+    return true;
   };
   const loadNew = (kind: EntityKind) => {
     if (!snapshot) return;
@@ -100,7 +119,6 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
       ? newQuiz(snapshot.bank, selectedSubject?.id ?? selection.parentId ?? '')
       : newQuestion(snapshot.bank, selectedQuiz?.id ?? selection.parentId ?? '');
     loadEntity({ kind, parentId: kind === 'quiz' ? (value as { subjectId: string }).subjectId : kind === 'question' ? (value as { quizId: string }).quizId : undefined }, value);
-    setSelection(previous => ({ ...previous, id: undefined }));
   };
 
   const buildSingleChangeSet = (): AdminChangeSet | undefined => {
@@ -121,12 +139,13 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     invalidateDraft();
     setBulkContext(context);
     setPendingBulk(undefined);
-    setEditor(JSON.stringify(bulkAddTemplate(context), null, 2));
+    const text = JSON.stringify(bulkAddTemplate(context), null, 2);
+    setEditor(text); setLoadedEditor(text);
     setIssues([]);
-    setSummary('Content-only template loaded. Edit the JSON, then validate it before staging.');
+    setSummary('');
   };
   const chooseBulkTarget = (kind: BulkTarget['kind'], context?: { subjectId?: string; quizId?: string }) => {
-    if (!snapshot) return;
+    if (!snapshot || busyRef.current || !discardDraft()) return;
     invalidateDraft();
     setMode('bulk');
     setPendingBulk(undefined);
@@ -140,17 +159,17 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
       const subjectId = context?.subjectId ?? selectedSubject?.id;
       setBulkTarget({ kind, subjectId });
       if (subjectId) loadBulkTemplate({ kind, subjectId, revision: snapshot.revision });
-      else { setBulkContext(undefined); setEditor(''); setSummary('Choose a subject to add quizzes.'); }
+      else { setBulkContext(undefined); setEditor(''); setLoadedEditor(''); setSummary('Choose a subject to add quizzes.'); }
       return;
     }
     const subjectId = context?.subjectId ?? selectedSubject?.id;
     const quizId = context?.quizId ?? selectedQuiz?.id;
     setBulkTarget({ kind, subjectId, quizId });
     if (subjectId && quizId) loadBulkTemplate({ kind, subjectId, quizId, revision: snapshot.revision });
-    else { setBulkContext(undefined); setEditor(''); setSummary('Choose a subject and quiz to add items.'); }
+    else { setBulkContext(undefined); setEditor(''); setLoadedEditor(''); setSummary('Choose a subject and quiz to add items.'); }
   };
   const chooseBulkSubject = (subjectId: string) => {
-    if (!snapshot || bulkTarget.kind === 'newSubject') return;
+    if (!snapshot || bulkTarget.kind === 'newSubject' || busyRef.current || !discardDraft()) return;
     invalidateDraft();
     setPendingBulk(undefined);
     setIssues([]);
@@ -161,11 +180,11 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     }
     setBulkTarget({ kind: 'quiz', subjectId });
     setBulkContext(undefined);
-    setEditor('');
+    setEditor(''); setLoadedEditor('');
     setSummary('Choose a quiz to add items.');
   };
   const chooseBulkQuiz = (quizId: string) => {
-    if (!snapshot || bulkTarget.kind !== 'quiz' || !bulkTarget.subjectId) return;
+    if (!snapshot || bulkTarget.kind !== 'quiz' || !bulkTarget.subjectId || busyRef.current || !discardDraft()) return;
     invalidateDraft();
     const quiz = snapshot.bank.quizzes.find(candidate => candidate.id === quizId && candidate.subjectId === bulkTarget.subjectId);
     if (!quiz) return;
@@ -189,6 +208,7 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
       const createdId = firstOperation && 'value' in firstOperation ? firstOperation.value.id : undefined;
       if (createdId) setSelection(previous => ({ ...previous, id: createdId }));
     }
+    if (isCurrent()) setLoadedEditor(editor);
     setDirty(true); setExported(false); setIssues([]); setSummary('Change staged. Export the updated bank and change set.');
   };
   const validateBulkDraft = async (isCurrent: () => boolean) => {
@@ -212,12 +232,13 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
       return;
     }
     setPendingBulk({ ...result.compiled });
-    setSummary(`Ready to stage: ${result.compiled.generatedIds.length} new record(s). Review generated IDs and warnings, then confirm.`);
+    setSummary(`Preview ready: ${result.compiled.generatedIds.length} new record(s). Review generated IDs and warnings, then stage.`);
   };
-  const stageValidatedBulk = async () => {
+  const stageValidatedBulk = async (isCurrent: () => boolean) => {
     if (!pendingBulk) return;
     try {
       const next = await gateway.apply(pendingBulk.changeSet);
+      if (isCurrent()) setLoadedEditor(editor);
       setSnapshot(next); setDirty(true); setExported(false); setPendingBulk(undefined); setIssues([]);
       setSummary('Bulk add staged. Export the updated bank and change set.');
     } catch (error) {
@@ -252,10 +273,14 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     setSummary(preview.issues.some(issue => issue.level === 'error') ? 'Imported change set failed preview.' : `Imported change set is valid: ${parsed.changeSet.operations.length} operation(s). Review it, then stage explicitly.`);
   };
   const stageImportedChangeSet = async () => {
-    if (!importedChangeSet || importedChangeSet.issues.some(issue => issue.level === 'error')) return;
+    if (!importedChangeSet || importedChangeSet.issues.some(issue => issue.level === 'error') || !discardDraft()) return;
     try {
+      const operationCount = gateway.appliedOperations().length;
       const next = await gateway.apply(importedChangeSet.changeSet);
+      rememberReason(operationCount);
       setSnapshot(next); setDirty(true); setExported(false); setImportedChangeSet(undefined); setIssues([]);
+      setEditor(''); setLoadedEditor(''); setSelection({ kind: 'subject' });
+      setReason(importedChangeSet.changeSet.reason);
       setSummary('Import staged. Export the updated bank and change set.');
     } catch (error) {
       setImportedChangeSet(undefined);
@@ -263,23 +288,29 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
       setSummary('Imported change set could not be staged.');
     }
   };
-  const stageDelete = async (isCurrent: () => boolean, target: Selection = selection, changeReason = reason) => {
-    if (!snapshot || !target.id) return;
+  const stageDelete = async (isCurrent: () => boolean, target: Selection = selection, changeReason = reason, ids?: string[], expectedRevision?: string) => {
+    if (!snapshot || (!target.id && !ids?.length)) return false;
+    if (!discardDraft()) return false;
+    if (expectedRevision && expectedRevision !== snapshot.revision) throw new Error('The deletion review is stale. Review the current content again.');
+    const targets = [...new Set(ids ?? [target.id!])];
+    if (ids && (target.kind !== 'question' || targets.some(id => !snapshot.bank.questions.some(row => row.id === id && row.quizId === target.parentId)))) throw new Error('The selected items no longer belong to this quiz.');
     const cascade = target.kind !== 'question';
-    const parsed = parseChangeSet({ changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason: changeReason, operations: [{ op: `${target.kind}.delete`, id: target.id, ...(cascade ? { cascade: true } : {}) }] });
-    if (!parsed.changeSet) { setIssues(parsed.errors.map(message => ({ level: 'error', message }))); return; }
+    const parsed = parseChangeSet({ changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: snapshot.revision }, reason: changeReason, operations: targets.map(id => ({ op: `${target.kind}.delete`, id, ...(cascade ? { cascade: true } : {}) })) });
+    if (!parsed.changeSet) { setIssues(parsed.errors.map(message => ({ level: 'error', message }))); return false; }
     const preview = await gateway.preview(parsed.changeSet);
     if (!isCurrent()) return;
     setIssues(preview.issues);
     setSummary(`${preview.summary.deletes} delete; cascade impact: ${preview.summary.cascadedQuizzes} quiz(zes), ${preview.summary.cascadedQuestions} item(s).`);
     if (preview.issues.some(issue => issue.level === 'error')) return;
     const next = await gateway.apply(parsed.changeSet);
-    setSnapshot(next); setSelection({ kind: 'subject' }); setEditor(''); setDirty(true); setExported(false); setIssues([]); setSummary('Deletion staged. Export the updated bank and change set.');
+    setSnapshot(next); setSelection(target.kind === 'question' ? { kind: 'quiz', id: target.parentId } : target.kind === 'quiz' ? { kind: 'subject', id: target.parentId } : { kind: 'subject' }); setEditor(''); setLoadedEditor(''); setDirty(true); setExported(false); setIssues([]); setSummary('Deletion staged. Export the updated bank and change set.');
+    return true;
   };
-  const undo = async () => { const next = await gateway.undo(); if (next) { setSnapshot(next); setDirty(gateway.appliedOperations().length > 0); setExported(false); setPendingBulk(undefined); setImportedChangeSet(undefined); setSummary('Last staged batch undone.'); } };
-  const reset = async () => { if (!hasAppliedChanges || confirmAction('Discard every staged edit in this browser session?')) { const next = await gateway.reset(); setSnapshot(next); setDirty(false); setExported(false); setEditor(''); setPendingBulk(undefined); setImportedChangeSet(undefined); setBulkContext(undefined); setIssues([]); setSummary('Reset to bundled canonical bank.'); } };
+  const undo = async () => { if (!discardDraft()) return; const next = await gateway.undo(); if (next) { restoreReason(); setSnapshot(next); setDirty(gateway.appliedOperations().length > 0); setExported(false); setPendingBulk(undefined); setImportedChangeSet(undefined); setSummary('Last staged batch undone.'); } };
+  const reset = async () => { if ((!hasAppliedChanges && !editorDirty) || confirmAction('Discard every staged and unstaged quiz edit in this browser session?')) { const next = await gateway.reset(); reasonHistory.current = []; setReason('Local question-bank edit'); setSnapshot(next); setDirty(false); setExported(false); setEditor(''); setLoadedEditor(''); setPendingBulk(undefined); setImportedChangeSet(undefined); setBulkContext(undefined); setIssues([]); setSummary('Reset to bundled canonical bank.'); } };
   const exportFiles = () => {
     if (!snapshot) return;
+    if (editorDirty) { setIssues([{ level: 'error', message: 'Stage or discard the quiz draft before exporting.' }]); return; }
     const operations = gateway.appliedOperations();
     if (!operations.length) { setIssues([{ level: 'warning', message: 'There are no staged changes to export.' }]); return; }
     const exported: AdminChangeSet = { changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: originalRevision }, reason, operations };
@@ -293,19 +324,21 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     }
   };
 
-  const showSingle = () => { invalidateDraft(); setMode('single'); };
-  const editRecord = (value: string) => { invalidateDraft(); setEditor(value); if (mode === 'bulk') { setIssues([]); setSummary('Draft changed. Validate again before staging.'); } };
+  const showSingle = () => { if (busyRef.current || !discardDraft()) return; invalidateDraft(); setMode('single'); };
+  const editRecord = (value: string) => { invalidateDraft(); setEditor(value); if (mode === 'bulk') { setIssues([]); setSummary('Draft changed. Preview again before staging.'); } };
   const editReason = (value: string) => { invalidateDraft(); setReason(value); if (mode === 'bulk') { setIssues([]); setSummary('Reason changed. Validate again before staging.'); } };
 
   const stageCoordinatedImport = async (changeSet: AdminChangeSet, flashcards: StoredFlashcardBank) => {
     if (busyRef.current) throw new Error('Wait for the current quiz authoring command to finish.');
     if (!gateway.applyCoordinated) throw new Error('This authoring adapter does not support coordinated imports.');
-    if (editor.trim() && !confirmAction('Discard the current quiz editor draft and stage the reviewed coordinated import?')) throw new Error('The coordinated import was not staged; the quiz editor draft was kept.');
+    if (editorDirty && !confirmAction('Discard the current quiz editor draft and stage the reviewed coordinated import?')) throw new Error('The coordinated import was not staged; the quiz editor draft was kept.');
     busyRef.current = true; setBusy('Coordinated import');
     try {
+      const operationCount = gateway.appliedOperations().length;
       const next = await gateway.applyCoordinated(changeSet, flashcards);
+      rememberReason(operationCount);
       invalidateDraft(); setSnapshot(next); setReason(changeSet.reason); setDirty(true); setExported(false);
-      setSelection({ kind: 'subject' }); setEditor(''); setIssues([]); setSummary('The validated quiz and flashcard snapshots were staged together.');
+      setSelection({ kind: 'subject' }); setEditor(''); setLoadedEditor(''); setIssues([]); setSummary('The validated quiz and flashcard snapshots were staged together.');
     } finally { busyRef.current = false; setBusy(undefined); }
   };
 
@@ -316,8 +349,9 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     setBusy('Coordinated reset');
     try {
       const next = await gateway.resetCoordinated(flashcards);
+      reasonHistory.current = []; setReason('Local question-bank edit');
       invalidateDraft();
-      setSnapshot(next); setDirty(false); setExported(false); setEditor('');
+      setSnapshot(next); setDirty(false); setExported(false); setEditor(''); setLoadedEditor('');
       setSelection({ kind: 'subject' }); setBulkContext(undefined); setIssues([]);
       setSummary('Both content banks were reset to bundled canonical content.');
     } finally { busyRef.current = false; setBusy(undefined); }
@@ -327,17 +361,29 @@ export function useAdminEditor(gateway: AdminQuestionBankGateway, options: { con
     snapshot, originalRevision, selection, mode, editor, reason, issues, summary,
     dirty, exported, filter, setFilter, pendingBulk, importedChangeSet,
     bulkContext, bulkTarget, busy, loadError, selectedQuiz, selectedSubject, hasAppliedChanges,
-    loadEntity, loadNew, chooseBulkTarget, chooseBulkSubject, chooseBulkQuiz,
+    editorDirty, discardDraft, browseContext, loadEntity, loadNew, chooseBulkTarget, chooseBulkSubject, chooseBulkQuiz,
     showSingle, editRecord, editReason,
+    undoCoordinated: async (expectedOperationCount: number) => {
+      if (busyRef.current) throw new Error('Wait for the current quiz command to finish.');
+      if (gateway.appliedOperations().length !== expectedOperationCount) throw new Error('Undo later quiz edits before undoing the paired transaction.');
+      if (!discardDraft()) throw new Error('The quiz draft was kept; the paired transaction was not undone.');
+      busyRef.current = true; setBusy('Coordinated undo');
+      try {
+        const next = await gateway.undo();
+        if (!next) throw new Error('The paired transaction is no longer available in history.');
+        restoreReason(); invalidateDraft(); setSnapshot(next); setDirty(gateway.appliedOperations().length > 0); setExported(false);
+        setEditor(''); setLoadedEditor(''); setSelection({ kind: 'subject' });
+      } finally { busyRef.current = false; setBusy(undefined); }
+    },
     stageCoordinatedImport,
     resetCoordinatedWorkspace,
     markCoordinatedExport: () => { setDirty(false); setExported(true); setSummary('Downloaded the coordinated content bundle and both canonical bank snapshots.'); },
-    stageSingle: () => runCommand('Stage', stageSingle),
+    stageSingle: async () => { await runCommand('Stage', stageSingle); },
     validateBulkDraft: () => runCommand('Validation', validateBulkDraft),
     stageValidatedBulk: () => runCommand('Stage', stageValidatedBulk),
     importChangeSetFile: (file?: File) => runCommand('Import', isCurrent => importChangeSetFile(file, isCurrent)),
     stageImportedChangeSet: () => runCommand('Stage', stageImportedChangeSet),
-    stageDelete: (target?: Selection, changeReason?: string) => runCommand('Delete', isCurrent => stageDelete(isCurrent, target ?? selection, changeReason ?? reason)),
+    stageDelete: (target?: Selection, changeReason?: string, ids?: string[], expectedRevision?: string) => runCommand('Delete', isCurrent => stageDelete(isCurrent, target ?? selection, changeReason ?? reason, ids, expectedRevision)),
     undo: () => runCommand('Undo', undo),
     reset: () => runCommand('Reset', reset),
     exportFiles: () => { if (!busyRef.current) exportFiles(); },

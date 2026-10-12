@@ -9,7 +9,7 @@ import { AdminNavigatorPanel } from './AdminNavigatorPanel';
 const bank = fixture as StoredQuestionBank;
 
 describe('admin quiz navigator presentation contracts', () => {
-  it('keeps parent-dependent creation unavailable until a destination is selected', () => {
+  it('offers subject creation when no subject is selected', () => {
     const loadNew = vi.fn();
     render(
       <ThemeProvider theme={theme}>
@@ -23,10 +23,7 @@ describe('admin quiz navigator presentation contracts', () => {
         />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
-    expect(screen.getByRole('menuitem', { name: 'Quiz' })).toHaveAttribute('aria-disabled', 'true');
-    expect(screen.getByRole('menuitem', { name: 'Item' })).toHaveAttribute('aria-disabled', 'true');
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Subject' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Add subject' }));
     expect(loadNew).toHaveBeenCalledExactlyOnceWith('subject');
   });
 
@@ -34,6 +31,7 @@ describe('admin quiz navigator presentation contracts', () => {
     const loadEntity = vi.fn();
     const loadNew = vi.fn();
     const setFilter = vi.fn();
+    const chooseBulkTarget = vi.fn();
     render(
       <ThemeProvider theme={theme}>
         <AdminNavigatorPanel
@@ -45,26 +43,25 @@ describe('admin quiz navigator presentation contracts', () => {
           setFilter={setFilter}
           loadEntity={loadEntity}
           loadNew={loadNew}
+          chooseBulkTarget={chooseBulkTarget}
         />
       </ThemeProvider>,
     );
     const questions = bank.questions.filter((question) => question.quizId === 'q1');
     const rows = screen
       .getAllByRole('button')
-      .filter((row) => questions.some((question) => row.textContent?.startsWith(question.id)));
+      .filter((row) => questions.some((question) => row.textContent?.includes(question.id)));
     expect(rows.map((row) => row.textContent)).toEqual(
-      questions.map((question) => `${question.id}${question.stem.slice(0, 64)}`),
+      questions.map((question, index) => `${index + 1}. ${question.id}${question.stem.slice(0, 64)}`),
     );
     fireEvent.click(rows[0]);
     expect(loadEntity).toHaveBeenCalledExactlyOnceWith(
       { kind: 'question', id: questions[0].id, parentId: 'q1' },
       questions[0],
     );
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search subjects' }), { target: { value: 'Subject One' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search items in this quiz' }), { target: { value: 'Subject One' } });
     expect(setFilter).toHaveBeenCalledExactlyOnceWith('Subject One');
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
-    expect(screen.getByRole('menuitem', { name: 'Quiz' })).not.toHaveAttribute('aria-disabled', 'true');
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Item' }));
-    expect(loadNew).toHaveBeenCalledExactlyOnceWith('question');
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add' }).at(-1)!);
+    expect(chooseBulkTarget).toHaveBeenCalledExactlyOnceWith('quiz', { subjectId: 's1', quizId: 'q1' });
   });
 });

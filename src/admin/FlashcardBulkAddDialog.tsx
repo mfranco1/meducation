@@ -55,7 +55,6 @@ export function FlashcardBulkAddDialog({
   bank,
   subjects,
   reason,
-  onReasonChange,
   exportContext,
   busy,
   onClose,
@@ -68,7 +67,6 @@ export function FlashcardBulkAddDialog({
   bank: StoredFlashcardBank;
   subjects: readonly Subject[];
   reason: string;
-  onReasonChange: (reason: string) => void;
   exportContext: string;
   busy: boolean;
   onClose: () => void;
@@ -80,14 +78,13 @@ export function FlashcardBulkAddDialog({
 }) {
   const template = useMemo(() => flashcardBulkAddTemplate(context), [context]);
   const [text, setText] = useState(template);
-  const [initialReason] = useState(reason);
   const [preview, setPreview] = useState<Preview>();
   const [diagnostics, setDiagnostics] = useState<CompiledFlashcardBulkAdd['diagnostics']>([]);
   const [message, setMessage] = useState<string>();
   const [loadingFile, setLoadingFile] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const generation = useRef(0);
-  const draftDirty = text !== template || reason !== initialReason;
+  const draftDirty = text !== template;
   const snapshot: FlashcardBulkPreviewSnapshot = {
     bankJson: serializeFlashcardBank(bank),
     subjectSnapshot: JSON.stringify(subjects),
@@ -113,6 +110,7 @@ export function FlashcardBulkAddDialog({
   const loadFile = async (file?: File) => {
     if (!file) return;
     const token = ++generation.current;
+    setPreview(undefined);
     setLoadingFile(true);
     setMessage(undefined);
     try {
@@ -176,19 +174,12 @@ export function FlashcardBulkAddDialog({
 
   return (
     <Dialog open={open} onClose={requestClose} fullWidth maxWidth="md" aria-labelledby="flashcard-bulk-title">
-      <DialogTitle id="flashcard-bulk-title">Bulk add {context.kind === 'deck' ? 'cards' : 'decks'}</DialogTitle>
+      <DialogTitle id="flashcard-bulk-title">Add {context.kind === 'deck' ? 'Cards' : 'Decks'}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary">
             Destination · {destinationLabel}
           </Typography>
-          <TextField
-            label="Reason"
-            value={reason}
-            onChange={(event) => onReasonChange(event.target.value)}
-            required
-            fullWidth
-          />
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Button onClick={() => void copyTemplate()} disabled={busy || loadingFile}>
               Copy template
@@ -208,7 +199,9 @@ export function FlashcardBulkAddDialog({
             />
           </Stack>
           <TextField
-            label="Bulk JSON"
+            label="JSON"
+            slotProps={{ inputLabel: { shrink: true } }}
+            sx={{ mt: 1 }}
             value={text}
             onChange={(event) => {
               generation.current++;
@@ -248,7 +241,7 @@ export function FlashcardBulkAddDialog({
           )}
           {previewIsStale && (
             <Alert severity="warning">
-              The bank, subjects, destination, draft, reason, or export context changed. Preview again before staging.
+              The bank, subjects, destination, draft, or export context changed. Preview again before staging.
             </Alert>
           )}
           {previewCurrent && preview && <PaperPreview preview={preview} />}
@@ -258,11 +251,8 @@ export function FlashcardBulkAddDialog({
         <Button onClick={requestClose} disabled={busy}>
           Cancel
         </Button>
-        <Button variant="outlined" onClick={previewDraft} disabled={busy || loadingFile || !reason.trim()}>
-          Preview
-        </Button>
-        <Button variant="contained" onClick={stage} disabled={busy || !previewCurrent || errors.length > 0}>
-          Stage batch
+        <Button variant="contained" onClick={previewCurrent ? stage : previewDraft} disabled={busy || loadingFile || (previewCurrent && errors.length > 0)}>
+          {previewCurrent ? 'Stage' : 'Preview'}
         </Button>
       </DialogActions>
     </Dialog>

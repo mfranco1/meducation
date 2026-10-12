@@ -67,7 +67,9 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   }
 
   async applyCoordinated(changeSet: AdminChangeSet, flashcards: StoredFlashcardBank): Promise<AdminBankSnapshot> {
+    const flashcardSnapshot = JSON.stringify(this.flashcards);
     if (changeSet.base.revision !== await this.currentRevision()) throw new Error('The coordinated import is based on stale quiz content.');
+    if (flashcardSnapshot !== JSON.stringify(this.flashcards)) throw new Error('The flashcard workspace changed during the coordinated review. Preview it again.');
     const preview = previewChangeSet(this.bank, changeSet, flashcards);
     const errors = [...preview.issues, ...validateFlashcardBank(flashcards, preview.bank.subjects)].filter(issue => issue.level === 'error');
     if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
@@ -92,7 +94,9 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   async undo(): Promise<AdminBankSnapshot | undefined> {
     const previous = this.history.at(-1);
     if (!previous) return undefined;
-    this.assertSharedSubjects(previous);
+    const pairedFlashcards = this.flashcardHistory.at(-1);
+    const errors = validateFlashcardSubjectReferences(pairedFlashcards ?? this.flashcards, previous.subjects);
+    if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
     this.history.pop();
     this.bank = previous;
     const previousFlashcards = this.flashcardHistory.pop();
@@ -124,6 +128,12 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
     this.revision = undefined;
     this.lastPreview = undefined;
     return this.snapshot();
+  }
+
+  coordinatedOperationCount(): number | undefined {
+    let index = this.flashcardHistory.length - 1;
+    while (index >= 0 && this.flashcardHistory[index] === undefined) index--;
+    return index < 0 ? undefined : this.operationLengths[index + 1] ?? this.operations.length;
   }
 
   appliedOperations(): AdminChangeSet['operations'] { return [...this.operations]; }

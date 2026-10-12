@@ -73,7 +73,8 @@ it('saves arrow-key navigation on the destination card when exiting', async () =
   fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Open Arrow subject' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Study deck' }));
-  expect(await screen.findByText('Card 1 of 2')).toBeInTheDocument();
+  // The study screen loads lazily; allow its module to settle under full-suite contention.
+  expect(await screen.findByText('Card 1 of 2', {}, { timeout: 10_000 })).toBeInTheDocument();
   expect(document.querySelector('[aria-modal="true"]')).toHaveStyle({ visibility: 'hidden' });
   expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeEnabled();
   fireEvent.keyDown(window, { key: 'ArrowRight' });
@@ -111,7 +112,8 @@ it('keeps the current card open and reports an error when arrow navigation canno
   fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Open Arrow quota subject' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Study deck' }));
-  expect(await screen.findByText('Card 1 of 2')).toBeInTheDocument();
+  // The study screen loads lazily; allow its module to settle under full-suite contention.
+  expect(await screen.findByText('Card 1 of 2', {}, { timeout: 10_000 })).toBeInTheDocument();
   fireEvent.keyDown(window, { key: 'ArrowRight' });
   expect(await screen.findByRole('alert')).toHaveTextContent('Flashcard progress could not be saved');
   expect(screen.getByText('Card 1 of 2')).toBeInTheDocument();

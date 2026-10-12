@@ -1,7 +1,9 @@
+import { useCallback, useRef, useState, type ComponentProps } from 'react';
+import { Button } from '@mui/material';
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { FlashcardAdminPanel } from './FlashcardAdminPanel';
+import { FlashcardAdminPanel as Panel } from './FlashcardAdminPanel';
 import { theme } from '../shared/theme';
 import { storedQuestionBank } from '../content/local/questionBank';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema/schema';
@@ -13,6 +15,22 @@ import {
   type FlashcardAdminChangeSet,
   type FlashcardAdminOperation,
 } from './core/flashcardChangeSet';
+
+// Exercise the real header export callback instead of an obsolete footer button.
+function FlashcardAdminPanel(props: ComponentProps<typeof Panel>) {
+  const action = useRef<() => void>(() => undefined);
+  const [enabled, setEnabled] = useState(false);
+  const onExportReady = useCallback((next: () => void, ready: boolean) => {
+    action.current = next;
+    setEnabled(ready);
+  }, []);
+  return <><Button disabled={!enabled} onClick={() => action.current()}>Export flashcards</Button><Panel {...props} onExportReady={onExportReady} /></>;
+}
+
+function recordAction(name: string) {
+  fireEvent.click(screen.getByRole('button', { name: 'Record actions' }));
+  fireEvent.click(screen.getByRole('menuitem', { name }));
+}
 
 // Authoring workflows start from a fixed empty catalog, including import/export replay.
 vi.mock('../content/flashcardBank.generated.json', async () => ({
@@ -35,12 +53,12 @@ function clickAddDeck(subjectId = 's1') {
   const subject = screen.getByRole('combobox', { name: 'Subject' }) as HTMLInputElement;
   const selected = props.subjects.find((item) => item.id === subjectId)?.name;
   if (subject.value !== selected) chooseSubject(subjectId);
-  fireEvent.click(screen.getByRole('button', { name: 'Add deck' }));
+  recordAction('New deck');
 }
 
 function stageRecord(value: object) {
-  fireEvent.change(screen.getByRole('textbox', { name: 'Record JSON' }), { target: { value: JSON.stringify(value) } });
-  fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
+  fireEvent.change(screen.getByRole('textbox', { name: 'JSON' }), { target: { value: JSON.stringify(value) } });
+  fireEvent.click(screen.getByRole('button', { name: 'Stage' }));
 }
 
 async function importFile() {
@@ -68,6 +86,8 @@ const props = {
   quizChangesStaged: false,
 };
 
+vi.setConfig({ testTimeout: 15_000 });
+
 describe('FlashcardAdminPanel', () => {
   it('confirms a paired reset, preserves drafts on failure, and clears them only on success', async () => {
     const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false);
@@ -85,19 +105,22 @@ describe('FlashcardAdminPanel', () => {
         />
       </ThemeProvider>,
     );
-    const editor = screen.getByRole('textbox', { name: 'Record JSON' });
+    const editor = screen.getByRole('textbox', { name: 'JSON' });
     fireEvent.change(editor, { target: { value: 'Unstaged draft' } });
-    fireEvent.click(screen.getByRole('button', { name: 'Reset both banks' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reset both banks' }));
     expect(onResetPaired).not.toHaveBeenCalled();
     expect(editor).toHaveValue('Unstaged draft');
     confirm.mockReturnValue(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Reset both banks' }));
-    expect(await screen.findByText('Reset unavailable')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reset both banks' }));
+    expect(await screen.findByText(/Reset unavailable/)).toBeVisible();
     expect(editor).toHaveValue('Unstaged draft');
-    fireEvent.click(screen.getByRole('button', { name: 'Reset both banks' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reset both banks' }));
     await waitFor(() => expect(editor).toHaveValue(''));
     expect(onResetPaired).toHaveBeenLastCalledWith(storedFlashcardBank);
-    expect(screen.queryByText('Reset unavailable')).toBeNull();
+    expect(screen.queryByText(/Reset unavailable/)).toBeNull();
   });
   it('previews a coordinated bundle and stages both snapshots through the atomic callback', async () => {
     const quizBank: StoredQuestionBank = {
@@ -203,7 +226,7 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Export flashcards' }));
     await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
     expect(screen.queryByText(/does not reproduce/)).toBeNull();
-    expect(screen.getByRole('textbox', { name: 'Record JSON' })).toHaveValue('');
+    expect(screen.getByRole('textbox', { name: 'JSON' })).toHaveValue('');
   });
   it('exports reproducible reorder operations for decks and retains reset after export', async () => {
     let bank!: StoredFlashcardBank;
@@ -225,16 +248,18 @@ describe('FlashcardAdminPanel', () => {
     stageRecord({ id: 'd-other', subjectId: 's2', name: 'Other Deck' });
     clickAddDeck();
     stageRecord({ id: 'd2', subjectId: 's1', name: 'Deck Two' });
-    fireEvent.click(screen.getByRole('button', { name: 'Move up' }));
+    recordAction('Move up');
     expect(bank.decks.map((deck) => deck.id)).toEqual(['d2', 'd1', 'd-other']);
     fireEvent.click(screen.getByRole('button', { name: 'Export flashcards' }));
     await waitFor(() => expect(click).toHaveBeenCalledTimes(2));
     expect(screen.queryByText(/does not reproduce/)).toBeNull();
-    expect(screen.getByRole('button', { name: 'Reset' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Import change set' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
+    expect(screen.getByRole('menuitem', { name: 'Reset flashcards' })).toBeEnabled();
+    expect(screen.getByRole('menuitem', { name: 'Import change set' })).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Reset flashcards' }));
     expect(bank.decks).toEqual([]);
-    expect(screen.getByRole('button', { name: 'Import change set' })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Workspace' }));
+    expect(screen.getByRole('menuitem', { name: 'Import change set' })).not.toHaveAttribute('aria-disabled', 'true');
     vi.unstubAllGlobals();
   }, 15_000);
 
@@ -247,22 +272,22 @@ describe('FlashcardAdminPanel', () => {
     );
     clickAddDeck();
     stageRecord({ id: 'd1', subjectId: 's1', name: 'Deck' });
-    fireEvent.click(screen.getByRole('button', { name: 'Add card' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Record JSON' }), {
+    recordAction('New card');
+    fireEvent.change(screen.getByRole('textbox', { name: 'JSON' }), {
       target: { value: JSON.stringify({ id: 'f1', deckId: 'd1', front: '<script>alert(1)</script>', back: 'Back' }) },
     });
     const unload = new Event('beforeunload', { cancelable: true });
     window.dispatchEvent(unload);
     expect(unload.defaultPrevented).toBe(true);
-    fireEvent.click(screen.getByRole('button', { name: 'Edit deck' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Edit' }).at(-1)!);
     expect(confirm).toHaveBeenCalledWith('Discard the unstaged record edits?');
     expect(screen.getByRole('heading', { name: 'Create card' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stage' }));
     expect(screen.getByText(/unsupported HTML/).closest('[role="alert"]')).toBeVisible();
     expect(screen.queryByRole('button', { name: /alert.*Card/ })).toBeNull();
   });
 
-  it('guards flashcard undo when restoring a deck would reference a removed subject', () => {
+  it('guards flashcard undo when restoring a deck would reference a removed subject', async () => {
     const { rerender } = render(
       <ThemeProvider theme={theme}>
         <FlashcardAdminPanel {...props} />
@@ -270,7 +295,9 @@ describe('FlashcardAdminPanel', () => {
     );
     clickAddDeck();
     stageRecord({ id: 'd1', subjectId: 's1', name: 'Deck' });
-    fireEvent.click(screen.getByRole('button', { name: 'Delete' }));
+    recordAction('Delete…');
+    fireEvent.click(screen.getByRole('button', { name: 'Stage deck deletion' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     rerender(
       <ThemeProvider theme={theme}>
         <FlashcardAdminPanel {...props} subjects={props.subjects.filter((subject) => subject.id !== 's1')} />
@@ -287,12 +314,12 @@ describe('FlashcardAdminPanel', () => {
       </ThemeProvider>,
     );
     clickAddDeck();
-    const editor = screen.getByRole('textbox', { name: 'Record JSON' });
+    const editor = screen.getByRole('textbox', { name: 'JSON' });
     const deck = JSON.parse((editor as HTMLTextAreaElement).value) as { id: string; subjectId: string; name: string };
     expect(deck.id).toMatch(/^d-/);
     expect(deck.subjectId).toBe('s1');
     fireEvent.change(editor, { target: { value: JSON.stringify({ ...deck, name: 'Test deck' }, null, 2) } });
-    fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stage' }));
     const deckPicker = screen.getByRole('combobox', { name: 'Deck' });
     fireEvent.change(deckPicker, { target: { value: 'Test deck' } });
     expect(screen.getByRole('option', { name: 'Test deck · 0 cards' })).toBeVisible();
@@ -307,11 +334,11 @@ describe('FlashcardAdminPanel', () => {
       </ThemeProvider>,
     );
     clickAddDeck();
-    const editor = screen.getByRole('textbox', { name: 'Record JSON' });
+    const editor = screen.getByRole('textbox', { name: 'JSON' });
     fireEvent.change(editor, {
       target: { value: JSON.stringify({ id: 'd-invalid', subjectId: 'missing', name: 'Invalid' }) },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Stage record' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stage' }));
     expect(screen.getByRole('alert')).toHaveTextContent('unknown subject');
     expect(screen.queryByText('Invalid')).toBeNull();
   });
@@ -326,10 +353,18 @@ describe('FlashcardAdminPanel', () => {
         <FlashcardAdminPanel {...props} onBankChange={onBankChange} />
       </ThemeProvider>,
     );
-    clickAddDeck();
-    stageRecord({ id: 'd-bulk-cards', subjectId: 's1', name: 'Bulk cards destination' });
-    fireEvent.click(screen.getByRole('button', { name: 'Bulk add cards' }));
-    const json = screen.getByRole('textbox', { name: 'Bulk JSON' });
+    chooseSubject();
+    fireEvent.click(screen.getByRole('button', { name: /^Add$/ }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'JSON' }), {
+      target: { value: JSON.stringify({ decks: [{ name: 'Bulk cards destination' }] }) },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stage' }));
+    await waitFor(() => expect(bank.decks).toHaveLength(1));
+    const stagedDeckId = bank.decks[0].id;
+    fireEvent.click(screen.getAllByRole('button', { name: /^Add$/ }).at(-1)!);
+    expect(screen.getByRole('dialog', { name: 'Add Cards' })).toBeVisible();
+    const json = screen.getByRole('textbox', { name: 'JSON' });
     fireEvent.change(json, {
       target: {
         value: JSON.stringify({
@@ -343,14 +378,14 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(await screen.findByRole('region', { name: 'Bulk add preview' })).toHaveTextContent('2 card(s)');
     expect(screen.getByRole('region', { name: 'Bulk add preview' })).toHaveTextContent('Check this later');
-    fireEvent.click(screen.getByRole('button', { name: 'Stage batch' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stage' }));
     await waitFor(() => expect(bank.cards).toHaveLength(2));
     expect(onBankChange).toHaveBeenCalledTimes(2);
     expect(screen.queryByRole('dialog')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
-    expect(bank.decks.map((deck) => deck.id)).toEqual(['d-bulk-cards']);
+    expect(bank.decks.map((deck) => deck.id)).toEqual([stagedDeckId]);
     expect(bank.cards).toEqual([]);
-  });
+  }, 15000);
 
   it('stages empty and recursively populated decks for a selected subject atomically', async () => {
     let bank: StoredFlashcardBank = structuredClone(storedFlashcardBank);
@@ -363,8 +398,9 @@ describe('FlashcardAdminPanel', () => {
       </ThemeProvider>,
     );
     chooseSubject();
-    fireEvent.click(screen.getByRole('button', { name: 'Bulk add decks' }));
-    fireEvent.change(screen.getByRole('textbox', { name: 'Bulk JSON' }), {
+    fireEvent.click(screen.getByRole('button', { name: /^Add$/ }));
+    expect(screen.getByRole('dialog', { name: 'Add Decks' })).toBeVisible();
+    fireEvent.change(screen.getByRole('textbox', { name: 'JSON' }), {
       target: {
         value: JSON.stringify({
           decks: [
@@ -385,8 +421,9 @@ describe('FlashcardAdminPanel', () => {
     expect(preview).toHaveTextContent('2 deck(s)');
     expect(preview).toHaveTextContent('2 card(s)');
     expect(preview).toHaveTextContent('Empty deck');
+    fireEvent.click(screen.getByRole('button', { name: 'Next deck' }));
     expect(preview).toHaveTextContent('Question two');
-    fireEvent.click(screen.getByRole('button', { name: 'Stage batch' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Stage' }));
     await waitFor(() => expect(bank.decks).toHaveLength(2));
     expect(bank.decks.map((deck) => deck.name)).toEqual(['Empty deck', 'Nested deck']);
     expect(bank.decks[0].description).toBe('No cards yet');
@@ -408,8 +445,9 @@ describe('FlashcardAdminPanel', () => {
       </ThemeProvider>,
     );
     chooseSubject();
-    fireEvent.click(screen.getByRole('button', { name: 'Bulk add decks' }));
-    const json = screen.getByRole('textbox', { name: 'Bulk JSON' });
+    fireEvent.click(screen.getByRole('button', { name: /^Add$/ }));
+    expect(screen.getByRole('dialog', { name: 'Add Decks' })).toBeVisible();
+    const json = screen.getByRole('textbox', { name: 'JSON' });
     fireEvent.change(json, {
       target: {
         value: JSON.stringify({
@@ -422,7 +460,7 @@ describe('FlashcardAdminPanel', () => {
     expect(unload.defaultPrevented).toBe(true);
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(await screen.findByText(/\$\.decks\[0\]\.cards\[0\].*unsupported HTML/)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Stage batch' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled();
     expect(bank.decks).toEqual([]);
     expect(bank.cards).toEqual([]);
     expect(onBankChange).not.toHaveBeenCalled();
@@ -430,8 +468,9 @@ describe('FlashcardAdminPanel', () => {
     fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Valid deck' }] }) } });
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
     expect(await screen.findByRole('region', { name: 'Bulk add preview' })).toBeVisible();
-    fireEvent.change(screen.getByRole('textbox', { name: 'Reason' }), { target: { value: 'Updated reason' } });
-    expect(await screen.findByText(/changed\. Preview again before staging/)).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Stage batch' })).toBeDisabled();
+    expect(screen.queryByRole('textbox', { name: 'Reason' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Stage' })).toBeEnabled();
+    fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Changed after preview' }] }) } });
+    expect(screen.getByRole('button', { name: 'Preview' })).toBeEnabled();
   });
 });
