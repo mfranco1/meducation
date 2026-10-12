@@ -1,4 +1,4 @@
-import { Box, Button, ButtonGroup, Typography } from '@mui/material';
+import { Box, Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useEffect, useRef } from 'react';
@@ -15,21 +15,35 @@ export function SubjectFilterPill({
   disabled?: boolean;
 }) {
   return (
-    <ButtonGroup
+    <ToggleButtonGroup
+      exclusive
+      value={value}
       aria-label="Filter subjects"
-      role="group"
+      onChange={(_, nextValue: SubjectFilter | null) => nextValue && onChange(nextValue)}
       sx={{
-        border: '1px solid',
-        borderColor: 'divider',
         borderRadius: 99,
-        overflow: 'hidden',
-        '& .MuiButton-root': {
+        bgcolor: 'rgba(185, 81, 27, .08)',
+        p: 0,
+        '& .MuiToggleButtonGroup-grouped': {
           border: 0,
           borderRadius: 99,
-          px: 1.5,
-          minHeight: 36,
+          px: 2.5,
+          minWidth: 108,
+          minHeight: 32,
+          height: 32,
+          padding: '0 18px',
+          lineHeight: 1.2,
           textTransform: 'none',
           fontWeight: 700,
+          fontSize: '0.875rem',
+          color: 'text.secondary',
+          '&:not(:first-of-type)': { borderLeft: 0, ml: 0 },
+          '&.Mui-selected': {
+            bgcolor: 'primary.main',
+            color: 'common.white',
+            '&:hover': { bgcolor: 'primary.main' },
+          },
+          '&:hover': { bgcolor: 'transparent' },
         },
       }}
     >
@@ -39,21 +53,11 @@ export function SubjectFilterPill({
           ['inProgress', 'In progress'],
         ] as const
       ).map(([filter, label]) => (
-        <Button
-          key={filter}
-          disabled={disabled}
-          aria-pressed={value === filter}
-          onClick={() => onChange(filter)}
-          sx={{
-            color: value === filter ? 'primary.dark' : 'text.secondary',
-            bgcolor: value === filter ? 'primary.light' : 'background.paper',
-            '&:hover': { bgcolor: value === filter ? 'primary.light' : 'action.hover' },
-          }}
-        >
+        <ToggleButton key={filter} value={filter} disabled={disabled}>
           {label}
-        </Button>
+        </ToggleButton>
       ))}
-    </ButtonGroup>
+    </ToggleButtonGroup>
   );
 }
 
@@ -84,11 +88,9 @@ export function SubjectPagination({
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mt: 2.5 }}>
       <Button
-        variant="outlined"
         startIcon={<ArrowBackRoundedIcon />}
         disabled={disabled || safePage <= 1}
         onClick={() => changePage(safePage - 1)}
-        sx={{ borderRadius: 99, textTransform: 'none', fontWeight: 700 }}
       >
         Previous
       </Button>
@@ -101,17 +103,14 @@ export function SubjectPagination({
         sx={{
           minWidth: 84,
           textAlign: 'center',
-          '&:focus': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 3, borderRadius: 1 },
         }}
       >
         Page {safePage} of {pageCount}
       </Typography>
       <Button
-        variant="outlined"
         endIcon={<ArrowForwardRoundedIcon />}
         disabled={disabled || safePage >= pageCount}
         onClick={() => changePage(safePage + 1)}
-        sx={{ borderRadius: 99, textTransform: 'none', fontWeight: 700 }}
       >
         Next
       </Button>

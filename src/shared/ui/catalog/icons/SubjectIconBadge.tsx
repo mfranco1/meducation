@@ -11,13 +11,13 @@ export function SubjectIconBadge({ subjectId }: { subjectId: string }) {
         borderRadius: '50%',
         color: 'primary.main',
         display: 'flex',
-        flex: '0 0 40px',
-        height: 40,
+        flex: '0 0 48px',
+        height: 48,
         justifyContent: 'center',
-        width: 40,
+        width: 48,
       }}
     >
-      <SubjectIcon subjectId={subjectId} sx={{ fontSize: '1.25rem' }} />
+      <SubjectIcon subjectId={subjectId} sx={{ fontSize: '1.75rem' }} />
     </Box>
   );
 }

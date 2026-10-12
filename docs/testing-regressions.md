@@ -8,7 +8,7 @@ Use this reference when changing the corresponding behavior. [Testing](testing.m
 
 - Component tests cover stable subject-ID icon mappings and fallback, decorative icon semantics, long-title card actions, score validation and fill widths, all three trend states, and activity-count omission at zero.
 - Dashboard tests scope All Subjects assertions separately from Continue Studying, verify All/In progress filtering, 12-item page boundaries and reset behavior, quiz activity beside the score above its track, and flashcard activity without score metadata.
-- Browser coverage checks three/two/one-column layout, maximum 12 cards, pagination and filter keyboard access, icon/title size alignment, stable quiz metadata geometry, 320px/390px/desktop overflow, keyboard activation, and reduced motion on both dashboards. Flashcard cards must not render quiz score tracks; generic loading checks icon/bar/status order.
+- Browser coverage checks three/two/one-column layout, maximum 12 cards, pagination and filter keyboard access, the compact bright-orange selected filter, icon/title size alignment, stable quiz metadata geometry, 320px/390px/desktop overflow, keyboard activation, and reduced motion on both dashboards. Flashcard cards must not render quiz score tracks; generic loading checks icon/bar/status order.
 
 ### Drawer and destination navigation
 

@@ -7,6 +7,16 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   await page.goto('/');
 
   const grid = page.getByTestId('all-subjects-grid');
+  const filterGroup = page.getByRole('group', { name: 'Filter subjects' });
+  const filterHeight = await filterGroup.evaluate((element) => element.getBoundingClientRect().height);
+  expect(filterHeight).toBeLessThan(40);
+  const selectedFilter = filterGroup.getByRole('button', { name: 'All' });
+  await expect(selectedFilter).toHaveCSS('background-color', 'rgb(185, 81, 27)');
+  await expect(selectedFilter).toHaveCSS('color', 'rgb(255, 255, 255)');
+  const inactiveFilter = filterGroup.getByRole('button', { name: 'In progress' });
+  const inactiveBackground = await inactiveFilter.evaluate((element) => getComputedStyle(element).backgroundColor);
+  await inactiveFilter.hover();
+  await expect(inactiveFilter).toHaveCSS('background-color', inactiveBackground);
   await expect
     .poll(() => grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length))
     .toBe(3);
@@ -17,6 +27,20 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   await expect(card.locator('[data-subject-icon="s1"]')).toBeVisible();
   await expect(card.getByTestId('subject-score-track')).toBeVisible();
   await expect(card.getByText(/Latest Score/)).toHaveCount(0);
+
+  const title = card.locator('h3');
+  await title.evaluate((element) => {
+    element.style.maxWidth = '120px';
+  });
+  const verticalAlignment = await card.evaluate((element) => {
+    const icon = element.querySelector('[data-subject-icon]')!.getBoundingClientRect();
+    const titleBounds = element.querySelector('h3')!.getBoundingClientRect();
+    return Math.abs(icon.top + icon.height / 2 - (titleBounds.top + titleBounds.height / 2));
+  });
+  expect(verticalAlignment).toBeLessThan(1);
+  await title.evaluate((element) => {
+    element.style.maxWidth = '';
+  });
 
   const alignment = await card.evaluate((element) => {
     const icon = element.querySelector('[data-subject-icon]')!.getBoundingClientRect();

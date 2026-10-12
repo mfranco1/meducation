@@ -60,7 +60,7 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
           }}
         >
           {isDashboardGrid ? (
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'nowrap', gap: 1.25, minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: 1.25, minWidth: 0 }}>
               <SubjectIconBadge subjectId={subject.id} />
               <Typography
                 component="h3"
