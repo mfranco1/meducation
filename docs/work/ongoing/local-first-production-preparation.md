@@ -162,6 +162,7 @@ Provision managed Postgres and the chosen admin identity; deploy static learner/
 - [x] Review verification: build/typecheck and canvas TSX syntax passed; existing bundle-size advisory remains. Runtime stages are still unimplemented.
 - [ ] L0 decisions recorded.
 - [x] L0 Step 1 current-contract evidence captured and audited; 49 baseline tests/build passed. Remaining L0 steps await user continuation one step at a time.
+- [x] L0 Step 2 backup-format/user-flow contract selected and audited; field/link/diff checks and build passed. Step 3 awaits user continuation.
 - [ ] L1 implemented and verified.
 - [ ] L2 implemented and verified.
 - [ ] L3 implemented and verified.

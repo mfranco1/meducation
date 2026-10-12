@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: in progress; Step 1 evidence captured, later decisions pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
+Status: in progress; Steps 1–2 complete, coordination/recovery/validation/browser decisions pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 
@@ -22,15 +22,15 @@ Output recorded: [progress-backup decision evidence](../../decisions/0002-progre
 
 ## Step 2 — Set the backup and user-flow contract
 
-- [ ] Adopt an application-specific v1 JSON envelope; nested quiz/flashcard payloads have explicit schema versions and omit runtime storage revisions. Current content signatures/revisions remain opaque references.
-- [ ] Include both progress systems, retained history and all durable summaries. Exclude arbitrary storage keys, authored content, authentication data and browser/environment fingerprints.
-- [ ] Make restore replace both systems, never merge. An absent system is an invalid v1 file; an explicitly empty valid payload is allowed and previewed as a replacement with empty data.
-- [ ] Place Progress backup in the existing learner drawer as an app-owned utility dialog. Avoid creating a third study feature or routing storage through shared presentation.
-- [ ] Allow opening it only from non-editable study states. Disable its drawer action during active quiz/flashcard study with clear accessible guidance to save and leave first. This reuses existing save/exit behavior rather than inventing a second exit workflow. Results/browse/review can be handled by closing/resetting their ephemeral view before successful restore, respecting existing review-exit confirmation.
-- [ ] Confirm that import validation and restore never require content/API availability; unknown content IDs remain recoverable. Compatibility checks happen when study resumes.
-- [ ] Set UI states: idle, reading, invalid, preview, committing, success, recoverable failure, recovery-required. Cancellation before committing must write nothing.
+- [x] Adopt an application-specific v1 JSON envelope; nested quiz/flashcard payloads have explicit schema versions and omit runtime storage revisions. Current content signatures/revisions remain opaque references.
+- [x] Include both progress systems, retained history and all durable summaries. Exclude arbitrary storage keys, separate authored content banks, authentication data and browser/environment fingerprints. Preserve active quiz signatures with their embedded text for resume compatibility; warn about sharing backups.
+- [x] Make restore replace both systems, never merge. An absent system is an invalid v1 file; an explicitly empty valid payload is allowed and previewed as a replacement with empty data.
+- [x] Place Progress backup in the existing learner drawer as an app-owned utility dialog. Avoid creating a third study feature or routing storage through shared presentation.
+- [x] Allow opening it only from non-editable study states. Disable its drawer action during active quiz/flashcard study with clear accessible guidance to save and leave first. This reuses existing save/exit behavior rather than inventing a second exit workflow. Review requires existing exit confirmation before opening the utility; results/browse remain visible until cancel or successful replacement resets sessions to the Quizzes dashboard. Cancel delayed launches before opening.
+- [x] Confirm that import validation and restore never require content/API availability; unknown content IDs remain recoverable. Compatibility checks happen when study resumes.
+- [x] Set UI states: idle, reading, invalid, preview, committing, success, recoverable failure, recovery-required. Cancellation before committing must write nothing.
 
-Output: envelope field definitions, UI state transitions, and proposed copy in the ADR; L1 implements them.
+Output recorded: envelope field allowlists, replacement/empty semantics, screen behavior, UI state transitions and proposed copy in the [progress-backup ADR](../../decisions/0002-progress-backup-and-restore.md). L1 implements them after remaining gates.
 
 ## Step 3 — Choose a coordination protocol that preserves saved progress
 
@@ -123,3 +123,5 @@ Planning verification: relative links resolve; repository build/typecheck passed
 ## Execution log
 
 2026-10-12 — Step 1 completed: current source contracts, storage fields/defaults, complete runtime write inventory and limitations recorded in the populated progress-backup ADR. Self-review/audit completed, including correction of the L1 text-free-backup claim: current active quiz signatures embed content. Seven existing suites/49 tests and build/typecheck passed; source/link assertions and diff check passed; canonical hashes unchanged. No runtime implementation or real browser-data access. Stop here; Step 2 requires the user's continuation instruction.
+
+2026-10-12 — Step 2 complete and self-audited: v1 paired backup, paused attempts, preserved content references, replace-only confirmation, review/launch gating and explicit failure/recovery states. JSON/source-interface field audit, link/diff checks and build/typecheck passed; existing chunk-size advisory remains. Canonical hashes unchanged; documentation only. Stop before Step 3 pending the user's continuation instruction.

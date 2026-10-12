@@ -34,7 +34,7 @@ Acceptance: fixtures model meaningful histories, not production content snapshot
 
 ## Step 2 — Implement the versioned backup contract
 
-Proposed v1 fields:
+Selected v1 fields (L0 Step 2):
 
 - format: exact literal meducation-progress-backup.
 - version: 1.
@@ -48,8 +48,9 @@ Proposed v1 fields:
 - [ ] Validate finite safe counts, bounded percentages, nonnegative time, timestamp parseability/canonical representation, valid enums, unique milestones and safe ID lengths. Selected answers must obey current immediate-feedback lock rules.
 - [ ] Check score total = correct + incorrect + unanswered; percentage matches the existing rounding rule. Require completed IDs to be unique and present in completedIds; response map keys match questionId; active map keys match quizId; the same attempt cannot be both active and completed. Durable counts may exceed retained-history counts; do not require equality or recompute lowest/latest statistics from pruned history.
 - [ ] Preserve arbitrary valid stable IDs, source signatures and optional bank revisions without requiring today's bank. Validate flashcard aggregate invariants through the existing domain validator and retain local-date strings unchanged.
+- [ ] Encode active attempts without timerStartedAt/completedAt/score; encode retained completed attempts without timerStartedAt/contentSignature. Preserve optional contentRevision/currentQuestionId. Finalize strict conversion/error rules in L0 Step 5.
 - [ ] Canonicalize legacy optional defaults only when defined by the existing schema. Do not trim malformed records into apparent success. Reject future backup versions before reading nested fields.
-- [ ] Encode with explicit field selection and deterministic serialization. Exclude storage revisions, arbitrary localStorage keys, authentication state and separate content banks. Step 1 audit found that existing active quiz contentSignature embeds question text/choices/answers; L0 Step 2/5 must explicitly resolve the privacy/size implications while preserving resume compatibility. Do not promise text-free backups or silently replace existing signatures with hashes. Validate the encoded result with the same import contract before offering download.
+- [ ] Encode with explicit field selection and deterministic serialization. Exclude storage revisions, arbitrary localStorage keys, authentication state and separate content banks. Step 1 audit found that existing active quiz contentSignature embeds question text/choices/answers; L0 Step 2 selects preserving that exact signature and a sharing warning; Step 5 finalizes size/validation. Do not promise text-free backups or silently replace existing signatures with hashes. Validate the encoded result with the same import contract before offering download.
 
 Acceptance: own-format round-trip; all invalid fixtures yield safe errors and zero storage writes. Include near-limit accepted/rejected cases, nested dangerous keys, invalid dates, score mismatch, duplicate completions, fractional/unsafe counts and preserved unknown IDs.
 
@@ -94,7 +95,7 @@ Acceptance: inject failure after every mutating operation; each restart determin
 ## Step 6 — Integrate the learner dialog
 
 - [ ] Add Progress backup to the drawer with a clear label/icon and accessible collapsed tooltip. It is a utility dialog, so existing quiz/flashcard destination identity remains unchanged.
-- [ ] Gate opening during active quiz/flashcard study with save-and-leave guidance; do not pause/finish/abort a session implicitly. Preserve existing review-exit confirmation when restore would discard a review view.
+- [ ] Gate opening during active quiz/flashcard study with save-and-leave guidance; do not pause/finish/abort a session implicitly. From review, run the existing exit confirmation before opening the utility; cancel keeps review, confirm leaves to the Quizzes dashboard and opens the utility. The separate restore preview must still be explicitly confirmed. Cancel pending quiz/deck launches before opening from other non-editable views.
 - [ ] Provide Download backup and Choose backup file actions. Show reading/validation status, preview counts/date, replacement warning, Cancel and Restore backup. Clear input so selecting the same file again works.
 - [ ] Disable duplicate actions during commit/recovery. Cancellation before commit clears only preview memory. Once writes begin, prevent closing via backdrop/Escape and explain the ongoing restore; browser termination is handled by the journal.
 - [ ] Use the existing theme and MUI dialog patterns, keyboard focus trapping/restoration, polite progress announcements and alert errors. No raw technical exception/status text in product UI.
