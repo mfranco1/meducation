@@ -2,7 +2,6 @@ import { Chip, Stack, Typography } from '@mui/material';
 import type { SubjectStat } from '../selectors/progress';
 import { ScoreTrendIndicator } from './ScoreTrendIndicator';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
-import { SubjectActivityLabel } from '../../../shared/ui/catalog/SubjectActivityLabel';
 import { SubjectScoreSummary } from './SubjectScoreSummary';
 
 export function QuizSubjectCard({
@@ -18,8 +17,7 @@ export function QuizSubjectCard({
   if (appearance === 'dashboardGrid') {
     return (
       <SubjectCard subject={subject} onSelect={onSelect} appearance="dashboardGrid">
-        <SubjectScoreSummary score={latest} trend={trend} />
-        <SubjectActivityLabel count={activeQuizCount} />
+        <SubjectScoreSummary score={latest} trend={trend} activeCount={activeQuizCount} />
       </SubjectCard>
     );
   }

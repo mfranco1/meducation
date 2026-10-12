@@ -23,7 +23,7 @@ export function SubjectCardSkeleton({ dashed = false }: { dashed?: boolean }) {
       <Box sx={{ alignItems: 'center', display: 'flex', gap: 1.25 }}>
         <LoadingSkeleton variant="circular" width={40} height={40} />
         <Box sx={{ flex: 1 }}>
-          <LoadingSkeleton variant="text" width="82%" height={24} />
+          <LoadingSkeleton variant="text" width="82%" height={28} />
           <LoadingSkeleton variant="text" width="60%" height={20} />
         </Box>
       </Box>

@@ -7,6 +7,9 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   await page.goto('/');
 
   const grid = page.getByTestId('all-subjects-grid');
+  await expect
+    .poll(() => grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length))
+    .toBe(3);
   const card = grid.locator('.MuiCardActionArea-root');
   await expect(card).toBeVisible();
   await expect(card).toHaveAttribute('aria-label', 'Open Browser Test Subject');
@@ -40,7 +43,14 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   await expect(card).toBeVisible();
 
   await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.setViewportSize({ width: 900, height: 800 });
+  await expect
+    .poll(() => grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length))
+    .toBe(2);
   await page.setViewportSize({ width: 320, height: 800 });
+  await expect
+    .poll(() => grid.evaluate((element) => getComputedStyle(element).gridTemplateColumns.split(' ').length))
+    .toBe(1);
   await expect
     .poll(() => page.locator('main').evaluate((element) => element.getBoundingClientRect().width))
     .toBeGreaterThan(200);

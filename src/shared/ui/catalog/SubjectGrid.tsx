@@ -7,7 +7,7 @@ export function SubjectGrid({ children }: { children: ReactNode }) {
       data-testid="all-subjects-grid"
       sx={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 260px), 1fr))',
+        gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))' },
         gap: 2,
         minWidth: 0,
       }}

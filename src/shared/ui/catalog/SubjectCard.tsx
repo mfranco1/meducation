@@ -65,13 +65,13 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
               <Typography
                 component="h3"
                 sx={{
-                  fontSize: '1rem',
+                  fontSize: '1.25rem',
                   fontWeight: 700,
                   flex: '1 1 auto',
                   lineHeight: 1.35,
                   minWidth: 0,
                   overflowWrap: 'anywhere',
-                  pt: 1,
+                  pt: 0,
                 }}
               >
                 {subject.name}

@@ -12,6 +12,8 @@ import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardL
 import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
 import { SubjectCardSkeleton } from '../../../shared/ui/catalog/SubjectCardSkeleton';
+import { SubjectFilterPill, SubjectPagination } from '../../../shared/ui/catalog/SubjectCatalogControls';
+import { useSubjectCatalog } from '../../../shared/ui/catalog/useSubjectCatalog';
 
 export type { SubjectStat } from '../selectors/dashboard';
 
@@ -132,6 +134,7 @@ export function DashboardScreen({
     return onRetry();
   };
   const sharedRecovery = Boolean(sharedError || retrying || manualRetryPending);
+  const catalog = useSubjectCatalog(subjectStats, (stat) => stat.activeQuizCount > 0);
   return (
     <>
       {sharedRecovery && (
@@ -145,6 +148,15 @@ export function DashboardScreen({
         />
       )}
       <StudyDashboardLayout
+        subjectsActions={
+          <SubjectFilterPill
+            value={catalog.filter}
+            onChange={catalog.setFilter}
+            disabled={
+              loading || Boolean(sharedError || retrying || manualRetryPending || subjectsFailure || statsFailure)
+            }
+          />
+        }
         summary={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
             <StatCard label="Completed quizzes" value={attempts.length} />
@@ -199,16 +211,25 @@ export function DashboardScreen({
         ) : subjectStats.length === 0 ? (
           <Typography color="text.secondary">No subjects are available yet.</Typography>
         ) : (
-          <SubjectGrid>
-            {subjectStats.map((stat) => (
-              <QuizSubjectCard
-                key={stat.subject.id}
-                stat={stat}
-                onSelect={onSelectSubject}
-                appearance="dashboardGrid"
-              />
-            ))}
-          </SubjectGrid>
+          <>
+            {catalog.total === 0 ? (
+              <Typography color="text.secondary">No subjects in progress.</Typography>
+            ) : (
+              <>
+                <SubjectGrid>
+                  {catalog.pageItems.map((stat) => (
+                    <QuizSubjectCard
+                      key={stat.subject.id}
+                      stat={stat}
+                      onSelect={onSelectSubject}
+                      appearance="dashboardGrid"
+                    />
+                  ))}
+                </SubjectGrid>
+                <SubjectPagination page={catalog.page} pageCount={catalog.pageCount} onChange={catalog.setPage} />
+              </>
+            )}
+          </>
         )}
       </StudyDashboardLayout>
     </>

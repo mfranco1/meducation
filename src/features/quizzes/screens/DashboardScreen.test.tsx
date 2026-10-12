@@ -153,14 +153,14 @@ describe('dashboard lowest score', () => {
 });
 
 describe('dashboard in-progress indicator', () => {
-  it.each([1, 2])('shows %i active quiz count below the score bar in All Subjects', (activeQuizCount) => {
+  it.each([1, 2])('shows %i active quiz count beside the score above the track in All Subjects', (activeQuizCount) => {
     renderDashboard(undefined, activeQuizCount);
 
     const grid = screen.getByTestId('all-subjects-grid');
     const label = within(grid).getByText(`${activeQuizCount} in progress`);
     const track = within(grid).getByTestId('subject-score-track');
     expect(label).toBeVisible();
-    expect(track.compareDocumentPosition(label) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(label.compareDocumentPosition(track) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(screen.getAllByText(`${activeQuizCount} in progress`)).toHaveLength(2);
   });
 
@@ -168,6 +168,39 @@ describe('dashboard in-progress indicator', () => {
     renderDashboard(undefined);
 
     expect(screen.queryByText(/in progress/)).toBeNull();
+  });
+});
+
+describe('dashboard subject filter and pagination', () => {
+  it('shows at most 12 subjects per page and filters active subjects', () => {
+    const stats = Array.from({ length: 13 }, (_, index) => ({
+      subject: { ...subject, id: `s${index}`, name: `Subject ${index + 1}` },
+      quizCount: 1,
+      activeQuizCount: index === 12 ? 1 : 0,
+    }));
+    render(
+      <ThemeProvider theme={theme}>
+        <DashboardScreen attempts={[]} subjectStats={stats} onSelectSubject={() => {}} />
+      </ThemeProvider>,
+    );
+
+    expect(
+      within(screen.getByTestId('all-subjects-grid')).getAllByRole('button', { name: /^Open Subject/ }),
+    ).toHaveLength(12);
+    expect(screen.getByText('Page 1 of 2')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(
+      within(screen.getByTestId('all-subjects-grid')).getByRole('button', { name: 'Open Subject 13' }),
+    ).toBeVisible();
+    expect(screen.getByText('Page 2 of 2')).toBeVisible();
+    expect(screen.getByText('Page 2 of 2')).toHaveFocus();
+    fireEvent.click(screen.getByRole('button', { name: 'In progress' }));
+    expect(
+      within(screen.getByTestId('all-subjects-grid')).getByRole('button', { name: 'Open Subject 13' }),
+    ).toBeVisible();
+    expect(screen.getByText('Page 1 of 1')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
   });
 });
 

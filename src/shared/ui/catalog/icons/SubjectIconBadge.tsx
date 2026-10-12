@@ -17,7 +17,7 @@ export function SubjectIconBadge({ subjectId }: { subjectId: string }) {
         width: 40,
       }}
     >
-      <SubjectIcon subjectId={subjectId} sx={{ fontSize: 24 }} />
+      <SubjectIcon subjectId={subjectId} sx={{ fontSize: '1.25rem' }} />
     </Box>
   );
 }

@@ -87,5 +87,33 @@ describe('FlashcardsDashboardScreen', () => {
     );
     expect(screen.getAllByText('—')).toHaveLength(3);
     expect(screen.queryByText('0.0')).not.toBeInTheDocument();
+    expect(
+      within(screen.getByRole('group', { name: 'Filter subjects' }).parentElement!).getByRole('button', {
+        name: 'In progress',
+      }),
+    ).toBeDisabled();
+  });
+
+  it('filters the All Subjects grid to in-progress subjects', () => {
+    const active = { id: 'a', name: 'Active', accent: '#b9511b' };
+    const inactive = { id: 'i', name: 'Inactive', accent: '#b9511b' };
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardsDashboardScreen
+          subjects={[
+            { subject: active, deckCount: 2, activeDeckCount: 1 },
+            { subject: inactive, deckCount: 2, activeDeckCount: 0 },
+          ]}
+          activeSubjects={[]}
+          progress={emptyProgress}
+          onRetry={vi.fn()}
+          onSelectSubject={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'In progress' }));
+    const grid = screen.getByTestId('all-subjects-grid');
+    expect(within(grid).getByRole('button', { name: 'Open Active' })).toBeVisible();
+    expect(within(grid).queryByRole('button', { name: 'Open Inactive' })).not.toBeInTheDocument();
   });
 });

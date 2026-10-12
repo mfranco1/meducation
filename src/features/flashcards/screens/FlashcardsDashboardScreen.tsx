@@ -1,4 +1,4 @@
-import { Chip, Stack, Typography } from '@mui/material';
+import { Box, Chip, Stack, Typography } from '@mui/material';
 import type { Subject } from '../../../domain/types';
 import type { FlashcardDashboardSubject } from '../selectors/flashcards';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
@@ -11,6 +11,8 @@ import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
 import { useFlashcardDashboardStats } from '../session/useFlashcardDashboardStats';
 import { SubjectActivityLabel } from '../../../shared/ui/catalog/SubjectActivityLabel';
 import { SubjectCardSkeleton } from '../../../shared/ui/catalog/SubjectCardSkeleton';
+import { SubjectFilterPill, SubjectPagination } from '../../../shared/ui/catalog/SubjectCatalogControls';
+import { useSubjectCatalog } from '../../../shared/ui/catalog/useSubjectCatalog';
 
 function SubjectPlaceholders() {
   return (
@@ -43,6 +45,7 @@ export function FlashcardsDashboardScreen({
 }) {
   const stats = useFlashcardDashboardStats(progress);
   const metric = (value: string | number) => (progressError ? '—' : value);
+  const catalog = useSubjectCatalog(subjects, (item) => item.activeDeckCount > 0);
   return (
     <>
       {error && (
@@ -54,6 +57,13 @@ export function FlashcardsDashboardScreen({
         />
       )}
       <StudyDashboardLayout
+        subjectsActions={
+          <SubjectFilterPill
+            value={catalog.filter}
+            onChange={catalog.setFilter}
+            disabled={loading || Boolean(error || progressError)}
+          />
+        }
         summary={
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
             <StatCard label="Completed decks" value={metric(stats.completedDecks)} />
@@ -88,19 +98,26 @@ export function FlashcardsDashboardScreen({
           <SubjectPlaceholders />
         ) : subjects.length === 0 ? (
           <Typography color="text.secondary">No subjects are available yet.</Typography>
+        ) : catalog.total === 0 ? (
+          <Typography color="text.secondary">No subjects in progress.</Typography>
         ) : (
-          <SubjectGrid>
-            {subjects.map((item) => (
-              <SubjectCard
-                key={item.subject.id}
-                subject={item.subject}
-                onSelect={onSelectSubject}
-                appearance="dashboardGrid"
-              >
-                <SubjectActivityLabel count={item.activeDeckCount} />
-              </SubjectCard>
-            ))}
-          </SubjectGrid>
+          <>
+            <SubjectGrid>
+              {catalog.pageItems.map((item) => (
+                <SubjectCard
+                  key={item.subject.id}
+                  subject={item.subject}
+                  onSelect={onSelectSubject}
+                  appearance="dashboardGrid"
+                >
+                  <Box sx={{ minHeight: 32 }}>
+                    <SubjectActivityLabel count={item.activeDeckCount} />
+                  </Box>
+                </SubjectCard>
+              ))}
+            </SubjectGrid>
+            <SubjectPagination page={catalog.page} pageCount={catalog.pageCount} onChange={catalog.setPage} />
+          </>
         )}
       </StudyDashboardLayout>
     </>
