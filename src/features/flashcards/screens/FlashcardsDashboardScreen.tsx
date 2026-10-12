@@ -1,4 +1,4 @@
-import { Box, Chip, Stack } from '@mui/material';
+import { Box } from '@mui/material';
 import StyleOutlinedIcon from '@mui/icons-material/StyleOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
@@ -8,6 +8,8 @@ import type { FlashcardDashboardSubject } from '../selectors/flashcards';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
 import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardLayout';
 import { StudyItemCarousel } from '../../../shared/ui/catalog/StudyItemCarousel';
+import { ContinueStudyCard } from '../../../shared/ui/catalog/ContinueStudyCard';
+import { StudyCardIllustration } from '../../../shared/ui/catalog/StudyCardIllustration';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
 import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StatCard } from '../../../shared/ui/catalog/StatCard';
@@ -137,16 +139,16 @@ export function FlashcardsDashboardScreen({
               title="Continue Studying"
               itemLabel="active subject"
               itemKey={(item) => item.subject.id}
+              layout="continueStudy"
+              headingVisibility="srOnly"
               renderItem={(item) => (
-                <SubjectCard subject={item.subject} onSelect={onSelectSubject}>
-                  <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
-                    <Chip
-                      label={`${item.activeDeckCount} in progress`}
-                      size="small"
-                      sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 700 }}
-                    />
-                  </Stack>
-                </SubjectCard>
+                <ContinueStudyCard
+                  title={item.subject.name}
+                  activityLabel={`${item.activeDeckCount} ${item.activeDeckCount === 1 ? 'deck' : 'decks'} in progress`}
+                  accessibleLabel={`Continue studying ${item.subject.name}`}
+                  onContinue={() => onSelectSubject(item.subject)}
+                  illustration={<StudyCardIllustration subjectId={item.subject.id} />}
+                />
               )}
             />
           ) : null

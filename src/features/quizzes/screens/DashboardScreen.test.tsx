@@ -189,7 +189,9 @@ describe('dashboard in-progress indicator', () => {
     const track = within(grid).getByTestId('subject-score-track');
     expect(label).toBeVisible();
     expect(label.compareDocumentPosition(track) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
-    expect(screen.getAllByText(`${activeQuizCount} in progress`)).toHaveLength(2);
+    const continueRegion = screen.getByRole('region', { name: 'Continue Studying' });
+    expect(within(grid).getAllByText(`${activeQuizCount} in progress`)).toHaveLength(1);
+    expect(within(continueRegion).getByText(`${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress`)).toBeVisible();
   });
 
   it('omits the indicator when the subject has no active quizzes', () => {

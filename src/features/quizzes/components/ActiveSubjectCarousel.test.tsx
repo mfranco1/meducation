@@ -1,5 +1,5 @@
 import { ThemeProvider } from '@mui/material';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { SubjectStat } from '../selectors/dashboard';
 import { theme } from '../../../shared/theme';
@@ -12,7 +12,11 @@ const stats: SubjectStat[] = [
 
 function renderCarousel(subjects = stats) {
   const onSelectSubject = vi.fn();
-  render(<ThemeProvider theme={theme}><ActiveSubjectCarousel subjects={subjects} onSelectSubject={onSelectSubject} /></ThemeProvider>);
+  render(
+    <ThemeProvider theme={theme}>
+      <ActiveSubjectCarousel subjects={subjects} onSelectSubject={onSelectSubject} />
+    </ThemeProvider>,
+  );
   return { onSelectSubject };
 }
 
@@ -20,19 +24,25 @@ describe('ActiveSubjectCarousel', () => {
   it('does not render without active subjects', () => {
     renderCarousel([]);
 
-    expect(screen.queryByRole('region', { name: 'Continue studying' })).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Continue Studying' })).toBeNull();
   });
 
   it('provides working forward and backward carousel controls', () => {
     renderCarousel();
 
-    expect(screen.getByRole('button', { name: 'Open Biochemistry' })).toBeVisible();
+    const region = screen.getByRole('region', { name: 'Continue Studying' });
+    expect(screen.getByRole('button', { name: 'Continue studying Biochemistry' })).toHaveAccessibleDescription(
+      '1 quiz in progress',
+    );
+    expect(within(region).getByText('1 quiz in progress')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
-    expect(screen.getByRole('button', { name: 'Open Physiology' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue studying Physiology' })).toHaveAccessibleDescription(
+      '2 quizzes in progress',
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
-    expect(screen.getByRole('button', { name: 'Open Biochemistry' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue studying Biochemistry' })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Previous active subject' }));
-    expect(screen.getByRole('button', { name: 'Open Physiology' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Continue studying Physiology' })).toBeInTheDocument();
   });
 
   it('shows only side arrows, without a position count', () => {
@@ -46,7 +56,7 @@ describe('ActiveSubjectCarousel', () => {
   it('selects the visible subject', () => {
     const { onSelectSubject } = renderCarousel();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Open Biochemistry' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Continue studying Biochemistry' }));
 
     expect(onSelectSubject).toHaveBeenCalledWith(stats[0].subject);
   });

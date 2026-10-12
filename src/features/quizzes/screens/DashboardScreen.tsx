@@ -14,8 +14,8 @@ import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
 import { QuizSubjectCard } from '../components/QuizSubjectCard';
 import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardLayout';
-import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
+import { ContinueStudyCardSkeleton } from '../../../shared/ui/catalog/ContinueStudyCardSkeleton';
 import { SubjectCardSkeleton } from '../../../shared/ui/catalog/SubjectCardSkeleton';
 import { SubjectFilterPill, SubjectPagination } from '../../../shared/ui/catalog/SubjectCatalogControls';
 import { useSubjectCatalog } from '../../../shared/ui/catalog/useSubjectCatalog';
@@ -285,7 +285,7 @@ export function DashboardScreen({
               aria-busy={!sharedError}
               aria-label={retrying ? 'Retrying active subjects' : 'Loading active subjects'}
             >
-              <LoadingSkeleton variant="rounded" height={122} />
+              <ContinueStudyCardSkeleton />
             </Box>
           ) : !loading && !sharedError && !subjectsFailure && !retrying && !manualRetryPending ? (
             <ActiveSubjectCarousel subjects={activeSubjectStats(subjectStats)} onSelectSubject={onSelectSubject} />

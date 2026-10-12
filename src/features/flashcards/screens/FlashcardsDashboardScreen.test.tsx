@@ -63,11 +63,16 @@ describe('FlashcardsDashboardScreen', () => {
         />
       </ThemeProvider>,
     );
-    expect(screen.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();
-    expect(screen.getAllByRole('button', { name: 'Open Anatomy' })).toHaveLength(2);
+    const continueRegion = screen.getByRole('region', { name: 'Continue Studying' });
+    expect(screen.getByRole('heading', { name: 'Continue Studying' })).toHaveStyle({ position: 'absolute' });
+    expect(
+      within(continueRegion).getByRole('button', { name: 'Continue studying Anatomy' }),
+    ).toHaveAccessibleDescription('1 deck in progress');
+    expect(within(continueRegion).getByText('Continue')).toBeVisible();
     const grid = screen.getByTestId('all-subjects-grid');
     expect(within(grid).getByText('1 in progress')).toBeVisible();
-    expect(screen.getAllByText('1 in progress')).toHaveLength(2);
+    expect(within(continueRegion).getByText('1 deck in progress')).toBeVisible();
+    expect(within(continueRegion).queryByTestId('subject-score-track')).not.toBeInTheDocument();
     expect(within(screen.getByRole('group', { name: 'Completed decks' })).getByText('3')).toBeVisible();
     expect(
       within(screen.getByRole('group', { name: 'Average flashcard deck finishes per day' })).getByText('1.5'),
@@ -77,8 +82,10 @@ describe('FlashcardsDashboardScreen', () => {
     ).toBeVisible();
     expect(screen.queryByText(/score/i)).not.toBeInTheDocument();
     expect(within(grid).queryByTestId('subject-score-track')).not.toBeInTheDocument();
+    fireEvent.click(within(continueRegion).getByRole('button', { name: 'Continue studying Anatomy' }));
+    expect(onSelectSubject).toHaveBeenCalledExactlyOnceWith(subject);
     fireEvent.click(within(grid).getByRole('button', { name: 'Open Anatomy' }));
-    expect(onSelectSubject).toHaveBeenCalledOnce();
+    expect(onSelectSubject).toHaveBeenCalledTimes(2);
   });
 
   it('does not present unreadable progress as zero statistics', () => {

@@ -303,7 +303,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByRole('combobox', { name: 'Topic' })).toHaveCount(0);
   await page.reload();
   await page.getByRole('button', { name: 'Flashcards' }).click();
-  await expect(page.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Continue Studying' })).toBeVisible();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Resume deck' }).click();
@@ -334,7 +334,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText('Completed 2 times')).toBeVisible();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'All subjects' }).click();
-  await expect(page.getByRole('heading', { name: 'Continue Studying' })).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Continue Studying' })).toBeVisible();
   await expect(page.getByText('Completed decks')).toBeVisible();
   await expect(page.getByText('Average count')).toBeVisible();
   await expect(page.getByText('Highest count')).toBeVisible();
