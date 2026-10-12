@@ -1,7 +1,6 @@
 import KeyboardArrowLeftRoundedIcon from '@mui/icons-material/KeyboardArrowLeftRounded';
 import { Box, ButtonBase } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { learnerDrawerEdgeToggleOffset } from './drawerDimensions';
 
 export interface DrawerEdgeToggleProps {
   expanded: boolean;
@@ -10,7 +9,6 @@ export interface DrawerEdgeToggleProps {
   controlsId: string;
   expandLabel?: string;
   collapseLabel?: string;
-  arrowOffset?: number;
 }
 
 export function DrawerEdgeToggle({
@@ -20,7 +18,6 @@ export function DrawerEdgeToggle({
   controlsId,
   expandLabel = 'Expand navigation',
   collapseLabel = 'Collapse navigation',
-  arrowOffset = learnerDrawerEdgeToggleOffset,
 }: DrawerEdgeToggleProps) {
   const theme = useTheme();
   const motion = theme.transitions.duration.short;
@@ -37,7 +34,7 @@ export function DrawerEdgeToggle({
         position: 'absolute',
         zIndex: 2,
         insetBlock: 0,
-      right: 0,
+        right: 0,
         width: 12,
         overflow: 'visible',
         cursor: disabled ? 'default' : 'pointer',
@@ -48,7 +45,7 @@ export function DrawerEdgeToggle({
           position: 'absolute',
           top: 0,
           bottom: 0,
-        right: 0,
+          right: 0,
           width: 2,
           bgcolor: 'primary.main',
           opacity: 0,
@@ -62,10 +59,17 @@ export function DrawerEdgeToggle({
           outlineOffset: 2,
           borderRadius: '50%',
         },
+        '& .drawer-edge-toggle-arrow': { opacity: 0 },
+        '&:hover .drawer-edge-toggle-arrow, &:focus-visible .drawer-edge-toggle-arrow, .drawer-surface:hover & .drawer-edge-toggle-arrow': {
+          opacity: 1,
+        },
         '&:disabled': { pointerEvents: 'none' },
         '@media (prefers-reduced-motion: reduce)': {
           '&::before': { transition: 'none' },
           '& .drawer-edge-toggle-arrow': { transition: 'none' },
+        },
+        '@media (hover: none)': {
+          '& .drawer-edge-toggle-arrow': { opacity: 1 },
         },
       }}
     >
@@ -74,8 +78,8 @@ export function DrawerEdgeToggle({
         aria-hidden="true"
         sx={{
           position: 'absolute',
-          top: `${arrowOffset}px`,
-        left: '100%',
+          top: '50%',
+          left: '100%',
           width: 28,
           height: 28,
           display: 'grid',
@@ -86,8 +90,9 @@ export function DrawerEdgeToggle({
           borderColor: '#eee5df',
           borderRadius: '50%',
           transform: `translate(-50%, -50%) rotate(${expanded ? 0 : 180}deg)`,
-          transition: `transform ${motion}ms ease`,
+          transition: `transform ${motion}ms ease, opacity ${motion}ms ease`,
           pointerEvents: 'none',
+          opacity: 0,
           '& svg': { fontSize: 19 },
         }}
       >

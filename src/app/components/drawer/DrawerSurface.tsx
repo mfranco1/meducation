@@ -11,7 +11,7 @@ export function DrawerSurface({
   separator?: ReactNode;
 }) {
   return (
-    <Box sx={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
+    <Box className="drawer-surface" sx={{ position: 'relative', width: '100%', height: '100%', overflow: 'visible' }}>
       <Box
         sx={{
           width: '100%',

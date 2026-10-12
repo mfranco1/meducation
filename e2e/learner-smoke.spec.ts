@@ -464,12 +464,25 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
   const edgeToggle = page.getByTestId('drawer-edge-toggle').first();
   const arrow = edgeToggle.locator('.drawer-edge-toggle-arrow');
+  const aside = page.getByLabel('Meducation navigation');
+  const assertArrowCentered = async () => {
+    const drawerBounds = (await aside.boundingBox())!;
+    const arrowBounds = (await arrow.boundingBox())!;
+    expect(arrowBounds.y + arrowBounds.height / 2).toBeCloseTo(drawerBounds.y + drawerBounds.height / 2);
+    expect(arrowBounds.x + arrowBounds.width / 2).toBeCloseTo(drawerBounds.x + drawerBounds.width);
+  };
   const orientation = async () =>
     arrow.evaluate((element) => {
       const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
       return { a: matrix.a, d: matrix.d };
     });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
+  await assertArrowCentered();
+  await expect.poll(() => arrow.evaluate((element) => getComputedStyle(element).opacity)).toBe('0');
+  await brand.hover();
+  await expect.poll(() => arrow.evaluate((element) => getComputedStyle(element).opacity)).toBe('1');
+  await page.mouse.move(900, 300);
+  await expect.poll(() => arrow.evaluate((element) => getComputedStyle(element).opacity)).toBe('0');
   await expect.poll(orientation).toEqual({ a: 1, d: 1 });
   const hoverEdge = async (y: number) => {
     const bounds = (await edgeToggle.boundingBox())!;
@@ -495,8 +508,8 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await edgeToggle.click({ position: { x: 6, y: 96 } });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
   await expect.poll(orientation).toEqual({ a: -1, d: -1 });
-  const aside = page.getByLabel('Meducation navigation');
   await expect.poll(async () => (await aside.boundingBox())?.width).toBe(64);
+  await assertArrowCentered();
   expect((await quizzesButton.boundingBox())!.y).toBe(quizzesTopExpanded);
   const collapsedSeparatorBounds = (await separator.boundingBox())!;
   expect(collapsedSeparatorBounds.y + collapsedSeparatorBounds.height / 2).toBeCloseTo(

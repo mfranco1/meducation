@@ -9,7 +9,7 @@ import { DrawerEdgeToggle } from './drawer/DrawerEdgeToggle';
 import { DrawerSurface } from './drawer/DrawerSurface';
 import {
   learnerDrawerCollapsedWidth,
-  learnerDrawerEdgeToggleOffset,
+  learnerDrawerBrandSeparatorOffset,
   learnerDrawerExpandedWidth,
 } from './drawer/drawerDimensions';
 
@@ -88,7 +88,7 @@ export function AppNavigationDrawer({
             aria-hidden="true"
             sx={{
               position: 'absolute',
-              top: `${learnerDrawerEdgeToggleOffset}px`,
+              top: `${learnerDrawerBrandSeparatorOffset}px`,
               left: compact ? 8 : 16,
               right: 20,
               height: '1px',
