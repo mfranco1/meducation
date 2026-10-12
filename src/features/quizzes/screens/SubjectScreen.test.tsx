@@ -32,11 +32,26 @@ function renderSubject(progress: Partial<QuizProgress>) {
 }
 
 describe('subject quiz action', () => {
+  it('shows the shared empty display only after quiz loading finishes and keeps back navigation available', () => {
+    const onBack = vi.fn();
+    const props = { subject, progress: [], onBack, onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
+    const { rerender } = render(<ThemeProvider theme={theme}><SubjectScreen {...props} loading /></ThemeProvider>);
+
+    expect(screen.queryByRole('heading', { name: 'No quizzes available yet' })).toBeNull();
+    rerender(<ThemeProvider theme={theme}><SubjectScreen {...props} /></ThemeProvider>);
+
+    expect(screen.getByRole('heading', { name: 'No quizzes available yet' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'All subjects' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
   it('keeps shimmer placeholders and exposes one full-width recovery banner after failure', () => {
     const onRetry = vi.fn();
     render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} progress={[]} error={new Error('raw backend detail')} recovery={{ failed: true, retrying: false, busy: false }} onRetry={onRetry} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
     expect(screen.getByRole('region', { name: 'Content recovery' })).toBeVisible();
     expect(screen.getByRole('alert')).toHaveTextContent(`We can’t load quizzes for ${subject.name} right now.`);
+    expect(screen.queryByRole('heading', { name: 'No quizzes available yet' })).toBeNull();
     expect(screen.queryByText('raw backend detail')).toBeNull();
     expect(document.querySelectorAll('.MuiSkeleton-root')).toHaveLength(4);
     expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);

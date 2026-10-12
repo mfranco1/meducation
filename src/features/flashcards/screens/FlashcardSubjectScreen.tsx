@@ -7,6 +7,7 @@ import { decksForSubject } from '../selectors/flashcards';
 import { SubjectBrowseLayout } from '../../../shared/ui/catalog/SubjectBrowseLayout';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
 import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
+import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
 
 export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completionCounts, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck }: {
   subject: Subject;
@@ -25,7 +26,7 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completi
     {error && <ContentRecoveryBanner title={`We can’t load flashcard decks for ${subject.name} right now.`} description="Your saved deck positions are safe. Please try again." error={error} onRetry={onRetry} />}
     <SubjectBrowseLayout subjectName={subject.name} onBack={onBack}>
       {error || loading ? <Stack spacing={2} role={loading ? 'status' : undefined} aria-busy={loading} aria-hidden={!loading} aria-label={loading ? 'Loading flashcard decks' : undefined}>{Array.from({ length: 4 }, (_, index) => <LoadingSkeleton key={index} variant="rounded" height={92} />)}</Stack>
-        : decks.length === 0 ? <Typography color="text.secondary">No flashcard decks are available in this subject yet.</Typography>
+        : decks.length === 0 ? <SubjectCatalogEmptyState title="No flashcard decks available yet" />
           : <Stack spacing={2}>{decks.map(deck => <FlashcardDeckRow key={deck.id} deck={deck} checkpoints={checkpoints} completionCount={completionCounts[deck.id] ?? 0} loading={loadingDeckId === deck.id} onSelect={() => onSelectDeck(deck)} />)}</Stack>}
     </SubjectBrowseLayout>
   </>;

@@ -16,6 +16,20 @@ const catalog: FlashcardCatalogResponse = {
 };
 
 describe('FlashcardSubjectScreen', () => {
+  it('shows the shared empty display after loading an empty catalog and keeps back navigation available', () => {
+    const onBack = vi.fn();
+    const props = { subject, checkpoints: {}, completionCounts: {}, onBack, onRetry: vi.fn(), onSelectDeck: vi.fn() };
+    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardSubjectScreen {...props} loading /></ThemeProvider>);
+
+    expect(screen.queryByRole('heading', { name: 'No flashcard decks available yet' })).toBeNull();
+    rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen {...props} catalog={{ ...catalog, decks: [] }} /></ThemeProvider>);
+
+    expect(screen.getByRole('heading', { name: 'No flashcard decks available yet' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'All subjects' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
+    expect(onBack).toHaveBeenCalledOnce();
+  });
+
   it('lists all subject decks directly and launches a selected non-empty deck', () => {
     const onSelectDeck = vi.fn();
     render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{}} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={onSelectDeck} /></ThemeProvider>);
@@ -41,6 +55,7 @@ describe('FlashcardSubjectScreen', () => {
     expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
     rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} completionCounts={{}} error={new Error('unavailable')} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('alert')).toHaveTextContent('We can’t load flashcard decks for Anatomy right now.');
+    expect(screen.queryByRole('heading', { name: 'No flashcard decks available yet' })).toBeNull();
     expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
     expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
   });
