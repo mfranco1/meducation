@@ -1,0 +1,125 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Isolated progress coordination probe</title>
+<script>
+// Synthetic storage only. This fixture does not load the learner application.
+const name = 'meducation.progress.coordination.v1';
+const key = { quiz: 'probe.quiz', cards: 'probe.cards', pending: 'probe.pending' };
+let state = 'gated';
+let held = false;
+let release;
+let request;
+let operationRelease;
+let operationRequest;
+let generation = 0;
+let recoveries = 0;
+const events = JSON.parse(sessionStorage.getItem('probe.events') || '[]');
+const log = (event, extra = {}) => {
+  events.push({ event, held, state, ...extra });
+  sessionStorage.setItem('probe.events', JSON.stringify(events));
+};
+const pair = () => [localStorage.getItem(key.quiz), localStorage.getItem(key.cards)];
+let snapshot;
+const join = async () => {
+  state = 'gated';
+  const token = ++generation;
+  let signal;
+  const acquired = new Promise(resolve => { signal = resolve; });
+  request = navigator.locks.request(name, { mode: 'shared' }, async () => {
+    held = true;
+    if (localStorage.getItem(key.pending)) {
+      held = false;
+      signal('pending');
+      return;
+    }
+    snapshot = pair();
+    state = 'ready';
+    const wait = new Promise(resolve => { release = resolve; });
+    signal('ready');
+    await wait;
+    if (generation === token) held = false;
+  });
+  request.catch(error => {
+    if (generation === token) { held = false; state = 'gated'; }
+    log('lock-error', { message: error.name });
+  });
+  const result = await acquired;
+  if (result === 'pending') await request;
+  return result;
+};
+const leave = async () => {
+  state = 'gated';
+  if (release) {
+    release();
+    release = undefined;
+    await request;
+  }
+  held = false;
+};
+const boot = async () => {
+  if (await join() === 'pending') {
+    // Marker consumption models recovery ownership, not a restore journal.
+    await navigator.locks.request(name, { signal: AbortSignal.timeout(5000) }, () => {
+      if (localStorage.getItem(key.pending)) {
+        recoveries++;
+        localStorage.setItem('probe.recoveries', String(Number(localStorage.getItem('probe.recoveries') || 0) + 1));
+        localStorage.removeItem(key.pending);
+      }
+    });
+    return boot();
+  }
+};
+const write = value => {
+  if (!held || state !== 'ready' || localStorage.getItem(key.pending)) throw new Error('Progress is gated');
+  localStorage.setItem(key.quiz, value);
+};
+const exclusive = async (wait = false) => {
+  await leave();
+  log('exclusive-attempt', { locks: await navigator.locks.query() });
+  let signal;
+  const acquired = new Promise(resolve => { signal = resolve; });
+  state = 'exclusive-pending';
+  operationRequest = navigator.locks.request(name, { ifAvailable: true }, async lock => {
+    if (!lock) { log('exclusive-denied'); signal(false); return; }
+    state = 'exclusive';
+    if (wait) {
+      const hold = new Promise(resolve => { operationRelease = resolve; });
+      signal(true);
+      await hold;
+    } else signal(true);
+  });
+  const result = await acquired;
+  if (!wait || !result) {
+    await operationRequest;
+    await boot();
+  }
+  return result;
+};
+const endExclusive = async () => {
+  operationRelease();
+  await operationRequest;
+  await boot();
+};
+// Pagehide checkpoint must happen synchronously before local participation release.
+addEventListener('pagehide', event => {
+  if (held && state === 'ready') {
+    write('paused-checkpoint');
+    log('checkpoint', { paused: true });
+  }
+  log('pagehide', { persisted: event.persisted });
+  state = 'gated';
+  if (release) { release(); release = undefined; }
+  held = false;
+});
+addEventListener('pageshow', event => {
+  log('pageshow', { persisted: event.persisted });
+  if (event.persisted) void boot();
+});
+window.probe = {
+  boot, leave, write, exclusive, endExclusive,
+  status: () => ({ state, held, snapshot, events, recoveries, visibility: document.visibilityState }),
+  lose: () => { held = false; state = 'gated'; },
+  unsupported: () => { state = 'unsupported'; held = false; },
+};
+void boot();
+</script>

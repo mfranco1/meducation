@@ -1,8 +1,8 @@
 # Progress backup and restore
 
-Status: partial decision — Step 2 backup format/user flow selected; coordination, recovery, limits and browser acceptance pending L0 steps 3–6. Date: 2026-10-12.
+Status: partial decision — Step 2 backup format/user flow selected; Step 3 coordination selected for L1 integration; recovery, limits and release browser acceptance pending L0 steps 4–6. Date: 2026-10-12.
 
-This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/ongoing/L0-local-contracts-plan.md). It does not yet select a coordination mechanism, restore journal, exact validation limits or browser support matrix. No runtime implementation exists; L1 implements accepted contracts after the remaining L0-A gates pass.
+This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/ongoing/L0-local-contracts-plan.md). It selects a coordination protocol based on isolated feasibility probes; restore journal, exact validation limits and final browser acceptance are still pending. No runtime implementation exists; L1 implements accepted contracts after the remaining L0-A gates pass.
 
 ## Scope and evidence method
 
@@ -243,3 +243,74 @@ Reviewed the selected fields against ProgressState, Attempt/CompletedAttempt, Fl
 Audited flow against App navigation and LeaveReviewDialog. Corrected the earlier ambiguous “close review after success” plan: review confirmation precedes opening the utility, while actual progress replacement still requires its own preview confirmation. Delayed launches must be canceled even on a currently non-editable subject view. Disabled-entry guidance must be accessible beyond hover. Error copy distinguishes safe rollback from recovery-required state.
 
 Step 2 chooses no Web Lock mechanism, journal implementation, byte limits, browser version or database/auth provider. Those remain unchecked in the plan. Verification: the illustrative JSON parses; source-interface field comparison confirms both payload allowlists exclude only their envelope revisions; record fields were checked against current domain definitions. Relative links and git diff --check passed. Build/typecheck passed with the existing non-blocking chunk-size advisory. Canonical hashes match Step 1 and no runtime code changed. Baseline runtime suites were not repeated for this documentation-only step; Step 1's 49 passing tests remain historical evidence, not tests of this future feature. Stop before Step 3 until the user continues.
+
+## Step 3 decision — Coordination protocol
+
+Selected on 2026-10-12: use a same-origin Web Lock named meducation.progress.coordination.v1. Each cooperating initialized learner document holds a shared participation lease while it can read/write progress. Paired backup capture, replacement and journal recovery require an exclusive lease. The protocol protects these paired operations from cooperating study tabs; it does not serialize ordinary shared-participant writes against one another or fix the existing simultaneous optimistic-write race.
+
+This is a design/prototype decision for L1, not a production implementation or an unconditional browser support claim. Step 6 and L1 integration retain their release gates, including Firefox and actual back/forward-cache restoration evidence.
+
+### Why this choice
+
+The synthetic probe demonstrates shared-tab admission and exclusive paired work without converting every save/checkpoint/pagehide into an asynchronous domain API. Ordinary persistence remains synchronous after admission. The expected user tradeoff is that another open app tab can block backup capture or restore until closed. Export capture must also be exclusive to get a coherent pair; holding only a shared lease does not stop a different tab changing one state between reads.
+
+Alternative asynchronous per-write locks would improve normal cross-tab serialization but require changing synchronous session contracts and resolving unreliable awaited saves during pagehide. A single authoritative combined progress key could simplify paired replacement but requires a new live storage migration and coordinated codec/subscription changes. Neither is justified by the observed feasibility of the narrower participation design. Do not introduce a distributed lock service or a fake localStorage compare-and-swap.
+
+### Admission and release rules
+
+1. Before any progress repository reads in rendering or any mutating callback, the app enters a progress-initialization gate and acquires shared participation. Constructors may remain side-effect-free, but hook subscriptions/reads cannot run through that gate. React StrictMode setup/cleanup must be idempotent and must not create multiple live leases for one document.
+2. With the shared lease held and no pending journal, hydrate both repositories, then admit the learner. Every commit rechecks its valid local lease/admission state and journal status. Losing participation gates further reads/writes; error or unsupported cases must not masquerade as an empty successful snapshot.
+3. To capture a backup or restore, block current-document study callbacks and cancel delayed launches, finish/reject current writes, gate its snapshot consumers, then release its own shared lease. Await callback completion before requesting exclusive access. Do not await exclusive access while holding this document's shared lease.
+4. Request exclusive access with ifAvailable. Null means other participation may still exist; no paired state is read as a coherent export or changed as a restore. Rejoin shared admission and show retry/close-tabs guidance. Closing a tab does not imply its lock has disappeared immediately; a harmless transient refusal is acceptable. Do not spin or force acquisition in production. Probe tests use bounded retry only to observe eventual browser cleanup.
+5. With an exclusive lease, capture the stable pair or run the later Step 4 journal protocol. Keep the lease across all verified paired-state operations and cleanup. The lock alone does not make localStorage writes crash-atomic; Step 4 remains necessary.
+6. After exclusive callback completion, reacquire shared participation, recheck journal/state and refresh both snapshots before enabling study. Restore must discard stale editing/review/result state. Do not leave a stale callback able to re-save pre-restore state.
+7. Shared or queued acquisition may wait behind a restoring/recovering document. Keep the gate visible, use an abortable bounded wait (initial implementation target five seconds) and offer explicit retry after timeout; never fall back to an uncoordinated write. Final browser messaging is Step 6 work.
+
+Implementation ownership: browser lock/storage globals and an injectable participation adapter belong in persistence. App owns the initialization/recovery gate and cross-feature launch cancellation. Existing quiz/flashcard commits, clear methods and pagehide checkpoints must all honor the same admission guard. A UI-only lock around Restore is insufficient.
+
+### Pending journal and simultaneous startup
+
+When an initializing document acquires shared participation and finds a pending journal, it must stay gated and immediately release that shared claim. It then requests exclusive recovery with a bounded abortable request. Multiple booting documents each release before queuing. Under exclusive access, the selected owner re-reads the marker: recover only if still pending; later queued owners see that work is already complete and do not replay it. Rejoin shared admission only after the chosen state pair is usable.
+
+There is one acquisition/retry path per boot attempt, not recurring polling. User-triggered retry after timeout is allowed. This ownership protocol was probed with a synthetic marker; actual journal contents, rollback and cleanup rules are Step 4 work.
+
+```mermaid
+stateDiagram-v2
+  [*] --> Gated
+  Gated --> SharedAdmission: acquire shared
+  SharedAdmission --> Ready: no pending journal
+  SharedAdmission --> GatedRecovery: pending journal, release shared
+  GatedRecovery --> ExclusiveRecovery: acquire exclusive, recheck marker
+  ExclusiveRecovery --> Gated: recovery resolved
+  Ready --> GatedOperation: block callbacks, release shared
+  GatedOperation --> ExclusiveOperation: exclusive available
+  GatedOperation --> Gated: unavailable, retry later
+  ExclusiveOperation --> Gated: paired work complete
+  Ready --> Gated: lease lost or page lifecycle exit
+```
+
+### Lifecycle behavior and safety limits
+
+Pagehide must checkpoint the quiz synchronously while its participation is still valid, then gate the page and release its shared lease. Do not introduce an awaited unload write. App integration must centralize or explicitly order this with the existing feature listener so teardown cannot release participation before the save. Flashcards retain their action checkpoints and do not gain an implicit completion/pagehide save.
+
+Every pageshow revalidates admission. A persisted back/forward-cache return must discard stale editable state and re-enter initialization; a controlled full reload before exposing study is the preferred simplest integration path. A page hidden or frozen without pagehide may retain participation and safely block an exclusive operation; do not expire or steal its lease because it appears inactive. A browser crash releases ownership; another tab may recover a remaining journal only under exclusivity. Lock loss/rejection invalidates local admission even if an old JavaScript promise remains alive.
+
+Legacy/nonparticipating same-origin scripts are not fenced by Web Locks. The probe demonstrates they can write during an exclusive operation. Restore copy must tell users to close all other app tabs, including old builds. Do not claim security against malicious same-origin JavaScript or against another browser's independent localStorage. Unsupported feature/capability behavior is finalized in Step 6; a feature name alone is not a successful participation token.
+
+The application never uses steal. The adversarial probe may use it only to force revocation and verify that the participant fails closed. Lock-manager query is diagnostic, not authority to ignore a null exclusive result or replace actual acquisition.
+
+### Reproducible feasibility evidence
+
+Retained probe: [runner](../../scripts/testing/probe-progress-coordination.mjs) and [synthetic fixture](../../tests/fixtures/progress-coordination/probe.html). Successful command: node scripts/testing/probe-progress-coordination.mjs chromium webkit. A loopback server uses an ephemeral port and newly created Playwright contexts; it never visits the real learner origin or reads personal browser storage. Its only keys are synthetic probe keys. The machine report is written under /private/tmp and copied to the [Step 3 evidence snapshot](../work/ongoing/L0-step3-coordination-evidence.json).
+
+Probes cover two shared documents, rejected exclusivity with safe rejoin, eventual exclusivity after other-document closure, new-reader gating, consistent paired capture, simultaneous boot recovery ownership, lost local permission, adversarial lock revocation, simulated unsupported state, synchronous pagehide checkpoint/reload/back navigation, synthetic persisted lifecycle and a legacy-script bypass demonstration. Chromium additionally covers renderer freezing and shared/exclusive owner crashes. Actual observed counts/versions are recorded in the evidence snapshot.
+
+Coverage limits: no actual BFCache restoration was observed in either automated engine even with Chromium's disabling flag removed; the persisted-event branch is synthetic evidence only. Firefox binaries installed but repeatedly failed before a page could open (“Could not find profile folder”), including a disposable explicit profile. That is a test-environment limitation, not evidence the protocol works or fails in Firefox. Real Firefox and real persisted-cache integration remain required before claiming those browser guarantees. Headless WebKit is not manual iOS Safari verification. The crash probe does not implement a real journal or simulate power loss at every storage syscall.
+
+### Step 3 self-review and audit
+
+The audit found and corrected an immediate-release assumption: ifAvailable may transiently reject just after a tab closes. The runner now tests eventual cleanup within a bounded interval while production remains single-attempt/user retry. A locks.query snapshot must not be treated as ownership; actual acquisition still decides success. The fixture's synthetic “unsupported” and “lost” states are labelled as guard tests, and an adversarial actual revocation adds stronger evidence.
+
+The probe initially ran with Chromium defaults that suppress back/forward caching; the final runner removes that flag and explicitly records whether actual cache restoration occurred. It did not occur, so no cache support claim is made. Firefox profile failures are preserved as a coverage gap instead of skipped tests being reported as passing. Source/global declarations are scoped to the retained probe, and no application repository, question content or learner UI is changed.
+
+Verification: 21 final isolated probes passed (12 Chromium 153.0.8010.12, 9 WebKit 26.6). Lint and checked architecture boundaries, formatting, build/typecheck, relative-link/evidence assertions and git diff --check passed. The existing Vite chunk-size advisory remains. Canonical content hashes match Step 1. The report records Firefox/profile and actual-BFCache limitations; neither is counted as a passed test. No production progress coordination or real journal was implemented. Step 3 is complete as the scoped design/feasibility step; browser/application release acceptance remains pending Step 6/L1. Stop before Step 4 until the user continues.

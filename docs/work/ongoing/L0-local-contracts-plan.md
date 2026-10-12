@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: in progress; Steps 1–2 complete, coordination/recovery/validation/browser decisions pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
+Status: in progress; Steps 1–3 design/prototype complete; recovery/validation/browser release decisions pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 
@@ -36,19 +36,19 @@ Output recorded: envelope field allowlists, replacement/empty semantics, screen 
 
 Preferred candidate: preserve synchronous ordinary writes using a shared Web Lock participation lease for each initialized learner tab. Restore/recovery takes the exclusive lock only when other cooperating tabs are closed/quiescent. This trades seamless multi-tab restore for smaller repository/session changes. It is not a generic distributed locking system.
 
-- [ ] Prototype the protocol against two browser pages with temporary fixture storage. Every current-version learner must acquire a shared same-origin lease before reading/mutating progress. Keep the lease while the page can write; each repository commit checks its valid participation state. Module-scope repository creation must not bypass the boot gate.
-- [ ] The restoring tab first blocks its own study/writes, releases its shared lease, then requests the exclusive lock with ifAvailable. If unavailable, do not mutate or force a lock; reacquire shared participation and tell the user to close other tabs and retry. A new tab waits behind an active exclusive restore before exposing snapshots.
-- [ ] A tab finding a pending journal during initialization must remain gated and release any shared lease before competing for recovery exclusivity; otherwise waiting readers can deadlock recovery. Specify one retry/notification path so simultaneous booting tabs converge without spinning.
-- [ ] Keep the exclusive lock across journal writes, recovery, verification and cleanup. Return to normal operation only after both repositories are coherent and shared participation is re-established.
-- [ ] Verify that pending lock acquisition and release cannot deadlock. Never request an exclusive lock while retaining this tab's shared lease; never use steal or a localStorage lock with an assumed atomic compare-and-swap.
-- [ ] Explicitly exercise pagehide, pageshow/back-forward cache, tab close, reload, hidden/frozen pages and crashed owner. A hidden tab may block restore; that is a safe reason to ask it to close. An unexpectedly lost lease must block further writes until reacquired. A pagehide save may run only while its lease is valid; do not release participation before that checkpoint.
-- [ ] Verify existing synchronous pagehide timer-pause semantics. The lease lifecycle must not introduce unawaited asynchronous writes at unload.
-- [ ] Document current-version guarantees and the unavoidable old-build limitation: old pages do not cooperate. Tell the user to close all other app tabs before restore; never claim the new implementation can fence legacy scripts.
-- [ ] If this candidate fails browser/lifecycle verification, evaluate asynchronous locks around every commit or a single authoritative progress envelope as alternatives. Record migration/call-site costs and revise L1 before adopting either. No ad hoc partial lock protocol is acceptable.
+- [x] Prototype the protocol against two browser pages with temporary fixture storage. Every current-version learner must acquire a shared same-origin lease before reading/mutating progress. Keep the lease while the page can write; each repository commit checks its valid participation state. Module-scope repository creation must not bypass the boot gate.
+- [x] The restoring tab first blocks its own study/writes, releases its shared lease, then requests the exclusive lock with ifAvailable. If unavailable, do not mutate or force a lock; reacquire shared participation and tell the user to close other tabs and retry. A new tab waits behind an active exclusive restore before exposing snapshots.
+- [x] A tab finding a pending journal during initialization must remain gated and release any shared lease before competing for recovery exclusivity; otherwise waiting readers can deadlock recovery. Specify one retry/notification path so simultaneous booting tabs converge without spinning.
+- [x] Keep the exclusive lock across journal writes, recovery, verification and cleanup. Return to normal operation only after both repositories are coherent and shared participation is re-established.
+- [x] Verify that pending lock acquisition and release cannot deadlock. Never request an exclusive lock while retaining this tab's shared lease; never use steal or a localStorage lock with an assumed atomic compare-and-swap.
+- [x] Explicitly exercise pagehide, pageshow/back-forward cache, tab close, reload, hidden/frozen pages and crashed owner. A hidden tab may block restore; that is a safe reason to ask it to close. An unexpectedly lost lease must block further writes until reacquired. A pagehide save may run only while its lease is valid; do not release participation before that checkpoint.
+- [x] Verify existing synchronous pagehide timer-pause semantics. The lease lifecycle must not introduce unawaited asynchronous writes at unload.
+- [x] Document current-version guarantees and the unavoidable old-build limitation: old pages do not cooperate. Tell the user to close all other app tabs before restore; never claim the new implementation can fence legacy scripts.
+- [x] If this candidate fails browser/lifecycle verification, evaluate asynchronous locks around every commit or a single authoritative progress envelope as alternatives. Record migration/call-site costs and revise L1 before adopting either. No ad hoc partial lock protocol is acceptable.
 
 Browser API facts: Web Locks provide same-origin asynchronous shared/exclusive coordination and require a secure context. Use feature detection; verify target engines rather than assuming a browser name guarantees behavior. See [Web Locks API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Locks_API).
 
-Output: approved-by-evidence protocol/state diagram, lock name/version, participating call sites, compatibility behavior and passing prototype observations. Ordinary domain rules stay framework-free.
+Output recorded: selected protocol/state diagram, lock name/version, participating call sites, boundaries and measured observations in the [ADR](../../decisions/0002-progress-backup-and-restore.md). Chromium/WebKit feasibility is demonstrated; Firefox launch and real BFCache observations remain explicit Step 6/L1 release gates, not passing claims. Ordinary domain rules stay framework-free.
 
 ## Step 4 — Specify transactional restore and crash recovery
 
@@ -125,3 +125,5 @@ Planning verification: relative links resolve; repository build/typecheck passed
 2026-10-12 — Step 1 completed: current source contracts, storage fields/defaults, complete runtime write inventory and limitations recorded in the populated progress-backup ADR. Self-review/audit completed, including correction of the L1 text-free-backup claim: current active quiz signatures embed content. Seven existing suites/49 tests and build/typecheck passed; source/link assertions and diff check passed; canonical hashes unchanged. No runtime implementation or real browser-data access. Stop here; Step 2 requires the user's continuation instruction.
 
 2026-10-12 — Step 2 complete and self-audited: v1 paired backup, paused attempts, preserved content references, replace-only confirmation, review/launch gating and explicit failure/recovery states. JSON/source-interface field audit, link/diff checks and build/typecheck passed; existing chunk-size advisory remains. Canonical hashes unchanged; documentation only. Stop before Step 3 pending the user's continuation instruction.
+
+2026-10-12 — Step 3 design/prototype complete and audited: shared participation, exclusive paired capture/restore/recovery, valid-lease write guards and lifecycle gating. Retained isolated probe/evidence: 21 passed across Chromium/WebKit. Lint/architecture, formatting, build/typecheck and link/diff/hash checks passed; existing chunk-size advisory remains. Firefox profile launch and actual BFCache restoration remain unverified Step 6/L1 release obligations, not passing claims. No production progress feature implemented. Stop before Step 4 pending user continuation.

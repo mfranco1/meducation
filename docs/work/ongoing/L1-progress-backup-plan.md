@@ -6,7 +6,7 @@ Status: planned; implementation not started. Created 2026-10-12. Parent: [local-
 
 A learner can download one JSON file containing both quiz and flashcard progress, select it later, review its contents, and explicitly replace local progress. Failed or interrupted restores preserve a recoverable state. No content/backend/authentication dependency is introduced.
 
-Use the existing two v2 storage contracts with a separate versioned backup format. The preferred L0 candidate is shared tab participation with an exclusive restore/recovery lease, preserving normal synchronous repository writes. If L0 selects a different protocol, update steps 3–5 before implementation; do not improvise it during UI work.
+Use the existing two v2 storage contracts with a separate versioned backup format. L0 Step 3 selects shared document participation with exclusive paired export/restore/recovery, preserving synchronous ordinary writes. L1 must integrate the admission guards, lifecycle ordering and bounded retry behavior from the ADR; browser acceptance remains gated by L0 Step 6 and actual application tests. Do not treat the synthetic probe as completed production coordination.
 
 ## Proposed module ownership
 
@@ -56,11 +56,11 @@ Acceptance: own-format round-trip; all invalid fixtures yield safe errors and ze
 
 ## Step 3 — Add progress participation and recovery gating
 
-- [ ] Implement the L0-selected browser coordination adapter with dependency injection. For the preferred shared-lease protocol, acquire participation before repository reads and check lease validity before every write.
+- [ ] Implement the L0-selected browser coordination adapter with dependency injection. For the selected shared-lease protocol, acquire participation before repository reads and check lease validity before every write.
 - [ ] Add an initialization/recovery state above study UI in app composition. Module-level repository creation must not read through the gate; lazy content loading can remain independent.
 - [ ] Guard both repositories against pending restore/recovery and invalid participation. Never refresh one displayed snapshot from an intermediate two-key write. Preserve existing frozen-snapshot behavior once ready.
 - [ ] Add explicit local invalidation/subscriber refresh after a committed pair; storage events alone do not notify the writing tab. Deduplicate recovery/initialization across both repositories.
-- [ ] Implement browser lifecycle handlers as selected by L0: retain participation through synchronous pagehide save; revalidate on pageshow; block writes after lost participation. No uncoordinated fallback writes during restore.
+- [ ] Implement browser lifecycle handlers as selected by L0: retain participation through synchronous pagehide save; revalidate on pageshow (persisted returns must discard stale sessions and re-enter boot, preferably via controlled reload); block writes after lost participation. No uncoordinated fallback writes during restore.
 - [ ] Preserve current study behavior on unsupported browsers where possible, but disable unsafe restore. Test capability-unavailable copy and no-write behavior.
 
 Acceptance: existing repository/session tests pass with the coordinator injected. A second initialized page cannot write during exclusive restore, and a fresh page cannot observe half-restored progress. Suspended/legacy-tab limitations match documented guarantees.
@@ -68,7 +68,7 @@ Acceptance: existing repository/session tests pass with the coordinator injected
 ## Step 4 — Implement safe export and preview
 
 - [ ] Refuse normal export if either repository reports corruption/unavailable storage. Missing keys normalize to valid empty progress; corruption never becomes an empty successful export.
-- [ ] Capture a consistent pair under the L0 protocol. Normalize backup active timers to paused values; never add time between export and import. Include all durable summary fields and signatures.
+- [ ] Acquire exclusive paired-capture access after gating this document and releasing its shared lease; if other tabs block it, capture nothing and offer close-tabs/retry guidance. This is read-only and does not journal. Capture a consistent pair under the L0 protocol. Normalize backup active timers to paused values; never add time between export and import. Include all durable summary fields and signatures.
 - [ ] Serialize and revalidate, enforce the export cap, then provide filename meducation-progress-YYYY-MM-DD.json using a sanitized generated date. Create/revoke Blob URLs; do not promise that a browser download proves an off-device backup exists.
 - [ ] On selected-file validation, produce counts for retained completed attempts, saved quizzes, saved flashcard decks and total recorded completions. Label totals distinctly; do not confuse saved checkpoints with completions.
 - [ ] Capture exact current raw base values/revisions alongside the immutable preview. New local changes invalidate the preview; never silently update the replacement target while confirmation remains open.
