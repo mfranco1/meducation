@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import { Box, ButtonBase, Drawer, Tooltip, useMediaQuery } from '@mui/material';
@@ -28,10 +28,15 @@ export function AppNavigationDrawer({
 }) {
   const theme = useTheme();
   const desktop = useMediaQuery(theme.breakpoints.up('md'));
-  const [expanded, setExpanded] = useState(desktop);
-  useEffect(() => {
-    setExpanded(desktop);
-  }, [desktop]);
+  const [expansion, setExpansion] = useState({ desktop, expanded: desktop });
+  // Reset before committing a new breakpoint. An effect reset briefly mounts an
+  // open mobile modal with the desktop expansion state and hides the app from
+  // assistive technology while that unintended modal closes.
+  if (expansion.desktop !== desktop) {
+    setExpansion({ desktop, expanded: desktop });
+  }
+  const expanded = expansion.desktop === desktop ? expansion.expanded : desktop;
+  const setExpanded = (value: boolean) => setExpansion({ desktop, expanded: value });
 
   const select = (section: LearnerSection) => {
     if (disabled) return;
@@ -103,7 +108,7 @@ export function AppNavigationDrawer({
         edgeToggle={
           <DrawerEdgeToggle
             expanded={overlay || (desktop && expanded)}
-            onToggle={() => setExpanded((value) => !value)}
+            onToggle={() => setExpanded(!expanded)}
             disabled={disabled}
             controlsId={contentId}
           />

@@ -45,13 +45,13 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.getByRole('button', { name: 'Flashcards' }).click();
   const flashcardCards = [
-    page.locator('[role="group"]').filter({ hasText: 'Completed decks' }),
-    page.locator('[role="group"]').filter({ hasText: 'Average count' }),
-    page.locator('[role="group"]').filter({ hasText: 'Highest count' }),
+    page.getByRole('group', { name: 'Completed', exact: true }),
+    page.getByRole('group', { name: 'Average flashcard deck finishes per day' }),
+    page.getByRole('group', { name: 'Highest flashcard deck finishes in a day' }),
   ];
-  await expect(flashcardCards[0]).toContainText('deck finishes');
-  await expect(flashcardCards[1]).toContainText('deck finishes / day');
-  await expect(flashcardCards[2]).toContainText('deck finishes in a day');
+  await expect(flashcardCards[0]).toContainText('decks');
+  await expect(flashcardCards[1]).toContainText('decks / day');
+  await expect(flashcardCards[2]).toContainText('decks finished in a day');
   const flashcardCardStyles = await flashcardCards[0]!.evaluate((card) => ({
     radius: getComputedStyle(card).borderRadius,
     backgroundImage: getComputedStyle(card).backgroundImage,
@@ -335,10 +335,12 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'All subjects' }).click();
   await expect(page.getByRole('region', { name: 'Continue Studying' })).toBeVisible();
-  await expect(page.getByText('Completed decks')).toBeVisible();
-  await expect(page.getByText('Average count')).toBeVisible();
-  await expect(page.getByText('Highest count')).toBeVisible();
-  await expect(page.getByRole('group', { name: 'Completed decks' }).getByText('2', { exact: true })).toBeVisible();
+  await expect(page.getByText('Completed', { exact: true })).toBeVisible();
+  await expect(page.getByText('Average', { exact: true })).toBeVisible();
+  await expect(page.getByText('Highest', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('group', { name: 'Completed', exact: true }).getByText('2', { exact: true }),
+  ).toBeVisible();
   await expect(
     page.getByRole('group', { name: 'Average flashcard deck finishes per day' }).getByText('2', { exact: true }),
   ).toBeVisible();
@@ -380,6 +382,8 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(secondParagraph).toBeVisible();
+  await expect(page.locator('#root')).not.toHaveAttribute('aria-hidden', 'true');
+  await expect(page.locator('.MuiDrawer-modal')).not.toBeVisible();
   const mobileParagraphPositions = await page
     .locator('h5')
     .evaluateAll((headings) =>
