@@ -1,8 +1,7 @@
-import { Box, Chip, Stack, Typography } from '@mui/material';
+import { Chip, Stack, Typography } from '@mui/material';
 import type { Subject } from '../../../domain/types';
 import type { FlashcardDashboardSubject } from '../selectors/flashcards';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
-import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
 import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardLayout';
 import { StudyItemCarousel } from '../../../shared/ui/catalog/StudyItemCarousel';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
@@ -10,12 +9,14 @@ import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StatCard } from '../../../shared/ui/catalog/StatCard';
 import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
 import { useFlashcardDashboardStats } from '../session/useFlashcardDashboardStats';
+import { SubjectActivityLabel } from '../../../shared/ui/catalog/SubjectActivityLabel';
+import { SubjectCardSkeleton } from '../../../shared/ui/catalog/SubjectCardSkeleton';
 
 function SubjectPlaceholders() {
   return (
     <SubjectGrid>
       {Array.from({ length: 6 }, (_, index) => (
-        <LoadingSkeleton key={index} variant="rounded" height={112} />
+        <SubjectCardSkeleton key={index} />
       ))}
     </SubjectGrid>
   );
@@ -41,7 +42,7 @@ export function FlashcardsDashboardScreen({
   onSelectSubject: (subject: Subject) => void;
 }) {
   const stats = useFlashcardDashboardStats(progress);
-  const metric = (value: string | number) => progressError ? '—' : value;
+  const metric = (value: string | number) => (progressError ? '—' : value);
   return (
     <>
       {error && (
@@ -53,11 +54,13 @@ export function FlashcardsDashboardScreen({
         />
       )}
       <StudyDashboardLayout
-        summary={<Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
-          <StatCard label="Completed decks" value={metric(stats.completedDecks)} />
-          <StatCard label="Average count" value={metric(stats.averagePerDay.toFixed(1))} />
-          <StatCard label="Highest count" value={metric(stats.highestInDay)} />
-        </Stack>}
+        summary={
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
+            <StatCard label="Completed decks" value={metric(stats.completedDecks)} />
+            <StatCard label="Average count" value={metric(stats.averagePerDay.toFixed(1))} />
+            <StatCard label="Highest count" value={metric(stats.highestInDay)} />
+          </Stack>
+        }
         continueStudying={
           !loading && !error ? (
             <StudyItemCarousel
@@ -88,16 +91,13 @@ export function FlashcardsDashboardScreen({
         ) : (
           <SubjectGrid>
             {subjects.map((item) => (
-              <SubjectCard key={item.subject.id} subject={item.subject} onSelect={onSelectSubject}>
-                {item.activeDeckCount > 0 && (
-                  <Box sx={{ mt: 1.25 }}>
-                    <Chip
-                      label={`${item.activeDeckCount} in progress`}
-                      size="small"
-                      sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 700 }}
-                    />
-                  </Box>
-                )}
+              <SubjectCard
+                key={item.subject.id}
+                subject={item.subject}
+                onSelect={onSelectSubject}
+                appearance="dashboardGrid"
+              >
+                <SubjectActivityLabel count={item.activeDeckCount} />
               </SubjectCard>
             ))}
           </SubjectGrid>

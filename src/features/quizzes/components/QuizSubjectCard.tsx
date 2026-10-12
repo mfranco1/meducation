@@ -2,14 +2,46 @@ import { Chip, Stack, Typography } from '@mui/material';
 import type { SubjectStat } from '../selectors/progress';
 import { ScoreTrendIndicator } from './ScoreTrendIndicator';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
+import { SubjectActivityLabel } from '../../../shared/ui/catalog/SubjectActivityLabel';
+import { SubjectScoreSummary } from './SubjectScoreSummary';
 
-export function QuizSubjectCard({ stat, onSelect }: { stat: SubjectStat; onSelect: (subject: SubjectStat['subject']) => void }) {
+export function QuizSubjectCard({
+  stat,
+  onSelect,
+  appearance = 'standard',
+}: {
+  stat: SubjectStat;
+  onSelect: (subject: SubjectStat['subject']) => void;
+  appearance?: 'standard' | 'dashboardGrid';
+}) {
   const { subject, activeQuizCount, latest, trend } = stat;
-  return <SubjectCard subject={subject} onSelect={onSelect}>
-    {activeQuizCount > 0 && <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}><Chip label={`${activeQuizCount} in progress`} size="small" sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 700 }} /></Stack>}
-    {latest !== undefined && <Stack alignItems="center" direction="row" spacing={0.75} sx={{ mt: 2 }}>
-      <Typography variant="body2" sx={{ color: 'primary.dark', fontWeight: 700 }}>Latest Score {latest}%</Typography>
-      {trend && <ScoreTrendIndicator trend={trend} />}
-    </Stack>}
-  </SubjectCard>;
+  if (appearance === 'dashboardGrid') {
+    return (
+      <SubjectCard subject={subject} onSelect={onSelect} appearance="dashboardGrid">
+        <SubjectScoreSummary score={latest} trend={trend} />
+        <SubjectActivityLabel count={activeQuizCount} />
+      </SubjectCard>
+    );
+  }
+  return (
+    <SubjectCard subject={subject} onSelect={onSelect}>
+      {activeQuizCount > 0 && (
+        <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
+          <Chip
+            label={`${activeQuizCount} in progress`}
+            size="small"
+            sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 700 }}
+          />
+        </Stack>
+      )}
+      {latest !== undefined && (
+        <Stack alignItems="center" direction="row" spacing={0.75} sx={{ mt: 2 }}>
+          <Typography variant="body2" sx={{ color: 'primary.dark', fontWeight: 700 }}>
+            Latest Score {latest}%
+          </Typography>
+          {trend && <ScoreTrendIndicator trend={trend} />}
+        </Stack>
+      )}
+    </SubjectCard>
+  );
 }
