@@ -1,4 +1,7 @@
 import { Box, Chip, Stack } from '@mui/material';
+import StyleOutlinedIcon from '@mui/icons-material/StyleOutlined';
+import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
+import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import { useEffect, useRef, useState } from 'react';
 import type { Subject } from '../../../domain/types';
 import type { FlashcardDashboardSubject } from '../selectors/flashcards';
@@ -8,6 +11,7 @@ import { StudyItemCarousel } from '../../../shared/ui/catalog/StudyItemCarousel'
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
 import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StatCard } from '../../../shared/ui/catalog/StatCard';
+import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
 import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
 import { useFlashcardDashboardStats } from '../session/useFlashcardDashboardStats';
 import { SubjectActivityLabel } from '../../../shared/ui/catalog/SubjectActivityLabel';
@@ -23,6 +27,12 @@ type CatalogPageChange = {
   resetKey: string;
   direction: 'next' | 'previous';
 };
+
+const averageFormatter = new Intl.NumberFormat('en-US', {
+  minimumFractionDigits: 0,
+  maximumFractionDigits: 1,
+  useGrouping: false,
+});
 
 function SubjectPlaceholders() {
   return (
@@ -96,11 +106,28 @@ export function FlashcardsDashboardScreen({
           />
         }
         summary={
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 5 }}>
-            <StatCard label="Completed decks" value={metric(stats.completedDecks)} />
-            <StatCard label="Average count" value={metric(stats.averagePerDay.toFixed(1))} />
-            <StatCard label="Highest count" value={metric(stats.highestInDay)} />
-          </Stack>
+          <StatCardRow>
+            <StatCard
+              label="Completed decks"
+              icon={<StyleOutlinedIcon aria-hidden="true" focusable="false" />}
+              value={metric(stats.completedDecks)}
+              supportingText="deck finishes"
+            />
+            <StatCard
+              label="Average count"
+              accessibleLabel="Average flashcard deck finishes per day"
+              icon={<BarChartOutlinedIcon aria-hidden="true" focusable="false" />}
+              value={metric(averageFormatter.format(stats.averagePerDay))}
+              supportingText="deck finishes / day"
+            />
+            <StatCard
+              label="Highest count"
+              accessibleLabel="Highest flashcard deck finishes in a day"
+              icon={<EmojiEventsOutlinedIcon aria-hidden="true" focusable="false" />}
+              value={metric(stats.highestInDay)}
+              supportingText="deck finishes in a day"
+            />
+          </StatCardRow>
         }
         continueStudying={
           !loading && !error ? (

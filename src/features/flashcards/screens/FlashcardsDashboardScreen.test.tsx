@@ -27,7 +27,12 @@ describe('FlashcardsDashboardScreen', () => {
     expect(screen.getByText('Highest count')).toBeVisible();
     expect(screen.queryByText('All recorded finishes')).not.toBeInTheDocument();
     expect(screen.queryByText(/decks\/day|since tracking began|one local day/)).not.toBeInTheDocument();
-    expect(screen.getAllByText('0.0')).toHaveLength(1);
+    expect(
+      within(screen.getByRole('group', { name: 'Average flashcard deck finishes per day' })).getByText('0'),
+    ).toBeVisible();
+    expect(screen.getByText('deck finishes')).toBeVisible();
+    expect(screen.getByText('deck finishes / day')).toBeVisible();
+    expect(screen.getByText('deck finishes in a day')).toBeVisible();
   });
 
   it('shows a continue carousel and all-subject grid without score metadata', () => {
@@ -63,9 +68,13 @@ describe('FlashcardsDashboardScreen', () => {
     const grid = screen.getByTestId('all-subjects-grid');
     expect(within(grid).getByText('1 in progress')).toBeVisible();
     expect(screen.getAllByText('1 in progress')).toHaveLength(2);
-    expect(screen.getByText('3')).toBeVisible();
-    expect(screen.getByText('1.5')).toBeVisible();
-    expect(screen.getByText('2')).toBeVisible();
+    expect(within(screen.getByRole('group', { name: 'Completed decks' })).getByText('3')).toBeVisible();
+    expect(
+      within(screen.getByRole('group', { name: 'Average flashcard deck finishes per day' })).getByText('1.5'),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole('group', { name: 'Highest flashcard deck finishes in a day' })).getByText('2'),
+    ).toBeVisible();
     expect(screen.queryByText(/score/i)).not.toBeInTheDocument();
     expect(within(grid).queryByTestId('subject-score-track')).not.toBeInTheDocument();
     fireEvent.click(within(grid).getByRole('button', { name: 'Open Anatomy' }));
@@ -92,6 +101,40 @@ describe('FlashcardsDashboardScreen', () => {
         name: 'In progress',
       }),
     ).toBeDisabled();
+  });
+
+  it.each([
+    [26, 25, '1'],
+    [53, 50, '1.1'],
+    [2, 1, '2'],
+  ])('formats average %i/%i without unnecessary decimal digits', (trackedCompletions, elapsedDays, expected) => {
+    const today = new Date();
+    const firstDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - elapsedDays + 1);
+    const dayKey = (date: Date) =>
+      `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardsDashboardScreen
+          subjects={[]}
+          activeSubjects={[]}
+          progress={{
+            ...emptyProgress,
+            dailyStats: {
+              firstDay: dayKey(firstDay),
+              currentDay: dayKey(today),
+              currentDayCount: 1,
+              trackedCompletions,
+              highestDailyCount: 1,
+            },
+          }}
+          onRetry={vi.fn()}
+          onSelectSubject={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    expect(
+      within(screen.getByRole('group', { name: 'Average flashcard deck finishes per day' })).getByText(expected),
+    ).toBeVisible();
   });
 
   it('filters the All Subjects grid to in-progress subjects', () => {

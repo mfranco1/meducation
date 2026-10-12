@@ -1,5 +1,90 @@
 import { expect, test, type Locator } from '@playwright/test';
 
+test('dashboard stat cards stay readable across desktop and narrow layouts', async ({ page }, testInfo) => {
+  await page.goto('/');
+  const quizCards = [
+    page.locator('[role="group"]').filter({ hasText: 'Completed' }),
+    page.locator('[role="group"]').filter({ hasText: 'Average' }),
+    page.locator('[role="group"]').filter({ hasText: 'Lowest' }),
+  ];
+  await expect(quizCards[0]).toContainText('quizzes');
+  await expect(quizCards[1]).toContainText('correct');
+  const quizCardStyles = await quizCards[0]!.evaluate((card) => ({
+    radius: getComputedStyle(card).borderRadius,
+    backgroundImage: getComputedStyle(card).backgroundImage,
+    backgroundColor: getComputedStyle(card).backgroundColor,
+  }));
+  expect(quizCardStyles.radius).toBe('14px');
+  expect(quizCardStyles.backgroundImage).toBe('none');
+  expect(quizCardStyles.backgroundColor).not.toBe('rgb(255, 253, 251)');
+
+  for (const width of [1280, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    const bounds = await Promise.all(quizCards.map((card) => card.boundingBox()));
+    expect(bounds.every(Boolean)).toBe(true);
+    if (width >= 600) {
+      expect(bounds[0]!.y).toBeCloseTo(bounds[1]!.y, 0);
+      expect(bounds[1]!.y).toBeCloseTo(bounds[2]!.y, 0);
+      expect(Math.abs(bounds[0]!.width - bounds[2]!.width)).toBeLessThan(2);
+    } else {
+      expect(bounds[1]!.y).toBeGreaterThan(bounds[0]!.y);
+      expect(bounds[2]!.y).toBeGreaterThan(bounds[1]!.y);
+    }
+  }
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const quizDesktop = testInfo.outputPath('quiz-dashboard-stat-cards.png');
+  await page.screenshot({ path: quizDesktop });
+  await testInfo.attach('quiz-dashboard-stat-cards.png', { path: quizDesktop, contentType: 'image/png' });
+  await page.setViewportSize({ width: 390, height: 800 });
+  const quizMobile = testInfo.outputPath('quiz-dashboard-stat-cards-mobile.png');
+  await page.screenshot({ path: quizMobile });
+  await testInfo.attach('quiz-dashboard-stat-cards-mobile.png', { path: quizMobile, contentType: 'image/png' });
+
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.getByRole('button', { name: 'Flashcards' }).click();
+  const flashcardCards = [
+    page.locator('[role="group"]').filter({ hasText: 'Completed decks' }),
+    page.locator('[role="group"]').filter({ hasText: 'Average count' }),
+    page.locator('[role="group"]').filter({ hasText: 'Highest count' }),
+  ];
+  await expect(flashcardCards[0]).toContainText('deck finishes');
+  await expect(flashcardCards[1]).toContainText('deck finishes / day');
+  await expect(flashcardCards[2]).toContainText('deck finishes in a day');
+  const flashcardCardStyles = await flashcardCards[0]!.evaluate((card) => ({
+    radius: getComputedStyle(card).borderRadius,
+    backgroundImage: getComputedStyle(card).backgroundImage,
+    backgroundColor: getComputedStyle(card).backgroundColor,
+  }));
+  expect(flashcardCardStyles).toEqual(quizCardStyles);
+  for (const width of [1280, 768, 390, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+    const bounds = await Promise.all(flashcardCards.map((card) => card.boundingBox()));
+    expect(bounds.every(Boolean)).toBe(true);
+    if (width >= 600) {
+      expect(bounds[0]!.y).toBeCloseTo(bounds[1]!.y, 0);
+      expect(bounds[1]!.y).toBeCloseTo(bounds[2]!.y, 0);
+      expect(Math.abs(bounds[0]!.width - bounds[2]!.width)).toBeLessThan(2);
+    } else {
+      expect(bounds[1]!.y).toBeGreaterThan(bounds[0]!.y);
+      expect(bounds[2]!.y).toBeGreaterThan(bounds[1]!.y);
+    }
+  }
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const flashcardDesktop = testInfo.outputPath('flashcard-dashboard-stat-cards.png');
+  await page.screenshot({ path: flashcardDesktop });
+  await testInfo.attach('flashcard-dashboard-stat-cards.png', { path: flashcardDesktop, contentType: 'image/png' });
+  await page.setViewportSize({ width: 390, height: 800 });
+  const flashcardMobile = testInfo.outputPath('flashcard-dashboard-stat-cards-mobile.png');
+  await page.screenshot({ path: flashcardMobile });
+  await testInfo.attach('flashcard-dashboard-stat-cards-mobile.png', {
+    path: flashcardMobile,
+    contentType: 'image/png',
+  });
+});
+
 async function expectEvenFlashcardOutline(decoration: Locator, inset: number) {
   // Sample the actual browser paths, including every corner: this catches
   // incorrectly positioned circles even when their declared radii look right.
@@ -253,10 +338,13 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText('Completed decks')).toBeVisible();
   await expect(page.getByText('Average count')).toBeVisible();
   await expect(page.getByText('Highest count')).toBeVisible();
-  const dashboardStats = page.locator('.MuiCard-root');
-  await expect(dashboardStats.filter({ hasText: 'Completed decks' }).getByText('2', { exact: true })).toBeVisible();
-  await expect(dashboardStats.filter({ hasText: 'Average count' }).getByText('2.0', { exact: true })).toBeVisible();
-  await expect(dashboardStats.filter({ hasText: 'Highest count' }).getByText('2', { exact: true })).toBeVisible();
+  await expect(page.getByRole('group', { name: 'Completed decks' }).getByText('2', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('group', { name: 'Average flashcard deck finishes per day' }).getByText('2', { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole('group', { name: 'Highest flashcard deck finishes in a day' }).getByText('2', { exact: true }),
+  ).toBeVisible();
   await expect(page.getByText(/score|completed quizzes/i)).toHaveCount(0);
 });
 

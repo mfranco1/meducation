@@ -1,5 +1,5 @@
 import { ThemeProvider } from '@mui/material';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { CompletedAttempt } from '../domain/types';
 import { LocalAttemptRepository } from '../persistence/localRepository';
@@ -14,7 +14,9 @@ function completed(quizId: string, subjectId: string, percentage: number): Compl
     quizId,
     subjectId,
     feedbackMode: 'exam',
-    elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: at,
+    elapsedMs: 0,
+    celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+    startedAt: at,
     completedAt: at,
     responses: {},
     score: { correct: 1, incorrect: 0, unanswered: 0, total: 1, percentage, elapsedMs: 0 },
@@ -49,7 +51,8 @@ describe('progressive dashboard statistics', () => {
         <App />
       </ThemeProvider>,
     );
-    expect(screen.getByText('Completed quizzes')).toBeVisible();
+    expect(screen.getByRole('group', { name: 'Completed quizzes' })).toBeVisible();
+    expect(within(screen.getByRole('group', { name: 'Completed quizzes' })).getByText('Completed')).toBeVisible();
     expect(screen.getByRole('heading', { name: '2' })).toBeVisible();
     expect(screen.getByRole('status', { name: 'Loading subjects' })).toBeVisible();
 
@@ -65,8 +68,14 @@ describe('progressive dashboard statistics', () => {
         }),
       }),
     );
-    await waitFor(() => expect(screen.getByText('60%')).toBeVisible());
-    expect(screen.getByRole('heading', { name: '40%' })).toBeVisible();
+    await waitFor(() =>
+      expect(within(screen.getByRole('group', { name: 'Average quiz score' })).getByRole('heading')).toHaveTextContent(
+        '60%',
+      ),
+    );
+    expect(within(screen.getByRole('group', { name: 'Lowest quiz score' })).getByRole('heading')).toHaveTextContent(
+      '40%',
+    );
     expect(screen.getByRole('button', { name: 'Open Second' })).toBeVisible();
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/subjects');
@@ -81,9 +90,7 @@ describe('progressive dashboard statistics', () => {
     });
     const attempts = new LocalAttemptRepository();
     attempts.saveCompleted(completed(quiz.id, subject.id, 80));
-    const progressKeys = [
-      'meducation.progress.v2',
-    ];
+    const progressKeys = ['meducation.progress.v2'];
     const before = progressKeys.map((key) => localStorage.getItem(key));
     const fetchMock = vi
       .fn()

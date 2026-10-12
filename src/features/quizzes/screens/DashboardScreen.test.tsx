@@ -33,7 +33,7 @@ describe('dashboard catalog states', () => {
         <DashboardScreen attempts={[]} subjectStats={[]} loading statsLoading onSelectSubject={() => {}} />
       </ThemeProvider>,
     );
-    expect(screen.getByText('Completed quizzes')).toBeVisible();
+    expect(within(screen.getByRole('group', { name: 'Completed quizzes' })).getByText('Completed')).toBeVisible();
     expect(screen.getByText('0')).toBeVisible();
     expect(screen.getByRole('status', { name: 'Loading subjects' })).toBeVisible();
     expect(screen.queryByText('No subjects are available yet.')).toBeNull();
@@ -135,7 +135,7 @@ describe('dashboard score trend indicator', () => {
 });
 
 describe('dashboard lowest score', () => {
-  it('shows the lowest-scoring subject in a pill beside the card label', () => {
+  it('shows the lowest-scoring subject below the score', () => {
     render(
       <ThemeProvider theme={theme}>
         <DashboardScreen
@@ -148,7 +148,35 @@ describe('dashboard lowest score', () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getByText('Physiology')).toBeVisible();
+    const card = screen.getByRole('group', { name: 'Lowest quiz score' });
+    expect(within(card).getByText('42')).toBeVisible();
+    expect(within(card).getByText('%')).toBeVisible();
+    expect(within(card).getByText('Physiology')).toBeVisible();
+    expect(within(card).queryByRole('button')).not.toBeInTheDocument();
+  });
+});
+
+describe('dashboard stat cards', () => {
+  it('associates completed quiz units and percentage display with their accessible cards', () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <DashboardScreen
+          attempts={[]}
+          averageLatest={71}
+          personalLowest={66}
+          personalLowestSubject="Pharmacology"
+          subjectStats={[]}
+          onSelectSubject={() => {}}
+        />
+      </ThemeProvider>,
+    );
+    expect(within(screen.getByRole('group', { name: 'Completed quizzes' })).getByText('quizzes')).toBeVisible();
+    expect(within(screen.getByRole('group', { name: 'Average quiz score' })).getByRole('heading')).toHaveTextContent(
+      '71%',
+    );
+    expect(within(screen.getByRole('group', { name: 'Lowest quiz score' })).getByRole('heading')).toHaveTextContent(
+      '66%',
+    );
   });
 });
 
@@ -190,7 +218,7 @@ describe('dashboard subject filter and pagination', () => {
     expect(screen.getByText('Page 1 of 2')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(
-      within(screen.getByTestId('all-subjects-grid')).getByRole('button', { name: 'Open Subject 13' }),
+      within(screen.getAllByTestId('all-subjects-grid').at(-1)!).getByRole('button', { name: 'Open Subject 13' }),
     ).toBeVisible();
     expect(screen.getByText('Page 2 of 2')).toBeVisible();
     expect(screen.getByText('Page 2 of 2')).toHaveFocus();
