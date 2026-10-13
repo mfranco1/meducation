@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: in progress; Steps 1–7 design/audit complete; L0-A/L0-B selected, implementation verification pending. Steps 8–9 pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
+Status: in progress; Steps 1–8 design/audit complete; L0-A/L0-B selected; L0-C contract recorded with final provider acceptance pending. Step 9 pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 
@@ -96,13 +96,13 @@ Output: [local Postgres/toolchain ADR](../../decisions/0003-local-postgres-toolc
 
 ## Step 8 — Record the single-editor auth contract (L0-C)
 
-- [ ] Prefer an OIDC authorization-code flow with PKCE and a backend session for the admin, subject to provider capability verification. Keep learner requests public and independent of admin authentication.
-- [ ] Specify allowed issuer, audience, algorithms, trusted key source/rotation, token time checks, stable editor subject ID, provider-specific MFA assurance, reauthentication rules and deny-by-default behavior.
-- [ ] Specify server session storage/lifetime, logout/revocation, Secure/HttpOnly/SameSite cookie behavior, CSRF state/token and origin checks, redirect allowlist, secret rotation and operator account recovery. No privileged tokens in browser localStorage.
-- [ ] Evaluate Neon Auth or a managed OIDC provider against those requirements using official documentation. Record support/gaps and the proposed adapter. If evidence is insufficient, mark provider selection pending before L4; do not block L1 or build a custom identity system.
-- [ ] Specify local test identity with production-shaped claims, explicit development-only configuration and fail-closed production startup. Define hosted login/MFA/recovery tests that mocks cannot replace.
+- [x] Prefer an OIDC authorization-code flow with PKCE and a backend session for the admin, subject to provider capability verification. Keep learner requests public and independent of admin authentication.
+- [x] Specify allowed issuer, audience, algorithms, trusted key source/rotation, token time checks, stable editor subject ID, provider-specific MFA assurance, reauthentication rules and deny-by-default behavior.
+- [x] Specify server session storage/lifetime, logout/revocation, Secure/HttpOnly/SameSite cookie behavior, CSRF state/token and origin checks, redirect allowlist, secret rotation and operator account recovery. No privileged tokens in browser localStorage.
+- [x] Evaluate Neon Auth or a managed OIDC provider against those requirements using official documentation. Record support/gaps and the proposed adapter. If evidence is insufficient, mark provider selection pending before L4; do not block L1 or build a custom identity system.
+- [x] Specify local test identity with production-shaped claims, explicit development-only configuration and fail-closed production startup. Define hosted login/MFA/recovery tests that mocks cannot replace.
 
-L0-C exit: security/session contract is recorded with provider capability status. A chosen verified adapter is mandatory before L4 implementation, but creating the cloud identity account is deferred.
+Output: [single-editor authentication ADR](../../decisions/0004-single-editor-authentication.md) and [provider capability evidence](L0-step8-auth-evidence.json). L0-C contract/capability-status deliverable is complete. Neon managed MFA remains coming soon; ZITADEL Cloud is a provisional candidate. Final adapter acceptance (especially actual MFA freshness/policy mapping) is pending before L4 provider integration; account creation/hosted verification remain deferred. L1–L3 are not blocked.
 
 ## Step 9 — Publish decisions and handoff
 
@@ -115,7 +115,7 @@ L0-C exit: security/session contract is recorded with provider capability status
 
 - [x] L0-A coordination/format/lifecycle decisions complete; feature verification remains L1.
 - [x] L0-B DB/toolchain decisions complete; runtime validation remains L2/L3.
-- [ ] L0-C identity contract and provider capability status complete.
+- [x] L0-C identity contract and provider capability status complete; final adapter acceptance pending before L4.
 - [ ] Decision documents, parent links and verification evidence recorded.
 
 Planning document creation is complete; only completed execution steps are checked.
@@ -137,3 +137,5 @@ Planning verification: relative links resolve; repository build/typecheck passed
 2026-10-13 — Step 6 complete and self-audited: capability admission, safe unsupported/storage-failure behavior, lifecycle evidence rules, dialog/file/download cleanup and accessibility contract selected. Added 14 pending application acceptance cases with separate L1/public-launch gates. L0-A design gate met; Firefox launch, real BFCache, actual quota and mobile/assistive-technology application checks remain explicitly pending. Documentation only; build/typecheck, changed-document link assertions, checklist-state/hash checks and git diff --check passed. Existing Vite chunk-size advisory remains. Stop before Step 7 pending user continuation.
 
 2026-10-13 — Step 7 complete and self-audited: PG17.11/Python3.14.8 multi-platform image digests, Psycopg binary3.3.6/SQLAlchemy2.1.4/Alembic1.20.0 baseline and role/connection/volume/backup/reset contracts recorded in ADR0003. Registry digest/native-architecture and package-wheel assertions, changed-document links, canonical hashes, build/typecheck and git diff --check passed; existing chunk-size advisory remains. Docker daemon unreachable and host pg_dump14 unsuitable for PG17; L2/L3 runtime verification pending. No installs/pulls/starts/provisioning/migrations. L0-B design gate met; stop before Step 8 pending user continuation.
+
+2026-10-13 — Step 8 complete and self-audited: exact editor identity, OIDC/code/PKCE validation, provider-specific MFA/freshness, opaque Postgres-backed sessions, CSRF/cookies, revocation/restore epoch, secrets and operator recovery recorded in ADR0004. Official Neon managed roadmap lists MFA coming soon; ZITADEL Cloud is provisional with final tenant/assurance adapter acceptance pending before L4. Local negative tests and real hosted gates specified. Build/typecheck, changed-document links, contract/evidence-status assertions, canonical hashes and git diff --check passed; existing chunk-size advisory remains. No auth implemented, credentials accessed, accounts provisioned or invitations sent. L0-C contract/capability-status deliverable met; stop before Step 9 pending user continuation.
