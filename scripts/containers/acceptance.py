@@ -42,7 +42,8 @@ def main():
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "tests/fixtures").rglob("*.json")]
     inputs += ["scripts/content/validate-paired-files.ts",
                "backend/pyproject.toml", "backend/requirements-dev.lock",
-               "playwright.containers.config.ts", "e2e/containers/service-recreation.spec.ts"]
+               "playwright.containers.config.ts", "e2e/containers/service-recreation.spec.ts",
+               "e2e/containers/postgres-release.spec.ts"]
     report["inputs_sha256"] = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in inputs}
 
     def run(name, command, timeout=600):
@@ -78,13 +79,18 @@ def main():
             report["builds"].append({"iteration": iteration, "images": {tag: image["Id"] for tag, image in images.items()}})
             smoke(f"api-{iteration}", "smoke-api.py", "--image", "meducation-api:local")
             smoke(f"learner-{iteration}", "smoke-learner.py", "--api-image", "meducation-api:local",
-                  "--frontend-image", "meducation-learner:local", *(("--browser",) if iteration == 2 else ()))
+                  "--frontend-image", "meducation-learner:local")
         smoke("compose", "smoke-compose.py")
         smoke("postgres-tools", "smoke-postgres-tools.py")
         run("db-toolchain", [sys.executable, str(ROOT / "scripts/containers/smoke-db-toolchain.py"),
                              "--image", "meducation-api:local", "--output", str(output / "db-toolchain.json")], timeout=300)
         run("postgres-content", [sys.executable, str(ROOT / "scripts/containers/test-postgres-content.py"),
                                  "--output", str(output / "postgres-content.json")], timeout=300)
+        run("release-recovery", [sys.executable, str(ROOT / "scripts/containers/verify-postgres-release.py"),
+                                 "--output", str(output / "release-recovery.json")], timeout=1200)
+        run("postgres-browser", [sys.executable, str(ROOT / "scripts/containers/smoke-postgres-learner.py"),
+                                 "--api-image", "meducation-api:local", "--frontend-image", "meducation-learner:local",
+                                 "--output", str(output / "postgres-browser.json")], timeout=1000)
         if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != value for name, value in report["inputs_sha256"].items()):
             raise RuntimeError("Acceptance inputs changed during execution")
         report["result"] = "pass"

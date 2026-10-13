@@ -1,6 +1,6 @@
 # L3 — Local Postgres schema, migration and parity
 
-Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Step 4 complete with passing local verification; Step 5 complete with passing local verification; Steps 6–7 pending.
+Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Step 4 complete with passing local verification; Step 5 complete with passing local verification; Step 6 implemented and locally verified; new native AMD64/ARM64 CI pending; Step 7 pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l3--local-postgres-schema-migration-and-parity). Prerequisites: [completed L2](../done/L2-containers-local-services-plan.md) and [ADR0003 toolchain contract](../../decisions/0003-local-postgres-toolchain.md). Follow the [work tracking stage gates](../README.md): implement one step, record its checks and limitations, then stop at that gate until continuation is authorized. The user's 2026-10-13 instruction to start implementation authorizes beginning this sequence; L4 remains outside scope.
 
@@ -358,14 +358,77 @@ No blocking Step 5 findings remain. Stop before Step 6 at the agreed stage gate.
 
 ## Step 6 — Prove actual-bank, browser and recovery parity
 
-- [ ] Parameterize the fixture repository/API contract suite over JSON and real PG17, covering every learner endpoint and 200/304/404/409/unavailable behavior. Add actual transaction/connection failure cases; ordinary unit tests remain fixture-based and DB-independent where possible.
-- [ ] Add a separate actual-bank parity command targeting an explicitly disposable database. Compare every reconstructed record/optional field, all collection and choice order, relationship/count/membership summaries, both revision hashes, and every learner route for all applicable subjects/quizzes/decks. Produce a compact report with input hashes and exact mismatch paths; do not hard-code current authored counts into normal tests.
-- [ ] Run the learner/progress-backup browser flows through the existing real reverse proxy in Postgres mode. Show that importing unchanged content and switching backends does not force active quiz/checkpoint restart or rescore completed history. Use fixture changes to verify existing changed-content conflict/restart behavior.
-- [ ] Extend PG17 dump/restore rehearsal to real content/schema using the backup role and restore into a fresh isolated database with deliberate ownership/ACL setup. Check migration head, draft/audit/allocation state, active publication and full content/API parity after restore. Source database and authored JSON remain untouched.
-- [ ] Add CI PG17 integration coverage with explicit migrate/import/test sequencing, isolated databases and cleanup. Extend native AMD64/ARM64 container acceptance to the new dependencies, migrations and DB-backed smoke; do not duplicate all expensive browser checks unnecessarily. Keep default JSON jobs independent of a DB.
-- [ ] Document exact implemented commands in backend setup, testing guidance and the container runbook, including initialization, re-import/explicit activation, parity, export, restore and pre-cutover JSON fallback. Existing volumes require explicit role/migration operations; editing initialization files alone is insufficient.
+Implementation checkpoint — 2026-10-13: continuation authorized. Added a separate
+captured-input parity command guarded to disposable `meducation_verify_` targets,
+and an isolated actual-bank/backup-role restore launcher. Browser/proxy migration,
+actual connection failures, final documentation and both native CI results remain
+pending. Prior snapshots and canonical bytes remain protected; no routine DB or
+volume is used. Do not mark Step 6 complete until its platform gate passes.
+
+- [x] Parameterize the fixture repository/API contract suite over JSON and real PG17, covering every learner endpoint and 200/304/404/409/unavailable behavior. Add actual transaction/connection failure cases; ordinary unit tests remain fixture-based and DB-independent where possible.
+- [x] Add a separate actual-bank parity command targeting an explicitly disposable database. Compare every reconstructed record/optional field, all collection and choice order, relationship/count/membership summaries, both revision hashes, and every learner route for all applicable subjects/quizzes/decks. Produce a compact report with input hashes and exact mismatch paths; do not hard-code current authored counts into normal tests.
+- [x] Run the learner/progress-backup browser flows through the existing real reverse proxy in Postgres mode. Show that importing unchanged content and switching backends does not force active quiz/checkpoint restart or rescore completed history. Use fixture changes to verify existing changed-content conflict/restart behavior.
+- [x] Extend PG17 dump/restore rehearsal to real content/schema using the backup role and restore into a fresh isolated database with deliberate ownership/ACL setup. Check migration head, draft/audit/allocation state, active publication and full content/API parity after restore. Source database and authored JSON remain untouched.
+- [x] Add CI PG17 integration coverage with explicit migrate/import/test sequencing, isolated databases and cleanup. Extend native AMD64/ARM64 container acceptance to the new dependencies, migrations and DB-backed smoke; do not duplicate all expensive browser checks unnecessarily. Keep default JSON jobs independent of a DB.
+- [x] Document exact implemented commands in backend setup, testing guidance and the container runbook, including initialization, re-import/explicit activation, parity, export, restore and pre-cutover JSON fallback. Existing volumes require explicit role/migration operations; editing initialization files alone is insufficient.
 
 Gate: actual canonical parity, fixture/browser acceptance, real-content restore and both native-platform checks have recorded evidence. Missing Docker/platform/CI evidence remains an open gate, never an implied pass.
+
+### Step 6 local result — 2026-10-14 (started 2026-10-13)
+
+Added `meducation-db parity` for matching explicit reader/operator connections to
+local disposable `meducation_verify_*` targets. It captures both input files,
+uses the existing Python/TypeScript validation gate, independently reconstructs
+every record, preserves typed optional presence and array/choice order, verifies
+exact artifacts/digests, and compares every applicable learner catalog/body and
+conditional response. Reports contain input hashes/counts and mismatch paths
+without values/SQL/credentials; existing report paths are refused.
+
+The isolated `verify-postgres-release.py` job passed the **actual bank pair**:
+13 subjects, 111 quizzes, 11,687 questions, 98 decks and 1,712 flashcards, across
+**348 learner routes**, with counts derived from current input. Both revisions
+matched JSON. It created a private draft and three burned ID reservations,
+dumped the `content` schema with PG17 as backup (`custom --no-owner --no-acl`),
+restored into a fresh target as migration owner in one transaction, revoked the
+temporary CREATE grant and reapplied default/selected ACLs. All table
+hashes/counts and sequence state, including draft/audit/operations/registry/
+counters/reservations/publication, matched. Fresh readers repeated all 348 API
+comparisons after restoration. Source state and canonical byte hashes stayed
+unchanged. The temporary archive was outside the DB tmpfs and was cleaned;
+this is not a retained/off-device backup or an authoritative RPO claim.
+
+The installed reader API and shipped Nginx learner proxy passed **44 Chromium
+cases** in a separate owned fixture stack. Existing learner, progress-backup,
+quota/navigation, multi-tab/recovery and frontend-recreation flows ran in PG mode.
+The extra release case completed a quiz, saved another active quiz and flashcard
+checkpoint, switched the owned API JSON→Postgres at the same origin, and verified
+original attempt identity/responses/signature, checkpoints and completed history.
+A changed fixture publication required explicit restart while preserving completed
+scores. Controls verify exact generated names/network labels and keep credentials
+in private files; no runtime write endpoint was introduced.
+
+The complete fixture suite passed **80 real-PG17 cases**, including actual
+reader backend termination and a failed transaction returning 503, freeing the
+connection and reconnecting successfully. Normal backend tests passed **81**
+cases (80 PG skips there, separately verified); Ruff, mypy (21 source modules),
+frontend lint/architecture, format and `npm run build`/typecheck passed. Source
+files and frozen earlier snapshots stayed byte-identical. Document links,
+new/changed whitespace and evidence JSON passed. Existing review/chunk/httpx
+advisories and the recovery script's SQLAlchemy tuples deprecation remain.
+
+Two harness defects found locally were fixed: sequence rows needed ordinary
+Python tuples for JSON reporting, and PG startup readiness needed TCP rather than
+the initialization server's temporary Unix socket. Corrected recovery/browser
+runs passed. No application/content correction was needed.
+
+Native acceptance now invokes the fixture suite, actual-bank recovery and PG
+proxy/browser job on both existing architectures. The expensive container browser
+suite runs once in PG mode; both clean JSON proxy checks and the host JSON browser
+job remain. **New native AMD64/ARM64 GitHub runs are still pending.** Local ARM64
+reports do not satisfy that final stage gate, so Step 6 remains open and Step 7
+has not started. [Local evidence](L3-step6-parity-recovery-evidence.json) freezes
+commands/input hashes/reports and the remaining CI gate. No routine database,
+volume or personal progress was used; canonical JSON remains authoritative.
 
 ## Step 7 — Final verification and L4 handoff
 
@@ -387,7 +450,7 @@ Gate: local Postgres serves the current learner without content drift or gratuit
 - [x] Step 3 — Migrations and transactional primitives: 58 real-PG17 cases, installed-image/JSON smokes and full verification passed.
 - [x] Step 4 — Paired import/export: 64 real-PG cases, 76 normal backend tests, captured canonical validation, installed-image smokes and build passed.
 - [x] Step 5 — DB adapters and API release consistency: 78 real-PG cases, 79 normal backend tests, installed-image smokes and full verification passed.
-- [ ] Step 6 — Parity, browser, recovery and CI evidence.
+- [ ] Step 6 — Local parity/browser/recovery implementation and checks pass; new native AMD64/ARM64 CI evidence pending.
 - [ ] Step 7 — Final verification and handoff.
 
 Planning verification — 2026-10-13: all 16 relative link targets resolved; tracked diff and new-plan whitespace checks passed; `npm run build` passed, including TypeScript checking, with the existing Vite chunk-size advisory. No migrations, dependency changes, database writes or runtime implementation occurred during plan creation.

@@ -356,7 +356,7 @@ Run the schema/operation integration suite separately:
 
 This launches a unique tmpfs PG17 container with a temporary random loopback port
 and synthetic credentials. Tests reset only its explicitly named test database
-schema. The 78 fixture cases cover SQL validation, paired finalization, role
+schema. The 80 fixture cases cover SQL validation, paired finalization, role
 isolation, immutability, audit/replay, publication rollback, private drafts and
 concurrent durable allocations. Both native acceptance jobs now invoke this
 suite alongside the installed-image smoke. Step 4 adds file/CLI roundtrip,
@@ -366,6 +366,13 @@ catalog/body/reconnect outage cleanup.
 Validation/import runs from the host checkout with Node dependencies; the API
 image receives no Node runtime or operator credentials. Actual-bank reconstruction/API parity
 and backup-role recovery remain later L3 gates.
+
+Step 6 supplies an [actual-bank parity and fresh restore rehearsal](../backend/README.md#actual-bank-parity-and-isolated-recovery-acceptance)
+and Postgres-mode proxy/browser acceptance. Follow those exact isolated commands;
+L2's bootstrap-only Compose dump remains a separate development tool. Restore
+uses backup/migrator roles, owner object creation and deliberate ACL reapplication.
+A successful local report does not establish off-device retention or native AMD64
+CI; both new native jobs remain the Step 6 stage gate.
 
 ## Separate destructive reset
 

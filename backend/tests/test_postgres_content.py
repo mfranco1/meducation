@@ -1460,3 +1460,39 @@ def test_reader_failure_cleanup_before_and_after_view_yield(db, failure):
             event.remove(engine, event_name, listener)
         assert client.get("/api/v1/quizzes/q1/questions").status_code == 200
         assert engine.pool.checkedout() == 0
+
+
+@pytest.mark.parametrize("fault", ["terminated", "aborted-transaction"])
+def test_real_reader_socket_and_transaction_failure_return_503_then_recover(db, monkeypatch, fault):
+    from fastapi.testclient import TestClient
+
+    from meducation_api.main import create_app
+    from meducation_api.repositories.postgres import PostgresQuestionBankRepository
+
+    release = store(db)
+    publish(db, release)
+    original = PostgresQuestionBankRepository.list_questions
+    fired = False
+
+    def fail_once(self, quiz_id):
+        nonlocal fired
+        if not fired:
+            fired = True
+            if fault == "terminated":
+                pid = self.connection.exec_driver_sql("SELECT pg_backend_pid()").scalar_one()
+                with db.admin.begin() as connection:
+                    connection.execute(text("SELECT pg_terminate_backend(:pid)"), {"pid": pid})
+            else:
+                self.connection.exec_driver_sql("SELECT 1/0")
+        return original(self, quiz_id)
+
+    monkeypatch.setattr(PostgresQuestionBankRepository, "list_questions", fail_once)
+    app = create_app(reader_settings(db))
+    with TestClient(app) as client:
+        result = client.get("/api/v1/quizzes/q1/questions")
+        assert result.status_code == 503 and result.json() == {
+            "detail": {"code": "content_unavailable"}
+        }
+        assert app.state.source.runtime.engine.pool.checkedout() == 0
+        assert client.get("/api/v1/quizzes/q1/questions").status_code == 200
+        assert app.state.source.runtime.engine.pool.checkedout() == 0

@@ -1,6 +1,23 @@
 # 0005 — Paired content releases and Postgres schema
 
-Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; paired file importer/exporter implemented; paired learner adapters implemented; comprehensive actual-bank parity/recovery pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; paired file importer/exporter implemented; paired learner adapters implemented; actual-bank parity/recovery and PG browser acceptance locally verified; new native CI gate pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+
+## Step 6 local acceptance follow-up — 2026-10-14
+
+The [isolated operator commands](../../backend/README.md#actual-bank-parity-and-isolated-recovery-acceptance)
+now verify the actual paired content and every learner route before and after a
+backup-role dump/fresh owner restore. All table/state/sequence fingerprints and
+canonical bytes matched. The PG proxy/browser suite proves unchanged backend
+switches preserve active study/checkpoints/history and changed publication uses
+the existing explicit restart flow. Real socket termination and aborted reader
+transactions return unavailable responses and reconnect cleanly.
+
+Native acceptance invokes these commands on both architectures; its expensive
+container browser suite runs once in PG mode. Local ARM64 evidence is recorded in
+[Step 6 evidence](../work/ongoing/L3-step6-parity-recovery-evidence.json); the new
+AMD64/ARM64 GitHub runs are unverified, so Step 6 stays open. The temporary archive
+is acceptance data, not off-device retention or a production RPO guarantee.
+No source authority, private HTTP authorization or hosted provisioning changed.
 
 ## Step 5 implementation follow-up — 2026-10-13
 

@@ -152,6 +152,9 @@ Postgres learner mode now works after explicit migration/import/activation; it
 never performs these jobs from workers or falls back to JSON.
 Recurring health endpoints remain free of database queries. Real PG17 fixture
 checks prove schema/operation and fixture repository/API parity; comprehensive
-actual-bank, reverse-proxy/browser and recovery checks remain Step 6. Local operator actor descriptions are not browser authentication.
+Step 6 now supplies explicit disposable actual-bank/API parity, backup-role
+restore and PG proxy/browser acceptance. `db/parity.py` is a development operator
+check; `db/recovery.py` reapplies supported owner-managed grants after portable
+restore. Neither runs from workers. Both native CI results remain the stage gate. Local operator actor descriptions are not browser authentication.
 
 Preserve existing checked boundaries when adding these modules. The [L1 plan](work/done/L1-progress-backup-plan.md) and [browser acceptance](work/ongoing/L0-browser-acceptance.md) record completed implementation and outstanding acceptance gates. Do not expose unfinished Restore/admin-write actions, move content authority, provision services or deploy as a side effect of contract documentation.

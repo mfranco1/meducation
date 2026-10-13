@@ -102,7 +102,7 @@ bootstrap and real packaged migration, restricted role/PUBLIC privileges,
 backup grants, an independent synthetic migration, round trip and rollback.
 
 Run `.venv/bin/python scripts/containers/test-postgres-content.py` separately for
-78 real-Postgres schema/operation/file-transfer/learner cases. It creates and cleans a unique tmpfs
+80 real-Postgres schema/operation/file-transfer/learner cases. It creates and cleans a unique tmpfs
 PG17 container with disposable credentials; it never targets the routine DB.
 Normal pytest skips these cases unless an explicitly isolated test URL is
 provided; skips are not Postgres acceptance. The suite checks SQL stored-contract
@@ -122,8 +122,14 @@ protocols and all learner endpoints against JSON fixtures, 200/304/404/409
 precedence, publication during response construction, shared-subject digest
 changes, old-release reactivation, bounded cache eviction and connection cleanup
 on catalog/body/reconnect failures. Paired-source injection/response cleanup
-also has DB-independent tests. Comprehensive actual-bank parity, proxy/browser
-and fresh-DB real-content recovery remain Step 6. Follow the
+also has DB-independent tests. Step 6 adds actual reader-socket termination and
+aborted-transaction cleanup/reconnect checks. Run the separate
+[actual-bank/recovery and PG proxy/browser commands](../backend/README.md#actual-bank-parity-and-isolated-recovery-acceptance).
+They compare all records/routes/digests, all restored draft/history/allocation and
+sequence state, and exact backend-switch/restart progress behavior. The reports
+are independent of Playwright's cleaned output directory. Native acceptance now
+runs these on both architectures, with one container browser run in PG mode.
+Do not mark the stage complete from local ARM64 evidence alone. Follow the
 [job/runbook commands](local-containers.md#l3-explicit-database-jobs-and-toolchain-verification).
 
 [Completed L0 decisions](work/done/L0-local-contracts-plan.md) are design/feasibility evidence. Their tests do not certify future application implementations. Keep frozen evidence under docs/work/done; record new feature results in ongoing stage trackers, without overwriting historical snapshots.

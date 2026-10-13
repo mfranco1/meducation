@@ -226,3 +226,61 @@ responses, explicit CORS and graceful shutdown. Synthetic invalid-bank mounts
 exercise startup rejection without changing canonical files. It removes only
 its own containers and requires no database or host source mount for successful
 startup. Add `--report /absolute/path/report.json` to retain machine evidence.
+
+## Actual-bank parity and isolated recovery acceptance
+
+Run these jobs from the repository root with the Python development lock and
+`npm ci` installed. Canonical JSON remains authoritative. They create unique
+PG17 tmpfs clusters and disposable targets; no routine Compose database/volume
+is read or changed, and source files stay unchanged.
+
+```sh
+.venv/bin/python scripts/containers/verify-postgres-release.py --output test-results/l3-step6-recovery.json
+.venv/bin/python scripts/containers/smoke-postgres-learner.py --api-image meducation-api:local --frontend-image meducation-learner:local --output test-results/l3-step6-browser.json
+```
+
+The first command captures/validates both actual banks, bootstraps/migrates,
+imports and explicitly activates them. It checks every normalized field,
+optional omission, rich string, global/choice order, both artifacts/digests and
+all applicable learner routes/counts/membership/ETags/304/409. Current content
+produces 348 routes, but counts are derived from input and not hard-coded tests.
+A private draft and burned reservations exercise non-public recovery state.
+PG17 `pg_dump` authenticates as backup, produces a temporary 0600 custom archive
+with no owner/ACL, and restores in one transaction into a fresh database through
+the migrator with `--role meducation_owner`. Only the newly created target gets
+temporary owner CREATE privilege, revoked afterward. Bootstrap/default grants
+and `db/recovery.py` selected reader/operator permissions are reapplied explicitly.
+All table hashes/counts and sequence values must match, source state must remain
+unchanged, and fresh readers repeat full reconstruction/API parity after restore.
+Credentials/archive and containers are cleaned; this is acceptance evidence, not
+a retained/off-device backup or a production RPO guarantee. After a real restore,
+restart workers/caches and reconcile lost post-backup allocations before authoring.
+
+For an already initialized *disposable local* target named `meducation_verify_*`,
+the standalone CLI uses matching explicit operator/reader URLs:
+
+```sh
+.venv/bin/meducation-db parity --quiz-file src/content/questionBank.generated.json --flashcard-file src/content/flashcardBank.generated.json --repository . --release-id "RELEASE_UUID" --report new-parity-report.json
+```
+
+It performs no import/activation or authored-file write. The selected pair must
+be active for API parity. The report path must be new. Failure diagnostics name
+mismatch paths without printing values, SQL or credentials. Parity requires
+Node and development TestClient dependencies; the learner runtime gains neither.
+
+The browser launcher loads only existing e2e fixtures into the isolated PG
+cluster, starts the installed reader API and shipped Nginx learner proxy, and
+runs existing Chromium learner/progress-backup/recreation flows. One extra test
+switches the exact owned API between JSON and Postgres at the same origin,
+verifies active quiz identity/responses/signature, flashcard checkpoints and
+completed history remain unchanged, then explicitly publishes changed fixture
+content and verifies the existing restart prompt and preserved completed scores.
+Controls verify exact generated container/network labels and never address a
+routine service. Synthetic operator credentials stay in private files, not the
+browser or command arguments.
+
+Native AMD64/ARM64 acceptance runs fixture PG tests, actual-bank recovery and the
+PG proxy/browser suite. The expensive container browser suite runs once in PG
+mode; default JSON HTTP/proxy checks remain on both clean builds and the host
+JSON browser job remains separate. Local ARM64 passes do not close the native
+CI gate until both new jobs pass. Continue to Step 7 only after that evidence.

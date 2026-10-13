@@ -21,11 +21,14 @@ def main() -> None:
     commands = parser.add_subparsers(dest="action", required=True)
     for action in ("head", "bootstrap-local", "upgrade"):
         commands.add_parser(action)
-    for action in ("validate-pair", "import-pair"):
+    for action in ("validate-pair", "import-pair", "parity"):
         command = commands.add_parser(action)
         command.add_argument("--quiz-file", type=Path, required=True)
         command.add_argument("--flashcard-file", type=Path, required=True)
         command.add_argument("--repository", type=Path, required=True)
+        if action == "parity":
+            command.add_argument("--release-id", type=UUID, required=True)
+            command.add_argument("--report", type=Path, required=True)
         if action == "import-pair":
             command.add_argument("--operation-id", type=UUID, required=True)
             command.add_argument("--actor", required=True)
@@ -45,7 +48,7 @@ def main() -> None:
             print(migration_head() or "No content migration head packaged.")
             return
         pair = None
-        if args.action in ("validate-pair", "import-pair"):
+        if args.action in ("validate-pair", "import-pair", "parity"):
             pair = capture_pair(args.quiz_file, args.flashcard_file, repository=args.repository)
             if args.action == "validate-pair":
                 print(json.dumps({"sourceSha256": pair.source_hashes, "warnings": pair.warnings}))
@@ -98,6 +101,30 @@ def main() -> None:
                         }
                     )
                 )
+            elif args.action == "parity":
+                from meducation_api.db.parity import verify_parity
+
+                assert pair is not None
+                try:
+                    report = verify_parity(engine, settings, pair, args.release_id)
+                except ContentDatabaseError as error:
+                    with args.report.open("x", encoding="utf-8") as output:
+                        output.write(
+                            json.dumps(
+                                {
+                                    "result": "fail",
+                                    "sourceSha256": pair.source_hashes,
+                                    "releaseId": str(args.release_id),
+                                    "mismatch": str(error),
+                                },
+                                indent=2,
+                            )
+                            + "\n"
+                        )
+                    raise
+                with args.report.open("x", encoding="utf-8") as output:
+                    output.write(json.dumps(report, indent=2) + "\n")
+                print(json.dumps(report))
             elif args.action == "activate":
                 with engine.begin() as connection:
                     publication = activate_release(
@@ -120,7 +147,7 @@ def main() -> None:
                 print(json.dumps(export_release(engine, args.release_id, args.output)))
         finally:
             engine.dispose()
-    except ValidationError, ValueError, SQLAlchemyError:
+    except ValidationError, ValueError, OSError, SQLAlchemyError:
         parser.exit(
             1, "Database job configuration/connection failed; no credentials or SQL logged.\n"
         )
