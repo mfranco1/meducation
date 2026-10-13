@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: in progress; Steps 1–6 design/audit complete; L0-A selected, L1 application verification pending. Steps 7–9 pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
+Status: in progress; Steps 1–7 design/audit complete; L0-A/L0-B selected, implementation verification pending. Steps 8–9 pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 
@@ -86,13 +86,13 @@ L0-A exit met for design: steps 1–6 select protocol, schema/limits and test ma
 
 ## Step 7 — Record database/toolchain compatibility (L0-B)
 
-- [ ] Inspect backend Python requirement/locks and machine architecture; record Docker/Compose availability without installing anything yet.
-- [ ] Check official Postgres, intended managed-host and Psycopg/SQLAlchemy/Alembic support. Select a mutually supported Postgres major and Python 3.14 driver; do not choose an unsupported newest version automatically.
-- [ ] Record concrete container tags/digests to pin in L2 and matched pg_dump/pg_restore tooling. Confirm linux/amd64 and linux/arm64 images or document emulation/CI constraints.
-- [ ] Specify development-only connection settings, separate migration/runtime URLs/roles, optional loopback DB port, named volume, backup location and explicit destructive reset command. Managed TLS/pooler differences stay environment configuration.
-- [ ] Save a short ADR and commands for L2 to verify. Mark untested container runtime behavior as pending L2, not validated by reading vendor docs.
+- [x] Inspect backend Python requirement/locks and machine architecture; record Docker/Compose availability without installing anything yet.
+- [x] Check official Postgres, intended managed-host and Psycopg/SQLAlchemy/Alembic support. Select a mutually supported Postgres major and Python 3.14 driver; do not choose an unsupported newest version automatically.
+- [x] Record concrete container tags/digests to pin in L2 and matched pg_dump/pg_restore tooling. Confirm linux/amd64 and linux/arm64 images or document emulation/CI constraints.
+- [x] Specify development-only connection settings, separate migration/runtime URLs/roles, optional loopback DB port, named volume, backup location and explicit destructive reset command. Managed TLS/pooler differences stay environment configuration.
+- [x] Save a short ADR and commands for L2 to verify. Mark untested container runtime behavior as pending L2, not validated by reading vendor docs.
 
-L0-B exit: selected versions and compatibility evidence are recorded; no database provisioning or migration occurs in L0.
+Output: [local Postgres/toolchain ADR](../../decisions/0003-local-postgres-toolchain.md) and [registry/package evidence](L0-step7-toolchain-evidence.json). L0-B design gate met. Docker daemon is unreachable in the current environment; native image builds, full dependency installation and database/dump-restore behavior remain L2/L3 verification gates. No installation, provisioning or migration occurred in L0.
 
 ## Step 8 — Record the single-editor auth contract (L0-C)
 
@@ -114,7 +114,7 @@ L0-C exit: security/session contract is recorded with provider capability status
 ## Completion checklist
 
 - [x] L0-A coordination/format/lifecycle decisions complete; feature verification remains L1.
-- [ ] L0-B DB/toolchain decisions complete.
+- [x] L0-B DB/toolchain decisions complete; runtime validation remains L2/L3.
 - [ ] L0-C identity contract and provider capability status complete.
 - [ ] Decision documents, parent links and verification evidence recorded.
 
@@ -135,3 +135,5 @@ Planning verification: relative links resolve; repository build/typecheck passed
 2026-10-13 — Step 5 complete and self-audited: exact validation/limits/normalization recorded; seven synthetic sizing scenarios and selected invariant assertions passed. Preserved pruned-history totals and local calendar dates; no current-clock timer inflation or silent truncation. Lint/architecture, format, build/typecheck and link/evidence/hash/diff checks passed; existing chunk-size advisory remains. Full importer/round-trip/quota implementation tests remain L1 work. Stop before Step 6 pending user continuation.
 
 2026-10-13 — Step 6 complete and self-audited: capability admission, safe unsupported/storage-failure behavior, lifecycle evidence rules, dialog/file/download cleanup and accessibility contract selected. Added 14 pending application acceptance cases with separate L1/public-launch gates. L0-A design gate met; Firefox launch, real BFCache, actual quota and mobile/assistive-technology application checks remain explicitly pending. Documentation only; build/typecheck, changed-document link assertions, checklist-state/hash checks and git diff --check passed. Existing Vite chunk-size advisory remains. Stop before Step 7 pending user continuation.
+
+2026-10-13 — Step 7 complete and self-audited: PG17.11/Python3.14.8 multi-platform image digests, Psycopg binary3.3.6/SQLAlchemy2.1.4/Alembic1.20.0 baseline and role/connection/volume/backup/reset contracts recorded in ADR0003. Registry digest/native-architecture and package-wheel assertions, changed-document links, canonical hashes, build/typecheck and git diff --check passed; existing chunk-size advisory remains. Docker daemon unreachable and host pg_dump14 unsuitable for PG17; L2/L3 runtime verification pending. No installs/pulls/starts/provisioning/migrations. L0-B design gate met; stop before Step 8 pending user continuation.

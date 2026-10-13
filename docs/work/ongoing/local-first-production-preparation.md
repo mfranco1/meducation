@@ -22,7 +22,7 @@ After the short L0 design prerequisite, stages L1–L6 are development work that
 Detailed sequence: [L0 local contracts plan](L0-local-contracts-plan.md). L0-A gates L1; database/auth decisions gate their respective later stages.
 
 - [x] Record the backup restore protocol and browser support target, including how all local progress readers/writers participate in restore/recovery. Specify export timer normalization, quota/oversize behavior, and legacy-tab limitations before UI work.
-- [ ] Choose a PostgreSQL major supported by the intended managed host and pin the same major in local/CI images and compatible dump/restore tooling. Check Python 3.14 driver/image availability before committing packaging.
+- [x] Choose a PostgreSQL major supported by the intended managed host and pin the same major in local/CI images and compatible dump/restore tooling. Check Python 3.14 driver/image availability before committing packaging.
 - [ ] Define the single-editor authentication contract before L4: authorization-code flow with PKCE or a backend session, issuer/audience/algorithm/key validation, stable subject allowlist, required MFA evidence, expiry/logout and credential recovery. Select a provider/adapter capable of that contract by L4; account provisioning can wait. Do not invent provider-independent MFA claims and assume a hosted provider will emit them.
 
 Gate: these implementation-affecting decisions are documented. No hosted account or deployment is required.
@@ -46,7 +46,7 @@ Gate: local backup/restore works without a backend and hostile/failed restores d
 
 ### L2 — Reproducible containers and local services
 
-- [ ] Add a production FastAPI container using pinned Python 3.14, locked dependencies, a non-root runtime, explicit settings, and existing liveness/readiness routes. Include canonical banks for initial JSON mode at known paths.
+- [ ] Follow [selected local toolchain](../../decisions/0003-local-postgres-toolchain.md) and verify native ARM64/AMD64 builds and daemon availability. Add a production FastAPI container using pinned Python 3.14, locked dependencies, a non-root runtime, explicit settings, and existing liveness/readiness routes. Include canonical banks for initial JSON mode at known paths.
 - [ ] Pin Postgres/local tools to the L0 version; use explicit readiness/wait behavior rather than assuming container start means DB readiness. Document amd64/arm64 image support for local Macs and hosted Linux. Image-version pinning needs an intentional security-update procedure.
 - [ ] Add a multi-stage frontend build/static-serving container for production-like local tests with explicit /api routing. Keep fast host-based Vite development available; do not require containerized Vite for routine UI work.
 - [ ] Add Docker Compose for API, frontend and pinned local Postgres with a named data volume. Postgres is optional for JSON mode and becomes required in DB mode; retain a simple JSON-only development path.
@@ -60,7 +60,7 @@ Gate: a fresh checkout can build and run the local stack from documented command
 ### L3 — Local Postgres schema, migration and parity
 
 - [ ] Write an architecture decision for content schema/versioning and the staged authority transition. Keep domain and frontend API contracts independent of the DB provider.
-- [ ] Add SQLAlchemy/Alembic and a supported Python-3.14 Postgres driver with updated locks. Run migrations as a controlled explicit job, not automatically in every API worker.
+- [ ] Start with the [selected dependency baseline](../../decisions/0003-local-postgres-toolchain.md) (Psycopg binary 3.3.6, SQLAlchemy 2.1.4, Alembic 1.20.0); verify clean resolution/install. Add SQLAlchemy/Alembic and a supported Python-3.14 Postgres driver with updated locks. Run migrations as a controlled explicit job, not automatically in every API worker.
 - [ ] Model immutable paired-bank releases, active release reference, subjects/quizzes/questions/decks/cards, explicit ordinal positions, one draft and audit events. Preserve stable entity IDs across versions; use relational constraints and selective JSONB for nested choices/sparse metadata.
 - [ ] Allocate new content IDs with a durable server-side registry/counter or equivalent never-reuse policy across drafts, deleted records and all releases. Seed it from imported IDs; retain allocations across rollback. Existing max-current-ID-plus-one helpers must not remain authoritative for persistent authoring. Preview/apply retries must keep the same reserved IDs.
 - [ ] Keep a publication sequence distinct from content digests: rollback may reactivate an identical old digest but must still trigger current-publication cache refresh. Define quiz/flashcard digest mapping to a paired release. DB transactions/foreign keys must prevent cross-release references; paired reads/publication must be consistent.
@@ -176,3 +176,5 @@ Provision managed Postgres and the chosen admin identity; deploy static learner/
 This turn changes planning artifacts only; no runtime implementation, content edits, schema migrations, Docker setup or cloud provisioning has occurred. Planning verification: `npm run build` passed including typecheck (non-blocking Vite chunk-size advisory); `git diff --check` passed; revised canvas TSX syntax validation passed. Canvas host rendering was not verified. Historical checks in the earlier snapshot are not implementation evidence for these stages.
 
 - [x] L0 Step 6 capability/lifecycle/accessibility acceptance selected and audited; L0-A design gate met. Application multi-browser, quota, BFCache and manual mobile/assistive-technology verification remain L1/release gates. Step 7 awaits user continuation.
+
+- [x] L0 Step 7 database/toolchain contract selected and audited; L0-B design gate met. PG17/Python3.14 image digests and ARM64/AMD64 metadata verified; host pg_dump14 mismatch and unreachable Docker daemon documented. L2/L3 runtime verification remains pending. Step 8 awaits user continuation.

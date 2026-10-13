@@ -1,0 +1,207 @@
+{
+  "observedAt": "2026-10-13",
+  "images": {
+    "postgres": {
+      "tag": "17.11-bookworm",
+      "digest": "sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "bodySha256": "sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "platforms": [
+        {
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "digest": "sha256:66aafa11cf15800a3c94763f7e11d1e7b2e37e5e84bc4ce027cb6e1e4bfaf4df"
+        },
+        {
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux",
+            "variant": "v8"
+          },
+          "digest": "sha256:a85953d6f830fd55a12929df3b7a4fa94dc96d652de62d2d714e0867ccb3670d"
+        }
+      ]
+    },
+    "python": {
+      "tag": "3.14.8-slim-bookworm",
+      "digest": "sha256:48b13b003dda20b16f9442b8475aa05fe21bf6579a8c881db92ffb4d8fd20f83",
+      "bodySha256": "sha256:48b13b003dda20b16f9442b8475aa05fe21bf6579a8c881db92ffb4d8fd20f83",
+      "platforms": [
+        {
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "digest": "sha256:a66d3a463d0be3cc537c269b0d3418746dda512417a975559a0eaa8a6406baaf"
+        },
+        {
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux",
+            "variant": "v8"
+          },
+          "digest": "sha256:0e24db28cf5b7788413afe3fdc63075ca22bc4ecf74f5472304b391c2110e629"
+        }
+      ]
+    }
+  },
+  "packages": {
+    "psycopg": {
+      "version": "3.3.6",
+      "requiresPython": ">=3.10",
+      "requiresDist": [
+        "typing-extensions>=4.6; python_version < \"3.13\"",
+        "tzdata; sys_platform == \"win32\"",
+        "psycopg-c==3.3.6; implementation_name != \"pypy\" and extra == \"c\"",
+        "psycopg-binary==3.3.6; implementation_name != \"pypy\" and extra == \"binary\"",
+        "psycopg-pool; extra == \"pool\"",
+        "anyio>=4.0; extra == \"test\"",
+        "mypy>=2.1.0; implementation_name != \"pypy\" and extra == \"test\"",
+        "pproxy>=2.7; extra == \"test\"",
+        "pytest>=6.2.5; extra == \"test\"",
+        "pytest-cov>=3.0; extra == \"test\"",
+        "pytest-randomly>=3.5; extra == \"test\"",
+        "ast-comments>=1.1.2; extra == \"dev\"",
+        "black>=26.1.0; extra == \"dev\"",
+        "codespell>=2.2; extra == \"dev\"",
+        "cython-lint>=0.21; extra == \"dev\"",
+        "dnspython>=2.1; extra == \"dev\"",
+        "flake8>=4.0; extra == \"dev\"",
+        "isort[colors]>=6.0; extra == \"dev\"",
+        "isort-psycopg>=0.0.3; extra == \"dev\"",
+        "mypy>=2.1.0; extra == \"dev\"",
+        "pre-commit>=4.0.1; extra == \"dev\"",
+        "types-setuptools>=57.4; extra == \"dev\"",
+        "types-shapely>=2.0; extra == \"dev\"",
+        "wheel>=0.37; extra == \"dev\"",
+        "Sphinx>=9.1; extra == \"docs\"",
+        "furo==2025.12.19; extra == \"docs\"",
+        "sphinx-autobuild>=2025.8.25; extra == \"docs\"",
+        "sphinx-autodoc-typehints>=3.10.2; extra == \"docs\""
+      ],
+      "python314Wheels": [],
+      "pythonIndependentWheels": [
+        "psycopg-3.3.6-py3-none-any.whl"
+      ]
+    },
+    "psycopg-binary": {
+      "version": "3.3.6",
+      "requiresPython": ">=3.10",
+      "requiresDist": null,
+      "python314Wheels": [
+        "psycopg_binary-3.3.6-cp314-cp314-macosx_10_15_x86_64.whl",
+        "psycopg_binary-3.3.6-cp314-cp314-macosx_11_0_arm64.whl",
+        "psycopg_binary-3.3.6-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.whl",
+        "psycopg_binary-3.3.6-cp314-cp314-manylinux_2_27_aarch64.manylinux_2_28_aarch64.whl",
+        "psycopg_binary-3.3.6-cp314-cp314-musllinux_1_2_aarch64.whl",
+        "psycopg_binary-3.3.6-cp314-cp314-musllinux_1_2_x86_64.whl"
+      ]
+    },
+    "SQLAlchemy": {
+      "version": "2.1.4",
+      "requiresPython": ">=3.11",
+      "requiresDist": [
+        "typing-extensions>=4.6.0",
+        "greenlet>=1; extra == \"asyncio\"",
+        "mypy>=2.4; extra == \"mypy\"",
+        "types-greenlet>=2; extra == \"mypy\"",
+        "pyodbc; extra == \"mssql\"",
+        "pymssql; extra == \"mssql-pymssql\"",
+        "pyodbc; extra == \"mssql-pyodbc\"",
+        "mssql-python>=1.9.0; extra == \"mssql-python\"",
+        "mysqlclient>=1.4.0; extra == \"mysql\"",
+        "mysql-connector-python; extra == \"mysql-connector\"",
+        "mariadb!=1.1.10,!=1.1.2,!=1.1.5,>=1.0.1; extra == \"mariadb-connector\"",
+        "oracledb>=2.0.1; extra == \"oracle\"",
+        "cx_oracle>=8; extra == \"oracle-cxoracle\"",
+        "oracledb>=2.0.1; extra == \"oracle-oracledb\"",
+        "psycopg!=3.1.15,>=3.0.7; extra == \"postgresql\"",
+        "pg8000>=1.29.3; extra == \"postgresql-pg8000\"",
+        "sqlalchemy[asyncio]; extra == \"postgresql-asyncpg\"",
+        "asyncpg; extra == \"postgresql-asyncpg\"",
+        "psycopg2-binary; extra == \"postgresql-psycopg2binary\"",
+        "psycopg2cffi; extra == \"postgresql-psycopg2cffi\"",
+        "psycopg!=3.1.15,>=3.0.7; extra == \"postgresql-psycopg\"",
+        "psycopg[binary]!=3.1.15,>=3.0.7; extra == \"postgresql-psycopgbinary\"",
+        "pymysql; extra == \"pymysql\"",
+        "cymysql; extra == \"cymysql\"",
+        "sqlalchemy[asyncio]; extra == \"aiomysql\"",
+        "aiomysql; extra == \"aiomysql\"",
+        "sqlalchemy[asyncio]; extra == \"aioodbc\"",
+        "aioodbc; extra == \"aioodbc\"",
+        "sqlalchemy[asyncio]; extra == \"asyncmy\"",
+        "asyncmy>=0.2.12; extra == \"asyncmy\"",
+        "sqlalchemy[asyncio]; extra == \"aiosqlite\"",
+        "aiosqlite; extra == \"aiosqlite\"",
+        "sqlcipher3_binary; extra == \"sqlcipher\""
+      ],
+      "python314Wheels": [
+        "sqlalchemy-2.1.4-cp314-cp314-macosx_11_0_arm64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314-musllinux_1_2_aarch64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314-musllinux_1_2_x86_64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314t-macosx_11_0_arm64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314t-manylinux2014_aarch64.manylinux_2_17_aarch64.manylinux_2_28_aarch64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314t-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314t-musllinux_1_2_aarch64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314t-musllinux_1_2_x86_64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314t-win_arm64.whl",
+        "sqlalchemy-2.1.4-cp314-cp314-win_arm64.whl"
+      ]
+    },
+    "alembic": {
+      "version": "1.20.0",
+      "requiresPython": ">=3.10",
+      "requiresDist": [
+        "SQLAlchemy>=2.0",
+        "Mako",
+        "typing-extensions>=4.12",
+        "tomli; python_version < \"3.11\"",
+        "tzdata; extra == \"tz\""
+      ],
+      "python314Wheels": [],
+      "pythonIndependentWheels": [
+        "alembic-1.20.0-py3-none-any.whl"
+      ]
+    },
+    "greenlet": {
+      "version": "3.5.6",
+      "requiresPython": ">=3.10",
+      "requiresDist": [
+        "Sphinx; extra == \"docs\"",
+        "furo; extra == \"docs\"",
+        "objgraph; extra == \"test\"",
+        "psutil; extra == \"test\"",
+        "setuptools; extra == \"test\""
+      ],
+      "python314Wheels": [
+        "greenlet-3.5.6-cp314-cp314-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl",
+        "greenlet-3.5.6-cp314-cp314-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+        "greenlet-3.5.6-cp314-cp314-musllinux_1_2_aarch64.whl",
+        "greenlet-3.5.6-cp314-cp314-musllinux_1_2_x86_64.whl",
+        "greenlet-3.5.6-cp314-cp314t-manylinux_2_24_aarch64.manylinux_2_28_aarch64.whl",
+        "greenlet-3.5.6-cp314-cp314t-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl",
+        "greenlet-3.5.6-cp314-cp314t-musllinux_1_2_aarch64.whl",
+        "greenlet-3.5.6-cp314-cp314t-musllinux_1_2_x86_64.whl",
+        "greenlet-3.5.6-cp314-cp314-win_arm64.whl"
+      ]
+    }
+  },
+  "local": {
+    "architecture": "macOS arm64",
+    "python": "3.14.7 (shell and root .venv)",
+    "dockerClient": "20.10.17",
+    "compose": "2.7.0",
+    "daemon": "unreachable at unix:///var/run/docker.sock; formatted docker info also panicked",
+    "hostPsql": "14.23",
+    "hostPgDump": "14.23",
+    "runtimeValidation": "not performed; no pull/install/start/migration"
+  },
+  "sources": {
+    "dockerRegistry": "https://registry-1.docker.io/v2/library/{image}/manifests/{tag}",
+    "pypi": "https://pypi.org/pypi/{package}/json",
+    "neonCompatibility": "https://github.com/neondatabase/website/blob/main/content/docs/reference/compatibility.md"
+  }
+}
