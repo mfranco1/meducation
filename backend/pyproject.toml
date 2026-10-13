@@ -31,12 +31,16 @@ dev = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"meducation_api.migrations" = ["*.sql"]
+
 [tool.ruff]
 line-length = 100
 target-version = "py314"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["postgres: integration tests requiring an explicitly isolated PG17 test database"]
 
 [tool.mypy]
 python_version = "3.14"

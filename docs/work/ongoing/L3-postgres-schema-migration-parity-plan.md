@@ -1,6 +1,6 @@
 # L3 — Local Postgres schema, migration and parity
 
-Created: 2026-10-13. Status: Step 1 complete; Step 2 implemented and locally verified, native AMD64 CI passed per user; ARM64 CI rerun pending after browser-test fix; Steps 3–7 pending.
+Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Steps 4–7 pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l3--local-postgres-schema-migration-and-parity). Prerequisites: [completed L2](../done/L2-containers-local-services-plan.md) and [ADR0003 toolchain contract](../../decisions/0003-local-postgres-toolchain.md). Follow the [work tracking stage gates](../README.md): implement one step, record its checks and limitations, then stop at that gate until continuation is authorized. The user's 2026-10-13 instruction to start implementation authorizes beginning this sequence; L4 remains outside scope.
 
@@ -132,15 +132,71 @@ all 43 cases in 2.2 minutes, and all six proxy smoke groups passed. The isolated
 reproduction stack was removed. The original toolchain evidence remains unchanged;
 hosted ARM64 acceptance remains pending.
 
+Step 2 closure — 2026-10-13: the user confirmed the tests passed after the browser fix and authorized continuation. Both native CI gates are accepted on that user confirmation; no run URL was supplied. Earlier pending/failure statements and frozen snapshots remain historical. Step 2 is complete.
+
 ## Step 3 — Create migrations and transactional content primitives
 
-- [ ] Implement the ADR schema in `content`, including releases, version-scoped entities/ordinals, singleton draft, active pointer/publication history, append-only audit events and durable ID allocation/reservations. Add indexes for learner parent lookups and release selection; avoid speculative indexes.
-- [ ] Implement controlled insert/finalize/activate operations. A release becomes visible only when both banks are valid and complete. Serialize competing activations with a pointer lock and expected-publication precondition; retries must not create duplicate events. Reject activation of incomplete or unknown releases.
-- [ ] Enforce immutable finalized rows/artifacts and protected audit history with database constraints/permissions/triggers as selected in the ADR. Verify direct SQL through operational roles cannot bypass these guarantees; document the privileged migration/owner trust boundary.
-- [ ] Seed allocation state atomically on imports. Concurrent reservations cannot collide; replaying an operation with changed payload must fail. Importing known stable IDs into another release preserves identity; attempts to introduce an already-reserved ID for a different new entity must fail under the documented rules.
-- [ ] Test empty-database upgrade, repeated upgrade, migration head checks, transactional failure and supported schema recovery. Define downgrade policy explicitly: destructive downgrade is disposable-test-only, while content rollback activates an old release. A schema rollback must not reset durable IDs or erase authoritative content.
+- [x] Implement the ADR schema in `content`, including releases, version-scoped entities/ordinals, singleton draft, active pointer/publication history, append-only audit events and durable ID allocation/reservations. Add indexes for learner parent lookups and release selection; avoid speculative indexes.
+- [x] Implement controlled insert/finalize/activate operations. A release becomes visible only when both banks are valid and complete. Serialize competing activations with a pointer lock and expected-publication precondition; retries must not create duplicate events. Reject activation of incomplete or unknown releases.
+- [x] Enforce immutable finalized rows/artifacts and protected audit history with database constraints/permissions/triggers as selected in the ADR. Verify direct SQL through operational roles cannot bypass these guarantees; document the privileged migration/owner trust boundary.
+- [x] Seed allocation state atomically on imports. Concurrent reservations cannot collide; replaying an operation with changed payload must fail. Importing known stable IDs into another release preserves identity; attempts to introduce an already-reserved ID for a different new entity must fail under the documented rules.
+- [x] Test empty-database upgrade, repeated upgrade, migration head checks, transactional failure and supported schema recovery. Define downgrade policy explicitly: destructive downgrade is refused; use a fresh disposable database for tests, while content rollback activates an old release. A schema rollback must not reset durable IDs or erase authoritative content.
 
 Gate: real PG17 tests prove constraints, immutability, publication atomicity, draft isolation and allocation concurrency. SQLite is not acceptable evidence.
+
+### Step 3 result — 2026-10-13
+
+Implemented packaged head `0001_content` with both SQL resources, release-scoped
+entities/global ordinals and parent indexes, immutable finalized TEXT artifacts,
+private paired draft, singleton publication pointer, append-only histories,
+global operation ledger and durable registry/counters/reservations. Composite
+relationships prohibit cross-release references. Finalization validates paired
+stored contracts, exact artifacts, both digest algorithms and normalized row
+reconstruction before a release can commit. Reader views exclude drafts and
+building releases. Operational roles cannot perform arbitrary DML/DDL or invoke
+internal helpers; owner/migrator maintenance is explicitly trusted.
+
+Private bound transaction primitives store/finalize, activate, save/reset draft
+and reserve IDs. Replay returns original results and rejects changed UUID intent.
+Storage and activation can share an atomic transaction; allocations commit in
+advance and survive failed apply, reset and rollback. Imports register/seed IDs
+atomically; unconsumed reserved IDs require their owning operation and context.
+Publication uses a pointer lock and expected sequence, with a fresh event for old
+release reactivation. Destructive downgrade is refused; full backup-role restore
+and compatible app/schema recovery rehearsal remain Step 6.
+
+Verification: all **58** fixture integration cases passed on real PG17.11,
+including empty/repeated migration, direct role attacks, finalization/ordinal/FK
+violations, protected history, draft isolation, atomic import/activation failure,
+replay/conflict, global order and subject key order, SQL malformed/shared-contract
+cases, and concurrent import/reservation/publication/finalization behavior.
+The installed non-editable ARM64 image passed all 13 toolchain groups, including
+the actual packaged migration and CLI, and the default JSON API smoke. All 18
+installed Python/SQL resources matched source hashes; authored banks remained
+byte-identical. Verification used unique tmpfs containers and cleaned them up;
+no routine database/volume or learner progress was changed.
+
+`npm run verify:full` passed: lint/format and 10 architecture tests, 534 frontend
+tests, actual-bank validation, backend Ruff/mypy, 65 normal backend tests (55 PG
+cases skipped in the full run and 58 skipped in the final backend rerun; all
+58 run separately), learner/admin builds and
+41 learner plus 12 admin Chromium tests. `npm run build` also passed. Final audit aligned SQL nonblank checks with Python
+whitespace semantics and added three direct-SQL cases for tabs/newlines, Unicode
+spaces and control separators. The affected real-PG suite, normal backend checks
+and rebuilt installed-image smokes were rerun successfully. Final
+backend/container Ruff, changed-Python format, mypy, document-link/anchor,
+protected-byte and diff/whitespace checks passed. Existing content-review,
+Vite chunk-size and Starlette/httpx advisories remain. An optional broad backend
+Ruff format check reports five pre-existing files; all six changed/new backend
+Python files pass and no unrelated formatting was applied.
+
+[Step 3 evidence](L3-step3-schema-evidence.json) freezes inputs and compact reports.
+Native acceptance now includes the new SQL/fixture suite and hashes its inputs
+on both architectures, but new Step 3 AMD64/hosted CI execution is not claimed.
+Step 2's passing CI is user-confirmed historical evidence. Actual-bank import,
+exports, DB learner adapters and full real-content recovery remain Steps 4–6;
+JSON stays authoritative. No blocking Step 3 findings remain. Stop before Step 4
+at the agreed stage gate.
 
 ## Step 4 — Import and export canonical paired banks
 
@@ -191,8 +247,8 @@ Gate: local Postgres serves the current learner without content drift or gratuit
 - [x] Inspected the L0/L2 decisions and completed work, current L3 scope, backend repository/revision/lifecycle code, Compose setup, schema and testing guidance.
 - [x] Prepared this staged implementation plan and linked it from the parent tracker.
 - [x] Step 1 — ADR and contracts.
-- [ ] Step 2 — Dependencies, roles and lifecycle: local implementation/checks and user-reported AMD64 CI passed; ARM64 CI rerun pending.
-- [ ] Step 3 — Migrations and transactional primitives.
+- [x] Step 2 — Dependencies, roles and lifecycle: local checks and user-confirmed CI passed after the browser fix.
+- [x] Step 3 — Migrations and transactional primitives: 58 real-PG17 cases, installed-image/JSON smokes and full verification passed.
 - [ ] Step 4 — Paired import/export.
 - [ ] Step 5 — DB adapters and API release consistency.
 - [ ] Step 6 — Parity, browser, recovery and CI evidence.

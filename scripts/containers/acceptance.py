@@ -37,7 +37,11 @@ def main():
               "ops/containers/proxy.conf", "src/content/questionBank.generated.json", "src/content/flashcardBank.generated.json"]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "scripts/containers").glob("*.py")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.py")]
-    inputs += ["playwright.containers.config.ts", "e2e/containers/service-recreation.spec.ts"]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.sql")]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/tests").glob("*.py")]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "tests/fixtures").rglob("*.json")]
+    inputs += ["backend/pyproject.toml", "backend/requirements-dev.lock",
+               "playwright.containers.config.ts", "e2e/containers/service-recreation.spec.ts"]
     report["inputs_sha256"] = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in inputs}
 
     def run(name, command, timeout=600):
@@ -78,6 +82,8 @@ def main():
         smoke("postgres-tools", "smoke-postgres-tools.py")
         run("db-toolchain", [sys.executable, str(ROOT / "scripts/containers/smoke-db-toolchain.py"),
                              "--image", "meducation-api:local", "--output", str(output / "db-toolchain.json")], timeout=300)
+        run("postgres-content", [sys.executable, str(ROOT / "scripts/containers/test-postgres-content.py"),
+                                 "--output", str(output / "postgres-content.json")], timeout=300)
         if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != value for name, value in report["inputs_sha256"].items()):
             raise RuntimeError("Acceptance inputs changed during execution")
         report["result"] = "pass"

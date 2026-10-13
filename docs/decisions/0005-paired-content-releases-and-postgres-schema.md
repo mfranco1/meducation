@@ -1,6 +1,63 @@
 # 0005 — Paired content releases and Postgres schema
 
-Date: 2026-10-13. Status: selected L3 design; database implementation and enforcement pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; file importer/exporter, learner adapters and actual-bank parity/recovery pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+
+## Step 3 implementation follow-up — 2026-10-13
+
+Packaged Alembic head `0001_content` creates the selected schema in one explicit
+owner transaction. Its SQL resources are the schema source of truth;
+`db/operations.py` is a bound SQLAlchemy transaction facade rather than a second
+ORM schema. No canonical content is imported by migration and no private HTTP
+route is added. JSON remains authoritative and the working learner source.
+
+The granted operator functions are `store_release`, `activate_release`,
+`reserve_ids` and `save_draft`. Storage inserts and finalizes the complete pair in
+one call; partial builders are not exposed. Callers may combine storage and
+activation in one transaction. Draft reset is a validated save at a new revision;
+L4 must compose publication with draft advancement and enforce authorization and
+stale base policy. Reservations commit independently before review/apply.
+
+A shared `operations` ledger fingerprints action, payload, actor and reason
+across all four functions. Identical replay returns the original result;
+conflicting UUID reuse fails. Deferred checks prevent incomplete operations or
+building releases from committing. `entity_ids.materialized` distinguishes
+unconsumed allocations from established identities and can only advance; first
+use requires the owning reservation and its matching draft/publication context.
+Registry rows, reservations, audit/import/publication history and finalized
+content cannot be removed by operational roles. Counters cannot rewind.
+
+Finalization compares independently reconstructed normalized JSONB with both
+parsed TEXT artifacts, checks ordinals and stored contracts, and verifies exact
+Python-compatible pretty serialization and both revisions using built-in PG17
+SHA-256. Ordered traversal preserves array/object order, including reordered
+subject input keys, while subject digest fields remain `id,name,accent`.
+Duplicate keys, JSON null and noncanonical artifacts are rejected. SQL structural
+validation is exercised against the shared stored-contract fixtures; the full
+rich-content gate on captured files remains Step 4, and backend authoring policy
+parity remains L4. [PG17 hashing](https://www.postgresql.org/docs/17/functions-binarystring.html).
+
+The reader receives only selected finalized views, schema version and active
+pointer. The operator has diagnostic SELECT and only the four write functions;
+PUBLIC execution and direct operational DML are denied. SECURITY DEFINER uses a
+fixed trusted search path with `pg_temp` last. Row-write triggers lock the release
+before changing children; deferred triggers require completed finalization at
+commit. The trusted owner/migrator can change this enforcement.
+[Function security](https://www.postgresql.org/docs/17/sql-createfunction.html),
+[deferred triggers](https://www.postgresql.org/docs/17/sql-createtrigger.html).
+
+Destructive downgrade is refused, including through the revision itself. For a
+disposable test use a fresh database; schema recovery requires a compatible
+app/schema plan or a separate restored database. Content rollback activates a
+retained release and never resets IDs or deletes history. Full backup-role
+real-content restore acceptance remains Step 6, not a Step 3 claim.
+
+[Step 3 evidence](../work/ongoing/L3-step3-schema-evidence.json) records 58 passing
+real-PG17 fixture cases, installed-wheel migration/role smoke, default JSON API
+regression and full project verification on native Linux ARM64 containers. The
+native acceptance runner now invokes these cases on both architectures; current
+Step 3 AMD64 CI execution is not certified by this local result. Prior Step 2 CI
+passed on user confirmation. Actual-bank import/export/API and recovery gates
+remain pending.
 
 ## Context and authority
 
@@ -32,7 +89,7 @@ Use schema `content`. Column names below use snake_case internally; stored/expor
 
 A building release exists only within its creation transaction. Finalization checks both stored validators, cross-bank references, ordinal contiguity, nested choice/answer references, artifact reconstruction and hashes before changing state. Commit only finalized releases; enforce this with a deferred constraint trigger. Learner-visible views include only finalized release rows. Initial migration may leave zero releases and an unpopulated active pointer; explicit import/activation precedes DB-mode API startup.
 
-Step 2 startup uses `content.schema_version`, a reader-visible view of the Alembic version marker, and `content.published_releases`, a finalized-release view, together with the active pointer. Step 3 must create/grant these views; readers never receive write access to migration metadata. No product revision exists during Step 2, so its explicit upgrade command refuses to mutate the database.
+Step 2 startup uses `content.schema_version`, a reader-visible view of the Alembic version marker, and `content.published_releases`, a finalized-release view, together with the active pointer. Step 3 creates/grants these views; readers never receive write access to migration metadata. No product revision exists during Step 2, so its explicit upgrade command refuses to mutate the database.
 
 ### Version-scoped content rows
 
@@ -109,7 +166,7 @@ Activation/import/publish and their audit are atomic. Controlled jobs require ex
 ## Ownership and implementation sequence
 
 - `backend/src/meducation_api/repositories/question_bank.py` continues to own stored models and learner protocols initially. Shared serialization/validation may be extracted into focused backend content modules when both adapters require it, without changing frontend owners.
-- `backend/src/meducation_api/db/` owns engine/session creation, SQLAlchemy tables and transactional functions; Postgres repository adapters belong in `repositories/`. Routes depend on protocols/views, not ORM entities.
+- `backend/src/meducation_api/db/` owns engine/session creation and bound transactional calls; packaged migration SQL owns tables/functions; Postgres repository adapters belong in `repositories/`. Routes depend on protocols/views, not ORM entities.
 - Paired-source composition and cleanup belong in backend application wiring; settings owns source selection and redacted connection configuration.
 - Alembic environment/version files belong in `backend/src/meducation_api/migrations/`, with packaged migration resources verified in the installed wheel/image. Step 2 places them within the existing package so editable installs and installed wheels use one resource path without a second copy or checkout dependency. A focused backend operator CLI owns migrate/import/activate/export/parity invocation; `scripts/containers/` owns local orchestration/PG17 tools.
 - Backend fixture/integration tests remain in `backend/tests/`; shared stored-contract cases remain in `tests/fixtures/`. Actual-bank parity is an explicit read-only-source command against disposable DBs, separate from normal fixture tests.
@@ -124,7 +181,7 @@ Implementation gates require PG17, not SQLite: empty/repeated migrations; least-
 
 Run actual-bank reconstruction/API parity separately, preserving source byte hashes, with exact mismatch paths. Rehearse PG17 dump/fresh restore using separate backup/migration roles and reapply deliberate ownership/ACLs because portable `--no-owner --no-acl` dumps omit them. Verify artifacts, normalized rows, active sequence, drafts/audit, reservations/counters and schema head after restore. Keep database caches/processes fresh after replacement; a restore can rewind allocation state, so before resuming authoritative authoring reconcile all post-backup allocation/import events from recoverable operator records or block new allocations until recovery resolves them. RPO-limited recovery must not quietly claim a never-reuse guarantee for lost reservations; L4 must settle durable off-volume allocation evidence with its backup contract before cutover.
 
-Content rollback only activates a retained finalized release; it never deletes newer releases or resets counters/draft history. Destructive Alembic downgrade is restricted to disposable verification databases. Production schema recovery uses a compatible app/schema plan or fresh-DB restoration with protected source/backup copies. Immutable release deletion/garbage collection is deferred; no automatic pruning in L3.
+Content rollback only activates a retained finalized release; it never deletes newer releases or resets counters/draft history. Destructive Alembic downgrade is refused; use a fresh disposable database for tests. Production schema recovery uses a compatible app/schema plan or fresh-DB restoration with protected source/backup copies. Immutable release deletion/garbage collection is deferred; no automatic pruning in L3.
 
 ## Consequences
 

@@ -1,6 +1,24 @@
 # Local Postgres and Python toolchain
 
-Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 L2 CI passed per user confirmation. L3 Step 2 is implemented and locally verified; the user reported native AMD64 CI passed; ARM64 CI needs rerun after a browser geometry test fix, and later real-content integration remains pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md) and [L3 tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md).
+Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 L2 CI passed per user confirmation. L3 Step 2 is complete with user-confirmed passing native CI after the browser fix. Step 3 schema/transactions are locally verified; real-content integration remains pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md) and [L3 tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md).
+
+## L3 Step 3 implementation follow-up — 2026-10-13
+
+Installed head `0001_content` now applies the real schema explicitly and safely
+repeats. Packaged SQL resources create immutable paired releases, private draft,
+publication/audit history, durable ID registry/reservations and narrowly granted
+operator functions. A separate secret `MEDUCATION_OPERATOR_DATABASE_URL` requires
+the operator role and is never supplied to the learner API. No extensions or
+provider-specific dependencies are added. Destructive downgrade is refused.
+
+The installed-image smoke now tests real migration before an independent
+synthetic revision using its own version marker. A separate 58-case real-PG17
+fixture suite exercises transactional invariants and concurrency. Both checks
+are included in native acceptance; local ARM64 passing results do not certify
+new AMD64 CI execution or actual-bank import/API/restore parity. See
+[ADR0005](0005-paired-content-releases-and-postgres-schema.md#step-3-implementation-follow-up--2026-10-13)
+and the [current tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md).
+Earlier Step 2 missing-head and pending-CI statements below are historical.
 
 ## L3 Step 2 implementation follow-up — 2026-10-13
 
@@ -59,7 +77,7 @@ Choose **PostgreSQL 17**, initially 17.11. It is supported upstream through Nove
 
 Use Debian Bookworm images on Linux ARM64 and AMD64, with multi-platform index digests verified from Docker Registry metadata:
 
-- DB and client tools: `postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826`.
+- DB and client tools: `postgres:17.11-bookworm@sha256:3645870cccdfa447589da9f57dd740faa29b30938e861289a5874b6ca6b03826`.
 - API base: `python:3.14.8-slim-bookworm@sha256:48b13b003dda20b16f9442b8475aa05fe21bf6579a8c881db92ffb4d8fd20f83`.
 
 Both metadata bodies hash to their reported index digest and list linux/amd64 and linux/arm64/v8 child manifests. Use the index digest so native architecture selection works; do not hard-code an AMD64 child on Apple Silicon. Official image definitions independently list both architectures. Avoid Alpine initially to reduce libc/build differences. This is registry evidence, not a pulled/running image or a proven container build. [Postgres image definitions](https://github.com/docker-library/official-images/blob/master/library/postgres), [Python image definitions](https://github.com/docker-library/official-images/blob/master/library/python).

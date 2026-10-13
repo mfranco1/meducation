@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     database_environment: Literal["local", "production"] = "production"
     database_url: SecretStr | None = None
     migration_database_url: SecretStr | None = None
+    operator_database_url: SecretStr | None = None
     bootstrap_database_url: SecretStr | None = None
 
     @model_validator(mode="after")
@@ -31,6 +32,7 @@ class Settings(BaseSettings):
         for value, role in (
             (self.database_url, "meducation_reader"),
             (self.migration_database_url, "meducation_migrator"),
+            (self.operator_database_url, "meducation_operator"),
             (self.bootstrap_database_url, "meducation_bootstrap"),
         ):
             if value is not None:

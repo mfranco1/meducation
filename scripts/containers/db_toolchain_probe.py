@@ -29,9 +29,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 def run_probe():
     assert psycopg.pq.__impl__ == "binary"
-    assert migration_head() is None, (
-        "Update the toolchain probe when Step 3 adds a real head"
-    )
+    assert migration_head() == "0001_content"
     config = migration_config()
     packaged = Path(config.get_main_option("script_location"))
     assert (
@@ -104,7 +102,9 @@ def run_probe():
                 raise AssertionError("Unsafe preexisting membership was accepted")
         finally:
             with admin.begin() as connection:
-                connection.exec_driver_sql("REVOKE meducation_owner FROM meducation_reader")
+                connection.exec_driver_sql(
+                    "REVOKE meducation_owner FROM meducation_reader"
+                )
         with admin.connect() as connection:
             version = connection.exec_driver_sql("SHOW server_version_num").scalar_one()
             attrs = connection.exec_driver_sql(
@@ -122,12 +122,31 @@ def run_probe():
             denied(engine, "CREATE TABLE public.forbidden(id int)")
             denied(engine, "CREATE ROLE forbidden")
 
+        upgrade(migrator)
+        upgrade(migrator)
+        with reader.connect() as connection:
+            assert (
+                connection.exec_driver_sql(
+                    "SELECT version_num FROM content.schema_version"
+                ).scalar_one()
+                == "0001_content"
+            )
+            assert (
+                connection.exec_driver_sql(
+                    "SELECT count(*) FROM content.published_releases"
+                ).scalar_one()
+                == 0
+            )
+
         # A synthetic Alembic revision tests packaged env.py without introducing product schema.
         with tempfile.TemporaryDirectory(
             prefix="meducation-migration-probe-"
         ) as temporary:
             fixture_dir = Path(temporary) / "migrations"
             shutil.copytree(packaged, fixture_dir)
+            for revision_file in fixture_dir.joinpath("versions").glob("*.py"):
+                if revision_file.name != "__init__.py":
+                    revision_file.unlink()
             fixture_dir.joinpath("versions/fixture.py").write_text(
                 "from alembic import op\n"
                 "revision = 'toolchain_fixture'\ndown_revision = None\n"
@@ -139,6 +158,7 @@ def run_probe():
                 encoding="utf-8",
             )
             config.set_main_option("script_location", str(fixture_dir))
+            config.attributes["version_table"] = "toolchain_alembic_version"
             for _ in range(2):
                 with migrator.begin() as connection:
                     connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
@@ -147,7 +167,7 @@ def run_probe():
             with backup.connect() as connection:
                 assert (
                     connection.exec_driver_sql(
-                        "SELECT version_num FROM content.alembic_version"
+                        "SELECT version_num FROM content.toolchain_alembic_version"
                     ).scalar_one()
                     == "toolchain_fixture"
                 )
@@ -239,13 +259,8 @@ def run_probe():
 
         asyncio.run(rejects_api())
 
-        # The explicit job refuses the absent product migration before opening a connection.
-        try:
-            upgrade(migrator)
-        except ContentDatabaseError as error:
-            assert "Step 3" in str(error)
-        else:
-            raise AssertionError("Missing migration head should fail")
+        # The explicit job can repeat the real schema migration without creating content.
+        upgrade(migrator)
         env = {
             **os.environ,
             "MEDUCATION_DATABASE_ENVIRONMENT": "local",
@@ -260,7 +275,7 @@ def run_probe():
             text=True,
             check=False,
         )
-        assert result.returncode == 1 and "Step 3" in result.stderr
+        assert result.returncode == 0 and "upgraded" in result.stdout
         assert bootstrap_password not in result.stderr
         invalid = database_url(
             SecretStr(reader_url), role="meducation_reader", local=True
@@ -285,13 +300,14 @@ def run_probe():
                 "future owner object backup grants",
                 "no PUBLIC function execution",
                 "synthetic explicit Alembic upgrade/repeat",
+                "real packaged content migration upgrade/repeat and reader head view",
                 "JSON/text/choice-order round trip",
                 "transaction rollback",
                 "bounded single reader pool",
                 "uninitialized runtime/API refusal and cleanup",
-                "explicit missing-head job refusal",
+                "explicit repeatable migration CLI",
             ],
-            "limitations": "Synthetic tables/revision only. Product schema, active content and learner adapters remain Steps 3–5. No hosted or native AMD64 claim from ARM64 execution.",
+            "limitations": "Real product schema plus synthetic toolchain data. Real-content import and learner adapters remain Steps 4–5. No hosted or native AMD64 claim from ARM64 execution.",
         }
     finally:
         for engine in engines:

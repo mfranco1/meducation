@@ -7,6 +7,7 @@ context.configure(
     connection=connection,
     target_metadata=None,
     version_table_schema="content",
+    version_table=context.config.attributes.get("version_table", "alembic_version"),
     compare_type=True,
 )
 with context.begin_transaction():

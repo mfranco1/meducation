@@ -44,8 +44,8 @@ regenerates its metadata.
 
 ## L3 database toolchain and explicit jobs
 
-The database toolchain is available; product content migrations/import and learner
-adapters are still later L3 steps. Keep `MEDUCATION_CONTENT_SOURCE=json` for the
+The database toolchain and content schema are available. File import/export and
+learner adapters remain later L3 steps. Keep `MEDUCATION_CONTENT_SOURCE=json` for the
 working learner API. Explicit `postgres` mode currently refuses startup; it never
 falls back to JSON or automatically migrates/imports content.
 
@@ -64,7 +64,7 @@ permissions, and grants backup access to future owner-created content objects.
 It also updates the four login passwords from the configured values. It refuses
 unexpected role memberships/schema ownership rather than taking over other data.
 Run it only against the intended local development database. Public learner
-reader access is granted to selected views by future content migrations; reader
+reader access is granted to selected finalized-release views by migration `0001_content`; reader
 and operator roles receive no blanket table/write/function access at bootstrap.
 
 Start local PG17 using the [container runbook](../docs/local-containers.md), with
@@ -81,11 +81,26 @@ migration credentials.
 .venv/bin/meducation-db upgrade
 ```
 
-`head` currently reports no packaged content revision, and `upgrade` fails before
-opening a connection because Step 3 has not supplied the product schema. This is
-an intentional gate, not a completed migration. The installed package contains
-the Alembic environment/versions directory under `meducation_api/migrations`, so
-the same explicit job runs from the API wheel/image without a source checkout.
+`head` reports `0001_content`; `upgrade` applies the packaged transactional content
+schema and is safe to repeat. The installed package contains Alembic revisions
+and SQL resources under `meducation_api/migrations`, so the same explicit job
+runs from the API wheel/image without a source checkout. It creates an empty
+draft and unpublished pointer; it does not import authored content. Destructive
+downgrade is refused. Use a disposable database for schema experiments and a
+compatible app/schema or separate-database restoration for recovery.
+
+`db/operations.py` provides private bound transaction calls for paired release
+storage/finalization, activation, draft save/reset and independently committed ID
+reservations. Configure the separate `meducation_operator` URL only for operator
+jobs; never pass it to the learner API. Operational roles cannot write tables
+directly. These are primitives, not file-import commands or an admin gateway.
+See the [schema decision](../docs/decisions/0005-paired-content-releases-and-postgres-schema.md)
+for replay, actor, allocation and privileged-maintenance boundaries.
+
+Normal pytest skips the 58 real-Postgres cases without an explicitly isolated
+test target. Run `.venv/bin/python scripts/containers/test-postgres-content.py`
+from the root to create a unique tmpfs PG17 test container, bootstrap/migrate and
+exercise those cases. It cleans up its container and never uses the routine DB.
 
 Runtime uses only `meducation_reader` and one SQLAlchemy pool of size 2 with no
 overflow. Operator jobs use direct, unpooled connections; migrations SET ROLE to
@@ -94,7 +109,7 @@ the NOLOGIN owner inside a transaction. Hosted configuration requires explicit
 Compose `postgres` hostname and `MEDUCATION_DATABASE_ENVIRONMENT=local`.
 One-time schema/head/active-release checks dispose connections on startup failure;
 recurring health routes do not query Postgres. Successful DB learner startup is
-pending the actual schema, explicit paired import/activation and adapters.
+pending explicit paired file import/activation and learner adapters.
 
 ## JSON API container
 

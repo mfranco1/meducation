@@ -94,17 +94,25 @@ Automated role/label, keyboard/focus, reduced-motion, and mobile/desktop checks 
 
 ## Local-preparation acceptance
 
-L3 Step 2 adds `backend/tests/test_database_setup.py` for strict source/secret URL
-validation, explicit migration transactions, startup refusal and engine cleanup.
-Run normal backend Ruff/mypy/pytest alongside
-`scripts/containers/smoke-db-toolchain.py --image meducation-api:l3-step2` after
-building that API image. The latter tests the installed wheel against an isolated
-real PG17 instance: binary imports/libpq, repeatable explicit bootstrap, role and
-PUBLIC function isolation, owner default backup grants, synthetic Alembic
-upgrade/repeat, JSON/text/order round trip and rollback. It is included in the
-existing native container acceptance jobs. Actual content revisions/adapters and
-successful DB startup remain later L3 gates; this toolchain test must be extended
-when Step 3 supplies the migration head. Follow the
+L3 Steps 2–3 add strict settings/lifecycle and paired-artifact fixture tests to
+normal backend Ruff/mypy/pytest. After building `meducation-api:l3-step3`, run
+`scripts/containers/smoke-db-toolchain.py --image meducation-api:l3-step3` to test
+the installed wheel against isolated PG17: binary imports/libpq, repeatable
+bootstrap and real packaged migration, restricted role/PUBLIC privileges,
+backup grants, an independent synthetic migration, round trip and rollback.
+
+Run `.venv/bin/python scripts/containers/test-postgres-content.py` separately for
+58 real-Postgres schema/operation cases. It creates and cleans a unique tmpfs
+PG17 container with disposable credentials; it never targets the routine DB.
+Normal pytest skips these cases unless an explicitly isolated test URL is
+provided; skips are not Postgres acceptance. The suite checks SQL stored-contract
+validation, exact fixture artifacts/digests/order/provenance, relational and
+finalization constraints, protected histories, draft isolation, atomic activation,
+idempotent replay and concurrent imports/reservations/publications. Existing
+native AMD64/ARM64 container acceptance jobs invoke both checks. Local ARM64
+results do not certify execution of these new tests on AMD64. Actual-bank file
+import/export, learner adapters and fresh-DB real-content recovery remain later
+L3 gates. Follow the
 [job/runbook commands](local-containers.md#l3-explicit-database-jobs-and-toolchain-verification).
 
 [Completed L0 decisions](work/done/L0-local-contracts-plan.md) are design/feasibility evidence. Their tests do not certify future application implementations. Keep frozen evidence under docs/work/done; record new feature results in ongoing stage trackers, without overwriting historical snapshots.
