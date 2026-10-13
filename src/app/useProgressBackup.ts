@@ -219,7 +219,9 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
         const captured = captureBrowserProgressPair(lease);
         if (captured.kind !== 'captured') return { kind: 'unavailable' as const };
         const current = encodeBackupFromProgressPair(captured.pair);
-        const recovery = current.ok ? undefined : encodeRawProgressRecovery(captured.pair);
+        const recovery = current.ok
+          ? undefined
+          : encodeRawProgressRecovery(captured.pair, new Date().toISOString(), null, false);
         return {
           kind: 'captured' as const,
           pair: captured.pair,

@@ -1,6 +1,6 @@
 # Local-first production preparation
 
-Created: 2026-10-12. Status: L0 design/evidence complete; L1–L6 implementation not started. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
+Created: 2026-10-12. Status: L0 design/evidence complete; L1 implementation underway; L2–L6 not started. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
 
 ## Confirmed scope
 
@@ -166,14 +166,14 @@ Provision managed Postgres and the chosen admin identity; deploy static learner/
 - [x] L0 Step 3 coordination design/prototype selected and audited; 21 Chromium/WebKit probes and lint/format/build passed. Firefox and actual BFCache validation remain release obligations. Step 4 awaits user continuation.
 - [x] L0 Step 4 journal/recovery contract selected and audited; fault model and lint/format/build passed. Step 5 awaits user continuation.
 - [x] L0 Step 5 strict validation/limits/timer-normalization selected and audited; synthetic sizing/invariants and lint/format/build passed. Step 6 awaits user continuation.
-- [ ] L1 implemented and verified. Implementation is underway; full verify:full passes, but L1 browser/recovery and public-launch gates remain open in its tracker.
+- [ ] L1 implemented and verified. Full `verify:full` passes (526 Vitest, 21 learner Chromium E2E, 12 admin E2E); five feature flows also pass in Chromium and WebKit. Firefox cannot launch on this host, and L1 acceptance remains open for fault/lifecycle/quota, manual mobile and assistive-technology evidence; see its tracker and browser checklist.
 - [ ] L2 implemented and verified.
 - [ ] L3 implemented and verified.
 - [ ] L4 implemented and verified.
 - [ ] L5 implemented and verified.
 - [ ] L6 implemented and verified.
 
-L1 runtime work has since begun in its own tracker. This parent planning document was updated to reflect that status; no content edits, schema migrations, Docker setup or cloud provisioning occurred. Planning verification: `npm run build` passed including typecheck (non-blocking Vite chunk-size advisory); `git diff --check` passed; revised canvas TSX syntax validation passed. Canvas host rendering was not verified. Historical checks in the earlier snapshot are not implementation evidence for these stages.
+L1 runtime work has since begun in its own tracker. Its latest verify:full and partial browser evidence are recorded there; no content edits, schema migrations, Docker setup or cloud provisioning occurred. The feature remains open pending the documented browser/recovery and public-launch gates. Historical checks in the earlier snapshot are not implementation evidence for these stages.
 
 - [x] L0 Step 6 capability/lifecycle/accessibility acceptance selected and audited; L0-A design gate met. Application multi-browser, quota, BFCache and manual mobile/assistive-technology verification remain L1/release gates. Step 7 awaits user continuation.
 

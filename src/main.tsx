@@ -10,12 +10,41 @@ import { AppNavigationDrawer } from './app/components/AppNavigationDrawer';
 import { ScreenLoading } from './shared/ui/loading/ScreenLoading';
 import { brand } from './shared/brand';
 import { ProgressBootFailure } from './shared/ui/loading/ProgressBootFailure';
-import { initializeProgressAdmission, installProgressPageLifecycle, learnerProgressAdmission } from './persistence/progressAdmission';
+import {
+  initializeProgressAdmission,
+  installProgressPageLifecycle,
+  learnerProgressAdmission,
+} from './persistence/progressAdmission';
+import { captureBrowserRawProgressRecovery, RAW_PROGRESS_RECOVERY_FORMAT } from './persistence/progressBackupStorage';
+
+function downloadBootRecovery(): string | undefined {
+  const recovery = captureBrowserRawProgressRecovery();
+  if (!recovery.ok) {
+    if (recovery.error === 'too-large')
+      return 'The saved values are larger than the 64 MiB recovery limit. No data was changed.';
+    if (recovery.error === 'changed')
+      return 'Saved values changed during capture. Close other Meducation tabs and try again.';
+    return 'Saved values could not be read. No recovery file was created.';
+  }
+  const url = URL.createObjectURL(new Blob([recovery.json], { type: 'application/json' }));
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = `${RAW_PROGRESS_RECOVERY_FORMAT}-${new Date().toISOString().slice(0, 10)}.json`;
+  anchor.click();
+  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
+  return undefined;
+}
 
 const root = createRoot(document.getElementById('root')!);
-const render = (content: ReactNode) => root.render(
-  <StrictMode><ThemeProvider theme={theme}><CssBaseline />{content}</ThemeProvider></StrictMode>,
-);
+const render = (content: ReactNode) =>
+  root.render(
+    <StrictMode>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        {content}
+      </ThemeProvider>
+    </StrictMode>,
+  );
 
 async function boot() {
   try {
@@ -26,10 +55,18 @@ async function boot() {
       render(<ContentQaPanel />);
       return;
     }
-    render(<AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />} busy><ScreenLoading label={`Loading ${brand.name}…`} /></AppShell>);
+    render(
+      <AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />} busy>
+        <ScreenLoading label={`Loading ${brand.name}…`} />
+      </AppShell>,
+    );
     const admission = await initializeProgressAdmission();
     if (admission.kind !== 'ready' && admission.kind !== 'read-only') {
-      render(<AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />}><ProgressBootFailure reason={admission.kind} /></AppShell>);
+      render(
+        <AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />}>
+          <ProgressBootFailure reason={admission.kind} onDownloadRecovery={downloadBootRecovery} />
+        </AppShell>,
+      );
       return;
     }
     installProgressPageLifecycle(learnerProgressAdmission);
@@ -38,7 +75,11 @@ async function boot() {
   } catch (error) {
     learnerProgressAdmission.close();
     console.error('Application could not start.', error);
-    render(<AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />}><BootFailure /></AppShell>);
+    render(
+      <AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />}>
+        <BootFailure />
+      </AppShell>,
+    );
   }
 }
 
