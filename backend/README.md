@@ -44,9 +44,9 @@ regenerates its metadata.
 
 ## L3 database toolchain and explicit jobs
 
-The database toolchain and content schema are available. File import/export and
-learner adapters remain later L3 steps. Keep `MEDUCATION_CONTENT_SOURCE=json` for the
-working learner API. Explicit `postgres` mode currently refuses startup; it never
+The database toolchain and content schema are available. Paired file import/export is now available;
+learner adapters remain Step 5. Keep `MEDUCATION_CONTENT_SOURCE=json` for the
+working learner API. Explicit `postgres` learner mode currently refuses startup; it never
 falls back to JSON or automatically migrates/imports content.
 
 Install the updated development lock using the setup commands above. Python 3.14
@@ -93,11 +93,12 @@ compatible app/schema or separate-database restoration for recovery.
 storage/finalization, activation, draft save/reset and independently committed ID
 reservations. Configure the separate `meducation_operator` URL only for operator
 jobs; never pass it to the learner API. Operational roles cannot write tables
-directly. These are primitives, not file-import commands or an admin gateway.
+directly. The operator CLI composes these primitives for file import, activation and export;
+no admin gateway is exposed.
 See the [schema decision](../docs/decisions/0005-paired-content-releases-and-postgres-schema.md)
 for replay, actor, allocation and privileged-maintenance boundaries.
 
-Normal pytest skips the 58 real-Postgres cases without an explicitly isolated
+Normal pytest skips the 64 real-Postgres cases without an explicitly isolated
 test target. Run `.venv/bin/python scripts/containers/test-postgres-content.py`
 from the root to create a unique tmpfs PG17 test container, bootstrap/migrate and
 exercise those cases. It cleans up its container and never uses the routine DB.
@@ -109,7 +110,58 @@ the NOLOGIN owner inside a transaction. Hosted configuration requires explicit
 Compose `postgres` hostname and `MEDUCATION_DATABASE_ENVIRONMENT=local`.
 One-time schema/head/active-release checks dispose connections on startup failure;
 recurring health routes do not query Postgres. Successful DB learner startup is
-pending explicit paired file import/activation and learner adapters.
+pending the Step 5 learner adapters, even after explicit import/activation.
+
+## Paired content import, activation and export
+
+Keep canonical JSON authoritative. Install the Python development environment and
+run `npm ci` in the repository. Validation/import requires `--repository` pointing
+to that checkout: the job runs existing TypeScript stored/domain/Markdown and
+flashcard validators against private copies of the exact captured input bytes.
+It never validates a different bundled bank or rereads source files after capture.
+Both files are limited to 64 MiB each. Python first rejects duplicate keys,
+nonfinite numbers, null/unknown fields, bad relationships and unpaired Unicode
+surrogates; the TypeScript gate adds rich-content and reviewed-note policy.
+Warnings are reported as a count and do not block existing reviewed content.
+No input text, database URL or SQL is printed.
+
+```sh
+.venv/bin/meducation-db validate-pair --quiz-file src/content/questionBank.generated.json --flashcard-file src/content/flashcardBank.generated.json --repository .
+.venv/bin/meducation-db import-pair --quiz-file src/content/questionBank.generated.json --flashcard-file src/content/flashcardBank.generated.json --repository . --operation-id "IMPORT_OPERATION_UUID" --actor "local-operator" --reason "Initial reviewed JSON copy"
+.venv/bin/meducation-db activate --release-id "RELEASE_UUID" --expected-sequence 0 --operation-id "ACTIVATION_OPERATION_UUID" --actor "local-operator" --reason "Explicit first activation"
+.venv/bin/meducation-db export-release --release-id "RELEASE_UUID" --output var/content-export-new
+```
+
+Replace the UUID placeholders before execution. Choose and retain one operation
+UUID per intent; retry with the same files/actor/reason/UUID to obtain the recorded
+result. Changed intent needs a new UUID. Import prints release identity, both
+revision hashes, captured source hashes and warning count. It never activates;
+reimporting an old pair cannot silently roll back the active pointer. Activation
+uses a separate UUID and expected sequence; zero applies only to a fresh
+unpublished database. Later activation requires the current sequence, which can
+be observed in an export manifest. Replay returns the original event without
+moving a subsequently changed pointer. Both actions require the configured
+operator connection; bootstrap/migration credentials are never substituted.
+
+Create the export parent first; the output directory itself must be new.
+`questionBank.json` and `flashcardBank.json` are reconstructed independently from
+normalized rows and global ordinals. Artifact key order is only a template;
+field/value/array differences fail rather than being repaired. Both serialized
+artifacts and revision hashes must match. `manifest.json`, written last, contains
+release ID, schema versions, digests, artifact checksums and publication context
+from one read-only repeatable snapshot. No manifest fields enter bank schemas.
+An ordinary write failure removes only the newly created output. A process crash
+may leave an incomplete directory: absence of the manifest means incomplete;
+retain source/DB data and choose a new output directory for retry. Existing
+outputs and canonical files are never overwritten.
+
+Validation/import is a host operator workflow requiring Node and the checkout;
+the production learner image does not gain Node or a runtime validator. Head,
+migration, activation and export use the installed Python package. Run the
+[disposable PG integration launcher](../docs/testing.md#local-preparation-acceptance)
+for roundtrip, source-capture, injected rollback, replay/concurrency, corrupt-row
+rejection and CLI evidence. Learner DB/API parity and actual-bank restore remain
+Steps 5–6; publication does not yet enable learner Postgres mode.
 
 ## JSON API container
 

@@ -40,7 +40,8 @@ def main():
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.sql")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/tests").glob("*.py")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "tests/fixtures").rglob("*.json")]
-    inputs += ["backend/pyproject.toml", "backend/requirements-dev.lock",
+    inputs += ["scripts/content/validate-paired-files.ts",
+               "backend/pyproject.toml", "backend/requirements-dev.lock",
                "playwright.containers.config.ts", "e2e/containers/service-recreation.spec.ts"]
     report["inputs_sha256"] = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in inputs}
 

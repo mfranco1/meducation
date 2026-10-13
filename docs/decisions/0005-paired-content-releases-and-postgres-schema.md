@@ -1,6 +1,44 @@
 # 0005 — Paired content releases and Postgres schema
 
-Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; file importer/exporter, learner adapters and actual-bank parity/recovery pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; paired file importer/exporter implemented; learner adapters and comprehensive actual-bank parity/recovery pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+
+## Step 4 implementation follow-up — 2026-10-13
+
+The [operator workflow](../../backend/README.md#paired-content-import-activation-and-export)
+now captures each paired file once (64 MiB per-file limit), rejects ambiguous
+JSON/invalid stored contracts/unpaired Unicode surrogates, and invokes the
+existing TypeScript stored/domain/rich-Markdown/flashcard policy on private copies
+of those captured bytes. No bundled canonical module is imported by that gate.
+Source hashes refer to original bytes; TEXT artifacts retain parsed key order and
+optional-field presence. Both validators finish before an import transaction.
+
+`validate-pair` needs no DB configuration. `import-pair` uses only the explicitly
+configured operator and returns release identity without activating. `activate`
+requires a separate operation UUID and expected publication sequence; replay does
+not move a later pointer. Jobs preserve actor/reason and never print content,
+credentials or SQL. Import validation requires a checkout with Node dependencies;
+the production learner image gains no Node or runtime authoring policy.
+
+Export independently reconstructs all collections from rows/global ordinals,
+checks typed leaves/key sets/array order against artifacts, reorders object keys
+using the artifacts only as templates, and validates exact bytes and both
+revision algorithms. A read-only repeatable snapshot supplies publication context
+for an external v1 manifest. Output must be a new directory; ordinary write
+failure removes that newly created output, and the manifest written last is its
+completion marker. Process-crash residue is incomplete and must not be mistaken
+for a valid export. No source file or existing output is overwritten.
+
+The policy boundary intentionally remains an intersection of validators. Python
+and SQL enforce stored shape/relationships/provenance, while TypeScript adds
+rich-Markdown and trimmed reviewed-draft notes. Whitespace conventions differ
+between runtimes; passing Python alone is not authoring acceptance. Fixture cases
+exercise rich-policy rejection, Unicode/Markdown/math/newlines, raw shape,
+capture/replay/failure/concurrency, cross-parent global order and corrupt exports.
+L4 still needs backend-only policy parity before accepting browser writes.
+Canonical captured-file validation passed with 32 retained review warnings; no
+actual bank was imported here. Comprehensive reconstruction/API parity and
+backup-role recovery remain Step 6. [Step 4 evidence](../work/ongoing/L3-step4-transfer-evidence.json)
+records current commands, hashes and local results separately from frozen Step 3.
 
 ## Step 3 implementation follow-up — 2026-10-13
 

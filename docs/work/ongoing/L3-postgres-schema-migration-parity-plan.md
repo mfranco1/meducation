@@ -1,6 +1,6 @@
 # L3 — Local Postgres schema, migration and parity
 
-Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Steps 4–7 pending.
+Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Step 4 complete with passing local verification; Steps 5–7 pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l3--local-postgres-schema-migration-and-parity). Prerequisites: [completed L2](../done/L2-containers-local-services-plan.md) and [ADR0003 toolchain contract](../../decisions/0003-local-postgres-toolchain.md). Follow the [work tracking stage gates](../README.md): implement one step, record its checks and limitations, then stop at that gate until continuation is authorized. The user's 2026-10-13 instruction to start implementation authorizes beginning this sequence; L4 remains outside scope.
 
@@ -200,14 +200,78 @@ at the agreed stage gate.
 
 ## Step 4 — Import and export canonical paired banks
 
-- [ ] Add an explicit paired-file validation/import command using existing stored validators and cross-bank subject checks. Run the repository content validator as part of the documented import workflow; record any Python/TypeScript validation-policy gaps and required cross-runtime cases instead of claiming the current Python loader enforces every authoring rule.
-- [ ] Validate both captured inputs before content mutation. Preserve exact strings, rich formatting, numeric values, choice order, source/verified answers, rationale metadata, sparse fields and global collection order. Hash the captured inputs, not files reread after validation. Reject invalid/null/unknown fields according to the stored contracts.
-- [ ] Import rows, serialized artifacts and provenance in one transaction. A failed import must leave no partial release, active-pointer change or misleading success audit. Deterministically identify duplicate paired input, compare its content, and reuse the existing release. Repeated import without activation must not create publication events.
-- [ ] Make activation explicit, with an expected-publication precondition and a recorded operator/reason. Importing a previously seen pair must not silently roll back the active release. For first startup, document the explicit import-and-activate sequence.
-- [ ] Export a selected release into new files with an external manifest containing release identity, schema versions, digests and publication context. Reconstruct from normalized data and compare against the immutable artifacts. Never overwrite authored banks by default or add manifest fields to their schemas.
-- [ ] Add fixture cases for Unicode, math/Markdown, escaped/newline strings, reordered object keys, omitted fields, verified answers, empty decks, and nontrivial global/parent order. Test invalid second-bank input, injected mid-import failure, duplicate/concurrent import and source files unchanged after success/failure.
+Implementation checkpoint — 2026-10-13: user authorized continuation, noting that
+usage limits may interrupt work. New `db/transfer.py` captures both input files
+once, runs strict stored validation plus the repository TypeScript rich-content
+gate on private captured copies, imports with source hashes, and independently
+reconstructs selected finalized releases for exact artifact/digest comparison.
+The CLI now exposes validate/import, explicit activation and export into a new
+directory with an external manifest. Implementation is in progress; integration,
+CLI failure/replay tests, documentation and completion evidence remain pending.
+Do not mark Step 4 done on this checkpoint alone. JSON authority is unchanged.
+
+- [x] Add an explicit paired-file validation/import command using existing stored validators and cross-bank subject checks. Run the repository content validator as part of the documented import workflow; record any Python/TypeScript validation-policy gaps and required cross-runtime cases instead of claiming the current Python loader enforces every authoring rule.
+- [x] Validate both captured inputs before content mutation. Preserve exact strings, rich formatting, numeric values, choice order, source/verified answers, rationale metadata, sparse fields and global collection order. Hash the captured inputs, not files reread after validation. Reject invalid/null/unknown fields according to the stored contracts.
+- [x] Import rows, serialized artifacts and provenance in one transaction. A failed import must leave no partial release, active-pointer change or misleading success audit. Deterministically identify duplicate paired input, compare its content, and reuse the existing release. Repeated import without activation must not create publication events.
+- [x] Make activation explicit, with an expected-publication precondition and a recorded operator/reason. Importing a previously seen pair must not silently roll back the active release. For first startup, document the explicit import-and-activate sequence.
+- [x] Export a selected release into new files with an external manifest containing release identity, schema versions, digests and publication context. Reconstruct from normalized data and compare against the immutable artifacts. Never overwrite authored banks by default or add manifest fields to their schemas.
+- [x] Add fixture cases for Unicode, math/Markdown, escaped/newline strings, reordered object keys, omitted fields, verified answers, empty decks, and nontrivial global/parent order. Test invalid second-bank input, injected mid-import failure, duplicate/concurrent import and source files unchanged after success/failure.
 
 Gate: import/export round trips preserve both banks and existing hashes; failure and retry behavior are proven on real Postgres. JSON remains authoritative.
+
+### Step 4 result — 2026-10-13
+
+Added explicit `validate-pair`, `import-pair`, `activate` and `export-release`
+operator commands. Both files are read once with a 64 MiB per-file limit;
+strict Python stored validation precedes the existing TypeScript stored/domain/
+Markdown/flashcard gate on private captured copies. The original bytes supply
+source hashes and preserved raw shape supplies TEXT artifacts. Validation/import
+requires a checkout with Node dependencies; the learner image gains no Node.
+No database content mutation occurs before both validators pass.
+
+Import commits rows/artifacts/provenance/audit in one transaction and never
+activates. Exact operation replay returns the original result; identical paired
+content reuses its finalized release. Explicit activation requires a separate
+operation UUID, actor/reason and expected publication sequence. Existing Step 3
+rollback/concurrency contracts remain intact. Export reads normalized rows and
+ordinals independently, compares typed values/key sets/array order, uses artifact
+object key order only as a template, and verifies exact bytes plus both digests.
+A read-only repeatable snapshot supplies the external manifest's publication
+context. Existing output directories are refused; ordinary write failure cleans
+only the new output. Manifest-last completion and process-crash residue are
+explained in the runbook.
+
+All **64 real-PG17 fixture cases** passed, including six file/CLI integration
+cases covering rich-policy rejection, Unicode/math/Markdown/newlines and escaped
+strings, reordered subject keys, source and verified answers, optional/empty
+fields, empty decks and global order across different parents. Captured inputs
+remain usable after original files change; concurrent imports reuse one release.
+Injected failure after row creation rolls back release/audit and leaves the active
+pointer unchanged. Re-import/export preserves artifacts and hashes. Corrupt rows
+fail without template repair; existing output and interrupted writes are protected.
+CLI validates/imports/replays/activates/rejects stale activation/exports end to end.
+
+Normal backend tests passed **76 cases**, with 64 PG cases skipped there and run
+separately. The two normal cross-runtime capture cases require `npm ci` and
+explicitly skip without it; native container acceptance supplies Node and tests
+that gate. Ruff, mypy (17 source files), changed-Python format, frontend
+lint/architecture (272 modules/1,203 imports), format and `npm run build`
+(typecheck included) passed. Captured canonical-file validation passed with the
+existing **32 review warnings**, without importing either actual bank. The native
+ARM64 installed-image migration and default JSON API smokes passed; all 19
+packaged Python/SQL resources matched source. Canonical banks and prior frozen
+snapshots stayed byte-identical; only disposable tmpfs PG containers were used.
+Relative doc links/anchors, changed/new whitespace, JSON evidence and diff checks
+passed. Existing Vite/Starlette/content-review advisories remain.
+
+[Step 4 evidence](L3-step4-transfer-evidence.json) records hashes, commands and
+reports. TypeScript adds rich-policy and trimmed review-note checks that Python/
+SQL do not fully implement; their intersection is required for file import, and
+L4 must provide backend authoring policy parity before browser writes. No new
+native AMD64/hosted CI execution or comprehensive actual-bank DB/API/restore
+parity is claimed. Learner Postgres mode still refuses until Step 5 adapters;
+JSON remains authoritative. No blocking Step 4 findings remain. Stop before
+Step 5 at the agreed stage gate.
 
 ## Step 5 — Serve both repositories through a consistent release view
 
@@ -249,7 +313,7 @@ Gate: local Postgres serves the current learner without content drift or gratuit
 - [x] Step 1 — ADR and contracts.
 - [x] Step 2 — Dependencies, roles and lifecycle: local checks and user-confirmed CI passed after the browser fix.
 - [x] Step 3 — Migrations and transactional primitives: 58 real-PG17 cases, installed-image/JSON smokes and full verification passed.
-- [ ] Step 4 — Paired import/export.
+- [x] Step 4 — Paired import/export: 64 real-PG cases, 76 normal backend tests, captured canonical validation, installed-image smokes and build passed.
 - [ ] Step 5 — DB adapters and API release consistency.
 - [ ] Step 6 — Parity, browser, recovery and CI evidence.
 - [ ] Step 7 — Final verification and handoff.

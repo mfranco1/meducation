@@ -942,3 +942,251 @@ def test_shared_stored_contract_cases_at_sql_boundary(db, case):
         with pytest.raises(SQLAlchemyError):
             invoke()
         assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 0
+
+
+def test_file_import_export_exact_roundtrip_and_replay(db, tmp_path):
+    from meducation_api.db.transfer import capture_pair, export_release, import_pair
+
+    q, f = banks()
+    q["subjects"][0] = dict(reversed(list(q["subjects"][0].items())))
+    q["subjects"].append({"id": "s2", "name": "Other subject", "accent": "#fff"})
+    q["quizzes"].insert(0, {"id": "q2", "subjectId": "s2", "name": "First catalog quiz"})
+    second = copy.deepcopy(q["questions"][0])
+    second.update({"id": "i2", "quizId": "q2"})
+    q["questions"].append(second)
+    q["questions"][0]["stem"] = 'Unicode β **bold** $x^2$\nEscaped "quote" and \\ slash'
+    f["decks"].append({"id": "dempty", "subjectId": q["subjects"][0]["id"], "name": "Empty"})
+    f["decks"].reverse()
+    paths = tmp_path / "source-q.json", tmp_path / "source-f.json"
+    for path, value in zip(paths, (q, f), strict=True):
+        path.write_text(json.dumps(value, ensure_ascii=False))
+    before = [p.read_bytes() for p in paths]
+    pair = capture_pair(*paths, repository=ROOT)
+    op = uuid4()
+    release = import_pair(db.operator, pair, operation_id=op, actor=ACTOR, reason=REASON)
+    assert import_pair(db.operator, pair, operation_id=op, actor=ACTOR, reason=REASON) == release
+    assert scalar(db.operator, "SELECT count(*) FROM content.publication_events") == 0
+    publication = publish(db, release)
+    output = tmp_path / "export"
+    manifest = export_release(db.operator, release.release_id, output)
+    assert (output / "questionBank.json").read_text() == pair.quiz_artifact
+    assert (output / "flashcardBank.json").read_text() == pair.flashcard_artifact
+    assert manifest["revisions"] == {
+        "quiz": release.quiz_revision,
+        "flashcard": release.flashcard_revision,
+    }
+    assert manifest["publication"]["observedActiveSequence"] == publication.publication_sequence
+    assert manifest["publication"]["selectedReleaseSequences"] == [publication.publication_sequence]
+    assert json.loads((output / "manifest.json").read_text()) == manifest
+    reimport = capture_pair(
+        output / "questionBank.json", output / "flashcardBank.json", repository=ROOT
+    )
+    assert (
+        import_pair(db.operator, reimport, operation_id=uuid4(), actor=ACTOR, reason=REASON)
+        == release
+    )
+    assert [p.read_bytes() for p in paths] == before
+    with pytest.raises(ContentDatabaseError):
+        export_release(db.operator, release.release_id, output)
+    assert (output / "questionBank.json").read_text() == pair.quiz_artifact
+
+
+def test_captured_pair_not_reread_and_concurrent_file_import_is_idempotent(db, tmp_path):
+    from meducation_api.db.transfer import capture_pair, import_pair
+
+    q, f = banks()
+    paths = tmp_path / "q.json", tmp_path / "f.json"
+    for path, value in zip(paths, (q, f), strict=True):
+        path.write_text(json.dumps(value))
+    pair = capture_pair(*paths, repository=ROOT)
+    paths[1].write_text("invalid after validation")
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        releases = list(
+            executor.map(
+                lambda _: import_pair(
+                    db.operator, pair, operation_id=uuid4(), actor=ACTOR, reason=REASON
+                ),
+                range(2),
+            )
+        )
+    assert releases[0] == releases[1]
+    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
+    assert scalar(db.operator, "SELECT count(*) FROM content.import_events") == 2
+    assert scalar(db.operator, "SELECT count(*) FROM content.publication_events") == 0
+    assert (
+        scalar(db.operator, "SELECT DISTINCT flashcard_source_sha256 FROM content.import_events")
+        == pair.flashcard_source_sha256
+    )
+
+
+def test_file_import_failure_preserves_source_and_active_state(db, tmp_path, monkeypatch):
+    from meducation_api.db import transfer
+
+    original = store(db)
+    publish(db, original)
+    q, f = banks()
+    q["questions"][0]["stem"] = "Different fixture"
+    paths = tmp_path / "q.json", tmp_path / "f.json"
+    for path, value in zip(paths, (q, f), strict=True):
+        path.write_text(json.dumps(value))
+    pair = transfer.capture_pair(*paths, repository=ROOT)
+    before = [p.read_bytes() for p in paths]
+    real_store = transfer.store_release
+
+    def fail_after_rows(*args, **kwargs):
+        real_store(*args, **kwargs)
+        raise RuntimeError("Injected mid-import failure")
+
+    monkeypatch.setattr(transfer, "store_release", fail_after_rows)
+    with pytest.raises(RuntimeError, match="Injected"):
+        transfer.import_pair(db.operator, pair, operation_id=uuid4(), actor=ACTOR, reason=REASON)
+    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
+    assert scalar(db.operator, "SELECT count(*) FROM content.import_events") == 1
+    assert (
+        scalar(db.operator, "SELECT release_id FROM content.active_publication")
+        == original.release_id
+    )
+    assert [p.read_bytes() for p in paths] == before
+    paths[1].write_text("null")
+    with pytest.raises(ContentDatabaseError):
+        transfer.capture_pair(*paths, repository=ROOT)
+    paths[1].write_text(json.dumps(f))
+    q["questions"][0]["stem"] = "<script>private()</script>"
+    paths[0].write_text(json.dumps(q))
+    with pytest.raises(ContentDatabaseError, match="repository content validation"):
+        transfer.capture_pair(*paths, repository=ROOT)
+    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
+
+
+def test_export_rejects_owner_corruption_without_repair_or_files(db, tmp_path):
+    from meducation_api.db.transfer import export_release, reconstruct_release
+
+    release = store(db)
+    with db.admin.begin() as connection:
+        connection.exec_driver_sql("ALTER TABLE content.questions DISABLE TRIGGER question_guard")
+        connection.execute(
+            text("UPDATE content.questions SET stem='corrupt fixture' WHERE release_id=:id"),
+            {"id": release.release_id},
+        )
+        with pytest.raises(ContentDatabaseError, match="value differs"):
+            reconstruct_release(connection, release.release_id)
+        assert (
+            connection.execute(
+                text("SELECT stem FROM content.questions WHERE release_id=:id"),
+                {"id": release.release_id},
+            ).scalar_one()
+            == "corrupt fixture"
+        )
+        connection.rollback()
+    with pytest.raises(ContentDatabaseError):
+        export_release(db.operator, uuid4(), tmp_path / "unknown")
+    assert not (tmp_path / "unknown").exists()
+
+
+def test_cli_validate_import_activate_export_and_stale_replay(db, tmp_path):
+    import subprocess
+    import sys
+
+    q, f = banks()
+    paths = tmp_path / "q.json", tmp_path / "f.json"
+    for path, value in zip(paths, (q, f), strict=True):
+        path.write_text(json.dumps(value))
+    env = {k: v for k, v in os.environ.items() if not k.startswith("MEDUCATION_")}
+    env.update(
+        {
+            "PYTHONPATH": str(ROOT / "backend/src"),
+            "MEDUCATION_DATABASE_ENVIRONMENT": "local",
+            "MEDUCATION_OPERATOR_DATABASE_URL": db.operator.url.render_as_string(
+                hide_password=False
+            ),
+        }
+    )
+
+    def invoke(*args):
+        return subprocess.run(
+            [sys.executable, "-m", "meducation_api.db.cli", *map(str, args)],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=30,
+            check=False,
+        )
+
+    files = ("--quiz-file", paths[0], "--flashcard-file", paths[1], "--repository", ROOT)
+    op = uuid4()
+    intent = ("--operation-id", op, "--actor", ACTOR, "--reason", REASON)
+    assert invoke("validate-pair", *files).returncode == 0
+    first = invoke("import-pair", *files, *intent)
+    assert first.returncode == 0, first.stderr
+    replay = invoke("import-pair", *files, *intent)
+    assert json.loads(replay.stdout) == json.loads(first.stdout)
+    release = json.loads(first.stdout)["releaseId"]
+    activation = (
+        "--release-id",
+        release,
+        "--expected-sequence",
+        0,
+        "--operation-id",
+        uuid4(),
+        "--actor",
+        ACTOR,
+        "--reason",
+        REASON,
+    )
+    activated = invoke("activate", *activation)
+    assert activated.returncode == 0, activated.stderr
+    assert invoke("activate", *activation).stdout == activated.stdout
+    stale = invoke(
+        "activate",
+        "--release-id",
+        release,
+        "--expected-sequence",
+        0,
+        "--operation-id",
+        uuid4(),
+        "--actor",
+        ACTOR,
+        "--reason",
+        REASON,
+    )
+    assert stale.returncode == 1 and "SQL" not in stale.stdout
+    exported = invoke(
+        "export-release", "--release-id", release, "--output", tmp_path / "cli-export"
+    )
+    assert exported.returncode == 0, exported.stderr
+    assert (
+        invoke(
+            "export-release", "--release-id", release, "--output", tmp_path / "cli-export"
+        ).returncode
+        == 1
+    )
+    paths[1].write_text("null")
+    failed = invoke(
+        "import-pair", *files, "--operation-id", uuid4(), "--actor", ACTOR, "--reason", REASON
+    )
+    assert failed.returncode == 1
+    assert db.operator.url.password not in failed.stderr + failed.stdout
+    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
+
+
+def test_export_write_failure_cleans_only_new_output(db, tmp_path, monkeypatch):
+    from meducation_api.db.transfer import export_release
+
+    release = store(db)
+    output = tmp_path / "failed-export"
+    unrelated = tmp_path / "keep.json"
+    unrelated.write_text("keep")
+    original_open = Path.open
+
+    def fail_manifest(path, *args, **kwargs):
+        if path == output / "manifest.json":
+            raise OSError("Injected disk failure")
+        return original_open(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", fail_manifest)
+    with pytest.raises(ContentDatabaseError):
+        export_release(db.operator, release.release_id, output)
+    assert not output.exists()
+    assert unrelated.read_text() == "keep"
+    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1

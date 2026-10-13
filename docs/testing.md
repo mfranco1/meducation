@@ -102,7 +102,7 @@ bootstrap and real packaged migration, restricted role/PUBLIC privileges,
 backup grants, an independent synthetic migration, round trip and rollback.
 
 Run `.venv/bin/python scripts/containers/test-postgres-content.py` separately for
-58 real-Postgres schema/operation cases. It creates and cleans a unique tmpfs
+64 real-Postgres schema/operation/file-transfer cases. It creates and cleans a unique tmpfs
 PG17 container with disposable credentials; it never targets the routine DB.
 Normal pytest skips these cases unless an explicitly isolated test URL is
 provided; skips are not Postgres acceptance. The suite checks SQL stored-contract
@@ -110,9 +110,15 @@ validation, exact fixture artifacts/digests/order/provenance, relational and
 finalization constraints, protected histories, draft isolation, atomic activation,
 idempotent replay and concurrent imports/reservations/publications. Existing
 native AMD64/ARM64 container acceptance jobs invoke both checks. Local ARM64
-results do not certify execution of these new tests on AMD64. Actual-bank file
-import/export, learner adapters and fresh-DB real-content recovery remain later
-L3 gates. Follow the
+results do not certify execution of these new tests on AMD64. Step 4 adds captured-file validation/import, CLI roundtrip/replay/stale
+activation, independent export ordering/omissions/digest checks, corrupt-row
+rejection and interrupted-output cleanup. Normal tests exercise source byte
+capture, TypeScript rich-policy rejection, duplicate/unpaired-surrogate input
+and reconstruction mismatch detection. Without `npm ci`, the two normal
+Python cross-runtime capture/policy cases explicitly skip; native container jobs
+have Node dependencies and exercise the gate, including rich-policy rejection.
+Other Python cases remain independent of Node. Learner adapters, comprehensive actual-bank
+parity and fresh-DB real-content recovery remain later L3 gates. Follow the
 [job/runbook commands](local-containers.md#l3-explicit-database-jobs-and-toolchain-verification).
 
 [Completed L0 decisions](work/done/L0-local-contracts-plan.md) are design/feasibility evidence. Their tests do not certify future application implementations. Keep frozen evidence under docs/work/done; record new feature results in ongoing stage trackers, without overwriting historical snapshots.
