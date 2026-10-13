@@ -1,8 +1,8 @@
 # Progress backup and restore
 
-Status: partial decision — Step 2 backup format/user flow selected; Step 3 coordination selected for L1 integration; Step 4 journal/recovery selected; validation limits and release browser acceptance pending L0 steps 5–6. Date: 2026-10-12.
+Status: partial decision — Step 2 backup format/user flow selected; Step 3 coordination selected for L1 integration; Step 4 journal/recovery selected; Step 5 validation/limits selected; browser release acceptance pending L0 Step 6. Date: 2026-10-12.
 
-This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/ongoing/L0-local-contracts-plan.md). It selects a coordination protocol based on isolated feasibility probes; journal/recovery semantics are selected below; exact validation limits and final browser acceptance are still pending. No runtime implementation exists; L1 implements accepted contracts after the remaining L0-A gates pass.
+This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/ongoing/L0-local-contracts-plan.md). It selects a coordination protocol based on isolated feasibility probes; journal/recovery semantics are selected below; validation/limits are selected below; final browser acceptance is still pending. No runtime implementation exists; L1 implements accepted contracts after the remaining L0-A gates pass.
 
 ## Scope and evidence method
 
@@ -419,3 +419,100 @@ Retained design model: [probe-progress-restore.mjs](../../scripts/testing/probe-
 The audit corrected the earlier unconditional “before-marker error means rollback” language: a marker write can take effect before a later read/exception. Recovery now trusts only the readable persisted decision, with a gate for uncertainty. It also distinguishes absent keys from stored null text, preserves corrupt originals, detects unexpected external values, and reuses committed revisions during retries. Equal-length decision strings avoid an avoidable marker-size increase without promising quota availability. Marker cleanup and refresh failures cannot silently return mixed snapshots or reverse a committed import.
 
 Step 4 selects the internal key/schema, transaction/recovery sequence and fail-closed actions. It does not set Step 5's exact byte/depth/record limits or claim a production restore implementation. Verification: 90 restore-interruption cases, 618 additional recovery-interruption/retry checks and 3 fail-closed cases passed in the retained model. Lint/architecture, formatting, build/typecheck, link/evidence assertions and git diff --check passed. Existing Vite chunk-size advisory remains; protected canonical hashes match Step 1. No real browser data, application persistence or actual restore UI was changed. Step 4 is complete as a design/audit step. Stop before Step 5 pending user continuation.
+
+## Step 5 decision — Strict validation, limits and normalization
+
+Selected 2026-10-13. This defines the supported v1 contract for L1; existing local-storage decoders remain unchanged in L0. Decoder-accepted local bytes are not automatically valid portable progress. Unsupported/anomalous local progress must produce an explicit export error, not silent record deletion, recalculation or data repair.
+
+### Validation order and object semantics
+
+1. Before File.text, require File.size <=4 MiB. MIME/extension are selection hints, not trust checks. After decoding, enforce UTF-8 size on the input text and canonical output separately. Whitespace counts against the input cap. An accepted file is not a guarantee that browser storage can hold its restore journal/targets.
+2. Parse using JSON.parse once; no eval, HTML rendering, signature parsing or content fetch. Preview/restore use the same immutable parsed/canonical candidate. Standard JSON.parse last-member behavior applies to repeated JSON object member names; do not claim lexical duplicate-member detection. Duplicate attempt IDs and list values in the parsed arrays are independently rejected. Canonical exporter emits each object member once.
+3. Walk the parsed tree iteratively with root depth zero. Count root, every container and every scalar value as a node; object keys are separately bounded by schema/ID rules. Reject any object property named __proto__, constructor or prototype at every depth. Reject depth/node limits before building application projections. Apply a generic array-length ceiling of 10,000 and own-object-member ceiling of 50,000 before/between traversal expansion, then narrower schema caps. Count scheduled children toward the 250,000-node budget before pushing them; do not materialize unbounded Object.entries/child arrays first.
+4. Apply exact required/optional field allowlists from Step 2. Objects must be records, not arrays/null; arrays must have their declared types. Unknown fields, including uploaded runtime revisions or timerStartedAt, are errors. Do not recursively merge parsed values into live objects; construct fresh typed structures with safe own-property checks and safe map writes.
+5. Apply per-field/container bounds and semantic invariants below. Keep dates/signatures/IDs as data only. Reject unsupported format/version/schema versions before deeper interpretation.
+6. Canonicalize only selected legacy defaults/paused timer exclusions during live export, then run the same v1 validator used for file import. Successful export must pass that validator and size checks. No storage mutation is performed by normalization.
+
+No lower-trust field influences storage key selection, content rendering, entitlement, or code execution. Safe validation messages use fixed categories/known field names, never arbitrary uploaded snippets or raw parser stacks. Uploaded dates and scores are descriptive personal data, not authenticated facts.
+
+### Exact v1 safety ceilings
+
+Binary units below use MiB=1,048,576 bytes and KiB=1,024 bytes. These are bounded-processing ceilings, not promises about browser quota. Export and import share them.
+
+- Portable input text and canonical backup JSON: 4 MiB each.
+- Parsed-tree maximum depth: 16, root depth 0. Maximum visited values/containers: 250,000.
+- Every ID string and ID map key: <=128 UTF-8 bytes, nonempty, no leading/trailing whitespace or ASCII controls, and not one of the three dangerous property names. Preserve remaining characters exactly; do not demand membership in today's bank or a particular generated prefix/UUID shape for historical IDs.
+- Opaque contentRevision: nonempty and <=256 UTF-8 bytes when present.
+- Active quiz contentSignature: nonempty and <=512 KiB UTF-8, copied exactly. Do not parse or replace it with a hash.
+- Flashcard contentSignature: nonempty and <=256 UTF-8 bytes. Current generated value is sha256- plus 64 lowercase hex digits (71 ASCII bytes), but bounded older/unknown opaque strings are retained for the existing resume/restart decision. No exact hash-prefix requirement is imposed on stored legacy checkpoints.
+- Retained completed attempts: <=200, matching current retention. Active quizzes: <=64, with unique active attempt IDs.
+- Responses per active/completed attempt: <=1,000.
+- Entries in each quiz completionCounts/lowestScores/latestScores/activity map: <=2,048. Durable completedIds: <=50,000.
+- Flashcard checkpoints: <=128. Flashcard completionCounts map: <=2,048. Each openedCardIds/flaggedCardIds list: <=10,000 unique IDs, independently bounded.
+- Milestone list: <=5 unique values, from 3,5,10,25,50. No unconstrained user-visible text field is added to the backup format.
+
+The file/node caps also apply when otherwise legal per-container limits combine. A valid runtime state may outgrow these ceilings because current durable maps are unbounded. Refuse a normal export/import clearly in that case, preserve all stored bytes, and offer the bounded raw recovery path where applicable. Do not prune completed IDs or change live retention as part of L1. Future larger-format/retention work needs a new explicit decision/version.
+
+### Timestamps, enums and numbers
+
+UTC timestamps exportedAt/startedAt/completedAt/updatedAt/latestScores.completedAt/activity values use exactly YYYY-MM-DDTHH:mm:ss.sssZ, four-digit year, finite parse and exact Date.toISOString round-trip. Noncanonical timezone offsets, invalid calendar dates and unparseable text are rejected. A valid timestamp may be before another record's start or after exportedAt because device clocks can move; do not rewrite it or impose a wall-clock “not in the future” rule. Normalization never changes these timestamps to the restore date.
+
+feedbackMode is exactly immediate or exam. flagged/locked are booleans; completedIds values are exactly true. Counts/streaks/score correct/incorrect/unanswered/total are nonnegative safe integers. Aggregate summation checks safety on each addition. Time values elapsedMs/timeMs/score.elapsedMs are finite nonnegative numbers <=Number.MAX_SAFE_INTEGER; fractional milliseconds are allowed because the domain type is number, not an integer contract. Scores and summary percentages are integers 0–100 under the current rounded scoring rule.
+
+### Quiz semantic invariants
+
+- active map keys equal their quizId. Active IDs are unique and cannot be in durable completedIds, including pruned completions. Active records have contentSignature but no completedAt/score/running timer.
+- Retained completed IDs are unique and each exists in completedIds. Completed records have completedAt/score but no running timer/signature. Their quiz IDs may be removed/unknown today.
+- Each response key equals questionId. selectedChoiceId, when present, is a valid bounded ID. In immediate mode, a selected response must be locked; a flagged unanswered response remains valid. Do not verify a historical choice against today's choices.
+- score.correct+incorrect+unanswered equals total using safe additions. percentage equals total ? Math.round(correct/total*100) : 0. score.elapsedMs equals the completed attempt's elapsedMs. Response map size <=total and the number of selected responses equals correct+incorrect. Never recompute which answer was correct from the current bank/signature.
+- Sum of completionCounts equals the number of durable completedIds. Counts per quiz are >=the number of retained completions for that quiz, not equal to retained count. This follows current saveCompleted, which updates counts and IDs together without pruning either. A discrepancy is unsupported/inconsistent data, not an invitation to regenerate IDs/totals.
+- Positive completion-count keys have lowest/latest score summaries; summary keys cannot claim a score for a zero/missing completion count. Lowest score cannot exceed a known retained score for that quiz. Latest score timestamp cannot be earlier than a retained completion. Do not require its percentage to match a particular retained record when timestamps tie or the relevant record has been pruned. Preserve history-array order and summary values after validation.
+- Celebration streak is a safe nonnegative integer. Milestones are unique and no greater than the current streak. Do not recompute streak from retained history or today’s scoring; detailed immediate/exam behavior remains the existing domain logic.
+- activity may include saved-only or removed quizzes; it is independent of completed-score timestamps. Do not require active-only quizzes to have score summaries or demand all activity keys exist in current content.
+
+### Flashcard semantic invariants
+
+Checkpoint map keys equal deckId. current/opened/flagged IDs and digest references retain exact valid values; do not require membership in currently loaded content during backup. Lists are unique but flags need not be opened cards. updatedAt is canonical UTC.
+
+Completion counts and their sum are safe nonnegative integers; unknown deck keys stay recoverable. No completion-ID set exists for flashcards, so do not invent one or replay completions. dailyStats follows the current domain calendar validator: valid YYYY-MM-DD dates, firstDay<=currentDay, positive safe counts, currentDayCount<=highestDailyCount<=trackedCompletions, trackedCompletions<=all-time deck completions. Its absence is valid even with positive all-time counts. Do not manufacture old daily history or equate tracked totals to legacy all-time totals.
+
+Preserve calendar-day strings across browser/timezone transfer. Future completions use the destination browser’s existing local-day logic, including clock rollback handling; this is not a timezone-history migration. Empty quiz/flashcard maps with no dailyStats are valid explicit empty progress.
+
+### Live export normalization and version policy
+
+Read error/corrupt fallback snapshots are never normal export inputs. Valid missing storage normalizes to current empty state. Source validation allows the live envelope revision, known optional runtime timer fields and a known historical contentSignature inherited from Attempt, but rejects other unknown fields instead of quietly discarding them. Legacy flashcard completionCounts absence alone normalizes to an empty map; dailyStats stays absent.
+
+The dialog is unavailable during editable study. The same-tab quiz must use its current save-and-leave flow before opening. For a readable saved active record with a valid timerStartedAt, copy elapsedMs unchanged and omit timerStartedAt. Do not call pauseAttempt using today's clock on stale records. That would add unobserved wall-clock time. A malformed timer timestamp is an export error, not a reason to silently strip it. An active completedAt/score is inconsistent and rejected. Source-only historical signature/timer fields are validated before their selected omission from the paused completed projection.
+
+This deliberately does not claim to recover unsaved timing since the last accumulated-time checkpoint. Proposed copy: “Quiz timers are paused in backups. Time since an unfinished quiz's last saved timer checkpoint is not added.” The original local record is not edited during export. Import never restarts timers; resume later invokes existing domain behavior on the paused restored attempt. Completed score/timing, signatures, response IDs, counts and flashcard dates otherwise remain unchanged.
+
+Support only the selected backup format version 1 and nested schemaVersion 2. Raw v2 storage dumps, raw recovery files, missing payloads, retired quiz-v1 records, unknown future versions and unknown extra fields are rejected by the normal importer with zero writes. Future conversion functions require their own explicit version fixtures; do not guess or recursively merge “compatible-looking” data.
+
+### Journal and raw recovery ceilings
+
+Use Step 4's exact journal allowlists and fixed destinations; originals remain opaque strings/nulls and imported states must satisfy the above strict rules plus generated UUID storage revisions.
+
+- Combined original raw pair: <=4 MiB UTF-8. A single original value cannot exceed that combined ceiling.
+- Combined canonical target raw pair including generated revisions: <=4.25 MiB UTF-8. This modest overhead budget is separate from the 4 MiB portable file, not permission to accept a larger portable file.
+- Fully encoded journal input/output: <=20 MiB UTF-8 before parsing or storing. Nested target JSON strings are separately byte/depth/node/schema bounded when parsed. Strings must not be treated as permission to evade inner validation.
+- Raw recovery file canonical output: <=64 MiB UTF-8. It is an exact allowlisted format/version with raw strings/nulls, never normal-import data. If unreadable/oversized bytes cannot fit this output ceiling, fail visibly without truncation or mutation; a recovery download is not guaranteed for arbitrarily large corrupt storage.
+
+Measure fully encoded lengths; journal escaping can grow data much more than a simple doubling. For example, raw NUL/control characters in corrupt originals become six-byte JSON escapes. A pair inside its individual limit can still exceed the encoded journal cap; refuse before mutation. Limits and equal-size decision markers are not storage reservation. Quota failures still follow Step 4 recovery. Do not try allocating a large padding key to “prove” free space or delete originals to make room.
+
+### Synthetic sizing and audit evidence
+
+Retained [probe-progress-backup-limits.mjs](../../scripts/testing/probe-progress-backup-limits.mjs) creates only synthetic progress and stem strings. [Machine evidence](../work/ongoing/L0-step5-limits-evidence.json) records exact sizes/limits and selected invariant assertions; it is not an implemented importer.
+
+Measured examples: empty 307 bytes; 20 retained attempts x30 responses 63,024 bytes; 200 x100 responses plus 1,500 durable IDs 1,958,386 bytes; 200 x100 plus 50,000 IDs 4,092,387 bytes (under the 4,194,304-byte file cap). A 200 x300-response history is 5,621,185 bytes and must fail the file cap. The other per-record/node ceilings still apply.
+
+A synthetic 300-question saved quiz with 1,200-character stems has a 379,391-byte signature, within 512 KiB. At 600 questions it has a 758,891-byte signature: the file is still small enough, but the signature ceiling rejects it. This demonstrates why validation cannot check only total file size and why out-of-contract generated states must fail clearly without truncation.
+
+The ordinary 200x100/1,500-ID pair yields a 4,582,181-byte journal before current progress/target storage overhead. Control-heavy corrupt originals demonstrate rejection even inside the raw-pair cap. These numbers are safety/cost observations, not successful browser quota tests; full application boundary/round-trip/quota tests remain L1.
+
+### Step 5 self-review and audit
+
+Checked semantic rules against current saveCompleted/deduplication, rounded quiz scoring, response behavior, legacy flashcard defaults and daily-stat validation. Avoided chronological/future-date restrictions that would reject clock-skew records, kept tracked flashcard history distinct from all-time counts, and retained opaque old content references. Corrected the potential misconception that flashcard signatures are bare 64-character hashes: the actual sha256- prefix makes them 71 characters. The chosen 256-byte ceiling preserves bounded older opaque references.
+
+The traversal audit also caught that pushing a full oversized container before checking the node count defeats the memory bound; the model now checks breadth and scheduled-node budget incrementally. The sizing audit caught that corrupt raw control characters can escape sixfold, so separate encoded journal/raw recovery limits are enforced rather than estimating by doubling. File-level and per-signature limits catch different synthetic cases. Numeric/date/timer assertions verify selected invariants but do not substitute for L1's complete strict validator, round-trip or real-browser storage tests. No personal progress or canonical question text was used.
+
+Step 5 selects exact processing limits, semantic requirements, normalization and version rejection behavior. Browser capability/accessibility acceptance remains Step 6. Verification: all seven synthetic sizing scenarios and selected boundary/date/score/timer/tree/journal assertions passed. Lint/architecture, formatting, build/typecheck, link/evidence/hash checks and git diff --check passed; the existing Vite chunk-size advisory remains. The audit corrected Node-global references in the standalone probe and the pre-expansion traversal bound. Canonical hashes match Step 1, and no production validator or real browser progress was changed. Stop before Step 6 pending user continuation.

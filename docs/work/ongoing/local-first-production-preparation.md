@@ -165,6 +165,7 @@ Provision managed Postgres and the chosen admin identity; deploy static learner/
 - [x] L0 Step 2 backup-format/user-flow contract selected and audited; field/link/diff checks and build passed. Step 3 awaits user continuation.
 - [x] L0 Step 3 coordination design/prototype selected and audited; 21 Chromium/WebKit probes and lint/format/build passed. Firefox and actual BFCache validation remain release obligations. Step 4 awaits user continuation.
 - [x] L0 Step 4 journal/recovery contract selected and audited; fault model and lint/format/build passed. Step 5 awaits user continuation.
+- [x] L0 Step 5 strict validation/limits/timer-normalization selected and audited; synthetic sizing/invariants and lint/format/build passed. Step 6 awaits user continuation.
 - [ ] L1 implemented and verified.
 - [ ] L2 implemented and verified.
 - [ ] L3 implemented and verified.

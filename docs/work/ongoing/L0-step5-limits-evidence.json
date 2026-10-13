@@ -1,0 +1,76 @@
+{
+  "purpose": "L0 Step 5 synthetic sizing and selected invariant audit",
+  "date": "2026-10-13",
+  "limits": {
+    "backupBytes": 4194304,
+    "depth": 16,
+    "nodes": 250000,
+    "idBytes": 128,
+    "referenceBytes": 256,
+    "quizSignatureBytes": 524288,
+    "retainedAttempts": 200,
+    "activeQuizzes": 64,
+    "responsesPerAttempt": 1000,
+    "summaryEntries": 2048,
+    "completedIds": 50000,
+    "checkpoints": 128,
+    "cardIdsPerList": 10000,
+    "originalPairBytes": 4194304,
+    "targetPairBytes": 4456448,
+    "journalBytes": 20971520,
+    "rawRecoveryBytes": 67108864
+  },
+  "sizing": [
+    {
+      "label": "empty",
+      "bytes": 307,
+      "withinFileCap": true,
+      "signatureBytes": 0
+    },
+    {
+      "label": "20 retained x 30 responses",
+      "bytes": 63024,
+      "withinFileCap": true,
+      "signatureBytes": 0
+    },
+    {
+      "label": "200 retained x 100 responses + 1500 durable IDs",
+      "bytes": 1958386,
+      "withinFileCap": true,
+      "signatureBytes": 0
+    },
+    {
+      "label": "200 retained x 100 responses + 50000 durable IDs",
+      "bytes": 4092387,
+      "withinFileCap": true,
+      "signatureBytes": 0
+    },
+    {
+      "label": "200 retained x 300 responses",
+      "bytes": 5621185,
+      "withinFileCap": false,
+      "signatureBytes": 0
+    },
+    {
+      "label": "300-question saved quiz x 1200-char stems",
+      "bytes": 384762,
+      "withinFileCap": true,
+      "signatureBytes": 379391
+    },
+    {
+      "label": "600-question saved quiz x 1200-char stems",
+      "bytes": 769062,
+      "withinFileCap": true,
+      "signatureBytes": 758891
+    }
+  ],
+  "journalExampleBytes": 4582181,
+  "controlHeavyJournalBytes": 27457052,
+  "journalStringEscapeMultiplier": 1.1699133757025075,
+  "assertions": "File/signature boundaries; iterative depth/nodes/dangerous keys; canonical dates; rounded scores; timer normalization; equal-size journal decisions.",
+  "limitations": [
+    "No complete application schema validator implemented.",
+    "No personal storage/canonical question text used.",
+    "UTF-8 limits are safety ceilings, not browser quota or capacity guarantees."
+  ]
+}

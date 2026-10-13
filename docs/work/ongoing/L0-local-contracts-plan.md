@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: in progress; Steps 1–4 design/prototype complete; validation/browser release decisions pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
+Status: in progress; Steps 1–5 design/audit complete; browser release acceptance pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 
@@ -64,14 +64,14 @@ Output recorded in the [ADR](../../decisions/0002-progress-backup-and-restore.md
 
 ## Step 5 — Decide strict validation, limits and timer normalization
 
-- [ ] Enumerate all permitted fields from current types; do not describe decodeProgress as strict. Define semantic checks for score sums/percentage, duplicate IDs, response-key agreement, completed-ID membership, safe numbers, timestamps and active/completed consistency.
-- [ ] Derive size limits using synthetic short/long retained history and growing completed-ID maps, not personal browser data. Recommended starting investigation: 4 MiB UTF-8 file cap, depth 16 and explicit per-field/container caps; finalize from fixtures and document exact constants. localStorage encoding/quota and journal duplication mean an under-limit file can still fail to restore safely.
-- [ ] Use identical canonical validation on export/import; either a successful export passes its own importer or export returns a clear error. Never silently trim history/IDs to meet limits.
-- [ ] Export paused attempts only. The active same-tab session must first save/leave through existing flow. For stale saved running timestamps, retain persisted elapsedMs and remove timerStartedAt; do not add unobserved elapsed time. Explain potential loss of uncheckpointed time, not fabricated elapsed time.
-- [ ] Preserve valid flashcard calendar dates and aggregate totals; do not rebucket on another device's timezone. Do not require old records to reference today's question bank or re-score old results.
-- [ ] Specify older/future backup version behavior: v1 only for first release, unknown versions rejected with no mutation. Future migrations require explicit conversion functions and fixtures.
+- [x] Enumerate all permitted fields from current types; do not describe decodeProgress as strict. Define semantic checks for score sums/percentage, duplicate IDs, response-key agreement, completed-ID membership, safe numbers, timestamps and active/completed consistency.
+- [x] Derive size limits using synthetic short/long retained history and growing completed-ID maps, not personal browser data. Recommended starting investigation: 4 MiB UTF-8 file cap, depth 16 and explicit per-field/container caps; finalize from fixtures and document exact constants. localStorage encoding/quota and journal duplication mean an under-limit file can still fail to restore safely.
+- [x] Use identical canonical validation on export/import; either a successful export passes its own importer or export returns a clear error. Never silently trim history/IDs to meet limits.
+- [x] Export paused attempts only. The active same-tab session must first save/leave through existing flow. For stale saved running timestamps, retain persisted elapsedMs and remove timerStartedAt; do not add unobserved elapsed time. Explain potential loss of uncheckpointed time, not fabricated elapsed time.
+- [x] Preserve valid flashcard calendar dates and aggregate totals; do not rebucket on another device's timezone. Do not require old records to reference today's question bank or re-score old results.
+- [x] Specify older/future backup version behavior: v1 only for first release, unknown versions rejected with no mutation. Future migrations require explicit conversion functions and fixtures.
 
-Output: exact limits, timestamp format and numerical invariants in ADR/schema documentation, plus fixture descriptions.
+Output recorded in the [ADR](../../decisions/0002-progress-backup-and-restore.md): exact portable/journal/container limits, canonical timestamp/score/count invariants, timer normalization and version policy. Synthetic sizing/invariant probe retained; full validator remains L1 work.
 
 ## Step 6 — Set browser, lifecycle and accessibility acceptance
 
@@ -129,3 +129,5 @@ Planning verification: relative links resolve; repository build/typecheck passed
 2026-10-12 — Step 3 design/prototype complete and audited: shared participation, exclusive paired capture/restore/recovery, valid-lease write guards and lifecycle gating. Retained isolated probe/evidence: 21 passed across Chromium/WebKit. Lint/architecture, formatting, build/typecheck and link/diff/hash checks passed; existing chunk-size advisory remains. Firefox profile launch and actual BFCache restoration remain unverified Step 6/L1 release obligations, not passing claims. No production progress feature implemented. Stop before Step 4 pending user continuation.
 
 2026-10-13 — Step 4 complete and self-audited; fixed marker/readback uncertainty and preserved raw corrupt/absent originals. Retained model: 90 restore interruptions, 618 recovery interruptions/retries and 3 fail-closed cases passed. Lint/architecture, format, build/typecheck, link/evidence/diff checks passed; canonical hashes unchanged and existing chunk-size advisory remains. Actual browser/production journal validation remains L1 work. Stop before Step 5 pending user continuation.
+
+2026-10-13 — Step 5 complete and self-audited: exact validation/limits/normalization recorded; seven synthetic sizing scenarios and selected invariant assertions passed. Preserved pruned-history totals and local calendar dates; no current-clock timer inflation or silent truncation. Lint/architecture, format, build/typecheck and link/evidence/hash/diff checks passed; existing chunk-size advisory remains. Full importer/round-trip/quota implementation tests remain L1 work. Stop before Step 6 pending user continuation.
