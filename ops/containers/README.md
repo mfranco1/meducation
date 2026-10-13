@@ -1,6 +1,6 @@
 # Container build inputs
 
-L2 Step 1 selects these inputs. Steps 2–3 add the [API Dockerfile](../../backend/Dockerfile), [learner Dockerfile](../../Dockerfile) and [container runbook](../../docs/local-containers.md); orchestration follows in the [implementation plan](../../docs/work/ongoing/L2-containers-local-services-plan.md). Registry metadata was checked on 2026-10-13. [Step 1 evidence](../../docs/work/ongoing/L2-step1-build-inputs-evidence.json) includes index, native child-manifest and config hashes; Steps 2–3 record actual native ARM64 image/runtime checks in their trackers. Native AMD64 execution remains pending.
+L2 Step 1 selects these inputs. Steps 2–4 add the [API Dockerfile](../../backend/Dockerfile), [learner Dockerfile](../../Dockerfile), [Compose stack](../../compose.yaml) and [container runbook](../../docs/local-containers.md). Registry metadata was checked on 2026-10-13. [Step 1 evidence](../../docs/work/ongoing/L2-step1-build-inputs-evidence.json) includes index, native child-manifest and config hashes; later steps record actual native ARM64 image/runtime checks in the [implementation tracker](../../docs/work/ongoing/L2-containers-local-services-plan.md). Native AMD64 execution remains pending.
 
 ## Image pins
 

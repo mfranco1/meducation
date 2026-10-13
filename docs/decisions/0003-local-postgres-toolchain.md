@@ -1,6 +1,6 @@
 # Local Postgres and Python toolchain
 
-Status: selected for L2/L3 implementation; runtime validation pending. Observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Machine-readable metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json).
+Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; native AMD64, backup tooling and L3 integration pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/ongoing/L2-containers-local-services-plan.md).
 
 ## Baseline and selected versions
 
@@ -27,7 +27,7 @@ Host psql/pg_dump report PostgreSQL 14.23. A version-14 pg_dump cannot dump a ve
 
 ## Proposed local configuration and roles
 
-These are L2/L3 names/contracts, not currently supported settings or runnable commands:
+L2 Step 4 now implements the Compose project, optional DB profile, pinned image/volume, development bootstrap configuration, SCRAM host initialization and optional loopback port below. [Current commands](../local-containers.md) use these implemented services. Application DB settings, schema/roles/migrations, pooling and backup-role contracts remain proposed L3/later work:
 
 - Compose project `meducation-local`; optional profile `db`, service `postgres`, database `meducation`, schema `content`, named volume `postgres-data` (resolved volume `meducation-local_postgres-data`). With PG17 mount at `/var/lib/postgresql/data`; an eventual PG18 change requires deliberate volume-layout/upgrade review. Keep the JSON-only API path available and fail explicitly when selected DB mode has no connection.
 - DB port is unpublished by default. An optional development override binds `127.0.0.1:5433:5432` to avoid the host's possible 5432 service. Other local services bind loopback as well. Containers use hostname `postgres`, not localhost. Host direct tools use 127.0.0.1:5433 only with that override.
@@ -72,6 +72,8 @@ L2 must document the actual resolved volume name and label verification before r
 Security/version updates: recheck upstream patch releases and registry digests before L2 build and at regular maintenance; update readable tag plus index digest together, regenerate locks when dependency patches change, inspect changelogs/security notes and rerun the affected native builds/migration/dump-restore/parity checks. Record new evidence. Never reuse a PG17 data directory under another major by merely editing the tag.
 
 ## Audit and gate result
+
+L2 runtime follow-up — 2026-10-13: Docker client/engine 29.8.2 and Compose 5.6.0 are reachable on native Linux ARM64 after the user's repair. The actual pinned PG17.11 image passed startup, authenticated TCP SQL, rejection without a password, optional port bindings and named-volume sentinel persistence across restart/recreation. A missing DB password fails at service startup without blocking the default JSON stack. The [L2 Step 4 evidence](../work/ongoing/L2-step4-compose-evidence.json) records these results and safe removal of its isolated test volume. No application roles/schema/DB adapter, real-content import, backup/restore or native AMD64 acceptance is claimed. L0 observations and frozen evidence below remain historical.
 
 L0-B design gate is met: major, image pins/architectures, Python driver/ORM/migration baseline, role/connection split, local volume/backup/reset contracts and future verification commands are recorded. Runtime Docker availability, full dependency resolution/install, images, migrations and actual dump/restore remain L2/L3 gates. JSON remains authoritative and no learner progress is moved to Postgres.
 

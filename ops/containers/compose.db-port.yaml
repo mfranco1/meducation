@@ -1,0 +1,5 @@
+# Optional development-only database access from the host.
+services:
+  postgres:
+    ports:
+      - "127.0.0.1:${MEDUCATION_POSTGRES_PORT:-5433}:5432"

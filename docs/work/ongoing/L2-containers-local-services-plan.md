@@ -1,6 +1,6 @@
 # L2 — Reproducible containers and local services
 
-Created: 2026-10-13. Status: Steps 1–3 implemented and verified on native ARM64; native AMD64 acceptance pending; Steps 4–7 not started. Parent: [local-first production preparation](local-first-production-preparation.md). Prerequisite: [L0 toolchain decision](../../decisions/0003-local-postgres-toolchain.md). Previous stage: [completed L1](../done/L1-progress-backup-plan.md).
+Created: 2026-10-13. Status: Steps 1–4 implemented and verified on native ARM64; native AMD64 acceptance pending; Steps 5–7 not started. Parent: [local-first production preparation](local-first-production-preparation.md). Prerequisite: [L0 toolchain decision](../../decisions/0003-local-postgres-toolchain.md). Previous stage: [completed L1](../done/L1-progress-backup-plan.md).
 
 ## Outcome and scope
 
@@ -8,7 +8,7 @@ A fresh checkout can build and run the learner and existing read-only FastAPI se
 
 L2 delivers packaging, local orchestration, operational instructions and verification. The API continues to read the two canonical JSON banks. Database adapters, SQLAlchemy/Psycopg/Alembic installation, content schema, least-privilege application roles, migrations and canonical import/export parity belong to L3. Authentication and database authoring belong to L4. No learner progress moves out of the browser; no content, IDs, answer provenance or storage contracts change.
 
-The user authorized starting L2 on 2026-10-13, then continued into Steps 2 and 3. Follow the repository's [stage gates](../README.md): implement an authorized step, record its checks, then stop at the agreed gate. Cloud provisioning and L3 remain outside L2; tool installation/upgrades require an intentional decision.
+The user authorized starting L2 on 2026-10-13, then continued through Step 4. Follow the repository's [stage gates](../README.md): implement an authorized step, record its checks, then stop at the agreed gate. Cloud provisioning and L3 remain outside L2; tool installation/upgrades require an intentional decision.
 
 ## Inspected baseline and constraints
 
@@ -105,14 +105,28 @@ Verification: final image/proxy and all 17 container browser cases passed. Smoke
 
 ## Step 4 — Compose the local stack and optional Postgres
 
-- [ ] Define project `meducation-local` with frontend and API by default. Publish only frontend `127.0.0.1:4173` by default (document an explicit port override); keep API on the internal network. JSON-only startup must succeed without starting Postgres.
-- [ ] Add service `postgres` under profile `db`, with ADR0003's pinned PG17 image and named volume `postgres-data` at `/var/lib/postgresql/data`. Do not hard-code an AMD64 platform on Apple Silicon. Postgres has no published port by default; optional override binds `127.0.0.1:5433:5432`.
-- [ ] Supply development-only bootstrap configuration from an ignored local env file with an explicitly labelled example. Require needed variables when starting the DB profile. Do not inject bootstrap credentials into API or frontend; do not print resolved secret-bearing Compose config into logs.
-- [ ] Use healthchecks and bounded waits rather than sleeps. API/frontend dependencies must not require the optional DB. Provide a `pg_isready` startup check and a separate authenticated `SELECT 1` smoke assertion; neither certifies L3 schema/content readiness.
-- [ ] Verify the default JSON-only config and DB-enabled/port-override configs using the supported Compose version. Keep unsupported modern Compose features out unless Step 1 deliberately raises/documented the minimum version.
-- [ ] Test named-volume survival across Postgres restart and container recreation using a disposable sentinel record/database. Remove only test-owned data afterward. No application content tables, roles or migrations are introduced.
+- [x] Define project `meducation-local` with frontend and API by default. Publish only frontend `127.0.0.1:4173` by default (document an explicit port override); keep API on the internal network. JSON-only startup must succeed without starting Postgres.
+- [x] Add service `postgres` under profile `db`, with ADR0003's pinned PG17 image and named volume `postgres-data` at `/var/lib/postgresql/data`. Do not hard-code an AMD64 platform on Apple Silicon. Postgres has no published port by default; optional override binds `127.0.0.1:5433:5432`.
+- [x] Supply development-only bootstrap configuration from an ignored local env file with an explicitly labelled example. Require needed variables when starting the DB profile. Do not inject bootstrap credentials into API or frontend; do not print resolved secret-bearing Compose config into logs.
+- [x] Use healthchecks and bounded waits rather than sleeps. API/frontend dependencies must not require the optional DB. Provide a `pg_isready` startup check and a separate authenticated `SELECT 1` smoke assertion; neither certifies L3 schema/content readiness.
+- [x] Verify the default JSON-only config and DB-enabled/port-override configs using the supported Compose version. Keep unsupported modern Compose features out unless Step 1 deliberately raises/documented the minimum version.
+- [x] Test named-volume survival across Postgres restart and container recreation using a disposable sentinel record/database. Remove only test-owned data afterward. No application content tables, roles or migrations are introduced.
 
 Gate: both stack modes run with loopback-only published ports. The DB profile supplies an independent local service; it does not implement `MEDUCATION_CONTENT_SOURCE=postgres`. L3 adds that setting, the dependency and one-time schema/content initialization checks, with no silent JSON fallback.
+
+### Step 4 result — 2026-10-13
+
+[Compose](../../../compose.yaml) defines `meducation-local`, API/frontend by default and Postgres under profile `db`. API has no host port; frontend binds `127.0.0.1:4173` by default with an explicit override. Frontend creation waits for API health; neither depends on Postgres. The optional DB uses the pinned PG17.11 index and named volume at the PG17 data path. [Port override](../../../ops/containers/compose.db-port.yaml) adds only loopback `5433:5432`. No platform is hard-coded.
+
+[Development example](../../../ops/containers/.env.example) documents ignored local configuration. DB password interpolation allows inactive-profile/JSON operation; the Postgres startup guard requires a nonempty value when the service runs. Fresh initialization enables SCRAM for TCP clients. App services receive no DB credential/URL or whole env file; the API continues using its packaged JSON banks. Existing-volume initialization/credential limitations are explicit in the [runbook](../../local-containers.md).
+
+[Readiness command](../../../scripts/containers/wait-compose.py) and shared [support module](../../../scripts/containers/compose_support.py) inspect existing service health with a deadline and fail visibly for missing/exited/unhealthy services. The read-only missing-service case failed in about 1.09 seconds for a one-second deadline and started nothing. `pg_isready` is only startup reachability; the [Compose smoke](../../../scripts/containers/smoke-compose.py) separately performs authenticated TCP `SELECT 1` and verifies rejection with no password.
+
+The real default/DB/port configurations validated on Compose 5.6.0. Compose built both local image tags from the existing Dockerfiles. Six smoke groups passed on native Linux ARM64: JSON-only healthy operation with no DB; missing-password rejection while JSON remains available; exact PG17.11 version and private default DB port/volume mount; real TCP authentication; a disposable sentinel surviving restart/recreation; and loopback-only optional DB port with unchanged sentinel/API behavior. Postgres' human version includes its Debian suffix, so exact patch verification uses `server_version_num=170011`. No app content tables, roles or migrations were introduced.
+
+[Machine evidence](L2-step4-compose-evidence.json) records the resolved default volume `meducation-local_postgres-data`, actual isolated volume/image, configuration hashes and checks without credentials or resolved secret-bearing config. The smoke removed only its generated project's exact volume after label verification; a final read confirmed no containers/networks/volumes remained for that project. Routine developer commands preserve their volume; backup output is now ignored under `var/backups/postgres/`.
+
+Verification: `npm run build` passed including TypeScript with the existing chunk-size advisory; Ruff passed all three new Python files. Configuration/runtime/storage/readiness checks above passed. Final links/hash/protected-file/diff checks are recorded in the evidence. This operational change did not modify app/backend source, canonical content or dependency locks; Step 3's full app verification remains applicable. Native AMD64, older Compose execution, DB backup/restore and L3 content integration remain unverified. Step 4 is complete on native ARM64; stop before Step 5 under the agreed stage gate. L2 remains ongoing.
 
 ## Step 5 — Operational runbook and matching database tools
 

@@ -25,3 +25,6 @@ coverage/
 test-results/
 test-results-containers/
 playwright-report/
+
+# Local off-volume database backups (not automatically off-device).
+/var/backups/postgres/

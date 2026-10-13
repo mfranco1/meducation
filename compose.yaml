@@ -1,0 +1,72 @@
+name: meducation-local
+
+services:
+  api:
+    image: meducation-api:local
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+
+  frontend:
+    image: meducation-learner:local
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${MEDUCATION_FRONTEND_PORT:-4173}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s
+
+  postgres:
+    profiles:
+      - db
+    image: postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826
+    environment:
+      POSTGRES_DB: meducation
+      POSTGRES_USER: meducation_bootstrap
+      POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
+      # Interpolation must allow JSON-only startup without DB configuration.
+      # The startup guard below requires the value only when Postgres is run.
+      POSTGRES_PASSWORD: ${MEDUCATION_POSTGRES_BOOTSTRAP_PASSWORD:-}
+    entrypoint:
+      - /bin/sh
+      - -ec
+      - 'test -n "$$POSTGRES_PASSWORD" || { echo "Set MEDUCATION_POSTGRES_BOOTSTRAP_PASSWORD in an ignored local env file before starting Postgres." >&2; exit 1; }; exec /usr/local/bin/docker-entrypoint.sh "$$@"'
+      - --
+    command:
+      - postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    read_only: true
+    tmpfs:
+      - /tmp
+      - /var/run/postgresql
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready --host 127.0.0.1 --username \"$$POSTGRES_USER\" --dbname \"$$POSTGRES_DB\""]
+      interval: 5s
+      timeout: 3s
+      start_period: 30s
+      retries: 6
+    stop_grace_period: 30s
+
+volumes:
+  postgres-data:

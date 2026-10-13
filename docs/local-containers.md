@@ -1,7 +1,7 @@
 # Local production containers
 
-L2 currently supplies the existing JSON API and a production learner/static-server
-image. PostgreSQL, Compose and database tools follow in later stages of the
+L2 supplies the existing JSON API, production learner/static-server image and
+Compose stack with optional local PostgreSQL. Database backup/restore tools follow in the
 [implementation tracker](work/ongoing/L2-containers-local-services-plan.md).
 Host-based Vite remains the routine UI development path.
 
@@ -14,6 +14,12 @@ docker build --pull -f backend/Dockerfile -t meducation-api:l2-step2 .
 docker build --pull -t meducation-learner:l2-step3 .
 ```
 
+For the Compose stack, build its local image tags instead:
+
+```sh
+docker compose build --pull api frontend
+```
+
 Both Dockerfiles pin multi-platform base indexes; native architecture selection
 works without an AMD64 override on Apple Silicon. See [build-input pins and
 maintenance](../ops/containers/README.md). The learner uses `npm ci`, typechecks,
@@ -21,6 +27,100 @@ and builds API mode with both admin flags disabled. Host `.env` files are exclud
 Its default automatic retry policy is retained. Hidden source maps and a Vite
 manifest let the build audit emitted modules; these files are removed before
 runtime. The audit record stays outside the public document root.
+
+## Compose startup and optional database
+
+The default project is `meducation-local`. JSON-only operation requires no DB
+credentials and starts only the API and learner:
+
+```sh
+docker compose up --detach
+.venv/bin/python scripts/containers/wait-compose.py api frontend
+```
+
+Open `http://127.0.0.1:4173/`. The API has no published host port; only the
+frontend binds loopback. To choose another frontend port, set
+`MEDUCATION_FRONTEND_PORT` in an ignored env file or the shell. The readiness
+command is read-only, has a 90-second deadline and supports `--timeout` and
+`--project` for explicit alternatives. It fails visibly on exited/unhealthy
+containers or expired deadlines. Frontend creation waits for API health;
+Postgres is independent of both app services.
+
+To enable local Postgres, create development-only configuration:
+
+```sh
+cp ops/containers/.env.example ops/containers/.env
+chmod 600 ops/containers/.env
+```
+
+Edit the password placeholder in that file, then start and verify the profile:
+
+```sh
+docker compose --env-file ops/containers/.env --profile db config --quiet
+docker compose --env-file ops/containers/.env --profile db up --detach
+.venv/bin/python scripts/containers/wait-compose.py api frontend postgres
+```
+
+Use the same `--env-file` for subsequent Compose operations on that stack.
+Do not print resolved `config` or `config --environment`: these contain the
+password. `config --quiet` validates syntax; password presence is enforced when
+Postgres starts, so an inactive profile does not block JSON-only operation.
+Missing/empty passwords fail with configuration guidance. The only supplied
+login is the disposable development bootstrap user `meducation_bootstrap`,
+with database `meducation`; app services receive no DB credentials.
+
+The service pins PostgreSQL 17.11 and mounts the named volume
+`meducation-local_postgres-data` at `/var/lib/postgresql/data`. It enables SCRAM
+for TCP clients on fresh initialization and exposes no host database port by
+default. API content still comes from packaged JSON: this profile supplies an
+independent local database, and L3 adds schema, roles, migrations and DB reads.
+The `pg_isready` healthcheck establishes startup reachability, not successful
+authentication or L3 content/schema readiness. The Compose smoke performs a
+separate authenticated TCP SQL check and verifies rejection without a password.
+
+For explicit host database access, add the loopback-only override:
+
+```sh
+docker compose --env-file ops/containers/.env --profile db \
+  -f compose.yaml -f ops/containers/compose.db-port.yaml up --detach
+```
+
+This binds `127.0.0.1:5433:5432`; set `MEDUCATION_POSTGRES_PORT` in the same env
+file to change the host port. Include the same override for subsequent commands
+when managing that variant. Containers use hostname `postgres`; host clients use
+the selected loopback port. Keep PG17 tools for this server; the observed host
+PG14 dump tool is unsuitable. Tool wrappers/rehearsal follow in Step 5.
+
+Stop/restart/recreate keep the named data volume:
+
+```sh
+docker compose --env-file ops/containers/.env --profile db stop
+docker compose --env-file ops/containers/.env --profile db start
+.venv/bin/python scripts/containers/wait-compose.py api frontend postgres
+docker compose --env-file ops/containers/.env --profile db up --detach --force-recreate
+.venv/bin/python scripts/containers/wait-compose.py api frontend postgres
+```
+
+For container/network removal while retaining the data volume:
+
+```sh
+docker compose --env-file ops/containers/.env --profile db down
+```
+
+The official image initializes only an empty volume. Editing env credentials,
+init arguments or a later SQL initialization file does not update existing
+roles/authentication/schema. Use deliberate operations/migrations; recreation
+is not a credential rotation or major-version upgrade. A named volume is not
+a backup. Backups will live outside it under ignored `var/backups/postgres/`;
+off-volume storage is not automatically off-device storage.
+
+Destructive deletion is a separate explicit operator action. Before removing
+`meducation-local_postgres-data`, stop the project, verify its exact
+`com.docker.compose.project=meducation-local` and
+`com.docker.compose.volume=postgres-data` labels, and verify an off-volume backup
+or intentionally discard only disposable development data. Routine commands
+never use `down --volumes` or global prune. Step 5 supplies the tested backup/reset
+runbook before any content-authority cutover.
 
 ## Start a standalone preview
 
@@ -92,7 +192,7 @@ docker network rm meducation-preview
 ```
 
 No volume deletion, global prune or database reset belongs to this routine.
-Compose's later runbook will add explicit database backup/reset operations.
+The database backup/reset rehearsal follows in Step 5.
 
 ## Verify the images
 
@@ -102,6 +202,7 @@ After installing host npm dependencies and Chromium as described in
 ```sh
 .venv/bin/python scripts/containers/smoke-api.py
 .venv/bin/python scripts/containers/smoke-learner.py --browser
+.venv/bin/python scripts/containers/smoke-compose.py
 ```
 
 Both scripts use unique disposable containers. The learner smoke also creates a
@@ -119,6 +220,15 @@ and run `npm run test:e2e:containers`. Browser output is isolated under
 `test-results-containers/`. Add `--report /absolute/path/report.json` to either
 Python command to retain a successful machine report. Failures retain browser
 traces and cannot produce a passing report.
+
+Build the Compose image tags before its smoke. It creates a unique test project
+with temporary credentials and a disposable named volume, verifies both profile
+configurations, actual TCP authentication, loopback ports and a sentinel across
+Postgres restart/recreation, then drops its synthetic database. Cleanup removes
+only its own exact volume after project/volume label verification. It does not
+start the developer's default project or touch its database. Add `--report` to
+retain successful machine evidence. These tests do not establish DB content
+parity, backup/restore or hosted behavior.
 
 Native ARM64 results do not certify native AMD64, real mobile/assistive-technology,
 database or hosted behavior. L1's Firefox deferral and other release acceptance
