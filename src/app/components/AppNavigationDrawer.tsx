@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
+import BackupRoundedIcon from '@mui/icons-material/BackupRounded';
 import { Box, ButtonBase, Drawer, Tooltip, useMediaQuery } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { brand } from '../../shared/brand';
@@ -19,11 +20,15 @@ export function AppNavigationDrawer({
   active,
   currentPage,
   onNavigate,
+  onProgressBackup,
+  progressBackupDisabledReason,
   disabled = false,
 }: {
   active: LearnerSection;
   currentPage?: LearnerSection;
   onNavigate: (section: LearnerSection) => void;
+  onProgressBackup?: () => void;
+  progressBackupDisabledReason?: string;
   disabled?: boolean;
 }) {
   const theme = useTheme();
@@ -142,6 +147,26 @@ export function AppNavigationDrawer({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             {item('quizzes', 'Quizzes', <QuizRoundedIcon />, active === 'quizzes', compact)}
             {item('flashcards', 'Flashcards', <StyleRoundedIcon />, active === 'flashcards', compact)}
+            <Tooltip title={compact ? (progressBackupDisabledReason ?? 'Progress backup') : progressBackupDisabledReason ?? ''} placement="right" enterDelay={500}>
+              <Box component="span" sx={{ display: 'block' }}>
+              <ButtonBase
+                disabled={disabled || !onProgressBackup || Boolean(progressBackupDisabledReason)}
+                aria-label="Progress backup"
+                aria-describedby={progressBackupDisabledReason ? 'progress-backup-disabled-guidance' : undefined}
+                onClick={() => onProgressBackup?.()}
+                sx={{
+                  width: '100%', minHeight: 48, px: compact ? 0 : 1.5, borderRadius: '10px', display: 'flex',
+                  justifyContent: compact ? 'center' : 'flex-start', gap: 1.5, color: 'text.secondary',
+                  '&:hover, &:active': { bgcolor: 'transparent' },
+                  '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+                }}
+              >
+                <Box aria-hidden="true" sx={{ display: 'flex' }}><BackupRoundedIcon /></Box>
+                {!compact && <Box component="span" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Progress backup</Box>}
+              </ButtonBase>
+              </Box>
+            </Tooltip>
+            {progressBackupDisabledReason && <Box id="progress-backup-disabled-guidance" component="span" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>{progressBackupDisabledReason}</Box>}
           </Box>
         </Box>
       </DrawerSurface>

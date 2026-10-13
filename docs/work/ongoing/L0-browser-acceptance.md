@@ -1,6 +1,6 @@
 # L0-A — Progress backup browser acceptance
 
-Status: acceptance criteria selected 2026-10-13; production backup implementation and acceptance runs pending L1. Owner: [L1 progress backups](L1-progress-backup-plan.md). Contract: [progress backup ADR, Step 6](../../decisions/0002-progress-backup-and-restore.md). This checklist remains ongoing until application evidence and required launch checks are recorded.
+Status: acceptance criteria selected 2026-10-13; L1 implementation is underway and the application gates remain open pending full evidence. Owner: [L1 progress backups](L1-progress-backup-plan.md). Contract: [progress backup ADR, Step 6](../../decisions/0002-progress-backup-and-restore.md). This checklist remains ongoing until application evidence and required launch checks are recorded.
 
 ## Evidence and execution rules
 
@@ -9,6 +9,10 @@ Use synthetic fixture progress in isolated browser contexts; never inspect perso
 Existing evidence is limited: [Step 3](../done/L0-step3-coordination-evidence.json) has 21 isolated Chromium/WebKit passes; Firefox launch unavailable; real BFCache return unobserved. [Step 4](../done/L0-step4-restore-evidence.json) is an in-memory interruption model. [Step 5](../done/L0-step5-limits-evidence.json) is synthetic sizing/invariants. None is a completed application test below. Existing learner CI is Chromium only. Manual iOS/Android and assistive-technology checks must be run against the implemented utility before public launch.
 
 ## Required application cases — all pending
+
+### Partial automated evidence — 2026-10-13
+
+`npm run test:e2e:prepared -- --grep progress-backup` passed 2 Chromium tests against the production learner bundle and synthetic localStorage fixture. It verified a real paired download, durable quiz/flashcard export fields, preview of an empty backup without pre-confirmation writes, explicit paired replacement with fresh revisions and controlled reload, no remaining journal, no backup network request, and exclusive capture blocked while a second same-origin page held participation. This is partial evidence only: no B01–B12 item is fully complete from these two tests, so their checkboxes remain pending. The full learner/admin browser suites, Firefox/WebKit, lifecycle/BFCache, recovery fault matrix, mobile and assistive-technology checks are still outstanding.
 
 - [ ] **B01 — Supported admission and round trip.** On each desktop engine, initialize shared participation before any progress read/write. Export empty/populated paired progress under exclusivity, then replace and reload. Assert exact selected fields/durable totals, fresh revisions, paused timers, no mixed snapshots and no journal after verified cleanup. Downloaded file passes its own importer.
 - [ ] **B02 — Missing/rejected capabilities.** Remove Web Locks before app initialization and separately reject actual lock acquisition; test an insecure non-loopback origin where feasible. Deny storage reads and separately writes. Assert specific guidance, exact byte preservation, no persistent study/pagehide writes without participation, no normal uncoordinated export/restore and no fake empty success. Readable absent journal plus exclusive access may allow read-only export when writes fail. Missing file/download APIs disable the affected action only; study with otherwise valid admission remains available.

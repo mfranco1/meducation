@@ -1,12 +1,16 @@
-import { useEffect, useLayoutEffect, useMemo, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Alert, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, LinearProgress } from '@mui/material';
 import { loadRuntimeContent, runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
 import { loadRuntimeFlashcardSubjects, runtimeFlashcardBank } from '../content/api/runtimeFlashcardBank';
 import { ContentLoadError } from '../content/api/contentTransport';
 import { LocalAttemptRepository } from '../persistence/localRepository';
+import { LocalFlashcardProgressRepository } from '../persistence/localFlashcardProgressRepository';
+import { learnerProgressAdmission } from '../persistence/progressAdmission';
 import { averageScore, lowestRecentScore } from '../analytics/analytics';
 import type { Quiz, Subject } from '../domain/types';
 import { AppNavigationDrawer, type LearnerSection } from './components/AppNavigationDrawer';
+import { ProgressBackupDialog } from './components/ProgressBackupDialog';
+import { useProgressBackup } from './useProgressBackup';
 import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenTransition } from '../shared/ui/transitions/ScreenTransition';
 import { ScreenLoadBoundary } from '../shared/ui/loading/ScreenLoadBoundary';
@@ -28,7 +32,8 @@ import { useQuizLaunch } from '../features/quizzes/session/useQuizLaunch';
 import { useFlashcardSession } from '../features/flashcards/session/useFlashcardSession';
 import { activeFlashcardSubjects, flashcardDashboardSubjects } from '../features/flashcards/selectors/flashcards';
 
-const attemptRepository = new LocalAttemptRepository();
+const attemptRepository = new LocalAttemptRepository(undefined, learnerProgressAdmission);
+const flashcardProgressRepository = new LocalFlashcardProgressRepository(undefined, learnerProgressAdmission);
 
 function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
   const count = runtimeQuestionBank.listQuestions(quiz.id).filter(question => question.rationaleMeta?.answerReviewNote).length;
@@ -36,7 +41,7 @@ function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
   return <Container maxWidth="md" sx={{ pt: 4 }}><Alert severity="warning">This score uses {count} source answer {count === 1 ? 'key' : 'keys'} under review. Interpret the result with that in mind.</Alert></Container>;
 }
 
-function LearnerApp() {
+function LearnerApp({ onProgressBackup, progressReadOnly }: { onProgressBackup: () => void; progressReadOnly: boolean }) {
   const toast = useToast();
   const questionBank = runtimeQuestionBank;
   const contentSnapshotVersion = useSyncExternalStore(questionBank.subscribe, questionBank.getSnapshot);
@@ -44,7 +49,7 @@ function LearnerApp() {
   const progressView = useMemo(() => createProgressView(progressSnapshot), [progressSnapshot]);
   useEffect(() => { void loadRuntimeContent().catch(() => undefined); }, []);
   const session = useQuizSession(questionBank, attemptRepository);
-  const flashcards = useFlashcardSession(undefined, undefined, ({ deck, subject, error }) => {
+  const flashcards = useFlashcardSession(undefined, flashcardProgressRepository, ({ deck, subject, error }) => {
     toast.show({ id: `flashcard-load-${deck.id}`, title: 'Unable to load deck', message: <>{deck.name}: {contentLoadMessage(error)}</>, severity: 'error', position: 'bottom-right', ttlMs: null, closeButton: true, dismissPolicy: 'manual', scope: { type: 'screen', key: `flashcards-subject:${subject.id}` } });
   });
   const flashcardContentVersion = useSyncExternalStore(runtimeFlashcardBank.subscribe, runtimeFlashcardBank.getSnapshot);
@@ -68,6 +73,7 @@ function LearnerApp() {
   const [reviewExitOpen, setReviewExitOpen] = useState(false);
   const [screenLoading, setScreenLoading] = useState(false);
   const [reviewExitDestination, setReviewExitDestination] = useState<QuizExitDestination>('subject');
+  const openBackupAfterReviewExit = useRef(false);
   const summaries = useMemo(
     () => questionBank.listSubjectSummaries(),
     // The external-store version invalidates a catalog whose array identity is not stable.
@@ -120,6 +126,19 @@ function LearnerApp() {
     setReviewExitOpen(false);
     setReviewExitDestination('subject');
   };
+  const requestProgressBackup = () => {
+    if (session.view.page === 'quiz' || view.page === 'flashcards-study') return;
+    cancel();
+    flashcards.cancelLaunch();
+    runtimeFlashcardBank.cancelAll();
+    session.cancelPendingResume();
+    if (session.view.page === 'quiz-review') {
+      openBackupAfterReviewExit.current = true;
+      requestReviewExit('dashboard');
+      return;
+    }
+    onProgressBackup();
+  };
   const handleNavigation = (section: LearnerSection) => {
     cancel();
     flashcards.cancelLaunch();
@@ -155,8 +174,13 @@ function LearnerApp() {
           : view.page === 'flashcards-study' ? 'Loading deck…' : 'Loading…';
 
   const activeSection = view.page === 'flashcards' || view.page === 'flashcards-subject' || view.page === 'flashcards-study' ? 'flashcards' : 'quizzes';
+  const activeStudy = session.view.page === 'quiz' || view.page === 'flashcards-study';
+  const backupDisabledReason = progressReadOnly
+    ? 'This browser cannot safely coordinate saved progress. Use a supported browser to study with saved progress or transfer a backup.'
+    : activeStudy ? 'Save and leave your study session before opening progress backup.' : undefined;
   const currentPage = view.page === 'dashboard' ? 'quizzes' : view.page === 'flashcards' ? 'flashcards' : undefined;
-  return <AppShell sidebar={<AppNavigationDrawer active={activeSection} currentPage={currentPage} onNavigate={handleNavigation} />} busy={screenLoading}>
+  return <AppShell sidebar={<AppNavigationDrawer active={activeSection} currentPage={currentPage} onNavigate={handleNavigation} onProgressBackup={backupDisabledReason ? undefined : requestProgressBackup} progressBackupDisabledReason={backupDisabledReason} />} busy={screenLoading}>
+    {progressReadOnly && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="warning">This browser cannot safely coordinate saved progress. You can browse content, but study, resume and backup are unavailable here. Use a supported browser to work with saved progress.</Alert></Container>}
     {session.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error" onClose={session.clearPersistenceError}>{session.persistenceError}</Alert></Container>}
     {activeSection === 'flashcards' && view.page !== 'flashcards-study' && flashcards.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error">{flashcards.persistenceError}</Alert></Container>}
     {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
@@ -184,6 +208,7 @@ function LearnerApp() {
     />}
     {currentFlashcardSubject && <FlashcardSubjectScreen
       subject={currentFlashcardSubject}
+      readOnly={progressReadOnly}
       catalog={runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id)}
       checkpoints={flashcards.progress.checkpoints}
       completionCounts={flashcards.progress.completionCounts}
@@ -198,7 +223,7 @@ function LearnerApp() {
       onBack={() => { runtimeFlashcardBank.cancel(`catalog:${currentFlashcardSubject.id}`); flashcards.showDashboard(); }}
       onSelectDeck={deck => { void flashcards.launchDeck(deck, currentFlashcardSubject); }}
     />}
-    {currentSubject && <SubjectScreen subject={currentSubject} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
+    {currentSubject && <SubjectScreen subject={currentSubject} progress={progressForSubject(currentSubject.id)} readOnly={progressReadOnly} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
       if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') { window.location.reload(); return; }
       if (currentQuizRecovery?.busy) return;
       if (currentQuizState === 'retrying') questionBank.retryQuizNow(currentSubject.id);
@@ -212,7 +237,13 @@ function LearnerApp() {
     </ScreenLoadBoundary>
     </ScreenTransition>
     <ExitQuizDialog open={exitOpen} onClose={closeExitDialog} onLeave={() => { session.leaveQuiz(exitDestination); closeExitDialog(); }} onAbort={() => { session.abortQuiz(exitDestination); closeExitDialog(); }} />
-    <LeaveReviewDialog open={reviewExitOpen} onClose={closeReviewExitDialog} onLeave={() => { session.leaveReview(reviewExitDestination); closeReviewExitDialog(); }} />
+    <LeaveReviewDialog open={reviewExitOpen} onClose={() => { openBackupAfterReviewExit.current = false; closeReviewExitDialog(); }} onLeave={() => {
+      session.leaveReview(reviewExitDestination);
+      const openBackup = openBackupAfterReviewExit.current;
+      openBackupAfterReviewExit.current = false;
+      closeReviewExitDialog();
+      if (openBackup) { session.showDashboard(); onProgressBackup(); }
+    }} />
     <ResumeContentDialog open={Boolean(session.pendingResume)} onCancel={session.cancelPendingResume} onRestart={session.restartPendingResume} />
     <Dialog open={Boolean(flashcards.pendingRestart)} onClose={flashcards.cancelRestart} aria-labelledby="flashcard-restart-title">
       <DialogTitle id="flashcard-restart-title">Restart this deck?</DialogTitle>
@@ -221,9 +252,15 @@ function LearnerApp() {
         : 'Your saved card is no longer in this deck. Restarting will save your position at the first card.'}</DialogContent>
       <DialogActions><Button onClick={flashcards.cancelRestart}>Keep saved position</Button><Button variant="contained" onClick={flashcards.confirmRestart}>Restart deck</Button></DialogActions>
     </Dialog>
+
   </AppShell>;
 }
 
 export default function App() {
-  return <ToastProvider><LearnerApp /></ToastProvider>;
+  const refreshProgress = useCallback(() => {
+    attemptRepository.refreshAfterPairedOperation();
+    flashcardProgressRepository.refreshAfterPairedOperation();
+  }, []);
+  const backup = useProgressBackup(refreshProgress);
+  return <ToastProvider><LearnerApp onProgressBackup={backup.show} progressReadOnly={learnerProgressAdmission.browsingOnly} /><ProgressBackupDialog controller={backup} /></ToastProvider>;
 }

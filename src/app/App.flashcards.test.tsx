@@ -1,12 +1,14 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
 import { runtimeFlashcardBank } from '../content/api/runtimeFlashcardBank';
 import App from './App';
 import { theme } from '../shared/theme';
+import { learnerProgressAdmission } from '../persistence/progressAdmission';
 
-afterEach(() => vi.unstubAllGlobals());
+beforeEach(() => learnerProgressAdmission.admit({ mode: 'shared', valid: true, release: () => undefined }, () => 'clear'));
+afterEach(() => { learnerProgressAdmission.close(); vi.unstubAllGlobals(); });
 
 it('shows unreadable saved progress on the dashboard before a deck is opened', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-corrupt', subjects: [] });
@@ -24,6 +26,28 @@ it('shows unreadable saved progress on the dashboard before a deck is opened', a
   fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
   expect(await screen.findByRole('alert')).toHaveTextContent('original browser data has been kept');
   expect(setItem).not.toHaveBeenCalled();
+});
+
+it('disables progress backup during flashcard study with save-and-leave guidance', async () => {
+  runtimeQuestionBank.configureLocal([], [], []);
+  runtimeFlashcardBank.configureLocal(
+    [{ id: 's-backup', name: 'Backup cards', accent: '#123456', deckCount: 1, deckIds: ['d-backup'] }],
+    [{ id: 'd-backup', subjectId: 's-backup', name: 'Backup deck', cardCount: 1, cardIds: ['f-backup'] }],
+    [{ id: 'f-backup', deckId: 'd-backup', front: 'Front', back: 'Back' }],
+  );
+  const values = new Map<string, string>();
+  vi.stubGlobal('localStorage', { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value), removeItem: (key: string) => values.delete(key) });
+  render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+  fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open Backup cards' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Study deck' }));
+  expect(await screen.findByText('Card 1 of 1')).toBeVisible();
+
+  const backupButton = screen.getByRole('button', { name: 'Progress backup' });
+  expect(backupButton).toBeDisabled();
+  expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent('Save and leave your study session');
+  expect(screen.queryByRole('dialog', { name: 'Progress backup' })).toBeNull();
+  expect(screen.getByText('Card 1 of 1')).toBeVisible();
 });
 
 it('shows a visible persistence error when a deck cannot be launched', async () => {

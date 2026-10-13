@@ -16,7 +16,7 @@ const MAX_QUIZ_SIGNATURE_BYTES = 512 * 1024;
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const MILESTONES = new Set([3, 5, 10, 25, 50]);
 
-export type BackupErrorCategory = 'too-large' | 'malformed-json' | 'wrong-format' | 'unsupported-version' | 'invalid-progress';
+export type BackupErrorCategory = 'too-large' | 'malformed-json' | 'wrong-format' | 'unsupported-version' | 'invalid-progress' | 'unsupported-browser' | 'storage-error' | 'recovery-required';
 export type BackupParseResult = { ok: true; value: ProgressBackupV1 } | { ok: false; error: BackupErrorCategory };
 
 export interface QuizBackupV2 {
@@ -42,6 +42,14 @@ export interface ProgressBackupV1 {
   quiz: QuizBackupV2;
   flashcards: FlashcardsBackupV2;
 }
+export interface ProgressBackupSummary {
+  retainedCompletedAttempts: number;
+  savedQuizzes: number;
+  savedFlashcardDecks: number;
+  quizCompletions: number;
+  flashcardCompletions: number;
+  totalRecordedCompletions: string;
+}
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const utf8Bytes = (s: string) => new TextEncoder().encode(s).byteLength;
@@ -54,7 +62,13 @@ const safeInt = (v: unknown): v is number => safeNumber(v) && Number.isSafeInteg
 const timestamp = (v: unknown): v is string => typeof v === 'string' && /^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z$/.test(v) && Number.isFinite(Date.parse(v)) && new Date(v).toISOString() === v;
 const addSafe = (a: number, b: number) => Number.isSafeInteger(a + b) && a + b >= 0;
 const own = (o: Record<string, unknown>, k: string) => Object.prototype.hasOwnProperty.call(o, k);
+const ownValue = (o: Record<string, unknown>, k: string): unknown => own(o, k) ? o[k] : undefined;
 const assignSafe = <T>(target: Record<string, T>, key: string, value: T) => Object.defineProperty(target, key, { value, enumerable: true, configurable: true, writable: true });
+function sortedRecord<T, U = T>(source: Record<string, T>, project: (value: T) => U = value => value as unknown as U): Record<string, U> {
+  const output: Record<string, U> = {};
+  for (const key of Object.keys(source).sort()) assignSafe(output, key, project(source[key]!));
+  return output;
+}
 
 /** Bounds the parsed tree before schema projection. Iterative to avoid attacker-controlled recursion. */
 function safeTree(value: unknown): boolean {
@@ -64,12 +78,15 @@ function safeTree(value: unknown): boolean {
     const item = pending.pop()!;
     if (++visited > MAX_NODES || item.depth > MAX_DEPTH) return false;
     if (Array.isArray(item.value)) {
-      if (item.value.length > 10_000 || visited + item.value.length > MAX_NODES) return false;
+      if (item.value.length > 10_000 || visited + pending.length + item.value.length > MAX_NODES) return false;
       for (let i = item.value.length - 1; i >= 0; i--) pending.push({ value: item.value[i], depth: item.depth + 1 });
     } else if (isRecord(item.value)) {
-      const keys = Object.keys(item.value);
-      if (keys.length > 50_000 || visited + keys.length > MAX_NODES || keys.some(k => DANGEROUS_KEYS.has(k))) return false;
-      for (const key of keys) pending.push({ value: item.value[key], depth: item.depth + 1 });
+      let members = 0;
+      for (const key in item.value) {
+        if (!own(item.value, key)) continue;
+        if (DANGEROUS_KEYS.has(key) || ++members > 50_000 || visited + pending.length + members > MAX_NODES) return false;
+        pending.push({ value: item.value[key], depth: item.depth + 1 });
+      }
     } else if (typeof item.value === 'string' && utf8Bytes(item.value) > PROGRESS_BACKUP_MAX_BYTES) return false;
   }
   return true;
@@ -132,7 +149,7 @@ function validQuiz(value: unknown): value is QuizBackupV2 {
   const completedIds = value.completedIds as Record<string, true>;
   const completionCounts = value.completionCounts as Record<string, number>;
   const active = value.active as Record<string, Attempt>;
-  if (new Set(completed.map(a => a.id)).size !== completed.length || completed.some(a => completedIds[a.id] !== true)) return false;
+  if (new Set(completed.map(a => a.id)).size !== completed.length || completed.some(a => ownValue(completedIds, a.id) !== true)) return false;
   if (new Set(Object.values(active).map(a => a.id)).size !== Object.keys(active).length || Object.values(active).some(a => own(completedIds, a.id))) return false;
   let countTotal = 0;
   for (const count of Object.values(completionCounts)) { if (!addSafe(countTotal, count)) return false; countTotal += count; }
@@ -141,10 +158,13 @@ function validQuiz(value: unknown): value is QuizBackupV2 {
   for (const attempt of completed) retainedByQuiz.set(attempt.quizId, [...(retainedByQuiz.get(attempt.quizId) ?? []), attempt]);
   for (const [quizId, count] of Object.entries(completionCounts)) {
     const retained = retainedByQuiz.get(quizId) ?? [];
-    if (count < retained.length || (count > 0 && (!own(value.lowestScores as Record<string, unknown>, quizId) || !own(value.latestScores as Record<string, unknown>, quizId)))) return false;
-    if (retained.some(a => (value.lowestScores as Record<string, number>)[quizId] > a.score.percentage || Date.parse((value.latestScores as Record<string, RecentScore>)[quizId].completedAt) < Date.parse(a.completedAt))) return false;
+    const lowest = ownValue(value.lowestScores as Record<string, unknown>, quizId) as number | undefined;
+    const latest = ownValue(value.latestScores as Record<string, unknown>, quizId) as RecentScore | undefined;
+    if (count < retained.length || (count > 0 && (lowest === undefined || latest === undefined))) return false;
+    if (lowest !== undefined && latest !== undefined && retained.some(a => lowest > a.score.percentage || Date.parse(latest.completedAt) < Date.parse(a.completedAt))) return false;
   }
-  return Object.keys(value.lowestScores as object).every(k => (completionCounts[k] ?? 0) > 0) && Object.keys(value.latestScores as object).every(k => (completionCounts[k] ?? 0) > 0);
+  return Object.keys(value.lowestScores as object).every(k => Number(ownValue(completionCounts, k) ?? 0) > 0)
+    && Object.keys(value.latestScores as object).every(k => Number(ownValue(completionCounts, k) ?? 0) > 0);
 }
 function validFlashcards(value: unknown): value is FlashcardsBackupV2 {
   if (!keys(value, ['schemaVersion', 'checkpoints', 'completionCounts'], ['dailyStats']) || value.schemaVersion !== 2) return false;
@@ -161,13 +181,45 @@ function validIdList(value: unknown): value is string[] {
   return Array.isArray(value) && value.length <= 10_000 && value.every(safeId) && new Set(value).size === value.length;
 }
 
+function validLiveQuiz(state: unknown): state is ProgressState {
+  if (!keys(state, ['schemaVersion', 'revision', 'active', 'completed', 'completionCounts', 'lowestScores', 'latestScores', 'activity', 'completedIds'])
+    || state.schemaVersion !== 2 || !safeReference(state.revision)) return false;
+  if (!validMap(state.active, 64, (key, value): value is Attempt => {
+    if (!keys(value, ['id', 'quizId', 'subjectId', 'feedbackMode', 'startedAt', 'elapsedMs', 'celebrationProgress', 'responses'], ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision'])) return false;
+    return (value.timerStartedAt === undefined || timestamp(value.timerStartedAt)) && validAttempt(stripAttemptRuntimeFields(value, true), true) && value.quizId === key;
+  })) return false;
+  if (!Array.isArray(state.completed) || state.completed.length > 200 || !state.completed.every(value => {
+    if (!keys(value, ['id', 'quizId', 'subjectId', 'feedbackMode', 'startedAt', 'elapsedMs', 'celebrationProgress', 'responses', 'completedAt', 'score'], ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision'])) return false;
+    if (value.timerStartedAt !== undefined && !timestamp(value.timerStartedAt)) return false;
+    if (value.contentSignature !== undefined && (typeof value.contentSignature !== 'string' || value.contentSignature.length === 0 || utf8Bytes(value.contentSignature) > MAX_QUIZ_SIGNATURE_BYTES)) return false;
+    return validAttempt(stripAttemptRuntimeFields(value, false), false);
+  })) return false;
+  try { return validQuiz(projectQuiz(state as unknown as ProgressState)); } catch { return false; }
+}
+function stripAttemptRuntimeFields(value: unknown, active: boolean): Record<string, unknown> {
+  if (!isRecord(value)) return {};
+  const result = { ...value };
+  delete result.timerStartedAt;
+  if (active) {
+    delete result.completedAt;
+    delete result.score;
+  } else delete result.contentSignature;
+  return result;
+}
+function validLiveFlashcards(state: unknown): state is FlashcardProgressState {
+  return keys(state, ['schemaVersion', 'revision', 'checkpoints'], ['completionCounts', 'dailyStats'])
+    && state.schemaVersion === 2 && safeReference(state.revision)
+    && (state.completionCounts === undefined || isRecord(state.completionCounts))
+    && validFlashcards({ schemaVersion: 2, checkpoints: state.checkpoints, completionCounts: state.completionCounts === undefined ? {} : state.completionCounts, ...(state.dailyStats === undefined ? {} : { dailyStats: state.dailyStats }) });
+}
+
 function projectAttempt(attempt: Attempt | CompletedAttempt, active: boolean): Attempt | CompletedAttempt {
   const result: Record<string, unknown> = {
     id: attempt.id, quizId: attempt.quizId, subjectId: attempt.subjectId, feedbackMode: attempt.feedbackMode,
     startedAt: attempt.startedAt, elapsedMs: attempt.elapsedMs, celebrationProgress: {
       correctStreak: attempt.celebrationProgress.correctStreak,
       awardedStreakMilestones: [...attempt.celebrationProgress.awardedStreakMilestones],
-    }, responses: Object.fromEntries(Object.entries(attempt.responses).map(([key, r]) => [key, { questionId: r.questionId, ...(r.selectedChoiceId === undefined ? {} : { selectedChoiceId: r.selectedChoiceId }), flagged: r.flagged, locked: r.locked, timeMs: r.timeMs }])),
+    }, responses: sortedRecord(attempt.responses, r => ({ questionId: r.questionId, ...(r.selectedChoiceId === undefined ? {} : { selectedChoiceId: r.selectedChoiceId }), flagged: r.flagged, locked: r.locked, timeMs: r.timeMs })),
   };
   if (attempt.currentQuestionId !== undefined) result.currentQuestionId = attempt.currentQuestionId;
   if (active) {
@@ -182,13 +234,47 @@ function projectAttempt(attempt: Attempt | CompletedAttempt, active: boolean): A
 }
 function projectQuiz(state: ProgressState): QuizBackupV2 {
   const active: Record<string, Attempt> = {};
-  for (const [key, attempt] of Object.entries(state.active)) {
+  for (const key of Object.keys(state.active).sort()) {
+    const attempt = state.active[key]!;
     if (attempt.timerStartedAt !== undefined && !timestamp(attempt.timerStartedAt)) throw new Error('invalid-progress');
     assignSafe(active, key, projectAttempt(attempt, true) as Attempt);
   }
   const completedIds: Record<string, true> = {};
-  for (const [key, value] of Object.entries(state.completedIds)) assignSafe(completedIds, key, value);
-  return { schemaVersion: 2, active, completed: state.completed.map(a => projectAttempt(a, false) as CompletedAttempt), completionCounts: { ...state.completionCounts }, lowestScores: { ...state.lowestScores }, latestScores: structuredClone(state.latestScores), activity: { ...state.activity }, completedIds };
+  for (const key of Object.keys(state.completedIds).sort()) assignSafe(completedIds, key, state.completedIds[key]!);
+  return {
+    schemaVersion: 2, active, completed: state.completed.map(a => projectAttempt(a, false) as CompletedAttempt),
+    completionCounts: sortedRecord(state.completionCounts), lowestScores: sortedRecord(state.lowestScores),
+    latestScores: sortedRecord(state.latestScores, value => ({ percentage: value.percentage, completedAt: value.completedAt })),
+    activity: sortedRecord(state.activity), completedIds,
+  };
+}
+
+/** Copy a validated parsed payload into fresh, fixed-shape records with stable map ordering. */
+function projectImportedBackup(value: ProgressBackupV1): ProgressBackupV1 {
+  const quiz: QuizBackupV2 = {
+    schemaVersion: 2,
+    active: sortedRecord(value.quiz.active, attempt => projectAttempt(attempt, true) as Attempt),
+    completed: value.quiz.completed.map(attempt => projectAttempt(attempt, false) as CompletedAttempt),
+    completionCounts: sortedRecord(value.quiz.completionCounts),
+    lowestScores: sortedRecord(value.quiz.lowestScores),
+    latestScores: sortedRecord(value.quiz.latestScores, score => ({ percentage: score.percentage, completedAt: score.completedAt })),
+    activity: sortedRecord(value.quiz.activity),
+    completedIds: sortedRecord(value.quiz.completedIds),
+  };
+  const flashcards: FlashcardsBackupV2 = {
+    schemaVersion: 2,
+    checkpoints: sortedRecord(value.flashcards.checkpoints, checkpoint => ({
+      deckId: checkpoint.deckId, currentCardId: checkpoint.currentCardId, contentSignature: checkpoint.contentSignature,
+      updatedAt: checkpoint.updatedAt, openedCardIds: [...checkpoint.openedCardIds], flaggedCardIds: [...checkpoint.flaggedCardIds],
+    })),
+    completionCounts: sortedRecord(value.flashcards.completionCounts),
+    ...(value.flashcards.dailyStats === undefined ? {} : { dailyStats: {
+      firstDay: value.flashcards.dailyStats.firstDay, currentDay: value.flashcards.dailyStats.currentDay,
+      currentDayCount: value.flashcards.dailyStats.currentDayCount, trackedCompletions: value.flashcards.dailyStats.trackedCompletions,
+      highestDailyCount: value.flashcards.dailyStats.highestDailyCount,
+    } }),
+  };
+  return { format: PROGRESS_BACKUP_FORMAT, version: 1, exportedAt: value.exportedAt, quiz, flashcards };
 }
 
 export function validateProgressBackup(value: unknown): BackupParseResult {
@@ -197,7 +283,7 @@ export function validateProgressBackup(value: unknown): BackupParseResult {
   if (value.version !== 1) return { ok: false, error: 'unsupported-version' };
   if (!safeTree(value)) return { ok: false, error: 'invalid-progress' };
   if (!keys(value, ['format', 'version', 'exportedAt', 'quiz', 'flashcards']) || !timestamp(value.exportedAt) || !validQuiz(value.quiz) || !validFlashcards(value.flashcards)) return { ok: false, error: 'invalid-progress' };
-  return { ok: true, value: value as unknown as ProgressBackupV1 };
+  return { ok: true, value: projectImportedBackup(value as unknown as ProgressBackupV1) };
 }
 
 export function parseProgressBackup(text: string): BackupParseResult {
@@ -207,12 +293,36 @@ export function parseProgressBackup(text: string): BackupParseResult {
   return validateProgressBackup(value);
 }
 
+export function summarizeProgressBackup(value: ProgressBackupV1): ProgressBackupSummary | undefined {
+  if (!validateProgressBackup(value).ok) return undefined;
+  const quizIds = new Set<string>([
+    ...Object.keys(value.quiz.active), ...value.quiz.completed.map(attempt => attempt.quizId),
+    ...Object.keys(value.quiz.completionCounts), ...Object.keys(value.quiz.lowestScores),
+    ...Object.keys(value.quiz.latestScores), ...Object.keys(value.quiz.activity),
+  ]);
+  const deckIds = new Set([...Object.keys(value.flashcards.checkpoints), ...Object.keys(value.flashcards.completionCounts)]);
+  const quizCompletions = Object.values(value.quiz.completionCounts).reduce((sum, count) => sum + count, 0);
+  const flashcardCompletions = Object.values(value.flashcards.completionCounts).reduce((sum, count) => sum + count, 0);
+  return {
+    retainedCompletedAttempts: value.quiz.completed.length,
+    savedQuizzes: quizIds.size,
+    savedFlashcardDecks: deckIds.size,
+    quizCompletions,
+    flashcardCompletions,
+    totalRecordedCompletions: (BigInt(quizCompletions) + BigInt(flashcardCompletions)).toString(),
+  };
+}
+
 /** Build the exact portable allowlist, pause running timers, and revalidate the result. */
 export function encodeProgressBackup(quiz: ProgressState, flashcards: FlashcardProgressState, exportedAt = new Date().toISOString()): string | undefined {
+  if (!safeTree({ quiz, flashcards }) || !validLiveQuiz(quiz) || !validLiveFlashcards(flashcards) || !timestamp(exportedAt)) return undefined;
   let quizPayload: QuizBackupV2;
   try { quizPayload = projectQuiz(quiz); } catch { return undefined; }
   const flashcardPayload: FlashcardsBackupV2 = {
-    schemaVersion: 2, checkpoints: structuredClone(flashcards.checkpoints), completionCounts: { ...flashcards.completionCounts },
+    schemaVersion: 2, checkpoints: sortedRecord(flashcards.checkpoints, checkpoint => ({
+      deckId: checkpoint.deckId, currentCardId: checkpoint.currentCardId, contentSignature: checkpoint.contentSignature,
+      updatedAt: checkpoint.updatedAt, openedCardIds: [...checkpoint.openedCardIds], flaggedCardIds: [...checkpoint.flaggedCardIds],
+    })), completionCounts: sortedRecord(flashcards.completionCounts ?? {}),
     ...(flashcards.dailyStats === undefined ? {} : { dailyStats: { ...flashcards.dailyStats } }),
   };
   const value: ProgressBackupV1 = { format: PROGRESS_BACKUP_FORMAT, version: 1, exportedAt, quiz: quizPayload, flashcards: flashcardPayload };

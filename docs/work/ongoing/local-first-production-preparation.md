@@ -166,14 +166,14 @@ Provision managed Postgres and the chosen admin identity; deploy static learner/
 - [x] L0 Step 3 coordination design/prototype selected and audited; 21 Chromium/WebKit probes and lint/format/build passed. Firefox and actual BFCache validation remain release obligations. Step 4 awaits user continuation.
 - [x] L0 Step 4 journal/recovery contract selected and audited; fault model and lint/format/build passed. Step 5 awaits user continuation.
 - [x] L0 Step 5 strict validation/limits/timer-normalization selected and audited; synthetic sizing/invariants and lint/format/build passed. Step 6 awaits user continuation.
-- [ ] L1 implemented and verified.
+- [ ] L1 implemented and verified. Implementation is underway; full verify:full passes, but L1 browser/recovery and public-launch gates remain open in its tracker.
 - [ ] L2 implemented and verified.
 - [ ] L3 implemented and verified.
 - [ ] L4 implemented and verified.
 - [ ] L5 implemented and verified.
 - [ ] L6 implemented and verified.
 
-This turn changes planning artifacts only; no runtime implementation, content edits, schema migrations, Docker setup or cloud provisioning has occurred. Planning verification: `npm run build` passed including typecheck (non-blocking Vite chunk-size advisory); `git diff --check` passed; revised canvas TSX syntax validation passed. Canvas host rendering was not verified. Historical checks in the earlier snapshot are not implementation evidence for these stages.
+L1 runtime work has since begun in its own tracker. This parent planning document was updated to reflect that status; no content edits, schema migrations, Docker setup or cloud provisioning occurred. Planning verification: `npm run build` passed including typecheck (non-blocking Vite chunk-size advisory); `git diff --check` passed; revised canvas TSX syntax validation passed. Canvas host rendering was not verified. Historical checks in the earlier snapshot are not implementation evidence for these stages.
 
 - [x] L0 Step 6 capability/lifecycle/accessibility acceptance selected and audited; L0-A design gate met. Application multi-browser, quota, BFCache and manual mobile/assistive-technology verification remain L1/release gates. Step 7 awaits user continuation.
 
@@ -184,8 +184,8 @@ This turn changes planning artifacts only; no runtime implementation, content ed
 
 ## L0 final handoff — 2026-10-13
 
-[Completed L0 tracker](../done/L0-local-contracts-plan.md) records all nine design/evidence steps and the independent gates. L0-A is ready for L1 implementation; L0-B is ready for L2/L3 implementation with container/dependency/runtime tests still pending. L0-C contract/capability status is recorded, but final provider/fresh-MFA acceptance remains required before production integration in L4. [Browser acceptance](L0-browser-acceptance.md) stays ongoing until its application/manual gates pass. No L1–L6 runtime implementation or hosted provisioning is complete.
+[Completed L0 tracker](../done/L0-local-contracts-plan.md) records all nine design/evidence steps and the independent gates. L0-A implementation is underway in L1; its feature and browser acceptance gates remain pending. L0-B is ready for L2/L3 implementation with container/dependency/runtime tests still pending. L0-C contract/capability status is recorded, but final provider/fresh-MFA acceptance remains required before production integration in L4. [Browser acceptance](L0-browser-acceptance.md) stays ongoing until its application/manual gates pass. L1 runtime implementation is in progress; it is not yet complete or fully browser-verified. No hosted provisioning has occurred.
 
-Next authorized unit of work after user continuation: [L1 Step 1](L1-progress-backup-plan.md#step-1--establish-fixtures-and-observable-invariants), synthetic fixtures and observable persistence invariants. Complete/audit that step and stop before L1 Step 2. Do not begin it during the L0 handoff turn.
+Current L1 work and evidence are tracked in [the progress backup plan](L1-progress-backup-plan.md); continue its remaining acceptance and documentation gates. Do not begin L2 until L1 is completed and audited.
 
-- [x] L0 Step 9 final handoff/audit complete; completed tracker/evidence archived. Build/typecheck, architecture graph, 105 link/anchor checks, immutable evidence/canonical hashes and diff checks passed; existing chunk-size advisory remains. L1 Step 1 awaits user continuation.
+- [x] L0 Step 9 final handoff/audit complete; completed tracker/evidence archived. Build/typecheck, architecture graph, 105 link/anchor checks, immutable evidence/canonical hashes and diff checks passed; existing chunk-size advisory remains. L1 runtime implementation is underway; see its current tracker and browser checklist.

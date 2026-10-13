@@ -6,6 +6,7 @@ import { LocalAttemptRepository } from '../persistence/localRepository';
 import App from './App';
 import { theme } from '../shared/theme';
 import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
+import { learnerProgressAdmission } from '../persistence/progressAdmission';
 
 function completed(quizId: string, subjectId: string, percentage: number): CompletedAttempt {
   const at = '2026-10-02T00:00:00.000Z';
@@ -31,8 +32,9 @@ beforeEach(() => {
     removeItem: (key: string) => values.delete(key),
     clear: () => values.clear(),
   });
+  learnerProgressAdmission.admit({ mode: 'shared', valid: true, release: () => undefined }, () => 'clear');
 });
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { learnerProgressAdmission.close(); vi.unstubAllGlobals(); });
 
 describe('progressive dashboard statistics', () => {
   it('calculates all subject scores after the summary request without opening a subject', async () => {
@@ -268,4 +270,43 @@ describe('progressive dashboard statistics', () => {
     expect(await screen.findByRole('heading', { name: 'All Subjects' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Quizzes' })).toHaveAttribute('aria-current', 'page');
   });
+  it('disables progress backup during active quiz with save-and-leave guidance', async () => {
+    const subject = { id: 's-backup', name: 'Backup subject', accent: '#b9511b' };
+    const quiz = { id: 'q-backup', subjectId: subject.id, name: 'Backup quiz', questionCount: 1, questionIds: ['i-backup'] };
+    runtimeQuestionBank.configureLocal(
+      [subject], [quiz], [{ id: 'i-backup', quizId: quiz.id, stem: 'Question', choices: [{ id: 'A', text: 'Choice' }], answer: 'A', rationale: '', metadata: {} }],
+    );
+    render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+    fireEvent.click(screen.getByRole('button', { name: 'Open Backup subject' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+    expect(await screen.findByText('Question 1 of 1')).toBeVisible();
+
+    const backupButton = screen.getByRole('button', { name: 'Progress backup' });
+    expect(backupButton).toBeDisabled();
+    expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent('Save and leave your study session');
+    expect(screen.queryByRole('dialog', { name: 'Progress backup' })).toBeNull();
+    expect(screen.getByText('Question 1 of 1')).toBeVisible();
+  });
+  it('allows content browsing without saved-progress writes when coordination is unsupported', async () => {
+    learnerProgressAdmission.close();
+    learnerProgressAdmission.admitReadOnly(() => 'clear');
+    const subject = { id: 's-safe', name: 'Safe subject', accent: '#123456' };
+    const quiz = { id: 'q-safe', subjectId: subject.id, name: 'Safe quiz', questionCount: 1, questionIds: ['i-safe'] };
+    runtimeQuestionBank.configureLocal(
+      [subject], [quiz], [{ id: 'i-safe', quizId: quiz.id, stem: 'Safe browse stem', choices: [{ id: 'A', text: 'Choice' }], answer: 'A', rationale: 'Explanation', metadata: {} }],
+    );
+    render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('study, resume and backup are unavailable');
+    fireEvent.click(screen.getByRole('button', { name: 'Open Safe subject' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Browse quiz' }));
+    expect(screen.getByRole('button', { name: 'Begin Quiz' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Browse Answers' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Open quiz' }));
+    await waitFor(() => expect(screen.getByText('Safe browse stem')).toBeVisible(), { timeout: 10_000 });
+    expect(new LocalAttemptRepository().getActive(quiz.id)).toBeUndefined();
+    expect(localStorage.getItem('meducation.progress.v2')).toBeNull();
+  });
+
 });

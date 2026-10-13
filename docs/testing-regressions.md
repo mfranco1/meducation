@@ -31,6 +31,8 @@ Use this reference when changing the corresponding behavior. [Testing](testing.m
 
 ## Quiz behavior and progress
 
+- Paired progress backup regressions cover strict v1 allowlisting and size/depth bounds, corrupt-versus-missing storage, no writes before confirmation, current-progress preview, durable completion totals, paused active-attempt export, stale preview rejection, journaled pair replacement/recovery, fresh revisions, and same-tab snapshot refresh. Playwright uses synthetic localStorage fixtures to exercise a real download, explicit empty restore and controlled reload, with a second same-origin page blocking exclusive capture. Keep recovery fault injection, lifecycle/BFCache, file cancellation/reselection, Firefox/WebKit, screen-reader and actual mobile checks open until recorded in the [L1 acceptance checklist](work/ongoing/L0-browser-acceptance.md).
+
 ### Read-only quiz presentation
 
 - For quiz-screen presentation changes, compare desktop and mobile browser fixture captures of the active quiz, Browse Answers, and results review.

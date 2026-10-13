@@ -4,6 +4,8 @@ Status: selected for L1 implementation — backup/user flow, coordination, journ
 
 This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/done/L0-local-contracts-plan.md). It selects a coordination protocol based on isolated feasibility probes; journal/recovery semantics are selected below; validation/limits are selected below; browser acceptance criteria are selected below. L0-A permits L1 implementation; it does not certify the finished feature. No runtime backup implementation exists.
 
+> **Historical note:** The source-baseline statements above and below describe the audit performed on 2026-10-12, before L1 implementation. Current implementation and verification status is appended at the end of this decision record.
+
 ## Scope and evidence method
 
 Inspected tracked source and relevant repository documentation. Inventoried non-test storage writes and repository call sites with rg; verified callers against both session hooks and quiz screen callbacks. No real browser progress, private study history, personal storage export or live UI was inspected. All runtime behavior below is a source baseline, not a new guarantee.
@@ -529,6 +531,14 @@ If coordination is unavailable, disable normal export and restore. **No repeated
 A pending journal with unavailable coordination, unreadable storage, malformed journal or recovery conflict requires the recovery gate; it is never an ordinary empty state. If storage is blocked, do not infer that keys are absent. If storage remains readable but writes fail, saved progress may be inspected only after valid participation and a readable absent journal; study mutations remain blocked until admission succeeds. No quota/private-mode detection heuristic may erase data or mislabel it as zero progress. A read-only ordinary export is permitted after exclusive capture with a readable absent journal even if a storage write probe failed; export itself does not need storage writes. Recovery always needs its full write/readback capabilities.
 
 A separate raw recovery download may read the fixed three keys when readable and within Step 5's ceiling. Without exclusivity it is a best-effort diagnostic capture: label it potentially inconsistent and never importable as progress. Re-read to reject observed changes, but do not claim that repeated reads exclude an unseen write. Failed reads must produce an error, never fabricated null values. Inaccessible download APIs/file selection disable only the corresponding action with useful guidance; no network upload or server fallback is selected.
+
+## L1 implementation status — 2026-10-13
+
+The runtime now has a v1 paired quiz/flashcard backup envelope, explicit bounded validation and projection, deterministic map serialization, a user preview, local file selection/download, exclusive paired capture, shared Web Locks admission, repository read/write gates, a journaled paired restore with startup recovery, paired refresh and a controlled reload. The learner sees a warning that active quiz signatures can contain question content. A missing progress key is exported as empty progress; corrupt current bytes are not silently normalized to empty. The preview can offer a separate 64 MiB-capped raw recovery file for the current progress pair; it is explicitly non-importable.
+
+Startup journal conflicts currently offer retry/reload but do not yet expose the selected three-key raw recovery download (quiz, flashcard and journal). The implementation does not claim that this recovery path, capability matrix, storage fault matrix, BFCache behavior or all selected browser criteria are complete.
+
+Verification on 2026-10-13: `npm run verify:full` passed end to end: lint, format, architecture, 523 Vitest tests, content validation, backend Ruff/mypy/pytest (39 passed), typecheck, learner smoke build, 18 learner Chromium E2E tests and 12 admin Chromium E2E tests. The initial browser run exposed an exclusive-lock handoff bug and the test fixture re-seeded on reload; both were fixed before the full pass. `git diff --check` passed and no authored canonical content changed. This is implementation evidence, not L1 completion. B01–B12 remain feature acceptance gates until fully evidenced; B13–B14 plus real mobile/Safari lifecycle observations remain public-launch gates.
 
 ### Support targets and evidence boundary
 

@@ -11,7 +11,7 @@ import { SubjectBrowseLayout } from '../../../shared/ui/catalog/SubjectBrowseLay
 import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
 export type { QuizProgress } from '../selectors/progress';
 
-export function SubjectScreen({ subject, progress, loading = false, retrying = false, recovery, loadingQuizIds = new Set<string>(), error, questionError, onRetry = () => undefined, onRetryQuestions = () => undefined, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz }: { subject: Subject; progress: QuizProgress[]; loading?: boolean; retrying?: boolean; recovery?: { failed: boolean; retryAt?: number; retryAfterAt?: number; retrying: boolean; busy: boolean }; loadingQuizIds?: Set<string>; error?: Error; questionError?: Error; onRetry?: () => void; onRetryQuestions?: () => void; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void }) {
+export function SubjectScreen({ subject, progress, loading = false, retrying = false, recovery, loadingQuizIds = new Set<string>(), error, questionError, readOnly = false, onRetry = () => undefined, onRetryQuestions = () => undefined, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz }: { subject: Subject; progress: QuizProgress[]; loading?: boolean; retrying?: boolean; recovery?: { failed: boolean; retryAt?: number; retryAfterAt?: number; retrying: boolean; busy: boolean }; loadingQuizIds?: Set<string>; error?: Error; questionError?: Error; readOnly?: boolean; onRetry?: () => void; onRetryQuestions?: () => void; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
 
   return <>
@@ -27,10 +27,10 @@ export function SubjectScreen({ subject, progress, loading = false, retrying = f
             {latestScore !== undefined && <Chip label={<Box component="span" sx={{ alignItems: 'center', display: 'inline-flex', gap: .75 }}>Latest score {latestScore}%{trend && <ScoreTrendIndicator trend={trend} />}</Box>} size="small" variant="outlined" />}
           </Stack>}
         </Box>
-        <Button variant="contained" disabled={loadingQuizIds.has(quiz.id)} onClick={() => active ? onResumeQuiz(quiz) : setSetupQuiz(quiz)}>{loadingQuizIds.has(quiz.id) ? 'Loading questions…' : active ? 'Resume quiz' : completionCount > 0 ? 'Retake quiz' : 'Start quiz'}</Button>
+        <Button variant="contained" disabled={loadingQuizIds.has(quiz.id)} onClick={() => readOnly ? setSetupQuiz(quiz) : active ? onResumeQuiz(quiz) : setSetupQuiz(quiz)}>{loadingQuizIds.has(quiz.id) ? 'Loading questions…' : readOnly ? 'Browse quiz' : active ? 'Resume quiz' : completionCount > 0 ? 'Retake quiz' : 'Start quiz'}</Button>
       </Stack>
     </CardContent></Card>)}</Stack>}
-    {setupQuiz && <QuizSetupDialog open quiz={setupQuiz} onClose={() => setSetupQuiz(null)} onStart={(quiz, mode) => { onStartQuiz(quiz, mode); setSetupQuiz(null); }} onBrowse={quiz => { onBrowseQuiz(quiz); setSetupQuiz(null); }} />}
+    {setupQuiz && <QuizSetupDialog open quiz={setupQuiz} readOnly={readOnly} onClose={() => setSetupQuiz(null)} onStart={(quiz, mode) => { onStartQuiz(quiz, mode); setSetupQuiz(null); }} onBrowse={quiz => { onBrowseQuiz(quiz); setSetupQuiz(null); }} />}
     </SubjectBrowseLayout>
   </>;
 }
