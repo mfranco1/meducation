@@ -1,6 +1,6 @@
 # L1 — Progress download/upload: detailed implementation plan
 
-Status: planned; implementation not started. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Prerequisite met: [L0-A](../done/L0-local-contracts-plan.md) selected protocol with isolated/model feasibility evidence; application verification remains in this stage. L0 database/auth research does not gate this feature.
+Status: in progress. Implementation began 2026-10-13 with the synthetic fixture and pure codec slice. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Prerequisite met: [L0-A](../done/L0-local-contracts-plan.md) selected protocol with isolated/model feasibility evidence; application verification remains in this stage. L0 database/auth research does not gate this feature.
 
 ## Deliverable
 
@@ -133,6 +133,16 @@ Use [L0 browser acceptance](L0-browser-acceptance.md) B01–B14 as the feature a
 
 Each slice should remain coherent and buildable. Do not expose a Restore action until the recovery and concurrency tests pass. No deployment, accounts, backend routes or Postgres implementation are part of L1.
 
+## Implementation progress
+
+### 2026-10-13 — Initial codec and fixture slice
+
+- Added synthetic populated and empty v1 backup fixtures under `tests/fixtures/progress-backups/`. The populated case includes paused active quiz progress, a retained completion with durable totals larger than retained history, a pruned completion ID, unknown/deleted quiz/deck/card IDs, a changed-content checkpoint signature, flashcard open/flag state and daily aggregates. No canonical content was changed.
+- Added `src/persistence/progressBackupCodec.ts` with the v1 envelope, fixed safe parse categories, byte/depth/node/dangerous-key checks, schema/field validation, semantic quiz/flashcard checks, explicit export projection, active timer exclusion, and self-validation before returning JSON.
+- Added colocated tests for fixture acceptance, empty/optional flashcard aggregates, fixed malformed/size/version errors, dangerous keys, score mismatch, runtime timer-field rejection, and export round-trip allowlisting.
+- This is an initial slice, not completion of Steps 1–2. Live repository source validation, exhaustive per-field and boundary coverage, storage read-error gating, preview summaries, coordination, restore/recovery, UI and browser acceptance remain outstanding. Do not mark the tracker or feature complete.
+- Verification on this slice: `npm run typecheck`, `npm test -- src/persistence/progressBackupCodec.test.ts` (5 tests), `npm run test:architecture`, `npm run lint`, `npm run build`, and `git diff --check` passed. The build retains the existing Vite >500 kB chunk advisory. No content validation was needed because canonical files were not modified.
+
 ## Completion checklist
 
 - [x] L0-A decisions linked; implementation must honor the ADR and pending acceptance gates.
@@ -142,6 +152,6 @@ Each slice should remain coherent and buildable. Do not expose a Restore action 
 - [ ] Step 6 UI complete.
 - [ ] Steps 7–8 checks/docs complete.
 
-Planning document creation is complete; feature execution remains pending.
+Planning document creation is complete; feature execution is underway.
 
 Planning verification: relative links resolve; repository build/typecheck passed with the existing bundle-size advisory; git diff --check passed. Feature-specific tests listed above remain pending implementation.

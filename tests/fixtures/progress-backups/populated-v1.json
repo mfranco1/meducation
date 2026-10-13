@@ -1,0 +1,62 @@
+{
+  "format": "meducation-progress-backup",
+  "version": 1,
+  "exportedAt": "2026-10-13T00:00:00.000Z",
+  "quiz": {
+    "schemaVersion": 2,
+    "active": {
+      "deleted-quiz": {
+        "id": "paused-attempt",
+        "quizId": "deleted-quiz",
+        "subjectId": "removed-subject",
+        "feedbackMode": "immediate",
+        "startedAt": "2026-10-01T00:00:00.000Z",
+        "elapsedMs": 1200.5,
+        "currentQuestionId": "old-question",
+        "contentSignature": "[\"old-question\",\"retained source signature\"]",
+        "contentRevision": "removed-bank-revision",
+        "celebrationProgress": { "correctStreak": 3, "awardedStreakMilestones": [3] },
+        "responses": {
+          "old-question": { "questionId": "old-question", "selectedChoiceId": "old-choice", "flagged": true, "locked": true, "timeMs": 600.5 }
+        }
+      }
+    },
+    "completed": [
+      {
+        "id": "retained-completion",
+        "quizId": "deleted-quiz",
+        "subjectId": "removed-subject",
+        "feedbackMode": "exam",
+        "startedAt": "2026-09-01T00:00:00.000Z",
+        "completedAt": "2026-09-01T00:02:00.000Z",
+        "elapsedMs": 1000,
+        "contentRevision": "old-bank-revision",
+        "celebrationProgress": { "correctStreak": 0, "awardedStreakMilestones": [] },
+        "responses": {
+          "removed-item": { "questionId": "removed-item", "selectedChoiceId": "removed-choice", "flagged": false, "locked": true, "timeMs": 500 }
+        },
+        "score": { "correct": 1, "incorrect": 0, "unanswered": 0, "total": 1, "percentage": 100, "elapsedMs": 1000 }
+      }
+    ],
+    "completionCounts": { "deleted-quiz": 2 },
+    "lowestScores": { "deleted-quiz": 100 },
+    "latestScores": { "deleted-quiz": { "percentage": 100, "completedAt": "2026-09-01T00:02:00.000Z" } },
+    "activity": { "deleted-quiz": "2026-10-01T00:00:00.000Z" },
+    "completedIds": { "retained-completion": true, "pruned-completion": true }
+  },
+  "flashcards": {
+    "schemaVersion": 2,
+    "checkpoints": {
+      "deleted-deck": {
+        "deckId": "deleted-deck",
+        "currentCardId": "removed-card",
+        "contentSignature": "older-opaque-signature",
+        "updatedAt": "2026-10-02T00:00:00.000Z",
+        "openedCardIds": ["removed-card", "missing-card"],
+        "flaggedCardIds": ["missing-card"]
+      }
+    },
+    "completionCounts": { "deleted-deck": 3 },
+    "dailyStats": { "firstDay": "2026-10-01", "currentDay": "2026-10-03", "currentDayCount": 1, "trackedCompletions": 2, "highestDailyCount": 1 }
+  }
+}
