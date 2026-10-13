@@ -1,6 +1,6 @@
 # L3 — Local Postgres schema, migration and parity
 
-Created: 2026-10-13. Status: Step 1 complete; Step 2 implemented and locally verified, native AMD64 acceptance pending; Steps 3–7 pending.
+Created: 2026-10-13. Status: Step 1 complete; Step 2 implemented and locally verified, native AMD64 CI passed per user; ARM64 CI rerun pending after browser-test fix; Steps 3–7 pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l3--local-postgres-schema-migration-and-parity). Prerequisites: [completed L2](../done/L2-containers-local-services-plan.md) and [ADR0003 toolchain contract](../../decisions/0003-local-postgres-toolchain.md). Follow the [work tracking stage gates](../README.md): implement one step, record its checks and limitations, then stop at that gate until continuation is authorized. The user's 2026-10-13 instruction to start implementation authorizes beginning this sequence; L4 remains outside scope.
 
@@ -48,7 +48,7 @@ Verification: `npm run build` passed, including TypeScript checking; `npm run ch
 
 ## Step 2 — Install the locked toolchain and explicit DB lifecycle
 
-- [ ] Start from ADR0003's recorded Psycopg binary 3.3.6, SQLAlchemy 2.1.4 and Alembic 1.20.0 baseline. Recheck compatibility/security information at implementation time, resolve under Python 3.14, regenerate production/development locks, and install in a clean environment. Record any intentional baseline revision in ADR0003. Verify binary wheels/imports on native Linux AMD64 and ARM64; no silent source-build fallback.
+- [x] Start from ADR0003's recorded Psycopg binary 3.3.6, SQLAlchemy 2.1.4 and Alembic 1.20.0 baseline. Recheck compatibility/security information at implementation time, resolve under Python 3.14, regenerate production/development locks, and install in a clean environment. Record any intentional baseline revision in ADR0003. Verify binary wheels/imports on native Linux AMD64 and ARM64; no silent source-build fallback.
 - [x] Use a synchronous SQLAlchemy engine and its bounded pool only, matching existing synchronous routes. Add `MEDUCATION_CONTENT_SOURCE=json|postgres` and distinct runtime/direct-migration connections; never borrow privileged credentials for API reads. Reject invalid source values or missing DB-mode configuration and redact secrets in errors.
 - [x] Implement explicit role/bootstrap operations following ADR0003: NOLOGIN owner, migrator, read-only runtime and backup roles, default privileges and restricted PUBLIC grants. Keep bootstrap credentials out of the API. Specify the restricted importer/activation writer role for L3 operator jobs; reserve authenticated editor use for L4.
 - [x] Package an explicit Alembic job/CLI and a Postgres-mode Compose override or equivalent documented invocation. Require DB startup readiness for DB mode while leaving default JSON-only startup independent. Include migration assets in the built package/image and inspect them from the installed image.
@@ -105,6 +105,32 @@ relative document links, tracked/new-file whitespace and installed-source hash
 checks passed. Task-owned containers/networks were cleaned up. Existing Vite
 chunk-size and Starlette/httpx deprecation warnings remain. No local blocking
 implementation finding remains; native AMD64 acceptance is an open required gate.
+
+### Step 2 CI/browser follow-up — 2026-10-13
+
+The user reported AMD64 CI passed and ARM64 failed during `learner-2`: the dashboard
+stat-card test measured an 8.40625px width difference against its unchanged `<2px`
+limit, while the other 42 browser tests passed. No run URL/artifacts were supplied;
+this is user-provided CI evidence. The failed ARM64 acceptance run never reached
+its later `db-toolchain` command. This follow-up supersedes the earlier AMD64-pending
+status; Step 2 stays open pending a passing ARM64 CI rerun.
+
+An isolated fixture/proxy probe reproduced four false failures in 48 samples at
+normal, 4x and 8x CPU throttling. Independent card bounds spanned different frames
+of the responsive drawer's width animation (largest difference 13.96875px).
+Measuring the complete row in one browser task had no failures and a maximum
+rounding difference of 0.015625px. [Follow-up evidence](L3-step2-arm64-layout-evidence.json)
+keeps these observations separate from the frozen toolchain snapshot.
+
+`e2e/learner-smoke.spec.ts` now obtains all three quiz/flashcard card rectangles in
+one `evaluateAll` task, asserts three cards and positive dimensions, and retains
+the width/alignment/stacking/overflow checks. No width tolerance, retries, fixed
+sleep or application CSS changed. Twenty consecutive corrected layout tests passed
+through the real native ARM64 container proxy. Build/typecheck, project lint,
+formatting and architecture checks passed. The full container browser suite passed
+all 43 cases in 2.2 minutes, and all six proxy smoke groups passed. The isolated
+reproduction stack was removed. The original toolchain evidence remains unchanged;
+hosted ARM64 acceptance remains pending.
 
 ## Step 3 — Create migrations and transactional content primitives
 
@@ -165,7 +191,7 @@ Gate: local Postgres serves the current learner without content drift or gratuit
 - [x] Inspected the L0/L2 decisions and completed work, current L3 scope, backend repository/revision/lifecycle code, Compose setup, schema and testing guidance.
 - [x] Prepared this staged implementation plan and linked it from the parent tracker.
 - [x] Step 1 — ADR and contracts.
-- [ ] Step 2 — Dependencies, roles and lifecycle: local implementation/checks passed; native AMD64 acceptance pending.
+- [ ] Step 2 — Dependencies, roles and lifecycle: local implementation/checks and user-reported AMD64 CI passed; ARM64 CI rerun pending.
 - [ ] Step 3 — Migrations and transactional primitives.
 - [ ] Step 4 — Paired import/export.
 - [ ] Step 5 — DB adapters and API release consistency.

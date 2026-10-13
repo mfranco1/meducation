@@ -1,6 +1,6 @@
 # Local Postgres and Python toolchain
 
-Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 L2 CI passed per user confirmation. L3 Step 2 is implemented and locally verified; its updated native AMD64 CI acceptance and later real-content integration remain pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md) and [L3 tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md).
+Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 L2 CI passed per user confirmation. L3 Step 2 is implemented and locally verified; the user reported native AMD64 CI passed; ARM64 CI needs rerun after a browser geometry test fix, and later real-content integration remains pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md) and [L3 tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md).
 
 ## L3 Step 2 implementation follow-up — 2026-10-13
 

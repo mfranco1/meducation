@@ -1,5 +1,18 @@
 import { expect, test, type Locator } from '@playwright/test';
 
+async function statCardBounds(firstCard: Locator) {
+  const cards = firstCard.locator('..').getByRole('group');
+  await expect(cards).toHaveCount(3);
+  // The responsive drawer animates the available width. Read the entire row
+  // in one browser task so comparisons cannot span different animation frames.
+  return cards.evaluateAll((elements) =>
+    elements.map((element) => {
+      const { y, width, height } = element.getBoundingClientRect();
+      return { y, width, height };
+    }),
+  );
+}
+
 test('dashboard stat cards stay readable across desktop and narrow layouts', async ({ page }, testInfo) => {
   await page.goto('/');
   const quizCards = [
@@ -21,8 +34,8 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
   for (const width of [1280, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 800 });
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    const bounds = await Promise.all(quizCards.map((card) => card.boundingBox()));
-    expect(bounds.every(Boolean)).toBe(true);
+    const bounds = await statCardBounds(quizCards[0]!);
+    expect(bounds.every(({ width, height }) => width > 0 && height > 0)).toBe(true);
     if (width >= 600) {
       expect(bounds[0]!.y).toBeCloseTo(bounds[1]!.y, 0);
       expect(bounds[1]!.y).toBeCloseTo(bounds[2]!.y, 0);
@@ -61,8 +74,8 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
   for (const width of [1280, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 800 });
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    const bounds = await Promise.all(flashcardCards.map((card) => card.boundingBox()));
-    expect(bounds.every(Boolean)).toBe(true);
+    const bounds = await statCardBounds(flashcardCards[0]!);
+    expect(bounds.every(({ width, height }) => width > 0 && height > 0)).toBe(true);
     if (width >= 600) {
       expect(bounds[0]!.y).toBeCloseTo(bounds[1]!.y, 0);
       expect(bounds[1]!.y).toBeCloseTo(bounds[2]!.y, 0);
