@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: in progress; Steps 1–3 design/prototype complete; recovery/validation/browser release decisions pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
+Status: in progress; Steps 1–4 design/prototype complete; validation/browser release decisions pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 
@@ -52,15 +52,15 @@ Output recorded: selected protocol/state diagram, lock name/version, participati
 
 ## Step 4 — Specify transactional restore and crash recovery
 
-- [ ] Preserve the existing two v2 keys for the preferred protocol; reserve a single versioned restore-journal key in persistence. Extend StoragePort with removeItem if needed; do not emulate missing keys by storing invalid null strings.
-- [ ] Define a bounded journal with operation ID, original raw values including absent keys, canonical target raw values with fresh revisions, and a validated decision marker. Journal data is itself untrusted and size-bounded.
-- [ ] Specify the sequence: acquire exclusive participation; recheck both preview base values; prepare complete journal before mutation; write both targets; verify; atomically replace journal with committed marker; clean up; refresh snapshots; reacquire shared participation.
-- [ ] Before the committed marker, recovery restores both originals; after it, recovery completes/retains both targets. Never delete the journal while unresolved. The exclusive participation requirement also applies to recovery.
-- [ ] Consider failure at every storage call, including journal reservation, either target, marker replacement, rollback, cleanup and readback. If quota prevents rollback, retain journal and gate all normal progress use with an actionable recovery screen. Do not return an empty fallback or report success.
-- [ ] Decide behavior for corrupt existing data: valid backup replacement may repair it only after explicit warning and preserving exact prior bytes in journal/optional raw recovery download. A corrupt journal cannot be replayed automatically; preserve bytes and fail closed with recovery guidance.
-- [ ] Do not assume free-space estimates reserve space. A safe failure to prepare the journal is preferable to deleting originals to make room.
+- [x] Preserve the existing two v2 keys for the preferred protocol; reserve a single versioned restore-journal key in persistence. Extend StoragePort with removeItem if needed; do not emulate missing keys by storing invalid null strings.
+- [x] Define a bounded journal with operation ID, original raw values including absent keys, canonical target raw values with fresh revisions, and a validated decision marker. Journal data is itself untrusted and size-bounded.
+- [x] Specify the sequence: acquire exclusive participation; recheck both preview base values; prepare complete journal before mutation; write both targets; verify; atomically replace journal with committed marker; clean up; refresh snapshots; reacquire shared participation.
+- [x] A readable journal decision original restores originals; decision imported completes/retains targets. Failed marker verification is uncertain until re-read, not automatically rollback. Never delete the journal while unresolved. The exclusive participation requirement also applies to recovery.
+- [x] Consider failure at every storage call, including journal reservation, either target, marker replacement, rollback, cleanup and readback. If quota prevents rollback, retain journal and gate all normal progress use with an actionable recovery screen. Do not return an empty fallback or report success.
+- [x] Decide behavior for corrupt existing data: valid backup replacement may repair it only after explicit warning and preserving exact prior bytes in journal/optional raw recovery download. A corrupt journal cannot be replayed automatically; preserve bytes and fail closed with recovery guidance.
+- [x] Do not assume free-space estimates reserve space. A safe failure to prepare the journal is preferable to deleting originals to make room.
 
-Output: complete write/recovery state machine and fault-injection cases. Browser storage events notify other documents, not the writer; local subscribers need explicit refresh. See [storage events](https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event) and [setItem quota behavior](https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem).
+Output recorded in the [ADR](../../decisions/0002-progress-backup-and-restore.md): internal v1 journal, equal-length decision marker, write/recovery state machine, failure ledger and synthetic interruption model. Exact size limits remain Step 5. Browser storage events notify other documents, not the writer; local subscribers need explicit refresh. See [storage events](https://developer.mozilla.org/en-US/docs/Web/API/Window/storage_event) and [setItem quota behavior](https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem).
 
 ## Step 5 — Decide strict validation, limits and timer normalization
 
@@ -127,3 +127,5 @@ Planning verification: relative links resolve; repository build/typecheck passed
 2026-10-12 — Step 2 complete and self-audited: v1 paired backup, paused attempts, preserved content references, replace-only confirmation, review/launch gating and explicit failure/recovery states. JSON/source-interface field audit, link/diff checks and build/typecheck passed; existing chunk-size advisory remains. Canonical hashes unchanged; documentation only. Stop before Step 3 pending the user's continuation instruction.
 
 2026-10-12 — Step 3 design/prototype complete and audited: shared participation, exclusive paired capture/restore/recovery, valid-lease write guards and lifecycle gating. Retained isolated probe/evidence: 21 passed across Chromium/WebKit. Lint/architecture, formatting, build/typecheck and link/diff/hash checks passed; existing chunk-size advisory remains. Firefox profile launch and actual BFCache restoration remain unverified Step 6/L1 release obligations, not passing claims. No production progress feature implemented. Stop before Step 4 pending user continuation.
+
+2026-10-13 — Step 4 complete and self-audited; fixed marker/readback uncertainty and preserved raw corrupt/absent originals. Retained model: 90 restore interruptions, 618 recovery interruptions/retries and 3 fail-closed cases passed. Lint/architecture, format, build/typecheck, link/evidence/diff checks passed; canonical hashes unchanged and existing chunk-size advisory remains. Actual browser/production journal validation remains L1 work. Stop before Step 5 pending user continuation.

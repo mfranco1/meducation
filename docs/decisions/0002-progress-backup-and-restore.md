@@ -1,8 +1,8 @@
 # Progress backup and restore
 
-Status: partial decision — Step 2 backup format/user flow selected; Step 3 coordination selected for L1 integration; recovery, limits and release browser acceptance pending L0 steps 4–6. Date: 2026-10-12.
+Status: partial decision — Step 2 backup format/user flow selected; Step 3 coordination selected for L1 integration; Step 4 journal/recovery selected; validation limits and release browser acceptance pending L0 steps 5–6. Date: 2026-10-12.
 
-This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/ongoing/L0-local-contracts-plan.md). It selects a coordination protocol based on isolated feasibility probes; restore journal, exact validation limits and final browser acceptance are still pending. No runtime implementation exists; L1 implements accepted contracts after the remaining L0-A gates pass.
+This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/ongoing/L0-local-contracts-plan.md). It selects a coordination protocol based on isolated feasibility probes; journal/recovery semantics are selected below; exact validation limits and final browser acceptance are still pending. No runtime implementation exists; L1 implements accepted contracts after the remaining L0-A gates pass.
 
 ## Scope and evidence method
 
@@ -314,3 +314,108 @@ The audit found and corrected an immediate-release assumption: ifAvailable may t
 The probe initially ran with Chromium defaults that suppress back/forward caching; the final runner removes that flag and explicitly records whether actual cache restoration occurred. It did not occur, so no cache support claim is made. Firefox profile failures are preserved as a coverage gap instead of skipped tests being reported as passing. Source/global declarations are scoped to the retained probe, and no application repository, question content or learner UI is changed.
 
 Verification: 21 final isolated probes passed (12 Chromium 153.0.8010.12, 9 WebKit 26.6). Lint and checked architecture boundaries, formatting, build/typecheck, relative-link/evidence assertions and git diff --check passed. The existing Vite chunk-size advisory remains. Canonical content hashes match Step 1. The report records Firefox/profile and actual-BFCache limitations; neither is counted as a passed test. No production progress coordination or real journal was implemented. Step 3 is complete as the scoped design/feasibility step; browser/application release acceptance remains pending Step 6/L1. Stop before Step 4 until the user continues.
+
+## Step 4 decision — Restore journal and recovery
+
+Selected 2026-10-13. Preserve the quiz and flashcard v2 keys and add exactly one journal key: meducation.progress.restore.v1. StoragePort will need removeItem in L1 to restore an originally absent key. An absent value is null in the journal, not the JSON text "null" stored in a progress key.
+
+The journal is internal persistence data, never a user-upload format. The file importer cannot choose storage keys or submit a journal. All operations below require Step 3 exclusive participation, valid local admission ownership and blocked study/snapshot consumers. No application implementation exists yet.
+
+### Journal schema and trust boundary
+
+Top-level allowlist:
+
+- format: exact literal meducation-progress-restore-journal.
+- version: integer 1, independent of the backup and progress schema versions.
+- operationId: fresh UUID identifying this restore. Preserve it throughout retry/recovery; it is not a security credential.
+- decision: original or imported. original means prepared/uncommitted; imported means the commit decision has been stored. Both ASCII values are eight characters, so changing the decision does not enlarge the canonical journal string. This reduces quota pressure but does not guarantee a storage write succeeds.
+- original: exactly quiz and flashcards, each the complete original raw storage string or null for an absent key. Preserve bytes even when JSON/progress validation fails; do not serialize a fallback empty snapshot.
+- imported: exactly quiz and flashcards, each a complete canonical target v2 storage string including newly generated independent storage revisions. Both must pass strict target-state validation before journal preparation.
+
+No timestamps, arbitrary key names, functions, browser identifiers, variable phase history or backup contents beyond the complete state pair are needed. Keys are fixed application constants outside the stored record. Targets keep the original imported IDs/counts/scores and paused timers; recovery reuses the exact target strings and revisions rather than re-importing/recounting.
+
+Check raw journal size before JSON parsing, then exact format/version/types/allowlists, safe operation ID and bounded raw string sizes. Validate imported nested states as application data. Original raw strings are opaque rollback data: syntax-invalid originals are permitted within bounds, and never executed/rendered. Step 5 must set total journal and original/target limits separately from the portable-file cap, accounting for JSON string escaping and duplicated data. If an original pair exceeds the supported preservation budget, refuse restore before mutation; do not truncate it or delete it to fit.
+
+A structurally valid journal cannot authenticate its own origin. Any malicious same-origin script can also edit localStorage directly. The protocol protects cooperative app operations and handles detected corruption/conflicts; it does not provide cryptographic tamper protection.
+
+### Restore sequence under exclusivity
+
+1. Cancel delayed study launches, gate all progress use, release this document's shared lease and obtain exclusive participation using Step 3. A blocked/unsupported acquisition writes nothing.
+2. Read the journal first. If one exists, resolve the existing operation or enter recovery-required state before starting a new restore. Do not overwrite unresolved evidence with a new operation.
+3. Read both current raw values and compare exactly with the preview baseline captured earlier. If reads fail or values changed, write nothing and require retry/re-preview. Raw readable-but-corrupt originals can be replaced only after the repair warning below.
+4. Revalidate the immutable candidate and target state strings; allocate fresh revisions once for this operation. Capture complete original raw values/nulls. Build canonical prepared journal with decision original and enforce the combined preservation limits.
+5. Persist prepared journal; read it back and require exact equality. Do not mutate either progress key until reservation is verified. A failed/uncertain reservation is handled by inspecting the actual journal, not by assuming the original pair has been lost.
+6. Write the quiz target and verify exact raw equality; write the flashcard target and verify exact raw equality. Skip a write if it already equals its selected value. Both targets must be verified while the journal still selects original.
+7. Replace the journal with its canonical decision imported form; read back and verify. Persisted decision imported is the logical commit point, not the later success UI, cleanup or a function's return value. There is no second independent commit-marker key.
+8. Under the same exclusive lease, recheck the selected target pair, remove the journal, and verify absence. Cleanup occurs only after the chosen pair is verified. Do not delete unresolved evidence merely to remove an error screen.
+9. Invalidate/rehydrate both repository snapshots, reset ephemeral study/review/result state, release exclusive ownership and rejoin shared admission. Check absence/recovery state again before enabling progress use and reporting success. No count or completion command is replayed.
+
+No network call, modal awaiting user input or normal study operation occurs within the mutating critical section. File reading/preview and user confirmation happen before exclusivity; storage operations are synchronous. New booting documents remain gated behind exclusivity and then check the journal before admission.
+
+### Decision-driven recovery
+
+Recovery first acquires exclusive ownership and reads/validates the entire journal. Re-read before acting because a previous owner may already have recovered it. With no journal, do not infer a restore from fallback repository state; hydrate existing storage normally and preserve any storage error.
+
+With a valid journal, first inspect current progress raw values. Each key may match its recorded original or target, including null. If either has a third unexpected value, keep all values/journal and enter conflict/recovery-required rather than overwriting potentially newer external data. This detects some nonparticipant interference but cannot fence legacy/malicious writers; close-other-tabs guidance remains mandatory.
+
+- decision original: restore both exact original raw values. Remove a key that was absent originally. Verify both before deleting the journal. Corrupt originals return as corrupt bytes, not repaired/empty data; the normal read error remains visible and valid-file repair can be retried afterward.
+- decision imported: complete or retain both exact target raw values, including the stored new revisions. Verify both before deleting the journal. Never roll back merely because the previous operation failed to show success.
+- unknown/unreadable/invalid decision or journal: write nothing automatically. Preserve all three raw values and block ordinary progress use until safe resolution. A malformed record must not provide arbitrary storage destinations or unvalidated replay strings.
+
+Repeat recovery is idempotent. If the selected pair is already present, verification/cleanup does not alter totals. If cleanup already succeeded, another retry sees no journal and keeps the pair. Do not create new revisions or completion events during journal replay.
+
+### Failure ledger and uncertainty
+
+API failures do not by themselves identify whether the logical commit occurred. In particular, a committed-marker set may succeed before its verification read fails. On any exception after journal preparation, remain gated, re-read the actual journal under exclusive ownership, and recover according to its readable decision. If it cannot be read, release ownership only into the gated recovery state and offer retry. Do not use the last attempted code line or in-memory prepared object as authority for rollback.
+
+Required cases for L1 fault injection:
+
+1. Lock/baseline/journal inspection failure before reservation: no mutation; retry/re-preview, or existing-journal recovery gate.
+2. Prepared-journal set failure: if absent afterward and originals verify, current state is unchanged; if prepared record exists, its original decision guides cleanup/rollback. If unreadable, do not assert unchanged state.
+3. Prepared readback failure/mismatch: targets have not been changed by this operation. Keep the journal and inspect/recover; unexpected operation ID/content means conflict rather than overwrite.
+4. First/second target set or readback failure: readable original decision selects rollback of both originals; an inaccessible journal keeps the gate. Do not admit a half-written pair.
+5. Commit-marker set failure: readable original selects rollback; readable imported selects roll-forward. If an injected port writes then throws, actual persisted decision still governs. Unknown state is gated.
+6. Commit-marker readback failure: imported may already be committed. Re-read or defer; never unconditionally roll back.
+7. Rollback/roll-forward set, removeItem or readback failure: retain the journal and recovery gate. A later attempt repeats the same selected pair safely. Changing write order to reduce temporary size is allowed only if the final selected-pair invariant remains.
+8. Journal cleanup failure/readback uncertainty: verify current journal and selected pair; if committed journal remains, retry cleanup. If removal succeeded and selected pair is intact, do not invent a rollback. If reads are unavailable, remain gated until verifiable.
+9. Snapshot refresh/re-admission failure after journal removal: retained pair remains authoritative; no rollback. Show initialization/recovery error, retry hydration and reset stale session state before enabling writes.
+10. Unexpected nonparticipant progress value, journal replacement/operation mismatch, or malformed journal: preserve evidence and block automatic replay. Never overwrite newer unknown values in the name of recovery.
+
+Throwing before/after getItem, setItem and removeItem, tab termination between calls, and retry interruption are separate tests. A failed individual setItem does not provide a cross-key transaction; storage access/quota errors and cross-document events follow the [HTML Storage specification](https://html.spec.whatwg.org/multipage/webstorage.html#the-storage-interface). Readback can confirm the API-visible value, not a disk fsync guarantee. This contract targets API-visible failures and tab/renderer interruption; it cannot promise zero loss after device power failure, browser eviction, manual clearing or OS/storage corruption.
+
+### Quota and corruption handling
+
+A backup under the file-size cap can still exceed storage capacity: originals remain stored while the journal holds escaped originals and targets, and target writes may temporarily grow the pair. There is no reliable reservation from a free-space estimate. Attempt journal preparation before any target mutation; if it does not fit, refuse safely. Never delete unrelated app data, old progress or the journal to make room automatically. Even equal-length commit decisions can fail; the same decision-driven recovery rules apply.
+
+For readable-but-corrupt originals, allow a validated replacement after an explicit warning: “Some saved progress could not be read. Restoring this backup will replace it.” Preserve exact corrupt bytes in the journal for rollback. Normal Download backup remains unavailable for corrupt data; do not call an empty fallback a valid export. This path must respect the original-pair preservation limit.
+
+For invalid/inaccessible journal state, supported non-destructive actions are Retry/reload and Download recovery data when bytes are readable. A raw recovery download is a distinct format named meducation-progress-recovery-raw, containing only the fixed quiz, flashcards and journal raw strings/nulls plus version 1. It is not accepted by the ordinary backup importer. Generate a local file without rendering or logging raw values; make clear it can contain saved answers/content. Download success is not proof of off-device durability.
+
+Do not offer an automatic discard-journal/reset button in L1. Guidance can explain restoring a known-good v1 backup in another browser while retaining this browser's raw recovery copy; otherwise the L1 runbook must describe diagnosing/repairing a copy before changing original storage. Destructive site-data clearing is outside automatic recovery and cannot be described as lossless. If raw reads fail, disable recovery download and give retry guidance. If originals were restored but remain corrupt, show that error rather than falsely reporting valid study data.
+
+### State model and audit evidence
+
+```mermaid
+stateDiagram-v2
+  [*] --> OriginalPair
+  OriginalPair --> Prepared: journal decision original verified
+  Prepared --> TargetPair: write and verify both targets
+  TargetPair --> Committed: persist decision imported
+  Committed --> ImportedPair: verify, remove journal, re-admit
+  Prepared --> OriginalPair: recovery original, verify and cleanup
+  TargetPair --> OriginalPair: recovery original, verify and cleanup
+  Committed --> ImportedPair: recovery imported, verify and cleanup
+  Prepared --> RecoveryRequired: read/write/conflict unresolved
+  TargetPair --> RecoveryRequired: read/write/conflict unresolved
+  Committed --> RecoveryRequired: read/write/conflict unresolved
+  RecoveryRequired --> OriginalPair: readable original decision
+  RecoveryRequired --> ImportedPair: readable imported decision
+```
+
+Retained design model: [probe-progress-restore.mjs](../../scripts/testing/probe-progress-restore.mjs). It uses synthetic in-memory strings and injected interruption before/after each storage operation, then repeats recovery. Present, absent and deliberately corrupt originals are exercised. This tests decision convergence and raw-byte preservation, not application validation, browser quota or physical durability. The machine report is [Step 4 evidence](../work/ongoing/L0-step4-restore-evidence.json). Full schema/size enforcement and actual-browser/journal integration remain L1 tests.
+
+### Step 4 self-review and audit
+
+The audit corrected the earlier unconditional “before-marker error means rollback” language: a marker write can take effect before a later read/exception. Recovery now trusts only the readable persisted decision, with a gate for uncertainty. It also distinguishes absent keys from stored null text, preserves corrupt originals, detects unexpected external values, and reuses committed revisions during retries. Equal-length decision strings avoid an avoidable marker-size increase without promising quota availability. Marker cleanup and refresh failures cannot silently return mixed snapshots or reverse a committed import.
+
+Step 4 selects the internal key/schema, transaction/recovery sequence and fail-closed actions. It does not set Step 5's exact byte/depth/record limits or claim a production restore implementation. Verification: 90 restore-interruption cases, 618 additional recovery-interruption/retry checks and 3 fail-closed cases passed in the retained model. Lint/architecture, formatting, build/typecheck, link/evidence assertions and git diff --check passed. Existing Vite chunk-size advisory remains; protected canonical hashes match Step 1. No real browser data, application persistence or actual restore UI was changed. Step 4 is complete as a design/audit step. Stop before Step 5 pending user continuation.
