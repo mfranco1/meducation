@@ -45,8 +45,8 @@ regenerates its metadata.
 ## L3 database toolchain and explicit jobs
 
 The database toolchain and content schema are available. Paired file import/export is now available;
-learner adapters remain Step 5. Keep `MEDUCATION_CONTENT_SOURCE=json` for the
-working learner API. Explicit `postgres` learner mode currently refuses startup; it never
+both learner database adapters are now available. Keep `MEDUCATION_CONTENT_SOURCE=json` for the
+working learner API. Explicit `postgres` learner mode requires an initialized schema and active pair; it never
 falls back to JSON or automatically migrates/imports content.
 
 Install the updated development lock using the setup commands above. Python 3.14
@@ -98,7 +98,7 @@ no admin gateway is exposed.
 See the [schema decision](../docs/decisions/0005-paired-content-releases-and-postgres-schema.md)
 for replay, actor, allocation and privileged-maintenance boundaries.
 
-Normal pytest skips the 64 real-Postgres cases without an explicitly isolated
+Normal pytest skips the 78 real-Postgres cases without an explicitly isolated
 test target. Run `.venv/bin/python scripts/containers/test-postgres-content.py`
 from the root to create a unique tmpfs PG17 test container, bootstrap/migrate and
 exercise those cases. It cleans up its container and never uses the routine DB.
@@ -110,7 +110,7 @@ the NOLOGIN owner inside a transaction. Hosted configuration requires explicit
 Compose `postgres` hostname and `MEDUCATION_DATABASE_ENVIRONMENT=local`.
 One-time schema/head/active-release checks dispose connections on startup failure;
 recurring health routes do not query Postgres. Successful DB learner startup is
-pending the Step 5 learner adapters, even after explicit import/activation.
+available after explicit bootstrap, migration, paired import and activation.
 
 ## Paired content import, activation and export
 
@@ -160,8 +160,25 @@ the production learner image does not gain Node or a runtime validator. Head,
 migration, activation and export use the installed Python package. Run the
 [disposable PG integration launcher](../docs/testing.md#local-preparation-acceptance)
 for roundtrip, source-capture, injected rollback, replay/concurrency, corrupt-row
-rejection and CLI evidence. Learner DB/API parity and actual-bank restore remain
-Steps 5–6; publication does not yet enable learner Postgres mode.
+rejection and CLI evidence. Fixture learner DB/API parity is verified in Step 5; comprehensive actual-bank,
+reverse-proxy/browser and restore acceptance remain Step 6. After activation,
+select `MEDUCATION_CONTENT_SOURCE=postgres` with only the reader URL to run the
+learner API. No JSON fallback or worker migration/import is performed.
+
+Each content request opens one paired view, selects the publication once and
+pins its release/digests for both repositories. All catalog/body SQL includes the
+pinned release ID. Catalog cache entries contain only immutable release-scoped
+subjects, quizzes, decks and ordered membership IDs; at most two releases are
+retained per worker. Every request still selects the current pointer, so publication
+and old-release reactivation take effect without an API restart. Eviction does
+not invalidate an in-flight view. Bodies come from normalized rows. The response
+dependency releases its one connection after complete synchronous payload
+construction, before sending the response, including 304/404/409 and failures.
+
+Database request failures return a sanitized 503 `content_unavailable`, even
+when an old catalog/ETag is cached. Recurring `/health/live` and `/health/ready`
+perform no SQL; readiness means initialization completed, not live DB reachability.
+The same bounded reader engine is disposed on failed startup and shutdown.
 
 ## JSON API container
 

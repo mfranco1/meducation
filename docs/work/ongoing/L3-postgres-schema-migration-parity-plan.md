@@ -1,6 +1,6 @@
 # L3 — Local Postgres schema, migration and parity
 
-Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Step 4 complete with passing local verification; Steps 5–7 pending.
+Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Step 4 complete with passing local verification; Step 5 complete with passing local verification; Steps 6–7 pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l3--local-postgres-schema-migration-and-parity). Prerequisites: [completed L2](../done/L2-containers-local-services-plan.md) and [ADR0003 toolchain contract](../../decisions/0003-local-postgres-toolchain.md). Follow the [work tracking stage gates](../README.md): implement one step, record its checks and limitations, then stop at that gate until continuation is authorized. The user's 2026-10-13 instruction to start implementation authorizes beginning this sequence; L4 remains outside scope.
 
@@ -275,14 +275,86 @@ Step 5 at the agreed stage gate.
 
 ## Step 5 — Serve both repositories through a consistent release view
 
-- [ ] Implement Postgres adapters for every method of `QuestionBankRepository` and `FlashcardCatalogRepository`. Keep storage details below the existing route/domain contracts; avoid separate engines for quiz and flashcard data.
-- [ ] Replace the path-only app factory seam with an injectable paired source/view abstraction usable by JSON, Postgres and test fakes. Remove process-lifetime subject snapshots from route composition; obtain subjects and all derived summaries from the same selected release.
-- [ ] Select the active pointer/publication sequence once per content request initially. Cache only immutable release-scoped data, with bounded cache retention; pointer changes select the new view immediately on the next request without background polling. L5 may optimize request-driven freshness after measuring it.
-- [ ] Preserve all existing DTOs, omitted fields, derived counts/ordered membership, revision query and If-Match conflicts, ETags/304, no-cache responses and current 404/error precedence. Do not replace public content revisions with release IDs or publication sequences.
-- [ ] Translate DB failures to intentional unavailable responses without exposing credentials/SQL or falling back to old files. Check resource cleanup after success, conditional responses, missing entities and exceptions; ensure worker startup/shutdown does not leak connections.
-- [ ] Test activation during response construction: the response must contain only the old or new complete release, never a mixture. Test shared-subject changes affecting the flashcard digest and reactivation of an old pair refreshing internal publication state while retaining its original content hashes.
+Step 4 CI follow-up — 2026-10-13: user reported the most recent GitHub push/build
+passed and authorized continuation. Accepted as user-confirmed native CI evidence;
+no run URL was provided. Frozen Step 4 local evidence remains unchanged.
+
+Implementation checkpoint: paired JSON/Postgres source/view composition and
+release-pinned reader adapters are being implemented. New sources use a single
+shared reader engine, bounded release-keyed catalog cache and one publication
+selection per content response. Integration/API/race/failure/lifecycle checks and
+completion evidence remain pending. JSON authority remains unchanged.
+
+- [x] Implement Postgres adapters for every method of `QuestionBankRepository` and `FlashcardCatalogRepository`. Keep storage details below the existing route/domain contracts; avoid separate engines for quiz and flashcard data.
+- [x] Replace the path-only app factory seam with an injectable paired source/view abstraction usable by JSON, Postgres and test fakes. Remove process-lifetime subject snapshots from route composition; obtain subjects and all derived summaries from the same selected release.
+- [x] Select the active pointer/publication sequence once per content request initially. Cache only immutable release-scoped data, with bounded cache retention; pointer changes select the new view immediately on the next request without background polling. L5 may optimize request-driven freshness after measuring it.
+- [x] Preserve all existing DTOs, omitted fields, derived counts/ordered membership, revision query and If-Match conflicts, ETags/304, no-cache responses and current 404/error precedence. Do not replace public content revisions with release IDs or publication sequences.
+- [x] Translate DB failures to intentional unavailable responses without exposing credentials/SQL or falling back to old files. Check resource cleanup after success, conditional responses, missing entities and exceptions; ensure worker startup/shutdown does not leak connections.
+- [x] Test activation during response construction: the response must contain only the old or new complete release, never a mixture. Test shared-subject changes affecting the flashcard digest and reactivation of an old pair refreshing internal publication state while retaining its original content hashes.
 
 Gate: fixture-based contract tests pass unchanged in meaning for both adapters; consistent releases and cache invalidation do not require restarting the API.
+
+### Step 5 result — 2026-10-13
+
+Implemented both reader repository protocols over one response-scoped connection.
+`repositories/source.py` owns paired source/view composition and JSON startup
+loading; `repositories/postgres.py` owns release-pinned readers and bounded
+catalog caching. `main.py` injects the view for complete synchronous response
+construction and releases it before sending the response. Subjects/catalogs and
+bodies come from that view rather than a process-lifetime subject snapshot.
+Legacy JSON path factories remain available for existing tests; a paired
+`source_factory` supports injected sources.
+
+Postgres selects the active pointer, publication sequence and both content hashes
+once per content request. Every catalog/body query filters by the pinned release.
+Only immutable subject/quiz/deck/membership catalogs are cached by release; the
+two latest observed publication sequences' release entries are retained. Returned
+models are copies and ordered membership IDs are copied into lists. In-flight
+views keep evicted catalogs; bodies remain normalized SQL reads. There is no
+active-pointer cache or SQL polling, so publication/reactivation is observed by
+the next request, including a repeated old digest. DB failures return sanitized
+`content_unavailable` 503 even with an old cached ETag/catalog. Startup still
+requires schema/head/active release, never migrates/imports or falls back. Health
+uses initialization state without SQL; failed startup/shutdown disposes the engine.
+
+All **78 real-PG17 cases** passed. New cases exercise every protocol method and
+all seven learner endpoints against identical JSON fixtures, exact DTO optional
+fields and answer provenance, counts/ordered membership, ETag/no-cache/304,
+revision and If-Match conflicts, existing 404 precedence and empty decks.
+Publication during body construction returns one old release; the next request
+sees new quiz/subject/flashcard revisions. Bounded cache eviction leaves pinned
+views intact, protects returned models from mutation, and observes old-release
+reactivation with new sequence/original hashes. Catalog/body/connect failures
+return 503, release connections and recover after the fault is removed. Health
+queries cause no SQL even during outages. Three DB-independent paired-source
+injection tests verify cleanup for success/304/404/409, unavailable and unexpected
+payload exceptions.
+
+`npm run verify:full` passed: lint/format and 10 architecture tests, **534**
+frontend tests, actual canonical content validation, Ruff, mypy (19 source files),
+**79** normal backend tests (78 PG cases skipped there and passed separately),
+typecheck, learner/admin builds, **41** learner and **12** admin Chromium cases.
+`npm run build` also passed. Installed-image toolchain and default JSON API smokes
+passed on native ARM64; all **21** packaged Python/SQL resources matched source.
+Canonical banks and prior frozen snapshots remained byte-identical. Relative
+links/anchors, new/changed whitespace, evidence JSON and diff checks passed.
+Only disposable fixture containers were used and cleaned; routine DB/volumes
+and browser progress were untouched.
+
+The first full run stopped at one existing flashcard lazy-study timing assertion
+while PG/image jobs ran concurrently (533 frontend passes). A fresh full rerun
+after those jobs completed passed without changing UI/test assertions; unexecuted
+steps of the first run were not counted as passes. The initial PG launch's
+automatic approval review timed out without a safety finding; its permitted retry
+and final PG run passed. Existing content-review, chunk-size and Starlette/httpx
+advisories remain.
+
+[Step 5 evidence](L3-step5-reader-evidence.json) freezes inputs and compact reports.
+Step 4 latest GitHub build is user-confirmed; new Step 5 native AMD64/hosted CI is
+not claimed from local ARM64 results. Comprehensive actual-bank parity,
+Postgres-mode reverse-proxy/browser acceptance and backup-role restore remain
+Step 6. JSON remains authoritative/default, with no authoring/authority cutover.
+No blocking Step 5 findings remain. Stop before Step 6 at the agreed stage gate.
 
 ## Step 6 — Prove actual-bank, browser and recovery parity
 
@@ -314,7 +386,7 @@ Gate: local Postgres serves the current learner without content drift or gratuit
 - [x] Step 2 — Dependencies, roles and lifecycle: local checks and user-confirmed CI passed after the browser fix.
 - [x] Step 3 — Migrations and transactional primitives: 58 real-PG17 cases, installed-image/JSON smokes and full verification passed.
 - [x] Step 4 — Paired import/export: 64 real-PG cases, 76 normal backend tests, captured canonical validation, installed-image smokes and build passed.
-- [ ] Step 5 — DB adapters and API release consistency.
+- [x] Step 5 — DB adapters and API release consistency: 78 real-PG cases, 79 normal backend tests, installed-image smokes and full verification passed.
 - [ ] Step 6 — Parity, browser, recovery and CI evidence.
 - [ ] Step 7 — Final verification and handoff.
 

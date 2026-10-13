@@ -1,13 +1,14 @@
-from collections.abc import AsyncIterator, Callable
+from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import cast
 
-from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.repositories.question_bank import (
     Flashcard,
     FlashcardCatalogRepository,
@@ -20,6 +21,7 @@ from meducation_api.repositories.question_bank import (
     Quiz,
     Subject,
 )
+from meducation_api.repositories.source import ContentSource, ContentView, JsonContentSource
 from meducation_api.settings import Settings
 
 
@@ -76,31 +78,34 @@ class FlashcardListResponse(BaseModel):
 def create_app(
     settings: Settings | None = None,
     repository_factory: Callable[[Path], QuestionBankRepository] = JsonQuestionBankRepository,
-    flashcard_repository_factory: Callable[[Path, list[Subject]], FlashcardCatalogRepository] = JsonFlashcardCatalogRepository,
+    flashcard_repository_factory: Callable[
+        [Path, list[Subject]], FlashcardCatalogRepository
+    ] = JsonFlashcardCatalogRepository,
+    *,
+    source_factory: Callable[[Settings], ContentSource] | None = None,
 ) -> FastAPI:
     config = settings or Settings()
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        app.state.source = None
         app.state.bank = None
-        app.state.subjects = None
         app.state.flashcards = None
         try:
-            if config.content_source == "postgres":
-                from meducation_api.db.engine import ContentDatabaseError
-                from meducation_api.db.runtime import PostgresRuntime
+            if source_factory is not None:
+                source = source_factory(config)
+            elif config.content_source == "postgres":
+                from meducation_api.repositories.postgres import PostgresContentSource
 
-                with PostgresRuntime(config):
-                    raise ContentDatabaseError(
-                        "Postgres learner adapters are not installed yet; L3 Step 5 is pending."
-                    )
-            app.state.bank = repository_factory(config.bank_path)
-            app.state.subjects = app.state.bank.list_subjects()
-            app.state.flashcards = flashcard_repository_factory(config.flashcard_bank_path, app.state.subjects)
-            yield
+                source = PostgresContentSource(config)
+            else:
+                source = JsonContentSource(config, repository_factory, flashcard_repository_factory)
+            with source as initialized:
+                app.state.source = initialized
+                yield
         finally:
+            app.state.source = None
             app.state.bank = None
-            app.state.subjects = None
             app.state.flashcards = None
 
     app = FastAPI(title="Meducation Content API", version="1.0.0", lifespan=lifespan)
@@ -111,17 +116,20 @@ def create_app(
         allow_headers=["If-None-Match", "If-Match", "Content-Type"],
     )
 
-    def repository(request: Request) -> QuestionBankRepository:
-        bank = getattr(request.app.state, "bank", None)
-        if bank is None:
-            raise HTTPException(status_code=503, detail={"code": "content_not_ready"})
-        return cast(QuestionBankRepository, bank)
+    @app.exception_handler(ContentDatabaseError)
+    async def unavailable(request: Request, error: ContentDatabaseError) -> JSONResponse:
+        return JSONResponse(
+            status_code=503,
+            content={"detail": {"code": "content_unavailable"}},
+            headers={"Cache-Control": "no-store"},
+        )
 
-    def flashcard_repository(request: Request) -> FlashcardCatalogRepository:
-        bank = getattr(request.app.state, "flashcards", None)
-        if bank is None:
+    def content_view(request: Request) -> Iterator[ContentView]:
+        source = getattr(request.app.state, "source", None)
+        if source is None:
             raise HTTPException(status_code=503, detail={"code": "content_not_ready"})
-        return cast(FlashcardCatalogRepository, bank)
+        with cast(ContentSource, source).view() as view:
+            yield view
 
     def content_response(
         build_payload: Callable[[], BaseModel],
@@ -139,7 +147,9 @@ def create_app(
             return Response(status_code=304, headers=headers)
         return JSONResponse(content=build_payload().model_dump(exclude_unset=True), headers=headers)
 
-    def subject_catalog(bank: QuestionBankRepository, bank_subjects: list[Subject]) -> SubjectCatalogResponse:
+    def subject_catalog(
+        bank: QuestionBankRepository, bank_subjects: list[Subject]
+    ) -> SubjectCatalogResponse:
         summaries: list[SubjectSummary] = []
         for subject in bank_subjects:
             count, ids = bank.subject_quiz_summary(subject.id)
@@ -162,23 +172,42 @@ def create_app(
 
     @app.get("/health/ready", include_in_schema=False)
     def ready(request: Request) -> dict[str, str]:
-        if getattr(request.app.state, "bank", None) is None or getattr(request.app.state, "flashcards", None) is None:
+        if getattr(request.app.state, "source", None) is None:
             raise HTTPException(status_code=503, detail={"code": "content_not_ready"})
         return {"status": "ready"}
 
+    view_dependency = Depends(content_view, scope="function")
+
     @app.get("/api/v1/subjects", response_model=SubjectCatalogResponse)
-    def list_subjects(request: Request, revision: str | None = None) -> Response:
-        bank = repository(request)
-        return content_response(lambda: subject_catalog(bank, request.app.state.subjects), bank, request, revision)
+    def list_subjects(
+        request: Request,
+        revision: str | None = None,
+        view: ContentView = view_dependency,
+    ) -> Response:
+        bank = view.questions
+        return content_response(
+            lambda: subject_catalog(bank, bank.list_subjects()), bank, request, revision
+        )
 
     @app.get("/api/v1/flashcards/subjects", response_model=FlashcardSubjectListResponse)
-    def list_flashcard_subjects(request: Request, revision: str | None = None) -> Response:
-        bank = flashcard_repository(request)
+    def list_flashcard_subjects(
+        request: Request,
+        revision: str | None = None,
+        view: ContentView = view_dependency,
+    ) -> Response:
+        bank = view.flashcards
         return content_response(lambda: flashcard_subject_catalog(bank), bank, request, revision)
 
-    @app.get("/api/v1/flashcards/subjects/{subject_id}/catalog", response_model=FlashcardCatalogResponse)
-    def list_flashcard_catalog(subject_id: str, request: Request, revision: str | None = None) -> Response:
-        bank = flashcard_repository(request)
+    @app.get(
+        "/api/v1/flashcards/subjects/{subject_id}/catalog", response_model=FlashcardCatalogResponse
+    )
+    def list_flashcard_catalog(
+        subject_id: str,
+        request: Request,
+        revision: str | None = None,
+        view: ContentView = view_dependency,
+    ) -> Response:
+        bank = view.flashcards
         if not bank.has_subject(subject_id):
             raise HTTPException(status_code=404, detail={"code": "subject_not_found"})
 
@@ -186,44 +215,76 @@ def create_app(
             decks = bank.list_catalog(subject_id)
             return FlashcardCatalogResponse(
                 revision=bank.revision,
-                decks=[FlashcardDeckSummary(**deck.model_dump(exclude_none=True), cardCount=count, cardIds=[card.id for card in bank.list_cards(deck.id)]) for deck, count in decks],
+                decks=[
+                    FlashcardDeckSummary(
+                        **deck.model_dump(exclude_none=True),
+                        cardCount=count,
+                        cardIds=[card.id for card in bank.list_cards(deck.id)],
+                    )
+                    for deck, count in decks
+                ],
             )
 
         return content_response(build_catalog, bank, request, revision)
 
     @app.get("/api/v1/flashcards/decks/{deck_id}/cards", response_model=FlashcardListResponse)
-    def list_flashcard_cards(deck_id: str, request: Request, revision: str | None = None) -> Response:
-        bank = flashcard_repository(request)
+    def list_flashcard_cards(
+        deck_id: str,
+        request: Request,
+        revision: str | None = None,
+        view: ContentView = view_dependency,
+    ) -> Response:
+        bank = view.flashcards
         if not bank.has_deck(deck_id):
             raise HTTPException(status_code=404, detail={"code": "deck_not_found"})
         return content_response(
             lambda: FlashcardListResponse(revision=bank.revision, cards=bank.list_cards(deck_id)),
-            bank, request, revision,
+            bank,
+            request,
+            revision,
         )
 
     @app.get("/api/v1/subjects/{subject_id}/quizzes", response_model=QuizCatalogResponse)
-    def list_quizzes(subject_id: str, request: Request, revision: str | None = None) -> Response:
-        bank = repository(request)
+    def list_quizzes(
+        subject_id: str,
+        request: Request,
+        revision: str | None = None,
+        view: ContentView = view_dependency,
+    ) -> Response:
+        bank = view.questions
         if not bank.has_subject(subject_id):
             raise HTTPException(status_code=404, detail={"code": "subject_not_found"})
         return content_response(
             lambda: QuizCatalogResponse(
                 revision=bank.revision,
-                quizzes=[catalog_quiz(bank, quiz, count) for quiz, count in bank.list_quizzes(subject_id)],
+                quizzes=[
+                    catalog_quiz(bank, quiz, count) for quiz, count in bank.list_quizzes(subject_id)
+                ],
             ),
-            bank, request, revision,
+            bank,
+            request,
+            revision,
         )
 
     @app.get("/api/v1/quizzes/{quiz_id}", response_model=QuizDetailResponse)
-    def get_quiz(quiz_id: str, request: Request, revision: str | None = None) -> Response:
-        bank = repository(request)
+    def get_quiz(
+        quiz_id: str,
+        request: Request,
+        revision: str | None = None,
+        view: ContentView = view_dependency,
+    ) -> Response:
+        bank = view.questions
         found = bank.get_quiz(quiz_id)
         if found is None:
             raise HTTPException(status_code=404, detail={"code": "quiz_not_found"})
         quiz, count = found
         return content_response(
-            lambda: QuizDetailResponse(revision=bank.revision, quiz=catalog_quiz(bank, quiz, count)),
-            bank, request, revision,
+            lambda: QuizDetailResponse(
+                revision=bank.revision, quiz=catalog_quiz(bank, quiz, count)
+            ),
+            bank,
+            request,
+            revision,
         )
 
     @app.get(
@@ -231,13 +292,22 @@ def create_app(
         response_model=QuestionListResponse,
         response_model_exclude_unset=True,
     )
-    def list_questions(quiz_id: str, request: Request, revision: str | None = None) -> Response:
-        bank = repository(request)
+    def list_questions(
+        quiz_id: str,
+        request: Request,
+        revision: str | None = None,
+        view: ContentView = view_dependency,
+    ) -> Response:
+        bank = view.questions
         if bank.get_quiz(quiz_id) is None:
             raise HTTPException(status_code=404, detail={"code": "quiz_not_found"})
         return content_response(
-            lambda: QuestionListResponse(revision=bank.revision, questions=bank.list_questions(quiz_id)),
-            bank, request, revision,
+            lambda: QuestionListResponse(
+                revision=bank.revision, questions=bank.list_questions(quiz_id)
+            ),
+            bank,
+            request,
+            revision,
         )
 
     return app

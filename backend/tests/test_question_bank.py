@@ -117,15 +117,16 @@ def test_injected_repository_skips_payload_build_for_conditional_response(
     with TestClient(app) as client:
         first = client.get("/api/v1/subjects")
         assert first.status_code == 200
-        assert repository.subject_reads == 1
+        # Startup pairs flashcard subjects once; this response reads from its view.
+        assert repository.subject_reads == 2
         cached = client.get("/api/v1/subjects", headers={"If-None-Match": first.headers["etag"]})
         assert cached.status_code == 304
-        assert repository.subject_reads == 1
+        assert repository.subject_reads == 2
         conflict = client.get(
             "/api/v1/subjects?revision=stale", headers={"If-None-Match": first.headers["etag"]}
         )
         assert conflict.status_code == 409
-        assert repository.subject_reads == 1
+        assert repository.subject_reads == 2
 
 
 def test_sparse_nested_metadata_is_preserved_in_api_response(

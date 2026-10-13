@@ -307,7 +307,7 @@ def run_probe():
                 "uninitialized runtime/API refusal and cleanup",
                 "explicit repeatable migration CLI",
             ],
-            "limitations": "Real product schema plus synthetic toolchain data. Learner adapters and comprehensive actual-bank parity/recovery remain Steps 5–6. This smoke does not import authored content. No hosted or native AMD64 claim from ARM64 execution.",
+            "limitations": "Real product schema plus synthetic toolchain data. Comprehensive actual-bank parity/recovery and DB reverse-proxy/browser acceptance remain Step 6. This smoke does not import authored content. No hosted or native AMD64 claim from ARM64 execution.",
         }
     finally:
         for engine in engines:

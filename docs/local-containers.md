@@ -296,7 +296,7 @@ and [password-file rules](https://www.postgresql.org/docs/17/libpq-pgpass.html).
 
 L3 Steps 2–3 supply locked database dependencies, local role/bootstrap commands,
 packaged migration `0001_content`, controlled content transactions and DB-mode
-initialization/cleanup. Step 4 supplies host-side paired file import/export; learner adapters remain pending.
+initialization/cleanup. Step 4 supplies host-side paired file import/export; Step 5 supplies the paired learner reader adapters.
 Default Compose startup remains the working JSON learner path. Follow
 [backend job setup](../backend/README.md#l3-database-toolchain-and-explicit-jobs)
 for ignored host configuration and explicit local bootstrap. Bootstrap updates
@@ -316,8 +316,19 @@ The migration job applies `0001_content` and can be repeated. Run this controlle
 job explicitly before the API. It receives only the migrator URL, while the API
 receives only the reader URL and waits for Postgres startup health. Import and
 activation are separate explicit [operator commands](../backend/README.md#paired-content-import-activation-and-export). A successful `pg_isready` check
-alone cannot start an uninitialized DB learner API. Do not switch a development
-learner to the override expecting functioning Postgres content before Step 5.
+alone cannot start an uninitialized DB learner API. After explicit paired import/activation, start the reader-backed services with
+the same override:
+
+```sh
+docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml --profile db up -d api frontend
+```
+
+The API initializes schema/head/active release once and uses one bounded reader
+pool for both adapters. Health endpoints perform no recurring SQL. Each content
+response pins one release; later publication is visible on the next request
+without restarting the process. Outages return a sanitized 503 rather than cached
+catalogs or a JSON fallback. Before L4 cutover, explicit JSON mode remains an
+operational option while the files still contain all authoritative edits.
 
 Verify the installed API wheel, binary driver/libpq, packaged Alembic environment,
 real empty/repeated schema migration, an independent synthetic toolchain migration,
@@ -325,8 +336,8 @@ backup grants, role permissions,
 transaction rollback and fail-closed startup against isolated PG17:
 
 ```sh
-docker build -f backend/Dockerfile -t meducation-api:l3-step3 .
-.venv/bin/python scripts/containers/smoke-db-toolchain.py --image meducation-api:l3-step3 --output test-results/l3-step3-db-toolchain.json
+docker build -f backend/Dockerfile -t meducation-api:l3-step5 .
+.venv/bin/python scripts/containers/smoke-db-toolchain.py --image meducation-api:l3-step5 --output test-results/l3-step5-db-toolchain.json
 ```
 
 This smoke uses uniquely named containers/network, synthetic data and a tmpfs
@@ -340,16 +351,18 @@ Alembic marker and is not actual-bank import/parity evidence.
 Run the schema/operation integration suite separately:
 
 ```sh
-.venv/bin/python scripts/containers/test-postgres-content.py --output test-results/l3-step3-postgres.json
+.venv/bin/python scripts/containers/test-postgres-content.py --output test-results/l3-step5-postgres.json
 ```
 
 This launches a unique tmpfs PG17 container with a temporary random loopback port
 and synthetic credentials. Tests reset only its explicitly named test database
-schema. The 64 fixture cases cover SQL validation, paired finalization, role
+schema. The 78 fixture cases cover SQL validation, paired finalization, role
 isolation, immutability, audit/replay, publication rollback, private drafts and
 concurrent durable allocations. Both native acceptance jobs now invoke this
 suite alongside the installed-image smoke. Step 4 adds file/CLI roundtrip,
-captured-input, concurrent import, output refusal/cleanup and corrupt-row cases.
+captured-input, concurrent import, output refusal/cleanup and corrupt-row cases. Step 5 adds all learner endpoint
+contracts, pinned publication/body races, cache eviction/reactivation and
+catalog/body/reconnect outage cleanup.
 Validation/import runs from the host checkout with Node dependencies; the API
 image receives no Node runtime or operator credentials. Actual-bank reconstruction/API parity
 and backup-role recovery remain later L3 gates.

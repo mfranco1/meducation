@@ -1,6 +1,39 @@
 # 0005 — Paired content releases and Postgres schema
 
-Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; paired file importer/exporter implemented; learner adapters and comprehensive actual-bank parity/recovery pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; paired file importer/exporter implemented; paired learner adapters implemented; comprehensive actual-bank parity/recovery pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+
+## Step 5 implementation follow-up — 2026-10-13
+
+`repositories/source.py` defines an injectable paired source/view; JSON keeps its
+startup-loaded pair and legacy path-factory test seam. `repositories/postgres.py`
+implements both learner protocols over one response-scoped reader connection.
+`main.py` obtains all subjects/catalogs/bodies from that view and no longer owns
+a process-lifetime subject snapshot. The dependency closes after complete
+synchronous response construction and before sending the response.
+
+Every content request reads the pointer/sequence and both revisions in one query,
+pins a finalized release, and filters all catalog/body SQL by that ID. Catalogs
+contain subjects/quizzes/decks and ordered membership IDs, keyed only by immutable
+release. Retain at most the two highest observed publication sequences' releases;
+old-release reactivation updates the observed sequence and reuses immutable data.
+There is no active-pointer cache or background polling to invalidate. Evicted
+catalogs remain referenced by in-flight views. Models returned to callers are
+copies, and body queries read normalized rows rather than TEXT artifacts.
+
+SQL/connection and model-decoding failures return sanitized `content_unavailable`
+503 without cached JSON/catalog fallback. Initialization still requires supported
+head and active release, with no worker DDL/import. Liveness/readiness use process
+state without SQL. Startup failure/shutdown disposes the same bounded engine.
+Fixture tests prove all existing endpoints, status/cache/error precedence, body
+publication races, shared-subject flashcard digests, rollback reactivation,
+cache bounds and catalog/body/connect failure cleanup. Comprehensive actual-bank,
+reverse-proxy/browser and recovery evidence remain Step 6.
+
+Step 4's GitHub build passed per user confirmation; no URL supplied. New Step 5
+native AMD64 CI is not certified by local ARM64 evidence. JSON remains canonical
+and default, with no authoring or authority cutover. The
+[Step 5 evidence](../work/ongoing/L3-step5-reader-evidence.json) records current
+source hashes and passing commands separately from frozen prior stages.
 
 ## Step 4 implementation follow-up — 2026-10-13
 
