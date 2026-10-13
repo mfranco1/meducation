@@ -1,6 +1,6 @@
 # L2 — Reproducible containers and local services
 
-Created: 2026-10-13. Status: Steps 1–5 implemented and verified on native ARM64; Step 6 native AMD64/ARM64 container CI jobs passed per user report; host browser CI screenshot fix verified locally, hosted rerun pending; Step 7 not started. Parent: [local-first production preparation](local-first-production-preparation.md). Prerequisite: [L0 toolchain decision](../../decisions/0003-local-postgres-toolchain.md). Previous stage: [completed L1](../done/L1-progress-backup-plan.md).
+Created: 2026-10-13. Completed: 2026-10-13. Status: L2 complete; local native ARM64 evidence and user-confirmed passing native AMD64/ARM64 GitHub CI; final audit passed. Parent: [local-first production preparation](../ongoing/local-first-production-preparation.md). Prerequisite: [L0 toolchain decision](../../decisions/0003-local-postgres-toolchain.md). Previous stage: [completed L1](L1-progress-backup-plan.md).
 
 ## Outcome and scope
 
@@ -8,7 +8,7 @@ A fresh checkout can build and run the learner and existing read-only FastAPI se
 
 L2 delivers packaging, local orchestration, operational instructions and verification. The API continues to read the two canonical JSON banks. Database adapters, SQLAlchemy/Psycopg/Alembic installation, content schema, least-privilege application roles, migrations and canonical import/export parity belong to L3. Authentication and database authoring belong to L4. No learner progress moves out of the browser; no content, IDs, answer provenance or storage contracts change.
 
-The user authorized starting L2 on 2026-10-13, then continued through Step 4. Follow the repository's [stage gates](../README.md): implement an authorized step, record its checks, then stop at the agreed gate. Cloud provisioning and L3 remain outside L2; tool installation/upgrades require an intentional decision.
+The user authorized starting L2 on 2026-10-13, then continued through all seven steps. Follow the repository's [stage gates](../README.md): implement an authorized step, record its checks, then stop at the agreed gate. Cloud provisioning and L3 remain outside L2; tool installation/upgrades require an intentional decision.
 
 ## Inspected baseline and constraints
 
@@ -20,7 +20,7 @@ The user authorized starting L2 on 2026-10-13, then continued through Step 4. Fo
 - [Current Playwright configuration](../../../playwright.config.ts) launches FastAPI and Vite preview itself. Passing that suite unchanged would not prove container routing. Add a dedicated externally started container configuration.
 - ADR0003 selects Python `3.14.8-slim-bookworm` and Postgres `17.11-bookworm`, each with an exact multi-platform index digest. These are inherited pins, not newly verified availability claims. Recheck them before implementation. Node and static-server image pins still need selection and registry verification.
 - L0 observed a macOS ARM64 host with an unreachable Docker daemon and older Docker/Compose clients. That is historical evidence; Step 1 must recheck it. Host PG14 dump tools are unsuitable for PG17. Use container PG17 tools.
-- L1 is complete under the user's Firefox deferral. Firefox, actual mobile/assistive-technology checks and unobserved persisted BFCache returns remain in [browser acceptance](L0-browser-acceptance.md); container smoke tests do not close those obligations.
+- L1 is complete under the user's Firefox deferral. Firefox, actual mobile/assistive-technology checks and unobserved persisted BFCache returns remain in [browser acceptance](../ongoing/L0-browser-acceptance.md); container smoke tests do not close those obligations.
 
 ## Proposed file ownership
 
@@ -153,7 +153,7 @@ Verification: the six smoke groups, Ruff on all three new Python files, `npm run
 - [x] Use the shipped images/configuration for canonical startup/hash/API smoke. Use read-only fixture bank mounts in a test-only override for deterministic browser scenarios; do not bake fixtures into the production runtime or replace canonical files.
 - [x] Add a Playwright config with the container origin and no Vite/host FastAPI `webServer`. Reuse applicable learner assertions without starting a second stack. Cover quiz start/answer/save/resume/submit/results, read-only browse, flashcard reveal/checkpoint/resume/finish, and an L1 paired download/restore round trip in synthetic browser storage.
 - [x] Assert proxy conditional 304, stale-revision 409, unknown API 404, upstream interruption/recovery, health routing, asset cache behavior, missing asset/admin 404, and persistence of browser progress across service recreation at the same origin. Verify Web Locks admission on the actual loopback origin.
-- [ ] Add CI jobs for clean image builds and stack smoke, optional-DB startup/recreation and dump/restore rehearsal. Keep current host tests. Record native Linux AMD64 and ARM64 build/runtime evidence separately; use available native runners or explicit external native evidence. QEMU may supplement but cannot replace this gate.
+- [x] Add CI jobs for clean image builds and stack smoke, optional-DB startup/recreation and dump/restore rehearsal. Keep current host tests. Record native Linux AMD64 and ARM64 build/runtime evidence separately; use available native runners or explicit external native evidence. QEMU may supplement but cannot replace this gate.
 - [x] Build again from the same pinned inputs without relying on prior outputs; verify installed versions, required artifact/content hashes and runtime behavior. Define reproducibility as repeatable locked inputs and verified output behavior; do not promise byte-identical image digests unless measured and timestamp/build metadata are controlled.
 - [x] Record commands, source commit, platform, image pins/IDs, Docker/Compose versions, result counts, logs and limitations in this tracker or a new L2 evidence file. Never copy real secrets, personal progress or full private build-context contents into evidence.
 
@@ -187,13 +187,23 @@ The [admin layout test](../../../e2e/admin/flashcard-admin.spec.ts) now uses `te
 
 ## Step 7 — Audit, documentation and handoff to L3
 
-- [ ] Update root/backend setup, architecture entry/deployment modes and testing guidance to describe implemented commands and current JSON-only API behavior. Add the runbook link and image-update procedure; avoid duplicating all commands across documents.
-- [ ] Run relevant [project verification](../../testing.md): at minimum `npm run build` (includes typecheck), lint/architecture, Python checks for packaging/settings, learner/admin artifact checks, and affected browser tests. Run the new container gates in addition to host tests, not as an assumed consequence of `verify:full`.
-- [ ] Compare canonical bank hashes before/after; run `git diff --check` and changed-document link checks. Any intentional build/config change affecting content loading requires the documented corresponding regressions.
-- [ ] Audit every L2 parent requirement against recorded evidence. Preserve Firefox/mobile/lifecycle deferrals and local-versus-hosted limitations. Complete the repository completion audit before marking implementation done.
-- [ ] Mark L2 complete and move this tracker/supporting evidence to `done` only after all applicable gates pass or a specific user-approved deferral is recorded. Update parent links/status; leave L3–L6 unchecked.
+- [x] Update root/backend setup, architecture entry/deployment modes and testing guidance to describe implemented commands and current JSON-only API behavior. Add the runbook link and image-update procedure; avoid duplicating all commands across documents.
+- [x] Run relevant [project verification](../../testing.md): at minimum `npm run build` (includes typecheck), lint/architecture, Python checks for packaging/settings, learner/admin artifact checks, and affected browser tests. Run the new container gates in addition to host tests, not as an assumed consequence of `verify:full`.
+- [x] Compare canonical bank hashes before/after; run `git diff --check` and changed-document link checks. Any intentional build/config change affecting content loading requires the documented corresponding regressions.
+- [x] Audit every L2 parent requirement against recorded evidence. Preserve Firefox/mobile/lifecycle deferrals and local-versus-hosted limitations. Complete the repository completion audit before marking implementation done.
+- [x] Mark L2 complete and move this tracker/supporting evidence to `done` only after all applicable gates pass or a specific user-approved deferral is recorded. Update parent links/status; leave L3–L6 unchecked.
 
 Handoff to L3 includes working container pins/configuration, native execution evidence, tested PG17 tooling, and outstanding environment limitations. It does not certify public-launch readiness, hosted TLS/suspension behavior, auth, load capacity or content authority cutover.
+
+### Final audit and L3 handoff — 2026-10-13
+
+The user confirmed **all GitHub jobs passed** in [run 38371220116](https://github.com/mfranco1/meducation/actions/runs/38371220116), including both native container matrix jobs and the corrected host browser/admin job. This is direct user-confirmed external evidence; the web tool could not retrieve the run/API metadata, and no downloaded AMD64 image/tool report is invented. The run link and CI artifact names preserve the route to detailed per-platform reports. Local machine snapshots remain distinct and frozen. Historical pending-gate statements earlier in this tracker describe their stage dates; this final audit supersedes them for L2 closure.
+
+`npm run verify:full` passed: lint/checked architecture, formatting, ten architecture tests, 534 unit tests, actual content validation, backend Ruff/mypy and 39 pytest cases, TypeScript, learner/admin builds, 41 learner Chromium cases and 12 admin cases. Container helpers also passed Ruff. Previously recorded repeated clean native ARM64 API/proxy/Compose/PG17 recovery runs and the passing native CI are reused because this final stage changes documentation only. A final normal `npm run build`, protected-file/snapshot byte comparisons, local links and `git diff --check` complete the documentation/archive gate. [Final audit evidence](L2-step7-completion-evidence.json) records counts, provenance and invariants.
+
+Every L2 parent requirement is covered: pinned/locked non-root wheel API packaging, explicit bank paths/health; filtered build context; learner multi-stage static/proxy packaging and admin omission; optional isolated PG17/volume/loopback settings; bounded readiness and operational commands; atomic dump/fresh restore/scoped discard; real-proxy learner/paired-backup/recreation acceptance; repeated native builds and separate native CI. No blocking findings remain for L2. The tracker and all supporting snapshots are archived together, with current owner-document links updated and frozen JSON bodies preserved.
+
+L3 receives working pins, Compose/tool commands, CI and evidence. Its first work is the content schema/authority-transition decision, least-privilege roles/URL split, locked SQLAlchemy/Psycopg/Alembic dependencies, explicit migrations, deterministic paired-bank import/export and API/recovery parity. JSON remains authoritative; the optional database currently uses only development bootstrap access, and learner progress remains browser-local. No L3 implementation or cloud provisioning occurred. Firefox deferral, mobile/assistive-technology/BFCache observations, hosted/TLS/suspension/auth/load/recovery verification and existing dependency advisory maintenance remain separate release/later-stage obligations. Stop at L2 completion before beginning L3.
 
 ## Planning verification
 

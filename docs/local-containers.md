@@ -2,7 +2,7 @@
 
 L2 supplies the existing JSON API, production learner/static-server image and
 Compose stack with optional local PostgreSQL and matching PG17 backup/restore tools.
-Stage status is recorded in the [implementation tracker](work/ongoing/L2-containers-local-services-plan.md).
+Stage status is recorded in the [implementation tracker](work/done/L2-containers-local-services-plan.md).
 Host-based Vite remains the routine UI development path.
 
 ## Build
@@ -366,3 +366,9 @@ artifacts retained for 14 days. [GitHub runner architecture reference](https://d
 A configured job is not execution evidence: both platforms must actually pass
 before L2 closes. Runner availability/eligibility and hosted execution remain
 unverified until the workflow runs for this revision.
+
+L2 acceptance closed on 2026-10-13 after local verification and the user's
+confirmation that all jobs passed in [GitHub Actions run 38371220116](https://github.com/mfranco1/meducation/actions/runs/38371220116).
+The completed tracker records native ARM64 machine evidence and user-confirmed
+native AMD64/ARM64 CI. This does not close L3 DB-content/role/parity work or the
+remaining L1 browser/device/lifecycle release checks.

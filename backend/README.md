@@ -71,8 +71,9 @@ with Ctrl+C or `docker stop --time 15 meducation-api-local`. The process uses
 one Uvicorn worker without reload. Local CORS defaults allow only
 `http://127.0.0.1:4173` and `http://localhost:4173`; override
 `MEDUCATION_ALLOWED_ORIGINS` explicitly when needed. This standalone port does
-not change the existing Vite proxy to port 8000. L2's later frontend/Compose
-steps provide the same-origin reverse proxy and optional Postgres service.
+not change the existing Vite proxy to port 8000. The [container stack](../docs/local-containers.md) provides the same-origin
+reverse proxy and an independent optional Postgres service with PG17 recovery
+tools. Application schema/roles/DB reads remain L3 work.
 
 Exercise the actual image with the repeatable API smoke command:
 
