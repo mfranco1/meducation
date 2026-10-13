@@ -79,6 +79,8 @@ Gate: local Postgres serves the existing learner without content drift or gratui
 
 ### L4 — Local database authoring and admin access boundary
 
+Detailed sequence: [L4 local authoring and admin access plan](L4-local-authoring-admin-access-plan.md). Planning is complete; implementation remains unstarted. Eight gated steps cover paired editor contracts, server validation, authentication, transactional authoring, HTTP editor integration, recovery/tooling, explicitly approved authority cutover and final verification.
+
 - [ ] Adapt AdminQuestionBankGateway and existing editor/core logic to HTTP-backed paired-bank drafts. Resolve existing synchronous flashcard snapshot and undo/reset semantics explicitly.
 - [ ] Save drafts directly to Postgres; revalidate on save and publish. Publish atomically creates/activates a complete immutable release. Retain source answers, verified answers, change reasons, editor identity and append-only audit history.
 - [ ] Reject stale revisions from multiple tabs, including preview/save/publish races. Undo/reset affects drafts only; it must not erase published releases or audit history. Support deterministic export and activation of a previous release.

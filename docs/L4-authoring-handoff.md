@@ -5,6 +5,8 @@ activation/export, durable IDs and tested recovery. L4 implementation has not
 started. Canonical JSON remains authoritative; do not enable DB-only editing or
 change authority as a side effect of this handoff.
 
+Execution plan: [L4 local authoring and admin access](work/ongoing/L4-local-authoring-admin-access-plan.md). The plan records implementation gates; it does not change this handoff's authority or verification status.
+
 Read [architecture](architecture.md), [paired-release decision](decisions/0005-paired-content-releases-and-postgres-schema.md),
 [single-editor authentication](decisions/0004-single-editor-authentication.md),
 [operator commands](../backend/README.md#paired-content-import-activation-and-export),
