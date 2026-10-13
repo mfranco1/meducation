@@ -1,0 +1,248 @@
+{
+  "date": "2026-10-13",
+  "stage": "L3 Step 2",
+  "status": "local verification passed; native AMD64 acceptance pending",
+  "source_commit": "2c5e3fe95d9cb2d392c517bc8d8f20fa2b591a3b",
+  "host": "Darwin/arm64",
+  "python": "3.14.7",
+  "clean_install": {
+    "location": "disposable Python 3.14 virtual environment",
+    "binary_only_install": "passed",
+    "pip_check": "passed",
+    "existing_locked_versions": "unchanged"
+  },
+  "host_packages": {
+    "psycopg": "3.3.6",
+    "psycopg-binary": "3.3.6",
+    "SQLAlchemy": "2.1.4",
+    "alembic": "1.20.0"
+  },
+  "host_psycopg_implementation": "binary",
+  "host_libpq_version": 180006,
+  "checks": {
+    "backend_ruff": "passed",
+    "backend_mypy": "passed",
+    "backend_pytest": "59 passed",
+    "npm_build_typecheck": "passed; existing chunk-size advisory",
+    "architecture": "passed: 271 modules/1198 imports",
+    "compose_postgres_override": "config --quiet passed with synthetic values; no services started",
+    "json_api_image": "8 groups passed on native Linux ARM64",
+    "toolchain_pg17": "passed on native Linux ARM64; synthetic schema only",
+    "installed_source_integrity": "passed: 14 source modules match final image",
+    "scoped_cleanup": "passed: no toolchain smoke containers/networks remain"
+  },
+  "native_amd64": "pending; existing CI runner now includes toolchain smoke but has not run for this change",
+  "limits": [
+    "No product content migration head is packaged until Step 3; explicit upgrade refuses before connecting.",
+    "Startup guards are implemented; real schema/head/active-release acceptance awaits Steps 3\u20135.",
+    "No real content import, database authoring, authority cutover, hosted provisioning or personal-progress writes.",
+    "L1 browser/device and later real-content recovery/hosted gates remain separate."
+  ],
+  "inputs_sha256": {
+    "backend/.env.example": "3be739abc95cf8178197e8b6e793c1d579db6a55ead00899383926d85a0b32ad",
+    "backend/README.md": "725a7ec1b8c550405db1f7d03f66065c6275b9864800f41e71fae01afb35a81f",
+    "backend/pyproject.toml": "856a711473ab0d3d52c0fbbcdfde6d6b0f1fde817f88aed9d836a9743508f3d9",
+    "backend/requirements-dev.lock": "85161293a9bf5c42acf6e9f67bfdd9d07da60ef1134a276ba8e4e9089daa284b",
+    "backend/requirements.lock": "be834759b4beb4f404142cb85de7122a3247c6bd570f176ca744a68ae04a3c71",
+    "backend/src/meducation_api/db/__init__.py": "a631647c2aeb893c5397f8897b2aa2c2ac759ae41852f7f3132fe198ee1a7717",
+    "backend/src/meducation_api/db/bootstrap.py": "db255ecb002dcd0ffea54d538fbe6c181ac3192bd6c0e63285e5841afbe88611",
+    "backend/src/meducation_api/db/cli.py": "2e50242a5cf61bf1891b77ab985503f077702e4aedbd3ef4db69cbc284613c8b",
+    "backend/src/meducation_api/db/engine.py": "a52cdf567ae3b1fd50226e5bebdbf3149d099c615f9613e17135d0e91c30a8e3",
+    "backend/src/meducation_api/db/migrate.py": "74263bf70101a9e31c3ee1e2806ebff25e73509d6f563a9472eb84b0b894b10b",
+    "backend/src/meducation_api/db/runtime.py": "b4556a8b1bc11a32eb37fab20e8d6af8f656228a87ae4abe6273369731e2eefe",
+    "backend/src/meducation_api/main.py": "e679095b1d67f59aa0e88e37e211f9a01ef29fd267003d8371830ba16ede2486",
+    "backend/src/meducation_api/migrations/__init__.py": "6ddbac668cf952fef0c82df5ca4cbc4a7cb6c542bf33450efca9aa118b2d625c",
+    "backend/src/meducation_api/migrations/env.py": "49127d4926c935bf2ce3d7c7ea439886effd5d15195651fa9efb2a0f432a845a",
+    "backend/src/meducation_api/migrations/versions/__init__.py": "57438bb62006b123da1f5aad30d2d17416968bf711c131098014ed7aa3e21a05",
+    "backend/src/meducation_api/settings.py": "61600aa8d040ad3b13964cd7d7b73dda94205c9369516011f5161e501d5a5676",
+    "backend/tests/test_database_setup.py": "4fd24194ce10090a1c8dd27794d672498476510206e5c90f247e7460175e711c",
+    "ops/containers/.env.example": "e629ace832f0e896b3979802d83ffc0e1fa30bff65e932e93ac06d61d21c8ff4",
+    "ops/containers/compose.postgres.yaml": "07b6559cb057d93bd61bccd72d019280ce8fc838f8eceb2fa3e71caa3dfbec6b",
+    "scripts/containers/acceptance.py": "11a42b7df7c42a9fc3c6b2995638d17ae275789ffc48c35d728b2d37469fa57d",
+    "scripts/containers/db_toolchain_probe.py": "9db5584779dd278150e34625fb02e8bc2d7e8496e923529a5f1eaac812fa4f60",
+    "scripts/containers/smoke-api.py": "61f395ee1e240290c0ff2de491f03a125414fe604eff976d7d2d768391662d13",
+    "scripts/containers/smoke-db-toolchain.py": "acc5226135653db3d103bc2b8805b8941b699fa5965ffbb1c82ed27aa26f1368"
+  },
+  "canonical_sha256": {
+    "src/content/questionBank.generated.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+    "src/content/flashcardBank.generated.json": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+  },
+  "json_api_smoke": {
+    "image_tag": "meducation-api:l3-step2",
+    "image_id": "sha256:133e481b2fb2e63b4bcb665be58a4b47c40179499693f644b66c88e70aa3d7a8",
+    "image_platform": "linux/arm64",
+    "docker": {
+      "Client": {
+        "Version": "29.8.2",
+        "ApiVersion": "1.56",
+        "DefaultAPIVersion": "1.56",
+        "GitCommit": "7fc2dff",
+        "GoVersion": "go1.26.8",
+        "Os": "darwin",
+        "Arch": "arm64",
+        "BuildTime": "Wed Sep 30 19:32:03 2026",
+        "Context": "desktop-linux"
+      },
+      "Server": {
+        "Platform": {
+          "Name": "Docker Desktop 4.95.0 (242831)"
+        },
+        "Version": "29.8.2",
+        "ApiVersion": "1.56",
+        "MinAPIVersion": "1.40",
+        "Os": "linux",
+        "Arch": "arm64",
+        "Components": [
+          {
+            "Name": "Engine",
+            "Version": "29.8.2",
+            "Details": {
+              "ApiVersion": "1.56",
+              "Arch": "arm64",
+              "BuildTime": "Wed Sep 30 19:31:50 2026",
+              "Experimental": "false",
+              "GitCommit": "8af9fe3",
+              "GoVersion": "go1.26.8",
+              "KernelVersion": "7.0.14-linuxkit",
+              "MinAPIVersion": "1.40",
+              "Module": "github.com/moby/moby/v2",
+              "ModuleVersion": "v2.0.0+unknown",
+              "Os": "linux"
+            }
+          },
+          {
+            "Name": "containerd",
+            "Version": "v2.3.6",
+            "Details": {
+              "GitCommit": "ee2735368117d2eb259779949d5e75cdafec9761"
+            }
+          },
+          {
+            "Name": "runc",
+            "Version": "1.5.1",
+            "Details": {
+              "GitCommit": "v1.5.1-0-g8f2685a4"
+            }
+          },
+          {
+            "Name": "docker-init",
+            "Version": "0.19.0",
+            "Details": {
+              "GitCommit": "de40ad0"
+            }
+          }
+        ],
+        "GitCommit": "8af9fe3",
+        "GoVersion": "go1.26.8",
+        "KernelVersion": "7.0.14-linuxkit",
+        "BuildTime": "2026-09-30T19:31:50.000000000+00:00"
+      }
+    },
+    "checks": [
+      "non-root/read-only runtime, exact bank/lock hashes, locked dependencies/imports",
+      "health, canonical subject/quiz/flashcard content, 304/409/404 and explicit CORS",
+      "SIGTERM graceful shutdown with exit 0",
+      "MEDUCATION_BANK_PATH: missing input fails startup",
+      "MEDUCATION_BANK_PATH: invalid input fails startup",
+      "MEDUCATION_FLASHCARD_BANK_PATH: missing input fails startup",
+      "MEDUCATION_FLASHCARD_BANK_PATH: invalid input fails startup",
+      "flashcard subject absent from quiz bank fails paired initialization"
+    ],
+    "runtime": {
+      "uid": 10001,
+      "gid": 10001,
+      "python": "3.14.8",
+      "architecture": "aarch64",
+      "package_path": "/opt/venv/lib/python3.14/site-packages/meducation_api/main.py",
+      "bank_paths": [
+        "/app/content/questionBank.generated.json",
+        "/app/content/flashcardBank.generated.json"
+      ],
+      "allowed_origins": [
+        "http://127.0.0.1:4173",
+        "http://localhost:4173"
+      ],
+      "hashes": {
+        "/app/content/questionBank.generated.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+        "/app/content/flashcardBank.generated.json": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7",
+        "/app/requirements.lock": "be834759b4beb4f404142cb85de7122a3247c6bd570f176ca744a68ae04a3c71"
+      },
+      "packages": {
+        "psycopg-binary": "3.3.6",
+        "pydantic-settings": "2.15.0",
+        "h11": "0.16.0",
+        "click": "8.5.0",
+        "typing-extensions": "4.16.0",
+        "sqlalchemy": "2.1.4",
+        "idna": "3.20",
+        "typing-inspection": "0.4.4",
+        "fastapi": "0.142.2",
+        "starlette": "1.7.0",
+        "opentelemetry-api": "1.45.0",
+        "markupsafe": "3.0.4",
+        "anyio": "4.15.1",
+        "alembic": "1.20.0",
+        "python-dotenv": "1.2.4",
+        "pip": "26.2.1",
+        "mako": "1.4.3",
+        "pydantic-core": "2.46.5",
+        "psycopg": "3.3.6",
+        "meducation-api": "0.1.0",
+        "uvicorn": "0.54.0",
+        "annotated-doc": "0.0.5",
+        "pydantic": "2.13.5",
+        "annotated-types": "0.8.0"
+      },
+      "compiler_present": false,
+      "source_env_present": false,
+      "banks_writable": false
+    },
+    "result": "pass"
+  },
+  "installed_source_sha256": {
+    "__init__.py": "b6a43fd12decc9a70779965991519a756ff3425cdc69dab00fea8f49897134fe",
+    "main.py": "e679095b1d67f59aa0e88e37e211f9a01ef29fd267003d8371830ba16ede2486",
+    "settings.py": "61600aa8d040ad3b13964cd7d7b73dda94205c9369516011f5161e501d5a5676",
+    "db/__init__.py": "a631647c2aeb893c5397f8897b2aa2c2ac759ae41852f7f3132fe198ee1a7717",
+    "db/bootstrap.py": "db255ecb002dcd0ffea54d538fbe6c181ac3192bd6c0e63285e5841afbe88611",
+    "db/cli.py": "2e50242a5cf61bf1891b77ab985503f077702e4aedbd3ef4db69cbc284613c8b",
+    "db/runtime.py": "b4556a8b1bc11a32eb37fab20e8d6af8f656228a87ae4abe6273369731e2eefe",
+    "db/engine.py": "a52cdf567ae3b1fd50226e5bebdbf3149d099c615f9613e17135d0e91c30a8e3",
+    "db/migrate.py": "74263bf70101a9e31c3ee1e2806ebff25e73509d6f563a9472eb84b0b894b10b",
+    "migrations/__init__.py": "6ddbac668cf952fef0c82df5ca4cbc4a7cb6c542bf33450efca9aa118b2d625c",
+    "migrations/env.py": "49127d4926c935bf2ce3d7c7ea439886effd5d15195651fa9efb2a0f432a845a",
+    "repositories/__init__.py": "4f1d79093e9df066e9f879bb0d64cf54d31bb36f235a235b64ef9700bf8c4919",
+    "repositories/question_bank.py": "7bd0b80e713cd110086dea93aae1426af9f0eadb2eaf0a53ced47b2f1c89f3d5",
+    "migrations/versions/__init__.py": "57438bb62006b123da1f5aad30d2d17416968bf711c131098014ed7aa3e21a05"
+  },
+  "postgres_toolchain_smoke": {
+    "server_version_num": "170011",
+    "packages": {
+      "psycopg": "3.3.6",
+      "psycopg-binary": "3.3.6",
+      "SQLAlchemy": "2.1.4",
+      "alembic": "1.20.0"
+    },
+    "psycopg_implementation": "binary",
+    "libpq_version": 180006,
+    "packaged_migration_env_sha256": "49127d4926c935bf2ce3d7c7ea439886effd5d15195651fa9efb2a0f432a845a",
+    "checks": [
+      "installed wheel resources",
+      "repeatable local bootstrap",
+      "unsafe preexisting role membership rejected",
+      "role flags/membership/DDL/TEMP isolation",
+      "future owner object backup grants",
+      "no PUBLIC function execution",
+      "synthetic explicit Alembic upgrade/repeat",
+      "JSON/text/choice-order round trip",
+      "transaction rollback",
+      "bounded single reader pool",
+      "uninitialized runtime/API refusal and cleanup",
+      "explicit missing-head job refusal"
+    ],
+    "limitations": "Synthetic tables/revision only. Product schema, active content and learner adapters remain Steps 3\u20135. No hosted or native AMD64 claim from ARM64 execution.",
+    "platform": "linux/arm64",
+    "image_id": "sha256:133e481b2fb2e63b4bcb665be58a4b47c40179499693f644b66c88e70aa3d7a8",
+    "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826"
+  }
+}

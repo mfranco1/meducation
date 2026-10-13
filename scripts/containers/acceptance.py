@@ -36,6 +36,7 @@ def main():
               "backend/requirements.lock", "backend/requirements-build.lock", "ops/containers/nginx.conf",
               "ops/containers/proxy.conf", "src/content/questionBank.generated.json", "src/content/flashcardBank.generated.json"]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "scripts/containers").glob("*.py")]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.py")]
     inputs += ["playwright.containers.config.ts", "e2e/containers/service-recreation.spec.ts"]
     report["inputs_sha256"] = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in inputs}
 
@@ -75,6 +76,8 @@ def main():
                   "--frontend-image", "meducation-learner:local", *(("--browser",) if iteration == 2 else ()))
         smoke("compose", "smoke-compose.py")
         smoke("postgres-tools", "smoke-postgres-tools.py")
+        run("db-toolchain", [sys.executable, str(ROOT / "scripts/containers/smoke-db-toolchain.py"),
+                             "--image", "meducation-api:local", "--output", str(output / "db-toolchain.json")], timeout=300)
         if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != value for name, value in report["inputs_sha256"].items()):
             raise RuntimeError("Acceptance inputs changed during execution")
         report["result"] = "pass"

@@ -42,6 +42,60 @@ It is ignored build output and should not be committed. The package source,
 `pyproject.toml`, and requirements locks are tracked; installing the package
 regenerates its metadata.
 
+## L3 database toolchain and explicit jobs
+
+The database toolchain is available; product content migrations/import and learner
+adapters are still later L3 steps. Keep `MEDUCATION_CONTENT_SOURCE=json` for the
+working learner API. Explicit `postgres` mode currently refuses startup; it never
+falls back to JSON or automatically migrates/imports content.
+
+Install the updated development lock using the setup commands above. Python 3.14
+uses locked Psycopg binary 3.3.6, SQLAlchemy 2.1.4 and Alembic 1.20.0. Regenerate
+the locks intentionally with Python 3.14 and pip-tools, retaining existing pins:
+
+```sh
+.venv/bin/pip-compile --output-file=backend/requirements.lock backend/pyproject.toml
+.venv/bin/pip-compile --extra=dev --output-file=backend/requirements-dev.lock backend/pyproject.toml
+```
+
+An explicit local bootstrap job creates/reconciles only the `meducation_*` roles,
+owns schema `content` with the NOLOGIN owner, restricts PUBLIC schema/database
+permissions, and grants backup access to future owner-created content objects.
+It also updates the four login passwords from the configured values. It refuses
+unexpected role memberships/schema ownership rather than taking over other data.
+Run it only against the intended local development database. Public learner
+reader access is granted to selected views by future content migrations; reader
+and operator roles receive no blanket table/write/function access at bootstrap.
+
+Start local PG17 using the [container runbook](../docs/local-containers.md), with
+the optional loopback port override for host-based jobs. Configure the commented
+examples in ignored `backend/.env`: explicit local DB environment, bootstrap
+connection, and four distinct passwords of at least 16 characters. Encode URL
+passwords; keep them out of command arguments and logs. Bootstrap credentials are
+never passed to the API. Jobs do not substitute runtime credentials for missing
+migration credentials.
+
+```sh
+.venv/bin/meducation-db bootstrap-local
+.venv/bin/meducation-db head
+.venv/bin/meducation-db upgrade
+```
+
+`head` currently reports no packaged content revision, and `upgrade` fails before
+opening a connection because Step 3 has not supplied the product schema. This is
+an intentional gate, not a completed migration. The installed package contains
+the Alembic environment/versions directory under `meducation_api/migrations`, so
+the same explicit job runs from the API wheel/image without a source checkout.
+
+Runtime uses only `meducation_reader` and one SQLAlchemy pool of size 2 with no
+overflow. Operator jobs use direct, unpooled connections; migrations SET ROLE to
+the NOLOGIN owner inside a transaction. Hosted configuration requires explicit
+`sslmode=verify-full` and forces `gssencmode=disable`; local non-TLS configuration requires a loopback or the
+Compose `postgres` hostname and `MEDUCATION_DATABASE_ENVIRONMENT=local`.
+One-time schema/head/active-release checks dispose connections on startup failure;
+recurring health routes do not query Postgres. Successful DB learner startup is
+pending the actual schema, explicit paired import/activation and adapters.
+
 ## JSON API container
 
 From the repository root, build the production API image:

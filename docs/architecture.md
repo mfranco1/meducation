@@ -115,4 +115,15 @@ L2 packages this existing JSON service in [backend/Dockerfile](../backend/Docker
 - [Paired releases and schema](decisions/0005-paired-content-releases-and-postgres-schema.md): selected L3 design, not yet implemented. Version-scoped relational rows preserve global array ordinals; immutable TEXT artifacts preserve existing revision serialization. One request pins one complete release for both adapters. Publication sequence is separate from content hashes; durable ID reservations survive draft deletion and content rollback. One validated paired-document draft remains private. Backend DB modules own storage/transactions, repository adapters own reads, and explicit operator jobs own migration/import/activation. L4 owns authenticated authoring and the authority cutover.
 - [Single-editor authentication](decisions/0004-single-editor-authentication.md): L4 owns backend OIDC/provider assurance, opaque private sessions and authorization on every private operation; admin data owns the HTTP gateway. Public published learner content remains independent of admin identity. Final provider acceptance is pending and must be resolved before production adapter integration. Neither an admin build flag nor hidden navigation is authorization.
 
+L3 Step 2 implements `backend/src/meducation_api/db` for secret URL validation,
+bounded synchronous engines, one-time initialization checks and explicit local
+bootstrap/migration commands. Alembic resources ship under
+`backend/src/meducation_api/migrations` in the installed wheel. The API receives
+only the reader connection; local bootstrap and direct unpooled migration jobs
+use separate configured credentials. JSON remains the working/default source.
+Postgres mode fails explicitly until schema, active paired content and adapters
+arrive in Steps 3–5; it never migrates/imports from workers or falls back to JSON.
+Recurring health endpoints remain free of database queries. These infrastructure
+primitives do not certify the planned release/draft/ID schema or reader parity.
+
 Preserve existing checked boundaries when adding these modules. The [L1 plan](work/done/L1-progress-backup-plan.md) and [browser acceptance](work/ongoing/L0-browser-acceptance.md) record completed implementation and outstanding acceptance gates. Do not expose unfinished Restore/admin-write actions, move content authority, provision services or deploy as a side effect of contract documentation.

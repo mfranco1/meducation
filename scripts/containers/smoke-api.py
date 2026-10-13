@@ -130,7 +130,8 @@ def main():
         for line in (ROOT / "backend/requirements.lock").read_text().splitlines():
             if line and not line.lstrip().startswith("#"):
                 name, version = line.split("==")
-                expected_packages[name.lower().replace("_", "-")] = version
+                # Extras select dependencies; they are not part of a distribution name.
+                expected_packages[name.split("[", 1)[0].lower().replace("_", "-")] = version
         installed = {k: v for k, v in audit["packages"].items() if k not in {"pip", "meducation-api"}}
         require(installed == expected_packages, "Runtime dependency set differs from the lock")
         for host, shipped in [

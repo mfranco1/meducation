@@ -1,6 +1,6 @@
 # L3 — Local Postgres schema, migration and parity
 
-Created: 2026-10-13. Status: Step 1 design/evidence complete; Steps 2–7 pending.
+Created: 2026-10-13. Status: Step 1 complete; Step 2 implemented and locally verified, native AMD64 acceptance pending; Steps 3–7 pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l3--local-postgres-schema-migration-and-parity). Prerequisites: [completed L2](../done/L2-containers-local-services-plan.md) and [ADR0003 toolchain contract](../../decisions/0003-local-postgres-toolchain.md). Follow the [work tracking stage gates](../README.md): implement one step, record its checks and limitations, then stop at that gate until continuation is authorized. The user's 2026-10-13 instruction to start implementation authorizes beginning this sequence; L4 remains outside scope.
 
@@ -19,7 +19,7 @@ L3 includes the schema and tested backend primitives for one paired draft, audit
 - [Settings](../../../backend/src/meducation_api/settings.py) currently configure paths and CORS only. Add explicit source/connection settings here, keeping SQLAlchemy and database URLs out of frontend/domain modules.
 - [Compose](../../../compose.yaml) supplies optional Postgres with a persistent volume; it does not initialize application roles/schema or connect the API to it. Extend the [container tooling](../../../scripts/containers/postgres.py) and [runbook](../../local-containers.md) rather than introducing a competing operational workflow.
 - [Backend dependencies](../../../backend/pyproject.toml) do not yet include a database driver, ORM or migration package. ADR0003's recorded versions are implementation inputs to verify, not a claim that installation has already passed.
-- Proposed owners: `backend/src/meducation_api/db/` for engine, relational mappings and transactional operations; repository adapters under `repositories/`; migrations under `backend/migrations/`; explicit operator commands under a small backend CLI module; integration/parity tests under `backend/tests/`. Operational wrappers remain under `scripts/containers/`. Final names are settled in Step 1.
+- Owners: `backend/src/meducation_api/db/` for engine, relational mappings, transactional operations and operator CLI; repository adapters under `repositories/`; packaged migrations under `backend/src/meducation_api/migrations/`; integration/parity tests under `backend/tests/`. Operational wrappers remain under `scripts/containers/`. Step 2 places Alembic resources inside the existing package so installed images and editable environments share one path.
 
 Read [architecture](../../architecture.md), [question schema](../../question-schema.md), [flashcard schema](../../flashcard-schema.md), [content management](../../content-management.md), and [testing guidance](../../testing.md) before changing their contracts. Do not change canonical text, IDs, provenance, schema versions or learner progress formats as part of this migration.
 
@@ -49,12 +49,62 @@ Verification: `npm run build` passed, including TypeScript checking; `npm run ch
 ## Step 2 — Install the locked toolchain and explicit DB lifecycle
 
 - [ ] Start from ADR0003's recorded Psycopg binary 3.3.6, SQLAlchemy 2.1.4 and Alembic 1.20.0 baseline. Recheck compatibility/security information at implementation time, resolve under Python 3.14, regenerate production/development locks, and install in a clean environment. Record any intentional baseline revision in ADR0003. Verify binary wheels/imports on native Linux AMD64 and ARM64; no silent source-build fallback.
-- [ ] Use a synchronous SQLAlchemy engine and its bounded pool only, matching existing synchronous routes. Add `MEDUCATION_CONTENT_SOURCE=json|postgres` and distinct runtime/direct-migration connections; never borrow privileged credentials for API reads. Reject invalid source values or missing DB-mode configuration and redact secrets in errors.
-- [ ] Implement explicit role/bootstrap operations following ADR0003: NOLOGIN owner, migrator, read-only runtime and backup roles, default privileges and restricted PUBLIC grants. Keep bootstrap credentials out of the API. Specify the restricted importer/activation writer role for L3 operator jobs; reserve authenticated editor use for L4.
-- [ ] Package an explicit Alembic job/CLI and a Postgres-mode Compose override or equivalent documented invocation. Require DB startup readiness for DB mode while leaving default JSON-only startup independent. Include migration assets in the built package/image and inspect them from the installed image.
-- [ ] Initialize schema/head/active-content readiness once at API startup; do not auto-migrate/import from workers. Keep recurring liveness/readiness free of SQL. Ensure failed initialization and normal shutdown dispose engines and sessions.
+- [x] Use a synchronous SQLAlchemy engine and its bounded pool only, matching existing synchronous routes. Add `MEDUCATION_CONTENT_SOURCE=json|postgres` and distinct runtime/direct-migration connections; never borrow privileged credentials for API reads. Reject invalid source values or missing DB-mode configuration and redact secrets in errors.
+- [x] Implement explicit role/bootstrap operations following ADR0003: NOLOGIN owner, migrator, read-only runtime and backup roles, default privileges and restricted PUBLIC grants. Keep bootstrap credentials out of the API. Specify the restricted importer/activation writer role for L3 operator jobs; reserve authenticated editor use for L4.
+- [x] Package an explicit Alembic job/CLI and a Postgres-mode Compose override or equivalent documented invocation. Require DB startup readiness for DB mode while leaving default JSON-only startup independent. Include migration assets in the built package/image and inspect them from the installed image.
+- [x] Initialize schema/head/active-content readiness once at API startup; do not auto-migrate/import from workers. Keep recurring liveness/readiness free of SQL. Ensure failed initialization and normal shutdown dispose engines and sessions.
 
 Gate: clean locked installation, least-privilege connection tests and explicit job invocation work; JSON-mode backend tests still pass. Record each platform actually tested.
+
+### Step 2 local result — 2026-10-13
+
+The exact ADR0003 baseline resolved under Python 3.14 and both locks were regenerated,
+retaining all existing package versions. Binary-only clean installation and
+`pip check` passed on macOS ARM64. The project-root environment was updated from
+those locks as well. Native Linux ARM64 API builds install only runtime wheels,
+including Psycopg's binary implementation/libpq, and ship Alembic resources from
+the existing Python package. ADR0005's migration-resource path was refined to
+`backend/src/meducation_api/migrations/` so installed images need no checkout copy.
+
+`meducation-db` provides explicit `bootstrap-local`, `head` and `upgrade` commands.
+Bootstrap creates/reconciles the local NOLOGIN owner and four distinct login roles,
+restricts PUBLIC permissions and grants future owner-created objects to the backup
+role. It refuses unexpected managed-role memberships/schema ownership. The reader
+and operator receive no blanket content-table/write/private-function access;
+Step 3 grants selected published views/controlled functions. No actual development
+database was modified; verification used disposable tmpfs databases only.
+
+Source selection and assigned-role secret URLs fail closed, including credential/
+host overrides and nonlocal non-TLS configurations. Runtime uses one pool of size
+2 with no overflow; direct operator jobs use NullPool. The engine forces
+`gssencmode=disable` so hosted `verify-full` follows the intended TLS path. API
+lifespan clears state on failed startup/shutdown and never calls JSON factories
+when Postgres mode fails. Existing health routes perform no DB queries.
+
+There is deliberately no product migration head until Step 3, and no Postgres
+learner adapter until Step 5. Explicit upgrade refuses the absent head before
+connecting. Installed-image verification uses a temporary synthetic Alembic
+revision to exercise the packaged environment, future backup grants, text/JSON/
+choice-order round trips and transaction rollback. It does not certify product
+release constraints, real content import or successful DB learner startup.
+
+[Step 2 evidence](L3-step2-toolchain-evidence.json) records the clean install,
+final source/image hashes, native Linux ARM64 toolchain/JSON API smoke results,
+versions and limits. The toolchain smoke is integrated into the existing native
+AMD64/ARM64 acceptance jobs. The previous L2 CI pass does not cover this change;
+native AMD64 execution remains pending, so Step 2's cross-platform checkbox and
+overall step stay open. Stop here before Step 3 unless that gate is satisfied or
+the user explicitly changes it.
+
+Verification: backend and container-helper Ruff passed; strict backend mypy passed;
+all 59 backend tests passed; the installed JSON API smoke passed eight groups;
+the real PG17 toolchain smoke passed twelve groups on native Linux ARM64. Build/
+TypeScript and architecture checks passed. DB-mode Compose `config --quiet`
+passed with synthetic credentials. Canonical/shared-fixture byte comparisons,
+relative document links, tracked/new-file whitespace and installed-source hash
+checks passed. Task-owned containers/networks were cleaned up. Existing Vite
+chunk-size and Starlette/httpx deprecation warnings remain. No local blocking
+implementation finding remains; native AMD64 acceptance is an open required gate.
 
 ## Step 3 — Create migrations and transactional content primitives
 
@@ -115,7 +165,7 @@ Gate: local Postgres serves the current learner without content drift or gratuit
 - [x] Inspected the L0/L2 decisions and completed work, current L3 scope, backend repository/revision/lifecycle code, Compose setup, schema and testing guidance.
 - [x] Prepared this staged implementation plan and linked it from the parent tracker.
 - [x] Step 1 — ADR and contracts.
-- [ ] Step 2 — Dependencies, roles and lifecycle.
+- [ ] Step 2 — Dependencies, roles and lifecycle: local implementation/checks passed; native AMD64 acceptance pending.
 - [ ] Step 3 — Migrations and transactional primitives.
 - [ ] Step 4 — Paired import/export.
 - [ ] Step 5 — DB adapters and API release consistency.

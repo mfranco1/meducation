@@ -11,7 +11,13 @@ dependencies = [
   "uvicorn>=0.34,<1",
   "pydantic>=2.10,<3",
   "pydantic-settings>=2.7,<3",
+  "psycopg[binary]==3.3.6",
+  "SQLAlchemy==2.1.4",
+  "alembic==1.20.0",
 ]
+
+[project.scripts]
+meducation-db = "meducation_api.db.cli:main"
 
 [project.optional-dependencies]
 dev = [

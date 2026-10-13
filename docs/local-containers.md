@@ -292,6 +292,51 @@ backups separately. See the [toolchain contract](decisions/0003-local-postgres-t
 [PG17 restore transactions](https://www.postgresql.org/docs/17/app-pgrestore.html)
 and [password-file rules](https://www.postgresql.org/docs/17/libpq-pgpass.html).
 
+## L3 explicit database jobs and toolchain verification
+
+L3 Step 2 supplies locked database dependencies, local role/bootstrap commands,
+packaged Alembic infrastructure and DB-mode initialization/cleanup. It does not
+yet supply a content migration, imported active release or learner adapters.
+Default Compose startup remains the working JSON learner path. Follow
+[backend job setup](../backend/README.md#l3-database-toolchain-and-explicit-jobs)
+for ignored host configuration and explicit local bootstrap. Bootstrap updates
+the four configured application passwords and restricts PUBLIC privileges on the
+selected local database; it is never an automatic init-directory/worker action.
+
+After configuring reader and migrator service-host connections in ignored
+`ops/containers/.env`, validate the DB-mode override without printing secrets:
+
+```sh
+docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml --profile db --profile db-jobs config --quiet
+docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml --profile db up -d postgres
+docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml --profile db-jobs run --rm --no-deps migrate
+```
+
+The migration job currently exits with the explicit Step 3 missing-head error;
+it performs no schema migration. Once Step 3 adds revisions, run this controlled
+job explicitly before the API. It receives only the migrator URL, while the API
+receives only the reader URL and waits for Postgres startup health. Import and
+activation remain separate future commands. A successful `pg_isready` check
+alone cannot start an uninitialized DB learner API. Do not switch a development
+learner to the override expecting functioning Postgres content before Steps 3–5.
+
+Verify the installed API wheel, binary driver/libpq, packaged Alembic environment,
+explicit synthetic migration, future backup grants, role permissions,
+transaction rollback and fail-closed startup against isolated PG17:
+
+```sh
+docker build -f backend/Dockerfile -t meducation-api:l3-step2 .
+.venv/bin/python scripts/containers/smoke-db-toolchain.py --image meducation-api:l3-step2 --output test-results/l3-step2-db-toolchain.json
+```
+
+This smoke uses uniquely named containers/network, synthetic data and a tmpfs
+database with no host port or persistent volume. Temporary credential files are
+mode 0600 and cleaned with the containers/network. It never connects to the
+routine Compose database or modifies authored banks. The native acceptance
+runner now includes this check on its existing AMD64/ARM64 CI jobs; an ARM64
+result does not establish AMD64 acceptance. The synthetic revision is not the
+product schema or real-content migration/parity evidence.
+
 ## Separate destructive reset
 
 For a database containing anything to retain, first dump it off-volume, restore

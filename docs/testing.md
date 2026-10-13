@@ -94,6 +94,19 @@ Automated role/label, keyboard/focus, reduced-motion, and mobile/desktop checks 
 
 ## Local-preparation acceptance
 
+L3 Step 2 adds `backend/tests/test_database_setup.py` for strict source/secret URL
+validation, explicit migration transactions, startup refusal and engine cleanup.
+Run normal backend Ruff/mypy/pytest alongside
+`scripts/containers/smoke-db-toolchain.py --image meducation-api:l3-step2` after
+building that API image. The latter tests the installed wheel against an isolated
+real PG17 instance: binary imports/libpq, repeatable explicit bootstrap, role and
+PUBLIC function isolation, owner default backup grants, synthetic Alembic
+upgrade/repeat, JSON/text/order round trip and rollback. It is included in the
+existing native container acceptance jobs. Actual content revisions/adapters and
+successful DB startup remain later L3 gates; this toolchain test must be extended
+when Step 3 supplies the migration head. Follow the
+[job/runbook commands](local-containers.md#l3-explicit-database-jobs-and-toolchain-verification).
+
 [Completed L0 decisions](work/done/L0-local-contracts-plan.md) are design/feasibility evidence. Their tests do not certify future application implementations. Keep frozen evidence under docs/work/done; record new feature results in ongoing stage trackers, without overwriting historical snapshots.
 
 For [L1 progress backups](work/done/L1-progress-backup-plan.md), use disposable synthetic progress and record engine/version, command and observed results in [B01–B14](work/ongoing/L0-browser-acceptance.md). Run `npm run test:e2e:progress-backup -- --project=chromium`, `--project=firefox` or `--project=webkit` sequentially against a fresh learner bundle. The dedicated config covers download and exact paired round trips, capabilities, recovery admission, cooperating tabs/races, file cancellation, focus, narrow/enlarged-text/reduced-motion interaction, network failures, actual quota and real navigation. The default full runner is Chromium only.

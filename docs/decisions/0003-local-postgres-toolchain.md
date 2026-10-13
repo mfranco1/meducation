@@ -1,6 +1,55 @@
 # Local Postgres and Python toolchain
 
-Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 CI passed per user confirmation; L3 integration pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md).
+Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 L2 CI passed per user confirmation. L3 Step 2 is implemented and locally verified; its updated native AMD64 CI acceptance and later real-content integration remain pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md) and [L3 tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md).
+
+## L3 Step 2 implementation follow-up — 2026-10-13
+
+The recorded dependency baseline resolved under Python 3.14 without changing
+existing locked versions. Both locks now include Psycopg binary 3.3.6,
+SQLAlchemy 2.1.4, Alembic 1.20.0 and their resolved Mako/MarkupSafe dependencies.
+A clean macOS ARM64 environment installed binary wheels and passed `pip check`;
+the installed native Linux ARM64 API image passed the same package/import check.
+Psycopg reports its binary implementation with bundled libpq 18.6 against PG17.11;
+PG17 dump/restore clients remain the separately pinned tooling requirement.
+Published release/API documentation was rechecked from
+[Psycopg](https://pypi.org/project/psycopg/3.3.6/),
+[SQLAlchemy](https://pypi.org/project/SQLAlchemy/2.1.4/), and
+[Alembic](https://pypi.org/project/alembic/1.20.0/).
+
+The official [Psycopg release notes](https://www.psycopg.org/psycopg3/docs/news.html),
+[SQLAlchemy changelog](https://docs.sqlalchemy.org/en/21/changelog/changelog_21.html)
+and [Alembic changelog](https://alembic.sqlalchemy.org/en/latest/changelog.html)
+were rechecked; unreleased headings do not replace the selected published pins.
+The engine forces `gssencmode=disable` and rejects conflicting query values:
+libpq can otherwise prefer GSS encryption regardless of `sslmode`, which would
+change the intended hosted TLS verification path.
+[PostgreSQL connection parameter documentation](https://www.postgresql.org/docs/17/libpq-connect.html#LIBPQ-CONNECT-SSLMODE).
+
+The backend implements explicit source/local-environment selection, redacted
+assigned-role URLs, one bounded synchronous reader pool and direct unpooled jobs.
+`meducation-db bootstrap-local` explicitly reconciles local owner/migrator/reader/
+backup/operator roles, restricted PUBLIC database/schema permissions and owner
+default backup/function privileges. The new operator has no blanket DML/DDL or
+function execution; Step 3 grants controlled functions. Reader grants are selected
+published views rather than all content tables, following ADR0005's private-draft
+boundary. Existing roles with unexpected memberships/schema owners cause refusal.
+
+Packaged Alembic resources live in `backend/src/meducation_api/migrations/` to work
+from the installed wheel; no product revision is packaged until Step 3. Explicit
+upgrade refuses that missing head before connecting. Runtime initialization checks
+PG17, the future reader-visible schema-head view and a complete active release,
+disposing the engine on failure/shutdown. DB learner startup stays closed until
+Steps 3–5; JSON mode remains operational and no fallback/worker migration occurs.
+
+[Toolchain smoke](../../scripts/containers/smoke-db-toolchain.py) uses a disposable
+tmpfs PG17 instance and installed API image to verify explicit/repeated bootstrap,
+role isolation, owner-created object backup grants, no PUBLIC private-function
+execution, a synthetic Alembic upgrade/repeat, text/JSON/order round trip and
+transaction rollback. It now runs in both native container CI jobs. These local
+ARM64 results do not certify AMD64 execution, the planned product schema, real
+content import/parity/restore or hosted behavior. See the L3 tracker for evidence
+and the remaining Step 2 acceptance gate; historical L0/L2 statements below remain
+their observations at the time.
 
 ## Baseline and selected versions
 

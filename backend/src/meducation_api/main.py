@@ -82,13 +82,26 @@ def create_app(
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
-        app.state.bank = repository_factory(config.bank_path)
-        app.state.subjects = app.state.bank.list_subjects()
-        app.state.flashcards = flashcard_repository_factory(config.flashcard_bank_path, app.state.subjects)
-        yield
         app.state.bank = None
         app.state.subjects = None
         app.state.flashcards = None
+        try:
+            if config.content_source == "postgres":
+                from meducation_api.db.engine import ContentDatabaseError
+                from meducation_api.db.runtime import PostgresRuntime
+
+                with PostgresRuntime(config):
+                    raise ContentDatabaseError(
+                        "Postgres learner adapters are not installed yet; L3 Step 5 is pending."
+                    )
+            app.state.bank = repository_factory(config.bank_path)
+            app.state.subjects = app.state.bank.list_subjects()
+            app.state.flashcards = flashcard_repository_factory(config.flashcard_bank_path, app.state.subjects)
+            yield
+        finally:
+            app.state.bank = None
+            app.state.subjects = None
+            app.state.flashcards = None
 
     app = FastAPI(title="Meducation Content API", version="1.0.0", lifespan=lifespan)
     app.add_middleware(

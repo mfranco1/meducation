@@ -1,0 +1,25 @@
+# Explicit DB-mode override; default compose.yaml remains JSON-only.
+services:
+  api:
+    environment:
+      MEDUCATION_CONTENT_SOURCE: postgres
+      MEDUCATION_DATABASE_ENVIRONMENT: local
+      MEDUCATION_DATABASE_URL: ${MEDUCATION_DATABASE_URL:?Set the reader connection in an ignored env file}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  migrate:
+    profiles: [db-jobs]
+    image: meducation-api:local
+    command: [python, -m, meducation_api.db.cli, upgrade]
+    environment:
+      MEDUCATION_DATABASE_ENVIRONMENT: local
+      MEDUCATION_MIGRATION_DATABASE_URL: ${MEDUCATION_MIGRATION_DATABASE_URL:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    read_only: true
+    tmpfs: [/tmp]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
