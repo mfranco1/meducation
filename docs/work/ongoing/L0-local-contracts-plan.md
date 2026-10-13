@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: in progress; Steps 1–5 design/audit complete; browser release acceptance pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
+Status: in progress; Steps 1–6 design/audit complete; L0-A selected, L1 application verification pending. Steps 7–9 pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 
@@ -75,12 +75,14 @@ Output recorded in the [ADR](../../decisions/0002-progress-backup-and-restore.md
 
 ## Step 6 — Set browser, lifecycle and accessibility acceptance
 
-- [ ] Target maintained Chromium, Firefox and WebKit on secure origins; include manual iOS Safari and Android Chrome download/file-selection checks before public launch. Record actual tested versions during implementation.
-- [ ] If Web Locks/required storage features are unavailable, preserve existing ordinary-study behavior where safe, but disable coordinated restore with a useful message. Never offer the same safety guarantee through an untested fallback. Valid export may use bounded repeated snapshots and reject observed concurrent changes; document its weaker coordination if this fallback is retained.
-- [ ] Test blocked storage, private-mode quota behavior, canceling file selection, choosing the same file twice, input clearing, focus restoration, Escape behavior, screen-reader progress and 390px layout.
-- [ ] Choose no backend calls or backup telemetry. Revoke created object URLs and discard parsed preview data when the dialog closes.
+- [x] Select maintained desktop Chromium, Firefox and WebKit on secure origins; require actual iOS Safari/Android Chrome download/file-selection and assistive-technology checks before public launch. Record actual tested versions in L1 evidence.
+- [x] Define admission using actual capability/access results. Without valid coordination, disable normal paired export/restore and persistent study writes; preserve safe browsing and saved bytes. Pending/unreadable journals gate progress. No weaker export fallback is selected.
+- [x] Define assertions for blocked storage, private-mode quota, file cancellation/reselection/input clearing, focus/Escape/screen-reader announcements and 390px layout. Record existing evidence and pending application/manual checks separately.
+- [x] Select no backup backend calls/telemetry, safe Blob URL revocation and invalidation/disposal of delayed reads/preview data.
 
-L0-A exit: steps 1–6 produce a selected protocol, schema/limits and test matrix; unresolved concurrency/recovery behavior blocks L1 implementation. The browser checks here may be small temporary feasibility probes, not a finished backup feature.
+Output: Step 6 of the [ADR](../../decisions/0002-progress-backup-and-restore.md) and the [browser acceptance checklist](L0-browser-acceptance.md). Firefox launch and actual BFCache coverage remain explicit L1 verification obligations. No finished utility/browser coverage is claimed.
+
+L0-A exit met for design: steps 1–6 select protocol, schema/limits and test matrix. An observed protocol/recovery failure blocks implementation until resolved; unimplemented application acceptance tests belong to L1. Public release still requires its automated/manual gates.
 
 ## Step 7 — Record database/toolchain compatibility (L0-B)
 
@@ -111,12 +113,12 @@ L0-C exit: security/session contract is recorded with provider capability status
 
 ## Completion checklist
 
-- [ ] L0-A coordination/format/lifecycle decisions complete.
+- [x] L0-A coordination/format/lifecycle decisions complete; feature verification remains L1.
 - [ ] L0-B DB/toolchain decisions complete.
 - [ ] L0-C identity contract and provider capability status complete.
 - [ ] Decision documents, parent links and verification evidence recorded.
 
-Planning document creation is complete; these execution boxes are deliberately unchecked.
+Planning document creation is complete; only completed execution steps are checked.
 
 Planning verification: relative links resolve; repository build/typecheck passed with the existing bundle-size advisory; git diff --check passed. No feasibility spike or runtime feature was implemented in this planning turn.
 
@@ -131,3 +133,5 @@ Planning verification: relative links resolve; repository build/typecheck passed
 2026-10-13 — Step 4 complete and self-audited; fixed marker/readback uncertainty and preserved raw corrupt/absent originals. Retained model: 90 restore interruptions, 618 recovery interruptions/retries and 3 fail-closed cases passed. Lint/architecture, format, build/typecheck, link/evidence/diff checks passed; canonical hashes unchanged and existing chunk-size advisory remains. Actual browser/production journal validation remains L1 work. Stop before Step 5 pending user continuation.
 
 2026-10-13 — Step 5 complete and self-audited: exact validation/limits/normalization recorded; seven synthetic sizing scenarios and selected invariant assertions passed. Preserved pruned-history totals and local calendar dates; no current-clock timer inflation or silent truncation. Lint/architecture, format, build/typecheck and link/evidence/hash/diff checks passed; existing chunk-size advisory remains. Full importer/round-trip/quota implementation tests remain L1 work. Stop before Step 6 pending user continuation.
+
+2026-10-13 — Step 6 complete and self-audited: capability admission, safe unsupported/storage-failure behavior, lifecycle evidence rules, dialog/file/download cleanup and accessibility contract selected. Added 14 pending application acceptance cases with separate L1/public-launch gates. L0-A design gate met; Firefox launch, real BFCache, actual quota and mobile/assistive-technology application checks remain explicitly pending. Documentation only; build/typecheck, changed-document link assertions, checklist-state/hash checks and git diff --check passed. Existing Vite chunk-size advisory remains. Stop before Step 7 pending user continuation.

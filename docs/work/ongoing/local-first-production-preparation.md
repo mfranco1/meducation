@@ -21,7 +21,7 @@ After the short L0 design prerequisite, stages L1–L6 are development work that
 
 Detailed sequence: [L0 local contracts plan](L0-local-contracts-plan.md). L0-A gates L1; database/auth decisions gate their respective later stages.
 
-- [ ] Record the backup restore protocol and browser support target, including how all local progress readers/writers participate in restore/recovery. Specify export timer normalization, quota/oversize behavior, and legacy-tab limitations before UI work.
+- [x] Record the backup restore protocol and browser support target, including how all local progress readers/writers participate in restore/recovery. Specify export timer normalization, quota/oversize behavior, and legacy-tab limitations before UI work.
 - [ ] Choose a PostgreSQL major supported by the intended managed host and pin the same major in local/CI images and compatible dump/restore tooling. Check Python 3.14 driver/image availability before committing packaging.
 - [ ] Define the single-editor authentication contract before L4: authorization-code flow with PKCE or a backend session, issuer/audience/algorithm/key validation, stable subject allowlist, required MFA evidence, expiry/logout and credential recovery. Select a provider/adapter capable of that contract by L4; account provisioning can wait. Do not invent provider-independent MFA claims and assume a hosted provider will emit them.
 
@@ -174,3 +174,5 @@ Provision managed Postgres and the chosen admin identity; deploy static learner/
 - [ ] L6 implemented and verified.
 
 This turn changes planning artifacts only; no runtime implementation, content edits, schema migrations, Docker setup or cloud provisioning has occurred. Planning verification: `npm run build` passed including typecheck (non-blocking Vite chunk-size advisory); `git diff --check` passed; revised canvas TSX syntax validation passed. Canvas host rendering was not verified. Historical checks in the earlier snapshot are not implementation evidence for these stages.
+
+- [x] L0 Step 6 capability/lifecycle/accessibility acceptance selected and audited; L0-A design gate met. Application multi-browser, quota, BFCache and manual mobile/assistive-technology verification remain L1/release gates. Step 7 awaits user continuation.

@@ -6,7 +6,7 @@ Status: planned; implementation not started. Created 2026-10-12. Parent: [local-
 
 A learner can download one JSON file containing both quiz and flashcard progress, select it later, review its contents, and explicitly replace local progress. Failed or interrupted restores preserve a recoverable state. No content/backend/authentication dependency is introduced.
 
-Use the existing two v2 storage contracts with a separate versioned backup format. L0 Step 3 selects shared document participation with exclusive paired export/restore/recovery, preserving synchronous ordinary writes. L1 must integrate the admission guards, lifecycle ordering and bounded retry behavior from the ADR; browser acceptance remains gated by L0 Step 6 and actual application tests. Do not treat the synthetic probe as completed production coordination.
+Use the existing two v2 storage contracts with a separate versioned backup format. L0 Step 3 selects shared document participation with exclusive paired export/restore/recovery, preserving synchronous ordinary writes. L1 must integrate the admission guards, lifecycle ordering and bounded retry behavior from the ADR; L0 Step 6 acceptance is selected in the [browser checklist](L0-browser-acceptance.md); actual application tests remain required. Do not treat the synthetic probe as completed production coordination.
 
 ## Proposed module ownership
 
@@ -62,7 +62,7 @@ Acceptance: own-format round-trip; all invalid fixtures yield safe errors and ze
 - [ ] Guard both repositories against pending restore/recovery and invalid participation. Never refresh one displayed snapshot from an intermediate two-key write. Preserve existing frozen-snapshot behavior once ready.
 - [ ] Add explicit local invalidation/subscriber refresh after a committed pair; storage events alone do not notify the writing tab. Deduplicate recovery/initialization across both repositories.
 - [ ] Implement browser lifecycle handlers as selected by L0: retain participation through synchronous pagehide save; revalidate on pageshow (persisted returns must discard stale sessions and re-enter boot, preferably via controlled reload); block writes after lost participation. No uncoordinated fallback writes during restore.
-- [ ] Preserve current study behavior on unsupported browsers where possible, but disable unsafe restore. Test capability-unavailable copy and no-write behavior.
+- [ ] Apply the Step 6 capability matrix: disable normal paired export/restore and persistent study writes without valid coordination; preserve safe browsing and exact saved bytes. Pending/unreadable journals require recovery gating. Do not add a repeated-snapshot export fallback or silently use an empty/transient store. Test actual acquisition/access failures, capability copy and no-write behavior.
 
 Acceptance: existing repository/session tests pass with the coordinator injected. A second initialized page cannot write during exclusive restore, and a fresh page cannot observe half-restored progress. Suspended/legacy-tab limitations match documented guarantees.
 
@@ -106,6 +106,8 @@ Acceptance: inject failure after every mutating operation; each restart determin
 Acceptance: keyboard-only, mobile-width, reduced-motion and no-network browser flows work; errors leave the user able to retry or cancel safely.
 
 ## Step 7 — Run adversarial and regression tests
+
+Use [L0 browser acceptance](L0-browser-acceptance.md) B01–B14 as the feature acceptance checklist. Add explicit Chromium/Firefox/WebKit projects; verify:full currently covers Chromium only. Record real BFCache/fresh-load paths and keep manual mobile/assistive-technology checks as launch gates.
 
 - [ ] Codec tests: valid empty/populated/legacy optional cases; unsupported envelope/schema; wrong app; dangerous keys; huge/deep content; invalid dates/numbers; duplicates; map mismatches; impossible score totals; missing system; unknown content IDs.
 - [ ] Export tests: corrupt-storage error vs missing-key empty state; durable history after pruning; active timer normalization; timezone-preserved flashcard dates; size-cap consistency; no mutation on export.
