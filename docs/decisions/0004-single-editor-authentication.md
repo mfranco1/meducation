@@ -1,6 +1,6 @@
 # Single-editor authentication and private admin sessions
 
-Status: security/session contract selected; ZITADEL Cloud is the provisional OIDC adapter candidate, final adapter acceptance pending before L4. Provider account/configuration and hosted tests are deferred. Observed 2026-10-13. Gate: [L0 Step 8](../work/ongoing/L0-local-contracts-plan.md). Local learner progress remains unauthenticated and in the browser.
+Status: security/session contract selected; ZITADEL Cloud is the provisional OIDC adapter candidate, final adapter acceptance pending before L4. Provider account/configuration and hosted tests are deferred. Observed 2026-10-13. Gate: [L0 Step 8](../work/done/L0-local-contracts-plan.md). Local learner progress remains unauthenticated and in the browser.
 
 ## Current boundary and proposed ownership
 

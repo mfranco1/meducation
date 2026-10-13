@@ -1,6 +1,6 @@
 # L1 — Progress download/upload: detailed implementation plan
 
-Status: planned; implementation not started. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Prerequisite: [L0-A](L0-local-contracts-plan.md) selected and verified restoration protocol. L0 database/auth research does not gate this feature.
+Status: planned; implementation not started. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Prerequisite met: [L0-A](../done/L0-local-contracts-plan.md) selected protocol with isolated/model feasibility evidence; application verification remains in this stage. L0 database/auth research does not gate this feature.
 
 ## Deliverable
 
@@ -17,7 +17,7 @@ Use these names as concrete starting points; combine very small helpers when tha
 - src/persistence/progressRestore.ts: raw paired-state capture, journal lifecycle, restore/recovery and atomic publication of usable snapshots.
 - Existing localRepository.ts/localFlashcardProgressRepository.ts: participation/journal guards, rehydration and subscriber refresh. Preserve normal domain behavior.
 - src/app/components/ProgressBackupDialog.tsx: MUI presentation receiving data/actions via props; no direct localStorage access.
-- src/app/useProgressBackup.ts: app-owned cross-feature composition, file handling and interaction state; invoke persistence services, never sibling feature internals.
+- src/app/useProgressBackup.ts: app-owned cross-feature composition, file handling and interaction state; invoke persistence services and composed session contracts, never sibling feature internals. App may compose concrete persistence services; the feature-session-only restriction applies within features.
 - src/app/App.tsx, navigation/drawer and bootstrap: utility action, safe-view gating, recovery gate and post-restore reset.
 - Colocated tests; tests/fixtures/progress-backups/ for small explicit contracts; e2e/progress-backup.spec.ts for download/restore and multi-page cases.
 
@@ -135,7 +135,7 @@ Each slice should remain coherent and buildable. Do not expose a Restore action 
 
 ## Completion checklist
 
-- [ ] L0-A decisions linked and honored.
+- [x] L0-A decisions linked; implementation must honor the ADR and pending acceptance gates.
 - [ ] Steps 1–2 contract/fixtures complete.
 - [ ] Step 3 coordination complete.
 - [ ] Steps 4–5 backup/restore complete.

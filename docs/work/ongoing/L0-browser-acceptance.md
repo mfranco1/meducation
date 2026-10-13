@@ -6,7 +6,7 @@ Status: acceptance criteria selected 2026-10-13; production backup implementatio
 
 Use synthetic fixture progress in isolated browser contexts; never inspect personal progress or copy it to logs/screenshots. Desktop automated targets: maintained Chromium, Firefox and WebKit, production learner bundle, secure origin (plus loopback development). Record actual browser/OS/version, command, origin/mode, test IDs/results and evidence path. Prefer deterministic injected storage faults for exhaustive recovery; supplement with real storage exceptions/quota. Private browsing does not always block storage: verify actual behavior rather than assuming it does.
 
-Existing evidence is limited: [Step 3](L0-step3-coordination-evidence.json) has 21 isolated Chromium/WebKit passes; Firefox launch unavailable; real BFCache return unobserved. [Step 4](L0-step4-restore-evidence.json) is an in-memory interruption model. [Step 5](L0-step5-limits-evidence.json) is synthetic sizing/invariants. None is a completed application test below. Existing learner CI is Chromium only. Manual iOS/Android and assistive-technology checks must be run against the implemented utility before public launch.
+Existing evidence is limited: [Step 3](../done/L0-step3-coordination-evidence.json) has 21 isolated Chromium/WebKit passes; Firefox launch unavailable; real BFCache return unobserved. [Step 4](../done/L0-step4-restore-evidence.json) is an in-memory interruption model. [Step 5](../done/L0-step5-limits-evidence.json) is synthetic sizing/invariants. None is a completed application test below. Existing learner CI is Chromium only. Manual iOS/Android and assistive-technology checks must be run against the implemented utility before public launch.
 
 ## Required application cases — all pending
 

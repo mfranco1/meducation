@@ -1,8 +1,8 @@
 # Progress backup and restore
 
-Status: partial decision — Step 2 backup format/user flow selected; Step 3 coordination selected for L1 integration; Step 4 journal/recovery selected; Step 5 validation/limits selected; Step 6 capability/lifecycle/accessibility acceptance selected. L0-A design complete; application release verification pending L1. Date: 2026-10-12.
+Status: selected for L1 implementation — backup/user flow, coordination, journal/recovery, validation/limits and browser acceptance criteria. L0-A design complete; application release verification pending L1. Date: 2026-10-12.
 
-This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/ongoing/L0-local-contracts-plan.md). It selects a coordination protocol based on isolated feasibility probes; journal/recovery semantics are selected below; validation/limits are selected below; browser acceptance criteria are selected below. L0-A permits L1 implementation; it does not certify the finished feature. No runtime backup implementation exists.
+This decision record owns the current-contract evidence and selected backup format/user flow for [L0](../work/done/L0-local-contracts-plan.md). It selects a coordination protocol based on isolated feasibility probes; journal/recovery semantics are selected below; validation/limits are selected below; browser acceptance criteria are selected below. L0-A permits L1 implementation; it does not certify the finished feature. No runtime backup implementation exists.
 
 ## Scope and evidence method
 
@@ -301,7 +301,7 @@ The application never uses steal. The adversarial probe may use it only to force
 
 ### Reproducible feasibility evidence
 
-Retained probe: [runner](../../scripts/testing/probe-progress-coordination.mjs) and [synthetic fixture](../../tests/fixtures/progress-coordination/probe.html). Successful command: node scripts/testing/probe-progress-coordination.mjs chromium webkit. A loopback server uses an ephemeral port and newly created Playwright contexts; it never visits the real learner origin or reads personal browser storage. Its only keys are synthetic probe keys. The machine report is written under /private/tmp and copied to the [Step 3 evidence snapshot](../work/ongoing/L0-step3-coordination-evidence.json).
+Retained probe: [runner](../../scripts/testing/probe-progress-coordination.mjs) and [synthetic fixture](../../tests/fixtures/progress-coordination/probe.html). Successful command: node scripts/testing/probe-progress-coordination.mjs chromium webkit. A loopback server uses an ephemeral port and newly created Playwright contexts; it never visits the real learner origin or reads personal browser storage. Its only keys are synthetic probe keys. The machine report is written under /private/tmp and copied to the [Step 3 evidence snapshot](../work/done/L0-step3-coordination-evidence.json).
 
 Probes cover two shared documents, rejected exclusivity with safe rejoin, eventual exclusivity after other-document closure, new-reader gating, consistent paired capture, simultaneous boot recovery ownership, lost local permission, adversarial lock revocation, simulated unsupported state, synchronous pagehide checkpoint/reload/back navigation, synthetic persisted lifecycle and a legacy-script bypass demonstration. Chromium additionally covers renderer freezing and shared/exclusive owner crashes. Actual observed counts/versions are recorded in the evidence snapshot.
 
@@ -412,7 +412,7 @@ stateDiagram-v2
   RecoveryRequired --> ImportedPair: readable imported decision
 ```
 
-Retained design model: [probe-progress-restore.mjs](../../scripts/testing/probe-progress-restore.mjs). It uses synthetic in-memory strings and injected interruption before/after each storage operation, then repeats recovery. Present, absent and deliberately corrupt originals are exercised. This tests decision convergence and raw-byte preservation, not application validation, browser quota or physical durability. The machine report is [Step 4 evidence](../work/ongoing/L0-step4-restore-evidence.json). Full schema/size enforcement and actual-browser/journal integration remain L1 tests.
+Retained design model: [probe-progress-restore.mjs](../../scripts/testing/probe-progress-restore.mjs). It uses synthetic in-memory strings and injected interruption before/after each storage operation, then repeats recovery. Present, absent and deliberately corrupt originals are exercised. This tests decision convergence and raw-byte preservation, not application validation, browser quota or physical durability. The machine report is [Step 4 evidence](../work/done/L0-step4-restore-evidence.json). Full schema/size enforcement and actual-browser/journal integration remain L1 tests.
 
 ### Step 4 self-review and audit
 
@@ -501,7 +501,7 @@ Measure fully encoded lengths; journal escaping can grow data much more than a s
 
 ### Synthetic sizing and audit evidence
 
-Retained [probe-progress-backup-limits.mjs](../../scripts/testing/probe-progress-backup-limits.mjs) creates only synthetic progress and stem strings. [Machine evidence](../work/ongoing/L0-step5-limits-evidence.json) records exact sizes/limits and selected invariant assertions; it is not an implemented importer.
+Retained [probe-progress-backup-limits.mjs](../../scripts/testing/probe-progress-backup-limits.mjs) creates only synthetic progress and stem strings. [Machine evidence](../work/done/L0-step5-limits-evidence.json) records exact sizes/limits and selected invariant assertions; it is not an implemented importer.
 
 Measured examples: empty 307 bytes; 20 retained attempts x30 responses 63,024 bytes; 200 x100 responses plus 1,500 durable IDs 1,958,386 bytes; 200 x100 plus 50,000 IDs 4,092,387 bytes (under the 4,194,304-byte file cap). A 200 x300-response history is 5,621,185 bytes and must fail the file cap. The other per-record/node ceilings still apply.
 

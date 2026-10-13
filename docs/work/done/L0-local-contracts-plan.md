@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: in progress; Steps 1–8 design/audit complete; L0-A/L0-B selected; L0-C contract recorded with final provider acceptance pending. Step 9 pending. Created 2026-10-12. Parent: [local-first preparation](local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
+Status: complete — L0 design/audit deliverables, Steps 1–9. Completed 2026-10-13. L0-A/L0-B selected; L0-C contract/capability status recorded with final provider acceptance pending before L4. Runtime implementation remains pending. Created 2026-10-12. Parent: [local-first preparation](../ongoing/local-first-production-preparation.md). Next feature: [L1 progress backups](../ongoing/L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 
@@ -80,7 +80,7 @@ Output recorded in the [ADR](../../decisions/0002-progress-backup-and-restore.md
 - [x] Define assertions for blocked storage, private-mode quota, file cancellation/reselection/input clearing, focus/Escape/screen-reader announcements and 390px layout. Record existing evidence and pending application/manual checks separately.
 - [x] Select no backup backend calls/telemetry, safe Blob URL revocation and invalidation/disposal of delayed reads/preview data.
 
-Output: Step 6 of the [ADR](../../decisions/0002-progress-backup-and-restore.md) and the [browser acceptance checklist](L0-browser-acceptance.md). Firefox launch and actual BFCache coverage remain explicit L1 verification obligations. No finished utility/browser coverage is claimed.
+Output: Step 6 of the [ADR](../../decisions/0002-progress-backup-and-restore.md) and the [browser acceptance checklist](../ongoing/L0-browser-acceptance.md). Firefox launch and actual BFCache coverage remain explicit L1 verification obligations. No finished utility/browser coverage is claimed.
 
 L0-A exit met for design: steps 1–6 select protocol, schema/limits and test matrix. An observed protocol/recovery failure blocks implementation until resolved; unimplemented application acceptance tests belong to L1. Public release still requires its automated/manual gates.
 
@@ -106,17 +106,17 @@ Output: [single-editor authentication ADR](../../decisions/0004-single-editor-au
 
 ## Step 9 — Publish decisions and handoff
 
-- [ ] Create focused decision records under docs/decisions using the next available numbers: progress backup/coordination; local database runtime; single-editor authentication. Do not pre-create empty records for unresolved choices.
-- [ ] Update docs/architecture.md, docs/testing.md and the parent/L1 plans only where an accepted decision changes their guidance; preserve current-vs-proposed wording.
-- [ ] Log L0-A, L0-B, L0-C separately with evidence, remaining tasks and selected file boundaries. Mark L0 complete only when all required decision deliverables are done; allow L1 to proceed after L0-A.
-- [ ] For documentation-only changes run link/path and diff checks plus the repository minimum build/typecheck. Any retained executable spike must receive relevant tests and boundary checks.
+- [x] Create focused decision records under docs/decisions using the next available numbers: progress backup/coordination; local database runtime; single-editor authentication. Do not pre-create empty records for unresolved choices.
+- [x] Update docs/architecture.md, docs/testing.md and the parent/L1 plans only where an accepted decision changes their guidance; preserve current-vs-proposed wording.
+- [x] Log L0-A, L0-B, L0-C separately with evidence, remaining tasks and selected file boundaries. Mark L0 complete only when all required decision deliverables are done; allow L1 to proceed after L0-A.
+- [x] For documentation-only changes run link/path and diff checks plus the repository minimum build/typecheck. Any retained executable spike must receive relevant tests and boundary checks.
 
 ## Completion checklist
 
 - [x] L0-A coordination/format/lifecycle decisions complete; feature verification remains L1.
 - [x] L0-B DB/toolchain decisions complete; runtime validation remains L2/L3.
 - [x] L0-C identity contract and provider capability status complete; final adapter acceptance pending before L4.
-- [ ] Decision documents, parent links and verification evidence recorded.
+- [x] Decision documents, parent links and verification evidence recorded.
 
 Planning document creation is complete; only completed execution steps are checked.
 
@@ -139,3 +139,16 @@ Planning verification: relative links resolve; repository build/typecheck passed
 2026-10-13 — Step 7 complete and self-audited: PG17.11/Python3.14.8 multi-platform image digests, Psycopg binary3.3.6/SQLAlchemy2.1.4/Alembic1.20.0 baseline and role/connection/volume/backup/reset contracts recorded in ADR0003. Registry digest/native-architecture and package-wheel assertions, changed-document links, canonical hashes, build/typecheck and git diff --check passed; existing chunk-size advisory remains. Docker daemon unreachable and host pg_dump14 unsuitable for PG17; L2/L3 runtime verification pending. No installs/pulls/starts/provisioning/migrations. L0-B design gate met; stop before Step 8 pending user continuation.
 
 2026-10-13 — Step 8 complete and self-audited: exact editor identity, OIDC/code/PKCE validation, provider-specific MFA/freshness, opaque Postgres-backed sessions, CSRF/cookies, revocation/restore epoch, secrets and operator recovery recorded in ADR0004. Official Neon managed roadmap lists MFA coming soon; ZITADEL Cloud is provisional with final tenant/assurance adapter acceptance pending before L4. Local negative tests and real hosted gates specified. Build/typecheck, changed-document links, contract/evidence-status assertions, canonical hashes and git diff --check passed; existing chunk-size advisory remains. No auth implemented, credentials accessed, accounts provisioned or invitations sent. L0-C contract/capability-status deliverable met; stop before Step 9 pending user continuation.
+
+
+## Final handoff — 2026-10-13
+
+L0 is a completed decision/evidence stage, not a production feature. All nine deliverables are recorded. L1–L6 runtime boxes remain unchecked. User continuation is required before L1 Step 1; continue its detailed plan one step at a time with review/audit after each step.
+
+- **L0-A: ready for L1 implementation.** [ADR0002](../../decisions/0002-progress-backup-and-restore.md) selects paired v1 backups, strict bounded validation, shared participation/exclusive paired capture, journal decisions/recovery and capability failure behavior. Evidence: 21 isolated Chromium/WebKit coordination passes, restore fault model and synthetic limit assertions. Implement in src/persistence plus app composition/session guards; domain rules and canonical banks stay unchanged. [Ongoing browser acceptance](../ongoing/L0-browser-acceptance.md) owns B01–B14. Firefox launch, real BFCache, actual application quota/recovery and mobile/assistive-technology checks remain pending. Models are supporting evidence, never finished feature acceptance.
+- **L0-B: ready for L2/L3 implementation.** [ADR0003](../../decisions/0003-local-postgres-toolchain.md) selects PG17 and Python3.14 image indexes, native ARM64/AMD64 metadata, Psycopg/SQLAlchemy/Alembic baseline, role/URL separation and volume/backup/reset contracts. Docker daemon was unreachable; host pg_dump14 cannot back up PG17. Resolve actual runtime availability and test clean dependency resolution, native builds, migrations, exact content parity and dump/restore in L2/L3. Update locks/images deliberately if dated pins need patching. JSON remains authoritative until L4's explicit cutover, never two independently writable canonical stores.
+- **L0-C: contract/capability deliverable complete; final provider acceptance pending.** [ADR0004](../../decisions/0004-single-editor-authentication.md) selects backend OIDC/PKCE, exact issuer/subject editor identity, provider-specific assurance and opaque server sessions. Neon managed MFA was coming soon in the observed roadmap; ZITADEL Cloud is provisional. Resolve exact configured assurance/fresh-factor behavior before production provider integration in L4; hosted login/MFA/logout/recovery tests remain release gates. Proposed backend auth/private admin routes and src/admin HTTP gateway own this work; learner APIs/progress stay public/local. No hosted account or custom password system was created.
+
+Handoff audit reconciled design-readiness versus runtime verification, initialization versus recurring database health probes, and app composition versus feature-level persistence import restrictions. Completed L0 tracker and its five immutable evidence snapshots move together to docs/work/done; the unfinished browser acceptance tracker and L1/parent remain ongoing. Probe scripts/fixture stay available at their original source paths. Documentation describes proposed work explicitly and does not claim implemented backup, DB or auth behavior.
+
+2026-10-13 — Step 9 complete and final self-audit passed. Archived this completed decision tracker and five byte-identical evidence snapshots; rebased all affected links. Architecture/testing guidance and parent/L1 handoff distinguish accepted contracts from current runtime and remaining verification. Corrected L1's fully-verified prerequisite wording and reconciled database health probes with idle suspension. Build/typecheck, architecture graph (252 modules/1092 imports), 105 relative-link/anchor checks, evidence byte comparison against HEAD, canonical hashes, pending-acceptance/status assertions and git diff --check passed. Existing Vite chunk-size advisory remains. Documentation only; no new application/browser/container/auth execution is claimed. L0 complete; stop before L1 Step 1 pending user continuation.

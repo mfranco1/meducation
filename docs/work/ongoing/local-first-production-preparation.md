@@ -1,6 +1,6 @@
 # Local-first production preparation
 
-Created: 2026-10-12. Status: reviewed execution plan; implementation not started. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
+Created: 2026-10-12. Status: L0 design/evidence complete; L1–L6 implementation not started. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
 
 ## Confirmed scope
 
@@ -19,7 +19,7 @@ After the short L0 design prerequisite, stages L1–L6 are development work that
 
 ### L0 — Resolve local contracts (short prerequisite, no provisioning)
 
-Detailed sequence: [L0 local contracts plan](L0-local-contracts-plan.md). L0-A gates L1; database/auth decisions gate their respective later stages.
+Detailed sequence: [L0 local contracts plan](../done/L0-local-contracts-plan.md). L0-A gates L1; database/auth decisions gate their respective later stages.
 
 - [x] Record the backup restore protocol and browser support target, including how all local progress readers/writers participate in restore/recovery. Specify export timer normalization, quota/oversize behavior, and legacy-tab limitations before UI work.
 - [x] Choose a PostgreSQL major supported by the intended managed host and pin the same major in local/CI images and compatible dump/restore tooling. Check Python 3.14 driver/image availability before committing packaging.
@@ -160,7 +160,7 @@ Provision managed Postgres and the chosen admin identity; deploy static learner/
 - [x] Retained guest/local-progress scope and changed database preference to provisional Neon.
 - [x] Reviewed plan against current code and corrected sequencing/safety/scope gaps.
 - [x] Review verification: build/typecheck and canvas TSX syntax passed; existing bundle-size advisory remains. Runtime stages are still unimplemented.
-- [ ] L0 decisions recorded.
+- [x] L0 decisions recorded and handoff audited; runtime stage gates remain pending.
 - [x] L0 Step 1 current-contract evidence captured and audited; 49 baseline tests/build passed. Remaining L0 steps await user continuation one step at a time.
 - [x] L0 Step 2 backup-format/user-flow contract selected and audited; field/link/diff checks and build passed. Step 3 awaits user continuation.
 - [x] L0 Step 3 coordination design/prototype selected and audited; 21 Chromium/WebKit probes and lint/format/build passed. Firefox and actual BFCache validation remain release obligations. Step 4 awaits user continuation.
@@ -180,3 +180,12 @@ This turn changes planning artifacts only; no runtime implementation, content ed
 - [x] L0 Step 7 database/toolchain contract selected and audited; L0-B design gate met. PG17/Python3.14 image digests and ARM64/AMD64 metadata verified; host pg_dump14 mismatch and unreachable Docker daemon documented. L2/L3 runtime verification remains pending. Step 8 awaits user continuation.
 
 - [x] L0 Step 8 auth/session contract and provider capability status recorded and audited. Neon managed MFA is coming soon; ZITADEL Cloud is provisional, with final adapter/fresh-MFA acceptance pending before L4. Local and hosted acceptance cases are explicit; no accounts/secrets/configuration created. Step 9 awaits user continuation.
+
+
+## L0 final handoff — 2026-10-13
+
+[Completed L0 tracker](../done/L0-local-contracts-plan.md) records all nine design/evidence steps and the independent gates. L0-A is ready for L1 implementation; L0-B is ready for L2/L3 implementation with container/dependency/runtime tests still pending. L0-C contract/capability status is recorded, but final provider/fresh-MFA acceptance remains required before production integration in L4. [Browser acceptance](L0-browser-acceptance.md) stays ongoing until its application/manual gates pass. No L1–L6 runtime implementation or hosted provisioning is complete.
+
+Next authorized unit of work after user continuation: [L1 Step 1](L1-progress-backup-plan.md#step-1--establish-fixtures-and-observable-invariants), synthetic fixtures and observable persistence invariants. Complete/audit that step and stop before L1 Step 2. Do not begin it during the L0 handoff turn.
+
+- [x] L0 Step 9 final handoff/audit complete; completed tracker/evidence archived. Build/typecheck, architecture graph, 105 link/anchor checks, immutable evidence/canonical hashes and diff checks passed; existing chunk-size advisory remains. L1 Step 1 awaits user continuation.
