@@ -1,8 +1,8 @@
 # L3 — Local Postgres schema, migration and parity
 
-Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Step 4 complete with passing local verification; Step 5 complete with passing local verification; Step 6 implemented and locally verified; new native AMD64/ARM64 CI pending; Step 7 pending.
+Created: 2026-10-13. Status: Step 1 complete; Step 2 complete with user-confirmed passing CI after the browser-test fix; Step 3 complete with passing local verification; Step 4 complete with passing local verification; Step 5 complete with passing local verification; L3 complete; all seven stages and final audit passed with verified native AMD64/ARM64 CI.
 
-Parent: [local-first production preparation](local-first-production-preparation.md#l3--local-postgres-schema-migration-and-parity). Prerequisites: [completed L2](../done/L2-containers-local-services-plan.md) and [ADR0003 toolchain contract](../../decisions/0003-local-postgres-toolchain.md). Follow the [work tracking stage gates](../README.md): implement one step, record its checks and limitations, then stop at that gate until continuation is authorized. The user's 2026-10-13 instruction to start implementation authorizes beginning this sequence; L4 remains outside scope.
+Parent: [local-first production preparation](../ongoing/local-first-production-preparation.md#l3--local-postgres-schema-migration-and-parity). Prerequisites: [completed L2](../done/L2-containers-local-services-plan.md) and [ADR0003 toolchain contract](../../decisions/0003-local-postgres-toolchain.md). Follow the [work tracking stage gates](../README.md): implement one step, record its checks and limitations, then stop at that gate until continuation is authorized. The user's 2026-10-13 instruction to start implementation authorizes beginning this sequence; L4 remains outside scope.
 
 ## Outcome and scope
 
@@ -430,16 +430,68 @@ has not started. [Local evidence](L3-step6-parity-recovery-evidence.json) freeze
 commands/input hashes/reports and the remaining CI gate. No routine database,
 volume or personal progress was used; canonical JSON remains authoritative.
 
+Step 6 closure — 2026-10-14: [GitHub run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502)
+completed successfully at commit `b7703172c5ab9efb82af715ff9d2047913b6ff15`, matching
+the current source. Read-only API metadata independently verified all five jobs,
+including `Containers (amd64)` and `Containers (arm64)` and their native acceptance
+steps. User confirmation and run URL are retained; earlier pending statements and
+frozen local evidence remain historical. Step 6 is complete.
+
 ## Step 7 — Final verification and L4 handoff
 
-- [ ] Run `npm run verify:full` and `npm run build`, plus the new PG17 integration, actual-bank parity, restore and container checks. The existing full verifier does not currently run those new checks; wire them deliberately or list separate commands/results. Run backend Ruff/mypy/pytest and affected operational-script lint through the documented gates.
-- [ ] Verify protected canonical files are byte-identical, localStorage contracts are unchanged, learner artifacts still omit admin content, default JSON startup works, DB mode fails safely without initialization, and worker startup never runs migrations.
-- [ ] Review the implementation against every L3 checkbox in the parent tracker. Update architecture/schema/content-management docs with the implemented read-mode mapping while explicitly retaining JSON authority. Record commands, source/input hashes, migration head, native platform evidence and limitations in this tracker and supporting evidence files.
-- [ ] Handoff to L4: draft schema/revision rules, reservation operation contract, paired validation gaps, activation/publication events, protected audit/immutability behavior, operator role boundaries, deterministic exports and restore commands. The browser admin's current max-ID helpers remain confined to authoritative JSON authoring in L3; L4 must replace them before DB-backed authoring is enabled.
-- [ ] Retain outstanding L1 Firefox/mobile/accessibility and deployment-only acceptance in their existing trackers. Do not count L3 database checks as evidence for hosted auth, TLS, suspend/wake, capacity, or production recovery retention.
-- [ ] Only after relevant checks pass, mark L3 complete in the parent and move this tracker/supporting evidence to `docs/work/done/`, updating links. Stop before L4's authoring/authority cutover.
+Checkpoint: full verification is running; source/contract audit and L4 handoff
+are being finalized. New work is limited to documentation and evidence unless
+an in-scope defect is found. No L4 authoring, authority cutover or deployment.
+
+- [x] Run `npm run verify:full` and `npm run build`, plus the new PG17 integration, actual-bank parity, restore and container checks. The existing full verifier does not currently run those new checks; wire them deliberately or list separate commands/results. Run backend Ruff/mypy/pytest and affected operational-script lint through the documented gates.
+- [x] Verify protected canonical files are byte-identical, localStorage contracts are unchanged, learner artifacts still omit admin content, default JSON startup works, DB mode fails safely without initialization, and worker startup never runs migrations.
+- [x] Review the implementation against every L3 checkbox in the parent tracker. Update architecture/schema/content-management docs with the implemented read-mode mapping while explicitly retaining JSON authority. Record commands, source/input hashes, migration head, native platform evidence and limitations in this tracker and supporting evidence files.
+- [x] Handoff to L4: draft schema/revision rules, reservation operation contract, paired validation gaps, activation/publication events, protected audit/immutability behavior, operator role boundaries, deterministic exports and restore commands. The browser admin's current max-ID helpers remain confined to authoritative JSON authoring in L3; L4 must replace them before DB-backed authoring is enabled.
+- [x] Retain outstanding L1 Firefox/mobile/accessibility and deployment-only acceptance in their existing trackers. Do not count L3 database checks as evidence for hosted auth, TLS, suspend/wake, capacity, or production recovery retention.
+- [x] Only after relevant checks pass, mark L3 complete in the parent and move this tracker/supporting evidence to `docs/work/done/`, updating links. Stop before L4's authoring/authority cutover.
 
 Gate: local Postgres serves the current learner without content drift or gratuitous attempt invalidation; implementation and operational evidence are reviewable, and L4 begins with explicit boundaries.
+
+### Step 7 completion — 2026-10-14
+
+Final `npm run verify:full` passed all gates: 10 architecture tests, 534 frontend
+tests in 92 files, actual canonical validation, backend Ruff/mypy (21 source
+modules), 81 normal backend tests (80 PG cases deliberately skipped there),
+typecheck, learner/admin builds and 41 learner plus 12 admin Chromium cases.
+`npm run build` also passed. Source-level audit found no blocking L3 findings.
+Existing content-review, chunk-size and Starlette/httpx advisories remain.
+
+The exact current implementation commit and all 70 frozen Step 6 inputs match
+[run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502).
+Its five successful jobs were independently verified by API metadata, including
+both native acceptance steps. Those steps execute the separate 80-case PG suite,
+348-route actual-bank parity before/after backup-role restore, exact private/
+allocator/publication state and 44 PG proxy/browser cases, along with repeated
+installed-image and JSON/proxy/toolchain checks. Passing recorded native results
+are reused for identical source/configuration; no new runtime code was changed
+in this documentation/audit stage.
+
+Canonical banks and all earlier snapshots stayed byte-identical. No `src/`
+changes exist against the L2 completion source, preserving domain/UI/progress
+contracts and the no-runtime-AI invariant. Main/runtime/readers were reviewed for
+explicit-only migration/import, SQL-free health, paired response pinning, bounded
+caches and connection disposal. Native artifact audits exclude admin/QA/canonical
+modules from learner assets. Relative links/anchors, new/changed whitespace,
+evidence JSON and diff checks passed.
+
+The [L4 handoff](../../L4-authoring-handoff.md) records reservation-backed authored
+publishing instead of privileged file import, backend rich-policy parity,
+authenticated private access, atomic draft advancement and durable recovery before
+cutover. L4 implementation has not started; JSON remains authoritative/default.
+Existing deferred Firefox/mobile/accessibility/navigation and deployment-only
+gates remain in their ongoing owners. No commit, push, cloud provisioning,
+deployment or authority change occurred here.
+
+[Final evidence](L3-step7-completion-evidence.json) records the audit, CI provenance,
+commands and frozen snapshot hashes. This tracker and all stage evidence are
+archived together under `docs/work/done`; earlier pending claims describe their
+historical stage and are superseded by this closure. L3 is complete. Stop before
+L4 implementation until continuation is authorized.
 
 ## Progress and verification log
 
@@ -450,7 +502,7 @@ Gate: local Postgres serves the current learner without content drift or gratuit
 - [x] Step 3 — Migrations and transactional primitives: 58 real-PG17 cases, installed-image/JSON smokes and full verification passed.
 - [x] Step 4 — Paired import/export: 64 real-PG cases, 76 normal backend tests, captured canonical validation, installed-image smokes and build passed.
 - [x] Step 5 — DB adapters and API release consistency: 78 real-PG cases, 79 normal backend tests, installed-image smokes and full verification passed.
-- [ ] Step 6 — Local parity/browser/recovery implementation and checks pass; new native AMD64/ARM64 CI evidence pending.
-- [ ] Step 7 — Final verification and handoff.
+- [x] Step 6 — Local parity/browser/recovery and verified native AMD64/ARM64 CI passed.
+- [x] Step 7 — Final full verification, source/contract audit, verified native evidence, L4 handoff and archive complete.
 
 Planning verification — 2026-10-13: all 16 relative link targets resolved; tracked diff and new-plan whitespace checks passed; `npm run build` passed, including TypeScript checking, with the existing Vite chunk-size advisory. No migrations, dependency changes, database writes or runtime implementation occurred during plan creation.

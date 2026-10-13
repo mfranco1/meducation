@@ -160,8 +160,8 @@ the production learner image does not gain Node or a runtime validator. Head,
 migration, activation and export use the installed Python package. Run the
 [disposable PG integration launcher](../docs/testing.md#local-preparation-acceptance)
 for roundtrip, source-capture, injected rollback, replay/concurrency, corrupt-row
-rejection and CLI evidence. Fixture learner DB/API parity is verified in Step 5; comprehensive actual-bank,
-reverse-proxy/browser and restore acceptance remain Step 6. After activation,
+rejection and CLI evidence. Fixture and actual-bank learner DB/API parity, PG reverse-proxy/browser and
+restore acceptance are verified, including both native CI architectures. After activation,
 select `MEDUCATION_CONTENT_SOURCE=postgres` with only the reader URL to run the
 learner API. No JSON fallback or worker migration/import is performed.
 
@@ -283,4 +283,4 @@ Native AMD64/ARM64 acceptance runs fixture PG tests, actual-bank recovery and th
 PG proxy/browser suite. The expensive container browser suite runs once in PG
 mode; default JSON HTTP/proxy checks remain on both clean builds and the host
 JSON browser job remains separate. Local ARM64 passes do not close the native
-CI gate until both new jobs pass. Continue to Step 7 only after that evidence.
+CI gate without both new jobs passing. [Run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502) passed both architectures at the current implementation commit. See the [L4 handoff](../docs/L4-authoring-handoff.md) for private editing and cutover requirements.

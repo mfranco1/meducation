@@ -1,6 +1,17 @@
 # Local Postgres and Python toolchain
 
-Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 L2 CI passed per user confirmation. L3 Step 2 is complete with user-confirmed passing native CI after the browser fix. Step 3 schema/transactions are locally verified; real-content integration remains pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md) and [L3 tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md).
+Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 L2 CI passed per user confirmation. L3 Step 2 is complete with user-confirmed passing native CI after the browser fix. L3 schema/transactions/readers, actual-bank parity/recovery and PG browser acceptance are verified with passing native AMD64/ARM64 CI. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md) and [L3 tracker](../work/done/L3-postgres-schema-migration-parity-plan.md).
+
+## L3 final verification follow-up — 2026-10-14
+
+[GitHub run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502)
+passed all five jobs at `b7703172c5ab9efb82af715ff9d2047913b6ff15`. Read-only API
+metadata verifies both native acceptance jobs and matches the local source.
+The locked installed images, roles/migrations, complete actual-bank/API parity,
+backup-role fresh restore and PG proxy/browser acceptance are now implementation
+evidence. Earlier pending toolchain/content statements below are historical.
+JSON remains authoritative; hosted identity/TLS/capacity/RPO and L4 authoring
+cutover are separate gates. See the [L4 handoff](../L4-authoring-handoff.md).
 
 ## L3 Step 3 implementation follow-up — 2026-10-13
 
@@ -17,7 +28,7 @@ fixture suite exercises transactional invariants and concurrency. Both checks
 are included in native acceptance; local ARM64 passing results do not certify
 new AMD64 CI execution or actual-bank import/API/restore parity. See
 [ADR0005](0005-paired-content-releases-and-postgres-schema.md#step-3-implementation-follow-up--2026-10-13)
-and the [current tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md).
+and the [current tracker](../work/done/L3-postgres-schema-migration-parity-plan.md).
 Earlier Step 2 missing-head and pending-CI statements below are historical.
 
 ## L3 Step 2 implementation follow-up — 2026-10-13

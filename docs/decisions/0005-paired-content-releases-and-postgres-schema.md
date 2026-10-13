@@ -1,6 +1,20 @@
 # 0005 — Paired content releases and Postgres schema
 
-Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; paired file importer/exporter implemented; paired learner adapters implemented; actual-bank parity/recovery and PG browser acceptance locally verified; new native CI gate pending. Gate: [L3 Step 1](../work/ongoing/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; paired file importer/exporter implemented; paired learner adapters implemented; actual-bank parity/recovery and PG browser acceptance verified with passing native AMD64/ARM64 CI. Gate: [L3 Step 1](../work/done/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
+
+## L3 final verification follow-up — 2026-10-14
+
+The user-linked [GitHub run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502)
+was independently verified through public API metadata: all five jobs succeeded,
+including both native container acceptance jobs, at the local source commit
+`b7703172c5ab9efb82af715ff9d2047913b6ff15`. Current owner docs describe implemented
+JSON/Postgres read modes and operator commands. Earlier pending/native-only
+statements and frozen stage snapshots below remain historical.
+
+The [L4 handoff](../L4-authoring-handoff.md) records required authenticated gateway,
+backend rich-validation parity, reservation-backed authored publishing, atomic
+draft advancement and durable recovery before authority cutover. This verification
+does not enable private editing, change canonical authority or certify hosting.
 
 ## Step 6 local acceptance follow-up — 2026-10-14
 
@@ -14,7 +28,7 @@ transactions return unavailable responses and reconnect cleanly.
 
 Native acceptance invokes these commands on both architectures; its expensive
 container browser suite runs once in PG mode. Local ARM64 evidence is recorded in
-[Step 6 evidence](../work/ongoing/L3-step6-parity-recovery-evidence.json); the new
+[Step 6 evidence](../work/done/L3-step6-parity-recovery-evidence.json); the new
 AMD64/ARM64 GitHub runs are unverified, so Step 6 stays open. The temporary archive
 is acceptance data, not off-device retention or a production RPO guarantee.
 No source authority, private HTTP authorization or hosted provisioning changed.
@@ -49,7 +63,7 @@ reverse-proxy/browser and recovery evidence remain Step 6.
 Step 4's GitHub build passed per user confirmation; no URL supplied. New Step 5
 native AMD64 CI is not certified by local ARM64 evidence. JSON remains canonical
 and default, with no authoring or authority cutover. The
-[Step 5 evidence](../work/ongoing/L3-step5-reader-evidence.json) records current
+[Step 5 evidence](../work/done/L3-step5-reader-evidence.json) records current
 source hashes and passing commands separately from frozen prior stages.
 
 ## Step 4 implementation follow-up — 2026-10-13
@@ -87,7 +101,7 @@ capture/replay/failure/concurrency, cross-parent global order and corrupt export
 L4 still needs backend-only policy parity before accepting browser writes.
 Canonical captured-file validation passed with 32 retained review warnings; no
 actual bank was imported here. Comprehensive reconstruction/API parity and
-backup-role recovery remain Step 6. [Step 4 evidence](../work/ongoing/L3-step4-transfer-evidence.json)
+backup-role recovery remain Step 6. [Step 4 evidence](../work/done/L3-step4-transfer-evidence.json)
 records current commands, hashes and local results separately from frozen Step 3.
 
 ## Step 3 implementation follow-up — 2026-10-13
@@ -139,7 +153,7 @@ app/schema plan or a separate restored database. Content rollback activates a
 retained release and never resets IDs or deletes history. Full backup-role
 real-content restore acceptance remains Step 6, not a Step 3 claim.
 
-[Step 3 evidence](../work/ongoing/L3-step3-schema-evidence.json) records 58 passing
+[Step 3 evidence](../work/done/L3-step3-schema-evidence.json) records 58 passing
 real-PG17 fixture cases, installed-wheel migration/role smoke, default JSON API
 regression and full project verification on native Linux ARM64 containers. The
 native acceptance runner now invokes these cases on both architectures; current
@@ -263,7 +277,7 @@ Do not create empty modules for this design step. Steps 2–6 implement and test
 
 ## Verification and recovery obligations
 
-Step 1 observational evidence is recorded separately in the [L3 tracker](../work/ongoing/L3-postgres-schema-migration-parity-plan.md). A serializer/key-order probe or architecture graph pass validates design inputs; it does not prove Postgres constraints, SQL privileges, migrations, atomicity or runtime parity.
+Step 1 observational evidence is recorded separately in the [L3 tracker](../work/done/L3-postgres-schema-migration-parity-plan.md). A serializer/key-order probe or architecture graph pass validates design inputs; it does not prove Postgres constraints, SQL privileges, migrations, atomicity or runtime parity.
 
 Implementation gates require PG17, not SQLite: empty/repeated migrations; least-privilege direct SQL attacks; cross-release FK/ordinal/finalization violations; concurrent reservation/import/activation; immutable finalized rows/audit; failed paired import with unchanged active state; draft isolation; reordered-key/omission/Unicode/choice/provenance parity; all API routes/status/cache rules; publication during reads and old-release reactivation; connection cleanup and unavailable responses.
 

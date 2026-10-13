@@ -372,7 +372,7 @@ and Postgres-mode proxy/browser acceptance. Follow those exact isolated commands
 L2's bootstrap-only Compose dump remains a separate development tool. Restore
 uses backup/migrator roles, owner object creation and deliberate ACL reapplication.
 A successful local report does not establish off-device retention or native AMD64
-CI; both new native jobs remain the Step 6 stage gate.
+CI. Both native jobs passed in [run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502); future input changes need new acceptance evidence.
 
 ## Separate destructive reset
 

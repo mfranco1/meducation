@@ -129,7 +129,7 @@ They compare all records/routes/digests, all restored draft/history/allocation a
 sequence state, and exact backend-switch/restart progress behavior. The reports
 are independent of Playwright's cleaned output directory. Native acceptance now
 runs these on both architectures, with one container browser run in PG mode.
-Do not mark the stage complete from local ARM64 evidence alone. Follow the
+Both native jobs passed in [run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502) at the current implementation commit; do not reuse that result for changed inputs without rechecking. Follow the
 [job/runbook commands](local-containers.md#l3-explicit-database-jobs-and-toolchain-verification).
 
 [Completed L0 decisions](work/done/L0-local-contracts-plan.md) are design/feasibility evidence. Their tests do not certify future application implementations. Keep frozen evidence under docs/work/done; record new feature results in ongoing stage trackers, without overwriting historical snapshots.
