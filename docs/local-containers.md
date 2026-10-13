@@ -1,8 +1,8 @@
 # Local production containers
 
 L2 supplies the existing JSON API, production learner/static-server image and
-Compose stack with optional local PostgreSQL. Database backup/restore tools follow in the
-[implementation tracker](work/ongoing/L2-containers-local-services-plan.md).
+Compose stack with optional local PostgreSQL and matching PG17 backup/restore tools.
+Stage status is recorded in the [implementation tracker](work/ongoing/L2-containers-local-services-plan.md).
 Host-based Vite remains the routine UI development path.
 
 ## Build
@@ -89,7 +89,7 @@ This binds `127.0.0.1:5433:5432`; set `MEDUCATION_POSTGRES_PORT` in the same env
 file to change the host port. Include the same override for subsequent commands
 when managing that variant. Containers use hostname `postgres`; host clients use
 the selected loopback port. Keep PG17 tools for this server; the observed host
-PG14 dump tool is unsuitable. Tool wrappers/rehearsal follow in Step 5.
+PG14 dump tool is unsuitable. Use the container tools below; no host database client is needed.
 
 Stop/restart/recreate keep the named data volume:
 
@@ -119,8 +119,7 @@ Destructive deletion is a separate explicit operator action. Before removing
 `com.docker.compose.project=meducation-local` and
 `com.docker.compose.volume=postgres-data` labels, and verify an off-volume backup
 or intentionally discard only disposable development data. Routine commands
-never use `down --volumes` or global prune. Step 5 supplies the tested backup/reset
-runbook before any content-authority cutover.
+never use `down --volumes` or global prune. Follow the separate reset procedure below.
 
 ## Start a standalone preview
 
@@ -192,7 +191,7 @@ docker network rm meducation-preview
 ```
 
 No volume deletion, global prune or database reset belongs to this routine.
-The database backup/reset rehearsal follows in Step 5.
+The database backup/reset procedure is separate below.
 
 ## Verify the images
 
@@ -203,9 +202,10 @@ After installing host npm dependencies and Chromium as described in
 .venv/bin/python scripts/containers/smoke-api.py
 .venv/bin/python scripts/containers/smoke-learner.py --browser
 .venv/bin/python scripts/containers/smoke-compose.py
+.venv/bin/python scripts/containers/smoke-postgres-tools.py
 ```
 
-Both scripts use unique disposable containers. The learner smoke also creates a
+The image scripts use unique disposable containers. The learner smoke also creates a
 unique Docker network and an allocated loopback port. It verifies shipped file
 hashes, cache/error/health behavior, static availability without the API, changed-IP
 DNS recovery and a synthetic upstream 503. Its optional Chromium suite runs the
@@ -228,8 +228,106 @@ Postgres restart/recreation, then drops its synthetic database. Cleanup removes
 only its own exact volume after project/volume label verification. It does not
 start the developer's default project or touch its database. Add `--report` to
 retain successful machine evidence. These tests do not establish DB content
-parity, backup/restore or hosted behavior.
+parity or hosted behavior. The separate tools smoke rehearses synthetic backup/restore; it does not certify real-content recovery.
 
 Native ARM64 results do not certify native AMD64, real mobile/assistive-technology,
 database or hosted behavior. L1's Firefox deferral and other release acceptance
 remain in the [browser checklist](work/ongoing/L0-browser-acceptance.md).
+
+## PG17 local tools and recovery rehearsal
+
+These commands use the healthy running `postgres` service's PG17 clients and
+**development bootstrap** access. They do not implement production backup roles.
+No database URLs or passwords go in command arguments. Each client creates a
+0600 pgpass file on the container's temporary filesystem, escapes colons and
+backslashes, and removes it on exit. Client errors omit SQL/credential diagnostics.
+The wrapper verifies all three client majors and the authenticated server major
+before operating. Use `--project NAME` before the subcommand for another explicit
+Compose project; the default is `meducation-local`.
+
+```sh
+.venv/bin/python scripts/containers/postgres.py versions
+printf 'SELECT current_database();\n' | .venv/bin/python scripts/containers/postgres.py psql
+.venv/bin/python scripts/containers/postgres.py dump \
+  --output var/backups/postgres/meducation.dump
+.venv/bin/python scripts/containers/postgres.py restore \
+  --input var/backups/postgres/meducation.dump --database meducation_verify
+```
+
+Dump uses custom format, `--no-owner --no-acl`, a 0600 temporary file in the
+output directory, fsync and archive-list validation before atomic replacement.
+A successful dump replaces the explicitly selected output; use dated names for
+retention. Failure leaves any previous backup untouched and removes temporary
+output. Parent directories created by the tool use 0700; protect existing backup
+directories yourself. Keep backups outside the DB volume. Copy verified backups
+to protected off-device storage for device-loss recovery; local ignored files
+alone do not provide that protection.
+
+Restore accepts a trusted local archive and **creates** the requested database
+from template0. An existing target fails without cleaning/dropping it. Reserved
+databases and `meducation` are rejected. It uses `--exit-on-error
+--single-transaction --no-owner --no-acl`; failed transactional restore leaves
+the newly created target empty for inspection. It never automatically drops a
+database. Inspect the restored data before treating a backup as verified; then
+remove only your explicit verification database:
+
+```sh
+printf "SELECT count(*) FROM pg_tables WHERE schemaname = 'public';\n" | \
+  .venv/bin/python scripts/containers/postgres.py psql --database meducation_verify
+printf 'DROP DATABASE meducation_verify;\n' | .venv/bin/python scripts/containers/postgres.py psql --database postgres
+```
+
+Run `.venv/bin/python scripts/containers/smoke-postgres-tools.py` for a repeatable
+isolated rehearsal. It starts only Postgres in a generated project, dumps synthetic
+text/JSON/order/sequence data, compares the restored rows, tests failed dump and
+truncated restore, and verifies credential cleanup and reset refusals. It drops
+only its synthetic databases and exact labeled volume; developer projects are
+untouched. `--report PATH` retains successful evidence without credentials.
+
+L3 must supply reader/migrator/backup roles and explicit ownership/default grants,
+migrations/head checks, and exact canonical-bank ID/text/order/provenance/API
+parity on restore. Bootstrap superuser recovery is an L2 tooling test, not the
+production backup design. Learner progress remains browser-local; use L1 progress
+backups separately. See the [toolchain contract](decisions/0003-local-postgres-toolchain.md),
+[PG17 restore transactions](https://www.postgresql.org/docs/17/app-pgrestore.html)
+and [password-file rules](https://www.postgresql.org/docs/17/libpq-pgpass.html).
+
+## Separate destructive reset
+
+For a database containing anything to retain, first dump it off-volume, restore
+it to a fresh target and compare the actual data. Preserve that verified backup
+and any role definitions before stopping the project. Inspect the exact volume:
+
+```sh
+docker compose --env-file ops/containers/.env --profile db down
+docker volume inspect --format '{{.Name}} {{json .Labels}}' meducation-local_postgres-data
+```
+
+The name must be `meducation-local_postgres-data`, with project label
+`meducation-local` and Compose volume label `postgres-data`. After verifying the
+backup, remove only that exact volume with `docker volume rm
+meducation-local_postgres-data`. The wrapper deliberately does not accept a mere
+backup path as proof that recovery was verified.
+
+If you intentionally discard **only disposable development data**, use the
+explicit command after `down`:
+
+```sh
+.venv/bin/python scripts/containers/postgres.py discard-volume --discard-disposable-data
+```
+
+It verifies the resolved project volume name and both labels and refuses any
+volume still referenced by a container. It never removes backup files or canonical
+JSON. Next startup initializes a fresh volume using the current env settings.
+This action is distinct from normal stop/start/recreation. No reset command is
+part of routine startup.
+
+For a port conflict, inspect `docker compose ... ps` and the loopback listener,
+then choose an unused explicit env-file port and recreate the affected service.
+For stale containers, use the same project/env/override flags and scoped
+`docker compose ... down` then `up`; keep the volume. Check scoped `logs --tail
+100 postgres` for startup failures without printing resolved configuration.
+Do not change credentials to try to migrate an existing volume. Update readable
+image tags and digests together after upstream review and rerun native builds
+and recovery checks. A new Postgres major requires an explicit upgrade or
+fresh-volume restore plan; never mount the PG17 data directory under a new major.

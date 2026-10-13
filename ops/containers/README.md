@@ -38,3 +38,7 @@ Step 1 observed older clients and an unreachable daemon. After the user's Docker
 ## Updating pins
 
 Recheck upstream patch/security notes and registry indexes before changing readable tags and index digests together. Verify the raw index/child/config hashes and both platforms, regenerate build-tool hashes when their versions change, then rerun clean native image builds and affected API/proxy/DB tooling checks. Record new evidence alongside the active tracker. Frozen L0 evidence remains historical. Never change the Postgres major by simply editing its tag over an existing volume.
+
+## Local PG17 operational tools
+
+The [recovery runbook](../../docs/local-containers.md#pg17-local-tools-and-recovery-rehearsal) documents `scripts/containers/postgres.py` and the isolated `smoke-postgres-tools.py` rehearsal. Tools execute inside the pinned running Postgres service with protected temporary pgpass credentials. L2 proves synthetic recovery with development bootstrap access; L3 owns least-privilege roles, migration head and bank parity. Routine Compose operations preserve the volume; destructive discard is a separate explicit command with exact name/label/reference checks.

@@ -1,6 +1,6 @@
 # Local Postgres and Python toolchain
 
-Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; native AMD64, backup tooling and L3 integration pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/ongoing/L2-containers-local-services-plan.md).
+Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64 and L3 integration pending. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/ongoing/L2-containers-local-services-plan.md).
 
 ## Baseline and selected versions
 
@@ -58,7 +58,7 @@ docker compose -p meducation-local --profile db exec -T postgres pg_dump --versi
 docker compose -p meducation-local --profile db exec -T postgres pg_restore --version
 ```
 
-Use a configured pgpass/secret mount for dump credentials; do not put passwords in argv or print connection URLs. L3's wrapper must check exit codes, use restrictive file permissions and a temporary output file renamed only after success. Restore into a fresh disposable verification database with matching version-17 pg_restore, `--exit-on-error --single-transaction --no-owner --no-acl`; set object ownership deliberately via the migration owner role. Verify schema head, exact bank IDs/text/order/provenance, counts/revisions and API parity. A dump command passing alone is not a tested backup.
+Use a configured pgpass/secret mount for dump credentials; do not put passwords in argv or print connection URLs. L2's local development wrapper checks exit codes, uses restrictive file permissions and renames temporary output only after success. L3 extends recovery to production roles and real content. Restore into a fresh disposable verification database with matching version-17 pg_restore, `--exit-on-error --single-transaction --no-owner --no-acl`; set object ownership deliberately via the migration owner role. Verify schema head, exact bank IDs/text/order/provenance, counts/revisions and API parity. A dump command passing alone is not a tested backup.
 
 Explicit destructive reset for the selected future volume, only after a verified off-volume backup or a conscious decision to discard disposable development data:
 
@@ -73,7 +73,7 @@ Security/version updates: recheck upstream patch releases and registry digests b
 
 ## Audit and gate result
 
-L2 runtime follow-up — 2026-10-13: Docker client/engine 29.8.2 and Compose 5.6.0 are reachable on native Linux ARM64 after the user's repair. The actual pinned PG17.11 image passed startup, authenticated TCP SQL, rejection without a password, optional port bindings and named-volume sentinel persistence across restart/recreation. A missing DB password fails at service startup without blocking the default JSON stack. The [L2 Step 4 evidence](../work/ongoing/L2-step4-compose-evidence.json) records these results and safe removal of its isolated test volume. No application roles/schema/DB adapter, real-content import, backup/restore or native AMD64 acceptance is claimed. L0 observations and frozen evidence below remain historical.
+L2 runtime follow-up — 2026-10-13: Docker client/engine 29.8.2 and Compose 5.6.0 are reachable on native Linux ARM64 after the user's repair. The actual pinned PG17.11 image passed startup, authenticated TCP SQL, rejection without a password, optional port bindings and named-volume sentinel persistence across restart/recreation. A missing DB password fails at service startup without blocking the default JSON stack. The [L2 Step 4 evidence](../work/ongoing/L2-step4-compose-evidence.json) records these results and safe removal of its isolated test volume. Step 5 subsequently verified synthetic custom-format dump/fresh restore and failure preservation with PG17 tools ([evidence](../work/ongoing/L2-step5-postgres-tools-evidence.json)); the [runbook](../local-containers.md#pg17-local-tools-and-recovery-rehearsal) supplies operational commands. No application roles/schema/DB adapter, real-content import/recovery parity or native AMD64 acceptance is claimed. L0 observations and frozen evidence below remain historical.
 
 L0-B design gate is met: major, image pins/architectures, Python driver/ORM/migration baseline, role/connection split, local volume/backup/reset contracts and future verification commands are recorded. Runtime Docker availability, full dependency resolution/install, images, migrations and actual dump/restore remain L2/L3 gates. JSON remains authoritative and no learner progress is moved to Postgres.
 
