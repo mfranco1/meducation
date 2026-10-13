@@ -12,13 +12,14 @@ import {
   learnerProgressAdmission,
   initializeProgressAdmission,
   readRestoreJournalStatus,
+  rememberProgressRestore,
 } from '../persistence/progressAdmission';
 import {
   summarizeProgressBackup,
   type ProgressBackupSummary,
   type ProgressBackupV1,
 } from '../persistence/progressBackupCodec';
-import { readProgressBackupFile } from './progressBackupFiles';
+import { downloadProgressJson, readProgressBackupFile, revokeProgressDownload } from './progressBackupFiles';
 
 export interface ProgressBackupPreview {
   backup: ProgressBackupV1;
@@ -39,6 +40,7 @@ export interface ProgressBackupController {
   preview?: ProgressBackupPreview;
   error?: string;
   recoveryRequired: boolean;
+  restoreUnavailable?: boolean;
   show(): void;
   close(): void;
   chooseFile(file: Pick<File, 'size' | 'text'>): Promise<void>;
@@ -53,29 +55,6 @@ function freezeBackup<T>(value: T): T {
   if (!value || typeof value !== 'object' || Object.isFrozen(value)) return value;
   for (const child of Object.values(value)) freezeBackup(child);
   return Object.freeze(value);
-}
-
-function downloadJson(json: string, exportedAt: string, prefix = 'meducation-progress'): void {
-  const date = /^\d{4}-\d\d-\d\d/.exec(exportedAt)?.[0] ?? new Date().toISOString().slice(0, 10);
-  revokeActiveDownload();
-  const url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
-  activeDownloadUrl = url;
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `${prefix}-${date}.json`;
-  anchor.click();
-  activeDownloadTimer = window.setTimeout(() => {
-    if (activeDownloadUrl === url) revokeActiveDownload();
-  }, 1_000);
-}
-
-let activeDownloadUrl: string | undefined;
-let activeDownloadTimer: number | undefined;
-function revokeActiveDownload(): void {
-  if (activeDownloadTimer !== undefined) window.clearTimeout(activeDownloadTimer);
-  activeDownloadTimer = undefined;
-  if (activeDownloadUrl) URL.revokeObjectURL(activeDownloadUrl);
-  activeDownloadUrl = undefined;
 }
 
 function parseErrorMessage(error: string): string {
@@ -98,6 +77,7 @@ function parseErrorMessage(error: string): string {
 export function useProgressBackup(onRefresh: () => void): ProgressBackupController {
   const coordination = useRef(createBrowserProgressCoordination());
   const operationGeneration = useRef(0);
+  const restoring = useRef(false);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [committing, setCommitting] = useState(false);
@@ -109,14 +89,14 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
   useEffect(
     () => () => {
       operationGeneration.current += 1;
-      revokeActiveDownload();
+      revokeProgressDownload();
     },
     [],
   );
 
   const rejoin = useCallback(async () => {
     const result = await initializeProgressAdmission(coordination.current);
-    if (result.kind !== 'ready') {
+    if (result.kind !== 'ready' && result.kind !== 'read-only') {
       setRecoveryRequired(true);
       setError(
         result.kind === 'timed-out'
@@ -126,7 +106,7 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
       return false;
     }
     setRecoveryRequired(false);
-    onRefresh();
+    if (result.kind === 'ready' || learnerProgressAdmission.coordinatedReadOnly) onRefresh();
     return true;
   }, [onRefresh]);
 
@@ -134,10 +114,6 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
     async <T>(action: (lease: ProgressLease) => T) => {
       setBusy(true);
       setError(undefined);
-      await new Promise<void>((resolve) => {
-        if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => resolve());
-        else window.setTimeout(resolve, 0);
-      });
       learnerProgressAdmission.close();
       // Let the browser's lock manager observe the released document lease before
       // issuing an ifAvailable exclusive request.
@@ -238,7 +214,7 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
       });
       if (!result || result.kind !== 'captured') {
         if (generation !== operationGeneration.current) return;
-        if (!error) setError('Current progress could not be read safely. No replacement target was captured.');
+        if (result?.kind === 'unavailable') setError('Current progress could not be read safely. No replacement target was captured.');
         setStatus(undefined);
         setBusy(false);
         return;
@@ -257,7 +233,7 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
       setStatus(undefined);
       setBusy(false);
     },
-    [withExclusive, error],
+    [withExclusive],
   );
 
   const download = useCallback(async () => {
@@ -270,7 +246,7 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
       return encoded.ok ? { kind: 'ready' as const, ...encoded } : { kind: 'invalid' as const, error: encoded.error };
     });
     if (generation !== operationGeneration.current || !result) return;
-    if (result.kind === 'ready') downloadJson(result.json, JSON.parse(result.json).exportedAt as string);
+    if (result.kind === 'ready') setError(downloadProgressJson(result.json, JSON.parse(result.json).exportedAt as string));
     else
       setError(
         result.kind === 'unavailable'
@@ -280,22 +256,14 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
     setStatus(undefined);
   }, [withExclusive]);
 
-  const downloadCurrent = useCallback(async () => {
-    if (!preview?.currentBackup) return;
-    downloadJson(preview.currentBackup, JSON.parse(preview.currentBackup).exportedAt as string);
-  }, [preview]);
-
-  const downloadRawRecovery = useCallback(() => {
-    if (preview?.rawRecovery)
-      downloadJson(preview.rawRecovery, new Date().toISOString(), 'meducation-progress-raw-recovery');
-  }, [preview]);
-
   const restore = useCallback(async () => {
-    if (!preview) return;
+    if (!preview || restoring.current) return;
+    restoring.current = true;
     setCommitting(true);
     setStatus('Restoring progress. Please keep this tab open.');
     const result = await withExclusive((lease) => restoreBrowserProgressPair(lease, preview.original, preview.backup));
     if (result?.kind === 'restored') {
+      rememberProgressRestore();
       learnerProgressAdmission.suppressNextPageHideWrite();
       window.location.reload();
       return;
@@ -314,6 +282,7 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
       );
     else if (result?.kind === 'blocked') setError('Close other Meducation tabs and retry the restore.');
     if (result?.kind !== 'recovery-required') {
+      restoring.current = false;
       setCommitting(false);
       setStatus(undefined);
     }
@@ -321,20 +290,15 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
 
   const retryRecovery = useCallback(async () => {
     setBusy(true);
-    const result = await initializeProgressAdmission(coordination.current);
-    if (result.kind === 'ready') {
-      setRecoveryRequired(false);
-      setError(undefined);
-      onRefresh();
-    } else {
-      setError(
-        result.kind === 'timed-out'
-          ? 'Another Meducation tab is using progress. Close other tabs and retry.'
-          : 'Recovery is still required. The saved data and journal have not been cleared.',
-      );
+    setError(undefined);
+    if (await rejoin()) {
+      restoring.current = false;
+      setCommitting(false);
+      setPreview(undefined);
+      setStatus(undefined);
     }
     setBusy(false);
-  }, [onRefresh]);
+  }, [rejoin]);
 
   return {
     open,
@@ -344,12 +308,17 @@ export function useProgressBackup(onRefresh: () => void): ProgressBackupControll
     preview,
     error,
     recoveryRequired,
+    restoreUnavailable: learnerProgressAdmission.browsingOnly,
     show,
     close,
     chooseFile,
     download,
-    downloadCurrent,
-    downloadRawRecovery,
+    downloadCurrent: async () => {
+      if (preview?.currentBackup) setError(downloadProgressJson(preview.currentBackup, JSON.parse(preview.currentBackup).exportedAt as string));
+    },
+    downloadRawRecovery: () => {
+      if (preview?.rawRecovery) setError(downloadProgressJson(preview.rawRecovery, undefined, 'meducation-progress-recovery-raw'));
+    },
     restore,
     retryRecovery,
   };

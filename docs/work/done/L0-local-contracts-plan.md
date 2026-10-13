@@ -1,6 +1,6 @@
 # L0 — Local contracts: detailed execution plan
 
-Status: complete — L0 design/audit deliverables, Steps 1–9. Completed 2026-10-13. L0-A/L0-B selected; L0-C contract/capability status recorded with final provider acceptance pending before L4. Runtime implementation remains pending. Created 2026-10-12. Parent: [local-first preparation](../ongoing/local-first-production-preparation.md). Next feature: [L1 progress backups](../ongoing/L1-progress-backup-plan.md).
+Status: complete — L0 design/audit deliverables, Steps 1–9. Completed 2026-10-13. L0-A/L0-B selected; L0-C contract/capability status recorded with final provider acceptance pending before L4. Runtime implementation remains pending. Created 2026-10-12. Parent: [local-first preparation](../ongoing/local-first-production-preparation.md). Next feature: [L1 progress backups](L1-progress-backup-plan.md).
 
 ## Outcome and dependency gates
 

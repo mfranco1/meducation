@@ -13,80 +13,37 @@ export type ProgressBackupExportResult =
   | { ok: false; error: 'corrupt-progress' | 'invalid-progress' };
 export type RawProgressRecoveryResult = { ok: true; json: string } | { ok: false; error: 'too-large' };
 
-function quoteRaw(value: string, remainingBytes: number): { json: string; bytes: number } | undefined {
-  const pieces = ['"'];
-  let size = 1;
+/** Exact JSON string size, including controls and lone surrogates, without allocating an escaped copy. */
+function rawJsonBytes(value: string | null): number {
+  if (value === null) return 4;
+  let size = 2;
   for (const character of value) {
-    const codePoint = character.codePointAt(0)!;
-    const escaped =
-      codePoint === 0x22 || codePoint === 0x5c || codePoint < 0x20 || (codePoint >= 0xd800 && codePoint <= 0xdfff)
-        ? JSON.stringify(character)!.slice(1, -1)
-        : character;
-    const length =
-      codePoint === 0x22 || codePoint === 0x5c
-        ? 2
-        : codePoint < 0x20
-          ? [0x08, 0x09, 0x0a, 0x0c, 0x0d].includes(codePoint)
-            ? 2
-            : 6
-          : codePoint >= 0xd800 && codePoint <= 0xdfff
-            ? 6
-            : codePoint <= 0x7f
-              ? 1
-              : codePoint <= 0x7ff
-                ? 2
-                : codePoint <= 0xffff
-                  ? 3
-                  : 4;
-    size += length;
-    if (size + 1 > remainingBytes) return undefined;
-    pieces.push(escaped);
+    const point = character.codePointAt(0)!;
+    if (point === 0x22 || point === 0x5c || [8, 9, 10, 12, 13].includes(point)) size += 2;
+    else if (point < 0x20 || (point >= 0xd800 && point <= 0xdfff)) size += 6;
+    else size += point <= 0x7f ? 1 : point <= 0x7ff ? 2 : point <= 0xffff ? 3 : 4;
+    if (size > RAW_PROGRESS_RECOVERY_MAX_BYTES) break;
   }
-  size += 1;
-  return size <= remainingBytes ? { json: `${pieces.join('')}"`, bytes: size } : undefined;
+  return size;
 }
 
-/** Preserve the exact fixed-key values in a separate, never-importable recovery file. */
+/** Preserve exact fixed-key values; size-check before allocating their escaped JSON output. */
 export function encodeRawProgressRecovery(
   pair: ProgressPair,
   capturedAt = new Date().toISOString(),
   journalRaw: string | null = null,
   mayBeInconsistent = true,
 ): RawProgressRecoveryResult {
-  const prefix = `{"format":"${RAW_PROGRESS_RECOVERY_FORMAT}","version":1,"capturedAt":${JSON.stringify(capturedAt)},"mayBeInconsistent":${mayBeInconsistent},"quizKey":${JSON.stringify(progressKey)},"quizRaw":`;
-  const middle = `,"flashcardsKey":${JSON.stringify(flashcardProgressKey)},"flashcardsRaw":`;
-  const journalMiddle = `,"journalKey":${JSON.stringify(progressRestoreJournalKey)},"journalRaw":`;
-  const suffix = '}';
-  const maximum = RAW_PROGRESS_RECOVERY_MAX_BYTES;
-  const prefixBytes = new TextEncoder().encode(prefix).byteLength;
-  const middleBytes = new TextEncoder().encode(middle).byteLength;
-  const journalMiddleBytes = new TextEncoder().encode(journalMiddle).byteLength;
-  const suffixBytes = new TextEncoder().encode(suffix).byteLength;
-  const encodedJournal = journalRaw === null ? undefined : quoteRaw(journalRaw, maximum);
-  if (journalRaw !== null && !encodedJournal) return { ok: false, error: 'too-large' };
-  const journalJson = encodedJournal?.json ?? 'null';
-  const journalBytes = encodedJournal?.bytes ?? 4;
-  let quiz = 'null';
-  let quizBytes = 4;
-  if (pair.quiz !== null) {
-    const encoded = quoteRaw(
-      pair.quiz,
-      maximum - prefixBytes - middleBytes - journalMiddleBytes - suffixBytes - journalBytes - 4,
-    );
-    if (!encoded) return { ok: false, error: 'too-large' };
-    quiz = encoded.json;
-    quizBytes = encoded.bytes;
-  }
-  const flashcardAllowance =
-    maximum - prefixBytes - middleBytes - journalMiddleBytes - suffixBytes - quizBytes - journalBytes;
-  let flashcards = 'null';
-  if (pair.flashcards !== null) {
-    const encoded = quoteRaw(pair.flashcards, flashcardAllowance);
-    if (!encoded) return { ok: false, error: 'too-large' };
-    flashcards = encoded.json;
-  } else if (flashcardAllowance < 4) return { ok: false, error: 'too-large' };
-  const json = `${prefix}${quiz}${middle}${flashcards}${journalMiddle}${journalJson}${suffix}`;
-  return new TextEncoder().encode(json).byteLength <= maximum ? { ok: true, json } : { ok: false, error: 'too-large' };
+  const recovery = {
+    format: RAW_PROGRESS_RECOVERY_FORMAT, version: 1, capturedAt, mayBeInconsistent,
+    quizKey: progressKey, quizRaw: null as string | null,
+    flashcardsKey: flashcardProgressKey, flashcardsRaw: null as string | null,
+    journalKey: progressRestoreJournalKey, journalRaw: null as string | null,
+  };
+  const size = new TextEncoder().encode(JSON.stringify(recovery)).byteLength
+    + rawJsonBytes(pair.quiz) + rawJsonBytes(pair.flashcards) + rawJsonBytes(journalRaw) - 12;
+  if (size > RAW_PROGRESS_RECOVERY_MAX_BYTES) return { ok: false, error: 'too-large' };
+  return { ok: true, json: JSON.stringify({ ...recovery, quizRaw: pair.quiz, flashcardsRaw: pair.flashcards, journalRaw }) };
 }
 
 export type RawProgressCaptureResult =

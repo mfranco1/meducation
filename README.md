@@ -42,7 +42,7 @@ VITE_CONTENT_SOURCE=local
 
 Run `npm run dev`; this mode loads both canonical JSON banks directly and needs no API. Use `VITE_CONTENT_SOURCE=api` to return to API delivery. Restart the development server after changing environment values; production builds capture these settings at build time. See [.env.example](.env.example) for retry settings.
 
-Your progress stays in the browser and origin you use. Clearing browser site data or switching browsers/devices will not carry attempts over. The app has no cloud sync.
+Your progress stays in the browser and origin you use. Use **Progress backup** to download a private copy or explicitly restore it in another browser; see [backup and recovery](docs/progress-backup.md). Clearing site data removes local progress, and switching browsers/devices does not transfer it automatically. The app has no cloud sync.
 
 ## Build and check
 

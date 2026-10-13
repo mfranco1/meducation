@@ -143,3 +143,15 @@ describe('backup from captured storage pair', () => {
       expect(JSON.parse(result.json)).toMatchObject({ quizRaw: pair.quiz, flashcardsRaw: pair.flashcards });
   });
 });
+
+it('accepts the exact 64 MiB escaped recovery ceiling and rejects one more byte before output allocation', () => {
+  const capturedAt = '2026-10-13T00:00:00.000Z';
+  const base = encodeRawProgressRecovery({ quiz: null, flashcards: null }, capturedAt);
+  if (!base.ok) throw new Error('empty raw recovery must be encodable');
+  const allowance = 64 * 1024 * 1024 - base.json.length + 2; // Replace null (4 bytes) with string quotes (2 bytes).
+  const quiz = '\u0000'.repeat(Math.floor(allowance / 6)) + 'a'.repeat(allowance % 6);
+  const exact = encodeRawProgressRecovery({ quiz, flashcards: null }, capturedAt);
+  expect(exact.ok).toBe(true);
+  if (exact.ok) expect(exact.json.length).toBe(64 * 1024 * 1024);
+  expect(encodeRawProgressRecovery({ quiz: quiz + 'a', flashcards: null }, capturedAt)).toEqual({ ok: false, error: 'too-large' });
+}, 15_000);

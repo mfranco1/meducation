@@ -1,5 +1,5 @@
 import { render, screen, fireEvent } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import fixture from '../../../tests/fixtures/progress-backups/empty-v1.json';
 import { ProgressBackupDialog } from './ProgressBackupDialog';
 import type { ProgressBackupController } from '../useProgressBackup';
@@ -24,6 +24,8 @@ function controller(overrides: Partial<ProgressBackupController> = {}): Progress
 }
 
 describe('progress backup dialog', () => {
+  beforeEach(() => vi.stubGlobal('URL', { createObjectURL: vi.fn(), revokeObjectURL: vi.fn() }));
+  afterEach(() => vi.unstubAllGlobals());
   it('shows a distinct preview and warns when restoring an empty backup', () => {
     const actions = controller({
       preview: {

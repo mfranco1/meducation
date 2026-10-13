@@ -17,7 +17,7 @@ export function ProgressBootFailure({
   onDownloadRecovery,
 }: {
   reason: ProgressBootFailureReason;
-  onDownloadRecovery: () => string | undefined;
+  onDownloadRecovery?: () => string | undefined;
 }) {
   const [recoveryError, setRecoveryError] = useState<string>();
   return (
@@ -28,9 +28,10 @@ export function ProgressBootFailure({
           The raw recovery file contains saved browser values, may capture a changing pair, and cannot be imported as a
           progress backup. Keep it private.
         </Typography>
-        <Button variant="outlined" onClick={() => setRecoveryError(onDownloadRecovery())}>
+        <Button variant="outlined" disabled={!onDownloadRecovery} onClick={() => setRecoveryError(onDownloadRecovery?.())}>
           Download raw recovery copy
         </Button>
+        {!onDownloadRecovery && <Typography variant="body2">This browser cannot download recovery files. Use a supported browser.</Typography>}
         {recoveryError && (
           <Alert severity="warning" role="alert">
             {recoveryError}

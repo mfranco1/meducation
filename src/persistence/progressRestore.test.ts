@@ -6,6 +6,8 @@ import { progressRestoreJournalKey } from './progressKeys';
 import { validateProgressBackup } from './progressBackupCodec';
 import { captureProgressPair, recoverProgressPair, restoreProgressPair, type ProgressStoragePort } from './progressRestore';
 import type { ProgressLease } from './progressCoordination';
+import { LocalAttemptRepository } from './localRepository';
+import { LocalFlashcardProgressRepository } from './localFlashcardProgressRepository';
 
 const backupResult = validateProgressBackup(backupFixture);
 if (!backupResult.ok) throw new Error('Invalid synthetic backup fixture.');
@@ -194,4 +196,74 @@ describe('paired progress restore journal', () => {
       expect([...storage.values.entries()]).toEqual(before);
     }
   });
+});
+
+/** Simulate process interruption: all storage access stops at the chosen call until restart. */
+class InterruptedStorage extends MemoryStorage {
+  calls = 0;
+  stopAt = Infinity;
+  after = false;
+  stopped = false;
+  private call<T>(operation: () => T): T {
+    if (this.stopped || (++this.calls === this.stopAt && !this.after)) {
+      this.stopped = true;
+      throw new Error('interrupted');
+    }
+    const result = operation();
+    if (this.calls === this.stopAt) { this.stopped = true; throw new Error('interrupted'); }
+    return result;
+  }
+  override getItem(key: string) { return this.call(() => super.getItem(key)); }
+  override setItem(key: string, value: string) { return this.call(() => super.setItem(key, value)); }
+  override removeItem(key: string) { return this.call(() => super.removeItem(key)); }
+  restart() { this.stopped = false; this.stopAt = Infinity; this.calls = 0; }
+}
+
+it('converges after interruption before/after every production storage call and every recovery call', () => {
+  for (const absent of [false, true]) {
+    const baseline = new InterruptedStorage();
+    const original = absent ? { quiz: null, flashcards: null } : originalPair(baseline);
+    expect(restoreProgressPair(baseline, lease(), original, backup, uuidFactory()).kind).toBe('restored');
+    const targets = { quiz: baseline.values.get(progressKey)!, flashcards: baseline.values.get(flashcardProgressKey)! };
+    const calls = baseline.calls;
+    for (let stopAt = 1; stopAt <= calls; stopAt++) for (const after of [false, true]) {
+      const interrupted = new InterruptedStorage();
+      if (!absent) originalPair(interrupted);
+      Object.assign(interrupted, { stopAt, after });
+      restoreProgressPair(interrupted, lease(), original, backup, uuidFactory());
+      const saved = new Map(interrupted.values);
+      const journal = saved.get(progressRestoreJournalKey);
+      const selected = journal ? JSON.parse(journal).decision === 'imported' ? targets : original
+        : saved.get(progressKey) === targets.quiz ? targets : original;
+      interrupted.restart();
+      expect(['none', 'recovered']).toContain(recoverProgressPair(interrupted, lease()).kind);
+      expect(captureProgressPair(interrupted, lease())).toEqual({ kind: 'captured', pair: selected });
+      expect(interrupted.values.has(progressRestoreJournalKey)).toBe(false);
+      const recoveryCalls = interrupted.calls - 2;
+      const verified = new Map(interrupted.values);
+      expect(recoverProgressPair(interrupted, lease())).toEqual({ kind: 'none' });
+      expect(interrupted.values).toEqual(verified);
+      const quizRepository = new LocalAttemptRepository(interrupted);
+      const cardRepository = new LocalFlashcardProgressRepository(interrupted);
+      const quizSnapshot = quizRepository.getSnapshot();
+      const cardSnapshot = cardRepository.getSnapshot();
+      expect(quizSnapshot.completed).toEqual(selected.quiz === targets.quiz ? backup.quiz.completed : []);
+      expect(cardSnapshot.completionCounts).toEqual(selected.flashcards === targets.flashcards ? backup.flashcards.completionCounts : {});
+      expect(quizRepository.getSnapshot()).toBe(quizSnapshot);
+      expect(cardRepository.getSnapshot()).toBe(cardSnapshot);
+      expect(interrupted.values).toEqual(verified);
+      // Repeat each recovery interruption with fresh storage, then restart twice.
+      for (let recoveryStop = 1; recoveryStop <= recoveryCalls; recoveryStop++) for (const recoveryAfter of [false, true]) {
+        const restarted = new InterruptedStorage();
+        for (const [key, value] of saved) restarted.values.set(key, value);
+        Object.assign(restarted, { stopAt: recoveryStop, after: recoveryAfter });
+        recoverProgressPair(restarted, lease());
+        restarted.restart();
+        expect(['none', 'recovered']).toContain(recoverProgressPair(restarted, lease()).kind);
+        expect(captureProgressPair(restarted, lease())).toEqual({ kind: 'captured', pair: selected });
+        expect(restarted.values.has(progressRestoreJournalKey)).toBe(false);
+        expect(recoverProgressPair(restarted, lease())).toEqual({ kind: 'none' });
+      }
+    }
+  }
 });

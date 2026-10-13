@@ -78,7 +78,7 @@ export class LocalFlashcardProgressRepository {
 
   /** Rehydrate after an exclusive paired operation before notifying subscribers. */
   refreshAfterPairedOperation() {
-    this.admission?.assertReady();
+    this.admission?.assertReadable();
     this.cached = undefined;
     this.observedRevision = undefined;
     this.storageError = undefined;
@@ -92,6 +92,7 @@ export class LocalFlashcardProgressRepository {
 
   private readonly onStorage = (event: StorageEvent) => {
     if (event.key !== null && event.key !== flashcardProgressKey) return;
+    if (this.admission && !this.admission.canRead) return;
     this.cached = undefined;
     this.listeners.forEach((listener) => listener());
   };

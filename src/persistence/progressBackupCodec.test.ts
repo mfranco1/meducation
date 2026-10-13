@@ -167,3 +167,24 @@ describe('progress backup codec', () => {
     expect(roundTrip.quiz.active['deleted-quiz']).not.toHaveProperty('timerStartedAt');
   });
 });
+
+it('enforces the combined UTF-8 file ceiling for individually valid active signatures', () => {
+  const value = structuredClone(fixture);
+  const active = value.quiz.active as Record<string, typeof value.quiz.active['deleted-quiz']>;
+  for (let i = 0; i < 7; i++) active[`saved-${i}`] = { ...structuredClone(active['deleted-quiz']), id: `attempt-${i}`, quizId: `saved-${i}`, contentSignature: '😀'.repeat(128 * 1024) };
+  expect(parseProgressBackup(JSON.stringify(value)).ok).toBe(true);
+  active['saved-7'] = { ...active['saved-0'], id: 'attempt-7', quizId: 'saved-7' };
+  expect(parseProgressBackup(JSON.stringify(value))).toEqual({ ok: false, error: 'too-large' });
+});
+
+it('rejects selected-but-unlocked feedback, missing durable completion IDs and contradictory attempt maps', () => {
+  for (const mutate of [
+    (value: typeof fixture) => { value.quiz.active['deleted-quiz'].responses['old-question'].locked = false; },
+    (value: typeof fixture) => { delete (value.quiz.completedIds as Record<string, boolean>)['retained-completion']; },
+    (value: typeof fixture) => { value.quiz.active['deleted-quiz'].id = value.quiz.completed[0].id; },
+    (value: typeof fixture) => { value.quiz.active['deleted-quiz'].quizId = 'different-quiz'; },
+  ]) {
+    const value = structuredClone(fixture); mutate(value);
+    expect(validateProgressBackup(value).ok).toBe(false);
+  }
+});

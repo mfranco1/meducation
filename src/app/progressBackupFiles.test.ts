@@ -20,3 +20,28 @@ describe('progress backup file reader', () => {
     expect(await readProgressBackupFile({ size: 2, text: async () => '   ' })).toEqual({ ok: false, error: 'malformed-json' });
   });
 });
+
+it('initiates downloads before revoking URLs and cleans replacement, failure and dismissal resources', async () => {
+  const { downloadProgressJson, revokeProgressDownload } = await import('./progressBackupFiles');
+  vi.useFakeTimers();
+  const created = vi.fn().mockReturnValueOnce('blob:first').mockReturnValueOnce('blob:second').mockReturnValueOnce('blob:failed');
+  const revoked = vi.fn();
+  vi.stubGlobal('URL', { createObjectURL: created, revokeObjectURL: revoked });
+  const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+    expect(revoked).not.toHaveBeenCalledWith(this.href);
+    expect(this.download).toMatch(/^meducation-progress-2026-10-13\.json$/);
+  });
+  try {
+    expect(downloadProgressJson('{}', '2026-10-13T00:00:00.000Z')).toBeUndefined();
+    expect(revoked).not.toHaveBeenCalled();
+    downloadProgressJson('{}', '2026-10-13T00:00:00.000Z');
+    expect(revoked).toHaveBeenCalledWith('blob:first');
+    vi.advanceTimersByTime(1000);
+    expect(revoked).toHaveBeenCalledWith('blob:second');
+    click.mockImplementationOnce(() => { throw new Error('download denied'); });
+    expect(downloadProgressJson('{}')).toContain('could not be downloaded');
+    expect(revoked).toHaveBeenCalledWith('blob:failed');
+  } finally {
+    revokeProgressDownload(); click.mockRestore(); vi.unstubAllGlobals(); vi.useRealTimers();
+  }
+});

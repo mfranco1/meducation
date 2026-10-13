@@ -1,5 +1,5 @@
 import type { ProgressLease } from './progressCoordination';
-import { createBrowserProgressCoordination, type ProgressCoordination, type ProgressCoordinationResult } from './progressCoordination';
+import { createBrowserProgressCoordination, type ProgressCoordination } from './progressCoordination';
 import { recoverProgressPair, type ProgressStoragePort } from './progressRestore';
 import { progressKey } from './progressCodec';
 import { flashcardProgressKey } from './flashcardProgressCodec';
@@ -51,7 +51,7 @@ export class ProgressAdmission {
   get coordinatedReadOnly(): boolean { return this.browsingOnly && Boolean(this.lease?.valid); }
 
   get canRead(): boolean {
-    if ((!this.lease?.valid && !this.readOnly) || !this.readJournal) return false;
+    if ((this.lease ? !this.lease.valid : !this.readOnly) || !this.readJournal) return false;
     try {
       if (this.readJournal() === 'clear') return true;
     } catch { /* Storage access failure closes admission. */ }
@@ -138,8 +138,16 @@ export function installProgressPageLifecycle(admission: ProgressAdmission, reloa
 
 export const learnerProgressAdmission = new ProgressAdmission();
 
-function failedAcquisition(result: ProgressCoordinationResult): ProgressInitializationResult | undefined {
-  return result.kind === 'acquired' ? undefined : { kind: result.kind };
+/** Ephemeral success notice across the controlled reload; never part of a progress backup. */
+export function rememberProgressRestore(): void {
+  try { sessionStorage.setItem('meducation.progress.restore.notice', '1'); } catch { /* Restore remains committed. */ }
+}
+export function consumeProgressRestoreNotice(): boolean {
+  try {
+    const restored = sessionStorage.getItem('meducation.progress.restore.notice') === '1';
+    sessionStorage.removeItem('meducation.progress.restore.notice');
+    return restored;
+  } catch { return false; }
 }
 
 /** Acquire shared participation and resolve any pending journal before app repositories mount. */
@@ -152,9 +160,8 @@ export async function initializeProgressAdmission(
   catch { return { kind: 'unavailable' }; }
 
   const shared = await coordination.acquireShared();
-  const sharedFailure = failedAcquisition(shared);
-  if (sharedFailure) {
-    if (sharedFailure.kind === 'unsupported-browser') {
+  if (shared.kind !== 'acquired') {
+    if (shared.kind === 'unsupported-browser') {
       try {
         const journal = readRestoreJournalStatus(storage);
         if (journal === 'pending') return { kind: 'recovery-required' };
@@ -163,9 +170,8 @@ export async function initializeProgressAdmission(
         return { kind: 'read-only' };
       } catch { return { kind: 'unavailable' }; }
     }
-    return sharedFailure;
+    return { kind: shared.kind };
   }
-  if (shared.kind !== 'acquired') return { kind: 'unavailable' };
   let lease = shared.lease;
   let status = readRestoreJournalStatus(storage);
   if (status === 'unavailable') { lease.release(); return { kind: 'unavailable' }; }
@@ -173,18 +179,14 @@ export async function initializeProgressAdmission(
   if (status === 'pending') {
     lease.release();
     const exclusive = await coordination.acquireExclusiveForRecovery();
-    const exclusiveFailure = failedAcquisition(exclusive);
-    if (exclusiveFailure) return exclusiveFailure;
-    if (exclusive.kind !== 'acquired') return { kind: 'unavailable' };
+    if (exclusive.kind !== 'acquired') return { kind: exclusive.kind };
     const recovery = recoverProgressPair(storage, exclusive.lease);
     exclusive.lease.release();
     if (recovery.kind === 'recovery-required') return { kind: 'recovery-required' };
     status = readRestoreJournalStatus(storage);
     if (status !== 'clear') return { kind: status === 'unavailable' ? 'unavailable' : 'recovery-required' };
     const rejoined = await coordination.acquireShared();
-    const rejoinFailure = failedAcquisition(rejoined);
-    if (rejoinFailure) return rejoinFailure;
-    if (rejoined.kind !== 'acquired') return { kind: 'unavailable' };
+    if (rejoined.kind !== 'acquired') return { kind: rejoined.kind };
     lease = rejoined.lease;
     status = readRestoreJournalStatus(storage);
   }

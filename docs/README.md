@@ -5,6 +5,7 @@ Start with the repository [README](../README.md) for frontend setup, default API
 ## Find the right guidance
 
 - **Understand the application:** [product behavior](product.md) describes learner flows; [architecture](architecture.md) explains composition, domain/content/storage boundaries, loading, and authoring.
+- **Keep or recover progress:** [progress backup and recovery](progress-backup.md) explains downloads, explicit replacement, limits, errors and diagnosis using copies.
 - **Edit or review content:** [content management](content-management.md) covers staged authoring, exports, validation, provenance, and [ignored local material](content-management.md#local-source-material-and-generated-output). [Question schema](question-schema.md) and [flashcard schema](flashcard-schema.md) define the canonical contracts.
 - **Change the UI:** [design system](design-system.md) owns theme, accessibility, responsive study layouts, feedback, and loading conventions. Preserve source wording while changing presentation.
 - **Verify a change:** [testing](testing.md) covers frontend, backend, content, and browser checks, fixture ownership, and [detailed regression requirements](testing-regressions.md).

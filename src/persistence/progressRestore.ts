@@ -169,17 +169,9 @@ function recoverProgressOperation(storage: ProgressStoragePort, lease: ProgressL
 function encodeTargets(backup: ProgressBackupV1, randomUUID: () => string): { quiz: string; flashcards: string } | undefined {
   const validated = validateProgressBackup(backup);
   if (!validated.ok || bytes(JSON.stringify(validated.value)) > PROGRESS_BACKUP_MAX_BYTES) return undefined;
-  const source = validated.value;
-  const quiz = JSON.stringify({
-    schemaVersion: 2, revision: randomUUID(), active: source.quiz.active, completed: source.quiz.completed,
-    completionCounts: source.quiz.completionCounts, lowestScores: source.quiz.lowestScores,
-    latestScores: source.quiz.latestScores, activity: source.quiz.activity, completedIds: source.quiz.completedIds,
-  });
-  const flashcards = JSON.stringify({
-    schemaVersion: 2, revision: randomUUID(), checkpoints: source.flashcards.checkpoints,
-    completionCounts: source.flashcards.completionCounts,
-    ...(source.flashcards.dailyStats === undefined ? {} : { dailyStats: source.flashcards.dailyStats }),
-  });
+  // Validation returns detached allowlisted payloads; add only fresh local revisions.
+  const quiz = JSON.stringify({ ...validated.value.quiz, revision: randomUUID() });
+  const flashcards = JSON.stringify({ ...validated.value.flashcards, revision: randomUUID() });
   const targets = { quiz, flashcards };
   return validTargetPair(targets) ? targets : undefined;
 }

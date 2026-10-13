@@ -15,6 +15,7 @@ import {
   installProgressPageLifecycle,
   learnerProgressAdmission,
 } from './persistence/progressAdmission';
+import { downloadProgressJson, progressFileCapabilities } from './app/progressBackupFiles';
 import { captureBrowserRawProgressRecovery, RAW_PROGRESS_RECOVERY_FORMAT } from './persistence/progressBackupStorage';
 
 function downloadBootRecovery(): string | undefined {
@@ -26,13 +27,7 @@ function downloadBootRecovery(): string | undefined {
       return 'Saved values changed during capture. Close other Meducation tabs and try again.';
     return 'Saved values could not be read. No recovery file was created.';
   }
-  const url = URL.createObjectURL(new Blob([recovery.json], { type: 'application/json' }));
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `${RAW_PROGRESS_RECOVERY_FORMAT}-${new Date().toISOString().slice(0, 10)}.json`;
-  anchor.click();
-  window.setTimeout(() => URL.revokeObjectURL(url), 1_000);
-  return undefined;
+  return downloadProgressJson(recovery.json, new Date().toISOString(), RAW_PROGRESS_RECOVERY_FORMAT);
 }
 
 const root = createRoot(document.getElementById('root')!);
@@ -64,7 +59,7 @@ async function boot() {
     if (admission.kind !== 'ready' && admission.kind !== 'read-only') {
       render(
         <AppShell sidebar={<AppNavigationDrawer active="quizzes" disabled onNavigate={() => undefined} />}>
-          <ProgressBootFailure reason={admission.kind} onDownloadRecovery={downloadBootRecovery} />
+          <ProgressBootFailure reason={admission.kind} onDownloadRecovery={progressFileCapabilities().download ? downloadBootRecovery : undefined} />
         </AppShell>,
       );
       return;

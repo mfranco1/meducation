@@ -32,3 +32,37 @@ describe('progress backup interaction lifetime', () => {
     expect(result.current.preview).toBeUndefined();
   });
 });
+
+it('unlocks the dialog after retrying a committed restore whose cleanup was interrupted', async () => {
+  const values = new Map<string, string>();
+  let denyCleanup = false;
+  vi.stubGlobal('localStorage', {
+    getItem: (key: string) => values.get(key) ?? null,
+    setItem: (key: string, value: string) => values.set(key, value),
+    removeItem: (key: string) => {
+      if (denyCleanup && key === 'meducation.progress.restore.v1') throw new Error('unavailable');
+      values.delete(key);
+    },
+  });
+  vi.stubGlobal('navigator', { locks: { request: (_name: string, _options: unknown, callback: (lock: object) => Promise<void>) => callback({}) } });
+  learnerProgressAdmission.admit({ mode: 'shared', valid: true, release: () => undefined }, () => 'clear');
+  const refresh = vi.fn();
+  const { result } = renderHook(() => useProgressBackup(refresh));
+  act(() => result.current.show());
+  await act(async () => result.current.chooseFile({ size: 100, text: async () => JSON.stringify(emptyBackup) }));
+  expect(result.current.preview).toBeDefined();
+  denyCleanup = true;
+  await act(async () => result.current.restore());
+  expect(result.current.committing).toBe(true);
+  expect(result.current.recoveryRequired).toBe(true);
+  denyCleanup = false;
+  await act(async () => result.current.retryRecovery());
+  expect(values.has('meducation.progress.restore.v1')).toBe(false);
+  expect(result.current.committing).toBe(false);
+  expect(result.current.recoveryRequired).toBe(false);
+  expect(result.current.preview).toBeUndefined();
+  act(() => result.current.close());
+  expect(result.current.open).toBe(false);
+  learnerProgressAdmission.close();
+  vi.unstubAllGlobals();
+});

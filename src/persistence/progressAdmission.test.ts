@@ -149,3 +149,50 @@ describe('paired progress admission', () => {
     learnerProgressAdmission.close();
   });
 });
+
+it('refreshes both snapshots under coordinated read-only admission without admitting writes', () => {
+  const admission = new ProgressAdmission();
+  const storage = new MemoryProgressStorage();
+  const acquired = sharedLease();
+  admission.admitReadOnly(() => 'clear', acquired.lease);
+  const quiz = new LocalAttemptRepository(storage, admission);
+  const cards = new LocalFlashcardProgressRepository(storage, admission);
+  const oldQuiz = quiz.getSnapshot();
+  const oldCards = cards.getSnapshot();
+  quiz.refreshAfterPairedOperation();
+  cards.refreshAfterPairedOperation();
+  expect(quiz.getSnapshot()).not.toBe(oldQuiz);
+  expect(cards.getSnapshot()).not.toBe(oldCards);
+  expect(storage.values.size).toBe(0);
+  expect(() => quiz.clearActive('quiz')).toThrow(ProgressAdmissionError);
+  expect(() => cards.clearCheckpoint('deck')).toThrow(ProgressAdmissionError);
+  acquired.invalidate();
+  expect(admission.canRead).toBe(false);
+  expect(() => admission.assertReadable()).toThrow(ProgressAdmissionError);
+  admission.close();
+});
+
+it('retains the displayed pair through gated storage events and refreshes only after re-admission', () => {
+  const storage = new MemoryProgressStorage();
+  const admission = new ProgressAdmission();
+  admission.admit(sharedLease().lease, () => 'clear');
+  const quiz = new LocalAttemptRepository(storage, admission);
+  const cards = new LocalFlashcardProgressRepository(storage, admission);
+  const originals = [quiz.getSnapshot(), cards.getSnapshot()];
+  const notify = vi.fn();
+  const unsubscribeQuiz = quiz.subscribe(notify);
+  const unsubscribeCards = cards.subscribe(notify);
+  try {
+    admission.close();
+    window.dispatchEvent(new StorageEvent('storage', { key: progressKey }));
+    window.dispatchEvent(new StorageEvent('storage', { key: flashcardProgressKey }));
+    expect(quiz.getSnapshot()).toBe(originals[0]);
+    expect(cards.getSnapshot()).toBe(originals[1]);
+    expect(notify).not.toHaveBeenCalled();
+    admission.admit(sharedLease().lease, () => 'clear');
+    quiz.refreshAfterPairedOperation(); cards.refreshAfterPairedOperation();
+    expect(notify).toHaveBeenCalledTimes(2);
+    expect(quiz.getSnapshot()).not.toBe(originals[0]);
+    expect(cards.getSnapshot()).not.toBe(originals[1]);
+  } finally { unsubscribeQuiz(); unsubscribeCards(); admission.close(); }
+});

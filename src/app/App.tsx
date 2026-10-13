@@ -5,7 +5,7 @@ import { loadRuntimeFlashcardSubjects, runtimeFlashcardBank } from '../content/a
 import { ContentLoadError } from '../content/api/contentTransport';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { LocalFlashcardProgressRepository } from '../persistence/localFlashcardProgressRepository';
-import { learnerProgressAdmission } from '../persistence/progressAdmission';
+import { consumeProgressRestoreNotice, learnerProgressAdmission } from '../persistence/progressAdmission';
 import { averageScore, lowestRecentScore } from '../analytics/analytics';
 import type { Quiz, Subject } from '../domain/types';
 import { AppNavigationDrawer, type LearnerSection } from './components/AppNavigationDrawer';
@@ -43,6 +43,13 @@ function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
 
 function LearnerApp({ onProgressBackup, progressReadOnly }: { onProgressBackup: () => void; progressReadOnly: boolean }) {
   const toast = useToast();
+  useEffect(() => {
+    if (!consumeProgressRestoreNotice()) return;
+    const heading = document.querySelector<HTMLElement>('main h2');
+    heading?.setAttribute('tabindex', '-1');
+    heading?.focus();
+    toast.show({ message: 'Progress restored.', severity: 'success', scope: { type: 'global' } });
+  }, [toast]);
   const questionBank = runtimeQuestionBank;
   const contentSnapshotVersion = useSyncExternalStore(questionBank.subscribe, questionBank.getSnapshot);
   const progressSnapshot = useSyncExternalStore(attemptRepository.subscribe, attemptRepository.getSnapshot);

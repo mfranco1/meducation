@@ -75,7 +75,7 @@ export class LocalAttemptRepository implements AttemptRepository {
 
   /** Rehydrate after an exclusive paired operation before notifying subscribers. */
   refreshAfterPairedOperation(): void {
-    this.admission?.assertReady();
+    this.admission?.assertReadable();
     this.cachedState = undefined;
     this.observedRevision = undefined;
     this.storageError = undefined;
@@ -85,6 +85,7 @@ export class LocalAttemptRepository implements AttemptRepository {
 
   private readonly onStorage = (event: StorageEvent) => {
     if (event.key !== null && event.key !== progressKey) return;
+    if (this.admission && !this.admission.canRead) return;
     this.cachedState = undefined;
     for (const listener of this.listeners) listener();
   };
