@@ -482,6 +482,8 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
     });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
   await assertArrowCentered();
+  // A new browser's pointer may start over the drawer; establish the non-hover state explicitly.
+  await page.mouse.move(900, 300);
   await expect.poll(() => arrow.evaluate((element) => getComputedStyle(element).opacity)).toBe('0');
   await brand.hover();
   await expect.poll(() => arrow.evaluate((element) => getComputedStyle(element).opacity)).toBe('1');

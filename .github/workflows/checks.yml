@@ -68,6 +68,14 @@ jobs:
       - run: npm run build:learner:smoke
       - run: npm run test:e2e:prepared
       - run: npm run test:e2e:admin
+      - name: Retain host browser failure traces
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: host-browser-failures
+          path: test-results/
+          retention-days: 14
+          if-no-files-found: warn
 
   containers:
     name: Containers (${{ matrix.architecture }})

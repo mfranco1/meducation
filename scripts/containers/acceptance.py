@@ -48,6 +48,13 @@ def main():
         report["commands"].append({"name": name, "command": command, "exit_code": result.returncode,
                                    "seconds": round(time.monotonic() - started, 2), "log": name + ".log"})
         if result.returncode:
+            # These logs come only from builds and isolated synthetic smokes, never env/config dumps.
+            # Show the underlying assertion in Actions instead of only the wrapper traceback.
+            with (output / (name + ".log")).open("rb") as log:
+                log.seek(0, 2)
+                log.seek(max(0, log.tell() - 24000))
+                excerpt = log.read().decode(errors="replace")
+            print(f"{name} failure log (last 24000 bytes):\n{excerpt}", file=sys.stderr, flush=True)
             raise RuntimeError(f"{name} failed; see {output / (name + '.log')}")
         print(name + " passed", flush=True)
 
