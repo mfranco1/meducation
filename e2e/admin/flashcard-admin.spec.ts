@@ -347,7 +347,7 @@ for (const viewport of [
   { width: 1048, height: 739 },
   { width: 1440, height: 900 },
 ]) {
-  test(`both admin panels use the available width at ${viewport.width}px`, async ({ page }) => {
+  test(`both admin panels use the available width at ${viewport.width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize(viewport);
     await page.goto('/admin.html');
     for (const [section, prefix] of [
@@ -370,7 +370,10 @@ for (const viewport of [
         expect(editorBounds.x).toBeGreaterThan(navBounds.x + navBounds.width);
       }
       if (viewport.width === 1048 && section === 'Quizzes')
-        await page.screenshot({ path: '/private/tmp/meducation-admin-width-fixed.png', fullPage: true });
+        await testInfo.attach('admin-width-1048-quizzes', {
+          body: await page.screenshot({ path: testInfo.outputPath('admin-width-1048-quizzes.png'), fullPage: true }),
+          contentType: 'image/png',
+        });
       expect(navBounds.height).toBeLessThan(editorBounds.height);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
     }
