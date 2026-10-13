@@ -8,7 +8,13 @@ if (origin.protocol !== 'http:' || origin.hostname !== '127.0.0.1')
 
 export default defineConfig({
   testDir: './e2e',
-  testMatch: ['learner-smoke.spec.ts', 'subject-cards.spec.ts', 'continue-studying.spec.ts', 'containers/*.spec.ts'],
+  testMatch: [
+    'learner-smoke.spec.ts',
+    'subject-cards.spec.ts',
+    'continue-studying.spec.ts',
+    'progress-backup.spec.ts',
+    'containers/*.spec.ts',
+  ],
   fullyParallel: false,
   workers: 1,
   retries: 0,

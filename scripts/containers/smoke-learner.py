@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -102,6 +103,9 @@ def main():
 
     try:
         front = start("frontend", frontend["Id"], "--publish", "127.0.0.1::8080")
+        # Track by exact generated name so browser recreation cleanup removes the replacement.
+        front = inspect(front)["Name"].lstrip("/")
+        containers[-1] = front
         wait_for(lambda: healthy(front), "frontend health without API")
         binding = inspect(front)["NetworkSettings"]["Ports"]["8080/tcp"]
         require(len(binding) == 1 and binding[0]["HostIp"] == "127.0.0.1", "Loopback binding required")
@@ -190,7 +194,9 @@ def main():
             fixture_api = start("fixture-api", api_image["Id"], "--network-alias", "api", *mounts)
             wait_for(lambda: healthy(fixture_api), "fixture API health")
             wait_for(lambda: 'Browser Test Subject' in request(origin, "/api/v1/subjects")[2].decode(), "fixture DNS recovery")
-            env = {**os.environ, "MEDUCATION_CONTAINER_URL": origin}
+            env = {**os.environ, "MEDUCATION_CONTAINER_URL": origin,
+                   "MEDUCATION_SMOKE_FRONTEND": front, "MEDUCATION_SMOKE_RUN_ID": run_id,
+                   "MEDUCATION_SMOKE_PYTHON": sys.executable}
             browser = subprocess.run(
                 ["npx", "playwright", "test", "--config=playwright.containers.config.ts"],
                 cwd=ROOT, env=env, text=True, capture_output=True, timeout=600, check=False,
@@ -203,6 +209,13 @@ def main():
         require(inspect(front)["State"]["ExitCode"] == 0, "Frontend did not shut down cleanly")
         report["checks"].append("frontend graceful SIGQUIT shutdown")
         report["result"] = "pass"
+    except Exception:
+        # Synthetic/canonical read-only API and Nginx only; no DB/env/config dumps.
+        for container in containers:
+            logs = subprocess.run(["docker", "logs", "--tail", "40", container],
+                                  capture_output=True, text=True, timeout=15, check=False)
+            print(f"Smoke container {container}:\n{logs.stdout[-4000:]}{logs.stderr[-4000:]}", file=sys.stderr)
+        raise
     finally:
         for container in reversed(containers):
             docker("rm", "--force", container)

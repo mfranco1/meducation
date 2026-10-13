@@ -68,3 +68,49 @@ jobs:
       - run: npm run build:learner:smoke
       - run: npm run test:e2e:prepared
       - run: npm run test:e2e:admin
+
+  containers:
+    name: Containers (${{ matrix.architecture }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-24.04
+            architecture: amd64
+          - runner: ubuntu-24.04-arm
+            architecture: arm64
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version-file: backend/.python-version
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.lock
+      - name: Install verification environment
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r backend/requirements-dev.lock
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Check container helpers
+        run: .venv/bin/ruff check scripts/containers
+      - name: Repeated clean builds and native acceptance
+        run: .venv/bin/python scripts/containers/acceptance.py --expected-architecture ${{ matrix.architecture }}
+      - name: Retain scoped evidence and failure traces
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: container-acceptance-${{ matrix.architecture }}
+          path: |
+            test-results/container-acceptance/
+            test-results-containers/
+          retention-days: 14
+          if-no-files-found: warn

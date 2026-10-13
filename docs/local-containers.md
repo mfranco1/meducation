@@ -331,3 +331,38 @@ Do not change credentials to try to migrate an existing volume. Update readable
 image tags and digests together after upstream review and rerun native builds
 and recovery checks. A new Postgres major requires an explicit upgrade or
 fresh-volume restore plan; never mount the PG17 data directory under a new major.
+
+## Native container acceptance and CI
+
+Run the complete gate after installing the host npm/backend verification tools
+and Chromium. It builds both images twice with `--pull --no-cache`, then checks
+each build's actual packages/content/artifacts/runtime. The second learner run
+also executes browser tests through the shipped proxy, including the L1 paired
+backup suite and progress persistence across frontend recreation at the same
+loopback origin. No host Vite/API server or personal profile is used.
+
+```sh
+.venv/bin/python scripts/containers/acceptance.py --expected-architecture arm64
+```
+
+Use `amd64` on a native AMD64 machine. The runner checks host, Docker engine and
+built image architectures; a QEMU run does not satisfy this gate. It finishes
+with isolated Compose startup/recreation and PG17 dump/restore rehearsals.
+Routine developer databases are untouched. The recreation helper accepts only
+the exact generated smoke frontend name, label, network and loopback binding.
+
+Evidence and command logs live under ignored `test-results/container-acceptance/`;
+Playwright traces use `test-results-containers/` separately so browser cleanup
+cannot erase the build evidence. `acceptance.json` records source commit, dirty
+file list, input hashes, platform/tool versions, both image IDs and command
+results. Build/package logs and failure traces contain only build metadata and
+synthetic test data. Reproducibility means repeatable pinned/locked inputs and
+verified output behavior; image digests are not promised byte-identical.
+
+The [Checks workflow](../.github/workflows/checks.yml) keeps host jobs and adds
+separate native `ubuntu-24.04` AMD64 and `ubuntu-24.04-arm` ARM64 jobs, with
+bounded execution, read-only repository permission and scoped evidence/trace
+artifacts retained for 14 days. [GitHub runner architecture reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
+A configured job is not execution evidence: both platforms must actually pass
+before L2 closes. Runner availability/eligibility and hosted execution remain
+unverified until the workflow runs for this revision.
