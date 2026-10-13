@@ -1,6 +1,6 @@
 # L2 — Reproducible containers and local services
 
-Created: 2026-10-13. Status: Steps 1–2 implemented; API image built and verified on native Linux ARM64; native AMD64 acceptance pending; Steps 3–7 not started. Parent: [local-first production preparation](local-first-production-preparation.md). Prerequisite: [L0 toolchain decision](../../decisions/0003-local-postgres-toolchain.md). Previous stage: [completed L1](../done/L1-progress-backup-plan.md).
+Created: 2026-10-13. Status: Steps 1–3 implemented and verified on native ARM64; native AMD64 acceptance pending; Steps 4–7 not started. Parent: [local-first production preparation](local-first-production-preparation.md). Prerequisite: [L0 toolchain decision](../../decisions/0003-local-postgres-toolchain.md). Previous stage: [completed L1](../done/L1-progress-backup-plan.md).
 
 ## Outcome and scope
 
@@ -8,7 +8,7 @@ A fresh checkout can build and run the learner and existing read-only FastAPI se
 
 L2 delivers packaging, local orchestration, operational instructions and verification. The API continues to read the two canonical JSON banks. Database adapters, SQLAlchemy/Psycopg/Alembic installation, content schema, least-privilege application roles, migrations and canonical import/export parity belong to L3. Authentication and database authoring belong to L4. No learner progress moves out of the browser; no content, IDs, answer provenance or storage contracts change.
 
-The user authorized starting L2 on 2026-10-13, then continued into Step 2 after repairing Docker. Follow the repository's [stage gates](../README.md): implement an authorized step, record its checks, then stop at the agreed gate. Cloud provisioning and L3 remain outside L2; tool installation/upgrades require an intentional decision.
+The user authorized starting L2 on 2026-10-13, then continued into Steps 2 and 3. Follow the repository's [stage gates](../README.md): implement an authorized step, record its checks, then stop at the agreed gate. Cloud provisioning and L3 remain outside L2; tool installation/upgrades require an intentional decision.
 
 ## Inspected baseline and constraints
 
@@ -78,14 +78,30 @@ Verification: TypeScript/build passed with the existing Vite chunk-size advisory
 
 ## Step 3 — Package learner assets and the real reverse proxy
 
-- [ ] Use a multi-stage build with `npm ci` from the committed lock and a clean learner build. Explicitly select API mode and disable both admin build/runtime flags. Copy only generated learner assets into the non-root static runtime. Retain host Vite commands for routine UI work.
-- [ ] Proxy `/api/` to `api:8000` without stripping the prefix; preserve query strings, `If-Match`, `If-None-Match`, ETag, status codes and API cache headers. API 404/409/503 and upstream failures must never become SPA HTML or a successful fallback response.
-- [ ] Define exact health routing: static-server liveness is independent; forward exact `/health/live` and `/health/ready` paths to FastAPI for end-to-end diagnostics. Compose should distinguish frontend availability from API readiness.
-- [ ] Serve the learner entry with revalidation, hashed assets with immutable caching, and missing assets with 404. Explicitly reject `/admin.html`; do not let a SPA fallback disguise its absence. Verify fonts, generated branding and lazy route chunks through the server.
-- [ ] Verify production artifact omission of admin entry/code and development QA through artifact/graph inspection as well as HTTP checks. Do not claim that hiding a URL is authentication or that API-mode output cannot contain optional local-adapter chunks without inspecting it.
-- [ ] Bound proxy timeouts and test backend unavailability and subsequent recovery, including API container recreation/address changes. Ensure the selected server's upstream resolution strategy recovers without requiring an unexplained manual frontend restart.
+- [x] Use a multi-stage build with `npm ci` from the committed lock and a clean learner build. Explicitly select API mode and disable both admin build/runtime flags. Copy only generated learner assets into the non-root static runtime. Retain host Vite commands for routine UI work.
+- [x] Proxy `/api/` to `api:8000` without stripping the prefix; preserve query strings, `If-Match`, `If-None-Match`, ETag, status codes and API cache headers. API 404/409/503 and upstream failures must never become SPA HTML or a successful fallback response.
+- [x] Define exact health routing: static-server liveness is independent; forward exact `/health/live` and `/health/ready` paths to FastAPI for end-to-end diagnostics. Compose should distinguish frontend availability from API readiness.
+- [x] Serve the learner entry with revalidation, hashed assets with immutable caching, and missing assets with 404. Explicitly reject `/admin.html`; do not let a SPA fallback disguise its absence. Verify fonts, generated branding and lazy route chunks through the server.
+- [x] Verify production artifact omission of admin entry/code and development QA through artifact/graph inspection as well as HTTP checks. Do not claim that hiding a URL is authentication or that API-mode output cannot contain optional local-adapter chunks without inspecting it.
+- [x] Bound proxy timeouts and test backend unavailability and subsequent recovery, including API container recreation/address changes. Ensure the selected server's upstream resolution strategy recovers without requiring an unexplained manual frontend restart.
 
 Gate: normal learner behavior and API error/cache semantics work through the actual static runtime; assets and authoring exclusion are verified.
+
+### Step 3 result — 2026-10-13
+
+[Learner Dockerfile](../../../Dockerfile) uses the selected Node/Nginx image indexes, `npm ci`, TypeScript checking and explicit API/admin build settings. [Artifact inspection](../../../scripts/containers/check-learner-artifacts.mjs) checks hidden source maps and the manifest before stripping them from shipped output. The actual build contains 734 mapped modules and 92 shipped files, with no admin, QA or canonical-bank modules. A five-case synthetic check also confirms rejection of those forbidden module owners. Only assets and the audit record outside the document root enter runtime; Node/build dependencies remain in the builder.
+
+[Nginx configuration](../../../ops/containers/nginx.conf) runs as UID/GID 101 with temporary paths under `/tmp`, independent static health, exact API health forwarding and prefix/query-preserving API routing. HTML/stable files revalidate; hashed assets cache immutably. Missing/private files and the admin entry return 404; API errors bypass the learner fallback. Docker DNS/shared upstream resolution handles recreated API addresses. Proxy connect/send/read timeouts are bounded.
+
+[Proxy smoke](../../../scripts/containers/smoke-learner.py) passed six groups on the final native ARM64 image: read-only/non-root startup without API; every shipped file hash/cache policy; missing assets/build files; actual API query/conditional/cache/error/health behavior; an API outage returning 504 in about two seconds; changed-IP recovery without frontend restart; exact synthetic upstream 503 forwarding; 17 Chromium learner cases; and graceful frontend shutdown. Its uniquely named containers/network are removed, and fixture mounts are read-only. [Machine evidence](L2-step3-learner-container-evidence.json) records the image, artifacts, DNS/outage observations and remaining gates.
+
+[Container Playwright configuration](../../../playwright.containers.config.ts) starts no host servers and keeps output separate from host tests. The new production-boundary case verifies same-origin API traffic, secure-context Web Locks and continued learner behavior at `#content-qa`. Existing quiz/flashcard/resume/results/review/navigation/layout/error flows run through the actual shipped proxy. The manual keyboard-Retry fixture now uses non-retryable HTTP 400 so it isolates the explicit action without assuming automatic retries are disabled; other transient-error cases still use retryable responses. The production image retains its normal three-retry policy.
+
+[Runbook](../../local-containers.md), setup and owner docs describe actual build/start/health/logs/stop/recreation and origin-specific progress. Compose, Postgres and DB tooling remain Step 4/5 work. Native AMD64 and container backup/CI acceptance remain Step 6 gates; L1's browser/device/accessibility deferrals remain open.
+
+Build follow-up: the unchanged dependency lock reports four low npm audit findings from nested KaTeX 0.16.47/dependency chains and one high finding in dev/build-only source-map-js 1.2.1. The [source-map-js advisory](https://github.com/advisories/GHSA-68fv-2mgg-jv7q) and [KaTeX advisory](https://github.com/advisories/GHSA-238p-pmpm-9mq7) are recorded in evidence. No dependency update or passing vulnerability audit is claimed; these remain maintenance/release follow-ups.
+
+Verification: final image/proxy and all 17 container browser cases passed. Smoke Ruff and `npm run verify:full` passed: lint/format/architecture, all 534 unit tests, content validation, backend Ruff/mypy/39 tests, TypeScript checking, both build modes and host learner/admin browser suites (12 admin cases). The earlier concurrent run hit one flashcard lazy-load timeout; the isolated file and sequential full run passed. Existing chunk-size/content-review/Starlette warnings remain. Final link/hash/diff and protected-file audit results are recorded in Step 3 evidence. Step 3 is complete on native ARM64; stop before Step 4 under the agreed stage gate. L2 remains ongoing.
 
 ## Step 4 — Compose the local stack and optional Postgres
 

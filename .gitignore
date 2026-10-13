@@ -23,4 +23,5 @@ venv/
 !.env.example
 coverage/
 test-results/
+test-results-containers/
 playwright-report/

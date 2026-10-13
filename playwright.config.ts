@@ -4,7 +4,7 @@ const e2eApiPort = process.env.MEDUCATION_E2E_API_PORT ?? '8765';
 
 export default defineConfig({
   testDir: './e2e',
-  testIgnore: '**/admin/**',
+  testIgnore: ['**/admin/**', '**/containers/**'],
   fullyParallel: false,
   workers: 1,
   retries: 0,

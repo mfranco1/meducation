@@ -56,6 +56,8 @@ npm run build
 
 `npm run build` type-checks the project and creates a production build in `dist/`. To view that build locally, run `npx vite preview` and open the URL it prints. API-mode preview also needs the content API running. Production API-mode hosting must route `/api` to the service. See [testing guidance](docs/testing.md) for backend and browser checks.
 
+For a local production preview through the actual static server and API reverse proxy, use the [container runbook](docs/local-containers.md). It retains the host Vite development path and browser-local progress.
+
 ### Local content editor
 
 Open `/admin.html` through the development server to edit quiz or flashcard records in a local staged workspace. The editor exports reviewed JSON and change sets; it does not write canonical repository files. Follow [content management](docs/content-management.md) to review and apply exports.

@@ -1,0 +1,679 @@
+{
+  "frontend_image": "sha256:8da47ad5658e70608e71370d13ad3e59f7cfcda75ac22f1d2faddf30ebb9b1ff",
+  "api_image": "sha256:44250a53c22a237e0f5cf06a0dfdceb582e5382dfe9442f866b42d9f1215f90d",
+  "image_platform": "linux/arm64",
+  "checks": [
+    "non-root/read-only static startup independent of API; shipped artifact hashes/cache/missing-file policies",
+    "real /api prefix/query/conditional headers/ETag/cache, JSON 404/409 and API health routing",
+    "bounded upstream outage and automatic recovery after API IP change",
+    "synthetic upstream 503 JSON body/cache/ETag preserved through shipped proxy",
+    "existing learner Chromium flows against fixture API through shipped static proxy",
+    "frontend graceful SIGQUIT shutdown"
+  ],
+  "artifact_audit": {
+    "moduleCount": 734,
+    "adminAndQaModules": [],
+    "canonicalBankModules": [],
+    "entries": [
+      "_App-CulcYiVr.js",
+      "_Flag-DUzR_wi0.js",
+      "_FlagOutlined-wAMLE8n8.js",
+      "_ReadOnlyQuizChrome-JRglBDYJ.js",
+      "_TimerOutlined-C6QTYYrU.js",
+      "_celebrationCatalog-BP_9a9B-.js",
+      "_format-f_2J44oX.js",
+      "_useStudyArrowNavigation-BJmosK-V.css",
+      "_useStudyArrowNavigation-Dq59eVC3.js",
+      "index.html",
+      "node_modules/katex/dist/fonts/KaTeX_AMS-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_AMS-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_AMS-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Caligraphic-Bold.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Caligraphic-Bold.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Caligraphic-Bold.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Caligraphic-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Caligraphic-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Caligraphic-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Fraktur-Bold.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Fraktur-Bold.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Fraktur-Bold.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Fraktur-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Fraktur-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Fraktur-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Bold.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Bold.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Bold.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Main-BoldItalic.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Main-BoldItalic.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Main-BoldItalic.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Italic.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Italic.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Italic.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Main-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Math-BoldItalic.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Math-BoldItalic.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Math-BoldItalic.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Math-Italic.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Math-Italic.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Math-Italic.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Bold.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Bold.woff",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Bold.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Italic.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Italic.woff",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Italic.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_SansSerif-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Script-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Script-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Script-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Size1-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Size1-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Size1-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Size2-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Size2-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Size2-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Size3-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Size3-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Size4-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Size4-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Size4-Regular.woff2",
+      "node_modules/katex/dist/fonts/KaTeX_Typewriter-Regular.ttf",
+      "node_modules/katex/dist/fonts/KaTeX_Typewriter-Regular.woff",
+      "node_modules/katex/dist/fonts/KaTeX_Typewriter-Regular.woff2",
+      "src/features/flashcards/screens/FlashcardStudyScreen.tsx",
+      "src/features/quizzes/screens/QuizBrowseScreen.tsx",
+      "src/features/quizzes/screens/QuizReviewScreen.tsx",
+      "src/features/quizzes/screens/QuizScreen.tsx",
+      "src/features/quizzes/screens/ResultsScreen.tsx"
+    ],
+    "files": [
+      {
+        "path": "assets/App-CulcYiVr.js",
+        "bytes": 157729,
+        "sha256": "fa93e9aa8a354aa00900b6a43e13148e01fb82c253c3826dea6be852ec7dcf26"
+      },
+      {
+        "path": "assets/Flag-DUzR_wi0.js",
+        "bytes": 133,
+        "sha256": "9636661c407eb7d1629f6b019a9efdd3534b7a3b20cdfb24510dc6dca35eda70"
+      },
+      {
+        "path": "assets/FlagOutlined-wAMLE8n8.js",
+        "bytes": 166,
+        "sha256": "9143662ae643f0a0c7b35ef1437686626bfbaca9cec1b2f67b047f1bc7691f40"
+      },
+      {
+        "path": "assets/FlashcardStudyScreen-C7kvC0c8.js",
+        "bytes": 10700,
+        "sha256": "0a763ef787cb03bc375f1b0d3ed75943cb35754a18155d85fe4da40ceacf79ae"
+      },
+      {
+        "path": "assets/KaTeX_AMS-Regular-BQhdFMY1.woff2",
+        "bytes": 28076,
+        "sha256": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308"
+      },
+      {
+        "path": "assets/KaTeX_AMS-Regular-DMm9YOAa.woff",
+        "bytes": 33516,
+        "sha256": "30da91e84c893f875e252689faebdc590b2871145e8adc7f9a9d4dbd8ce0b251"
+      },
+      {
+        "path": "assets/KaTeX_AMS-Regular-DRggAlZN.ttf",
+        "bytes": 63632,
+        "sha256": "68534840bcfdd2bffb6f0e8deb48684dd01e7f04ea2813267577afb906de1d13"
+      },
+      {
+        "path": "assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf",
+        "bytes": 12368,
+        "sha256": "07d8e303ce4fc12b4bb54f1004170dd190a1f3db45d400fe68060df3e0897268"
+      },
+      {
+        "path": "assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff",
+        "bytes": 7716,
+        "sha256": "1ae6bd7475590e97e7f145a89e09ccde322f7a6bc0b91607b1c8b8ee28290fed"
+      },
+      {
+        "path": "assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2",
+        "bytes": 6912,
+        "sha256": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c"
+      },
+      {
+        "path": "assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff",
+        "bytes": 7656,
+        "sha256": "3398dd02302557a793f2863f88e02d96ce10df2abffa07c8e9fa90775116e65c"
+      },
+      {
+        "path": "assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2",
+        "bytes": 6908,
+        "sha256": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b"
+      },
+      {
+        "path": "assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf",
+        "bytes": 12344,
+        "sha256": "ed0b74372feefcbb9c0666b2e210da37b7e49fa7fbbf3eeb11db5f693dacfbb7"
+      },
+      {
+        "path": "assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf",
+        "bytes": 19584,
+        "sha256": "9163df9c7122432e6495b4229fa9071cf9ae86a758ae5efc4924ec2e1a6dbce1"
+      },
+      {
+        "path": "assets/KaTeX_Fraktur-Bold-BsDP51OF.woff",
+        "bytes": 13296,
+        "sha256": "9be7ceb88004ab8ad124082246fbfcca4091e36385d4ec6ed1df67375dad50fb"
+      },
+      {
+        "path": "assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2",
+        "bytes": 11348,
+        "sha256": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f"
+      },
+      {
+        "path": "assets/KaTeX_Fraktur-Regular-CB_wures.ttf",
+        "bytes": 19572,
+        "sha256": "1e6f9579e90e2cac37f8f60a597c436e075c114385652b7cbeb0dec0421291b3"
+      },
+      {
+        "path": "assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2",
+        "bytes": 11316,
+        "sha256": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc"
+      },
+      {
+        "path": "assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff",
+        "bytes": 13208,
+        "sha256": "5e28753be717dac97f559f49bc10be9cf3c124ddcabda6659d11cb68febc6463"
+      },
+      {
+        "path": "assets/KaTeX_Main-Bold-Cx986IdX.woff2",
+        "bytes": 25324,
+        "sha256": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021"
+      },
+      {
+        "path": "assets/KaTeX_Main-Bold-Jm3AIy58.woff",
+        "bytes": 29912,
+        "sha256": "c76c5d696297d51b9cb1639c7da4334f0e7dec81b42b11213b5e25ef671bb822"
+      },
+      {
+        "path": "assets/KaTeX_Main-Bold-waoOVXN0.ttf",
+        "bytes": 51336,
+        "sha256": "138ac28d1663b3037e9c5f52371fa5c63d8324f4a38d22cd573e6ea3a3fd0cf8"
+      },
+      {
+        "path": "assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2",
+        "bytes": 16780,
+        "sha256": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b"
+      },
+      {
+        "path": "assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf",
+        "bytes": 32968,
+        "sha256": "70ee1f64a20f2048c21940ef46d0144fd215baa953ca69afd1e31e98544f708f"
+      },
+      {
+        "path": "assets/KaTeX_Main-BoldItalic-SpSLRI95.woff",
+        "bytes": 19412,
+        "sha256": "a6f7ec0d846ac7ad975adb8959c37ed49b94acbc4ae436db9ce9e20287e4a64c"
+      },
+      {
+        "path": "assets/KaTeX_Main-Italic-3WenGoN9.ttf",
+        "bytes": 33580,
+        "sha256": "0d85ae7cc30f23790a7f1a58c4a112fdca8aae769b6ba11429af1d98b1b6cb3a"
+      },
+      {
+        "path": "assets/KaTeX_Main-Italic-BMLOBm91.woff",
+        "bytes": 19676,
+        "sha256": "f1d6ef86f3b11a528bd5185199bd2443ecb2b0dead96d88674b5a2c12be24bdf"
+      },
+      {
+        "path": "assets/KaTeX_Main-Italic-NWA7e6Wa.woff2",
+        "bytes": 16988,
+        "sha256": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267"
+      },
+      {
+        "path": "assets/KaTeX_Main-Regular-B22Nviop.woff2",
+        "bytes": 26272,
+        "sha256": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866"
+      },
+      {
+        "path": "assets/KaTeX_Main-Regular-Dr94JaBh.woff",
+        "bytes": 30772,
+        "sha256": "c6368d87e8a1a3a5d337623d83d8dc4b868f242a9ad476237d6f8d1e0f168cdc"
+      },
+      {
+        "path": "assets/KaTeX_Main-Regular-ypZvNtVU.ttf",
+        "bytes": 53580,
+        "sha256": "d0332f52868370fd83ae7fa46470f90c8f2eab2fcf12bc4f88080b340c95a830"
+      },
+      {
+        "path": "assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf",
+        "bytes": 31196,
+        "sha256": "f9377ab0271cda59af24bcffbd46a4d0c8a3572ffafdbb38de2ad5ea7b0d5ee5"
+      },
+      {
+        "path": "assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2",
+        "bytes": 16400,
+        "sha256": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1"
+      },
+      {
+        "path": "assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff",
+        "bytes": 18668,
+        "sha256": "850c0af5c2238497febaf5e461d880bf458c341f42f4f330f1b1ab5698b1998e"
+      },
+      {
+        "path": "assets/KaTeX_Math-Italic-DA0__PXp.woff",
+        "bytes": 18748,
+        "sha256": "8a8d244581371912b8f3f5a23e2437cb2a59cd9bcaebb0346e722c05737a2571"
+      },
+      {
+        "path": "assets/KaTeX_Math-Italic-flOr_0UB.ttf",
+        "bytes": 31308,
+        "sha256": "08ce98e51b04d58945a301e639e02b6998af29fdfd61a7b8afdd07bbfc479d4a"
+      },
+      {
+        "path": "assets/KaTeX_Math-Italic-t53AETM-.woff2",
+        "bytes": 16440,
+        "sha256": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf",
+        "bytes": 24504,
+        "sha256": "1ece03f79f95277d57dc7f6b435a74e1379b0d46104a8530286b60ff49369ea0"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2",
+        "bytes": 12216,
+        "sha256": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff",
+        "bytes": 14408,
+        "sha256": "ece03cfd83e22c212cdef66feb8442d25a083beb988db3f1883f3f9738d750ba"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2",
+        "bytes": 12028,
+        "sha256": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Italic-DN2j7dab.woff",
+        "bytes": 14112,
+        "sha256": "91ee67500cc0129aa0ace3ac5c61ff1692102f0f31d02b69347fba35dcb75bf2"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf",
+        "bytes": 22364,
+        "sha256": "3931dd81faed86ba021bb2bbdc36f5bed9a38d6b4f4077aca59b265aa1b02083"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf",
+        "bytes": 19436,
+        "sha256": "f36ea897e19f4a2e571d1e900e4e3710e438deb05a842486045ba0a3e616a4ad"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff",
+        "bytes": 12316,
+        "sha256": "11e4dc8a6471ff6d6ee561d53d10fde8f7489e798257ff449c5d37c197435605"
+      },
+      {
+        "path": "assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2",
+        "bytes": 10344,
+        "sha256": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342"
+      },
+      {
+        "path": "assets/KaTeX_Script-Regular-C5JkGWo-.ttf",
+        "bytes": 16648,
+        "sha256": "1c67f068fea8bb09bf099c088b1cf64bd27516a6e07f4684344873564bb66a67"
+      },
+      {
+        "path": "assets/KaTeX_Script-Regular-D3wIWfF6.woff2",
+        "bytes": 9644,
+        "sha256": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b"
+      },
+      {
+        "path": "assets/KaTeX_Script-Regular-D5yQViql.woff",
+        "bytes": 10588,
+        "sha256": "d96cdf2b3bdd4d64a8fd5f74a4c467f123a8a73931cd435889f08ffaf9bf947a"
+      },
+      {
+        "path": "assets/KaTeX_Size1-Regular-C195tn64.woff",
+        "bytes": 6496,
+        "sha256": "c943cc986384f59e86bea5fd7dc50a9c4dfe567a7c05eb40d6790720dead97c9"
+      },
+      {
+        "path": "assets/KaTeX_Size1-Regular-Dbsnue_I.ttf",
+        "bytes": 12228,
+        "sha256": "95b6d2f1a50173bfedb8c63e1d1c99b10427d0a4df4201cb44513b226951a22b"
+      },
+      {
+        "path": "assets/KaTeX_Size1-Regular-mCD8mA8B.woff2",
+        "bytes": 5468,
+        "sha256": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe"
+      },
+      {
+        "path": "assets/KaTeX_Size2-Regular-B7gKUWhC.ttf",
+        "bytes": 11508,
+        "sha256": "a6b2099fb555c60e3a0db3a08842ebf1d732c6eb4e4bf44913613bed4fc4e39b"
+      },
+      {
+        "path": "assets/KaTeX_Size2-Regular-Dy4dx90m.woff2",
+        "bytes": 5208,
+        "sha256": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd"
+      },
+      {
+        "path": "assets/KaTeX_Size2-Regular-oD1tc_U0.woff",
+        "bytes": 6188,
+        "sha256": "2014c523c3210bcc166648c4d4cc57f05b747df07a24277bf71c51e67dc79e3d"
+      },
+      {
+        "path": "assets/KaTeX_Size3-Regular-CTq5MqoE.woff",
+        "bytes": 4420,
+        "sha256": "6ab6b62e9b62dae2c00dd90f791bd10950be0ecc3490d7d6045f51c2e8fe0949"
+      },
+      {
+        "path": "assets/KaTeX_Size3-Regular-DgpXs0kz.ttf",
+        "bytes": 7588,
+        "sha256": "500e04d54f0d51666332c9d2089aa803be22aa878eca539e59fa53c6e522b082"
+      },
+      {
+        "path": "assets/KaTeX_Size4-Regular-BF-4gkZK.woff",
+        "bytes": 5980,
+        "sha256": "99f9c6750b489c9462bf04900bd3f939df9b829339daaaaa99ef5495cdddea58"
+      },
+      {
+        "path": "assets/KaTeX_Size4-Regular-DWFBv043.ttf",
+        "bytes": 10364,
+        "sha256": "c647367d1dd4e162468717d020e1fc0f1dc5c26ebfdffbe55261713bf88c5877"
+      },
+      {
+        "path": "assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2",
+        "bytes": 4928,
+        "sha256": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0"
+      },
+      {
+        "path": "assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff",
+        "bytes": 16028,
+        "sha256": "e14fed02b1aba7ce9f5afd5844b5d0321b22351febc720e0de8b8723527609f7"
+      },
+      {
+        "path": "assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2",
+        "bytes": 13568,
+        "sha256": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b"
+      },
+      {
+        "path": "assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf",
+        "bytes": 27556,
+        "sha256": "f01f3e87d9c6a61c0c081ceb577abd864eb00a612f7ac1620dd6915fad2ef5aa"
+      },
+      {
+        "path": "assets/QuizBrowseScreen-BOd9hdUk.js",
+        "bytes": 2105,
+        "sha256": "9b379a5f731758c832515a158028c7b69dd13e5a1e95a11f4c408c9fc0ced246"
+      },
+      {
+        "path": "assets/QuizReviewScreen-BnQ9wk6s.js",
+        "bytes": 2384,
+        "sha256": "5ee14ea2150045be489542d97bec9481270509a84bff9873d0cc3d169d237805"
+      },
+      {
+        "path": "assets/QuizScreen-UQZ2Y6Us.js",
+        "bytes": 15203,
+        "sha256": "65fa6a252ae48e27936fdc0b94cf6e8518bd00eac402a15cc5fa952964358cec"
+      },
+      {
+        "path": "assets/ReadOnlyQuizChrome-JRglBDYJ.js",
+        "bytes": 2786,
+        "sha256": "0ccf3a3f6e9e4002eaed9399d5fc24750e6b50e37aa7460cbf8e251adb5fabc4"
+      },
+      {
+        "path": "assets/ResultsScreen-9jOEnZgA.js",
+        "bytes": 4799,
+        "sha256": "55d54aeffc3609f9188ed6a353584e8c236aa4268e834af01e9727587e6f0a1b"
+      },
+      {
+        "path": "assets/TimerOutlined-C6QTYYrU.js",
+        "bytes": 5927,
+        "sha256": "a313c8d9d69d9b974b2df12ea35ac454cad12d07d648290a381a61c6985e3318"
+      },
+      {
+        "path": "assets/celebrationCatalog-BP_9a9B-.js",
+        "bytes": 3401,
+        "sha256": "2a57507a4708832dc582d0a3695b7df2f2fd806c5ee2df9285630bf9066d7eed"
+      },
+      {
+        "path": "assets/format-f_2J44oX.js",
+        "bytes": 145,
+        "sha256": "e97f3e9a11abcd8bfedd86d58e9af222cc2c885144f13fc9159014ea7f4ab146"
+      },
+      {
+        "path": "assets/learner-A8s7FG3e.js",
+        "bytes": 498888,
+        "sha256": "9c109e93fbffc74d9110f8d3137d98a37b6e2b2766b7531e235f53fc63d98e1f"
+      },
+      {
+        "path": "assets/useStudyArrowNavigation-BJmosK-V.css",
+        "bytes": 30255,
+        "sha256": "6f2ae1a672326d22a1e7f0ff599e035099348bfc6ba8ef9b89bb4874e88cdf10"
+      },
+      {
+        "path": "assets/useStudyArrowNavigation-Dq59eVC3.js",
+        "bytes": 621744,
+        "sha256": "6fc3eb565d045fa05c10387334ed0838761284e2d253d0596408306d7146b706"
+      },
+      {
+        "path": "brand/meducation-full-horizontal-black.svg",
+        "bytes": 1317,
+        "sha256": "d1ffdad86bcde933ab31c1796be65203ffad371ab86dddf42d205656a05c06dc"
+      },
+      {
+        "path": "brand/meducation-full-horizontal-current-color.svg",
+        "bytes": 1327,
+        "sha256": "ab8b882f22ce1130af4e02bf430e237d66b0d1f1870a0f9ff135c4b138d3f759"
+      },
+      {
+        "path": "brand/meducation-full-horizontal-full-color.svg",
+        "bytes": 1566,
+        "sha256": "9c301950f56b97e5afcf64d6b494ee2240dc34ea8e8a4ece654442732f1a1826"
+      },
+      {
+        "path": "brand/meducation-full-horizontal-white.svg",
+        "bytes": 1317,
+        "sha256": "3dd72e8766d27d6d45256ae589e2998a47ff1e9525fc25fc88c3adcaa8df4e05"
+      },
+      {
+        "path": "brand/meducation-full-stacked-black.svg",
+        "bytes": 1318,
+        "sha256": "eeb11ebeaa271d9cfe9854e43756081f5979f0876256334105bde95996243d62"
+      },
+      {
+        "path": "brand/meducation-full-stacked-current-color.svg",
+        "bytes": 1328,
+        "sha256": "5ae0f2ac24542b86808f2554ee675d85dbc1aa725be5e1f5581b7d866b329383"
+      },
+      {
+        "path": "brand/meducation-full-stacked-full-color.svg",
+        "bytes": 1567,
+        "sha256": "fb005650c4fa41c5076713c8eee8ba75a0cb549eaac2ee352337ee55ed90f0b8"
+      },
+      {
+        "path": "brand/meducation-full-stacked-white.svg",
+        "bytes": 1318,
+        "sha256": "1f3d0fb5c7d3e8ed65d0fd3f3400396f00a232a7b2dd4d6752f98b637385bc98"
+      },
+      {
+        "path": "brand/meducation-icon-black.svg",
+        "bytes": 963,
+        "sha256": "37ac91b4e46ff1977af4aeb33d4dd3946e3573549487c0eb7d113683ebeb7312"
+      },
+      {
+        "path": "brand/meducation-icon-current-color.svg",
+        "bytes": 973,
+        "sha256": "51b7cf309101dccb1ce6c49e7f0ed4d849caa0d6d174d0f632e9fe8a16aa34a2"
+      },
+      {
+        "path": "brand/meducation-icon-full-color.svg",
+        "bytes": 1212,
+        "sha256": "a99a4266ce735e14944d0983b62b32776727c7a54c247b4cc84eb9cd47cb222c"
+      },
+      {
+        "path": "brand/meducation-icon-white.svg",
+        "bytes": 963,
+        "sha256": "ebec189fe431e96e57c8b39dc53db9bba6350ad584080313a782f447d2969792"
+      },
+      {
+        "path": "brand/meducation-wordmark-black.svg",
+        "bytes": 704,
+        "sha256": "38fbf1b5a5bf8dd4cb4d4a2c4172eb517756196a78252fb088bcc32cc8216cd6"
+      },
+      {
+        "path": "brand/meducation-wordmark-current-color.svg",
+        "bytes": 714,
+        "sha256": "3b549cd5a8395d9a60cd6d33748928705820e6b433127ba1c7f9d5840093dadc"
+      },
+      {
+        "path": "brand/meducation-wordmark-full-color.svg",
+        "bytes": 953,
+        "sha256": "ffed434c4fee65970fa7d846e01ed8e8ba752d731a2c3884b78b7a4f183da666"
+      },
+      {
+        "path": "brand/meducation-wordmark-white.svg",
+        "bytes": 704,
+        "sha256": "cfaed5c98b8821d9e5cc6dd5e19e670218f793998d3b7cf4d05b0befe990eade"
+      },
+      {
+        "path": "favicon.svg",
+        "bytes": 929,
+        "sha256": "d5ea5e32dde330e229f9c6eaa143498cc831fb80330eb3a210bddf6a294ac7b5"
+      },
+      {
+        "path": "index.html",
+        "bytes": 392,
+        "sha256": "93e5c57c7a1aabda029dca78282204f6c7c856e77a7785d73c4efc8ae4badaf8"
+      }
+    ]
+  },
+  "outage": {
+    "status": 504,
+    "seconds": 2.0175698332022876
+  },
+  "dns_recovery": {
+    "old_ip": "172.18.0.3",
+    "new_ip": "172.18.0.4",
+    "frontend_restarted": false
+  },
+  "browser_result": "\nRunning 17 tests using 1 worker\n\n  \u2713   1 [chromium] \u203a e2e/containers/runtime-boundaries.spec.ts:3:1 \u203a production learner keeps QA/admin absent and uses the same-origin API with Web Locks (809ms)\n  \u2713   2 [chromium] \u203a e2e/continue-studying.spec.ts:98:1 \u203a quiz Continue Studying card is responsive and opens the active subject (2.4s)\n  \u2713   3 [chromium] \u203a e2e/continue-studying.spec.ts:129:1 \u203a flashcard Continue Studying card shows deck activity and opens the saved subject (3.8s)\n  \u2713   4 [chromium] \u203a e2e/learner-smoke.spec.ts:3:1 \u203a dashboard stat cards stay readable across desktop and narrow layouts (3.7s)\n  \u2713   5 [chromium] \u203a e2e/learner-smoke.spec.ts:105:1 \u203a abandoned flashcard loads do not reopen study or create progress (2.6s)\n  \u2713   6 [chromium] \u203a e2e/learner-smoke.spec.ts:135:1 \u203a a failed flashcard deck request shows a toast and recovers through the deck action (6.3s)\n  \u2713   7 [chromium] \u203a e2e/learner-smoke.spec.ts:168:1 \u203a flashcards browse, resume an imported fixture deck, and finish without quiz analytics (7.3s)\nFirst quiz screen after Begin Quiz: 586 ms (local fixture and API)\n  \u2713   8 [chromium] \u203a e2e/learner-smoke.spec.ts:353:1 \u203a API-backed quiz survives reload, completes, and opens Browse Answers (6.1s)\n  \u2713   9 [chromium] \u203a e2e/learner-smoke.spec.ts:454:1 \u203a left navigation switches dashboards in collapsed and mobile layouts (9.5s)\n  \u2713  10 [chromium] \u203a e2e/learner-smoke.spec.ts:609:1 \u203a Exam Mode submission offers a one-time read-only review (4.2s)\n  \u2713  11 [chromium] \u203a e2e/learner-smoke.spec.ts:659:1 \u203a failed catalog request recovers by keyboard Retry on a narrow reduced-motion screen (535ms)\n  \u2713  12 [chromium] \u203a e2e/learner-smoke.spec.ts:693:1 \u203a subject quiz failure keeps the full-width banner and original shimmer placeholders through recovery (777ms)\n  \u2713  13 [chromium] \u203a e2e/learner-smoke.spec.ts:749:1 \u203a failed question loading shows a persistent bottom-right toast that can be closed (12.3s)\n  \u2713  14 [chromium] \u203a e2e/learner-smoke.spec.ts:784:1 \u203a pending catalog stays accessible and static with reduced motion (1.2s)\nFirst quiz screen after Begin Quiz: 3910 ms (production build, 150 ms latency, 200 kB/s)\n  \u2713  15 [chromium] \u203a e2e/learner-smoke.spec.ts:819:1 \u203a records first-quiz latency from the production build under throttled network (8.6s)\n  \u2713  16 [chromium] \u203a e2e/subject-cards.spec.ts:3:1 \u203a quiz subject cards keep title, icon, score track, and card geometry aligned responsively (1.2s)\n  \u2713  17 [chromium] \u203a e2e/subject-cards.spec.ts:114:1 \u203a flashcard subject grid shares the subject header and activity style without quiz scores (581ms)\n\n  17 passed (1.2m)\n",
+  "result": "pass",
+  "observed_date": "2026-10-13",
+  "source_commit": "cea02842f15ecc1a0b736dbcdcc60ffc1af0c4a7",
+  "builds": {
+    "initial": "docker build --pull --no-cache -t meducation-learner:l2-step3 .",
+    "final": "docker build --pull -t meducation-learner:l2-step3 .",
+    "result": "pass; native Linux ARM64",
+    "node_index": "sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392",
+    "nginx_index": "sha256:8f18dedfceea3d7feb98792810c8c9925c985890ade257f2ec1b2f492b4eaebb",
+    "policy": {
+      "content_source": "api",
+      "admin_build": false,
+      "admin_runtime": false,
+      "automatic_retries": 3
+    },
+    "existing_chunk_size_advisory": true
+  },
+  "runtime_environment": {
+    "docker_client_and_engine": "29.8.2",
+    "desktop": "4.95.0",
+    "compose": "5.6.0",
+    "buildx": "0.37.2",
+    "engine_os": "linux",
+    "engine_architecture": "arm64",
+    "host_os": "macOS",
+    "host_architecture": "arm64",
+    "native_execution": true
+  },
+  "smoke_command": ".venv/bin/python scripts/containers/smoke-learner.py --browser --report /private/tmp/meducation-l2-learner-final.json",
+  "file_hashes": {
+    "Dockerfile": "953db0a49f31434bc520729e545da3021997a12c523e5317b68b83ccb365d0a2",
+    "ops/containers/nginx.conf": "44aead90ed5c4d3870e4501ca179b5fb01055bdcc5f4b614517c2089aadb08e8",
+    "ops/containers/proxy.conf": "ac3bc542d3c495d2c1bf6d12c4d8b64338d01c877280060b45cb2499cc823298",
+    "scripts/containers/check-learner-artifacts.mjs": "5f0e82bdc2b06d7991c85f485d3c6a52ccfe866c925079d321311a0ea2f01e11",
+    "scripts/containers/smoke-learner.py": "c9fe6caf3ab6cf083f099ffddf8084887f30658424047106f8d4357b25ea9f89",
+    "playwright.containers.config.ts": "a9a6763d7944f02c5237f9f0cc3c694c782c2b57c943e67ac85ee6e4d978c1f8",
+    "e2e/containers/runtime-boundaries.spec.ts": "872d99c37367a0c9901165ff92040cedfbf0b43515b2cb7c868b7bdc0215b169",
+    "e2e/learner-smoke.spec.ts": "fde9ab23b3ce1d95a9a2283fe6d31f6ba1e51471a6d4d001db44b4af54285d37",
+    "package.json": "081d988a94c5feac17f51c515d06a7954c840296d9ab86342ab62ca1beb5d73c",
+    "package-lock.json": "37243fa20a5c90cb222c9ab2277dac1cb5b8a0f6e4bc6dc72b30a1be9cb11cf8",
+    ".dockerignore": "9a62cced9a180841e091c0acd184a2413fcbaf4f7d4af9bc111f6b30858368af"
+  },
+  "checker_cases": {
+    "accepted_learner": 1,
+    "rejected_admin_qa_and_canonical_banks": 4,
+    "result": "pass"
+  },
+  "test_development_findings": [
+    {
+      "finding": "Stopped API produces a bounded connection timeout (504) or refusal (502).",
+      "resolution": "Require a gateway failure without SPA fallback and bounded elapsed time; observed final 504 in about 2 seconds."
+    },
+    {
+      "finding": "Existing manual-keyboard-retry fixture assumes automatic retries disabled.",
+      "resolution": "Initial fixture error is now non-retryable HTTP 400; manual keyboard action and exact two-request assertion retained. Other 503 retry cases still execute."
+    },
+    {
+      "finding": "One flashcard lazy-loading assertion timed out during concurrent full/container tests.",
+      "resolution": "Isolated file rerun passed all 5 cases; sequential verify:full passed all 534 unit tests and every remaining gate."
+    }
+  ],
+  "dependency_advisories": {
+    "command": "npm audit --json",
+    "counts": {
+      "low": 4,
+      "high": 1
+    },
+    "high": {
+      "package": "source-map-js",
+      "version": "1.2.1",
+      "scope": "dev/build dependency per lock and npm explain",
+      "advisory": "https://github.com/advisories/GHSA-68fv-2mgg-jv7q"
+    },
+    "low": {
+      "package": "nested katex and affected dependency chains",
+      "version": "0.16.47",
+      "advisory": "https://github.com/advisories/GHSA-238p-pmpm-9mq7"
+    },
+    "lock_changed": false,
+    "resolution": "open maintenance/release follow-up; no passing vulnerability audit claimed"
+  },
+  "project_checks": {
+    "ruff_smoke": "pass",
+    "format": "pass",
+    "full_verification": {
+      "command": "npm run verify:full",
+      "result": "pass",
+      "unit_tests": 534,
+      "backend_tests": 39,
+      "host_learner_browser": "pass",
+      "host_admin_browser_tests": 12,
+      "build_modes": [
+        "learner",
+        "enabled optional admin"
+      ],
+      "typecheck_lint_format_architecture_content": "pass"
+    },
+    "smoke_cleanup": "no matching containers or networks remain",
+    "final_audit": {
+      "relative_links": 102,
+      "implementation_hashes": "match",
+      "canonical_banks_and_locks": "byte-identical to HEAD",
+      "earlier_evidence": "byte-identical to HEAD",
+      "tracked_and_new_file_whitespace": "pass",
+      "blocking_findings_for_step3": "none; open dependency/native-platform/later-stage gates remain explicit"
+    }
+  },
+  "limitations": [
+    "Native AMD64 remains pending",
+    "Compose/Postgres/tooling/CI and paired backup container acceptance remain later L2 gates",
+    "Container browser execution is Chromium only; release engine/device/accessibility gates are unchanged",
+    "Known dependency advisories remain unresolved; no hosted/public launch readiness claim"
+  ]
+}

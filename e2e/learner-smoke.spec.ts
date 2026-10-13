@@ -667,9 +667,10 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
   await page.route('**/api/v1/subjects', async (route) => {
     if (failures++ === 0)
       await route.fulfill({
-        status: 503,
+        // Isolate keyboard Retry from the build's automatic retry policy.
+        status: 400,
         contentType: 'application/json',
-        body: '{"detail":"temporary"}',
+        body: '{"detail":"manual retry fixture"}',
       });
     else {
       await retryResponse;
