@@ -41,3 +41,49 @@ Python installation may generate `backend/src/meducation_api.egg-info/` metadata
 It is ignored build output and should not be committed. The package source,
 `pyproject.toml`, and requirements locks are tracked; installing the package
 regenerates its metadata.
+
+## JSON API container
+
+From the repository root, build the production API image:
+
+```sh
+docker build --pull -f backend/Dockerfile -t meducation-api:l2-step2 .
+```
+
+The multi-stage image installs a non-editable wheel and the locked runtime
+dependencies under pinned Python 3.14.8. It includes byte-identical copies of
+both canonical banks at `/app/content/` with explicit path settings, runs as
+UID/GID 10001, and has a bounded `/health/ready` healthcheck. The builder's
+tools, host `.env` files and private source material are excluded from runtime.
+See [build inputs and maintenance](../ops/containers/README.md) for image pins,
+context rules and lock updates.
+
+Run an isolated local API on loopback port 8800:
+
+```sh
+docker run --rm --name meducation-api-local --read-only --tmpfs /tmp \
+  --cap-drop ALL --security-opt no-new-privileges:true \
+  --publish 127.0.0.1:8800:8000 meducation-api:l2-step2
+```
+
+Inspect `/health/live` and `/health/ready` at `http://127.0.0.1:8800`, and stop
+with Ctrl+C or `docker stop --time 15 meducation-api-local`. The process uses
+one Uvicorn worker without reload. Local CORS defaults allow only
+`http://127.0.0.1:4173` and `http://localhost:4173`; override
+`MEDUCATION_ALLOWED_ORIGINS` explicitly when needed. This standalone port does
+not change the existing Vite proxy to port 8000. L2's later frontend/Compose
+steps provide the same-origin reverse proxy and optional Postgres service.
+
+Exercise the actual image with the repeatable API smoke command:
+
+```sh
+.venv/bin/python scripts/containers/smoke-api.py --image meducation-api:l2-step2
+```
+
+The smoke uses unique disposable containers and an automatically allocated
+loopback port. It checks canonical file hashes and representative API content,
+locked dependencies, non-root/read-only execution, health, cache/conflict/error
+responses, explicit CORS and graceful shutdown. Synthetic invalid-bank mounts
+exercise startup rejection without changing canonical files. It removes only
+its own containers and requires no database or host source mount for successful
+startup. Add `--report /absolute/path/report.json` to retain machine evidence.

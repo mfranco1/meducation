@@ -1,6 +1,6 @@
 # Local-first production preparation
 
-Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2–L6 not started. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
+Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 Steps 1–2 implemented and API verified on native ARM64, remaining L2 acceptance pending; L3–L6 not started. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
 
 ## Confirmed scope
 
@@ -47,6 +47,8 @@ Implementation requirements above are complete in code and local evidence. L1 is
 Gate: local backup/restore works without a backend and hostile/failed restores do not silently lose progress or inflate totals. Imported personal statistics are untrusted; a checksum is not proof of authenticity. No imported string is executed or rendered as HTML, and backup data never leaves the browser.
 
 ### L2 — Reproducible containers and local services
+
+Detailed sequence: [L2 containers and local services plan](L2-containers-local-services-plan.md), including seven gated steps, file ownership, JSON-only/default and optional-DB modes, native-platform evidence, real-proxy browser checks and the L3 handoff. Steps 1–2 are implemented; Docker is reachable and the JSON API container passed native ARM64 runtime checks. Frontend packaging, orchestration, DB tooling, CI and native AMD64 acceptance remain pending in Steps 3–7.
 
 - [ ] Follow [selected local toolchain](../../decisions/0003-local-postgres-toolchain.md) and verify native ARM64/AMD64 builds and daemon availability. Add a production FastAPI container using pinned Python 3.14, locked dependencies, a non-root runtime, explicit settings, and existing liveness/readiness routes. Include canonical banks for initial JSON mode at known paths.
 - [ ] Pin Postgres/local tools to the L0 version; use explicit readiness/wait behavior rather than assuming container start means DB readiness. Document amd64/arm64 image support for local Macs and hosted Linux. Image-version pinning needs an intentional security-update procedure.
@@ -175,7 +177,7 @@ Provision managed Postgres and the chosen admin identity; deploy static learner/
 - [ ] L5 implemented and verified.
 - [ ] L6 implemented and verified.
 
-L1 runtime work has since begun in its own tracker. Its latest verify:full and partial browser evidence are recorded there; no content edits, schema migrations, Docker setup or cloud provisioning occurred. The feature remains open pending the documented browser/recovery and public-launch gates. Historical checks in the earlier snapshot are not implementation evidence for these stages.
+L1 runtime work is complete in its own tracker with passing verification and the explicit Firefox deferral. Outstanding browser and public-launch acceptance stays in the ongoing browser checklist. No content edits, schema migrations, Docker setup or cloud provisioning occurred in that stage. Historical checks in the earlier snapshot are not implementation evidence for later stages.
 
 - [x] L0 Step 6 capability/lifecycle/accessibility acceptance selected and audited; L0-A design gate met. Application multi-browser, quota, BFCache and manual mobile/assistive-technology verification remain L1/release gates. Step 7 awaits user continuation.
 
@@ -188,6 +190,6 @@ L1 runtime work has since begun in its own tracker. Its latest verify:full and p
 
 [Completed L0 tracker](../done/L0-local-contracts-plan.md) records all nine design/evidence steps and the independent gates. L0-A implementation is complete in L1; Firefox acceptance is user-deferred and public-launch checks remain pending. L0-B is ready for L2/L3 implementation with container/dependency/runtime tests still pending. L0-C contract/capability status is recorded, but final provider/fresh-MFA acceptance remains required before production integration in L4. [Browser acceptance](L0-browser-acceptance.md) stays ongoing until its application/manual gates pass. L1 runtime implementation, audit and Chromium/WebKit acceptance are complete; the user-approved Firefox deferral is recorded separately. No hosted provisioning has occurred.
 
-Completed L1 work and evidence are tracked in [the progress backup plan](../done/L1-progress-backup-plan.md). Firefox acceptance was explicitly deferred by the user; [browser acceptance](L0-browser-acceptance.md) owns outstanding checks. L2 is the next stage and has not started.
+Completed L1 work and evidence are tracked in [the progress backup plan](../done/L1-progress-backup-plan.md). Firefox acceptance was explicitly deferred by the user; [browser acceptance](L0-browser-acceptance.md) owns outstanding checks. L2 is underway: its [implementation tracker](L2-containers-local-services-plan.md) records Steps 1–2 inputs/API evidence and remaining acceptance. Step 3 learner container/reverse proxy awaits continuation at the staged-work gate.
 
 - [x] L0 Step 9 final handoff/audit complete; completed tracker/evidence archived. Build/typecheck, architecture graph, 105 link/anchor checks, immutable evidence/canonical hashes and diff checks passed; existing chunk-size advisory remains. L1 runtime implementation is underway; see its current tracker and browser checklist.

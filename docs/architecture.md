@@ -103,6 +103,8 @@ Admin search, pagination, deletion impact calculation, and operation application
 
 The runtime never calls a generative AI service. Quiz rules and scoring stay in the pure TypeScript domain layer; learner progress persists through the browser repository. The Python API owns read-only quiz content delivery from the canonical JSON file. A database adapter is an option if content delivery later needs one; no database migration is part of the current architecture.
 
+L2 Step 2 packages this existing JSON service in [backend/Dockerfile](../backend/Dockerfile), using a non-editable installed wheel, pinned Python/runtime dependencies, an explicit non-root user and absolute paths to byte-identical copies of both banks. The image has no database dependency and reuses the existing health routes. [Standalone container commands](../backend/README.md#json-api-container) and the API smoke cover current packaging; the learner static proxy and Compose stack remain later L2 steps.
+
 
 ## Accepted local-preparation contracts and L1 runtime status
 

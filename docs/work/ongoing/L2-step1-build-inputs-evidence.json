@@ -1,0 +1,200 @@
+{
+  "observed_date": "2026-10-13",
+  "evidence_kind": "registry metadata only; no pull/build/runtime execution",
+  "images": [
+    {
+      "repository": "library/python",
+      "tag": "3.14.8-slim-bookworm",
+      "index_digest": "sha256:48b13b003dda20b16f9442b8475aa05fe21bf6579a8c881db92ffb4d8fd20f83",
+      "body_digest_verified": true,
+      "platforms": [
+        {
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "manifest_digest": "sha256:a66d3a463d0be3cc537c269b0d3418746dda512417a975559a0eaa8a6406baaf",
+          "config_digest": "sha256:82cd6bca489be723b62b192752c133eb7c6acbcecaeca797628725d994998c5b",
+          "runtime_user": "",
+          "exposed_ports": []
+        },
+        {
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux",
+            "variant": "v8"
+          },
+          "manifest_digest": "sha256:0e24db28cf5b7788413afe3fdc63075ca22bc4ecf74f5472304b391c2110e629",
+          "config_digest": "sha256:6b13e377e404ac4a3e8f307f79fa0621893d931bbd73d6c3116bc4a1556e0b2c",
+          "runtime_user": "",
+          "exposed_ports": []
+        }
+      ]
+    },
+    {
+      "repository": "library/postgres",
+      "tag": "17.11-bookworm",
+      "index_digest": "sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "body_digest_verified": true,
+      "platforms": [
+        {
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "manifest_digest": "sha256:66aafa11cf15800a3c94763f7e11d1e7b2e37e5e84bc4ce027cb6e1e4bfaf4df",
+          "config_digest": "sha256:589f742565e4f6d22149176b032974f55f8201a8a37b71ed587ec5c6902e689f",
+          "runtime_user": "",
+          "exposed_ports": [
+            "5432/tcp"
+          ]
+        },
+        {
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux",
+            "variant": "v8"
+          },
+          "manifest_digest": "sha256:a85953d6f830fd55a12929df3b7a4fa94dc96d652de62d2d714e0867ccb3670d",
+          "config_digest": "sha256:bb96c2f03a0b490277250ef12f9fd17e43244db37811cca90711e135bd98ece2",
+          "runtime_user": "",
+          "exposed_ports": [
+            "5432/tcp"
+          ]
+        }
+      ]
+    },
+    {
+      "repository": "library/node",
+      "tag": "22.23.3-bookworm-slim",
+      "index_digest": "sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392",
+      "body_digest_verified": true,
+      "platforms": [
+        {
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "manifest_digest": "sha256:efd0ab5780c2d9ab1f0f869571a00d5edb17793bff4cce4a2792e3eb0ffc7562",
+          "config_digest": "sha256:d0a16be756b6ec6658aecb8b7bcf87fa6c7d0d7fcc6ca53ad14bb49a4c90bdd7",
+          "runtime_user": "",
+          "exposed_ports": []
+        },
+        {
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux",
+            "variant": "v8"
+          },
+          "manifest_digest": "sha256:b20fe038d9592822dd534600a1ddf467e985178aa3fed60ec441a056c2cc45bd",
+          "config_digest": "sha256:cd2df7ff65c5fce1f8a18ce89e3aac24a80c1db3776d5842a4cf86bc27f300a2",
+          "runtime_user": "",
+          "exposed_ports": []
+        }
+      ]
+    },
+    {
+      "repository": "nginxinc/nginx-unprivileged",
+      "tag": "1.30.5-trixie",
+      "index_digest": "sha256:8f18dedfceea3d7feb98792810c8c9925c985890ade257f2ec1b2f492b4eaebb",
+      "body_digest_verified": true,
+      "platforms": [
+        {
+          "platform": {
+            "architecture": "amd64",
+            "os": "linux"
+          },
+          "manifest_digest": "sha256:580b0383be54db4ac2f53e951361212f20aff02e713bf2e1d60947ec801e1a40",
+          "config_digest": "sha256:ec844729c572dafcacc1658191502e37427aa0ec32554e193cc60947e15aefea",
+          "runtime_user": "101",
+          "exposed_ports": [
+            "8080/tcp"
+          ]
+        },
+        {
+          "platform": {
+            "architecture": "arm64",
+            "os": "linux"
+          },
+          "manifest_digest": "sha256:000d3c29da4b00df54dd9e4677780d7d9d25b63d07fc8791c390e8fe620125ae",
+          "config_digest": "sha256:742d79bc700c2ee88a09130c35f427b7edb93489241ab695d2a2cd207733919a",
+          "runtime_user": "101",
+          "exposed_ports": [
+            "8080/tcp"
+          ]
+        }
+      ]
+    }
+  ],
+  "source_commit": "23b22a667d82a5cb14f58b3b613cdb11f6cfe5ab",
+  "host": {
+    "os": "macOS",
+    "architecture": "arm64",
+    "docker_client": "20.10.17",
+    "compose": "2.7.0",
+    "buildx": "0.8.2",
+    "docker_server": null,
+    "daemon_check": {
+      "command": "docker version --format {{json .Server}}",
+      "timeout_seconds": 12,
+      "exit_code": 1,
+      "result": "Cannot connect to the Docker daemon at unix:///var/run/docker.sock"
+    },
+    "native_linux_execution": {
+      "arm64": "pending reachable local Linux Docker runtime",
+      "amd64": "pending native Linux runner"
+    },
+    "tool_changes": false
+  },
+  "sources": [
+    "https://www.python.org/downloads/release/python-3148/",
+    "https://www.postgresql.org/docs/release/17.11/",
+    "https://nodejs.org/en/blog/release/v22.23.3",
+    "https://nginx.org/en/security_advisories.html",
+    "https://github.com/nginx/docker-nginx-unprivileged",
+    "https://docs.docker.com/build/concepts/context/",
+    "https://pypi.org/pypi/setuptools/84.0.0/json",
+    "https://pypi.org/pypi/wheel/0.48.0/json",
+    "https://pypi.org/pypi/packaging/26.3/json"
+  ],
+  "build_tool_checks": {
+    "tools": {
+      "setuptools": "84.0.0",
+      "wheel": "0.48.0",
+      "packaging": "26.3"
+    },
+    "hash_verified_download": "pass",
+    "clean_install": "pass",
+    "python": "3.14.7",
+    "host_platform": "macOS ARM64",
+    "wheel_command": "python -m pip wheel --no-index --no-deps --no-build-isolation --wheel-dir=<temporary-dir> ./backend",
+    "app_wheel": "meducation_api-0.1.0-py3-none-any.whl",
+    "package_source_parity_files": 5,
+    "non_editable_install": "pass",
+    "linux_container_build": "not run"
+  },
+  "context_check": {
+    "engine": "github.com/moby/patternmatcher v0.6.1",
+    "module_checksum": "h1:qlhtafmr6kgMIJjKJMDmMWq7WLkKIo23hsrpR3x084U=",
+    "excluded_cases": 31,
+    "retained_cases": 26,
+    "result": "pass",
+    "actual_context_transfer": "not run"
+  },
+  "file_hashes": {
+    ".dockerignore": "3b252470ce2062aba0e95e73d9ad83149ae2ea9558b64a7f8481eb10fd10a901",
+    "backend/requirements-build.lock": "4d558783f5d421012ec4fd9daedcc6ca9f212c9e34e9bac28aa2adcd08292ce7",
+    "src/content/questionBank.generated.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+    "src/content/flashcardBank.generated.json": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+  },
+  "project_checks": {
+    "npm run build": "pass; existing Vite chunk-size advisory",
+    "ruff": "pass",
+    "mypy": "pass; 5 source files",
+    "pytest": "39 passed; Starlette httpx deprecation warning",
+    "relative_document_links": "32 resolve",
+    "protected_files": "canonical banks and existing dependency locks byte-identical to HEAD",
+    "evidence_hashes": "pass",
+    "diff_whitespace": "pass; includes new files"
+  }
+}

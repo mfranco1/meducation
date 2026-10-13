@@ -1,0 +1,41 @@
+# Private source material; root content/ is extraction data, not src/content/.
+/tn-pdfs/
+/content/
+**/*.pdf
+
+# Local credentials and configuration at any depth. Examples are documentation.
+**/.env
+**/.env.*
+!**/.env.example
+
+# Repository/agent state and local tooling.
+**/.git
+.agents/
+.codex/
+.aws/
+**/.DS_Store
+**/node_modules
+**/.venv
+**/venv
+**/__pycache__
+**/*.py[cod]
+**/*.egg-info
+**/.pytest_cache
+**/.mypy_cache
+**/.ruff_cache
+**/.cache
+
+# Generated artifacts and reports are not production build inputs.
+**/dist
+**/build
+**/*.tsbuildinfo
+**/coverage
+**/test-results
+**/playwright-report
+/var/
+/docs/
+
+# Retain package sources/manifests/locks, public assets, scripts (including
+# brandingPlugin), Vite/TypeScript configuration and both canonical JSON banks.
+# Keep source-test fixtures: the existing TypeScript project checks src tests
+# that import them. Runtime Dockerfiles must copy only their shipped artifacts.

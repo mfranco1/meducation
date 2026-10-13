@@ -1,0 +1,138 @@
+# L2 — Reproducible containers and local services
+
+Created: 2026-10-13. Status: Steps 1–2 implemented; API image built and verified on native Linux ARM64; native AMD64 acceptance pending; Steps 3–7 not started. Parent: [local-first production preparation](local-first-production-preparation.md). Prerequisite: [L0 toolchain decision](../../decisions/0003-local-postgres-toolchain.md). Previous stage: [completed L1](../done/L1-progress-backup-plan.md).
+
+## Outcome and scope
+
+A fresh checkout can build and run the learner and existing read-only FastAPI service through a real static server/reverse proxy. An optional local PostgreSQL 17 service retains disposable data across container replacement and provides matching client tools for L3. Builds use pinned inputs and locked dependencies, require no cloud account, and work on native Linux ARM64 and AMD64.
+
+L2 delivers packaging, local orchestration, operational instructions and verification. The API continues to read the two canonical JSON banks. Database adapters, SQLAlchemy/Psycopg/Alembic installation, content schema, least-privilege application roles, migrations and canonical import/export parity belong to L3. Authentication and database authoring belong to L4. No learner progress moves out of the browser; no content, IDs, answer provenance or storage contracts change.
+
+The user authorized starting L2 on 2026-10-13, then continued into Step 2 after repairing Docker. Follow the repository's [stage gates](../README.md): implement an authorized step, record its checks, then stop at the agreed gate. Cloud provisioning and L3 remain outside L2; tool installation/upgrades require an intentional decision.
+
+## Inspected baseline and constraints
+
+- There are no tracked Dockerfiles, Compose configuration or `.dockerignore`. [CI](../../../.github/workflows/checks.yml) runs host-based frontend, backend and browser jobs.
+- [Backend settings](../../../backend/src/meducation_api/settings.py) derive default bank paths and an optional `backend/.env` path from the source checkout. A packaged installation must receive explicit absolute paths for both banks; it cannot rely on that checkout layout.
+- [FastAPI startup](../../../backend/src/meducation_api/main.py) validates/indexes both banks once. Existing `/health/live` and `/health/ready` routes are outside `/api`; readiness checks initialized repositories. No new health semantics or recurring database query is needed in L2.
+- [Python packaging](../../../backend/pyproject.toml) requires Python 3.14. Runtime dependencies are pinned in `requirements.lock`, but the build-system requirements are ranges. Container packaging must also control build dependencies rather than allowing isolated package builds to resolve fresh tooling implicitly.
+- [Vite configuration](../../../vite.config.ts) proxies `/api` only in development/preview. The static runtime must supply its own proxy. Normal builds omit `admin.html`; optional admin builds deliberately enable it. Host `.env` files must not influence container builds.
+- [Current Playwright configuration](../../../playwright.config.ts) launches FastAPI and Vite preview itself. Passing that suite unchanged would not prove container routing. Add a dedicated externally started container configuration.
+- ADR0003 selects Python `3.14.8-slim-bookworm` and Postgres `17.11-bookworm`, each with an exact multi-platform index digest. These are inherited pins, not newly verified availability claims. Recheck them before implementation. Node and static-server image pins still need selection and registry verification.
+- L0 observed a macOS ARM64 host with an unreachable Docker daemon and older Docker/Compose clients. That is historical evidence; Step 1 must recheck it. Host PG14 dump tools are unsuitable for PG17. Use container PG17 tools.
+- L1 is complete under the user's Firefox deferral. Firefox, actual mobile/assistive-technology checks and unobserved persisted BFCache returns remain in [browser acceptance](L0-browser-acceptance.md); container smoke tests do not close those obligations.
+
+## Proposed file ownership
+
+Use these paths as implementation starting points, creating files only when their step needs them:
+
+- Root `compose.yaml`, `.dockerignore` and `Dockerfile`: tool-discovered orchestration, shared repository build-context filter, multi-stage learner build/static runtime.
+- `backend/Dockerfile`: locked Python build and non-root API runtime; repository root is its build context so both canonical banks can be copied explicitly.
+- `ops/containers/`: static-server configuration, optional loopback DB-port override, fixture-only smoke override and development environment example. Keep this small; no general deployment framework.
+- `scripts/containers/`: bounded readiness/smoke and database tool wrappers where a script is clearer than repeated shell instructions. Test failure/cleanup behavior, not just successful commands.
+- Root `playwright.containers.config.ts` and `e2e/containers/`: browser coverage against an already started stack. Exclude this directory from the host learner suite to avoid accidentally running infrastructure cases through Vite.
+- `docs/local-containers.md`: operational runbook linked from root/backend READMEs and testing guidance. `var/backups/postgres/` becomes ignored output, never a build input or committed artifact.
+- Existing CI workflow: separate container job(s). Leave application ownership and checked dependency boundaries intact.
+
+## Step 1 — Confirm runtime, pins and build inputs
+
+- [x] Record host architecture, Docker client/server, Compose and Buildx versions and bounded daemon availability checks. Do not change the user's Docker context or install/upgrade tooling silently. If unavailable, complete reviewable files later but leave runtime gates pending.
+- [x] Recheck ADR0003 image tags/index digests, supported platforms and upstream security updates against official sources. Preserve PG major 17. Record any intentional patch-pin changes in the ADR and new L2 evidence; never rewrite frozen L0 snapshots.
+- [x] Select exact Node 22 patch and Debian-based non-root static-server image/version/index digest, verifying compatibility with the lockfile's toolchain and both platforms. Use a small Nginx configuration unless evidence warrants a different server; record the concrete choice before writing its runtime config.
+- [x] Define locked Python build-tool installation and a no-dependency, non-editable app install. Prefer a wheel built using explicitly locked tooling with build isolation disabled, then install that wheel plus the runtime lock into the final image. No dev dependencies, compiler or editable checkout in runtime.
+- [x] Add a narrow context filter for `.git`, private `tn-pdfs/` and root `content/`, all real `.env` variants, virtual environments, caches, package metadata, node_modules, dist, test reports and backup output. Keep explicitly required manifests, locks, package sources, Vite/branding inputs and canonical banks. Check nested env paths and allow only intentional example files.
+
+Gate: exact input pins, build-tool strategy, allowed context and native verification environments are recorded. A manifest listing ARM64/AMD64 is not a successful build; emulation is not native execution. If a native runner is unavailable, identify that gap without declaring L2 complete.
+
+### Step 1 result — 2026-10-13
+
+[Build-input record](../../../ops/containers/README.md) selects exact pins and the wheel-install strategy; [machine evidence](L2-step1-build-inputs-evidence.json) records current host availability, public index/child/config digests, context checks and packaging results. `.dockerignore` and `backend/requirements-build.lock` are implemented. Python/Postgres pins still match ADR0003. Node 22.23.3 satisfies installed tool engines. Nginx 1.30.5 uses Debian Trixie because available unprivileged Bookworm tags lag current security fixes; its AMD64/ARM64 config metadata selects user 101.
+
+Docker client 20.10.17, Compose 2.7.0 and Buildx 0.8.2 are installed on macOS ARM64. The bounded daemon check failed to connect to the current socket. Native ARM64 container execution therefore remains pending; native AMD64 runner execution is also pending. No tools/contexts were changed, images pulled or containers started. Step 1 records these limitations; L2 is not complete.
+
+The Moby pattern matcher passed 31 excluded and 26 retained path assertions. Source-test fixtures remain because the existing TypeScript project needs their imports; runtime images must copy only shipped artifacts. A clean temporary Python 3.14.7 environment installed three hash-verified build wheels, built the app without build isolation/network/dependency resolution, and installed its non-editable wheel. All five package-source files match; fixtures/content are absent from the app wheel. Linux Python 3.14.8 packaging is still a Step 2 container gate.
+
+Verification: `npm run build` including typecheck passed with the existing Vite chunk-size advisory. Backend Ruff/mypy passed; pytest passed all 39 tests with a Starlette/httpx deprecation warning. The completion audit confirmed 32 relative document links, recorded file hashes, canonical banks and existing dependency locks byte-identical to HEAD, and whitespace checks for tracked/new files. Step 1 input work is complete with runtime limitations recorded; stop before Step 2 under the staged-work gate.
+
+## Step 2 — Package the JSON content API
+
+- [x] Add the backend image using ADR0003's Python base pin and production lock. Copy both canonical banks byte-for-byte to `/app/content/`; set `MEDUCATION_BANK_PATH` and `MEDUCATION_FLASHCARD_BANK_PATH` explicitly. Runtime must not load a copied developer `.env`.
+- [x] Run as a fixed non-root user, with readable application/content files and no content write requirement. Start one Uvicorn process without reload, bound to the container interface on port 8000, using exec-form startup and graceful termination. Host exposure is controlled separately by Compose.
+- [x] Configure allowed origins explicitly for local container use; same-origin browser API calls go through the frontend. Do not add permissive wildcard CORS or database URLs to solve proxy mistakes.
+- [x] Add a bounded readiness healthcheck using a tool already present (Python standard library is sufficient). Exercise both health endpoints and startup failure with missing/invalid paired banks. Do not make readiness depend on optional Postgres.
+- [x] Verify imports, runtime UID, lock consistency, both bank hashes and representative quiz/flashcard API responses in a clean image. Run backend Ruff, mypy and pytest for packaging/settings changes.
+
+Gate: the isolated image serves both banks, rejects invalid startup inputs, shuts down cleanly and requires neither a host source mount nor Postgres.
+
+### Step 2 result — 2026-10-13
+
+Docker is now reachable after the user's repair. The current client/engine is 29.8.2, Compose 5.6.0 and Buildx 0.37.2 on `desktop-linux`, with a native Linux ARM64 engine. The task did not upgrade tools or switch contexts. The failed initial sandbox socket check was resolved by approved local Docker access; no application/runtime availability failure remained.
+
+[API Dockerfile](../../../backend/Dockerfile) builds the app wheel using the hashed build-tool lock, downloads only binary runtime wheels from the existing production lock, installs them offline into a separate virtual environment and checks dependencies. The final pinned Python 3.14.8 image contains that installed environment, the runtime lock and the two exact canonical banks. It uses UID/GID 10001, explicit absolute bank paths, local-only CORS origins, one exec-form Uvicorn process, SIGTERM shutdown and a bounded existing readiness endpoint. The source/settings/API contracts are unchanged.
+
+`docker build --pull --no-cache -f backend/Dockerfile -t meducation-api:l2-step2 .` passed on native Linux ARM64. [Repeatable API smoke](../../../scripts/containers/smoke-api.py) passed eight groups against the built image: non-root/read-only/import/dependency/hash checks; both health endpoints and representative canonical subject/question/flashcard text/order/provenance; 304/409/404 and explicit CORS; graceful exit 0; missing and invalid inputs for each bank; and cross-bank shared-subject rejection. The successful runtime uses no host source/content mount or database. Synthetic negative cases use temporary read-only files. All smoke-owned containers were removed; the built image remains available locally.
+
+[Step 2 machine evidence](L2-step2-api-container-evidence.json) records the image ID, platform, versions, source hashes and results. [Backend setup](../../../backend/README.md#json-api-container) documents standalone build/run/smoke commands; build-input/testing/architecture guidance now reflects current API packaging. Native AMD64 execution, frontend/proxy/browser/Compose/DB acceptance and clean rebuild comparison remain later L2 gates. Step 1 evidence stays historical and unchanged.
+
+Verification: TypeScript/build passed with the existing Vite chunk-size advisory. Backend and smoke Ruff passed, backend mypy passed, and all 39 backend tests passed with the existing Starlette/httpx warning. The final audit checked 77 relative links, evidence hashes, tracked/new-file whitespace, byte-identical canonical content/existing locks and the unchanged Step 1 snapshot. A filtered Docker check confirmed no smoke-owned containers remained. Step 2 is verified on native ARM64; stop before Step 3 under the staged-work gate. L2 remains ongoing.
+
+## Step 3 — Package learner assets and the real reverse proxy
+
+- [ ] Use a multi-stage build with `npm ci` from the committed lock and a clean learner build. Explicitly select API mode and disable both admin build/runtime flags. Copy only generated learner assets into the non-root static runtime. Retain host Vite commands for routine UI work.
+- [ ] Proxy `/api/` to `api:8000` without stripping the prefix; preserve query strings, `If-Match`, `If-None-Match`, ETag, status codes and API cache headers. API 404/409/503 and upstream failures must never become SPA HTML or a successful fallback response.
+- [ ] Define exact health routing: static-server liveness is independent; forward exact `/health/live` and `/health/ready` paths to FastAPI for end-to-end diagnostics. Compose should distinguish frontend availability from API readiness.
+- [ ] Serve the learner entry with revalidation, hashed assets with immutable caching, and missing assets with 404. Explicitly reject `/admin.html`; do not let a SPA fallback disguise its absence. Verify fonts, generated branding and lazy route chunks through the server.
+- [ ] Verify production artifact omission of admin entry/code and development QA through artifact/graph inspection as well as HTTP checks. Do not claim that hiding a URL is authentication or that API-mode output cannot contain optional local-adapter chunks without inspecting it.
+- [ ] Bound proxy timeouts and test backend unavailability and subsequent recovery, including API container recreation/address changes. Ensure the selected server's upstream resolution strategy recovers without requiring an unexplained manual frontend restart.
+
+Gate: normal learner behavior and API error/cache semantics work through the actual static runtime; assets and authoring exclusion are verified.
+
+## Step 4 — Compose the local stack and optional Postgres
+
+- [ ] Define project `meducation-local` with frontend and API by default. Publish only frontend `127.0.0.1:4173` by default (document an explicit port override); keep API on the internal network. JSON-only startup must succeed without starting Postgres.
+- [ ] Add service `postgres` under profile `db`, with ADR0003's pinned PG17 image and named volume `postgres-data` at `/var/lib/postgresql/data`. Do not hard-code an AMD64 platform on Apple Silicon. Postgres has no published port by default; optional override binds `127.0.0.1:5433:5432`.
+- [ ] Supply development-only bootstrap configuration from an ignored local env file with an explicitly labelled example. Require needed variables when starting the DB profile. Do not inject bootstrap credentials into API or frontend; do not print resolved secret-bearing Compose config into logs.
+- [ ] Use healthchecks and bounded waits rather than sleeps. API/frontend dependencies must not require the optional DB. Provide a `pg_isready` startup check and a separate authenticated `SELECT 1` smoke assertion; neither certifies L3 schema/content readiness.
+- [ ] Verify the default JSON-only config and DB-enabled/port-override configs using the supported Compose version. Keep unsupported modern Compose features out unless Step 1 deliberately raises/documented the minimum version.
+- [ ] Test named-volume survival across Postgres restart and container recreation using a disposable sentinel record/database. Remove only test-owned data afterward. No application content tables, roles or migrations are introduced.
+
+Gate: both stack modes run with loopback-only published ports. The DB profile supplies an independent local service; it does not implement `MEDUCATION_CONTENT_SOURCE=postgres`. L3 adds that setting, the dependency and one-time schema/content initialization checks, with no silent JSON fallback.
+
+## Step 5 — Operational runbook and matching database tools
+
+- [ ] Document prerequisites, env-file preparation, build, JSON-only start, DB-profile start, bounded readiness, logs, stop/start and rebuild/recreate commands. Explain that host `localhost:5173` and container `127.0.0.1:4173` have separate browser storage; switching origins does not automatically transfer progress. Use L1 download/restore for deliberate transfer.
+- [ ] Document/API smoke-check `psql`, `pg_dump` and `pg_restore` from the pinned PG17 image. Confirm client/server versions. Do not use host PG14 tools or expose passwords in argv/logs; use protected credential files/mounts as appropriate.
+- [ ] Provide a local disposable-database dump/restore rehearsal: custom-format dump with `--no-owner --no-acl`, restrictive output permissions, temporary file renamed only on success, and restore into a distinct fresh test database with `--exit-on-error --single-transaction`. Compare sentinel values and clean up only that test database. Failed dumps must not replace a good backup.
+- [ ] Label this L2 rehearsal as tooling/volume verification using development bootstrap access. L3 owns least-privilege reader/migrator/backup roles, owner/default privileges, migration head and actual-bank restoration/parity. Do not describe bootstrap access as the production backup design.
+- [ ] Separate routine restart/recreate from destructive reset. Never include `down --volumes`, broad prune or automatic volume deletion in startup/cleanup. Before explicit deletion, verify exact project/volume labels and resolved `meducation-local_postgres-data`, plus a verified off-volume backup or an intentional decision to discard disposable data.
+- [ ] Explain empty-volume-only Postgres initialization: editing env credentials does not update existing roles. Document off-volume versus off-device backup limits, safe stale-container/port troubleshooting and deliberate readable-tag-plus-digest maintenance. A major Postgres change requires an upgrade/restore plan.
+
+Gate: commands are exercised against disposable local data and their failure paths preserve existing data/backups. Canonical JSON and learner storage are untouched.
+
+## Step 6 — Container acceptance and CI
+
+- [ ] Add isolated smoke orchestration with a unique project/port/volume namespace, bounded startup/teardown, safe logs on failure and no reuse of personal browser profiles or the developer database. Remove only explicitly test-owned disposable resources.
+- [ ] Use the shipped images/configuration for canonical startup/hash/API smoke. Use read-only fixture bank mounts in a test-only override for deterministic browser scenarios; do not bake fixtures into the production runtime or replace canonical files.
+- [ ] Add a Playwright config with the container origin and no Vite/host FastAPI `webServer`. Reuse applicable learner assertions without starting a second stack. Cover quiz start/answer/save/resume/submit/results, read-only browse, flashcard reveal/checkpoint/resume/finish, and an L1 paired download/restore round trip in synthetic browser storage.
+- [ ] Assert proxy conditional 304, stale-revision 409, unknown API 404, upstream interruption/recovery, health routing, asset cache behavior, missing asset/admin 404, and persistence of browser progress across service recreation at the same origin. Verify Web Locks admission on the actual loopback origin.
+- [ ] Add CI jobs for clean image builds and stack smoke, optional-DB startup/recreation and dump/restore rehearsal. Keep current host tests. Record native Linux AMD64 and ARM64 build/runtime evidence separately; use available native runners or explicit external native evidence. QEMU may supplement but cannot replace this gate.
+- [ ] Build again from the same pinned inputs without relying on prior outputs; verify installed versions, required artifact/content hashes and runtime behavior. Define reproducibility as repeatable locked inputs and verified output behavior; do not promise byte-identical image digests unless measured and timestamp/build metadata are controlled.
+- [ ] Record commands, source commit, platform, image pins/IDs, Docker/Compose versions, result counts, logs and limitations in this tracker or a new L2 evidence file. Never copy real secrets, personal progress or full private build-context contents into evidence.
+
+Gate: documented fresh-checkout commands and container-specific checks pass on both native platforms. Unavailable Docker/runners remain unmet gates, not passing metadata checks.
+
+## Step 7 — Audit, documentation and handoff to L3
+
+- [ ] Update root/backend setup, architecture entry/deployment modes and testing guidance to describe implemented commands and current JSON-only API behavior. Add the runbook link and image-update procedure; avoid duplicating all commands across documents.
+- [ ] Run relevant [project verification](../../testing.md): at minimum `npm run build` (includes typecheck), lint/architecture, Python checks for packaging/settings, learner/admin artifact checks, and affected browser tests. Run the new container gates in addition to host tests, not as an assumed consequence of `verify:full`.
+- [ ] Compare canonical bank hashes before/after; run `git diff --check` and changed-document link checks. Any intentional build/config change affecting content loading requires the documented corresponding regressions.
+- [ ] Audit every L2 parent requirement against recorded evidence. Preserve Firefox/mobile/lifecycle deferrals and local-versus-hosted limitations. Complete the repository completion audit before marking implementation done.
+- [ ] Mark L2 complete and move this tracker/supporting evidence to `done` only after all applicable gates pass or a specific user-approved deferral is recorded. Update parent links/status; leave L3–L6 unchecked.
+
+Handoff to L3 includes working container pins/configuration, native execution evidence, tested PG17 tooling, and outstanding environment limitations. It does not certify public-launch readiness, hosted TLS/suspension behavior, auth, load capacity or content authority cutover.
+
+## Planning verification
+
+This document is based on current repository code, owner docs, completed L0/L1 trackers and the active production-preparation roadmap. No external version revalidation, container build/start, database operation or application implementation was performed while planning.
+
+2026-10-13: `npm run build` passed, including TypeScript checking; the existing Vite chunk-size advisory remains. All 26 relative document links across this plan and the updated parent resolve; `git diff --check` passed. Only these two Markdown trackers changed. Container/native-platform, browser and database checks above remain implementation gates, not results of this planning task.

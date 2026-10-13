@@ -1,0 +1,164 @@
+{
+  "image_tag": "meducation-api:l2-step2",
+  "image_id": "sha256:44250a53c22a237e0f5cf06a0dfdceb582e5382dfe9442f866b42d9f1215f90d",
+  "image_platform": "linux/arm64",
+  "docker": {
+    "Client": {
+      "Version": "29.8.2",
+      "ApiVersion": "1.56",
+      "DefaultAPIVersion": "1.56",
+      "GitCommit": "7fc2dff",
+      "GoVersion": "go1.26.8",
+      "Os": "darwin",
+      "Arch": "arm64",
+      "BuildTime": "Wed Sep 30 19:32:03 2026",
+      "Context": "desktop-linux"
+    },
+    "Server": {
+      "Platform": {
+        "Name": "Docker Desktop 4.95.0 (242831)"
+      },
+      "Version": "29.8.2",
+      "ApiVersion": "1.56",
+      "MinAPIVersion": "1.40",
+      "Os": "linux",
+      "Arch": "arm64",
+      "Components": [
+        {
+          "Name": "Engine",
+          "Version": "29.8.2",
+          "Details": {
+            "ApiVersion": "1.56",
+            "Arch": "arm64",
+            "BuildTime": "Wed Sep 30 19:31:50 2026",
+            "Experimental": "false",
+            "GitCommit": "8af9fe3",
+            "GoVersion": "go1.26.8",
+            "KernelVersion": "7.0.14-linuxkit",
+            "MinAPIVersion": "1.40",
+            "Module": "github.com/moby/moby/v2",
+            "ModuleVersion": "v2.0.0+unknown",
+            "Os": "linux"
+          }
+        },
+        {
+          "Name": "containerd",
+          "Version": "v2.3.6",
+          "Details": {
+            "GitCommit": "ee2735368117d2eb259779949d5e75cdafec9761"
+          }
+        },
+        {
+          "Name": "runc",
+          "Version": "1.5.1",
+          "Details": {
+            "GitCommit": "v1.5.1-0-g8f2685a4"
+          }
+        },
+        {
+          "Name": "docker-init",
+          "Version": "0.19.0",
+          "Details": {
+            "GitCommit": "de40ad0"
+          }
+        }
+      ],
+      "GitCommit": "8af9fe3",
+      "GoVersion": "go1.26.8",
+      "KernelVersion": "7.0.14-linuxkit",
+      "BuildTime": "2026-09-30T19:31:50.000000000+00:00"
+    }
+  },
+  "checks": [
+    "non-root/read-only runtime, exact bank/lock hashes, locked dependencies/imports",
+    "health, canonical subject/quiz/flashcard content, 304/409/404 and explicit CORS",
+    "SIGTERM graceful shutdown with exit 0",
+    "MEDUCATION_BANK_PATH: missing input fails startup",
+    "MEDUCATION_BANK_PATH: invalid input fails startup",
+    "MEDUCATION_FLASHCARD_BANK_PATH: missing input fails startup",
+    "MEDUCATION_FLASHCARD_BANK_PATH: invalid input fails startup",
+    "flashcard subject absent from quiz bank fails paired initialization"
+  ],
+  "runtime": {
+    "uid": 10001,
+    "gid": 10001,
+    "python": "3.14.8",
+    "architecture": "aarch64",
+    "package_path": "/opt/venv/lib/python3.14/site-packages/meducation_api/main.py",
+    "bank_paths": [
+      "/app/content/questionBank.generated.json",
+      "/app/content/flashcardBank.generated.json"
+    ],
+    "allowed_origins": [
+      "http://127.0.0.1:4173",
+      "http://localhost:4173"
+    ],
+    "hashes": {
+      "/app/content/questionBank.generated.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+      "/app/content/flashcardBank.generated.json": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7",
+      "/app/requirements.lock": "1b0a7a2f3e8997b5585c5d30cf1aaf4f209f97aa504092f70fe0b84a9161c449"
+    },
+    "packages": {
+      "pydantic-settings": "2.15.0",
+      "h11": "0.16.0",
+      "click": "8.5.0",
+      "typing-extensions": "4.16.0",
+      "idna": "3.20",
+      "typing-inspection": "0.4.4",
+      "fastapi": "0.142.2",
+      "starlette": "1.7.0",
+      "opentelemetry-api": "1.45.0",
+      "anyio": "4.15.1",
+      "python-dotenv": "1.2.4",
+      "pip": "26.2.1",
+      "pydantic-core": "2.46.5",
+      "meducation-api": "0.1.0",
+      "uvicorn": "0.54.0",
+      "annotated-doc": "0.0.5",
+      "pydantic": "2.13.5",
+      "annotated-types": "0.8.0"
+    },
+    "compiler_present": false,
+    "source_env_present": false,
+    "banks_writable": false
+  },
+  "result": "pass",
+  "observed_date": "2026-10-13",
+  "source_commit": "23b22a667d82a5cb14f58b3b613cdb11f6cfe5ab",
+  "build": {
+    "command": "docker build --pull --no-cache -f backend/Dockerfile -t meducation-api:l2-step2 .",
+    "result": "pass",
+    "base_index": "sha256:48b13b003dda20b16f9442b8475aa05fe21bf6579a8c881db92ffb4d8fd20f83",
+    "context_transfer_bytes_displayed": "17.14MB",
+    "native_platform": "linux/arm64",
+    "runtime_wheels": "binary-only from the unchanged production lock; offline installation and pip check"
+  },
+  "smoke_command": ".venv/bin/python scripts/containers/smoke-api.py --report /private/tmp/meducation-l2-api-smoke.json",
+  "file_hashes": {
+    "backend/Dockerfile": "376aeef1b5979dcd98b21c909795a170d97d2aab0ce16f8bb1547d78f05707fe",
+    "scripts/containers/smoke-api.py": "d6dabb5e525b87960ea12f6068f1b154f4f59a7f609292a4d5412bdd240ee428",
+    "backend/requirements.lock": "1b0a7a2f3e8997b5585c5d30cf1aaf4f209f97aa504092f70fe0b84a9161c449",
+    "backend/requirements-build.lock": "4d558783f5d421012ec4fd9daedcc6ca9f212c9e34e9bac28aa2adcd08292ce7",
+    "src/content/questionBank.generated.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+    "src/content/flashcardBank.generated.json": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+  },
+  "project_checks": {
+    "build_typecheck": "pass; existing Vite chunk-size advisory",
+    "ruff_backend_and_smoke": "pass",
+    "mypy": "pass; 5 source files",
+    "pytest": "39 passed; Starlette/httpx deprecation warning",
+    "final_audit": {
+      "relative_links": 77,
+      "file_hashes": "match",
+      "protected_content_locks": "unchanged",
+      "step1_snapshot": "unchanged",
+      "tracked_and_new_file_whitespace": "pass"
+    }
+  },
+  "limitations": [
+    "Native AMD64 build/runtime execution pending L2 acceptance",
+    "Frontend proxy, Compose, Postgres and browser-container tests belong to later steps",
+    "One clean image build; reproducible rebuild comparison remains Step 6",
+    "No hosted or public-launch readiness claim"
+  ]
+}
