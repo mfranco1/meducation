@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-13",
+  "stage": "L3 Step 1 design-input probe",
+  "python": "3.14.7",
+  "probe_source_sha256": "d5c795f47dc0a4afea5fff83d8cb28e9b49012b8e422d2939a74d76eefe5eb5c",
+  "scope": "In-memory independent column projection, simulated key-order loss and global-ordinal reassembly. No SQL, DB or role enforcement tested. Uses existing JSON adapters for revision baseline.",
+  "banks": [
+    {
+      "name": "actual_banks",
+      "paths": [
+        "src/content/questionBank.generated.json",
+        "src/content/flashcardBank.generated.json"
+      ],
+      "source_byte_sha256": [
+        "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+        "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+      ],
+      "revisions": {
+        "quiz": "sha256-11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+        "flashcard": "sha256-78dc0f035e3e42c81fcbfc92ea3a5963fc3807186ea82b7ee9bc84cfe6a02f19"
+      },
+      "counts": {
+        "subjects": 13,
+        "quizzes": 111,
+        "questions": 11687,
+        "decks": 98,
+        "cards": 1712
+      },
+      "column_projection_global_ordinal_reassembly": "passed",
+      "recursive_template_key_reordering_and_exact_artifact_match": "passed"
+    },
+    {
+      "name": "learner_fixtures",
+      "paths": [
+        "e2e/fixtures/bank.json",
+        "e2e/fixtures/flashcard-bank.json"
+      ],
+      "source_byte_sha256": [
+        "61eeb0421940c5557f94ea6dbb9b078e8563b61bd038bc364d5fded5bf8c860f",
+        "1158225f8ea910a4efffaf57371a50e73bf151bcd8f1993c9a78e73aca961150"
+      ],
+      "revisions": {
+        "quiz": "sha256-2660aef37253ceb19c3f98914417137649b07b50918cf3b42d00dfd75b7c08b4",
+        "flashcard": "sha256-1a061594f393b7e2aaf223050763dbb3522cc573cc3b3ecb6e5af9a8ad94dbab"
+      },
+      "counts": {
+        "subjects": 1,
+        "quizzes": 1,
+        "questions": 2,
+        "decks": 1,
+        "cards": 2
+      },
+      "column_projection_global_ordinal_reassembly": "passed",
+      "recursive_template_key_reordering_and_exact_artifact_match": "passed"
+    }
+  ],
+  "adversarial_checks": {
+    "sorted_object_keys_change_existing_revision": "passed",
+    "key_template_restores_revision_without_leaf_substitution": "passed",
+    "missing_field_changed_leaf_reordered_choices_rejected": "passed",
+    "opaque_flashcard_ids_accepted_by_current_stored_contract": "passed"
+  },
+  "runtime_gates": "Postgres migrations, constraints, permissions, atomicity, allocator recovery and API adapters remain unimplemented."
+}
