@@ -1,5 +1,9 @@
 # Meducation
 
+For current local database authoring, follow the [local authority runbook](docs/local-authoring.md). Legacy JSON-editor instructions below apply only to explicit development fixtures.
+
+Content authoring uses the designated local PostgreSQL database through the authenticated paired HTTP editor. Published learner content remains read-only and learner progress remains in the browser. Repository JSON/local-content mode is an explicitly labeled read-only export/archive fallback; it cannot overwrite later database-only work. Hosted provider acceptance remains a separate gate. See [the recovery runbook](docs/L4-authoritative-recovery.md).
+
 Meducation is a browser-based study platform built with React, TypeScript, Vite, and Material UI. It offers subject-based quizzes with Fast Feedback or Exam Mode, resumable attempts, score history, and flashcard decks with saved study progress.
 
 The app runs locally without an account. By default, the existing read-only FastAPI service delivers the canonical quiz and flashcard content. Attempts, scores, and flashcard checkpoints are stored in your browser's `localStorage`; the API does not persist learner progress. An explicit local-content mode also loads the repository's JSON banks without the API.

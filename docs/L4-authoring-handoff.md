@@ -1,5 +1,9 @@
 # L4 authoring handoff from L3
 
+Current status: local PostgreSQL authority cutover is user-approved. See the
+[local authority runbook](local-authoring.md). Authority statements in the original
+design-stage snapshot below describe the pre-cutover stage.
+
 Recorded 2026-10-14. L3 implements local Postgres read delivery, operator import/
 activation/export, durable IDs and tested recovery. L4 implementation has not
 started. Canonical JSON remains authoritative; do not enable DB-only editing or

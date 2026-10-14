@@ -1,7 +1,11 @@
 # Meducation content API
 
-The FastAPI service reads `src/content/questionBank.generated.json` as the
-canonical schema-v4 quiz bank and `src/content/flashcardBank.generated.json` as
+For the initialized local authority, use the [local authoring launcher and jobs](../docs/local-authoring.md).
+
+Use PostgreSQL published-only learner delivery and authenticated paired HTTP authoring for the designated authoritative target. JSON mode and JSON-authoring instructions below are archive/fixture workflows only. Explicit migrator jobs own schema/ACL/session/allocation recovery; workers never migrate or import. Restore into a separate target, quarantine sessions and protected allocation, rotate external auth epoch, reconcile complete independent journals, then restart compatible workers/caches. Hosted identity remains disabled until its separate acceptance gate passes. See [the recovery runbook](../docs/L4-authoritative-recovery.md).
+
+Explicit JSON archive/fixture mode reads `src/content/questionBank.generated.json` as the
+schema-v4 quiz representation and `src/content/flashcardBank.generated.json` as
 the canonical flashcard bank. Flashcard decks reference the quiz bank's shared
 subjects directly. It serves read-only content; attempts, checkpoints, and scoring remain
 in the browser.

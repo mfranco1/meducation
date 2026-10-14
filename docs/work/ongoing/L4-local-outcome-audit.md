@@ -1,5 +1,9 @@
 # L4 local outcome audit — 2026-10-14
 
+Later status: the user-approved local cutover supersedes the pending authority
+and external-copy gates below. See [Step 7 evidence](L4-step7-cutover-evidence.json).
+This earlier closeout remains historical.
+
 Scope: finish locally executable L4 verification/preparation before further L5
 work, as requested by the user. Base checkout: `ae26a0c`. This is a partial L4
 completion audit, not authority cutover or hosted readiness. The retained external

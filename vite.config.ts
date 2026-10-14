@@ -11,8 +11,16 @@ export default defineConfig(({ mode }) => {
 
   return {
     plugins: [brandingPlugin(), react()],
-    server: { proxy: { '/api': 'http://127.0.0.1:8000' } },
-    preview: { proxy: { '/api': `http://127.0.0.1:${process.env.MEDUCATION_E2E_API_PORT ?? '8000'}` } },
+    server: {
+      proxy: {
+        '/api': { target: `http://127.0.0.1:${process.env.MEDUCATION_API_PORT ?? '8000'}`, changeOrigin: false },
+      },
+    },
+    preview: {
+      proxy: {
+        '/api': { target: `http://127.0.0.1:${process.env.MEDUCATION_E2E_API_PORT ?? '8000'}`, changeOrigin: false },
+      },
+    },
     build: { rollupOptions: { input } },
     test: {
       maxWorkers: 2,

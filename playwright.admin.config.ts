@@ -11,7 +11,8 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   webServer: {
-    command: 'npm run dev -- --host 127.0.0.1 --port 4174 --strictPort',
+    command:
+      'VITE_ADMIN_SOURCE=json VITE_JSON_FIXTURE_AUTHORING=true npm run dev -- --host 127.0.0.1 --port 4174 --strictPort',
     url: 'http://127.0.0.1:4174/admin.html',
     reuseExistingServer: false,
     timeout: 60_000,

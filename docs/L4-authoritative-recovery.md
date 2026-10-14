@@ -1,11 +1,24 @@
 # L4 authoritative recovery preparation
 
-Status: Step 6 implementation is in progress. Repository JSON remains authoritative.
+Status: Local PostgreSQL cutover is user-authorized on 2026-10-14. Protected local dumps, exports and allocation journals are retained outside the volume. Off-device retention is explicitly deferred for this local stage.
 The isolated rehearsal and export tools below do not authorize cutover, certify a
 retained backup, or enable a hosted identity provider. The [L4 tracker](work/ongoing/L4-local-authoring-admin-access-plan.md#step-6--rehearse-authoritative-recovery-and-prepare-tooling)
 owns acceptance and remaining gates.
 
-## Small local backup policy
+## Current local-only policy override — 2026-10-14
+
+The user approved proceeding with a protected local backup and explicitly made
+off-device copies a later priority. This supersedes the original requirement for
+an external destination before the local authority cutover. Use the
+[local authority runbook](local-authoring.md): `var/backups/postgres/` holds full
+PG17 dumps, deterministic exports and two local allocation journal directories.
+`--local-copy-only` reports this policy honestly and is restricted to the designated
+loopback authority. No off-device attestation was supplied. Loss of this host is
+not covered; incomplete journals still block allocation recovery. The original
+independent-copy policy below remains the future disaster-recovery target, not a
+claim about the current retained copies.
+
+## Original independent-copy backup policy
 
 Decision selected on 2026-10-14 after the user delegated the approach: use a
 private local recovery folder plus a dedicated encrypted external drive. This fits
@@ -284,7 +297,10 @@ remote URLs are retained. Learners own browser progress and use the separate
 
 The [prepared documentation patch](work/ongoing/L4-cutover-documentation.patch)
 and [base file hashes](work/ongoing/L4-cutover-documentation-base.json) are review
-artifacts only. `git apply --check` verifies applicability; do not apply them before
+historical preparation artifacts. The prepared patch was applied at the
+user-approved local Step 7 cutover and reconciled with the local-only policy; see
+[cutover evidence](work/ongoing/L4-step7-cutover-evidence.json). For future reviews,
+`git apply --check` verifies applicability of a newly prepared patch; do not apply them before
 separate Step 7 authorization. Runtime/build retirement and operational identifiers
 remain part of that approved cutover implementation.
 

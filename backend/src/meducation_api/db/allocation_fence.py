@@ -179,6 +179,7 @@ def issue_range(
     reason: str,
     independent_copy_confirmed: bool = False,
     rehearsal: bool = False,
+    local_copy_only: bool = False,
 ) -> dict[str, Any]:
     """Persist two complete journals before advancing counters/admitting a new range.
 
@@ -194,7 +195,14 @@ def issue_range(
         or len(reason) > 2000
     ):
         raise ContentDatabaseError("Allocation range size/reason is invalid.")
-    if rehearsal:
+    if sum((rehearsal, independent_copy_confirmed, local_copy_only)) > 1:
+        raise ContentDatabaseError("Choose exactly one allocation retention policy.")
+    if local_copy_only:
+        if engine.url.host != "127.0.0.1" or engine.url.database != "meducation_authority":
+            raise ContentDatabaseError(
+                "Local-only retention requires the designated loopback authority database."
+            )
+    elif rehearsal:
         if engine.url.host != "127.0.0.1" or not (engine.url.database or "").startswith(
             ("meducation_test_", "meducation_verify_")
         ):
@@ -298,6 +306,11 @@ def issue_range(
             "ceilings": ceilings,
             "recovery": recovery,
             "rehearsal": rehearsal,
+            "retention": "local-only; off-device deferred"
+            if local_copy_only
+            else "independent-confirmed"
+            if independent_copy_confirmed
+            else "rehearsal",
         }
     except OSError, ValueError, TypeError, KeyError, SQLAlchemyError:
         raise ContentDatabaseError(

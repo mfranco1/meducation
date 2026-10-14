@@ -1,5 +1,7 @@
 # Architecture
 
+The designated local PostgreSQL database is the sole writable authority for paired quiz/flashcard content. Authenticated HTTP authoring owns durable paired drafts and explicit immutable publication. Learners read a request-pinned published pair; progress remains browser-local. Repository JSON and the legacy JSON editor descriptions below apply to read-only fallback/archive or isolated fixtures. The cutover build retires writable JSON authoring. Preserve no runtime AI, module boundaries and locally retained allocation/recovery evidence; off-device retention is user-deferred for the current local target. See [the recovery runbook](L4-authoritative-recovery.md).
+
 This page owns current module boundaries and data flow. [Product behavior](product.md), [design conventions](design-system.md), [content management](content-management.md), and [testing](testing.md) own their respective requirements. The [ownership decision](decisions/0001-repository-ownership-and-boundaries.md) explains the rationale; completed work trackers preserve migration history.
 
 ## Repository ownership

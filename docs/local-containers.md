@@ -1,5 +1,10 @@
 # Local production containers
 
+The designated authority uses the [local authoring runbook](local-authoring.md).
+The older Compose stack below remains explicit JSON archive/development tooling.
+
+The designated local content database is the sole writable authority. Development JSON containers and bootstrap backup helpers below remain fixture/archive tooling; they are not authoritative recovery acceptance. Keep retained full DB dumps outside the volume, maintain the protected local allocation journals (off-device retention is currently user-deferred), and follow the role-separated fresh-target restore/quarantine/reconciliation procedure before authoring resumes. See [the recovery runbook](L4-authoritative-recovery.md).
+
 L2 supplies the existing JSON API, production learner/static-server image and
 Compose stack with optional local PostgreSQL and matching PG17 backup/restore tools.
 Stage status is recorded in the [implementation tracker](work/done/L2-containers-local-services-plan.md).

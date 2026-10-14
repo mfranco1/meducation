@@ -14,15 +14,13 @@ that API's exact admin Origin to match the frontend origin. Session/editor
 credentials and identity keys stay in backend configuration. No credential, token,
 private draft or browser editor text is put in learner progress storage.
 
-The JSON editor remains an isolated development/fixture adapter. Default Vite
-development selects it; explicitly select `VITE_ADMIN_SOURCE=json` for its optional
-production preview together with `VITE_BUILD_ADMIN=true` and
-`VITE_ENABLE_LOCAL_ADMIN=true`. Those flags enable local reviewed downloads only.
-They do not authenticate anyone. HTTP production bundles exclude this development
-entry and both canonical banks. Normal learner builds still omit admin modules.
-A source selection requires restarting/rebuilding; there is no writable-mode
-switch or automatic fallback. The later cutover gate must retire the independent
-JSON editing path before PostgreSQL becomes authoritative.
+The JSON editor remains an isolated development/fixture adapter. Vite development
+selects HTTP by default. JSON fixtures require both `VITE_ADMIN_SOURCE=json` and
+`VITE_JSON_FIXTURE_AUTHORING=true` on the development server. Production builds
+always use HTTP authoring and omit this adapter and both bundled banks, even if
+those fixture variables are set. Normal learner builds omit admin modules. A
+source selection requires restarting; there is no writable-mode switch or
+automatic fallback. See [local authoring](local-authoring.md).
 
 ## Editing and paired history
 
@@ -89,7 +87,7 @@ for deliberate re-preview rather than overwriting it or replaying its edits.
 Publication and retained-release activation use captured server previews and a
 confirmation dialog with reason, context and bounded affected content. Both
 require fresh authentication. Visibility follows the configured PostgreSQL reader;
-experimental publication does not replace canonical JSON or a JSON-mode reader. Activation preserves the draft; a stale base requires
+a fixture publication does not replace the designated authority or an explicit JSON archive reader. Activation preserves the draft; a stale base requires
 explicit reset before a future publication. Retained metadata pages have a bounded
 page size and explicit next-page control.
 

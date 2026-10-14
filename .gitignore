@@ -28,6 +28,7 @@ playwright-report/
 
 # Local off-volume database backups (not automatically off-device).
 /var/backups/postgres/
+/var/local-authority/
 
 # Packaged content-policy resources are built from checked frontend policy.
 /backend/src/meducation_api/content_policy/worker.mjs

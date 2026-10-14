@@ -3,8 +3,9 @@
 Step 4 adds private HTTP services behind the verified session boundary in
 [L4 admin sessions](L4-admin-session-boundary.md). This is local backend acceptance;
 the hosted identity adapter remains disabled. The [HTTP browser editor](L4-http-editor.md) now uses these services, with a
-separate JSON development adapter. Canonical repository JSON remains the
-content authority until the later recovery and cutover gates pass.
+JSON adapter restricted to explicit development fixtures. The designated local
+PostgreSQL database is the writable authority after the user-approved local
+cutover; repository JSON is an export/archive. See [local authoring](local-authoring.md).
 
 ## Wire contracts
 

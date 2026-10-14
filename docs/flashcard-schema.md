@@ -1,6 +1,8 @@
 # Flashcard schema
 
-The canonical flashcard store is `src/content/flashcardBank.generated.json`, a schema-v2 JSON document with flat `decks` and `cards` arrays. Shared subject records remain authoritative in `src/content/questionBank.generated.json`; flashcards refer to stable subject IDs and never copy subject rows.
+PostgreSQL is the sole writable content authority. This page defines the schema-v2 flashcard representation used in paired drafts/releases and deterministic JSON exports. The paired quiz subject registry remains authoritative for deck references. Preserve exact strings, array order, omitted fields and stable server-reserved IDs. JSON file editing below describes fixture/archive representations only. See [the recovery runbook](L4-authoritative-recovery.md).
+
+The repository flashcard export/archive is `src/content/flashcardBank.generated.json`, a schema-v2 JSON document with flat `decks` and `cards` arrays. Shared subject records remain authoritative in the paired database quiz bank (represented in its `src/content/questionBank.generated.json` export); flashcards refer to stable subject IDs and never copy subject rows.
 
 The relationship chain is `card.deckId → deck.subjectId → subject.id`. A deck belongs directly to one subject, and a card belongs to one deck. Do not store repeated subject names, child ID arrays, or derived card counts in canonical records. Runtime summaries may derive parent details and counts.
 

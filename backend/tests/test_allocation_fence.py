@@ -131,3 +131,89 @@ def test_rehearsal_cannot_admit_a_routine_database_or_substitute_for_retention(t
             issue_range(engine, **args)
     finally:
         engine.dispose()
+
+
+@pytest.mark.parametrize(
+    "host,database",
+    [("db.example.com", "meducation_authority"), ("127.0.0.1", "meducation_test_content")],
+)
+def test_local_only_retention_refuses_other_targets_before_connecting(tmp_path, host, database):
+    engine = create_engine(URL.create("postgresql+psycopg", host=host, database=database))
+    try:
+        with pytest.raises(ContentDatabaseError, match="designated loopback authority"):
+            issue_range(
+                engine,
+                primary=tmp_path,
+                independent=tmp_path,
+                size=10,
+                recovery=False,
+                reason="local-only",
+                local_copy_only=True,
+            )
+    finally:
+        engine.dispose()
+
+
+def test_retention_policy_cannot_combine_local_and_offdevice_attestations(tmp_path):
+    engine = create_engine(
+        URL.create("postgresql+psycopg", host="127.0.0.1", database="meducation_authority")
+    )
+    try:
+        with pytest.raises(ContentDatabaseError, match="exactly one"):
+            issue_range(
+                engine,
+                primary=tmp_path,
+                independent=tmp_path,
+                size=10,
+                recovery=False,
+                reason="local-only",
+                local_copy_only=True,
+                independent_copy_confirmed=True,
+            )
+    finally:
+        engine.dispose()
+
+
+def test_authority_import_cli_requires_explicit_review_before_connecting(monkeypatch, capsys):
+    from types import SimpleNamespace
+
+    from pydantic import SecretStr
+
+    from meducation_api.db import cli
+
+    url = "postgresql+psycopg://meducation_operator:private-placeholder@127.0.0.1:5433/meducation_authority?sslmode=disable"
+    monkeypatch.setattr(
+        "sys.argv",
+        [
+            "meducation-db",
+            "import-pair",
+            "--quiz-file",
+            "q.json",
+            "--flashcard-file",
+            "f.json",
+            "--repository",
+            ".",
+            "--operation-id",
+            str(uuid4()),
+            "--actor",
+            "operator",
+            "--reason",
+            "review",
+        ],
+    )
+    monkeypatch.setattr(cli, "capture_pair", lambda *a, **kw: object())
+    monkeypatch.setattr(
+        cli,
+        "Settings",
+        lambda: SimpleNamespace(database_environment="local", operator_database_url=SecretStr(url)),
+    )
+    monkeypatch.setattr(
+        cli,
+        "create_database_engine",
+        lambda *a, **kw: pytest.fail("Unreviewed import attempted a connection"),
+    )
+    with pytest.raises(SystemExit):
+        cli.main()
+    error = capsys.readouterr().err
+    assert "--reviewed-recovery-import" in error
+    assert "private-placeholder" not in error

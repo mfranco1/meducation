@@ -1,6 +1,6 @@
 # L4 — Local database authoring and admin access
 
-Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 recovery/tooling implementation is in progress (authorized 2026-10-14); allocation protection implementation and isolated recovery are verified; retained-copy policy is selected (local backups plus an encrypted external drive); physical destination acceptance is user-deferred. Step 7 authority cutover remains pending; Step 8 native CI passed at `f99a18e` on both architectures. Hosted provider/fresh-factor acceptance remains explicitly pending. Local editor session UX has automated acceptance; manual device/accessibility obligations remain pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration is locally verified in Steps 4–5. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
+Created: 2026-10-14. Status: Steps 1–5 local gates complete. Steps 6–7 locally complete under the user's 2026-10-14 local-only retention override: the designated PostgreSQL database is authoritative, protected local dumps/exports and allocation journals are retained and a fresh separate-target restore passed. Off-device/hardware-loss recovery is explicitly deferred. Step 8 full local verification/audit passes; changed-source native CI remains pending (earlier CI at `f99a18e` is historical). Hosted provider/fresh-factor and manual device/accessibility acceptance remain separate open gates.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l4--local-database-authoring-and-admin-access-boundary). Prerequisites: [completed L3](../done/L3-postgres-schema-migration-parity-plan.md), [L4 handoff](../../L4-authoring-handoff.md), [authentication contract](../../decisions/0004-single-editor-authentication.md), and [paired-release contract](../../decisions/0005-paired-content-releases-and-postgres-schema.md). Follow the [work tracking gates](../README.md): implement one step, record evidence and limitations, then stop until continuation is authorized. The authority cutover has its own explicit approval gate.
 
@@ -84,22 +84,22 @@ Gate: browser tests through the actual API/reverse proxy edit both banks, reload
 
 ## Step 6 — Rehearse authoritative recovery and prepare tooling
 
-- [ ] Define an operator backup schedule after meaningful authoring sessions/publishing and at least daily while authoring. Record an off-volume destination, protected access, retention schedule and restore procedure; measure provisional content RPO <=24h and RTO <=4h. Keep an independent off-device copy; a temporary test archive or Docker volume is not retained recovery.
-- [ ] Settle recovery of allocations made after the last DB backup. Choose durable off-volume allocation evidence/high-water protection and test reconciliation before enabling authoritative creates. If evidence is incomplete, fail closed on allocation until resolved; RPO data loss cannot silently permit ID reuse.
+- [x] Define an operator backup schedule after meaningful authoring sessions/publishing and at least daily while authoring. Record an off-volume destination, protected access, retention schedule and restore procedure; measure provisional content RPO <=24h and RTO <=4h. Independent off-device retention is user-deferred for this local cutover; a temporary test archive or Docker volume is not retained recovery.
+- [x] Settle recovery of allocations made after the last DB backup. Choose durable local off-volume allocation evidence/high-water protection (off-device deferred) and test reconciliation before enabling authoritative creates. If evidence is incomplete, fail closed on allocation until resolved; RPO data loss cannot silently permit ID reuse.
 - [x] Rehearse PG17 custom dump/fresh separate-DB restore with draft, release, audit, operation/reservation history, counters, schema and explicit role/ACL parity. Include auth schema as appropriate but rotate the external auth epoch and clear login transactions before restoring admin access. Restart application caches after replacement.
 - [x] Obtain deterministic exports from selected drafts/releases and implement authority-aware validation/audit commands. Keep fixture CI independent of production credentials; update operator commands and admin bootstrapping so stale repository JSON is never mistaken for current authored content.
 - [x] Inventory private PDFs, extracted source material, local media and external URLs separately; content DB backups do not contain them or learner browser progress. Document recovery ownership and limitations.
 - [x] Prepare the exact cutover checklist and documentation patch for AGENTS.md, architecture, both schema guides, content management, testing, backend/container runbooks and affected validation/audit tooling. Preserve the original canonical source hashes and identity history limitations.
 
-Gate: a recoverable retained copy exists, fresh restoration is measured and verified, allocation recovery is enforced, and current export/tooling commands work. Record destination identifiers and evidence without committing secrets or private content. If the required backup destination or provider evidence is unavailable, keep cutover pending.
+Gate: a recoverable retained copy exists, fresh restoration is measured and verified, allocation recovery is enforced, and current export/tooling commands work. Record destination identifiers and evidence without committing secrets or private content. The user-approved local-only policy closes the local cutover gate; hardware-loss and hosted-provider acceptance remain open.
 
 ## Step 7 — Explicitly cut over content authority
 
-- [ ] Present the concrete verification evidence, remaining provider/launch limitations, source comparison and recovery artifacts for explicit cutover approval. Do not change authority as an incidental consequence of implementing the gateway.
-- [ ] Freeze JSON authoring, capture/hash the final paired canonical files and import/reconcile that reviewed pair into the designated local authoritative DB. Discard experimental fixture/copy drafts from the cutover target; do not silently promote test edits.
-- [ ] Verify exact data/order/provenance/revision parity and obtain a retained full backup plus deterministic export. Enable the authenticated local database authoring workflow and apply the prepared authority/tooling documentation together.
-- [ ] Postgres becomes the only writable canonical source. JSON is a labeled deterministic export/archive/local read fallback; operator import is restricted recovery/migration. Record the first DB-only edit/publication and regenerate its export as a rehearsal. A stale JSON snapshot cannot roll back subsequent DB-only work.
-- [ ] Test compatible app/schema recovery and previous-release activation without deleting later content. Record cutover time, schema/release/sequence, hashes, backup evidence and allowed fallback procedure.
+- [x] Present the concrete verification evidence, remaining provider/launch limitations, source comparison and recovery artifacts for explicit cutover approval. Do not change authority as an incidental consequence of implementing the gateway.
+- [x] Freeze JSON authoring, capture/hash the final paired canonical files and import/reconcile that reviewed pair into the designated local authoritative DB. Discard experimental fixture/copy drafts from the cutover target; do not silently promote test edits.
+- [x] Verify exact data/order/provenance/revision parity and obtain a retained full backup plus deterministic export. Enable the authenticated local database authoring workflow and apply the prepared authority/tooling documentation together.
+- [x] Postgres becomes the only writable canonical source. JSON is a labeled deterministic export/archive/local read fallback; operator import is restricted recovery/migration. Record the first DB-only edit/publication and regenerate its export as a rehearsal. A stale JSON snapshot cannot roll back subsequent DB-only work.
+- [x] Test compatible app/schema recovery and previous-release activation without deleting later content. Record cutover time, schema/release/sequence, hashes, backup evidence and allowed fallback procedure.
 
 Gate: separately authorized cutover completed with current recoverable content and no second writable canonical source. Local test identity remains visibly development-only; hosted provider acceptance is still required before production enablement. No deployment is authorized by this step.
 
@@ -438,3 +438,55 @@ No further L5 implementation was started in this closeout. JSON remains
 canonical, the patch is not applied, and no routine DB or retained destination is
 modified. Step 6 retained-copy acceptance and separately approved Step 7 remain
 open; the L4 tracker stays ongoing.
+
+
+## Step 7 local authority cutover — 2026-10-14
+
+The user explicitly authorized Step 7 and stated that off-device backup is not a
+priority, allowing a local backup instead. This supersedes the external-copy
+prerequisite for the local cutover only. No off-device attestation or hosted
+identity acceptance is claimed. [Cutover evidence](L4-step7-cutover-evidence.json),
+[authority identifiers](../../../ops/content-authority.json) and the
+[local authoring runbook](../../local-authoring.md) record the concrete target.
+
+- [x] Initialized a new dedicated PG17 persistent target from the captured reviewed
+  pair, with protected role-separated credentials, schema `0006_allocation_fence`,
+  exact normalized reconstruction and unchanged source hashes. No experimental
+  fixture draft was promoted or existing DB/volume replaced.
+- [x] Admitted a protected allocation range backed by two agreeing, fsynced local
+  journal chains. New explicit `--local-copy-only` reports user-deferred off-device
+  retention and refuses other targets/production CLI configuration/mixed policies.
+- [x] Rehearsed DB-only publication with a temporary nonmedical subject-label
+  change, then restored the exact original pair. The original import and later
+  rehearsal release remain retained; final publication sequence is **3**, draft
+  revision **5**. Medical text/choices/numbers/provenance/IDs were unchanged.
+  An incorrect result-field reference stopped the first script after commit;
+  guarded continuation restored the original metadata without resetting/reimporting.
+- [x] Retained full local PG17 dumps and deterministic exports outside the volume.
+  Fresh restoration from a retained dump passed exact all-table/sequence/effective
+  ACL and paired-artifact parity, session quarantine, copied-journal recovery and
+  burning every previously admitted range. Final same-machine measurement: **29.69s**, including compatible restored reader
+  startup and previous-release activation/return without deletion;
+  not hardware-loss RTO or off-device acceptance. Verification DB was removed;
+  the original authority was checked unchanged.
+- [x] Applied and reconciled authority documentation; production and ordinary
+  development authoring select HTTP. JSON editing requires explicit development
+  fixture flags and is omitted from production even if those flags are set.
+  Authority CLI imports require reviewed recovery intent. Archive validation is
+  labeled; selected current exports have explicit validation/audit commands.
+- [x] Explicit loopback development identity launcher and actual-authority browser
+  acceptance passed: denial before sign-in, signed code/PKCE confirmation, exact
+  draft, fresh session, direct readiness and logout. No real MFA is simulated as
+  hosted acceptance; production still refuses this identity adapter.
+- [x] Vite proxy now preserves the frontend Host, satisfying the existing strict
+  admin host check. API uses loopback **8001** because an existing process occupies
+  8000; that process was not stopped. UI runs at **127.0.0.1:5173**.
+- [x] Full verification runner exited 0; additional allocation units **17 passed**,
+  real-PG allocation cases **9 passed**, Ruff/mypy and fresh build passed. Native
+  acceptance of these changed sources remains pending after commit.
+
+Step 7 is complete at its approved local gate. L4 stays ongoing for final native
+CI/outcome closure and explicitly carried hosted/manual/off-device obligations.
+The original cutover patch/base snapshots and earlier JSON-authoritative progress
+logs are historical and remain preserved. Do not overwrite DB-only edits with
+these frozen repository exports. No cloud deployment or further L5 work occurred.

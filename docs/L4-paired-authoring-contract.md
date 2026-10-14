@@ -1,5 +1,9 @@
 # L4 paired authoring and private HTTP contract
 
+Current status: local PostgreSQL authority cutover is user-approved. See the
+[local authority runbook](local-authoring.md). Authority statements in the original
+design-stage snapshot below describe the pre-cutover stage.
+
 Selected 2026-10-14 for [L4 Step 1](work/ongoing/L4-local-authoring-admin-access-plan.md#step-1--freeze-the-paired-editor-and-access-contracts).
 This specifies subsequent implementation; no routes, authentication, durable
 history or authority cutover are enabled by this document. Canonical JSON remains

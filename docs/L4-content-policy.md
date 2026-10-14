@@ -1,5 +1,9 @@
 # Paired authoring content-policy boundary
 
+Current status: local PostgreSQL authority cutover is user-approved. See the
+[local authority runbook](local-authoring.md). Authority statements in the original
+design-stage snapshot below describe the pre-cutover stage.
+
 Implemented for [L4 Step 2](work/ongoing/L4-local-authoring-admin-access-plan.md#step-2--implement-server-content-policy-validation).
 Canonical JSON remains authoritative. Internal paired preview/save/authored-publish
 services are implemented. The local [Step 3 session boundary](L4-admin-session-boundary.md)

@@ -1,5 +1,7 @@
 # Testing
 
+Current database content checks must select a fresh draft/release export explicitly (`validate-export`/`audit-export`). The npm JSON commands check fixture/archive files only. Keep fixture CI independent of production credentials. Retained full-backup restore, session/allocation quarantine, independent-journal reconciliation and compatible worker/cache restart are required recovery gates. See [the recovery runbook](L4-authoritative-recovery.md).
+
 Run checks appropriate to the change and follow the [regression requirements](testing-regressions.md) for affected behavior. CI executes frontend, backend, and browser checks in [checks.yml](../.github/workflows/checks.yml). Do not hand off a change while relevant gates fail.
 
 ## Commands

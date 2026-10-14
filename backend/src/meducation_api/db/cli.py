@@ -41,6 +41,7 @@ def main() -> None:
         confirmation = command.add_mutually_exclusive_group(required=True)
         confirmation.add_argument("--independent-copy-confirmed", action="store_true")
         confirmation.add_argument("--rehearsal", action="store_true")
+        confirmation.add_argument("--local-copy-only", action="store_true")
     for action in ("validate-pair", "import-pair", "parity"):
         command = commands.add_parser(action)
         command.add_argument("--quiz-file", type=Path, required=True)
@@ -50,6 +51,7 @@ def main() -> None:
             command.add_argument("--release-id", type=UUID, required=True)
             command.add_argument("--report", type=Path, required=True)
         if action == "import-pair":
+            command.add_argument("--reviewed-recovery-import", action="store_true")
             command.add_argument("--operation-id", type=UUID, required=True)
             command.add_argument("--actor", required=True)
             command.add_argument("--reason", required=True)
@@ -112,6 +114,14 @@ def main() -> None:
                 "The explicit job connection is missing; runtime credentials are never substituted."
             )
         url = database_url(secret, role=role, local=settings.database_environment == "local")
+        if (
+            args.action == "import-pair"
+            and url.database == "meducation_authority"
+            and not args.reviewed_recovery_import
+        ):
+            raise ContentDatabaseError(
+                "Authority imports require --reviewed-recovery-import; use HTTP authoring for ordinary edits."
+            )
         engine = create_database_engine(url, operator=True)
         try:
             if args.action == "bootstrap-local":
@@ -126,6 +136,10 @@ def main() -> None:
             elif args.action in ("allocation-range", "allocation-recover"):
                 from meducation_api.db.allocation_fence import issue_range
 
+                if args.local_copy_only and settings.database_environment != "local":
+                    raise ContentDatabaseError(
+                        "Local-only retention requires explicit local configuration."
+                    )
                 result = issue_range(
                     engine,
                     primary=args.primary,
@@ -134,6 +148,7 @@ def main() -> None:
                     recovery=args.action == "allocation-recover",
                     reason=args.reason,
                     independent_copy_confirmed=args.independent_copy_confirmed,
+                    local_copy_only=args.local_copy_only,
                     rehearsal=args.rehearsal,
                 )
                 print(json.dumps(result))

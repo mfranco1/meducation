@@ -2,7 +2,7 @@
 
 [L4 Step 3](work/ongoing/L4-local-authoring-admin-access-plan.md#step-3--add-authenticated-sessions-and-least-privilege-access)
 implements the backend portions of [ADR0004](decisions/0004-single-editor-authentication.md).
-The learner remains public. Canonical JSON remains authoritative; content HTTP
+The learner remains public. The designated local PostgreSQL database is authoritative; content HTTP
 operations and editor session UX are implemented by [Step 4 services](L4-paired-editor-services.md)
 and the [Step 5 HTTP editor](L4-http-editor.md), with isolated local acceptance.
 

@@ -20,7 +20,9 @@ Do not add backend infrastructure unless explicitly requested.
 
 ### 1. Canonical question bank is authoritative
 
-`src/content/questionBank.generated.json` is the source of truth for all quiz content.
+The designated local PostgreSQL database is the only writable authority for the paired quiz/flashcard bank. Use the authenticated HTTP editor and server-reserved stable IDs. Saving a paired draft does not publish it.
+
+`src/content/questionBank.generated.json` and `src/content/flashcardBank.generated.json` are labeled deterministic exports, archives or explicit read-only fallbacks. Never replace database-only work with a stale JSON snapshot. Trusted imports are reviewed recovery/migration jobs. Before authoritative creates, require the admitted allocation fence and current locally retained journals (off-device retention is user-deferred for this local cutover) described in `docs/L4-authoritative-recovery.md`.
 
 Never silently modify, rewrite, correct, reorder, simplify, or otherwise alter:
 
