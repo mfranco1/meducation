@@ -318,3 +318,12 @@ Offline `validate-export`/`audit-export` commands need a selected export directo
 the repository validation toolchain and a new private report path; they do not load
 repository banks or require DB credentials. Their manifests identify draft/release
 context without claiming live database currency. JSON authority is unchanged.
+
+Migration `0006_allocation_fence` adds opt-in independently retained allocation
+ceilings. `allocation-range` and `allocation-recover` are explicit migrator jobs;
+private editor/operator transactions cannot change their admission state. Session
+quarantine pauses protected allocation. Two durable agreeing journal chains must
+be recorded before the DB admits a range; restore reconciliation burns all earlier
+permitted ranges. Destination independence is an operator acceptance gate. Follow
+[the allocation procedure](../docs/L4-authoritative-recovery.md#allocation-safety-is-a-separate-gate)
+before enabling it; production JSON authority remains unchanged.

@@ -205,3 +205,12 @@ publication controls operate on one paired context. Reserved parents in migratio
 The [HTTP editor runbook](L4-http-editor.md) records source selection, session
 completion, import conversion and verification limits. Learner/domain/persistence
 modules receive no authentication dependencies.
+
+L4 recovery preparation adds owner-only allocation range jobs in
+`db/allocation_fence.py` and migration `0006_allocation_fence`. The opt-in database
+trigger bounds new allocated IDs; only explicit migrator jobs can advance the fence
+with two durably recorded agreeing journal chains. Restored session quarantine
+pauses protected allocation until explicit counter reconciliation. Existing JSON
+authority and fixture allocation mode remain unchanged. This does not add runtime
+AI or learner/auth dependencies to frontend domain modules. See the
+[recovery runbook](L4-authoritative-recovery.md) for retention and cutover gates.

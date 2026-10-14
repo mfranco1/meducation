@@ -13,6 +13,7 @@ from meducation_api.auth.store import Principal, SessionStore
 from meducation_api.content_policy import PairedContentValidator, ValidatedPair
 
 ERRORS = {
+    "P5031": (503, "allocation_recovery_required"),
     "P4010": (401, "session_expired"),
     "P4030": (403, "editor_denied"),
     "P4031": (403, "fresh_auth_required"),

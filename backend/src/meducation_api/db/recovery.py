@@ -26,6 +26,7 @@ def invalidate_restored_sessions(connection: Connection) -> dict[str, int]:
         "UPDATE admin_auth.sessions SET revoked=true WHERE NOT revoked"
     ).rowcount
     cleared = connection.exec_driver_sql("DELETE FROM admin_auth.logins").rowcount
+    connection.exec_driver_sql("UPDATE content.allocation_fence SET paused=true WHERE required")
     return {"revokedSessions": revoked, "clearedLoginTransactions": cleared}
 
 

@@ -178,7 +178,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0005_reserved_parents"
+    assert migration_head() == "0006_allocation_fence"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -205,7 +205,7 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0005_reserved_parents"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0006_allocation_fence"
 
 
 def test_release_omission_provenance_order_and_digest(db):
@@ -2705,9 +2705,10 @@ def test_recovery_reapplied_acl_preserves_editor_and_session_role_boundaries(db)
 def test_recovery_tools_check_real_deterministic_http_exports(db, tmp_path, target):
     import io
     import zipfile
+
     from meducation_api.db.export_tools import inspect_export
 
-    service, original = authoring_service(db)
+    _service, original = authoring_service(db)
     client, runtime, h = auth_app(db)
     with client:
         login, _ = auth_login(client, runtime, h)
@@ -2730,3 +2731,175 @@ def test_recovery_tools_check_real_deterministic_http_exports(db, tmp_path, targ
         serialized = json.dumps(report)
         assert runtime.config.epoch not in serialized
         assert runtime.config.client_secret.get_secret_value() not in serialized
+
+
+def allocation_journals(tmp_path):
+    primary, independent = tmp_path / 'primary', tmp_path / 'independent'
+    primary.mkdir(mode=0o700)
+    independent.mkdir(mode=0o700)
+    return primary, independent
+
+
+def allocation_range(db, journals, *, recovery=False, size=2):
+    from meducation_api.db.allocation_fence import issue_range
+    return issue_range(db.migrator, primary=journals[0], independent=journals[1],
+                       size=size, recovery=recovery, reason='Isolated allocation fixture', rehearsal=True)
+
+
+def allocation_reserve(db, count=1):
+    return reserve_ids(db.operator, operation_id=uuid4(), counts={'i': count},
+                       expected_draft_revision=0, expected_publication_sequence=0,
+                       intent='Independent range fixture', actor=ACTOR, reason=REASON)
+
+
+def test_allocation_fence_exhaustion_rolls_back_and_extension_burns_unused_tails(db, tmp_path):
+    journals = allocation_journals(tmp_path)
+    admitted = allocation_range(db, journals)
+    allocated = allocation_reserve(db, 2)['i']
+    assert max(int(value[1:]) for value in allocated) < admitted['ceilings']['i']
+    before = authoring_state(db)
+    with pytest.raises(ContentDatabaseError):
+        allocation_reserve(db)
+    assert authoring_state(db) == before
+    # No explicit DML/function privilege can bypass the fence through a reader/editor.
+    for engine in (db.editor, db.reader, db.operator, db.session, db.backup):
+        with pytest.raises(SQLAlchemyError), engine.begin() as c:
+            c.execute(text('UPDATE content.allocation_fence SET required=false'))
+    second = allocation_range(db, journals)
+    ids = allocation_reserve(db)['i']
+    assert int(ids[0][1:]) >= admitted['ceilings']['i']
+    assert second['generation'] == 2
+    assert scalar(db.backup, 'SELECT count(*) FROM content.allocation_fence_events') == 2
+
+
+def test_allocation_fence_blocks_editor_and_trusted_new_id_import(db, tmp_path):
+    authoring_service(db)
+    journals = allocation_journals(tmp_path)
+    allocation_range(db, journals, size=1)
+    allocation_reserve(db)
+    client, runtime, h = auth_app(db)
+    with client:
+        login, _ = auth_login(client, runtime, h)
+        assert login.status_code == 303
+        snapshot = client.get('/api/admin/draft').json()
+        command = {'operationId': str(uuid4()), 'expected': editor_expected(snapshot),
+                   'reason': REASON, 'counts': {'i': 1}, 'intent': {'slots': [{
+                       'kind': 'i', 'count': 1, 'parentId': snapshot['pair']['quizzes']['quizzes'][0]['id']}]}}
+        before = authoring_state(db)
+        response = editor_post(client, '/reservations', command)
+        assert response.status_code == 503
+        assert response.json()['error']['code'] == 'allocation_recovery_required'
+        assert authoring_state(db) == before
+    q, _f = banks()
+    q['subjects'][0]['id'] = 's999'
+    q['quizzes'][0]['subjectId'] = 's999'
+    with pytest.raises(ContentDatabaseError):
+        store(db, q=q, f={"schemaVersion": 2, "decks": [], "cards": []})
+    assert authoring_state(db) == before
+
+
+def test_allocation_fence_partial_independent_write_never_admits_range(db, tmp_path, monkeypatch):
+    from meducation_api.db import allocation_fence as fence
+    journals = allocation_journals(tmp_path)
+    append = fence.append_record
+    def fail_second(folder, record):
+        if folder == journals[1]:
+            raise OSError('independent destination unavailable')
+        append(folder, record)
+    before = authoring_state(db)
+    with monkeypatch.context() as patch:
+        patch.setattr(fence, 'append_record', fail_second)
+        with pytest.raises(ContentDatabaseError):
+            allocation_range(db, journals)
+    assert authoring_state(db) == before
+    assert scalar(db.operator, 'SELECT required FROM content.allocation_fence') is False
+    with pytest.raises(ContentDatabaseError, match='differ'):
+        allocation_range(db, journals)
+    # Reviewed completion of the second immutable copy repairs evidence only.
+    append(journals[1], fence.read_journal(journals[0])[0])
+    with pytest.raises(ContentDatabaseError, match='explicit recovery'):
+        allocation_range(db, journals)
+    recovered = allocation_range(db, journals, recovery=True)
+    assert recovered['generation'] == 2
+    assert int(allocation_reserve(db)['i'][0][1:]) >= 3
+
+
+def test_allocation_fence_missing_old_foreign_and_divergent_evidence_fail_closed(db, tmp_path):
+    from meducation_api.db.allocation_fence import append_record
+    from meducation_api.db.recovery import invalidate_restored_sessions
+    journals = allocation_journals(tmp_path)
+    allocation_range(db, journals)
+    allocation_range(db, journals)
+    with db.migrator.begin() as c:
+        invalidate_restored_sessions(c)
+    before = authoring_state(db)
+    with pytest.raises(ContentDatabaseError):
+        allocation_reserve(db)
+    # Both copies are stale: DB digest/generation detects the missing latest record.
+    for folder in journals:
+        (folder / '00000000000000000002.json').unlink()
+    with pytest.raises(ContentDatabaseError, match='older'):
+        allocation_range(db, journals, recovery=True)
+    for folder in journals:
+        (folder / '00000000000000000001.json').unlink()
+    with pytest.raises(ContentDatabaseError, match='missing'):
+        allocation_range(db, journals, recovery=True)
+    # Evidence copied from another lineage must never reset this database's identity.
+    for folder in journals:
+        append_record(folder, {'version': 1, 'lineage': str(uuid4()), 'generation': 1,
+                              'previous': None, 'schemaHead': migration_head(), 'recovery': False,
+                              'floors': dict.fromkeys(('s','q','i','d','f'), 1),
+                              'ceilings': dict.fromkeys(('s','q','i','d','f'), 5)})
+    with pytest.raises(ContentDatabaseError):
+        allocation_range(db, journals, recovery=True)
+    assert authoring_state(db) == before
+    assert scalar(db.operator, 'SELECT paused FROM content.allocation_fence') is True
+
+
+def test_allocation_fence_commit_failure_leaves_ahead_evidence_for_explicit_recovery(db, tmp_path):
+    from meducation_api.db.recovery import invalidate_restored_sessions
+    journals = allocation_journals(tmp_path)
+    first = allocation_range(db, journals)
+    owner_execute(db, "CREATE FUNCTION content.fail_fence_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Fixture deferred failure'; END $$")
+    owner_execute(db, 'CREATE CONSTRAINT TRIGGER fail_fence AFTER INSERT ON content.allocation_fence_events DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION content.fail_fence_fixture()')
+    before = authoring_state(db)
+    with pytest.raises(ContentDatabaseError):
+        allocation_range(db, journals)
+    assert authoring_state(db) == before
+    assert scalar(db.operator, 'SELECT generation FROM content.allocation_fence') == 1
+    owner_execute(db, 'DROP TRIGGER fail_fence ON content.allocation_fence_events')
+    with pytest.raises(ContentDatabaseError, match='explicit recovery'):
+        allocation_range(db, journals)
+    with db.migrator.begin() as c:
+        invalidate_restored_sessions(c)
+    recovered = allocation_range(db, journals, recovery=True)
+    assert recovered['generation'] == 3
+    assert int(allocation_reserve(db)['i'][0][1:]) >= first['ceilings']['i'] + 2
+
+
+def test_concurrent_allocation_fence_boundary_has_one_atomic_winner(db, tmp_path):
+    allocation_range(db, allocation_journals(tmp_path), size=1)
+    def allocate():
+        try:
+            return allocation_reserve(db)
+        except ContentDatabaseError:
+            return None
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        outcomes = list(pool.map(lambda _: allocate(), range(2)))
+    assert sum(value is not None for value in outcomes) == 1
+    assert scalar(db.operator, 'SELECT count(*) FROM content.id_reservations') == 1
+
+
+def test_allocation_fence_prefix_fsync_failure_cannot_admit_another_range(db, tmp_path, monkeypatch):
+    from meducation_api.db import allocation_fence as fence
+    journals = allocation_journals(tmp_path)
+    allocation_range(db, journals)
+    before = authoring_state(db)
+    generation = scalar(db.operator, 'SELECT generation FROM content.allocation_fence')
+    with monkeypatch.context() as patch:
+        patch.setattr(fence.os, 'fsync', lambda _: (_ for _ in ()).throw(OSError('flush failed')))
+        with pytest.raises(ContentDatabaseError):
+            allocation_range(db, journals)
+    assert scalar(db.operator, 'SELECT generation FROM content.allocation_fence') == generation
+    assert authoring_state(db) == before
+    assert len(fence.read_journal(journals[0])) == len(fence.read_journal(journals[1])) == 1

@@ -32,6 +32,15 @@ def main() -> None:
         command.add_argument("--directory", type=Path, required=True)
         command.add_argument("--repository", type=Path, required=True)
         command.add_argument("--report", type=Path, required=True)
+    for action in ("allocation-range", "allocation-recover"):
+        command = commands.add_parser(action)
+        command.add_argument("--primary", type=Path, required=True)
+        command.add_argument("--independent", type=Path, required=True)
+        command.add_argument("--size", type=int, default=1000)
+        command.add_argument("--reason", required=True)
+        confirmation = command.add_mutually_exclusive_group(required=True)
+        confirmation.add_argument("--independent-copy-confirmed", action="store_true")
+        confirmation.add_argument("--rehearsal", action="store_true")
     for action in ("validate-pair", "import-pair", "parity"):
         command = commands.add_parser(action)
         command.add_argument("--quiz-file", type=Path, required=True)
@@ -86,7 +95,13 @@ def main() -> None:
                 raise ContentDatabaseError("Role bootstrap is local-development-only.")
             secret, role = settings.bootstrap_database_url, "meducation_bootstrap"
             passwords = RolePasswords()
-        elif args.action in ("upgrade", "restore-permissions", "invalidate-restored-sessions"):
+        elif args.action in (
+            "upgrade",
+            "restore-permissions",
+            "invalidate-restored-sessions",
+            "allocation-range",
+            "allocation-recover",
+        ):
             secret, role = settings.migration_database_url, "meducation_migrator"
             passwords = None
         else:
@@ -108,6 +123,20 @@ def main() -> None:
             elif args.action == "upgrade":
                 upgrade(engine)
                 print("Content schema upgraded to the packaged head.")
+            elif args.action in ("allocation-range", "allocation-recover"):
+                from meducation_api.db.allocation_fence import issue_range
+
+                result = issue_range(
+                    engine,
+                    primary=args.primary,
+                    independent=args.independent,
+                    size=args.size,
+                    recovery=args.action == "allocation-recover",
+                    reason=args.reason,
+                    independent_copy_confirmed=args.independent_copy_confirmed,
+                    rehearsal=args.rehearsal,
+                )
+                print(json.dumps(result))
             elif args.action in ("restore-permissions", "invalidate-restored-sessions"):
                 from meducation_api.db.recovery import (
                     invalidate_restored_sessions,

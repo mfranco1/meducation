@@ -224,3 +224,11 @@ PG17 regressions with `scripts/containers/test-postgres-content.py --keyword rec
 Offline export tests live in `backend/tests/test_export_tools.py` and require the
 repository Node validation toolchain, independently of production credentials.
 See [the recovery runbook](L4-authoritative-recovery.md) for commands and open gates.
+
+Allocation protection adds `backend/tests/test_allocation_fence.py` for journal
+integrity, private paths/locks, immutable records and isolated-rehearsal admission.
+Real PG17 cases test exhaustion rollback, editor/import bypass denial, concurrent
+boundary allocation, incomplete/foreign/stale evidence and failed commits leaving
+ahead journals. The full restore rehearsal deliberately loses post-backup
+allocations and reconciles from independently retained test ceilings before creating
+new IDs. Those temporary journals do not count as off-device retention acceptance.

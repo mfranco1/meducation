@@ -7,24 +7,95 @@ owns acceptance and remaining gates.
 
 ## Small local backup policy
 
-Before database-only authoring, choose one private folder outside the Docker data
-volume and include it in an existing off-device backup. The existing ignored
-`var/backups/postgres/` is a possible local staging folder, but a Git clone, Docker
-volume, same-device copy or temporary rehearsal archive cannot recover a lost
-machine. No new hosted service is required. Destination identifiers and successful
-copy/restore dates belong in operator evidence; credentials and private artifacts
-stay outside Git. Owner access only (0700 directories, 0600 files); protect the
-independent copy with the backup destination's access controls/encryption.
+Decision selected on 2026-10-14 after the user delegated the approach: use a
+private local recovery folder plus a dedicated encrypted external drive. This fits
+the existing durable journal implementation and requires no new cloud service.
+Destination verification and an actual retained restore are still pending.
 
-Proposed schedule, awaiting destination acceptance: take a full custom-format dump
-after each meaningful authoring session and each publication, and at least daily
-on days when authoring. Retain 7 daily, 4 weekly and 3 monthly verified copies. Do
-not prune the last verified recoverable copy. Copy each completed dump off-device
-and record its digest, source schema head/release/publication/draft context and
-copy time. Verify restoration before relying on a new destination and periodically
-afterward. Content RPO is provisionally <=24h and RTO <=4h; measure the age of the
-last independently recoverable copy and the complete recovery-to-service duration.
-A disposable rehearsal's timing is compatibility evidence, not achieved RPO/RTO.
+The primary root is the existing ignored `var/backups/postgres/` outside the Docker
+data volume. Use dedicated `dumps/`, `manifests/` and `allocations/` subdirectories;
+the allocation directory contains only its immutable records and lock file. The
+independent root is a dedicated recovery folder on an encrypted external SSD.
+`/Volumes/MeducationBackup/MeducationRecovery/` is the proposed mount label/path,
+not a discovered or verified device. Bind the configuration to the actual verified
+volume UUID when available; a pathname alone is insufficient. Never create a
+missing `/Volumes/...` directory and accidentally write the independent copy onto
+the Mac's internal disk.
+
+Prefer APFS Encrypted on this Mac, with the unlock/recovery secret stored in the
+owner's password manager independently of the drive. Reuse a suitable drive if
+available; if purchasing one is necessary, a 1 TB SSD is a practical initial size
+with headroom for retained history and approximately 1.8 GB of private source
+material. This is a capacity choice, not a claim that 1 TB has been measured as
+necessary. No purchase, disk erase, encryption change or system backup setting is
+authorized merely by this policy decision. Existing drive contents must be
+preserved. Apple's [supported backup disk guidance](https://support.apple.com/en-gb/guide/mac-help/mh15139/mac)
+identifies APFS/APFS Encrypted as preferred Mac backup formats.
+
+Write PG17 custom-format full content/auth dumps locally with the backup role,
+then copy the completed archive and its manifest onto the external drive. Check
+SHA-256, flush files/directories and record successful copy time before counting
+that backup as independent. PostgreSQL [documents custom archives](https://www.postgresql.org/docs/17/app-pgdump.html)
+as a compressed, portable format for `pg_restore`; follow the existing explicit
+ownership/ACL reconstruction procedure. Git, a Docker volume and temporary test
+archives do not replace these retained copies.
+
+The external drive also holds the independent allocation journal, written and
+flushed synchronously before a new ID range is admitted. Connect and unlock it
+while taking backups, admitting new ranges and rehearsing recovery. Existing
+admitted ranges can continue without another journal write; a new range requires
+both destinations. Disconnect/store the drive separately from the Mac between
+sessions to reduce shared device-loss exposure. This protects loss of the Mac,
+not every event that destroys both locations. Geographically separate/cloud
+retention can be added when the product's risk warrants it; it is not a required
+new service for this local/private stage. Ordinary Time Machine or asynchronous
+cloud sync may provide extra copies, but does not replace this explicit journal
+write barrier or the measured database restore.
+
+The selected schedule is a completed independently copied dump after each
+meaningful authoring session and publication, and at least once per 24 hours while
+authoring. The daily job's eventual scheduled time is 21:00 Asia/Manila; missed
+runs must be surfaced and completed before relying on the 24-hour target. This
+is the chosen policy, not an installed automation. Retain 7 daily, 4 weekly and
+3 monthly verified copies on both destinations. Keep all allocation journal
+records permanently. Never prune the last verified recoverable copy. Protect
+directories with 0700, files with 0600, and the external volume with encryption.
+Retain ignored PDFs/extraction/review material separately under the same external
+recovery root; content DB dumps and learner progress backups remain distinct.
+
+## Selected recovery targets and measurement
+
+Content RPO is **<=24 hours**: at any destructive failure, the latest complete
+independently retained snapshot must be no more than 24 hours old. Aim to reduce
+actual loss to the last completed authoring session by backing up after sessions
+and publication. Measure age from the database snapshot's capture time, not its
+later copy completion time. Record source schema/release/publication/draft context,
+archive SHA-256, snapshot/copy timestamps and destination identity in private
+operator evidence. If a backup/snapshot time is uncertain, do not claim the target.
+
+RTO is **<=4 hours** for restoration on an available compatible machine, starting
+when recovery begins and ending only after the retained external copy is selected,
+restored into a fresh target, checked for content/history/ACL parity, session and
+allocation quarantine are resolved, external auth epoch is rotated, workers/caches
+restart and learner/editor acceptance passes. It includes configuration/key
+retrieval and validation; it excludes purchasing a replacement Mac or waiting for
+hardware delivery. Record wall-clock start/end, environment, selected recovery
+point and acceptance results. The prior approximately 12-minute synthetic suite
+is encouraging compatibility evidence, not the achieved operational RTO.
+
+Allocation RPO is **zero ID reuse**, enforced separately from allowed content loss:
+reconcile the actual latest independently retained journal and burn through every
+previously permitted range before creating new IDs. If evidence is incomplete,
+allocation stays paused.
+
+Rehearse from the actual retained external archive **before cutover**, then monthly
+and after a material app/schema/recovery change. The first drill must prove the
+external destination survives removal/unavailability of the original database and
+local backup path. Use a separate disposable target, not the live database. A full
+machine-loss rehearsal additionally starts from a clean compatible environment
+with code/configuration and recovery secrets available independently. Mark the
+4-hour target achieved only for the measured scenario; keep any replacement-host
+scenario unverified until actually exercised.
 
 ## Allocation safety is a separate gate
 
@@ -33,19 +104,69 @@ An ID issued afterward may have appeared in an editor/export even if its draft
 was never saved. Restoring the earlier dump can reuse that ID. Content loss within
 the RPO does not permit identity reuse.
 
-Keep authoritative creates disabled until durable off-volume allocation protection
-is implemented and tested. The proposed minimal mechanism is an operator-issued
-numeric ceiling for each of `s/q/i/d/f`: persist protected ceilings independently
-before allowing a bounded range of IDs to be issued. Restoration burns through
-all previously permitted ranges, including unused IDs, before issuing another
-range. An incomplete, older or missing fence fails closed. The evidence must also
-survive loss of the device; periodic counter exports alone leave an unsafe window.
-Ceilings require explicit environment/lineage binding, atomic durable recording,
-concurrent range exhaustion tests and a database enforcement boundary. This
-mechanism is **not implemented yet**. Neither session quarantine nor export digest
-checks enforce allocation safety. Do not resume restored editor/operator allocation
-merely because content parity passes. Pre-cutover fixture reservations remain
-isolated experiments.
+Migration `0006_allocation_fence` implements opt-in protection. Existing
+JSON-authoritative fixtures keep their existing allocation mode. Before cutover,
+a trusted migrator job must enable protection with a bounded range for every
+kind (`s/q/i/d/f`). Once enabled, new IDs must be server-allocated numeric IDs
+strictly below their admitted exclusive ceilings. The database trigger rejects
+range exhaustion and unseen trusted-import IDs atomically; editor/operator roles
+cannot change the fence or its append-only audit events.
+
+The operator job writes the same immutable, numbered, hash-chained record into two
+private journal directories, flushes each file and directory, and only then commits
+new database ceilings. Records bind the database lineage, generation, floors,
+ceilings and schema head. Both complete journals must agree with the database's
+known prefix; missing, truncated, foreign, older or divergent evidence refuses
+admission. Range extension intentionally burns unused tails. Journals are small
+allocation evidence, not content backups; retain their complete chains permanently.
+
+For a reviewed local authoritative target, configured with an explicit migrator
+connection and two existing 0700 destinations:
+
+```sh
+PYTHONPATH=backend/src .venv/bin/python -m meducation_api.db.cli allocation-range --primary /path/to/private-primary-journal --independent /path/to/independent-journal --size 1000 --reason "Reviewed allocation range" --independent-copy-confirmed
+```
+
+The second destination must acknowledge **durable off-device writes before the job
+returns** (for example a suitable mounted external/remote filesystem). Distinct
+paths do not prove independence. A local cloud-sync folder or later periodic backup
+does not meet this ordering until the newly permitted ceilings are independently
+retained. `--independent-copy-confirmed` is an operator attestation of destination
+semantics, not automatic proof. Destination acceptance remains pending; no real
+range or retained destination has been configured by these tests. Do not claim
+off-device acceptance merely because both paths exist.
+
+During restore, `invalidate-restored-sessions` also pauses protected allocation.
+Do not run two live writable databases of the same lineage. With workers stopped,
+select the complete current independent journals, then reconcile explicitly:
+
+```sh
+PYTHONPATH=backend/src .venv/bin/python -m meducation_api.db.cli allocation-recover --primary /path/to/private-primary-journal --independent /path/to/independent-journal --size 1000 --reason "Reviewed restore reconciliation" --independent-copy-confirmed
+```
+
+Recovery advances counters beyond **all** ranges previously admitted in the latest
+independent journal, including unused IDs and ranges absent from the DB backup,
+before admitting a new range. It cannot recreate lost content, operations or
+reservation receipts. New recovery audit evidence records the gap; original retained
+identities, audit events and allocations are not deleted. Recovery rejects missing
+or incomplete evidence and leaves the restored allocator paused. If both external
+copies are themselves stale relative to a restored older DB, the software cannot
+infer the missing history: retention of the actual latest independent journal is
+an operator acceptance requirement, not a digest guarantee.
+
+Filesystem failure prevents the DB from admitting a new range. A failed/uncertain
+DB commit can leave both journals ahead of the DB; do not automatically repeat
+range extension. Inspect the protected DB and journals, quarantine protected
+allocation if necessary, then use explicit recovery to burn the ahead ranges. A
+partial second copy or interrupted record is preserved as failure evidence; repair
+only by verifying/copying the exact immutable record from a complete independent
+chain, then reconcile. Never delete a newer record to make old evidence match.
+A failed first activation can also be reconciled from complete ahead journals.
+
+`--rehearsal` replaces the off-device attestation only for explicitly isolated
+loopback `meducation_test_*`/`meducation_verify_*` databases. It cannot target the
+routine database. Temporary same-device test journals prove the failure/recovery
+protocol, not retained recovery. Full retained-copy acceptance still gates cutover.
 
 ## Fresh restoration procedure
 
@@ -73,8 +194,9 @@ isolated experiments.
 
    These commands require the explicit migrator connection; worker credentials
    never substitute. Unsupported schema heads fail rather than guessing grants.
-   Session invalidation revokes retained sessions and clears pending login
-   transactions atomically. It preserves content, audit, operations and allocations.
+   Session invalidation revokes retained sessions, clears pending login
+   transactions and pauses protected allocation atomically. It preserves content,
+   audit, operations and allocation history.
    Rotate `MEDUCATION_ADMIN_EPOCH` in protected external configuration before any
    admin worker starts; do not restore that configuration from the old snapshot.
    Require a new login. A schema mismatch requires compatible code or an explicitly
@@ -82,8 +204,8 @@ isolated experiments.
 5. Compare all content tables, draft/history, audit/operation/reservation records,
    counters/sequences and effective role privileges with recorded backup evidence.
    Independently reconstruct selected releases and validate paired exports. Compare
-   the published pair through fresh learner readers. Reconcile the independent
-   allocation fence; if it is unavailable, keep authoring disabled.
+   the published pair through fresh learner readers. Run `allocation-recover` against the complete independent
+   journals; if they are unavailable or incomplete, keep allocation disabled.
 6. Deliberately switch reader/session/editor connections together to the accepted
    target and restart workers/caches. Verify public learner reads and fresh editor
    access, then record elapsed recovery time and achieved recovery point. Retain
@@ -103,10 +225,11 @@ in a uniquely owned tmpfs cluster, never against routine content. Run:
 It now seeds paired editor saves, an authored publication, newer unpublished
 content, editor reservation slots, a live synthetic session and pending login.
 Raw restoration must exactly match all table/sequence state and effective privileges
-before session quarantine. Quarantine then invalidates old session/callback use
+before session/allocation quarantine. The rehearsal deliberately allocates and admits
+a later range after the dump, then proves that recovery burns through those IDs. Quarantine then invalidates old session/callback use
 without changing content. Fresh readers and selected authored exports repeat
-parity. Archives/credentials are temporary and cleaned. Retained-copy and
-post-backup allocation reconciliation remain separate requirements.
+parity. Archives/credentials are temporary and cleaned. Real destination retention/independence and operational RPO/RTO remain separate
+requirements even when the synthetic post-backup allocation recovery passes.
 
 ## Explicit export validation and audit
 
@@ -155,6 +278,12 @@ remote URLs are retained. Learners own browser progress and use the separate
 [paired progress backup](progress-backup.md); no content backup includes it.
 
 ## Prepared cutover documentation checklist
+
+The [prepared documentation patch](work/ongoing/L4-cutover-documentation.patch)
+and [base file hashes](work/ongoing/L4-cutover-documentation-base.json) are review
+artifacts only. `git apply --check` verifies applicability; do not apply them before
+separate Step 7 authorization. Runtime/build retirement and operational identifiers
+remain part of that approved cutover implementation.
 
 Apply these changes only with separately authorized Step 7 cutover, alongside
 verified recovery/allocation enforcement and the reviewed final paired import:

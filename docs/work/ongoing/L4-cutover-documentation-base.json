@@ -1,0 +1,15 @@
+{
+  "status": "prepared only; do not apply before separately approved Step 7",
+  "baseFilesSha256": {
+    "AGENTS.md": "04fb6bd57ed6895f9a3695faaded72572c229528a27284ac5c8d8a9ab052bd0b",
+    "docs/architecture.md": "edc11d344c9c2b4198cd69bc826c0e26477a706dcbbea1efee24b57ffd3b0dad",
+    "docs/question-schema.md": "9312e2ef795846c594fbacb6fb4207f727b01a70fa3899a9d9bd3b81bed36dda",
+    "docs/flashcard-schema.md": "0a4d85ab1c5acb6d1abdf87b7a16f01548aa199613ed40a5a9910020b0b8dafd",
+    "docs/content-management.md": "b94265648354c2f74fe9d4f792f22a00736af77498b824d1762d028fa66ba6d1",
+    "docs/testing.md": "86f178b3a15de09a11122a0224d30e5d81cd45004a2e042e1bfe80c99f1dba4c",
+    "backend/README.md": "bcb2855bfec3fae8fd9d1b792b4f7105423a332d902997fe9287c8b70fc9c591",
+    "docs/local-containers.md": "2927d886504fa59b5598a9b54f8c63836723d1e908407fefb20ba4d800ca1323",
+    "README.md": "afb770e9ce3c1cf495b89c77a97f9f8db5fcfcc18c1e95531024c5a178500bde"
+  },
+  "limitations": "Descriptions of legacy JSON workflows are explicitly scoped to fixtures/archives by the prepared patch. Build/bootstrap retirement and final destination/release/backup identifiers require separate cutover implementation and evidence."
+}

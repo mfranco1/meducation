@@ -1,6 +1,6 @@
 # L4 — Local database authoring and admin access
 
-Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 recovery/tooling implementation is in progress (authorized 2026-10-14); retained destinations and allocation enforcement remain pending. Hosted provider/fresh-factor and editor session UX acceptance remain explicitly pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration remain Steps 4–5 work. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
+Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 recovery/tooling implementation is in progress (authorized 2026-10-14); allocation protection implementation and isolated recovery are verified; retained-copy policy is selected (local backups plus an encrypted external drive); physical destination acceptance remains pending. Hosted provider/fresh-factor and editor session UX acceptance remain explicitly pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration remain Steps 4–5 work. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l4--local-database-authoring-and-admin-access-boundary). Prerequisites: [completed L3](../done/L3-postgres-schema-migration-parity-plan.md), [L4 handoff](../../L4-authoring-handoff.md), [authentication contract](../../decisions/0004-single-editor-authentication.md), and [paired-release contract](../../decisions/0005-paired-content-releases-and-postgres-schema.md). Follow the [work tracking gates](../README.md): implement one step, record evidence and limitations, then stop until continuation is authorized. The authority cutover has its own explicit approval gate.
 
@@ -86,10 +86,10 @@ Gate: browser tests through the actual API/reverse proxy edit both banks, reload
 
 - [ ] Define an operator backup schedule after meaningful authoring sessions/publishing and at least daily while authoring. Record an off-volume destination, protected access, retention schedule and restore procedure; measure provisional content RPO <=24h and RTO <=4h. Keep an independent off-device copy; a temporary test archive or Docker volume is not retained recovery.
 - [ ] Settle recovery of allocations made after the last DB backup. Choose durable off-volume allocation evidence/high-water protection and test reconciliation before enabling authoritative creates. If evidence is incomplete, fail closed on allocation until resolved; RPO data loss cannot silently permit ID reuse.
-- [ ] Rehearse PG17 custom dump/fresh separate-DB restore with draft, release, audit, operation/reservation history, counters, schema and explicit role/ACL parity. Include auth schema as appropriate but rotate the external auth epoch and clear login transactions before restoring admin access. Restart application caches after replacement.
-- [ ] Obtain deterministic exports from selected drafts/releases and implement authority-aware validation/audit commands. Keep fixture CI independent of production credentials; update operator commands and admin bootstrapping so stale repository JSON is never mistaken for current authored content.
-- [ ] Inventory private PDFs, extracted source material, local media and external URLs separately; content DB backups do not contain them or learner browser progress. Document recovery ownership and limitations.
-- [ ] Prepare the exact cutover checklist and documentation patch for AGENTS.md, architecture, both schema guides, content management, testing, backend/container runbooks and affected validation/audit tooling. Preserve the original canonical source hashes and identity history limitations.
+- [x] Rehearse PG17 custom dump/fresh separate-DB restore with draft, release, audit, operation/reservation history, counters, schema and explicit role/ACL parity. Include auth schema as appropriate but rotate the external auth epoch and clear login transactions before restoring admin access. Restart application caches after replacement.
+- [x] Obtain deterministic exports from selected drafts/releases and implement authority-aware validation/audit commands. Keep fixture CI independent of production credentials; update operator commands and admin bootstrapping so stale repository JSON is never mistaken for current authored content.
+- [x] Inventory private PDFs, extracted source material, local media and external URLs separately; content DB backups do not contain them or learner browser progress. Document recovery ownership and limitations.
+- [x] Prepare the exact cutover checklist and documentation patch for AGENTS.md, architecture, both schema guides, content management, testing, backend/container runbooks and affected validation/audit tooling. Preserve the original canonical source hashes and identity history limitations.
 
 Gate: a recoverable retained copy exists, fresh restoration is measured and verified, allocation recovery is enforced, and current export/tooling commands work. Record destination identifiers and evidence without committing secrets or private content. If the required backup destination or provider evidence is unavailable, keep cutover pending.
 
@@ -254,3 +254,93 @@ authoritative. No routine DB/volume, hosted resource or canonical content change
 Step 6 remains open. [Step 6 evidence](L4-step6-recovery-evidence.json) records
 sources, observed checks, provisional rehearsal timing and remaining acceptance
 gates. Retained-copy acceptance and allocation enforcement are not passed.
+
+
+## Step 6 continuation — allocation protection — 2026-10-14
+
+The user authorized continuing Step 6. Migration `0006_allocation_fence` and explicit
+migrator jobs now implement independently retained ID ceilings. Protection is
+opt-in before the separate authority cutover; no routine schema, destination,
+canonical file or writable authority changed.
+
+- [x] `allocation-range` durably records a complete immutable hash-chained range in
+  two private journal directories before DB admission. Records bind lineage,
+  generation, schema, floors and ceilings. Operator attestation is required for
+  real off-device durability; `--rehearsal` is restricted to isolated loopback
+  test/verification DBs. No automatic off-device acceptance is claimed.
+- [x] DB triggers reject IDs outside admitted ranges and unseen trusted-import
+  IDs while protection is enabled. Private application roles cannot edit/disable
+  the fence. Range events are append-only and record the verified DB maintenance
+  role/reason. Existing registered IDs, answers and authored strings are preserved.
+- [x] Restore session quarantine pauses protected allocations. Explicit
+  `allocation-recover` verifies complete agreeing journals against the retained DB
+  prefix and burns all previous permitted ranges, including ranges absent from a
+  backup. Missing/older/foreign/divergent evidence refuses admission. An initial
+  failed admission with complete ahead journals can also be reconciled explicitly.
+- [x] Failed filesystem/commit admission preserves evidence and admits no new
+  range. Ahead/partial journals require explicit review/repair/recovery, never an
+  automatic extension retry. Existing journal prefixes are re-flushed before
+  admission so a repaired record cannot bypass the durability boundary.
+- [x] Full real PG17 suite passed **167 tests** before the final prefix-flush
+  safeguard; final focused allocation suite passed **7 tests**. Ordinary backend
+  passed **229 tests** at the earlier source stage; skips/deselections do not count
+  as PG acceptance. TypeScript, learner build, lint/architecture and Python
+  Ruff/mypy (39 source files) passed. Final ordinary backend **230 passed**, journal units **13 passed**, wheel
+  packaging/isolated CLI head, all changed source formatting and doc links also
+  passed. [Allocation continuation evidence](L4-step6-allocation-evidence.json)
+  records exact source stages; temporary journals are not retained recovery.
+- [x] Updated full actual-bank restore rehearsal passed: deliberately lost four
+  post-backup allocations and a later admitted range, verified quarantine blocks
+  creation, then reconciled current independent test journals and proved no ID
+  reuse. Source/restored learner parity covered 348 routes each; exact raw
+  table/sequence/role-ACL parity passed. Temporary journals do not prove retained
+  off-device recovery.
+- [x] Prepared [cutover documentation patch](L4-cutover-documentation.patch) and
+  [base file hashes](L4-cutover-documentation-base.json); `git apply --check` passes.
+  The patch is not applied. Final runtime/build retirement and actual operational
+  identifiers remain separately approved Step 7 implementation.
+
+Step 6 remains open until a protected retained off-volume copy and independently
+retained off-device backup/journals are selected and verified, with measured
+operational RPO/RTO. Historical Step 6 evidence remains unchanged; the
+[continuation snapshot](L4-step6-allocation-evidence.json) records the new migration,
+final source stages and remaining acceptance.
+
+
+- [x] Final completion audit found no blocking local implementation defect. Required
+  frontend regressions passed **592 tests / 94 files**. Actual-bank validation
+  passed through the direct Node/tsx loader with existing review warnings; the npm
+  tsx CLI itself was blocked by sandbox IPC permissions, not content rejection.
+  All backend source/test Ruff checks, current source formatting, local file links,
+  prepared-patch applicability and whitespace passed. Removed only this task's
+  wheel build staging output. The tracker stays ongoing for retained destinations,
+  real independent durability and measured operational RPO/RTO; no cutover occurred.
+
+
+## Step 6 operator policy decision — 2026-10-14
+
+The user delegated selection of the retained-copy approach and recovery targets.
+The selected approach is a private local root at `var/backups/postgres/` plus a
+synchronously written independent recovery root on an encrypted external SSD.
+Use an existing suitable drive, or 1 TB initial capacity if one must be acquired;
+no device purchase/erase or new cloud service was performed. Bind the independent
+configuration to its verified volume UUID before acceptance. No suitable external
+destination has been verified in this session; disk-management inspection was
+unavailable in the current tool environment.
+
+Policy: full PG17 dump and independently verified copy after meaningful authoring
+sessions/publications and at least every 24 hours while authoring (eventual daily
+21:00 Asia/Manila schedule); 7 daily/4 weekly/3 monthly copies, permanent allocation
+journal chains. Content RPO <=24 hours is measured from the retained snapshot's
+capture time. RTO <=4 hours covers recovery from the external copy through checked
+learner/editor service restoration on an available compatible machine, including
+configuration/key retrieval. Replacement hardware procurement is outside that
+clock. Allocation recovery must permit zero ID reuse. Rehearse before cutover,
+monthly and after material recovery/schema changes; do not claim a clean-host
+recovery target until that scenario is measured.
+
+[The updated runbook](../../L4-authoritative-recovery.md#selected-recovery-targets-and-measurement)
+records this decision and the measurement procedure. The decisions are settled;
+physical destination verification, retained copies, actual measurements and any
+backup scheduling implementation remain open. No recovery/retention gate was
+marked passed on the strength of a policy choice.

@@ -486,3 +486,9 @@ rehearsal with authored paired history, editor reservations, exact effective ACL
 parity and restored-session quarantine. The generic bootstrap-based `postgres.py`
 restore helper does not perform these L4 gates. Independent retained copies and
 allocation recovery remain pending before the separately authorized cutover.
+
+Rebuild the installed API image before using migration `0006_allocation_fence`;
+startup only checks the packaged schema and never migrates. Range/recovery jobs
+use explicit migrator credentials and private journal paths. Their `--rehearsal`
+mode is restricted to loopback test/verification databases; ordinary Compose
+bootstrap dump/restore commands do not establish authoritative allocation recovery.

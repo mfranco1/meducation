@@ -16,6 +16,7 @@ from compose_support import docker
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend/src"))
+from meducation_api.db.allocation_fence import issue_range
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.engine import ContentDatabaseError, create_database_engine
 from meducation_api.db.migrate import upgrade
@@ -309,6 +310,13 @@ def main():
                                           "intent": {"slots": slots}, "operationId": str(uuid.uuid4())})
             export_manifest = export_release(operator, authored_release, folder / "authored-export")
             export_report = inspect_export(folder / "authored-export", repository=ROOT, audit=True)
+            journals = (folder / "primary-allocation", folder / "independent-allocation")
+            for journal in journals:
+                journal.mkdir(mode=0o700)
+            admitted_range = issue_range(
+                migrator, primary=journals[0], independent=journals[1], size=16,
+                recovery=False, reason="Recovery fixture range before backup", rehearsal=True,
+            )
             before = snapshot(source_admin)
             source_permissions = permission_snapshot(source_admin)
             passfile = folder / "pgpass"
@@ -375,6 +383,21 @@ def main():
                     "--no-acl",
                     stdout=stream,
                 )
+            # Allocate after the snapshot, then extend the independently retained
+            # fence. These IDs/events will intentionally be absent from the dump.
+            def allocate(engine):
+                return reserve_ids(engine, operation_id=uuid.uuid4(), counts={"i": 2},
+                                   expected_draft_revision=int(ctx["revision"]),
+                                   expected_publication_sequence=int(ctx["sequence"]),
+                                   intent="Post-backup allocation loss rehearsal",
+                                   actor="local-recovery-probe", reason="Allocation recovery evidence")
+            lost_ids = allocate(operator)["i"]
+            later_range = issue_range(
+                migrator, primary=journals[0], independent=journals[1], size=16,
+                recovery=False, reason="Independent range after backup", rehearsal=True,
+            )
+            lost_ids += allocate(operator)["i"]
+            expected_source_state = snapshot(source_admin)
             docker(
                 "exec",
                 name,
@@ -451,14 +474,26 @@ def main():
             if rotated_config.policy_epoch == auth_config.policy_epoch:
                 raise RuntimeError("External auth epoch was not rotated")
             after_quarantine = snapshot(restored_admin)
-            if {k: v for k, v in before.items() if not k.startswith("admin_auth.")} != {
-                k: v for k, v in after_quarantine.items() if not k.startswith("admin_auth.")
+            if {k: v for k, v in before.items() if not k.startswith("admin_auth.") and k != "content.allocation_fence"} != {
+                k: v for k, v in after_quarantine.items() if not k.startswith("admin_auth.") and k != "content.allocation_fence"
             }:
                 raise RuntimeError("Session quarantine changed content history")
+            try:
+                allocate(restored_operator)
+                raise RuntimeError("Quarantined restored allocator remained usable")
+            except ContentDatabaseError:
+                pass
+            recovered_range = issue_range(
+                restored_migrator, primary=journals[0], independent=journals[1], size=16,
+                recovery=True, reason="Burn all post-backup permitted IDs", rehearsal=True,
+            )
+            recovered_ids = allocate(restored_operator)["i"]
+            if set(recovered_ids) & set(lost_ids) or min(int(value[1:]) for value in recovered_ids) < later_range["ceilings"]["i"]:
+                raise RuntimeError("Restoration reused a previously permitted identity")
             restored_export = export_release(restored_operator, authored_release, folder / "restored-export")
             if restored_export != export_manifest:
                 raise RuntimeError("Authored export changed after restoration")
-            if before != snapshot(source_admin):
+            if expected_source_state != snapshot(source_admin):
                 raise RuntimeError("Source state changed during backup/restore")
             restored_settings = settings.model_copy(
                 update={
@@ -497,6 +532,12 @@ def main():
                 "recovery_seconds": raw_restore_seconds,
                 "restored_auth_quarantine": quarantined,
                 "external_auth_epoch_rotated": True,
+                "postBackupAllocationRecovery": {
+                    "beforeBackup": admitted_range, "afterBackup": later_range,
+                    "recovered": recovered_range, "lostIds": lost_ids,
+                    "newIds": recovered_ids, "noReuse": True,
+                    "retention": "two temporary test journals; not retained/off-device acceptance",
+                },
                 "authored_export_validation": {k: v for k, v in export_report.items() if k != "explanations"},
                 "restored_parity": restored_parity,
                 "state_snapshot": before,
@@ -506,7 +547,9 @@ def main():
                     "fresh target single-transaction restore as migration owner",
                     "exact effective owner/migrator/reader/operator/backup/session/editor privilege parity",
                     "exact all-table draft/audit/operation/allocation and sequence state",
-                    "source state and authored bytes unchanged",
+                    "source state unchanged after deliberate post-backup reservations; authored bytes unchanged",
+                    "post-backup allocations absent from dump; restore quarantine blocks creates",
+                    "complete independent journal reconciliation burns all permitted ranges; no ID reuse",
                     "paired authored saves/publication, unpublished history and editor slots restored",
                     "restored live sessions revoked and login transactions cleared; external epoch rotated",
                     "selected authored-release export/audit and exact restored export parity",

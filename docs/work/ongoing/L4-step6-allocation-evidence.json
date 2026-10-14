@@ -1,0 +1,446 @@
+{
+  "recordedDate": "2026-10-14",
+  "step": "L4 Step 6 continuation",
+  "status": "implementation/rehearsal verified; retained destinations and cutover acceptance pending",
+  "baselineCommit": "83a16ece37f7f5e5e45771bf493cd5292293fc0d",
+  "canonical": [
+    {
+      "path": "src/content/questionBank.generated.json",
+      "sha256": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+      "unchangedFromStep1": true
+    },
+    {
+      "path": "src/content/flashcardBank.generated.json",
+      "sha256": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7",
+      "unchangedFromStep1": true
+    }
+  ],
+  "sources": [
+    {
+      "path": "backend/src/meducation_api/db/allocation_fence.py",
+      "sha256": "d25ccee403e415d85cc9b06763775b0fab7d20e1a2d507297291bbe93e3fa1f9"
+    },
+    {
+      "path": "backend/src/meducation_api/db/cli.py",
+      "sha256": "e7170656f424bcc70f445215383cc1db82481bc32c7db419218752c1417d5826"
+    },
+    {
+      "path": "backend/src/meducation_api/db/recovery.py",
+      "sha256": "1501e5752908be50237117dc27c17a3f25ab5bdd961feb56efdd8f4dda9e01b5"
+    },
+    {
+      "path": "backend/src/meducation_api/admin/service.py",
+      "sha256": "631d710f610b797c6cad59f424b3755769a0aab09b96ccf732ed32396c767951"
+    },
+    {
+      "path": "backend/src/meducation_api/migrations/0006_allocation_fence.sql",
+      "sha256": "817483597cb38a3726add40248be8eeb3291c9f1a3394f691f88206e67daa25b"
+    },
+    {
+      "path": "backend/src/meducation_api/migrations/versions/0006_allocation_fence.py",
+      "sha256": "3b6d8b2afbc4a714784dd9cc6f73af477465e2ab0666acb41a5aaf303eeebb1d"
+    },
+    {
+      "path": "backend/tests/test_allocation_fence.py",
+      "sha256": "859f5f691071d3dd70baf2acd0e44c4f126a81fc0d560cf07e05fac701d72caf"
+    },
+    {
+      "path": "backend/tests/test_postgres_content.py",
+      "sha256": "a8e0f1a20e7b49a6c863bb1e7583af8b2fc904e9a6058e8bbe4f7cfd9295f16b"
+    },
+    {
+      "path": "scripts/containers/db_toolchain_probe.py",
+      "sha256": "a0055ada27828cdb5f943b083c9d7d72c31a078807c62d353fef153c80a9918a"
+    },
+    {
+      "path": "scripts/containers/verify-postgres-release.py",
+      "sha256": "b90ddfee22e6ef6e7beb668d8bfe0ab96dec2d57d05abcaef632936bf296d150"
+    }
+  ],
+  "scope": "Opt-in database allocation fence, owner-only durable independent journal range/recovery jobs, post-backup no-reuse rehearsal and prepared cutover documentation. No routine DB migration, retained copy, hosted resource or authority change.",
+  "checks": {
+    "backendOrdinary": {
+      "result": "pass",
+      "passed": 230,
+      "deselected": 168,
+      "command": "PYTHONPATH=backend/src .venv/bin/pytest backend/tests -q -m 'not postgres'"
+    },
+    "journalUnits": {
+      "result": "pass",
+      "passed": 13,
+      "command": "PYTHONPATH=backend/src .venv/bin/pytest backend/tests/test_allocation_fence.py -q"
+    },
+    "fullPostgres": {
+      "result": "pass",
+      "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "platform": "linux/arm64",
+      "command": [
+        "/Users/noodle.zip/Documents/code_projects/meducation/.venv/bin/python",
+        "-m",
+        "pytest",
+        "backend/tests/test_postgres_content.py",
+        "-q",
+        "--tb=short",
+        "--maxfail=0",
+        "-k",
+        ""
+      ],
+      "pytest_output": "........................................................................ [ 43%]\n........................................................................ [ 86%]\n.......................                                                  [100%]\n167 passed in 279.65s (0:04:39)\n",
+      "isolation": "unique tmpfs container; loopback port; fixture-only disposable schema; no routine database or volume used"
+    },
+    "finalFocusedPostgres": {
+      "result": "pass",
+      "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "platform": "linux/arm64",
+      "command": [
+        "/Users/noodle.zip/Documents/code_projects/meducation/.venv/bin/python",
+        "-m",
+        "pytest",
+        "backend/tests/test_postgres_content.py",
+        "-q",
+        "--tb=short",
+        "--maxfail=0",
+        "-k",
+        "allocation_fence"
+      ],
+      "pytest_output": ".......                                                                  [100%]\n7 passed, 161 deselected in 7.04s\n",
+      "isolation": "unique tmpfs container; loopback port; fixture-only disposable schema; no routine database or volume used"
+    },
+    "freshActualBankRecovery": {
+      "result": "pass",
+      "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "platform": "linux/arm64",
+      "seconds": 703.51,
+      "source_parity": {
+        "result": "pass",
+        "sourceSha256": {
+          "quiz": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+        },
+        "releaseId": "21b5b9e4-8eae-4606-a480-f85bd460f2da",
+        "revisions": {
+          "quiz": "sha256-11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "sha256-78dc0f035e3e42c81fcbfc92ea3a5963fc3807186ea82b7ee9bc84cfe6a02f19"
+        },
+        "routesChecked": 348,
+        "counts": {
+          "subjects": 13,
+          "quizzes": 111,
+          "questions": 11687,
+          "decks": 98,
+          "cards": 1712
+        },
+        "checks": [
+          "all reconstructed typed fields/optional presence/string/array order",
+          "both exact serialized artifacts and revision hashes",
+          "all learner catalogs/bodies/counts/membership and ETag/304/409",
+          "reader connection cleanup"
+        ]
+      },
+      "recovery_seconds": 530.24,
+      "restored_auth_quarantine": {
+        "revokedSessions": 1,
+        "clearedLoginTransactions": 1
+      },
+      "external_auth_epoch_rotated": true,
+      "postBackupAllocationRecovery": {
+        "beforeBackup": {
+          "lineage": "a8559180-06d9-428d-a033-2ea7315ee5b9",
+          "generation": 1,
+          "recordSha256": "a4081cc6eef10bc11298bdce9847cec2ad27ae9f615076bdc552f2f3b437452d",
+          "ceilings": {
+            "s": 30,
+            "q": 128,
+            "i": 11717,
+            "d": 17,
+            "f": 18
+          },
+          "recovery": false,
+          "rehearsal": true
+        },
+        "afterBackup": {
+          "lineage": "a8559180-06d9-428d-a033-2ea7315ee5b9",
+          "generation": 2,
+          "recordSha256": "c89e8c8bcfa0fa992ab2e7b2d48f3c20279b27fa4a39cbc122cc0fd28c89adc2",
+          "ceilings": {
+            "s": 46,
+            "q": 144,
+            "i": 11733,
+            "d": 33,
+            "f": 34
+          },
+          "recovery": false,
+          "rehearsal": true
+        },
+        "recovered": {
+          "lineage": "a8559180-06d9-428d-a033-2ea7315ee5b9",
+          "generation": 3,
+          "recordSha256": "3f42c53c588eef6451f3cd748e1c6dd285c0a6fcc2c7f3a38b7002d8f9bf5d48",
+          "ceilings": {
+            "s": 62,
+            "q": 160,
+            "i": 11749,
+            "d": 49,
+            "f": 50
+          },
+          "recovery": true,
+          "rehearsal": true
+        },
+        "lostIds": [
+          "i11701",
+          "i11702",
+          "i11717",
+          "i11718"
+        ],
+        "newIds": [
+          "i11733",
+          "i11734"
+        ],
+        "noReuse": true,
+        "retention": "two temporary test journals; not retained/off-device acceptance"
+      },
+      "authored_export_validation": {
+        "result": "pass",
+        "source": "selected-export",
+        "context": {
+          "target": "release",
+          "unpublished": false,
+          "releaseId": "c0fb3c70-6028-407f-852b-18f648ba6f65",
+          "publication": {
+            "observedActiveReleaseId": "c0fb3c70-6028-407f-852b-18f648ba6f65",
+            "observedActiveSequence": 2,
+            "selectedReleaseSequences": [
+              2
+            ]
+          }
+        },
+        "artifactsSha256": {
+          "quiz": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+        },
+        "manifestSha256": "74aba5984590109c67ddf66401410bfe0cdc2ca960df066f77f683694f139ca6",
+        "warnings": 32,
+        "revisions": {
+          "quiz": "sha256-11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "sha256-78dc0f035e3e42c81fcbfc92ea3a5963fc3807186ea82b7ee9bc84cfe6a02f19"
+        },
+        "currentDatabaseCompared": false
+      },
+      "restored_parity": {
+        "result": "pass",
+        "sourceSha256": {
+          "quiz": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+        },
+        "releaseId": "21b5b9e4-8eae-4606-a480-f85bd460f2da",
+        "revisions": {
+          "quiz": "sha256-11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "sha256-78dc0f035e3e42c81fcbfc92ea3a5963fc3807186ea82b7ee9bc84cfe6a02f19"
+        },
+        "routesChecked": 348,
+        "counts": {
+          "subjects": 13,
+          "quizzes": 111,
+          "questions": 11687,
+          "decks": 98,
+          "cards": 1712
+        },
+        "checks": [
+          "all reconstructed typed fields/optional presence/string/array order",
+          "both exact serialized artifacts and revision hashes",
+          "all learner catalogs/bodies/counts/membership and ETag/304/409",
+          "reader connection cleanup"
+        ]
+      },
+      "state_snapshot": {
+        "admin_auth.logins": {
+          "count": 1,
+          "sha256": "8ed5f3e52e36009d5ab5d32bbe93179d0a62e7a783be2fb989867ff749820438"
+        },
+        "admin_auth.rate_limits": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "admin_auth.sessions": {
+          "count": 1,
+          "sha256": "1b5ac36006ffb467252fdec87fb9e529f7d2e2d14229334514a7d787af98c9c5"
+        },
+        "content.active_publication": {
+          "count": 1,
+          "sha256": "d4993cc2d3a03616dedf14f7af80b53401cd640c8f19910e18a86717f63e76f7"
+        },
+        "content.alembic_version": {
+          "count": 1,
+          "sha256": "5c4ecd4a749c80a3aa580ff1b9538e6d2b99e41152f2f8f47ce1eb277290531d"
+        },
+        "content.allocation_fence": {
+          "count": 1,
+          "sha256": "ee1d7ea25bc1588c05b32c8e23c2dfde0e5f92f460afb7a4cf065b9613b10e22"
+        },
+        "content.allocation_fence_events": {
+          "count": 1,
+          "sha256": "19ec2700cb8ee73da102b1324a2519f5a0718d9ad54cf2d98052c8b7897ffac1"
+        },
+        "content.audit_events": {
+          "count": 8,
+          "sha256": "21462406b4737955303f4dbc15df74c3e0c1a22d1e97564887e8222a52b9402a"
+        },
+        "content.authored_events": {
+          "count": 1,
+          "sha256": "2260c77999eff0822855110c5e1d465d3ff83a36de18c0d76a0b8f418637fe6e"
+        },
+        "content.decks": {
+          "count": 196,
+          "sha256": "2dcde54a54a1776c3bc4c6385949010986f093f364e0b036319524c234e68af5"
+        },
+        "content.draft": {
+          "count": 1,
+          "sha256": "dda3a6f1c5e2f69bba9b526dbb2f9a0e48e7326f2e3291fbaf0d706630cc0551"
+        },
+        "content.draft_control": {
+          "count": 1,
+          "sha256": "b53855dec767426800630149334137fe753cfb67fae88c4bcdffa2380b46b663"
+        },
+        "content.draft_history": {
+          "count": 6,
+          "sha256": "329e684f92287bbcb743a098f07b0d27da28e58b1858d26353a0aee9ea387033"
+        },
+        "content.editor_reservations": {
+          "count": 1,
+          "sha256": "7c6d7124619e8f6b977c7ebbb30be75d69cea2f9f4db2035baacfd6db945547c"
+        },
+        "content.editor_slots": {
+          "count": 2,
+          "sha256": "24701782d3f57298038d363201fa2d94c71627692769e38bcdcd7d2a6130359d"
+        },
+        "content.entity_ids": {
+          "count": 13626,
+          "sha256": "200060cdf36e02e565decea7da04b0978b611cc150ed5a5c5555e5f1e02ff474"
+        },
+        "content.flashcards": {
+          "count": 3424,
+          "sha256": "45d2742015b7a1d5571731a650eff4e0fb676966275a296c51a7f4d05b667aa4"
+        },
+        "content.id_counters": {
+          "count": 5,
+          "sha256": "c15e68a758f4823a2eaebd9648718ddc6544787c4e1a3a03cf0504e9da19acdd"
+        },
+        "content.id_reservations": {
+          "count": 2,
+          "sha256": "bf69fd3ad5da94698220dd23fafc1a0d3f78fa00b5370f7d787db079019199b3"
+        },
+        "content.import_events": {
+          "count": 1,
+          "sha256": "ced3759e58ce7e6b5e02d54a072d6ffd929347da86913eefcb2fee2c9448fec1"
+        },
+        "content.operations": {
+          "count": 8,
+          "sha256": "ad52bcfec3fbacfd72fa798502142c5efce28164d4074933085ae69ccfea1a98"
+        },
+        "content.publication_events": {
+          "count": 2,
+          "sha256": "ed0198278b020885932e45db13e6cc06ba21cfc535ed95fc35aa6024af1c8dc4"
+        },
+        "content.questions": {
+          "count": 23374,
+          "sha256": "befc7505c7561b9d746a609de962d8a2ed666f730704c31e6860b4bba444f0b9"
+        },
+        "content.quizzes": {
+          "count": 222,
+          "sha256": "d5d5b7531d581632d98f2421ee5ec40661ab887a4e02922e21bd602e5ab8dc20"
+        },
+        "content.releases": {
+          "count": 2,
+          "sha256": "82d4c1e2636f0ec57b21cfcae336d68a0c3934bb877b66c9b7a91ee8d9a0cd57"
+        },
+        "content.subjects": {
+          "count": 26,
+          "sha256": "a0e4b57d632b6e51e0a71438f57a1689fb83ba9cc5d79ad12e6695296b17f3a4"
+        },
+        "sequences": [
+          [
+            "draft_history_history_id_seq",
+            6
+          ],
+          [
+            "publication_events_publication_sequence_seq",
+            2
+          ]
+        ]
+      },
+      "dump_sha256": "5ac40e453cb02f167255037797a4b82b6045dda3b0f99964b3964353d7cd1dcd",
+      "checks": [
+        "backup login dump, no owner/ACL",
+        "fresh target single-transaction restore as migration owner",
+        "exact effective owner/migrator/reader/operator/backup/session/editor privilege parity",
+        "exact all-table draft/audit/operation/allocation and sequence state",
+        "source state unchanged after deliberate post-backup reservations; authored bytes unchanged",
+        "post-backup allocations absent from dump; restore quarantine blocks creates",
+        "complete independent journal reconciliation burns all permitted ranges; no ID reuse",
+        "paired authored saves/publication, unpublished history and editor slots restored",
+        "restored live sessions revoked and login transactions cleared; external epoch rotated",
+        "selected authored-release export/audit and exact restored export parity",
+        "fresh readers and complete actual-bank/API parity after restoration"
+      ],
+      "isolation": "unique tmpfs cluster; no persistent volumes or routine DB; credentials and archive temporary"
+    },
+    "wheel": {
+      "result": "pass",
+      "wheelSha256": "bf14b1f8f7cbc2f5e4077d47ce2682ddb20242cb6ea9a85b390ad8d1d1c3ce23",
+      "packagedFilesMatchSource": [
+        "meducation_api/db/allocation_fence.py",
+        "meducation_api/migrations/0006_allocation_fence.sql",
+        "meducation_api/migrations/versions/0006_allocation_fence.py",
+        "meducation_api/db/cli.py"
+      ],
+      "isolatedWheelCliHead": "0006_allocation_fence",
+      "allocationCommandHelp": "pass"
+    },
+    "mypy": "pass; 39 source files",
+    "ruff": "pass; all backend source and tests",
+    "typecheck": "pass",
+    "learnerBuild": "pass; existing chunk size advisory",
+    "lintAndArchitecture": "pass; 285 modules / 1247 imports",
+    "changedPythonFormat": "pass",
+    "preparedDocumentationPatch": "git apply --check pass; not applied",
+    "whitespaceAndChangedDocFileLinks": "pass",
+    "frontendUnits": {
+      "result": "pass",
+      "files": 94,
+      "passed": 592,
+      "command": "npm run test:ci"
+    },
+    "actualContentValidation": {
+      "result": "pass",
+      "command": "node --import tsx scripts/content/validate-question-bank.ts",
+      "counts": {
+        "questions": 11687,
+        "quizzes": 111,
+        "cards": 1712,
+        "decks": 98,
+        "subjects": 13
+      },
+      "note": "npm run validate:content was blocked by the sandbox restriction on tsx CLI IPC sockets. The same unchanged validation script passed via the direct Node/tsx loader, with existing answer-review warnings."
+    }
+  },
+  "stageNotes": [
+    "Full 167-case Postgres regression and full actual-bank restore ran before the final prefix re-flush/canonical-lineage admission hardening. Seven final focused PG tests cover the prefix durability guard; 13 final journal units and 230 final ordinary backend tests cover canonical-lineage input admission.",
+    "Fresh-restore timing includes authoring setup, paired policy validation and parity. It is synthetic compatibility evidence, not achieved operational RPO/RTO.",
+    "Same-device temporary rehearsal journals replace independent retention only for explicitly isolated test databases. The operator flag cannot prove off-device durability or the completeness of two identically stale external copies.",
+    "Existing routine JSON-authoritative mode is unchanged; a future explicit migrator job enables protected ranges before cutover."
+  ],
+  "remaining": [
+    "Select/verify a protected retained DB backup destination and an independent off-device copy.",
+    "Accept journal destinations that acknowledge durable independent writes before range admission; asynchronous local cloud sync alone is insufficient.",
+    "Measure retained-copy operational RPO <=24h and RTO <=4h.",
+    "Apply final authority/build/bootstrap retirement and prepared documentation only under separate Step 7 approval.",
+    "Hosted provider/fresh-factor acceptance, native CI for new recovery code and manual device/assistive-technology acceptance remain pending."
+  ],
+  "completionAudit": {
+    "skill": ".agents/skills/meducation-completion-audit/SKILL.md",
+    "verdict": "No blocking local implementation findings. L4 Step 6 remains incomplete at retained-copy/destination and operational RPO/RTO acceptance gates.",
+    "canonicalAuthority": "repository JSON; unchanged",
+    "cutoverDocumentation": "prepared and applicable, not applied",
+    "limits": "No claim of exhaustive proof, real off-device retention, hosted assurance, native CI or public-release readiness."
+  }
+}
