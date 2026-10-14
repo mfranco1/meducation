@@ -1,0 +1,110 @@
+{
+  "recordedDate": "2026-10-14",
+  "baselineCommit": "4104f120712be2e1333f9780de4548f24dc0a729",
+  "scope": "L4 Step 1 inspected sources; hashes are byte hashes, not draft revisions or publication identities. No private content copied.",
+  "files": [
+    {
+      "path": "src/content/questionBank.generated.json",
+      "bytes": 16456246,
+      "sha256": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+      "collections": {
+        "subjects": 13,
+        "quizzes": 111,
+        "questions": 11687
+      },
+      "compactUtf8Bytes": 13717856
+    },
+    {
+      "path": "src/content/flashcardBank.generated.json",
+      "bytes": 653579,
+      "sha256": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7",
+      "collections": {
+        "decks": 98,
+        "cards": 1712
+      },
+      "compactUtf8Bytes": 577539
+    },
+    {
+      "path": "src/admin/AdminApp.tsx",
+      "bytes": 18325,
+      "sha256": "673a06421f75760ad605493bc1ee725df9984cddf9eec660e7d330b242b9f803"
+    },
+    {
+      "path": "src/admin/useAdminEditor.ts",
+      "bytes": 24016,
+      "sha256": "bc1c58f3c36bd6e15b1ab739eb9b49cf17b6cb14ba56ed4ba876244550ada7b1"
+    },
+    {
+      "path": "src/admin/FlashcardAdminPanel.tsx",
+      "bytes": 46179,
+      "sha256": "d34e1e9a94b074c1fa35b1b2973ff0cfcc680f6d6f06a8a496dfe08e98dc2c0f"
+    },
+    {
+      "path": "src/admin/data/AdminQuestionBankGateway.ts",
+      "bytes": 937,
+      "sha256": "73b9b722826097eecd901fac80f374b1cb411dd33f53188d490752cc17401a63"
+    },
+    {
+      "path": "src/admin/data/InMemoryQuestionBankGateway.ts",
+      "bytes": 7438,
+      "sha256": "8b66d491c1594f505a2fa765d90f9db4b8fb3a06988d053a3c72cb0ab5d32d84"
+    },
+    {
+      "path": "src/admin/core/templates.ts",
+      "bytes": 1403,
+      "sha256": "8669901eb607e139500c6cf7954ff826d9377a5c3784750f9d335fee02057d22"
+    },
+    {
+      "path": "src/admin/core/bulkAddDraft.ts",
+      "bytes": 13869,
+      "sha256": "dcc993a5a8d69ee40adae9698002f52bb81504ecb014e65edbd6e8ab9cf4d5fe"
+    },
+    {
+      "path": "src/admin/core/flashcardBulkAddDraft.ts",
+      "bytes": 11543,
+      "sha256": "0a816232de047002840a4e167f7fe122eccdc3b6fd76fbcf89197fe648e9169a"
+    },
+    {
+      "path": "src/admin/core/coordinatedContentChangeSet.ts",
+      "bytes": 2142,
+      "sha256": "10653fdfccc74c97e245f64f952cf1ab0c1963b64d5cb11a164fc608be53ef73"
+    },
+    {
+      "path": "backend/src/meducation_api/db/operations.py",
+      "bytes": 6018,
+      "sha256": "15fa166a63a9d47a03091d5f715f2bc7891e837e65912260d6adb55f7a0c9e33"
+    },
+    {
+      "path": "backend/src/meducation_api/migrations/0001_operations.sql",
+      "bytes": 24250,
+      "sha256": "81bb82913707028a5ed9ea1f75afa2c3ebd2c14a1f1fb8217c1438124b2fa2d7"
+    }
+  ],
+  "checks": [
+    {
+      "command": "npm test -- src/admin/core/applyChangeSet.test.ts src/admin/core/coordinatedContentChangeSet.test.ts src/admin/core/bulkAddDraft.test.ts src/admin/core/flashcardBulkAddDraft.test.ts src/admin/core/flashcardChangeSet.test.ts src/admin/useAdminEditor.test.ts src/admin/FlashcardAdminPanel.test.tsx",
+      "result": "7 files, 58 tests passed"
+    },
+    {
+      "command": ".venv/bin/python -m pytest backend/tests/test_content_operations.py -q",
+      "result": "6 tests passed"
+    },
+    {
+      "command": "npm run build",
+      "result": "TypeScript and Vite learner build passed; existing >500 kB chunk advisory remains"
+    },
+    {
+      "command": "Relative Markdown link/anchor and source hash check",
+      "result": "45 links/anchors passed; all 13 captured source hashes unchanged"
+    },
+    {
+      "command": "git diff --check and new-file whitespace check",
+      "result": "Passed"
+    }
+  ],
+  "limitations": [
+    "L3 SQL behavior inspected; no new real-PG acceptance run in this documentation step.",
+    "No L4 runtime route/session/validation/Undo/publication implemented.",
+    "Provider acceptance, retained backups, cutover and native CI remain pending."
+  ]
+}
