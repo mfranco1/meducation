@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { questions, quizzes } from '../../src/content/local/questionBank.ts';
 
 type Pattern = 'plain_prose' | 'bulleted' | 'choice_by_choice' | 'table_like' | 'heading' | 'source_disclosure';
+console.log('Source: repository JSON pair. This command does not inspect saved PostgreSQL drafts or releases.');
 const patternFor = (rationale: string, sources?: string): Pattern[] => {
   const patterns: Pattern[] = [];
   if (/^\s*(?:[-*+] |\d+[.)] )/m.test(rationale)) patterns.push('bulleted');

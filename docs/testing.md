@@ -211,3 +211,16 @@ The learner Playwright configuration excludes `e2e/admin-http`; those tests requ
 their dedicated isolated API/proxy/identity fixture and must not run against the
 ordinary read-only learner server. Protocol-null admission and expiry after SQL
 writes have focused backend regressions in addition to the complete database gate.
+
+## L4 recovery preparation checks
+
+The extended `scripts/containers/verify-postgres-release.py` rehearses L4 paired
+history/authored publication/editor reservations plus exact fresh-DB table/sequence
+and effective privilege parity. It checks restored session quarantine and pending
+callback rejection without altering content, selected authored-export parity and
+fresh learner readers. Its credentials/archive are disposable; it cannot certify
+retained/off-device recovery or post-backup allocation safety. Run the focused real
+PG17 regressions with `scripts/containers/test-postgres-content.py --keyword recovery`.
+Offline export tests live in `backend/tests/test_export_tools.py` and require the
+repository Node validation toolchain, independently of production credentials.
+See [the recovery runbook](L4-authoritative-recovery.md) for commands and open gates.

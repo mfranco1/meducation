@@ -307,3 +307,14 @@ provide guarded reservations, draft history, publication, activation and export.
 [Step 5 HTTP editor](../docs/L4-http-editor.md) supplies the private browser gateway.
 Packaged head is `0005_reserved_parents`; migration/bootstrap remain explicit
 operator jobs and no authority cutover is implied.
+
+## L4 recovery preparation jobs
+
+The [authoritative recovery runbook](../docs/L4-authoritative-recovery.md) describes
+fresh-target role/ACL restoration, session quarantine, external epoch rotation,
+selected-export checks and pending retained-copy/allocation gates. Explicit migrator
+jobs `restore-permissions` and `invalidate-restored-sessions` never run in workers.
+Offline `validate-export`/`audit-export` commands need a selected export directory,
+the repository validation toolchain and a new private report path; they do not load
+repository banks or require DB credentials. Their manifests identify draft/release
+context without claiming live database currency. JSON authority is unchanged.

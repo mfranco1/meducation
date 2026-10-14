@@ -19,8 +19,19 @@ from meducation_api.settings import Settings
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="action", required=True)
-    for action in ("head", "bootstrap-local", "upgrade"):
+    for action in (
+        "head",
+        "bootstrap-local",
+        "upgrade",
+        "restore-permissions",
+        "invalidate-restored-sessions",
+    ):
         commands.add_parser(action)
+    for action in ("validate-export", "audit-export"):
+        command = commands.add_parser(action)
+        command.add_argument("--directory", type=Path, required=True)
+        command.add_argument("--repository", type=Path, required=True)
+        command.add_argument("--report", type=Path, required=True)
     for action in ("validate-pair", "import-pair", "parity"):
         command = commands.add_parser(action)
         command.add_argument("--quiz-file", type=Path, required=True)
@@ -47,6 +58,22 @@ def main() -> None:
         if args.action == "head":
             print(migration_head() or "No content migration head packaged.")
             return
+        if args.action in ("validate-export", "audit-export"):
+            from meducation_api.db.export_tools import inspect_export
+
+            report = inspect_export(
+                args.directory, repository=args.repository, audit=args.action == "audit-export"
+            )
+            # Refuse overwrite; reports may contain private identifier inventories.
+            import os
+
+            fd = os.open(args.report, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as output:
+                output.write(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+            print(
+                "Selected export checked; context recorded in the new private report. Live database currency was not checked."
+            )
+            return
         pair = None
         if args.action in ("validate-pair", "import-pair", "parity"):
             pair = capture_pair(args.quiz_file, args.flashcard_file, repository=args.repository)
@@ -59,7 +86,7 @@ def main() -> None:
                 raise ContentDatabaseError("Role bootstrap is local-development-only.")
             secret, role = settings.bootstrap_database_url, "meducation_bootstrap"
             passwords = RolePasswords()
-        elif args.action == "upgrade":
+        elif args.action in ("upgrade", "restore-permissions", "invalidate-restored-sessions"):
             secret, role = settings.migration_database_url, "meducation_migrator"
             passwords = None
         else:
@@ -81,6 +108,26 @@ def main() -> None:
             elif args.action == "upgrade":
                 upgrade(engine)
                 print("Content schema upgraded to the packaged head.")
+            elif args.action in ("restore-permissions", "invalidate-restored-sessions"):
+                from meducation_api.db.recovery import (
+                    invalidate_restored_sessions,
+                    restore_content_permissions,
+                )
+
+                with engine.begin() as connection:
+                    if args.action == "restore-permissions":
+                        restore_content_permissions(connection)
+                    else:
+                        result = invalidate_restored_sessions(connection)
+                if args.action == "restore-permissions":
+                    print(
+                        "Packaged content/auth permissions reapplied; role bootstrap remains separate."
+                    )
+                else:
+                    print(json.dumps(result))
+                    print(
+                        "Keep workers stopped until the external admin epoch is rotated and allocation recovery is resolved."
+                    )
             elif args.action == "import-pair":
                 assert pair is not None
                 release = import_pair(

@@ -10,6 +10,7 @@ import { validateQuestionMarkdown } from '../../src/content/validation/markdownV
 import { validateFlashcardBank } from '../../src/content/validation/flashcardValidation.ts';
 import { validateQuestionBank, validateStoredQuestionBank } from '../../src/content/validation/validate.ts';
 
+console.log('Source: repository JSON pair. This command does not inspect saved PostgreSQL drafts or releases.');
 const issues = [
   ...(schemaVersion === 4
     ? []

@@ -1,6 +1,6 @@
 # L4 — Local database authoring and admin access
 
-Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 awaits continuation. Hosted provider/fresh-factor and editor session UX acceptance remain explicitly pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration remain Steps 4–5 work. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
+Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 recovery/tooling implementation is in progress (authorized 2026-10-14); retained destinations and allocation enforcement remain pending. Hosted provider/fresh-factor and editor session UX acceptance remain explicitly pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration remain Steps 4–5 work. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l4--local-database-authoring-and-admin-access-boundary). Prerequisites: [completed L3](../done/L3-postgres-schema-migration-parity-plan.md), [L4 handoff](../../L4-authoring-handoff.md), [authentication contract](../../decisions/0004-single-editor-authentication.md), and [paired-release contract](../../decisions/0005-paired-content-releases-and-postgres-schema.md). Follow the [work tracking gates](../README.md): implement one step, record evidence and limitations, then stop until continuation is authorized. The authority cutover has its own explicit approval gate.
 
@@ -206,3 +206,51 @@ disabled/pending.
 - [x] Completion audit matched every original Step 5 outcome to implementation/evidence with no blocking local findings. Canonical hashes remain unchanged; changed/new whitespace, local links and formatting checked. [HTTP editor runbook](../../L4-http-editor.md) and [Step 5 evidence](L4-step5-editor-evidence.json) capture the final sources, image, observed checks, advisories and limits. Historical stage evidence is preserved.
 
 Step 5 is complete at its local HTTP editor gate. Step 6 recovery/tooling is next, pending continuation. Hosted provider/fresh-factor/TLS/routing, durable authored recovery/allocation protection, authority cutover, new native CI and manual device/assistive-technology acceptance remain open. No canonical bank, routine DB/volume or hosted resource changed; L4 overall remains open.
+
+
+## Step 6 implementation progress — 2026-10-14
+
+The user authorized starting Step 6. After discussing the backup requirement, scope
+stays local: prepare and rehearse the tools without provisioning a new backup
+service. Retained destination selection/acceptance remains pending; JSON remains
+authoritative. No routine DB/volume, hosted resource or canonical content changed.
+
+- [x] Added explicit offline `validate-export`/`audit-export` jobs for selected
+  operator release directories and extracted HTTP draft/release ZIPs. Captured
+  byte hashes, normalized revisions, ordered HTTP identity inventories, paired
+  policy checks and source/context reports prevent silent bundled-bank fallback.
+  Reports are private, exclusive-create and do not claim live database currency.
+  Existing npm validators/audits identify their repository JSON source.
+- [x] Added explicit migrator-only `restore-permissions` and
+  `invalidate-restored-sessions` jobs. Unsupported schema heads fail. Session
+  quarantine revokes restored sessions/clears login transactions in one transaction
+  without modifying content/history/allocations; external epoch rotation remains
+  an operator requirement before startup.
+- [x] Added a small proposed backup/retention schedule, role-separated fresh-target
+  restore procedure, private-source/media recovery inventory and file-by-file
+  cutover documentation checklist in [the recovery runbook](../../L4-authoritative-recovery.md).
+  This is preparation: no authority or admin build-mode cutover was applied.
+- [x] Extended actual-bank PG17 fresh-restore rehearsal passed:
+  paired editor history/authored publication/newer unpublished draft, editor slots,
+  live session/pending login, exact all-table/sequence/effective-ACL parity, session
+  quarantine, independent authored export and fresh learner readers.
+- [ ] Select/verify retained off-volume and independent off-device copies; measure
+  achieved RPO/RTO. Temporary test archives do not meet this gate.
+- [ ] Implement and test allocation recovery enforcement. The runbook proposes
+  independently durable pre-issued numeric ceilings; periodic counter snapshots
+  alone cannot prevent reuse. Missing/incomplete evidence must fail closed before
+  authoritative creates. No such enforcement is claimed implemented.
+- [ ] Finish exact cutover documentation patch and retire dual writable modes only
+  at separately authorized Step 7. Hosted provider/fresh-factor acceptance and
+  native CI/manual device/assistive-technology gates remain pending.
+
+- [x] Verification: 13 final offline-export tests, 4 real PG17 recovery tests and
+  2 final real HTTP export checks passed; ordinary backend 215 passed at the earlier
+  source stage. TypeScript/learner build, lint/architecture, changed Python
+  Ruff/mypy, changed TypeScript format, whitespace and new local doc links passed.
+  Actual-bank source/restored API parity checked 348 routes on each side, with
+  exact content/history/counter/sequence and effective role permission parity.
+
+Step 6 remains open. [Step 6 evidence](L4-step6-recovery-evidence.json) records
+sources, observed checks, provisional rehearsal timing and remaining acceptance
+gates. Retained-copy acceptance and allocation enforcement are not passed.

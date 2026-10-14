@@ -480,3 +480,9 @@ provider acceptance, browser editor integration or durable authored recovery.
 [Step 5 HTTP editor](L4-http-editor.md) supplies the private browser gateway.
 Packaged head is `0005_reserved_parents`; migration/bootstrap remain explicit
 operator jobs and no authority cutover is implied.
+
+L4's [recovery preparation](L4-authoritative-recovery.md) extends the actual-bank
+rehearsal with authored paired history, editor reservations, exact effective ACL
+parity and restored-session quarantine. The generic bootstrap-based `postgres.py`
+restore helper does not perform these L4 gates. Independent retained copies and
+allocation recovery remain pending before the separately authorized cutover.

@@ -91,3 +91,12 @@ When shared-subject changes make independent resets invalid, use **Reset both ba
 `npm run validate:content` runs `scripts/content/validate-question-bank.ts`; `npm run audit:explanations` runs `scripts/content/audit-explanations.ts` and still writes the ignored `content/explanation-audit.json`. Run these commands from the repository root. Stored contracts live under `src/content/schema`, validators under `src/content/validation`, and shared sanitization/math policies under `src/content/richText`. Local JSON adapters and API delivery live under `src/content/local` and `src/content/api`.
 
 The schema-v1 flashcard migration CLI and legacy import/read paths have been retired after the owner verified that backward compatibility is no longer needed. Current authoring imports require version-2 change sets. Future schema changes still require deliberate candidate/parity validation.
+
+L4 Step 6 adds explicit selected-export validation/audit commands for operator
+release directories and extracted HTTP draft/release ZIPs. They verify captured
+bytes, content revisions and (for HTTP exports) ordered identity inventories,
+then run paired content policy checks. Reports retain selected publication or
+unpublished draft context and do not claim current database currency. Existing
+npm validation/audit commands still examine repository JSON and announce that
+source. Follow [the authoritative recovery preparation runbook](L4-authoritative-recovery.md#explicit-export-validation-and-audit).
+These tools do not change canonical authority or replace a retained full backup.

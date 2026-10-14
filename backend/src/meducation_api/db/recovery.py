@@ -6,6 +6,29 @@ from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.db.migrate import migration_head
 
 
+def invalidate_restored_sessions(connection: Connection) -> dict[str, int]:
+    """Quarantine restored credentials before workers start; retain revoked session evidence.
+
+    The operator must also rotate MEDUCATION_ADMIN_EPOCH outside the database.
+    Clearing outstanding login ciphertext prevents pre-restore callbacks from creating
+    new sessions even if an old configuration is accidentally reused.
+    """
+    connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
+    if (
+        connection.exec_driver_sql("SELECT version_num FROM content.alembic_version").scalar_one()
+        != migration_head()
+    ):
+        raise ContentDatabaseError("Restored schema head is unsupported; sessions not changed.")
+    connection.exec_driver_sql(
+        "LOCK TABLE admin_auth.sessions,admin_auth.logins IN ACCESS EXCLUSIVE MODE"
+    )
+    revoked = connection.exec_driver_sql(
+        "UPDATE admin_auth.sessions SET revoked=true WHERE NOT revoked"
+    ).rowcount
+    cleared = connection.exec_driver_sql("DELETE FROM admin_auth.logins").rowcount
+    return {"revokedSessions": revoked, "clearedLoginTransactions": cleared}
+
+
 def restore_content_permissions(connection: Connection) -> None:
     connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
     if (
