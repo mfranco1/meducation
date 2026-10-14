@@ -26,6 +26,8 @@ class PostgresRuntime(AbstractContextManager["PostgresRuntime"]):
     def __enter__(self) -> Self:
         try:
             with self.engine.connect() as connection:
+                connection.exec_driver_sql("SET LOCAL statement_timeout = '10s'")
+                connection.exec_driver_sql("SET LOCAL lock_timeout = '3s'")
                 version = int(connection.exec_driver_sql("SHOW server_version_num").scalar_one())
                 if not 170000 <= version < 180000:
                     raise ContentDatabaseError("Postgres content mode requires PostgreSQL 17.")

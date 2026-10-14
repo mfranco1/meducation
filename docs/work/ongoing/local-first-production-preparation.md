@@ -1,6 +1,6 @@
 # Local-first production preparation
 
-Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 complete with passing local verification and user-confirmed native AMD64/ARM64 GitHub CI; L3 complete with final verification and independently verified native AMD64/ARM64 CI; L4 Steps 1–2 complete; Steps 3–4 local backend and Step 5 local HTTP editor gates complete; Steps 6–8 and L5–L6 pending. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
+Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 complete with passing local verification and user-confirmed native AMD64/ARM64 GitHub CI; L3 complete with final verification and independently verified native AMD64/ARM64 CI; L4 Steps 1–2 complete; Steps 3–4 local backend and Step 5 local HTTP editor gates complete; Step 6 recovery tooling verified with retained-copy acceptance deferred; Step 7 authority cutover pending; Step 8 native CI verified at `f99a18e`; L5 Step 1 local gate complete, remaining L5 work and L6 pending. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
 
 ## Confirmed scope
 
@@ -97,6 +97,12 @@ Detailed sequence: [L4 local authoring and admin access plan](L4-local-authoring
 Gate: the current admin can edit/save/publish locally against Postgres with authorization, validation, audit and rollback; canonical authority and backup responsibilities are explicit. Hosted identity provisioning remains deferred, but the security boundary is implemented and exercised locally.
 
 ### L5 — Resilience, scale-to-zero readiness and local operations
+
+Implementation is tracked in [the L5 plan](L5-resilience-and-local-operations-plan.md).
+Step 1 implements one worker, bounded pools, request-driven stale socket repair,
+reader SQL deadlines and isolated local restart acceptance. Whole-L5 checkboxes
+remain open until the remaining freshness, diagnostics and concurrency outcomes
+are verified. L4's retained-copy and authority gates remain separate.
 
 - [ ] Start with one API process/instance for the initial small deployment, while retaining transactional concurrency tests. Define a concrete current-release freshness target (initially <=30 seconds for new content launches). Never mix versions during an active quiz. Requests discovering a changed catalog must use the existing revision-conflict/reload behavior; cached active sessions must not switch underneath the learner. Test future multi-worker behavior before enabling multiple workers.
 - [ ] Configure small bounded database pools, timeouts, connection invalidation/reconnect, and safe idempotent retries. Do not retry uncertain non-idempotent admin writes blindly; use transactional operation IDs/revision preconditions.

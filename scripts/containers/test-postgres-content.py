@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import secrets
+import socket
 import subprocess
 import sys
 import tempfile
@@ -22,9 +23,38 @@ def main():
     parser.add_argument("--output", type=Path)
     parser.add_argument("--maxfail", type=int, default=0)
     parser.add_argument("--keyword", default="")
+    parser.add_argument(
+        "--restartable",
+        action="store_true",
+        help="Use an owned disposable volume for real stop/start cases",
+    )
     args = parser.parse_args()
     name = "meducation-pg-content-" + uuid.uuid4().hex[:12]
+    volume = name + "-data"
+    volume_created = False
     try:
+        if args.restartable:
+            docker(
+                "volume",
+                "create",
+                "--label",
+                "meducation.restartable-fixture=" + name,
+                volume,
+            )
+            volume_created = True
+            with socket.socket() as reservation:
+                reservation.bind(("127.0.0.1", 0))
+                fixed_port = reservation.getsockname()[1]
+            storage = [
+                "--mount",
+                "type=volume,src=" + volume + ",dst=/var/lib/postgresql/data",
+                "--label",
+                "meducation.restartable-fixture=" + name,
+            ]
+            binding = "127.0.0.1:" + str(fixed_port) + ":5432"
+        else:
+            storage = ["--tmpfs", "/var/lib/postgresql/data:rw,size=512m"]
+            binding = "127.0.0.1::5432"
         with tempfile.TemporaryDirectory(prefix="meducation-pg-content-") as temp:
             env_file = Path(temp) / "postgres.env"
             password = secrets.token_urlsafe(24)
@@ -42,9 +72,8 @@ def main():
                 "--env-file",
                 str(env_file),
                 "--publish",
-                "127.0.0.1::5432",
-                "--tmpfs",
-                "/var/lib/postgresql/data:rw,size=512m",
+                binding,
+                *storage,
                 PG_IMAGE,
                 timeout=120,
             )
@@ -84,6 +113,7 @@ def main():
                 + port
                 + "/meducation_test_content?sslmode=disable",
             }
+            env["MEDUCATION_TEST_RESTART_CONTAINER"] = name if args.restartable else ""
             for role in (
                 "MIGRATOR",
                 "READER",
@@ -127,7 +157,11 @@ def main():
                 + docker("image", "inspect", "--format", "{{.Architecture}}", PG_IMAGE),
                 "command": command,
                 "pytest_output": result.stdout,
-                "isolation": "unique tmpfs container; loopback port; fixture-only disposable schema; no routine database or volume used",
+                "isolation": (
+                    "owned disposable restartable volume; removed after run; no routine database/volume"
+                    if args.restartable
+                    else "unique tmpfs container; loopback port; fixture-only disposable schema; no routine database or volume used"
+                ),
             }
             if args.output:
                 args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -139,6 +173,12 @@ def main():
             timeout=30,
             check=False,
         )
+
+        if volume_created:
+            metadata = json.loads(docker("volume", "inspect", volume))[0]
+            if metadata.get("Labels", {}).get("meducation.restartable-fixture") != name:
+                raise RuntimeError("Fixture volume ownership changed; refusing removal")
+            docker("volume", "rm", volume)
 
 
 if __name__ == "__main__":

@@ -96,6 +96,9 @@ def main():
                              "--image", "meducation-api:local", "--output", str(output / "db-toolchain.json")], timeout=300)
         run("postgres-content", [sys.executable, str(ROOT / "scripts/containers/test-postgres-content.py"),
                                  "--output", str(output / "postgres-content.json")], timeout=600)
+        run("postgres-resilience", [sys.executable, str(ROOT / "scripts/containers/test-postgres-content.py"),
+                                    "--restartable", "--keyword", "l5",
+                                    "--output", str(output / "postgres-resilience.json")], timeout=600)
         run("release-recovery", [sys.executable, str(ROOT / "scripts/containers/verify-postgres-release.py"),
                                  "--output", str(output / "release-recovery.json")], timeout=1200)
         run("postgres-browser", [sys.executable, str(ROOT / "scripts/containers/smoke-postgres-learner.py"),

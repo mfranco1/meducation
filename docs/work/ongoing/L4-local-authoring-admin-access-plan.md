@@ -1,6 +1,6 @@
 # L4 — Local database authoring and admin access
 
-Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 recovery/tooling implementation is in progress (authorized 2026-10-14); allocation protection implementation and isolated recovery are verified; retained-copy policy is selected (local backups plus an encrypted external drive); physical destination acceptance remains pending. Hosted provider/fresh-factor and editor session UX acceptance remain explicitly pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration remain Steps 4–5 work. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
+Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 recovery/tooling implementation is in progress (authorized 2026-10-14); allocation protection implementation and isolated recovery are verified; retained-copy policy is selected (local backups plus an encrypted external drive); physical destination acceptance is user-deferred. Step 7 authority cutover remains pending; Step 8 native CI passed at `f99a18e` on both architectures. Hosted provider/fresh-factor and editor session UX acceptance remain explicitly pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration remain Steps 4–5 work. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l4--local-database-authoring-and-admin-access-boundary). Prerequisites: [completed L3](../done/L3-postgres-schema-migration-parity-plan.md), [L4 handoff](../../L4-authoring-handoff.md), [authentication contract](../../decisions/0004-single-editor-authentication.md), and [paired-release contract](../../decisions/0005-paired-content-releases-and-postgres-schema.md). Follow the [work tracking gates](../README.md): implement one step, record evidence and limitations, then stop until continuation is authorized. The authority cutover has its own explicit approval gate.
 
@@ -385,3 +385,19 @@ cannot certify AMD64 or close the whole Step 8 gate.
 [CI preparation evidence](L4-step8-ci-preparation-evidence.json) freezes sources,
 image and observed checks. Backup/cutover/provider gates remain explicitly open;
 no deployment, retained backup or change in canonical authority occurred.
+
+
+## Final implementation native CI verification — 2026-10-14
+
+The user reported [run 38562572275](https://github.com/mfranco1/meducation/actions/runs/38562572275)
+passed and authorized continued work. Read-only GitHub REST metadata independently
+confirms all five jobs succeeded, including native AMD64/ARM64 repeated clean
+builds and acceptance, at `f99a18e60e22dbe23e698d4521e126aac85bd4b7`, matching the
+local checkout before continuation. [Frozen metadata](L4-final-native-ci-evidence.json)
+records the run, jobs and steps. This closes the independent native CI requirement
+for that L4 implementation commit, not retained-copy/RPO/RTO, provider acceptance,
+authority cutover or the entire L4 outcome audit.
+
+Proceed with independent L5 resilience work under the user's continuation request.
+Retained external setup remains user-deferred; JSON remains authoritative and the
+L4 tracker stays ongoing. New L5 changes require their own CI evidence.

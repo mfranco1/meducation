@@ -66,6 +66,9 @@ def create_database_engine(url: URL, *, operator: bool = False) -> Engine:
         pool_size=2,
         max_overflow=0,
         pool_timeout=5,
+        # Checkout-driven only: repair stale idle sockets without background SQL
+        # or replaying a transaction that may already have written data.
+        pool_pre_ping=True,
         hide_parameters=True,
         echo=False,
         connect_args={"connect_timeout": 5, "gssencmode": "disable"},

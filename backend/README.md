@@ -103,14 +103,42 @@ test target. Run `.venv/bin/python scripts/containers/test-postgres-content.py`
 from the root to create a unique tmpfs PG17 test container, bootstrap/migrate and
 exercise those cases. It cleans up its container and never uses the routine DB.
 
-Runtime uses only `meducation_reader` and one SQLAlchemy pool of size 2 with no
-overflow. Operator jobs use direct, unpooled connections; migrations SET ROLE to
+The container starts one explicit API worker. Runtime has a reader pool and, when
+private admin authentication is enabled, separate session and editor pools. Each
+pool has size 2, zero overflow and a five-second checkout wait; the aggregate is
+at most six runtime connections per enabled API process (two without admin).
+Connection establishment has a five-second driver timeout. Increasing the worker
+or instance count multiplies these limits and needs separate capacity verification.
+Operator jobs use direct, unpooled connections; migrations SET ROLE to
 the NOLOGIN owner inside a transaction. Hosted configuration requires explicit
 `sslmode=verify-full` and forces `gssencmode=disable`; local non-TLS configuration requires a loopback or the
 Compose `postgres` hostname and `MEDUCATION_DATABASE_ENVIRONMENT=local`.
 One-time schema/head/active-release checks dispose connections on startup failure;
 recurring health routes do not query Postgres. Successful DB learner startup is
 available after explicit bootstrap, migration, paired import and activation.
+
+Runtime pools use request-driven checkout pre-ping to replace stale idle sockets;
+there are no timer-driven SQL pings. A transaction interrupted after checkout
+still fails and is not replayed automatically, particularly for uncertain writes.
+Reader startup and request transactions set a ten-second statement timeout and
+three-second lock timeout locally. Failed requests release/roll back their
+connection and return the existing safe `content_unavailable` response. These
+limits bound SQL waits, not an absolute request deadline through a network
+blackhole. See [SQLAlchemy's disconnect handling](https://docs.sqlalchemy.org/en/21/core/pooling.html#disconnect-handling-pessimistic).
+
+Run the isolated restart acceptance with:
+
+```sh
+.venv/bin/python scripts/containers/test-postgres-content.py --restartable --keyword l5 --output /tmp/meducation-resilience.json
+```
+
+This uses a uniquely labeled temporary volume and fixed loopback port so data
+survives fixture stop/start. The controller checks the exact container label,
+volume and port before either action; cleanup removes only its owned fixture.
+It tests stale reader/session/editor sockets, reader lock timeout cleanup and
+actual database restart recovery, including query-free health routes during the
+outage. Native container CI runs this separately from the default tmpfs suite.
+Local restart evidence does not establish hosted suspend/wake latency.
 
 ## Paired content import, activation and export
 

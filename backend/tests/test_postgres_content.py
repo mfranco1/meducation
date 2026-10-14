@@ -2903,3 +2903,91 @@ def test_allocation_fence_prefix_fsync_failure_cannot_admit_another_range(db, tm
     assert scalar(db.operator, 'SELECT generation FROM content.allocation_fence') == generation
     assert authoring_state(db) == before
     assert len(fence.read_journal(journals[0])) == len(fence.read_journal(journals[1])) == 1
+
+
+@pytest.mark.parametrize('role', ['reader', 'session', 'editor'])
+def test_l5_stale_idle_pool_connection_is_repaired_before_work(db, role):
+    from sqlalchemy import event
+    engine = create_database_engine(getattr(db, role).url)
+    opened = []
+    event.listen(engine, 'connect', lambda *_: opened.append(True))
+    try:
+        with engine.connect() as connection:
+            old = connection.exec_driver_sql('SELECT pg_backend_pid()').scalar_one()
+        with db.admin.begin() as connection:
+            assert connection.execute(text('SELECT pg_terminate_backend(:pid)'), {'pid': old}).scalar_one()
+        with engine.connect() as connection:
+            assert connection.exec_driver_sql('SELECT 1').scalar_one() == 1
+        assert len(opened) == 2
+        assert engine.pool.checkedout() == 0
+    finally:
+        engine.dispose()
+
+
+def test_l5_reader_lock_timeout_returns_safe_error_and_leaves_pool_clean(db):
+    from fastapi.testclient import TestClient
+
+    from meducation_api.main import create_app
+    from meducation_api.repositories.postgres import PostgresQuestionBankRepository
+    release = store(db)
+    publish(db, release)
+    app = create_app(reader_settings(db))
+    with TestClient(app) as client:
+        assert client.get('/api/v1/quizzes/q1/questions').status_code == 200
+        engine = app.state.source.runtime.engine
+        with app.state.source.view() as view:
+            assert isinstance(view.questions, PostgresQuestionBankRepository)
+            c = view.questions.connection
+            assert c.exec_driver_sql('SHOW statement_timeout').scalar_one() == '10s'
+            assert c.exec_driver_sql('SHOW lock_timeout').scalar_one() == '3s'
+        with db.admin.begin() as held:
+            held.exec_driver_sql('LOCK TABLE content.questions IN ACCESS EXCLUSIVE MODE')
+            result = client.get('/api/v1/quizzes/q1/questions')
+            assert result.status_code == 503
+            assert result.json() == {'detail': {'code': 'content_unavailable'}}
+            assert engine.pool.checkedout() == 0
+        assert client.get('/api/v1/quizzes/q1/questions').status_code == 200
+        assert engine.pool.checkedout() == 0
+
+
+def test_l5_database_stop_start_keeps_health_query_free_and_recovers_reader(db):
+    import subprocess
+    import sys
+
+    from fastapi.testclient import TestClient
+    from sqlalchemy import event
+
+    from meducation_api.main import create_app
+    container = os.environ.get('MEDUCATION_TEST_RESTART_CONTAINER')
+    if not container:
+        pytest.skip('Run the isolated launcher with --restartable --keyword l5')
+    def control(action):
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/containers/control-resilience-fixture.py'),
+                                 '--container', container, '--port', str(db.admin.url.port),
+                                 '--action', action], capture_output=True, text=True, timeout=60, check=False)
+        assert result.returncode == 0, 'Owned fixture control failed'
+    release = store(db)
+    publish(db, release)
+    app = create_app(reader_settings(db))
+    with TestClient(app) as client:
+        first = client.get('/api/v1/quizzes/q1/questions')
+        assert first.status_code == 200
+        engine = app.state.source.runtime.engine
+        checkouts = []
+        event.listen(engine, 'checkout', lambda *_: checkouts.append(True))
+        try:
+            control('stop')
+            assert client.get('/health/live').status_code == 200
+            assert client.get('/health/ready').status_code == 200
+            assert checkouts == []
+            unavailable = client.get('/api/v1/quizzes/q1/questions')
+            assert unavailable.status_code == 503
+            assert unavailable.json() == {'detail': {'code': 'content_unavailable'}}
+            assert engine.pool.checkedout() == 0
+        finally:
+            control('start')
+        recovered = client.get('/api/v1/quizzes/q1/questions')
+        assert recovered.status_code == 200
+        assert recovered.json() == first.json()
+        assert recovered.headers['etag'] == first.headers['etag']
+        assert engine.pool.checkedout() == 0

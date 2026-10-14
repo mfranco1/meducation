@@ -232,6 +232,8 @@ class PostgresContentSource:
     def view(self) -> Iterator[ContentView]:
         try:
             with self.runtime.engine.connect() as connection:
+                connection.exec_driver_sql("SET LOCAL statement_timeout = '10s'")
+                connection.exec_driver_sql("SET LOCAL lock_timeout = '3s'")
                 selected = (
                     connection.execute(
                         text(

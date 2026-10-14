@@ -1,0 +1,221 @@
+{
+  "date": "2026-10-14",
+  "base_commit": "f99a18e60e22dbe23e698d4521e126aac85bd4b7",
+  "scope": "L5 Step 1 local verification; changed-source native GitHub acceptance pending",
+  "inputs_sha256": {
+    "backend/Dockerfile": "2a86a812b8b9c1c4122bfbe22432afd4dadae020d0091e023018b3843a26bf6b",
+    "backend/src/meducation_api/db/engine.py": "e7a780b629b2ec5d764a5b8daaad9f99fdce0b36520554f4ee425f332264ae1c",
+    "backend/src/meducation_api/db/runtime.py": "e1f819dbcce32e4ca497df45d22bf16ff3a4b1b0d235cec569b43e5ef3162a8f",
+    "backend/src/meducation_api/repositories/postgres.py": "02bbdea08b199472509640366ea9eaf943d0e5cd44f9fb2aace20131175cfa3d",
+    "backend/tests/test_postgres_content.py": "54fe81efd5f43d53e4018b82f849acb3656842388d37dc8c119a2cb0e406693b",
+    "scripts/containers/acceptance.py": "3fb80866a31de11ecebe5febbcf8581b75c8d102f7b8f0b0c0f3dc8a837e41ac",
+    "scripts/containers/test-postgres-content.py": "12f029c3c002cba9dce94072bcb719e2ddcd023a8ed880381abe1a4d9382d04c",
+    "scripts/containers/control-resilience-fixture.py": "61db40896ea859c7112387dba5e6dfa68e3d511f65892efbd5ac48543237519a"
+  },
+  "canonical_sha256": {
+    "src/content/questionBank.generated.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+    "src/content/flashcardBank.generated.json": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+  },
+  "ordinary_backend": "230 passed, 173 deselected; two weak-RSA fixture warnings",
+  "ruff": "pass: backend/src backend/tests scripts/containers",
+  "mypy": "pass: 39 source files",
+  "frontend_build": "pass: npm run build (includes typecheck)",
+  "diff_check": "pass",
+  "restart_recovery": {
+    "result": "pass",
+    "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+    "platform": "linux/arm64",
+    "command": [
+      "/Users/noodle.zip/Documents/code_projects/meducation/.venv/bin/python",
+      "-m",
+      "pytest",
+      "backend/tests/test_postgres_content.py",
+      "-q",
+      "--tb=short",
+      "--maxfail=0",
+      "-k",
+      "l5"
+    ],
+    "pytest_output": ".....                                                                    [100%]\n5 passed, 168 deselected in 10.98s\n",
+    "isolation": "owned disposable restartable volume; removed after run; no routine database/volume"
+  },
+  "installed_api_smoke": {
+    "image_tag": "meducation-api:l5-step1",
+    "image_id": "sha256:d83ce542a06c5e7c03bd1068af71ac6ac8a18c642e4530f82a046b5c7a2686dc",
+    "image_platform": "linux/arm64",
+    "docker": {
+      "Client": {
+        "Version": "29.8.2",
+        "ApiVersion": "1.56",
+        "DefaultAPIVersion": "1.56",
+        "GitCommit": "7fc2dff",
+        "GoVersion": "go1.26.8",
+        "Os": "darwin",
+        "Arch": "arm64",
+        "BuildTime": "Wed Sep 30 19:32:03 2026",
+        "Context": "desktop-linux"
+      },
+      "Server": {
+        "Platform": {
+          "Name": "Docker Desktop 4.95.0 (242831)"
+        },
+        "Version": "29.8.2",
+        "ApiVersion": "1.56",
+        "MinAPIVersion": "1.40",
+        "Os": "linux",
+        "Arch": "arm64",
+        "Components": [
+          {
+            "Name": "Engine",
+            "Version": "29.8.2",
+            "Details": {
+              "ApiVersion": "1.56",
+              "Arch": "arm64",
+              "BuildTime": "Wed Sep 30 19:31:50 2026",
+              "Experimental": "false",
+              "GitCommit": "8af9fe3",
+              "GoVersion": "go1.26.8",
+              "KernelVersion": "7.0.14-linuxkit",
+              "MinAPIVersion": "1.40",
+              "Module": "github.com/moby/moby/v2",
+              "ModuleVersion": "v2.0.0+unknown",
+              "Os": "linux"
+            }
+          },
+          {
+            "Name": "containerd",
+            "Version": "v2.3.6",
+            "Details": {
+              "GitCommit": "ee2735368117d2eb259779949d5e75cdafec9761"
+            }
+          },
+          {
+            "Name": "runc",
+            "Version": "1.5.1",
+            "Details": {
+              "GitCommit": "v1.5.1-0-g8f2685a4"
+            }
+          },
+          {
+            "Name": "docker-init",
+            "Version": "0.19.0",
+            "Details": {
+              "GitCommit": "de40ad0"
+            }
+          }
+        ],
+        "GitCommit": "8af9fe3",
+        "GoVersion": "go1.26.8",
+        "KernelVersion": "7.0.14-linuxkit",
+        "BuildTime": "2026-09-30T19:31:50.000000000+00:00"
+      }
+    },
+    "checks": [
+      "non-root/read-only runtime, exact bank/lock hashes, locked dependencies/imports",
+      "health, canonical subject/quiz/flashcard content, 304/409/404 and explicit CORS",
+      "SIGTERM graceful shutdown with exit 0",
+      "MEDUCATION_BANK_PATH: missing input fails startup",
+      "MEDUCATION_BANK_PATH: invalid input fails startup",
+      "MEDUCATION_FLASHCARD_BANK_PATH: missing input fails startup",
+      "MEDUCATION_FLASHCARD_BANK_PATH: invalid input fails startup",
+      "flashcard subject absent from quiz bank fails paired initialization"
+    ],
+    "runtime": {
+      "uid": 10001,
+      "gid": 10001,
+      "python": "3.14.8",
+      "architecture": "aarch64",
+      "package_path": "/opt/venv/lib/python3.14/site-packages/meducation_api/main.py",
+      "bank_paths": [
+        "/app/content/questionBank.generated.json",
+        "/app/content/flashcardBank.generated.json"
+      ],
+      "allowed_origins": [
+        "http://127.0.0.1:4173",
+        "http://localhost:4173"
+      ],
+      "hashes": {
+        "/app/content/questionBank.generated.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+        "/app/content/flashcardBank.generated.json": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7",
+        "/app/requirements.lock": "ab5557d7298e77ec9968ed5e2b2ba0d934d907b943442cf9a80b0b7dce6a4a0b"
+      },
+      "packages": {
+        "httpcore2": "2.13.1",
+        "psycopg-binary": "3.3.6",
+        "pydantic-settings": "2.15.0",
+        "h11": "0.16.0",
+        "click": "8.5.0",
+        "typing-extensions": "4.16.0",
+        "sqlalchemy": "2.1.4",
+        "idna": "3.20",
+        "typing-inspection": "0.4.4",
+        "fastapi": "0.142.2",
+        "starlette": "1.7.0",
+        "opentelemetry-api": "1.45.0",
+        "httpx2": "2.13.1",
+        "cryptography": "50.0.2",
+        "markupsafe": "3.0.4",
+        "authlib": "1.8.0",
+        "truststore": "0.10.5",
+        "anyio": "4.15.1",
+        "alembic": "1.20.0",
+        "python-dotenv": "1.2.4",
+        "pip": "26.2.1",
+        "joserfc": "1.7.5",
+        "mako": "1.4.3",
+        "pydantic-core": "2.46.5",
+        "psycopg": "3.3.6",
+        "meducation-api": "0.1.0",
+        "uvicorn": "0.54.0",
+        "annotated-doc": "0.0.5",
+        "pydantic": "2.13.5",
+        "cffi": "2.1.1",
+        "annotated-types": "0.8.0",
+        "pycparser": "3.11"
+      },
+      "compiler_present": false,
+      "source_env_present": false,
+      "banks_writable": false
+    },
+    "result": "pass"
+  },
+  "image_command": [
+    "python",
+    "-m",
+    "uvicorn",
+    "meducation_api.main:app",
+    "--host",
+    "0.0.0.0",
+    "--port",
+    "8000",
+    "--workers",
+    "1",
+    "--timeout-graceful-shutdown",
+    "10"
+  ],
+  "limitations": [
+    "Local ARM64 fixtures do not prove hosted suspend/wake latency.",
+    "SQL statement and lock deadlines do not impose an absolute network-blackhole request deadline.",
+    "L4 retained-copy and authority-cutover gates remain open.",
+    "L5 freshness, authenticated diagnostics and 20-concurrent-launch gates remain open."
+  ],
+  "full_postgres": {
+    "result": "pass",
+    "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+    "platform": "linux/arm64",
+    "command": [
+      "/Users/noodle.zip/Documents/code_projects/meducation/.venv/bin/python",
+      "-m",
+      "pytest",
+      "backend/tests/test_postgres_content.py",
+      "-q",
+      "--tb=short",
+      "--maxfail=0",
+      "-k",
+      ""
+    ],
+    "pytest_output": "........................................................................ [ 41%]\n........................................................................ [ 83%]\n............................s                                            [100%]\n172 passed, 1 skipped in 229.02s (0:03:49)\n",
+    "isolation": "unique tmpfs container; loopback port; fixture-only disposable schema; no routine database or volume used"
+  },
+  "completion_audit": "No blocking findings for L5 Step 1 local gate; remaining L4/L5 and changed-source native CI gates explicitly tracked."
+}
