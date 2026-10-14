@@ -1,4 +1,10 @@
-import type { StoredQuestion, StoredQuestionBank, StoredQuiz, StoredSubject } from '../../content/schema/schema';
+import type {
+  StoredFlashcardBank,
+  StoredQuestion,
+  StoredQuestionBank,
+  StoredQuiz,
+  StoredSubject,
+} from '../../content/schema/schema';
 import type { ValidationIssue } from '../../content/validation/validate';
 
 export type AdminOperation =
@@ -34,6 +40,7 @@ export interface AdminChangeSet {
 }
 
 export interface AdminBankSnapshot {
+  flashcards?: StoredFlashcardBank;
   bank: StoredQuestionBank;
   revision: string;
 }
@@ -41,7 +48,14 @@ export interface AdminBankSnapshot {
 export interface AdminChangePreview {
   bank: StoredQuestionBank;
   issues: ValidationIssue[];
-  summary: { creates: number; updates: number; deletes: number; moves: number; cascadedQuestions: number; cascadedQuizzes: number };
+  summary: {
+    creates: number;
+    updates: number;
+    deletes: number;
+    moves: number;
+    cascadedQuestions: number;
+    cascadedQuizzes: number;
+  };
 }
 
 export interface AppliedAdminChange extends AdminChangeSet {

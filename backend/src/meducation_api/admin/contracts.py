@@ -135,6 +135,20 @@ class Export(Contract):
 
 def parse_contract(cls: type[Contract], value: Any) -> dict[str, Any]:
     try:
+
+        def protocol_nulls(node: Any) -> None:
+            if node is None:
+                raise ValueError("Omit optional protocol fields instead of null")
+            if isinstance(node, dict):
+                for key, child in node.items():
+                    # Stored bank violations retain the shared content-policy diagnostics.
+                    if key != "pair":
+                        protocol_nulls(child)
+            elif isinstance(node, list):
+                for child in node:
+                    protocol_nulls(child)
+
+        protocol_nulls(value)
         result = cls.model_validate(value).model_dump(exclude_none=True)
 
         def uuids(node: Any) -> None:

@@ -196,3 +196,25 @@ describe('admin editor workflows', () => {
   });
 
 });
+
+it.each(['import', 'coordinated'] as const)('keeps newer text typed during an in-flight %s commit', async mode => {
+  const source = bank(); const delegate = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
+  let release!: () => void;
+  const gate = new Promise<void>(resolve => { release = resolve; });
+  const gateway: AdminQuestionBankGateway = {
+    load: () => delegate.load(), preview: changes => delegate.preview(changes),
+    apply: async changes => { await gate; return delegate.apply(changes); },
+    applyCoordinated: async (changes, cards) => { await gate; return delegate.applyCoordinated(changes, cards); },
+    undo: () => delegate.undo(), reset: () => delegate.reset(), appliedOperations: () => delegate.appliedOperations(),
+  };
+  const { result } = renderHook(() => useAdminEditor(gateway, { confirm: () => true }));
+  await waitFor(() => expect(result.current.snapshot).toBeDefined());
+  const changes: AdminChangeSet = { changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: result.current.snapshot!.revision }, reason: 'Captured import', operations: [{ op: 'subject.update', id: 's1', value: { ...source.subjects[0], name: 'Captured saved subject' } }] };
+  if (mode === 'import') await act(async () => { await result.current.importChangeSetFile({ text: async () => JSON.stringify(changes) } as File); });
+  let pending!: Promise<unknown>;
+  act(() => { pending = mode === 'import' ? result.current.stageImportedChangeSet() : result.current.stageCoordinatedImport(changes, emptyFlashcardBank); });
+  act(() => { result.current.editRecord('Newer unsaved text'); result.current.editReason('Newer reason'); });
+  await act(async () => { release(); await pending; });
+  expect(result.current.snapshot?.bank.subjects[0].name).toBe('Captured saved subject');
+  expect(result.current.editor).toBe('Newer unsaved text'); expect(result.current.reason).toBe('Newer reason'); expect(result.current.editorDirty).toBe(true);
+});

@@ -1,6 +1,6 @@
 import type { StoredQuestionBank } from '../../content/schema/schema';
 import type { StoredFlashcardBank } from '../../content/schema/schema';
-import { storedFlashcardBank } from '../../content/local/flashcardBank';
+import { emptyFlashcardBank } from '../core/flashcardSerialization';
 import { previewChangeSet } from '../core/applyChangeSet';
 import { validateFlashcardSubjectReferences } from '../../content/validation/validate';
 import { validateFlashcardBank } from '../../content/validation/flashcardValidation';
@@ -21,10 +21,16 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   private lastPreview?: { key: string; revision: string; bank: StoredQuestionBank; result: AdminPreviewSummary };
   private flashcards: StoredFlashcardBank;
 
-  constructor(bank: StoredQuestionBank, flashcards: StoredFlashcardBank = storedFlashcardBank) {
+  constructor(bank: StoredQuestionBank, flashcards: StoredFlashcardBank = emptyFlashcardBank) {
     this.initial = cloneBank(bank);
     this.bank = cloneBank(bank);
     this.flashcards = structuredClone(flashcards);
+  }
+
+  protected installPair(bank: StoredQuestionBank, flashcards: StoredFlashcardBank): void {
+    this.bank = cloneBank(bank); this.flashcards = structuredClone(flashcards);
+    this.history = []; this.flashcardHistory = []; this.operationLengths = [];
+    this.operations = []; this.revision = undefined; this.lastPreview = undefined;
   }
 
   setFlashcardBank(bank: StoredFlashcardBank): void { this.flashcards = structuredClone(bank); this.lastPreview = undefined; }

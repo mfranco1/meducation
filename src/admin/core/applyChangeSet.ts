@@ -2,7 +2,7 @@ import type { StoredFlashcardBank, StoredQuestion, StoredQuestionBank, StoredQui
 import type { ValidationIssue } from '../../content/validation/validate';
 import { cloneBank } from './serializeBank';
 import { validateAdminBank } from './validateAdminBank';
-import { storedFlashcardBank } from '../../content/local/flashcardBank';
+import { emptyFlashcardBank } from './flashcardSerialization';
 import type { AdminChangePreview, AdminChangeSet, AdminOperation, ContentAddOperation } from './types';
 
 class OperationError extends Error {}
@@ -155,7 +155,7 @@ function applyContentAdd(bank: StoredQuestionBank, operation: ContentAddOperatio
   });
 }
 
-export function previewChangeSet(bank: StoredQuestionBank, changeSet: AdminChangeSet, flashcards: StoredFlashcardBank = storedFlashcardBank): AdminChangePreview {
+export function previewChangeSet(bank: StoredQuestionBank, changeSet: AdminChangeSet, flashcards: StoredFlashcardBank = emptyFlashcardBank): AdminChangePreview {
   const next = cloneBank(bank);
   const result = summary();
   const issues: ValidationIssue[] = [];

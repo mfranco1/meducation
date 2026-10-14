@@ -191,3 +191,23 @@ private-data-free ZIPs are included. Installed-image migration/policy smokes cov
 packaging; actual corpus recovery checks compatibility only. Hosted identity,
 browser editor integration, authored-history recovery/off-device retention and
 new native CI remain later gates.
+
+## L4 HTTP editor browser gate
+
+Build the installed API image and fresh optional HTTP admin bundle, then run
+`.venv/bin/python scripts/containers/smoke-admin-http.py`. It creates disposable
+PG17/API/nginx resources and exercises signed synthetic login, paired edits,
+server reservations, grouped/import conversion, saved reload, publication,
+activation/export, expiry/step-up/logout, stale tabs/reset, uncertain commits,
+pending-text preservation and keyboard/overflow at 390/1048/1440px. Use `--grep`
+only for development; the complete run is the acceptance gate. Its fixture module
+is never packaged. The [HTTP editor runbook](L4-http-editor.md) records boundaries.
+Keep this run separate from builds/learner/admin browser suites sharing `dist`.
+`verify:full` retains the ordinary backend, learner and JSON-development admin
+regressions; its database skips do not replace the separate real PG17 suite.
+Hosted/provider and manual assistive-technology/device acceptance remain pending.
+
+The learner Playwright configuration excludes `e2e/admin-http`; those tests require
+their dedicated isolated API/proxy/identity fixture and must not run against the
+ordinary read-only learner server. Protocol-null admission and expiry after SQL
+writes have focused backend regressions in addition to the complete database gate.

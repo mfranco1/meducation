@@ -2,9 +2,9 @@ import type { Question, Quiz } from '../../domain/types';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
 import { validateQuestionMarkdown } from '../../content/validation/markdownValidation';
 import { validateQuestionBank, validateStoredQuestionBank, type ValidationIssue } from '../../content/validation/validate';
-import { storedFlashcardBank } from '../../content/local/flashcardBank';
+import { emptyFlashcardBank } from './flashcardSerialization';
 
-export function validateAdminBank(bank: StoredQuestionBank, flashcards: StoredFlashcardBank = storedFlashcardBank): ValidationIssue[] {
+export function validateAdminBank(bank: StoredQuestionBank, flashcards: StoredFlashcardBank = emptyFlashcardBank): ValidationIssue[] {
   const questionCount = new Map<string, number>();
   bank.questions.forEach(question => questionCount.set(question.quizId, (questionCount.get(question.quizId) ?? 0) + 1));
   const quizzes: Quiz[] = bank.quizzes.map(quiz => ({ ...quiz, questionCount: questionCount.get(quiz.id) ?? 0 }));

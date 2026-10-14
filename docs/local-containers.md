@@ -312,7 +312,7 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml --profile db-jobs run --rm --no-deps migrate
 ```
 
-The migration job applies head `0004_editor_operations` (including the preserved
+The migration job applies head `0005_reserved_parents` (including the preserved
 `0001_content` foundation) and can be repeated. Run this controlled
 job explicitly before the API. It receives only the migrator URL, while the API
 receives only the reader URL and waits for Postgres startup health. Import and
@@ -476,3 +476,7 @@ docker build -f backend/Dockerfile -t meducation-api:l4-step4 .
 These checks use isolated synthetic/actual-corpus databases and containers, without
 changing routine volumes. Native ARM64 image evidence does not certify AMD64 CI,
 provider acceptance, browser editor integration or durable authored recovery.
+
+[Step 5 HTTP editor](L4-http-editor.md) supplies the private browser gateway.
+Packaged head is `0005_reserved_parents`; migration/bootstrap remain explicit
+operator jobs and no authority cutover is implied.

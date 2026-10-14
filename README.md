@@ -65,11 +65,13 @@ Open `/admin.html` through the development server to edit quiz or flashcard reco
 Normal production builds omit the admin entry. For a local production-build preview of the editor, explicitly enable both bundling and the editor UI:
 
 ```bash
-VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build
+VITE_ADMIN_SOURCE=json VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build
 npx vite preview
 ```
 
-`VITE_BUILD_ADMIN=true` alone includes the HTML entry but does not enable the production editor. These flags are not authentication; keep this authoring surface local.
+`VITE_BUILD_ADMIN=true` includes the optional HTTP editor entry by default; its private content requires a backend session. The explicit JSON preview above also needs the local editor flag. These build flags are not authentication; keep JSON authoring local.
+
+[L4 HTTP editor](docs/L4-http-editor.md) connects the existing panels to private paired draft, reservation, history, publication, activation and export services. Use `VITE_ADMIN_SOURCE=http` during development and a separately configured synthetic loopback API. Production provider acceptance, authored recovery and authority cutover remain pending; no hosted access is enabled.
 
 ## Working with study content
 

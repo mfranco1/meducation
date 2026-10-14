@@ -14,7 +14,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { storedFlashcardBank, serializeFlashcardBank, flashcardContentRevision } from '../content/local/flashcardBank';
+import { emptyFlashcardBank, serializeFlashcardBank, flashcardContentRevision } from './core/flashcardSerialization';
 import type {
   StoredFlashcardBank,
   StoredFlashcardDeck,
@@ -23,7 +23,6 @@ import type {
 } from '../content/schema/schema';
 import { validateFlashcardBank } from '../content/validation/flashcardValidation';
 import type { Subject } from '../domain/types';
-import { storedQuestionBank } from '../content/local/questionBank';
 import { sha256Text } from '../domain/contentDigest';
 import {
   applyFlashcardOperations,
@@ -53,6 +52,11 @@ const clone = (bank: StoredFlashcardBank): StoredFlashcardBank => structuredClon
 /** Local-only authoring workspace. It exports reviewed JSON; it never writes canonical files. */
 export function FlashcardAdminPanel({
   subjects,
+  initialBank = emptyFlashcardBank,
+  initialSubjects = subjects,
+  serverBank,
+  onSaveBank,
+  readSavedBank,
   onBankChange,
   quizRevision,
   originalQuizRevision,
@@ -74,6 +78,11 @@ export function FlashcardAdminPanel({
   externalBusy = false,
 }: {
   subjects: readonly Subject[];
+  initialBank?: StoredFlashcardBank;
+  serverBank?: StoredFlashcardBank;
+  readSavedBank?: () => StoredFlashcardBank;
+  onSaveBank?: (bank: StoredFlashcardBank, reason: string) => Promise<StoredFlashcardBank>;
+  initialSubjects?: readonly Subject[];
   onBankChange: (bank: StoredFlashcardBank) => void;
   quizRevision: string;
   originalQuizRevision: string;
@@ -94,7 +103,8 @@ export function FlashcardAdminPanel({
   onUndoCoordinated?: (expectedQuizOperations: number) => Promise<void>;
   externalBusy?: boolean;
 }) {
-  const [bank, setBank] = useState(() => clone(storedFlashcardBank));
+  const [bank, setBank] = useState(() => clone(initialBank));
+  useEffect(() => { if (serverBank) { setBank(clone(serverBank)); generation.current++; setPendingImport(undefined); setHistory([]); setOperations([]); setDirty(false); } }, [serverBank]);
   const [selection, setSelection] = useState<Selected>();
   const [browseSubjectId, setBrowseSubjectId] = useState('');
   const [browseDeckId, setBrowseDeckId] = useState('');
@@ -158,7 +168,7 @@ export function FlashcardAdminPanel({
   useEffect(() => {
     generation.current++;
     setPendingImport(undefined);
-    if (operations.length) setDirty(true);
+    if (operations.length) setDirty(!onSaveBank);
     // Operation edits already mark the workspace dirty; invalidate previews when shared content changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [subjectSnapshot, exportContext]);
@@ -232,7 +242,7 @@ export function FlashcardAdminPanel({
     setBank(clone(externalTransaction.bank));
     setOperations(structuredClone(externalTransaction.operations));
     setReason(externalTransaction.reason);
-    setDirty(true);
+    setDirty(!onSaveBank);
     onBankChange(externalTransaction.bank);
     setSelection(undefined); setEditor(''); setLoadedEditor(''); setBrowseSubjectId(''); setBrowseDeckId(''); setCardQuery(''); setCardPage(0);
     // One externally coordinated delete is one flashcard Undo entry.
@@ -272,6 +282,17 @@ export function FlashcardAdminPanel({
   const commitOperations = (batch: FlashcardAdminOperation[]) => {
     try {
       const candidate = applyFlashcardOperations(bank, subjects, batch);
+      if (onSaveBank) {
+        setBusy(true);
+        return onSaveBank(candidate, reason).then(install).catch(error => {
+          setIssues([error instanceof Error ? error.message : 'Unable to save. Unsaved text is kept.']); return undefined;
+        }).finally(() => setBusy(false));
+      }
+      return install(candidate);
+    } catch (error) {
+      setIssues([error instanceof Error ? error.message : 'Unable to stage this operation.']); return undefined;
+    }
+    function install(candidate: StoredFlashcardBank) {
       generation.current++;
       setPendingImport(undefined);
       remember();
@@ -287,19 +308,16 @@ export function FlashcardAdminPanel({
         setBrowseSubjectId('');
         setBrowseDeckId('');
       }
-      setDirty(true);
+      setDirty(!onSaveBank);
       setIssues([]);
       return candidate;
-    } catch (error) {
-      setIssues([error instanceof Error ? error.message : 'Unable to stage this operation.']);
-      return undefined;
     }
   };
   const commitOperation = (operation: FlashcardAdminOperation) => commitOperations([operation]);
-  const commitBulkOperations = (
+  const commitBulkOperations = async (
     batch: readonly FlashcardAdminOperation[],
     snapshot: FlashcardBulkPreviewSnapshot,
-  ): string | undefined => {
+  ): Promise<string | undefined> => {
     if (!bulkDestination) return 'The bulk destination is no longer selected. Open the batch again.';
     if (
       snapshot.bankJson !== serializeFlashcardBank(bank) ||
@@ -310,21 +328,24 @@ export function FlashcardAdminPanel({
     )
       return 'The workspace changed after preview. Preview the batch again.';
     try {
-      const candidate = applyFlashcardOperations(bank, subjects, batch);
+      let candidate = applyFlashcardOperations(bank, subjects, batch);
+      if (onSaveBank) { setBusy(true); candidate = await onSaveBank(candidate, reason); }
       generation.current++;
       setPendingImport(undefined);
       remember();
       setOperations((items) => [...items, ...structuredClone(batch)]);
       setBank(candidate);
       onBankChange(candidate);
-      setDirty(true);
+      setDirty(!onSaveBank);
       setIssues([]);
       setSelection(undefined);
       setEditor('');
       setLoadedEditor('');
       setBulkDestination(undefined);
       setBulkDraftDirty(false);
-      const first = batch.find((operation) => operation.op === 'card.create' || operation.op === 'deck.create');
+      let first = batch.find((operation) => operation.op === 'card.create' || operation.op === 'deck.create');
+      if (onSaveBank && first?.op === 'card.create') { const value = candidate.cards.find(row => !bank.cards.some(old => old.id === row.id)); if (value) first = { ...first, value }; }
+      if (onSaveBank && first?.op === 'deck.create') { const value = candidate.decks.find(row => !bank.decks.some(old => old.id === row.id)); if (value) first = { ...first, value }; }
       if (first?.op === 'card.create') {
         const deck = candidate.decks.find((item) => item.id === first.value.deckId);
         if (deck) setBrowseSubjectId(deck.subjectId);
@@ -342,7 +363,7 @@ export function FlashcardAdminPanel({
       }
     } catch (error) {
       return error instanceof Error ? error.message : 'Unable to stage the bulk flashcard batch.';
-    }
+    } finally { setBusy(false); }
     return undefined;
   };
   const openBulk = (context: FlashcardBulkAddContext, label: string) => {
@@ -355,7 +376,7 @@ export function FlashcardAdminPanel({
     setBulkDraftDirty(false);
     setBulkDestination({ context, label });
   };
-  const stage = () => {
+  const stage = async () => {
     if (!selection) return;
     let value: unknown;
     try {
@@ -378,9 +399,12 @@ export function FlashcardAdminPanel({
       ...(selection.id ? { id: selection.id } : {}),
       value,
     } as FlashcardAdminOperation;
-    const candidate = commitOperation(op);
+    const staged = commitOperation(op);
+    const candidate = staged instanceof Promise ? await staged : staged;
     if (!candidate) return;
-    const text = JSON.stringify(value, null, 2);
+    const actual = selection.id ? value : (selection.kind === 'deck' ? candidate.decks.at(-1) : candidate.cards.at(-1));
+    const text = JSON.stringify(actual, null, 2);
+    Object.assign(record, actual);
     setSelection({ kind: selection.kind, id: record.id as string });
     setEditor(text);
     setLoadedEditor(text);
@@ -417,7 +441,7 @@ export function FlashcardAdminPanel({
     setDeleteError('');
     setDeleteRequest({ selection: { kind, id }, label: 'name' in row ? row.name : row.front, reviewKey: deletionKey });
   };
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (!deleteRequest || busy || externalBusy) return;
     if (deleteRequest.reviewKey !== deletionKey) { setDeleteError('The content changed. Cancel and review the deletion again.'); return; }
     if (!discardDraft()) return;
@@ -425,10 +449,10 @@ export function FlashcardAdminPanel({
     const batch = ids.map(id => deleteRequest.selection.kind === 'deck'
       ? { op: 'deck.delete' as const, id, cascade: true as const }
       : { op: 'card.delete' as const, id });
-    if (!commitOperations(batch)) { setDeleteError('The deletion failed validation. No changes were staged.'); return; }
+    if (!await commitOperations(batch)) { setDeleteError('The deletion failed validation. No changes were staged.'); return; }
     setDeleteRequest(undefined); recordSelection.clear(); setSelection(undefined); setEditor(''); setLoadedEditor('');
   };
-  const reorder = (direction: -1 | 1) => {
+  const reorder = async (direction: -1 | 1) => {
     if (!selection) return;
     const candidate = clone(bank);
     const rows = selection.kind === 'deck' ? candidate.decks : candidate.cards;
@@ -446,11 +470,12 @@ export function FlashcardAdminPanel({
     if (!target) return;
     const afterPosition = direction === -1 ? siblingPosition - 2 : siblingPosition + 1;
     const afterId = siblings[afterPosition]?.item.id;
-    const resultBank = commitOperation({
+    const result = commitOperation({
       op: `${selection.kind}.move`,
       id: selection.id,
       ...(afterId ? { afterId } : { first: true }),
     } as FlashcardAdminOperation);
+    const resultBank = result instanceof Promise ? await result : result;
     if (resultBank && selection.kind === 'card') {
       const card = resultBank.cards.find((item) => item.id === selection.id);
       if (!card) return;
@@ -524,7 +549,7 @@ export function FlashcardAdminPanel({
   };
   const reset = () => {
     if ((dirty || editorDirty) && !window.confirm('Discard every staged and unstaged flashcard change?')) return;
-    const initial = clone(storedFlashcardBank);
+    const initial = clone(initialBank);
     const errors = validateFlashcardBank(initial, subjects).filter((issue) => issue.level === 'error');
     if (errors.length) {
       setIssues(errors.map((issue) => issue.message));
@@ -540,7 +565,7 @@ export function FlashcardAdminPanel({
       return;
     setBusy(true);
     try {
-      const initial = clone(storedFlashcardBank);
+      const initial = clone(initialBank);
       await onResetPaired(initial);
       clearWorkspace(initial);
     } catch (error) {
@@ -562,11 +587,11 @@ export function FlashcardAdminPanel({
     const exportedSubjects = subjectSnapshot;
     setBusy(true);
     try {
-      const baseRevision = await flashcardContentRevision(storedFlashcardBank);
+      const baseRevision = await flashcardContentRevision(initialBank, [...initialSubjects]);
       const nextRevision = await flashcardContentRevision(bank, [...subjects]);
-      const baseSubjectRevision = await sha256Text(JSON.stringify(storedQuestionBank.subjects));
+      const baseSubjectRevision = await sha256Text(JSON.stringify(initialSubjects));
       const resultSubjectRevision = await sha256Text(JSON.stringify(subjects));
-      const replayed = applyFlashcardOperations(storedFlashcardBank, [...subjects], operations);
+      const replayed = applyFlashcardOperations(initialBank, [...subjects], operations);
       if (serializeFlashcardBank(replayed) !== serializeFlashcardBank(bank)) {
         setIssues([
           'The staged operation list does not reproduce the current flashcard bank. Reset and restage the affected records.',
@@ -626,7 +651,7 @@ export function FlashcardAdminPanel({
     setPendingImport(undefined);
     setImportFileError(undefined);
     if (!file) return;
-    if (operations.length || editorDirty) {
+    if ((!onSaveBank && operations.length) || editorDirty) {
       setImportFileError('Reset or undo the current workspace before importing another change set.');
       return;
     }
@@ -640,7 +665,7 @@ export function FlashcardAdminPanel({
           throw new Error('Coordinated imports require the full local authoring workspace.');
         if (quizChangesStaged)
           throw new Error('Reset or undo staged quiz changes before importing a coordinated bundle.');
-        const paired = await replayCoordinatedContentChangeSet(quizBank, storedFlashcardBank, input);
+        const paired = await replayCoordinatedContentChangeSet(quizBank, serverBank ?? initialBank, input);
         if (
           token !== generation.current ||
           importedSubjects !== latestSubjects.current ||
@@ -658,8 +683,8 @@ export function FlashcardAdminPanel({
       }
       if (!isFlashcardAdminChangeSet(input)) throw new Error('The file is not a valid flashcard change set.');
       const next = await replayFlashcardAdminChangeSet(
-        storedFlashcardBank,
-        storedQuestionBank.subjects,
+        serverBank ?? initialBank,
+        serverBank ? subjects : initialSubjects,
         input,
         subjects,
       );
@@ -677,7 +702,7 @@ export function FlashcardAdminPanel({
     if (
       pendingImport.subjectSnapshot !== subjectSnapshot ||
       pendingImport.exportContext !== exportContext ||
-      operations.length ||
+      (!onSaveBank && operations.length) ||
       editorDirty
     ) {
       setPendingImport(undefined);
@@ -692,11 +717,12 @@ export function FlashcardAdminPanel({
       }
       generation.current++;
       remember(Boolean(pendingImport.quizChangeSet), pendingImport.quizChangeSet?.operations.length);
-      setBank(pendingImport.bank);
-      onBankChange(pendingImport.bank);
+      const imported = onSaveBank && !pendingImport.quizChangeSet ? await onSaveBank(pendingImport.bank, pendingImport.changeSet.reason) : readSavedBank?.() ?? pendingImport.bank;
+      setBank(imported);
+      onBankChange(imported);
       setOperations(pendingImport.changeSet.operations);
       setReason(pendingImport.changeSet.reason);
-      setDirty(true);
+      setDirty(!onSaveBank);
       setSelection(undefined);
       setEditor('');
       setLoadedEditor('');
@@ -899,7 +925,7 @@ export function FlashcardAdminPanel({
           {warnings.length > 0 && <Alert severity="warning"><AdminIssues issues={warnings} /></Alert>}
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
             <Button variant="contained" disabled={!selection} onClick={stage}>
-              Stage
+              {onSaveBank ? 'Save draft' : 'Stage'}
             </Button>
             <Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>Record actions</Button><Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
               <MenuItem disabled={!browseSubjectId} onClick={() => { setActionAnchor(null); createRecord('deck'); }}>New deck</MenuItem>
@@ -908,14 +934,14 @@ export function FlashcardAdminPanel({
               {selection?.id && <MenuItem disabled={siblingIndex <= 0} onClick={() => { setActionAnchor(null); reorder(-1); }}>Move up</MenuItem>}
               {selection?.id && <MenuItem disabled={siblingIndex < 0 || siblingIndex + 1 >= siblingRows.length} onClick={() => { setActionAnchor(null); reorder(1); }}>Move down</MenuItem>}
             </Menu>
-            <Button disabled={!history.length} onClick={undo}>
+            <Button disabled={Boolean(onSaveBank) || !history.length} onClick={undo}>
               Undo
             </Button>
             <Button size="small" aria-haspopup="menu" onClick={(event) => setWorkspaceAnchor(event.currentTarget)}>Workspace</Button>
             <Menu anchorEl={workspaceAnchor} open={Boolean(workspaceAnchor)} onClose={() => setWorkspaceAnchor(null)}>
-              <MenuItem disabled={!operations.length && !editorDirty} onClick={() => { setWorkspaceAnchor(null); reset(); }}>Reset flashcards</MenuItem>
-              {onResetPaired && quizChangesStaged && <MenuItem onClick={() => { setWorkspaceAnchor(null); void resetBoth(); }}>Reset both banks</MenuItem>}
-              <MenuItem disabled={Boolean(operations.length) || editorDirty} onClick={() => { setWorkspaceAnchor(null); importFileRef.current?.click(); }}>Import change set</MenuItem>
+              <MenuItem disabled={Boolean(onSaveBank) || (!operations.length && !editorDirty)} onClick={() => { setWorkspaceAnchor(null); reset(); }}>Reset flashcards</MenuItem>
+              {!onSaveBank && onResetPaired && quizChangesStaged && <MenuItem onClick={() => { setWorkspaceAnchor(null); void resetBoth(); }}>Reset both banks</MenuItem>}
+              <MenuItem disabled={(!onSaveBank && Boolean(operations.length)) || editorDirty} onClick={() => { setWorkspaceAnchor(null); importFileRef.current?.click(); }}>Import change set</MenuItem>
             </Menu>
             <input
               ref={importFileRef}
@@ -987,7 +1013,7 @@ export function FlashcardAdminPanel({
           )}
         </Stack>
       </Paper>
-      <AdminDeleteDialog request={deleteRequest} bank={quizBank ?? { schemaVersion: 4, subjects: [...subjects], quizzes: [], questions: [] }} flashcardBank={bank} currentReviewKey={deletionKey} busy={busy || externalBusy} error={deleteError} onClose={() => setDeleteRequest(undefined)} onConfirm={confirmDelete} />
+      <AdminDeleteDialog commitLabel={onSaveBank ? 'Save' : 'Stage'} request={deleteRequest} bank={quizBank ?? { schemaVersion: 4, subjects: [...subjects], quizzes: [], questions: [] }} flashcardBank={bank} currentReviewKey={deletionKey} busy={busy || externalBusy} error={deleteError} onClose={() => setDeleteRequest(undefined)} onConfirm={confirmDelete} />
       {bulkDestination && (
         <FlashcardBulkAddDialog
           open
@@ -1000,7 +1026,7 @@ export function FlashcardAdminPanel({
           busy={busy || externalBusy}
           onClose={() => setBulkDestination(undefined)}
           onDraftDirtyChange={setBulkDraftDirty}
-          onStage={commitBulkOperations}
+          onStage={commitBulkOperations} commitLabel={onSaveBank ? 'Save draft' : 'Stage'}
         />
       )}
     </Stack>

@@ -99,7 +99,7 @@ Admin search, pagination, deletion impact calculation, and operation application
 
 `src/main.tsx` bootstraps the learner through `index.html`. API delivery is the default; the Vite development/preview proxy routes `/api` to the configured content service. Production hosting must route the same prefix to FastAPI. `VITE_CONTENT_SOURCE=local` explicitly selects the dynamically imported browser JSON adapters. Both modes retain local progress storage and the same domain contracts. Follow [frontend setup](../README.md) and [backend setup](../backend/README.md) for exact commands and environment variables.
 
-`admin.html` is a separate development entry. Normal production builds omit it; its bundling and runtime gates are independent. Follow the [local editor setup](../README.md#local-content-editor) to preview an enabled production editor. `/#content-qa` is development-only. JSON mode requires explicit reviewed canonical JSON replacement and service restart. Local experimental [L4 private paired services](L4-paired-editor-services.md) can save/publish PostgreSQL drafts behind the synthetic session boundary; the browser editor is not connected yet, production identity remains disabled, and authority cutover is pending.
+`admin.html` is a separate development entry. Normal production builds omit it; its bundling and runtime gates are independent. Follow the [local editor setup](../README.md#local-content-editor) to preview an enabled production editor. `/#content-qa` is development-only. JSON mode requires explicit reviewed canonical JSON replacement and service restart. Local experimental [L4 private paired services](L4-paired-editor-services.md) can save/publish PostgreSQL drafts behind the synthetic session boundary; the optional HTTP browser editor is connected, while production identity remains disabled and authority cutover is pending.
 
 The runtime never calls a generative AI service. Quiz rules and scoring stay in the pure TypeScript domain layer; learner progress persists through the browser repository. The Python API owns read-only quiz content delivery from the canonical JSON file. L3 now packages an explicit Postgres schema migration, private transaction primitives, operator jobs and paired learner database adapters.
 
@@ -170,7 +170,7 @@ operations. Migration `0002_authored_publish` adds atomic authored releases and
 reviewed saves, retaining importer deduplication and separate provenance. No frontend
 presentation dependencies enter this boundary. Internal service actors are trusted operator context; the local Step 3 session
 boundary supplies verified principals to Step 4 private HTTP services.
-The browser editor integration remains Step 5. No content
+Step 5 connects the browser editor to those services. No content
 authority has changed.
 
 ## Private admin session boundary
@@ -185,7 +185,7 @@ independently lock/check sessions through commit to serialize logout/revocation.
 Public learner routes retain their separate reader and ignore admin cookies.
 The [session runbook](L4-admin-session-boundary.md) records limits and recovery
 epoch handling. Only synthetic loopback identity is available; production adapter
-acceptance and browser editor integration remain later gates.
+acceptance remains a later gate.
 
 `backend/src/meducation_api/admin/contracts.py`, `service.py` and `http.py` own
 private wire parsing, verified-principal orchestration and bounded HTTP/export
@@ -193,3 +193,15 @@ delivery. Migration `0004_editor_operations` owns guarded paired mutations,
 creation-intent bindings and immutable history with a bounded Undo stack.
 [Paired-service contracts](L4-paired-editor-services.md) document exact replay,
 freshness, stale-base handling and request-driven publication visibility.
+
+`src/admin/AdminApp.tsx` selects an isolated JSON development entry or the HTTP
+entry; HTTP production builds exclude canonical banks. `PairedHttpClient` owns
+session/CSRF, one-attempt writes and explicit uncertain-operation reconciliation.
+`HttpQuestionBankGateway` adapts pure edit helpers to paired server snapshots,
+reservations and validation; it owns no local durable history. `AdminWorkspace`
+and the existing panels retain browsing/text while shared server Undo/reset and
+publication controls operate on one paired context. Reserved parents in migration
+`0005_reserved_parents` permit atomic grouped creates with owned same-context IDs.
+The [HTTP editor runbook](L4-http-editor.md) records source selection, session
+completion, import conversion and verification limits. Learner/domain/persistence
+modules receive no authentication dependencies.

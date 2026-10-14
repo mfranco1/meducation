@@ -5,13 +5,14 @@ import { deletionReview, type DeletionTarget } from '../core/deletionReview';
 
 export interface DeleteRequest { selection: DeletionTarget; label: string; ids?: string[]; reviewKey?: string }
 
-export function AdminDeleteDialog({ request, bank, flashcardBank, error, currentReviewKey, busy = false, onClose, onConfirm }: {
+export function AdminDeleteDialog({ request, bank, flashcardBank, error, currentReviewKey, busy = false, commitLabel = 'Stage', onClose, onConfirm }: {
   request?: DeleteRequest;
   bank: StoredQuestionBank;
   flashcardBank: StoredFlashcardBank;
   error?: string;
   currentReviewKey?: string;
   busy?: boolean;
+  commitLabel?: string;
   onClose: () => void;
   onConfirm: () => void;
 }) {
@@ -34,6 +35,6 @@ export function AdminDeleteDialog({ request, bank, flashcardBank, error, current
       {error && <Alert severity="error">{error}</Alert>}
       {records.length > 0 && <><Button size="small" onClick={() => setShowRecords((value) => !value)} aria-expanded={showRecords}>{showRecords ? 'Hide affected records' : `Review affected records (${records.length})`}</Button>{showRecords && <><Stack sx={{ maxHeight: 220, overflow: 'auto' }} spacing={.5}>{records.slice(page * 25, (page + 1) * 25).map((record) => <Typography key={record} variant="caption">{record}</Typography>)}</Stack><Stack direction="row" justifyContent="space-between" alignItems="center"><Typography variant="caption">{page * 25 + 1}–{Math.min(records.length, (page + 1) * 25)} of {records.length}</Typography><Stack direction="row"><Button size="small" disabled={!page} onClick={() => setPage((value) => Math.max(0, value - 1))}>Previous</Button><Button size="small" disabled={(page + 1) * 25 >= records.length} onClick={() => setPage((value) => Math.min(Math.floor((records.length - 1) / 25), value + 1))}>Next</Button></Stack></Stack></>}</>}
     </Stack></DialogContent>
-    <DialogActions><Button ref={cancelRef} autoFocus disabled={busy} onClick={onClose}>Cancel</Button><Button color="error" variant="contained" disabled={busy || stale || !records.length} onClick={onConfirm}>Stage {action} deletion</Button></DialogActions>
+    <DialogActions><Button ref={cancelRef} autoFocus disabled={busy} onClick={onClose}>Cancel</Button><Button color="error" variant="contained" disabled={busy || stale || !records.length} onClick={onConfirm}>{commitLabel} {action} deletion</Button></DialogActions>
   </Dialog>;
 }

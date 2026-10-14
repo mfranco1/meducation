@@ -178,7 +178,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0004_editor_operations"
+    assert migration_head() == "0005_reserved_parents"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -205,7 +205,7 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0004_editor_operations"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0005_reserved_parents"
 
 
 def test_release_omission_provenance_order_and_digest(db):
@@ -2596,3 +2596,57 @@ def test_reservation_save_race_never_allocates_against_changed_context(db):
         assert isinstance(results[1], dict) or results[1] == 409
         assert scalar(db.operator, 'SELECT revision FROM content.draft') == int(current['draft']['revision']) + 1
         assert scalar(db.operator, 'SELECT count(*) FROM content.editor_slots') == int(isinstance(results[1], dict))
+
+
+def test_editor_grouped_reservations_require_owned_same_context_parent(db):
+    authoring_service(db)
+    client, runtime, h = auth_app(db)
+    with client:
+        auth_login(client, runtime, h)
+        current = client.get('/api/admin/draft').json()
+        receipts = []
+        def reserve(kind, parent=None):
+            slots = [{'kind': kind, 'count': 1, **({'parentId': parent} if parent else {})}]
+            op = str(uuid4())
+            response = editor_post(client, '/reservations', {'operationId': op, 'expected': editor_expected(current), 'reason': REASON, 'counts': {kind: 1}, 'intent': {'slots': slots}})
+            assert response.status_code == 200, response.text
+            receipts.append({'reservationId': op, 'slots': slots})
+            return response.json()['result']['allocatedIds'][kind][0]
+        subject = reserve('s')
+        quiz = reserve('q', subject)
+        deck = reserve('d', subject)
+        question = reserve('i', quiz)
+        card = reserve('f', deck)
+        pair = copy.deepcopy(current['pair'])
+        pair['quizzes']['subjects'].append({'id': subject, 'name': 'Grouped subject', 'accent': '#bc531e'})
+        pair['quizzes']['quizzes'].append({'id': quiz, 'subjectId': subject, 'name': 'Grouped quiz'})
+        item = copy.deepcopy(pair['quizzes']['questions'][0]); item.update(id=question, quizId=quiz)
+        pair['quizzes']['questions'].append(item)
+        pair['flashcards']['decks'].append({'id': deck, 'subjectId': subject, 'name': 'Grouped deck'})
+        pair['flashcards']['cards'].append({'id': card, 'deckId': deck, 'front': 'Grouped front', 'back': 'Grouped back'})
+        args = {'expected': editor_expected(current), 'reason': REASON, 'pair': pair, 'reservationIds': [r['reservationId'] for r in receipts], 'intent': {'reservations': receipts}}
+        preview = editor_post(client, '/draft/preview', args)
+        assert preview.status_code == 200, preview.text
+        result = editor_post(client, '/draft/save', {**args, 'operationId': str(uuid4()), 'previewFingerprint': preview.json()['previewFingerprint']})
+        assert result.status_code == 200, result.text
+        assert result.json()['snapshot']['pair'] == pair
+        stale = editor_post(client, '/reservations', {'operationId': str(uuid4()), 'expected': editor_expected(result.json()['snapshot']), 'reason': REASON, 'counts': {'q': 1}, 'intent': {'slots': [{'kind': 'q', 'count': 1, 'parentId': 'missing-parent'}]}})
+        assert stale.status_code == 422
+
+
+def test_editor_rechecks_session_after_sql_writes_before_finishing_receipt(db):
+    authoring_service(db)
+    client, runtime, h = auth_app(db)
+    with client:
+        auth_login(client, runtime, h)
+        current = client.get('/api/admin/draft').json()
+        value = {'expected': editor_expected(current), 'reason': REASON, 'pair': current['pair'], 'reservationIds': [], 'intent': {'reservations': []}}
+        preview = editor_post(client, '/draft/preview', value)
+        assert preview.status_code == 200
+        owner_execute(db, "CREATE FUNCTION content.expire_during_sql_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN UPDATE admin_auth.sessions SET expires=0; RETURN NEW; END $$")
+        owner_execute(db, 'CREATE TRIGGER expire_during_sql AFTER INSERT ON content.draft_history FOR EACH ROW EXECUTE FUNCTION content.expire_during_sql_fixture()')
+        before = authoring_state(db)
+        response = editor_post(client, '/draft/save', {**value, 'operationId': str(uuid4()), 'previewFingerprint': preview.json()['previewFingerprint']})
+        assert response.status_code == 401, response.text
+        assert authoring_state(db) == before
+        assert scalar(db.session, 'SELECT count(*) FROM admin_auth.sessions WHERE expires>0') == 1  # Expiry injection rolled back; 401 clears the browser cookie.

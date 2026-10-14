@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import type { Subject } from '../domain/types';
 import type { StoredFlashcardBank } from '../content/schema/schema';
-import { serializeFlashcardBank } from '../content/local/flashcardBank';
+import { serializeFlashcardBank } from './core/flashcardSerialization';
 import {
   compileFlashcardBulkAddDraft,
   flashcardBulkAddTemplate,
@@ -60,6 +60,7 @@ export function FlashcardBulkAddDialog({
   onClose,
   onDraftDirtyChange,
   onStage,
+  commitLabel = 'Stage',
 }: {
   open: boolean;
   context: FlashcardBulkAddContext;
@@ -71,10 +72,11 @@ export function FlashcardBulkAddDialog({
   busy: boolean;
   onClose: () => void;
   onDraftDirtyChange: (dirty: boolean) => void;
+  commitLabel?: string;
   onStage: (
     operations: readonly FlashcardAdminOperation[],
     snapshot: FlashcardBulkPreviewSnapshot,
-  ) => string | undefined;
+  ) => string | undefined | Promise<string | undefined>;
 }) {
   const template = useMemo(() => flashcardBulkAddTemplate(context), [context]);
   const [text, setText] = useState(template);
@@ -150,9 +152,9 @@ export function FlashcardBulkAddDialog({
     setPreview({ compiled: compiled.compiled, snapshot, key: previewKey });
   };
 
-  const stage = () => {
+  const stage = async () => {
     if (!previewCurrent || !preview) return;
-    const error = onStage(preview.compiled.operations, preview.snapshot);
+    const error = await onStage(preview.compiled.operations, preview.snapshot);
     if (error) {
       setPreview(undefined);
       setMessage(error);
@@ -252,7 +254,7 @@ export function FlashcardBulkAddDialog({
           Cancel
         </Button>
         <Button variant="contained" onClick={previewCurrent ? stage : previewDraft} disabled={busy || loadingFile || (previewCurrent && errors.length > 0)}>
-          {previewCurrent ? 'Stage' : 'Preview'}
+          {previewCurrent ? commitLabel : 'Preview'}
         </Button>
       </DialogActions>
     </Dialog>

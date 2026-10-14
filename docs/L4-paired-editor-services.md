@@ -2,8 +2,8 @@
 
 Step 4 adds private HTTP services behind the verified session boundary in
 [L4 admin sessions](L4-admin-session-boundary.md). This is local backend acceptance;
-the hosted identity adapter remains disabled. The existing browser editor still
-uses its in-memory gateway until Step 5. Canonical repository JSON remains the
+the hosted identity adapter remains disabled. The [HTTP browser editor](L4-http-editor.md) now uses these services, with a
+separate JSON development adapter. Canonical repository JSON remains the
 content authority until the later recovery and cutover gates pass.
 
 ## Wire contracts
@@ -20,7 +20,8 @@ strings; operation and release identifiers are canonical UUID strings.
   the authored records.
 - `POST /reservations` captures `operationId`, `expected` draft/publication,
   `reason`, per-kind `counts`, and `intent.slots`. Each slot supplies `kind`,
-  `count`, and an existing `parentId` except root subjects. Kinds `s/q/i/d/f`
+  `count`, and a `parentId` except root subjects. A parent must exist or be an
+  owned same-context reservation under migration `0005_reserved_parents`. Kinds `s/q/i/d/f`
   represent subjects, quizzes, questions, decks and cards. Counts must exactly
   match slots. Reservations burn IDs independently of later save success.
 - `POST /draft/preview` accepts the exact `pair` (`quizzes` and `flashcards`),
@@ -53,13 +54,13 @@ strings; operation and release identifiers are canonical UUID strings.
 
 Initial draft setup remains an explicit trusted operator job. An uninitialized
 revision returns conflict instead of importing repository content implicitly.
-Creating children of newly created parents requires saving the parents first,
-then reserving against the resulting context. Legacy client-generated IDs cannot
-bypass reservations and must be converted before re-preview in Step 5.
+Creating children under owned same-context reserved parents permits one atomic
+grouped save under migration `0005_reserved_parents`. Legacy client-generated IDs cannot
+bypass reservations and are converted and re-previewed by the HTTP editor.
 
 ## Transactions, sessions and privileges
 
-Packaged head `0004_editor_operations` adds immutable before/after paired history,
+Migration `0004_editor_operations` adds immutable before/after paired history,
 reservation intent/slot records and bounded ten-entry Undo control. Append-only
 history outlives the active Undo stack. One global operation ledger/audit receipt
 covers each mutation; failures, including deferred constraints at commit, roll
@@ -71,7 +72,7 @@ before protected work. Each editor SQL transaction independently checks and lock
 the session `FOR NO KEY UPDATE`, compatible with the request lock and serialized
 against logout/revocation. It then locks draft, active publication and Undo control
 in that order. Validation occurs before mutation and freshness/expiry are checked
-again before mutation. Session connection failure returns a safe error. Publish,
+again before mutation and after SQL work before receipt finalization. Session connection failure returns a safe error. Publish,
 activation, reset and export require a factor within fifteen minutes; save/Undo
 require freshness when the server computes more than one deleted entity, including
 cascades. Replays recheck current authorization and the original freshness rule.
@@ -104,4 +105,4 @@ sequence. Learner routes never select drafts. JSON mode retains its existing
 explicit replacement/restart behavior.
 
 Full authored-history recovery, post-backup allocation protection, off-device
-retention, HTTP editor browser acceptance and new native CI remain later L4 gates.
+retention, hosted identity/routing acceptance and new native CI remain later L4 gates.

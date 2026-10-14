@@ -26,7 +26,8 @@ server or header identity shortcut is shipped. ZITADEL tenant claims, effective
 factor policy, forced fresh factor challenge, recovery and logout acceptance
 remain ADR0004 hosted gates. A provider-specific adapter cannot be enabled merely
 by changing the issuer setting. Editor session UX/dirty-text acceptance remains
-Step 5; local protocol evidence is not UI or hosted acceptance.
+[Step 5 HTTP editor](L4-http-editor.md); local protocol evidence alone is not UI
+or hosted acceptance.
 
 ## Runtime and private routes
 
@@ -41,7 +42,7 @@ failure affects admin requests, while public learner routes ignore admin cookies
   host-only HttpOnly flow cookie to a server-keyed CSRF token.
 - `POST /api/admin/auth/login` accepts exactly `{}`, exact Origin/JSON and the
   anonymous CSRF header. It returns a fixed authorization URL to open; the editor
-  will consume this in Step 5. State, nonce and PKCE verifier use 32 random bytes.
+  consumes this in the HTTP editor. State, nonce and PKCE verifier use 32 random bytes.
 - `GET /api/admin/auth/callback` requires one state/code and browser binding,
   consumes the login transaction before exchange, verifies signed ID-token
   purpose/issuer/sub/audience/azp/nonce/dates/assurance, then redirects to the
@@ -87,7 +88,7 @@ therefore cannot expose the synthetic identity flow.
 ## Roles, locking and recovery
 
 Run the explicit local bootstrap job **before** upgrading head
-`0004_editor_operations`. Bootstrap creates owner-managed `content` and `admin_auth`
+`0005_reserved_parents`. Bootstrap creates owner-managed `content` and `admin_auth`
 schemas without granting application database CREATE. New `meducation_session`
 and `meducation_editor` roles start NOLOGIN when their optional credentials are
 absent. To enable the local experiment, supply both distinct

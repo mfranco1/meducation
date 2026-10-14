@@ -81,7 +81,7 @@ migration credentials.
 .venv/bin/meducation-db upgrade
 ```
 
-`head` reports `0004_editor_operations`; `upgrade` applies the packaged transactional
+`head` reports `0005_reserved_parents`; `upgrade` applies the packaged transactional
 content schema and private authored-publication extension and is safe to repeat. The installed package contains Alembic revisions
 and SQL resources under `meducation_api/migrations`, so the same explicit job
 runs from the API wheel/image without a source checkout. It creates an empty
@@ -301,5 +301,9 @@ context, not browser authentication. Step 3 now supplies a disabled-by-default, 
 boundary; production provider assurance is still unaccepted.
 [Step 4 paired content HTTP services](../docs/L4-paired-editor-services.md) now
 provide guarded reservations, draft history, publication, activation and export.
-Step 5 editor session integration remains pending. See
+[Step 5 editor session integration](../docs/L4-http-editor.md) is now implemented locally. See
 [session roles, configuration and verification](../docs/L4-admin-session-boundary.md).
+
+[Step 5 HTTP editor](../docs/L4-http-editor.md) supplies the private browser gateway.
+Packaged head is `0005_reserved_parents`; migration/bootstrap remain explicit
+operator jobs and no authority cutover is implied.
