@@ -105,7 +105,6 @@ The runtime never calls a generative AI service. Quiz rules and scoring stay in 
 
 L2 packages this existing JSON service in [backend/Dockerfile](../backend/Dockerfile), using a non-editable installed wheel, pinned Python/runtime dependencies, an explicit non-root user and absolute paths to byte-identical copies of both banks. Default JSON operation needs no database service and reuses the existing health routes. Step 3 adds the [learner Dockerfile](../Dockerfile) and a non-root Nginx runtime with explicit static/cache/health/API routing and dynamic Docker DNS resolution. Build-time module inspection excludes admin/QA/canonical-bank modules from the API-mode learner assets; inspection source maps/manifest are removed before runtime. Step 4 adds [Compose](../compose.yaml) for default API/frontend operation and an independent optional Postgres profile with a named volume; app services receive no DB credentials and still serve JSON. [Container commands](local-containers.md) and separate API/proxy/browser/Compose smokes cover current packaging. Matching PG17 tooling provides atomic custom-format backups, fresh verification-database restore and explicit scoped disposable-volume discard. Separate native AMD64/ARM64 CI jobs run repeated clean builds, proxy/browser/Compose smokes and synthetic recovery. JSON remains the default API source; L3 now supplies least-privilege roles, migration `0001_content` and paired file import/export; fixture learner reader/API parity is implemented; actual-bank/API/recovery and PG browser parity are verified on both native CI architectures. Container recovery does not back up learner browser progress or certify hosted database behavior.
 
-
 ## Accepted local-preparation contracts and L1 runtime status
 
 [Completed L0](work/done/L0-local-contracts-plan.md) records development decisions for [ongoing local-first preparation](work/ongoing/local-first-production-preparation.md). L1 now implements a local paired progress backup utility; this does not add a database, authentication, backend persistence or cloud upload. The L1 tracker and application acceptance checklist carry current verification status and remaining release gates.
@@ -165,6 +164,10 @@ The [L4 paired validator](L4-content-policy.md) keeps shared Markdown/HTML/math
 rules under `src/content/validation` and `richText`. Build tooling packages a
 self-contained Node worker and shared limits into `backend/src/meducation_api/content_policy`.
 Python owns byte admission, strict stored validation and bounded worker execution;
-its draft-save wrapper validates before SQL. No frontend presentation dependencies
-enter this boundary. Authenticated authoring routes and publication services remain
-later L4 steps. No content authority has changed.
+its draft-save wrapper validates before SQL. Internal `backend/src/meducation_api/admin`
+owns captured paired preview/save/publish, calling the validator and bound DB
+operations. Migration `0002_authored_publish` adds atomic authored releases and
+reviewed saves, retaining importer deduplication and separate provenance. No frontend
+presentation dependencies enter this boundary. Actors are trusted operator context;
+authenticated sessions/private HTTP routes and editor integration remain later L4
+steps. No content authority has changed.

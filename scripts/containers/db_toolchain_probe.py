@@ -29,7 +29,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 def run_probe():
     assert psycopg.pq.__impl__ == "binary"
-    assert migration_head() == "0001_content"
+    assert migration_head() == "0002_authored_publish"
     config = migration_config()
     packaged = Path(config.get_main_option("script_location"))
     assert (
@@ -129,7 +129,7 @@ def run_probe():
                 connection.exec_driver_sql(
                     "SELECT version_num FROM content.schema_version"
                 ).scalar_one()
-                == "0001_content"
+                == "0002_authored_publish"
             )
             assert (
                 connection.exec_driver_sql(

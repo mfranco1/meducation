@@ -24,5 +24,9 @@ content.published_decks,content.published_flashcards TO meducation_reader;
 GRANT EXECUTE ON FUNCTION content.reserve_ids(uuid,jsonb,bigint,bigint,text,text,text),
 content.store_release(uuid,text,text,jsonb,text,text,uuid[]),
 content.activate_release(uuid,uuid,bigint,text,text),
-content.save_draft(uuid,text,text,bigint,bigint,text,text,uuid[]) TO meducation_operator;
+content.save_draft(uuid,text,text,bigint,bigint,text,text,uuid[]),
+content.authored_publish_result(uuid,text,text,bigint,bigint,integer,text,text,text),
+content.publish_draft(uuid,text,text,bigint,bigint,integer,text,text,text),
+content.reviewed_save_result(uuid,text,text,bigint,bigint,bigint,integer,text,uuid[],text,text),
+content.save_reviewed_draft(uuid,text,text,bigint,bigint,bigint,integer,text,uuid[],text,text) TO meducation_operator;
 """)

@@ -1,8 +1,9 @@
 # Paired authoring content-policy boundary
 
 Implemented for [L4 Step 2](work/ongoing/L4-local-authoring-admin-access-plan.md#step-2--implement-server-content-policy-validation).
-Canonical JSON remains authoritative. This is validation infrastructure; private
-HTTP routes, session protection and authored publication are Steps 3–4 work.
+Canonical JSON remains authoritative. Internal paired preview/save/authored-publish
+services are implemented; private HTTP routes and session protection remain
+Steps 3–4 work.
 
 ## Selected parser and packaging
 
@@ -80,11 +81,28 @@ presence and source/verified answers without Pydantic defaults.
 
 The current `save_draft` primitive now validates rich content before executing its
 SQL call. Its operator-facing wrapper maps policy errors to safe database errors;
-HTTP services should retain `ContentPolicyError` diagnostics. Future preview and
-captured authored publish must use the same `PairedContentValidator` inside their
-Step 4 services and revalidate on each save/publish. Those services do not exist
-yet; this step does not claim they are wired or authenticated. Trusted importer
-and reconstruction operations retain their separate operator contract.
+HTTP services should retain `ContentPolicyError` diagnostics. Internal
+`admin/authoring.py` uses the same validator for candidate and publication preview
+and fresh save/publish validation. Immutable previews bind exact paired artifacts,
+policy version, actor, reason, reservations and draft/publication context. Validation
+runs before the write transaction; SQL locks and compares current context and exact
+captured artifacts before committing. Replay of a completed operation returns its
+original immutable outcome without moving the pointer again.
+
+Migration `0002_authored_publish` adds reviewed save and authored publication
+transactions, append-only authored receipts and distinct release identities even
+when content digests repeat. Trusted file imports still reuse the earliest matching
+release and retain their own provenance. Reviewed creates require owned reservations;
+ordinary save cannot resurrect deleted materialized IDs. Publish atomically finalizes
+both banks, writes authored/publication/audit outcomes, moves the active pointer and
+advances the draft base/revision. No file-import provenance is invented.
+
+Only the existing trusted operator role can call these primitives; no browser-facing
+route or editor role is enabled. Actors here are explicit trusted operator/test
+context, not verified sessions. Step 3 authentication/CSRF/MFA and Step 4 HTTP
+integration remain required, including durable Undo/reset, creation-intent binding
+and bounded exports. Trusted importer and reconstruction operations retain their
+separate operator contract.
 
 The actual nginx `/api/admin/` location enforces 64 MiB, streams requests and uses
 155-second read/35-second send timeouts for bounded validation. Learner routes
@@ -121,8 +139,12 @@ null fields, Unicode, duplicate/invalid JSON, dangerous keys, unsafe HTML/URLs/m
 image policy, answer references, empty descendants and coordinated deletes/moves.
 Backend tests cover paths, immutable artifacts, bounded diagnostics, slot release,
 worker outage/timeout, trusted origins and HTTP streamed body admission. Real PG17
-checks show rejected saves leave draft, publication, releases, audit and operation
-state unchanged while independently reserved IDs remain burned.
+checks show rejected preview/save/publication inputs leave draft, publication,
+releases, normalized rows, audit, operation ledger and reservations unchanged while
+independently reserved IDs remain burned. They also exercise original-result replay,
+stale context, ownership, exact artifact reconstruction, concurrent save/publish and
+rollback at finalization, authored/publication receipts, draft, audit and commit.
+An upgrade from populated `0001_content` preserves existing content and ledgers.
 
 ```sh
 docker build -f backend/Dockerfile -t meducation-api:l4-step2 .

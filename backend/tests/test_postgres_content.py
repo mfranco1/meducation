@@ -175,7 +175,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0001_content"
+    assert migration_head() == "0002_authored_publish"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -202,7 +202,7 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0001_content"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0002_authored_publish"
 
 
 def test_release_omission_provenance_order_and_digest(db):
@@ -1527,3 +1527,289 @@ def test_authoring_policy_rejection_preserves_draft_release_audit_and_burned_ids
                            expected_publication_sequence=publication.publication_sequence,
                            intent="next-policy-fixture", actor=ACTOR, reason=REASON)
     assert allocated["i"][0] != next_ids["i"][0]
+
+
+def authoring_service(db, *, actor=ACTOR, validator=None):
+    from meducation_api.admin.authoring import PairedAuthoringService
+
+    original = store(db)
+    current = publish(db, original)
+    q, f = artifacts()
+    with db.operator.begin() as connection:
+        save_draft(connection, operation_id=uuid4(), quiz_text=q, flashcard_text=f,
+                   expected_revision=0, base_sequence=current.publication_sequence,
+                   actor=actor, reason=REASON)
+    return PairedAuthoringService(db.operator, actor=actor, validator=validator), original
+
+
+def authoring_state(db):
+    tables = ("draft", "active_publication", "releases", "subjects", "quizzes", "questions",
+              "decks", "flashcards", "audit_events", "operations", "import_events",
+              "authored_events", "publication_events", "id_reservations", "id_counters", "entity_ids")
+    with db.admin.connect() as connection:
+        return {table: connection.execute(text(f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{table} t")).scalar_one()
+                for table in tables}
+
+
+def saved_pair(service):
+    context = service.load()
+    return {"quizzes": json.loads(context.quiz_document), "flashcards": json.loads(context.flashcard_document)}
+
+
+def test_authoring_preview_save_publish_preserves_exact_pair_and_records_authored_provenance(db):
+    from meducation_api.db.transfer import reconstruct_release
+
+    service, original = authoring_service(db)
+    pair = saved_pair(service)
+    pair["quizzes"]["subjects"][0]["name"] = "Paired subject β"
+    pair["quizzes"]["questions"][0]["stem"] = "Reviewed **stem** $x^2$"
+    pair["flashcards"]["cards"][0]["back"] = "Reviewed card β"
+    context = service.load()
+    before = authoring_state(db)
+    preview = service.preview(pair, expected_revision=context.revision,
+                              expected_sequence=context.publication_sequence, reason=REASON)
+    assert authoring_state(db) == before
+    assert service.save(preview, operation_id=uuid4()) == context.revision + 1
+    assert scalar(db.reader, "SELECT release_id FROM content.active_publication") == original.release_id
+    context = service.load()
+    before = authoring_state(db)
+    reviewed = service.publish_preview(expected_revision=context.revision,
+                                       expected_sequence=context.publication_sequence, reason=REASON)
+    assert authoring_state(db) == before
+    outcome = service.publish(reviewed, operation_id=uuid4())
+    with db.operator.connect() as connection:
+        q, f, _ = reconstruct_release(connection, outcome.release.release_id)
+    assert q == reviewed.pair.quiz_artifact and f == reviewed.pair.flashcard_artifact
+    assert json.loads(q)["questions"][0]["answer"] == "A"
+    assert json.loads(q)["questions"][0]["verifiedAnswer"] == "B"
+    assert scalar(db.operator, "SELECT count(*) FROM content.import_events") == 1
+    assert scalar(db.operator, "SELECT count(*) FROM content.authored_events") == 1
+    assert scalar(db.operator, "SELECT count(*) FROM content.audit_events WHERE event_type='publish'") == 1
+    current = service.load()
+    assert current.revision == outcome.draft_revision == context.revision + 1
+    assert current.base_publication_sequence == current.publication_sequence == outcome.publication_sequence
+    assert current.base_release_id == current.published_release_id == outcome.release.release_id
+    assert current.quiz_document == q and current.flashcard_document == f
+
+
+@pytest.mark.parametrize("action", ["preview", "save", "publish-preview", "publish"])
+def test_authoring_invalid_content_rejected_without_mutation_and_reservations_stay_burned(db, action):
+    from meducation_api.admin.authoring import AuthoringPreview, _binding
+    from meducation_api.content_policy import ContentPolicyError, ValidatedPair
+
+    service, _ = authoring_service(db)
+    context = service.load()
+    allocated = reserve(db, counts={"i": 1}, draft=context.revision, publication=context.publication_sequence)
+    pair = saved_pair(service)
+    pair["quizzes"]["questions"][0]["stem"] = '<img src="/content/x" alt="x" onerror="PRIVATE_SENTINEL">'
+    invalid = ValidatedPair(json.dumps(pair["quizzes"], ensure_ascii=False, indent=2) + "\n",
+                            json.dumps(pair["flashcards"], ensure_ascii=False, indent=2) + "\n", 1, 0)
+    if action in ("publish-preview", "publish"):
+        # Simulate legacy/restored structurally-valid content through the trusted SQL
+        # maintenance boundary; the authored path must still validate rich policy.
+        with db.operator.begin() as connection:
+            connection.execute(text("SELECT content.save_draft(:op,:q,:f,:revision,:base,:actor,:reason)"),
+                               {"op": uuid4(), "q": invalid.quiz_artifact, "f": invalid.flashcard_artifact,
+                                "revision": context.revision, "base": context.base_publication_sequence,
+                                "actor": ACTOR, "reason": "Explicit unsafe fixture, never canonical content"})
+        context = service.load()
+    before = authoring_state(db)
+    with pytest.raises(ContentPolicyError) as caught:
+        if action == "preview":
+            service.preview(pair, expected_revision=context.revision, expected_sequence=context.publication_sequence, reason=REASON)
+        elif action == "publish-preview":
+            service.publish_preview(expected_revision=context.revision, expected_sequence=context.publication_sequence, reason=REASON)
+        else:
+            kind = "save" if action == "save" else "publish"
+            # An internal preview object is not a validation permission. Even a
+            # constructed fingerprint cannot skip the mutation's fresh validator.
+            preview = AuthoringPreview(kind, context, invalid, REASON, (),
+                                       _binding(kind, context, invalid, ACTOR, REASON, ()))
+            getattr(service, kind)(preview, operation_id=uuid4())
+    assert caught.value.status == 422
+    assert "PRIVATE_SENTINEL" not in json.dumps(caught.value.response())
+    assert authoring_state(db) == before
+    next_ids = reserve(db, counts={"i": 1}, draft=context.revision, publication=context.publication_sequence)
+    assert next_ids["i"][0] != allocated["i"][0]
+
+
+def test_authored_publication_replay_identical_releases_stale_context_and_importer_reuse(db):
+    from dataclasses import replace
+
+    from meducation_api.admin.authoring import _binding
+
+    service, original = authoring_service(db)
+    context = service.load()
+    preview = service.publish_preview(expected_revision=context.revision,
+                                      expected_sequence=context.publication_sequence, reason=REASON)
+    operation = uuid4()
+    first = service.publish(preview, operation_id=operation)
+    assert first.release.release_id != original.release_id
+    assert first.release.quiz_revision == original.quiz_revision
+    context = service.load()
+    later = service.publish(service.publish_preview(expected_revision=context.revision,
+                            expected_sequence=context.publication_sequence, reason=REASON), operation_id=uuid4())
+    assert later.release.release_id != first.release.release_id
+    assert later.release.quiz_revision == first.release.quiz_revision
+    before = authoring_state(db)
+    assert service.publish(preview, operation_id=operation) == first
+    assert authoring_state(db) == before
+    with pytest.raises(ContentDatabaseError):
+        service.publish(preview, operation_id=uuid4())
+    changed = replace(preview, reason="Different reason")
+    changed = replace(changed, fingerprint=_binding("publish", changed.context, changed.pair, ACTOR, changed.reason, ()))
+    with pytest.raises(ContentDatabaseError):
+        service.publish(changed, operation_id=operation)
+    assert authoring_state(db) == before
+    # File import retains its original earliest-release deduplication/provenance path.
+    assert store(db) == original
+
+
+@pytest.mark.parametrize("boundary", ["finalize", "authored", "publication", "draft", "audit", "commit"])
+def test_authored_publication_failure_rolls_back_all_content_and_audit_boundaries(db, boundary):
+    service, _ = authoring_service(db)
+    context = service.load()
+    preview = service.publish_preview(expected_revision=context.revision,
+                                      expected_sequence=context.publication_sequence, reason=REASON)
+    owner_execute(db, """CREATE FUNCTION content.fail_authored_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Injected authored boundary failure'; END $$""")
+    event, table = {"finalize": ("BEFORE UPDATE OF state", "releases"),
+                    "authored": ("BEFORE INSERT", "authored_events"),
+                    "publication": ("BEFORE INSERT", "publication_events"),
+                    "draft": ("BEFORE UPDATE", "draft"),
+                    "audit": ("BEFORE INSERT", "audit_events"),
+                    "commit": ("AFTER INSERT", "authored_events")}[boundary]
+    if boundary == "commit":
+        owner_execute(db, f"CREATE CONSTRAINT TRIGGER fail_authored {event} ON content.{table} DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION content.fail_authored_fixture()")
+    else:
+        owner_execute(db, f"CREATE TRIGGER fail_authored {event} ON content.{table} FOR EACH ROW EXECUTE FUNCTION content.fail_authored_fixture()")
+    before = authoring_state(db)
+    with pytest.raises(ContentDatabaseError):
+        service.publish(preview, operation_id=uuid4())
+    assert authoring_state(db) == before
+
+
+def test_reviewed_save_reservation_owner_replay_and_stale_publication(db):
+    from meducation_api.admin.authoring import PairedAuthoringService
+
+    service, original = authoring_service(db)
+    context = service.load()
+    reservation = uuid4()
+    ids = reserve(db, op=reservation, counts={"i": 1}, draft=context.revision, publication=context.publication_sequence)
+    pair = saved_pair(service)
+    pair["quizzes"]["questions"].append({**copy.deepcopy(pair["quizzes"]["questions"][0]), "id": ids["i"][0]})
+    preview = service.preview(pair, expected_revision=context.revision,
+                              expected_sequence=context.publication_sequence, reason=REASON, reservation_ids=[reservation])
+    other = PairedAuthoringService(db.operator, actor="different-test-editor")
+    foreign = other.preview(pair, expected_revision=context.revision,
+                            expected_sequence=context.publication_sequence, reason=REASON, reservation_ids=[reservation])
+    before = authoring_state(db)
+    with pytest.raises(ContentDatabaseError):
+        other.save(foreign, operation_id=uuid4())
+    assert authoring_state(db) == before
+    operation = uuid4()
+    revision = service.save(preview, operation_id=operation)
+    before = authoring_state(db)
+    assert service.save(preview, operation_id=operation) == revision
+    assert authoring_state(db) == before
+    with pytest.raises(ContentDatabaseError):
+        service.save(preview, operation_id=uuid4())
+    context = service.load()
+    stale = service.preview(saved_pair(service), expected_revision=context.revision,
+                            expected_sequence=context.publication_sequence, reason=REASON)
+    publish(db, original, expected=context.publication_sequence)
+    before = authoring_state(db)
+    with pytest.raises(ContentDatabaseError):
+        service.save(stale, operation_id=uuid4())
+    with pytest.raises(ContentDatabaseError):
+        service.publish_preview(expected_revision=context.revision,
+                                expected_sequence=context.publication_sequence + 1, reason=REASON)
+    assert authoring_state(db) == before
+
+
+def test_concurrent_authored_publications_and_read_role_denial(db):
+    service, _ = authoring_service(db)
+    context = service.load()
+    preview = service.publish_preview(expected_revision=context.revision,
+                                      expected_sequence=context.publication_sequence, reason=REASON)
+    barrier = Barrier(2)
+    def run():
+        barrier.wait(timeout=10)
+        try:
+            return service.publish(preview, operation_id=uuid4())
+        except ContentDatabaseError:
+            return None
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        outcomes = list(executor.map(lambda _: run(), range(2)))
+    assert sum(value is not None for value in outcomes) == 1
+    assert scalar(db.operator, "SELECT count(*) FROM content.authored_events") == 1
+    for engine in (db.reader, db.backup):
+        with pytest.raises(SQLAlchemyError), engine.begin() as connection:
+            connection.execute(text("SELECT content.publish_draft(NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL)"))
+    with pytest.raises(SQLAlchemyError), db.reader.connect() as connection:
+        connection.execute(text("SELECT * FROM content.authored_events"))
+
+
+def test_upgrade_populated_l3_schema_preserves_content_and_protected_history(db):
+    # Rebuild only this launcher's disposable schema at the original packaged head.
+    with db.admin.begin() as connection:
+        connection.exec_driver_sql("DROP SCHEMA content CASCADE")
+    bootstrap(db.admin, RolePasswords(_env_file=None))
+    with db.migrator.begin() as connection:
+        connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
+        config = migration_config()
+        config.attributes["connection"] = connection
+        command.upgrade(config, "0001_content")
+    original = store(db)
+    publication = publish(db, original)
+    reserve(db, draft=0, publication=publication.publication_sequence)
+    tables = ("draft", "active_publication", "releases", "operations", "audit_events",
+              "import_events", "publication_events", "entity_ids", "id_counters", "id_reservations")
+    def snapshot():
+        return {table: scalar(db.operator, f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{table} t") for table in tables}
+    before = snapshot()
+    upgrade(db.migrator)
+    assert snapshot() == before
+    assert migration_head() == scalar(db.reader, "SELECT version_num FROM content.schema_version")
+    assert store(db) == original
+
+
+def test_reviewed_save_cannot_restore_deleted_ids_without_a_controlled_reset(db):
+    service, _ = authoring_service(db)
+    pair = saved_pair(service)
+    original_pair = copy.deepcopy(pair)
+    pair["flashcards"]["cards"] = []
+    context = service.load()
+    deleted = service.preview(pair, expected_revision=context.revision,
+                              expected_sequence=context.publication_sequence, reason=REASON)
+    service.save(deleted, operation_id=uuid4())
+    context = service.load()
+    resurrect = service.preview(original_pair, expected_revision=context.revision,
+                                expected_sequence=context.publication_sequence, reason=REASON)
+    before = authoring_state(db)
+    with pytest.raises(ContentDatabaseError):
+        service.save(resurrect, operation_id=uuid4())
+    assert authoring_state(db) == before
+
+
+def test_concurrent_reviewed_save_and_publish_never_overwrite_each_other(db):
+    service, _ = authoring_service(db)
+    context = service.load()
+    pair = saved_pair(service)
+    pair["flashcards"]["cards"][0]["back"] = "Concurrent unpublished update"
+    save_preview = service.preview(pair, expected_revision=context.revision,
+                                   expected_sequence=context.publication_sequence, reason=REASON)
+    publish_preview = service.publish_preview(expected_revision=context.revision,
+                                              expected_sequence=context.publication_sequence, reason=REASON)
+    barrier = Barrier(2)
+    def run(action):
+        barrier.wait(timeout=10)
+        try:
+            return getattr(service, action)(save_preview if action == "save" else publish_preview,
+                                           operation_id=uuid4())
+        except ContentDatabaseError:
+            return None
+    with ThreadPoolExecutor(max_workers=2) as executor:
+        outcomes = list(executor.map(run, ("save", "publish")))
+    assert sum(value is not None for value in outcomes) == 1
+    assert service.load().revision == context.revision + 1
+    assert scalar(db.operator, "SELECT count(*) FROM content.authored_events") == (1 if outcomes[1] is not None else 0)

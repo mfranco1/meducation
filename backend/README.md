@@ -81,8 +81,8 @@ migration credentials.
 .venv/bin/meducation-db upgrade
 ```
 
-`head` reports `0001_content`; `upgrade` applies the packaged transactional content
-schema and is safe to repeat. The installed package contains Alembic revisions
+`head` reports `0002_authored_publish`; `upgrade` applies the packaged transactional
+content schema and private authored-publication extension and is safe to repeat. The installed package contains Alembic revisions
 and SQL resources under `meducation_api/migrations`, so the same explicit job
 runs from the API wheel/image without a source checkout. It creates an empty
 draft and unpublished pointer; it does not import authored content. Destructive
@@ -256,7 +256,7 @@ Credentials/archive and containers are cleaned; this is acceptance evidence, not
 a retained/off-device backup or a production RPO guarantee. After a real restore,
 restart workers/caches and reconcile lost post-backup allocations before authoring.
 
-For an already initialized *disposable local* target named `meducation_verify_*`,
+For an already initialized _disposable local_ target named `meducation_verify_*`,
 the standalone CLI uses matching explicit operator/reader URLs:
 
 ```sh
@@ -295,4 +295,7 @@ closed for authoring while learner reads retain their separate read-only path.
 See [policy limits and acceptance](../docs/L4-content-policy.md). Rebuild after
 editing shared policy or limits. The default validator approves local images only;
 HTTP integration must inject any approved origins from trusted backend settings.
-Private routes, authentication and authored publication are not enabled yet.
+`admin/authoring.py` supplies internal paired preview/save/publish with fresh validation,
+context checks and atomic authored provenance. Its actor is trusted backend/operator
+context, not browser authentication. Private HTTP routes and sessions remain disabled;
+Step 3 authorization must precede Step 4 HTTP integration.

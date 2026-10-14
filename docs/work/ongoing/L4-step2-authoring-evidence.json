@@ -1,0 +1,126 @@
+{
+  "recordedDate": "2026-10-14",
+  "sourceCommit": "8fcc14e8f2d1c7040bcc11ce5bd12588fa050afa",
+  "scope": "L4 Step 2 remaining internal preview/save/authored-publish integration; changes uncommitted. No auth/private HTTP/editor exposure, content cutover or hosted provisioning.",
+  "completionStatus": "complete for all four original Step 2 requirements; Steps 3–4 session and HTTP integration remain pending",
+  "foundationEvidence": "L4-step2-validation-evidence.json (historical partial foundation; preserved)",
+  "canonicalSources": [
+    {
+      "path": "src/content/questionBank.generated.json",
+      "bytes": 16456246,
+      "sha256": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901"
+    },
+    {
+      "path": "src/content/flashcardBank.generated.json",
+      "bytes": 653579,
+      "sha256": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+    }
+  ],
+  "inputsSha256": {
+    "backend/src/meducation_api/admin/__init__.py": "464d85d737e0e974f77b8dd4fffe68696123fc1ebfc5528ce9d1631daf43d752",
+    "backend/src/meducation_api/admin/authoring.py": "293e22393e5dbbe166f259206cc5003807aed14dca83e9d324f2eb518efc6705",
+    "backend/src/meducation_api/db/operations.py": "ffb9dadd023ab72a01fed1911cc081a5ae5e9e40166db71b7ddc1212e08817a6",
+    "backend/src/meducation_api/db/recovery.py": "b6c4ab63fb3b3b0b2a5279b859acb216a602fcd70e7e4c366c9d859b2629b0c7",
+    "backend/src/meducation_api/migrations/0002_authored_publish.sql": "e18967824538d0514f933a4b7b57d137afedec60ef4fbce2169aa135247626e5",
+    "backend/src/meducation_api/migrations/versions/0002_authored_publish.py": "dbda2aa9e5306344ef3d7965e9e295c7985366276287144bbe24c450401cdeac",
+    "backend/tests/test_postgres_content.py": "a44544bd4cb869a05a330e9efdb14c51c7466a7c61a340ff8f7f33feda88f24c",
+    "scripts/containers/db_toolchain_probe.py": "7e627df487bd2903d44054cf96b86246e5676803c9790970d1b8b1c3ab889243"
+  },
+  "verification": {
+    "realPostgres": {
+      "result": "pass",
+      "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "platform": "linux/arm64",
+      "command": [
+        "/Users/noodle.zip/Documents/code_projects/meducation/.venv/bin/python",
+        "-m",
+        "pytest",
+        "backend/tests/test_postgres_content.py",
+        "-q",
+        "--tb=short"
+      ],
+      "pytest_output": "........................................................................ [ 73%]\n..........................                                               [100%]\n=============================== warnings summary ===============================\ntests/test_postgres_content.py::test_postgres_learner_routes_match_json_and_release_connections[/api/v1/subjects]\n  /Users/noodle.zip/Documents/code_projects/meducation/.venv/lib/python3.14/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n    from starlette.testclient import TestClient as TestClient  # noqa\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n98 passed, 1 warning in 56.98s\n",
+      "isolation": "unique tmpfs container; loopback port; fixture-only disposable schema; no routine database or volume used"
+    },
+    "ordinaryBackend": {
+      "command": ".venv/bin/python -m pytest backend/tests -q",
+      "passed": 139,
+      "skipped": 98,
+      "skips": "All 98 separately passed in isolated real PostgreSQL run.",
+      "seconds": 10.64
+    },
+    "ruff": {
+      "scope": "backend/src backend/tests scripts/containers",
+      "result": "pass"
+    },
+    "mypy": {
+      "scope": "backend/src",
+      "sourceFiles": 25,
+      "result": "pass"
+    },
+    "build": {
+      "command": "npm run build",
+      "result": "pass; includes TypeScript and learner production build"
+    },
+    "apiImage": {
+      "command": "docker build -f backend/Dockerfile -t meducation-api:l4-step2-authoring .",
+      "result": "pass",
+      "imageId": "sha256:cb77a17d7e224cb46cb318db54cf5fcf5dfd2549b2f32ac8f817ded34a77dafa",
+      "platform": "linux/arm64"
+    },
+    "installedWheelToolchain": {
+      "server_version_num": "170011",
+      "packages": {
+        "psycopg": "3.3.6",
+        "psycopg-binary": "3.3.6",
+        "SQLAlchemy": "2.1.4",
+        "alembic": "1.20.0"
+      },
+      "psycopg_implementation": "binary",
+      "libpq_version": 180006,
+      "packaged_migration_env_sha256": "a47bb282289728210c571276c7194ddb004ac5793cf01f5d77a701c1cc3df412",
+      "checks": [
+        "installed wheel resources",
+        "repeatable local bootstrap",
+        "unsafe preexisting role membership rejected",
+        "role flags/membership/DDL/TEMP isolation",
+        "future owner object backup grants",
+        "no PUBLIC function execution",
+        "synthetic explicit Alembic upgrade/repeat",
+        "real packaged content migration upgrade/repeat and reader head view",
+        "JSON/text/choice-order round trip",
+        "transaction rollback",
+        "bounded single reader pool",
+        "uninitialized runtime/API refusal and cleanup",
+        "explicit repeatable migration CLI"
+      ],
+      "limitations": "Real product schema plus synthetic toolchain data. Comprehensive actual-bank parity/recovery and DB reverse-proxy/browser acceptance remain Step 6. This smoke does not import authored content. No hosted or native AMD64 claim from ARM64 execution.",
+      "platform": "linux/arm64",
+      "image_id": "sha256:cb77a17d7e224cb46cb318db54cf5fcf5dfd2549b2f32ac8f817ded34a77dafa",
+      "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826"
+    }
+  },
+  "audit": {
+    "result": "No blocking findings for Step 2 internal integration. All original Step 2 checkboxes mapped to implementation and evidence.",
+    "coverage": [
+      "Four invalid preview/save/publication paths leave all persisted content/ledger/audit/allocation state unchanged",
+      "Independent reservations remain burned",
+      "Exact paired artifacts, ordering, Unicode and source/verified answer provenance",
+      "Stale revision/publication/base, owned allocations and denied ordinary historical resurrection",
+      "Distinct authored releases with repeated digest and no fake import provenance",
+      "Original-result replay and existing importer earliest-release deduplication",
+      "Six injected failure boundaries including deferred commit roll back all persisted state",
+      "Concurrent publish/publish and save/publish have one winner",
+      "Populated L3 head upgrade preserves content, audit, ledgers and allocations",
+      "Reader/backup publication denial and reader authored receipt denial"
+    ]
+  },
+  "limitations": [
+    "Only trusted backend/operator actors; no identity/session verification or private HTTP routes yet.",
+    "Full Step 4 remains open: verified sessions, HTTP/editor integration, durable Undo/reset, creation-intent/destination binding, fresh MFA, exports.",
+    "Local ARM64 evidence only; no new native CI or hosted provider acceptance.",
+    "Retained authored-backup recovery and authority cutover are later L4 gates.",
+    "Unchanged frontend/policy/proxy suites use preserved foundation evidence, not a claimed rerun."
+  ],
+  "advisories": ["Existing Vite >500 kB chunk warning.", "Existing Starlette/httpx TestClient deprecation."]
+}

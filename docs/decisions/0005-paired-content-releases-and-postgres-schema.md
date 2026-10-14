@@ -290,3 +290,15 @@ Content rollback only activates a retained finalized release; it never deletes n
 Paired immutable releases make request consistency and rollback explicit while retaining existing learner revision behavior. Global ordinals and TEXT artifacts cost storage but avoid content drift caused by parent grouping, JSONB key ordering or serializer changes. A single paired-document draft is sufficient for one editor and reuses the existing bank validation/export model.
 
 The price is controlled database write functions, release immutability checks and dual representation parity tests. These are required for the promised import/read safety, not a distributed workflow system. Provider identity, publication UX, DB-authority recovery and hosted acceptance remain later gates. No database implementation is certified by this decision alone.
+
+## L4 internal authoring extension — 2026-10-14
+
+Migration `0002_authored_publish` extends the preserved L3 schema with reviewed
+paired saves and captured authored publication. Every authored publication creates
+a distinct immutable release and append-only authored receipt, including repeated
+content digests. File imports still deduplicate to the earliest matching release
+and keep file provenance separate. Publication, draft base/revision, operation
+result and audit commit together. Shared rich-content validation precedes the
+transaction; locked exact-artifact/context comparisons reject stale captures.
+Only trusted operator execution is currently granted. Browser authentication,
+private HTTP exposure, durable history/reset and authority cutover remain L4 gates.

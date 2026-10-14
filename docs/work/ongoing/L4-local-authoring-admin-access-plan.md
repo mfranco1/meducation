@@ -1,6 +1,6 @@
 # L4 — Local database authoring and admin access
 
-Created: 2026-10-14. Status: Step 2 partially implemented, not complete. Validator/parity/transport checks pass; required preview/authored-publish integration and rejection tests remain open. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
+Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 awaits continuation. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Sessions/private HTTP/editor integration remain Steps 3–4 work. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l4--local-database-authoring-and-admin-access-boundary). Prerequisites: [completed L3](../done/L3-postgres-schema-migration-parity-plan.md), [L4 handoff](../../L4-authoring-handoff.md), [authentication contract](../../decisions/0004-single-editor-authentication.md), and [paired-release contract](../../decisions/0005-paired-content-releases-and-postgres-schema.md). Follow the [work tracking gates](../README.md): implement one step, record evidence and limitations, then stop until continuation is authorized. The authority cutover has its own explicit approval gate.
 
@@ -39,10 +39,9 @@ Gate: reviewable request/state contracts and ownership decisions cover all exist
 - [x] Add an HTTP-safe paired validator covering stored structure, shared-subject references, ordering, provenance, Markdown/limited HTML, URLs/images and LaTeX policy. L3's development-time Node CLI is not the request validation boundary. Select and document the maintained parser/render-validation approach before locking dependencies; do not replace parser policy with permissive regex checks.
 - [x] Extend shared TypeScript/Python cases for omitted versus null fields, Unicode, duplicate JSON keys, non-finite numbers, dangerous keys, malformed markup/math, image origins, answer references, empty/invalid descendants and coordinated deletes/moves. Preserve exact accepted content rather than normalizing it silently.
 - [x] Bound request bytes before parsing, collection/string/depth limits and expensive parser work. Size limits must accommodate measured actual-bank edits/exports; return actionable errors without truncation. Apply equivalent limits through the real proxy.
-- [ ] Make preview, save and authored publish use this validator. Prove rejected input leaves draft, active release and audit mutation outcome consistent; already committed ID reservations remain burned.
+- [x] Make preview, save and authored publish use this validator. Prove rejected input leaves draft, active release and audit mutation outcome consistent; already committed ID reservations remain burned.
 
 Gate: shared fixture policy parity and read-only actual-bank acceptance pass. Any validator difference is resolved or explicitly blocks affected authoring; authentication is not treated as validation.
-
 
 ## Step 3 — Add authenticated sessions and least-privilege access
 
@@ -140,3 +139,17 @@ The provisional provider remains unaccepted. No dependencies/provider settings w
 The user identified the unchecked Step 2 requirement after the handoff. Step 2 is **partial**, not complete. Passing validator, fixture, corpus, draft-save and proxy checks does not establish validation/rejection behavior in unimplemented preview and authored-publish services. The earlier proposal to advance to Step 3 treated a subset of the gate as full step completion; that conclusion is withdrawn.
 
 Remaining work: integrate the validator into the actual preview and captured authored-publication paths and prove their rejected-input behavior preserves draft, active release and audit outcomes, with committed allocations remaining burned. The plan places authentication in Step 3 and those services in Step 4, creating a sequencing dependency for this Step 2 item. Resolve that dependency explicitly before claiming completion or treating the stage boundary as passed. Keep the original checkbox open; no requirement has been waived or silently moved.
+
+### Step 2 integration completed — 2026-10-14
+
+The user authorized continuation to close the original unchecked requirement.
+The sequencing dependency is resolved by implementing internal services and
+transactions before HTTP exposure. The foundation/correction entries above and
+[foundation evidence](L4-step2-validation-evidence.json) are preserved as history;
+[new integration evidence](L4-step2-authoring-evidence.json) records this gate.
+
+- [x] Added internal paired candidate/publication preview and fresh save/publish validation. Captures bind exact artifacts, actor/reason, policy version, reservations and revision/publication context. Completed operation replay returns the original outcome before stale-context checks; new operations revalidate and SQL checks captured context under locks. No browser actor or preview proof is trusted.
+- [x] Added packaged migration `0002_authored_publish`, atomic reviewed save and distinct authored releases/receipts with no invented import provenance. Save requires owned allocations for creates; ordinary save cannot resurrect deleted materialized IDs. Publish finalizes both banks and advances pointer/draft base/revision/audit/result atomically. Existing file imports retain earliest-match digest deduplication; populated L3 upgrades preserve content/ledger state.
+- [x] All 98 real PG17 tests passed, including all four invalid preview/save/publish paths with complete state snapshots and burned reservations, exact paired reconstruction/provenance, stale/foreign ownership, original-result replay, repeated identical releases, concurrent save/publish and failure injection at six transaction/commit boundaries. Ordinary backend tests: 139 passed, 98 skipped; those skipped cases passed in the separate PG run. Ruff and mypy passed; `npm run build` passed TypeScript and learner production build. Earlier frontend/policy/proxy verification applies to unchanged code; those suites were not rerun for this backend-only continuation.
+- [x] Rebuilt native ARM64 API image and passed installed-wheel/resource/migration/privilege/toolchain smoke at the new packaged head. Updated current runbooks, architecture, recovery grants and parent status. No routine database/volume, canonical banks, hosted service or authority was changed. New CI architectures, retained authored-backup recovery and provider acceptance remain later gates.
+- [x] Completion audit matched all four original Step 2 checkboxes to implementation/evidence; no blocking findings remain for Step 2. Step 3 sessions/least-privilege authorization is next, pending continuation. Step 4 still owns private HTTP/editor integration, verified-session actors, durable Undo/reset, creation-intent/destination binding, freshness and exports; its checkbox is not marked complete by these internal foundations.

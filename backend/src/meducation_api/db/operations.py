@@ -9,7 +9,7 @@ from uuid import UUID
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from meducation_api.content_policy import ContentPolicyError, PairedContentValidator
+from meducation_api.content_policy import ContentPolicyError, PairedContentValidator, ValidatedPair
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.repositories.question_bank import Bank, FlashcardBank
 
@@ -184,6 +184,30 @@ def save_draft(
         raise ContentDatabaseError(
             "Paired draft policy validation failed; no content logged."
         ) from None
+    return _save_validated_draft(
+        connection,
+        pair=pair,
+        operation_id=operation_id,
+        expected_revision=expected_revision,
+        base_sequence=base_sequence,
+        actor=actor,
+        reason=reason,
+        reservations=reservations,
+    )
+
+
+def _save_validated_draft(
+    connection: Connection,
+    *,
+    pair: ValidatedPair,
+    operation_id: UUID,
+    expected_revision: int,
+    base_sequence: int,
+    actor: str,
+    reason: str,
+    reservations: Sequence[UUID] = (),
+) -> int:
+    # Internal commit hook: the service obtains a fresh validation proof, never a browser proof.
     qtext, ftext = pair.quiz_artifact, pair.flashcard_artifact
     result = _call(
         connection,
@@ -200,3 +224,181 @@ def save_draft(
         },
     )
     return int(result["draft_revision"])
+
+
+@dataclass(frozen=True)
+class AuthoredPublication:
+    release: ReleaseIdentity
+    publication_sequence: int
+    draft_revision: int
+
+
+def _publication_outcome(result: Any) -> AuthoredPublication:
+    try:
+        return AuthoredPublication(
+            ReleaseIdentity(
+                UUID(result["release_id"]), result["quiz_revision"], result["flashcard_revision"]
+            ),
+            result["publication_sequence"],
+            result["draft_revision"],
+        )
+    except KeyError, TypeError, ValueError:
+        raise ContentDatabaseError("Invalid authored-publication result.") from None
+
+
+def _publish_parameters(
+    operation_id: UUID,
+    pair: ValidatedPair,
+    expected_revision: int,
+    expected_sequence: int,
+    preview: str,
+    actor: str,
+    reason: str,
+) -> dict[str, Any]:
+    return {
+        "op": operation_id,
+        "q": pair.quiz_artifact,
+        "f": pair.flashcard_artifact,
+        "draft": expected_revision,
+        "publication": expected_sequence,
+        "policy": pair.policy_version,
+        "preview": preview,
+        "actor": actor,
+        "reason": reason,
+    }
+
+
+def authored_publication_result(
+    connection: Connection,
+    *,
+    operation_id: UUID,
+    pair: ValidatedPair,
+    expected_revision: int,
+    expected_sequence: int,
+    preview: str,
+    actor: str,
+    reason: str,
+) -> AuthoredPublication | None:
+    try:
+        value: Any = connection.execute(
+            text(
+                "SELECT content.authored_publish_result(:op,:q,:f,:draft,:publication,:policy,:preview,:actor,:reason)"
+            ),
+            _publish_parameters(
+                operation_id, pair, expected_revision, expected_sequence, preview, actor, reason
+            ),
+        ).scalar_one()
+    except SQLAlchemyError:
+        raise ContentDatabaseError(
+            "Publication replay lookup was rejected; no SQL or content logged."
+        ) from None
+    return None if value is None else _publication_outcome(value)
+
+
+def _publish_validated_draft(
+    connection: Connection,
+    *,
+    operation_id: UUID,
+    pair: ValidatedPair,
+    expected_revision: int,
+    expected_sequence: int,
+    preview: str,
+    actor: str,
+    reason: str,
+) -> AuthoredPublication:
+    result = _call(
+        connection,
+        "SELECT content.publish_draft(:op,:q,:f,:draft,:publication,:policy,:preview,:actor,:reason)",
+        _publish_parameters(
+            operation_id, pair, expected_revision, expected_sequence, preview, actor, reason
+        ),
+    )
+    return _publication_outcome(result)
+
+
+def _reviewed_parameters(
+    operation_id: UUID,
+    pair: ValidatedPair,
+    expected_revision: int,
+    expected_sequence: int,
+    base_sequence: int,
+    preview: str,
+    actor: str,
+    reason: str,
+    reservations: Sequence[UUID],
+) -> dict[str, Any]:
+    return {
+        **_publish_parameters(
+            operation_id, pair, expected_revision, expected_sequence, preview, actor, reason
+        ),
+        "base": base_sequence,
+        "reservations": list(reservations),
+    }
+
+
+def reviewed_draft_result(
+    connection: Connection,
+    *,
+    operation_id: UUID,
+    pair: ValidatedPair,
+    expected_revision: int,
+    expected_sequence: int,
+    base_sequence: int,
+    preview: str,
+    actor: str,
+    reason: str,
+    reservations: Sequence[UUID],
+) -> int | None:
+    try:
+        value: Any = connection.execute(
+            text(
+                "SELECT content.reviewed_save_result(:op,:q,:f,:draft,:publication,:base,:policy,:preview,CAST(:reservations AS uuid[]),:actor,:reason)"
+            ),
+            _reviewed_parameters(
+                operation_id,
+                pair,
+                expected_revision,
+                expected_sequence,
+                base_sequence,
+                preview,
+                actor,
+                reason,
+                reservations,
+            ),
+        ).scalar_one()
+    except SQLAlchemyError:
+        raise ContentDatabaseError(
+            "Draft replay lookup was rejected; no SQL or content logged."
+        ) from None
+    return None if value is None else int(value["draft_revision"])
+
+
+def _save_reviewed_draft(
+    connection: Connection,
+    *,
+    operation_id: UUID,
+    pair: ValidatedPair,
+    expected_revision: int,
+    expected_sequence: int,
+    base_sequence: int,
+    preview: str,
+    actor: str,
+    reason: str,
+    reservations: Sequence[UUID],
+) -> int:
+    value = _call(
+        connection,
+        "SELECT content.save_reviewed_draft(:op,:q,:f,:draft,:publication,:base,:policy,:preview,CAST(:reservations AS uuid[]),:actor,:reason)",
+        _reviewed_parameters(
+            operation_id,
+            pair,
+            expected_revision,
+            expected_sequence,
+            base_sequence,
+            preview,
+            actor,
+            reason,
+            reservations,
+        ),
+    )
+    return int(value["draft_revision"])

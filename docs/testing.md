@@ -92,7 +92,6 @@ Before handoff, confirm affected obligations in [the regression reference](testi
 
 Automated role/label, keyboard/focus, reduced-motion, and mobile/desktop checks do not establish real VoiceOver/NVDA behavior; manual assistive-technology testing remains release QA. No line/branch coverage percentage or broad production-load benchmark is claimed. Browser first-quiz timings characterize the specified fixtures; measure production latency separately before making performance claims.
 
-
 ## Local-preparation acceptance
 
 L3 Steps 2–3 add strict settings/lifecycle and paired-artifact fixture tests to
@@ -158,3 +157,14 @@ L2 Step 6 uses `scripts/containers/acceptance.py` for two `--pull --no-cache` bu
 For L4, follow [authentication gates](decisions/0004-single-editor-authentication.md): production-shaped injected tokens/code flow/session store, negative authorization/CSRF/expiry/revocation tests, dev-mode production rejection and all private HTTP routes. Final provider mapping/fresh-MFA evidence is pending before production integration; local mocks cannot certify hosted factor challenge, key rotation, logout, recovery or plan entitlements. Auth/session records restored from backup must be invalidated with a fresh external epoch. No private-token/real-progress fixtures or secrets in logs.
 
 L4 adds the [paired authoring validation boundary](L4-content-policy.md). Build resources with `npm run build:content-policy` before backend tests/authoring jobs. The full runner and backend/native CI do this explicitly. Run `scripts/containers/smoke-authoring-policy.py` with the freshly built API image for the installed-wheel/real-nginx request-limit gate. Test-only smoke routes are never shipped; authenticated preview/publication routes remain later L4 work.
+
+L4 Step 2 internal authoring adds real PG17 coverage in
+`backend/tests/test_postgres_content.py`: all 98 cases pass, including rejected
+preview/save/publish preservation, committed reservation retention, exact paired
+reconstruction/provenance, ownership, stale context, distinct repeated releases,
+original-result replay, concurrency, injected transaction/commit failures and
+upgrade from populated L3 head. Run the disposable PostgreSQL launcher separately
+from ordinary pytest (which skips these cases without its database environment).
+After migration/resource changes, rebuild the API image and run
+`scripts/containers/smoke-db-toolchain.py` against the installed wheel. Local
+ARM64 evidence does not certify hosted or new native AMD64/ARM64 CI acceptance.
