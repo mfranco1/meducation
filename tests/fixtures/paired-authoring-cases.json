@@ -1,0 +1,760 @@
+{
+  "base": {
+    "quizzes": {
+      "schemaVersion": 4,
+      "subjects": [
+        {
+          "id": "s1",
+          "name": "Anatomía",
+          "accent": "#123456"
+        }
+      ],
+      "quizzes": [
+        {
+          "id": "q1",
+          "subjectId": "s1",
+          "name": "Café Quiz"
+        }
+      ],
+      "questions": [
+        {
+          "id": "i1",
+          "quizId": "q1",
+          "stem": "What is π?",
+          "choices": [
+            {
+              "id": "A",
+              "text": "Three"
+            },
+            {
+              "id": "B",
+              "text": "About 3.14"
+            }
+          ],
+          "answer": "A",
+          "verifiedAnswer": "B",
+          "rationale": "π is approximately 3.14."
+        }
+      ]
+    },
+    "flashcards": {
+      "schemaVersion": 2,
+      "decks": [
+        {
+          "id": "d1",
+          "subjectId": "s1",
+          "name": "Deck"
+        }
+      ],
+      "cards": [
+        {
+          "id": "f1",
+          "deckId": "d1",
+          "front": "Front",
+          "back": "Back"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "id": "unicode",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "日本語 🩺 café\n**BP** 140/90"
+        }
+      ]
+    },
+    {
+      "id": "unsafe_html",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "<script>private</script>"
+        }
+      ]
+    },
+    {
+      "id": "encoded_protocol",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "<a href=\"jav&#x61;script:alert(1)\">Link</a>"
+        }
+      ]
+    },
+    {
+      "id": "quoted_angle_attribute",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "<img alt=\"A > B\" src=\"/content/img.png\" onerror=\"private\">"
+        }
+      ]
+    },
+    {
+      "id": "duplicate_html_attribute",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "<img alt=\"A\" src=\"/content/a.png\" src=\"/content/b.png\">"
+        }
+      ]
+    },
+    {
+      "id": "inline_style",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "<p style=\"color:red\">text</p>"
+        }
+      ]
+    },
+    {
+      "id": "unsafe_reference",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "[bad][ref]\n\n[ref]: javascript:alert(1)"
+        }
+      ]
+    },
+    {
+      "id": "unsafe_image_reference",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "![Diagram][ref]\n\n[ref]: https://unapproved.example/image.png"
+        }
+      ]
+    },
+    {
+      "id": "image_local",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "![Diagram](/content/img.png)"
+        }
+      ]
+    },
+    {
+      "id": "math_valid",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "rationale"
+          ],
+          "value": "$\\frac{1}{2}$\n\n```math\nx^2\n```"
+        }
+      ]
+    },
+    {
+      "id": "math_bad",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "rationale"
+          ],
+          "value": "$\\notARealCommand{x}$"
+        }
+      ]
+    },
+    {
+      "id": "math_trust",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "rationale"
+          ],
+          "value": "$\\href{https://example.org}{x}$"
+        }
+      ]
+    },
+    {
+      "id": "currency_literal",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "$500B; its citizens earn $100B."
+        }
+      ]
+    },
+    {
+      "id": "html_input",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "<input type=\"text\">"
+        }
+      ]
+    },
+    {
+      "id": "html_checkbox",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "<input type=\"checkbox\" disabled checked>"
+        }
+      ]
+    },
+    {
+      "id": "omitted_fields",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "rationaleMeta"
+          ],
+          "value": {}
+        }
+      ]
+    },
+    {
+      "id": "null_optional",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "metadata"
+          ],
+          "value": null
+        }
+      ]
+    },
+    {
+      "id": "invalid_verified",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "verifiedAnswer"
+          ],
+          "value": "Z"
+        }
+      ]
+    },
+    {
+      "id": "source_verified_distinct",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "verifiedAnswer"
+          ],
+          "value": "B"
+        }
+      ]
+    },
+    {
+      "id": "review_date",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "rationaleMeta"
+          ],
+          "value": {
+            "provenance": "ai_draft_reviewed",
+            "reviewedAt": "yesterday",
+            "reviewNote": "checked"
+          }
+        }
+      ]
+    },
+    {
+      "id": "restricted_choice",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "choices"
+          ],
+          "value": [
+            {
+              "id": "A",
+              "text": "<b>A</b>"
+            },
+            {
+              "id": "B",
+              "text": "B"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "restricted_explanation",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "choiceExplanations"
+          ],
+          "value": {
+            "A": "![Bad](/content/a.png)"
+          }
+        }
+      ]
+    },
+    {
+      "id": "restricted_pearl",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "pearls"
+          ],
+          "value": [
+            "<b>Pearl</b>"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "provenance_blank",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "rationaleMeta"
+          ],
+          "value": {
+            "provenance": "ai_draft_reviewed",
+            "reviewedAt": "2026-10-14",
+            "reviewNote": " "
+          }
+        }
+      ]
+    },
+    {
+      "id": "empty_stem",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": ""
+        }
+      ]
+    },
+    {
+      "id": "dangerous_field",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "metadata"
+          ],
+          "value": {
+            "__proto__": "private"
+          }
+        }
+      ]
+    },
+    {
+      "id": "source_markup",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "flashcards",
+            "cards",
+            0,
+            "sources"
+          ],
+          "value": "<img src=\"/content/a.png\" alt=\"a\">"
+        }
+      ]
+    },
+    {
+      "id": "flashcard_math",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "flashcards",
+            "cards",
+            0,
+            "back"
+          ],
+          "value": "$\\badCommand{x}$"
+        }
+      ]
+    },
+    {
+      "id": "unknown_subject",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "flashcards",
+            "decks",
+            0,
+            "subjectId"
+          ],
+          "value": "s99"
+        }
+      ]
+    },
+    {
+      "id": "delete_subject_unpaired",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "subjects"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "id": "delete_subject_paired",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "subjects"
+          ],
+          "value": []
+        },
+        {
+          "path": [
+            "quizzes",
+            "quizzes"
+          ],
+          "value": []
+        },
+        {
+          "path": [
+            "quizzes",
+            "questions"
+          ],
+          "value": []
+        },
+        {
+          "path": [
+            "flashcards",
+            "decks"
+          ],
+          "value": []
+        },
+        {
+          "path": [
+            "flashcards",
+            "cards"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "id": "coordinated_move",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "subjects",
+            0,
+            "id"
+          ],
+          "value": "s2"
+        },
+        {
+          "path": [
+            "quizzes",
+            "quizzes",
+            0,
+            "subjectId"
+          ],
+          "value": "s2"
+        },
+        {
+          "path": [
+            "flashcards",
+            "decks",
+            0,
+            "subjectId"
+          ],
+          "value": "s2"
+        }
+      ]
+    },
+    {
+      "id": "empty_quiz",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "id": "empty_deck",
+      "valid": true,
+      "changes": [
+        {
+          "path": [
+            "flashcards",
+            "cards"
+          ],
+          "value": []
+        }
+      ]
+    },
+    {
+      "id": "null_card",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "flashcards",
+            "cards"
+          ],
+          "value": [
+            null
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wrong_card_parent",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "flashcards",
+            "cards",
+            0,
+            "deckId"
+          ],
+          "value": "d99"
+        }
+      ]
+    },
+    {
+      "id": "duplicate_card",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "flashcards",
+            "cards"
+          ],
+          "value": [
+            {
+              "id": "f1",
+              "deckId": "d1",
+              "front": "Front",
+              "back": "Back"
+            },
+            {
+              "id": "f1",
+              "deckId": "d1",
+              "front": "Front",
+              "back": "Back"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "unknown_field",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "legacyHint"
+          ],
+          "value": "private"
+        }
+      ]
+    },
+    {
+      "id": "backslash_image_origin",
+      "valid": false,
+      "changes": [
+        {
+          "path": [
+            "quizzes",
+            "questions",
+            0,
+            "stem"
+          ],
+          "value": "![Diagram](/\\\\evil.example/image.png)"
+        }
+      ]
+    }
+  ],
+  "wireCases": [
+    {
+      "id": "duplicate_key",
+      "text": "{\"x\":1,\"x\":2}",
+      "code": "duplicate_key"
+    },
+    {
+      "id": "escaped_duplicate",
+      "text": "{\"x\":1,\"\\u0078\":2}",
+      "code": "duplicate_key"
+    },
+    {
+      "id": "nonfinite",
+      "text": "{\"x\":NaN}",
+      "code": "invalid_json"
+    },
+    {
+      "id": "overflow_number",
+      "text": "{\"x\":1e400}",
+      "code": "invalid_number"
+    },
+    {
+      "id": "dangerous_key",
+      "text": "{\"__proto__\":{}}",
+      "code": "dangerous_key"
+    },
+    {
+      "id": "unicode_surrogate",
+      "text": "{\"x\":\"\\ud800\"}",
+      "code": "invalid_unicode"
+    },
+    {
+      "id": "deep",
+      "text": "[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[0]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]",
+      "code": "depth_limit"
+    },
+    {
+      "id": "nul_text",
+      "text": "{\"x\":\"\\u0000\"}",
+      "code": "invalid_text"
+    }
+  ]
+}

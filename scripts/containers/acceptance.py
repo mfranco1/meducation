@@ -44,6 +44,10 @@ def main():
                "backend/pyproject.toml", "backend/requirements-dev.lock",
                "playwright.containers.config.ts", "e2e/containers/service-recreation.spec.ts",
                "e2e/containers/postgres-release.spec.ts"]
+    inputs += ["package.json", "scripts/content/authoring-policy-worker.ts",
+               "scripts/content/build-authoring-policy.mjs"]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "src/content/validation").glob("*") if p.is_file()]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "src/content/richText").glob("*.ts")]
     report["inputs_sha256"] = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in inputs}
 
     def run(name, command, timeout=600):
@@ -80,6 +84,7 @@ def main():
             smoke(f"api-{iteration}", "smoke-api.py", "--image", "meducation-api:local")
             smoke(f"learner-{iteration}", "smoke-learner.py", "--api-image", "meducation-api:local",
                   "--frontend-image", "meducation-learner:local")
+        smoke("authoring-policy", "smoke-authoring-policy.py", "--image", "meducation-api:local")
         smoke("compose", "smoke-compose.py")
         smoke("postgres-tools", "smoke-postgres-tools.py")
         run("db-toolchain", [sys.executable, str(ROOT / "scripts/containers/smoke-db-toolchain.py"),

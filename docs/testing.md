@@ -42,9 +42,10 @@ npm run build
 
 The ordinary build must omit `admin.html`; the optional build must include it. Both flags are needed to preview an enabled production editor. Verify initial and quiz-route chunk composition when changing lazy imports: API startup must not eagerly load canonical banks or the validation pipeline.
 
-For the existing content service and shared stored-bank contracts:
+For the existing content service and shared stored-bank contracts (build the packaged authoring policy after installing npm dependencies):
 
 ```sh
+npm run build:content-policy
 .venv/bin/python -m pytest backend/tests -q
 .venv/bin/ruff check backend/src backend/tests
 .venv/bin/mypy backend/src
@@ -155,3 +156,5 @@ L2 Step 5 adds `scripts/containers/postgres.py`, its `postgres_tools.py` helpers
 L2 Step 6 uses `scripts/containers/acceptance.py` for two `--pull --no-cache` builds, both API/learner runtime smokes, a second-build Chromium suite, optional Compose/Postgres persistence and dump/restore. It rejects mismatched host/engine/image architecture. The existing Checks workflow adds native AMD64/ARM64 jobs and retains scoped logs/evidence/traces. Evidence output is separate from Playwright's cleaned output directory. `recreate-smoke-frontend.py` checks exact generated name/label/network/binding before replacing the frontend at the same origin. Run Ruff on container helpers, lint/architecture, format, build/typecheck and the actual acceptance runner after changes. CI configuration alone is not a passing native run. Failure commands print a bounded tail of their scoped log into Actions output; full container logs/traces remain artifacts. Host browser failures also retain `test-results/` artifacts. Hover assertions explicitly establish pointer position before checking a non-hover state; an initial pointer over the drawer must not be mistaken for a product failure.
 
 For L4, follow [authentication gates](decisions/0004-single-editor-authentication.md): production-shaped injected tokens/code flow/session store, negative authorization/CSRF/expiry/revocation tests, dev-mode production rejection and all private HTTP routes. Final provider mapping/fresh-MFA evidence is pending before production integration; local mocks cannot certify hosted factor challenge, key rotation, logout, recovery or plan entitlements. Auth/session records restored from backup must be invalidated with a fresh external epoch. No private-token/real-progress fixtures or secrets in logs.
+
+L4 adds the [paired authoring validation boundary](L4-content-policy.md). Build resources with `npm run build:content-policy` before backend tests/authoring jobs. The full runner and backend/native CI do this explicitly. Run `scripts/containers/smoke-authoring-policy.py` with the freshly built API image for the installed-wheel/real-nginx request-limit gate. Test-only smoke routes are never shipped; authenticated preview/publication routes remain later L4 work.

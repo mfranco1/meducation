@@ -284,3 +284,15 @@ PG proxy/browser suite. The expensive container browser suite runs once in PG
 mode; default JSON HTTP/proxy checks remain on both clean builds and the host
 JSON browser job remains separate. Local ARM64 passes do not close the native
 CI gate without both new jobs passing. [Run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502) passed both architectures at the current implementation commit. See the [L4 handoff](../docs/L4-authoring-handoff.md) for private editing and cutover requirements.
+
+## Packaged authoring content policy
+
+Run `npm ci` and `npm run build:content-policy` from the repository root before
+backend tests or local draft-save jobs. The API image builds these resources and
+ships Node 22 plus the self-contained validator in the Python wheel; runtime
+requests do not invoke tsx or require the checkout. Missing resources/Node fail
+closed for authoring while learner reads retain their separate read-only path.
+See [policy limits and acceptance](../docs/L4-content-policy.md). Rebuild after
+editing shared policy or limits. The default validator approves local images only;
+HTTP integration must inject any approved origins from trusted backend settings.
+Private routes, authentication and authored publication are not enabled yet.

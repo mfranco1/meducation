@@ -49,7 +49,8 @@ export function isAllowedLinkUrl(url: string): boolean {
 }
 
 export function isAllowedImageUrl(url: string, allowedOrigins = approvedImageOrigins): boolean {
-  if (url.startsWith('/') && !url.startsWith('//')) return true;
+  if (Array.from(url).some(character => character === '\\' || character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) return false;
+  if (url.startsWith('/') && !url.startsWith('//')) return new URL(url, 'https://meducation.invalid').origin === 'https://meducation.invalid';
   try {
     const parsed = new URL(url);
     return parsed.protocol === 'https:' && allowedOrigins.has(parsed.origin);

@@ -1,0 +1,13 @@
+{
+  "policyVersion": 1,
+  "requestBytes": 67108864,
+  "maxDepth": 32,
+  "maxNodes": 1000000,
+  "maxArrayLength": 32768,
+  "maxObjectKeys": 64,
+  "maxStringBytes": 65536,
+  "maxIssues": 200,
+  "workerSeconds": 120,
+  "workerMemoryMiB": 512,
+  "workerConcurrency": 2
+}

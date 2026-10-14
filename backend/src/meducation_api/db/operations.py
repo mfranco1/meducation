@@ -9,6 +9,7 @@ from uuid import UUID
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from meducation_api.content_policy import ContentPolicyError, PairedContentValidator
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.repositories.question_bank import Bank, FlashcardBank
 
@@ -174,8 +175,16 @@ def save_draft(
     actor: str,
     reason: str,
     reservations: Sequence[UUID] = (),
+    validator: PairedContentValidator | None = None,
 ) -> int:
-    qtext, ftext = paired_artifacts(quiz_text, flashcard_text)
+    # A database authoring save cannot bypass the same policy used by HTTP preview.
+    try:
+        pair = (validator or PairedContentValidator()).documents(quiz_text, flashcard_text)
+    except ContentPolicyError:
+        raise ContentDatabaseError(
+            "Paired draft policy validation failed; no content logged."
+        ) from None
+    qtext, ftext = pair.quiz_artifact, pair.flashcard_artifact
     result = _call(
         connection,
         "SELECT content.save_draft(:op, :q, :f, :expected, :base, :actor, :reason, CAST(:reservations AS uuid[]))",

@@ -158,3 +158,13 @@ check; `db/recovery.py` reapplies supported owner-managed grants after portable
 restore. Neither runs from workers. Both native CI jobs passed for the verified source commit. Local operator actor descriptions are not browser authentication. See the [L4 handoff](L4-authoring-handoff.md) before enabling private editing or changing authority.
 
 Preserve existing checked boundaries when adding these modules. The [L1 plan](work/done/L1-progress-backup-plan.md) and [browser acceptance](work/ongoing/L0-browser-acceptance.md) record completed implementation and outstanding acceptance gates. Do not expose unfinished Restore/admin-write actions, move content authority, provision services or deploy as a side effect of contract documentation.
+
+## Authoring content-policy boundary
+
+The [L4 paired validator](L4-content-policy.md) keeps shared Markdown/HTML/math
+rules under `src/content/validation` and `richText`. Build tooling packages a
+self-contained Node worker and shared limits into `backend/src/meducation_api/content_policy`.
+Python owns byte admission, strict stored validation and bounded worker execution;
+its draft-save wrapper validates before SQL. No frontend presentation dependencies
+enter this boundary. Authenticated authoring routes and publication services remain
+later L4 steps. No content authority has changed.

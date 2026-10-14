@@ -33,6 +33,7 @@ where = ["src"]
 
 [tool.setuptools.package-data]
 "meducation_api.migrations" = ["*.sql"]
+"meducation_api.content_policy" = ["*.mjs", "*.json"]
 
 [tool.ruff]
 line-length = 100

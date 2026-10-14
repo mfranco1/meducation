@@ -19,6 +19,12 @@ jobs:
           python -m venv .venv
           .venv/bin/python -m pip install -r backend/requirements-dev.lock
           .venv/bin/python -m pip install --no-deps -e backend
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build:content-policy
       - name: Check Python style and types
         run: |
           .venv/bin/ruff check backend/src backend/tests
@@ -64,6 +70,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build:content-policy
       - run: npx playwright install --with-deps chromium
       - run: npm run build:learner:smoke
       - run: npm run test:e2e:prepared
@@ -107,6 +114,7 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm run build:content-policy
       - run: npx playwright install --with-deps chromium
       - name: Check container helpers
         run: .venv/bin/ruff check scripts/containers

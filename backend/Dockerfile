@@ -1,3 +1,12 @@
+FROM node:22.23.3-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472301c9c78a017978392 AS policy
+WORKDIR /policy
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY src/content ./src/content
+COPY src/domain ./src/domain
+COPY scripts/content ./scripts/content
+RUN npm run build:content-policy
+
 FROM python:3.14.8-slim-bookworm@sha256:48b13b003dda20b16f9442b8475aa05fe21bf6579a8c881db92ffb4d8fd20f83 AS builder
 
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
@@ -11,6 +20,7 @@ RUN python -m pip install --require-hashes --only-binary=:all: -r requirements-b
 
 COPY backend/pyproject.toml backend/pyproject.toml
 COPY backend/src/meducation_api backend/src/meducation_api
+COPY --from=policy /policy/backend/src/meducation_api/content_policy/worker.mjs /policy/backend/src/meducation_api/content_policy/limits.json backend/src/meducation_api/content_policy/
 RUN python -m pip wheel --no-index --no-deps --no-build-isolation --wheel-dir /wheels ./backend \
     && python -m venv /opt/venv \
     && /opt/venv/bin/python -m pip install --no-index --no-deps --find-links=/wheels \
@@ -30,6 +40,7 @@ RUN groupadd --gid 10001 meducation \
     && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin meducation
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
+COPY --from=policy /usr/local/bin/node /usr/local/bin/node
 COPY backend/requirements.lock /app/requirements.lock
 COPY src/content/questionBank.generated.json src/content/flashcardBank.generated.json /app/content/
 

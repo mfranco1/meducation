@@ -1496,3 +1496,34 @@ def test_real_reader_socket_and_transaction_failure_return_503_then_recover(db, 
         assert app.state.source.runtime.engine.pool.checkedout() == 0
         assert client.get("/api/v1/quizzes/q1/questions").status_code == 200
         assert app.state.source.runtime.engine.pool.checkedout() == 0
+
+
+def test_authoring_policy_rejection_preserves_draft_release_audit_and_burned_ids(db):
+    """The new request policy rejects before SQL; independent reservations survive."""
+    release = store(db)
+    with db.operator.begin() as connection:
+        publication = activate_release(connection, operation_id=uuid4(), release_id=release.release_id,
+                                       expected_sequence=0, actor=ACTOR, reason=REASON)
+    operation = uuid4()
+    allocated = reserve_ids(db.operator, operation_id=operation, counts={"i": 1},
+                            expected_draft_revision=0,
+                            expected_publication_sequence=publication.publication_sequence,
+                            intent="policy-failure-fixture", actor=ACTOR, reason=REASON)
+    def state():
+        with db.admin.connect() as connection:
+            return {table: [dict(row) for row in connection.execute(text(f"SELECT * FROM content.{table}")).mappings()]
+                    for table in ("draft", "active_publication", "releases", "audit_events", "operations", "id_reservations", "id_counters", "entity_ids")}
+    before = state()
+    q, f = banks()
+    q["questions"][0]["stem"] = '<img src="/content/x" alt="x" onerror="private">'
+    with pytest.raises(ContentDatabaseError, match="policy validation"), db.operator.begin() as connection:
+        save_draft(connection, operation_id=uuid4(), quiz_text=json.dumps(q),
+                   flashcard_text=json.dumps(f), expected_revision=0,
+                   base_sequence=publication.publication_sequence,
+                   actor=ACTOR, reason=REASON, reservations=[operation])
+    assert state() == before
+    next_ids = reserve_ids(db.operator, operation_id=uuid4(), counts={"i": 1},
+                           expected_draft_revision=0,
+                           expected_publication_sequence=publication.publication_sequence,
+                           intent="next-policy-fixture", actor=ACTOR, reason=REASON)
+    assert allocated["i"][0] != next_ids["i"][0]
