@@ -288,6 +288,12 @@ artifacts only. `git apply --check` verifies applicability; do not apply them be
 separate Step 7 authorization. Runtime/build retirement and operational identifiers
 remain part of that approved cutover implementation.
 
+The original base hashes are a historical snapshot. Revalidate every target file
+against the current checkout at cutover: patch applicability alone does not prove
+that intervening changes are reviewed. The [local outcome audit](work/ongoing/L4-local-outcome-audit.md)
+records the current revalidation; the later evidence snapshot includes current
+target hashes without replacing the original baseline.
+
 Apply these changes only with separately authorized Step 7 cutover, alongside
 verified recovery/allocation enforcement and the reviewed final paired import:
 

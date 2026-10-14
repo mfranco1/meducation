@@ -185,6 +185,45 @@ test('canceled step-up keeps text and does not refresh factor or resend publicat
   expect((await draft(page)).publication.sequence).toBe(before);
 });
 
+test('successful fresh step-up preserves text and still rejects a draft changed by another tab', async ({
+  page,
+  context,
+}) => {
+  await login(page);
+  const editor = await question(page);
+  const original = JSON.parse(await editor.inputValue());
+  const pending = JSON.stringify({ ...original, stem: 'Kept through fresh step-up' }, null, 2);
+  await editor.fill(pending);
+  const second = await context.newPage();
+  await second.goto('/admin.html');
+  second.on('dialog', (dialog) => void dialog.accept());
+  const other = await question(second);
+  await other.fill(JSON.stringify({ ...original, stem: 'Other tab committed before step-up' }, null, 2));
+  await second
+    .getByRole('region', { name: 'Quiz editor' })
+    .getByRole('button', { name: 'Save draft', exact: true })
+    .click();
+  await expect
+    .poll(async () => (await draft(page)).pair.quizzes.questions[0].stem)
+    .toBe('Other tab committed before step-up');
+  const before = await draft(page);
+  await page.request.post('/fixture/old-factor');
+  expect((await (await page.request.get('/api/admin/session')).json()).fresh).toBe(false);
+  await page.getByRole('button', { name: 'Refresh authentication' }).click();
+  await expect.poll(async () => (await (await page.request.get('/api/admin/session')).json()).fresh).toBe(true);
+  await expect(editor).toHaveValue(pending);
+  expect((await draft(page)).draft.revision).toBe(before.draft.revision);
+  expect((await draft(page)).publication.sequence).toBe(before.publication.sequence);
+  await page
+    .getByRole('region', { name: 'Quiz editor' })
+    .getByRole('button', { name: 'Save draft', exact: true })
+    .click();
+  await expect(page.getByText(/draft or publication changed/).first()).toBeVisible();
+  await expect(editor).toHaveValue(pending);
+  expect((await draft(page)).pair.quizzes.questions[0].stem).toBe('Other tab committed before step-up');
+  await second.close();
+});
+
 test('logout wins before an in-flight save reaches the API and keeps unsaved text', async ({ page }) => {
   await login(page);
   const editor = await question(page);

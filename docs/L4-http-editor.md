@@ -114,7 +114,8 @@ Build `meducation-api:l4-step5` and a fresh `npm run build:admin` before running
 Do not rebuild shared `dist` while any learner/admin browser suite is running.
 The suite covers paired edits/reload/publication/activation/export, expired sessions,
 uncertain commit reconciliation, stale tabs/reset, pending preview edits, canceled
-step-up, logout during save, grouped/import creates and keyboard/overflow at
+step-up, successful fresh step-up with dirty text and stale-save rejection after
+another tab commits, logout during save, grouped/import creates and keyboard/overflow at
 390/1048/1440px. Existing JSON editor, learner progress and review browser suites
 remain separate regression gates. Hosted identity/TLS/routing, durable authored
 recovery, authority cutover, native CI and manual assistive-technology/device
@@ -125,3 +126,8 @@ against its freshly built installed API image, after learner browser acceptance
 and a fresh explicitly HTTP admin build. Both architecture runners retain scoped
 reports and traces; source fingerprints include the fixture module and editor
 inputs. A local ARM64 run does not certify AMD64 or a final-commit GitHub run.
+
+The [local outcome audit](work/ongoing/L4-local-outcome-audit.md) records the later
+12-case installed-image suite and full-runner verification. Native CI passed for
+the earlier L4 implementation at `f99a18e`; the additional case needs changed-source
+CI evidence. Hosted and retained-recovery gates remain distinct.

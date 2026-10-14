@@ -96,6 +96,9 @@ and browser request boundary now implemented. All local backend negative cases
 and a disposable loopback issuer are verified. Production adapter acceptance
 remains pending; only synthetic local assurance is enabled, with production and
 default application guards refusing that configuration. No provider account or
-real factor policy is provisioned. Authored HTTP services and editor dirty-text/
-expiry/login UX acceptance remain Steps 4–5; those UI/hosted cases are not claimed
-by backend tests. Earlier design-stage verification above is historical evidence.
+real factor policy is provisioned. [Step 4 services](../L4-paired-editor-services.md)
+and the [Step 5 HTTP editor](../L4-http-editor.md) now have local backend and
+real API/PG17/Nginx browser acceptance, including dirty-text preservation,
+expiry/reauthentication and logout races. Backend tests alone do not establish UI
+acceptance, and synthetic browser flows do not establish hosted MFA behavior.
+Earlier design-stage verification above is historical evidence.

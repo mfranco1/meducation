@@ -3,7 +3,8 @@
 [L4 Step 3](work/ongoing/L4-local-authoring-admin-access-plan.md#step-3--add-authenticated-sessions-and-least-privilege-access)
 implements the backend portions of [ADR0004](decisions/0004-single-editor-authentication.md).
 The learner remains public. Canonical JSON remains authoritative; content HTTP
-operations and editor session UX are Steps 4–5 work.
+operations and editor session UX are implemented by [Step 4 services](L4-paired-editor-services.md)
+and the [Step 5 HTTP editor](L4-http-editor.md), with isolated local acceptance.
 
 ## Selected libraries and assurance scope
 
@@ -25,9 +26,10 @@ with production mode or another adapter refuses startup. No real password/MFA
 server or header identity shortcut is shipped. ZITADEL tenant claims, effective
 factor policy, forced fresh factor challenge, recovery and logout acceptance
 remain ADR0004 hosted gates. A provider-specific adapter cannot be enabled merely
-by changing the issuer setting. Editor session UX/dirty-text acceptance remains
-[Step 5 HTTP editor](L4-http-editor.md); local protocol evidence alone is not UI
-or hosted acceptance.
+by changing the issuer setting. The [Step 5 HTTP editor](L4-http-editor.md) has
+real API/PG17/Nginx browser coverage for dirty text, expiry, reauthentication,
+canceled step-up and logout races. Local protocol/browser evidence cannot establish
+hosted provider assurance or manual assistive-technology acceptance.
 
 ## Runtime and private routes
 

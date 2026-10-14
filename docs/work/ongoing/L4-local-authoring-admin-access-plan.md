@@ -1,6 +1,6 @@
 # L4 — Local database authoring and admin access
 
-Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 recovery/tooling implementation is in progress (authorized 2026-10-14); allocation protection implementation and isolated recovery are verified; retained-copy policy is selected (local backups plus an encrypted external drive); physical destination acceptance is user-deferred. Step 7 authority cutover remains pending; Step 8 native CI passed at `f99a18e` on both architectures. Hosted provider/fresh-factor and editor session UX acceptance remain explicitly pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration remain Steps 4–5 work. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
+Created: 2026-10-14. Status: Steps 1–2 complete; Step 3 local backend gate implemented and verified. Step 4 local paired-service gate implemented and verified; Step 5 local HTTP editor gate implemented and verified; Step 6 recovery/tooling implementation is in progress (authorized 2026-10-14); allocation protection implementation and isolated recovery are verified; retained-copy policy is selected (local backups plus an encrypted external drive); physical destination acceptance is user-deferred. Step 7 authority cutover remains pending; Step 8 native CI passed at `f99a18e` on both architectures. Hosted provider/fresh-factor acceptance remains explicitly pending. Local editor session UX has automated acceptance; manual device/accessibility obligations remain pending. Internal preview/save/authored-publish integration and rejection tests close the original Step 2 requirement. Private content HTTP/editor integration is locally verified in Steps 4–5. The user authorized starting L4 on 2026-10-14, superseding the original planning-only scope. Canonical JSON remains authoritative.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l4--local-database-authoring-and-admin-access-boundary). Prerequisites: [completed L3](../done/L3-postgres-schema-migration-parity-plan.md), [L4 handoff](../../L4-authoring-handoff.md), [authentication contract](../../decisions/0004-single-editor-authentication.md), and [paired-release contract](../../decisions/0005-paired-content-releases-and-postgres-schema.md). Follow the [work tracking gates](../README.md): implement one step, record evidence and limitations, then stop until continuation is authorized. The authority cutover has its own explicit approval gate.
 
@@ -105,11 +105,11 @@ Gate: separately authorized cutover completed with current recoverable content a
 
 ## Step 8 — Verify L4 and hand off to L5
 
-- [ ] Run `npm run verify:full` with updated authoring coverage, required learner/admin builds, and the new authentication/content validation suites. Run real-Postgres authoring/concurrency/privilege tests, actual-content parity, full restore and real-proxy browser acceptance separately where not included by the runner.
+- [x] Run `npm run verify:full` with updated authoring coverage, required learner/admin builds, and the new authentication/content validation suites. Run real-Postgres authoring/concurrency/privilege tests, actual-content parity, full restore and real-proxy browser acceptance separately where not included by the runner.
 - [ ] Extend existing native AMD64/ARM64 container CI to include packaged migrations, auth dependencies and L4 acceptance; verify both jobs against the final implementation commit. Do not reuse L3's CI result as evidence for changed code.
-- [ ] Complete an outcome/invariant audit against every parent L4 checkbox and the handoff requirements. Record commands, versions/commit, observed outcomes, skipped checks, advisories and provider/backup limitations. Relevant failures keep the step open.
+- [x] Complete an outcome/invariant audit against every parent L4 checkbox and the handoff requirements. Record commands, versions/commit, observed outcomes, skipped checks, advisories and provider/backup limitations. Relevant failures keep the step open.
 - [ ] Update the parent tracker only for demonstrated results. Move this tracker and supporting evidence to `docs/work/done` only after L4 implementation, recovery and authorized cutover gates pass; update incoming links at that time.
-- [ ] Carry real hosted identity/MFA/TLS/routing acceptance to deployment, Firefox/mobile/assistive-technology obligations to the existing [browser tracker](L0-browser-acceptance.md), and resilience/load tuning to L5. Deferred tests remain explicit, not implied passes.
+- [x] Carry real hosted identity/MFA/TLS/routing acceptance to deployment, Firefox/mobile/assistive-technology obligations to the existing [browser tracker](L0-browser-acceptance.md), and resilience/load tuning to L5. Deferred tests remain explicit, not implied passes.
 
 Gate: L4 is locally complete and reproducible, with a secure development authoring boundary, recoverable canonical content and a precise L5 handoff. Hosted readiness is a separate claim.
 
@@ -401,3 +401,40 @@ authority cutover or the entire L4 outcome audit.
 Proceed with independent L5 resilience work under the user's continuation request.
 Retained external setup remains user-deferred; JSON remains authoritative and the
 L4 tracker stays ongoing. New L5 changes require their own CI evidence.
+
+
+## Local verification closeout before further L5 work — 2026-10-14
+
+The user asked to finish remaining locally executable L4 work first. The
+[local outcome audit](L4-local-outcome-audit.md) maps every parent L4 outcome and
+handoff requirement to its implementation, evidence and remaining gate.
+Parent checkboxes now reflect demonstrated local implementation instead of the
+outdated Step 3 status; authority, tooling cutover, retained recovery and hosted
+assurance stay open.
+
+- [x] `npm run verify:full` exited successfully as one complete runner: lint/format,
+  10 architecture tests, 592 frontend tests, actual-bank validation, packaged policy,
+  Ruff, mypy (39 files), 230 backend tests, TypeScript, fresh learner/admin builds,
+  41 learner and 12 JSON-editor Chromium tests. Its 173 PG skips are not database
+  acceptance; real-PG evidence is recorded separately.
+- [x] Prepared cutover patch still passes `git apply --check`. Original base hashes
+  are preserved; `docs/testing.md` and `backend/README.md` have changed since that
+  snapshot. Current hashes are captured separately for review at actual cutover.
+- [x] Updated HTTP suite: **12 passed** against fresh production HTTP admin assets
+  and installed API/PG17/Nginx on native ARM64. The new case proves successful
+  fresh step-up preserves unsaved text, makes no automatic write and still rejects
+  a stale save after another tab commits. Signed synthetic assurance is not hosted
+  MFA acceptance; the new test needs changed-source native CI.
+- [x] Fresh actual-bank full authoring/session/allocation recovery passed against
+  current source: **348 routes each** before/after restore, exact ordered content,
+  all-table/sequence/effective-role parity, safe session quarantine/epoch rotation,
+  selected authored export validation/audit, and lost-allocation recovery with zero
+  ID reuse. Temporary archives/journals were cleaned and do not prove retention.
+- [x] [Closeout evidence](L4-local-closeout-evidence.json) freezes observed results,
+  current source/target hashes and versions. Completion audit found no blocking
+  local implementation issue in this scope; L4 overall is still incomplete.
+
+No further L5 implementation was started in this closeout. JSON remains
+canonical, the patch is not applied, and no routine DB or retained destination is
+modified. Step 6 retained-copy acceptance and separately approved Step 7 remain
+open; the L4 tracker stays ongoing.
