@@ -99,7 +99,7 @@ Admin search, pagination, deletion impact calculation, and operation application
 
 `src/main.tsx` bootstraps the learner through `index.html`. API delivery is the default; the Vite development/preview proxy routes `/api` to the configured content service. Production hosting must route the same prefix to FastAPI. `VITE_CONTENT_SOURCE=local` explicitly selects the dynamically imported browser JSON adapters. Both modes retain local progress storage and the same domain contracts. Follow [frontend setup](../README.md) and [backend setup](../backend/README.md) for exact commands and environment variables.
 
-`admin.html` is a separate development entry. Normal production builds omit it; its bundling and runtime gates are independent. Follow the [local editor setup](../README.md#local-content-editor) to preview an enabled production editor. `/#content-qa` is development-only. The API does not publish edits: replace reviewed canonical JSON explicitly and restart the service to load it.
+`admin.html` is a separate development entry. Normal production builds omit it; its bundling and runtime gates are independent. Follow the [local editor setup](../README.md#local-content-editor) to preview an enabled production editor. `/#content-qa` is development-only. JSON mode requires explicit reviewed canonical JSON replacement and service restart. Local experimental [L4 private paired services](L4-paired-editor-services.md) can save/publish PostgreSQL drafts behind the synthetic session boundary; the browser editor is not connected yet, production identity remains disabled, and authority cutover is pending.
 
 The runtime never calls a generative AI service. Quiz rules and scoring stay in the pure TypeScript domain layer; learner progress persists through the browser repository. The Python API owns read-only quiz content delivery from the canonical JSON file. L3 now packages an explicit Postgres schema migration, private transaction primitives, operator jobs and paired learner database adapters.
 
@@ -169,8 +169,8 @@ owns captured paired preview/save/publish, calling the validator and bound DB
 operations. Migration `0002_authored_publish` adds atomic authored releases and
 reviewed saves, retaining importer deduplication and separate provenance. No frontend
 presentation dependencies enter this boundary. Internal service actors are trusted operator context; the local Step 3 session
-boundary now supplies verified principals for future private HTTP integration.
-Content HTTP routes and editor integration remain later L4 steps. No content
+boundary supplies verified principals to Step 4 private HTTP services.
+The browser editor integration remains Step 5. No content
 authority has changed.
 
 ## Private admin session boundary
@@ -180,8 +180,16 @@ code/PKCE and signed-ID-token validation, encrypted login transactions, Postgres
 sessions and prefix-wide HTTP authorization. Private admin modules consume a
 verified principal supplied by this boundary. Migration `0003_admin_sessions` and
 explicit bootstrap own separate session/editor roles and auth schema; workers
-never migrate. Session locks span protected work and serialize logout/revocation.
+never migrate. Request guards hold session identity locks; editor SQL mutations
+independently lock/check sessions through commit to serialize logout/revocation.
 Public learner routes retain their separate reader and ignore admin cookies.
 The [session runbook](L4-admin-session-boundary.md) records limits and recovery
 epoch handling. Only synthetic loopback identity is available; production adapter
-acceptance, content HTTP operations and editor integration remain later gates.
+acceptance and browser editor integration remain later gates.
+
+`backend/src/meducation_api/admin/contracts.py`, `service.py` and `http.py` own
+private wire parsing, verified-principal orchestration and bounded HTTP/export
+delivery. Migration `0004_editor_operations` owns guarded paired mutations,
+creation-intent bindings and immutable history with a bounded Undo stack.
+[Paired-service contracts](L4-paired-editor-services.md) document exact replay,
+freshness, stale-base handling and request-driven publication visibility.

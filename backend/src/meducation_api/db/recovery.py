@@ -35,4 +35,5 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA admin_auth TO meducati
 GRANT SELECT ON ALL TABLES IN SCHEMA admin_auth TO meducation_backup;
 GRANT USAGE ON SCHEMA content TO meducation_editor;
 GRANT SELECT ON content.draft,content.active_publication,content.published_releases TO meducation_editor;
+GRANT EXECUTE ON FUNCTION content.editor_read(text,text,text,text,jsonb),content.editor_replay(text,text,text,uuid,text,jsonb),content.editor_apply(text,text,text,uuid,text,jsonb,integer),content.editor_check_creates(text,text,text,text,text,uuid[],jsonb,bigint,bigint) TO meducation_editor;
 """)

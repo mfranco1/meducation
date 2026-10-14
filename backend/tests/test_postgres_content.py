@@ -178,7 +178,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0003_admin_sessions"
+    assert migration_head() == "0004_editor_operations"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -205,7 +205,7 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0003_admin_sessions"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0004_editor_operations"
 
 
 def test_release_omission_provenance_order_and_digest(db):
@@ -1548,7 +1548,7 @@ def authoring_service(db, *, actor=ACTOR, validator=None):
 def authoring_state(db):
     tables = ("draft", "active_publication", "releases", "subjects", "quizzes", "questions",
               "decks", "flashcards", "audit_events", "operations", "import_events",
-              "authored_events", "publication_events", "id_reservations", "id_counters", "entity_ids")
+              "authored_events", "publication_events", "id_reservations", "id_counters", "entity_ids", "draft_control", "draft_history", "editor_slots", "editor_reservations")
     with db.admin.connect() as connection:
         return {table: connection.execute(text(f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{table} t")).scalar_one()
                 for table in tables}
@@ -1820,7 +1820,7 @@ def test_concurrent_reviewed_save_and_publish_never_overwrite_each_other(db):
 
 
 # Private auth uses the same disposable database, with separate actual role connections.
-def auth_app(db, harness=None, **changes):
+def auth_app(db, harness=None, *, postgres=False, **changes):
     from types import SimpleNamespace
 
     from fastapi.testclient import TestClient
@@ -1845,6 +1845,8 @@ def auth_app(db, harness=None, **changes):
     settings = Settings(
         _env_file=None,
         database_environment="local",
+        content_source="postgres" if postgres else "json",
+        database_url=db.reader.url.render_as_string(hide_password=False) if postgres else None,
         bank_path=ROOT / "e2e/fixtures/bank.json",
         flashcard_bank_path=ROOT / "e2e/fixtures/flashcard-bank.json",
     )
@@ -2103,6 +2105,7 @@ def test_session_lock_serializes_protected_work_and_logout_across_workers(db):
 
     def protected():
         with runtime.store.guard(token) as p:
+            p.connection.execute(text("SELECT token_hash FROM admin_auth.sessions WHERE token_hash=:h FOR NO KEY UPDATE"),{"h":p.token_hash})
             entered.set()
             assert release.wait(5)
             # Commit a representative protected content write before releasing auth lock.
@@ -2252,3 +2255,344 @@ def test_all_private_paths_reject_revoked_expired_wrong_editor_and_old_epoch(db)
                 assert response.status_code==401,(field,path,response.text)
                 assert response.headers['cache-control']=='no-store'
         assert authoring_state(db)==before
+
+
+def editor_post(client,path,value):
+    csrf=client.get('/api/admin/session').json()['csrfToken']
+    return client.post('/api/admin'+path,json=value,headers={'Origin':str(client.base_url).rstrip('/'),'X-CSRF-Token':csrf})
+
+
+def editor_expected(snapshot):
+    return {'draftRevision':snapshot['draft']['revision'],'publicationSequence':snapshot['publication']['sequence']}
+
+
+def editor_save(client,snapshot,pair=None,reservations=None,op=None):
+    value={'expected':editor_expected(snapshot),'reason':REASON,'pair':pair or snapshot['pair'],'reservationIds':[], 'intent':{'reservations':[]}}
+    if reservations:
+        value['reservationIds']=[reservations['id']]; value['intent']['reservations']=[{'reservationId':reservations['id'],'slots':reservations['slots']}]
+    preview=editor_post(client,'/draft/preview',value)
+    assert preview.status_code==200,preview.text
+    request={**value,'operationId':str(op or uuid4()),'previewFingerprint':preview.json()['previewFingerprint']}
+    result=editor_post(client,'/draft/save',request)
+    assert result.status_code==200,result.text
+    return result.json(),request
+
+
+def test_editor_http_save_publish_undo_reset_export_and_original_replay(db):
+    import io
+    import zipfile
+    authoring_service(db)
+    client,runtime,h=auth_app(db)
+    with client:
+        login,_=auth_login(client,runtime,h);assert login.status_code==303
+        start=client.get('/api/admin/draft');assert start.status_code==200,start.text
+        initial=start.json(); pair=copy.deepcopy(initial['pair'])
+        pair['quizzes']['questions'][0]['stem']='**Saved** Unicode β'
+        pair['flashcards']['cards'][0]['front']='Saved paired 🌿'
+        saved,request=editor_save(client,initial,pair)
+        snapshot=saved['snapshot']; assert snapshot['undo']['available']
+        assert snapshot['publication']==initial['publication']
+        assert snapshot['pair']==pair
+        second,_=editor_save(client,snapshot)
+        replay=editor_post(client,'/draft/save',request)
+        assert replay.status_code==200 and replay.json()==saved
+        assert client.get('/api/admin/draft').json()['draft']['revision']==second['snapshot']['draft']['revision']
+        lookup=client.get('/api/admin/operations/'+request['operationId']);assert lookup.status_code==200
+        assert lookup.json()['result']['draftRevision']==snapshot['draft']['revision']
+        undo=editor_post(client,'/draft/undo',{'operationId':str(uuid4()),'expected':editor_expected(second['snapshot']),'reason':REASON,'targetRevision':second['snapshot']['undo']['targetRevision']})
+        assert undo.status_code==200,undo.text
+        current=undo.json()['snapshot']; assert current['pair']==pair
+        publication_request={'expected':editor_expected(current),'reason':REASON}
+        preview=editor_post(client,'/publish/preview',publication_request);assert preview.status_code==200,preview.text
+        publication_request.update(operationId=str(uuid4()),previewFingerprint=preview.json()['previewFingerprint'])
+        published=editor_post(client,'/publish',publication_request);assert published.status_code==200,published.text
+        after=published.json()['snapshot'];assert not after['undo']['available']
+        assert after['draft']['baseReleaseId']==after['publication']['releaseId']
+        assert scalar(db.operator,'SELECT count(*) FROM content.authored_events')==1
+        assert scalar(db.operator,'SELECT count(*) FROM content.import_events')==1
+        release=after['publication']['releaseId']
+        archive=editor_post(client,'/exports',{'target':'release','releaseId':release});assert archive.status_code==200,archive.text
+        assert archive.content==editor_post(client,'/exports',{'target':'release','releaseId':release}).content
+        with zipfile.ZipFile(io.BytesIO(archive.content)) as zipped:
+            manifest=json.loads(zipped.read('manifest.json')); assert manifest['target']=='release' and manifest['publication']['selectedIsCurrent']
+            assert 'session' not in manifest and 'csrf' not in manifest and 'actor' not in manifest
+            assert json.loads(zipped.read('questionBank.generated.json'))==pair['quizzes']
+            assert json.loads(zipped.read('flashcardBank.generated.json'))==pair['flashcards']
+        draft_zip=editor_post(client,'/exports',{'target':'draft','draftRevision':after['draft']['revision'],'expected':editor_expected(after)})
+        assert draft_zip.status_code==200
+        with zipfile.ZipFile(io.BytesIO(draft_zip.content)) as zipped:assert json.loads(zipped.read('manifest.json'))['unpublished']
+        changed=copy.deepcopy(pair);changed['flashcards']['cards'][0]['back']='Displaced unpublished content'
+        saved2,_=editor_save(client,after,changed)
+        reset=editor_post(client,'/draft/reset',{'operationId':str(uuid4()),'expected':editor_expected(saved2['snapshot']),'reason':REASON})
+        assert reset.status_code==200,reset.text
+        assert reset.json()['snapshot']['pair']==pair
+        assert not reset.json()['snapshot']['undo']['available']
+        assert scalar(db.operator,'SELECT count(*) FROM content.draft_history')==12
+        with pytest.raises(SQLAlchemyError),db.operator.begin() as c:c.execute(text('DELETE FROM content.draft_history'))
+
+
+def test_editor_reservations_destination_context_ownership_and_burned_rejection(db):
+    authoring_service(db)
+    client,runtime,h=auth_app(db)
+    with client:
+        auth_login(client,runtime,h)
+        start=client.get('/api/admin/draft').json()
+        slots=[{'kind':'f','count':2,'parentId':'dlegacy-X'}]
+        request={'operationId':str(uuid4()),'expected':editor_expected(start),'reason':REASON,'counts':{'f':2},'intent':{'slots':slots}}
+        reserved=editor_post(client,'/reservations',request);assert reserved.status_code==200,reserved.text
+        assert reserved.json()==editor_post(client,'/reservations',request).json()
+        assert client.get('/api/admin/draft').json()['draft']['revision']==start['draft']['revision']
+        ids=reserved.json()['result']['allocatedIds']['f']
+        candidate=copy.deepcopy(start['pair'])
+        candidate['flashcards']['cards'] += [{'id':id,'deckId':'dlegacy-X','front':'Reserved front','back':'Reserved back'} for id in ids]
+        malicious=copy.deepcopy(candidate);malicious['flashcards']['cards'][-1]['front']='<script>PRIVATE_SENTINEL</script>'
+        invalid={'expected':editor_expected(start),'reason':REASON,'pair':malicious,'reservationIds':[request['operationId']],
+            'intent':{'reservations':[{'reservationId':request['operationId'],'slots':slots}]}}
+        before=authoring_state(db)
+        rejected=editor_post(client,'/draft/preview',invalid);assert rejected.status_code==422,rejected.text
+        assert 'PRIVATE_SENTINEL' not in rejected.text and authoring_state(db)==before
+        wrong=copy.deepcopy(invalid);wrong['pair']=candidate;wrong['intent']['reservations'][0]['slots'][0]['count']=1
+        assert editor_post(client,'/draft/preview',wrong).status_code==422
+        result,_=editor_save(client,start,candidate,{'id':request['operationId'],'slots':slots})
+        assert result['snapshot']['pair']==candidate
+        assert scalar(db.operator,'SELECT count(*) FROM content.editor_slots')==2
+        stale={**request,'operationId':str(uuid4())}
+        assert editor_post(client,'/reservations',stale).status_code==409
+        with pytest.raises(SQLAlchemyError),db.editor.connect() as c:
+            c.execute(text("SELECT content.editor_apply('unknown','unknown','[\"forged\",\"actor\"]',:id,'reserve',CAST(:r AS jsonb),1)"),{'id':uuid4(),'r':json.dumps(stale)})
+        assert scalar(db.operator,'SELECT count(*) FROM content.editor_slots')==2
+
+
+def test_editor_undo_bound_activation_stale_base_and_mutation_role_denial(db):
+    _,original=authoring_service(db)
+    client,runtime,h=auth_app(db)
+    with client:
+        auth_login(client,runtime,h)
+        current=client.get('/api/admin/draft').json()
+        for index in range(12):
+            pair=copy.deepcopy(current['pair']);pair['flashcards']['cards'][0]['back']='Batch '+str(index)
+            result,_=editor_save(client,current,pair);current=result['snapshot']
+        assert current['undo']['depth']==10
+        expected=editor_expected(current); request={'expected':expected,'reason':REASON}
+        target=str(original.release_id)
+        preview=editor_post(client,'/releases/'+target+'/activation-preview',request);assert preview.status_code==200,preview.text
+        activation=editor_post(client,'/releases/'+target+'/activate',{**request,'operationId':str(uuid4()),'previewFingerprint':preview.json()['previewFingerprint']})
+        assert activation.status_code==200,activation.text
+        after=activation.json()['snapshot'];assert after['pair']==current['pair'] and after['draft']['revision']==current['draft']['revision']
+        assert not after['undo']['available']
+        assert editor_post(client,'/publish/preview',{'expected':editor_expected(after),'reason':REASON}).status_code==409
+        assert editor_post(client,'/draft/undo',{'operationId':str(uuid4()),'expected':editor_expected(after),'reason':REASON,'targetRevision':current['undo']['targetRevision']}).status_code==409
+        reset=editor_post(client,'/draft/reset',{'operationId':str(uuid4()),'expected':editor_expected(after),'reason':REASON});assert reset.status_code==200,reset.text
+        assert reset.json()['snapshot']['draft']['baseReleaseId']==target
+        assert scalar(db.operator,'SELECT count(*) FROM content.draft_history')==28
+    for engine in (db.editor,db.reader,db.backup,db.session):
+        with pytest.raises(SQLAlchemyError),engine.connect() as c:
+            c.execute(text("SELECT content.editor_internal_publish_draft(NULL,NULL,NULL,0,0,1,NULL,NULL,NULL)"))
+
+
+@pytest.mark.parametrize('boundary',['history','audit','commit'])
+def test_editor_save_failure_rolls_back_history_and_ledger(db,boundary):
+    authoring_service(db)
+    client,runtime,h=auth_app(db)
+    owner_execute(db,"CREATE FUNCTION content.fail_editor_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Injected editor failure'; END $$")
+    table='draft_history' if boundary in ('history','commit') else 'audit_events'
+    if boundary=='commit':owner_execute(db,f'CREATE CONSTRAINT TRIGGER fail_editor AFTER INSERT ON content.{table} DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION content.fail_editor_fixture()')
+    else:owner_execute(db,f'CREATE TRIGGER fail_editor BEFORE INSERT ON content.{table} FOR EACH ROW EXECUTE FUNCTION content.fail_editor_fixture()')
+    with client:
+        auth_login(client,runtime,h)
+        current=client.get('/api/admin/draft').json();value={'expected':editor_expected(current),'reason':REASON,'pair':current['pair'],'reservationIds':[],'intent':{'reservations':[]}}
+        preview=editor_post(client,'/draft/preview',value);assert preview.status_code==200,preview.text
+        before=authoring_state(db)
+        result=editor_post(client,'/draft/save',{**value,'operationId':str(uuid4()),'previewFingerprint':preview.json()['previewFingerprint']})
+        assert result.status_code==503,result.text
+        assert authoring_state(db)==before
+        assert scalar(db.operator,'SELECT count(*) FROM content.draft_history')==0
+
+
+def test_editor_publish_visibility_and_same_digest_rollback_without_worker_restart(db):
+    _,original=authoring_service(db)
+    client,runtime,h=auth_app(db,postgres=True)
+    with client:
+        auth_login(client,runtime,h)
+        initial=client.get('/api/admin/draft').json()
+        original_public=client.get('/api/v1/quizzes/q1/questions').json()
+        pair=copy.deepcopy(initial['pair']);pair['quizzes']['questions'][0]['stem']='Published after request-driven selection'
+        pair['flashcards']['cards'][0]['front']='Paired publication front'
+        saved,_=editor_save(client,initial,pair)
+        assert client.get('/api/v1/quizzes/q1/questions').json()==original_public
+        args={'expected':editor_expected(saved['snapshot']),'reason':REASON}
+        preview=editor_post(client,'/publish/preview',args)
+        request={**args,'operationId':str(uuid4()),'previewFingerprint':preview.json()['previewFingerprint']}
+        published=editor_post(client,'/publish',request);assert published.status_code==200,published.text
+        assert client.get('/api/v1/quizzes/q1/questions').json()['questions'][0]['stem']==pair['quizzes']['questions'][0]['stem']
+        assert client.get('/api/v1/flashcards/decks/dlegacy-X/cards').json()['cards'][0]['front']==pair['flashcards']['cards'][0]['front']
+        current=published.json()['snapshot'];target=str(original.release_id)
+        for _ in range(2):
+            args={'expected':editor_expected(current),'reason':REASON}
+            preview=editor_post(client,'/releases/'+target+'/activation-preview',args)
+            activated=editor_post(client,'/releases/'+target+'/activate',{**args,'operationId':str(uuid4()),'previewFingerprint':preview.json()['previewFingerprint']})
+            assert activated.status_code==200,activated.text
+            current=activated.json()['snapshot']
+            assert client.get('/api/v1/quizzes/q1/questions').json()==original_public
+        before=authoring_state(db)
+        replay=editor_post(client,'/publish',request);assert replay.status_code==200 and replay.json()==published.json()
+        assert authoring_state(db)==before
+        assert current['pair']==pair  # Rollback never overwrites unpublished draft content.
+        assert editor_post(client,'/publish/preview',{'expected':editor_expected(current),'reason':REASON}).status_code==409
+
+
+def test_editor_freshness_derived_from_bulk_deletes_and_checked_after_validation(db):
+    authoring_service(db)
+    client,runtime,h=auth_app(db)
+    with client:
+        auth_login(client,runtime,h)
+        initial=client.get('/api/admin/draft').json()
+        request={'operationId':str(uuid4()),'expected':editor_expected(initial),'reason':REASON,'counts':{'f':2},'intent':{'slots':[{'kind':'f','count':2,'parentId':'dlegacy-X'}]}}
+        reserved=editor_post(client,'/reservations',request).json()['result']['allocatedIds']['f']
+        pair=copy.deepcopy(initial['pair']);pair['flashcards']['cards'] += [{'id':id,'deckId':'dlegacy-X','front':'Extra front','back':'Extra back'} for id in reserved]
+        saved,_=editor_save(client,initial,pair,{'id':request['operationId'],'slots':request['intent']['slots']})
+        # Keep the session live but make the factor older than fifteen minutes in both clocks.
+        with db.session.begin() as c:c.execute(text('UPDATE admin_auth.sessions SET auth_time=:old'),{'old':h.now-901})
+        candidate=copy.deepcopy(saved['snapshot']['pair']);candidate['flashcards']['cards']=candidate['flashcards']['cards'][:1]
+        args={'expected':editor_expected(saved['snapshot']),'reason':REASON,'pair':candidate,'reservationIds':[],'intent':{'reservations':[]}}
+        preview=editor_post(client,'/draft/preview',args);assert preview.status_code==200
+        assert preview.json()['requiresFreshAuthentication']
+        before=authoring_state(db)
+        result=editor_post(client,'/draft/save',{**args,'operationId':str(uuid4()),'previewFingerprint':preview.json()['previewFingerprint']})
+        assert result.status_code==403 and authoring_state(db)==before
+        # Single-record edits still work with a live older-factor session.
+        single=copy.deepcopy(saved['snapshot']['pair']);single['flashcards']['cards'][0]['back']='Ordinary single update'
+        saved2,_=editor_save(client,saved['snapshot'],single)
+        assert saved2['snapshot']['pair']==single
+        # A validator delay crossing absolute expiry cannot commit after its initial guard.
+        with db.session.begin() as c:c.execute(text('UPDATE admin_auth.sessions SET auth_time=:now'),{'now':h.now})
+        from meducation_api.admin.service import EditorService
+        from meducation_api.auth.oidc import AuthError
+        from meducation_api.content_policy import PairedContentValidator
+        token=client.cookies.get(runtime.config.cookie)
+        class Delayed(PairedContentValidator):
+            def validate(self,pair):
+                result=super().validate(pair);h.now+=28801;return result
+        with runtime.store.guard(token,interactive=False) as principal:
+            svc=EditorService(client.app.state.editor_engine,runtime.store,principal,Delayed())
+            args={'expected':editor_expected(saved2['snapshot']),'reason':REASON,'pair':single,'reservationIds':[],'intent':{'reservations':[]},'previewFingerprint':'a'*64,'operationId':str(uuid4())}
+            before=authoring_state(db)
+            with pytest.raises(AuthError):svc.mutate('save',args)
+            assert authoring_state(db)==before
+
+
+@pytest.mark.parametrize('action', ['save', 'publish'])
+def test_concurrent_guarded_editor_saves_and_reservations_are_context_safe(db, action):
+    from meducation_api.admin.service import EditorService
+    authoring_service(db)
+    client,runtime,h=auth_app(db)
+    with client:
+        auth_login(client,runtime,h)
+        current=client.get('/api/admin/draft').json()
+        args={'expected':editor_expected(current),'reason':REASON,'pair':current['pair'],'reservationIds':[],'intent':{'reservations':[]}}
+        if action == 'publish':
+            args = {'expected': editor_expected(current), 'reason': REASON}
+        preview=editor_post(client,'/draft/preview' if action == 'save' else '/publish/preview',args).json()['previewFingerprint']
+        identity=h.client.verify(h.token(),nonce=h.nonce)
+        tokens=[runtime.store.issue(identity)[0] for _ in range(2)]
+        barrier=Barrier(2)
+        def save(token):
+            from meducation_api.auth.oidc import AuthError
+            try:
+                with runtime.store.guard(token) as principal:
+                    svc=EditorService(client.app.state.editor_engine,runtime.store,principal)
+                    barrier.wait(timeout=5)
+                    return svc.mutate(action,{**args,'operationId':str(uuid4()),'previewFingerprint':preview})
+            except AuthError as error:return error.status
+        with ThreadPoolExecutor(2) as pool:results=list(pool.map(save,tokens))
+        assert sum(isinstance(result,dict) for result in results)==1
+        assert 409 in results
+        assert scalar(db.operator,'SELECT count(*) FROM content.draft_history')==2
+
+
+@pytest.mark.parametrize('boundary', ['finalize', 'authored', 'publication', 'draft', 'history', 'audit', 'commit'])
+def test_guarded_publish_failure_preserves_every_paired_history_audit_boundary(db, boundary):
+    authoring_service(db)
+    client, runtime, h = auth_app(db)
+    with client:
+        auth_login(client, runtime, h)
+        current = client.get('/api/admin/draft').json()
+        args = {'expected': editor_expected(current), 'reason': REASON}
+        preview = editor_post(client, '/publish/preview', args)
+        assert preview.status_code == 200, preview.text
+        owner_execute(db, "CREATE FUNCTION content.fail_editor_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Injected editor failure'; END $$")
+        table = {'finalize': 'releases', 'authored': 'authored_events', 'publication': 'publication_events', 'draft': 'draft', 'history': 'draft_history', 'audit': 'audit_events', 'commit': 'authored_events'}[boundary]
+        if boundary == 'commit':
+            owner_execute(db, f'CREATE CONSTRAINT TRIGGER fail_editor AFTER INSERT ON content.{table} DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION content.fail_editor_fixture()')
+        else:
+            event = 'UPDATE' if boundary in ('finalize', 'draft') else 'INSERT'
+            owner_execute(db, f'CREATE TRIGGER fail_editor BEFORE {event} ON content.{table} FOR EACH ROW EXECUTE FUNCTION content.fail_editor_fixture()')
+        before = authoring_state(db)
+        result = editor_post(client, '/publish', {**args, 'operationId': str(uuid4()), 'previewFingerprint': preview.json()['previewFingerprint']})
+        assert result.status_code == 503, result.text
+        assert authoring_state(db) == before
+
+
+def test_guarded_reader_pins_both_banks_while_editor_publishes(db):
+    authoring_service(db)
+    client, runtime, h = auth_app(db, postgres=True)
+    with client:
+        auth_login(client, runtime, h)
+        current = client.get('/api/admin/draft').json()
+        pair = copy.deepcopy(current['pair'])
+        pair['quizzes']['questions'][0]['stem'] = 'New paired stem'
+        pair['flashcards']['cards'][0]['front'] = 'New paired front'
+        saved, _ = editor_save(client, current, pair)
+        args = {'expected': editor_expected(saved['snapshot']), 'reason': REASON}
+        preview = editor_post(client, '/publish/preview', args)
+        with client.app.state.source.view() as pinned:
+            old = (pinned.questions.list_questions('q1'), pinned.flashcards.list_cards('dlegacy-X'))
+            result = editor_post(client, '/publish', {**args, 'operationId': str(uuid4()), 'previewFingerprint': preview.json()['previewFingerprint']})
+            assert result.status_code == 200, result.text
+            assert (pinned.questions.list_questions('q1'), pinned.flashcards.list_cards('dlegacy-X')) == old
+        with client.app.state.source.view() as newer:
+            assert (newer.questions.list_questions('q1'), newer.flashcards.list_cards('dlegacy-X')) != old
+
+
+def test_editor_envelope_pagination_and_uninitialized_draft_errors_are_safe(db):
+    client, runtime, h = auth_app(db)
+    with client:
+        auth_login(client, runtime, h)
+        assert client.get('/api/admin/draft').status_code == 409
+        assert client.get('/api/admin/releases?limit=51').status_code == 400
+        assert client.get('/api/admin/releases?cursor=invalid').status_code == 400
+        assert client.get('/api/admin/operations/' + str(uuid4())).status_code == 404
+        before = authoring_state(db)
+        result = editor_post(client, '/reservations', {'actor': 'PRIVATE_SENTINEL'})
+        assert result.status_code == 400 and 'PRIVATE_SENTINEL' not in result.text
+        assert authoring_state(db) == before
+
+
+def test_reservation_save_race_never_allocates_against_changed_context(db):
+    from meducation_api.admin.service import EditorService
+    from meducation_api.auth.oidc import AuthError
+    authoring_service(db)
+    client, runtime, h = auth_app(db)
+    with client:
+        auth_login(client, runtime, h)
+        current = client.get('/api/admin/draft').json()
+        args = {'expected': editor_expected(current), 'reason': REASON, 'pair': current['pair'], 'reservationIds': [], 'intent': {'reservations': []}}
+        preview = editor_post(client, '/draft/preview', args).json()['previewFingerprint']
+        identity = h.client.verify(h.token(), nonce=h.nonce)
+        tokens = [runtime.store.issue(identity)[0] for _ in range(2)]
+        barrier = Barrier(2)
+        def run(index):
+            try:
+                with runtime.store.guard(tokens[index]) as principal:
+                    svc = EditorService(client.app.state.editor_engine, runtime.store, principal)
+                    value = {**args, 'operationId': str(uuid4()), 'previewFingerprint': preview} if index == 0 else {'operationId': str(uuid4()), 'expected': editor_expected(current), 'reason': REASON, 'counts': {'f': 1}, 'intent': {'slots': [{'kind': 'f', 'count': 1, 'parentId': 'dlegacy-X'}]}}
+                    barrier.wait(timeout=5)
+                    return svc.mutate('save' if index == 0 else 'reserve', value)
+            except AuthError as error:
+                return error.status
+        with ThreadPoolExecutor(2) as pool:
+            results = list(pool.map(run, range(2)))
+        assert isinstance(results[0], dict)
+        assert isinstance(results[1], dict) or results[1] == 409
+        assert scalar(db.operator, 'SELECT revision FROM content.draft') == int(current['draft']['revision']) + 1
+        assert scalar(db.operator, 'SELECT count(*) FROM content.editor_slots') == int(isinstance(results[1], dict))

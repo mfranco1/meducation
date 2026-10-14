@@ -312,7 +312,7 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml --profile db-jobs run --rm --no-deps migrate
 ```
 
-The migration job applies head `0003_admin_sessions` (including the preserved
+The migration job applies head `0004_editor_operations` (including the preserved
 `0001_content` foundation) and can be repeated. Run this controlled
 job explicitly before the API. It receives only the migrator URL, while the API
 receives only the reader URL and waits for Postgres startup health. Import and
@@ -455,3 +455,24 @@ confirmation that all jobs passed in [GitHub Actions run 38371220116](https://gi
 The completed tracker records native ARM64 machine evidence and user-confirmed
 native AMD64/ARM64 CI. This does not close L3 DB-content/role/parity work or the
 remaining L1 browser/device/lifecycle release checks.
+
+## L4 private paired-service verification
+
+Rebuild the API image after the Step 4 migration/service changes. The packaged
+head is `0004_editor_operations`; default Compose remains reader-only JSON unless
+explicitly configured otherwise. Private sessions require the separate local
+synthetic configuration in the [session runbook](L4-admin-session-boundary.md).
+The session/editor credentials must refer to the same PostgreSQL database.
+[Paired services](L4-paired-editor-services.md) add no startup migration or cutover.
+
+```sh
+docker build -f backend/Dockerfile -t meducation-api:l4-step4 .
+.venv/bin/python scripts/containers/test-postgres-content.py --output /private/tmp/l4-postgres.json
+.venv/bin/python scripts/containers/smoke-db-toolchain.py --image meducation-api:l4-step4 --output /private/tmp/l4-toolchain.json
+.venv/bin/python scripts/containers/smoke-authoring-policy.py --image meducation-api:l4-step4 --report /private/tmp/l4-policy.json
+.venv/bin/python scripts/containers/verify-postgres-release.py --output /private/tmp/l4-recovery.json
+```
+
+These checks use isolated synthetic/actual-corpus databases and containers, without
+changing routine volumes. Native ARM64 image evidence does not certify AMD64 CI,
+provider acceptance, browser editor integration or durable authored recovery.

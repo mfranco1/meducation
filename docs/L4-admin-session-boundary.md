@@ -56,8 +56,8 @@ failure affects admin requests, while public learner routes ignore admin cookies
   accepted provider adapter; none is claimed by local logout.
 
 The entire `/api/admin` prefix is protected before private routing, including
-currently unimplemented content-operation paths. Authenticated unknown paths
-still return 404; this does not implement Step 4 operations. Every browser POST
+unknown content-operation paths, which return 404 after authorization. Private
+operations are supplied by [Step 4 services](L4-paired-editor-services.md). Every browser POST
 uses exact configured Origin, JSON, identity encoding and session-bound CSRF;
 private routes have no CORS surface. Auth envelopes are limited to 8 KiB and ten
 seconds. Shared PG rate limits allow six flow requests per browser and thirty
@@ -87,7 +87,7 @@ therefore cannot expose the synthetic identity flow.
 ## Roles, locking and recovery
 
 Run the explicit local bootstrap job **before** upgrading head
-`0003_admin_sessions`. Bootstrap creates owner-managed `content` and `admin_auth`
+`0004_editor_operations`. Bootstrap creates owner-managed `content` and `admin_auth`
 schemas without granting application database CREATE. New `meducation_session`
 and `meducation_editor` roles start NOLOGIN when their optional credentials are
 absent. To enable the local experiment, supply both distinct
@@ -98,8 +98,8 @@ it does not silently disable those roles. API workers never bootstrap or migrate
 The session role has only necessary `admin_auth` table operations and cannot
 inspect/mutate content. The editor can read the paired draft/publication views;
 it cannot use trusted imports, registration, arbitrary DML, owner membership or
-auth tables. Step 4 must add session-bound controlled mutations and intent checks
-before using this role for authoring. Reader/operator roles cannot inspect auth
+auth tables. [Step 4 services](L4-paired-editor-services.md) supply session-bound
+controlled mutations and creation-intent checks. Reader/operator roles cannot inspect auth
 tables. Backup can read both schemas for full DB recovery; content exports never
 include auth records.
 
@@ -110,16 +110,17 @@ refresh or ID-token hint is retained. Login transactions expire after ten minute
 sessions expire after thirty idle minutes or eight absolute hours. Session/status
 polling does not keep them alive. Explicit activity prunes expired records.
 
-`SessionStore.guard` holds the session row lock until protected work finishes.
-Content services must commit before leaving that guard; middleware supplies the
-principal in `request.state.principal`. Logout/revocation takes the same lock.
+`SessionStore.guard` holds a session identity `FOR KEY SHARE` lock until protected
+work finishes; explicit activity commits first. Content transactions independently
+lock/check the session `FOR NO KEY UPDATE` through commit, serializing against
+logout/revocation. Middleware supplies the principal in `request.state.principal`.
 Already committed writes remain committed. Session checks use bounded lock/query
 waits; store/pool failure returns safe 503 rather than falling back to RAM/cookies.
 Step-up reuses its held store connection, avoiding nested pool checkout under the
 session lock. Publish/activate/reset/export require fifteen-minute freshness;
-Step 4 must recheck expiry/freshness immediately before committing after expensive
-validation, and additionally derive bulk destructive saves/Undo and require freshness
-from server-computed impact, not a browser action label.
+Step 4 rechecks expiry/freshness after expensive validation and inside the SQL
+mutation, and derives bulk destructive saves/Undo freshness from server-computed
+impact rather than a browser action label.
 
 The external random epoch is combined with issuer/sub/client/assurance policy.
 Changing allowlist/policy or epoch invalidates old sessions on every request.

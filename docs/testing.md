@@ -175,3 +175,19 @@ loopback code/PKCE issuer. Follow the [session runbook](L4-admin-session-boundar
 Synthetic MFA/time claims prove local checks only; hosted factor policy/freshness
 and editor dirty-text/session UX acceptance remain distinct gates. New native CI
 results must be verified separately from the local ARM64 image/recovery evidence.
+
+## L4 private paired services
+
+[Service contracts](L4-paired-editor-services.md) are tested through authenticated
+HTTP and the actual editor role against disposable PG17. Run
+`.venv/bin/python scripts/containers/test-postgres-content.py` for the complete
+regression gate; `--keyword` is for focused development only. Ordinary pytest
+skips these database cases without isolated credentials and is not their acceptance.
+Failure injection covers history/audit and deferred commit, plus every authored
+publication boundary. Replays, burned reservations, stale intent/context, bounded
+Undo, retained activation, server-derived fresh-auth, expiry during validation,
+concurrent saves/reservations, pinned paired reader visibility and deterministic
+private-data-free ZIPs are included. Installed-image migration/policy smokes cover
+packaging; actual corpus recovery checks compatibility only. Hosted identity,
+browser editor integration, authored-history recovery/off-device retention and
+new native CI remain later gates.

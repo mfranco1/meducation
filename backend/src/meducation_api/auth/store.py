@@ -157,12 +157,22 @@ class SessionStore:
         if not token or len(token) != 43:
             raise AuthError(401, "session_required")
         try:
+            if interactive:
+                with self.guard(
+                    token, csrf=csrf, write=write, fresh=fresh, interactive=False
+                ) as activity:
+                    activity.connection.execute(
+                        text(
+                            "UPDATE admin_auth.sessions SET last_activity=:now WHERE token_hash=:h"
+                        ),
+                        {"now": self.clock(), "h": activity.token_hash},
+                    )
             with self.engine.begin() as c:
                 c.exec_driver_sql("SET LOCAL lock_timeout = '5s'")
                 c.exec_driver_sql("SET LOCAL statement_timeout = '10s'")
                 row = (
                     c.execute(
-                        text("SELECT * FROM admin_auth.sessions WHERE token_hash=:h FOR UPDATE"),
+                        text("SELECT * FROM admin_auth.sessions WHERE token_hash=:h FOR KEY SHARE"),
                         {"h": digest(token)},
                     )
                     .mappings()
@@ -171,17 +181,12 @@ class SessionStore:
                 if not self._live(row):
                     raise AuthError(401, "session_expired")
                 assert row is not None
-                if write and (not csrf or not secrets.compare_digest(row["csrf"].encode(), csrf.encode())):
+                if write and (
+                    not csrf or not secrets.compare_digest(row["csrf"].encode(), csrf.encode())
+                ):
                     raise AuthError(403, "csrf_invalid")
                 if fresh and self.clock() - row["auth_time"] > 900:
                     raise AuthError(403, "fresh_auth_required")
-                if interactive:
-                    c.execute(
-                        text(
-                            "UPDATE admin_auth.sessions SET last_activity=:now WHERE token_hash=:h"
-                        ),
-                        {"now": self.clock(), "h": row["token_hash"]},
-                    )
                 identity = VerifiedEditorIdentity(
                     row["issuer"],
                     row["subject"],
@@ -190,8 +195,26 @@ class SessionStore:
                     row["assurance_policy"],
                 )
                 yield Principal(identity, row["token_hash"], row["csrf"], row["expires"], c)
-                # Content writes must commit before leaving this guard. Logout takes the
-                # same lock; it cannot retroactively undo a write committed before revocation.
+                # Content writes commit inside this guard and independently lock the session
+                # FOR NO KEY UPDATE in their transaction, serializing with revocation.
+        except SQLAlchemyError:
+            raise AuthError(503, "session_unavailable") from None
+
+    def recheck(self, principal: Principal, *, fresh: bool = False) -> None:
+        try:
+            row = (
+                principal.connection.execute(
+                    text("SELECT * FROM admin_auth.sessions WHERE token_hash=:h"),
+                    {"h": principal.token_hash},
+                )
+                .mappings()
+                .one_or_none()
+            )
+            if not self._live(row):
+                raise AuthError(401, "session_expired")
+            if fresh and self.clock() - principal.identity.auth_time > 900:
+                raise AuthError(403, "fresh_auth_required")
+
         except SQLAlchemyError:
             raise AuthError(503, "session_unavailable") from None
 

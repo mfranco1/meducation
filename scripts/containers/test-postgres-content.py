@@ -21,6 +21,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
     parser.add_argument("--maxfail", type=int, default=0)
+    parser.add_argument("--keyword", default="")
     args = parser.parse_args()
     name = "meducation-pg-content-" + uuid.uuid4().hex[:12]
     try:
@@ -83,7 +84,14 @@ def main():
                 + port
                 + "/meducation_test_content?sslmode=disable",
             }
-            for role in ("MIGRATOR", "READER", "BACKUP", "OPERATOR", "SESSION", "EDITOR"):
+            for role in (
+                "MIGRATOR",
+                "READER",
+                "BACKUP",
+                "OPERATOR",
+                "SESSION",
+                "EDITOR",
+            ):
                 env["MEDUCATION_POSTGRES_" + role + "_PASSWORD"] = (
                     secrets.token_urlsafe(24)
                 )
@@ -94,7 +102,9 @@ def main():
                 "backend/tests/test_postgres_content.py",
                 "-q",
                 "--tb=short",
-                "--maxfail="+str(args.maxfail),
+                "--maxfail=" + str(args.maxfail),
+                "-k",
+                args.keyword,
             ]
             result = subprocess.run(
                 command,
@@ -102,7 +112,7 @@ def main():
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=300,
+                timeout=600,
                 check=False,
             )
             print(result.stdout)

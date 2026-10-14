@@ -8,6 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from meducation_api.admin.http import install_editor
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.http import AuthRuntime, install_auth
 from meducation_api.db.engine import ContentDatabaseError
@@ -118,6 +119,8 @@ def create_app(
             app.state.flashcards = None
             if app.state.auth is not None:
                 app.state.auth.close()
+            if app.state.editor_engine is not None:
+                app.state.editor_engine.dispose()
 
     app = FastAPI(title="Meducation Content API", version="1.0.0", lifespan=lifespan)
     app.add_middleware(
@@ -128,6 +131,7 @@ def create_app(
     )
 
     install_auth(app, identity_config, auth_factory)
+    install_editor(app, identity_config)
 
     @app.exception_handler(ContentDatabaseError)
     async def unavailable(request: Request, error: ContentDatabaseError) -> JSONResponse:
