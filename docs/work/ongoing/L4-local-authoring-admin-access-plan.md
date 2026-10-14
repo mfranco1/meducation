@@ -1,6 +1,6 @@
 # L4 — Local database authoring and admin access
 
-Created: 2026-10-14. Status: Steps 1–5 local gates complete. Steps 6–7 locally complete under the user's 2026-10-14 local-only retention override: the designated PostgreSQL database is authoritative, protected local dumps/exports and allocation journals are retained and a fresh separate-target restore passed. Off-device/hardware-loss recovery is explicitly deferred. Step 8 full local verification/audit passes; changed-source native CI remains pending (earlier CI at `f99a18e` is historical). Hosted provider/fresh-factor and manual device/accessibility acceptance remain separate open gates.
+Created: 2026-10-14. Status: Steps 1–5 local gates complete. Steps 6–7 locally complete under the user's 2026-10-14 local-only retention override: the designated PostgreSQL database is authoritative, protected local dumps/exports and allocation journals are retained and a fresh separate-target restore passed. Off-device/hardware-loss recovery is explicitly deferred. Step 8 full local verification/audit and all five changed-source CI jobs pass at `bc90d75`, including native AMD64/ARM64. Final tracker archival remains pending (earlier CI at `f99a18e` is historical). Hosted provider/fresh-factor and manual device/accessibility acceptance remain separate open gates.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l4--local-database-authoring-and-admin-access-boundary). Prerequisites: [completed L3](../done/L3-postgres-schema-migration-parity-plan.md), [L4 handoff](../../L4-authoring-handoff.md), [authentication contract](../../decisions/0004-single-editor-authentication.md), and [paired-release contract](../../decisions/0005-paired-content-releases-and-postgres-schema.md). Follow the [work tracking gates](../README.md): implement one step, record evidence and limitations, then stop until continuation is authorized. The authority cutover has its own explicit approval gate.
 
@@ -106,7 +106,7 @@ Gate: separately authorized cutover completed with current recoverable content a
 ## Step 8 — Verify L4 and hand off to L5
 
 - [x] Run `npm run verify:full` with updated authoring coverage, required learner/admin builds, and the new authentication/content validation suites. Run real-Postgres authoring/concurrency/privilege tests, actual-content parity, full restore and real-proxy browser acceptance separately where not included by the runner.
-- [ ] Extend existing native AMD64/ARM64 container CI to include packaged migrations, auth dependencies and L4 acceptance; verify both jobs against the final implementation commit. Do not reuse L3's CI result as evidence for changed code.
+- [x] Extend existing native AMD64/ARM64 container CI to include packaged migrations, auth dependencies and L4 acceptance; verify both jobs against the final implementation commit. Do not reuse L3's CI result as evidence for changed code.
 - [x] Complete an outcome/invariant audit against every parent L4 checkbox and the handoff requirements. Record commands, versions/commit, observed outcomes, skipped checks, advisories and provider/backup limitations. Relevant failures keep the step open.
 - [ ] Update the parent tracker only for demonstrated results. Move this tracker and supporting evidence to `docs/work/done` only after L4 implementation, recovery and authorized cutover gates pass; update incoming links at that time.
 - [x] Carry real hosted identity/MFA/TLS/routing acceptance to deployment, Firefox/mobile/assistive-technology obligations to the existing [browser tracker](L0-browser-acceptance.md), and resilience/load tuning to L5. Deferred tests remain explicit, not implied passes.
@@ -490,3 +490,17 @@ CI/outcome closure and explicitly carried hosted/manual/off-device obligations.
 The original cutover patch/base snapshots and earlier JSON-authoritative progress
 logs are historical and remain preserved. Do not overwrite DB-only edits with
 these frozen repository exports. No cloud deployment or further L5 work occurred.
+
+
+## Cutover implementation CI verified — 2026-10-14
+
+Independently verified [run 38585464434](https://github.com/mfranco1/meducation/actions/runs/38585464434) against current implementation HEAD
+`bc90d751c48fc42b97a3aca4717a2b94a0f47e2c`. All five jobs completed successfully:
+frontend, backend, browser-smoke, Containers (amd64), and Containers (arm64).
+[Cutover CI evidence](L4-cutover-native-ci-evidence.json) freezes job and step results;
+earlier CI evidence remains historical. This closes the changed-source native CI
+gap after Step 7 and covers the committed L5 Step 1 changes as well.
+No application or authoritative content changed during this evidence update.
+Hosted identity/MFA/TLS/routing, manual browser/device/accessibility acceptance,
+and user-deferred off-device recovery remain explicit external obligations.
+Final tracker archival/handoff is still to be completed.

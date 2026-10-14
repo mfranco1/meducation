@@ -1,6 +1,6 @@
 # Local-first production preparation
 
-Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 complete with passing local verification and user-confirmed native AMD64/ARM64 GitHub CI; L3 complete with final verification and independently verified native AMD64/ARM64 CI; L4 Steps 1–2 complete; Steps 3–4 local backend and Step 5 local HTTP editor gates complete; Steps 6–7 locally complete under user-approved local-only backup policy and PostgreSQL authority cutover; off-device recovery deferred; Step 8 native CI verified at `f99a18e`; L5 Step 1 local gate complete, remaining L5 work and L6 pending. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
+Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 complete with passing local verification and user-confirmed native AMD64/ARM64 GitHub CI; L3 complete with final verification and independently verified native AMD64/ARM64 CI; L4 Steps 1–2 complete; Steps 3–4 local backend and Step 5 local HTTP editor gates complete; Steps 6–7 locally complete under user-approved local-only backup policy and PostgreSQL authority cutover; off-device recovery deferred; Step 8 changed-source native AMD64/ARM64 CI verified at `bc90d75`; L5 Step 1 local gate complete, remaining L5 work and L6 pending. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
 
 ## Confirmed scope
 
@@ -79,7 +79,7 @@ Gate: local Postgres serves the existing learner without content drift or gratui
 
 ### L4 — Local database authoring and admin access boundary
 
-Detailed sequence: [L4 local authoring and admin access plan](L4-local-authoring-admin-access-plan.md). Steps 1–5 local implementation gates are complete. Steps 6–7 local recovery/cutover are verified with protected local backups and journals; off-device acceptance is user-deferred. Step 8 local full-runner/recovery/browser verification and the outcome audit are complete; changed-source native CI and overall L4 closure remain pending. See the [local outcome audit](L4-local-outcome-audit.md). Eight gated steps cover paired editor contracts, server validation, authentication, transactional authoring, HTTP editor integration, recovery/tooling, explicitly approved authority cutover and final verification.
+Detailed sequence: [L4 local authoring and admin access plan](L4-local-authoring-admin-access-plan.md). Steps 1–5 local implementation gates are complete. Steps 6–7 local recovery/cutover are verified with protected local backups and journals; off-device acceptance is user-deferred. Step 8 local full-runner/recovery/browser verification and the outcome audit are complete; changed-source native AMD64/ARM64 CI passes at `bc90d75`; final L4 tracker archival remains pending. See the [local outcome audit](L4-local-outcome-audit.md). Eight gated steps cover paired editor contracts, server validation, authentication, transactional authoring, HTTP editor integration, recovery/tooling, explicitly approved authority cutover and final verification.
 
 - [x] Adapt AdminQuestionBankGateway and existing editor/core logic to HTTP-backed paired-bank drafts. Resolve existing synchronous flashcard snapshot and undo/reset semantics explicitly.
 - [x] Save drafts directly to Postgres; revalidate on save and publish. Publish atomically creates/activates a complete immutable release. Retain source answers, verified answers, change reasons, editor identity and append-only audit history.
@@ -108,14 +108,17 @@ Implementation is tracked in [the L5 plan](L5-resilience-and-local-operations-pl
 Step 1 implements one worker, bounded pools, request-driven stale socket repair,
 reader SQL deadlines and isolated local restart acceptance. Whole-L5 checkboxes
 remain open until the remaining freshness, diagnostics and concurrency outcomes
-are verified. L4's retained-copy and authority gates remain separate.
+are verified. The local PostgreSQL authority cutover and post-cutover native CI
+are complete under the user-approved local-only backup policy; off-device recovery
+and hosted acceptance remain separate. The L5 plan was revised on 2026-10-14
+for the next implementation session, beginning with Step 2.
 
 - [ ] Start with one API process/instance for the initial small deployment, while retaining transactional concurrency tests. Define a concrete current-release freshness target (initially <=30 seconds for new content launches). Never mix versions during an active quiz. Requests discovering a changed catalog must use the existing revision-conflict/reload behavior; cached active sessions must not switch underneath the learner. Test future multi-worker behavior before enabling multiple workers.
 - [ ] Configure small bounded database pools, timeouts, connection invalidation/reconnect, and safe idempotent retries. Do not retry uncertain non-idempotent admin writes blindly; use transactional operation IDs/revision preconditions.
 - [ ] Separate runtime and migration/backup connection configuration; validate pooled-endpoint compatibility if used on Neon, and use direct connections for operations needing session semantics. Aggregate pool limits across processes; require DB TLS with verified settings outside local development.
 - [ ] Test Postgres restart/outage and stale pooled connections locally. These approximate connection-loss behavior; they do not prove Neon wake latency. Actual suspend/wake tests belong to deployment verification.
 - [ ] Ensure liveness does not query Postgres. Define lightweight readiness as process/configuration/schema initialization readiness, not a continuous guarantee of DB reachability. Expose a separate authenticated deep-dependency diagnostic for explicit checks. Route/telemetry errors must report DB outages promptly. Do not configure host keepalive probes to run SQL continually just to prove dependency reachability; if deployment requires continuous DB probes, accept the resulting loss of scale-to-zero savings.
-- [ ] Avoid background release polling and recurring DB pings that defeat idle suspension. Use publication-triggered local invalidation plus documented request-driven bounded-freshness checks for other workers; measure the query/consistency tradeoff. Preserve one-release consistency.
+- [ ] Avoid background release polling and recurring DB pings that defeat idle suspension. Retain current request-driven publication selection on every backend content request and add explicit-launch frontend revalidation; immutable release caches need no separate invalidation bus. Verify independent-reader visibility and measure the query/consistency tradeoff. Preserve one-release consistency.
 - [ ] Add configuration validation, safe structured logs, token/secret redaction, request/body limits and intentional public error messages. Document production TLS/CORS settings and separate migration/editor/read privileges.
 - [ ] Provide and rehearse local DB backup/restore, previous-release rollback and compatible app/schema rollback. Restore to a separate DB; protect authored content during tests.
 - [ ] Add a provisional fixture-based load test for 20 concurrent learner content launches and characterize latency/errors/pool saturation. This is a test target, not a production capacity promise.
@@ -229,3 +232,6 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
   pending. Independent Step 8 native CI coverage is now being extended; no new
   cloud service, backup automation or routine DB change was authorized by this
   deferral, and final-commit AMD64/ARM64 CI acceptance is not yet claimed.
+
+
+- [x] 2026-10-14: independently verified all five jobs in [run 38585464434](https://github.com/mfranco1/meducation/actions/runs/38585464434) at current implementation HEAD `bc90d75`, including native AMD64/ARM64 containers. This closes the post-cutover CI gap; [frozen evidence](L4-cutover-native-ci-evidence.json) preserves results. Hosted/manual/off-device obligations remain explicit; no further L5 implementation occurred.
