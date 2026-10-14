@@ -29,4 +29,10 @@ content.authored_publish_result(uuid,text,text,bigint,bigint,integer,text,text,t
 content.publish_draft(uuid,text,text,bigint,bigint,integer,text,text,text),
 content.reviewed_save_result(uuid,text,text,bigint,bigint,bigint,integer,text,uuid[],text,text),
 content.save_reviewed_draft(uuid,text,text,bigint,bigint,bigint,integer,text,uuid[],text,text) TO meducation_operator;
+REVOKE ALL ON SCHEMA admin_auth FROM PUBLIC;
+GRANT USAGE ON SCHEMA admin_auth TO meducation_session,meducation_backup;
+GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA admin_auth TO meducation_session;
+GRANT SELECT ON ALL TABLES IN SCHEMA admin_auth TO meducation_backup;
+GRANT USAGE ON SCHEMA content TO meducation_editor;
+GRANT SELECT ON content.draft,content.active_publication,content.published_releases TO meducation_editor;
 """)

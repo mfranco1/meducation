@@ -23,6 +23,8 @@ class RolePasswords(BaseSettings):
     reader_password: SecretStr = SecretStr("")
     backup_password: SecretStr = SecretStr("")
     operator_password: SecretStr = SecretStr("")
+    session_password: SecretStr | None = None
+    editor_password: SecretStr | None = None
 
     @model_validator(mode="after")
     def validate_passwords(self) -> RolePasswords:
@@ -30,6 +32,10 @@ class RolePasswords(BaseSettings):
             getattr(self, role.removeprefix("meducation_") + "_password").get_secret_value()
             for role in ROLES
         ]
+        optional = [self.session_password, self.editor_password]
+        if any(optional) and not all(optional):
+            raise ValueError("Supply both session/editor passwords or neither.")
+        values += [v.get_secret_value() for v in optional if v is not None]
         if any(len(value) < 16 or any(char in value for char in "\r\n\x00") for value in values):
             raise ValueError(
                 "Each role requires a distinct password of at least 16 characters without control delimiters."
@@ -48,6 +54,12 @@ def bootstrap(engine: Engine, passwords: RolePasswords) -> None:
         passwords.operator_password.get_secret_value(),
     ):
         raise ContentDatabaseError("Bootstrap and application role passwords must be distinct.")
+    auth_roles = ("meducation_session", "meducation_editor")
+    if any(
+        v is not None and v.get_secret_value() == engine.url.password
+        for v in (passwords.session_password, passwords.editor_password)
+    ):
+        raise ContentDatabaseError("Bootstrap/auth passwords must be distinct.")
     try:
         with engine.begin() as connection:
             if (
@@ -71,7 +83,7 @@ def bootstrap(engine: Engine, passwords: RolePasswords) -> None:
                     "JOIN pg_roles member ON member.oid = m.member "
                     "JOIN pg_roles parent ON parent.oid = m.roleid "
                     "WHERE member.rolname = ANY(%s)",
-                    (list(ROLES) + ["meducation_owner"],),
+                    (list(ROLES) + list(auth_roles) + ["meducation_owner"],),
                 )
                 if any(
                     row != ("meducation_migrator", "meducation_owner") for row in cursor.fetchall()
@@ -80,23 +92,35 @@ def bootstrap(engine: Engine, passwords: RolePasswords) -> None:
                         "Managed roles have unexpected memberships; inspect them before bootstrap."
                     )
                 cursor.execute(
-                    "SELECT rolname FROM pg_roles WHERE rolname = ANY(%s)",
-                    (list(ROLES) + ["meducation_owner"],),
+                    "SELECT rolname,rolcanlogin FROM pg_roles WHERE rolname = ANY(%s)",
+                    (list(ROLES) + list(auth_roles) + ["meducation_owner"],),
                 )
-                existing = {row[0] for row in cursor.fetchall()}
-                for role in ("meducation_owner", *ROLES):
+                existing = dict(cursor.fetchall())
+                for auth_role in auth_roles:
+                    if (
+                        existing.get(auth_role)
+                        and getattr(passwords, auth_role.removeprefix("meducation_") + "_password")
+                        is None
+                    ):
+                        raise ContentDatabaseError(
+                            "Existing enabled auth roles require explicit session/editor credentials for bootstrap."
+                        )
+                for role in ("meducation_owner", *ROLES, *auth_roles):
                     name = sql.Identifier(role)
                     if role not in existing:
                         cursor.execute(sql.SQL("CREATE ROLE {}").format(name))
+                    secret = getattr(
+                        passwords, role.removeprefix("meducation_") + "_password", None
+                    )
+                    login = role != "meducation_owner" and secret is not None
                     cursor.execute(
                         sql.SQL(
                             "ALTER ROLE {} NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS NOINHERIT {}"
-                        ).format(
-                            name, sql.SQL("NOLOGIN" if role == "meducation_owner" else "LOGIN")
-                        )
+                        ).format(name, sql.SQL("LOGIN" if login else "NOLOGIN"))
                     )
-                    if role != "meducation_owner":
+                    if login:
                         secret = getattr(passwords, role.removeprefix("meducation_") + "_password")
+                        assert secret is not None
                         cursor.execute(
                             sql.SQL("ALTER ROLE {} PASSWORD {}").format(
                                 name, sql.Literal(secret.get_secret_value())
@@ -112,8 +136,18 @@ def bootstrap(engine: Engine, passwords: RolePasswords) -> None:
                 if owner is not None and owner[0] != "meducation_owner":
                     raise ContentDatabaseError("Existing content schema has an unexpected owner.")
                 cursor.execute("CREATE SCHEMA IF NOT EXISTS content AUTHORIZATION meducation_owner")
+                cursor.execute(
+                    "SELECT pg_get_userbyid(nspowner) FROM pg_namespace WHERE nspname = 'admin_auth'"
+                )
+                auth_owner = cursor.fetchone()
+                if auth_owner is not None and auth_owner[0] != "meducation_owner":
+                    raise ContentDatabaseError("Existing auth schema has an unexpected owner.")
+                cursor.execute(
+                    "CREATE SCHEMA IF NOT EXISTS admin_auth AUTHORIZATION meducation_owner"
+                )
+                cursor.execute("REVOKE ALL ON SCHEMA admin_auth FROM PUBLIC")
                 cursor.execute(sql.SQL("REVOKE ALL ON DATABASE {} FROM PUBLIC").format(database))
-                for role in ROLES:
+                for role in (*ROLES, *auth_roles):
                     cursor.execute(
                         sql.SQL("GRANT CONNECT ON DATABASE {} TO {}").format(
                             database, sql.Identifier(role)

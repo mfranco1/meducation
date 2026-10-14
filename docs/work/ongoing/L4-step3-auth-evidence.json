@@ -1,0 +1,325 @@
+{
+  "recordedDate": "2026-10-14",
+  "sourceCommit": "e0322378c3749af948744a7699cb25575505b361",
+  "sourceChanges": "uncommitted",
+  "completionStatus": "Step 3 local backend gate complete; hosted provider/assurance and Step 5 editor UX remain unverified",
+  "scope": "OIDC/code/PKCE local synthetic assurance, private PostgreSQL sessions and role separation, prefix-wide authorization and browser request protection. No content HTTP operations, hosted adapter/provisioning or content authority cutover.",
+  "canonicalSources": [
+    {
+      "path": "src/content/questionBank.generated.json",
+      "bytes": 16456246,
+      "sha256": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901"
+    },
+    {
+      "path": "src/content/flashcardBank.generated.json",
+      "bytes": 653579,
+      "sha256": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+    }
+  ],
+  "inputsSha256": {
+    "backend/pyproject.toml": "08745a7b89eb5a54652f1865e3db6fc619c58d8654eb579ef51dd4d8c294dfe3",
+    "backend/requirements.lock": "ab5557d7298e77ec9968ed5e2b2ba0d934d907b943442cf9a80b0b7dce6a4a0b",
+    "backend/requirements-dev.lock": "ab5ed763592180dd062bae1f54bda7c25338a1e6245ab825086e4ac5e8100220",
+    "backend/src/meducation_api/main.py": "d72793190eb732902cd74857f1d2eddb6b2d974f250f85cad7235aec09ad1973",
+    "backend/src/meducation_api/db/bootstrap.py": "815b309687406896c654adf4fb10e7bf3f88b10614bba60948616e3658c63c0b",
+    "backend/src/meducation_api/db/recovery.py": "1faf60ad5dc3ce7ee84bd242324aa5493d54bb78a22db46d93375024025b7c1a",
+    "backend/src/meducation_api/migrations/0003_admin_sessions.sql": "d386ec7aa40e223be46a65af1b04cba6309b524aac3532422f7b2b8ea74a735f",
+    "backend/src/meducation_api/migrations/versions/0003_admin_sessions.py": "85075a334f4ad2ed49c3b6761d50d0d2605e6dadc2d3935f1033d1a2091c81d6",
+    "backend/tests/test_auth.py": "85d7f91dd11f2e8ca51e4aee205f3f4c9e9a7b45951281457953209bcc18a00a",
+    "backend/tests/test_postgres_content.py": "5bd0c0d24538f1fa2966d08dd155305a30e68d74f71a2e9091e897bf80f9cf6e",
+    "ops/containers/nginx.conf": "4c19c0da93238622cfe7b6f55d227882f9d3853f9f75a0ebf4514134ad558201",
+    "scripts/containers/db_toolchain_probe.py": "a56e2bd5cf8d92248c365b10b9753aa7a9edeb6bb4df0a3ee8c36c85aa7eaabe",
+    "scripts/containers/test-postgres-content.py": "ff46952153cb541ac428a6a8cc79f8a096c40e322a9c35e546485e0a03f5f048",
+    "scripts/containers/verify-postgres-release.py": "a3b200fa6ee7f53716fdc2b5d60391c62367a821a75e8da5163b6e78f231f43b",
+    "backend/src/meducation_api/auth/__init__.py": "dadb38bfa575ec50edf07e9f06b88857772aac3be013b11267312b435bc9291c",
+    "backend/src/meducation_api/auth/config.py": "0ab1ead1f0e7bd9f03580aa1d6249ec5f3552e0762a0bf3b8ff6ab57e83233e2",
+    "backend/src/meducation_api/auth/http.py": "e708132ae3992ec06dc90bf4429b62fa0495884fbb533cac6d8f5123ccea9dc2",
+    "backend/src/meducation_api/auth/oidc.py": "0e488d9717ccb2270d7b86265e4026613ff516cc0d0b9f4b2808255d611d51b2",
+    "backend/src/meducation_api/auth/store.py": "11294ffae1700d04b015dfbf807660a95f5bf68093a64fe09d19593a810039f7"
+  },
+  "dependencies": {
+    "Authlib": "1.8.0",
+    "joserfc": "1.7.5",
+    "cryptography": "50.0.2",
+    "httpx2": "2.13.1",
+    "compatibility": "Python 3.14 host and clean installed-wheel native ARM64 image passed; existing runtime pins retained"
+  },
+  "checks": {
+    "ordinaryBackend": {
+      "passed": 202,
+      "postgresSkipped": 135,
+      "seconds": 32.95,
+      "warnings": "Two intentional weak RSA key warnings from negative fixtures"
+    },
+    "realPostgres": {
+      "result": "pass",
+      "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "platform": "linux/arm64",
+      "command": [
+        "/Users/noodle.zip/Documents/code_projects/meducation/.venv/bin/python",
+        "-m",
+        "pytest",
+        "backend/tests/test_postgres_content.py",
+        "-q",
+        "--tb=short",
+        "--maxfail=1"
+      ],
+      "pytest_output": "........................................................................ [ 53%]\n...............................................................          [100%]\n135 passed in 121.44s (0:02:01)\n",
+      "isolation": "unique tmpfs container; loopback port; fixture-only disposable schema; no routine database or volume used"
+    },
+    "ruff": {
+      "scope": "backend/src backend/tests scripts/containers",
+      "result": "pass"
+    },
+    "mypy": {
+      "sourceFiles": 31,
+      "result": "pass"
+    },
+    "build": {
+      "command": "npm run build",
+      "typecheck": "pass",
+      "learnerBuild": "pass"
+    },
+    "apiImage": {
+      "result": "pass",
+      "platform": "linux/arm64",
+      "imageId": "sha256:35763f50141f7bc83527b5fe565449777e13e1f956ca5c1c485d26d5fb280f04"
+    },
+    "installedWheelToolchain": {
+      "server_version_num": "170011",
+      "packages": {
+        "psycopg": "3.3.6",
+        "psycopg-binary": "3.3.6",
+        "SQLAlchemy": "2.1.4",
+        "alembic": "1.20.0"
+      },
+      "psycopg_implementation": "binary",
+      "libpq_version": 180006,
+      "packaged_migration_env_sha256": "a47bb282289728210c571276c7194ddb004ac5793cf01f5d77a701c1cc3df412",
+      "checks": [
+        "installed wheel resources",
+        "repeatable local bootstrap",
+        "unsafe preexisting role membership rejected",
+        "role flags/membership/DDL/TEMP isolation",
+        "future owner object backup grants",
+        "no PUBLIC function execution",
+        "synthetic explicit Alembic upgrade/repeat",
+        "real packaged content migration upgrade/repeat and reader head view",
+        "JSON/text/choice-order round trip",
+        "transaction rollback",
+        "bounded single reader pool",
+        "uninitialized runtime/API refusal and cleanup",
+        "explicit repeatable migration CLI"
+      ],
+      "limitations": "Real product schema plus synthetic toolchain data. Comprehensive actual-bank parity/recovery and DB reverse-proxy/browser acceptance remain Step 6. This smoke does not import authored content. No hosted or native AMD64 claim from ARM64 execution.",
+      "platform": "linux/arm64",
+      "image_id": "sha256:35763f50141f7bc83527b5fe565449777e13e1f956ca5c1c485d26d5fb280f04",
+      "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826"
+    },
+    "actualNginxPolicy": {
+      "image": "meducation-api:l4-step3",
+      "checks": [
+        "packaged Python/Node policy accepted fixture through nginx",
+        "rich-policy rejection and safe error paths pass through nginx",
+        "nginx rejects declared request above 64 MiB",
+        "exact 64 MiB chunked body accepted by nginx and API",
+        "64 MiB plus one chunked byte rejected",
+        "compressed body denied without expansion",
+        "installed wheel validates actual banks with exact artifact bytes"
+      ],
+      "isolation": "unique network/containers; loopback port; test-only routes; no databases or volumes",
+      "actualBank": {
+        "policyVersion": 1,
+        "warnings": 32,
+        "pythonVersion": "3.14.8",
+        "quizSha256": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+        "flashcardSha256": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+      },
+      "nodeVersion": "v22.23.3",
+      "imageId": "sha256:35763f50141f7bc83527b5fe565449777e13e1f956ca5c1c485d26d5fb280f04",
+      "platform": "linux/arm64",
+      "result": "pass"
+    },
+    "actualBankRecovery": {
+      "result": "pass",
+      "postgres_image": "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826",
+      "platform": "linux/arm64",
+      "seconds": 142.6,
+      "source_parity": {
+        "result": "pass",
+        "sourceSha256": {
+          "quiz": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+        },
+        "releaseId": "440d6444-c2f0-441c-b689-51aa27c4da3a",
+        "revisions": {
+          "quiz": "sha256-11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "sha256-78dc0f035e3e42c81fcbfc92ea3a5963fc3807186ea82b7ee9bc84cfe6a02f19"
+        },
+        "routesChecked": 348,
+        "counts": {
+          "subjects": 13,
+          "quizzes": 111,
+          "questions": 11687,
+          "decks": 98,
+          "cards": 1712
+        },
+        "checks": [
+          "all reconstructed typed fields/optional presence/string/array order",
+          "both exact serialized artifacts and revision hashes",
+          "all learner catalogs/bodies/counts/membership and ETag/304/409",
+          "reader connection cleanup"
+        ]
+      },
+      "restored_parity": {
+        "result": "pass",
+        "sourceSha256": {
+          "quiz": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+        },
+        "releaseId": "440d6444-c2f0-441c-b689-51aa27c4da3a",
+        "revisions": {
+          "quiz": "sha256-11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+          "flashcard": "sha256-78dc0f035e3e42c81fcbfc92ea3a5963fc3807186ea82b7ee9bc84cfe6a02f19"
+        },
+        "routesChecked": 348,
+        "counts": {
+          "subjects": 13,
+          "quizzes": 111,
+          "questions": 11687,
+          "decks": 98,
+          "cards": 1712
+        },
+        "checks": [
+          "all reconstructed typed fields/optional presence/string/array order",
+          "both exact serialized artifacts and revision hashes",
+          "all learner catalogs/bodies/counts/membership and ETag/304/409",
+          "reader connection cleanup"
+        ]
+      },
+      "state_snapshot": {
+        "admin_auth.logins": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "admin_auth.rate_limits": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "admin_auth.sessions": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "content.active_publication": {
+          "count": 1,
+          "sha256": "eda44730d823469c6111e0798cb4c29b1849340a61fd39a6cc487fe40e47e18d"
+        },
+        "content.alembic_version": {
+          "count": 1,
+          "sha256": "e7809046fca2224b9e970d02f63084e1190c014103d6c36a6ad3d4fb0cd74ea0"
+        },
+        "content.audit_events": {
+          "count": 4,
+          "sha256": "a8eda4c4b8a15b9f36d272ce6b0908c730a173fb24b386f48a9641e21ba5a024"
+        },
+        "content.authored_events": {
+          "count": 0,
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        "content.decks": {
+          "count": 98,
+          "sha256": "b06ecfc5a5fb76f8974dfae751e90fa42c6d83979f799101cc1fbf5d4456d5e4"
+        },
+        "content.draft": {
+          "count": 1,
+          "sha256": "d61cbcc70d39ba9a79497238d2e2e05cd80e2ca8c6344d24b2fa99049c0cbbf1"
+        },
+        "content.entity_ids": {
+          "count": 13624,
+          "sha256": "c3eeb2f99c481c972e0bab968d43197ac249b43a88455156afccde9230ec59d7"
+        },
+        "content.flashcards": {
+          "count": 1712,
+          "sha256": "e2d0919083926d54bd1f18bc9bf994c37768ef41ff10b6e60b715f07f8f5b8a5"
+        },
+        "content.id_counters": {
+          "count": 5,
+          "sha256": "fbec830e403d4ebdfe679359b2a93fccef067ac8d6befdec1b317cf5e6d0f54a"
+        },
+        "content.id_reservations": {
+          "count": 1,
+          "sha256": "6cac2b533118762ee2ecdc88a7a75c51d866c7733935b7d3ed98e60287cc1e90"
+        },
+        "content.import_events": {
+          "count": 1,
+          "sha256": "e0e50ae877ca8c4e72b01ebc2bccc28c136847061454df71bcaa4134a970f662"
+        },
+        "content.operations": {
+          "count": 4,
+          "sha256": "d9ca65954f1aec642dcb896e232fd8f86fba75c114e5bbe92008ce31af0ab688"
+        },
+        "content.publication_events": {
+          "count": 1,
+          "sha256": "9aac108cbfd33d3fe12766147491c0d9ebd0c74ee5de0e16e84a0fe15b787f6a"
+        },
+        "content.questions": {
+          "count": 11687,
+          "sha256": "f2c46db3665957a7e56b58cfd199aaf13b37feba81fb8d665ced335e2ec53ab1"
+        },
+        "content.quizzes": {
+          "count": 111,
+          "sha256": "9d7001175b90f5400e98f91e69b942f0e1e814cb358c6e774eecf4cf6c1c9b47"
+        },
+        "content.releases": {
+          "count": 1,
+          "sha256": "666bb7bc34b6f055d9255e44040b4124b305993580c300ef03ec610339c3f7a3"
+        },
+        "content.subjects": {
+          "count": 13,
+          "sha256": "21b48496688deb9c532ce2ce7bb3253f8b1fafcd577c6e77b1f82ecd9fad4359"
+        },
+        "sequences": [["publication_events_publication_sequence_seq", 1]]
+      },
+      "dump_sha256": "a7c34df7f429a30c7c0b5eff582738bc33e75bbb104ad591e72f253f4bc5ae99",
+      "checks": [
+        "backup login dump, no owner/ACL",
+        "fresh target single-transaction restore as migration owner",
+        "explicit owner/default/reader/operator/backup grants",
+        "exact all-table draft/audit/operation/allocation and sequence state",
+        "source state and authored bytes unchanged",
+        "fresh readers and complete actual-bank/API parity after restoration"
+      ],
+      "isolation": "unique tmpfs cluster; no persistent volumes or routine DB; credentials and archive temporary"
+    },
+    "documentsAndDiff": {
+      "prettier": "pass",
+      "gitDiffCheck": "pass"
+    }
+  },
+  "audit": {
+    "result": "No blocking findings for local Step 3 backend gate. Explicit separation of runtime verification from hosted/UI acceptance.",
+    "coverage": [
+      "Maintained-library code/PKCE and ID-token signature/claims/purpose validation",
+      "Unknown/rotated/removed/ambiguous/weak/oversized signing keys, stale cache and discovery/transport outage",
+      "All planned private content paths deny anonymous, revoked, expired, wrong-editor and old-epoch sessions before lookup",
+      "Session rotation preserves absolute expiry; failed step-up does not upgrade/revoke a still-valid session",
+      "Serialized protected work/logout across store instances; emergency revoke without provider access",
+      "Exact Origin/CSRF/JSON/encoding/body/rate limits, non-ASCII CSRF safe denial, cookie flags, fixed redirects, no CORS and query redaction",
+      "Actual disposable loopback HTTP code/Basic/PKCE/nonce/cookie redirect flow",
+      "Role isolation and explicit packaged migration head; no worker migration",
+      "Actual-bank exact parity and source hashes, both-schema dump/restore and grants compatibility"
+    ]
+  },
+  "limitations": [
+    "Synthetic factor-time claims establish local behavior only; production provider adapter is disabled pending tenant/factor/freshness/logout/recovery acceptance.",
+    "Content HTTP/structured allocation/durable history operations remain Step 4; dirty-text/expired-session/login UX and proxy editor acceptance remain Step 5.",
+    "Corpus recovery fixture includes empty auth tables. Retained live auth/authoring backup and restored-session acceptance remains Step 6; external epoch change is required before restored admin traffic.",
+    "No new native AMD64/ARM64 CI run or hosted configuration; container evidence is local ARM64 only.",
+    "Frontend/browser suites were not rerun; current continuation changes backend/proxy configuration, covered by backend/build and actual nginx checks."
+  ],
+  "advisories": [
+    "Existing Vite >500 kB chunk warning.",
+    "SQLAlchemy Result.tuples() deprecation in corpus recovery helper.",
+    "Intentional weak-key warning in auth rejection fixture."
+  ]
+}

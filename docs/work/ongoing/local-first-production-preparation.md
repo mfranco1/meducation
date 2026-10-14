@@ -1,6 +1,6 @@
 # Local-first production preparation
 
-Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 complete with passing local verification and user-confirmed native AMD64/ARM64 GitHub CI; L3 complete with final verification and independently verified native AMD64/ARM64 CI; L4 Steps 1–2 complete; Steps 3–8 and L5–L6 pending. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
+Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 complete with passing local verification and user-confirmed native AMD64/ARM64 GitHub CI; L3 complete with final verification and independently verified native AMD64/ARM64 CI; L4 Steps 1–2 complete; Step 3 local backend gate complete; Steps 4–8 and L5–L6 pending. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
 
 ## Confirmed scope
 
@@ -79,7 +79,7 @@ Gate: local Postgres serves the existing learner without content drift or gratui
 
 ### L4 — Local database authoring and admin access boundary
 
-Detailed sequence: [L4 local authoring and admin access plan](L4-local-authoring-admin-access-plan.md). Steps 1–2 are complete; Step 3 awaits continuation. Eight gated steps cover paired editor contracts, server validation, authentication, transactional authoring, HTTP editor integration, recovery/tooling, explicitly approved authority cutover and final verification.
+Detailed sequence: [L4 local authoring and admin access plan](L4-local-authoring-admin-access-plan.md). Steps 1–2 and Step 3 local backend gate are complete; Step 4 awaits continuation. Eight gated steps cover paired editor contracts, server validation, authentication, transactional authoring, HTTP editor integration, recovery/tooling, explicitly approved authority cutover and final verification.
 
 - [ ] Adapt AdminQuestionBankGateway and existing editor/core logic to HTTP-backed paired-bank drafts. Resolve existing synchronous flashcard snapshot and undo/reset semantics explicitly.
 - [ ] Save drafts directly to Postgres; revalidate on save and publish. Publish atomically creates/activates a complete immutable release. Retain source answers, verified answers, change reasons, editor identity and append-only audit history.
@@ -202,3 +202,5 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
 - [x] L4 Step 2 partially implemented: packaged parser policy, shared fixtures, real-PG invalid-save preservation and real-nginx byte limits verified. Authenticated preview/publish wiring remains Steps 3–4 work; see the [L4 tracker](L4-local-authoring-admin-access-plan.md) and [policy runbook](../../L4-content-policy.md). Step 2 remains open; the validation/transport results do not establish complete Step 2 acceptance.
 
 - [x] L4 Step 2 integration completed after the status correction: internal preview/save/authored publish share validation; all 98 real PG tests, backend checks/build and installed-wheel migration smoke pass. [Integration evidence](L4-step2-authoring-evidence.json) closes the original requirement; earlier partial-status entries remain historical. Step 3 awaits continuation; L4 overall remains open.
+
+- [x] L4 Step 3 local backend access/session gate implemented and verified: maintained-library OIDC/code/PKCE, private persistent sessions and separate roles, prefix-wide authorization, expiry/revocation/CSRF/epoch, loopback flow and negative cases. [Session runbook](../../L4-admin-session-boundary.md) and [evidence](L4-step3-auth-evidence.json) distinguish local backend verification from unaccepted hosted MFA/provider behavior and Step 5 editor UX. Step 4 awaits continuation; L4 overall remains open.

@@ -35,20 +35,20 @@ def snapshot(engine):
         tables = (
             connection.execute(
                 text(
-                    "SELECT tablename FROM pg_tables WHERE schemaname='content' ORDER BY tablename"
+                    "SELECT schemaname,tablename FROM pg_tables WHERE schemaname IN ('content','admin_auth') ORDER BY schemaname,tablename"
                 )
             )
-            .scalars()
+            .tuples()
             .all()
         )
-        for table in tables:
+        for schema, table in tables:
             rows = [
                 json.dumps(row, sort_keys=True, default=str, separators=(",", ":"))
                 for row in connection.execute(
-                    text(f'SELECT to_jsonb(t) FROM content."{table}" t')
+                    text(f'SELECT to_jsonb(t) FROM "{schema}"."{table}" t')
                 ).scalars()
             ]
-            state[table] = {
+            state[schema + "." + table] = {
                 "count": len(rows),
                 "sha256": hashlib.sha256("\n".join(sorted(rows)).encode()).hexdigest(),
             }
@@ -271,6 +271,8 @@ def main():
                     "meducation_verify_source",
                     "--schema",
                     "content",
+                    "--schema",
+                    "admin_auth",
                     "--format=custom",
                     "--no-owner",
                     "--no-acl",
@@ -300,6 +302,7 @@ def main():
                 ):
                     raise RuntimeError("Fresh restore schema was not empty")
                 connection.exec_driver_sql("DROP SCHEMA content")
+                connection.exec_driver_sql("DROP SCHEMA admin_auth")
                 connection.exec_driver_sql(
                     "GRANT CREATE ON DATABASE meducation_verify_restored TO meducation_owner"
                 )

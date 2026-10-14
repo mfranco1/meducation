@@ -2,8 +2,8 @@
 
 Implemented for [L4 Step 2](work/ongoing/L4-local-authoring-admin-access-plan.md#step-2--implement-server-content-policy-validation).
 Canonical JSON remains authoritative. Internal paired preview/save/authored-publish
-services are implemented; private HTTP routes and session protection remain
-Steps 3–4 work.
+services are implemented. The local [Step 3 session boundary](L4-admin-session-boundary.md)
+is available; private content HTTP integration remains Step 4 work.
 
 ## Selected parser and packaging
 
@@ -99,8 +99,8 @@ advances the draft base/revision. No file-import provenance is invented.
 
 Only the existing trusted operator role can call these primitives; no browser-facing
 route or editor role is enabled. Actors here are explicit trusted operator/test
-context, not verified sessions. Step 3 authentication/CSRF/MFA and Step 4 HTTP
-integration remain required, including durable Undo/reset, creation-intent binding
+context, not verified sessions. The local Step 3 authentication/CSRF/synthetic-assurance boundary is implemented;
+Step 4 HTTP integration remains required, including durable Undo/reset, creation-intent binding
 and bounded exports. Trusted importer and reconstruction operations retain their
 separate operator contract.
 

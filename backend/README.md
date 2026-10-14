@@ -81,7 +81,7 @@ migration credentials.
 .venv/bin/meducation-db upgrade
 ```
 
-`head` reports `0002_authored_publish`; `upgrade` applies the packaged transactional
+`head` reports `0003_admin_sessions`; `upgrade` applies the packaged transactional
 content schema and private authored-publication extension and is safe to repeat. The installed package contains Alembic revisions
 and SQL resources under `meducation_api/migrations`, so the same explicit job
 runs from the API wheel/image without a source checkout. It creates an empty
@@ -297,5 +297,7 @@ editing shared policy or limits. The default validator approves local images onl
 HTTP integration must inject any approved origins from trusted backend settings.
 `admin/authoring.py` supplies internal paired preview/save/publish with fresh validation,
 context checks and atomic authored provenance. Its actor is trusted backend/operator
-context, not browser authentication. Private HTTP routes and sessions remain disabled;
-Step 3 authorization must precede Step 4 HTTP integration.
+context, not browser authentication. Step 3 now supplies a disabled-by-default, loopback-only synthetic OIDC/session
+boundary; production provider assurance is still unaccepted. Step 4 content HTTP
+operations and Step 5 editor session integration remain pending. See
+[session roles, configuration and verification](../docs/L4-admin-session-boundary.md).

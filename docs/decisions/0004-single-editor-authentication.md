@@ -4,7 +4,7 @@ Status: security/session contract selected; ZITADEL Cloud is the provisional OID
 
 ## Current boundary and proposed ownership
 
-[AdminApp](../../src/admin/AdminApp.tsx) currently creates an in-memory gateway from bundled canonical JSON. Its development/build enable flag is not authorization. [FastAPI](../../backend/src/meducation_api/main.py) serves read-only public content; [settings](../../backend/src/meducation_api/settings.py) has no identity/session settings. Nothing here implements authentication or changes content authority.
+At contract selection, [AdminApp](../../src/admin/AdminApp.tsx) creates an in-memory gateway from bundled canonical JSON. Its development/build enable flag is not authorization. [FastAPI](../../backend/src/meducation_api/main.py) serves read-only public content; [settings](../../backend/src/meducation_api/settings.py) has no identity/session settings. Nothing here implements authentication or changes content authority.
 
 L4 adds a backend-for-frontend boundary: admin UI and `/api/admin/*` use one trusted origin, backend OIDC code exchange and an opaque server session. All private reads, drafts, save/undo/reset, publish/activate/rollback, exports and diagnostics authorize on the server; learner published-content endpoints remain public and ignore admin cookies. The authenticated editor is the exact configured `(issuer, subject)` pair, never email, domain, display name, a browser admin flag, or a generic provider role. Registration never grants editor access. Use the existing editor/core with an HTTP gateway; remove bundled private draft bootstrap from the hosted editor.
 
@@ -86,3 +86,16 @@ Pending provider acceptance before L4 production adapter, and hosted release gat
 L0-C contract/capability status is complete; final provider acceptance remains explicitly pending as permitted by L0. No authentication is implemented and no cloud configuration is created. Self-audit distinguished enrollment from challenged MFA, provider console MFA from application assurance, ID tokens from API bearer/logout tokens, local logout from provider revocation, and DB restoration from safe session revocation. Stop before L0 Step 9.
 
 Verification: build/typecheck, changed-document link checks, contract/evidence-status assertions, protected canonical hashes and git diff --check passed. Existing Vite chunk-size advisory remains. Documentation only: no auth runtime, provider account, token verification run or hosted MFA test is claimed.
+
+## L4 local implementation — 2026-10-14
+
+The [Step 3 session runbook](../L4-admin-session-boundary.md) records the maintained
+Authlib/joserfc/crypto/HTTP dependencies, private migrations/roles, code/PKCE flow,
+strict signed ID-token validation, persistent sessions, revocation/epoch protection
+and browser request boundary now implemented. All local backend negative cases
+and a disposable loopback issuer are verified. Production adapter acceptance
+remains pending; only synthetic local assurance is enabled, with production and
+default application guards refusing that configuration. No provider account or
+real factor policy is provisioned. Authored HTTP services and editor dirty-text/
+expiry/login UX acceptance remain Steps 4–5; those UI/hosted cases are not claimed
+by backend tests. Earlier design-stage verification above is historical evidence.

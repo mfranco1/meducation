@@ -20,6 +20,7 @@ PG_IMAGE = "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b3
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--maxfail", type=int, default=0)
     args = parser.parse_args()
     name = "meducation-pg-content-" + uuid.uuid4().hex[:12]
     try:
@@ -82,7 +83,7 @@ def main():
                 + port
                 + "/meducation_test_content?sslmode=disable",
             }
-            for role in ("MIGRATOR", "READER", "BACKUP", "OPERATOR"):
+            for role in ("MIGRATOR", "READER", "BACKUP", "OPERATOR", "SESSION", "EDITOR"):
                 env["MEDUCATION_POSTGRES_" + role + "_PASSWORD"] = (
                     secrets.token_urlsafe(24)
                 )
@@ -93,6 +94,7 @@ def main():
                 "backend/tests/test_postgres_content.py",
                 "-q",
                 "--tb=short",
+                "--maxfail="+str(args.maxfail),
             ]
             result = subprocess.run(
                 command,
@@ -100,7 +102,7 @@ def main():
                 env=env,
                 capture_output=True,
                 text=True,
-                timeout=180,
+                timeout=300,
                 check=False,
             )
             print(result.stdout)

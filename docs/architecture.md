@@ -168,6 +168,20 @@ its draft-save wrapper validates before SQL. Internal `backend/src/meducation_ap
 owns captured paired preview/save/publish, calling the validator and bound DB
 operations. Migration `0002_authored_publish` adds atomic authored releases and
 reviewed saves, retaining importer deduplication and separate provenance. No frontend
-presentation dependencies enter this boundary. Actors are trusted operator context;
-authenticated sessions/private HTTP routes and editor integration remain later L4
-steps. No content authority has changed.
+presentation dependencies enter this boundary. Internal service actors are trusted operator context; the local Step 3 session
+boundary now supplies verified principals for future private HTTP integration.
+Content HTTP routes and editor integration remain later L4 steps. No content
+authority has changed.
+
+## Private admin session boundary
+
+`backend/src/meducation_api/auth` owns fixed OIDC configuration, maintained-library
+code/PKCE and signed-ID-token validation, encrypted login transactions, Postgres
+sessions and prefix-wide HTTP authorization. Private admin modules consume a
+verified principal supplied by this boundary. Migration `0003_admin_sessions` and
+explicit bootstrap own separate session/editor roles and auth schema; workers
+never migrate. Session locks span protected work and serialize logout/revocation.
+Public learner routes retain their separate reader and ignore admin cookies.
+The [session runbook](L4-admin-session-boundary.md) records limits and recovery
+epoch handling. Only synthetic loopback identity is available; production adapter
+acceptance, content HTTP operations and editor integration remain later gates.

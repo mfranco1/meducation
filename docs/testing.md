@@ -168,3 +168,10 @@ from ordinary pytest (which skips these cases without its database environment).
 After migration/resource changes, rebuild the API image and run
 `scripts/containers/smoke-db-toolchain.py` against the installed wheel. Local
 ARM64 evidence does not certify hosted or new native AMD64/ARM64 CI acceptance.
+
+L4 Step 3 adds `backend/tests/test_auth.py` signed-token/JWKS/transport fixtures
+and private-cookie/session/role tests in the real PG launcher, including a real
+loopback code/PKCE issuer. Follow the [session runbook](L4-admin-session-boundary.md).
+Synthetic MFA/time claims prove local checks only; hosted factor policy/freshness
+and editor dirty-text/session UX acceptance remain distinct gates. New native CI
+results must be verified separately from the local ARM64 image/recovery evidence.

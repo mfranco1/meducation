@@ -8,6 +8,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from meducation_api.auth.config import AuthSettings
+from meducation_api.auth.http import AuthRuntime, install_auth
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.repositories.question_bank import (
     Flashcard,
@@ -83,8 +85,15 @@ def create_app(
     ] = JsonFlashcardCatalogRepository,
     *,
     source_factory: Callable[[Settings], ContentSource] | None = None,
+    auth_settings: AuthSettings | None = None,
+    auth_factory: Callable[[AuthSettings], AuthRuntime] = AuthRuntime,
 ) -> FastAPI:
     config = settings or Settings()
+    identity_config = auth_settings or AuthSettings()
+    if identity_config.enabled and config.database_environment != identity_config.environment:
+        raise ValueError(
+            "Local synthetic identity requires explicit local application/database mode."
+        )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
@@ -107,6 +116,8 @@ def create_app(
             app.state.source = None
             app.state.bank = None
             app.state.flashcards = None
+            if app.state.auth is not None:
+                app.state.auth.close()
 
     app = FastAPI(title="Meducation Content API", version="1.0.0", lifespan=lifespan)
     app.add_middleware(
@@ -115,6 +126,8 @@ def create_app(
         allow_methods=["GET", "HEAD"],
         allow_headers=["If-None-Match", "If-Match", "Content-Type"],
     )
+
+    install_auth(app, identity_config, auth_factory)
 
     @app.exception_handler(ContentDatabaseError)
     async def unavailable(request: Request, error: ContentDatabaseError) -> JSONResponse:

@@ -312,7 +312,7 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml --profile db-jobs run --rm --no-deps migrate
 ```
 
-The migration job applies head `0002_authored_publish` (including the preserved
+The migration job applies head `0003_admin_sessions` (including the preserved
 `0001_content` foundation) and can be repeated. Run this controlled
 job explicitly before the API. It receives only the migrator URL, while the API
 receives only the reader URL and waits for Postgres startup health. Import and

@@ -39,6 +39,8 @@ class Database:
     operator: Engine
     reader: Engine
     backup: Engine
+    session: Engine
+    editor: Engine
 
 
 @pytest.fixture
@@ -55,7 +57,7 @@ def db():
         raise RuntimeError("Integration tests require the launcher's disposable loopback database")
     passwords = RolePasswords(_env_file=None)
     engines = [create_database_engine(url, operator=True)]
-    for role in ("migrator", "operator", "reader", "backup"):
+    for role in ("migrator", "operator", "reader", "backup", "session", "editor"):
         engines.append(
             create_database_engine(
                 url.set(
@@ -68,6 +70,7 @@ def db():
     database = Database(*engines)
     try:
         with database.admin.begin() as connection:
+            connection.exec_driver_sql("DROP SCHEMA IF EXISTS admin_auth CASCADE")
             connection.exec_driver_sql("DROP SCHEMA IF EXISTS content CASCADE")
         bootstrap(database.admin, passwords)
         upgrade(database.migrator)
@@ -175,7 +178,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0002_authored_publish"
+    assert migration_head() == "0003_admin_sessions"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -202,7 +205,7 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0002_authored_publish"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0003_admin_sessions"
 
 
 def test_release_omission_provenance_order_and_digest(db):
@@ -1752,6 +1755,7 @@ def test_concurrent_authored_publications_and_read_role_denial(db):
 def test_upgrade_populated_l3_schema_preserves_content_and_protected_history(db):
     # Rebuild only this launcher's disposable schema at the original packaged head.
     with db.admin.begin() as connection:
+        connection.exec_driver_sql("DROP SCHEMA admin_auth CASCADE")
         connection.exec_driver_sql("DROP SCHEMA content CASCADE")
     bootstrap(db.admin, RolePasswords(_env_file=None))
     with db.migrator.begin() as connection:
@@ -1813,3 +1817,438 @@ def test_concurrent_reviewed_save_and_publish_never_overwrite_each_other(db):
     assert sum(value is not None for value in outcomes) == 1
     assert service.load().revision == context.revision + 1
     assert scalar(db.operator, "SELECT count(*) FROM content.authored_events") == (1 if outcomes[1] is not None else 0)
+
+
+# Private auth uses the same disposable database, with separate actual role connections.
+def auth_app(db, harness=None, **changes):
+    from types import SimpleNamespace
+
+    from fastapi.testclient import TestClient
+    from test_auth import Harness, config
+
+    from meducation_api.auth.store import SessionStore
+    from meducation_api.main import create_app
+    from meducation_api.settings import Settings
+
+    cfg = config(
+        session_database_url=db.session.url.render_as_string(hide_password=False),
+        editor_database_url=db.editor.url.render_as_string(hide_password=False),
+        **changes,
+    )
+    h = harness or Harness(cfg)
+    runtime = SimpleNamespace(
+        config=cfg,
+        store=SessionStore(db.session, cfg, clock=lambda: h.now),
+        oidc=h.client,
+        close=lambda: None,
+    )
+    settings = Settings(
+        _env_file=None,
+        database_environment="local",
+        bank_path=ROOT / "e2e/fixtures/bank.json",
+        flashcard_bank_path=ROOT / "e2e/fixtures/flashcard-bank.json",
+    )
+    # Fixture filename follows existing content-source tests.
+    app = create_app(settings, auth_settings=cfg, auth_factory=lambda _: runtime)
+    return TestClient(app, base_url=cfg.origin, follow_redirects=False), runtime, h
+
+
+def auth_login(client, runtime, h, *, stepup=False):
+    from urllib.parse import parse_qs, urlsplit
+
+    csrf = client.get("/api/admin/session").json()["csrfToken"]
+    path = "/api/admin/auth/reauthenticate" if stepup else "/api/admin/auth/login"
+    response = client.post(
+        path, json={}, headers={"Origin": runtime.config.origin, "X-CSRF-Token": csrf}
+    )
+    assert response.status_code == 200, response.text
+    fields = parse_qs(urlsplit(response.json()["authorizationUrl"]).query)
+    h.nonce = fields["nonce"][0]
+    h.code = "disposable-single-use-code"
+    row = scalar(
+        runtime.store.engine,
+        "SELECT ciphertext FROM admin_auth.logins WHERE NOT consumed ORDER BY expires DESC LIMIT 1",
+    )
+    h.verifier = json.loads(runtime.store.cipher.decrypt(row.encode()))["verifier"]
+    return client.get(
+        "/api/admin/auth/callback", params={"state": fields["state"][0], "code": h.code}
+    ), fields
+
+
+def test_auth_role_isolation_and_cookie_login_logout(db):
+    client, runtime, h = auth_app(db)
+    with client:
+        assert client.get("/api/admin/access").status_code == 401
+        result, fields = auth_login(client, runtime, h)
+        assert result.status_code == 303, result.text
+        cookie = result.headers["set-cookie"]
+        assert "HttpOnly" in cookie and "SameSite=lax" in cookie and "Path=/" in cookie
+        assert "Domain=" not in cookie and "__Host-" not in cookie
+        assert result.headers["location"] == runtime.config.origin + "/admin.html"
+        assert result.headers["cache-control"] == "no-store"
+        assert client.get("/api/admin/access").status_code == 200
+        assert (
+            client.get(
+                "/api/admin/auth/callback", params={"state": fields["state"][0], "code": "replay"}
+            ).status_code
+            == 401
+        )
+        assert (
+            client.get("/api/admin/access").status_code == 200
+        )  # callback failure retains valid session
+        info = client.get("/api/admin/session").json()
+        assert info["authenticated"]
+        assert (
+            client.post(
+                "/api/admin/auth/logout", json={}, headers={"Origin": runtime.config.origin}
+            ).status_code
+            == 403
+        )
+        cookie_value = client.cookies.get(runtime.config.cookie)
+        response = client.post(
+            "/api/admin/auth/logout",
+            json={},
+            headers={"Origin": runtime.config.origin, "X-CSRF-Token": info["csrfToken"]},
+        )
+        assert response.status_code == 200
+        assert (
+            client.get(
+                "/api/admin/access", headers={"Cookie": runtime.config.cookie + "=" + cookie_value}
+            ).status_code
+            == 401
+        )
+        assert (
+            client.get(
+                "/api/v1/subjects", headers={"Cookie": runtime.config.cookie + "=malicious"}
+            ).status_code
+            == 200
+        )
+    for engine in (db.reader, db.operator, db.editor):
+        with pytest.raises(SQLAlchemyError), engine.connect() as c:
+            c.execute(text("SELECT * FROM admin_auth.sessions"))
+    for engine in (db.session, db.editor):
+        for statement in (
+            "SET ROLE meducation_owner",
+            "INSERT INTO content.entity_ids(kind,id,materialized) VALUES('i','ibypass',true)",
+            "SELECT content.store_release(NULL,NULL,NULL,NULL,NULL,NULL,NULL)",
+            "UPDATE content.draft SET revision=999",
+        ):
+            with pytest.raises(SQLAlchemyError), engine.begin() as c:
+                c.execute(text(statement))
+    assert scalar(db.backup, "SELECT count(*) FROM admin_auth.sessions") == 1
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/draft",
+        "/reservations",
+        "/draft/preview",
+        "/draft/save",
+        "/draft/undo",
+        "/draft/reset",
+        "/publish/preview",
+        "/publish",
+        "/releases",
+        "/releases/any/activation-preview",
+        "/releases/any/activate",
+        "/exports",
+        "/operations/any",
+    ],
+)
+def test_every_private_operation_is_guarded_before_lookup(db, path):
+    client, runtime, _h = auth_app(db)
+    with client:
+        response = (
+            client.get("/api/admin" + path)
+            if path in ("/draft", "/releases", "/operations/any")
+            else client.post(
+                "/api/admin" + path, json={}, headers={"Origin": runtime.config.origin}
+            )
+        )
+        assert response.status_code == 401
+        assert response.headers["cache-control"] == "no-store"
+        assert "draft" not in response.text
+
+
+@pytest.mark.parametrize(
+    "fault", ["origin", "sibling", "csrf", "content-type", "host", "oversize", "duplicate", "encoding", "nonascii"]
+)
+def test_auth_http_transport_denies_bad_browser_requests(db, fault):
+    client, runtime, _h = auth_app(db)
+    with client:
+        csrf = client.get("/api/admin/session").json()["csrfToken"]
+        headers = {
+            "Origin": runtime.config.origin,
+            "X-CSRF-Token": csrf,
+            "Content-Type": "application/json",
+        }
+        body = "{}"
+        if fault == "origin":
+            del headers["Origin"]
+        elif fault == "sibling":
+            headers["Origin"] = "http://localhost:4173"
+        elif fault == "csrf":
+            headers["X-CSRF-Token"] = "forged"
+        elif fault == "content-type":
+            headers["Content-Type"] = "text/plain"
+        elif fault == "host":
+            headers["Host"] = "evil.example"
+        elif fault == "nonascii":
+            headers["X-CSRF-Token"]=b"\xff"
+        elif fault == "encoding":
+            headers["Content-Encoding"]="gzip"
+        elif fault == "oversize":
+            body = " " * 8193
+        elif fault == "duplicate":
+            body = '{"x":1,"x":2}'
+        result = client.post("/api/admin/auth/login", content=body, headers=headers)
+        assert result.status_code in (400, 403, 413, 415)
+        assert scalar(db.session, "SELECT count(*) FROM admin_auth.logins") == 0
+        assert result.headers["x-frame-options"] == "DENY"
+        assert result.headers["content-security-policy"].startswith("default-src 'none'")
+        assert "access-control-allow-origin" not in result.headers
+
+
+def test_auth_expiry_epoch_wrong_editor_and_session_store_outage(db):
+    from meducation_api.auth.oidc import AuthError
+
+    client, runtime, h = auth_app(db)
+    with client:
+        result, _ = auth_login(client, runtime, h)
+        assert result.status_code == 303
+        token = client.cookies.get(runtime.config.cookie)
+        for changes in ({"epoch": "different-external-epoch"}, {"editor_subject": "other-editor"}):
+            _alternate, other, _ = auth_app(db, **changes)
+            with pytest.raises(AuthError), other.store.guard(token):
+                pytest.fail("Old session granted access")
+        h.now += 901
+        csrf = client.get("/api/admin/session").json()["csrfToken"]
+        assert (
+            client.post(
+                "/api/admin/publish",
+                json={},
+                headers={"Origin": runtime.config.origin, "X-CSRF-Token": csrf},
+            ).status_code
+            == 403
+        )
+        # Session bootstrap is polling; it must not extend idle lifetime.
+        h.now += 900
+        assert not client.get("/api/admin/session").json()["authenticated"]
+        h.now -= 1801
+        token2, _ = runtime.store.issue(h.client.verify(h.token(), nonce=h.nonce))
+        h.now += 28801
+        with pytest.raises(AuthError), runtime.store.guard(token2):
+            pytest.fail("Absolute expiry bypass")
+        h.now -= 28801
+        owner_execute(db, "REVOKE USAGE ON SCHEMA admin_auth FROM meducation_session")
+        result = client.get(
+            "/api/admin/session", headers={"Cookie": runtime.config.cookie + "=" + token2}
+        )
+        assert result.status_code == 503
+        assert "admin_auth" not in result.text
+        assert client.get("/api/v1/subjects").status_code == 200
+
+
+def test_auth_rotation_cancelled_stepup_and_logout_prevents_reissue(db):
+    from meducation_api.auth.oidc import AuthError
+
+    client, runtime, h = auth_app(db)
+    with client:
+        result, _ = auth_login(client, runtime, h)
+        assert result.status_code == 303
+        old = client.cookies.get(runtime.config.cookie)
+        old_csrf = client.get("/api/admin/session").json()["csrfToken"]
+        h.now += 6
+        result, _ = auth_login(client, runtime, h, stepup=True)
+        assert result.status_code == 303
+        new = client.cookies.get(runtime.config.cookie)
+        assert new != old
+        assert client.get("/api/admin/session").json()["csrfToken"] != old_csrf
+        with pytest.raises(AuthError), runtime.store.guard(old):
+            pytest.fail("Rotated cookie remained active")
+        h.now += 6
+        h.token_changes = {"sub": "other-editor"}
+        result, _ = auth_login(client, runtime, h, stepup=True)
+        assert result.status_code == 403
+        assert client.get("/api/admin/access").status_code == 200
+        identity = h.client.verify(h.token(), nonce=h.nonce)
+        with runtime.store.guard(new, interactive=False) as principal:
+            runtime.store.revoke(principal)
+        with pytest.raises(AuthError):
+            runtime.store.issue(identity, previous=hashlib.sha256(new.encode()).hexdigest())
+        assert scalar(db.session, "SELECT count(*) FROM admin_auth.sessions WHERE NOT revoked") == 0
+        live, _ = runtime.store.issue(identity)
+        runtime.store.begin_login("b"*43)
+        h.fail=True  # Emergency revoke must not contact the provider.
+        runtime.store.revoke_all()
+        assert scalar(db.session,"SELECT count(*) FROM admin_auth.logins")==0
+        with pytest.raises(AuthError), runtime.store.guard(live):
+            pytest.fail("Emergency revocation did not persist")
+
+
+def test_session_lock_serializes_protected_work_and_logout_across_workers(db):
+    from threading import Event
+
+    from meducation_api.auth.oidc import AuthError
+    from meducation_api.auth.store import SessionStore
+
+    store(db)
+    _, runtime, h = auth_app(db)
+    token, _ = runtime.store.issue(h.client.verify(h.token(), nonce=h.nonce))
+    other = SessionStore(db.session, runtime.config, clock=lambda: h.now)
+    entered = Event()
+    release = Event()
+    revoked = Event()
+
+    def protected():
+        with runtime.store.guard(token) as p:
+            entered.set()
+            assert release.wait(5)
+            # Commit a representative protected content write before releasing auth lock.
+            with db.operator.begin() as c:
+                c.execute(
+                    text("SELECT content.save_draft(:op,:q,:f,0,0,:actor,:reason,'{}')"),
+                    {
+                        "op": uuid4(),
+                        "q": artifacts()[0],
+                        "f": artifacts()[1],
+                        "actor": p.actor,
+                        "reason": REASON,
+                    },
+                )
+
+    def logout():
+        assert entered.wait(5)
+        with other.guard(token) as p:
+            other.revoke(p)
+        revoked.set()
+
+    with ThreadPoolExecutor(2) as pool:
+        work = pool.submit(protected)
+        out = pool.submit(logout)
+        assert entered.wait(5)
+        assert not revoked.wait(0.1)
+        release.set()
+        work.result(timeout=5)
+        out.result(timeout=5)
+    assert scalar(db.operator, "SELECT revision FROM content.draft") == 1
+    with pytest.raises(AuthError), runtime.store.guard(token):
+        pytest.fail("Revoked session accepted")
+
+
+def test_loopback_oidc_flow_exchanges_real_http_code_pkce_and_stepup(db):
+    """A disposable synthetic issuer exercises sockets/redirects, not real MFA."""
+    import base64
+    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+    from threading import Thread
+    from urllib.parse import parse_qs, urlencode, urlsplit
+
+    import httpx2
+
+    from meducation_api.auth.oidc import OIDCClient
+
+    _client,runtime,h=auth_app(db)
+    class Handler(BaseHTTPRequestHandler):
+        def log_message(self,*args):
+            pass  # Never log synthetic codes either.
+        def do_GET(self):
+            if urlsplit(self.path).path=='/authorize':
+                fields=parse_qs(urlsplit(self.path).query)
+                assert fields['response_type']==['code'] and fields['code_challenge_method']==['S256']
+                assert fields['redirect_uri']==[runtime.config.callback] and fields['scope']==['openid']
+                h.nonce=fields['nonce'][0]; h.code='once-only-loopback-code'; self.server.challenge=fields['code_challenge'][0]
+                self.send_response(302); self.send_header('Location',runtime.config.callback+'?'+urlencode({'code':h.code,'state':fields['state'][0]})); self.end_headers()
+            else:
+                result=h.request(httpx2.Request('GET',runtime.config.issuer+self.path))
+                self.send_response(result.status_code); self.send_header('Content-Type','application/json'); self.end_headers(); self.wfile.write(result.content)
+        def do_POST(self):
+            data=self.rfile.read(int(self.headers['Content-Length']))
+            verifier=parse_qs(data.decode())['code_verifier'][0]
+            assert base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('=')==self.server.challenge
+            h.verifier=verifier
+            result=h.request(httpx2.Request('POST',runtime.config.token_endpoint,content=data,headers={'Authorization':self.headers['Authorization']}))
+            self.send_response(result.status_code); self.send_header('Content-Type','application/json'); self.end_headers(); self.wfile.write(result.content)
+    server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
+    thread=Thread(target=server.serve_forever,daemon=True); thread.start()
+    issuer='http://127.0.0.1:'+str(server.server_address[1])
+    cfg=runtime.config.model_copy(update={'issuer':issuer,'authorization_endpoint':issuer+'/authorize','token_endpoint':issuer+'/token','jwks_uri':issuer+'/jwks'})
+    # Rebuild the app with the same private DB and a real (non-mocked) client.
+    actual,rt,h=auth_app(db,issuer=issuer,authorization_endpoint=cfg.authorization_endpoint,token_endpoint=cfg.token_endpoint,jwks_uri=cfg.jwks_uri)
+    rt.oidc=OIDCClient(rt.config,clock=lambda:h.now)
+    runtime=rt
+    try:
+        with actual,httpx2.Client(follow_redirects=False,trust_env=False) as browser:
+            old=None
+            for path in ('/api/admin/auth/login','/api/admin/auth/reauthenticate'):
+                csrf=actual.get('/api/admin/session').json()['csrfToken']
+                login=actual.post(path,json={},headers={'Origin':rt.config.origin,'X-CSRF-Token':csrf})
+                assert login.status_code==200
+                authorize=browser.get(login.json()['authorizationUrl'])
+                assert authorize.status_code==302
+                result=actual.get(authorize.headers['Location'])
+                assert result.status_code==303,result.text
+                token=actual.cookies.get(rt.config.cookie); assert token and token!=old; old=token
+                assert actual.get('/api/admin/access').status_code==200
+                h.now+=6
+    finally:
+        rt.oidc.close(); server.shutdown(); server.server_close(); thread.join(timeout=2)
+
+
+@pytest.mark.parametrize('fault',['browser','state','duplicate','expired','cancel','missing-mfa','wrong-issuer','wrong-purpose'])
+def test_login_callback_faults_create_no_session(db,fault):
+    from urllib.parse import parse_qs, urlsplit
+    client,runtime,h=auth_app(db)
+    with client:
+        csrf=client.get('/api/admin/session').json()['csrfToken']
+        login=client.post('/api/admin/auth/login',json={},headers={'Origin':runtime.config.origin,'X-CSRF-Token':csrf})
+        fields=parse_qs(urlsplit(login.json()['authorizationUrl']).query)
+        h.nonce=fields['nonce'][0]; h.code='disposable-code'
+        h.verifier=json.loads(runtime.store.cipher.decrypt(scalar(db.session,'SELECT ciphertext FROM admin_auth.logins').encode()))['verifier']
+        params=[('state',fields['state'][0]),('code',h.code)]
+        if fault=='browser': client.cookies.clear()
+        elif fault=='state': params[0]=('state','x'*43)
+        elif fault=='duplicate': params.append(params[0])
+        elif fault=='expired': h.now+=601
+        elif fault=='cancel': params=[('state',fields['state'][0]),('error','access_denied')]
+        elif fault=='missing-mfa': h.token_changes={'amr':['pwd']}
+        elif fault=='wrong-issuer': h.token_changes={'iss':'http://untrusted.invalid'}
+        elif fault=='wrong-purpose': h.token_changes={'token_use':'logout'}
+        result=client.get('/api/admin/auth/callback',params=params)
+        assert result.status_code in (303,400,401,403)
+        assert scalar(db.session,'SELECT count(*) FROM admin_auth.sessions')==0
+        assert client.get('/api/admin/access').status_code==401
+        assert 'disposable-code' not in result.text
+        assert result.headers['cache-control']=='no-store'
+
+
+def test_auth_login_rate_limit_and_no_header_identity_bypass(db):
+    client,runtime,h=auth_app(db)
+    with client:
+        csrf=client.get('/api/admin/session').json()['csrfToken']
+        for _ in range(6):
+            response=client.post('/api/admin/auth/login',json={},headers={'Origin':runtime.config.origin,'X-CSRF-Token':csrf})
+            assert response.status_code==200
+        response=client.post('/api/admin/auth/login',json={},headers={'Origin':runtime.config.origin,'X-CSRF-Token':csrf})
+        assert response.status_code==429
+        assert scalar(db.session,'SELECT count(*) FROM admin_auth.logins')==6
+        assert client.get('/api/admin/access',headers={'Authorization':'Bearer '+h.token(),'X-Editor-Subject':runtime.config.editor_subject}).status_code==401
+        assert client.get('/api/v1/subjects').status_code==200
+
+
+def test_all_private_paths_reject_revoked_expired_wrong_editor_and_old_epoch(db):
+    client,runtime,h=auth_app(db)
+    paths=['/draft','/reservations','/draft/preview','/draft/save','/draft/undo','/draft/reset','/publish/preview','/publish','/releases','/releases/any/activation-preview','/releases/any/activate','/exports','/operations/any']
+    before=authoring_state(db)
+    with client:
+        identity=h.client.verify(h.token(),nonce=h.nonce)
+        for field,value in [('revoked',True),('epoch','restored-old-epoch'),('subject','wrong-editor'),('last_activity',h.now-1801),('expires',h.now-1)]:
+            token,csrf=runtime.store.issue(identity)
+            with db.session.begin() as c:
+                c.execute(text(f'UPDATE admin_auth.sessions SET {field}=:v WHERE token_hash=:h'),{'v':value,'h':hashlib.sha256(token.encode()).hexdigest()})
+            for path in paths:
+                headers={'Cookie':runtime.config.cookie+'='+token,'Origin':runtime.config.origin,'X-CSRF-Token':csrf}
+                response=client.get('/api/admin'+path,headers=headers) if path in ('/draft','/releases','/operations/any') else client.post('/api/admin'+path,json={},headers=headers)
+                assert response.status_code==401,(field,path,response.text)
+                assert response.headers['cache-control']=='no-store'
+        assert authoring_state(db)==before
