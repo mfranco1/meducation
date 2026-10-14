@@ -22,7 +22,10 @@ from meducation_api.db.engine import ContentDatabaseError, create_database_engin
 from meducation_api.db.migrate import upgrade
 from meducation_api.db.operations import activate_release, reserve_ids, save_draft
 from meducation_api.db.parity import verify_parity
-from meducation_api.db.recovery import invalidate_restored_sessions, restore_content_permissions
+from meducation_api.db.recovery import (
+    invalidate_restored_sessions,
+    restore_content_permissions,
+)
 from meducation_api.db.transfer import capture_pair, import_pair
 from meducation_api.settings import Settings
 from sqlalchemy import URL, text

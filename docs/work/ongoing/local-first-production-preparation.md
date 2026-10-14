@@ -208,3 +208,12 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
 - [x] L4 Step 4 local paired-service gate implemented and verified: guarded HTTP reservations/draft history/Undo/reset, distinct authored publication, retained activation and deterministic export. All 155 real PG17 tests, 202 ordinary backend tests, Ruff/mypy/build, native ARM64 installed-image/proxy policy checks and actual-corpus recovery compatibility passed. [Service runbook](../../L4-paired-editor-services.md) and [Step 4 evidence](L4-step4-editor-evidence.json) record limitations. Step 5 browser editor integration awaits continuation; hosted assurance, durable recovery/cutover/native CI and L4 overall remain open.
 
 - [x] L4 Step 5 local HTTP editor gate implemented and verified: asynchronous session/paired loading, reserved/grouped/import IDs, server history/publication/activation/export and explicit uncertain-operation reconciliation preserve unsaved text and learner boundaries. Final 157 real PG17 tests, 204 ordinary backend tests, 592 frontend units, 11 actual API/Nginx editor browser cases, 41 learner and 12 JSON-admin browser tests passed, with native ARM64 installed-image checks. [Runbook](../../L4-http-editor.md) and [evidence](L4-step5-editor-evidence.json) record runner continuation and limits. Step 6 recovery/tooling awaits continuation; L4 overall remains open.
+
+
+- [x] L4 Step 6 recovery/export tooling and allocation-ceiling implementation passed
+  isolated local verification; retained-copy policy was selected but the user
+  deferred external-drive setup. [The L4 tracker](L4-local-authoring-admin-access-plan.md)
+  preserves the open retained-copy/RPO/RTO gate. JSON authority/cutover remains
+  pending. Independent Step 8 native CI coverage is now being extended; no new
+  cloud service, backup automation or routine DB change was authorized by this
+  deferral, and final-commit AMD64/ARM64 CI acceptance is not yet claimed.

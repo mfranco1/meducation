@@ -232,3 +232,12 @@ boundary allocation, incomplete/foreign/stale evidence and failed commits leavin
 ahead journals. The full restore rehearsal deliberately loses post-backup
 allocations and reconciles from independently retained test ceilings before creating
 new IDs. Those temporary journals do not count as off-device retention acceptance.
+
+Native container acceptance now builds the optional HTTP admin after the learner
+browser stages, then runs the installed API/PG17/Nginx synthetic-session editor
+suite on both AMD64/ARM64 matrix runners. Evidence includes HTTP fixture/admin
+source hashes and scoped editor reports/traces. The PG subprocess has a ten-minute
+budget and the matrix job a sixty-minute budget for the expanded L4 workload.
+Pipeline wiring and local ARM64 evidence are distinct from observed final-commit
+GitHub matrix results; no CI result is inferred from a local run. Backup deferral
+keeps retained-copy/cutover gates open independently of these fixture jobs.

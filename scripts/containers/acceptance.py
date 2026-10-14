@@ -1,8 +1,9 @@
-"""Clean repeated native builds and isolated L2 acceptance; retains scoped evidence/logs."""
+"""Clean repeated native builds and isolated learner/L4 acceptance with scoped evidence."""
 
 import argparse
 import hashlib
 import json
+import os
 import platform
 import subprocess
 import sys
@@ -32,10 +33,10 @@ def main():
               "docker": docker("version", "--format", "{{.Client.Version}}/{{.Server.Version}}"),
               "compose": docker("compose", "version", "--short"), "commands": [], "builds": [],
               "reproducibility": "two no-cache builds from pinned inputs; output/content/runtime verified, no byte-identical digest promise"}
-    inputs = ["Dockerfile", "backend/Dockerfile", "compose.yaml", ".dockerignore", "package-lock.json",
+    inputs = [".github/workflows/checks.yml", "Dockerfile", "backend/Dockerfile", "compose.yaml", ".dockerignore", "package-lock.json",
               "backend/requirements.lock", "backend/requirements-build.lock", "ops/containers/nginx.conf",
               "ops/containers/proxy.conf", "src/content/questionBank.generated.json", "src/content/flashcardBank.generated.json"]
-    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "scripts/containers").glob("*.py")]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "scripts/containers").rglob("*.py")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.py")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.sql")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/tests").glob("*.py")]
@@ -48,14 +49,18 @@ def main():
                "scripts/content/build-authoring-policy.mjs"]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "src/content/validation").glob("*") if p.is_file()]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "src/content/richText").glob("*.ts")]
+    inputs += ["admin.html", "vite.config.ts", "playwright.admin-http.config.ts"]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "src").rglob("*")
+               if p.is_file() and p.suffix in (".ts", ".tsx", ".css")]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "e2e/admin-http").glob("*.ts")]
     report["inputs_sha256"] = {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in inputs}
 
-    def run(name, command, timeout=600):
+    def run(name, command, timeout=600, environment=None):
         print("Running " + name, flush=True)
         started = time.monotonic()
         with (output / (name + ".log")).open("w") as log:
             result = subprocess.run(command, cwd=ROOT, stdout=log, stderr=subprocess.STDOUT,
-                                    timeout=timeout, check=False)
+                                    timeout=timeout, check=False, env=environment)
         report["commands"].append({"name": name, "command": command, "exit_code": result.returncode,
                                    "seconds": round(time.monotonic() - started, 2), "log": name + ".log"})
         if result.returncode:
@@ -90,12 +95,18 @@ def main():
         run("db-toolchain", [sys.executable, str(ROOT / "scripts/containers/smoke-db-toolchain.py"),
                              "--image", "meducation-api:local", "--output", str(output / "db-toolchain.json")], timeout=300)
         run("postgres-content", [sys.executable, str(ROOT / "scripts/containers/test-postgres-content.py"),
-                                 "--output", str(output / "postgres-content.json")], timeout=300)
+                                 "--output", str(output / "postgres-content.json")], timeout=600)
         run("release-recovery", [sys.executable, str(ROOT / "scripts/containers/verify-postgres-release.py"),
                                  "--output", str(output / "release-recovery.json")], timeout=1200)
         run("postgres-browser", [sys.executable, str(ROOT / "scripts/containers/smoke-postgres-learner.py"),
                                  "--api-image", "meducation-api:local", "--frontend-image", "meducation-learner:local",
                                  "--output", str(output / "postgres-browser.json")], timeout=1000)
+        # Complete learner/browser work before replacing the shared dist assets.
+        run("build-http-admin", ["npm", "run", "build:admin"], timeout=300,
+            environment={**os.environ, "VITE_ADMIN_SOURCE": "http"})
+        run("admin-http", [sys.executable, str(ROOT / "scripts/containers/smoke-admin-http.py"),
+                           "--image", "meducation-api:local",
+                           "--output", str(output / "admin-http.json")], timeout=900)
         if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != value for name, value in report["inputs_sha256"].items()):
             raise RuntimeError("Acceptance inputs changed during execution")
         report["result"] = "pass"

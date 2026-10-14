@@ -10,7 +10,10 @@ owns acceptance and remaining gates.
 Decision selected on 2026-10-14 after the user delegated the approach: use a
 private local recovery folder plus a dedicated encrypted external drive. This fits
 the existing durable journal implementation and requires no new cloud service.
-Destination verification and an actual retained restore are still pending.
+The user explicitly deferred connecting an external drive on 2026-10-14.
+Destination verification and an actual retained restore remain pending while
+independent implementation/CI work proceeds. This does not authorize cutover or
+certify retained recovery.
 
 The primary root is the existing ignored `var/backups/postgres/` outside the Docker
 data volume. Use dedicated `dumps/`, `manifests/` and `allocations/` subdirectories;

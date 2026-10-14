@@ -344,3 +344,44 @@ records this decision and the measurement procedure. The decisions are settled;
 physical destination verification, retained copies, actual measurements and any
 backup scheduling implementation remain open. No recovery/retention gate was
 marked passed on the strength of a policy choice.
+
+
+## Retained-copy deferral and independent CI continuation — 2026-10-14
+
+The user accepted the recovery policy but explicitly deferred connecting an
+external drive and asked to continue other work. Retained/off-device acceptance
+and operational RPO/RTO remain open; the deferral is not a passed backup gate or
+an authority-cutover approval. JSON remains authoritative. No external drive,
+cloud service, backup automation or routine database change is being configured.
+
+Proceed with the independent native CI portion of Step 8 while Step 7 stays
+pending. The existing AMD64/ARM64 acceptance pipeline already runs current
+Postgres/auth/concurrency tests and full recovery. Extend it with fresh HTTP admin
+build and installed API/PG17/Nginx editor acceptance, after learner browser stages
+that share `dist`. Increase the whole job budget and PG test subprocess timeout
+to accommodate measured L4 duration; freeze HTTP fixture/admin inputs in evidence.
+Actual final-commit native CI results must still be obtained; local ARM64 checks
+cannot certify AMD64 or close the whole Step 8 gate.
+
+
+### Independent CI preparation verification — 2026-10-14
+
+- [x] Native acceptance now fingerprints the workflow, HTTP fixture module,
+  admin/shared frontend inputs and browser config/specs; runs HTTP admin build
+  and installed API/PG17/Nginx editor acceptance after learner browser stages;
+  records scoped reports and retains HTTP traces under the container artifact tree.
+  PG suite timeout is 600 seconds; whole matrix job budget is 60 minutes.
+- [x] Fresh ARM64 API image built with installed `0006_allocation_fence` and pinned
+  auth dependencies. Installed-wheel/schema/role/toolchain smoke passed; the full
+  HTTP editor browser suite passed **11 tests**. Final trace output directory was
+  checked with the Playwright config loader after the artifact-only setting change.
+  TypeScript, learner/HTTP-admin builds, lint/architecture, container-helper Ruff,
+  syntax, whitespace and prepared cutover patch applicability passed. Original
+  canonical hashes remain unchanged.
+- [ ] Execute both native GitHub jobs against a final implementation commit. The
+  full repeated-clean-build runner was not rerun locally; this evidence proves
+  the new local ARM64 stages, not the complete matrix or L4 completion.
+
+[CI preparation evidence](L4-step8-ci-preparation-evidence.json) freezes sources,
+image and observed checks. Backup/cutover/provider gates remain explicitly open;
+no deployment, retained backup or change in canonical authority occurred.

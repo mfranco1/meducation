@@ -119,3 +119,9 @@ step-up, logout during save, grouped/import creates and keyboard/overflow at
 remain separate regression gates. Hosted identity/TLS/routing, durable authored
 recovery, authority cutover, native CI and manual assistive-technology/device
 acceptance remain later tracked obligations.
+
+The native container CI acceptance runner now invokes this complete editor suite
+against its freshly built installed API image, after learner browser acceptance
+and a fresh explicitly HTTP admin build. Both architecture runners retain scoped
+reports and traces; source fingerprints include the fixture module and editor
+inputs. A local ARM64 run does not certify AMD64 or a final-commit GitHub run.
