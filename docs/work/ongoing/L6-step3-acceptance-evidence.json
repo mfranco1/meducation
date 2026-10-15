@@ -1,0 +1,421 @@
+{
+  "stage": "L6 Step 3 local learner/editor acceptance",
+  "date": "2026-10-15 (Asia/Manila)",
+  "result": "pass for local Step 3 gate",
+  "overall_l6": "incomplete; Steps 4\u20136 and candidate-input CI pending",
+  "baseline_commit": "fd897152b7bcdd0ba23011a2b2fec707546b433d",
+  "input_sha256": {
+    ".github/workflows/checks.yml": "afb2185d83f0cba61f99fd15b00be489417be4e5953e9fc50d0a58e3e7130b46",
+    ".dockerignore": "baac65a49f08c6d4721939da3e3ef3cb5da87c807b66f4cd8a77ba5b197b068c",
+    ".gitignore": "454dd06f00327de0518d40ea3e4769c118406735fdc5966576a3aba170fd8c97",
+    "playwright.admin-http.config.ts": "48f83cd725fb3eb2e2843c3025fec8af00c29057a359562273c294f5b2d9b6b3",
+    "playwright.progress-backup.config.ts": "053184a8f128bd2ba424f58edf4c1dde679acd8e402c82b2bd66e7df61a63123",
+    "e2e/progress-backup.spec.ts": "1a50406aeb5431c5c3f8c3d8a3235b75bb8765893c3dbb65dc1d4e614ba15bc2",
+    "e2e/content-candidate.spec.ts": "5b5197bea1238015b9126d78ec0fe6ba84e249ff65b7c4880eed7c539317252d",
+    "e2e/admin-http/content-candidate.spec.ts": "cc71526aff22e00126916ba2c91a07e1a6ac28e5aeb367fc81a61dbb7dc00c7a",
+    "e2e/support/contentCases.ts": "30ce3137beceff7a0ec4827b0fa645249cdf04d4bc38d29e787cc716ee06be45",
+    "Dockerfile": "953db0a49f31434bc520729e545da3021997a12c523e5317b68b83ccb365d0a2",
+    "backend/Dockerfile": "f2bbffa77ca28187d05689b66ae6e956b172c875e760ae9cf3044c7c8f43e3c6",
+    "package-lock.json": "4d3c5db912e44bc2623df1eca495569d2cad1ec844ad50ff85a378d7697d739d",
+    "backend/requirements.lock": "ab5557d7298e77ec9968ed5e2b2ba0d934d907b943442cf9a80b0b7dce6a4a0b"
+  },
+  "runtime_application_sources_changed": false,
+  "canonical_content_changed": false,
+  "previous_receipts_unchanged": true,
+  "host": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "browser_versions": {
+    "chromium": "153.0.8010.12",
+    "webkit": "26.6"
+  },
+  "build_modes": {
+    "learner": "fresh VITE_CONTENT_MAX_RETRIES=0 learner assets; no admin entry",
+    "admin": "fresh VITE_ADMIN_SOURCE=http VITE_CONTENT_MAX_RETRIES=0 enabled optional production admin after all learner suites",
+    "api": {
+      "image": "meducation-api:l6-step3",
+      "imageId": "sha256:02b79878958ffa95ffd3ec9a9fca8663a0e9918f9cd3136f3ccf1cd3eb0c855d",
+      "platform": "arm64",
+      "build": "docker build -f backend/Dockerfile -t meducation-api:l6-step3 .",
+      "build_log": "test-results-containers/l6-step3/api-build.log",
+      "duration_note": "Build wall time not instrumented; completed successfully with cached pinned inputs. Full repeated no-cache builds belong to Step 5."
+    }
+  },
+  "commands": [
+    {
+      "command": [
+        "npm",
+        "run",
+        "build:learner:smoke"
+      ],
+      "exit_status": 0,
+      "seconds": 8.19,
+      "log": "initial build log was removed by Playwright; assets verified fresh before suite"
+    },
+    {
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "--grep",
+        "L6 learner content acceptance"
+      ],
+      "exit_status": 0,
+      "seconds": 10.54,
+      "log": "test-results-containers/l6-step3/final-learner/0.log"
+    },
+    {
+      "command": [
+        "npm",
+        "run",
+        "test:e2e:prepared"
+      ],
+      "exit_status": 0,
+      "seconds": 77.88,
+      "log": "test-results-containers/l6-step3/final-learner/1.log"
+    },
+    {
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "--config=playwright.progress-backup.config.ts",
+        "--project=chromium",
+        "--project=webkit"
+      ],
+      "exit_status": 0,
+      "seconds": 104.56,
+      "log": "test-results-containers/l6-step3/final-learner/2.log"
+    },
+    {
+      "name": "private-learner",
+      "command": [
+        "npx",
+        "playwright",
+        "test",
+        "e2e/content-candidate.spec.ts",
+        "--output",
+        "var/backups/postgres/l6-candidate-20261015T055606Z/step3/learner"
+      ],
+      "environment": {
+        "MEDUCATION_RC_EXPORT_DIRECTORY": "var/backups/postgres/l6-candidate-20261015T055606Z/export"
+      },
+      "exit_status": 0,
+      "seconds": 19.83,
+      "log": "var/backups/postgres/l6-candidate-20261015T055606Z/step3/private-learner.log"
+    },
+    {
+      "name": "admin-build",
+      "command": [
+        "npm",
+        "run",
+        "build:admin"
+      ],
+      "environment": {
+        "VITE_ADMIN_SOURCE": "http",
+        "VITE_CONTENT_MAX_RETRIES": "0"
+      },
+      "exit_status": 0,
+      "seconds": 7.6,
+      "log": "test-results-containers/l6-step3/admin-build.log"
+    },
+    {
+      "name": "http-full",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-admin-http.py",
+        "--image",
+        "meducation-api:l6-step3",
+        "--output",
+        "test-results-containers/l6-step3/http-full.json"
+      ],
+      "environment": {},
+      "exit_status": 0,
+      "seconds": 126.28,
+      "log": "test-results-containers/l6-step3/http-full.log"
+    },
+    {
+      "name": "http-private",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-admin-http.py",
+        "--image",
+        "meducation-api:l6-step3",
+        "--grep",
+        "L6 HTTP editor exact content display",
+        "--output",
+        "var/backups/postgres/l6-candidate-20261015T055606Z/step3/http-private.json"
+      ],
+      "environment": {
+        "MEDUCATION_RC_EXPORT_DIRECTORY": "var/backups/postgres/l6-candidate-20261015T055606Z/export",
+        "MEDUCATION_EDITOR_HTTP_OUTPUT": "var/backups/postgres/l6-candidate-20261015T055606Z/step3/http"
+      },
+      "exit_status": 0,
+      "seconds": 26.97,
+      "log": "var/backups/postgres/l6-candidate-20261015T055606Z/step3/http-private.log"
+    }
+  ],
+  "additional_checks": [
+    {
+      "command": "npm run typecheck",
+      "exit_status": 0
+    },
+    {
+      "command": "npm run lint",
+      "exit_status": 0,
+      "architecture": "288 modules, 1255 imports"
+    },
+    {
+      "command": "npm run format:check",
+      "exit_status": 0
+    },
+    {
+      "command": "npm test -- src/shared/ui/content/MarkdownContent.test.tsx src/content/richText/richContentPolicy.test.ts",
+      "exit_status": 0,
+      "tests": 9,
+      "reported_seconds": 5.84
+    },
+    {
+      "command": "PyYAML parse .github/workflows/checks.yml",
+      "exit_status": 0
+    },
+    {
+      "command": "local Markdown path validation",
+      "exit_status": 0,
+      "targets": 98
+    },
+    {
+      "command": "git diff --check",
+      "exit_status": 0
+    }
+  ],
+  "results": {
+    "full_learner": 43,
+    "dedicated_progress_backup": {
+      "chromium": 25,
+      "webkit": 25,
+      "skipped": 0,
+      "unexpected": 0,
+      "flaky": 0,
+      "retries": 0
+    },
+    "full_http_editor": 18,
+    "private_learner_display": {
+      "cases": 6,
+      "synthetic": 2,
+      "selected_export": 4
+    },
+    "private_http_editor_display": {
+      "cases": 6,
+      "synthetic": 2,
+      "selected_export": 4
+    }
+  },
+  "protected_content_reference": {
+    "step2_receipt": "L6-step2-content-evidence.json",
+    "release_id": "3e3604bf-dedf-470e-adf6-4dccc1bab5f9",
+    "sequence": 3,
+    "selected_export_manifest_sha256": "30709d9dde9f6d22f06a21c8eb27d61b2d11366878172adb8bcfbe7ad291eed9",
+    "original_export_unchanged": true,
+    "case_selection": [
+      {
+        "label": "synthetic-rich",
+        "id": "i1",
+        "quizId": "q1",
+        "sha256": "f45c46defc048bee9a5a016bdd85b1f8cb7b1009aee9635e8e15b27300d34480",
+        "verifiedAnswerPresent": false,
+        "maxChoiceLength": 520
+      },
+      {
+        "label": "synthetic-hostile",
+        "id": "i2",
+        "quizId": "q1",
+        "sha256": "83d35b589eb19af75b14681b906d590241d899d35173cc2a6e9f4b3e58a373da",
+        "verifiedAnswerPresent": false,
+        "maxChoiceLength": 6
+      },
+      {
+        "label": "selected-export-1",
+        "id": "i8493",
+        "quizId": "q83",
+        "sha256": "b13c477ae701b2e6491a058399f632cd68b6e6ebd60b2eaec195088a53aca8ca",
+        "verifiedAnswerPresent": false,
+        "maxChoiceLength": 5
+      },
+      {
+        "label": "selected-export-2",
+        "id": "i1",
+        "quizId": "q1",
+        "sha256": "58a63c9fcd8fe1aee3aebe924af7a7b5a5d7971319e09ce7e45163a04ddd9078",
+        "verifiedAnswerPresent": false,
+        "maxChoiceLength": 14
+      },
+      {
+        "label": "selected-export-3",
+        "id": "i2529",
+        "quizId": "q25",
+        "sha256": "6c04ce9b3cb83b08addb1022de0e13204e6e08742f740be67c6f9d8e0b149569",
+        "verifiedAnswerPresent": false,
+        "maxChoiceLength": 420
+      },
+      {
+        "label": "selected-export-4",
+        "id": "i3372",
+        "quizId": "q32",
+        "sha256": "a93f34a431dda9ae3b583af55889ea0a9393ea61341ade78df1c5c7d7b7adb96",
+        "verifiedAnswerPresent": true,
+        "maxChoiceLength": 12
+      }
+    ],
+    "method": "Exact unmodified records displayed through read-only intercepted browser responses. This is presentation acceptance; Step 2 separately proves full DB/API content parity. Private rows/traces/screenshots remain in ignored 0700 operator directory."
+  },
+  "http_functional_scope": [
+    "paired save distinct from publish",
+    "server-reserved create/import mappings",
+    "stale tabs, Undo/reset, retained activation/export",
+    "expiry, synthetic fresh step-up, logout and pending text",
+    "lost response/uncertain operation reconciliation without replay",
+    "publication with cached launches and pinned in-flight study/results",
+    "delayed restart, failed request/retry and launch cancellation",
+    "protected diagnostics and operational secret canaries"
+  ],
+  "operational_log_canaries": "pass: path/query/method/headers/body/exception canaries; API 500, proxy 413 and upstream 502; generated request correlation; no raw log retention",
+  "visual_review": [
+    {
+      "path": "test-results/content-candidate-L6-learn-82503-t-acceptance-synthetic-rich-chromium/content-390.png",
+      "sha256": "9dab5cde887500a0458b20112a82fcae6d62875f0be798f5f32275142885480b",
+      "status": "inspected; no blocking wrapping, rendering or clipped-action finding"
+    },
+    {
+      "path": "test-results/content-candidate-L6-learn-82503-t-acceptance-synthetic-rich-chromium/content-1440.png",
+      "sha256": "d2874732144763a18662378c03702cd9a6cbe6a1334af6ccde07a7dabf6f25ed",
+      "status": "inspected; no blocking wrapping, rendering or clipped-action finding"
+    },
+    {
+      "path": "var/backups/postgres/l6-candidate-20261015T055606Z/step3/learner/content-candidate-L6-learn-8f643-cceptance-selected-export-1-chromium/content-390.png",
+      "sha256": "ba176e47bf4d7bb3831f3012816938ecfff6034aee6588c15e2810ab139acaf6",
+      "status": "inspected; no blocking wrapping, rendering or clipped-action finding"
+    },
+    {
+      "path": "test-results-containers/l6-step3/http-artifacts/content-candidate-L6-HTTP--2e68d-tent-display-synthetic-rich/editor-content-390.png",
+      "sha256": "f3bb6049cd9b392a7fdbd100670b6c7fae64e820b59f2ab231713a7a01ce47e7",
+      "status": "inspected; no blocking wrapping, rendering or clipped-action finding"
+    },
+    {
+      "path": "test-results-containers/l6-step3/http-artifacts/content-candidate-L6-HTTP--2e68d-tent-display-synthetic-rich/editor-content-1440.png",
+      "sha256": "752b18375f68653a4c4ae36f0f20d234b76fdb0d4936ea9f371e1045d22c7c53",
+      "status": "inspected; no blocking wrapping, rendering or clipped-action finding"
+    },
+    {
+      "path": "var/backups/postgres/l6-candidate-20261015T055606Z/step3/http/content-candidate-L6-HTTP--644fe-t-display-selected-export-1/editor-content-390.png",
+      "sha256": "9c7039e4edc9d740baf5560a407c761b4bba1c7159a46af38859a8f0bfbd9b87",
+      "status": "inspected; no blocking wrapping, rendering or clipped-action finding"
+    }
+  ],
+  "automated_presentation_scope": {
+    "widths": [
+      390,
+      1048,
+      1440
+    ],
+    "root_font_px": 20,
+    "reduced_motion": true,
+    "assertions": [
+      "safe HTML and hostile markup do not execute",
+      "list/table/inline-display math and local KaTeX fonts",
+      "long choice wrapping; exact optional/source/verified fields in JSON",
+      "reachable Done/Save actions and keyboard focus",
+      "existing status/error/busy/recovery semantics and study workflows"
+    ]
+  },
+  "navigation_observations": [
+    {
+      "engine": "chromium",
+      "pageshows": [
+        false,
+        false
+      ],
+      "observed_path": "fresh load on back navigation"
+    },
+    {
+      "engine": "webkit",
+      "pageshows": [
+        false,
+        false
+      ],
+      "observed_path": "fresh load on back navigation"
+    }
+  ],
+  "manual_launch_blockers": [
+    {
+      "item": "Firefox application matrix",
+      "owner": "user/operator",
+      "status": "explicitly user-deferred; no retry performed",
+      "closure": "Complete dedicated Firefox suite on a working host; record OS/browser and lifecycle observations"
+    },
+    {
+      "item": "B13 actual iOS Safari/Android Chrome files/navigation",
+      "owner": "user/operator",
+      "status": "not observed",
+      "closure": "Record actual device/browser versions, download/files/picker/import/transfer/background/back and error/timer outcomes"
+    },
+    {
+      "item": "B14 actual assistive technology",
+      "owner": "user/operator",
+      "status": "not observed",
+      "closure": "Record screen-reader/browser versions and real labels, announcements, busy/recovery and focus behavior"
+    },
+    {
+      "item": "Persisted BFCache/freeze-return",
+      "owner": "user/operator",
+      "status": "not observed",
+      "closure": "Observe real persisted/frozen return and safe re-admission before writes"
+    }
+  ],
+  "ci": {
+    "configuration": "existing browser-smoke job now installs Chromium/WebKit and runs dedicated accepted-engine backup sequentially; isolated report/traces retained separately",
+    "execution_status": "not yet observed on changed candidate inputs; required in Step 5",
+    "private_content_or_authority_credentials_in_ci": false
+  },
+  "development_failures": [
+    {
+      "scope": "initial focused synthetic content tests",
+      "finding": "Incorrect expected exit accessible name; corrected to existing Leave answer browser",
+      "product_change": false
+    },
+    {
+      "scope": "temporary command evidence wrapper",
+      "finding": "Playwright cleaned log directory; moved evidence outside output cleanup and preserved failed artifacts",
+      "product_change": false
+    },
+    {
+      "scope": "first full learner attempt",
+      "result": "42 passed, 1 failed",
+      "finding": "Backup opened before browse launch admission, so correct pending-launch cancellation returned to subject view. Wait for visible browse rationale before testing backup-dialog cancel. Separate pending-launch tests retained.",
+      "product_change": false,
+      "report": "test-results-containers/l6-step3/1.log"
+    }
+  ],
+  "cleanup": {
+    "http_fixture_containers": "independent Docker prefix listing empty",
+    "http_fixture_networks": "independent Docker prefix listing empty",
+    "resources": "only owned disposable PG17/API/Nginx fixtures; no routine authority access/grant changes or writes"
+  },
+  "evidence_artifacts": {
+    "test-results-containers/l6-step3/backup-report.json": "69774ead9918d0f69a13e120e7d10ed8d28fa15255538039bdf65dec807459a3",
+    "test-results-containers/l6-step3/http-full.json": "f9845932da6cc08c87a9ebb5da8faf77ad3955636d0e87b81d03e6e3d7ab88a8",
+    "var/backups/postgres/l6-candidate-20261015T055606Z/step3/http-private.json": "c96d17482cccf8dbff12503a01d8b5aca86522427df9e05ebaf215d0be1b868b",
+    "test-results-containers/l6-step3/final-learner/learner-commands.json": "101fb44e23ff93ddaff3c4f3d9a1d094d9e5e375c600d2b9f241b5381489174c",
+    "test-results-containers/l6-step3/remaining-commands.json": "232d5e154d4e1d23e47671ea775c85626fcf4874632787366ba58cef36b8d15d",
+    "test-results-containers/l6-step3/rich-unit.log": "fa6cb082b02b6842a759388047b6513dd4cecd19dc4b3a7667af422578e723ce",
+    "test-results-containers/l6-step3/typecheck.log": "0ca466e02494aef77f4ac35f945cef6f2bf7198b288fa2ceb548ac7b458d442a",
+    "test-results-containers/l6-step3/lint.log": "7bca5d8170e9a75eb718b16c230c53e4dbfeab598d54d8c48ebf668dff69ebec",
+    "test-results-containers/l6-step3/format.log": "71a0a87702be87008f07c4da26bd47d9922dbc8d8c68df5a5c6b4fa271527796"
+  },
+  "completion_audit": "No blocking local Step 3 findings. Full candidate/native CI and provider/manual/public-launch obligations remain open.",
+  "limitations": [
+    "Desktop WebKit is not real iOS Safari. Automated attributes/focus are not a screen-reader session.",
+    "Synthetic loopback OIDC/MFA fixtures do not certify the production identity adapter/provider.",
+    "Local passing tests and CI wiring do not certify candidate-input GitHub jobs.",
+    "No new medical answer review, publication, source correction or personal progress inspection occurred.",
+    "Some build/style/typecheck commands were not wall-time instrumented; reports/logs and passing outcomes are retained. Step 5 owns complete step-level candidate timing evidence."
+  ]
+}

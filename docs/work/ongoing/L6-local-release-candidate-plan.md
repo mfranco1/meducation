@@ -1,6 +1,6 @@
 # L6 — Local release candidate
 
-Created: 2026-10-15 (Asia/Manila). Status: Steps 1–2 complete; stopped at the Step 2 gate. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. The user authorized continuation into Step 2. Steps 3–6 remain pending.
+Created: 2026-10-15 (Asia/Manila). Status: Steps 1–3 local gates complete; stopped at the Step 3 gate. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. The user authorized continuation through Step 3. Steps 4–6 remain pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l6--local-release-candidate).
 Predecessor: [L5 plan](../done/L5-resilience-and-local-operations-plan.md) and
@@ -93,30 +93,30 @@ normalization. Current content need not be copied into CI or committed to Git.
 
 ## Step 3 — Close local learner/editor acceptance gaps
 
-- [ ] Build fresh learner and HTTP admin assets sequentially. Review representative
+- [x] Build fresh learner and HTTP admin assets sequentially. Review representative
   rich-content cases in both: Markdown lists/tables, allowed HTML, inline/display
   math, units/symbols, long choices, explanations and empty/optional fields. Select
   cases from the validated export plus synthetic hostile/edge fixtures. Verify
   sanitizer behavior, KaTeX assets, wrapping and no clipped actions without editing
   content to make it fit.
-- [ ] Exercise learner launch/resume/browse, scoring, retained results, flashcard
+- [x] Exercise learner launch/resume/browse, scoring, retained results, flashcard
   checkpoints and progress replacement/recovery. Include publication while a tab
   is open, in-flight view preservation, revision conflict/reload, delayed restart,
   failed request/retry and cancellation. Reuse existing scenarios rather than
   duplicating all prior tests.
-- [ ] Exercise HTTP editor paired save versus publish, reserved IDs/import mapping,
+- [x] Exercise HTTP editor paired save versus publish, reserved IDs/import mapping,
   stale tabs, Undo/reset, retained activation/export, expired/stepped-up sessions,
   pending text and uncertain-write reconciliation. Use the isolated synthetic
   identity fixture; never infer real hosted MFA from its success.
-- [ ] Run the dedicated Chromium/WebKit progress-backup application suites against
+- [x] Run the dedicated Chromium/WebKit progress-backup application suites against
   fresh assets. Preserve Firefox's explicit deferral unless the user reopens it;
   record its working-host command and missing evidence. Add repeatable CI coverage
   for accepted engines if absent, using isolated outputs/job sequencing. CI must
   use fixtures without access to the authoritative DB or private progress.
-- [ ] Verify narrow learner/admin layouts, enlarged text, reduced motion, keyboard
+- [x] Verify narrow learner/admin layouts, enlarged text, reduced motion, keyboard
   navigation, focus and accessible status/error semantics. Use existing
   390/1048/1440px editor coverage and learner regressions as the baseline.
-- [ ] Track actual iOS Safari/Android Chrome file workflows, screen-reader usage
+- [x] Track actual iOS Safari/Android Chrome file workflows, screen-reader usage
   and persisted BFCache/freeze-return observations in the existing
   [browser acceptance tracker](L0-browser-acceptance.md). Record devices/versions,
   actual observed navigation and evidence. Emulation and synthetic events do not
@@ -244,7 +244,7 @@ The [baseline receipt](L6-step1-baseline-evidence.json) identifies code, runtime
 ### Parent requirement evidence ledger
 
 - **Complete verification and repeatable CI** — Step 5 owns `npm run verify:full`, fresh native `scripts/containers/acceptance.py`, dedicated accepted-engine backup suites, and new candidate-input five-job CI. Reserve `L6-step5-local-evidence.json` and `L6-step5-native-ci-evidence.json`; retain command exit/duration, scoped native reports, skips and fixture cleanup. L5's receipt establishes the dependency only. Status: pending.
-- **Actual content parity and learner/editor acceptance** — Step 2 owns the supported read-only publication lookup, protected immutable `export-release`, `validate-export`, `audit-export` and explicit paired-input PG17 round-trip/route comparison. Reserve `L6-step2-content-evidence.json`. Step 3 owns fresh learner/HTTP admin builds, dedicated progress-backup Chromium/WebKit runs, existing learner/editor rich-content and workflow suites, and available visual checks; reserve `L6-step3-acceptance-evidence.json`. Step 2 is now accepted in [the content receipt](L6-step2-content-evidence.json), including authority release/digests, draft distinction and final publication recheck. Step 3 rendering/workflow acceptance remains pending. Repository archive validation cannot close these gates.
+- **Actual content parity and learner/editor acceptance** — Step 2 owns the supported read-only publication lookup, protected immutable `export-release`, `validate-export`, `audit-export` and explicit paired-input PG17 round-trip/route comparison. Reserve `L6-step2-content-evidence.json`. Step 3 owns fresh learner/HTTP admin builds, dedicated progress-backup Chromium/WebKit runs, existing learner/editor rich-content and workflow suites, and available visual checks; reserve `L6-step3-acceptance-evidence.json`. Step 2 is now accepted in [the content receipt](L6-step2-content-evidence.json), including authority release/digests, draft distinction and final publication recheck. Step 3 rendering/workflow acceptance is now locally accepted in [its receipt](L6-step3-acceptance-evidence.json); manual launch obligations remain in the browser tracker. Repository archive validation cannot close these gates.
 - **Provider-neutral deployment inputs** — Step 4 owns `docs/L6-deployment-handoff.md`, fresh image identities/build commands, optional admin serving recipe, environment/secret inventory, explicit schema/transfer/recovery sequence and smoke/rollback commands. Reserve `L6-step4-deployment-evidence.json`; exact recipes must follow current runbooks and use disposable resources. Status: pending.
 - **Outstanding deployment acceptance** — Steps 4/6 own named evidence owners and closure conditions for provider/region/latency/budgets, TLS/routing/pooling/suspend, real identity adapter/MFA/rotation, domain/origin transfer and off-device retention/journals/restore. [Browser acceptance](L0-browser-acceptance.md) retains Firefox and actual mobile/assistive-technology/persisted-return gaps. Reserve `L6-final-decision-evidence.json`. All remain public-launch obligations; no cloud provisioning or identity bypass is authorized.
 
@@ -263,3 +263,21 @@ Final local gate: **pass**. The complete selected authoritative pair round-tripp
 At 2026-10-15 14:35:24 Asia/Manila the authority still selected the same release/sequence/digests/schema, with draft revision 5 unchanged and matching the published pair. The pinned export remains current at this observation. The [frozen content receipt](L6-step2-content-evidence.json) records source/fixture identities separately, command outcomes (including development failures), private report/export references and SHA-256 fingerprints. The original export and repository JSON remain unchanged. No routine writes, publication, ID allocation, grant changes or authority recovery occurred.
 
 Completion audit: **no blocking Step 2 findings**. Ruff over all container helpers, combined 26-test export/admission suite, final 13-test dedicated admission suite, build/typecheck, affected local links and diff/integrity checks pass. Existing chunk advisory and 32 editorial answer-review obligations remain. The new synthetic admission stage is wired into native acceptance; fresh full archive/native AMD64/ARM64 candidate execution belongs to Step 5 and is still pending. This stage establishes paired content parity only; full-authority retained/off-device recovery, browser rendering, manual devices and hosted acceptance remain separate. Parent L6 checkboxes stay open. Step 3 learner/editor acceptance is next, following the agreed continuation gate.
+
+## Step 3 implementation and local acceptance — 2026-10-15
+
+Reusing the complete learner suite, dedicated Chromium/WebKit progress-backup suite and complete installed-API/PG17/Nginx HTTP editor suite. New content acceptance exercises synthetic lists/tables, allowed HTML, inline/display math and local fonts, units, long choices, explanations, optional fields and hostile markup at 390/1048/1440px with enlarged text/reduced motion. The same tests can read explicitly selected immutable question records from the protected Step 2 export; private rows/screenshots stay outside Git and ordinary CI uses synthetic cases only. The HTTP editor intentionally displays JSON, so acceptance checks exact authored values and safe text display without adding a rendered preview. No content is saved by these read-only display checks.
+
+CI gap repair: the existing browser-smoke job now installs WebKit alongside Chromium and runs the dedicated backup suite sequentially after learner tests, using isolated outputs and a retained report/traces. Firefox remains user-deferred; no installation or acceptance retry is implied. Actual mobile, screen-reader and persisted-return observations remain public-launch obligations.
+
+Development trial: a test initially used an incorrect exit-button name (the product exposes “Leave answer browser”); corrected to the existing accessible name. The temporary command wrapper also placed logs beneath Playwright's cleaned output directory; moved command evidence outside that directory and preserved failure traces. These are test/harness findings, not product passes or product regressions. Fresh learner build passed; complete application checks and visual inspection remain in progress.
+
+Final Step 3 local gate: **pass**, with explicit public-launch obligations. The complete learner suite passed **43 tests** (77.88s command wall time); the dedicated progress-backup suite passed **50 Chromium/WebKit tests** (104.56s), with zero skips/retries/flaky cases. The complete installed-API/PG17/Nginx HTTP editor suite passed **18 tests** (126.28s). Private display checks passed **6 cases in each learner/editor context** (two synthetic plus four unchanged records from the pinned Step 2 export), in 19.83s and 26.97s respectively. Selected records retain original IDs, text, numbers, order, optional presence and answer provenance; interception supplies read-only browser fixtures and performs no authoring writes. Step 2 remains the separate full-content/database parity evidence.
+
+The first full learner run preserved **42 passes and one failure**: a pre-existing progress-backup scenario opened the utility before a newly asynchronous browse launch finished. The fixture now waits for the admitted browse view before testing cancel; pending-launch cancellation remains separately asserted. After this test-only correction, full learner and both backup engine suites passed. No application runtime changes were needed. Rich renderer/policy units passed **9 tests**. Typecheck, learner and fresh HTTP admin builds, lint/architecture, format, workflow parsing, affected links and diff checks pass. The native ARM64 API image is `sha256:02b79878958ffa95ffd3ec9a9fca8663a0e9918f9cd3136f3ccf1cd3eb0c855d`.
+
+Visual inspection covered synthetic rich content at 390/1440px, real export content at 390px, and synthetic/real HTTP editor JSON at 390px plus desktop editor layout. Automated assertions cover 390/1048/1440px, 20px root text, reduced motion, focus and reachable Done/Save actions. Tables scroll within their bounded region, long choices wrap, explanations/pearls and inline/display math render, local KaTeX fonts load, and hostile markup does not execute. Authenticated functional editor scenarios cover paired save versus publish, reservations/imports, stale tabs/reset/Undo, expiry/step-up, pending text, uncertain writes, retained activation/export and publication while study/review is open. Protected diagnostic/log canaries also pass. Synthetic identity does not establish real hosted MFA. Both HTTP fixture runs cleaned up; independent Docker listing found no editor fixture containers/networks.
+
+[The frozen receipt](L6-step3-acceptance-evidence.json) records command outcomes, input/image/report fingerprints, selected-record hashes and visual/automation scope without raw private content or progress. Original export and previous receipts are unchanged. Public-launch blockers remain individually tracked in [browser acceptance](L0-browser-acceptance.md#l6-accepted-engine-refresh--2026-10-15): Firefox remains user-deferred; actual iOS/Android file workflows, actual screen-reader sessions, and persisted BFCache/freeze-return are unobserved. Chromium/WebKit back navigation observed `[false,false]` fresh-load paths only. New accepted-engine CI coverage is wired but **not yet certified by candidate-input CI**; Step 5 owns that full native/five-job gate.
+
+Completion audit: **no blocking local Step 3 findings**. No full candidate/public-launch acceptance is implied. Parent L6 requirements remain open for Steps 4–6. Step 4 provider-neutral deployment inputs is next, after continuation at this agreed stage gate.

@@ -38,6 +38,27 @@ The runner stops at the first failed step. It runs lint, formatting, architectur
 
 `npm run test:e2e` remains self-contained and builds fresh output with retries disabled before running Chromium. `npm run test:e2e:prepared` skips that build and is intended for `verify:full` immediately after `npm run build:learner:smoke`; do not use it with an old or differently configured `dist`. `npm run test:e2e:admin` runs against Vite's development server and does not need production output.
 
+The dedicated progress-backup config runs Chromium, Firefox and WebKit when all
+projects are selected. For the currently accepted engines, run
+`npx playwright test --config=playwright.progress-backup.config.ts --project=chromium --project=webkit`
+after a fresh learner build. It writes isolated traces to
+`test-results-progress-backup/` and a JSON report beside that directory. The
+browser-smoke CI job installs both accepted engines and runs this command
+sequentially after the complete learner suite, before the JSON-fixture admin
+suite, retaining a separate evidence artifact. Firefox remains explicitly
+user-deferred; its absence from this invocation is not a pass or support change.
+
+`content-candidate.spec.ts` and the HTTP editor's matching spec exercise synthetic
+rich/hostile content, exact JSON display and reachable actions at 390/1048/1440px
+with enlarged text and reduced motion. For local candidate inspection only, set
+`MEDUCATION_RC_EXPORT_DIRECTORY` to a protected operator export; the tests verify
+its quiz-byte manifest digest and select unchanged representative records. These
+are read-only browser response fixtures, not publication or database parity tests.
+Keep their logs/screenshots/traces private: pass a protected `--output` to the
+learner command and set `MEDUCATION_EDITOR_HTTP_OUTPUT` for the HTTP fixture
+command. Ordinary CI uses synthetic cases only. The HTTP editor's authored JSON
+is intentionally text; these checks do not add a rich preview or save content.
+
 From the repository root, run the frontend checks:
 
 ```sh

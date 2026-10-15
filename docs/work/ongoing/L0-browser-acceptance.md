@@ -49,3 +49,18 @@ Record deferred acceptance results here after L1. Move this tracker to docs/work
 ## Final L1 evidence — 2026-10-13
 
 `npm run verify:full` passed: 534 Vitest tests, 41 learner Chromium E2E, 12 admin E2E, frontend/backend/content/architecture checks and learner/admin builds. The final dedicated command `npx playwright test --config=playwright.progress-backup.config.ts --project=chromium --project=webkit` passed 50 cases (25 per engine), including the final results/browse cancellation assertions. Versions/origin and coverage limits are recorded above and in the [completed L1 tracker](../done/L1-progress-backup-plan.md). Firefox is explicitly user-deferred and has no application pass. B13–B14 remain unexecuted public-launch gates.
+
+## L6 accepted-engine refresh — 2026-10-15
+
+The fresh learner build passed the dedicated progress-backup application suite on **Chromium 153.0.8010.12 and WebKit 26.6: 50 passed (25 per engine), zero skips, zero retries**. Both real back-navigation probes observed `pageshow.persisted` sequences `[false, false]`: safe fresh-load returns, with no observed persisted BFCache return. The run retained actual quota, paired replacement/recovery, competing tabs, cancellation, file lifecycle, narrow/enlarged-text/reduced-motion and accessible dialog/focus/status assertions. Synthetic progress only; this is desktop automation, not a native mobile file-picker or screen-reader pass.
+
+L6 fixed a pre-existing test race by waiting for admitted Browse Answers before opening and canceling backup; opening backup while a launch is pending deliberately cancels that launch, covered separately. The complete learner suite subsequently passed 43 tests. The browser-smoke workflow now installs Chromium/WebKit and runs the dedicated suite with isolated reports/traces. That is new CI wiring; changed-source CI acceptance is still pending under L6 Step 5.
+
+Remaining launch obligations and closure evidence owners:
+
+- **Firefox application acceptance** — user-deferred; owner/operator runs `npm run test:e2e:progress-backup -- --project=firefox` on a working host and records engine/OS, complete application results and lifecycle observations. No Firefox retry was performed for L6.
+- **B13 actual iOS Safari and Android Chrome** — owner/operator supplies device/OS/browser versions and observed download-to-files, picker cancel/reselection/import/transfer, background/return, back/forward, timer and quota/error behavior. No actual device observations were collected here.
+- **B14 actual assistive technology** — owner/operator records VoiceOver/Safari or NVDA/browser versions and entry/dialog labels, announcements, focus trapping/return, replacement/error/recovery/success behavior. Automated semantics/focus assertions do not close this gate; no reader session was observed here.
+- **Persisted BFCache and freeze-return** — owner/operator records a real persisted return/freeze lifecycle and safe re-admission before writes. `[false, false]` does not close this observation gap, and no synthetic event is counted as device evidence.
+
+These remain public-launch blockers, with the original aggregate boxes open. They do not erase the accepted local desktop results. [Final L6 Step 3 evidence](L6-step3-acceptance-evidence.json) records passing HTTP/visual checks and preserves these launch blockers.

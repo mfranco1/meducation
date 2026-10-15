@@ -616,6 +616,9 @@ test('backup from results review requires leave confirmation and cancelled confi
   await page.getByRole('button', { name: 'Retake quiz' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();
+  // Exercise cancellation from an admitted browse view. Opening backup while
+  // launch revalidation is pending deliberately cancels that launch instead.
+  await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
   await page.getByRole('button', { name: 'Progress backup' }).click();
   await page.getByRole('button', { name: 'Cancel', exact: true }).click();
   await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();

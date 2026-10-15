@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e/admin-http',
-  outputDir: 'test-results-containers/admin-http',
+  outputDir: process.env.MEDUCATION_EDITOR_HTTP_OUTPUT ?? 'test-results-containers/admin-http',
   fullyParallel: false,
   workers: 1,
   retries: 0,
