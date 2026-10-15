@@ -13,8 +13,8 @@ from joserfc.jwk import RSAKey
 from pydantic import ValidationError
 
 from meducation_api.auth.config import AuthSettings
-from meducation_api.auth.http import RedactAdminQuery
 from meducation_api.auth.oidc import AuthError, OIDCClient, StrictDecoder
+from meducation_api.operations import SafeAccessFilter
 
 NOW = time.time()
 KEY = RSAKey.generate_key(2048)
@@ -277,7 +277,7 @@ def test_access_log_redacts_auth_query():
         ("peer", "GET", "/api/admin/auth/callback?code=secret&state=secret", "1.1", 303),
         None,
     )
-    assert RedactAdminQuery().filter(record)
+    assert SafeAccessFilter().filter(record)
     assert "secret" not in record.getMessage()
 
 

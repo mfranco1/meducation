@@ -81,6 +81,8 @@ def test_source_cleanup_survives_body_construction_failure(source, monkeypatch, 
             result = client.get("/api/v1/quizzes/q1/questions")
             assert result.status_code == 503 and "secret" not in result.text
         else:
-            with pytest.raises(RuntimeError, match="payload failed"):
-                client.get("/api/v1/quizzes/q1/questions")
+            result = client.get("/api/v1/quizzes/q1/questions")
+            assert result.status_code == 500
+            assert result.json()["detail"]["code"] == "internal_error"
+            assert "payload failed" not in result.text
         assert paired.events == ["open", "closed"]

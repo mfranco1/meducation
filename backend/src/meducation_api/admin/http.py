@@ -6,7 +6,6 @@ import tempfile
 import zipfile
 from collections.abc import Iterator
 from typing import Any
-from uuid import uuid4
 
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -62,7 +61,7 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
     @app.exception_handler(ContentPolicyError)
     async def content_error(request: Request, error: ContentPolicyError) -> JSONResponse:
         data = error.response()
-        data["error"]["requestId"] = str(uuid4())
+        data["error"]["requestId"] = request.state.request_id
         return JSONResponse(data, status_code=error.status, headers={"Cache-Control": "no-store"})
 
     @app.get("/api/admin/draft", include_in_schema=False)

@@ -8,10 +8,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from meducation_api.admin.diagnostics import install_diagnostics
 from meducation_api.admin.http import install_editor
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.http import AuthRuntime, install_auth
 from meducation_api.db.engine import ContentDatabaseError
+from meducation_api.operations import OperationalMiddleware, configure_operational_logging
 from meducation_api.repositories.question_bank import (
     Flashcard,
     FlashcardCatalogRepository,
@@ -132,6 +134,9 @@ def create_app(
 
     install_auth(app, identity_config, auth_factory)
     install_editor(app, identity_config)
+    install_diagnostics(app, config)
+    configure_operational_logging()
+    app.add_middleware(OperationalMiddleware, routes=app.router.routes)
 
     @app.exception_handler(ContentDatabaseError)
     async def unavailable(request: Request, error: ContentDatabaseError) -> JSONResponse:

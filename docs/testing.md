@@ -257,3 +257,23 @@ build:admin`, then `smoke-admin-http.py --image <fresh-image> --grep L5` for foc
 development; the complete HTTP editor gate must still pass. The real PG suite
 adds independent readers, A → B → A, other-bank-only publication, and measured
 HTTP/SQL/pre-ping counts. No routine-authority or provider acceptance is implied.
+
+## L5 protected diagnostics and operational canaries
+
+`backend/tests/test_operations.py` verifies generated IDs, route templates,
+sanitized 500s, access/error filters, driver categories and CORS separation.
+Real PG tests cover two concurrent diagnostics with bounded role pools, no nested
+session checkout or activity/test writes, schema/publication failure outcomes,
+Origin/CSRF/auth failures, pool/connection failures and request-driven recovery.
+The dedicated `--restartable --keyword l5` gate verifies actual PG stop/start,
+closed session-dependent diagnostics and SQL-free health during the outage.
+
+Rebuild the installed API and use a fresh HTTP admin bundle before
+`smoke-admin-http.py`. Its complete browser suite includes protected diagnostic
+requests; subsequent probes put synthetic secret canaries in request paths,
+queries, method, headers, body and exceptions, and assert that actual Uvicorn/API
+and Nginx access/error logs do not contain them. Native proxy 400/413/502 and API
+500 paths retain structured events. Failed raw logs are not printed or retained.
+The refused upstream location and exception route are fixture-only, never shipped.
+Rebuild the learner image and run `smoke-learner.py --browser` for proxy/loading
+regressions. Serialize browser suites and shared `dist` builds.

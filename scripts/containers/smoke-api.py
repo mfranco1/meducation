@@ -186,16 +186,20 @@ def main():
 
         with tempfile.TemporaryDirectory(prefix="meducation-l2-invalid-") as temp:
             invalid = Path(temp) / "invalid.json"
-            invalid.write_text("{}\n")
+            canary = "L5_STARTUP_SECRET_" + uuid.uuid4().hex
+            invalid.write_text(json.dumps({"secret": canary}))
             for key in ["MEDUCATION_BANK_PATH", "MEDUCATION_FLASHCARD_BANK_PATH"]:
                 for mode in ["missing", "invalid"]:
-                    options = ["--env", f"{key}=/{mode}-bank.json"]
+                    target = f"/{mode}-{canary}.json"
+                    options = ["--env", f"{key}={target}"]
                     if mode == "invalid":
-                        options += ["--mount", f"type=bind,source={invalid},target=/invalid-bank.json,readonly"]
+                        options += ["--mount", f"type=bind,source={invalid},target={target},readonly"]
                     failed = start(key.lower() + "-" + mode, *options)
                     result = wait_for(failed, lambda s: not s["Running"], "startup rejection", timeout=30)
                     require(result["ExitCode"] != 0 and not result["OOMKilled"], "Invalid bank did not fail startup")
-                    require("Application startup failed" in docker("logs", failed), "Unexpected startup failure")
+                    failure_logs = docker("logs", failed)
+                    require('"event":"server_error"' in failure_logs, "Missing sanitized startup failure")
+                    require(canary not in failure_logs and "Traceback" not in failure_logs, "Startup log canary/trace leaked")
                     report["checks"].append(f"{key}: {mode} input fails startup")
             invalid.write_text(json.dumps({
                 "schemaVersion": flashcards["schemaVersion"],
@@ -208,8 +212,9 @@ def main():
             )
             result = wait_for(failed, lambda s: not s["Running"], "paired-bank rejection", timeout=30)
             require(result["ExitCode"] != 0 and not result["OOMKilled"], "Cross-bank mismatch was accepted")
-            require("references a subject missing" in docker("logs", failed), "Unexpected paired-bank failure")
-            report["checks"].append("flashcard subject absent from quiz bank fails paired initialization")
+            failure_logs = docker("logs", failed)
+            require('"event":"server_error"' in failure_logs and "Traceback" not in failure_logs, "Missing sanitized paired-bank startup failure")
+            report["checks"].append("flashcard subject absent from quiz bank fails paired initialization; startup canaries and traces are redacted")
         report["result"] = "pass"
     finally:
         for container in containers:

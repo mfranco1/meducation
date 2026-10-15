@@ -130,7 +130,7 @@ def main():
                 .replace("server api:8000 resolve;", "server 127.0.0.1:8000;")
                 .replace(
                     "location = /admin.html {\n            return 404;\n        }",
-                    'location = /admin.html { try_files $uri =404; add_header Cache-Control "no-store" always; }\n        location /fixture/ { include /etc/nginx/meducation-proxy.conf; }',
+                    'location = /admin.html { try_files $uri =404; add_header Cache-Control "no-store" always; }\n        location /fixture/ { include /etc/nginx/meducation-proxy.conf; }\n        location = /fixture/upstream-unavailable { proxy_pass http://127.0.0.1:1; }',
                 )
             )
             (temp / "nginx.conf").write_text(config)
@@ -194,8 +194,72 @@ def main():
             if result.returncode:
                 print(result.stderr)
                 raise RuntimeError("Private editor browser acceptance failed")
+            # Exercise both Uvicorn and real Nginx failure logs, including native
+            # proxy errors whose default format would contain the full request.
+            canary = "L5_LOG_SECRET_" + uuid.uuid4().hex
+            import urllib.error
+
+            def probe(path, expected, *, data=None, method=None):
+                req = urllib.request.Request(
+                    origin + path,
+                    data=data,
+                    method=method,
+                    headers={
+                        "Cookie": "secret=" + canary,
+                        "X-Forwarded-For": canary,
+                        "X-Request-ID": canary,
+                        "Content-Type": "application/json",
+                    },
+                )
+                try:
+                    response = urllib.request.urlopen(req, timeout=15)
+                except urllib.error.HTTPError as error:
+                    response = error
+                with response:
+                    if response.status != expected:
+                        raise RuntimeError(
+                            f"Operational log probe status {response.status}, expected {expected}"
+                        )
+                    response.read()
+
+            probe("/fixture/operational-failure/" + canary + "?code=" + canary, 500)
+            probe("/api/" + canary + "?token=" + canary, 400, method=canary)
+            # The public ingress's default 1 MiB admission should fail before API.
+            probe(
+                "/api/" + canary + "?code=" + canary,
+                413,
+                data=(canary + " ").encode() + b"x" * (1024 * 1024),
+            )
+            probe("/fixture/upstream-unavailable?code=" + canary, 502)
+            captured = {}
+            for target, label in ((api, "api"), (proxy, "proxy")):
+                logs = subprocess.run(
+                    ["docker", "logs", target],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                    timeout=15,
+                )
+                combined = logs.stdout + logs.stderr
+                if canary in combined:
+                    # Never print the failed log itself; it may contain the canary.
+                    raise RuntimeError(
+                        "Operational log redaction canary leaked in " + label
+                    )
+                captured[label] = combined
+            if (
+                '"event":"request_complete"' not in captured["api"]
+                or '"event":"proxy_request"' not in captured["proxy"]
+            ):
+                raise RuntimeError("Structured operational request events missing")
+            if (
+                '"failure_category":"internal_error"' not in captured["api"]
+                or '"failure_category":"upstream_unavailable"' not in captured["proxy"]
+            ):
+                raise RuntimeError("Operational failure categories missing")
             report = {
                 "result": "pass",
+                "operational_log_canaries": "pass: path/query/method/headers/body/exception canaries; API 500, proxy 413 and upstream 502; generated request correlation; no raw log retention",
                 "isolation": "unique PG17 tmpfs, API and nginx containers/network; synthetic fixture identity; no routine volumes",
                 "image": args.image,
                 "imageId": docker(

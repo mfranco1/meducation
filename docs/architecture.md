@@ -231,3 +231,16 @@ pauses protected allocation until explicit counter reconciliation. Existing JSON
 authority and fixture allocation mode remain unchanged. This does not add runtime
 AI or learner/auth dependencies to frontend domain modules. See the
 [recovery runbook](L4-authoritative-recovery.md) for retention and cutover gates.
+
+## Operational diagnostics and logging
+
+`backend/src/meducation_api/admin/diagnostics.py` owns explicit protected dependency
+inspection. Existing auth guards supply the session connection; reader/editor
+checks reuse existing pools with read-only transactions. This adds no schema,
+grant, worker or background query. `operations.py` owns allowlisted request
+correlation, dependency categories/recovery observations and access/error log
+filters. Database boundaries record safe categories before replacing exceptions;
+no raw request/exception content enters events. Middleware keeps per-request
+observations across threadpool calls without exposing them in domain/content DTOs.
+[Local operations](L5-local-operations.md) defines the limits, proxy log policy,
+configuration audit and remaining provider gates.

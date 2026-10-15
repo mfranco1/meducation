@@ -151,7 +151,7 @@ def test_postgres_api_never_calls_json_factories_on_startup_failure() -> None:
         _env_file=None, content_source="postgres", database_environment="local", database_url=READER
     )
     factory = MagicMock()
-    with patch("meducation_api.db.runtime.PostgresRuntime") as runtime:
+    with patch("meducation_api.repositories.postgres.PostgresRuntime") as runtime:
         runtime.return_value.__enter__.side_effect = ContentDatabaseError("uninitialized")
         app = create_app(settings, repository_factory=factory)
         with pytest.raises(ContentDatabaseError, match="uninitialized"), TestClient(app):

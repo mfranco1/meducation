@@ -58,6 +58,12 @@ failure affects admin requests, while public learner routes ignore admin cookies
   count as interactive activity. Provider logout is conditional on a future
   accepted provider adapter; none is claimed by local logout.
 
+`POST /api/admin/diagnostics` is an explicit read-only dependency check under this
+same session/Origin/CSRF boundary. It reuses the guard's session connection and
+does not refresh idle activity. A session DB outage can prevent the diagnostic
+from running; there is no unauthenticated fallback. Its response/logging/resource
+contract is in [L5 operations](L5-local-operations.md).
+
 The entire `/api/admin` prefix is protected before private routing, including
 unknown content-operation paths, which return 404 after authorization. Private
 operations are supplied by [Step 4 services](L4-paired-editor-services.md). Every browser POST
@@ -77,8 +83,9 @@ at most fifteen minutes; refreshes coalesce with a five-second interval. Unknown
 keys, ambiguous keys, stale-cache outages and invalid signatures fail closed.
 
 Private responses use no-store, no-referrer, nosniff and frame/CSP restrictions.
-Nginx logs method/path without query strings; a Uvicorn access filter redacts admin
-queries. Cookies, bodies, tokens and library exception details are not logged.
+Nginx logs fixed route families and safe request events; Uvicorn access records
+redact all raw paths/query/client fields. HTTP proxy error contexts and server
+tracebacks cannot echo request inputs; see [L5 operations](L5-local-operations.md). Cookies, bodies, tokens and library exception details are not logged.
 All redirects use configuration, never Host/forwarded headers or return-to fields.
 Local testing uses `meducation-dev-admin`; production cookie code uses the
 `__Host-meducation-admin` Secure/HttpOnly/Lax/Path=/ contract but remains disabled.

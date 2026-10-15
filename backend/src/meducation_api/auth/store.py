@@ -15,6 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.oidc import AuthError, VerifiedEditorIdentity
+from meducation_api.operations import database_failure, dependency_result
 
 
 def opaque() -> str:
@@ -64,7 +65,8 @@ class SessionStore:
                     ).scalar_one()
                     if count > limit:
                         raise AuthError(429, "auth_rate_limit")
-        except SQLAlchemyError:
+        except SQLAlchemyError as error:
+            database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None
 
     def begin_login(
@@ -98,7 +100,8 @@ class SessionStore:
                         "expires": self.clock() + 600,
                     },
                 )
-        except SQLAlchemyError:
+        except SQLAlchemyError as error:
+            database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None
         return {"state": state, "nonce": nonce, "verifier": verifier}
 
@@ -122,7 +125,8 @@ class SessionStore:
             if not isinstance(value, dict):
                 raise TypeError
             return value
-        except SQLAlchemyError:
+        except SQLAlchemyError as error:
+            database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None
         except AuthError:
             raise
@@ -194,10 +198,12 @@ class SessionStore:
                     row["auth_time"],
                     row["assurance_policy"],
                 )
+                dependency_result("session")
                 yield Principal(identity, row["token_hash"], row["csrf"], row["expires"], c)
                 # Content writes commit inside this guard and independently lock the session
                 # FOR NO KEY UPDATE in their transaction, serializing with revocation.
-        except SQLAlchemyError:
+        except SQLAlchemyError as error:
+            database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None
 
     def recheck(self, principal: Principal, *, fresh: bool = False) -> None:
@@ -215,7 +221,8 @@ class SessionStore:
             if fresh and self.clock() - principal.identity.auth_time > 900:
                 raise AuthError(403, "fresh_auth_required")
 
-        except SQLAlchemyError:
+        except SQLAlchemyError as error:
+            database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None
 
     def issue(
@@ -277,7 +284,8 @@ class SessionStore:
                         "expires": expires,
                     },
                 )
-        except SQLAlchemyError:
+        except SQLAlchemyError as error:
+            database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None
         return token, csrf
 
@@ -287,7 +295,8 @@ class SessionStore:
                 text("UPDATE admin_auth.sessions SET revoked=true WHERE token_hash=:h"),
                 {"h": principal.token_hash},
             )
-        except SQLAlchemyError:
+        except SQLAlchemyError as error:
+            database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None
 
     def revoke_all(self) -> None:
@@ -296,5 +305,6 @@ class SessionStore:
             with self.engine.begin() as c:
                 c.execute(text("UPDATE admin_auth.sessions SET revoked=true"))
                 c.execute(text("DELETE FROM admin_auth.logins"))
-        except SQLAlchemyError:
+        except SQLAlchemyError as error:
+            database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None

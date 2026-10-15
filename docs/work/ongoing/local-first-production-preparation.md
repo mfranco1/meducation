@@ -107,21 +107,22 @@ not accepted by this local gate.
 Implementation is tracked in [the L5 plan](L5-resilience-and-local-operations-plan.md).
 Step 1 implements one worker, bounded pools, request-driven stale socket repair,
 reader SQL deadlines and isolated local restart acceptance. Step 2 adds launch
-freshness and independent-reader/query-cost acceptance. Remaining L5 checkboxes
-cover diagnostics, configuration, concurrency and operational recovery drills. The local PostgreSQL authority cutover and post-cutover native CI
+freshness and independent-reader/query-cost acceptance. Step 3 adds protected diagnostics, configuration auditing and safe operational
+events. Remaining L5 checkboxes cover concurrency and operational recovery drills. The local PostgreSQL authority cutover and post-cutover native CI
 are complete under the user-approved local-only backup policy; off-device recovery
 and hosted acceptance remain separate. The L5 plan was revised on 2026-10-14
 for implementation; Step 2 now passes its local gate. [Step 2 evidence](L5-step2-local-evidence.json)
-records explicit-launch freshness, independent readers and query costs. Step 3
-diagnostics/configuration/failure visibility is next; Steps 3–5 remain pending.
+records explicit-launch freshness, independent readers and query costs.
+[Step 3 evidence](L5-step3-local-evidence.json) closes the local diagnostic/logging
+gate; Step 4 load characterization is next and Steps 4–5 remain pending.
 
 - [x] Start with one API process/instance for the initial small deployment, while retaining transactional concurrency tests. Define a concrete current-release freshness target (initially <=30 seconds for new content launches). Never mix versions during an active quiz. Requests discovering a changed catalog must use the existing revision-conflict/reload behavior; cached active sessions must not switch underneath the learner. Test future multi-worker behavior before enabling multiple workers.
-- [ ] Configure small bounded database pools, timeouts, connection invalidation/reconnect, and safe idempotent retries. Do not retry uncertain non-idempotent admin writes blindly; use transactional operation IDs/revision preconditions.
-- [ ] Separate runtime and migration/backup connection configuration; validate pooled-endpoint compatibility if used on Neon, and use direct connections for operations needing session semantics. Aggregate pool limits across processes; require DB TLS with verified settings outside local development.
-- [ ] Test Postgres restart/outage and stale pooled connections locally. These approximate connection-loss behavior; they do not prove Neon wake latency. Actual suspend/wake tests belong to deployment verification.
-- [ ] Ensure liveness does not query Postgres. Define lightweight readiness as process/configuration/schema initialization readiness, not a continuous guarantee of DB reachability. Expose a separate authenticated deep-dependency diagnostic for explicit checks. Route/telemetry errors must report DB outages promptly. Do not configure host keepalive probes to run SQL continually just to prove dependency reachability; if deployment requires continuous DB probes, accept the resulting loss of scale-to-zero savings.
+- [x] Configure small bounded database pools, timeouts, connection invalidation/reconnect, and safe idempotent retries. Do not retry uncertain non-idempotent admin writes blindly; use transactional operation IDs/revision preconditions.
+- [x] Separate runtime and migration/backup connection configuration; validate pooled-endpoint compatibility if used on Neon, and use direct connections for operations needing session semantics. Aggregate pool limits across processes; require DB TLS with verified settings outside local development.
+- [x] Test Postgres restart/outage and stale pooled connections locally. These approximate connection-loss behavior; they do not prove Neon wake latency. Actual suspend/wake tests belong to deployment verification.
+- [x] Ensure liveness does not query Postgres. Define lightweight readiness as process/configuration/schema initialization readiness, not a continuous guarantee of DB reachability. Expose a separate authenticated deep-dependency diagnostic for explicit checks. Route/telemetry errors must report DB outages promptly. Do not configure host keepalive probes to run SQL continually just to prove dependency reachability; if deployment requires continuous DB probes, accept the resulting loss of scale-to-zero savings.
 - [x] Avoid background release polling and recurring DB pings that defeat idle suspension. Retain current request-driven publication selection on every backend content request and add explicit-launch frontend revalidation; immutable release caches need no separate invalidation bus. Verify independent-reader visibility and measure the query/consistency tradeoff. Preserve one-release consistency.
-- [ ] Add configuration validation, safe structured logs, token/secret redaction, request/body limits and intentional public error messages. Document production TLS/CORS settings and separate migration/editor/read privileges.
+- [x] Add configuration validation, safe structured logs, token/secret redaction, request/body limits and intentional public error messages. Document production TLS/CORS settings and separate migration/editor/read privileges.
 - [ ] Provide and rehearse local DB backup/restore, previous-release rollback and compatible app/schema rollback. Restore to a separate DB; protect authored content during tests.
 - [ ] Add a provisional fixture-based load test for 20 concurrent learner content launches and characterize latency/errors/pool saturation. This is a test target, not a production capacity promise.
 
@@ -246,3 +247,12 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
   cases across learner/HTTP/JSON-fixture admin. Builds, style/types/architecture
   and protected export hashes pass. Steps 3–5 and changed-source native CI remain
   open; no routine authority change or hosted/off-device acceptance occurred.
+
+- [x] 2026-10-15: L5 Step 3 local diagnostic/configuration/failure-visibility gate
+  completed. Protected read-only checks reuse existing role pools and the held
+  session connection; safe request/recovery and proxy events redact all request/
+  exception inputs. [Evidence](L5-step3-local-evidence.json) records 238 ordinary
+  backend tests, 183 PG tests plus 17 restart checks, 14 HTTP browser cases, 43
+  proxy browser cases (one explicit skip), installed-image/startup/redaction checks
+  and unchanged protected exports. [Runbook](../../L5-local-operations.md) records
+  limits and provider caveats. Steps 4–5 and changed-source native CI remain open.

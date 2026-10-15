@@ -1,8 +1,8 @@
 # L5 — Resilience and local operations
 
 Started: 2026-10-14. Plan reviewed and revised: 2026-10-14 for implementation
-on 2026-10-15 (Asia/Manila). Status: Steps 1–2 local gates complete;
-Steps 3–5 pending. The plan review alone
+on 2026-10-15 (Asia/Manila). Status: Steps 1–3 local gates complete;
+Steps 4–5 pending. The plan review alone
 did not establish runtime behavior or L5 acceptance.
 
 The designated local PostgreSQL database is now the only writable paired-bank
@@ -134,35 +134,35 @@ freshness wording with the measured policy. No freshness claim during an outage.
 
 ## Step 3 — Diagnostics, configuration and failure visibility
 
-- [ ] Add an explicit operator-triggered read-only diagnostic under the existing
+- [x] Add an explicit operator-triggered read-only diagnostic under the existing
   protected `/api/admin/` boundary, using existing session/editor authorization,
   origin/CSRF policy where applicable and `no-store`. Do not add an unauthenticated
   exemption, a second credential scheme or a periodic health client.
-- [ ] Report bounded, sanitized dependency outcomes for reader connectivity,
+- [x] Report bounded, sanitized dependency outcomes for reader connectivity,
   supported schema and active publication, and enabled session/editor connectivity
   using their existing role pools. Do not perform a test write or create another
   pool. Account for the session guard already holding a connection: avoid nested
   session checkout that can exhaust the two-slot pool under concurrent diagnostics.
-- [ ] Session authorization itself depends on Postgres. If that dependency is down,
+- [x] Session authorization itself depends on Postgres. If that dependency is down,
   the diagnostic may fail with the existing sanitized auth-unavailable response
   before it runs. Document this limitation and the explicit local operator checks;
   never bypass auth to make an outage diagnostic succeed. Disabled admin stays closed.
-- [ ] Keep `/health/live` and `/health/ready` free of DB checkout after initialization.
+- [x] Keep `/health/live` and `/health/ready` free of DB checkout after initialization.
   Document ready-during-outage versus failed startup. Diagnostic SQL/lock/connection
   limits and cleanup must be bounded; distinguish them from a hard end-to-end
   network-blackhole deadline, as in Step 1.
-- [ ] Add safe structured operational events with request correlation, route
+- [x] Add safe structured operational events with request correlation, route
   template, status, duration and stable failure category. Cover pool timeout,
   connection failure and recovery on real requests. Exclude raw URLs/query strings,
   cookies, tokens, CSRF/OIDC codes, DB credentials, request bodies, authored text,
   SQL parameters and unsanitized exception traces. Exercise proxy/access logs as
   well as application handlers; use injected secret canaries in failure tests.
-- [ ] Audit existing settings and limits before adding new ones: verified DB TLS
+- [x] Audit existing settings and limits before adding new ones: verified DB TLS
   outside local mode, explicit public CORS versus private same-origin policy,
   trusted proxy assumptions, bounded request bodies/timeouts and separate reader,
   session, editor, backup and migrator credentials. Record aggregate connection
   budget including diagnostics/jobs. No new grants without a demonstrated need.
-- [ ] Document direct versus transaction-pooled endpoint requirements for the
+- [x] Document direct versus transaction-pooled endpoint requirements for the
   existing SQL/session-lock/transaction behavior. Unverified provider compatibility
   stays a deployment gate; do not claim Neon/TLS/suspend acceptance from local PG.
 
@@ -349,3 +349,64 @@ under the staged-work contract; Step 3 diagnostics/configuration/failure visibil
 is next. L5 remains ongoing. Changed-source native AMD64/ARM64 CI belongs to Step 5;
 hosted suspend/wake/provider/TLS/identity, off-device retention and manual-device
 acceptance are not established by these local results. Firefox remains user-deferred.
+
+## Step 3 implementation and local acceptance — 2026-10-15
+
+Continuation authorized. Baseline: clean `bb8f354971cf5914eaad50feb24671b833ae679c`.
+Protected export hashes remain those frozen in Step 2. No routine authority,
+volume, credential, journal or content changes are authorized for verification.
+
+Implement explicit POST `/api/admin/diagnostics` behind the existing prefix
+session/Origin/CSRF policy and bounded empty-JSON envelope. Reuse the guard's
+session connection without interactive activity writes or nested checkout; use
+existing reader/editor pools for read-only checks. Health remains SQL-free.
+Structured request events and safe access/error logging exclude raw request and
+exception data. Verification passed; [frozen evidence](L5-step3-local-evidence.json)
+binds source hashes to installed API modules and proxy files. Steps 4–5 remain open.
+
+Step 3 acceptance:
+
+- Explicit read-only diagnostic uses existing verified-editor session/Origin/CSRF,
+  `no-store`, bounded empty JSON and existing role pools. Two concurrent diagnostic
+  requests use exactly two session checkouts, no nested checkout or activity/test
+  writes; all role pools return to zero checked-out connections. Disabled admin,
+  missing session and denied Origin/CSRF remain closed.
+- Full isolated PG17 suite: **183 passed, 2 skipped**, 495.58s. Both actual-restart
+  skips pass in the separate owned-volume stage: **17 passed**, 38.73s. This proves
+  diagnostic auth closure during DB stop/start, SQL-free health, role pool/connection
+  failures, SQL-timeout cleanup, safe categories and request-driven recovery.
+- Ordinary backend: **238 passed, 185 skipped**, 66.68s; PG cases accepted above.
+  Ruff on backend/tests/container scripts and mypy (**41 source files**) pass.
+  Two existing weak-RSA fixture warnings remain. Development tests were adjusted
+  for intentional sanitized 500 behavior and real ownership/recovery timing;
+  no timeout or assertion was relaxed.
+- Fresh installed ARM64 API plus HTTP admin/learner bundle: **14 browser cases
+  passed**, including diagnostics and prior editor/freshness regressions. Actual
+  API/Nginx log canaries cover request fields and exception text, rejected method
+  400, ingress 413, API 500 and refused-upstream 502. Startup path/body canaries and
+  trace suppression pass in the API smoke (**8 groups**).
+- Fresh learner image and API through shipped Nginx: **43 browser cases passed,
+  1 skipped**, plus **6 proxy smoke groups** (outage/DNS recovery included). The
+  skipped dedicated PG source-switch case does not run in this JSON-fixture smoke;
+  real PG behavior is covered by the separate HTTP/PG gates, not counted as a pass.
+- Network-free installed-source inspection matches all **8 changed API modules**
+  and both proxy files byte-for-byte. The packaged command retains **one worker**
+  and explicitly disables proxy-header trust.
+- `npm run build` (typecheck), fresh HTTP admin build, Docker learner typecheck/
+  bundle exclusion, lint, formatting, architecture graph (**288 modules / 1,255
+  imports**), **10 architecture tests**, documentation links and diff checks pass.
+  Existing learner chunk-size advisory remains; protected export hashes are unchanged.
+- [Operations runbook](../../L5-local-operations.md) records response states, safe
+  log/recovery semantics, six-connection aggregate budget plus independent jobs,
+  timeout limitations, TLS/CORS/proxy/body/credential audit and unverified pooled
+  provider requirements. No new grants, engines, workers, background SQL or write
+  replay were introduced. Readiness remains initialization readiness during outage.
+- All fixtures/owned volumes were cleaned. An exited, unmounted tmpfs fixture left
+  by the full-run cleanup was verified by exact metadata and removed; final scoped
+  listings were empty. No routine authority, volume, journal or credential operation.
+
+Completion audit: **Step 3 local gate complete, no blocking findings**. Stop at this
+stage gate. Step 4's reproducible twenty-learner load characterization is next;
+Step 5 rollback/restore/native CI and overall L5 acceptance remain open. Local
+verification does not establish hosted TLS/pooling/identity/suspend behavior or
+off-device retention. Existing Firefox/manual-device obligations remain separate.

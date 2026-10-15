@@ -4,7 +4,6 @@ import asyncio
 import hashlib
 import hmac
 import json
-import logging
 from collections.abc import Callable
 from typing import Any
 from urllib.parse import urlsplit
@@ -18,24 +17,7 @@ from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.oidc import AuthError, OIDCClient, StrictDecoder
 from meducation_api.auth.store import SessionStore, opaque
 from meducation_api.db.engine import create_database_engine, database_url
-
-PRIVATE_HEADERS = {
-    "Cache-Control": "no-store",
-    "Referrer-Policy": "no-referrer",
-    "X-Content-Type-Options": "nosniff",
-    "X-Frame-Options": "DENY",
-    "Content-Security-Policy": "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
-}
-
-
-class RedactAdminQuery(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        if isinstance(record.args, tuple) and len(record.args) == 5:
-            args = list(record.args)
-            if isinstance(args[2], str) and args[2].startswith("/api/admin"):
-                args[2] = args[2].split("?", 1)[0]
-                record.args = tuple(args)
-        return True
+from meducation_api.operations import PRIVATE_RESPONSE_HEADERS as PRIVATE_HEADERS
 
 
 class AuthRuntime:
@@ -57,14 +39,16 @@ class AuthRuntime:
         self.engine.dispose()
 
 
-def error_response(error: AuthError, config: AuthSettings, *, callback: bool = False) -> Response:
+def error_response(
+    error: AuthError, config: AuthSettings, *, callback: bool = False, request_id: str | None = None
+) -> Response:
     # No exception/claim/provider/body details in the public error contract.
     response = JSONResponse(
         {
             "error": {
                 "code": error.code,
                 "message": "Admin access could not be completed.",
-                "requestId": str(uuid4()),
+                "requestId": request_id or str(uuid4()),
             }
         },
         status_code=error.status,
@@ -79,15 +63,30 @@ def error_response(error: AuthError, config: AuthSettings, *, callback: bool = F
     return response
 
 
+async def read_empty_private_body(request: Request) -> None:
+    data = b""
+    try:
+        async with asyncio.timeout(10):
+            async for chunk in request.stream():
+                data += chunk
+                if len(data) > 8192:
+                    raise AuthError(413, "auth_body_limit")
+        if json.loads(data, cls=StrictDecoder) != {}:
+            raise AuthError(400, "auth_envelope_invalid")
+    except AuthError:
+        raise
+    except TimeoutError:
+        raise AuthError(408, "auth_body_timeout") from None
+    except ValueError, UnicodeError, RecursionError:
+        raise AuthError(400, "auth_envelope_invalid") from None
+
+
 def install_auth(
     app: FastAPI,
     config: AuthSettings,
     runtime_factory: Callable[[AuthSettings], AuthRuntime] = AuthRuntime,
 ) -> None:
     # Construction has no network/DB/migration side effect. Lifecycle owns resources.
-    access_logger = logging.getLogger("uvicorn.access")
-    if not any(isinstance(f, RedactAdminQuery) for f in access_logger.filters):
-        access_logger.addFilter(RedactAdminQuery())
     runtime = runtime_factory(config) if config.enabled else None
     app.state.auth = runtime
     flow_cookie = config.cookie + "-flow"
@@ -111,7 +110,9 @@ def install_auth(
         if path != "/api/admin" and not path.startswith("/api/admin/"):
             return await call_next(request)
         if runtime is None:
-            return error_response(AuthError(503, "admin_disabled"), config)
+            return error_response(
+                AuthError(503, "admin_disabled"), config, request_id=request.state.request_id
+            )
         guard = None
         principal = None
         try:
@@ -143,7 +144,7 @@ def install_auth(
                     csrf=request.headers.get("x-csrf-token"),
                     write=request.method not in ("GET", "HEAD"),
                     fresh=fresh,
-                    interactive=path != "/api/admin/access"
+                    interactive=path not in {"/api/admin/access", "/api/admin/diagnostics"}
                     and not path.startswith("/api/admin/operations/"),
                 )
                 principal = await run_in_threadpool(guard.__enter__)
@@ -159,7 +160,12 @@ def install_auth(
                     del response.headers[key]
             return response
         except AuthError as error:
-            return error_response(error, config, callback=path == "/api/admin/auth/callback")
+            return error_response(
+                error,
+                config,
+                callback=path == "/api/admin/auth/callback",
+                request_id=request.state.request_id,
+            )
         finally:
             request.scope["query_string"] = (
                 b""
@@ -171,23 +177,6 @@ def install_auth(
                 await run_in_threadpool(
                     guard.__exit__, RuntimeError, RuntimeError("private request failed"), None
                 )
-
-    async def empty_body(request: Request) -> None:
-        data = b""
-        try:
-            async with asyncio.timeout(10):
-                async for chunk in request.stream():
-                    data += chunk
-                    if len(data) > 8192:
-                        raise AuthError(413, "auth_body_limit")
-            if json.loads(data, cls=StrictDecoder) != {}:
-                raise AuthError(400, "auth_envelope_invalid")
-        except AuthError:
-            raise
-        except TimeoutError:
-            raise AuthError(408, "auth_body_timeout") from None
-        except ValueError, UnicodeError, RecursionError:
-            raise AuthError(400, "auth_envelope_invalid") from None
 
     @app.get("/api/admin/session", include_in_schema=False)
     def session(request: Request) -> Response:
@@ -224,10 +213,12 @@ def install_auth(
     @app.post("/api/admin/auth/login", include_in_schema=False)
     async def login(request: Request) -> Response:
         assert runtime is not None
-        await empty_body(request)
+        await read_empty_private_body(request)
         browser = request.cookies.get(flow_cookie, "")
         csrf = request.headers.get("x-csrf-token", "")
-        if len(browser) != 43 or not hmac.compare_digest(flow_csrf(browser).encode(), csrf.encode()):
+        if len(browser) != 43 or not hmac.compare_digest(
+            flow_csrf(browser).encode(), csrf.encode()
+        ):
             raise AuthError(403, "csrf_invalid")
         await run_in_threadpool(runtime.store.rate, browser)
         transaction = await run_in_threadpool(runtime.store.begin_login, browser)
@@ -241,7 +232,7 @@ def install_auth(
     @app.post("/api/admin/auth/reauthenticate", include_in_schema=False)
     async def reauthenticate(request: Request) -> Response:
         assert runtime is not None
-        await empty_body(request)
+        await read_empty_private_body(request)
         browser = request.cookies.get(flow_cookie) or opaque()
         await run_in_threadpool(
             runtime.store.rate, browser, connection=request.state.principal.connection
@@ -307,7 +298,7 @@ def install_auth(
     @app.post("/api/admin/auth/logout", include_in_schema=False)
     async def logout(request: Request) -> Response:
         assert runtime is not None
-        await empty_body(request)
+        await read_empty_private_body(request)
         await run_in_threadpool(runtime.store.revoke, request.state.principal)
         response = JSONResponse({"authenticated": False}, headers=PRIVATE_HEADERS)
         response.delete_cookie(config.cookie, secure=config.secure, httponly=True, samesite="lax")
@@ -322,5 +313,8 @@ def install_auth(
     async def auth_failure(request: Request, error: AuthError) -> Response:
         # Invalid step-up retains an existing session. Callback errors only clear flow binding.
         return error_response(
-            error, config, callback=request.url.path == "/api/admin/auth/callback"
+            error,
+            config,
+            callback=request.url.path == "/api/admin/auth/callback",
+            request_id=request.state.request_id,
         )

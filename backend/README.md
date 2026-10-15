@@ -16,7 +16,7 @@ From the repository root, create the isolated environment if it does not exist:
 python3.14 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements-dev.lock
 .venv/bin/python -m pip install --no-deps -e backend
-.venv/bin/python -m uvicorn meducation_api.main:app --reload --host 127.0.0.1 --port 8000
+.venv/bin/python -m uvicorn meducation_api.main:app --reload --host 127.0.0.1 --port 8000 --no-proxy-headers
 ```
 
 For configuration overrides, copy `backend/.env.example` to `backend/.env` and
@@ -378,3 +378,20 @@ construction also reads its card IDs. A fully cached body needs one HTTP request
 three SQL statements (two SET LOCAL limits, one pointer read), plus one pre-ping.
 Health calls add none. Counts depend on fixture size for flashcard catalog bodies;
 no pointer-cache optimization is justified by these measurements.
+
+### L5 explicit diagnostics and failure visibility
+
+POST `{}` to `/api/admin/diagnostics` only from the existing signed-in editor
+session with exact Origin and current CSRF. It checks reader connectivity,
+packaged PG17 schema and active publication, plus session/editor connectivity,
+without test writes or additional pools. The held session connection is reused;
+concurrent diagnostics do not nest checkout. Session outages may return sanitized
+`session_unavailable` before the diagnostic runs. Liveness/readiness stay SQL-free.
+
+[The operations runbook](../docs/L5-local-operations.md) owns response states,
+connection/time budgets, generated request correlation, log redaction, local
+outage checks and the configuration audit. Worker request JSON logs use route
+templates and fixed categories; Uvicorn access paths and native HTTP Nginx error
+contexts cannot disclose request inputs. No new grants, runtime polling or write
+replay were added. Transaction-pooled endpoints/provider TLS/suspend behavior
+remain unverified deployment gates; use direct endpoints for operator jobs.

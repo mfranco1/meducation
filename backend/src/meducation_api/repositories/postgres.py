@@ -13,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.db.runtime import PostgresRuntime
+from meducation_api.operations import database_failure, dependency_result
 from meducation_api.repositories.question_bank import (
     Flashcard,
     FlashcardDeck,
@@ -265,7 +266,9 @@ class PostgresContentSource:
                     release,
                     sequence,
                 )
-        except SQLAlchemyError, ValidationError:
+            dependency_result("reader")
+        except (SQLAlchemyError, ValidationError) as error:
+            database_failure("reader", error)
             raise ContentDatabaseError(
                 "Content database unavailable; no SQL or credentials logged."
             ) from None

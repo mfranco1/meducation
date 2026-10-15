@@ -497,3 +497,30 @@ startup only checks the packaged schema and never migrates. Range/recovery jobs
 use explicit migrator credentials and private journal paths. Their `--rehearsal`
 mode is restricted to loopback test/verification databases; ordinary Compose
 bootstrap dump/restore commands do not establish authoritative allocation recovery.
+
+## L5 diagnostics and safe logging
+
+Rebuild both API and frontend images after changing operational middleware or
+`ops/containers/nginx.conf`. The API keeps one worker and disables forwarded-header
+trust. Liveness/readiness do no recurring SQL; ready can remain 200 during a DB
+outage. The authenticated, explicit POST `/api/admin/diagnostics` shares existing
+reader/session/editor pools, reusing the guard's session connection. See the
+[operations runbook](L5-local-operations.md) for the local-only identity gate,
+bounded outcomes, aggregate six-connection worker budget and failure diagnosis.
+
+Nginx structured access events use fixed route families, generated correlation,
+status, duration and safe categories. The HTTP error channel discards native
+request-context messages; master startup messages remain on stderr. The API logs
+fixed route templates and dependency failure/recovery events without raw URLs,
+parameters, cookies, text, SQL or exception traces. Keep these log controls when
+changing proxy/server launch commands. Their protection includes failure paths.
+
+Run `smoke-admin-http.py --image <fresh-api-image>` after a fresh HTTP admin build,
+with no concurrent `dist` builds/browser suites. It tests explicit protected
+diagnostics, then injected canaries against API exceptions, native rejected
+methods/body limits and a test-only refused Nginx upstream. No raw logs are saved
+in its report. `test-postgres-content.py` covers authorization, concurrent bounded
+pool cleanup and failures; its separate `--restartable --keyword l5` stage covers
+actual stop/start and DB-dependent diagnostic authorization. All fixtures are
+disposable and never target routine authority volumes. Native changed-source
+AMD64/ARM64 acceptance remains a later L5 gate.

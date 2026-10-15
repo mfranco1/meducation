@@ -3,6 +3,7 @@
 import base64
 import hashlib
 import json
+import logging
 import os
 import secrets
 import time
@@ -209,5 +210,13 @@ def old_factor():
     return {"fixture": "old-factor"}
 
 
+@app.get("/fixture/operational-failure/{value}")
+def operational_failure(value: str):
+    # Test-only exception canary. This fixture is never shipped in the API wheel.
+    logging.getLogger("uvicorn.error").error(value)
+    logging.getLogger("sqlalchemy.pool.impl.QueuePool").error(value)
+    raise RuntimeError(value)
+
+
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000, access_log=False)
+    uvicorn.run(app, host="127.0.0.1", port=8000, access_log=True, proxy_headers=False)

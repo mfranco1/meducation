@@ -2924,7 +2924,7 @@ def test_l5_stale_idle_pool_connection_is_repaired_before_work(db, role):
         engine.dispose()
 
 
-def test_l5_reader_lock_timeout_returns_safe_error_and_leaves_pool_clean(db):
+def test_l5_reader_lock_timeout_returns_safe_error_and_leaves_pool_clean(db, caplog):
     from fastapi.testclient import TestClient
 
     from meducation_api.main import create_app
@@ -2945,8 +2945,10 @@ def test_l5_reader_lock_timeout_returns_safe_error_and_leaves_pool_clean(db):
             result = client.get('/api/v1/quizzes/q1/questions')
             assert result.status_code == 503
             assert result.json() == {'detail': {'code': 'content_unavailable'}}
+            assert l5_events(caplog)[-1]['failure_category'] == 'sql_timeout'
             assert engine.pool.checkedout() == 0
         assert client.get('/api/v1/quizzes/q1/questions').status_code == 200
+        assert 'reader' in l5_events(caplog)[-1]['recovered_dependencies']
         assert engine.pool.checkedout() == 0
 
 
@@ -3075,3 +3077,179 @@ def test_l5_launch_http_sql_counts_include_pre_ping_and_sql_free_health(db, monk
         assert client.get('/health/ready').status_code == 200
         assert counts == {'sql': 0, 'pointer': 0, 'ping': 0}
         assert engine.pool.checkedout() == 0
+
+
+def l5_bounded_session(runtime, db):
+    # auth_app normally uses an unpooled test role. Exercise the real worker pool.
+    engine = create_database_engine(db.session.url)
+    runtime.store.engine = engine
+    return engine
+
+
+def l5_events(caplog):
+    return [json.loads(r.getMessage()) for r in caplog.records if r.name == 'meducation.operations']
+
+
+def test_l5_diagnostics_guard_readonly_concurrency_and_pool_cleanup(db):
+    from sqlalchemy import event
+
+    authoring_service(db)
+    client, runtime, h = auth_app(db, postgres=True)
+    session_engine = l5_bounded_session(runtime, db)
+    try:
+        with client:
+            assert client.post('/api/admin/diagnostics', json={}, headers={'Origin': runtime.config.origin}).status_code == 401
+            auth_login(client, runtime, h)
+            csrf = client.get('/api/admin/session').json()['csrfToken']
+            for headers in ({'Origin': 'http://elsewhere.invalid', 'X-CSRF-Token': csrf}, {'Origin': runtime.config.origin, 'X-CSRF-Token': 'wrong'}):
+                denied = client.post('/api/admin/diagnostics', json={}, headers=headers)
+                assert denied.status_code == 403
+                assert denied.headers['cache-control'] == 'no-store'
+                assert 'dependencies' not in denied.json()
+            assert editor_post(client, '/diagnostics', {'extra': 'secret authored body'}).status_code == 400
+            engines = [session_engine, client.app.state.source.runtime.engine, client.app.state.editor_engine]
+            sql, session_checkouts = [], []
+            for engine in engines:
+                event.listen(engine, 'before_cursor_execute', lambda _c, _cur, statement, *_: sql.append(statement))
+            event.listen(session_engine, 'checkout', lambda *_: session_checkouts.append(True))
+            barrier = Barrier(2)
+            def synchronize(*_):
+                barrier.wait(timeout=10)
+            event.listen(engines[2], 'checkout', synchronize)
+            def run(_):
+                return client.post('/api/admin/diagnostics', json={}, headers={'Origin': runtime.config.origin, 'X-CSRF-Token': csrf})
+            try:
+                with ThreadPoolExecutor(max_workers=2) as executor:
+                    responses = list(executor.map(run, range(2)))
+            finally:
+                event.remove(engines[2], 'checkout', synchronize)
+            assert all(r.status_code == 200 for r in responses)
+            assert responses[0].json() == {'dependencies': {'reader': {'connectivity': 'ok', 'schema': 'ok', 'publication': 'ok'}, 'session': 'ok', 'editor': 'ok'}}
+            assert len(session_checkouts) == 2  # no activity write or nested checkout
+            assert all(statement.lstrip().split()[0].upper() in {'SET', 'SELECT', 'SHOW'} for statement in sql)
+            assert all(engine.pool.checkedout() == 0 for engine in engines)
+            assert all(engine.pool.size() == 2 for engine in engines)
+    finally:
+        session_engine.dispose()
+
+
+@pytest.mark.parametrize('role', ['reader', 'session', 'editor'])
+@pytest.mark.parametrize('fault', ['pool_timeout', 'connection_failure'])
+def test_l5_diagnostic_dependency_failure_events_redaction_and_recovery(db, caplog, role, fault):
+    from sqlalchemy import event
+    from sqlalchemy.exc import OperationalError
+
+    authoring_service(db)
+    client, runtime, h = auth_app(db, postgres=True)
+    session_engine = l5_bounded_session(runtime, db)
+    canary = 'L5-private-password-cookie-code-authored-text'
+    try:
+        with client:
+            auth_login(client, runtime, h)
+            csrf = client.get('/api/admin/session').json()['csrfToken']
+            engine = {'reader': client.app.state.source.runtime.engine, 'session': session_engine, 'editor': client.app.state.editor_engine}[role]
+            def fail(*_):
+                raise OperationalError(canary, {'token': canary}, RuntimeError(canary), connection_invalidated=True)
+            held = []
+            try:
+                if fault == 'pool_timeout':
+                    engine.pool._timeout = 0.05
+                    held = [engine.connect(), engine.connect()]
+                else:
+                    event.listen(engine, 'checkout', fail)
+                response = client.post('/api/admin/diagnostics?code='+canary, json={}, headers={'Origin': runtime.config.origin, 'X-CSRF-Token': csrf, 'X-Request-ID': canary})
+                assert response.status_code == 503
+                if role == 'session':
+                    assert response.json()['error']['code'] == 'session_unavailable'
+                    assert 'dependencies' not in response.json()
+                else:
+                    outcome = response.json()['dependencies'][role]
+                    assert outcome == 'unavailable' if role == 'editor' else outcome['connectivity'] == 'unavailable'
+                event_record = l5_events(caplog)[-1]
+                assert event_record['request_id'] == response.headers['x-request-id']
+                assert event_record['dependencies'][role] == fault
+                assert event_record['failure_category'] == fault
+                assert canary not in json.dumps(l5_events(caplog)) + response.text
+                if role in ('reader', 'editor'):
+                    path = '/api/v1/subjects' if role == 'reader' else '/api/admin/draft'
+                    ordinary = client.get(path)
+                    assert ordinary.status_code == 503
+                    assert l5_events(caplog)[-1]['dependencies'][role] == fault
+                    assert canary not in json.dumps(l5_events(caplog)) + ordinary.text
+            finally:
+                for connection in held:
+                    connection.close()
+                if fault == 'connection_failure':
+                    event.remove(engine, 'checkout', fail)
+            assert client.post('/api/admin/diagnostics', json={}, headers={'Origin': runtime.config.origin, 'X-CSRF-Token': csrf}).status_code == 200
+            assert role in l5_events(caplog)[-1]['recovered_dependencies']
+            assert engine.pool.checkedout() == 0
+    finally:
+        session_engine.dispose()
+
+
+def test_l5_diagnostics_reject_schema_and_missing_publication_without_mutating(db, monkeypatch):
+    from meducation_api.admin import diagnostics
+
+    release = store(db)
+    # Boot initialized with a release; then change fixture state only.
+    publish(db, release)
+    client, runtime, h = auth_app(db, postgres=True)
+    with client:
+        auth_login(client, runtime, h)
+        with monkeypatch.context() as patch:
+            patch.setattr(diagnostics, 'migration_head', lambda: 'unsupported-test-head')
+            result = editor_post(client, '/diagnostics', {})
+            assert result.status_code == 503
+            assert result.json()['dependencies']['reader'] == {'connectivity': 'ok', 'schema': 'unsupported', 'publication': 'not_checked'}
+        with db.admin.begin() as c:
+            c.exec_driver_sql('UPDATE content.active_publication SET release_id=NULL, publication_sequence=0')
+        result = editor_post(client, '/diagnostics', {})
+        assert result.status_code == 503
+        assert result.json()['dependencies']['reader']['publication'] == 'missing'
+        for path in ('/health/live', '/health/ready'):
+            assert client.get(path).status_code == 200
+
+
+def test_l5_diagnostics_actual_db_outage_keeps_auth_closed_health_sql_free_and_recovers(db, caplog):
+    import subprocess
+    import sys
+
+    from sqlalchemy import event
+
+    container = os.environ.get('MEDUCATION_TEST_RESTART_CONTAINER')
+    if not container:
+        pytest.skip('Dedicated --restartable --keyword l5 gate')
+    authoring_service(db)
+    client, runtime, h = auth_app(db, postgres=True)
+    session_engine = l5_bounded_session(runtime, db)
+    def control(action):
+        result = subprocess.run([sys.executable, str(ROOT/'scripts/containers/control-resilience-fixture.py'), '--container', container, '--port', str(db.admin.url.port), '--action', action], capture_output=True, timeout=60, check=False)
+        assert result.returncode == 0, 'Owned fixture control failed'
+    try:
+        with client:
+            auth_login(client, runtime, h)
+            csrf = client.get('/api/admin/session').json()['csrfToken']
+            headers = {'Origin': runtime.config.origin, 'X-CSRF-Token': csrf}
+            assert client.post('/api/admin/diagnostics', json={}, headers=headers).status_code == 200
+            engines = [session_engine, client.app.state.source.runtime.engine, client.app.state.editor_engine]
+            work = []
+            for engine in engines:
+                event.listen(engine, 'checkout', lambda *_: work.append(True))
+            try:
+                control('stop')
+                assert client.get('/health/live').status_code == 200
+                assert client.get('/health/ready').status_code == 200
+                assert not work
+                failed = client.post('/api/admin/diagnostics', json={}, headers=headers)
+                assert failed.status_code == 503
+                assert failed.json()['error']['code'] == 'session_unavailable'
+                assert l5_events(caplog)[-1]['dependencies']['session'] == 'connection_failure'
+                assert all(engine.pool.checkedout() == 0 for engine in engines)
+            finally:
+                control('start')
+            assert client.post('/api/admin/diagnostics', json={}, headers=headers).status_code == 200
+            assert 'session' in l5_events(caplog)[-1]['recovered_dependencies']
+            assert all(engine.pool.checkedout() == 0 for engine in engines)
+    finally:
+        session_engine.dispose()

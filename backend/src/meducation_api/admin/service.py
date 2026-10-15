@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from meducation_api.auth.oidc import AuthError
 from meducation_api.auth.store import Principal, SessionStore
 from meducation_api.content_policy import PairedContentValidator, ValidatedPair
+from meducation_api.operations import database_failure, dependency_result
 
 ERRORS = {
     "P5031": (503, "allocation_recovery_required"),
@@ -163,10 +164,14 @@ class EditorService:
             with self.engine.begin() if mutation else self.engine.connect() as c:
                 c.exec_driver_sql("SET LOCAL lock_timeout = '5s'")
                 c.exec_driver_sql("SET LOCAL statement_timeout = '120s'")
-                return c.execute(text(expression), parameters).scalar_one()
+                result: Any = c.execute(text(expression), parameters).scalar_one()
+            dependency_result("editor")
+            return result
         except SQLAlchemyError as error:
             state = getattr(getattr(error, "orig", None), "sqlstate", None)
             status, code = ERRORS.get(str(state), (503, "authoring_unavailable"))
+            if code == "authoring_unavailable":
+                database_failure("editor", error)
             raise AuthError(status, code) from None
 
     def read(self, kind: str, arg: dict[str, Any] | None = None) -> dict[str, Any]:
