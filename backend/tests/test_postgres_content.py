@@ -2991,3 +2991,87 @@ def test_l5_database_stop_start_keeps_health_query_free_and_recovers_reader(db):
         assert recovered.json() == first.json()
         assert recovered.headers['etag'] == first.headers['etag']
         assert engine.pool.checkedout() == 0
+
+
+def test_l5_independent_sources_observe_other_bank_publication_and_a_b_a(db):
+    from meducation_api.repositories.postgres import PostgresContentSource
+
+    old = store(db)
+    first = publish(db, old)
+    q, f = banks()
+    f['cards'][0]['front'] = 'L5 only flashcards changed'
+    changed = store(db, q=q, f=f)
+    assert changed.quiz_revision == old.quiz_revision
+    assert changed.flashcard_revision != old.flashcard_revision
+    with (PostgresContentSource(reader_settings(db)) as one,
+          PostgresContentSource(reader_settings(db)) as two):
+        for source in (one, two):
+            with source.view() as view:
+                assert view.release_id == old.release_id
+        second = publish(db, changed, expected=first.publication_sequence)
+        for source in (one, two):
+            with source.view() as view:
+                assert view.release_id == changed.release_id
+                assert view.publication_sequence == second.publication_sequence
+                assert view.questions.revision == old.quiz_revision
+                assert view.flashcards.list_cards('dlegacy-X')[0].front == 'L5 only flashcards changed'
+        third = publish(db, old, expected=second.publication_sequence)
+        for source in (one, two):
+            with source.view() as view:
+                assert view.release_id == old.release_id
+                assert view.publication_sequence == third.publication_sequence
+                assert view.flashcards.revision == old.flashcard_revision
+            assert source.runtime.engine.pool.checkedout() == 0
+
+
+@pytest.mark.parametrize('bank', ['quiz', 'flashcard'])
+def test_l5_launch_http_sql_counts_include_pre_ping_and_sql_free_health(db, monkeypatch, bank):
+    from fastapi.testclient import TestClient
+    from sqlalchemy import event
+
+    from meducation_api.main import create_app
+
+    release = store(db)
+    publish(db, release)
+    app = create_app(reader_settings(db))
+    with TestClient(app) as client:
+        engine = app.state.source.runtime.engine
+        counts = {'sql': 0, 'pointer': 0, 'ping': 0}
+
+        def statement(_connection, _cursor, sql, *_args):
+            counts['sql'] += 1
+            counts['pointer'] += int('FROM content.active_publication' in sql)
+
+        ping = engine.dialect.do_ping
+
+        def counted_ping(connection):
+            counts['ping'] += 1
+            return ping(connection)
+
+        event.listen(engine, 'before_cursor_execute', statement)
+        monkeypatch.setattr(engine.dialect, 'do_ping', counted_ping)
+        app.state.source._catalogs.clear()
+        if bank == 'quiz':
+            subjects = '/api/v1/subjects'
+            membership = '/api/v1/subjects/s1/quizzes'
+            body = '/api/v1/quizzes/q1/questions'
+            revision = release.quiz_revision
+        else:
+            subjects = '/api/v1/flashcards/subjects'
+            membership = '/api/v1/flashcards/subjects/s1/catalog'
+            body = '/api/v1/flashcards/decks/dlegacy-X/cards'
+            revision = release.flashcard_revision
+        # Startup catalog, selected membership, launch check, uncached body.
+        for path in (subjects, membership + '?revision=' + revision, subjects,
+                     body + '?revision=' + revision):
+            assert client.get(path).status_code == 200
+        assert counts == {'sql': 18 if bank == 'quiz' else 19, 'pointer': 4, 'ping': 4}
+        counts.update(sql=0, pointer=0, ping=0)
+        # A fully cached browser launch sends only the fresh subjects check.
+        assert client.get(subjects).status_code == 200
+        assert counts == {'sql': 3, 'pointer': 1, 'ping': 1}
+        counts.update(sql=0, pointer=0, ping=0)
+        assert client.get('/health/live').status_code == 200
+        assert client.get('/health/ready').status_code == 200
+        assert counts == {'sql': 0, 'pointer': 0, 'ping': 0}
+        assert engine.pool.checkedout() == 0

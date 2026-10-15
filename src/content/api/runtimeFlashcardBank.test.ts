@@ -95,3 +95,36 @@ describe('runtime flashcard bank', () => {
     expect(bank.getState('subjects')).toBe('idle');
   });
 });
+
+describe('deck launch freshness', () => {
+  it('checks cached launches, blocks revision/membership changes and outages without replacing study cards', async () => {
+    const transport = { get: vi.fn().mockResolvedValue({ revision: 'rev-1', subjects }) };
+    const bank = new RuntimeFlashcardBank(noRetries, transport);
+    await bank.ensureSubjects();
+    transport.get.mockResolvedValueOnce(catalog).mockResolvedValueOnce(cards);
+    await bank.ensureSubjectCatalog('s1');
+    const active = await bank.ensureCards('d-neuro');
+    const deck = catalog.decks[0];
+    (await bank.validateLaunch(deck))();
+    (await bank.validateLaunch(deck))();
+    expect(transport.get).toHaveBeenCalledTimes(5);
+    await bank.ensureCards(deck.id);
+    expect(transport.get).toHaveBeenCalledTimes(5);
+    transport.get.mockResolvedValueOnce({ revision: 'rev-2', subjects });
+    await expect(bank.validateLaunch(deck)).rejects.toMatchObject({ kind: 'revision' });
+    transport.get.mockResolvedValueOnce({ revision: 'rev-1', subjects: [] });
+    await expect(bank.validateLaunch(deck)).rejects.toMatchObject({ kind: 'revision' });
+    transport.get.mockRejectedValueOnce(new Error('offline'));
+    await expect(bank.validateLaunch(deck)).rejects.toThrow('offline');
+    expect(bank.listCards(deck.id)).toBe(active);
+    (await bank.validateLaunch(deck))();
+  });
+
+  it('keeps explicit local launch validation network-free', async () => {
+    const transport = { get: vi.fn() };
+    const bank = new RuntimeFlashcardBank(noRetries, transport);
+    bank.configureLocal(subjects, catalog.decks, cards.cards);
+    (await bank.validateLaunch(catalog.decks[0]))();
+    expect(transport.get).not.toHaveBeenCalled();
+  });
+});

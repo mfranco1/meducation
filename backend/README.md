@@ -359,3 +359,22 @@ be recorded before the DB admits a range; restore reconciliation burns all earli
 permitted ranges. Destination independence is an operator acceptance gate. Follow
 [the allocation procedure](../docs/L4-authoritative-recovery.md#allocation-safety-is-a-separate-gate)
 before enabling it; production JSON authority remains unchanged.
+
+### Learner launch freshness (L5)
+
+The PostgreSQL source selects the active publication on every content request;
+there is no pointer TTL or background keepalive. A response pins one release.
+Learner explicit launches now re-fetch their bank's subject catalog even with a
+cached body, and block revision conflicts until reload. Admission requires check
+start evidence younger than 30 seconds; failed/slow validation blocks new launches.
+Active study and results review retain their content. This is not an outage or
+hosted suspend/wake guarantee. See [the contract](../docs/product.md#content-freshness-at-launch).
+
+Isolated one-quiz/one-deck PG17 measurements (excluding startup validation): a cold
+browser launch sends four HTTP requests (initial subjects, membership, launch
+subjects check, body). With a cold server catalog, quiz uses 18 SQL statements plus
+four checkout pre-pings; flashcards use 19 plus four pre-pings because deck catalog
+construction also reads its card IDs. A fully cached body needs one HTTP request,
+three SQL statements (two SET LOCAL limits, one pointer read), plus one pre-ping.
+Health calls add none. Counts depend on fixture size for flashcard catalog bodies;
+no pointer-cache optimization is justified by these measurements.

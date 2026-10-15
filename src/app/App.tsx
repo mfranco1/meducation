@@ -251,7 +251,7 @@ function LearnerApp({ onProgressBackup, progressReadOnly }: { onProgressBackup: 
       closeReviewExitDialog();
       if (openBackup) { session.showDashboard(); onProgressBackup(); }
     }} />
-    <ResumeContentDialog open={Boolean(session.pendingResume)} onCancel={session.cancelPendingResume} onRestart={session.restartPendingResume} />
+    <ResumeContentDialog open={Boolean(session.pendingResume)} onCancel={() => { cancel(); session.cancelPendingResume(); }} onRestart={() => { const pending = session.pendingResume; if (pending) launch(pending.quiz, session.restartPendingResume); }} />
     <Dialog open={Boolean(flashcards.pendingRestart)} onClose={flashcards.cancelRestart} aria-labelledby="flashcard-restart-title">
       <DialogTitle id="flashcard-restart-title">Restart this deck?</DialogTitle>
       <DialogContent>{flashcards.pendingRestart?.reason === 'changed-content'

@@ -32,7 +32,7 @@ export interface FlashcardLoadFailure {
 
 const flashcardProgressRepository = new LocalFlashcardProgressRepository();
 
-type FlashcardLoader = Pick<typeof runtimeFlashcardBank, 'ensureCards' | 'listCards' | 'cancel'>;
+type FlashcardLoader = Pick<typeof runtimeFlashcardBank, 'ensureCards' | 'listCards' | 'cancel'> & Partial<Pick<typeof runtimeFlashcardBank, 'validateLaunch'>>;
 
 export function useFlashcardSession(
   loader: FlashcardLoader = runtimeFlashcardBank,
@@ -103,10 +103,13 @@ export function useFlashcardSession(
       launching.current = { deckId: deck.id, token };
       setLoadingDeckId(deck.id);
       try {
+        const admit = loader.validateLaunch ? await loader.validateLaunch(deck) : () => undefined;
+        if (launching.current?.token !== token) return;
         const cards = await loader.ensureCards(deck.id);
         if (launching.current?.token !== token) return;
         const contentSignature = await flashcardContentSignature(cards);
         if (launching.current?.token !== token) return;
+        admit();
         const choice = resolveFlashcardLaunch(deck.id, cards, contentSignature, repository.getCheckpoint(deck.id));
         if (choice.kind === 'empty') return;
         if (choice.kind === 'restart-required') {
@@ -139,22 +142,31 @@ export function useFlashcardSession(
     [cancelLaunch, loader, onFailure, repository, runPersistence],
   );
 
-  const confirmRestart = useCallback(() => {
-    if (!pendingRestart) return;
-    const { deck, subject, cards, signature: contentSignature } = pendingRestart;
-    const cardId = cards[0]?.id;
-    if (!cardId) {
+  const confirmRestart = useCallback(async () => {
+    if (!pendingRestart || launching.current) return;
+    const pending = pendingRestart;
+    const { deck, subject, cards, signature: contentSignature } = pending;
+    const token = Symbol(deck.id);
+    launching.current = { deckId: deck.id, token };
+    setLoadingDeckId(deck.id);
+    try {
+      const admit = loader.validateLaunch ? await loader.validateLaunch(deck) : () => undefined;
+      if (launching.current?.token !== token) return;
+      admit();
+      const cardId = cards[0]?.id;
+      if (!cardId) { setPendingRestart(undefined); return; }
+      if (!runPersistence(() => repository.saveCheckpoint(checkpointForCard(deck.id, cards, cardId, contentSignature)))) return;
+      signature.current = contentSignature;
       setPendingRestart(undefined);
-      return;
+      setView({ page: 'flashcards-study', subject, deck, index: 0, revealed: false });
+    } catch (error) {
+      if (launching.current?.token === token) onFailure?.({ deck, subject, error: error instanceof Error ? error : new Error('Please try again or come back later.') });
+    } finally {
+      if (launching.current?.token === token) { launching.current = undefined; setLoadingDeckId(undefined); }
     }
-    if (!runPersistence(() => repository.saveCheckpoint(checkpointForCard(deck.id, cards, cardId, contentSignature))))
-      return;
-    signature.current = contentSignature;
-    setPendingRestart(undefined);
-    setView({ page: 'flashcards-study', subject, deck, index: 0, revealed: false });
-  }, [pendingRestart, repository, runPersistence]);
+  }, [pendingRestart, loader, onFailure, repository, runPersistence]);
 
-  const cancelRestart = useCallback(() => setPendingRestart(undefined), []);
+  const cancelRestart = cancelLaunch;
 
   const moveTo = useCallback(
     (index: number) => {

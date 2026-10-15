@@ -1,3 +1,4 @@
+import { LaunchFreshness } from './launchFreshness';
 import { contentRetryPolicy, type RetryPolicy } from './retryPolicy';
 import {
   ContentLoadError,
@@ -33,10 +34,13 @@ export class RuntimeFlashcardBank {
   private generation = 0;
   private version = 0;
 
+  private readonly freshness: LaunchFreshness;
+
   constructor(
     private readonly retryPolicy: RetryPolicy = contentRetryPolicy,
     private readonly transport: JsonTransport = browserJsonTransport,
-  ) {}
+    now?: () => number,
+  ) { this.freshness = new LaunchFreshness(now); }
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -53,6 +57,7 @@ export class RuntimeFlashcardBank {
     return this.errors.get(key);
   }
   cancel(key: string) {
+    if (key.startsWith('cards:')) this.freshness.cancelAll();
     this.controllers.get(key)?.abort();
     this.controllers.delete(key);
     this.pending.delete(key);
@@ -60,6 +65,7 @@ export class RuntimeFlashcardBank {
     this.notify();
   }
   cancelAll() {
+    this.freshness.cancelAll();
     [...this.controllers.keys()].forEach((key) => this.cancel(key));
   }
   listSubjects() {
@@ -112,6 +118,20 @@ export class RuntimeFlashcardBank {
     }
     this.states.set('subjects', 'ready');
     this.notify();
+  }
+
+  validateLaunch(deck: Pick<FlashcardDeckSummary, 'id' | 'subjectId'>): Promise<() => void> {
+    if (this.source === 'local') return Promise.resolve(() => undefined);
+    const revision = this.revision;
+    return this.freshness.check(`${deck.subjectId}:${deck.id}`, async signal => {
+      const payload = await this.transport.get<unknown>('/api/v1/flashcards/subjects', {
+        signal, policy: this.retryPolicy,
+      });
+      if (!isFlashcardSubjectResponse(payload)) throw new ContentLoadError('invalid', 'The flashcard catalog is incomplete. Retry later.');
+      if (payload.revision !== revision) throw revisionError();
+      const subject = payload.subjects.find(subject => subject.id === deck.subjectId);
+      if (!subject?.deckIds.includes(deck.id)) throw revisionError();
+    });
   }
 
   async ensureSubjects(): Promise<FlashcardSubjectSummary[]> {

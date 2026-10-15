@@ -4,6 +4,26 @@
 
 The learner shell has a collapsible left navigation with **Quizzes** and **Flashcards**. Quizzes opens the quiz subject dashboard; Flashcards opens a deck dashboard using the same subject catalog, dashboard grid, and Continue Studying carousel. Flashcards show deck inventory only, with no score or completion analytics. A learner chooses a subject and selects one of its decks directly. Subject screens show the shared concise empty display after their catalog loads successfully with no quizzes or decks; loading and recovery presentations remain visible while data is unavailable. Empty flashcard decks remain visible but cannot be launched. Subject empty displays keep the All subjects navigation available. Subject catalog rows use the shared warm shimmer while loading; selecting Study or Resume shows the orange shell progress bar until the deck opens. A failed deck request leaves its subject list available and shows a persistent, manually closable error toast; selecting Study or Resume retries. Study reveals each card's back on request, saves the current card while navigating, resumes from the saved card with its front visible, and clears the active position only when the learner explicitly finishes. The Meducation brand returns to Quizzes. Desktop navigation starts expanded, while narrow screens keep an icon rail and open an overlay drawer for labels. Navigation from an active quiz or results review retains the existing confirmation and persistence rules; leaving a flashcard deck saves its checkpoint before switching destinations.
 
+## Content freshness at launch
+
+API-mode starting/retaking, resuming or browsing a quiz, and opening/resuming a
+deck, revalidate that bank's current subject catalog on every explicit launch,
+even when all bodies are cached in a long-lived tab. Restart confirmations check
+again. A check must still be younger than 30 seconds, measured from monotonic
+request start, when study or browsing is admitted. Slow checks, retries, body
+loads or signature calculations cannot admit a launch with expired evidence.
+This bounds evidence age, not network response time. A publication after a
+successful check may be observed on the next launch; uncached body requests also
+carry revision preconditions.
+
+Changed revisions or missing/moved membership block launch with reload guidance.
+Reload obtains a coherent current catalog; changed saved content still requires
+explicit restart. Unavailable checks block new launches and preserve saved bytes.
+Cached bodies are never an outage fallback. Active study, timers, answers,
+checkpoints, completed scores and transient results review keep their existing
+content. No publication polling, focus refresh or idle content requests run.
+Explicit local fallback mode stays network-free.
+
 ## Progress backup and restore
 
 Progress backup is available from the learner navigation when no quiz or flashcard study session is active. It downloads one versioned JSON file containing paired quiz and flashcard progress. Unfinished quiz signatures are preserved and may contain question text and choices; the dialog warns learners to share files only when intended. Downloads are local browser actions and do not prove that a copy was saved off-device.
@@ -47,5 +67,7 @@ after sign-in. Saved drafts remain unpublished until explicit reviewed publicati
 retained activation preserves draft content. Save, paired Undo/reset and publication
 show captured context. Session expiry, conflicts and uncertain responses retain
 unsaved text, with explicit session refresh/review and operation reconciliation.
-The JSON development editor remains a separate reviewed-download mode while
-canonical JSON is authoritative; HTTP provider/recovery/cutover gates are pending.
+The designated local PostgreSQL database is the writable authority. The JSON
+development editor remains a separate reviewed-download mode for exports/fixtures.
+Hosted identity/provider and off-device retention acceptance remain deferred;
+see [local authoring](local-authoring.md) for the current operating policy.

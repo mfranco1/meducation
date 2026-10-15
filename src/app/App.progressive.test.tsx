@@ -145,7 +145,7 @@ describe('progressive dashboard statistics', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Start quiz' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock.mock.calls[0][0]).toContain('/api/v1/quizzes/q-cancel/questions');
+    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/subjects');
 
     fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
@@ -218,7 +218,7 @@ describe('progressive dashboard statistics', () => {
     );
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue({
+      vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }) }).mockResolvedValue({
         ok: true,
         json: async () => ({
           revision: 'rev-lazy',

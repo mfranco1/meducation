@@ -1,8 +1,9 @@
 # L5 — Resilience and local operations
 
 Started: 2026-10-14. Plan reviewed and revised: 2026-10-14 for implementation
-on 2026-10-15 (Asia/Manila). Status: Step 1 local gate complete; Steps 2–5
-pending. This review changes the plan only, not runtime behavior or L5 acceptance.
+on 2026-10-15 (Asia/Manila). Status: Steps 1–2 local gates complete;
+Steps 3–5 pending. The plan review alone
+did not establish runtime behavior or L5 acceptance.
 
 The designated local PostgreSQL database is now the only writable paired-bank
 authority. JSON files are exports/archives or explicit read-only fallbacks and may
@@ -15,8 +16,8 @@ The older Step 1 evidence below remains a historical record.
 
 Parent: [production preparation](local-first-production-preparation.md#l5--resilience-scale-to-zero-readiness-and-local-operations).
 Follow [work tracking](../README.md): implement a coherent step, record results and
-limitations, then stop at its gate until continuation is authorized. This request
-prepares the implementation plan; it does not start Step 2.
+limitations, then stop at its gate until continuation is authorized. The prior
+request prepared the plan only; continuation on 2026-10-15 authorizes Step 2.
 
 ## Scope and implementation baseline
 
@@ -72,19 +73,19 @@ suspend/wake or complete L5 capacity claim.
 
 ### Contract and smallest implementation
 
-- [ ] Define a launch as starting/retaking, resuming, or browsing a quiz, or
+- [x] Define a launch as starting/retaking, resuming, or browsing a quiz, or
   opening/resuming a flashcard deck, including a previously cached body in a tab
   that has remained open. Revalidate the applicable current subject catalog on
   **every explicit launch** before allowing the cached-body fast path. Coalesce
   concurrent checks within a launch generation. Do not add a timer, focus polling
   or background SQL; explicit local fallback mode remains network-free.
-- [ ] Use the existing catalog endpoints and content revisions first. If the
+- [x] Use the existing catalog endpoints and content revisions first. If the
   revision is unchanged, retain validated catalog/body caches. If changed, reject
   the launch through the existing revision-conflict/reload recovery UI; do not
   silently combine a new body with the clicked old quiz/deck or overwrite progress.
   Deleted/moved items, changed membership and shared subjects must use the same
   recovery path. A reload must obtain a coherent new catalog before retry.
-- [ ] Interpret <=30 seconds as maximum age of successful current-content
+- [x] Interpret <=30 seconds as maximum age of successful current-content
   validation at launch admission, not a network-response SLA. Record a conservative
   monotonic check-start time; an excessively delayed check/body/retry cannot admit
   a launch using expired evidence. Bound rechecks and surface recovery on failure
@@ -92,17 +93,17 @@ suspend/wake or complete L5 capacity claim.
   be observed by the next launch; a body request crossing publication must still
   enforce revision preconditions. With the service reachable, a launch beginning
   >=30 seconds after publication cannot silently use the prior changed content.
-- [ ] A failed revalidation blocks the new launch with existing retry/reload UX;
+- [x] A failed revalidation blocks the new launch with existing retry/reload UX;
   cached content is not an outage fallback. Existing on-screen study, timers,
   answers, checkpoints and transient post-submit review stay unchanged. Do not
   revalidate from answer/render/checkpoint paths or refresh their backing arrays.
   Saved resume signatures and explicit restart confirmations retain their current
   semantics; completed scores are never recomputed. No historical-review feature.
-- [ ] Preserve generation/cancellation guards so late catalog/body responses,
+- [x] Preserve generation/cancellation guards so late catalog/body responses,
   back navigation and rapid successive launches cannot populate a newer cache or
   start the wrong activity. Pending restart confirmations must not bypass launch
   freshness if the user leaves them open past the budget.
-- [ ] Keep one-release-per-response backend pinning and publication sequence
+- [x] Keep one-release-per-response backend pinning and publication sequence
   distinct from hashes. Test A → B → A activation and publication with only the
   other bank changed: identical content need not invalidate valid attempts, while
   server publication selection must advance. Do not require unrelated quiz and
@@ -110,20 +111,20 @@ suspend/wake or complete L5 capacity claim.
 
 ### Acceptance
 
-- [ ] Deterministic clock/transport tests cover same/changed revision, just-before
+- [x] Deterministic clock/transport tests cover same/changed revision, just-before
   and at/after 30 seconds, slow responses, retries, failed checks, cache hits,
   cancellation, concurrent callers, stale replies and delayed restart confirmation
   for both banks. Assert request counts and no work while idle.
-- [ ] Real PG17 tests retain publication during pinned reads, next-request
+- [x] Real PG17 tests retain publication during pinned reads, next-request
   visibility, A → B → A, and two independent source instances observing publication
   without restart. This is future-worker consistency coverage, not permission to
   increase production workers.
-- [ ] Browser fixture: cache quiz and deck in an open learner tab, publish from
+- [x] Browser fixture: cache quiz and deck in an open learner tab, publish from
   the isolated editor, then launch/resume/browse without manually refreshing first.
   Observe conflict/reload and current content; verify an active quiz/deck and quiz
   results review remain unchanged through publication. Cover an outage at launch,
   unchanged-content resume and changed-content explicit restart with saved bytes.
-- [ ] Measure incremental HTTP/SQL requests for cold and cached launches, including
+- [x] Measure incremental HTTP/SQL requests for cold and cached launches, including
   checkout pre-ping, with idle request/query counts. Retain one current-pointer
   read per server request unless measured evidence justifies another design.
 
@@ -293,3 +294,58 @@ replay, background SQL, bank edits, routine volume operations or authority chang
 were introduced. The runbook explains connection inventory and timeout limits.
 The whole L5 gate remains open; proceed next with Step 2 request-driven release
 freshness on further continuation.
+
+## Step 2 implementation and local acceptance — 2026-10-15
+
+Continuation authorized. Baseline: clean working tree at
+`d6756de368dad70a04da21613d78263fc0e02020`. Protected exports:
+quiz `11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901`;
+flashcard `fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7`.
+Docker 29.8.2 reachable with sandbox access. Only disposable fixtures are authorized
+for database/browser acceptance; routine authority remains protected.
+
+Launch admission validates the current bank subject catalog before cached bodies,
+without replacing any study arrays. Evidence ages from monotonic request start;
+30 seconds or older fails admission. Explicit retry/confirmation obtains new
+evidence. Pending checks for the same item coalesce; cancellation invalidates
+pending checks and completed admission closures. Final local verification passed; [frozen evidence](L5-step2-local-evidence.json)
+records source hashes, image identity, commands, results and limitations.
+
+Step 2 acceptance:
+
+- Runtime/feature/App suites: **605 tests passed across 95 files**. An earlier
+  five-second contention timeout passed in isolation and in the final full rerun;
+  no assertion or timeout was relaxed.
+- Full isolated PG17: **175 passed, 1 skipped** (379.33s); the restart-only case
+  passes in the separate owned-volume run: **8 passed** (16.84s). Coverage includes
+  pinned publication, next-request visibility, two independent sources, A → B → A,
+  other-bank-only updates, and SQL/pre-ping resource counts.
+- Ordinary backend: **234 passed, 176 skipped** (PG cases accepted separately);
+  Ruff and mypy (39 files) pass. Two existing weak-RSA fixture warnings remain.
+- Fresh installed ARM64 API image plus optional HTTP admin/learner bundle:
+  **13 browser cases passed**, including the new freshness scenario. New launches
+  in an already open tab detect publication without a manual refresh. Tests cover
+  saved-byte preservation, cached resume/browse, explicit reload/restart,
+  publication while confirmation is open, active quiz/deck preservation and
+  unchanged transient results review. Browser outage is an intercepted **503**;
+  actual PG outage/restart is covered separately by the real-PG gate.
+- Fresh ordinary learner build/typecheck and **41 learner browser cases passed**;
+  optional admin build and **12 JSON-fixture admin browser cases passed**.
+- Lint, formatting, checked architecture (**288 modules / 1,255 imports**),
+  **10 architecture tests**, typecheck and `git diff --check` pass. Existing
+  learner bundle-size advisory remains. Protected export hashes are unchanged.
+- A cold browser launch sends four HTTP requests (startup subjects, membership,
+  launch validation, body). Cold server catalog: quiz **18 SQL + 4 pre-pings**;
+  one-deck flashcards **19 SQL + 4 pre-pings**. A fully cached launch adds only
+  **1 HTTP, 3 SQL (two SET LOCAL + one pointer), 1 pre-ping**. Health calls add no
+  SQL/pre-pings. No recurring launch validation or publication polling was added;
+  local fallback admission makes no HTTP requests. Keep the current pointer policy.
+- All uniquely named tmpfs/editor fixtures and the owned restart volume were
+  removed; final scoped container/volume listings were empty. Routine authority,
+  its volume/credentials/journals and content were not manipulated.
+
+Completion audit: **Step 2 local gate complete, no blocking findings**. Stop here
+under the staged-work contract; Step 3 diagnostics/configuration/failure visibility
+is next. L5 remains ongoing. Changed-source native AMD64/ARM64 CI belongs to Step 5;
+hosted suspend/wake/provider/TLS/identity, off-device retention and manual-device
+acceptance are not established by these local results. Firefox remains user-deferred.

@@ -55,3 +55,35 @@ describe('quiz launch coordinator', () => {
     expect(onFailure).not.toHaveBeenCalled();
   });
 });
+
+describe('fresh quiz launch admission', () => {
+  it('does not fetch bodies or start when validation fails, and checks admission after body loading', async () => {
+    const admit = vi.fn(() => { throw new Error('expired'); });
+    const loader = { validateLaunch: vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(admit), ensureQuestions: vi.fn().mockResolvedValue([]), cancelQuestionLoads: vi.fn() };
+    const action = vi.fn();
+    const failure = vi.fn();
+    const { result } = renderHook(() => useQuizLaunch(loader, failure));
+    act(() => result.current.launch(quiz, action));
+    await waitFor(() => expect(failure).toHaveBeenCalledTimes(1));
+    expect(loader.ensureQuestions).not.toHaveBeenCalled();
+    act(() => result.current.launch(quiz, action));
+    await waitFor(() => expect(failure).toHaveBeenCalledTimes(2));
+    expect(admit).toHaveBeenCalledOnce();
+    expect(action).not.toHaveBeenCalled();
+  });
+
+  it('ignores late validation and body replies when a different launch wins', async () => {
+    const old = deferred<() => void>();
+    const loader = { validateLaunch: vi.fn().mockReturnValueOnce(old.promise).mockResolvedValue(() => undefined), ensureQuestions: vi.fn().mockResolvedValue([]), cancelQuestionLoads: vi.fn() };
+    const oldAction = vi.fn();
+    const nextAction = vi.fn();
+    const { result } = renderHook(() => useQuizLaunch(loader));
+    act(() => result.current.launch(quiz, oldAction));
+    act(() => result.current.launch({ ...quiz, id: 'next' }, nextAction));
+    await waitFor(() => expect(nextAction).toHaveBeenCalledOnce());
+    await act(async () => old.resolve(() => undefined));
+    expect(oldAction).not.toHaveBeenCalled();
+    expect(loader.ensureQuestions).toHaveBeenCalledTimes(1);
+    expect(loader.ensureQuestions).toHaveBeenCalledWith('next');
+  });
+});

@@ -2,6 +2,7 @@ import type { Question, Quiz, QuizRepository, Subject } from '../../domain/types
 import { contentRetryPolicy, type RetryPolicy } from './retryPolicy';
 import { isQuestionList, isQuizCatalog, isSubjectCatalog, responseRevision, type QuizCatalogResponse, type SubjectSummary } from './apiDecoders';
 import { browserJsonTransport, ContentLoadError, genericFailure, revisionError, type JsonTransport } from './contentTransport';
+import { LaunchFreshness } from './launchFreshness';
 import { RuntimeContentCache } from './runtimeContentCache';
 
 type SubjectCatalogRecord = Subject & Partial<Pick<SubjectSummary, 'quizCount' | 'quizIds'>>;
@@ -31,11 +32,14 @@ export class RuntimeQuestionBank implements QuizRepository {
   private snapshotVersion = 0;
   private generation = 0;
 
+  private readonly freshness: LaunchFreshness;
+
   constructor(
     private readonly retryPolicy: RetryPolicy = contentRetryPolicy,
     private readonly random = Math.random,
     private readonly transport: JsonTransport = browserJsonTransport,
-  ) {}
+    now?: () => number,
+  ) { this.freshness = new LaunchFreshness(now); }
 
   subscribe = (listener: () => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener); };
   getSnapshot = () => this.snapshotVersion;
@@ -121,6 +125,20 @@ export class RuntimeQuestionBank implements QuizRepository {
   listSubjects() { return this.cache.listSubjects(); }
   listQuizzes(subjectId: string) { return this.cache.listQuizzes(subjectId); }
   listQuestions(quizId: string) { return this.cache.listQuestions(quizId); }
+
+  validateLaunch(quiz: Pick<Quiz, 'id' | 'subjectId'>): Promise<() => void> {
+    if (this.source === 'local') return Promise.resolve(() => undefined);
+    const revision = this.revision;
+    return this.freshness.check(`${quiz.subjectId}:${quiz.id}`, async signal => {
+      const payload = await this.transport.get<unknown>('/api/v1/subjects', {
+        signal, policy: this.retryPolicy, random: this.random,
+      });
+      if (!isSubjectCatalog(payload)) throw new ContentLoadError('invalid', 'The subject catalog is incomplete. Retry later.');
+      if (payload.revision !== revision) throw revisionError();
+      const subject = payload.subjects.find(subject => subject.id === quiz.subjectId);
+      if (!subject?.quizIds.includes(quiz.id)) throw revisionError();
+    });
+  }
 
   async ensureSubjects(): Promise<SubjectSummary[]> {
     if (this.catalogState === 'ready') return this.summaries;
@@ -264,6 +282,7 @@ export class RuntimeQuestionBank implements QuizRepository {
     this.notify();
   }
   cancelQuestionLoads() {
+    this.freshness.cancelAll();
     [...this.questionControllers.keys()].forEach(quizId => this.cancelQuestionLoad(quizId));
     this.notify();
   }

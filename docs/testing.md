@@ -243,3 +243,17 @@ budget and the matrix job a sixty-minute budget for the expanded L4 workload.
 Pipeline wiring and local ARM64 evidence are distinct from observed final-commit
 GitHub matrix results; no CI result is inferred from a local run. Backup deferral
 keeps retained-copy/cutover gates open independently of these fixture jobs.
+
+## L5 launch freshness
+
+`launchFreshness.test.ts`, runtime bank tests and quiz/deck session tests cover
+monotonic evidence expiry, cache hits, failed checks, cancellation, deduplication
+and explicit restart admission. `e2e/admin-http/freshness.spec.ts` runs through the
+installed API/nginx/PG17 editor fixture: cached launch conflict, explicit reload
+and saved-content restart, publication during confirmation, outage response,
+unchanged-content resume, active quiz/deck preservation and transient results
+review. Use a fresh `VITE_ADMIN_SOURCE=http VITE_CONTENT_MAX_RETRIES=0 npm run
+build:admin`, then `smoke-admin-http.py --image <fresh-image> --grep L5` for focused
+development; the complete HTTP editor gate must still pass. The real PG suite
+adds independent readers, A → B → A, other-bank-only publication, and measured
+HTTP/SQL/pre-ping counts. No routine-authority or provider acceptance is implied.

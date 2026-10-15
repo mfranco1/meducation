@@ -416,3 +416,35 @@ describe('runtime question bank', () => {
     expect(bank.listQuestions('q1')).toEqual([]);
   });
 });
+
+describe('quiz launch freshness', () => {
+  it('checks every cached launch, blocks changed/deleted/moved content and outages, preserving study arrays', async () => {
+    const subjects = [{ ...subject, quizCount: 1, quizIds: [quiz.id] }];
+    const transport = { get: vi.fn().mockResolvedValue({ revision: 'rev-1', subjects }) };
+    const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
+    bank.configureApi({ revision: 'rev-1', subjects }, [{ revision: 'rev-1', quizzes: [quiz] }]);
+    transport.get.mockResolvedValueOnce({ revision: 'rev-1', questions: [{ ...question, metadata: undefined }] });
+    const active = await bank.ensureQuestions(quiz.id);
+    (await bank.validateLaunch(quiz))();
+    (await bank.validateLaunch(quiz))();
+    expect(transport.get).toHaveBeenCalledTimes(3);
+    await bank.ensureQuestions(quiz.id);
+    expect(transport.get).toHaveBeenCalledTimes(3);
+    transport.get.mockResolvedValueOnce({ revision: 'rev-2', subjects });
+    await expect(bank.validateLaunch(quiz)).rejects.toMatchObject({ kind: 'revision' });
+    transport.get.mockResolvedValueOnce({ revision: 'rev-1', subjects: [] });
+    await expect(bank.validateLaunch(quiz)).rejects.toMatchObject({ kind: 'revision' });
+    transport.get.mockRejectedValueOnce(new Error('offline'));
+    await expect(bank.validateLaunch(quiz)).rejects.toThrow('offline');
+    expect(bank.listQuestions(quiz.id)).toBe(active);
+    (await bank.validateLaunch(quiz))();
+  });
+
+  it('keeps explicit local launch validation network-free', async () => {
+    const transport = { get: vi.fn() };
+    const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
+    bank.configureLocal([subject], [quiz], [question]);
+    (await bank.validateLaunch(quiz))();
+    expect(transport.get).not.toHaveBeenCalled();
+  });
+});
