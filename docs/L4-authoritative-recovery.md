@@ -187,7 +187,10 @@ protocol, not retained recovery. Full retained-copy acceptance still gates cutov
 ## Fresh restoration procedure
 
 1. Stop editor/API workers and preserve the failed database/volume and any newer
-   allocation evidence. Record the incident and selected backup context. Never
+   allocation evidence. Retire source writer CONNECT privileges and drain existing
+   writer connections before admitting a restored authority; stopping one process
+   alone does not prevent a second writer from reconnecting. Read-only reader/
+   backup access can remain for verification. Record the incident and selected backup context. Never
    restore over the only surviving copy or use `--clean` against the routine DB.
 2. Use matching PG17 clients. Dump as `meducation_backup` in custom format, including
    both `content` and `admin_auth`, with `--no-owner --no-acl`. Store credentials in

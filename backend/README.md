@@ -262,16 +262,24 @@ startup. Add `--report /absolute/path/report.json` to retain machine evidence.
 ## Actual-bank parity and isolated recovery acceptance
 
 Run these jobs from the repository root with the Python development lock and
-`npm ci` installed. Canonical JSON remains authoritative. They create unique
-PG17 tmpfs clusters and disposable targets; no routine Compose database/volume
-is read or changed, and source files stay unchanged.
+`npm ci` installed. The routine local PostgreSQL database is authoritative; these
+jobs use repository JSON archives as read-only fixture inputs, which may be older
+than that authority. They create unique PG17 tmpfs clusters and disposable targets;
+no routine database/volume is read or changed, and source files stay unchanged.
 
 ```sh
 .venv/bin/python scripts/containers/verify-postgres-release.py --output test-results/l3-step6-recovery.json
 .venv/bin/python scripts/containers/smoke-postgres-learner.py --api-image meducation-api:local --frontend-image meducation-learner:local --output test-results/l3-step6-browser.json
 ```
 
-The first command captures/validates both actual banks, bootstraps/migrates,
+For all three L5 operational drills, first build the pinned retained image with
+`scripts/containers/build-rollback-api.py`, then pass `--api-image meducation-api:local
+--previous-api-image meducation-api:l5-rollback-prior` to the first command. See the
+[rollback/restore runbook](../docs/L5-local-operations.md#distinct-recovery-and-rollback-drills).
+Its default mode omits installed application rollback; `--small-fixture` is only
+for development and does not certify archive-corpus parity.
+
+The first command captures/validates both archive banks, bootstraps/migrates,
 imports and explicitly activates them. It checks every normalized field,
 optional omission, rich string, global/choice order, both artifacts/digests and
 all applicable learner routes/counts/membership/ETags/304/409. Current content

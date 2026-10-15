@@ -538,3 +538,18 @@ subprocess budget is 600 seconds; each measured round retains its stricter
 [L5 operations runbook](L5-local-operations.md#twenty-learner-api-launch-characterization).
 This adds a gate to future native AMD64/ARM64 jobs; local execution does not certify
 that those changed-source jobs have passed.
+
+## L5 operational rollback images
+
+The native recovery stage builds `meducation-api:l5-rollback-prior` from commit
+`bb8f354971cf5914eaad50feb24671b833ae679c` using
+`.venv/bin/python scripts/containers/build-rollback-api.py`. The containers job
+fetches full Git history so that exact source object is available. The retained
+and current installed images must have matching packaged schema heads; the
+recovery script verifies Python/SQL fingerprints, retained activation, unchanged
+authoring state across image swaps, refused incompatible startup and successful
+roll-forward. It also retires source application connections before restored
+allocation admission. These are disposable fixtures; see the
+[operations runbook](L5-local-operations.md#distinct-recovery-and-rollback-drills)
+for full commands and the separate retained-backup/provider obligations. These
+new inputs require another native AMD64/ARM64 run before overall L5 acceptance.

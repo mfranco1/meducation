@@ -97,13 +97,23 @@ stale archive. See the [recovery runbook](L4-authoritative-recovery.md).
 .venv/bin/python scripts/local-authoring/verify-backup.py
 ```
 
-This first retains a new full local backup, then restores it into a uniquely named
+This is an **offline writable recovery rehearsal**. A source-database advisory
+lock admits one rehearsal across processes/checkouts until clone cleanup finishes.
+It then checks, without
+changing source grants or stopping workers, that operator/editor/session/migrator/
+owner CONNECT access is retired and existing writer connections are drained.
+Read-only reader/backup access can remain available. It refuses before taking a
+backup or creating a target if writers can still connect. Use `backup.py` alone
+for an online backup; perform offline retirement only as an explicit recovery
+operation. The rehearsal then retains a new full local backup and restores it into a uniquely named
 `meducation_verify_cutover_*` database. It verifies exact tables/sequences/ACLs and
 paired artifacts, quarantines copied sessions and allocations, reconciles copied
 journals and proves allocations burn earlier admitted ranges. It also starts the compatible restored reader and rehearses retained-release
 activation/return while preserving later releases. It removes only that
 disposable verification DB. It never restores over or rewinds the authority.
-The observed same-machine restoration time is evidence, not a hardware-loss RTO.
+The command does not re-enable source writer access when it finishes; resume the
+source only after verifying disposable-target cleanup. The observed same-machine
+restoration time is evidence, not a hardware-loss RTO.
 
 For real recovery, stop writers, restore into a fresh separate target, apply
 explicit role grants, quarantine sessions, rotate the external auth epoch,

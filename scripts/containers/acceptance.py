@@ -41,6 +41,7 @@ def main():
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.sql")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/tests").glob("*.py")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "tests/fixtures").rglob("*.json")]
+    inputs += ["scripts/local-authoring/verify-backup.py", "scripts/local-authoring/backup.py"]
     inputs += ["scripts/content/validate-paired-files.ts",
                "backend/pyproject.toml", "backend/requirements-dev.lock",
                "playwright.containers.config.ts", "e2e/containers/service-recreation.spec.ts",
@@ -104,7 +105,9 @@ def main():
         run("postgres-load", [sys.executable, str(ROOT / "scripts/containers/load-postgres.py"),
                               "--api-image", "meducation-api:local", "--rounds", "1",
                               "--output", str(output / "postgres-load.json")], timeout=600)
+        run("build-rollback-api", [sys.executable, str(ROOT / "scripts/containers/build-rollback-api.py")], timeout=1000)
         run("release-recovery", [sys.executable, str(ROOT / "scripts/containers/verify-postgres-release.py"),
+                                 "--api-image", "meducation-api:local", "--previous-api-image", "meducation-api:l5-rollback-prior",
                                  "--output", str(output / "release-recovery.json")], timeout=1200)
         run("postgres-browser", [sys.executable, str(ROOT / "scripts/containers/smoke-postgres-learner.py"),
                                  "--api-image", "meducation-api:local", "--frontend-image", "meducation-learner:local",

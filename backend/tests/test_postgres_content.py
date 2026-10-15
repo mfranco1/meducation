@@ -3253,3 +3253,61 @@ def test_l5_diagnostics_actual_db_outage_keeps_auth_closed_health_sql_free_and_r
             assert all(engine.pool.checkedout() == 0 for engine in engines)
     finally:
         session_engine.dispose()
+
+
+def test_l5_retained_restore_requires_source_writer_retirement(db, monkeypatch):
+    import importlib.util
+
+    monkeypatch.syspath_prepend(str(ROOT / "scripts/local-authoring"))
+    spec = importlib.util.spec_from_file_location(
+        "retained_restore_guard", ROOT / "scripts/local-authoring/verify-backup.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    require_retired = module.require_retired_writers
+    writers = ("meducation_operator", "meducation_editor", "meducation_session",
+               "meducation_migrator", "meducation_owner")
+    with db.admin.connect() as connection:
+        database = connection.dialect.identifier_preparer.quote(connection.engine.url.database)
+        original = {role: connection.execute(
+            text("SELECT has_database_privilege(:role,current_database(),'CONNECT')"),
+            {"role": role}).scalar_one() for role in writers}
+    def grant(role, enable):
+        with db.admin.begin() as connection:
+            connection.exec_driver_sql(
+                ("GRANT CONNECT ON DATABASE " + database + " TO " if enable
+                 else "REVOKE CONNECT ON DATABASE " + database + " FROM ") + role)
+    with pytest.raises(RuntimeError, match="Retire source writer"):
+        require_retired(db.admin)
+    try:
+        # Revoking CONNECT alone does not retire an already open source writer.
+        with db.operator.connect():
+            for role in writers:
+                grant(role, False)
+            with pytest.raises(RuntimeError, match="Retire source writer"):
+                require_retired(db.admin)
+        require_retired(db.admin)
+        # Every writer role, including inherited owner access, must stay retired.
+        for role in writers:
+            grant(role, True)
+            with pytest.raises(RuntimeError, match="Retire source writer"):
+                require_retired(db.admin)
+            grant(role, False)
+        # The source can still be backed up and read; neither role can author.
+        with db.backup.connect(), db.reader.connect():
+            require_retired(db.admin)
+    finally:
+        for role, enabled in original.items():
+            grant(role, enabled)
+
+    # One source may admit only one writable verification clone at a time.
+    with module.source_rehearsal_lock(db.admin), pytest.raises(
+        RuntimeError, match="Another retained-backup rehearsal"
+    ), module.source_rehearsal_lock(db.admin):
+        pass
+    with module.source_rehearsal_lock(db.admin):
+        pass  # The admission lock is released after normal completion.
+    with pytest.raises(RuntimeError, match="fixture interruption"), module.source_rehearsal_lock(db.admin):
+        raise RuntimeError("fixture interruption")
+    with module.source_rehearsal_lock(db.admin):
+        pass  # Interruption also releases admission.

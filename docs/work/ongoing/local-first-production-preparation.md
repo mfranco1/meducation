@@ -109,14 +109,16 @@ Step 1 implements one worker, bounded pools, request-driven stale socket repair,
 reader SQL deadlines and isolated local restart acceptance. Step 2 adds launch
 freshness and independent-reader/query-cost acceptance. Step 3 adds protected diagnostics, configuration auditing and safe operational
 events. Step 4 adds reproducible twenty-learner load characterization. Remaining
-L5 work covers operational recovery drills and changed-source native acceptance. The local PostgreSQL authority cutover and post-cutover native CI
+L5 work now has passing local operational recovery/rollback drills; changed-source
+native acceptance remains pending. The local PostgreSQL authority cutover and post-cutover native CI
 are complete under the user-approved local-only backup policy; off-device recovery
 and hosted acceptance remain separate. The L5 plan was revised on 2026-10-14
 for implementation; Step 2 now passes its local gate. [Step 2 evidence](L5-step2-local-evidence.json)
 records explicit-launch freshness, independent readers and query costs.
 [Step 3 evidence](L5-step3-local-evidence.json) closes the local diagnostic/logging
 gate; [Step 4 evidence](L5-step4-local-evidence.json) closes the provisional local
-load gate. Step 5 operational recovery and changed-source native CI remain pending.
+load gate. [Step 5 local evidence](L5-step5-local-evidence.json) covers recovery and
+rollback drills; changed-source native CI remains pending.
 
 - [x] Start with one API process/instance for the initial small deployment, while retaining transactional concurrency tests. Define a concrete current-release freshness target (initially <=30 seconds for new content launches). Never mix versions during an active quiz. Requests discovering a changed catalog must use the existing revision-conflict/reload behavior; cached active sessions must not switch underneath the learner. Test future multi-worker behavior before enabling multiple workers.
 - [x] Configure small bounded database pools, timeouts, connection invalidation/reconnect, and safe idempotent retries. Do not retry uncertain non-idempotent admin writes blindly; use transactional operation IDs/revision preconditions.
@@ -125,7 +127,7 @@ load gate. Step 5 operational recovery and changed-source native CI remain pendi
 - [x] Ensure liveness does not query Postgres. Define lightweight readiness as process/configuration/schema initialization readiness, not a continuous guarantee of DB reachability. Expose a separate authenticated deep-dependency diagnostic for explicit checks. Route/telemetry errors must report DB outages promptly. Do not configure host keepalive probes to run SQL continually just to prove dependency reachability; if deployment requires continuous DB probes, accept the resulting loss of scale-to-zero savings.
 - [x] Avoid background release polling and recurring DB pings that defeat idle suspension. Retain current request-driven publication selection on every backend content request and add explicit-launch frontend revalidation; immutable release caches need no separate invalidation bus. Verify independent-reader visibility and measure the query/consistency tradeoff. Preserve one-release consistency.
 - [x] Add configuration validation, safe structured logs, token/secret redaction, request/body limits and intentional public error messages. Document production TLS/CORS settings and separate migration/editor/read privileges.
-- [ ] Provide and rehearse local DB backup/restore, previous-release rollback and compatible app/schema rollback. Restore to a separate DB; protect authored content during tests.
+- [x] Provide and rehearse local DB backup/restore, previous-release rollback and compatible app/schema rollback. Restore to a separate DB; protect authored content during tests.
 - [x] Add a provisional fixture-based load test for 20 concurrent learner content launches and characterize latency/errors/pool saturation. This is a test target, not a production capacity promise.
 
 Gate: local restart/failure/recovery and concurrency tests pass; no designed-in keepalive defeats Neon suspension; operator recovery is documented.
@@ -275,3 +277,19 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
   local HTTP suite **16 passed**; [follow-up evidence](L5-ci-auth-rate-isolation-evidence.json)
   records the diagnosis and limits. Corrected-source native CI must be rerun;
   overall L5 and Step 5 remain open.
+
+- [x] Independently verified all five jobs in
+  [run 38680895018](https://github.com/mfranco1/meducation/actions/runs/38680895018)
+  at `0761b6b`, including native AMD64/ARM64. This closes the authentication test
+  isolation CI gap. [Baseline evidence](L5-step5-baseline-ci-evidence.json) records
+  exact jobs/artifacts. Subsequent Step 5 recovery/rollback changes require their
+  own native acceptance; overall L5 remains open.
+
+- [x] L5 Step 5 local operational implementation verified. Full archive-corpus
+  recovery checked 11,687 questions/1,712 cards and 348 routes before/after restore;
+  retained activations, pinned views, rebuilt historical-image rollback,
+  incompatible startup/roll-forward, exact history/grants, rotated auth and lost-ID
+  recovery passed. The offline retained-backup writer guard passed a separate
+  disposable PG regression. [Local evidence](L5-step5-local-evidence.json) maps all
+  L5 requirements to evidence. New native AMD64/ARM64 acceptance is still required;
+  L5 remains ongoing and L6 implementation has not started.

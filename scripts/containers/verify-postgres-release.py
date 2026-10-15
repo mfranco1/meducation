@@ -1,9 +1,10 @@
-"""Actual-bank parity and backup-role recovery in a uniquely owned disposable PG17 cluster."""
+"""Archived-bank fixture parity and backup-role recovery in a uniquely owned disposable PG17 cluster."""
 
 import argparse
 import copy
 import hashlib
 import json
+import logging
 import secrets
 import subprocess
 import sys
@@ -19,7 +20,7 @@ sys.path.insert(0, str(ROOT / "backend/src"))
 from meducation_api.db.allocation_fence import issue_range
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.engine import ContentDatabaseError, create_database_engine
-from meducation_api.db.migrate import upgrade
+from meducation_api.db.migrate import migration_head, upgrade
 from meducation_api.db.operations import activate_release, reserve_ids, save_draft
 from meducation_api.db.parity import verify_parity
 from meducation_api.db.recovery import (
@@ -28,6 +29,11 @@ from meducation_api.db.recovery import (
 )
 from meducation_api.db.transfer import capture_pair, import_pair
 from meducation_api.settings import Settings
+from rollback_drills import (
+    application_rollback,
+    prepare_retained_pair,
+    retained_release,
+)
 from sqlalchemy import URL, text
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -104,14 +110,28 @@ SELECT role,kind,object,privilege,granted FROM permissions ORDER BY role,kind,ob
 """).tuples().all()
         return [tuple(row) for row in result]
 
+def publication_summary(engine):
+    with engine.connect() as connection:
+        row = connection.exec_driver_sql("SELECT p.release_id,p.publication_sequence,r.quiz_revision,r.flashcard_revision FROM content.active_publication p JOIN content.releases r USING (release_id)").one()
+        return {"release_id": str(row[0]), "sequence": row[1], "quiz_digest": row[2], "flashcard_digest": row[3]}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--small-fixture", action="store_true", help="Development-only browser fixture; not archive-corpus acceptance")
+    parser.add_argument("--api-image")
+    parser.add_argument("--previous-api-image")
     args = parser.parse_args()
+    if bool(args.api_image) != bool(args.previous_api_image):
+        parser.error("Supply both current and previous images for the application rollback drill")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     name = "meducation-release-verify-" + uuid.uuid4().hex[:12]
     engines = []
     started = time.monotonic()
+    report = None
+    # Per-route behavior is asserted by parity; avoid thousands of fixture request events.
+    logging.getLogger("meducation.operations").disabled = True
     try:
         with tempfile.TemporaryDirectory(prefix="meducation-release-verify-") as temp:
             folder = Path(temp)
@@ -135,10 +155,14 @@ def main():
                 "--detach",
                 "--name",
                 name,
+                "--label",
+                "meducation.release-verify=" + name,
                 "--env-file",
                 str(env),
                 "--publish",
                 "127.0.0.1::5432",
+                "--publish",
+                "127.0.0.1::8000",
                 "--tmpfs",
                 "/var/lib/postgresql/data:rw,size=2g",
                 PG_IMAGE,
@@ -201,13 +225,14 @@ def main():
             reader = engine("meducation_verify_source", "reader")
             bootstrap(source_admin, passwords)
             upgrade(migrator)
-            print("Capturing and validating actual canonical inputs", flush=True)
-            pair = capture_pair(
-                ROOT / "src/content/questionBank.generated.json",
-                ROOT / "src/content/flashcardBank.generated.json",
-                repository=ROOT,
+            print("Capturing and validating disposable input copies", flush=True)
+            source_q, source_f = (
+                (ROOT / "e2e/fixtures/bank.json", ROOT / "e2e/fixtures/flashcard-bank.json")
+                if args.small_fixture else
+                (ROOT / "src/content/questionBank.generated.json", ROOT / "src/content/flashcardBank.generated.json")
             )
-            print("Importing actual bank pair into disposable database", flush=True)
+            pair = capture_pair(source_q, source_f, repository=ROOT)
+            print("Importing paired fixture into disposable database", flush=True)
             release = import_pair(
                 operator,
                 pair,
@@ -252,7 +277,6 @@ def main():
             )
             print("Comparing every actual-bank learner route", flush=True)
             parity = verify_parity(operator, settings, pair, release.release_id)
-            recovery_started = time.monotonic()
             # Test-only identity is created explicitly in this isolated process; no
             # token/provider shortcut is installed in the application.
             from cryptography.fernet import Fernet
@@ -311,15 +335,34 @@ def main():
                 service.mutate("reserve", {"expected": {"draftRevision": ctx["revision"], "publicationSequence": ctx["sequence"]},
                                           "reason": "Burned editor allocations for recovery", "counts": {"i": 2},
                                           "intent": {"slots": slots}, "operationId": str(uuid.uuid4())})
-            export_manifest = export_release(operator, authored_release, folder / "authored-export")
-            export_report = inspect_export(folder / "authored-export", repository=ROOT, audit=True)
             journals = (folder / "primary-allocation", folder / "independent-allocation")
             for journal in journals:
                 journal.mkdir(mode=0o700)
+            prepared_retained_pair = prepare_retained_pair(operator, pair, folder, ROOT)
             admitted_range = issue_range(
                 migrator, primary=journals[0], independent=journals[1], size=16,
                 recovery=False, reason="Recovery fixture range before backup", rehearsal=True,
             )
+            print("Rehearsing retained paired activation and in-flight views", flush=True)
+            retained_drill = retained_release(operator, settings, pair, release, prepared_retained_pair,
+                                               snapshot, source_admin)
+            ctx["sequence"] = retained_drill["activations"][-1]["publication_sequence"]
+            app_drill = None
+            if args.api_image:
+                print("Rehearsing compatible installed application rollback and roll-forward", flush=True)
+                binding = json.loads(docker("inspect", name))[0]["NetworkSettings"]["Ports"]["8000/tcp"][0]
+                assert binding["HostIp"] == "127.0.0.1"
+                runtime_env = folder / "rollback-reader.env"
+                runtime_env.write_text("MEDUCATION_CONTENT_SOURCE=postgres\nMEDUCATION_DATABASE_ENVIRONMENT=local\nMEDUCATION_DATABASE_URL="
+                                       + reader.url.set(host="127.0.0.1", port=5432).render_as_string(hide_password=False) + "\n")
+                runtime_env.chmod(0o600)
+                current_ref = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
+                app_drill = application_rollback(current_image=args.api_image, prior_image=args.previous_api_image,
+                                                 current_ref=current_ref, pg=name,
+                                                 origin="http://127.0.0.1:" + binding["HostPort"], envfile=runtime_env,
+                                                 admin=source_admin, pair=pair, folder=folder, root=ROOT, snapshot=snapshot)
+            export_manifest = export_release(operator, authored_release, folder / "authored-export")
+            export_report = inspect_export(folder / "authored-export", repository=ROOT, audit=True)
             before = snapshot(source_admin)
             source_permissions = permission_snapshot(source_admin)
             passfile = folder / "pgpass"
@@ -365,6 +408,7 @@ def main():
                     )
                 return result.stdout
 
+            dump_started = time.monotonic()
             archive = folder / "content.dump"
             print(
                 "Dumping as backup role and restoring into fresh owner-managed target",
@@ -386,6 +430,7 @@ def main():
                     "--no-acl",
                     stdout=stream,
                 )
+            dump_seconds = time.monotonic() - dump_started
             # Allocate after the snapshot, then extend the independently retained
             # fence. These IDs/events will intentionally be absent from the dump.
             def allocate(engine):
@@ -401,6 +446,19 @@ def main():
             )
             lost_ids += allocate(operator)["i"]
             expected_source_state = snapshot(source_admin)
+            # Retire source application access before the restored lineage can write.
+            # Only the private bootstrap inspection connection remains possible.
+            with source_admin.begin() as connection:
+                connection.exec_driver_sql("REVOKE CONNECT ON DATABASE meducation_verify_source FROM meducation_reader,meducation_operator,meducation_session,meducation_editor,meducation_migrator,meducation_backup,meducation_owner")
+                connection.exec_driver_sql("SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname='meducation_verify_source' AND usename<>'meducation_bootstrap'")
+                access = connection.exec_driver_sql("SELECT bool_or(has_database_privilege(role,'meducation_verify_source','CONNECT')) FROM unnest(ARRAY['meducation_reader','meducation_operator','meducation_session','meducation_editor','meducation_migrator','meducation_backup','meducation_owner']) role").scalar_one()
+                assert access is False, "Source authority still admits application connections"
+            try:
+                with operator.connect():
+                    raise RuntimeError("Source write connection was not retired")
+            except SQLAlchemyError:
+                pass
+            restore_started = time.monotonic()
             docker(
                 "exec",
                 name,
@@ -457,7 +515,7 @@ def main():
                 raise RuntimeError(
                     "Restored content/draft/audit/allocator/sequence state differs"
                 )
-            raw_restore_seconds = round(time.monotonic() - recovery_started, 2)
+            raw_restore_seconds = round(time.monotonic() - restore_started, 2)
             restored_store = SessionStore(engine("meducation_verify_restored", "session"), auth_config)
             with restored_store.guard(token) as _principal:
                 pass  # Exact restore initially contains live credentials; quarantine is mandatory.
@@ -476,6 +534,18 @@ def main():
             rotated_config = auth_config.model_copy(update={"epoch": secrets.token_urlsafe(24)})
             if rotated_config.policy_epoch == auth_config.policy_epoch:
                 raise RuntimeError("External auth epoch was not rotated")
+            rotated_store = SessionStore(engine("meducation_verify_restored", "session"), rotated_config)
+            fresh_token, fresh_csrf = rotated_store.issue(VerifiedEditorIdentity(
+                rotated_config.issuer, rotated_config.editor_subject, None, time.time(),
+                "synthetic-fresh-factor-v1",
+            ))
+            with rotated_store.guard(fresh_token, csrf=fresh_csrf, write=True, fresh=True):
+                pass
+            try:
+                with rotated_store.guard(token):
+                    raise RuntimeError("Old-epoch credential accepted after rotation")
+            except AuthError:
+                pass
             after_quarantine = snapshot(restored_admin)
             if {k: v for k, v in before.items() if not k.startswith("admin_auth.") and k != "content.allocation_fence"} != {
                 k: v for k, v in after_quarantine.items() if not k.startswith("admin_auth.") and k != "content.allocation_fence"
@@ -493,6 +563,7 @@ def main():
             recovered_ids = allocate(restored_operator)["i"]
             if set(recovered_ids) & set(lost_ids) or min(int(value[1:]) for value in recovered_ids) < later_range["ceilings"]["i"]:
                 raise RuntimeError("Restoration reused a previously permitted identity")
+            admission_seconds = time.monotonic() - restore_started
             restored_export = export_release(restored_operator, authored_release, folder / "restored-export")
             if restored_export != export_manifest:
                 raise RuntimeError("Authored export changed after restoration")
@@ -517,8 +588,8 @@ def main():
                 restored_operator, restored_settings, pair, release.release_id
             )
             for path, key in (
-                (ROOT / "src/content/questionBank.generated.json", "quiz"),
-                (ROOT / "src/content/flashcardBank.generated.json", "flashcard"),
+                (source_q, "quiz"),
+                (source_f, "flashcard"),
             ):
                 if (
                     hashlib.sha256(path.read_bytes()).hexdigest()
@@ -527,14 +598,34 @@ def main():
                     raise RuntimeError("Authored input changed during verification")
             report = {
                 "result": "pass",
+                "input_scope": "small-browser-fixture" if args.small_fixture else "repository-archive-corpus",
                 "postgres_image": PG_IMAGE,
                 "platform": "linux/"
                 + docker("image", "inspect", "--format", "{{.Architecture}}", PG_IMAGE),
                 "seconds": round(time.monotonic() - started, 2),
                 "source_parity": parity,
                 "recovery_seconds": raw_restore_seconds,
+                "schema_head": migration_head(),
+                "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+                "worktree_changes": subprocess.check_output(["git", "status", "--short"], cwd=ROOT, text=True).splitlines(),
+                "input_sha256": {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest()
+                                  for path in [Path(__file__).resolve(), ROOT / "scripts/containers/rollback_drills.py",
+                                               ROOT / "scripts/containers/build-rollback-api.py", ROOT / "backend/Dockerfile",
+                                               ROOT / "backend/requirements.lock", ROOT / ".github/workflows/checks.yml", source_q, source_f,
+                                               *sorted((ROOT / "backend/src").rglob("*.py")),
+                                               *sorted((ROOT / "backend/src").rglob("*.sql"))]},
+                "dump_seconds": dump_seconds,
+                "restore_and_admission_seconds": admission_seconds,
+                "source_and_restored_publication": publication_summary(source_admin),
+                "restored_publication": publication_summary(restored_admin),
+                "retained_release_drill": retained_drill,
+                "application_rollback_drill": app_drill,
+                "source_application_access_retired_before_restore": True,
+                "source_after_retirement": expected_source_state,
+                "restore_target_after_admission": snapshot(restored_admin),
                 "restored_auth_quarantine": quarantined,
                 "external_auth_epoch_rotated": True,
+                "fresh_session_with_rotated_epoch_verified": True,
                 "postBackupAllocationRecovery": {
                     "beforeBackup": admitted_range, "afterBackup": later_range,
                     "recovered": recovered_range, "lostIds": lost_ids,
@@ -550,7 +641,7 @@ def main():
                     "fresh target single-transaction restore as migration owner",
                     "exact effective owner/migrator/reader/operator/backup/session/editor privilege parity",
                     "exact all-table draft/audit/operation/allocation and sequence state",
-                    "source state unchanged after deliberate post-backup reservations; authored bytes unchanged",
+                    "source application CONNECT revoked and sessions drained before restore; source content state unchanged",
                     "post-backup allocations absent from dump; restore quarantine blocks creates",
                     "complete independent journal reconciliation burns all permitted ranges; no ID reuse",
                     "paired authored saves/publication, unpublished history and editor slots restored",
@@ -560,8 +651,7 @@ def main():
                 ],
                 "isolation": "unique tmpfs cluster; no persistent volumes or routine DB; credentials and archive temporary",
             }
-            args.output.write_text(json.dumps(report, indent=2) + "\n")
-            print("Actual-bank parity and recovery passed", flush=True)
+            print("Paired fixture parity and recovery passed", flush=True)
     except SQLAlchemyError, ContentDatabaseError:
         raise RuntimeError(
             "Content verification failed; no SQL, content or credentials logged"
@@ -569,12 +659,24 @@ def main():
     finally:
         for value in engines:
             value.dispose()
-        subprocess.run(
-            ["docker", "rm", "--force", name],
-            capture_output=True,
-            check=False,
-            timeout=30,
-        )
+        try:
+            for label, expected in (("meducation.rollback-fixture", name + "-rollback-api"),
+                                    ("meducation.release-verify", name)):
+                ids = docker("ps", "--all", "--quiet", "--filter", "label=" + label + "=" + name).splitlines()
+                for identifier in ids:
+                    owned = json.loads(docker("inspect", identifier))[0]
+                    assert owned["Name"] == "/" + expected and owned["Config"]["Labels"][label] == name
+                    docker("rm", "--force", identifier)
+            if report is not None:
+                report["cleanup"] = "pass"
+                assert report["source_and_restored_publication"] == report["restored_publication"]
+        except Exception:
+            if report is not None:
+                report.update(result="fail", cleanup="fail")
+            raise
+        finally:
+            if report is not None:
+                args.output.write_text(json.dumps(report, indent=2) + "\n")
 
 
 if __name__ == "__main__":

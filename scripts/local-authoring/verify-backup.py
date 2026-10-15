@@ -8,6 +8,7 @@ import subprocess
 import sys
 import tempfile
 import time
+from contextlib import contextmanager
 from pathlib import Path
 from uuid import UUID, uuid4
 
@@ -29,6 +30,44 @@ from pydantic import SecretStr
 from sqlalchemy import text
 
 
+@contextmanager
+def source_rehearsal_lock(engine):
+    """Serialize clones of one source database across processes/checkouts."""
+    with engine.connect() as connection:
+        admitted = connection.exec_driver_sql(
+            "SELECT pg_try_advisory_lock(1936024677, 9)"
+        ).scalar_one()
+        if not admitted:
+            raise RuntimeError("Another retained-backup rehearsal owns this source database.")
+        connection.commit()
+        try:
+            yield
+        finally:
+            connection.exec_driver_sql("SELECT pg_advisory_unlock(1936024677, 9)")
+            connection.commit()
+
+
+def require_retired_writers(engine):
+    """Read-only precondition; never stop workers or alter the routine authority."""
+    with engine.connect() as connection:
+        allowed = connection.exec_driver_sql("""
+SELECT bool_or(has_database_privilege(role,current_database(),'CONNECT'))
+FROM unnest(ARRAY['meducation_operator','meducation_editor','meducation_session',
+                  'meducation_migrator','meducation_owner']) role
+""").scalar_one()
+        active = connection.exec_driver_sql("""
+SELECT count(*) FROM pg_stat_activity WHERE datname=current_database()
+AND usename IN ('meducation_operator','meducation_editor','meducation_session',
+                'meducation_migrator','meducation_owner')
+""").scalar_one()
+    if allowed or active:
+        raise RuntimeError(
+            "Retire source writer CONNECT privileges and drain their connections before "
+            "this writable recovery rehearsal. No source changes were performed. "
+            "Read-only reader/backup access may remain available."
+        )
+
+
 def main():
     started = time.monotonic()
     root = ROOT / "var/local-authority"
@@ -44,11 +83,21 @@ def main():
     name = "meducation_verify_cutover_" + uuid4().hex[:12]
     original = create_database_engine(base, operator=True)
     engines = [original]
+    try:
+        with source_rehearsal_lock(original):
+            verify_retained_backup(started, root, state, env, base, name, original, engines)
+    finally:
+        for engine in engines:
+            engine.dispose()
+
+
+def verify_retained_backup(started, root, state, env, base, name, original, engines):
     spec = importlib.util.spec_from_file_location(
         "recovery_probe", ROOT / "scripts/containers/verify-postgres-release.py"
     )
     probe = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(probe)
+    require_retired_writers(original)
     archive = retain_backup()
     with original.connect() as c:
         current = c.exec_driver_sql(

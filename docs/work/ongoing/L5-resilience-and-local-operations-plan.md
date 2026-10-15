@@ -2,7 +2,7 @@
 
 Started: 2026-10-14. Plan reviewed and revised: 2026-10-14 for implementation
 on 2026-10-15 (Asia/Manila). Status: Steps 1–4 local gates complete;
-Step 5 pending. The plan review alone
+Step 5 local drills pass; changed-source native CI is pending. The plan review alone
 did not establish runtime behavior or L5 acceptance.
 
 The designated local PostgreSQL database is now the only writable paired-bank
@@ -18,7 +18,7 @@ Parent: [production preparation](local-first-production-preparation.md#l5--resil
 Follow [work tracking](../README.md): implement a coherent step, record results and
 limitations, then stop at its gate until continuation is authorized. The prior
 request prepared the plan only; subsequent continuation on 2026-10-15 authorized
-Steps 2–4 in sequence. Step 5 awaits continuation.
+Steps 2–5 in sequence. Step 5 awaits changed-source native CI acceptance.
 
 ## Scope and implementation baseline
 
@@ -200,27 +200,27 @@ explicit operator commands. Do not relax assertions to hide saturation. A failed
 
 ## Step 5 — Operational regression and L6 handoff
 
-- [ ] Reuse existing isolated backup/recovery tooling and separate three drills:
+- [x] Reuse existing isolated backup/recovery tooling and separate three drills:
   retained-release activation, backup restoration into a fresh DB, and compatible
   application/schema rollback. Record source and target image/commit, schema head,
   publication sequence, paired hashes, draft/history/allocation state and timings.
-- [ ] For retained activation, prove the old paired release becomes current with a
+- [x] For retained activation, prove the old paired release becomes current with a
   new publication sequence while later releases, draft/history and reservations
   remain intact. Reactivate the later release to prove reversibility; verify both
   new learner launches and preserved in-flight views.
-- [ ] For restore, verify exact paired content/history and effective grants, restored
+- [x] For restore, verify exact paired content/history and effective grants, restored
   session quarantine, external auth-epoch rotation and allocation reconciliation
   against current fixture journals before any new fixture ID is issued. Do not
   run two writable restored authorities of the same lineage. Preserve the current
   local-only retention policy; disposable archives do not certify off-device RPO/RTO.
-- [ ] Select a concrete prior application image and schema compatibility pair
+- [x] Select a concrete prior application image and schema compatibility pair
   before rehearsing app rollback. The runtime currently requires the exact packaged
   migration head. Prefer an application rollback compatible with the retained
   schema; prove incompatible startup fails closed and document roll-forward
   recovery. Do not invent an unsafe schema downgrade or restore an older snapshot
   over newer authoring. If no prior compatible image exists, record that limitation
   explicitly and retain this gate until a supported recovery path is demonstrated.
-- [ ] Update affected operational docs and map every parent L5 checkbox to evidence
+- [x] Update affected operational docs and map every parent L5 checkbox to evidence
   (Steps 1/4 pools and concurrency; Step 2 freshness/no polling; Step 3 config,
   diagnostics/logs; Steps 1/5 outage and recovery). Record commands, source hashes,
   results, skips, fixture ownership and cleanup; never overwrite frozen evidence.
@@ -232,12 +232,12 @@ explicit operator commands. Do not relax assertions to hide saturation. A failed
 
 ## Verification and next implementation session
 
-Start Step 5 by recording `git status`, the current commit and protected export
-hashes. Select the concrete compatible prior application/schema pair before the
-rollback drill; use only owned disposable restore/publication fixtures. Preserve
-existing uncommitted tracker/evidence work. Confirm Docker is available before
-fixture tests; report unavailable prerequisites as unrun gates. Never manipulate
-the routine authority to reproduce an outage or restore.
+Next verify all five jobs, including the newly extended native AMD64/ARM64
+stages, against the exact Step 5 implementation commit. The passing `0761b6b`
+baseline predates these inputs. Retain this tracker/evidence under ongoing until
+that gate passes; then freeze native receipts and archive the completed L5 set
+before authorized L6 implementation. Never manipulate the routine authority to
+repeat fixture outage, restore or rollback checks.
 
 Use [testing guidance](../../testing.md) for exact environment setup and suite
 ownership. The implementation evidence must include:
@@ -529,3 +529,92 @@ Corrected-source full AMD64/ARM64 jobs still require a new run after commit/push
 this fix does not close the overall native CI gate. Step 5 operational recovery
 and rollback acceptance remain open. No production authentication threshold,
 runtime service, routine authority or authored content changed.
+
+## Step 5 baseline and implementation — 2026-10-15
+
+Continuation authorized Step 5. Clean baseline HEAD:
+`0761b6b908d20b3630f8a2fb4d6e83e670c9918e`. Independently verified all five jobs
+in [run 38680895018](https://github.com/mfranco1/meducation/actions/runs/38680895018),
+including native AMD64/ARM64, succeeded at that exact commit. This closes the
+previous authentication isolation CI gap. [Baseline evidence](L5-step5-baseline-ci-evidence.json)
+retains job identities and artifact metadata. It does not certify the subsequent
+Step 5 implementation. Both protected archive hashes remain unchanged.
+
+The existing archive-corpus restore rehearsal is being extended with separate
+retained-release and installed application rollback drills. The selected prior
+revision is `bb8f354971cf5914eaad50feb24671b833ae679c` (L5 Step 2), packaged head
+`0006_allocation_fence`, matching the current head. Installed Python/SQL hashes
+match the prior (45 files) and current (47 files) source revisions. Trusted fixture
+imports precede allocation-fence admission; retained activations follow authoring
+preparation so the stale-draft-base guard remains effective. The drills preserve
+newer unpublished drafts/history and never silently rebase or replay publication.
+
+Step 5 local verification:
+
+- The rebuilt historical image at `bb8f354` and current runtime at `0761b6b` passed
+  current → prior → current HTTP launches against the same database, including
+  catalogs, ordered memberships, counts, revisions and exact quiz/card bodies.
+  All Python/SQL hashes match those commits; both images' migration files are
+  identical and package `0006_allocation_fence`. All table/sequence state remained
+  unchanged. An incompatible disposable marker refused startup; repairing that
+  test marker and rolling forward restored reads. No schema downgrade occurred.
+- The archive-corpus run passed with **11,687 questions / 1,712 cards**, **348
+  learner routes** checked before and after restoration, and exact source/target
+  table/sequence and effective grant parity. Total including fixture preparation,
+  authoring, import, all drills and cleanup: **824.390 seconds**, within the native
+  1,200-second recovery budget. Activation drill: 18.240 s; application drill:
+  60.935 s; dump: 8.559 s; raw fresh-target restore/grant/state verification:
+  17.110 s; restore through auth/allocation admission: 25.734 s. These measure
+  disposable fixtures, not retained-copy freshness or hardware-loss RPO/RTO.
+- Retained activations advanced publication sequences **3 → 4 → 5 → 6**, with
+  changed quiz/card bodies observed by new views and original in-flight bodies
+  preserved. Later releases, newer private draft/history, reservations, counters
+  and admitted allocation-fence state remained intact. Source and restored target
+  retain publication 6 and the same paired digests.
+- Before restored writes, the fixture explicitly revoked source application
+  CONNECT and drained its sessions. Restored raw credentials/history first matched
+  the dump exactly; quarantine then revoked **1 session** and cleared **1 pending
+  login**. A fresh session under a rotated external epoch passed; old credentials
+  failed. Complete test-journal reconciliation burned permitted post-dump ranges
+  and the newly assigned IDs did not reuse lost IDs.
+- Audit found the separate retained-backup command could also resume a restored
+  lineage while source writers remained available. Its new **read-only** guard
+  refuses before backup/target creation unless writer CONNECT is retired and
+  writer sessions drained. It never changes routine privileges or stops workers.
+  A dedicated disposable PG test **1 passed** verifies every writer role, a still
+  open writer after CONNECT revocation, and allowed read-only backup/reader access.
+  Exclusive source-database admission also rejects concurrent clone rehearsals
+  and releases after completion/interruption. The routine command/database was
+  not used for testing. Updated recovery docs
+  distinguish offline rehearsal, ordinary online backup and deliberate resumption
+  after target cleanup.
+- Historical image build, build/typecheck, lint/architecture (288 modules/1,255
+  imports), architecture tests **10 passed**, formatting, backend/container/local
+  helper Ruff, mypy (41 runtime files), Python compilation, workflow YAML parsing,
+  local Markdown targets and diff checks passed. The existing bundle advisory
+  remains. **320 production runtime input hashes** still match passing native CI
+  at `0761b6b`; unchanged unit/browser/full-PG runtime evidence is reused only for
+  those inputs. The new guard has separate real-PG evidence. Small fixture trials
+  aided development and are not counted as archive-corpus acceptance.
+- Cleanup checks found no remaining labeled recovery/rollback containers or
+  disposable PG test containers. Protected archive SHA-256 values are unchanged;
+  no routine container/volume, authority content, retained backup/journal, provider
+  configuration or cloud resource was changed.
+
+[Frozen local evidence](L5-step5-local-evidence.json) records fingerprints,
+commands, image IDs, exact state summaries, phase timings, guard output and a map
+from every parent L5 requirement to Step 1–5 evidence. The
+[operations runbook](../../L5-local-operations.md#l6-handoff) records the L6 handoff
+and distinct provider/identity/off-device/device obligations.
+
+Completion audit: **Step 5 local implementation verified, no blocking local
+findings**. **Overall Step 5/L5 acceptance remains open** until new full native
+AMD64/ARM64 jobs pass the changed helper/test/workflow inputs. Native CI now builds
+the concrete retained image (full Git history), exercises all three recovery
+drills and includes the writer-retirement regression in its full PG/restart
+stages. Do not archive or reuse the baseline run as proof of these new inputs.
+
+The pre-maintenance-lock receipt is preserved as
+[historical local evidence](L5-step5-pre-maintenance-lock-local-evidence.json);
+the final local receipt includes the added exclusive source-rehearsal admission
+regression. No original frozen receipt was overwritten.

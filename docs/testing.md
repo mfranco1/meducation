@@ -300,3 +300,27 @@ the application image. `auth-rate.spec.ts` fills the global budget in consecutiv
 scenarios and verifies that the real per-browser/global limits still return 429
 within each scenario. Keep this suite at one worker against a shared fixture DB;
 parallel workers require separate fixture databases.
+
+L5 operational acceptance extends `verify-postgres-release.py` with three separate
+drills: retained-release activation/pinned views, fresh-target backup restoration,
+and compatible installed application rollback. Native CI first runs
+`scripts/containers/build-rollback-api.py` from the pinned retained commit (full
+Git history is required), then passes `--api-image meducation-api:local
+--previous-api-image meducation-api:l5-rollback-prior` to the recovery script.
+Both images must match their selected Python/SQL source fingerprints and schema
+head. Current → prior → current must preserve exact database state and fresh
+learner content. An incompatible fixture schema marker must refuse startup and
+recover by roll-forward, without a data/schema downgrade. Source application
+connections are revoked/drained before a restored lineage can admit allocations.
+The restore checks remain exact for all-table history/state and effective grants,
+then require auth quarantine/new epoch and independent-journal reconciliation.
+See [drill commands and limits](L5-local-operations.md#distinct-recovery-and-rollback-drills).
+
+The retained-backup command's writer-retirement precondition is covered by
+`test_l5_retained_restore_requires_source_writer_retirement` in the real PG suite.
+It rejects live writer grants, an already-open writer after CONNECT revocation,
+and each independently enabled writer role; it permits read-only backup/reader
+connections after retirement. The test uses the disposable PG launcher only.
+It also verifies exclusive source-database rehearsal admission and lock release
+after both completion and interruption. Neither this test nor the L5 drills invoke
+the routine authority's recovery script.

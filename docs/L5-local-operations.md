@@ -228,3 +228,95 @@ machine. They do not measure browser rendering, proxy throughput, broad catalog
 scale, hosted networking or concurrent editor activity, and do not define a
 production latency SLO. Keep runtime worker/pool settings unchanged unless a
 measured failure supports a specific adjustment, then repeat the baseline.
+
+## Distinct recovery and rollback drills
+
+A retained-release activation changes the current immutable publication. It does
+not rewind the paired working draft, delete later releases/history, reclaim IDs,
+or restore session state. Review the retained pair and current sequence in the
+HTTP editor, use explicit activation confirmation, and verify a new learner
+launch. An already running quiz/deck retains its pinned content. Reactivating the
+later retained release gives another new publication sequence; it is an explicit
+operation, never an automatic retry of an uncertain write.
+
+A database restoration instead reconstructs content **and** draft/history,
+audit/operation records, reservations/counters, allocation-fence state and auth
+records as of the dump. Follow the
+[authoritative recovery procedure](L4-authoritative-recovery.md#fresh-restoration-procedure)
+and [local authority operations](local-authoring.md#recovery-and-verification).
+Stop source workers/writers and retire their database access before admitting the
+restored lineage. Restore into a separate fresh target, verify effective grants
+and exact content/history, quarantine restored sessions/pending logins, rotate the
+external auth epoch, and reconcile complete journals before issuing any new ID.
+Switch reader/session/editor connections together only after acceptance. Keep the
+retired source unavailable to application roles; two writable authorities of the
+same lineage must never issue allocations concurrently. The retained-backup
+rehearsal also holds an exclusive source-database advisory lock through target
+cleanup so concurrent invocations cannot admit two writable clones.
+
+An application rollback changes the installed service image while retaining the
+current database. The runtime requires the exact packaged migration head. Select
+and verify a concrete prior image/source/schema pair before stopping the current
+worker. Keep the newer database/draft/history/allocation state intact, start only
+one worker, and verify current catalogs, ordered memberships and bodies through
+fresh requests. If startup rejects a mismatched schema, keep serving stopped and
+roll forward to a known compatible image/schema pair. Do not edit a real schema
+version marker, invent a downgrade, or restore an older dump over newer authoring
+to make an image start.
+
+The local compatibility specimen is commit
+`bb8f354971cf5914eaad50feb24671b833ae679c` (L5 Step 2), with packaged schema head
+`0006_allocation_fence`. It predates Step 3 diagnostics/logging changes; the drill
+establishes schema/data compatibility, not approval of those reverted behaviors
+for a deployment. Future deployments need an approved retained release inventory.
+The harness compares all installed Python/SQL module hashes to the chosen Git
+revision before using the image. It starts current → prior → current against the
+same fixture database, then temporarily corrupts **only the disposable fixture's**
+schema marker to prove incompatible startup refuses content. It repairs that test
+marker and proves current-image roll-forward. No actual migration downgrade runs.
+
+Run all three drills with an installed current image and retained specimen:
+
+```sh
+.venv/bin/python scripts/containers/build-rollback-api.py
+.venv/bin/python scripts/containers/verify-postgres-release.py --api-image meducation-api:local --previous-api-image meducation-api:l5-rollback-prior --output test-results/l5-operational-recovery.json
+```
+
+The builder extracts the exact historical Git commit into a temporary directory
+and builds its pinned Dockerfile. It needs that Git object locally. Native CI
+fetches full history, builds this specimen and passes both images to the existing
+recovery stage. Omitting both image arguments retains the standalone archive
+parity/restore mode but does not certify application rollback.
+
+The rehearsal imports copies of repository archives into a uniquely labeled tmpfs
+PG17 cluster. These may be older than the routine authority and are fixture data.
+It demonstrates reversible retained activation and pinned-view preservation,
+then compatible application rollback with exact all-table state equality. Before
+restoration it deliberately creates post-dump allocations and advances retained
+journals, revokes source application CONNECT privileges and drains those sessions.
+Only the private bootstrap controller remains for read-only comparison. The fresh
+target must restore exact pre-dump content/auth/grants before quarantine, reject
+old credentials/callbacks, burn every permitted journal range, and allocate above
+the lost IDs. Reports separate activation/application/dump/restore/admission
+measurements and retain hashes/counts, schema/publication identity and cleanup.
+
+Those timings describe disposable local fixtures. They do not establish retained
+backup freshness, off-device RPO/RTO, hosted suspend/wake/TLS/pooling, provider MFA,
+or real-device acceptance. Preserve the user's current local-only retention policy.
+
+## L6 handoff
+
+After the changed-source native jobs accept these drills, L6 still owns a fresh
+full release-candidate verification, authoritative DB/export parity, rich-content
+and real-device review, provider-neutral deployment inputs, and an explicit
+remaining-deployment checklist. The routine local PostgreSQL authority and its
+locally retained journals/backups remain the source of truth; a passing archive
+fixture is not proof that those archives match the live bank. Learner progress
+remains private browser storage and requires its separate backup/recovery path.
+
+Preserve the existing deployment gates: verified hosted TLS and the chosen
+provider's pooling/suspend/wake behavior; actual identity/MFA assurance; off-device
+retention under the user's deferred policy; Firefox's explicit testing deferral;
+real mobile/Safari, assistive-technology and persisted-return observations. Local
+PG and synthetic identity evidence do not close them. L6 preparation does not
+provision a cloud database/API, publish content or change the selected local scope.
