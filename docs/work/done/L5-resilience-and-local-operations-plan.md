@@ -1,8 +1,7 @@
 # L5 — Resilience and local operations
 
 Started: 2026-10-14. Plan reviewed and revised: 2026-10-14 for implementation
-on 2026-10-15 (Asia/Manila). Status: Steps 1–4 local gates complete;
-Step 5 local drills pass; changed-source native CI is pending. The plan review alone
+on 2026-10-15 (Asia/Manila). Status: complete; Steps 1–5 local gates and changed-source native AMD64/ARM64 CI accepted at `7128a97`. The plan review alone
 did not establish runtime behavior or L5 acceptance.
 
 The designated local PostgreSQL database is now the only writable paired-bank
@@ -10,15 +9,15 @@ authority. JSON files are exports/archives or explicit read-only fallbacks and m
 be stale. Follow [local authoring](../../local-authoring.md) and the current
 [recovery policy](../../L4-authoritative-recovery.md#current-local-only-policy-override--2026-10-14).
 Off-device retention remains user-deferred; the local cutover is no longer pending.
-The existing [post-cutover CI evidence](L4-cutover-native-ci-evidence.json) records
+The existing [post-cutover CI evidence](../ongoing/L4-cutover-native-ci-evidence.json) records
 native AMD64/ARM64 success at `bc90d75`; it does not certify future L5 changes.
 The older Step 1 evidence below remains a historical record.
 
-Parent: [production preparation](local-first-production-preparation.md#l5--resilience-scale-to-zero-readiness-and-local-operations).
+Parent: [production preparation](../ongoing/local-first-production-preparation.md#l5--resilience-scale-to-zero-readiness-and-local-operations).
 Follow [work tracking](../README.md): implement a coherent step, record results and
 limitations, then stop at its gate until continuation is authorized. The prior
 request prepared the plan only; subsequent continuation on 2026-10-15 authorized
-Steps 2–5 in sequence. Step 5 awaits changed-source native CI acceptance.
+Steps 2–5 in sequence. Step 5 changed-source CI is now accepted; see final archival entry.
 
 ## Scope and implementation baseline
 
@@ -224,7 +223,7 @@ explicit operator commands. Do not relax assertions to hide saturation. A failed
   (Steps 1/4 pools and concurrency; Step 2 freshness/no polling; Step 3 config,
   diagnostics/logs; Steps 1/5 outage and recovery). Record commands, source hashes,
   results, skips, fixture ownership and cleanup; never overwrite frozen evidence.
-- [ ] Run applicable regression/container checks below and obtain changed-source
+- [x] Run applicable regression/container checks below and obtain changed-source
   native AMD64/ARM64 CI acceptance. Record hosted suspend/wake, provider pooling/TLS,
   real identity/MFA, off-device retention and manual-device limitations for L6.
   They remain distinct from the local L5 gate. Archive only after complete L5
@@ -618,3 +617,9 @@ The pre-maintenance-lock receipt is preserved as
 [historical local evidence](L5-step5-pre-maintenance-lock-local-evidence.json);
 the final local receipt includes the added exclusive source-rehearsal admission
 regression. No original frozen receipt was overwritten.
+
+## Final CI acceptance and archival — 2026-10-15
+
+The user reported [run 38686411130](https://github.com/mfranco1/meducation/actions/runs/38686411130) passed and authorized L6. Independent GitHub REST inspection confirms commit `7128a9737216867a9e64844d74b2891bbdf55d42` and all five jobs succeeded: backend, frontend, browser-smoke, Containers (amd64), Containers (arm64). The native acceptance and evidence-upload steps passed on both architectures. The [frozen receipt](L5-step5-native-ci-evidence.json) records job URLs, steps, retained artifact metadata and exact changed helper/test/workflow hashes. Artifact payloads were not independently audited; retention expires 2026-10-29.
+
+This closes the remaining L5 gate; earlier pending statements above record the state at their original checks. Completion audit found no blocking local L5 findings when combining the prior local receipts and this changed-source CI acceptance. All L5 receipts moved together, with their bytes preserved. Historical path strings inside frozen JSON retain their original meaning; resolve L5 filenames in this done directory. L4 remains ongoing for its own archival/retention obligations. Hosted TLS/pooling/suspend, actual identity/MFA, off-device recovery, Firefox and manual-device acceptance remain open for L6/deployment.

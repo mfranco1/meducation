@@ -1,0 +1,487 @@
+{
+  "purpose": "L5 Step 5 changed-source native CI acceptance",
+  "captured_date": "2026-10-15",
+  "evidence_source": "Independently read GitHub REST run, jobs and artifact metadata; user separately reported success. Artifact payloads/logs were not downloaded or independently audited.",
+  "run_url": "https://github.com/mfranco1/meducation/actions/runs/38686411130",
+  "head_sha": "7128a9737216867a9e64844d74b2891bbdf55d42",
+  "status": "completed",
+  "conclusion": "success",
+  "created_at": "2026-10-15T05:22:11Z",
+  "updated_at": "2026-10-15T05:44:26Z",
+  "jobs": [
+    {
+      "id": 116262152443,
+      "name": "frontend",
+      "conclusion": "success",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38686411130/job/116262152443",
+      "started_at": "2026-10-15T05:22:14Z",
+      "completed_at": "2026-10-15T05:25:05Z",
+      "runner_name": "GitHub Actions 1000000221",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run lint",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run format:check",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run test:architecture",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run test:ci",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run validate:content",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run typecheck",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run build:learner",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Build the optional local admin entry",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 116262152618,
+      "name": "Containers (arm64)",
+      "conclusion": "success",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38686411130/job/116262152618",
+      "started_at": "2026-10-15T05:22:17Z",
+      "completed_at": "2026-10-15T05:41:30Z",
+      "runner_name": "GitHub Actions 1000000223",
+      "labels": [
+        "ubuntu-24.04-arm"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install verification environment",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run build:content-policy",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check container helpers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Repeated clean builds and native acceptance",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Retain scoped evidence and failure traces",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 116262152692,
+      "name": "backend",
+      "conclusion": "success",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38686411130/job/116262152692",
+      "started_at": "2026-10-15T05:22:15Z",
+      "completed_at": "2026-10-15T05:23:01Z",
+      "runner_name": "GitHub Actions 1000000224",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install backend environment",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run build:content-policy",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check Python style and types",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Test backend",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 116262152700,
+      "name": "browser-smoke",
+      "conclusion": "success",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38686411130/job/116262152700",
+      "started_at": "2026-10-15T05:22:15Z",
+      "completed_at": "2026-10-15T05:26:01Z",
+      "runner_name": "GitHub Actions 1000000222",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install backend environment",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run build:content-policy",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run build:learner:smoke",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run test:e2e:prepared",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run test:e2e:admin",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Retain host browser failure traces",
+          "status": "completed",
+          "conclusion": "skipped"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    },
+    {
+      "id": 116262152720,
+      "name": "Containers (amd64)",
+      "conclusion": "success",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38686411130/job/116262152720",
+      "started_at": "2026-10-15T05:22:15Z",
+      "completed_at": "2026-10-15T05:44:25Z",
+      "runner_name": "GitHub Actions 1000000225",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Install verification environment",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npm run build:content-policy",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Check container helpers",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Repeated clean builds and native acceptance",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Retain scoped evidence and failure traces",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success"
+        }
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 11950904529,
+      "name": "container-acceptance-amd64",
+      "size_in_bytes": 2501690,
+      "digest": "sha256:7d56b3086c95387e067e0c7b4633d503e2b960c6cf4dceee49ce83022a980023",
+      "expired": false,
+      "created_at": "2026-10-15T05:44:21Z",
+      "expires_at": "2026-10-29T05:44:20Z"
+    },
+    {
+      "id": 11950589357,
+      "name": "container-acceptance-arm64",
+      "size_in_bytes": 2397211,
+      "digest": "sha256:18c9b21aa252b281c994e94b2897ad177c1f8c8ccbda3ef24cb4b11e9c7a3d21",
+      "expired": false,
+      "created_at": "2026-10-15T05:41:27Z",
+      "expires_at": "2026-10-29T05:41:26Z"
+    }
+  ],
+  "tested_input_sha256": {
+    ".github/workflows/checks.yml": "7dd747f154f5d83a3d0639d4d4596014c404522eb33594afb6a04b2df7221b70",
+    "scripts/containers/acceptance.py": "b1aa30d9dccc39c6398c7d5626fc298d1a9030cf161436efdf42174741c506b8",
+    "scripts/containers/build-rollback-api.py": "bdc31182444e2e907aa9e52f74bb1ce641d64321572044c88660695f7826db2a",
+    "scripts/containers/rollback_drills.py": "09c48ff2ca979194ec57368e2b6e6d135e5887a6a2916afdce0d886d13eb7647",
+    "scripts/containers/verify-postgres-release.py": "1a1cdf8e8c89ab37eb22ad5f744c44260d632226534dd896c508a8cfeac2f632",
+    "scripts/local-authoring/verify-backup.py": "0451ce579a41a8c84f4869185d33306a98dc832448425b133f60c8eca10b4536",
+    "backend/tests/test_postgres_content.py": "a98c9b1ac93d1128e65d6f14ad2403e52146d32c0da0acd8e0a622b33275efb9"
+  },
+  "input_verification": "Each listed worktree input is byte-identical to the tested Git commit. Native acceptance stage and artifact upload succeeded on both jobs. Earlier 0761b6b run is baseline only.",
+  "limitations": [
+    "No live authority parity, hosted provider, real identity/MFA, off-device retention or real-device acceptance inferred.",
+    "Artifact contents are not locally retained by this receipt; GitHub retention expires 2026-10-29."
+  ]
+}

@@ -1,6 +1,6 @@
 # Local-first production preparation
 
-Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 complete with passing local verification and user-confirmed native AMD64/ARM64 GitHub CI; L3 complete with final verification and independently verified native AMD64/ARM64 CI; L4 Steps 1–2 complete; Steps 3–4 local backend and Step 5 local HTTP editor gates complete; Steps 6–7 locally complete under user-approved local-only backup policy and PostgreSQL authority cutover; off-device recovery deferred; Step 8 changed-source native AMD64/ARM64 CI verified at `bc90d75`; L5 Step 1 local gate complete, remaining L5 work and L6 pending. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
+Created: 2026-10-12. Status: L0 design/evidence complete; L1 complete with user-deferred Firefox acceptance; L2 complete with passing local verification and user-confirmed native AMD64/ARM64 GitHub CI; L3 complete with final verification and independently verified native AMD64/ARM64 CI; L4 Steps 1–2 complete; Steps 3–4 local backend and Step 5 local HTTP editor gates complete; Steps 6–7 locally complete under user-approved local-only backup policy and PostgreSQL authority cutover; off-device recovery deferred; Step 8 changed-source native AMD64/ARM64 CI verified at `bc90d75`; L5 complete with independently verified changed-source native AMD64/ARM64 CI at `7128a97`; L6 Step 1 baseline complete, candidate acceptance pending. This is the current next-phase tracker and supersedes the stage ordering and hosting recommendation in the [earlier planning snapshot](../done/production-deployment-roadmap.md). Move this tracker to done only when implementation and relevant checks are complete. No cloud services are provisioned by this plan.
 
 ## Confirmed scope
 
@@ -104,21 +104,7 @@ not accepted by this local gate.
 
 ### L5 — Resilience, scale-to-zero readiness and local operations
 
-Implementation is tracked in [the L5 plan](L5-resilience-and-local-operations-plan.md).
-Step 1 implements one worker, bounded pools, request-driven stale socket repair,
-reader SQL deadlines and isolated local restart acceptance. Step 2 adds launch
-freshness and independent-reader/query-cost acceptance. Step 3 adds protected diagnostics, configuration auditing and safe operational
-events. Step 4 adds reproducible twenty-learner load characterization. Remaining
-L5 work now has passing local operational recovery/rollback drills; changed-source
-native acceptance remains pending. The local PostgreSQL authority cutover and post-cutover native CI
-are complete under the user-approved local-only backup policy; off-device recovery
-and hosted acceptance remain separate. The L5 plan was revised on 2026-10-14
-for implementation; Step 2 now passes its local gate. [Step 2 evidence](L5-step2-local-evidence.json)
-records explicit-launch freshness, independent readers and query costs.
-[Step 3 evidence](L5-step3-local-evidence.json) closes the local diagnostic/logging
-gate; [Step 4 evidence](L5-step4-local-evidence.json) closes the provisional local
-load gate. [Step 5 local evidence](L5-step5-local-evidence.json) covers recovery and
-rollback drills; changed-source native CI remains pending.
+Implementation and local evidence are archived in [the completed L5 plan](../done/L5-resilience-and-local-operations-plan.md). Steps 1–5 and all parent requirements below are accepted locally and by [changed-source CI](../done/L5-step5-native-ci-evidence.json) at `7128a9737216867a9e64844d74b2891bbdf55d42` (all five jobs, including native AMD64/ARM64). L4's local PostgreSQL authority cutover remains accepted under the local-only retention override; its archival/off-device/provider obligations remain explicit in the ongoing L4 tracker. Hosted pooling/TLS/suspend, identity/MFA and browser/device obligations pass to L6/deployment.
 
 - [x] Start with one API process/instance for the initial small deployment, while retaining transactional concurrency tests. Define a concrete current-release freshness target (initially <=30 seconds for new content launches). Never mix versions during an active quiz. Requests discovering a changed catalog must use the existing revision-conflict/reload behavior; cached active sessions must not switch underneath the learner. Test future multi-worker behavior before enabling multiple workers.
 - [x] Configure small bounded database pools, timeouts, connection invalidation/reconnect, and safe idempotent retries. Do not retry uncertain non-idempotent admin writes blindly; use transactional operation IDs/revision preconditions.
@@ -133,6 +119,8 @@ rollback drills; changed-source native CI remains pending.
 Gate: local restart/failure/recovery and concurrency tests pass; no designed-in keepalive defeats Neon suspension; operator recovery is documented.
 
 ### L6 — Local release candidate
+
+Detailed sequence: [L6 local release candidate plan](L6-local-release-candidate-plan.md). L5 acceptance is verified; L6 Step 1 establishes the candidate baseline and evidence ledger. Remaining candidate verification is pending. The plan separates actual authority/export parity, local acceptance, deployment inputs, final native CI and public-launch obligations.
 
 - [ ] Run npm run verify:full and required learner/admin build checks, plus added Postgres integration, backup-restore, authorization and container smoke tests. Ensure CI can repeat relevant local gates.
 - [ ] Validate actual canonical/exported content and exact migration parity with protected sources. Verify rich text and math rendering, mobile admin/learner usability, progress restore, retry/revision failures and authoring regressions.
@@ -246,7 +234,7 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
 - [x] 2026-10-15: L5 Step 2 local launch-freshness gate completed. Every explicit
   API quiz/deck launch and restart confirmation checks current subjects; expired
   or failed evidence blocks launch without replacing active study arrays or saved
-  progress. [Evidence](L5-step2-local-evidence.json) records 605 frontend tests,
+  progress. [Evidence](../done/L5-step2-local-evidence.json) records 605 frontend tests,
   175 PG tests plus 8 restart tests, 234 ordinary backend tests and 66 browser
   cases across learner/HTTP/JSON-fixture admin. Builds, style/types/architecture
   and protected export hashes pass. Steps 3–5 and changed-source native CI remain
@@ -255,7 +243,7 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
 - [x] 2026-10-15: L5 Step 3 local diagnostic/configuration/failure-visibility gate
   completed. Protected read-only checks reuse existing role pools and the held
   session connection; safe request/recovery and proxy events redact all request/
-  exception inputs. [Evidence](L5-step3-local-evidence.json) records 238 ordinary
+  exception inputs. [Evidence](../done/L5-step3-local-evidence.json) records 238 ordinary
   backend tests, 183 PG tests plus 17 restart checks, 14 HTTP browser cases, 43
   proxy browser cases (one explicit skip), installed-image/startup/redaction checks
   and unchanged protected exports. [Runbook](../../L5-local-operations.md) records
@@ -266,7 +254,7 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
   of twenty mixed quiz/flashcard launches, with 460 successful launches and the
   expected publication/outage outcomes separated. Reader peak/end occupancy was
   2/0 with no admission failures; actual restart recovery and exact body/revision
-  checks passed. [Evidence](L5-step4-local-evidence.json) retains machine/fixture/
+  checks passed. [Evidence](../done/L5-step4-local-evidence.json) retains machine/fixture/
   source/image fingerprints and limitations. Step 5 recovery/rollback/native CI
   remains open; no routine authority change or runtime tuning occurred.
 
@@ -274,14 +262,14 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
   the new load gate, then failed late browser sign-ins with HTTP 429. Isolated
   test rate-bucket cleanup now prevents cross-scenario exhaustion while two new
   regressions retain production per-browser/global admission checks. The full
-  local HTTP suite **16 passed**; [follow-up evidence](L5-ci-auth-rate-isolation-evidence.json)
+  local HTTP suite **16 passed**; [follow-up evidence](../done/L5-ci-auth-rate-isolation-evidence.json)
   records the diagnosis and limits. Corrected-source native CI must be rerun;
   overall L5 and Step 5 remain open.
 
 - [x] Independently verified all five jobs in
   [run 38680895018](https://github.com/mfranco1/meducation/actions/runs/38680895018)
   at `0761b6b`, including native AMD64/ARM64. This closes the authentication test
-  isolation CI gap. [Baseline evidence](L5-step5-baseline-ci-evidence.json) records
+  isolation CI gap. [Baseline evidence](../done/L5-step5-baseline-ci-evidence.json) records
   exact jobs/artifacts. Subsequent Step 5 recovery/rollback changes require their
   own native acceptance; overall L5 remains open.
 
@@ -290,6 +278,8 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
   retained activations, pinned views, rebuilt historical-image rollback,
   incompatible startup/roll-forward, exact history/grants, rotated auth and lost-ID
   recovery passed. The offline retained-backup writer guard passed a separate
-  disposable PG regression. [Local evidence](L5-step5-local-evidence.json) maps all
+  disposable PG regression. [Local evidence](../done/L5-step5-local-evidence.json) maps all
   L5 requirements to evidence. New native AMD64/ARM64 acceptance is still required;
   L5 remains ongoing and L6 implementation has not started.
+
+- [x] 2026-10-15: Independently verified L5 final run 38686411130 at `7128a97` (all five jobs including native AMD64/ARM64); archived L5 tracker/receipts. L6 Step 1 records the provisional code/input/tool baseline and four-requirement evidence ledger. Build/typecheck, affected links, unchanged runtime/frozen receipts and diff checks pass. Step 2 actual authoritative content capture is next; all parent L6 acceptance boxes remain open.

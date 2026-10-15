@@ -4,7 +4,7 @@ The local PostgreSQL database remains the only writable paired-bank authority.
 These checks inspect dependencies; they do not publish, repair, restore, allocate
 IDs or replay writes. See [local authoring](local-authoring.md),
 [recovery policy](L4-authoritative-recovery.md) and the
-[L5 tracker](work/ongoing/L5-resilience-and-local-operations-plan.md).
+[L5 tracker](work/done/L5-resilience-and-local-operations-plan.md).
 Hosted identity/TLS/pooling/suspend acceptance remains a deployment gate.
 
 ## Explicit protected diagnostic
