@@ -2,17 +2,17 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
-import { runtimeFlashcardBank } from '../content/api/runtimeFlashcardBank';
+import { installFlashcardApiFixture } from '../test/runtimeContentFixtures';
 import App from './App';
 import { theme } from '../shared/theme';
 import { learnerProgressAdmission } from '../persistence/progressAdmission';
 
 beforeEach(() => learnerProgressAdmission.admit({ mode: 'shared', valid: true, release: () => undefined }, () => 'clear'));
-afterEach(() => { learnerProgressAdmission.close(); vi.unstubAllGlobals(); });
+afterEach(() => { learnerProgressAdmission.close(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 it('shows unreadable saved progress on the dashboard before a deck is opened', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-corrupt', subjects: [] });
-  runtimeFlashcardBank.configureLocal([], [], []);
+  await installFlashcardApiFixture([], [], []);
   const setItem = vi.fn();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => (key === 'meducation.flashcards.progress.v2' ? '{broken' : null),
@@ -31,10 +31,10 @@ it('shows unreadable saved progress on the dashboard before a deck is opened', a
 it('disables progress backup during flashcard study with save-and-leave guidance', async () => {
   // This checks backup availability after admission; browser tests cover cold lazy loading.
   await import('../features/flashcards/screens/FlashcardStudyScreen');
-  runtimeQuestionBank.configureLocal([], [], []);
-  runtimeFlashcardBank.configureLocal(
-    [{ id: 's-backup', name: 'Backup cards', accent: '#123456', deckCount: 1, deckIds: ['d-backup'] }],
-    [{ id: 'd-backup', subjectId: 's-backup', name: 'Backup deck', cardCount: 1, cardIds: ['f-backup'] }],
+  runtimeQuestionBank.configureApi({ revision: 'empty', subjects: [] });
+  await installFlashcardApiFixture(
+    [{ id: 's3', name: 'Backup cards', accent: '#123456', deckCount: 1, deckIds: ['d-backup'] }],
+    [{ id: 'd-backup', subjectId: 's3', name: 'Backup deck', cardCount: 1, cardIds: ['f-backup'] }],
     [{ id: 'f-backup', deckId: 'd-backup', front: 'Front', back: 'Back' }],
   );
   const values = new Map<string, string>();
@@ -54,7 +54,7 @@ it('disables progress backup during flashcard study with save-and-leave guidance
 
 it('shows a visible persistence error when a deck cannot be launched', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-quota', subjects: [] });
-  runtimeFlashcardBank.configureLocal(
+  await installFlashcardApiFixture(
     [{ id: 's1', name: 'Flash subject', accent: '#123456', deckCount: 1, deckIds: ['d1'] }],
     [{ id: 'd1', subjectId: 's1', name: 'Test deck', cardCount: 1, cardIds: ['f1'] }],
     [{ id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' }],
@@ -84,9 +84,9 @@ it('shows a visible persistence error when a deck cannot be launched', async () 
 
 it('saves arrow-key navigation on the destination card when exiting', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-arrow', subjects: [] });
-  runtimeFlashcardBank.configureLocal(
-    [{ id: 's-arrow', name: 'Arrow subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow'] }],
-    [{ id: 'd-arrow', subjectId: 's-arrow', name: 'Arrow deck', cardCount: 2, cardIds: ['f-arrow-1', 'f-arrow-2'] }],
+  await installFlashcardApiFixture(
+    [{ id: 's4', name: 'Arrow subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow'] }],
+    [{ id: 'd-arrow', subjectId: 's4', name: 'Arrow deck', cardCount: 2, cardIds: ['f-arrow-1', 'f-arrow-2'] }],
     [
       { id: 'f-arrow-1', deckId: 'd-arrow', front: 'First front', back: 'First back' },
       { id: 'f-arrow-2', deckId: 'd-arrow', front: 'Second front', back: 'Second back' },
@@ -113,9 +113,9 @@ it('saves arrow-key navigation on the destination card when exiting', async () =
 
 it('keeps the current card open and reports an error when arrow navigation cannot save', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-arrow-quota', subjects: [] });
-  runtimeFlashcardBank.configureLocal(
-    [{ id: 's-arrow-quota', name: 'Arrow quota subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow-quota'] }],
-    [{ id: 'd-arrow-quota', subjectId: 's-arrow-quota', name: 'Arrow quota deck', cardCount: 2, cardIds: ['f-arrow-q1', 'f-arrow-q2'] }],
+  await installFlashcardApiFixture(
+    [{ id: 's5', name: 'Arrow quota subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow-quota'] }],
+    [{ id: 'd-arrow-quota', subjectId: 's5', name: 'Arrow quota deck', cardCount: 2, cardIds: ['f-arrow-q1', 'f-arrow-q2'] }],
     [
       { id: 'f-arrow-q1', deckId: 'd-arrow-quota', front: 'Saved first front', back: 'Saved first back' },
       { id: 'f-arrow-q2', deckId: 'd-arrow-quota', front: 'Saved second front', back: 'Saved second back' },

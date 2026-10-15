@@ -27,7 +27,7 @@ jobs:
       - run: npm run build:content-policy
       - name: Check Python style and types
         run: |
-          .venv/bin/ruff check backend/src backend/tests
+          .venv/bin/ruff check backend/src backend/tests scripts/testing/serve-postgres-fixture.py scripts/containers/fixtures/editor_http.py
           .venv/bin/mypy backend/src
       - name: Test backend
         run: .venv/bin/python -m pytest backend/tests -q

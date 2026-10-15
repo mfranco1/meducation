@@ -15,7 +15,6 @@ export class RuntimeQuestionBank implements QuizRepository {
   private readonly questionStates = new Map<string, ResourceState>();
   private readonly questionRetryAttempts = new Map<string, number>();
   private revision = '';
-  private source: 'api' | 'local' = 'api';
   private summaries: SubjectSummary[] = [];
   private catalogState: ResourceState = 'idle';
   private catalogError?: Error;
@@ -80,7 +79,6 @@ export class RuntimeQuestionBank implements QuizRepository {
   configureApi(subjectResponse: { revision: string; subjects: SubjectCatalogRecord[] }, quizResponses: QuizCatalogResponse[] = []) {
     this.generation++;
     this.cancelQuestionLoads();
-    this.source = 'api';
     this.revision = subjectResponse.revision;
     const allQuizzes = quizResponses.flatMap(response => response.quizzes);
     this.summaries = subjectResponse.subjects.map(subject => {
@@ -102,32 +100,11 @@ export class RuntimeQuestionBank implements QuizRepository {
     this.questionStates.clear(); this.questionRetryAttempts.clear();
   }
 
-  configureLocal(subjects: Subject[], quizzes: Quiz[], questions: Question[]) {
-    this.generation++;
-    this.cancelQuestionLoads();
-    this.source = 'local';
-    this.revision = '';
-    this.summaries = subjects.map(subject => {
-      const subjectQuizzes = quizzes.filter(quiz => quiz.subjectId === subject.id);
-      return { ...subject, quizCount: subjectQuizzes.length, quizIds: subjectQuizzes.map(quiz => quiz.id) };
-    });
-    this.cache.replaceCatalog(subjects, quizzes, questions);
-    this.catalogState = 'ready';
-    this.catalogError = undefined;
-    this.catalogRetryAt = undefined;
-    this.quizStates.clear(); this.quizErrors.clear(); this.quizRetryAttempts.clear(); this.quizRecovery.clear(); this.quizRetryAt.clear(); this.quizRetryAfterAt.clear(); this.quizRetryNow.clear(); this.pendingCatalogs.clear();
-    for (const subject of subjects) this.quizStates.set(subject.id, 'ready');
-    this.pending.clear();
-    this.questionStates.clear(); this.questionRetryAttempts.clear();
-    this.notify();
-  }
-
   listSubjects() { return this.cache.listSubjects(); }
   listQuizzes(subjectId: string) { return this.cache.listQuizzes(subjectId); }
   listQuestions(quizId: string) { return this.cache.listQuestions(quizId); }
 
   validateLaunch(quiz: Pick<Quiz, 'id' | 'subjectId'>): Promise<() => void> {
-    if (this.source === 'local') return Promise.resolve(() => undefined);
     const revision = this.revision;
     return this.freshness.check(`${quiz.subjectId}:${quiz.id}`, async signal => {
       const payload = await this.transport.get<unknown>('/api/v1/subjects', {
@@ -142,7 +119,6 @@ export class RuntimeQuestionBank implements QuizRepository {
 
   async ensureSubjects(): Promise<SubjectSummary[]> {
     if (this.catalogState === 'ready') return this.summaries;
-    if (this.source === 'local') return this.summaries;
     if (this.catalogState === 'loading' || this.catalogState === 'retrying') return this.catalogRequest!;
     const generation = this.generation;
     this.catalogState = 'loading'; this.catalogError = undefined; this.catalogRetryAt = undefined;
@@ -181,7 +157,6 @@ export class RuntimeQuestionBank implements QuizRepository {
     if (this.quizStates.get(subjectId) === 'ready') return this.listQuizzes(subjectId);
     const pending = this.pendingCatalogs.get(subjectId);
     if (pending) return pending;
-    if (this.source === 'local') return this.listQuizzes(subjectId);
     const generation = this.generation;
     const request: Promise<Quiz[]> = (async () => {
       try {
@@ -232,7 +207,6 @@ export class RuntimeQuestionBank implements QuizRepository {
 
   async ensureQuestions(quizId: string): Promise<Question[]> {
     if (this.cache.hasQuestions(quizId)) return this.cache.listQuestions(quizId);
-    if (this.source === 'local') return [];
     const pending = this.pending.get(quizId);
     if (pending) return pending;
 
@@ -291,11 +265,5 @@ export class RuntimeQuestionBank implements QuizRepository {
 export const runtimeQuestionBank = new RuntimeQuestionBank();
 
 export async function loadRuntimeContent() {
-  if (import.meta.env.VITE_CONTENT_SOURCE === 'local') {
-    const local = await import('../local/questionBank');
-    runtimeQuestionBank.configureLocal(local.subjects, local.quizzes, local.questions);
-    return;
-  }
-
   await runtimeQuestionBank.ensureSubjects();
 }

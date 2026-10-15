@@ -8,8 +8,7 @@ COPY src ./src
 COPY public ./public
 COPY scripts ./scripts
 COPY tests/fixtures ./tests/fixtures
-ENV VITE_CONTENT_SOURCE=api \
-    VITE_BUILD_ADMIN=false \
+ENV VITE_BUILD_ADMIN=false \
     VITE_ENABLE_LOCAL_ADMIN=false
 RUN npm run typecheck \
     && npm run build:learner -- --manifest --sourcemap hidden \

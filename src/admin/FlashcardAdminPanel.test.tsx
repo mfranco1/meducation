@@ -5,10 +5,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { FlashcardAdminPanel as Panel } from './FlashcardAdminPanel';
 import { theme } from '../shared/theme';
-import { storedQuestionBank } from '../content/local/questionBank';
+import { storedQuestionBank, emptyFlashcardBank as storedFlashcardBank } from '../test/contentFixtures';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema/schema';
 import { revisionForBank } from './core/serializeBank';
-import { flashcardContentRevision, storedFlashcardBank } from '../content/local/flashcardBank';
+import { flashcardContentRevision } from './core/flashcardSerialization';
 import { sha256Text } from '../domain/contentDigest';
 import {
   applyFlashcardOperations,
@@ -31,11 +31,6 @@ function recordAction(name: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Record actions' }));
   fireEvent.click(screen.getByRole('menuitem', { name }));
 }
-
-// Authoring workflows start from a fixed empty catalog, including import/export replay.
-vi.mock('../content/flashcardBank.generated.json', async () => ({
-  default: (await import('../../tests/fixtures/empty-flashcard-bank.json')).default,
-}));
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -69,7 +64,7 @@ async function importFile() {
   const subjectRevision = await sha256Text(JSON.stringify(props.subjects));
   const changeSet: FlashcardAdminChangeSet = {
     changeSetVersion: 2,
-    base: { schemaVersion: 2, revision: await flashcardContentRevision(storedFlashcardBank), subjectRevision },
+    base: { schemaVersion: 2, revision: await flashcardContentRevision(storedFlashcardBank, props.subjects), subjectRevision },
     resultRevision: await flashcardContentRevision(result, props.subjects),
     resultSubjectRevision: subjectRevision,
     reason: 'Reviewed import',

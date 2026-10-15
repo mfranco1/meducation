@@ -21,7 +21,6 @@ type ResourceState = 'idle' | 'loading' | 'ready' | 'error';
 
 export class RuntimeFlashcardBank {
   private revision = '';
-  private source: 'api' | 'local' = 'api';
   private subjects: FlashcardSubjectSummary[] = [];
   private readonly catalogs = new Map<string, FlashcardCatalogResponse>();
   private readonly cards = new Map<string, StoredFlashcard[]>();
@@ -84,44 +83,7 @@ export class RuntimeFlashcardBank {
     return this.decksById.get(deckId);
   }
 
-  configureLocal(
-    subjects: FlashcardSubjectSummary[],
-    decks: FlashcardDeckSummary[],
-    cards: StoredFlashcard[],
-  ) {
-    this.generation += 1;
-    this.source = 'local';
-    this.subjects = subjects;
-    this.cancelAll();
-    this.catalogs.clear();
-    this.cards.clear();
-    this.decksById.clear();
-    this.pending.clear();
-    this.states.clear();
-    this.errors.clear();
-    const decksBySubject = new Map<string, FlashcardDeckSummary[]>();
-    for (const deck of decks) {
-      const siblings = decksBySubject.get(deck.subjectId) ?? [];
-      siblings.push(deck);
-      decksBySubject.set(deck.subjectId, siblings);
-      this.decksById.set(deck.id, deck);
-      this.cards.set(deck.id, []);
-      this.states.set(`cards:${deck.id}`, 'ready');
-    }
-    for (const card of cards) this.cards.get(card.deckId)?.push(card);
-    for (const subject of subjects) {
-      this.catalogs.set(subject.id, {
-        revision: 'local',
-        decks: decksBySubject.get(subject.id) ?? [],
-      });
-      this.states.set(`catalog:${subject.id}`, 'ready');
-    }
-    this.states.set('subjects', 'ready');
-    this.notify();
-  }
-
   validateLaunch(deck: Pick<FlashcardDeckSummary, 'id' | 'subjectId'>): Promise<() => void> {
-    if (this.source === 'local') return Promise.resolve(() => undefined);
     const revision = this.revision;
     return this.freshness.check(`${deck.subjectId}:${deck.id}`, async signal => {
       const payload = await this.transport.get<unknown>('/api/v1/flashcards/subjects', {
@@ -135,7 +97,7 @@ export class RuntimeFlashcardBank {
   }
 
   async ensureSubjects(): Promise<FlashcardSubjectSummary[]> {
-    if (this.getState('subjects') === 'ready' || this.source === 'local') return this.subjects;
+    if (this.getState('subjects') === 'ready') return this.subjects;
     const existing = this.pending.get('subjects') as Promise<FlashcardSubjectSummary[]> | undefined;
     if (existing) return existing;
     const generation = this.generation;
@@ -181,7 +143,6 @@ export class RuntimeFlashcardBank {
   async ensureSubjectCatalog(subjectId: string): Promise<FlashcardCatalogResponse> {
     const cached = this.catalogs.get(subjectId);
     if (cached) return cached;
-    if (this.source === 'local') return { revision: 'local', decks: [] };
     const key = `catalog:${subjectId}`;
     const existing = this.pending.get(key) as Promise<FlashcardCatalogResponse> | undefined;
     if (existing) return existing;
@@ -240,7 +201,6 @@ export class RuntimeFlashcardBank {
   async ensureCards(deckId: string): Promise<StoredFlashcard[]> {
     const cached = this.cards.get(deckId);
     if (cached) return cached;
-    if (this.source === 'local') return [];
     const key = `cards:${deckId}`;
     const existing = this.pending.get(key) as Promise<StoredFlashcard[]> | undefined;
     if (existing) return existing;
@@ -297,25 +257,5 @@ export class RuntimeFlashcardBank {
 export const runtimeFlashcardBank = new RuntimeFlashcardBank();
 
 export async function loadRuntimeFlashcardSubjects() {
-  if (import.meta.env.VITE_CONTENT_SOURCE === 'local') {
-    const local = await import('../local/flashcardBank');
-    const subjects = local.flashcardRepository.listSubjects();
-    const decks = local.flashcardRepository
-      .listSubjects()
-      .flatMap((subject) =>
-        local.flashcardRepository
-          .listDecks(subject.id)
-          .map((deck) => ({
-            id: deck.id,
-            subjectId: deck.subjectId,
-            name: deck.name,
-            ...(deck.description ? { description: deck.description } : {}),
-            cardCount: deck.cardCount,
-            cardIds: deck.cardIds,
-          })),
-      );
-    runtimeFlashcardBank.configureLocal(subjects, decks, local.storedFlashcardBank.cards);
-    return;
-  }
   await runtimeFlashcardBank.ensureSubjects();
 }

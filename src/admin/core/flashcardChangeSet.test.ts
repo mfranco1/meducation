@@ -7,8 +7,8 @@ import {
   type FlashcardAdminOperation,
 } from './flashcardChangeSet';
 import type { StoredFlashcardBank } from '../../content/schema/schema';
-import { storedQuestionBank } from '../../content/local/questionBank';
-import { flashcardContentRevision } from '../../content/local/flashcardBank';
+import { storedQuestionBank } from '../../test/contentFixtures';
+import { flashcardContentRevision } from './flashcardSerialization';
 
 const source: StoredFlashcardBank = {
   schemaVersion: 2,

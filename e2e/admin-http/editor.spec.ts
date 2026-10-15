@@ -7,6 +7,14 @@ async function login(page: Page) {
   await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toBeVisible();
   page.on('dialog', (dialog) => void dialog.accept());
 }
+async function refreshAuthentication(page: Page) {
+  const opened = page.waitForEvent('popup');
+  await page.getByRole('button', { name: 'Refresh authentication' }).click();
+  const popup = await opened;
+  // Session probes can set/clear cookies. Do not race them against the OIDC
+  // callback; closure means the editor received completion and refreshed context.
+  await expect.poll(() => popup.isClosed()).toBe(true);
+}
 async function question(page: Page) {
   const nav = page.getByRole('region', { name: 'Quiz navigator' });
   await nav.getByRole('combobox', { name: 'Subject', exact: true }).click();
@@ -75,8 +83,8 @@ test('keeps text across expiry and reauthentication, and never automatically res
     .click();
   await expect(editor).toHaveValue(text);
   await expect(page.getByText(/session expired/).first()).toBeVisible();
-  await page.getByRole('button', { name: 'Refresh authentication' }).click();
-  await expect.poll(async () => (await (await page.request.get('/api/admin/session')).json()).authenticated).toBe(true);
+  await refreshAuthentication(page);
+  expect((await (await page.request.get('/api/admin/session')).json()).authenticated).toBe(true);
   await expect(editor).toHaveValue(text);
   expect((await draft(page)).pair.quizzes.questions[0].stem).not.toBe('Kept through expired session');
 });
@@ -210,8 +218,8 @@ test('successful fresh step-up preserves text and still rejects a draft changed 
   const before = await draft(page);
   await page.request.post('/fixture/old-factor');
   expect((await (await page.request.get('/api/admin/session')).json()).fresh).toBe(false);
-  await page.getByRole('button', { name: 'Refresh authentication' }).click();
-  await expect.poll(async () => (await (await page.request.get('/api/admin/session')).json()).fresh).toBe(true);
+  await refreshAuthentication(page);
+  expect((await (await page.request.get('/api/admin/session')).json()).fresh).toBe(true);
   await expect(editor).toHaveValue(pending);
   expect((await draft(page)).draft.revision).toBe(before.draft.revision);
   expect((await draft(page)).publication.sequence).toBe(before.publication.sequence);

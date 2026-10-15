@@ -22,7 +22,7 @@ import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
 import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
 import { HttpQuestionBankGateway } from './data/HttpQuestionBankGateway';
-import { InMemoryQuestionBankGateway } from './data/InMemoryQuestionBankGateway';
+import type { InMemoryQuestionBankGateway } from './data/InMemoryQuestionBankGateway';
 import { useAdminEditor } from './useAdminEditor';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 import { applyFlashcardOperations, type FlashcardAdminOperation } from './core/flashcardChangeSet';
@@ -36,7 +36,7 @@ export function AdminWorkspace({
   controls,
   onDirtyChange,
 }: {
-  gateway: InMemoryQuestionBankGateway;
+  gateway: HttpQuestionBankGateway | InMemoryQuestionBankGateway;
   controls?: ReactNode;
   onDirtyChange?: (dirty: boolean) => void;
 }) {
@@ -314,7 +314,7 @@ export function AdminWorkspace({
                   loadEntity({ kind: 'subject', id }, subject);
                 }
               }}
-              onBankChange={(bank) => gateway.setFlashcardBank(bank)}
+              onBankChange={(bank) => { if ('setFlashcardBank' in gateway) gateway.setFlashcardBank(bank); }}
               onExportReady={(action, enabled) => {
                 flashcardExport.current = action;
                 setFlashcardExportEnabled(enabled);

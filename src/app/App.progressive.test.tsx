@@ -6,6 +6,7 @@ import { LocalAttemptRepository } from '../persistence/localRepository';
 import App from './App';
 import { theme } from '../shared/theme';
 import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
+import { installQuizApiFixture } from '../test/runtimeContentFixtures';
 import { learnerProgressAdmission } from '../persistence/progressAdmission';
 
 function completed(quizId: string, subjectId: string, percentage: number): CompletedAttempt {
@@ -157,7 +158,7 @@ describe('progressive dashboard statistics', () => {
         json: async () => ({
           revision: 'rev-cancel-app',
           questions: [
-            { id: 'i-cancel', quizId: quiz.id, stem: 'Question', choices: [{ id: 'A', text: 'Choice' }], answer: 'A' },
+            { id: 'i-cancel', quizId: quiz.id, stem: 'Question', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }], answer: 'A' },
           ],
         }),
       }),
@@ -271,10 +272,10 @@ describe('progressive dashboard statistics', () => {
     expect(screen.getByRole('button', { name: 'Quizzes' })).toHaveAttribute('aria-current', 'page');
   });
   it('disables progress backup during active quiz with save-and-leave guidance', async () => {
-    const subject = { id: 's-backup', name: 'Backup subject', accent: '#b9511b' };
-    const quiz = { id: 'q-backup', subjectId: subject.id, name: 'Backup quiz', questionCount: 1, questionIds: ['i-backup'] };
-    runtimeQuestionBank.configureLocal(
-      [subject], [quiz], [{ id: 'i-backup', quizId: quiz.id, stem: 'Question', choices: [{ id: 'A', text: 'Choice' }], answer: 'A', rationale: '', metadata: {} }],
+    const subject = { id: 's3', name: 'Backup subject', accent: '#b9511b' };
+    const quiz = { id: 'q3', subjectId: subject.id, name: 'Backup quiz', questionCount: 1, questionIds: ['i3'] };
+    installQuizApiFixture(
+      [subject], [quiz], [{ id: 'i3', quizId: quiz.id, stem: 'Question', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }], answer: 'A', rationale: 'Fixture explanation', metadata: { topic: 'Fixture' } }],
     );
     render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Open Backup subject' }));
@@ -291,10 +292,10 @@ describe('progressive dashboard statistics', () => {
   it('allows content browsing without saved-progress writes when coordination is unsupported', async () => {
     learnerProgressAdmission.close();
     learnerProgressAdmission.admitReadOnly(() => 'clear');
-    const subject = { id: 's-safe', name: 'Safe subject', accent: '#123456' };
-    const quiz = { id: 'q-safe', subjectId: subject.id, name: 'Safe quiz', questionCount: 1, questionIds: ['i-safe'] };
-    runtimeQuestionBank.configureLocal(
-      [subject], [quiz], [{ id: 'i-safe', quizId: quiz.id, stem: 'Safe browse stem', choices: [{ id: 'A', text: 'Choice' }], answer: 'A', rationale: 'Explanation', metadata: {} }],
+    const subject = { id: 's4', name: 'Safe subject', accent: '#123456' };
+    const quiz = { id: 'q4', subjectId: subject.id, name: 'Safe quiz', questionCount: 1, questionIds: ['i4'] };
+    installQuizApiFixture(
+      [subject], [quiz], [{ id: 'i4', quizId: quiz.id, stem: 'Safe browse stem', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }], answer: 'A', rationale: 'Explanation', metadata: { topic: 'Fixture' } }],
     );
     render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
 

@@ -174,7 +174,7 @@ test('graph detects transitive runtime cycles including lazy edges, while permit
   );
 });
 
-test('learner startup cannot eagerly reach banks or validators through intermediate modules', () => {
+test('learner cannot reach local banks even lazily, or eagerly reach validators through intermediate modules', () => {
   fixture(
     {
       'src/app/App.tsx': "import '../content/api/bridge';",
@@ -194,6 +194,17 @@ test('learner startup cannot eagerly reach banks or validators through intermedi
       'src/content/api/bridge.ts': "export const load = () => import('../local/bank');",
       'src/content/local/bank.ts': "import '../questionBank.generated.json';",
       'src/content/questionBank.generated.json': '{}',
+    },
+    (root) => {
+      const problems = checkRepository(root).problems;
+      assert.equal(problems.filter((problem) => problem.includes('retired local-bank source')).length, 2);
+      assert.ok(!problems.some((problem) => problem.includes('Learner startup eagerly')));
+    },
+  );
+  fixture(
+    {
+      'src/app/App.tsx': "export const load = () => import('../content/api/bridge');",
+      'src/content/api/bridge.ts': 'export const load = async () => [];',
     },
     (root) => assert.deepEqual(checkRepository(root).problems, []),
   );

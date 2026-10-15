@@ -2,9 +2,101 @@
 
 Date: 2026-10-15. Planning baseline: `c9a7154`.
 
-Status: implementation plan prepared; implementation has not started. The user
-requested this plan, not execution of the retirement. Keep this tracker in
-`ongoing` until the implementation and its acceptance gates pass.
+Status: implementation in progress, authorized by the user's follow-up to start
+and continue. Keep this tracker in `ongoing` until implementation and its
+acceptance gates pass. Do not infer completion from individual passing slices.
+
+## Execution checkpoint — 2026-10-15
+
+- Working tree was clean when implementation started. No authoritative content
+  writes, ID allocation, imports, migrations or database restarts have occurred.
+- Online full backup passed archive inspection:
+  `var/backups/postgres/20261015T095759Z-758495de.dump` with its checksum sidecar.
+- Protected repeatable-read/read-only database baseline, exact current draft and
+  published artifacts, content-table counts/digests, allocation journal hashes and
+  repository bank hashes are under
+  `var/backups/postgres/json-retirement-20261015/`. Published export validation
+  passed using `job.py validate-export`; this does not alone establish future
+  database currency. Retain these private files outside Git.
+- Fresh baseline learner `npm run build` (includes type-check) and optional
+  `npm run build:admin` passed. Total shipped assets before retirement:
+  learner 2,451,862 raw / 1,300,237 gzip / 1,213,077 brotli bytes;
+  admin 2,782,808 raw / 1,403,224 gzip / 1,306,624 brotli bytes. These totals sum
+  per-file sizes, including fonts; use the same method for final comparison.
+  The learner build has the existing large-chunk warning. Existing local API
+  image tags report approximately 405 MB; this is an observed rounded historical
+  image size, not yet a fresh image baseline for the current source.
+- Added explicit synthetic `src/test/contentFixtures.ts`. Four admin test files
+  now import fixtures/pure serialization directly, without runtime local adapters
+  or per-test generated-bank mocks. Focused verification: 4 files / 28 tests pass.
+- Replaced the parity checker's JSON reference API with independently calculated
+  expected HTTP responses from captured inputs. Added a regression for interleaved
+  membership, empty decks, optional fields, ordering and answer provenance.
+  Focused pytest: 4 passed (including rejection of a JSON-configured parity target). Backend Ruff and strict mypy passed for this slice.
+- Selected-export parity passed against disposable PostgreSQL: 348 learner routes,
+  exact reconstruction/bytes/revisions, ETags/304/409 and reader cleanup. The report
+  records cleanup passing. One prior run rejected an intentional source edit made
+  during verification; the accepted rerun used frozen checker inputs.
+- Learner runtime loaders no longer expose `configureLocal` or local-source
+  branches. Removed the bundled `/#content-qa` viewer. Retired frontend source
+  configuration now fails early; API fixture tests preserve freshness checks.
+  Updated affected learner tests: 4 files / 43 tests passed with one worker.
+- Added a guarded disposable PostgreSQL browser runner and migrated the standard
+  learner/progress-backup configuration to it. Six admission guard tests passed.
+  All 43 standard learner Chromium browser tests passed using PostgreSQL with the
+  fresh retries-disabled smoke build. Its container was cleaned up on shutdown.
+- Added architecture rejection of local-bank sources through lazy learner edges;
+  10 architecture tests and graph check passed. Explicit old local mode is rejected
+  before build. Format check passed. Source/fixture changes passed type-check and
+  learner build; the existing large-chunk warning remains.
+- HTTP admin gateway no longer inherits or stores paired state in the in-memory
+  gateway. Its flashcard reads clone the current server snapshot. The workspace
+  retains a temporary type union for the legacy editor pending full removal.
+  Enabled admin build and hidden-map artifact audit passed; the audit now rejects
+  in-memory gateway modules. All 9 audit regression tests passed. Subsequent
+  type-check passed. HTTP admin browser acceptance: 16 cases passed in the full
+  run; two authentication-refresh cases initially failed because their session
+  polling raced the callback cookies. Those tests now await popup completion
+  before inspecting session state; both passed in the focused rerun. The tests
+  still assert unsaved-text retention and no automatic write. No authentication
+  policy or production session behavior was weakened.
+- Full frontend unit rerun passed sequentially: 95 files / 602 tests, 173 seconds.
+  A prior two-worker run under competing heavy jobs hit timeouts and was
+  interrupted. An initial browser attempt used the normal retry-enabled build
+  and was stopped; the accepted 43-test result above used the required fresh
+  smoke build. Keep heavy suites sequential on this host rather than increasing
+  timeouts to mask resource contention.
+- Final slice verification passed: full backend pytest reported 246 passed /
+  186 skipped / 2 warnings (the deliberately weak-key warning cases). Skipped
+  PostgreSQL integration cases are not claimed as passes; real-PostgreSQL evidence
+  for this slice is the selected-export parity and browser suites above. Backend
+  Ruff/mypy, final lint/format, architecture and admin audit regressions, and the
+  final ordinary `npm run build` (including type-check) passed. The known
+  large-chunk build warning remains.
+- Read-only preservation comparison passed: every captured content-table digest,
+  allocation journal and repository-bank hash is unchanged. Private report:
+  `var/backups/postgres/json-retirement-20261015/authority-after-first-slice.json`.
+  No routine content writes, imports, migrations, allocation or authority restarts
+  occurred. Nothing has been committed, published or deployed.
+- Remaining next steps: migrate the legacy
+  admin browser scenarios, remove the remaining local editor/file workflows and
+  in-memory implementation, then remove backend JSON service/tooling and packaged
+  banks per stages below. Neither
+  repository bank has been deleted; global adapter mocks remain until their last
+  adapter tests are replaced. No full-retirement acceptance is claimed yet.
+
+### Resume without repeating completed work
+
+The next implementation slice should migrate the remaining scenarios in
+`e2e/admin/flashcard-admin.spec.ts` to the HTTP/PostgreSQL suite, then retire
+`LocalAdminApp.tsx` and its flags, remove file import/replacement exports and local
+history from `AdminWorkspace`, `useAdminEditor` and `FlashcardAdminPanel`, and move
+any still-useful in-memory operation test double out of production. The HTTP
+`HttpQuestionBankGateway` is already independent of that implementation; do not
+restore the inheritance. The new learner fixture runner already works; reuse it
+rather than creating another JSON test service. Keep both banks until the
+remaining backend/tooling/container consumers have been replaced. Reuse the
+protected baseline for comparison; do not reimport it into the authority.
 
 ## Outcome and scope
 
@@ -104,7 +196,7 @@ removed before final acceptance.
   and scripts. Classify each as remove, rewrite, or retain with a stated reason.
   Include `package.json`, all Playwright configs, `.github/workflows/checks.yml`,
   `scripts/testing/verify-full.mjs`, artifact audits and architecture rules.
-- [ ] Capture a fresh protected online backup with the existing `backup.py`.
+- [x] Capture a fresh protected online backup with the existing `backup.py`.
   Record draft revision/digests, current publication/release identity, ordered
   inventories and exact paired exports for the current draft and published pair.
   Keep private content/credentials out of Git and CI evidence. Validate exports
@@ -137,7 +229,7 @@ write/import, database reset, or volume recreation occurs during inventory.
   Replace tests using `configureLocal` with transport fixtures or test-owned
   repositories implementing existing domain contracts. Do not leave a production
   file-source hook simply to support tests.
-- [ ] Replace JSON-reference-server parity with explicit fixture expectations for
+- [x] Replace JSON-reference-server parity with explicit fixture expectations for
   every learner route plus captured-export comparisons of exact authored fields,
   ordering, optional presence, provenance, revisions and serialized bytes. Keep
   independent expected digests/contract cases and HTTP conditional assertions.
@@ -190,10 +282,10 @@ session can read it. Unpublished edits do not reach learner APIs.
 
 ### 3. Remove learner offline and bundled QA sources
 
-- [ ] Remove `VITE_CONTENT_SOURCE=local` branches and production `configureLocal`
+- [x] Remove `VITE_CONTENT_SOURCE=local` branches and production `configureLocal`
   paths from both runtime loaders. Keep HTTP loading/caching, progressive
   catalogs, request cancellation, retry/error states and freshness checks.
-- [ ] Remove the bundled `/#content-qa` bootstrap and `ContentQaPanel` after
+- [x] Remove the bundled `/#content-qa` bootstrap and `ContentQaPanel` after
   retaining rich-content inspection regressions in existing API/browser tests.
   Do not introduce a replacement standalone content source.
 - [ ] Delete `src/content/local` adapters after relocating any genuinely shared
@@ -421,7 +513,7 @@ code can still help, but measure fresh raw/gzip/brotli entry and lazy chunks,
 total assets, API image and build context separately. Report actual before/after
 numbers without promising a percentage or faster startup/builds in advance.
 
-## Plan verification record
+## Original planning-stage verification record
 
 - Repository working tree was clean before planning; no app/content/database
   changes were made for this plan.
@@ -430,5 +522,6 @@ numbers without promising a percentage or faster startup/builds in advance.
   rules and current operator/schema/testing documentation.
 - Measured bank sizes directly from the tracked working files. Other local disk
   observations are informational, not comparable fresh-build benchmarks.
-- Implementation tests and builds are intentionally not claimed: this deliverable
-  changes only the plan. Record implementation results stage by stage above.
+- At the original planning stage, no implementation tests/builds were claimed.
+  Implementation was subsequently authorized; current evidence and remaining
+  work are recorded in the execution checkpoint above.

@@ -45,6 +45,14 @@ export function checkRepository(root) {
     }
   }
   for (const cycle of findCycles(runtime)) problems.push(`Runtime dependency cycle: ${cycle.join(' -> ')}`);
+  for (const file of reachableFrom(runtime, ['src/main.tsx', 'src/app/App.tsx'])) {
+    if (
+      /^src\/content\/.*\.generated\.json$/.test(file) ||
+      file.startsWith('src/content/local/') ||
+      file.startsWith('src/qa/')
+    )
+      problems.push(`Learner reaches a retired local-bank source: ${file}`);
+  }
   // App is also a root because main deliberately loads it through a dynamic import.
   for (const file of reachableFrom(eager, ['src/main.tsx', 'src/app/App.tsx'])) {
     if (/^src\/content\/.*\.generated\.json$/.test(file) || file.startsWith('src/content/validation/'))
@@ -60,6 +68,6 @@ if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.me
     process.exitCode = 1;
   } else
     console.log(
-      `Architecture valid: ${result.files} modules, ${result.imports} imports; no forbidden dependencies, runtime cycles, or eager learner banks/validators.`,
+      `Architecture valid: ${result.files} modules, ${result.imports} imports; no forbidden dependencies, runtime cycles, retired learner banks, or eager validators.`,
     );
 }

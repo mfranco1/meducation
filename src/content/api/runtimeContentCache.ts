@@ -7,7 +7,7 @@ export class RuntimeContentCache {
   private readonly quizzesById = new Map<string, Quiz>();
   private readonly questionsByQuiz = new Map<string, Question[]>();
 
-  replaceCatalog(subjects: Subject[], quizzes: Quiz[] = [], questions: Question[] = []) {
+  replaceCatalog(subjects: Subject[], quizzes: Quiz[] = []) {
     this.subjects = subjects;
     this.quizzesBySubject.clear();
     this.quizzesById.clear();
@@ -17,11 +17,6 @@ export class RuntimeContentCache {
       group.push(quiz);
       this.quizzesBySubject.set(quiz.subjectId, group);
       this.quizzesById.set(quiz.id, quiz);
-    }
-    for (const question of questions) {
-      const group = this.questionsByQuiz.get(question.quizId) ?? [];
-      group.push(question);
-      this.questionsByQuiz.set(question.quizId, group);
     }
   }
 

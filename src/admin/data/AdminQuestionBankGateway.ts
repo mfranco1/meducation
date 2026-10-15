@@ -4,7 +4,7 @@ import type { StoredFlashcardBank } from '../../content/schema/schema';
 export type AdminPreviewSummary = Pick<AdminChangePreview, 'issues' | 'summary'> & { preparedChangeSet?: AdminChangeSet; idMappings?: Record<string, string> };
 
 
-/** Replace this local adapter with an authenticated API implementation in the backend task. */
+/** Editor operations; the HTTP implementation owns durable paired PostgreSQL writes. */
 export interface AdminQuestionBankGateway {
   readonly delivery?: 'http';
   subscribe?(listener: () => void): () => void;

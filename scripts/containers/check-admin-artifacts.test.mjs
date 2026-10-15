@@ -6,7 +6,16 @@ import test from 'node:test';
 import { auditAdmin, adminProxy } from './check-admin-artifacts.mjs';
 
 const valid = ['../../src/admin/main.tsx', '../../src/admin/HttpAdminApp.tsx', '../../src/admin/SessionCompletion.tsx'];
-for (const fault of [undefined, 'local-editor', 'bank', 'qa', 'missing-http', 'missing-completion', 'missing-entry']) {
+for (const fault of [
+  undefined,
+  'local-editor',
+  'memory-gateway',
+  'bank',
+  'qa',
+  'missing-http',
+  'missing-completion',
+  'missing-entry',
+]) {
   test(`optional admin audit ${fault ?? 'accepts HTTP-only artifacts'}`, () => {
     const root = mkdtempSync(join(tmpdir(), 'meducation-admin-audit-'));
     try {
@@ -19,6 +28,7 @@ for (const fault of [undefined, 'local-editor', 'bank', 'qa', 'missing-http', 'm
             ? valid.filter((s) => !s.includes('SessionCompletion'))
             : [...valid];
       if (fault === 'local-editor') sources.push('../../src/admin/LocalAdminApp.tsx');
+      if (fault === 'memory-gateway') sources.push('../../src/admin/data/InMemoryQuestionBankGateway.ts');
       if (fault === 'bank') sources.push('../../src/content/questionBank.generated.json');
       if (fault === 'qa') sources.push('../../src/qa/ContentQa.tsx');
       writeFileSync(join(root, 'entry.js.map'), JSON.stringify({ sources }));

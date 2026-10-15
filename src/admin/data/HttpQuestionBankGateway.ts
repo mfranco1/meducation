@@ -1,7 +1,7 @@
 import type { StoredFlashcardBank } from '../../content/schema/schema';
 import type { AdminChangeSet, AdminBankSnapshot } from '../core/types';
 import { previewChangeSet } from '../core/applyChangeSet';
-import { InMemoryQuestionBankGateway } from './InMemoryQuestionBankGateway';
+import type { AdminQuestionBankGateway } from './AdminQuestionBankGateway';
 import {
   PairedHttpClient,
   expectedContext,
@@ -11,7 +11,7 @@ import {
   type ServerPreview,
 } from './PairedHttpClient';
 
-export class HttpQuestionBankGateway extends InMemoryQuestionBankGateway {
+export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
   readonly delivery = 'http' as const;
   current: PairedSnapshot;
   private readonly listeners = new Set<() => void>();
@@ -27,12 +27,10 @@ export class HttpQuestionBankGateway extends InMemoryQuestionBankGateway {
     readonly client: PairedHttpClient,
     snapshot: PairedSnapshot,
   ) {
-    super(snapshot.pair.quizzes, snapshot.pair.flashcards);
     this.current = snapshot;
   }
   async accept(value: PairedSnapshot): Promise<AdminBankSnapshot> {
     this.current = value;
-    this.installPair(value.pair.quizzes, value.pair.flashcards);
     this.prepared = undefined;
     this.bindings = [];
     for (const listener of this.listeners) listener();
@@ -45,17 +43,20 @@ export class HttpQuestionBankGateway extends InMemoryQuestionBankGateway {
     this.prepared = undefined;
     for (const listener of this.listeners) listener();
   }
-  override async load(): Promise<AdminBankSnapshot> {
+  getFlashcardBank(): StoredFlashcardBank {
+    return structuredClone(this.current.pair.flashcards);
+  }
+  async load(): Promise<AdminBankSnapshot> {
     return {
       bank: structuredClone(this.current.pair.quizzes),
       revision: this.current.draft.digests.quizRevision,
       flashcards: structuredClone(this.current.pair.flashcards),
     };
   }
-  override coordinatedOperationCount(): undefined {
+  coordinatedOperationCount(): undefined {
     return undefined;
   }
-  override appliedOperations(): AdminChangeSet['operations'] {
+  appliedOperations(): AdminChangeSet['operations'] {
     // Used by the existing workspace only to enable paired Undo, not as durable history.
     return this.current.undo.available ? [{ op: 'subject.delete', id: '__server_history__' }] : [];
   }
@@ -154,7 +155,7 @@ Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.
     });
     return this.accept(receipt.snapshot);
   }
-  override async preview(changeSet: AdminChangeSet) {
+  async preview(changeSet: AdminChangeSet) {
     const loaded = await this.load();
     if (loaded.revision !== changeSet.base.revision) throw new Error('The edit was prepared from a stale draft.');
     const local = previewChangeSet(loaded.bank, changeSet, this.getFlashcardBank());
@@ -180,12 +181,12 @@ Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.
     remap(preparedChangeSet);
     return { issues: local.issues, summary: local.summary, preparedChangeSet, idMappings: result.mapping };
   }
-  override async apply(changeSet: AdminChangeSet): Promise<AdminBankSnapshot> {
+  async apply(changeSet: AdminChangeSet): Promise<AdminBankSnapshot> {
     const loaded = await this.load();
     const local = previewChangeSet(loaded.bank, changeSet, this.getFlashcardBank());
     return this.savePair({ quizzes: local.bank, flashcards: this.getFlashcardBank() }, changeSet.reason);
   }
-  override async applyCoordinated(
+  async applyCoordinated(
     changeSet: AdminChangeSet,
     flashcards: StoredFlashcardBank,
   ): Promise<AdminBankSnapshot> {
@@ -201,7 +202,7 @@ Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.
     await this.savePair(result.pair, reason);
     return this.getFlashcardBank();
   }
-  override async undo(): Promise<AdminBankSnapshot | undefined> {
+  async undo(): Promise<AdminBankSnapshot | undefined> {
     if (!this.current.undo.available) return undefined;
     const receipt = await this.client.mutate<{ snapshot: PairedSnapshot }>('/draft/undo', {
       expected: expectedContext(this.current),
@@ -210,14 +211,14 @@ Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.
     });
     return this.accept(receipt.snapshot);
   }
-  override async reset(): Promise<AdminBankSnapshot> {
+  async reset(): Promise<AdminBankSnapshot> {
     const receipt = await this.client.mutate<{ snapshot: PairedSnapshot }>('/draft/reset', {
       expected: expectedContext(this.current),
       reason: 'Reset the draft to the current publication',
     });
     return this.accept(receipt.snapshot);
   }
-  override async resetCoordinated(): Promise<AdminBankSnapshot> {
+  async resetCoordinated(): Promise<AdminBankSnapshot> {
     return this.reset();
   }
 }

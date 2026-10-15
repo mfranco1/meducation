@@ -120,11 +120,5 @@ describe('deck launch freshness', () => {
     (await bank.validateLaunch(deck))();
   });
 
-  it('keeps explicit local launch validation network-free', async () => {
-    const transport = { get: vi.fn() };
-    const bank = new RuntimeFlashcardBank(noRetries, transport);
-    bank.configureLocal(subjects, catalog.decks, cards.cards);
-    (await bank.validateLaunch(catalog.decks[0]))();
-    expect(transport.get).not.toHaveBeenCalled();
-  });
+
 });

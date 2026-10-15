@@ -7,7 +7,16 @@ const steps = [
   ['npm', ['test']],
   ['npm', ['run', 'validate:content']],
   ['npm', ['run', 'build:content-policy']],
-  ['.venv/bin/ruff', ['check', 'backend/src', 'backend/tests']],
+  [
+    '.venv/bin/ruff',
+    [
+      'check',
+      'backend/src',
+      'backend/tests',
+      'scripts/testing/serve-postgres-fixture.py',
+      'scripts/containers/fixtures/editor_http.py',
+    ],
+  ],
   ['.venv/bin/mypy', ['backend/src']],
   ['.venv/bin/python', ['-m', 'pytest', 'backend/tests', '-q']],
   ['npm', ['run', 'typecheck']],

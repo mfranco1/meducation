@@ -36,15 +36,14 @@ The app runs locally without an account. By default, the existing read-only Fast
 
 5. Open the local URL printed by Vite, usually `http://localhost:5173/`. Vite proxies `/api` requests to the local content service.
 
-### Local-content mode
+### API content delivery
 
-For frontend-only development, create `.env.local` at the repository root with:
-
-```dotenv
-VITE_CONTENT_SOURCE=local
-```
-
-Run `npm run dev`; this mode loads both canonical JSON banks directly and needs no API. Use `VITE_CONTENT_SOURCE=api` to return to API delivery. Restart the development server after changing environment values; production builds capture these settings at build time. See [.env.example](.env.example) for retry settings.
+The learner always loads quizzes and flashcards through the content API. The
+frontend-only JSON mode and `/#content-qa` bank viewer have been retired. Remove
+`VITE_CONTENT_SOURCE` from local configuration; selecting the old mode now fails
+at startup/build instead of silently loading archived content. Follow the
+[local authority runbook](docs/local-authoring.md) to run the PostgreSQL-backed
+API and editor. See [.env.example](.env.example) for retry settings.
 
 Your progress stays in the browser and origin you use. Use **Progress backup** to download a private copy or explicitly restore it in another browser; see [backup and recovery](docs/progress-backup.md). Clearing site data removes local progress, and switching browsers/devices does not transfer it automatically. The app has no cloud sync.
 

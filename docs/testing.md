@@ -28,7 +28,7 @@ Choose affected tests using the ownership and regression guidance below. UI, sha
 
 ### Full verification
 
-After Chromium has been installed and the backend development environment is set up, run:
+After Chromium has been installed, the backend development environment is set up, and Docker is running for the disposable PostgreSQL browser fixtures, run:
 
 ```sh
 npm run verify:full
@@ -91,9 +91,15 @@ npm run test:e2e
 npm run test:e2e:admin
 ```
 
-The learner npm pretest builds production output with automatic retries disabled. Playwright starts FastAPI with `e2e/fixtures/bank.json` and the separate flashcard fixture on port 8765, and Vite preview proxies `/api` there. Override that port with `MEDUCATION_E2E_API_PORT`; this fixture service is separate from development API port 8000. The admin suite starts its own Vite development server. Fixtures never replace authored canonical files.
+The learner npm pretest builds production output with automatic retries disabled. Docker must be running: Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds the explicit small quiz/flashcard fixtures into a uniquely owned disposable PG17 tmpfs container and serves the real PostgreSQL API on port 8765. Vite preview proxies `/api` there. Override the API port with `MEDUCATION_E2E_API_PORT`; the service is separate from the designated authority and never reads its credentials or content. The wrapper rejects non-fixture input paths and non-loopback origins, generates disposable role credentials, and removes only its labelled container on shutdown. The progress-backup browser config shares this setup. The legacy admin suite still starts its own Vite development server pending its HTTP workflow migration. Fixtures never replace authored canonical records.
 
 ## Suite ownership and fixtures
+
+Admin core/panel tests use explicit synthetic banks from `src/test/contentFixtures.ts`
+and pure serialization helpers. App tests formerly using local-source setup now
+exercise real runtime API repositories with synthetic transport DTOs from
+`src/test/runtimeContentFixtures.ts`. Keep fixture IDs valid under API decoders;
+local-only bypasses must not be restored to make invalid fixtures pass.
 
 - Vitest tests stay beside their domain, persistence, content, shared UI, feature, and authoring modules. App tests cover composition/navigation/drawer policy; quiz-to-subject lookup tests live with the quiz session contract.
 - `src/test/setup.ts` mocks both canonical JSON imports, including transitive adapter imports, with `tests/fixtures/question-bank.json` and `tests/fixtures/flashcard-bank-contract.json`, and installs React Testing Library cleanup, matchMedia, and observer shims. Vitest uses two workers by default; CI calls `npm run test:ci` to make that limit explicit. Four workers varied between a fast pass and a slower failed run on the local machine, so they are not the default. The flashcard admin panel overrides its initial catalog with `tests/fixtures/empty-flashcard-bank.json`; backend quiz request tests use the same explicit empty baseline.
@@ -118,7 +124,7 @@ Use small versioned fixtures for schema, relationships, canonical ordering, spar
 
 ## Selecting verification
 
-For source/config moves, run frontend gates and compare protected canonical hashes. For shared UI, feature, content-loader, or entry changes, also run both browser suites and both build modes; retain saved-attempt/checkpoint behavior, lazy screen imports, KaTeX assets, and accessible desktop/mobile layouts. Exercise explicit local mode and `/#content-qa` when their imports change. For backend packaging, stored contracts, or shared fixture changes, run Python checks as well.
+For source/config moves, run frontend gates and compare protected canonical hashes. For shared UI, feature, content-loader, or entry changes, also run both browser suites and both build modes; retain saved-attempt/checkpoint behavior, lazy screen imports, KaTeX assets, and accessible desktop/mobile layouts. The learner local mode and bundled `/#content-qa` viewer are retired. Exercise API loading/failure/freshness paths and content-candidate rendering instead. For backend packaging, stored contracts, or shared fixture changes, run Python checks as well.
 
 Before handoff, confirm affected obligations in [the regression reference](testing-regressions.md), run `git diff --check`, and record results and existing advisories in the work tracker. Preserve stable IDs, ordering, answer provenance, current storage contracts, and export/replay behavior. Use a dedicated candidate/parity check for future schema migrations.
 

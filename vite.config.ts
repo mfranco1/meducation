@@ -6,6 +6,10 @@ import { brandingPlugin } from './scripts/branding/brandingPlugin';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
+  if (env.VITE_CONTENT_SOURCE)
+    throw new Error(
+      'Offline content mode has been retired. Remove VITE_CONTENT_SOURCE and run the PostgreSQL-backed API.',
+    );
   const input: Record<string, string> = { learner: resolve(__dirname, 'index.html') };
   if (env.VITE_BUILD_ADMIN === 'true') input.admin = resolve(__dirname, 'admin.html');
 

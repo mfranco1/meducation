@@ -30,13 +30,20 @@ from meducation_api.settings import Settings
 from sqlalchemy import create_engine, text
 from sqlalchemy.engine import make_url
 
-origin_path = Path("/fixture/origin.txt")
+fixture_directory = Path(os.environ.get("MEDUCATION_FIXTURE_DIRECTORY", "/fixture"))
+origin_path = fixture_directory / "origin.txt"
 for _ in range(300):
     if origin_path.exists() and origin_path.read_text().strip():
         break
     time.sleep(0.1)
 origin = origin_path.read_text().strip()
 url = make_url(os.environ["FIXTURE_DATABASE_URL"])
+if (
+    url.host not in ("127.0.0.1", "localhost", "postgres")
+    or not (url.database or "").startswith("meducation_test_")
+    or url.username != "meducation_bootstrap"
+):
+    raise RuntimeError("Browser fixture refuses non-test PostgreSQL targets.")
 engines = {}
 for role in ["bootstrap", "migrator", "operator", "reader", "session", "editor"]:
     credential = (
@@ -50,7 +57,7 @@ for role in ["bootstrap", "migrator", "operator", "reader", "session", "editor"]
     engines[role] = create_engine(credential, hide_parameters=True)
 bootstrap(engines["bootstrap"], RolePasswords(_env_file=None))
 upgrade(engines["migrator"])
-pair = json.loads(Path("/fixture/pair.json").read_text())["base"]
+pair = json.loads((fixture_directory / "pair.json").read_text())["base"]
 q, f = [
     json.dumps(pair[k], ensure_ascii=False, indent=2) + "\n"
     for k in ("quizzes", "flashcards")
@@ -228,4 +235,10 @@ def operational_failure(value: str):
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000, access_log=True, proxy_headers=False)
+    uvicorn.run(
+        app,
+        host="127.0.0.1",
+        port=int(os.environ.get("MEDUCATION_FIXTURE_PORT", "8000")),
+        access_log=False,
+        proxy_headers=False,
+    )

@@ -29,18 +29,6 @@ describe('runtime question bank', () => {
     expect(fetchMock.mock.calls[1][0]).toContain('/api/v1/subjects/s1/quizzes?revision=rev-0');
   });
 
-  it('serves explicit local content without making backend requests', async () => {
-    const fetchMock = vi.fn();
-    vi.stubGlobal('fetch', fetchMock);
-    const bank = new RuntimeQuestionBank(noRetries, () => 0);
-    bank.configureLocal([subject], [quiz], [question]);
-
-    await expect(bank.ensureSubjects()).resolves.toMatchObject([{ id: 's1', quizIds: ['q1'] }]);
-    await expect(bank.ensureQuizzes('s1')).resolves.toEqual([quiz]);
-    await expect(bank.ensureQuestions('q1')).resolves.toEqual([expect.objectContaining({ id: 'i1' })]);
-    expect(fetchMock).not.toHaveBeenCalled();
-  });
-
   it('loads quiz questions lazily, hydrates sparse metadata, and caches the result', async () => {
     const fetchMock = vi.fn().mockResolvedValue({
       ok: true,
@@ -374,13 +362,13 @@ describe('runtime question bank', () => {
     expect(onRetry).not.toHaveBeenCalled();
   });
 
-  it('ignores an old subject response after switching to local content', async () => {
+  it('ignores an old subject response after a new API revision is configured', async () => {
     let resolveOld!: (value: unknown) => void;
     const pending = new Promise<unknown>(resolve => { resolveOld = resolve; });
     const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
     const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
     const oldRequest = bank.ensureSubjects();
-    bank.configureLocal([subject], [quiz], [question]);
+    bank.configureApi({ revision: 'new', subjects: [subject] }, [{ revision: 'new', quizzes: [quiz] }]);
     resolveOld({ revision: 'old', subjects: [{ ...subject, quizCount: 0, quizIds: [] }] });
     await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
     expect(bank.listSubjectSummaries()[0].quizIds).toEqual(['q1']);
@@ -410,7 +398,7 @@ describe('runtime question bank', () => {
     const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
     bank.configureApi({ revision: 'old', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'old', quizzes: [quiz] }]);
     const oldRequest = bank.ensureQuestions('q1');
-    bank.configureLocal([subject], [quiz], []);
+    bank.configureApi({ revision: 'new', subjects: [subject] }, [{ revision: 'new', quizzes: [quiz] }]);
     resolveOld({ revision: 'old', questions: [question] });
     await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
     expect(bank.listQuestions('q1')).toEqual([]);
@@ -440,11 +428,5 @@ describe('quiz launch freshness', () => {
     (await bank.validateLaunch(quiz))();
   });
 
-  it('keeps explicit local launch validation network-free', async () => {
-    const transport = { get: vi.fn() };
-    const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
-    bank.configureLocal([subject], [quiz], [question]);
-    (await bank.validateLaunch(quiz))();
-    expect(transport.get).not.toHaveBeenCalled();
-  });
+
 });

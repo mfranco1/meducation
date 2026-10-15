@@ -16,10 +16,10 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: `MEDUCATION_BANK_PATH=e2e/fixtures/bank.json MEDUCATION_FLASHCARD_BANK_PATH=e2e/fixtures/flashcard-bank.json .venv/bin/uvicorn meducation_api.main:app --host 127.0.0.1 --port ${e2eApiPort}`,
+      command: `.venv/bin/python scripts/testing/serve-postgres-fixture.py --api-port ${e2eApiPort} --origin http://127.0.0.1:4173 --quiz-file e2e/fixtures/bank.json --flashcard-file e2e/fixtures/flashcard-bank.json`,
       url: `http://127.0.0.1:${e2eApiPort}/health/ready`,
       reuseExistingServer: false,
-      timeout: 60_000,
+      timeout: 120_000,
     },
     {
       command: `MEDUCATION_E2E_API_PORT=${e2eApiPort} npx vite preview --host 127.0.0.1 --port 4173 --strictPort`,
