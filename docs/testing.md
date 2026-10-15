@@ -2,6 +2,15 @@
 
 Current database content checks must select a fresh draft/release export explicitly (`validate-export`/`audit-export`). The npm JSON commands check fixture/archive files only. Keep fixture CI independent of production credentials. Retained full-backup restore, session/allocation quarantine, independent-journal reconciliation and compatible worker/cache restart are required recovery gates. See [the recovery runbook](L4-authoritative-recovery.md).
 
+For a pinned published operator export, use the [selected-content parity command](local-authoring.md#verify-a-pinned-published-content-candidate).
+`verify-postgres-release.py --export-directory` checks that explicit paired export
+in an owned disposable PG17 cluster and re-exports exact digests; it does not
+replace default archive recovery or full-authority retained recovery. Native
+acceptance also runs `python -m pytest scripts/containers/test_release_inputs.py -q`
+for synthetic admission, mutation and protected-output regressions, without
+authority credentials or private content. A `--small-fixture` archive run remains
+a development regression, never the complete archive-corpus acceptance gate.
+
 Run checks appropriate to the change and follow the [regression requirements](testing-regressions.md) for affected behavior. CI executes frontend, backend, and browser checks in [checks.yml](../.github/workflows/checks.yml). Do not hand off a change while relevant gates fail.
 
 ## Commands

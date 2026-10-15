@@ -102,6 +102,8 @@ def main():
                                     "--output", str(output / "postgres-resilience.json")], timeout=600)
         run("load-harness-contracts", [sys.executable, "-m", "pytest",
                                        "scripts/containers/test_load_rounds.py", "-q"], timeout=60)
+        run("release-input-contracts", [sys.executable, "-m", "pytest",
+                                       "scripts/containers/test_release_inputs.py", "-q"], timeout=60)
         run("postgres-load", [sys.executable, str(ROOT / "scripts/containers/load-postgres.py"),
                               "--api-image", "meducation-api:local", "--rounds", "1",
                               "--output", str(output / "postgres-load.json")], timeout=600)

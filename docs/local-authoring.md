@@ -91,6 +91,38 @@ this authority require `--reviewed-recovery-import`; ordinary edits use HTTP.
 Imports are privileged maintenance, not a way to replace DB-only work with a
 stale archive. See the [recovery runbook](L4-authoritative-recovery.md).
 
+### Verify a pinned published content candidate
+
+After selecting the published UUID and completing `export-release`,
+`validate-export` and `audit-export` above, run:
+
+```sh
+.venv/bin/python scripts/containers/verify-postgres-release.py --export-directory NEW_EXPORT_DIRECTORY --output NEW_PRIVATE_PARITY_REPORT.json
+```
+
+Use the operator `export-release` directory, with `manifest.json`,
+`questionBank.json` and `flashcardBank.json`. The report must be a new path outside
+that immutable directory. The harness snapshots and validates explicit inputs
+before starting Docker; missing, corrupt, unpublished or mismatched inputs fail
+without falling back to repository archives. Reports and temporary files are
+private. It imports into a uniquely named/labeled disposable PG17 tmpfs cluster,
+checks exact authored fields, optional presence, ordered IDs/choices, provenance,
+serialized bytes, revisions and every learner route/conditional contract, then
+re-exports and compares paired digests. It verifies the original export and its
+verification code remain unchanged and removes only its owned fixture.
+
+Source question/deck/card IDs remain exact; the disposable fixture has its own
+release UUID and publication sequence. Source release/publication identity is
+recorded separately from that fixture identity. No authority history, sessions,
+grants or allocation lineage are cloned. This is paired-content parity, not a
+full-authority backup/recovery rehearsal. It does not run writer retirement or
+change the routine database. Recheck the actual publication in the HTTP editor
+at handoff; an earlier pinned export can pass while a newer release is current.
+
+The default archive/recovery mode and its CI invocation remain separate. Do not
+combine `--export-directory` with `--small-fixture` or application rollback image
+arguments. Current private content and authority credentials are never CI inputs.
+
 ## Recovery and verification
 
 ```sh

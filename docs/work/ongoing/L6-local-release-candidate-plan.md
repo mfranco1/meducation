@@ -1,6 +1,6 @@
 # L6 — Local release candidate
 
-Created: 2026-10-15 (Asia/Manila). Status: Step 1 complete; stopped at its gate. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. Steps 2–6 remain pending.
+Created: 2026-10-15 (Asia/Manila). Status: Steps 1–2 complete; stopped at the Step 2 gate. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. The user authorized continuation into Step 2. Steps 3–6 remain pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l6--local-release-candidate).
 Predecessor: [L5 plan](../done/L5-resilience-and-local-operations-plan.md) and
@@ -59,7 +59,7 @@ and the remaining L6 work is explicit. Planning alone does not close this gate.
 
 ## Step 2 — Capture and validate the actual content candidate
 
-- [ ] Read the current published release identity through the authenticated editor
+- [x] Read the current published release identity through the authenticated editor
   or supported read-only operator path. Record publication sequence, release UUID,
   schema head and paired digests. Export that immutable release into a new protected
   local directory using the documented `export-release` command; validate and audit
@@ -67,21 +67,21 @@ and the remaining L6 work is explicit. Planning alone does not close this gate.
   and [recovery policy](../../L4-authoritative-recovery.md), not repository JSON as
   a substitute. Identify any unpublished draft separately; never publish it just
   to produce a candidate.
-- [ ] Check the export manifest, full schema/relationships, rich-text/math safety,
+- [x] Check the export manifest, full schema/relationships, rich-text/math safety,
   exact optional fields, ordered IDs/choices and source/verified answer provenance.
   Audit findings need a documented disposition; medical/content corrections remain
   a separate explicit canonical editing task. Keep the original export immutable.
-- [ ] Reconstruct the selected export in a disposable PG17 database through the
+- [x] Reconstruct the selected export in a disposable PG17 database through the
   reviewed fixture/import tooling, re-export and compare exact authored values,
   order, metadata, hashes and all learner API route contracts. If the existing
   archive-corpus harness cannot accept explicit paired export inputs, extend it
   narrowly with provenance/reporting and negative input checks; retain its archive
   CI mode. Never stage the fresh export by overwriting `src/content/*.generated.json`.
-- [ ] Separate full-authority recovery from paired content parity: an export is
+- [x] Separate full-authority recovery from paired content parity: an export is
   not a full backup of history, sessions, grants or allocation journals. L5's
   isolated recovery drills cover those mechanisms; they do not prove the live
   archive equals today's database or establish off-device RPO/RTO.
-- [ ] Recheck active release identity at handoff. If publication advanced during
+- [x] Recheck active release identity at handoff. If publication advanced during
   verification, retain evidence for the pinned candidate and explicitly decide
   whether to recapture/retest the newer release. A pinned export remains valid;
   do not silently describe it as the latest content.
@@ -244,8 +244,22 @@ The [baseline receipt](L6-step1-baseline-evidence.json) identifies code, runtime
 ### Parent requirement evidence ledger
 
 - **Complete verification and repeatable CI** — Step 5 owns `npm run verify:full`, fresh native `scripts/containers/acceptance.py`, dedicated accepted-engine backup suites, and new candidate-input five-job CI. Reserve `L6-step5-local-evidence.json` and `L6-step5-native-ci-evidence.json`; retain command exit/duration, scoped native reports, skips and fixture cleanup. L5's receipt establishes the dependency only. Status: pending.
-- **Actual content parity and learner/editor acceptance** — Step 2 owns the supported read-only publication lookup, protected immutable `export-release`, `validate-export`, `audit-export` and explicit paired-input PG17 round-trip/route comparison. Reserve `L6-step2-content-evidence.json`. Step 3 owns fresh learner/HTTP admin builds, dedicated progress-backup Chromium/WebKit runs, existing learner/editor rich-content and workflow suites, and available visual checks; reserve `L6-step3-acceptance-evidence.json`. Current authority release/digests, unpublished draft distinction and final publication recheck remain pending. Repository archive validation cannot close these gates.
+- **Actual content parity and learner/editor acceptance** — Step 2 owns the supported read-only publication lookup, protected immutable `export-release`, `validate-export`, `audit-export` and explicit paired-input PG17 round-trip/route comparison. Reserve `L6-step2-content-evidence.json`. Step 3 owns fresh learner/HTTP admin builds, dedicated progress-backup Chromium/WebKit runs, existing learner/editor rich-content and workflow suites, and available visual checks; reserve `L6-step3-acceptance-evidence.json`. Step 2 is now accepted in [the content receipt](L6-step2-content-evidence.json), including authority release/digests, draft distinction and final publication recheck. Step 3 rendering/workflow acceptance remains pending. Repository archive validation cannot close these gates.
 - **Provider-neutral deployment inputs** — Step 4 owns `docs/L6-deployment-handoff.md`, fresh image identities/build commands, optional admin serving recipe, environment/secret inventory, explicit schema/transfer/recovery sequence and smoke/rollback commands. Reserve `L6-step4-deployment-evidence.json`; exact recipes must follow current runbooks and use disposable resources. Status: pending.
 - **Outstanding deployment acceptance** — Steps 4/6 own named evidence owners and closure conditions for provider/region/latency/budgets, TLS/routing/pooling/suspend, real identity adapter/MFA/rotation, domain/origin transfer and off-device retention/journals/restore. [Browser acceptance](L0-browser-acceptance.md) retains Firefox and actual mobile/assistive-technology/persisted-return gaps. Reserve `L6-final-decision-evidence.json`. All remain public-launch obligations; no cloud provisioning or identity bypass is authorized.
 
 Validation: `npm run build` passed TypeScript and production bundling, retaining the existing >500 kB chunk advisory. All 81 local Markdown paths in affected documents resolve; the repository-wide scan also found four pre-existing unrelated missing targets (one illustrative content image and three historical tracker links), recorded in the baseline receipt. Runtime/config fingerprints and archived receipt hashes match; `git diff --check` passed. Completion audit: no blocking Step 1 findings. Stop after the Step 1 gate per the agreed work-tracking sequence; Step 2 requires continuation. This does not accept the overall L6 candidate.
+
+## Step 2 implementation and acceptance — 2026-10-15
+
+The supported operator path read the designated authority in a repeatable-read, read-only transaction. It selected published release `3e3604bf-dedf-470e-adf6-4dccc1bab5f9`, publication sequence **3**, schema `0006_allocation_fence`. Draft revision **5** matches the published pair; no unpublished content was promoted. A new protected export is retained under ignored `var/backups/postgres/l6-candidate-20261015T055606Z/export/`. The documented `export-release`, `validate-export` and `audit-export` commands passed. The export contains 11,687 questions with rationales, 177 with sources, 121 marked AI-draft-reviewed, and 32 carrying answer-review notes. Independent warning categorization found exactly 32 answer-review warnings and zero other warnings/errors. These are retained editorial obligations, not newly verified medical answers. Two verified answers differ from original source keys; both fields remain exact.
+
+`verify-postgres-release.py --export-directory` now pins/validates an explicit operator export, imports it only into an owned disposable PG17 tmpfs fixture, checks exact reconstructed fields/order/optional presence/paired bytes and every learner route, and re-exports matching paired digests. It distinguishes source release/publication identity from fixture identity and bypasses the unrelated full-authority recovery workflow. It rejects mixed modes, malformed/unpublished/missing inputs, export mutation, changed verification source and reports that would overwrite evidence or the immutable export. No archive fallback supplies missing selected inputs. Synthetic admission tests are wired into native acceptance; private content and authority credentials are never CI inputs.
+
+Development evidence: the initial whole selected pair passed parity and cleanup in 131.63s. A subsequent run overlapped harness edits and was rejected (exit 1, 153.95s); it is not final acceptance. Negative tests first exposed an unnecessary Docker cleanup lookup before fixture creation; that was fixed. A follow-up assertion was corrected to match the harness's sanitized outer error. The latest combined export/admission suite passed **26 tests** in 24.96s; the final dedicated admission run passed **13 tests** in 17.02s. Ruff for all container helpers and learner build/typecheck pass (existing chunk advisory). The settled-input results and final publication recheck below close this stage.
+
+Final local gate: **pass**. The complete selected authoritative pair round-tripped through disposable PG17 on Linux ARM64: **13 subjects, 111 quizzes, 11,687 questions, 98 decks, 1,712 cards; all 348 learner routes** matched, including ETag/304/409 behavior. Exact optional presence, text/choice order, answer provenance, serialized paired artifacts and re-export revisions/hashes match. The settled command passed in **84.44s**, including cleanup (internal verification 82.32s). The preserved small archive/recovery mode passed in **14.18s**, including cleanup; this regression is not full archive-corpus/native acceptance. Both fixture cleanups passed and an independent Docker label check found no remaining release-verification containers.
+
+At 2026-10-15 14:35:24 Asia/Manila the authority still selected the same release/sequence/digests/schema, with draft revision 5 unchanged and matching the published pair. The pinned export remains current at this observation. The [frozen content receipt](L6-step2-content-evidence.json) records source/fixture identities separately, command outcomes (including development failures), private report/export references and SHA-256 fingerprints. The original export and repository JSON remain unchanged. No routine writes, publication, ID allocation, grant changes or authority recovery occurred.
+
+Completion audit: **no blocking Step 2 findings**. Ruff over all container helpers, combined 26-test export/admission suite, final 13-test dedicated admission suite, build/typecheck, affected local links and diff/integrity checks pass. Existing chunk advisory and 32 editorial answer-review obligations remain. The new synthetic admission stage is wired into native acceptance; fresh full archive/native AMD64/ARM64 candidate execution belongs to Step 5 and is still pending. This stage establishes paired content parity only; full-authority retained/off-device recovery, browser rendering, manual devices and hosted acceptance remain separate. Parent L6 checkboxes stay open. Step 3 learner/editor acceptance is next, following the agreed continuation gate.

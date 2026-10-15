@@ -1,10 +1,11 @@
-"""Archived-bank fixture parity and backup-role recovery in a uniquely owned disposable PG17 cluster."""
+"""Selected-export parity or archive-fixture recovery in an owned disposable PG17 cluster."""
 
 import argparse
 import copy
 import hashlib
 import json
 import logging
+import os
 import secrets
 import subprocess
 import sys
@@ -29,6 +30,7 @@ from meducation_api.db.recovery import (
 )
 from meducation_api.db.transfer import capture_pair, import_pair
 from meducation_api.settings import Settings
+from release_inputs import capture_export, require_unchanged_export
 from rollback_drills import (
     application_rollback,
     prepare_retained_pair,
@@ -117,24 +119,44 @@ def publication_summary(engine):
 
 
 def main():
+    os.umask(0o077)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--small-fixture", action="store_true", help="Development-only browser fixture; not archive-corpus acceptance")
+    inputs = parser.add_mutually_exclusive_group()
+    inputs.add_argument("--small-fixture", action="store_true", help="Development-only browser fixture; not archive-corpus acceptance")
+    inputs.add_argument("--export-directory", type=Path, help="Explicit protected export-release directory; parity only, no authority recovery")
     parser.add_argument("--api-image")
     parser.add_argument("--previous-api-image")
     args = parser.parse_args()
     if bool(args.api_image) != bool(args.previous_api_image):
         parser.error("Supply both current and previous images for the application rollback drill")
+    if args.export_directory and args.api_image:
+        parser.error("Selected-export mode verifies paired parity only; run archive recovery separately")
+    if args.export_directory and (
+        args.output.resolve().is_relative_to(args.export_directory.resolve()) or args.output.exists()
+    ):
+        parser.error("Selected-export report requires a new path outside the immutable export")
     args.output.parent.mkdir(parents=True, exist_ok=True)
     name = "meducation-release-verify-" + uuid.uuid4().hex[:12]
     engines = []
     started = time.monotonic()
     report = None
+    fixture_started = False
     # Per-route behavior is asserted by parity; avoid thousands of fixture request events.
     logging.getLogger("meducation.operations").disabled = True
     try:
         with tempfile.TemporaryDirectory(prefix="meducation-release-verify-") as temp:
             folder = Path(temp)
+            selected = None
+            if args.export_directory:
+                selected_inputs = {
+                    str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest()
+                    for p in [Path(__file__).resolve(), ROOT / "scripts/containers/release_inputs.py",
+                              *sorted((ROOT / "backend/src").rglob("*.py")),
+                              *sorted((ROOT / "backend/src").rglob("*.sql"))]
+                }
+                pair, selected = capture_export(args.export_directory, folder / "selected", repository=ROOT)
+                require_unchanged_export(args.export_directory, selected)
             admin_secret = secrets.token_urlsafe(24)
             passwords = RolePasswords(
                 _env_file=None,
@@ -150,6 +172,7 @@ def main():
                 + "\nPOSTGRES_INITDB_ARGS=--auth-host=scram-sha-256\n"
             )
             env.chmod(0o600)
+            fixture_started = True
             docker(
                 "run",
                 "--detach",
@@ -231,7 +254,8 @@ def main():
                 if args.small_fixture else
                 (ROOT / "src/content/questionBank.generated.json", ROOT / "src/content/flashcardBank.generated.json")
             )
-            pair = capture_pair(source_q, source_f, repository=ROOT)
+            if selected is None:
+                pair = capture_pair(source_q, source_f, repository=ROOT)
             print("Importing paired fixture into disposable database", flush=True)
             release = import_pair(
                 operator,
@@ -240,6 +264,48 @@ def main():
                 actor="local-recovery-probe",
                 reason="Read-only canonical-copy verification",
             )
+            if selected is not None:
+                # Reconstruct exactly the pinned published pair. Do not create an
+                # authored draft, IDs, sessions or a writable clone of its lineage.
+                with operator.begin() as connection:
+                    activate_release(
+                        connection, operation_id=uuid.uuid4(), release_id=release.release_id,
+                        expected_sequence=0, actor="selected-export-parity",
+                        reason="Disposable paired-content parity only",
+                    )
+                settings = Settings(
+                    _env_file=None, content_source="postgres", database_environment="local",
+                    database_url=reader.url.render_as_string(hide_password=False),
+                )
+                from meducation_api.db.transfer import export_release
+
+                parity = verify_parity(operator, settings, pair, release.release_id)
+                exported = export_release(operator, release.release_id, folder / "reexport")
+                if (exported["artifactsSha256"] != selected["artifactsSha256"]
+                        or exported["revisions"] != selected["revisions"]):
+                    raise ContentDatabaseError("Selected export re-export digests differ.")
+                require_unchanged_export(args.export_directory, selected)
+                if any(hashlib.sha256((ROOT / p).read_bytes()).hexdigest() != digest
+                       for p, digest in selected_inputs.items()):
+                    raise ContentDatabaseError("Verification code changed during selected-export run.")
+                report = {
+                    "result": "pass", "input_scope": "selected-release-export",
+                    "selected_export": selected, "source_parity": parity,
+                    "fixture_release_id": str(release.release_id),
+                    "reexport_artifacts_sha256": exported["artifactsSha256"],
+                    "reexport_revisions": exported["revisions"],
+                    "schema_head": migration_head(), "postgres_image": PG_IMAGE,
+                    "platform": "linux/" + docker("image", "inspect", "--format", "{{.Architecture}}", PG_IMAGE),
+                    "seconds": round(time.monotonic() - started, 2),
+                    "source_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+                    "input_sha256": selected_inputs,
+                    "checks": ["pinned manifest/schema/rich-policy validation", "exact authored fields/order/optional presence and paired bytes",
+                               "all learner API route/conditional contracts", "exact re-export paired hashes/revisions", "original export unchanged"],
+                    "isolation": "unique owned tmpfs PG17 cluster; no routine DB credentials, history, auth or allocation lineage copied",
+                    "scope_limit": "Paired content parity only; not full-authority recovery or current-publication verification",
+                }
+                print("Selected-release export parity passed", flush=True)
+                return
             with operator.begin() as connection:
                 publication = activate_release(
                     connection,
@@ -660,8 +726,9 @@ def main():
         for value in engines:
             value.dispose()
         try:
-            for label, expected in (("meducation.rollback-fixture", name + "-rollback-api"),
-                                    ("meducation.release-verify", name)):
+            cleanup_targets = (("meducation.rollback-fixture", name + "-rollback-api"),
+                               ("meducation.release-verify", name)) if fixture_started else ()
+            for label, expected in cleanup_targets:
                 ids = docker("ps", "--all", "--quiet", "--filter", "label=" + label + "=" + name).splitlines()
                 for identifier in ids:
                     owned = json.loads(docker("inspect", identifier))[0]
@@ -669,14 +736,19 @@ def main():
                     docker("rm", "--force", identifier)
             if report is not None:
                 report["cleanup"] = "pass"
-                assert report["source_and_restored_publication"] == report["restored_publication"]
+                if selected is None:
+                    assert report["source_and_restored_publication"] == report["restored_publication"]
         except Exception:
             if report is not None:
                 report.update(result="fail", cleanup="fail")
             raise
         finally:
             if report is not None:
-                args.output.write_text(json.dumps(report, indent=2) + "\n")
+                if selected is not None:
+                    with args.output.open("x", encoding="utf-8") as output:
+                        output.write(json.dumps(report, indent=2) + "\n")
+                else:
+                    args.output.write_text(json.dumps(report, indent=2) + "\n")
 
 
 if __name__ == "__main__":
