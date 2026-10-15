@@ -1,14 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyFlashcardOperations,
-  isFlashcardAdminChangeSet,
-  replayFlashcardAdminChangeSet,
-  type FlashcardAdminChangeSet,
   type FlashcardAdminOperation,
 } from './flashcardChangeSet';
 import type { StoredFlashcardBank } from '../../content/schema/schema';
 import { storedQuestionBank } from '../../test/contentFixtures';
-import { flashcardContentRevision } from './flashcardSerialization';
 
 const source: StoredFlashcardBank = {
   schemaVersion: 2,
@@ -79,38 +75,5 @@ describe('flashcard admin change sets', () => {
       ]),
     ).toThrow('does not exist');
     expect(source.decks.map((deck) => deck.id)).toEqual(['d-one', 'd-two']);
-  });
-  it('validates the v2 export envelope and rejects legacy change sets clearly', () => {
-    expect(
-      isFlashcardAdminChangeSet({
-        changeSetVersion: 2,
-        base: { schemaVersion: 2, revision: 'sha256-base', subjectRevision: 'sha256-subjects' },
-        resultRevision: 'sha256-result',
-        resultSubjectRevision: 'sha256-subjects-next',
-        reason: 'reviewed change',
-        operations: [{ op: 'deck.delete', id: 'd-one', cascade: true }],
-      }),
-    ).toBe(true);
-    expect(isFlashcardAdminChangeSet({ changeSetVersion: 1 })).toBe(false);
-  });
-  it('replays only against matching flashcard and subject revisions', async () => {
-    const subjects = storedQuestionBank.subjects;
-    const subjectRevision = await (await import('../../domain/contentDigest')).sha256Text(JSON.stringify(subjects));
-    const operations: FlashcardAdminOperation[] = [
-      { op: 'deck.create', value: { id: 'd-new', subjectId: 's1', name: 'New deck' } },
-    ];
-    const next = applyFlashcardOperations(source, subjects, operations);
-    const changeSet: FlashcardAdminChangeSet = {
-      changeSetVersion: 2,
-      base: { schemaVersion: 2, revision: await flashcardContentRevision(source, subjects), subjectRevision },
-      resultRevision: await flashcardContentRevision(next, subjects),
-      resultSubjectRevision: subjectRevision,
-      reason: 'reviewed deck',
-      operations,
-    };
-    expect(await replayFlashcardAdminChangeSet(source, subjects, changeSet)).toEqual(next);
-    await expect(replayFlashcardAdminChangeSet(source, [...subjects].reverse(), changeSet)).rejects.toThrow(
-      'stale content',
-    );
   });
 });

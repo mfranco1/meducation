@@ -235,7 +235,7 @@ An importer cannot infer from changed text whether a human reused an established
 
 ## Serialization and revision preservation
 
-The compatibility source is the [Python JSON adapters](../../backend/src/meducation_api/repositories/question_bank.py), [quiz serializer](../../src/admin/core/serializeBank.ts) and [flashcard serializer](../../src/content/local/flashcardBank.ts), with shared Unicode/contract fixtures. Use their current behavior rather than introducing sorted-key hashing.
+The compatibility source is the [Python JSON adapters](../../backend/src/meducation_api/repositories/question_bank.py), [quiz serializer](../../src/admin/core/serializeBank.ts) and [flashcard serializer](../../src/admin/core/flashcardSerialization.ts), with shared Unicode/contract fixtures. Use their current behavior rather than introducing sorted-key hashing.
 
 1. Quiz artifact: parsed raw quiz document serialized with Python `json.dumps(ensure_ascii=False, allow_nan=False, indent=2)` plus one LF. Hash UTF-8 bytes and prefix `sha256-`. Whitespace of the original input file is not this revision input; record its byte hash separately.
 2. Flashcard artifact: the same pretty serialization of the raw flashcard document plus LF.

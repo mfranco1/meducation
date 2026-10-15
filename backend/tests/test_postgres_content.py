@@ -1218,22 +1218,19 @@ def reader_settings(db):
         "/api/v1/flashcards/decks/dlegacy-X/cards",
     ],
 )
-def test_postgres_learner_routes_match_json_and_release_connections(db, tmp_path, path):
+def test_postgres_learner_routes_match_protocol_and_release_connections(db, tmp_path, path):
     from fastapi.testclient import TestClient
 
     from meducation_api.main import create_app
-    from meducation_api.settings import Settings
 
     q, f = banks()
     f["decks"].append({"id": "dempty", "subjectId": "s1", "name": "Empty"})
     release = store(db, q=q, f=f)
     publish(db, release)
-    qp, fp = tmp_path / "q.json", tmp_path / "f.json"
-    qp.write_text(json.dumps(q, ensure_ascii=False))
-    fp.write_text(json.dumps(f, ensure_ascii=False))
-    json_app = create_app(Settings(_env_file=None, bank_path=qp, flashcard_bank_path=fp))
+    from fixture_content import fixture_app
+    reference_app = fixture_app(q, f)
     pg_app = create_app(reader_settings(db))
-    with TestClient(json_app) as expected, TestClient(pg_app) as actual:
+    with TestClient(reference_app) as expected, TestClient(pg_app) as actual:
         source = pg_app.state.source
         reference = expected.get(path)
         result = actual.get(path)
@@ -1276,20 +1273,15 @@ def test_postgres_learner_routes_match_json_and_release_connections(db, tmp_path
 
 
 def test_postgres_repository_protocols_and_unknown_parents(db, tmp_path):
+    from fixture_content import FixtureFlashcardRepository, FixtureQuestionRepository
+
     from meducation_api.repositories.postgres import PostgresContentSource
-    from meducation_api.repositories.question_bank import (
-        JsonFlashcardCatalogRepository,
-        JsonQuestionBankRepository,
-    )
 
     q, f = banks()
     release = store(db)
     publish(db, release)
-    qp, fp = tmp_path / "q.json", tmp_path / "f.json"
-    qp.write_text(json.dumps(q))
-    fp.write_text(json.dumps(f))
-    reference = JsonQuestionBankRepository(qp)
-    flashcards = JsonFlashcardCatalogRepository(fp, reference.list_subjects())
+    reference = FixtureQuestionRepository(q)
+    flashcards = FixtureFlashcardRepository(f, reference.list_subjects())
     with PostgresContentSource(reader_settings(db)) as source, source.view() as view:
         bank = view.questions
         cards = view.flashcards
@@ -1845,13 +1837,11 @@ def auth_app(db, harness=None, *, postgres=False, **changes):
     settings = Settings(
         _env_file=None,
         database_environment="local",
-        content_source="postgres" if postgres else "json",
-        database_url=db.reader.url.render_as_string(hide_password=False) if postgres else None,
-        bank_path=ROOT / "e2e/fixtures/bank.json",
-        flashcard_bank_path=ROOT / "e2e/fixtures/flashcard-bank.json",
+        content_source="postgres",
+        database_url=db.reader.url.render_as_string(hide_password=False),
     )
-    # Fixture filename follows existing content-source tests.
-    app = create_app(settings, auth_settings=cfg, auth_factory=lambda _: runtime)
+    from fixture_content import FixtureContentSource
+    app = create_app(settings, auth_settings=cfg, auth_factory=lambda _: runtime, source_factory=None if postgres else lambda _: FixtureContentSource(json.loads((ROOT / "e2e/fixtures/bank.json").read_text()), json.loads((ROOT / "e2e/fixtures/flashcard-bank.json").read_text())))
     return TestClient(app, base_url=cfg.origin, follow_redirects=False), runtime, h
 
 

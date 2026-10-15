@@ -8,8 +8,7 @@ COPY src ./src
 COPY public ./public
 COPY scripts ./scripts
 COPY tests/fixtures ./tests/fixtures
-ENV VITE_BUILD_ADMIN=false \
-    VITE_ENABLE_LOCAL_ADMIN=false
+ENV VITE_BUILD_ADMIN=false
 RUN npm run typecheck \
     && npm run build:learner -- --manifest --sourcemap hidden \
     && node scripts/containers/check-learner-artifacts.mjs dist > /learner-artifacts.json \
@@ -19,10 +18,7 @@ RUN npm run typecheck \
 FROM builder AS admin-builder
 COPY admin.html ./
 COPY ops/containers/nginx.conf ./nginx.source.conf
-ENV VITE_BUILD_ADMIN=true \
-    VITE_ENABLE_LOCAL_ADMIN=true \
-    VITE_ADMIN_SOURCE=http \
-    VITE_JSON_FIXTURE_AUTHORING=false
+ENV VITE_BUILD_ADMIN=true
 RUN npm run build:admin -- --manifest --sourcemap hidden \
     && node scripts/containers/check-admin-artifacts.mjs dist nginx.source.conf /admin-nginx.conf > /admin-artifacts.json \
     && find dist -name '*.map' -delete \

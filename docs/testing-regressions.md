@@ -141,7 +141,7 @@ The suite checks quiz start, answer persistence across reload, resume, completio
 - Cover fixture-based schema-v4 load and revision parity, invalid IDs/references/answers, subject and quiz ordering, omitted optional metadata, ETags/revision conflicts, not-found responses, and startup readiness.
 - Use fixture files for request tests so no test can mutate the canonical bank.
 - Frontend content integration must cover API catalog loading, lazy question fetch and caching, retry/error states, a bank revision changing between catalog and question fetch, Browse Answers, both scoring modes, and local attempt resume/completion staying in localStorage.
-- Run the existing `npm test`, `npm run validate:content`, and `npm run build` checks before handoff.
+- Run the existing `npm test`, `npm run validate:content -- <quiz-file> <flashcard-file>`, and `npm run build` checks before handoff.
 - GitHub Actions runs the backend and frontend checks in `.github/workflows/checks.yml`.
 
 ### Shared contract cases
@@ -150,33 +150,33 @@ The suite checks quiz start, answer persistence across reload, resume, completio
 - `src/content/api/apiContract.test.ts` covers the separate API DTO boundary, including membership and question order.
 - Storage boundary fixtures must remain ordinary passing tests.
 
-## Authoring and replay
+## PostgreSQL authoring
 
 ### Operations and serialization
 
 - For admin tooling, add core fixture tests for every change-set operation, stale revisions, relative insertion, moves, explicit cascades, rollback of an invalid mixed batch, and deterministic serialization.
-- Verify an unedited bank round-trips byte-for-byte, exported JSON passes `npm run validate:content` when substituted in a disposable checkout, and the separate `/admin.html` entry remains disabled in a normal production build.
+- Verify an unedited bank round-trips byte-for-byte, a selected database export passes manifest/identity validation and the explicit paired-file content validator, and the separate `/admin.html` entry remains disabled in a normal production build.
 
 ### Controller and stale previews
 
-- Exercise the admin controller through stage/export/undo and import-preview/stage flows.
+- Exercise authenticated paired saves, database-derived export and server undo/reset; retired file import/replay and local history must remain absent.
 - Hold a preview open, change the draft, and assert that the old preview cannot apply.
 - Check duplicate command requests while busy.
 - Profile preview, apply, and undo against the full canonical bank before changing gateway memory or validation behavior.
 
 ### Grouped additions
 
-Grouped version-2 `content.add` tests must cover new subjects with multiple quizzes and item lists, additions under existing subjects/quizzes, inherited parent IDs, duplicate IDs, ownership mismatches, nested-field diagnostics, item ordering, unsupported-version rejection, rollback, undo, and replay of the exported grouped change set to the same flat canonical bank.
+Grouped version-2 `content.add` tests must cover new subjects with multiple quizzes and item lists, additions under existing subjects/quizzes, inherited parent IDs, duplicate IDs, ownership mismatches, nested-field diagnostics, item ordering, unsupported-version rejection, rollback, server undo, and exact paired persistence with reserved IDs.
 
 ### Bulk draft compilation
 
 - Content-only bulk-draft tests must cover each destination template, reject change-set and ID fields, compile choice strings into ordered A–Z choices, allocate stable IDs, preserve provided and verified answers distinctly, reject stale snapshots and empty reasons, and confirm that the exact compiled change set is used for preview and staging.
-- Imported version-2 change sets remain a separate read-only preview flow.
+- Routine version-2 file import/replay is retired; content-only JSON remains a previewed HTTP draft input.
 
 ### Isolation and coordinated reset
 
 - Final-audit regressions verify immediate visibility of unreadable flashcard progress without overwriting stored bytes, isolation between operation inputs and validated flashcard records, and coordinated reset of replaced subjects with rejection/rollback of invalid reset candidates.
-- Component tests cover cancel/failure/retry of the combined reset; the admin browser workflow verifies that it clears both sections and their undo history.
+- HTTP tests cover cancel/failure/retry of the paired server reset and its history epoch; unsaved text remains available for explicit review.
 
 ## Accessibility and measurement limits
 

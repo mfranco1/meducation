@@ -51,13 +51,22 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-port", type=int, required=True)
     parser.add_argument("--origin", type=loopback_origin, required=True)
-    parser.add_argument("--quiz-file", type=Path, required=True)
-    parser.add_argument("--flashcard-file", type=Path, required=True)
+    parser.add_argument("--quiz-file", type=Path)
+    parser.add_argument("--flashcard-file", type=Path)
+    parser.add_argument("--pair-file", type=Path)
     args = parser.parse_args()
     if not 1024 <= args.api_port <= 65535:
         parser.error("API port must be between 1024 and 65535.")
+    if args.pair_file:
+        if args.quiz_file or args.flashcard_file:
+            parser.error("Use a paired fixture or two individual fixtures, not both.")
+        inputs = [args.pair_file]
+    else:
+        if not args.quiz_file or not args.flashcard_file:
+            parser.error("Supply --pair-file or both --quiz-file and --flashcard-file.")
+        inputs = [args.quiz_file, args.flashcard_file]
     # Explicit small fixtures only; refuse the routine corpus and ignored exports.
-    sources = [path.resolve() for path in (args.quiz_file, args.flashcard_file)]
+    sources = [path.resolve() for path in inputs]
     fixture_roots = [
         (ROOT / name).resolve() for name in ("tests/fixtures", "e2e/fixtures")
     ]
@@ -65,15 +74,18 @@ def main():
         not any(path.is_relative_to(root) for root in fixture_roots) for path in sources
     ):
         parser.error("Browser seed inputs must be explicit repository test fixtures.")
-    pair = {
-        "base": dict(
-            zip(
-                ("quizzes", "flashcards"),
-                [json.loads(p.read_text()) for p in sources],
-                strict=True,
+    if args.pair_file:
+        pair = {"base": json.loads(sources[0].read_text())["base"]}
+    else:
+        pair = {
+            "base": dict(
+                zip(
+                    ("quizzes", "flashcards"),
+                    [json.loads(p.read_text()) for p in sources],
+                    strict=True,
+                )
             )
-        )
-    }
+        }
     name = "meducation-browser-" + uuid.uuid4().hex[:12]
     child = None
     attempted = False

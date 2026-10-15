@@ -10,6 +10,10 @@ export default defineConfig(({ mode }) => {
     throw new Error(
       'Offline content mode has been retired. Remove VITE_CONTENT_SOURCE and run the PostgreSQL-backed API.',
     );
+  if (env.VITE_ADMIN_SOURCE || env.VITE_JSON_FIXTURE_AUTHORING)
+    throw new Error(
+      'JSON authoring has been retired. Remove VITE_ADMIN_SOURCE and VITE_JSON_FIXTURE_AUTHORING; the editor uses PostgreSQL.',
+    );
   const input: Record<string, string> = { learner: resolve(__dirname, 'index.html') };
   if (env.VITE_BUILD_ADMIN === 'true') input.admin = resolve(__dirname, 'admin.html');
 
@@ -18,6 +22,14 @@ export default defineConfig(({ mode }) => {
     server: {
       proxy: {
         '/api': { target: `http://127.0.0.1:${process.env.MEDUCATION_API_PORT ?? '8000'}`, changeOrigin: false },
+        ...(process.env.MEDUCATION_TEST_FIXTURE_PROXY === 'true'
+          ? {
+              '/fixture': {
+                target: `http://127.0.0.1:${process.env.MEDUCATION_API_PORT ?? '8000'}`,
+                changeOrigin: false,
+              },
+            }
+          : {}),
       },
     },
     preview: {

@@ -272,10 +272,11 @@ they do not expose session/key material. Reports use 0600 and refuse overwrite.
 Digests prove internal consistency, not authenticity or live database currency.
 Obtain a fresh export from the selected target for a current-content check.
 
-`npm run validate:content` and `npm run audit:explanations` currently examine
-repository JSON and announce that source. They are valid canonical checks before
-cutover and fixture/archive checks afterward. Do not infer current database content
-from a successful check of an old JSON snapshot. Fixture CI needs no operator or
+`npm run validate:content -- <quiz-file> <flashcard-file>` checks an explicitly
+selected pair; it has no implicit repository content source. The old explanation
+audit command has been removed. Use `validate-export`/`audit-export` for a fresh
+captured database export and its identity/manifest checks. Passing synthetic
+fixture CI cannot certify current authority content and needs no operator or
 production credentials.
 
 ## Recovery ownership outside the database

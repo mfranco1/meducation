@@ -83,3 +83,25 @@ def test_browser_fixture_rejects_authority_or_archive_inputs_before_docker(
         runner.main()
     assert error.value.code == 2
     docker.assert_not_called()
+
+
+def test_browser_fixture_rejects_private_pair_export_before_docker(runner, monkeypatch):
+    docker = Mock(side_effect=AssertionError("Docker must not run"))
+    monkeypatch.setattr(runner, "docker", docker)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [
+            "fixture",
+            "--origin",
+            "http://127.0.0.1:4174",
+            "--api-port",
+            "8766",
+            "--pair-file",
+            "var/backups/postgres/private-export/pair.json",
+        ],
+    )
+    with pytest.raises(SystemExit) as error:
+        runner.main()
+    assert error.value.code == 2
+    docker.assert_not_called()

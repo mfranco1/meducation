@@ -52,7 +52,7 @@ Your progress stays in the browser and origin you use. Use **Progress backup** t
 ```bash
 npm run lint
 npm run format:check
-npm run validate:content
+npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json
 npm test
 npm run build
 ```
@@ -63,44 +63,41 @@ For a local production preview through the actual static server and API reverse 
 
 ### Local content editor
 
-Open `/admin.html` through the development server to edit quiz or flashcard records in a local staged workspace. The editor exports reviewed JSON and change sets; it does not write canonical repository files. Follow [content management](docs/content-management.md) to review and apply exports.
+Open `/admin.html` through the development server with the [local PostgreSQL authoring service](docs/local-authoring.md) running. Sign in to edit the paired quiz/flashcard draft. Saving writes to PostgreSQL; publication is a separate reviewed action. The editor has no offline or file-backed authoring mode.
 
-Normal production builds omit the admin entry. For a local production-build preview of the editor, explicitly enable both bundling and the editor UI:
+Normal production builds omit the admin entry. To build the authenticated HTTP editor alongside the learner:
 
 ```bash
-VITE_ADMIN_SOURCE=json VITE_BUILD_ADMIN=true VITE_ENABLE_LOCAL_ADMIN=true npm run build
-npx vite preview
+npm run build:admin
 ```
 
-`VITE_BUILD_ADMIN=true` includes the optional HTTP editor entry by default; its private content requires a backend session. The explicit JSON preview above also needs the local editor flag. These build flags are not authentication; keep JSON authoring local.
-
-[L4 HTTP editor](docs/L4-http-editor.md) connects the existing panels to private paired draft, reservation, history, publication, activation and export services. Use `VITE_ADMIN_SOURCE=http` during development and a separately configured synthetic loopback API. Production provider acceptance, authored recovery and authority cutover remain pending; no hosted access is enabled.
+These build flags do not grant API access. The [HTTP editor guide](docs/L4-http-editor.md) describes sessions, server-reserved IDs, paired undo, publication, activation, and database-derived exports. Production identity provider acceptance remains pending; no hosted access is enabled.
 
 ## Working with study content
 
-Both JSON banks are tracked canonical content, even though their names end in `.generated.json`. A normal install does not require rebuilding them.
+PostgreSQL is the only writable authority for quiz and flashcard content. Edit the paired draft through the authenticated editor, preserve stable IDs and answer provenance, and publish explicitly. Browser-local learner progress remains separate.
 
-Quiz content and the shared subject catalog live in [questionBank.generated.json](src/content/questionBank.generated.json). Flashcard decks and cards live in [flashcardBank.generated.json](src/content/flashcardBank.generated.json). See [content management](docs/content-management.md) for editing/validation and [flashcard schema](docs/flashcard-schema.md) for the shared-subject relationship.
+For a content check, export the selected current draft/release and run `validate-export`/`audit-export` as described in [content management](docs/content-management.md). The npm validator requires two explicit file paths and checks their structure and rendering policy; it cannot establish live database currency. Small synthetic fixtures keep CI independent of private content.
 
-Question text, choice order, answer provenance, rationales, and reviewed explanations are canonical in the JSON bank. Preserve stable IDs and record answer uncertainty explicitly. See [docs/question-schema.md](docs/question-schema.md) and [AGENTS.md](AGENTS.md) before changing content.
+Repository JSON archives are pending final removal with their remaining backend/container consumers. They must never replace database-only changes.
 
 ## Project layout
 
 - `src/app/` — composition, navigation, lazy screens, and learner drawer
 - `src/features/` — quiz and flashcard screens, components, sessions, and selectors
 - `src/shared/` — theme and reusable shell, loading, catalog, study, notification, and rich-content presentation
-- `src/admin/` — local staged content editor
+- `src/admin/` — authenticated paired PostgreSQL draft editor
 - `src/domain/` — quiz types and rules
-- `src/content/` — canonical banks and schema, validation, local, API, and rich-text modules
+- `src/content/` — stored schema, validation, API loading, and rich-text modules; historical bank archives await final removal
 - `src/persistence/` — browser storage implementation
 - `src/analytics/` — score summaries
-- `scripts/content/` — content validation and audit tools
+- `scripts/content/` — explicit paired-file validation and packaged content policy
 - `scripts/architecture/` — dependency policy, graph checks, and tooling regression tests
-- `backend/` — read-only FastAPI content delivery
+- `backend/` — FastAPI published content delivery, authenticated authoring, and PostgreSQL maintenance
 - `tests/fixtures/` — shared content/storage contracts
 - `e2e/` — learner and admin browser tests
 - `docs/` — architecture, product, content, design, and testing guidance
 
 Start with the [documentation index](docs/README.md) for contributor workflows. Ignored private sources and audit reports have distinct lifecycles; see [local-file guidance](docs/content-management.md#local-source-material-and-generated-output).
 
-The app does not call a generative AI service at runtime. Explanations are bundled static content.
+The app does not call a generative AI service at runtime. Explanations are authored content delivered from PostgreSQL.

@@ -15,10 +15,8 @@ class Settings(BaseSettings):
         hide_input_in_errors=True,
     )
 
-    bank_path: Path = REPOSITORY_ROOT / "src/content/questionBank.generated.json"
-    flashcard_bank_path: Path = REPOSITORY_ROOT / "src/content/flashcardBank.generated.json"
     allowed_origins: str = "http://localhost:5173,http://127.0.0.1:5173"
-    content_source: Literal["json", "postgres"] = "json"
+    content_source: Literal["postgres"] = "postgres"
     database_environment: Literal["local", "production"] = "production"
     database_url: SecretStr | None = None
     migration_database_url: SecretStr | None = None
@@ -37,8 +35,6 @@ class Settings(BaseSettings):
         ):
             if value is not None:
                 database_url(value, role=role, local=self.database_environment == "local")
-        if self.content_source == "postgres" and self.database_url is None:
-            raise ValueError("Postgres content mode requires MEDUCATION_DATABASE_URL.")
         return self
 
     @property

@@ -1,6 +1,6 @@
 # Testing
 
-Current database content checks must select a fresh draft/release export explicitly (`validate-export`/`audit-export`). The npm JSON commands check fixture/archive files only. Keep fixture CI independent of production credentials. Retained full-backup restore, session/allocation quarantine, independent-journal reconciliation and compatible worker/cache restart are required recovery gates. See [the recovery runbook](L4-authoritative-recovery.md).
+Current database content checks must select a fresh draft/release export explicitly (`validate-export`/`audit-export`). The npm pair validator requires explicit fixture/export file paths. Keep fixture CI independent of production credentials. Retained full-backup restore, session/allocation quarantine, independent-journal reconciliation and compatible worker/cache restart are required recovery gates. See [the recovery runbook](L4-authoritative-recovery.md).
 
 For a pinned published operator export, use the [selected-content parity command](local-authoring.md#verify-a-pinned-published-content-candidate).
 `verify-postgres-release.py --export-directory` checks that explicit paired export
@@ -34,7 +34,7 @@ After Chromium has been installed, the backend development environment is set up
 npm run verify:full
 ```
 
-The runner stops at the first failed step. It runs lint, formatting, architecture tests, the complete unit suite, actual-bank validation, backend Ruff/mypy/pytest, and TypeScript checking. It then creates a fresh learner production bundle with retries disabled, runs the learner browser suite against that bundle, creates the enabled optional admin production bundle, and runs the admin browser suite. Both browser suites use fixture banks; neither changes authored content. The learner bundle has a fresh build before preview starts. The admin build follows learner tests because both builds write to `dist`.
+The runner stops at the first failed step. It runs lint, formatting, architecture tests, the complete unit suite, explicit synthetic pair validation, backend Ruff/mypy/pytest, and TypeScript checking. It then creates a fresh learner production bundle with retries disabled, runs the learner browser suite against that bundle, creates the enabled optional admin production bundle, and runs the admin browser suite. Both browser suites use fixture banks; neither changes authored content. The learner bundle has a fresh build before preview starts. The admin build follows learner tests because both builds write to `dist`.
 
 `npm run test:e2e` remains self-contained and builds fresh output with retries disabled before running Chromium. `npm run test:e2e:prepared` skips that build and is intended for `verify:full` immediately after `npm run build:learner:smoke`; do not use it with an old or differently configured `dist`. `npm run test:e2e:admin` runs against Vite's development server and does not need production output.
 
@@ -44,7 +44,7 @@ projects are selected. For the currently accepted engines, run
 after a fresh learner build. It writes isolated traces to
 `test-results-progress-backup/` and a JSON report beside that directory. The
 browser-smoke CI job installs both accepted engines and runs this command
-sequentially after the complete learner suite, before the JSON-fixture admin
+sequentially after the complete learner suite, before the PostgreSQL admin
 suite, retaining a separate evidence artifact. Firefox remains explicitly
 user-deferred; its absence from this invocation is not a pass or support change.
 
@@ -66,13 +66,13 @@ npm run lint
 npm run format:check
 npm run test:architecture
 npm test
-npm run validate:content
+npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json
 npm run build
 ```
 
 `npm run build` includes TypeScript checking for browser and maintenance code. `npm run typecheck`, `npm run build:learner`, and `npm run build:admin` are split commands for verification flows that already run TypeScript checking once. The Vite-only admin command enables both the admin entry and the production authoring editor. Test the optional admin build when changing entries, shared UI, authoring, or bundle boundaries, using the [enabled production editor command](../README.md#local-content-editor).
 
-The ordinary build must omit `admin.html`; the optional build must include it. Both flags are needed to preview an enabled production editor. Verify initial and quiz-route chunk composition when changing lazy imports: API startup must not eagerly load canonical banks or the validation pipeline.
+The ordinary build must omit `admin.html`; the optional build must include it. `VITE_BUILD_ADMIN=true` includes the optional HTTP editor; its API still requires authentication. Verify initial and quiz-route chunk composition when changing lazy imports: API startup must not eagerly load canonical banks or the validation pipeline.
 
 For the existing content service and shared stored-bank contracts (build the packaged authoring policy after installing npm dependencies):
 
@@ -91,7 +91,7 @@ npm run test:e2e
 npm run test:e2e:admin
 ```
 
-The learner npm pretest builds production output with automatic retries disabled. Docker must be running: Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds the explicit small quiz/flashcard fixtures into a uniquely owned disposable PG17 tmpfs container and serves the real PostgreSQL API on port 8765. Vite preview proxies `/api` there. Override the API port with `MEDUCATION_E2E_API_PORT`; the service is separate from the designated authority and never reads its credentials or content. The wrapper rejects non-fixture input paths and non-loopback origins, generates disposable role credentials, and removes only its labelled container on shutdown. The progress-backup browser config shares this setup. The legacy admin suite still starts its own Vite development server pending its HTTP workflow migration. Fixtures never replace authored canonical records.
+The learner npm pretest builds production output with automatic retries disabled. Docker must be running: Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds the explicit small quiz/flashcard fixtures into a uniquely owned disposable PG17 tmpfs container and serves the real PostgreSQL API on port 8765. Vite preview proxies `/api` there. Override the API port with `MEDUCATION_E2E_API_PORT`; the service is separate from the designated authority and never reads its credentials or content. The wrapper rejects non-fixture input paths and non-loopback origins, generates disposable role credentials, and removes only its labelled container on shutdown. The progress-backup browser config shares this setup. The admin suite uses the same guarded runner on port 8766 with the explicit `base` pair from `tests/fixtures/paired-authoring-cases.json`, and a Vite development server on port 4174. Its test-only `/fixture` proxy is enabled only by the runner. Fixtures never replace authored canonical records.
 
 ## Suite ownership and fixtures
 
@@ -102,19 +102,19 @@ exercise real runtime API repositories with synthetic transport DTOs from
 local-only bypasses must not be restored to make invalid fixtures pass.
 
 - Vitest tests stay beside their domain, persistence, content, shared UI, feature, and authoring modules. App tests cover composition/navigation/drawer policy; quiz-to-subject lookup tests live with the quiz session contract.
-- `src/test/setup.ts` mocks both canonical JSON imports, including transitive adapter imports, with `tests/fixtures/question-bank.json` and `tests/fixtures/flashcard-bank-contract.json`, and installs React Testing Library cleanup, matchMedia, and observer shims. Vitest uses two workers by default; CI calls `npm run test:ci` to make that limit explicit. Four workers varied between a fast pass and a slower failed run on the local machine, so they are not the default. The flashcard admin panel overrides its initial catalog with `tests/fixtures/empty-flashcard-bank.json`; backend quiz request tests use the same explicit empty baseline.
+- `src/test/setup.ts` installs React Testing Library cleanup, matchMedia, and observer shims. It no longer mocks any repository banks; tests supply explicit fixtures through their owned contracts. Vitest uses two workers by default; CI calls `npm run test:ci`. Use one worker on a resource-constrained local host and keep heavy suites sequential.
 - `tests/fixtures/bank-contract-cases.json` is shared by TypeScript and Python stored-bank validators. Add cross-runtime edge cases there. `src/content/api/apiContract.test.ts` owns the separate API DTO contract.
 - `backend/tests` uses explicit fixture paths for repository/request behavior; it must never mutate canonical banks.
-- `e2e` covers production learner flows and the separate development authoring flow. Its populated flashcard fixture is selected through `MEDUCATION_FLASHCARD_BANK_PATH`.
-- Admin browser tests intercept both canonical bank modules before navigation, using `tests/fixtures/question-bank.json` and `tests/fixtures/flashcard-bank-contract.json`. They retain a fixed populated baseline for loading, reset, replay, and export; exported question records and flashcard records are checked against their fixture contents. Deck actions are scoped to test-created records.
+- `e2e` covers production learner flows and HTTP authoring with isolated PostgreSQL fixtures.
+- `e2e/admin-http` runs through both the standard host runner (`npm run test:e2e:admin`) and the separate nginx/container harness. It covers authenticated paired saves, publication, retained activation, database-derived export, reservations, stale context, uncertain writes, session expiry, paired cascades/undo, selected deletion, deck/card CRUD/order/moves, cancelled context changes, hidden text retention, and responsive geometry. It never intercepts repository banks or runs a local JSON editor.
 - Admin quiz navigator/status tests under `src/admin/components` use the small question-bank fixture to protect selection payloads, canonical row order, parent-dependent Add availability, and textual validation/workspace status. UI copy cleanup must retain diagnostic paths and busy feedback; do not lock incidental subtitles or colors into unit tests. The admin browser suite also checks keyboard access, primary-action color, panel radius, and horizontal overflow at 390px.
-- Admin content-management regressions should cover quiz search and 25-item pagination beyond 200 records, draft retention while browsing, contextual cascade deletion for subject/quiz/deck/item/card, paired subject-delete validation and Undo, export gating while a paired transaction is staged, and bounded issue/bulk/import previews. Keep these tests fixture-based and assert the final quiz/flashcard pair, operation replay, stable IDs, and unchanged learner progress.
-- The admin width regressions measure the actual navigator/editor bounding boxes at 390, 1048, and 1440 CSS pixels in both sections. They assert full-width stacked panels, top-aligned desktop columns, intrinsic navigator height, and no horizontal page overflow. Browser tests also cover cancellation and one-batch Undo for selected quiz items/cards, paired-deletion Undo barriers, and preservation of a hidden flashcard draft. Component/controller tests cover stale deletion reviews, severity pagination, selection scope, imported-reason restoration, wrong-parent/invalid deletion batches, and draft cancellation.
+- Admin content-management regressions should cover quiz search and 25-item pagination beyond 200 records, draft retention while browsing, contextual cascade deletion for subject/quiz/deck/item/card, paired subject-delete validation and Undo, separate publication and database-derived export, and bounded issue/bulk previews. Keep these tests fixture-based and assert the final quiz/flashcard pair, stable IDs, and unchanged learner progress.
+- The admin width regressions measure the actual navigator/editor bounding boxes at 390, 1048, and 1440 CSS pixels in both sections. They assert full-width stacked panels, top-aligned desktop columns, intrinsic navigator height, and no horizontal page overflow. Browser tests also cover cancellation and one-batch Undo for selected quiz items/cards, server paired-deletion Undo, and preservation of a hidden flashcard draft. Component/controller tests cover stale deletion reviews, severity pagination, selection scope, wrong-parent/invalid deletion batches, and draft cancellation.
 - Architecture tests under `scripts/architecture` use Node's test runner and are excluded from Vitest to avoid duplicate execution.
 
 Use small versioned fixtures for schema, relationships, canonical ordering, sparse metadata, provenance, rendering safety, revision/serialization parity, scoring, and persistence. Do not assert production record counts or individual authored records in unit tests. Adding canonical flashcards must not change fixture-based starting catalogs.
 
-`npm run validate:content` is the repository archive/fixture gate outside Vitest: it reads both exported JSON files and checks the full corpus once for structure, shared-subject references, Markdown/HTML/URL/LaTeX safety, and review metadata. Keep focused rendering cases in unit tests instead of duplicating this full-corpus scan. Intentional content changes follow [content management](content-management.md) and the schema guides.
+`npm run validate:content -- <quiz-file> <flashcard-file>` checks explicitly selected pairs outside Vitest for structure, shared-subject references, Markdown/HTML/URL/LaTeX safety, and review metadata. It never selects a repository database implicitly. CI uses the small quiz/empty-flashcard fixture pair. Current authored checks require a fresh selected database export and `validate-export`/`audit-export`; passing fixtures does not certify authority content.
 
 ## Architecture and formatting
 
@@ -288,7 +288,7 @@ and explicit restart admission. `e2e/admin-http/freshness.spec.ts` runs through 
 installed API/nginx/PG17 editor fixture: cached launch conflict, explicit reload
 and saved-content restart, publication during confirmation, outage response,
 unchanged-content resume, active quiz/deck preservation and transient results
-review. Use a fresh `VITE_ADMIN_SOURCE=http VITE_CONTENT_MAX_RETRIES=0 npm run
+review. Use a fresh `VITE_CONTENT_MAX_RETRIES=0 npm run
 build:admin`, then `smoke-admin-http.py --image <fresh-image> --grep L5` for focused
 development; the complete HTTP editor gate must still pass. The real PG suite
 adds independent readers, A → B → A, other-bank-only publication, and measured

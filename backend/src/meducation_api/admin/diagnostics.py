@@ -31,46 +31,45 @@ def inspect_dependencies(request: Request, config: Settings) -> tuple[dict[str, 
     }
     healthy = True
     source = request.app.state.source
-    if config.content_source == "postgres":
-        from meducation_api.repositories.postgres import PostgresContentSource
+    from meducation_api.repositories.postgres import PostgresContentSource
 
-        reader = result["reader"] = {
-            "connectivity": "unavailable",
-            "schema": "not_checked",
-            "publication": "not_checked",
-        }
-        phase = "connectivity"
-        try:
-            if not isinstance(source, PostgresContentSource):
-                return result, 503
-            with source.runtime.engine.connect() as connection:
-                limits(connection)
-                connection.exec_driver_sql("SELECT 1").scalar_one()
-                reader["connectivity"] = "ok"
-                phase = "schema"
-                version = int(connection.exec_driver_sql("SHOW server_version_num").scalar_one())
-                heads: list[str] = list(
-                    connection.exec_driver_sql(
-                        "SELECT version_num FROM content.schema_version"
-                    ).scalars()
-                )
-                reader["schema"] = (
-                    "ok"
-                    if 170000 <= version < 180000 and heads == [migration_head()]
-                    else "unsupported"
-                )
-                if reader["schema"] == "ok":
-                    phase = "publication"
-                    publication = connection.exec_driver_sql(
-                        "SELECT p.release_id FROM content.active_publication p JOIN content.published_releases r USING (release_id) WHERE p.publication_sequence>0"
-                    ).scalar_one_or_none()
-                    reader["publication"] = "ok" if publication is not None else "missing"
-                healthy = reader["schema"] == reader["publication"] == "ok"
-                dependency_result("reader", "ok" if healthy else "database_failure")
-        except SQLAlchemyError as error:
-            reader[phase] = "unavailable"
-            database_failure("reader", error)
-            healthy = False
+    reader = result["reader"] = {
+        "connectivity": "unavailable",
+        "schema": "not_checked",
+        "publication": "not_checked",
+    }
+    phase = "connectivity"
+    try:
+        if not isinstance(source, PostgresContentSource):
+            return result, 503
+        with source.runtime.engine.connect() as connection:
+            limits(connection)
+            connection.exec_driver_sql("SELECT 1").scalar_one()
+            reader["connectivity"] = "ok"
+            phase = "schema"
+            version = int(connection.exec_driver_sql("SHOW server_version_num").scalar_one())
+            heads: list[str] = list(
+                connection.exec_driver_sql(
+                    "SELECT version_num FROM content.schema_version"
+                ).scalars()
+            )
+            reader["schema"] = (
+                "ok"
+                if 170000 <= version < 180000 and heads == [migration_head()]
+                else "unsupported"
+            )
+            if reader["schema"] == "ok":
+                phase = "publication"
+                publication = connection.exec_driver_sql(
+                    "SELECT p.release_id FROM content.active_publication p JOIN content.published_releases r USING (release_id) WHERE p.publication_sequence>0"
+                ).scalar_one_or_none()
+                reader["publication"] = "ok" if publication is not None else "missing"
+            healthy = reader["schema"] == reader["publication"] == "ok"
+            dependency_result("reader", "ok" if healthy else "database_failure")
+    except SQLAlchemyError as error:
+        reader[phase] = "unavailable"
+        database_failure("reader", error)
+        healthy = False
     # Authorization already owns a session connection: never nest a pool checkout.
     try:
         request.state.principal.connection.exec_driver_sql("SELECT 1").scalar_one()

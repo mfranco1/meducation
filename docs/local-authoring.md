@@ -161,8 +161,10 @@ target and refuses existing state/containers/volumes; never rerun it as recovery
 The one-use `finish-cutover.py` records the reviewed continuation of the initial
 rehearsal interruption and refuses completed or changed revisions.
 
-Development fixture JSON editing requires both `VITE_ADMIN_SOURCE=json` and
-`VITE_JSON_FIXTURE_AUTHORING=true`; production builds always use HTTP authoring,
-even if those variables are set. Fixture tests remain independent of this local
-DB and credentials. Manual browser/device/accessibility and changed-source native
-CI obligations remain in the ongoing trackers.
+Development and production editors both use authenticated HTTP access to
+PostgreSQL. The old fixture JSON editor and its source flags have been removed;
+remove `VITE_ADMIN_SOURCE` and `VITE_JSON_FIXTURE_AUTHORING` from old environment
+files. Standard admin browser tests use an isolated disposable PostgreSQL database
+seeded from synthetic fixtures, independent of this authority and its credentials.
+Manual browser/device/accessibility and changed-source native CI obligations
+remain in the ongoing trackers.

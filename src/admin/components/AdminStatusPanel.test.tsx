@@ -11,24 +11,17 @@ const bank = fixture as StoredQuestionBank;
 
 describe('admin status presentation contracts', () => {
   it.each([
-    [false, false, 'No changes'],
-    [false, true, 'Exported'],
-    [true, true, 'Not exported'],
-  ])('describes the workspace in text (dirty=%s, exported=%s)', (dirty, exported, expected) => {
+    [false, 'Saved draft'],
+    [true, 'Unsaved text'],
+  ])('describes saved and unsaved editor text (dirty=%s)', (editorDirty, expected) => {
     render(
       <ThemeProvider theme={theme}>
-        <AdminStatusPanel
-          bank={bank}
-          issues={[]}
-          summary="Load a record or paste a change set."
-          dirty={dirty}
-          exported={exported}
-        />
+        <AdminStatusPanel bank={bank} issues={[]} summary="Load a record or add content." editorDirty={editorDirty} />
       </ThemeProvider>,
     );
     expect(screen.getByLabelText('Admin status')).toHaveTextContent(expected);
     expect(screen.queryByLabelText('Validation issues')).toBeNull();
-    expect(screen.queryByText('Load a record or paste a change set.')).toBeNull();
+    expect(screen.queryByText('Load a record or add content.')).toBeNull();
   });
 
   it('keeps diagnostics, record paths, busy feedback, and summaries available regardless of status color', () => {
@@ -43,8 +36,7 @@ describe('admin status presentation contracts', () => {
           issues={issues}
           questionPaths={{ i1: '$.items[0]' }}
           summary="Batch rejected."
-          dirty
-          exported={false}
+          editorDirty
           busy="Validating"
         />
       </ThemeProvider>,
@@ -57,13 +49,7 @@ describe('admin status presentation contracts', () => {
     expect(diagnostics).toHaveTextContent('ERROR [i3]: Missing rationale.');
     rerender(
       <ThemeProvider theme={theme}>
-        <AdminStatusPanel
-          bank={bank}
-          issues={issues.slice(0, 1)}
-          summary="Review before staging."
-          dirty
-          exported={false}
-        />
+        <AdminStatusPanel bank={bank} issues={issues.slice(0, 1)} summary="Review before staging." editorDirty />
       </ThemeProvider>,
     );
     expect(screen.getByLabelText('Admin status')).toHaveTextContent('Review warnings');

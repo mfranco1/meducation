@@ -14,7 +14,7 @@ export function auditAdmin(root) {
   if (!maps.length) throw new Error('Hidden JS source maps are required for the admin audit.');
   const sources = [...new Set(maps.flatMap((file) => JSON.parse(readFileSync(file, 'utf8')).sources))];
   const forbidden = sources.filter((source) =>
-    /(?:^|\/)src\/(?:qa\/|admin\/(?:LocalAdminApp\.|data\/InMemoryQuestionBankGateway\.)|content\/(?:questionBank|flashcardBank)\.generated\.json$)/.test(
+    /(?:^|\/)src\/(?:test\/|qa\/|admin\/(?:LocalAdminApp\.|data\/InMemoryQuestionBankGateway\.)|content\/(?:questionBank|flashcardBank)\.generated\.json$)/.test(
       source,
     ),
   );

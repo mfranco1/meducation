@@ -4,7 +4,7 @@ import { previewChangeSet as previewWithBank } from './applyChangeSet';
 import { parseChangeSet } from './changeSetSchema';
 import { serializeBank } from './serializeBank';
 import type { AdminChangeSet, ContentAddOperation } from './types';
-import { InMemoryQuestionBankGateway } from '../data/InMemoryQuestionBankGateway';
+import { InMemoryQuestionBankGateway } from '../../test/InMemoryQuestionBankGateway';
 
 const bank = (): StoredQuestionBank => ({
   schemaVersion: 4,

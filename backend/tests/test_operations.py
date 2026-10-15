@@ -5,25 +5,19 @@ import logging
 from pathlib import Path
 
 from fastapi.testclient import TestClient
+from fixture_content import fixture_app
 from sqlalchemy.exc import DBAPIError, TimeoutError
 
-from meducation_api.auth.config import AuthSettings
-from meducation_api.main import create_app
 from meducation_api.operations import SafeAccessFilter, SafeServerErrorFilter, database_category
-from meducation_api.settings import Settings
 
 ROOT = Path(__file__).resolve().parents[2]
 CANARY = "L5-secret-code-token-password-authored-text"
 
 
 def app():
-    return create_app(
-        Settings(
-            _env_file=None,
-            bank_path=ROOT / "e2e/fixtures/bank.json",
-            flashcard_bank_path=ROOT / "e2e/fixtures/flashcard-bank.json",
-        ),
-        auth_settings=AuthSettings(_env_file=None),
+    return fixture_app(
+        json.loads((ROOT / "e2e/fixtures/bank.json").read_text()),
+        json.loads((ROOT / "e2e/fixtures/flashcard-bank.json").read_text()),
     )
 
 

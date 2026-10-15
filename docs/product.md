@@ -67,8 +67,9 @@ after sign-in. Saved drafts remain unpublished until explicit reviewed publicati
 retained activation preserves draft content. Save, paired Undo/reset and publication
 show captured context. Session expiry, conflicts and uncertain responses retain
 unsaved text, with explicit session refresh/review and operation reconciliation.
-The designated local PostgreSQL database is the writable authority. The JSON
-development editor remains a separate reviewed-download mode for exports/fixtures.
+The designated local PostgreSQL database is the writable authority. Development and production use the same authenticated HTTP editor. Local JSON
+authoring, file import/replay, replacement exports and per-section histories are
+retired. Content-only JSON fields remain inputs to previewed PostgreSQL saves.
 Hosted identity/provider and off-device retention acceptance remain deferred;
 see [local authoring](local-authoring.md) for the current operating policy.
 
@@ -76,8 +77,9 @@ see [local authoring](local-authoring.md) for the current operating policy.
 
 Published learner content comes from the designated PostgreSQL authority. Saving
 a paired HTTP draft does not publish it; publication or retained activation is
-explicit. JSON exports/archives and development fixture editing do not replace
-that authority. The default static image serves only the learner entry; a
+explicit. Database-derived JSON exports are recovery/inspection artifacts; they do not
+replace that authority. Synthetic browser fixtures are loaded only into disposable
+PostgreSQL. The default static image serves only the learner entry; a
 separate optional admin image serves HTTP editor assets. Private APIs enforce
 session/origin/CSRF/freshness policy independently of those assets. Production
 identity integration remains disabled pending real adapter and MFA acceptance.

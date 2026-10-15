@@ -45,7 +45,7 @@ jobs:
       - run: npm run format:check
       - run: npm run test:architecture
       - run: npm run test:ci
-      - run: npm run validate:content
+      - run: npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json
       - run: npm run typecheck
       - run: npm run build:learner
       - name: Build the optional local admin entry

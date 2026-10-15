@@ -33,12 +33,16 @@
 **/test-results
 **/test-results-containers
 **/test-results-progress-backup
+**/test-results-admin
 **/test-results-progress-backup-report.json
 **/playwright-report
 /var/
 /docs/
 
+# Historical corpus archives are never runtime/container build inputs.
+/src/content/*.generated.json
+
 # Retain package sources/manifests/locks, public assets, scripts (including
-# brandingPlugin), Vite/TypeScript configuration and both canonical JSON banks.
+# brandingPlugin), Vite/TypeScript configuration.
 # Keep source-test fixtures: the existing TypeScript project checks src tests
 # that import them. Runtime Dockerfiles must copy only their shipped artifacts.

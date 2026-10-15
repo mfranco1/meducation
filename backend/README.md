@@ -2,13 +2,12 @@
 
 For the initialized local authority, use the [local authoring launcher and jobs](../docs/local-authoring.md).
 
-Use PostgreSQL published-only learner delivery and authenticated paired HTTP authoring for the designated authoritative target. JSON mode and JSON-authoring instructions below are archive/fixture workflows only. Explicit migrator jobs own schema/ACL/session/allocation recovery; workers never migrate or import. Restore into a separate target, quarantine sessions and protected allocation, rotate external auth epoch, reconcile complete independent journals, then restart compatible workers/caches. Hosted identity remains disabled until its separate acceptance gate passes. See [the recovery runbook](../docs/L4-authoritative-recovery.md).
+Use PostgreSQL published-only learner delivery and authenticated paired HTTP authoring for the designated authoritative target. JSON service mode and routine file authoring are retired; JSON remains a request/export/recovery format. Explicit migrator jobs own schema/ACL/session/allocation recovery; workers never migrate or import. Restore into a separate target, quarantine sessions and protected allocation, rotate external auth epoch, reconcile complete independent journals, then restart compatible workers/caches. Hosted identity remains disabled until its separate acceptance gate passes. See [the recovery runbook](../docs/L4-authoritative-recovery.md).
 
-Explicit JSON archive/fixture mode reads `src/content/questionBank.generated.json` as the
-schema-v4 quiz representation and `src/content/flashcardBank.generated.json` as
-the archived flashcard representation. Flashcard decks reference the quiz bank's shared
-subjects directly. It serves read-only content; attempts, checkpoints, and scoring remain
-in the browser.
+The API reads only PostgreSQL. Flashcard decks reference shared quiz-bank
+subjects directly. Attempts, checkpoints and scoring remain browser-local.
+Small synthetic inputs may seed disposable test databases; they cannot configure
+a file-backed production service.
 
 From the repository root, create the isolated environment if it does not exist:
 
@@ -19,23 +18,24 @@ python3.14 -m venv .venv
 .venv/bin/python -m uvicorn meducation_api.main:app --reload --host 127.0.0.1 --port 8000 --no-proxy-headers
 ```
 
-For configuration overrides, copy `backend/.env.example` to `backend/.env` and
-edit it there. The default bank path points to the repository archive/fixture
-file. `MEDUCATION_FLASHCARD_BANK_PATH` overrides the flashcard file path.
+For configuration overrides, copy `backend/.env.example` to ignored
+`backend/.env`. Set a reader-role `MEDUCATION_DATABASE_URL` for an initialized
+PostgreSQL 17 schema and active paired publication before starting the API. Local
+non-TLS connections also require explicit `MEDUCATION_DATABASE_ENVIRONMENT=local`.
+The default environment is production, which requires verified TLS. A missing
+reader connection fails API startup; operator-only jobs can still load settings
+without a reader URL. Explicit `MEDUCATION_CONTENT_SOURCE=json` is rejected;
+remove legacy bank-path settings, which have no runtime consumers.
 
 Run the frontend separately using [frontend setup](../README.md#install-and-run).
-Production API-mode hosting must route `/api` to FastAPI. For an explicit JSON fixture, set
-`MEDUCATION_BANK_PATH` when its archive is stored at a different path. The frontend guide also owns [local-content mode](../README.md#local-content-mode)
-and [local editor setup](../README.md#local-content-editor).
+Production hosting must route `/api` to FastAPI. See
+[local editor setup](../README.md#local-content-editor) for authenticated authoring.
 
-On startup the service validates and indexes both banks together, including
-flashcard references to shared subjects. The flashcard API exposes subject
-inventory, a selected subject's deck summaries, and one deck's
-ordered cards under `/api/v1/flashcards`. Flashcard responses use a separate
-revision that also changes when shared subject records change. Restart the
-JSON fixture service after replacing either archive file. PostgreSQL workers select
-the current immutable publication on every request; private paired HTTP services
-own controlled writes and never rewrite repository banks.
+On startup the service checks schema/publication readiness, without migrating or
+importing. Every content request pins the current immutable PostgreSQL publication.
+The flashcard API exposes shared-subject inventory, deck summaries and ordered
+card bodies under `/api/v1/flashcards`. Its revision also changes when shared
+subject records change. Private paired HTTP services own controlled writes.
 Interactive API documentation is available at `/docs` in development.
 
 On Windows, activate `.venv\Scripts\Activate.ps1` and use `python -m pip ...`
@@ -48,10 +48,10 @@ regenerates its metadata.
 
 ## L3 database toolchain and explicit jobs
 
-The database toolchain and content schema are available. Paired file import/export is now available;
-both learner database adapters are now available. Keep `MEDUCATION_CONTENT_SOURCE=json` for the
-working learner API. Explicit `postgres` learner mode requires an initialized schema and active pair; it never
-falls back to JSON or automatically migrates/imports content.
+The database toolchain, paired import/export and PostgreSQL learner adapters are
+available. Explicit jobs own migration and reviewed recovery imports. Workers
+require an initialized schema and active pair, never import or migrate at startup,
+and cannot fall back to JSON.
 
 Install the updated development lock using the setup commands above. Python 3.14
 uses locked Psycopg binary 3.3.6, SQLAlchemy 2.1.4 and Alembic 1.20.0. Regenerate
@@ -158,8 +158,8 @@ Warnings are reported as a count and do not block existing reviewed content.
 No input text, database URL or SQL is printed.
 
 ```sh
-.venv/bin/meducation-db validate-pair --quiz-file src/content/questionBank.generated.json --flashcard-file src/content/flashcardBank.generated.json --repository .
-.venv/bin/meducation-db import-pair --quiz-file src/content/questionBank.generated.json --flashcard-file src/content/flashcardBank.generated.json --repository . --operation-id "IMPORT_OPERATION_UUID" --actor "local-operator" --reason "Initial reviewed JSON copy"
+.venv/bin/meducation-db validate-pair --quiz-file /protected/selected-export/questionBank.json --flashcard-file /protected/selected-export/flashcardBank.json --repository .
+.venv/bin/meducation-db import-pair --reviewed-recovery-import --quiz-file /protected/selected-export/questionBank.json --flashcard-file /protected/selected-export/flashcardBank.json --repository . --operation-id "IMPORT_OPERATION_UUID" --actor "local-operator" --reason "Initial reviewed JSON copy"
 .venv/bin/meducation-db activate --release-id "RELEASE_UUID" --expected-sequence 0 --operation-id "ACTIVATION_OPERATION_UUID" --actor "local-operator" --reason "Explicit first activation"
 .venv/bin/meducation-db export-release --release-id "RELEASE_UUID" --output var/content-export-new
 ```
@@ -300,7 +300,7 @@ For an already initialized _disposable local_ target named `meducation_verify_*`
 the standalone CLI uses matching explicit operator/reader URLs:
 
 ```sh
-.venv/bin/meducation-db parity --quiz-file src/content/questionBank.generated.json --flashcard-file src/content/flashcardBank.generated.json --repository . --release-id "RELEASE_UUID" --report new-parity-report.json
+.venv/bin/meducation-db parity --quiz-file /protected/selected-export/questionBank.json --flashcard-file /protected/selected-export/flashcardBank.json --repository . --release-id "RELEASE_UUID" --report new-parity-report.json
 ```
 
 It performs no import/activation or authored-file write. The selected pair must

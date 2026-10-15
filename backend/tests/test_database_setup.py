@@ -40,8 +40,13 @@ def test_runtime_url_rejects_wrong_role_driver_and_local_escape(value: str) -> N
 
 
 def test_settings_are_secret_and_fail_closed() -> None:
-    with pytest.raises(ValidationError, match="requires MEDUCATION_DATABASE_URL"):
-        Settings(_env_file=None, content_source="postgres")
+    with (
+        pytest.raises(ContentDatabaseError, match="requires MEDUCATION_DATABASE_URL"),
+        TestClient(create_app(Settings(_env_file=None))),
+    ):
+        pass
+    with pytest.raises(ValidationError):
+        Settings(_env_file=None, content_source="json")
     with pytest.raises(ValidationError):
         Settings(_env_file=None, content_source="other")
     with pytest.raises(ValidationError):
@@ -146,17 +151,19 @@ def test_runtime_refuses_unsupported_schema_and_missing_release(schema, publicat
     engine.dispose.assert_called_once()
 
 
-def test_postgres_api_never_calls_json_factories_on_startup_failure() -> None:
+def test_postgres_api_fails_closed_without_a_file_source_parameter() -> None:
     settings = Settings(
         _env_file=None, content_source="postgres", database_environment="local", database_url=READER
     )
-    factory = MagicMock()
+    from inspect import signature
+
+    assert "repository_factory" not in signature(create_app).parameters
+    assert "flashcard_repository_factory" not in signature(create_app).parameters
     with patch("meducation_api.repositories.postgres.PostgresRuntime") as runtime:
         runtime.return_value.__enter__.side_effect = ContentDatabaseError("uninitialized")
-        app = create_app(settings, repository_factory=factory)
+        app = create_app(settings)
         with pytest.raises(ContentDatabaseError, match="uninitialized"), TestClient(app):
             pytest.fail("Uninitialized DB must not start")
-    factory.assert_not_called()
     assert app.state.bank is None and app.state.flashcards is None
 
 

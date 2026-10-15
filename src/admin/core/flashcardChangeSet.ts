@@ -1,8 +1,6 @@
 import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck } from '../../content/schema/schema';
 import type { Subject } from '../../domain/types';
 import { validateFlashcardBank } from '../../content/validation/flashcardValidation';
-import { flashcardContentRevision } from './flashcardSerialization';
-import { sha256Text } from '../../domain/contentDigest';
 
 type Kind = 'deck' | 'card';
 type EntityFor<K extends Kind> = K extends 'deck' ? StoredFlashcardDeck : StoredFlashcard;
@@ -16,17 +14,7 @@ export type FlashcardAdminOperation =
   | { op: 'card.delete'; id: string }
   | { op: 'card.move'; id: string; afterId?: string; first?: true };
 
-export interface FlashcardAdminChangeSet {
-  changeSetVersion: 2;
-  base: { schemaVersion: 2; revision: string; subjectRevision: string };
-  resultRevision: string;
-  resultSubjectRevision: string;
-  reason: string;
-  operations: FlashcardAdminOperation[];
-}
-
 const clone = (bank: StoredFlashcardBank) => structuredClone(bank);
-const only = (value: Record<string, unknown>, keys: string[]) => Object.keys(value).every((key) => keys.includes(key));
 const keyFor = (kind: Kind) => (kind === 'deck' ? 'decks' : 'cards');
 const parentFor = (kind: Kind, value: EntityFor<Kind>) =>
   kind === 'deck' ? (value as StoredFlashcardDeck).subjectId : (value as StoredFlashcard).deckId;
@@ -116,80 +104,4 @@ export function applyFlashcardOperations(
   const errors = validateFlashcardBank(bank, subjects).filter((issue) => issue.level === 'error');
   if (errors.length) throw new Error(errors.map((issue) => issue.message).join(' '));
   return bank;
-}
-
-export function isFlashcardAdminChangeSet(value: unknown): value is FlashcardAdminChangeSet {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
-  const candidate = value as Record<string, unknown>;
-  if (!only(candidate, ['changeSetVersion', 'base', 'resultRevision', 'resultSubjectRevision', 'reason', 'operations']))
-    return false;
-  if (
-    candidate.changeSetVersion !== 2 ||
-    !candidate.base ||
-    typeof candidate.base !== 'object' ||
-    !Array.isArray(candidate.operations) ||
-    !candidate.operations.length
-  )
-    return false;
-  const base = candidate.base as Record<string, unknown>;
-  if (!only(base, ['schemaVersion', 'revision', 'subjectRevision'])) return false;
-  if (
-    base.schemaVersion !== 2 ||
-    typeof base.revision !== 'string' ||
-    typeof base.subjectRevision !== 'string' ||
-    typeof candidate.resultRevision !== 'string' ||
-    typeof candidate.resultSubjectRevision !== 'string' ||
-    typeof candidate.reason !== 'string' ||
-    !candidate.reason.trim()
-  )
-    return false;
-  return candidate.operations.every((operation) => {
-    if (!operation || typeof operation !== 'object' || Array.isArray(operation)) return false;
-    const op = operation as Record<string, unknown>;
-    if (typeof op.op !== 'string' || !/^(deck|card)\.(create|update|delete|move)$/.test(op.op)) return false;
-    const [kind, action] = op.op.split('.');
-    if (action === 'create')
-      return (
-        only(op, ['op', 'value', 'afterId']) &&
-        Boolean(op.value && typeof op.value === 'object' && !Array.isArray(op.value)) &&
-        (op.afterId === undefined || (typeof op.afterId === 'string' && Boolean(op.afterId.trim())))
-      );
-    if (action === 'update')
-      return (
-        only(op, ['op', 'id', 'value']) &&
-        typeof op.id === 'string' &&
-        Boolean(op.id.trim()) &&
-        Boolean(op.value && typeof op.value === 'object' && !Array.isArray(op.value))
-      );
-    if (typeof op.id !== 'string' || !op.id.trim()) return false;
-    if (action === 'delete')
-      return (
-        only(op, kind === 'card' ? ['op', 'id'] : ['op', 'id', 'cascade']) &&
-        (op.cascade === undefined || op.cascade === true)
-      );
-    return (
-      only(op, ['op', 'id', 'afterId', 'first']) &&
-      (op.afterId === undefined || (typeof op.afterId === 'string' && Boolean(op.afterId.trim()))) &&
-      (op.first === undefined || op.first === true) &&
-      !(op.first === true && op.afterId !== undefined)
-    );
-  });
-}
-
-export async function replayFlashcardAdminChangeSet(
-  source: StoredFlashcardBank,
-  baseSubjects: readonly Subject[],
-  changeSet: FlashcardAdminChangeSet,
-  resultSubjects: readonly Subject[] = baseSubjects,
-): Promise<StoredFlashcardBank> {
-  const subjectRevision = await sha256Text(JSON.stringify(baseSubjects));
-  const resultSubjectRevision = await sha256Text(JSON.stringify(resultSubjects));
-  const revision = await flashcardContentRevision(source, [...baseSubjects]);
-  if (revision !== changeSet.base.revision || subjectRevision !== changeSet.base.subjectRevision)
-    throw new Error('This flashcard change set is based on stale content.');
-  const result = applyFlashcardOperations(source, resultSubjects, changeSet.operations);
-  const resultRevision = await flashcardContentRevision(result, [...resultSubjects]);
-  if (resultRevision !== changeSet.resultRevision || resultSubjectRevision !== changeSet.resultSubjectRevision)
-    throw new Error('The replayed flashcard change set does not match its declared result revisions.');
-  return result;
 }

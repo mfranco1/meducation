@@ -35,3 +35,6 @@ playwright-report/
 # Packaged content-policy resources are built from checked frontend policy.
 /backend/src/meducation_api/content_policy/worker.mjs
 /backend/src/meducation_api/content_policy/limits.json
+
+# HTTP admin browser evidence
+/test-results-admin/

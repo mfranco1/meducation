@@ -136,6 +136,12 @@ for (const width of [390, 1048, 1440])
     const editor = await question(page);
     await editor.focus();
     await expect(editor).toBeFocused();
+    const save = page
+      .getByRole('region', { name: 'Quiz editor' })
+      .getByRole('button', { name: 'Save draft', exact: true });
+    await expect
+      .poll(() => save.evaluate((element) => getComputedStyle(element).backgroundColor))
+      .toBe('rgb(185, 81, 27)');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   });
 
@@ -266,7 +272,7 @@ test('logout wins before an in-flight save reaches the API and keeps unsaved tex
   await expect(page.getByText(/session expired|Sign in/).first()).toBeVisible();
 });
 
-test('grouped creates and imported legacy creates use reserved IDs and one paired save', async ({ page }) => {
+test('grouped quiz and flashcard creates use reserved IDs and one paired save', async ({ page }) => {
   await login(page);
   await question(page);
   const nav = page.getByRole('region', { name: 'Quiz navigator' });
@@ -303,7 +309,7 @@ test('grouped creates and imported legacy creates use reserved IDs and one paire
       (await draft(page)).pair.quizzes.subjects.some((row: { name: string }) => row.name === 'HTTP grouped subject'),
     )
     .toBe(true);
-  let saved = await draft(page);
+  const saved = await draft(page);
   const subject = saved.pair.quizzes.subjects.find((row: { name: string }) => row.name === 'HTTP grouped subject');
   const quiz = saved.pair.quizzes.quizzes.find((row: { name: string }) => row.name === 'HTTP grouped quiz');
   const item = saved.pair.quizzes.questions.find((row: { stem: string }) => row.stem === 'Grouped source stem');
@@ -311,57 +317,6 @@ test('grouped creates and imported legacy creates use reserved IDs and one paire
   expect(item.quizId).toBe(quiz.id);
   expect(item.answer).toBe('A');
   expect(item.verifiedAnswer).toBe('B');
-  // Import is explicitly converted and re-previewed, never trusted as an allocation proof.
-  const revision = await page.evaluate(async (bank) => {
-    const data = new TextEncoder().encode(JSON.stringify(bank, null, 2) + '\n');
-    const digest = await crypto.subtle.digest('SHA-256', data);
-    return (
-      'sha256-' +
-      Array.from(new Uint8Array(digest))
-        .map((b) => b.toString(16).padStart(2, '0'))
-        .join('')
-    );
-  }, saved.pair.quizzes);
-  const imported = {
-    changeSetVersion: 2,
-    base: { bankSchemaVersion: 4, revision },
-    reason: 'Reviewed legacy create conversion',
-    operations: [
-      {
-        op: 'question.create',
-        value: { ...item, id: 'i9000', stem: 'Imported exact $x^2$ stem\n', quizId: quiz.id },
-      },
-    ],
-  };
-  await page
-    .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Workspace', exact: true })
-    .click();
-  await page.getByRole('menuitem', { name: 'Import quiz change set' }).click();
-  await page
-    .locator('input[type=file]')
-    .first()
-    .setInputFiles({
-      name: 'legacy.json',
-      mimeType: 'application/json',
-      buffer: Buffer.from(JSON.stringify(imported)),
-    });
-  await page.getByRole('button', { name: 'Save import', exact: true }).click();
-  await expect
-    .poll(async () =>
-      (await draft(page)).pair.quizzes.questions.some(
-        (row: { stem: string }) => row.stem === 'Imported exact $x^2$ stem\n',
-      ),
-    )
-    .toBe(true);
-  saved = await draft(page);
-  const created = saved.pair.quizzes.questions.find(
-    (row: { stem: string }) => row.stem === 'Imported exact $x^2$ stem\n',
-  );
-  expect(created.id).not.toBe('i9000');
-  expect(created.quizId).toBe(quiz.id);
-  expect(created.answer).toBe('A');
-  expect(created.verifiedAnswer).toBe('B');
   await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
   await page.getByRole('combobox', { name: 'Subject', exact: true }).click();
   await page.getByRole('listbox').getByRole('option', { name: 'HTTP grouped subject', exact: true }).click();
@@ -410,26 +365,12 @@ test('grouped creates and imported legacy creates use reserved IDs and one paire
   expect((await draft(page)).pair).toEqual(paired);
 });
 
-test('keeps newer text typed while an imported save is in flight', async ({ page }) => {
+test('keeps newer text typed while a draft save is in flight', async ({ page }) => {
   await login(page);
   const editor = await question(page);
   const current = await draft(page);
   const item = current.pair.quizzes.questions[0];
-  const changes = {
-    changeSetVersion: 2,
-    base: { bankSchemaVersion: 4, revision: current.draft.digests.quizRevision },
-    reason: 'Captured imported edit',
-    operations: [{ op: 'question.update', id: item.id, value: { ...item, stem: 'Captured imported stem' } }],
-  };
-  await page
-    .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Workspace', exact: true })
-    .click();
-  await page.getByRole('menuitem', { name: 'Import quiz change set' }).click();
-  await page
-    .locator('input[type=file]')
-    .first()
-    .setInputFiles({ name: 'update.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(changes)) });
+  await editor.fill(JSON.stringify({ ...item, stem: 'Captured saved stem' }));
   let release!: () => void;
   const wait = new Promise<void>((resolve) => {
     release = resolve;
@@ -446,14 +387,17 @@ test('keeps newer text typed while an imported save is in flight', async ({ page
   const saved = page.waitForResponse(
     (response) => response.url().endsWith('/api/admin/draft/save') && response.request().method() === 'POST',
   );
-  await page.getByRole('button', { name: 'Save import', exact: true }).click();
+  await page
+    .getByRole('region', { name: 'Quiz editor' })
+    .getByRole('button', { name: 'Save draft', exact: true })
+    .click();
   await ready;
-  const text = JSON.stringify({ ...item, stem: 'Newer text during imported save' });
+  const text = JSON.stringify({ ...item, stem: 'Newer text during draft save' });
   await editor.fill(text);
   release();
-  // The imported write is deliberately held in flight above. Observe its
+  // The draft write is deliberately held in flight above. Observe its
   // committed receipt before issuing the post-commit read through auth pools.
   expect((await saved).status()).toBe(200);
-  await expect.poll(async () => (await draft(page)).pair.quizzes.questions[0].stem).toBe('Captured imported stem');
+  await expect.poll(async () => (await draft(page)).pair.quizzes.questions[0].stem).toBe('Captured saved stem');
   await expect(editor).toHaveValue(text);
 });

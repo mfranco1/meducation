@@ -44,12 +44,16 @@ def main():
     try:
         docker("network", "create", network)
         with tempfile.TemporaryDirectory(prefix=prefix) as folder:
+            fixture = json.loads((ROOT / "tests/fixtures/paired-authoring-cases.json").read_bytes())
+            fixture_path = Path(folder) / "paired-fixture.json"
+            fixture_path.write_text(json.dumps(fixture["base"], ensure_ascii=False))
             module = Path(folder) / "policy_http.py"
             module.write_text(TEST_APP)
             docker("run", "--detach", "--name", api, "--network", network,
                    "--network-alias", "api", "--memory", "1g", "--read-only",
                    "--tmpfs", "/tmp:rw,size=64m", "--mount",
                    f"type=bind,src={module},dst=/app/policy_http.py,readonly",
+                   "--mount", f"type=bind,src={fixture_path},dst=/app/paired-fixture.json,readonly",
                    "--entrypoint", "python", args.image, "-m", "uvicorn",
                    "policy_http:app", "--app-dir", "/app", "--host", "0.0.0.0",
                    "--port", "8000", timeout=60)
@@ -71,7 +75,6 @@ def main():
                 finally:
                     connection.close()
 
-            fixture = json.loads((ROOT / "tests/fixtures/paired-authoring-cases.json").read_bytes())
             body = json.dumps(fixture["base"], ensure_ascii=False).encode()
             deadline = time.monotonic() + 30
             while True:
@@ -111,13 +114,15 @@ def main():
             status, _ = request(body, {"Content-Encoding": "gzip"})
             assert status == 415
             report["checks"].append("compressed body denied without expansion")
-            # Check packaged actual-bank acceptance independently of the test-only endpoint.
+            # Check packaged synthetic-pair validation independently of the test-only endpoint.
             actual_check = """
 import hashlib, json, platform
 from pathlib import Path
 from meducation_api.content_policy import PairedContentValidator
-q = Path('/app/content/questionBank.generated.json').read_text()
-f = Path('/app/content/flashcardBank.generated.json').read_text()
+assert not Path('/app/content').exists(), 'Historical corpus must not be packaged'
+pair = json.loads(Path('/app/paired-fixture.json').read_text())
+q = json.dumps(pair['quizzes'], ensure_ascii=False, indent=2) + '\\n'
+f = json.dumps(pair['flashcards'], ensure_ascii=False, indent=2) + '\\n'
 p = PairedContentValidator().documents(q, f)
 assert p.quiz_artifact == q and p.flashcard_artifact == f
 print(json.dumps({'policyVersion': p.policy_version, 'warnings': p.warnings,
@@ -127,7 +132,7 @@ print(json.dumps({'policyVersion': p.policy_version, 'warnings': p.warnings,
 """
             summary = json.loads(docker("exec", api, "python", "-c", actual_check, timeout=150))
             assert summary["policyVersion"] == 1
-            report["actualBank"] = summary
+            report["fixturePair"] = summary
             report["nodeVersion"] = docker("exec", api, "node", "--version")
             report["checks"].append("installed wheel validates actual banks with exact artifact bytes")
             report["imageId"] = docker("image", "inspect", "--format", "{{.Id}}", args.image)

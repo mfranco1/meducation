@@ -54,4 +54,4 @@ Learner checkpoints are not content. They belong in a separate progress reposito
 
 ## Validation
 
-Run `npm run validate:content` to validate both canonical banks and cross-bank subject references. Do not edit the generated flashcard JSON without reviewing stable IDs, parent relationships, order, rich content, and the corresponding authoring change set.
+Edit flashcards through the authenticated paired PostgreSQL draft, preserving stable IDs, parent relationships, order, and rich content. Validate a fresh selected database export with `validate-export`; `npm run validate:content -- <quiz-file> <flashcard-file>` checks only the explicitly selected pair and its shared-subject references.

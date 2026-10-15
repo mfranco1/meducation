@@ -22,80 +22,46 @@ import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
 import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
 import { HttpQuestionBankGateway } from './data/HttpQuestionBankGateway';
-import type { InMemoryQuestionBankGateway } from './data/InMemoryQuestionBankGateway';
 import { useAdminEditor } from './useAdminEditor';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 import { applyFlashcardOperations, type FlashcardAdminOperation } from './core/flashcardChangeSet';
-import type { StoredFlashcardBank } from '../content/schema/schema';
 import { parseChangeSet } from './core/changeSetSchema';
-
-const localAdminEnabled = import.meta.env.DEV || import.meta.env.VITE_ENABLE_LOCAL_ADMIN === 'true';
 
 export function AdminWorkspace({
   gateway,
   controls,
   onDirtyChange,
 }: {
-  gateway: HttpQuestionBankGateway | InMemoryQuestionBankGateway;
+  gateway: HttpQuestionBankGateway;
   controls?: ReactNode;
   onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const remote = gateway instanceof HttpQuestionBankGateway ? gateway : undefined;
-  const initialFlashcards = useRef(gateway.getFlashcardBank()).current;
-  const initialSubjects = useRef(remote?.current.pair.quizzes.subjects).current;
   const [section, setSection] = useState<'quizzes' | 'flashcards'>('quizzes');
   const [deleteRequest, setDeleteRequest] = useState<DeleteRequest>();
+  const [flashcardDiscardRequest, setFlashcardDiscardRequest] = useState(0);
   const [deleteReason, setDeleteReason] = useState('Remove obsolete content');
   const [deleteError, setDeleteError] = useState('');
-  const [coupledQuizOperationCount, setCoupledQuizOperationCount] = useState<number>();
-  const [undoPulse, setUndoPulse] = useState(0);
-  const [coordinatedTransaction, setCoordinatedTransaction] = useState<{
-    id: number;
-    bank: StoredFlashcardBank;
-    operations: FlashcardAdminOperation[];
-    reason: string;
-    quizOperationCount: number;
-  }>({
-    id: 0,
-    bank: gateway.getFlashcardBank(),
-    operations: [],
-    reason: 'Local flashcard content edit',
-    quizOperationCount: 0,
-  });
   const flashcardDraft = useRef(false);
-  const flashcardWorkspace = useRef({
-    bank: gateway.getFlashcardBank(),
-    operations: [] as FlashcardAdminOperation[],
-    reason: 'Local flashcard content edit',
-  });
   const [bulkSubjectQuery, setBulkSubjectQuery] = useState<string>();
   const [bulkQuizQuery, setBulkQuizQuery] = useState<string>();
   const [recordAnchor, setRecordAnchor] = useState<HTMLElement | null>(null);
-  const [workspaceAnchor, setWorkspaceAnchor] = useState<HTMLElement | null>(null);
-  const flashcardExport = useRef<() => void>(() => undefined);
-  const [flashcardExportEnabled, setFlashcardExportEnabled] = useState(false);
   const {
     snapshot,
-    originalRevision,
     selection,
     mode,
     editor,
     reason,
     issues,
     summary,
-    dirty,
-    exported,
     editorDirty,
     filter,
     setFilter,
     pendingBulk,
-    importedChangeSet,
     bulkTarget,
     busy,
     loadError,
     selectedQuiz,
     selectedSubject,
-    hasAppliedChanges,
     loadEntity,
     loadNew,
     chooseBulkTarget,
@@ -107,19 +73,10 @@ export function AdminWorkspace({
     stageSingle,
     validateBulkDraft,
     stageValidatedBulk,
-    importChangeSetFile,
-    stageImportedChangeSet,
     stageDelete,
     browseContext,
-    undo,
-    reset,
-    exportFiles,
-    stageCoordinatedImport,
-    undoCoordinated,
-    resetCoordinatedWorkspace,
-    markCoordinatedExport,
+    savePairedChange,
   } = useAdminEditor(gateway);
-  const importFileRef = useRef<HTMLInputElement>(null);
   useEffect(() => {
     onDirtyChange?.(editorDirty || flashcardDraft.current);
   }, [editorDirty, onDirtyChange]);
@@ -142,12 +99,18 @@ export function AdminWorkspace({
           ? `${bulkSubject.name} / ${bulkQuiz.name}`
           : (bulkSubject?.name ?? 'Choose a subject and quiz');
 
-  const deletionKey = snapshot && deleteRequest ? JSON.stringify([snapshot.bank, snapshot.flashcards ?? gateway.getFlashcardBank()]) : '';
+  const deletionKey =
+    snapshot && deleteRequest ? JSON.stringify([snapshot.bank, snapshot.flashcards ?? gateway.getFlashcardBank()]) : '';
   const requestDelete = (selection: DeleteRequest['selection'], label: string, ids?: string[]) => {
     if (!snapshot || busy) return;
     setDeleteReason(reason);
     setDeleteError('');
-    setDeleteRequest({ selection, label, ids, reviewKey: JSON.stringify([snapshot.bank, snapshot.flashcards ?? gateway.getFlashcardBank()]) });
+    setDeleteRequest({
+      selection,
+      label,
+      ids,
+      reviewKey: JSON.stringify([snapshot.bank, snapshot.flashcards ?? gateway.getFlashcardBank()]),
+    });
   };
   const confirmDelete = async () => {
     const request = deleteRequest;
@@ -165,7 +128,7 @@ export function AdminWorkspace({
         snapshot.revision,
       );
       if (staged) setDeleteRequest(undefined);
-      else setDeleteError('The deletion did not pass validation. No changes were staged.');
+      else setDeleteError('The deletion did not pass validation. No changes were saved.');
       return;
     }
     const parentId = request.selection.id;
@@ -173,18 +136,17 @@ export function AdminWorkspace({
     try {
       if (
         flashcardDraft.current &&
-        !window.confirm('Discard the unstaged flashcard drafts and stage the paired subject deletion?')
+        !window.confirm('Discard the unstaged flashcard drafts and save the paired subject deletion?')
       )
         return;
-      const workspace = flashcardWorkspace.current;
-      const childDecks = workspace.bank.decks.filter((deck) => deck.subjectId === parentId);
+      const savedFlashcards = gateway.getFlashcardBank();
+      const childDecks = savedFlashcards.decks.filter((deck) => deck.subjectId === parentId);
       const cascades: FlashcardAdminOperation[] = childDecks.map((deck) => ({
         op: 'deck.delete',
         id: deck.id,
         cascade: true,
       }));
-      const operations = [...workspace.operations, ...cascades];
-      const flashcards = applyFlashcardOperations(workspace.bank, snapshot.bank.subjects, cascades);
+      const flashcards = applyFlashcardOperations(savedFlashcards, snapshot.bank.subjects, cascades);
       const parsed = parseChangeSet({
         changeSetVersion: 2,
         base: { bankSchemaVersion: 4, revision: snapshot.revision },
@@ -192,20 +154,12 @@ export function AdminWorkspace({
         operations: [{ op: 'subject.delete', id: parentId, cascade: true }],
       });
       if (!parsed.changeSet) throw new Error('The subject deletion could not be prepared.');
-      await stageCoordinatedImport(parsed.changeSet, flashcards);
-      const pairedReason = `${workspace.reason}; ${deleteReason}`;
-      setCoordinatedTransaction((previous) => ({
-        id: previous.id + 1,
-        bank: flashcards,
-        operations,
-        reason: pairedReason,
-        quizOperationCount: gateway.appliedOperations().length,
-      }));
-      setCoupledQuizOperationCount(gateway.coordinatedOperationCount());
+      await savePairedChange(parsed.changeSet, flashcards);
+      setFlashcardDiscardRequest((value) => value + 1);
       setDeleteError('');
       setDeleteRequest(undefined);
     } catch (error) {
-      setDeleteError(error instanceof Error ? error.message : 'The paired subject deletion could not be staged.');
+      setDeleteError(error instanceof Error ? error.message : 'The paired subject deletion could not be saved.');
     }
   };
 
@@ -225,37 +179,7 @@ export function AdminWorkspace({
             </Typography>
           </Stack>
           <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
-            {!remote &&
-              (section === 'quizzes' ? (
-                <Button
-                  size="small"
-                  variant="contained"
-                  disabled={!snapshot || Boolean(busy) || !hasAppliedChanges || coupledQuizOperationCount !== undefined}
-                  onClick={exportFiles}
-                >
-                  Export quizzes
-                </Button>
-              ) : (
-                <Button
-                  size="small"
-                  variant="contained"
-                  disabled={Boolean(busy) || !flashcardExportEnabled}
-                  onClick={() => flashcardExport.current()}
-                >
-                  Export flashcards
-                </Button>
-              ))}
             {controls}
-            <input
-              ref={importFileRef}
-              type="file"
-              accept="application/json,.json"
-              hidden
-              onChange={(event) => {
-                void importChangeSetFile(event.currentTarget.files?.[0]);
-                event.currentTarget.value = '';
-              }}
-            />
           </Stack>
         </Stack>
       </Container>
@@ -263,14 +187,8 @@ export function AdminWorkspace({
   );
 
   return (
-    <AppShell header={header} busy={Boolean((remote || localAdminEnabled) && !snapshot && !loadError)}>
-      {!remote && !localAdminEnabled ? (
-        <Container maxWidth="sm" sx={{ py: 8 }}>
-          <Alert severity="warning">
-            The JSON content admin is disabled in production builds. It is not an authentication mechanism.
-          </Alert>
-        </Container>
-      ) : !snapshot ? (
+    <AppShell header={header} busy={Boolean(!snapshot && !loadError)}>
+      {!snapshot ? (
         loadError ? (
           <Container sx={{ py: 8 }}>
             <Alert severity="error">{loadError}</Alert>
@@ -293,11 +211,9 @@ export function AdminWorkspace({
           </Stack>
           <Box sx={{ display: section === 'flashcards' ? 'block' : 'none' }}>
             <FlashcardAdminPanel
-              initialBank={initialFlashcards}
-              initialSubjects={initialSubjects ?? snapshot.bank.subjects}
-              serverBank={remote ? snapshot.flashcards : undefined}
-              readSavedBank={remote ? () => remote.getFlashcardBank() : undefined}
-              onSaveBank={remote ? (bank, reason) => remote.saveFlashcards(bank, reason) : undefined}
+              discardRequest={flashcardDiscardRequest}
+              serverBank={snapshot.flashcards!}
+              onSaveBank={(bank, reason) => gateway.saveFlashcards(bank, reason)}
               onDraftChange={(dirty) => {
                 flashcardDraft.current = dirty;
                 onDirtyChange?.(dirty || editorDirty);
@@ -314,46 +230,8 @@ export function AdminWorkspace({
                   loadEntity({ kind: 'subject', id }, subject);
                 }
               }}
-              onBankChange={(bank) => { if ('setFlashcardBank' in gateway) gateway.setFlashcardBank(bank); }}
-              onExportReady={(action, enabled) => {
-                flashcardExport.current = action;
-                setFlashcardExportEnabled(enabled);
-              }}
-              onWorkspaceChange={(bank, operations, changeReason) => {
-                flashcardWorkspace.current = { bank, operations, reason: changeReason };
-              }}
-              externalTransaction={coordinatedTransaction}
-              undoRequest={undoPulse}
-              onUndoCoordinated={async (expected) => {
-                await undoCoordinated(expected);
-                setCoupledQuizOperationCount(gateway.coordinatedOperationCount());
-                setCoordinatedTransaction((previous) => ({ ...previous, id: 0 }));
-              }}
               onDeleteSubject={(id, name) => requestDelete({ kind: 'subject', id }, name)}
               quizRevision={snapshot.revision}
-              originalQuizRevision={originalRevision}
-              quizChangesStaged={!remote && hasAppliedChanges}
-              quizBank={snapshot.bank}
-              quizChangeSet={
-                !remote && hasAppliedChanges
-                  ? {
-                      changeSetVersion: 2,
-                      base: { bankSchemaVersion: 4, revision: originalRevision },
-                      reason,
-                      operations: gateway.appliedOperations(),
-                    }
-                  : undefined
-              }
-              onStagePairedImport={async (changeSet, flashcards) => {
-                await stageCoordinatedImport(changeSet, flashcards);
-                setCoupledQuizOperationCount(gateway.coordinatedOperationCount());
-              }}
-              onResetPaired={async (flashcards) => {
-                await resetCoordinatedWorkspace(flashcards);
-                setCoupledQuizOperationCount(undefined);
-                setCoordinatedTransaction((previous) => ({ ...previous, id: 0 }));
-              }}
-              onPairedExport={markCoordinatedExport}
               externalBusy={Boolean(busy)}
             />
           </Box>
@@ -485,15 +363,7 @@ export function AdminWorkspace({
                         mode === 'single' ? stageSingle : pendingBulkCurrent ? stageValidatedBulk : validateBulkDraft
                       }
                     >
-                      {mode === 'single'
-                        ? remote
-                          ? 'Save draft'
-                          : 'Stage'
-                        : pendingBulkCurrent
-                          ? remote
-                            ? 'Save draft'
-                            : 'Stage'
-                          : 'Preview'}
+                      {mode === 'single' || pendingBulkCurrent ? 'Save draft' : 'Preview'}
                     </Button>
                     {mode === 'single' && (
                       <>
@@ -549,56 +419,6 @@ export function AdminWorkspace({
                         </Menu>
                       </>
                     )}
-                    <Button
-                      disabled={Boolean(remote) || Boolean(busy) || !hasAppliedChanges}
-                      onClick={() => {
-                        if (
-                          coupledQuizOperationCount !== undefined &&
-                          gateway.appliedOperations().length === coupledQuizOperationCount
-                        ) {
-                          setSection('flashcards');
-                          setUndoPulse((value) => value + 1);
-                        } else void undo();
-                      }}
-                    >
-                      Undo
-                    </Button>
-                    <Button
-                      size="small"
-                      aria-haspopup="menu"
-                      onClick={(event) => setWorkspaceAnchor(event.currentTarget)}
-                    >
-                      Workspace
-                    </Button>
-                    <Menu
-                      anchorEl={workspaceAnchor}
-                      open={Boolean(workspaceAnchor)}
-                      onClose={() => setWorkspaceAnchor(null)}
-                    >
-                      <MenuItem
-                        disabled={
-                          Boolean(remote) ||
-                          (!hasAppliedChanges && !editorDirty) ||
-                          Boolean(busy) ||
-                          coupledQuizOperationCount !== undefined
-                        }
-                        onClick={() => {
-                          setWorkspaceAnchor(null);
-                          reset();
-                        }}
-                      >
-                        Reset quizzes
-                      </MenuItem>
-                      <MenuItem
-                        disabled={!snapshot || Boolean(busy)}
-                        onClick={() => {
-                          setWorkspaceAnchor(null);
-                          importFileRef.current?.click();
-                        }}
-                      >
-                        Import quiz change set
-                      </MenuItem>
-                    </Menu>
                   </Stack>
                   {pendingBulkCurrent && pendingBulk && (
                     <Alert
@@ -628,30 +448,6 @@ export function AdminWorkspace({
                       )}
                     </Alert>
                   )}
-                  {importedChangeSet && (
-                    <Paper variant="outlined" sx={{ p: 2 }}>
-                      <Stack spacing={1}>
-                        <Typography variant="subtitle1">
-                          Import preview · {importedChangeSet.changeSet.operations.length} operations
-                        </Typography>
-                        <TextField
-                          value={importedChangeSet.text}
-                          multiline
-                          minRows={8}
-                          maxRows={14}
-                          fullWidth
-                          InputProps={{ readOnly: true, sx: { fontFamily: 'monospace', fontSize: 12 } }}
-                        />
-                        <Button
-                          variant="contained"
-                          disabled={Boolean(busy) || importedChangeSet.issues.some((issue) => issue.level === 'error')}
-                          onClick={stageImportedChangeSet}
-                        >
-                          {remote ? 'Save import' : 'Stage import'}
-                        </Button>
-                      </Stack>
-                    </Paper>
-                  )}
                 </Stack>
               </Paper>
               <AdminStatusPanel
@@ -659,14 +455,12 @@ export function AdminWorkspace({
                 issues={issues}
                 questionPaths={pendingBulkCurrent ? pendingBulk?.questionPaths : undefined}
                 summary={summary}
-                dirty={dirty}
-                exported={exported}
+                editorDirty={editorDirty}
                 busy={busy}
               />
             </Stack>
           )}
           <AdminDeleteDialog
-            commitLabel={remote ? 'Save' : 'Stage'}
             currentReviewKey={deletionKey}
             busy={Boolean(busy)}
             request={deleteRequest}

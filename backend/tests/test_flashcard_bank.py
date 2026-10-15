@@ -4,11 +4,10 @@ from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
+from fixture_content import fixture_app
 from pydantic import ValidationError
 
-from meducation_api.main import create_app
-from meducation_api.repositories.question_bank import FlashcardBank, JsonFlashcardCatalogRepository
-from meducation_api.settings import Settings
+from meducation_api.repositories.question_bank import FlashcardBank
 
 
 @pytest.fixture
@@ -30,10 +29,6 @@ def flashcard_bank() -> dict:
     return json.loads(fixture.read_text(encoding="utf-8"))["bank"]
 
 
-def write_json(path, value: dict) -> None:
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-
-
 def test_flashcard_bank_rejects_bad_schema_and_references(flashcard_bank: dict) -> None:
     invalid_version = {**flashcard_bank, "schemaVersion": 1}
     with pytest.raises(ValidationError, match="Unsupported flashcard bank schema"):
@@ -48,62 +43,10 @@ def test_flashcard_bank_rejects_bad_schema_and_references(flashcard_bank: dict) 
         FlashcardBank.model_validate(null_optional)
 
 
-def test_flashcard_repository_preserves_order_and_checks_shared_subjects(tmp_path, quiz_bank: dict, flashcard_bank: dict) -> None:
-    quiz_path = tmp_path / "quiz.json"
-    flashcard_path = tmp_path / "flashcards.json"
-    write_json(quiz_path, quiz_bank)
-    write_json(flashcard_path, flashcard_bank)
-    from meducation_api.repositories.question_bank import JsonQuestionBankRepository
-
-    subjects = JsonQuestionBankRepository(quiz_path).list_subjects()
-    repository = JsonFlashcardCatalogRepository(flashcard_path, subjects)
-    assert repository.revision == "sha256-4b107698325e06033184db9da6e921c6f07ee50837fc539bca72fc1addfcc8b9"
-    assert [(deck.id, count) for deck, count in repository.list_catalog("s1")] == [
-        ("d-cranial", 2), ("d-empty", 0)
-    ]
-    assert [card.id for card in repository.list_cards("d-cranial")] == ["f-1", "f-2"]
-    assert [subject.deckCount for subject in repository.list_subjects()] == [2, 0]
-    broken = copy.deepcopy(flashcard_bank)
-    broken["decks"][0]["subjectId"] = "s-unknown"
-    write_json(flashcard_path, broken)
-    with pytest.raises(RuntimeError, match="subject missing"):
-        JsonFlashcardCatalogRepository(flashcard_path, subjects)
-
-
-def test_flashcard_revision_changes_when_shared_subject_metadata_changes(tmp_path, quiz_bank: dict, flashcard_bank: dict) -> None:
-    quiz_path = tmp_path / "quiz.json"
-    flashcard_path = tmp_path / "flashcards.json"
-    write_json(quiz_path, quiz_bank)
-    write_json(flashcard_path, flashcard_bank)
-    from meducation_api.repositories.question_bank import JsonQuestionBankRepository
-
-    subjects = JsonQuestionBankRepository(quiz_path).list_subjects()
-    original = JsonFlashcardCatalogRepository(flashcard_path, subjects).revision
-    changed = copy.deepcopy(subjects)
-    changed[0] = changed[0].model_copy(update={"name": "Renamed subject"})
-    assert JsonFlashcardCatalogRepository(flashcard_path, changed).revision != original
-
-
-def test_flashcard_catalog_keeps_canonical_interleaved_deck_order(tmp_path, quiz_bank: dict, flashcard_bank: dict) -> None:
-    from meducation_api.repositories.question_bank import JsonQuestionBankRepository
-
-    quiz_path, flashcard_path = tmp_path / "quiz.json", tmp_path / "flashcards.json"
-    flashcard_bank["decks"].reverse()
-    flashcard_bank["decks"].append({"id": "d-extra", "subjectId": "s1", "name": "Extra"})
-    write_json(quiz_path, quiz_bank)
-    write_json(flashcard_path, flashcard_bank)
-    repository = JsonFlashcardCatalogRepository(flashcard_path, JsonQuestionBankRepository(quiz_path).list_subjects())
-    expected = ["d-empty", "d-cranial", "d-extra"]
-    assert [deck.id for deck, _ in repository.list_catalog("s1")] == expected
-    assert repository.list_subjects()[0].deckIds == expected
-
-
-def test_flashcard_api_catalog_cards_revision_and_missing_routes(tmp_path, quiz_bank: dict, flashcard_bank: dict) -> None:
-    quiz_path = tmp_path / "quiz.json"
-    flashcard_path = tmp_path / "flashcards.json"
-    write_json(quiz_path, quiz_bank)
-    write_json(flashcard_path, flashcard_bank)
-    app = create_app(Settings(bank_path=quiz_path, flashcard_bank_path=flashcard_path))
+def test_flashcard_api_catalog_cards_revision_and_missing_routes(
+    quiz_bank: dict, flashcard_bank: dict
+) -> None:
+    app = fixture_app(quiz_bank, flashcard_bank)
     with TestClient(app) as client:
         subjects = client.get("/api/v1/flashcards/subjects")
         assert subjects.status_code == 200
@@ -123,5 +66,12 @@ def test_flashcard_api_catalog_cards_revision_and_missing_routes(tmp_path, quiz_
 
         assert client.get("/api/v1/flashcards/subjects/s-missing/catalog").status_code == 404
         assert client.get("/api/v1/flashcards/decks/d-missing/cards").status_code == 404
-        assert client.get("/api/v1/flashcards/decks/d-cranial/cards?revision=stale").status_code == 409
-        assert client.get("/api/v1/flashcards/subjects", headers={"If-None-Match": subjects.headers["etag"]}).status_code == 304
+        assert (
+            client.get("/api/v1/flashcards/decks/d-cranial/cards?revision=stale").status_code == 409
+        )
+        assert (
+            client.get(
+                "/api/v1/flashcards/subjects", headers={"If-None-Match": subjects.headers["etag"]}
+            ).status_code
+            == 304
+        )

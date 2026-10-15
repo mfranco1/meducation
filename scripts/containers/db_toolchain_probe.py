@@ -244,12 +244,7 @@ def run_probe():
         assert reader.pool.checkedout() == 0
 
         async def rejects_api():
-            app = create_app(
-                settings,
-                repository_factory=lambda _: (_ for _ in ()).throw(
-                    AssertionError("JSON fallback")
-                ),
-            )
+            app = create_app(settings)
             try:
                 async with app.router.lifespan_context(app):
                     raise AssertionError("Uninitialized product schema started")

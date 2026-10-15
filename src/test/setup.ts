@@ -2,14 +2,6 @@ import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 
-// Unit tests use small fixed banks; validate:content scans the authored banks.
-vi.mock('../content/questionBank.generated.json', async () => ({
-  default: (await import('../../tests/fixtures/question-bank.json')).default,
-}));
-vi.mock('../content/flashcardBank.generated.json', async () => ({
-  default: (await import('../../tests/fixtures/flashcard-bank-contract.json')).default.bank,
-}));
-
 const matchMedia = (matches = false) => vi.fn().mockImplementation((query: string) => ({
   matches,
   media: query,

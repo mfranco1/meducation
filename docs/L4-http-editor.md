@@ -8,23 +8,22 @@ retains the original mounted editor. Production provider acceptance remains
 pending: the current backend accepts only explicitly enabled synthetic loopback
 identity. The designated local authority cutover is complete; this does not accept hosted identity or authorize another authority replacement.
 
-`VITE_ADMIN_SOURCE=http npm run dev` selects HTTP mode during development. Its
+`npm run dev` uses the HTTP editor during development. Its
 same-origin `/api` proxy must reach the explicitly configured local API; configure
 that API's exact admin Origin to match the frontend origin. Session/editor
 credentials and identity keys stay in backend configuration. No credential, token,
 private draft or browser editor text is put in learner progress storage.
 
-The JSON editor remains an isolated development/fixture adapter. Vite development
-selects HTTP by default. JSON fixtures require both `VITE_ADMIN_SOURCE=json` and
-`VITE_JSON_FIXTURE_AUTHORING=true` on the development server. Production builds
-always use HTTP authoring and omit this adapter and both bundled banks, even if
-those fixture variables are set. Normal learner builds omit admin modules. A
-source selection requires restarting; there is no writable-mode switch or
-automatic fallback. See [local authoring](local-authoring.md).
+The JSON fixture editor has been removed. Development and production both use
+HTTP authoring; explicit `VITE_ADMIN_SOURCE` or `VITE_JSON_FIXTURE_AUTHORING`
+settings fail early and must be removed. Normal learner builds omit admin modules.
+Browser tests seed small synthetic fixtures into isolated disposable PostgreSQL,
+without using the designated authority or its credentials. See
+[local authoring](local-authoring.md).
 
 ## Editing and paired history
 
-Existing quiz record/add/import and flashcard record/add/import panels retain
+Quiz record/add and flashcard record/add panels retain
 browsing, ordered operations, bounded diagnostics, shared-subject cascade review
 and mounted text across section switches. In HTTP mode, **Save draft** writes one
 paired server revision; saving does not publish. Server confirmations show captured
@@ -41,19 +40,14 @@ context. Both parents and descendants materialize in one paired save. Establishe
 records retain their IDs. Reservations remain burned after cancellation, rejected
 validation, logout or an abandoned preview.
 
-Valid legacy import creates are explicitly converted: new-record IDs and structural
-parent/order references are replaced with server reservations before server
-re-preview and save confirmation. Existing-record IDs, stems, choices, sparse
-fields, source/verified answers and exact authored text remain unchanged. The
-confirmation exposes the resulting reserved IDs; imported IDs are never accepted
-as allocation proof. Invalid schema or unsupported identifier spellings are rejected
-before allocation. Imports whose base content/context is stale fail and require
-review again. A paired import adopts the actual returned server banks rather than
-retaining its former temporary IDs.
+Routine file import/replay and per-section replacement exports have been removed.
+Content-only JSON fields remain authoring inputs; they compile to a reviewed
+paired HTTP save with server-reserved IDs. Recovery imports are privileged,
+explicit maintenance jobs; they are never an editor fallback.
 
 **Undo saved batch** and **Reset paired draft** operate on server history/current
 publication and show both-bank context in confirmation. Per-section local history
-buttons are disabled in HTTP mode. Undo advances revision without publication;
+buttons have been removed. Undo advances revision without publication;
 reset retains displaced saved content and starts a new Undo epoch. Unsaved editor
 text remains available after these actions for explicit review. Shared-subject
 cascades still require the hidden section's discard decision before committing;
@@ -113,7 +107,7 @@ Do not rebuild shared `dist` while any learner/admin browser suite is running.
 The suite covers paired edits/reload/publication/activation/export, expired sessions,
 uncertain commit reconciliation, stale tabs/reset, pending preview edits, canceled
 step-up, successful fresh step-up with dirty text and stale-save rejection after
-another tab commits, logout during save, grouped/import creates and keyboard/overflow at
+another tab commits, logout during save, grouped creates, selected deletion/undo, deck/card CRUD and cross-deck moves and keyboard/overflow at
 390/1048/1440px. Existing JSON editor, learner progress and review browser suites
 remain separate regression gates. Hosted identity/TLS/routing, durable authored
 off-device recovery, candidate-input native CI and manual assistive-technology/device

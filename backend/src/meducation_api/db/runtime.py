@@ -14,7 +14,7 @@ from meducation_api.settings import Settings
 class PostgresRuntime(AbstractContextManager["PostgresRuntime"]):
     def __init__(self, settings: Settings):
         if settings.database_url is None:
-            raise ContentDatabaseError("Postgres content mode requires the runtime connection.")
+            raise ContentDatabaseError("Content API requires MEDUCATION_DATABASE_URL for its PostgreSQL reader.")
         self.engine: Engine = create_database_engine(
             database_url(
                 settings.database_url,

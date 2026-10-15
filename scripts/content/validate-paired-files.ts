@@ -7,7 +7,12 @@ import { validateQuestionBank, validateStoredQuestionBank } from '../../src/cont
 // The operator first runs strict Python parsing; this gate never imports bundled banks.
 try {
   const [quizPath, flashcardPath] = process.argv.slice(2);
-  if (!quizPath || !flashcardPath || process.argv.length !== 4) throw new Error('Expected paired inputs');
+  if (!quizPath || !flashcardPath || process.argv.length !== 4) {
+    console.error(
+      'Provide an explicit pair: npm run validate:content -- <quiz-file> <flashcard-file>. For current database content, validate a fresh selected export.',
+    );
+    throw new Error('Expected paired inputs');
+  }
   const bank = JSON.parse(readFileSync(quizPath, 'utf8')) as StoredQuestionBank;
   const flashcards = JSON.parse(readFileSync(flashcardPath, 'utf8')) as StoredFlashcardBank;
   const questions = bank.questions.map((question) => ({ ...question, metadata: question.metadata ?? {} }));

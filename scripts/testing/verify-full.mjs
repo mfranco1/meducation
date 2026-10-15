@@ -5,7 +5,10 @@ const steps = [
   ['npm', ['run', 'format:check']],
   ['npm', ['run', 'test:architecture']],
   ['npm', ['test']],
-  ['npm', ['run', 'validate:content']],
+  [
+    'npm',
+    ['run', 'validate:content', '--', 'tests/fixtures/question-bank.json', 'tests/fixtures/empty-flashcard-bank.json'],
+  ],
   ['npm', ['run', 'build:content-policy']],
   [
     '.venv/bin/ruff',

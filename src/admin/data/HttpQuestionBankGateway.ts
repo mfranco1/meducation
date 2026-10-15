@@ -12,7 +12,6 @@ import {
 } from './PairedHttpClient';
 
 export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
-  readonly delivery = 'http' as const;
   current: PairedSnapshot;
   private readonly listeners = new Set<() => void>();
   subscribe(listener: () => void): () => void {
@@ -52,13 +51,6 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
       revision: this.current.draft.digests.quizRevision,
       flashcards: structuredClone(this.current.pair.flashcards),
     };
-  }
-  coordinatedOperationCount(): undefined {
-    return undefined;
-  }
-  appliedOperations(): AdminChangeSet['operations'] {
-    // Used by the existing workspace only to enable paired Undo, not as durable history.
-    return this.current.undo.available ? [{ op: 'subject.delete', id: '__server_history__' }] : [];
   }
   private async allocate(pair: PairedSnapshot['pair'], reason: string): Promise<Record<string, string>> {
     const mapping: Record<string, string> = {};
@@ -217,8 +209,5 @@ Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.
       reason: 'Reset the draft to the current publication',
     });
     return this.accept(receipt.snapshot);
-  }
-  async resetCoordinated(): Promise<AdminBankSnapshot> {
-    return this.reset();
   }
 }

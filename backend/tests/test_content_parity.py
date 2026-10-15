@@ -17,7 +17,6 @@ from meducation_api.settings import Settings
     [
         ("meducation", "meducation", "postgres"),
         ("meducation_verify_copy", "other", "postgres"),
-        ("meducation_verify_copy", "meducation_verify_copy", "json"),
     ],
 )
 def test_parity_target_guard_does_not_connect(database, reader, source):

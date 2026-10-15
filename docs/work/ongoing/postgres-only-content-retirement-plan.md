@@ -78,25 +78,105 @@ acceptance gates pass. Do not infer completion from individual passing slices.
   `var/backups/postgres/json-retirement-20261015/authority-after-first-slice.json`.
   No routine content writes, imports, migrations, allocation or authority restarts
   occurred. Nothing has been committed, published or deployed.
-- Remaining next steps: migrate the legacy
-  admin browser scenarios, remove the remaining local editor/file workflows and
-  in-memory implementation, then remove backend JSON service/tooling and packaged
-  banks per stages below. Neither
-  repository bank has been deleted; global adapter mocks remain until their last
-  adapter tests are replaced. No full-retirement acceptance is claimed yet.
+- Second slice: standard admin Playwright now seeds the explicit synthetic paired
+  fixture into an owned disposable PostgreSQL container and uses authenticated
+  HTTP workflows through Vite. The fixture runner accepts a guarded `--pair-file`
+  input and still refuses private/authority inputs; all 7 admission tests passed.
+  Backend fixture/helper Ruff passed. Initial full host acceptance: 26/26 tests,
+  including CRUD/order/cross-deck moves, bulk reservations, selected/cascade
+  deletion with paired undo, publication/activation/export, stale/uncertain writes,
+  authentication freshness, hidden text/context cancellation, and responsive bounds.
+- Removed `LocalAdminApp`, source-selection flags and `VITE_ENABLE_LOCAL_ADMIN`.
+  `AdminWorkspace` accepts only the HTTP gateway. Both panels await successful
+  server receipts, retain unsaved text on failure/context refresh, and use shared
+  PostgreSQL history. Removed local history, file import/replay, replacement
+  exports/manifests, local export status, and their unused replay/download helpers.
+  The in-memory operation double moved to `src/test`; the production artifact
+  audit rejects test helpers as well as the former production gateway (10 tests).
+- Removed both frontend local adapters, their retired lookup tests and global
+  generated-bank mocks. Content policy/schema/API tests remain. The npm validator
+  now requires two explicit paths; CI/full verification use synthetic fixtures.
+  Removed the implicit explanation audit; current-content audit/validation uses
+  the retained selected-export tools. Explicit fixture validation passed (one
+  fixture warning). Controller/panel/status/deletion unit checks passed before the
+  final full-suite rerun. Current owner documentation reflects HTTP-only editing.
+- Second-slice verification passed: full frontend suite 92 files / 579 tests,
+  128 seconds, one worker. Final controller/panel rerun passed 2 files / 11 tests
+  after copy and duplicate-command coverage changes. The full host admin suite
+  passed 26/26; enabled production nginx/API/PG acceptance passed 10 selected
+  workflows, including keyboard/theme checks at all three widths. The final
+  enabled production build with hidden maps and artifact audit passed again after
+  copy cleanup. Ordinary `npm run build` (including type-check) passed, with the
+  existing learner chunk-size warning. Final lint/format, 10 architecture tests,
+  graph check and `git diff --check` passed. Old JSON editor flags fail early.
+- The final optional admin assets, excluding hidden maps/manifest, total
+  2,756,230 raw / 1,396,860 gzip / 1,300,400 brotli bytes using the baseline's
+  per-file compression method. Baseline: 2,782,808 / 1,403,224 / 1,306,624.
+  This slice saves 26,578 raw bytes; the larger repository/API-image savings await
+  actual bank deletion and container cleanup. Private size inventories are in
+  the preservation folder; the initial second-slice measurement included maps
+  and is explicitly superseded by `admin-second-slice-final-assets.json`.
+- Read-only preservation comparison passed again: all content-table digests,
+  allocation journals and repository-bank hashes are unchanged. Private report:
+  `var/backups/postgres/json-retirement-20261015/authority-after-second-slice.json`.
+  The preserved published export passed validation through the retained explicit
+  export tool; its report is `/tmp/meducation-retirement-published-second-validation.json`.
+  No authority writes, ID allocation, imports, migrations or restarts occurred.
+  All tests used isolated synthetic databases. No full-retirement acceptance is
+  claimed; no commit, publication or deployment was made.
+
+- Third slice in progress: removed Python JSON repositories and `JsonContentSource`,
+  bank-path settings/defaults, and repository-factory startup parameters. Settings
+  accepts only PostgreSQL; a missing reader URL now fails in API startup while
+  operator-only CLI settings remain usable. Diagnostics always checks the reader.
+  Stored models, protocols, deterministic artifacts and recovery import/export
+  services remain. Fast HTTP boundary tests inject small explicit test-owned
+  object repositories from `backend/tests/fixture_content.py`, never shipped or
+  selectable from environment configuration. Updated stored revision tests to
+  exercise the retained artifact encoder. Updated the DB toolchain probe.
+- Backend checks for this slice: full pytest 242 passed / 186 skipped / two
+  intentional weak-key warnings, Ruff passed, strict mypy passed (41 files).
+  Disposable PostgreSQL integration passed 184 tests / 2 skipped in 237 seconds
+  using `test-postgres-content.py --maxfail 1`; the two skipped cases require the
+  separate restartable fixture. These are real DB passes, independent of the
+  ordinary suite's skipped integration cases. Log/report: `/tmp/meducation-retirement-backend-mode-postgres.{log,json}`.
+- Removed API Docker bank COPY/env defaults and excluded full corpus archives
+  from both Docker contexts. Base Compose passes explicit reader URL/environment
+  and no longer implies a JSON startup path. The local DB override retains its
+  startup dependency and migration job. Packaged policy smoke now mounts only
+  its explicit small synthetic pair and checks corpus absence, rather than reading
+  packaged authored banks. Base and local-extension Compose configurations passed
+  `config --quiet`. These container edits still require a fresh image,
+  policy smoke, and migration of remaining JSON-oriented smoke/Compose callers.
+
+- Final third-slice unit rerun passed again: 242 passed / 186 skipped / the
+  same two intentional weak-key warnings; Ruff and strict mypy passed. Final
+  frontend lint/format, architecture graph and ordinary type-check/build passed
+  after the shutdown configuration fix. The existing chunk-size warning remains.
+  Read-only authority comparison passed for all content tables, journals and
+  repository bank hashes (`authority-after-third-slice.json` in the preservation
+  folder). No authority writes/restarts occurred.
+- Found and fixed test-harness teardown leakage: Playwright's immediate default
+  kill could prevent the Python wrapper's Docker cleanup. Both standard browser
+  configs now request SIGTERM with a 30-second API shutdown window; progress
+  backup inherits it. Removed four exact abandoned fixture containers only after
+  checking ownership label, synthetic DB name, tmpfs storage and absence of
+  volumes, using immutable container IDs. No authority container or volume was
+  touched. A fresh authenticated flashcard delete/undo browser test passed with
+  the new backend source and graceful API shutdown. A final `docker ps --all`
+  inventory confirmed no browser or PG-content test containers remain.
 
 ### Resume without repeating completed work
 
-The next implementation slice should migrate the remaining scenarios in
-`e2e/admin/flashcard-admin.spec.ts` to the HTTP/PostgreSQL suite, then retire
-`LocalAdminApp.tsx` and its flags, remove file import/replacement exports and local
-history from `AdminWorkspace`, `useAdminEditor` and `FlashcardAdminPanel`, and move
-any still-useful in-memory operation test double out of production. The HTTP
-`HttpQuestionBankGateway` is already independent of that implementation; do not
-restore the inheritance. The new learner fixture runner already works; reuse it
-rather than creating another JSON test service. Keep both banks until the
-remaining backend/tooling/container consumers have been replaced. Reuse the
-protected baseline for comparison; do not reimport it into the authority.
+Frontend JSON authoring/local adapters are removed and verified. Backend JSON mode
+is removed and its 184 ordinary PostgreSQL integration cases passed.
+Next migrate the JSON-oriented API/learner/static-admin/Compose smoke callers,
+then build/test the corpus-free images. Retire one-use cutover/archive checks and
+make `verify-postgres-release.py` require explicit small fixtures or selected
+protected exports before deleting both repository banks. Keep privileged
+selected-export/recovery/backup tools and learner progress. Reuse the protected
+baseline and never reimport it into the authority. Keep this tracker ongoing until
+all phases and final gates pass.
 
 ## Outcome and scope
 
@@ -221,10 +301,10 @@ write/import, database reset, or volume recreation occurs during inventory.
   schema/bootstrap jobs and unique owned targets. Tests must reject the designated
   authority/container/volume and clean up only their own resources, including on
   failure. Never source `var/local-authority/*.env` in a test runner.
-- [ ] Provide reproducible learner and authenticated admin test startup with
+- [x] Provide reproducible learner and authenticated admin test startup with
   separate reader/editor/session/operator/migrator roles as needed. Test seeding
   and synthetic identity controls must remain outside shipped application code.
-- [ ] Replace global generated-bank mocks and transitive local-adapter imports
+- [x] Replace global generated-bank mocks and transitive local-adapter imports
   with explicit small fixtures or mocked HTTP DTOs in unit/component tests.
   Replace tests using `configureLocal` with transport fixtures or test-owned
   repositories implementing existing domain contracts. Do not leave a production
@@ -245,32 +325,32 @@ passing when PostgreSQL is unavailable or database tests are skipped.
 
 ### 2. Make all admin content workflows HTTP/PostgreSQL-only
 
-- [ ] Make `AdminApp.tsx` load only `HttpAdminApp.tsx`; remove `LocalAdminApp.tsx`
+- [x] Make `AdminApp.tsx` load only `HttpAdminApp.tsx`; remove `LocalAdminApp.tsx`
   and the JSON fixture editor selection flags. Retain independent admin build
   inclusion and API authorization; rendering admin assets grants no write access.
-- [ ] Replace the `InMemoryQuestionBankGateway` inheritance/concrete workspace
+- [x] Replace the `InMemoryQuestionBankGateway` inheritance/concrete workspace
   dependency with the smallest HTTP-owned gateway contract. Keep pure draft
   transformation, cloning, validation, ordering and preview helpers where useful.
   Remove the production in-memory persistence/history implementation once its
   consumers have moved; test doubles must live only in test-owned code.
-- [ ] Simplify `AdminWorkspace`, `useAdminEditor`, and `FlashcardAdminPanel` to one
+- [x] Simplify `AdminWorkspace`, `useAdminEditor`, and `FlashcardAdminPanel` to one
   save/undo/reset path. Remove optional callbacks/branches that can accept edits
   as saved only in memory, legacy file downloads, file replacement manifests,
   change-set file import/replay controls and local-only history/export status.
   Do not remove operation compilers still required for bulk or record editing.
-- [ ] Preserve single and bulk creation/editing, shared subject management,
+- [x] Preserve single and bulk creation/editing, shared subject management,
   parent changes, sibling ordering, single/selected/cascade deletion, search,
   pagination, validation diagnostics, dirty-text retention and navigation guards.
   Each durable mutation must await a PostgreSQL-backed server receipt; refresh
   both sections from the accepted paired snapshot after commits/Undo/reset.
-- [ ] Keep server-reserved IDs, hierarchical parent bindings, allocation admission,
+- [x] Keep server-reserved IDs, hierarchical parent bindings, allocation admission,
   preview fingerprints, operation identity/reconciliation, and concurrency guards.
   UI temporary IDs are not durable IDs. Reauthentication must not replay a write.
-- [ ] Preserve server paired Undo/reset, explicit reviewed publish, retained-release
+- [x] Preserve server paired Undo/reset, explicit reviewed publish, retained-release
   activation without overwriting the current draft, release history and the
   read-only paired HTTP export. Replace residual Stage/export-as-save copy with
   accurate Preview/Save draft/publish state where applicable.
-- [ ] Move the existing admin browser regressions from
+- [x] Move the existing admin browser regressions from
   `e2e/admin/flashcard-admin.spec.ts` to the HTTP/PostgreSQL suite. Retain desktop,
   narrow-screen, keyboard, focus and unsaved-text coverage. Exercise an enabled
   production admin build as well as development startup.
@@ -288,7 +368,7 @@ session can read it. Unpublished edits do not reach learner APIs.
 - [x] Remove the bundled `/#content-qa` bootstrap and `ContentQaPanel` after
   retaining rich-content inspection regressions in existing API/browser tests.
   Do not introduce a replacement standalone content source.
-- [ ] Delete `src/content/local` adapters after relocating any genuinely shared
+- [x] Delete `src/content/local` adapters after relocating any genuinely shared
   types/pure helpers into their owning schema/domain/content modules. Reuse
   `src/admin/core/flashcardSerialization.ts` where appropriate; do not move
   admin-owned utilities into learner imports or duplicate revision algorithms.
@@ -303,18 +383,18 @@ there is no disk-based alternative bank. Learner progress formats remain intact.
 
 ### 4. Remove backend JSON runtime service mode
 
-- [ ] Make `Settings` and `create_app` PostgreSQL-only. Remove bank-path defaults,
+- [x] Make `Settings` and `create_app` PostgreSQL-only. Remove bank-path defaults,
   JSON mode dispatch, public JSON repository factories and `JsonContentSource`.
   Missing/misconfigured reader URL must fail safely without secrets in errors.
   A temporarily accepted `MEDUCATION_CONTENT_SOURCE=postgres` compatibility value
   may ease staged changes; the final configuration must have no mode selector.
   Explicit legacy JSON/path settings should produce a clear rejection.
-- [ ] Separate shared validated models, repository protocols and DTO construction
+- [x] Separate shared validated models, repository protocols and DTO construction
   from the file adapters in `repositories/question_bank.py`. Retain what
   `repositories/postgres.py`, validation, authoring, recovery and export need;
   remove `JsonQuestionBankRepository` and `JsonFlashcardCatalogRepository`.
   A test source double must not become an environment-selectable runtime backend.
-- [ ] Remove JSON branches in diagnostics and other services. Preserve request-
+- [x] Remove JSON branches in diagnostics and other services. Preserve request-
   pinned paired publication, revision/ETag contracts, strict initialization,
   schema validation, bounded caches, cleanup/reconnect and readiness semantics.
   Runtime startup must never bootstrap, migrate, import, or create an authority.
@@ -327,7 +407,7 @@ consulting files. Auth/session/CSRF/freshness and concurrency tests still pass.
 
 ### 5. Retire file maintenance and archive-only operational workflows
 
-- [ ] Replace `validate:content` and `audit:explanations` scripts that import local
+- [x] Replace `validate:content` and `audit:explanations` scripts that import local
   banks. Provide explicit commands for synthetic fixture validation in CI and
   authoritative content validation/audit through a pinned DB draft/release export
   produced by the existing HTTP/operator paths. A no-target command must fail

@@ -1,12 +1,12 @@
-import type { StoredQuestionBank } from '../../content/schema/schema';
-import type { StoredFlashcardBank } from '../../content/schema/schema';
-import { emptyFlashcardBank } from '../core/flashcardSerialization';
-import { previewChangeSet } from '../core/applyChangeSet';
-import { validateFlashcardSubjectReferences } from '../../content/validation/validate';
-import { validateFlashcardBank } from '../../content/validation/flashcardValidation';
-import { cloneBank, revisionForBank } from '../core/serializeBank';
-import type { AdminBankSnapshot, AdminChangeSet } from '../core/types';
-import type { AdminPreviewSummary, AdminQuestionBankGateway } from './AdminQuestionBankGateway';
+import type { StoredQuestionBank } from '../content/schema/schema';
+import type { StoredFlashcardBank } from '../content/schema/schema';
+import { emptyFlashcardBank } from '../admin/core/flashcardSerialization';
+import { previewChangeSet } from '../admin/core/applyChangeSet';
+import { validateFlashcardSubjectReferences } from '../content/validation/validate';
+import { validateFlashcardBank } from '../content/validation/flashcardValidation';
+import { cloneBank, revisionForBank } from '../admin/core/serializeBank';
+import type { AdminBankSnapshot, AdminChangeSet } from '../admin/core/types';
+import type { AdminPreviewSummary, AdminQuestionBankGateway } from '../admin/data/AdminQuestionBankGateway';
 
 const undoLimit = 10;
 
@@ -28,45 +28,66 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   }
 
   protected installPair(bank: StoredQuestionBank, flashcards: StoredFlashcardBank): void {
-    this.bank = cloneBank(bank); this.flashcards = structuredClone(flashcards);
-    this.history = []; this.flashcardHistory = []; this.operationLengths = [];
-    this.operations = []; this.revision = undefined; this.lastPreview = undefined;
+    this.bank = cloneBank(bank);
+    this.flashcards = structuredClone(flashcards);
+    this.history = [];
+    this.flashcardHistory = [];
+    this.operationLengths = [];
+    this.operations = [];
+    this.revision = undefined;
+    this.lastPreview = undefined;
   }
 
-  setFlashcardBank(bank: StoredFlashcardBank): void { this.flashcards = structuredClone(bank); this.lastPreview = undefined; }
-  getFlashcardBank(): StoredFlashcardBank { return structuredClone(this.flashcards); }
+  setFlashcardBank(bank: StoredFlashcardBank): void {
+    this.flashcards = structuredClone(bank);
+    this.lastPreview = undefined;
+  }
+  getFlashcardBank(): StoredFlashcardBank {
+    return structuredClone(this.flashcards);
+  }
 
   private async snapshot(): Promise<AdminBankSnapshot> {
     return { bank: cloneBank(this.bank), revision: await this.currentRevision() };
   }
 
   private async currentRevision(): Promise<string> {
-    return this.revision ??= await revisionForBank(this.bank);
+    return (this.revision ??= await revisionForBank(this.bank));
   }
 
-  load(): Promise<AdminBankSnapshot> { return this.snapshot(); }
+  load(): Promise<AdminBankSnapshot> {
+    return this.snapshot();
+  }
 
   async preview(changeSet: AdminChangeSet): Promise<AdminPreviewSummary> {
     const current = await this.currentRevision();
-    if (changeSet.base.revision !== current) return {
-      issues: [{ level: 'error', message: 'This change set was created from a stale snapshot. Reload or rebuild it before applying.' }],
-      summary: { creates: 0, updates: 0, deletes: 0, moves: 0, cascadedQuestions: 0, cascadedQuizzes: 0 },
-    };
+    if (changeSet.base.revision !== current)
+      return {
+        issues: [
+          {
+            level: 'error',
+            message: 'This change set was created from a stale snapshot. Reload or rebuild it before applying.',
+          },
+        ],
+        summary: { creates: 0, updates: 0, deletes: 0, moves: 0, cascadedQuestions: 0, cascadedQuizzes: 0 },
+      };
     const key = JSON.stringify(changeSet);
-    if (this.lastPreview?.key === key && this.lastPreview.revision === current) return {
-      issues: this.lastPreview.result.issues.map(issue => ({ ...issue })),
-      summary: { ...this.lastPreview.result.summary },
-    };
+    if (this.lastPreview?.key === key && this.lastPreview.revision === current)
+      return {
+        issues: this.lastPreview.result.issues.map((issue) => ({ ...issue })),
+        summary: { ...this.lastPreview.result.summary },
+      };
     const preview = previewChangeSet(this.bank, changeSet, this.flashcards);
     const result = { issues: preview.issues, summary: preview.summary };
-    this.lastPreview = preview.issues.some(issue => issue.level === 'error') ? undefined
+    this.lastPreview = preview.issues.some((issue) => issue.level === 'error')
+      ? undefined
       : { key, revision: current, bank: preview.bank, result };
-    return { issues: result.issues.map(issue => ({ ...issue })), summary: { ...result.summary } };
+    return { issues: result.issues.map((issue) => ({ ...issue })), summary: { ...result.summary } };
   }
 
   async apply(changeSet: AdminChangeSet): Promise<AdminBankSnapshot> {
     const preview = await this.preview(changeSet);
-    if (preview.issues.some(issue => issue.level === 'error')) throw new Error(preview.issues.map(issue => issue.message).join(' '));
+    if (preview.issues.some((issue) => issue.level === 'error'))
+      throw new Error(preview.issues.map((issue) => issue.message).join(' '));
     const validated = this.lastPreview;
     if (!validated) throw new Error('Validated preview is unavailable.');
     return this.commit(validated.bank, changeSet);
@@ -74,22 +95,34 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
 
   async applyCoordinated(changeSet: AdminChangeSet, flashcards: StoredFlashcardBank): Promise<AdminBankSnapshot> {
     const flashcardSnapshot = JSON.stringify(this.flashcards);
-    if (changeSet.base.revision !== await this.currentRevision()) throw new Error('The coordinated import is based on stale quiz content.');
-    if (flashcardSnapshot !== JSON.stringify(this.flashcards)) throw new Error('The flashcard workspace changed during the coordinated review. Preview it again.');
+    if (changeSet.base.revision !== (await this.currentRevision()))
+      throw new Error('The coordinated import is based on stale quiz content.');
+    if (flashcardSnapshot !== JSON.stringify(this.flashcards))
+      throw new Error('The flashcard workspace changed during the coordinated review. Preview it again.');
     const preview = previewChangeSet(this.bank, changeSet, flashcards);
-    const errors = [...preview.issues, ...validateFlashcardBank(flashcards, preview.bank.subjects)].filter(issue => issue.level === 'error');
-    if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
+    const errors = [...preview.issues, ...validateFlashcardBank(flashcards, preview.bank.subjects)].filter(
+      (issue) => issue.level === 'error',
+    );
+    if (errors.length) throw new Error(errors.map((issue) => issue.message).join(' '));
     // Both validated snapshots become visible in the same synchronous commit.
     const previousFlashcards = structuredClone(this.flashcards);
     this.flashcards = structuredClone(flashcards);
     return this.commit(preview.bank, changeSet, previousFlashcards);
   }
 
-  private commit(bank: StoredQuestionBank, changeSet: AdminChangeSet, previousFlashcards?: StoredFlashcardBank): Promise<AdminBankSnapshot> {
+  private commit(
+    bank: StoredQuestionBank,
+    changeSet: AdminChangeSet,
+    previousFlashcards?: StoredFlashcardBank,
+  ): Promise<AdminBankSnapshot> {
     this.history.push(this.bank);
     this.flashcardHistory.push(previousFlashcards && structuredClone(previousFlashcards));
     this.operationLengths.push(this.operations.length);
-    if (this.history.length > undoLimit) { this.history.shift(); this.flashcardHistory.shift(); this.operationLengths.shift(); }
+    if (this.history.length > undoLimit) {
+      this.history.shift();
+      this.flashcardHistory.shift();
+      this.operationLengths.shift();
+    }
     this.bank = bank;
     this.operations.push(...changeSet.operations);
     this.revision = undefined;
@@ -102,7 +135,7 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
     if (!previous) return undefined;
     const pairedFlashcards = this.flashcardHistory.at(-1);
     const errors = validateFlashcardSubjectReferences(pairedFlashcards ?? this.flashcards, previous.subjects);
-    if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
+    if (errors.length) throw new Error(errors.map((issue) => issue.message).join(' '));
     this.history.pop();
     this.bank = previous;
     const previousFlashcards = this.flashcardHistory.pop();
@@ -119,8 +152,8 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   }
 
   async resetCoordinated(flashcards: StoredFlashcardBank): Promise<AdminBankSnapshot> {
-    const errors = validateFlashcardBank(flashcards, this.initial.subjects).filter(issue => issue.level === 'error');
-    if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
+    const errors = validateFlashcardBank(flashcards, this.initial.subjects).filter((issue) => issue.level === 'error');
+    if (errors.length) throw new Error(errors.map((issue) => issue.message).join(' '));
     this.flashcards = structuredClone(flashcards);
     return this.resetToInitial();
   }
@@ -139,13 +172,15 @@ export class InMemoryQuestionBankGateway implements AdminQuestionBankGateway {
   coordinatedOperationCount(): number | undefined {
     let index = this.flashcardHistory.length - 1;
     while (index >= 0 && this.flashcardHistory[index] === undefined) index--;
-    return index < 0 ? undefined : this.operationLengths[index + 1] ?? this.operations.length;
+    return index < 0 ? undefined : (this.operationLengths[index + 1] ?? this.operations.length);
   }
 
-  appliedOperations(): AdminChangeSet['operations'] { return [...this.operations]; }
+  appliedOperations(): AdminChangeSet['operations'] {
+    return [...this.operations];
+  }
 
   private assertSharedSubjects(candidate: StoredQuestionBank) {
     const errors = validateFlashcardSubjectReferences(this.flashcards, candidate.subjects);
-    if (errors.length) throw new Error(errors.map(issue => issue.message).join(' '));
+    if (errors.length) throw new Error(errors.map((issue) => issue.message).join(' '));
   }
 }

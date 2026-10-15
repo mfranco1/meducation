@@ -116,8 +116,7 @@ def main():
                                  "--api-image", "meducation-api:local", "--frontend-image", "meducation-learner:local",
                                  "--output", str(output / "postgres-browser.json")], timeout=1000)
         # Complete learner/browser work before replacing the shared dist assets.
-        run("build-http-admin", ["npm", "run", "build:admin"], timeout=300,
-            environment={**os.environ, "VITE_ADMIN_SOURCE": "http"})
+        run("build-http-admin", ["npm", "run", "build:admin"], timeout=300)
         run("admin-artifact-contracts", ["node", "--test", "scripts/containers/check-admin-artifacts.test.mjs"], timeout=60)
         run("build-admin-image", ["docker", "build", "--target", "admin", "-t", "meducation-admin:local", "."], timeout=900)
         run("admin-static", [sys.executable, str(ROOT / "scripts/containers/smoke-admin-static.py"),

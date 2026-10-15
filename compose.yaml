@@ -6,6 +6,10 @@ services:
     build:
       context: .
       dockerfile: backend/Dockerfile
+    environment:
+      MEDUCATION_DATABASE_ENVIRONMENT: ${MEDUCATION_DATABASE_ENVIRONMENT:-production}
+      # API startup requires a reader URL; empty allows DB-only bootstrap jobs.
+      MEDUCATION_DATABASE_URL: ${MEDUCATION_DATABASE_URL:-}
     read_only: true
     tmpfs:
       - /tmp
@@ -42,8 +46,8 @@ services:
       POSTGRES_DB: meducation
       POSTGRES_USER: meducation_bootstrap
       POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256
-      # Interpolation must allow JSON-only startup without DB configuration.
-      # The startup guard below requires the value only when Postgres is run.
+      # Keep DB-only bootstrap independent of API configuration.
+      # The startup guard below requires the password when Postgres is run.
       POSTGRES_PASSWORD: ${MEDUCATION_POSTGRES_BOOTSTRAP_PASSWORD:-}
     entrypoint:
       - /bin/sh

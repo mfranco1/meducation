@@ -32,8 +32,6 @@ FROM python:3.14.8-slim-bookworm@sha256:48b13b003dda20b16f9442b8475aa05fe21bf657
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    MEDUCATION_BANK_PATH=/app/content/questionBank.generated.json \
-    MEDUCATION_FLASHCARD_BANK_PATH=/app/content/flashcardBank.generated.json \
     MEDUCATION_ALLOWED_ORIGINS=http://127.0.0.1:4173,http://localhost:4173
 
 RUN groupadd --gid 10001 meducation \
@@ -42,7 +40,6 @@ WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=policy /usr/local/bin/node /usr/local/bin/node
 COPY backend/requirements.lock /app/requirements.lock
-COPY src/content/questionBank.generated.json src/content/flashcardBank.generated.json /app/content/
 
 USER 10001:10001
 EXPOSE 8000

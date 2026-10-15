@@ -7,14 +7,10 @@ from typing import ClassVar
 
 import pytest
 from fastapi.testclient import TestClient
+from fixture_content import FixtureContentSource
 
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.main import create_app
-from meducation_api.repositories.question_bank import (
-    JsonFlashcardCatalogRepository,
-    JsonQuestionBankRepository,
-)
-from meducation_api.repositories.source import JsonContentSource
 from meducation_api.settings import Settings
 
 
@@ -22,12 +18,9 @@ from meducation_api.settings import Settings
 def source(tmp_path):
     root = Path(__file__).resolve().parents[2]
     q = json.loads((root / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    qp, fp = tmp_path / "q.json", tmp_path / "f.json"
-    qp.write_text(json.dumps(q))
-    fp.write_text('{"schemaVersion":2,"decks":[],"cards":[]}')
-    settings = Settings(_env_file=None, bank_path=qp, flashcard_bank_path=fp)
+    settings = Settings(_env_file=None)
 
-    class TracedSource(JsonContentSource):
+    class TracedSource(FixtureContentSource):
         events: ClassVar[list[str]] = []
 
         @contextmanager
@@ -39,9 +32,7 @@ def source(tmp_path):
             finally:
                 self.events.append("closed")
 
-    return settings, TracedSource(
-        settings, JsonQuestionBankRepository, JsonFlashcardCatalogRepository
-    )
+    return settings, TracedSource(q)
 
 
 def test_injected_paired_source_closes_for_success_conditional_and_errors(source):

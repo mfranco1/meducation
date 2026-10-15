@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 from pydantic import ValidationError
 
-from meducation_api.repositories.question_bank import Bank, JsonQuestionBankRepository
+from meducation_api.repositories.question_bank import Bank
 
 FIXTURES = json.loads(
     (Path(__file__).resolve().parents[2] / "tests/fixtures/bank-contract-cases.json").read_text(
@@ -76,9 +76,15 @@ def test_shared_stored_bank_contract(case: dict) -> None:
             Bank.model_validate(bank)
 
 
-def test_shared_unicode_revision(tmp_path: Path) -> None:
-    path = tmp_path / "bank.json"
-    path.write_text(json.dumps(bank_for("none"), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    assert JsonQuestionBankRepository(path).revision == (
+def test_shared_unicode_revision() -> None:
+    import hashlib
+
+    from meducation_api.db.operations import paired_artifacts
+
+    text, _ = paired_artifacts(
+        json.dumps(bank_for("none"), ensure_ascii=False),
+        '{"schemaVersion":2,"decks":[],"cards":[]}',
+    )
+    assert "sha256-" + hashlib.sha256(text.encode()).hexdigest() == (
         "sha256-3428200bbea813f67a79fb5a36bbaa0a83b0148cd4dfdfc5cef5cdb32045b8d8"
     )

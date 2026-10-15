@@ -10,6 +10,7 @@ for (const fault of [
   undefined,
   'local-editor',
   'memory-gateway',
+  'test-helper',
   'bank',
   'qa',
   'missing-http',
@@ -29,6 +30,7 @@ for (const fault of [
             : [...valid];
       if (fault === 'local-editor') sources.push('../../src/admin/LocalAdminApp.tsx');
       if (fault === 'memory-gateway') sources.push('../../src/admin/data/InMemoryQuestionBankGateway.ts');
+      if (fault === 'test-helper') sources.push('../../src/test/InMemoryQuestionBankGateway.ts');
       if (fault === 'bank') sources.push('../../src/content/questionBank.generated.json');
       if (fault === 'qa') sources.push('../../src/qa/ContentQa.tsx');
       writeFileSync(join(root, 'entry.js.map'), JSON.stringify({ sources }));

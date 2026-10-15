@@ -85,16 +85,16 @@ below authorizes bypassing a disabled production identity adapter.
 
 Public **build-time** settings, owned by the release operator:
 
-- `VITE_CONTENT_SOURCE=api` selects published API delivery; `local` explicitly
-  bundles read-only archives and is not the authority release path.
+- Published content is delivered through the PostgreSQL-backed API. Remove
+  the retired `VITE_CONTENT_SOURCE` setting; explicit values fail the build.
 - `VITE_CONTENT_MAX_RETRIES`, `VITE_CONTENT_RETRY_BASE_DELAY_MS`,
   `VITE_CONTENT_RETRY_MAX_DELAY_MS` bound public read retries (0–5 retries, delays
   capped at 30 seconds). Smoke fixtures explicitly use zero; shipped images keep
   the ordinary policy. They never authorize admin write replay.
-- `VITE_BUILD_ADMIN`, `VITE_ENABLE_LOCAL_ADMIN` select the separate optional
-  entry; the Docker targets set them explicitly. `VITE_ADMIN_SOURCE=http` is the
-  production path. `VITE_ADMIN_SOURCE=json` plus
-  `VITE_JSON_FIXTURE_AUTHORING=true` works only in development, never production.
+- `VITE_BUILD_ADMIN` selects the separate optional
+  entry; the Docker targets set them explicitly. Development and production
+  use the HTTP editor. Remove retired `VITE_ADMIN_SOURCE` and
+  `VITE_JSON_FIXTURE_AUTHORING` settings; explicit values fail the build.
 - `VITE_CONTENT_IMAGE_ORIGINS` is a public image-origin allowlist; local image
   paths need no extra origin. Maintenance validator `CONTENT_IMAGE_ORIGINS` is
   an operator tool input, not an API runtime switch. API authoring supplies its

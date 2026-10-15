@@ -1,6 +1,5 @@
 from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager
-from pathlib import Path
 from typing import cast
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
@@ -19,14 +18,12 @@ from meducation_api.repositories.question_bank import (
     FlashcardCatalogRepository,
     FlashcardDeck,
     FlashcardSubjectSummary,
-    JsonFlashcardCatalogRepository,
-    JsonQuestionBankRepository,
     Question,
     QuestionBankRepository,
     Quiz,
     Subject,
 )
-from meducation_api.repositories.source import ContentSource, ContentView, JsonContentSource
+from meducation_api.repositories.source import ContentSource, ContentView
 from meducation_api.settings import Settings
 
 
@@ -82,10 +79,6 @@ class FlashcardListResponse(BaseModel):
 
 def create_app(
     settings: Settings | None = None,
-    repository_factory: Callable[[Path], QuestionBankRepository] = JsonQuestionBankRepository,
-    flashcard_repository_factory: Callable[
-        [Path, list[Subject]], FlashcardCatalogRepository
-    ] = JsonFlashcardCatalogRepository,
     *,
     source_factory: Callable[[Settings], ContentSource] | None = None,
     auth_settings: AuthSettings | None = None,
@@ -106,12 +99,10 @@ def create_app(
         try:
             if source_factory is not None:
                 source = source_factory(config)
-            elif config.content_source == "postgres":
+            else:
                 from meducation_api.repositories.postgres import PostgresContentSource
 
                 source = PostgresContentSource(config)
-            else:
-                source = JsonContentSource(config, repository_factory, flashcard_repository_factory)
             with source as initialized:
                 app.state.source = initialized
                 yield
