@@ -6,7 +6,7 @@ Use PostgreSQL published-only learner delivery and authenticated paired HTTP aut
 
 Explicit JSON archive/fixture mode reads `src/content/questionBank.generated.json` as the
 schema-v4 quiz representation and `src/content/flashcardBank.generated.json` as
-the canonical flashcard bank. Flashcard decks reference the quiz bank's shared
+the archived flashcard representation. Flashcard decks reference the quiz bank's shared
 subjects directly. It serves read-only content; attempts, checkpoints, and scoring remain
 in the browser.
 
@@ -20,13 +20,12 @@ python3.14 -m venv .venv
 ```
 
 For configuration overrides, copy `backend/.env.example` to `backend/.env` and
-edit it there. The default bank path already points to the canonical repository
+edit it there. The default bank path points to the repository archive/fixture
 file. `MEDUCATION_FLASHCARD_BANK_PATH` overrides the flashcard file path.
 
 Run the frontend separately using [frontend setup](../README.md#install-and-run).
-Production API-mode hosting must route `/api` to FastAPI. Set
-`MEDUCATION_BANK_PATH` only when the canonical file is stored at a different
-path. The frontend guide also owns [local-content mode](../README.md#local-content-mode)
+Production API-mode hosting must route `/api` to FastAPI. For an explicit JSON fixture, set
+`MEDUCATION_BANK_PATH` when its archive is stored at a different path. The frontend guide also owns [local-content mode](../README.md#local-content-mode)
 and [local editor setup](../README.md#local-content-editor).
 
 On startup the service validates and indexes both banks together, including
@@ -34,8 +33,9 @@ flashcard references to shared subjects. The flashcard API exposes subject
 inventory, a selected subject's deck summaries, and one deck's
 ordered cards under `/api/v1/flashcards`. Flashcard responses use a separate
 revision that also changes when shared subject records change. Restart the
-service after replacing either canonical file. The API never writes or modifies
-bank content.
+JSON fixture service after replacing either archive file. PostgreSQL workers select
+the current immutable publication on every request; private paired HTTP services
+own controlled writes and never rewrite repository banks.
 Interactive API documentation is available at `/docs` in development.
 
 On Windows, activate `.venv\Scripts\Activate.ps1` and use `python -m pip ...`
@@ -222,7 +222,7 @@ docker build --pull -f backend/Dockerfile -t meducation-api:l2-step2 .
 
 The multi-stage image installs a non-editable wheel and the locked runtime
 dependencies under pinned Python 3.14.8. It includes byte-identical copies of
-both canonical banks at `/app/content/` with explicit path settings, runs as
+both archived banks at `/app/content/` with explicit path settings, runs as
 UID/GID 10001, and has a bounded `/health/ready` healthcheck. The builder's
 tools, host `.env` files and private source material are excluded from runtime.
 See [build inputs and maintenance](../ops/containers/README.md) for image pins,
@@ -243,7 +243,7 @@ one Uvicorn worker without reload. Local CORS defaults allow only
 `MEDUCATION_ALLOWED_ORIGINS` explicitly when needed. This standalone port does
 not change the existing Vite proxy to port 8000. The [container stack](../docs/local-containers.md) provides the same-origin
 reverse proxy and an independent optional Postgres service with PG17 recovery
-tools. Application schema/roles/DB reads remain L3 work.
+tools. Application schema/roles/DB reads are implemented; generic JSON Compose does not configure the authority.
 
 Exercise the actual image with the repeatable API smoke command:
 
@@ -345,8 +345,8 @@ provide guarded reservations, draft history, publication, activation and export.
 [session roles, configuration and verification](../docs/L4-admin-session-boundary.md).
 
 [Step 5 HTTP editor](../docs/L4-http-editor.md) supplies the private browser gateway.
-Packaged head is `0005_reserved_parents`; migration/bootstrap remain explicit
-operator jobs and no authority cutover is implied.
+Packaged head is `0006_allocation_fence`; migration/bootstrap remain explicit
+operator jobs. The designated local PostgreSQL authority cutover is complete.
 
 ## L4 recovery preparation jobs
 
@@ -357,7 +357,7 @@ jobs `restore-permissions` and `invalidate-restored-sessions` never run in worke
 Offline `validate-export`/`audit-export` commands need a selected export directory,
 the repository validation toolchain and a new private report path; they do not load
 repository banks or require DB credentials. Their manifests identify draft/release
-context without claiming live database currency. JSON authority is unchanged.
+context without claiming live database currency. JSON checks remain archive/fixture-only; the local PostgreSQL authority is unchanged.
 
 Migration `0006_allocation_fence` adds opt-in independently retained allocation
 ceilings. `allocation-range` and `allocation-recover` are explicit migrator jobs;
@@ -366,7 +366,7 @@ quarantine pauses protected allocation. Two durable agreeing journal chains must
 be recorded before the DB admits a range; restore reconciliation burns all earlier
 permitted ranges. Destination independence is an operator acceptance gate. Follow
 [the allocation procedure](../docs/L4-authoritative-recovery.md#allocation-safety-is-a-separate-gate)
-before enabling it; production JSON authority remains unchanged.
+before enabling it; the designated PostgreSQL authority remains unchanged.
 
 ### Learner launch freshness (L5)
 
@@ -403,3 +403,9 @@ templates and fixed categories; Uvicorn access paths and native HTTP Nginx error
 contexts cannot disclose request inputs. No new grants, runtime polling or write
 replay were added. Transaction-pooled endpoints/provider TLS/suspend behavior
 remain unverified deployment gates; use direct endpoints for operator jobs.
+
+The [L6 deployment handoff](../docs/L6-deployment-handoff.md) records complete
+configuration/secret ownership, explicit bootstrap/migration/selected transfer,
+optional admin packaging, routing and smoke/recovery ordering. Hosted role
+bootstrap and identity adapters remain implementation/acceptance gaps;
+`bootstrap-local` refuses production and must not be used to bypass TLS validation.

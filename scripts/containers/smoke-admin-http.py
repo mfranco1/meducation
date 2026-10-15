@@ -20,6 +20,7 @@ NGINX = "nginxinc/nginx-unprivileged:1.30.5-trixie@sha256:8f18dedfceea3d7feb9879
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--image", default="meducation-api:l4-step5")
+    parser.add_argument("--frontend-image", help="Optional packaged admin image instead of host dist assets")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--grep", default="")
     args = parser.parse_args()
@@ -38,6 +39,9 @@ def main():
                 + "\nPOSTGRES_INITDB_ARGS=--auth-host=scram-sha-256\n"
             )
             os.chmod(env, 0o600)
+            asset_mount = [] if args.frontend_image else [
+                "--mount", f"type=bind,src={ROOT / 'dist'},dst=/opt/meducation/html,readonly",
+            ]
             docker(
                 "run",
                 "--detach",
@@ -145,9 +149,8 @@ def main():
                 f"type=bind,src={temp / 'nginx.conf'},dst=/etc/nginx/nginx.conf,readonly",
                 "--mount",
                 f"type=bind,src={ROOT / 'ops/containers/proxy.conf'},dst=/etc/nginx/meducation-proxy.conf,readonly",
-                "--mount",
-                f"type=bind,src={ROOT / 'dist'},dst=/opt/meducation/html,readonly",
-                NGINX,
+                *asset_mount,
+                args.frontend_image or NGINX,
             )
             import urllib.request
 
@@ -262,6 +265,8 @@ def main():
                 "operational_log_canaries": "pass: path/query/method/headers/body/exception canaries; API 500, proxy 413 and upstream 502; generated request correlation; no raw log retention",
                 "isolation": "unique PG17 tmpfs, API and nginx containers/network; synthetic fixture identity; no routine volumes",
                 "image": args.image,
+                "frontendImage": args.frontend_image,
+                "frontendImageId": docker("image", "inspect", "--format", "{{.Id}}", args.frontend_image) if args.frontend_image else None,
                 "imageId": docker(
                     "image", "inspect", "--format", "{{.Id}}", args.image
                 ),

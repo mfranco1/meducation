@@ -108,7 +108,7 @@ The learner npm pretest builds production output with automatic retries disabled
 
 Use small versioned fixtures for schema, relationships, canonical ordering, sparse metadata, provenance, rendering safety, revision/serialization parity, scoring, and persistence. Do not assert production record counts or individual authored records in unit tests. Adding canonical flashcards must not change fixture-based starting catalogs.
 
-`npm run validate:content` is the actual-data gate outside Vitest: it reads both authoritative JSON files and checks the full corpus once for structure, shared-subject references, Markdown/HTML/URL/LaTeX safety, and review metadata. Keep focused rendering cases in unit tests instead of duplicating this full-corpus scan. Intentional content changes follow [content management](content-management.md) and the schema guides.
+`npm run validate:content` is the repository archive/fixture gate outside Vitest: it reads both exported JSON files and checks the full corpus once for structure, shared-subject references, Markdown/HTML/URL/LaTeX safety, and review metadata. Keep focused rendering cases in unit tests instead of duplicating this full-corpus scan. Intentional content changes follow [content management](content-management.md) and the schema guides.
 
 ## Architecture and formatting
 
@@ -354,3 +354,18 @@ connections after retirement. The test uses the disposable PG launcher only.
 It also verifies exclusive source-database rehearsal admission and lock release
 after both completion and interruption. Neither this test nor the L5 drills invoke
 the routine authority's recovery script.
+
+## Optional packaged HTTP admin
+
+Build the default learner and optional `admin` targets from the root Dockerfile;
+follow [the deployment handoff](L6-deployment-handoff.md#build-and-serve-the-local-artifacts).
+`node --test scripts/containers/check-admin-artifacts.test.mjs` rejects fixture
+authoring/bank/QA modules, missing HTTP/popup entries and unexpected routing
+templates. `smoke-admin-static.py` checks every shipped asset hash, real Nginx
+entry/cache/API separation, hidden/missing artifact denial and disabled private
+API responses. `smoke-admin-http.py --frontend-image IMAGE` runs the complete
+HTTP editor suite with packaged assets instead of a host `dist` mount; its
+synthetic PG17/API/identity/proxy configuration stays fixture-only. Omitting that
+option retains the existing fresh-host-assets path. Native acceptance builds and
+checks this optional image after learner work, then uses it for the full HTTP
+suite. New CI wiring still requires passing changed-input jobs.

@@ -1,6 +1,6 @@
 # L6 — Local release candidate
 
-Created: 2026-10-15 (Asia/Manila). Status: Steps 1–3 local gates complete; stopped at the Step 3 gate. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. The user authorized continuation through Step 3. Steps 4–6 remain pending.
+Created: 2026-10-15 (Asia/Manila). Status: Steps 1–4 local gates complete; stopped at the Step 4 gate. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. The user authorized continuation through Step 4. Steps 5–6 remain pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l6--local-release-candidate).
 Predecessor: [L5 plan](../done/L5-resilience-and-local-operations-plan.md) and
@@ -131,37 +131,37 @@ coverage and rerun checks. Scope expansion requires a separate decision.
 
 ## Step 4 — Prepare provider-neutral deployment inputs
 
-- [ ] Create `docs/L6-deployment-handoff.md` as the operational entry point, linking
+- [x] Create `docs/L6-deployment-handoff.md` as the operational entry point, linking
   existing runbooks rather than copying whole procedures. Update contradictory
   current prose in architecture/product/testing/content docs (for example remaining
   claims that archive JSON is authoritative); preserve historical trackers.
-- [ ] Record reproducible learner/API image builds and immutable artifact identities,
+- [x] Record reproducible learner/API image builds and immutable artifact identities,
   plus the separate optional HTTP admin build. Verify learner artifacts exclude
   admin code and production admin excludes fixture authoring/bundled banks. Document
   the actual supported serving path for admin assets; if a deployable admin artifact
   or serving recipe is missing, supply the smallest provider-neutral packaging gap.
-- [ ] Inventory every required environment setting and secret by name, purpose,
+- [x] Inventory every required environment setting and secret by name, purpose,
   consumer, build/runtime phase and rotation/recovery responsibility. Reuse
   `.env.example`, `backend/.env.example` and `ops/containers/.env.example`; examples
   contain placeholders only. Browser build variables must never contain secrets.
   Distinguish reader/session/editor/backup/migrator roles, identity keys and the
   external auth epoch; runtime must not receive owner credentials.
-- [ ] Document ordered bootstrap/explicit migrations, selected paired transfer,
+- [x] Document ordered bootstrap/explicit migrations, selected paired transfer,
   validation, export/full-backup and activation steps. Schema jobs run once as
   operator actions, not in each worker. State allocation-fence/journal admission
   and single-writer lineage prerequisites before hosted authoring; the local-only
   retention override must not become an implicit hosted recovery policy.
-- [ ] Specify stable public origin, same-origin private `/api` and callback routing,
+- [x] Specify stable public origin, same-origin private `/api` and callback routing,
   TLS/cookie/origin/CSRF requirements, cache separation, body/time limits, proxy
   trust and startup/health semantics. Keep one API process and the existing six-slot
   aggregate role-pool budget, plus separate jobs. Readiness during a later outage
   is not proof of current database connectivity.
-- [ ] Provide ordered smoke, failure diagnosis and rollback/roll-forward commands
+- [x] Provide ordered smoke, failure diagnosis and rollback/roll-forward commands
   using existing scripts: learner read and revision, private denial/session,
   protected diagnostic, fixture authoring, progress restore and retained activation.
   Distinguish compatible app rollback, release activation and fresh-DB recovery;
   never suggest a schema downgrade or stale archive overwrite as a generic rollback.
-- [ ] Record the identity implementation gap accurately: the current runtime accepts
+- [x] Record the identity implementation gap accurately: the current runtime accepts
   only the explicitly enabled synthetic loopback adapter, which production refuses.
   Real provider adapter/configuration work and actual assurance/fresh-MFA acceptance
   remain pre-public-admin gates; this is more than a credential swap. Keep private
@@ -281,3 +281,21 @@ Visual inspection covered synthetic rich content at 390/1440px, real export cont
 [The frozen receipt](L6-step3-acceptance-evidence.json) records command outcomes, input/image/report fingerprints, selected-record hashes and visual/automation scope without raw private content or progress. Original export and previous receipts are unchanged. Public-launch blockers remain individually tracked in [browser acceptance](L0-browser-acceptance.md#l6-accepted-engine-refresh--2026-10-15): Firefox remains user-deferred; actual iOS/Android file workflows, actual screen-reader sessions, and persisted BFCache/freeze-return are unobserved. Chromium/WebKit back navigation observed `[false,false]` fresh-load paths only. New accepted-engine CI coverage is wired but **not yet certified by candidate-input CI**; Step 5 owns that full native/five-job gate.
 
 Completion audit: **no blocking local Step 3 findings**. No full candidate/public-launch acceptance is implied. Parent L6 requirements remain open for Steps 4–6. Step 4 provider-neutral deployment inputs is next, after continuation at this agreed stage gate.
+
+## Step 4 implementation and local acceptance — 2026-10-15
+
+Prepared [the provider-neutral handoff](../../L6-deployment-handoff.md): build/serve recipes, complete environment/secret consumers and ownership, explicit bootstrap/schema/selected-pair transfer/recovery order, stable-origin/private routing/cache/body/pool/health policy, ordered smoke/diagnosis and three distinct rollback mechanisms. Production identity adapter/MFA and hosted role bootstrap remain implementation/acceptance gaps; disabled production admin and `bootstrap-local` production refusal are preserved. No provider account, domain or hosted resources are provisioned. Current JSON-authority/schema/cutover prose is reconciled in architecture/product/testing/content/API docs; historical trackers/receipts stay unchanged.
+
+Packaging gap repair: the root Dockerfile retains `learner` as its default final target and adds an explicit optional `admin` target. Build-time audits require HTTP/popup entries and reject fixture authoring, QA and bundled banks; audits live outside the public root and hidden maps/manifests are removed. Generated admin routing changes only the explicit entry to no-store, preserving the shared private/public proxy limits. New real static smoke checks asset hashes/cache/private-denial behavior; the full HTTP fixture can consume packaged admin assets. Native acceptance now builds/checks this image and runs the complete HTTP suite against it. No private API bypass or provider integration is added.
+
+Development checks: all three initial image builds and API smoke passed. The container browser config's broad `test-results-containers` cleanup erased the temporary Step 4 logs (and prior ephemeral synthetic test outputs), causing the wrapper's evidence write to fail. Frozen repository receipts and protected private exports/screenshots are unchanged. Container learner traces now use a `learner/` subdirectory; retained Step 4 evidence is outside all Playwright outputs. A sentinel and rerun verify the repair. Final packaging/browser/quality checks remain in progress; no pass is inferred from missing initial logs.
+
+Final Step 4 local gate: **pass**. [The handoff](../../L6-deployment-handoff.md) links procedures and records exact artifact IDs, 30 model-backed environment settings plus public build/local runner inputs, secret rotation/recovery ownership, target role-bootstrap and real identity gaps, and ordered smoke/rollback/restore/admission. Default learner production behavior remains unchanged; the optional admin target has audited HTTP/popup entries, no fixture editor or bundled banks, real no-store entry serving and unchanged protected API denial. Source maps/manifests/audit metadata are not publicly served.
+
+The retained rerun passed API smoke, all **six learner proxy groups**, **43 container learner browser cases** and **18 full packaged HTTP editor cases**, plus **eight artifact/routing contract tests** and the new optional static smoke (103 asset hashes, cache/private-denial/runtime checks). The JSON learner mode explicitly skips its PG-only source-switch test; final PG/native acceptance still owns that case. Default learner audit: 735 modules and no admin/QA/bank modules. Optional admin audit: 862 modules and no fixture-authoring/QA/bank modules. Builds use pinned inputs on native Linux ARM64; current API/learner/admin immutable local IDs are in the [frozen receipt](L6-step4-deployment-evidence.json). Cached rebuilds and local ARM64 do not replace Step 5's repeated no-cache builds and both native CI jobs.
+
+Development failures are retained, not counted as passes. After output isolation repair, the new static test's wrong `detail.code` expectation was corrected to the existing private `error.code` contract. The first packaged HTTP run passed 17 cases and failed the deliberately held import-save case while a post-commit read probe remained pending; trace showed a 200 save receipt with the expected new pair. The test now waits for that response before its read, then retains exact stored-pair and newer-editor-text assertions. The complete rerun passed 18 cases. No application/backend/domain/content changes or relaxed timeouts/assertions were needed.
+
+Ruff, lint/architecture, format, host build/typecheck, artifact contracts, environment-name inventory, affected link/section anchors and diff/integrity checks pass. An independent Docker listing found no smoke containers/networks. All previous repository receipts and protected selected export remain unchanged. Prior raw synthetic test directories were ephemeral and the initial broad container-output cleanup removed them; protected private export/screenshots and frozen receipt JSON were preserved. New learner traces are scoped under `test-results-containers/learner/`, and Step 4 retained logs/reports are outside all Playwright cleanup paths.
+
+Completion audit: **no blocking local Step 4 findings**. Public launch remains blocked by the listed hosted bootstrap/TLS/routing/pooling/suspend/region/latency/budget, production identity/MFA, off-device retained recovery and Firefox/manual-device/reader/persisted-return gates. No cloud account/domain/database/deployment was created and the routine authority was not read or written during Step 4. Step 5 complete candidate verification is next, after continuation at this agreed gate.

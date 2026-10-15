@@ -78,7 +78,7 @@ The service pins PostgreSQL 17.11 and mounts the named volume
 `meducation-local_postgres-data` at `/var/lib/postgresql/data`. It enables SCRAM
 for TCP clients on fresh initialization and exposes no host database port by
 default. API content still comes from packaged JSON: this profile supplies an
-independent local database, and L3 adds schema, roles, migrations and DB reads.
+independent local database, with schema/roles/migrations/DB reads available through explicit L3+ jobs; this profile does not wire them automatically.
 The `pg_isready` healthcheck establishes startup reachability, not successful
 authentication or L3 content/schema readiness. The Compose smoke performs a
 separate authenticated TCP SQL check and verifies rejection without a password.
@@ -553,3 +553,13 @@ allocation admission. These are disposable fixtures; see the
 [operations runbook](L5-local-operations.md#distinct-recovery-and-rollback-drills)
 for full commands and the separate retained-backup/provider obligations. These
 new inputs require another native AMD64/ARM64 run before overall L5 acceptance.
+
+## Optional HTTP admin image
+
+The root Dockerfile's explicit `admin` target packages HTTP authoring assets and
+serves `/admin.html` with `Cache-Control: no-store`. Default builds and Compose
+still select the final `learner` target and reject that path. Both targets use the
+same non-root static runtime, bounded API proxy and cache policy. Source maps and
+build manifests are audited then removed; audit JSON is outside the web root.
+This packages a serving path; it does not enable private API identity. Follow the
+[build/serving and smoke recipe](L6-deployment-handoff.md#build-and-serve-the-local-artifacts).

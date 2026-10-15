@@ -1,0 +1,1419 @@
+{
+  "stage": "L6 Step 4 provider-neutral deployment inputs",
+  "date": "2026-10-15 (Asia/Manila)",
+  "result": "pass for local Step 4 gate",
+  "overall_l6": "incomplete; full candidate/local/native five-job CI and final decision pending",
+  "code_commit": "42e911d3c113912cc461e926337cfc1b9714b6f1",
+  "input_sha256": {
+    "Dockerfile": "a7d94869acc1e71453d68111f30f0362756221098b32b73e5b4cdf2cee4823d9",
+    "backend/Dockerfile": "f2bbffa77ca28187d05689b66ae6e956b172c875e760ae9cf3044c7c8f43e3c6",
+    "scripts/containers/check-admin-artifacts.mjs": "7e7d9a03caf6a33befbd33ae48c6a91f6b8e2570d0954fb2edf7581646ec62b5",
+    "scripts/containers/check-admin-artifacts.test.mjs": "02ee6d3727508cbfa8e6e7344fd4c42230890c89dd473d58c13a62a5d0ff2cb5",
+    "scripts/containers/smoke-admin-static.py": "e0edc30c34e4ff07b4fdfe240c13b63405871107bec3e38e2f074a075be2a3f0",
+    "scripts/containers/smoke-admin-http.py": "d6356e8423830415e07076d8af90025eea07580695f0611e8516832eac458476",
+    "scripts/containers/acceptance.py": "be92e0521918e8078e82097ad81b466b35241d4733226499cf9e3ff3b7eee1a7",
+    "playwright.containers.config.ts": "ecaa8661e42a7b2c4558191cbe7566a2ba31628d4996c8d21ec6c5dbeb120042",
+    "e2e/admin-http/editor.spec.ts": "844ac4de11d559e61ae52b55a3a45191b0d87b6ad6f96a0b186eb3be9d0bfb9b",
+    "ops/containers/nginx.conf": "31e3a44cc7d5a5c3031d6dcbb7046c45ca0c8405f00f8232f1910011b6464314",
+    "ops/containers/proxy.conf": "dd56e85eb6cfe5303aeff691a6f56509714d7cd65321b1ed04605078e5e8aec0",
+    "package-lock.json": "4d3c5db912e44bc2623df1eca495569d2cad1ec844ad50ff85a378d7697d739d",
+    "backend/requirements.lock": "ab5557d7298e77ec9968ed5e2b2ba0d934d907b943442cf9a80b0b7dce6a4a0b",
+    ".env.example": "f8f1042dd555275cec3b35cf6937df9a81a54701135513c0442667c2af631629",
+    "backend/.env.example": "6b43a65e91c988d54f24dc0801cb359d655e9bd8103b1da942bf99f37edfc620",
+    "ops/containers/.env.example": "e629ace832f0e896b3979802d83ffc0e1fa30bff65e932e93ac06d61d21c8ff4"
+  },
+  "handoff": "../../L6-deployment-handoff.md",
+  "platform": "linux/arm64",
+  "host": "macOS-27.0-arm64-arm-64bit-Mach-O",
+  "commands": [
+    {
+      "name": "api-build",
+      "command": [
+        "docker",
+        "build",
+        "--pull",
+        "-f",
+        "backend/Dockerfile",
+        "-t",
+        "meducation-api:l6-step4",
+        "."
+      ],
+      "exit_status": 0,
+      "seconds": 1.4,
+      "log": "var/backups/postgres/l6-step4-verification/api-build.log"
+    },
+    {
+      "name": "learner-build",
+      "command": [
+        "docker",
+        "build",
+        "--pull",
+        "-t",
+        "meducation-learner:l6-step4",
+        "."
+      ],
+      "exit_status": 0,
+      "seconds": 0.98,
+      "log": "var/backups/postgres/l6-step4-verification/learner-build.log"
+    },
+    {
+      "name": "admin-build",
+      "command": [
+        "docker",
+        "build",
+        "--pull",
+        "--target",
+        "admin",
+        "-t",
+        "meducation-admin:l6-step4",
+        "."
+      ],
+      "exit_status": 0,
+      "seconds": 0.72,
+      "log": "var/backups/postgres/l6-step4-verification/admin-build.log"
+    },
+    {
+      "name": "api-smoke",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-api.py",
+        "--image",
+        "meducation-api:l6-step4",
+        "--report",
+        "var/backups/postgres/l6-step4-verification/api-smoke.json"
+      ],
+      "exit_status": 0,
+      "seconds": 28.41,
+      "log": "var/backups/postgres/l6-step4-verification/api-smoke.log"
+    },
+    {
+      "name": "learner-smoke",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-learner.py",
+        "--frontend-image",
+        "meducation-learner:l6-step4",
+        "--api-image",
+        "meducation-api:l6-step4",
+        "--browser",
+        "--report",
+        "var/backups/postgres/l6-step4-verification/learner-smoke.json"
+      ],
+      "exit_status": 0,
+      "seconds": 150.23,
+      "log": "var/backups/postgres/l6-step4-verification/learner-smoke.log"
+    },
+    {
+      "name": "admin-static",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-admin-static.py",
+        "--frontend-image",
+        "meducation-admin:l6-step4",
+        "--api-image",
+        "meducation-api:l6-step4",
+        "--output",
+        "var/backups/postgres/l6-step4-verification/admin-static.json"
+      ],
+      "exit_status": 0,
+      "seconds": 10.53,
+      "log": "var/backups/postgres/l6-step4-verification/admin-static-final.log"
+    },
+    {
+      "name": "admin-http",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-admin-http.py",
+        "--image",
+        "meducation-api:l6-step4",
+        "--frontend-image",
+        "meducation-admin:l6-step4",
+        "--output",
+        "var/backups/postgres/l6-step4-verification/admin-http.json"
+      ],
+      "exit_status": 0,
+      "seconds": 128.03,
+      "log": "var/backups/postgres/l6-step4-verification/admin-http-rerun.log"
+    }
+  ],
+  "images": {
+    "api": "sha256:02b79878958ffa95ffd3ec9a9fca8663a0e9918f9cd3136f3ccf1cd3eb0c855d",
+    "learner": "sha256:bc4baf99207130fecc952c532a52fa43b604dc74c79fe41070322f5527f5bafe",
+    "admin": "sha256:e3ce2cb83c34b22d7be16c8657b46bfbaf45dbd9055dced71c4b802d9d7cf363"
+  },
+  "image_identity_scope": "Immutable local image IDs, not registry manifest digests; retained rebuilds use cached pinned inputs. Both native architectures and repeated no-cache candidate acceptance remain Step 5.",
+  "artifact_audits": {
+    "learner": {
+      "module_count": 735,
+      "admin_qa_modules": [],
+      "bank_modules": [],
+      "files": [
+        {
+          "path": "assets/App-BEly4115.js",
+          "bytes": 159031,
+          "sha256": "586af3af1c29ce5d5057450ba707a711fc83ca9e9ff13453848299ef841db52f"
+        },
+        {
+          "path": "assets/Flag-EN_HQn6t.js",
+          "bytes": 133,
+          "sha256": "5e432a227fc4abc081fa071fe124221e83b876dd98a0cc512a7445eacc580fc2"
+        },
+        {
+          "path": "assets/FlagOutlined-CSZOYhjn.js",
+          "bytes": 166,
+          "sha256": "06e1b89c9beec8431b1a7b91cd47f816110f647149c01dc574d4bb8d60ddaba4"
+        },
+        {
+          "path": "assets/FlashcardStudyScreen-B_TedIPf.js",
+          "bytes": 10700,
+          "sha256": "3ab0fe95abe775604204ecaae77535fd5f1da5248b01f53bfd22e543bb71aec5"
+        },
+        {
+          "path": "assets/KaTeX_AMS-Regular-BQhdFMY1.woff2",
+          "bytes": 28076,
+          "sha256": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308"
+        },
+        {
+          "path": "assets/KaTeX_AMS-Regular-DMm9YOAa.woff",
+          "bytes": 33516,
+          "sha256": "30da91e84c893f875e252689faebdc590b2871145e8adc7f9a9d4dbd8ce0b251"
+        },
+        {
+          "path": "assets/KaTeX_AMS-Regular-DRggAlZN.ttf",
+          "bytes": 63632,
+          "sha256": "68534840bcfdd2bffb6f0e8deb48684dd01e7f04ea2813267577afb906de1d13"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf",
+          "bytes": 12368,
+          "sha256": "07d8e303ce4fc12b4bb54f1004170dd190a1f3db45d400fe68060df3e0897268"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff",
+          "bytes": 7716,
+          "sha256": "1ae6bd7475590e97e7f145a89e09ccde322f7a6bc0b91607b1c8b8ee28290fed"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2",
+          "bytes": 6912,
+          "sha256": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff",
+          "bytes": 7656,
+          "sha256": "3398dd02302557a793f2863f88e02d96ce10df2abffa07c8e9fa90775116e65c"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2",
+          "bytes": 6908,
+          "sha256": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf",
+          "bytes": 12344,
+          "sha256": "ed0b74372feefcbb9c0666b2e210da37b7e49fa7fbbf3eeb11db5f693dacfbb7"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf",
+          "bytes": 19584,
+          "sha256": "9163df9c7122432e6495b4229fa9071cf9ae86a758ae5efc4924ec2e1a6dbce1"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Bold-BsDP51OF.woff",
+          "bytes": 13296,
+          "sha256": "9be7ceb88004ab8ad124082246fbfcca4091e36385d4ec6ed1df67375dad50fb"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2",
+          "bytes": 11348,
+          "sha256": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Regular-CB_wures.ttf",
+          "bytes": 19572,
+          "sha256": "1e6f9579e90e2cac37f8f60a597c436e075c114385652b7cbeb0dec0421291b3"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2",
+          "bytes": 11316,
+          "sha256": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff",
+          "bytes": 13208,
+          "sha256": "5e28753be717dac97f559f49bc10be9cf3c124ddcabda6659d11cb68febc6463"
+        },
+        {
+          "path": "assets/KaTeX_Main-Bold-Cx986IdX.woff2",
+          "bytes": 25324,
+          "sha256": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021"
+        },
+        {
+          "path": "assets/KaTeX_Main-Bold-Jm3AIy58.woff",
+          "bytes": 29912,
+          "sha256": "c76c5d696297d51b9cb1639c7da4334f0e7dec81b42b11213b5e25ef671bb822"
+        },
+        {
+          "path": "assets/KaTeX_Main-Bold-waoOVXN0.ttf",
+          "bytes": 51336,
+          "sha256": "138ac28d1663b3037e9c5f52371fa5c63d8324f4a38d22cd573e6ea3a3fd0cf8"
+        },
+        {
+          "path": "assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2",
+          "bytes": 16780,
+          "sha256": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b"
+        },
+        {
+          "path": "assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf",
+          "bytes": 32968,
+          "sha256": "70ee1f64a20f2048c21940ef46d0144fd215baa953ca69afd1e31e98544f708f"
+        },
+        {
+          "path": "assets/KaTeX_Main-BoldItalic-SpSLRI95.woff",
+          "bytes": 19412,
+          "sha256": "a6f7ec0d846ac7ad975adb8959c37ed49b94acbc4ae436db9ce9e20287e4a64c"
+        },
+        {
+          "path": "assets/KaTeX_Main-Italic-3WenGoN9.ttf",
+          "bytes": 33580,
+          "sha256": "0d85ae7cc30f23790a7f1a58c4a112fdca8aae769b6ba11429af1d98b1b6cb3a"
+        },
+        {
+          "path": "assets/KaTeX_Main-Italic-BMLOBm91.woff",
+          "bytes": 19676,
+          "sha256": "f1d6ef86f3b11a528bd5185199bd2443ecb2b0dead96d88674b5a2c12be24bdf"
+        },
+        {
+          "path": "assets/KaTeX_Main-Italic-NWA7e6Wa.woff2",
+          "bytes": 16988,
+          "sha256": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267"
+        },
+        {
+          "path": "assets/KaTeX_Main-Regular-B22Nviop.woff2",
+          "bytes": 26272,
+          "sha256": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866"
+        },
+        {
+          "path": "assets/KaTeX_Main-Regular-Dr94JaBh.woff",
+          "bytes": 30772,
+          "sha256": "c6368d87e8a1a3a5d337623d83d8dc4b868f242a9ad476237d6f8d1e0f168cdc"
+        },
+        {
+          "path": "assets/KaTeX_Main-Regular-ypZvNtVU.ttf",
+          "bytes": 53580,
+          "sha256": "d0332f52868370fd83ae7fa46470f90c8f2eab2fcf12bc4f88080b340c95a830"
+        },
+        {
+          "path": "assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf",
+          "bytes": 31196,
+          "sha256": "f9377ab0271cda59af24bcffbd46a4d0c8a3572ffafdbb38de2ad5ea7b0d5ee5"
+        },
+        {
+          "path": "assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2",
+          "bytes": 16400,
+          "sha256": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1"
+        },
+        {
+          "path": "assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff",
+          "bytes": 18668,
+          "sha256": "850c0af5c2238497febaf5e461d880bf458c341f42f4f330f1b1ab5698b1998e"
+        },
+        {
+          "path": "assets/KaTeX_Math-Italic-DA0__PXp.woff",
+          "bytes": 18748,
+          "sha256": "8a8d244581371912b8f3f5a23e2437cb2a59cd9bcaebb0346e722c05737a2571"
+        },
+        {
+          "path": "assets/KaTeX_Math-Italic-flOr_0UB.ttf",
+          "bytes": 31308,
+          "sha256": "08ce98e51b04d58945a301e639e02b6998af29fdfd61a7b8afdd07bbfc479d4a"
+        },
+        {
+          "path": "assets/KaTeX_Math-Italic-t53AETM-.woff2",
+          "bytes": 16440,
+          "sha256": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf",
+          "bytes": 24504,
+          "sha256": "1ece03f79f95277d57dc7f6b435a74e1379b0d46104a8530286b60ff49369ea0"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2",
+          "bytes": 12216,
+          "sha256": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff",
+          "bytes": 14408,
+          "sha256": "ece03cfd83e22c212cdef66feb8442d25a083beb988db3f1883f3f9738d750ba"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2",
+          "bytes": 12028,
+          "sha256": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Italic-DN2j7dab.woff",
+          "bytes": 14112,
+          "sha256": "91ee67500cc0129aa0ace3ac5c61ff1692102f0f31d02b69347fba35dcb75bf2"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf",
+          "bytes": 22364,
+          "sha256": "3931dd81faed86ba021bb2bbdc36f5bed9a38d6b4f4077aca59b265aa1b02083"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf",
+          "bytes": 19436,
+          "sha256": "f36ea897e19f4a2e571d1e900e4e3710e438deb05a842486045ba0a3e616a4ad"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff",
+          "bytes": 12316,
+          "sha256": "11e4dc8a6471ff6d6ee561d53d10fde8f7489e798257ff449c5d37c197435605"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2",
+          "bytes": 10344,
+          "sha256": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342"
+        },
+        {
+          "path": "assets/KaTeX_Script-Regular-C5JkGWo-.ttf",
+          "bytes": 16648,
+          "sha256": "1c67f068fea8bb09bf099c088b1cf64bd27516a6e07f4684344873564bb66a67"
+        },
+        {
+          "path": "assets/KaTeX_Script-Regular-D3wIWfF6.woff2",
+          "bytes": 9644,
+          "sha256": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b"
+        },
+        {
+          "path": "assets/KaTeX_Script-Regular-D5yQViql.woff",
+          "bytes": 10588,
+          "sha256": "d96cdf2b3bdd4d64a8fd5f74a4c467f123a8a73931cd435889f08ffaf9bf947a"
+        },
+        {
+          "path": "assets/KaTeX_Size1-Regular-C195tn64.woff",
+          "bytes": 6496,
+          "sha256": "c943cc986384f59e86bea5fd7dc50a9c4dfe567a7c05eb40d6790720dead97c9"
+        },
+        {
+          "path": "assets/KaTeX_Size1-Regular-Dbsnue_I.ttf",
+          "bytes": 12228,
+          "sha256": "95b6d2f1a50173bfedb8c63e1d1c99b10427d0a4df4201cb44513b226951a22b"
+        },
+        {
+          "path": "assets/KaTeX_Size1-Regular-mCD8mA8B.woff2",
+          "bytes": 5468,
+          "sha256": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe"
+        },
+        {
+          "path": "assets/KaTeX_Size2-Regular-B7gKUWhC.ttf",
+          "bytes": 11508,
+          "sha256": "a6b2099fb555c60e3a0db3a08842ebf1d732c6eb4e4bf44913613bed4fc4e39b"
+        },
+        {
+          "path": "assets/KaTeX_Size2-Regular-Dy4dx90m.woff2",
+          "bytes": 5208,
+          "sha256": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd"
+        },
+        {
+          "path": "assets/KaTeX_Size2-Regular-oD1tc_U0.woff",
+          "bytes": 6188,
+          "sha256": "2014c523c3210bcc166648c4d4cc57f05b747df07a24277bf71c51e67dc79e3d"
+        },
+        {
+          "path": "assets/KaTeX_Size3-Regular-CTq5MqoE.woff",
+          "bytes": 4420,
+          "sha256": "6ab6b62e9b62dae2c00dd90f791bd10950be0ecc3490d7d6045f51c2e8fe0949"
+        },
+        {
+          "path": "assets/KaTeX_Size3-Regular-DgpXs0kz.ttf",
+          "bytes": 7588,
+          "sha256": "500e04d54f0d51666332c9d2089aa803be22aa878eca539e59fa53c6e522b082"
+        },
+        {
+          "path": "assets/KaTeX_Size4-Regular-BF-4gkZK.woff",
+          "bytes": 5980,
+          "sha256": "99f9c6750b489c9462bf04900bd3f939df9b829339daaaaa99ef5495cdddea58"
+        },
+        {
+          "path": "assets/KaTeX_Size4-Regular-DWFBv043.ttf",
+          "bytes": 10364,
+          "sha256": "c647367d1dd4e162468717d020e1fc0f1dc5c26ebfdffbe55261713bf88c5877"
+        },
+        {
+          "path": "assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2",
+          "bytes": 4928,
+          "sha256": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0"
+        },
+        {
+          "path": "assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff",
+          "bytes": 16028,
+          "sha256": "e14fed02b1aba7ce9f5afd5844b5d0321b22351febc720e0de8b8723527609f7"
+        },
+        {
+          "path": "assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2",
+          "bytes": 13568,
+          "sha256": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b"
+        },
+        {
+          "path": "assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf",
+          "bytes": 27556,
+          "sha256": "f01f3e87d9c6a61c0c081ceb577abd864eb00a612f7ac1620dd6915fad2ef5aa"
+        },
+        {
+          "path": "assets/QuizBrowseScreen-BgwUXcLO.js",
+          "bytes": 2105,
+          "sha256": "bc97b6923a4f53f55857539c02d19b404658b26ddc567042d3dd415d8842e7d2"
+        },
+        {
+          "path": "assets/QuizReviewScreen-CXez4dyn.js",
+          "bytes": 2389,
+          "sha256": "06dd8cf5756f50f33f6a3fc98f4c545758982f86dc02bfbb9d181ca8c941f133"
+        },
+        {
+          "path": "assets/QuizScreen-B2mRhJq0.js",
+          "bytes": 15203,
+          "sha256": "17652485ab70ec811a6c1d5c17f4bc4fe8ab2c83ff3da46ccaba3cd1d1650f99"
+        },
+        {
+          "path": "assets/ReadOnlyQuizChrome-CBxTXveD.js",
+          "bytes": 2786,
+          "sha256": "09e47e4d7b6bfa2f3e06e16b5bff58fc4584f70d75743be35b0bf6a06fa29b70"
+        },
+        {
+          "path": "assets/ResultsScreen-DkwxQMFT.js",
+          "bytes": 4799,
+          "sha256": "06ae4e7fd59d37ed0d0052f277d2dd81adabb286d98ba26bf5d94af6b359ff6a"
+        },
+        {
+          "path": "assets/TimerOutlined-M2rSWWak.js",
+          "bytes": 5927,
+          "sha256": "6c74616a9f7a463ce201c28de987b8d937aecade66b1365072ddeb4b84f531c6"
+        },
+        {
+          "path": "assets/celebrationCatalog-BsJMdDfz.js",
+          "bytes": 3401,
+          "sha256": "6f9737864ab090c3cb165a0c9373f9b710ad0e0d69e965c8848863f35e144c2d"
+        },
+        {
+          "path": "assets/format-f_2J44oX.js",
+          "bytes": 145,
+          "sha256": "e97f3e9a11abcd8bfedd86d58e9af222cc2c885144f13fc9159014ea7f4ab146"
+        },
+        {
+          "path": "assets/learner-BotbdesK.js",
+          "bytes": 500000,
+          "sha256": "e3b3bb24ba12974820f1c45dd6f14ca3fa183cec775d3b7f49d20376cd0c4ecb"
+        },
+        {
+          "path": "assets/useStudyArrowNavigation-BJmosK-V.css",
+          "bytes": 30255,
+          "sha256": "6f2ae1a672326d22a1e7f0ff599e035099348bfc6ba8ef9b89bb4874e88cdf10"
+        },
+        {
+          "path": "assets/useStudyArrowNavigation-Deh6ml4w.js",
+          "bytes": 622309,
+          "sha256": "c35fa34e0c4a84b474d01f2088bd681002ad7abcb9e28b6e95a6654874b024c5"
+        },
+        {
+          "path": "brand/meducation-full-horizontal-black.svg",
+          "bytes": 1317,
+          "sha256": "d1ffdad86bcde933ab31c1796be65203ffad371ab86dddf42d205656a05c06dc"
+        },
+        {
+          "path": "brand/meducation-full-horizontal-current-color.svg",
+          "bytes": 1327,
+          "sha256": "ab8b882f22ce1130af4e02bf430e237d66b0d1f1870a0f9ff135c4b138d3f759"
+        },
+        {
+          "path": "brand/meducation-full-horizontal-full-color.svg",
+          "bytes": 1566,
+          "sha256": "9c301950f56b97e5afcf64d6b494ee2240dc34ea8e8a4ece654442732f1a1826"
+        },
+        {
+          "path": "brand/meducation-full-horizontal-white.svg",
+          "bytes": 1317,
+          "sha256": "3dd72e8766d27d6d45256ae589e2998a47ff1e9525fc25fc88c3adcaa8df4e05"
+        },
+        {
+          "path": "brand/meducation-full-stacked-black.svg",
+          "bytes": 1318,
+          "sha256": "eeb11ebeaa271d9cfe9854e43756081f5979f0876256334105bde95996243d62"
+        },
+        {
+          "path": "brand/meducation-full-stacked-current-color.svg",
+          "bytes": 1328,
+          "sha256": "5ae0f2ac24542b86808f2554ee675d85dbc1aa725be5e1f5581b7d866b329383"
+        },
+        {
+          "path": "brand/meducation-full-stacked-full-color.svg",
+          "bytes": 1567,
+          "sha256": "fb005650c4fa41c5076713c8eee8ba75a0cb549eaac2ee352337ee55ed90f0b8"
+        },
+        {
+          "path": "brand/meducation-full-stacked-white.svg",
+          "bytes": 1318,
+          "sha256": "1f3d0fb5c7d3e8ed65d0fd3f3400396f00a232a7b2dd4d6752f98b637385bc98"
+        },
+        {
+          "path": "brand/meducation-icon-black.svg",
+          "bytes": 963,
+          "sha256": "37ac91b4e46ff1977af4aeb33d4dd3946e3573549487c0eb7d113683ebeb7312"
+        },
+        {
+          "path": "brand/meducation-icon-current-color.svg",
+          "bytes": 973,
+          "sha256": "51b7cf309101dccb1ce6c49e7f0ed4d849caa0d6d174d0f632e9fe8a16aa34a2"
+        },
+        {
+          "path": "brand/meducation-icon-full-color.svg",
+          "bytes": 1212,
+          "sha256": "a99a4266ce735e14944d0983b62b32776727c7a54c247b4cc84eb9cd47cb222c"
+        },
+        {
+          "path": "brand/meducation-icon-white.svg",
+          "bytes": 963,
+          "sha256": "ebec189fe431e96e57c8b39dc53db9bba6350ad584080313a782f447d2969792"
+        },
+        {
+          "path": "brand/meducation-wordmark-black.svg",
+          "bytes": 704,
+          "sha256": "38fbf1b5a5bf8dd4cb4d4a2c4172eb517756196a78252fb088bcc32cc8216cd6"
+        },
+        {
+          "path": "brand/meducation-wordmark-current-color.svg",
+          "bytes": 714,
+          "sha256": "3b549cd5a8395d9a60cd6d33748928705820e6b433127ba1c7f9d5840093dadc"
+        },
+        {
+          "path": "brand/meducation-wordmark-full-color.svg",
+          "bytes": 953,
+          "sha256": "ffed434c4fee65970fa7d846e01ed8e8ba752d731a2c3884b78b7a4f183da666"
+        },
+        {
+          "path": "brand/meducation-wordmark-white.svg",
+          "bytes": 704,
+          "sha256": "cfaed5c98b8821d9e5cc6dd5e19e670218f793998d3b7cf4d05b0befe990eade"
+        },
+        {
+          "path": "favicon.svg",
+          "bytes": 929,
+          "sha256": "d5ea5e32dde330e229f9c6eaa143498cc831fb80330eb3a210bddf6a294ac7b5"
+        },
+        {
+          "path": "index.html",
+          "bytes": 392,
+          "sha256": "74c1b03cac77770fdf6c2f4f202057a56992d32bec2fdb9c52847fad893c57eb"
+        }
+      ]
+    },
+    "admin": {
+      "module_count": 862,
+      "fixture_authoring_modules": [],
+      "bank_modules": [],
+      "files": [
+        {
+          "path": "admin.html",
+          "bytes": 534,
+          "sha256": "8744a8060b0ce2c36f7b247492de9538bb6349ee22fe1217b90f7754b8027048"
+        },
+        {
+          "path": "assets/App-JVNa0VRu.js",
+          "bytes": 143447,
+          "sha256": "b2e8cf61c298f46c9a02b42ac3fd0a07a36fa1f8ce58b79f11f0b702a96ead2b"
+        },
+        {
+          "path": "assets/AppShell-DT_yCrJi.js",
+          "bytes": 44780,
+          "sha256": "be6c7defebdfa3fae0a46ca898fd578b479acb1b1aad31cffaff1965bf5970ab"
+        },
+        {
+          "path": "assets/Flag-D6AZnEBb.js",
+          "bytes": 172,
+          "sha256": "9cf6fb82348489f245130eaf0a856b4d1ed7ddf7380c1cb2d875599f58363590"
+        },
+        {
+          "path": "assets/FlagOutlined-BuHCi3Zf.js",
+          "bytes": 205,
+          "sha256": "477c6bcf0e4b188e984c7cfce101d313a095579fbce7ed8722945cf23f9378a5"
+        },
+        {
+          "path": "assets/FlashcardStudyScreen-SBo_TuQg.js",
+          "bytes": 10873,
+          "sha256": "6f4d24a5cb8334b52f3668ec8cc166a22854790104ca2b8f63e40356f496a466"
+        },
+        {
+          "path": "assets/HttpAdminApp-izhX5xYp.js",
+          "bytes": 322002,
+          "sha256": "60b910c7a67c7291c199821d8824489b6bf90556d0ad68c48f45fe1cd158df5c"
+        },
+        {
+          "path": "assets/KaTeX_AMS-Regular-BQhdFMY1.woff2",
+          "bytes": 28076,
+          "sha256": "0cdd387c9590a1a9f9794560022dbb59654a7d86f187aa0c81495ad42d3a7308"
+        },
+        {
+          "path": "assets/KaTeX_AMS-Regular-DMm9YOAa.woff",
+          "bytes": 33516,
+          "sha256": "30da91e84c893f875e252689faebdc590b2871145e8adc7f9a9d4dbd8ce0b251"
+        },
+        {
+          "path": "assets/KaTeX_AMS-Regular-DRggAlZN.ttf",
+          "bytes": 63632,
+          "sha256": "68534840bcfdd2bffb6f0e8deb48684dd01e7f04ea2813267577afb906de1d13"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Bold-ATXxdsX0.ttf",
+          "bytes": 12368,
+          "sha256": "07d8e303ce4fc12b4bb54f1004170dd190a1f3db45d400fe68060df3e0897268"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Bold-BEiXGLvX.woff",
+          "bytes": 7716,
+          "sha256": "1ae6bd7475590e97e7f145a89e09ccde322f7a6bc0b91607b1c8b8ee28290fed"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Bold-Dq_IR9rO.woff2",
+          "bytes": 6912,
+          "sha256": "de7701e42cf1f4cf0b766c03fb27977207eee2f4fd5d76fa82188406da43ea4c"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Regular-CTRA-rTL.woff",
+          "bytes": 7656,
+          "sha256": "3398dd02302557a793f2863f88e02d96ce10df2abffa07c8e9fa90775116e65c"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Regular-Di6jR-x-.woff2",
+          "bytes": 6908,
+          "sha256": "5d53e70ad607c2352162dec9e0923fb54ecdafaccbf604cd8dcf7d00facb989b"
+        },
+        {
+          "path": "assets/KaTeX_Caligraphic-Regular-wX97UBjC.ttf",
+          "bytes": 12344,
+          "sha256": "ed0b74372feefcbb9c0666b2e210da37b7e49fa7fbbf3eeb11db5f693dacfbb7"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Bold-BdnERNNW.ttf",
+          "bytes": 19584,
+          "sha256": "9163df9c7122432e6495b4229fa9071cf9ae86a758ae5efc4924ec2e1a6dbce1"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Bold-BsDP51OF.woff",
+          "bytes": 13296,
+          "sha256": "9be7ceb88004ab8ad124082246fbfcca4091e36385d4ec6ed1df67375dad50fb"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Bold-CL6g_b3V.woff2",
+          "bytes": 11348,
+          "sha256": "74444efd593c005e3f4573b44524704c0af0a937fe911cca9e94068d0d140d3f"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Regular-CB_wures.ttf",
+          "bytes": 19572,
+          "sha256": "1e6f9579e90e2cac37f8f60a597c436e075c114385652b7cbeb0dec0421291b3"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Regular-CTYiF6lA.woff2",
+          "bytes": 11316,
+          "sha256": "51814d270d06ff0255dba0799994fa4d8c84d11f09951d47595f4abb1f3602dc"
+        },
+        {
+          "path": "assets/KaTeX_Fraktur-Regular-Dxdc4cR9.woff",
+          "bytes": 13208,
+          "sha256": "5e28753be717dac97f559f49bc10be9cf3c124ddcabda6659d11cb68febc6463"
+        },
+        {
+          "path": "assets/KaTeX_Main-Bold-Cx986IdX.woff2",
+          "bytes": 25324,
+          "sha256": "0f60d1b897938ec918c8ce073092411baf9438f6739465693ff18b0f9d20b021"
+        },
+        {
+          "path": "assets/KaTeX_Main-Bold-Jm3AIy58.woff",
+          "bytes": 29912,
+          "sha256": "c76c5d696297d51b9cb1639c7da4334f0e7dec81b42b11213b5e25ef671bb822"
+        },
+        {
+          "path": "assets/KaTeX_Main-Bold-waoOVXN0.ttf",
+          "bytes": 51336,
+          "sha256": "138ac28d1663b3037e9c5f52371fa5c63d8324f4a38d22cd573e6ea3a3fd0cf8"
+        },
+        {
+          "path": "assets/KaTeX_Main-BoldItalic-DxDJ3AOS.woff2",
+          "bytes": 16780,
+          "sha256": "99cd42a3c072d918f2f44984a807cf7aa16e13545fd0875fc07c6c65f99e715b"
+        },
+        {
+          "path": "assets/KaTeX_Main-BoldItalic-DzxPMmG6.ttf",
+          "bytes": 32968,
+          "sha256": "70ee1f64a20f2048c21940ef46d0144fd215baa953ca69afd1e31e98544f708f"
+        },
+        {
+          "path": "assets/KaTeX_Main-BoldItalic-SpSLRI95.woff",
+          "bytes": 19412,
+          "sha256": "a6f7ec0d846ac7ad975adb8959c37ed49b94acbc4ae436db9ce9e20287e4a64c"
+        },
+        {
+          "path": "assets/KaTeX_Main-Italic-3WenGoN9.ttf",
+          "bytes": 33580,
+          "sha256": "0d85ae7cc30f23790a7f1a58c4a112fdca8aae769b6ba11429af1d98b1b6cb3a"
+        },
+        {
+          "path": "assets/KaTeX_Main-Italic-BMLOBm91.woff",
+          "bytes": 19676,
+          "sha256": "f1d6ef86f3b11a528bd5185199bd2443ecb2b0dead96d88674b5a2c12be24bdf"
+        },
+        {
+          "path": "assets/KaTeX_Main-Italic-NWA7e6Wa.woff2",
+          "bytes": 16988,
+          "sha256": "97479ca6cce906abc961ecac96faa5f9ca2e61b8e7670d475826bcdee9a7c267"
+        },
+        {
+          "path": "assets/KaTeX_Main-Regular-B22Nviop.woff2",
+          "bytes": 26272,
+          "sha256": "c2342cd8b869e01752a9321dc17213fc40d4d04c79688c1d43f2cf316abd7866"
+        },
+        {
+          "path": "assets/KaTeX_Main-Regular-Dr94JaBh.woff",
+          "bytes": 30772,
+          "sha256": "c6368d87e8a1a3a5d337623d83d8dc4b868f242a9ad476237d6f8d1e0f168cdc"
+        },
+        {
+          "path": "assets/KaTeX_Main-Regular-ypZvNtVU.ttf",
+          "bytes": 53580,
+          "sha256": "d0332f52868370fd83ae7fa46470f90c8f2eab2fcf12bc4f88080b340c95a830"
+        },
+        {
+          "path": "assets/KaTeX_Math-BoldItalic-B3XSjfu4.ttf",
+          "bytes": 31196,
+          "sha256": "f9377ab0271cda59af24bcffbd46a4d0c8a3572ffafdbb38de2ad5ea7b0d5ee5"
+        },
+        {
+          "path": "assets/KaTeX_Math-BoldItalic-CZnvNsCZ.woff2",
+          "bytes": 16400,
+          "sha256": "dc47344dbb6cb5b655c8460d561f4df5f501b90c804ad3c6cec65fe322351ab1"
+        },
+        {
+          "path": "assets/KaTeX_Math-BoldItalic-iY-2wyZ7.woff",
+          "bytes": 18668,
+          "sha256": "850c0af5c2238497febaf5e461d880bf458c341f42f4f330f1b1ab5698b1998e"
+        },
+        {
+          "path": "assets/KaTeX_Math-Italic-DA0__PXp.woff",
+          "bytes": 18748,
+          "sha256": "8a8d244581371912b8f3f5a23e2437cb2a59cd9bcaebb0346e722c05737a2571"
+        },
+        {
+          "path": "assets/KaTeX_Math-Italic-flOr_0UB.ttf",
+          "bytes": 31308,
+          "sha256": "08ce98e51b04d58945a301e639e02b6998af29fdfd61a7b8afdd07bbfc479d4a"
+        },
+        {
+          "path": "assets/KaTeX_Math-Italic-t53AETM-.woff2",
+          "bytes": 16440,
+          "sha256": "7af58c5ec8f132a2ddde9027c6d7814decce4d3b822a11192a42a20e2e973264"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Bold-CFMepnvq.ttf",
+          "bytes": 24504,
+          "sha256": "1ece03f79f95277d57dc7f6b435a74e1379b0d46104a8530286b60ff49369ea0"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Bold-D1sUS0GD.woff2",
+          "bytes": 12216,
+          "sha256": "e99ae51144bf1232efcc1bfe5add36262c6866b0faab24fa75740e1b98577a62"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Bold-DbIhKOiC.woff",
+          "bytes": 14408,
+          "sha256": "ece03cfd83e22c212cdef66feb8442d25a083beb988db3f1883f3f9738d750ba"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Italic-C3H0VqGB.woff2",
+          "bytes": 12028,
+          "sha256": "00b26ac825e2095056396e0553b8ac26d3f8ad158c3826e28b4c45b385c4714a"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Italic-DN2j7dab.woff",
+          "bytes": 14112,
+          "sha256": "91ee67500cc0129aa0ace3ac5c61ff1692102f0f31d02b69347fba35dcb75bf2"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Italic-YYjJ1zSn.ttf",
+          "bytes": 22364,
+          "sha256": "3931dd81faed86ba021bb2bbdc36f5bed9a38d6b4f4077aca59b265aa1b02083"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Regular-BNo7hRIc.ttf",
+          "bytes": 19436,
+          "sha256": "f36ea897e19f4a2e571d1e900e4e3710e438deb05a842486045ba0a3e616a4ad"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Regular-CS6fqUqJ.woff",
+          "bytes": 12316,
+          "sha256": "11e4dc8a6471ff6d6ee561d53d10fde8f7489e798257ff449c5d37c197435605"
+        },
+        {
+          "path": "assets/KaTeX_SansSerif-Regular-DDBCnlJ7.woff2",
+          "bytes": 10344,
+          "sha256": "68e8c73ef42afd3ccec58bf0fba302cce448938e7fc020a5e31f8a952eee1342"
+        },
+        {
+          "path": "assets/KaTeX_Script-Regular-C5JkGWo-.ttf",
+          "bytes": 16648,
+          "sha256": "1c67f068fea8bb09bf099c088b1cf64bd27516a6e07f4684344873564bb66a67"
+        },
+        {
+          "path": "assets/KaTeX_Script-Regular-D3wIWfF6.woff2",
+          "bytes": 9644,
+          "sha256": "036d4e95149b69ff9bcc0cd55771efeb25ffa3947293e69acd78d5ac328c684b"
+        },
+        {
+          "path": "assets/KaTeX_Script-Regular-D5yQViql.woff",
+          "bytes": 10588,
+          "sha256": "d96cdf2b3bdd4d64a8fd5f74a4c467f123a8a73931cd435889f08ffaf9bf947a"
+        },
+        {
+          "path": "assets/KaTeX_Size1-Regular-C195tn64.woff",
+          "bytes": 6496,
+          "sha256": "c943cc986384f59e86bea5fd7dc50a9c4dfe567a7c05eb40d6790720dead97c9"
+        },
+        {
+          "path": "assets/KaTeX_Size1-Regular-Dbsnue_I.ttf",
+          "bytes": 12228,
+          "sha256": "95b6d2f1a50173bfedb8c63e1d1c99b10427d0a4df4201cb44513b226951a22b"
+        },
+        {
+          "path": "assets/KaTeX_Size1-Regular-mCD8mA8B.woff2",
+          "bytes": 5468,
+          "sha256": "6b47c40166b6dbe21a5dfca7718413f2147fd2399be1ba605d8ad39cedf25dfe"
+        },
+        {
+          "path": "assets/KaTeX_Size2-Regular-B7gKUWhC.ttf",
+          "bytes": 11508,
+          "sha256": "a6b2099fb555c60e3a0db3a08842ebf1d732c6eb4e4bf44913613bed4fc4e39b"
+        },
+        {
+          "path": "assets/KaTeX_Size2-Regular-Dy4dx90m.woff2",
+          "bytes": 5208,
+          "sha256": "d04c54219f9eaec6d4d4fd42dfb28785975a4794d6b2fc71e566b9cd6db842dd"
+        },
+        {
+          "path": "assets/KaTeX_Size2-Regular-oD1tc_U0.woff",
+          "bytes": 6188,
+          "sha256": "2014c523c3210bcc166648c4d4cc57f05b747df07a24277bf71c51e67dc79e3d"
+        },
+        {
+          "path": "assets/KaTeX_Size3-Regular-CTq5MqoE.woff",
+          "bytes": 4420,
+          "sha256": "6ab6b62e9b62dae2c00dd90f791bd10950be0ecc3490d7d6045f51c2e8fe0949"
+        },
+        {
+          "path": "assets/KaTeX_Size3-Regular-DgpXs0kz.ttf",
+          "bytes": 7588,
+          "sha256": "500e04d54f0d51666332c9d2089aa803be22aa878eca539e59fa53c6e522b082"
+        },
+        {
+          "path": "assets/KaTeX_Size4-Regular-BF-4gkZK.woff",
+          "bytes": 5980,
+          "sha256": "99f9c6750b489c9462bf04900bd3f939df9b829339daaaaa99ef5495cdddea58"
+        },
+        {
+          "path": "assets/KaTeX_Size4-Regular-DWFBv043.ttf",
+          "bytes": 10364,
+          "sha256": "c647367d1dd4e162468717d020e1fc0f1dc5c26ebfdffbe55261713bf88c5877"
+        },
+        {
+          "path": "assets/KaTeX_Size4-Regular-Dl5lxZxV.woff2",
+          "bytes": 4928,
+          "sha256": "a4af7d414440a1c1790825cfb700cf9cf43b0f2c4b04f0ebc523011ad9853ec0"
+        },
+        {
+          "path": "assets/KaTeX_Typewriter-Regular-C0xS9mPB.woff",
+          "bytes": 16028,
+          "sha256": "e14fed02b1aba7ce9f5afd5844b5d0321b22351febc720e0de8b8723527609f7"
+        },
+        {
+          "path": "assets/KaTeX_Typewriter-Regular-CO6r4hn1.woff2",
+          "bytes": 13568,
+          "sha256": "71d517d67827787cfabdf186914cc3358eda539e37931941f2b2fd4a21f68c0b"
+        },
+        {
+          "path": "assets/KaTeX_Typewriter-Regular-D3Ib7_Hf.ttf",
+          "bytes": 27556,
+          "sha256": "f01f3e87d9c6a61c0c081ceb577abd864eb00a612f7ac1620dd6915fad2ef5aa"
+        },
+        {
+          "path": "assets/PairedHttpClient-DFTwsSfU.js",
+          "bytes": 3366,
+          "sha256": "6010b3dc7811b71f1e51064fc5b4c65e141c970b7f30ac144fd4d8c45a48fbae"
+        },
+        {
+          "path": "assets/QuizBrowseScreen-DyAXUhie.js",
+          "bytes": 2284,
+          "sha256": "51cac2d43d7ea81bcb5f7ce1ab34260fa8c3d2de48687323fec086b79999d372"
+        },
+        {
+          "path": "assets/QuizReviewScreen-CfNfMi9N.js",
+          "bytes": 2573,
+          "sha256": "dc7034dac51ae90d3b778b42e5b239dca85f1e9314d036d0697c142cb84c8d19"
+        },
+        {
+          "path": "assets/QuizScreen-CMyMk2hy.js",
+          "bytes": 12985,
+          "sha256": "e20152d2ae93f6af699f312ae20d94cf6dc1f24ef459e269850ef91f6e6369bc"
+        },
+        {
+          "path": "assets/ReadOnlyQuizChrome-CKDXuj4u.js",
+          "bytes": 2825,
+          "sha256": "2a15ed73d9b82e66ba6590d2169ab193d8df9af3440baa3f035a8511bc05cbcb"
+        },
+        {
+          "path": "assets/ResultsScreen-DKddxoV_.js",
+          "bytes": 4936,
+          "sha256": "4a055468a050563d786999320c139d73ca77e2680c308a3b2e162158ef2299c1"
+        },
+        {
+          "path": "assets/ScreenLoading-Byc07lyU.js",
+          "bytes": 361724,
+          "sha256": "d3566218dcb83be7aaaaac1ca69f90f895c9a3643dbb6dd396e49fe2eb82a63a"
+        },
+        {
+          "path": "assets/SessionCompletion-DvZzEmCo.js",
+          "bytes": 820,
+          "sha256": "1062a727f7df95edcd15230483b2f4e235d24a09e93ff51cf974291573abe7d6"
+        },
+        {
+          "path": "assets/Stack-lhyCQpHT.js",
+          "bytes": 17855,
+          "sha256": "ddfc5f962d04f0015df5959a59d247ca3262575c8fc99c3727b38701336d52a1"
+        },
+        {
+          "path": "assets/SwitchBase-vYgOcIoU.js",
+          "bytes": 2665,
+          "sha256": "6599051d6444ea4f12b530af717dd4346ed84880ae979abb70520a53092fc1e7"
+        },
+        {
+          "path": "assets/TimerOutlined-CL_M1LH3.js",
+          "bytes": 5961,
+          "sha256": "d5e8d32431129c2b4217991cfcdd7d1dbafedda4aa72b39564831d2258c2d731"
+        },
+        {
+          "path": "assets/admin-9tXIZmXT.js",
+          "bytes": 1012,
+          "sha256": "6e9ab289cad1404a313986fea25851cd7c26bf3c9d4f1452efbaff83393b4426"
+        },
+        {
+          "path": "assets/celebrationCatalog-BF65pVoY.js",
+          "bytes": 3441,
+          "sha256": "4666c18aeacc2a1d15493c5dce345d2ac4123546aa71b8867417929a4784848d"
+        },
+        {
+          "path": "assets/contentDigest-ixKUoQh8.js",
+          "bytes": 16195,
+          "sha256": "8b8fd6ebf0c47ea0aaae852e2633b867333d2dcfdb09639a47671e8e2d784bfc"
+        },
+        {
+          "path": "assets/format-f_2J44oX.js",
+          "bytes": 145,
+          "sha256": "e97f3e9a11abcd8bfedd86d58e9af222cc2c885144f13fc9159014ea7f4ab146"
+        },
+        {
+          "path": "assets/learner-E57O49cf.js",
+          "bytes": 76719,
+          "sha256": "09013a78ce4e7e23c2c9332450207f28a140533ce614a1c46a094c96111aa88c"
+        },
+        {
+          "path": "assets/remarkMathPolicy-DVpjIArI.js",
+          "bytes": 380799,
+          "sha256": "c75070362674545d54f9a19411eac8f1eb2f74e9bc88e458f6d08cec04c1fb77"
+        },
+        {
+          "path": "assets/useStudyArrowNavigation-BJmosK-V.css",
+          "bytes": 30255,
+          "sha256": "6f2ae1a672326d22a1e7f0ff599e035099348bfc6ba8ef9b89bb4874e88cdf10"
+        },
+        {
+          "path": "assets/useStudyArrowNavigation-EeiCr1Ns.js",
+          "bytes": 241489,
+          "sha256": "8adade56af3f16cb47b9d670b0e3ed389e420e30964717643548a377b6c944de"
+        },
+        {
+          "path": "brand/meducation-full-horizontal-black.svg",
+          "bytes": 1317,
+          "sha256": "d1ffdad86bcde933ab31c1796be65203ffad371ab86dddf42d205656a05c06dc"
+        },
+        {
+          "path": "brand/meducation-full-horizontal-current-color.svg",
+          "bytes": 1327,
+          "sha256": "ab8b882f22ce1130af4e02bf430e237d66b0d1f1870a0f9ff135c4b138d3f759"
+        },
+        {
+          "path": "brand/meducation-full-horizontal-full-color.svg",
+          "bytes": 1566,
+          "sha256": "9c301950f56b97e5afcf64d6b494ee2240dc34ea8e8a4ece654442732f1a1826"
+        },
+        {
+          "path": "brand/meducation-full-horizontal-white.svg",
+          "bytes": 1317,
+          "sha256": "3dd72e8766d27d6d45256ae589e2998a47ff1e9525fc25fc88c3adcaa8df4e05"
+        },
+        {
+          "path": "brand/meducation-full-stacked-black.svg",
+          "bytes": 1318,
+          "sha256": "eeb11ebeaa271d9cfe9854e43756081f5979f0876256334105bde95996243d62"
+        },
+        {
+          "path": "brand/meducation-full-stacked-current-color.svg",
+          "bytes": 1328,
+          "sha256": "5ae0f2ac24542b86808f2554ee675d85dbc1aa725be5e1f5581b7d866b329383"
+        },
+        {
+          "path": "brand/meducation-full-stacked-full-color.svg",
+          "bytes": 1567,
+          "sha256": "fb005650c4fa41c5076713c8eee8ba75a0cb549eaac2ee352337ee55ed90f0b8"
+        },
+        {
+          "path": "brand/meducation-full-stacked-white.svg",
+          "bytes": 1318,
+          "sha256": "1f3d0fb5c7d3e8ed65d0fd3f3400396f00a232a7b2dd4d6752f98b637385bc98"
+        },
+        {
+          "path": "brand/meducation-icon-black.svg",
+          "bytes": 963,
+          "sha256": "37ac91b4e46ff1977af4aeb33d4dd3946e3573549487c0eb7d113683ebeb7312"
+        },
+        {
+          "path": "brand/meducation-icon-current-color.svg",
+          "bytes": 973,
+          "sha256": "51b7cf309101dccb1ce6c49e7f0ed4d849caa0d6d174d0f632e9fe8a16aa34a2"
+        },
+        {
+          "path": "brand/meducation-icon-full-color.svg",
+          "bytes": 1212,
+          "sha256": "a99a4266ce735e14944d0983b62b32776727c7a54c247b4cc84eb9cd47cb222c"
+        },
+        {
+          "path": "brand/meducation-icon-white.svg",
+          "bytes": 963,
+          "sha256": "ebec189fe431e96e57c8b39dc53db9bba6350ad584080313a782f447d2969792"
+        },
+        {
+          "path": "brand/meducation-wordmark-black.svg",
+          "bytes": 704,
+          "sha256": "38fbf1b5a5bf8dd4cb4d4a2c4172eb517756196a78252fb088bcc32cc8216cd6"
+        },
+        {
+          "path": "brand/meducation-wordmark-current-color.svg",
+          "bytes": 714,
+          "sha256": "3b549cd5a8395d9a60cd6d33748928705820e6b433127ba1c7f9d5840093dadc"
+        },
+        {
+          "path": "brand/meducation-wordmark-full-color.svg",
+          "bytes": 953,
+          "sha256": "ffed434c4fee65970fa7d846e01ed8e8ba752d731a2c3884b78b7a4f183da666"
+        },
+        {
+          "path": "brand/meducation-wordmark-white.svg",
+          "bytes": 704,
+          "sha256": "cfaed5c98b8821d9e5cc6dd5e19e670218f793998d3b7cf4d05b0befe990eade"
+        },
+        {
+          "path": "favicon.svg",
+          "bytes": 929,
+          "sha256": "d5ea5e32dde330e229f9c6eaa143498cc831fb80330eb3a210bddf6a294ac7b5"
+        },
+        {
+          "path": "index.html",
+          "bytes": 625,
+          "sha256": "25ad9613e9280cc8f8f05403ca82472a3b9899a840d95289238297436d907571"
+        }
+      ]
+    }
+  },
+  "checks": {
+    "api_installed_archive_smoke": "pass",
+    "learner_proxy_groups": [
+      "non-root/read-only static startup independent of API; shipped artifact hashes/cache/missing-file policies",
+      "real /api prefix/query/conditional headers/ETag/cache, JSON 404/409 and API health routing",
+      "bounded upstream outage and automatic recovery after API IP change",
+      "synthetic upstream 503 JSON body/cache/ETag preserved through shipped proxy",
+      "existing learner Chromium flows against fixture API through shipped static proxy",
+      "frontend graceful SIGQUIT shutdown"
+    ],
+    "container_learner_browser": {
+      "passed": 43,
+      "skipped": 1,
+      "skip_disposition": "PG-only source-switch not applicable to JSON proxy fixture; must pass later PG proxy/native mode"
+    },
+    "optional_admin_static": [
+      "all packaged artifact hashes through real nginx",
+      "admin entry/callback no-store",
+      "disabled private API remains 503/no-store; public API no-cache",
+      "immutable hashed assets",
+      "missing assets/maps/manifests/audit never SPA fallback",
+      "non-root/read-only tmpfs runtime"
+    ],
+    "packaged_http_editor": {
+      "passed": 18,
+      "frontend_image": "sha256:e3ce2cb83c34b22d7be16c8657b46bfbaf45dbd9055dced71c4b802d9d7cf363",
+      "synthetic_identity_only": true,
+      "canaries": "pass: path/query/method/headers/body/exception canaries; API 500, proxy 413 and upstream 502; generated request correlation; no raw log retention"
+    },
+    "artifact_routing_contract_tests": 8,
+    "typecheck_build": "npm run build passed; existing >500 kB chunk advisory",
+    "lint_architecture": "pass; 290 modules, 1265 imports",
+    "format": "pass",
+    "python_ruff": "pass; all container helpers",
+    "environment_inventory": {
+      "result": "pass",
+      "settings_count": 30,
+      "settings_names": [
+        "MEDUCATION_BANK_PATH",
+        "MEDUCATION_FLASHCARD_BANK_PATH",
+        "MEDUCATION_ALLOWED_ORIGINS",
+        "MEDUCATION_CONTENT_SOURCE",
+        "MEDUCATION_DATABASE_ENVIRONMENT",
+        "MEDUCATION_DATABASE_URL",
+        "MEDUCATION_MIGRATION_DATABASE_URL",
+        "MEDUCATION_OPERATOR_DATABASE_URL",
+        "MEDUCATION_BOOTSTRAP_DATABASE_URL",
+        "MEDUCATION_ADMIN_ENABLED",
+        "MEDUCATION_ADMIN_ENVIRONMENT",
+        "MEDUCATION_ADMIN_ADAPTER",
+        "MEDUCATION_ADMIN_ORIGIN",
+        "MEDUCATION_ADMIN_ISSUER",
+        "MEDUCATION_ADMIN_AUTHORIZATION_ENDPOINT",
+        "MEDUCATION_ADMIN_TOKEN_ENDPOINT",
+        "MEDUCATION_ADMIN_JWKS_URI",
+        "MEDUCATION_ADMIN_CLIENT_ID",
+        "MEDUCATION_ADMIN_CLIENT_SECRET",
+        "MEDUCATION_ADMIN_EDITOR_SUBJECT",
+        "MEDUCATION_ADMIN_EPOCH",
+        "MEDUCATION_ADMIN_ENCRYPTION_KEY",
+        "MEDUCATION_ADMIN_SESSION_DATABASE_URL",
+        "MEDUCATION_ADMIN_EDITOR_DATABASE_URL",
+        "MEDUCATION_POSTGRES_MIGRATOR_PASSWORD",
+        "MEDUCATION_POSTGRES_READER_PASSWORD",
+        "MEDUCATION_POSTGRES_BACKUP_PASSWORD",
+        "MEDUCATION_POSTGRES_OPERATOR_PASSWORD",
+        "MEDUCATION_POSTGRES_SESSION_PASSWORD",
+        "MEDUCATION_POSTGRES_EDITOR_PASSWORD"
+      ],
+      "scope": "names only; no runtime env or secret values inspected"
+    },
+    "local_links": 220,
+    "section_anchors": 45,
+    "git_diff_check": "pass",
+    "output_isolation": "sentinel outside learner output retained through browser run"
+  },
+  "previous_receipts_unchanged": true,
+  "protected_selected_export_unchanged": true,
+  "runtime_application_backend_domain_content_changed": false,
+  "changes": [
+    "optional admin Docker target; default final learner target preserved",
+    "HTTP/popup module and forbidden fixture/QA/bank audit plus generated no-store admin entry",
+    "actual packaged static asset/cache/private-denial smoke",
+    "HTTP browser fixture supports packaged frontend image; existing host-dist path retained",
+    "native acceptance builds/audits/smokes optional image and uses it for full HTTP suite",
+    "container learner output scoped away from sibling evidence",
+    "test waits for successful held import-save receipt before post-commit read",
+    "provider-neutral handoff and current documentation/configuration examples reconciled"
+  ],
+  "gaps_preserved": [
+    "Production identity adapter is not implemented/accepted; production configuration refuses it. Keep admin disabled.",
+    "Hosted role bootstrap is not implemented/accepted; bootstrap-local refuses production. No local-mode/TLS bypass.",
+    "Host/region/quotas/budgets/alerts/Philippine latency, verified TLS/routing/pooling/suspend and deployed smoke remain external gates.",
+    "Single writable lineage and off-device retained journals/backup/restore required before hosted authoring; local-only override does not transfer.",
+    "Firefox, actual mobile files, actual screen readers and persisted BFCache/freeze-return remain ongoing public-launch obligations."
+  ],
+  "development_failures": [
+    {
+      "attempt": "initial temporary ledger",
+      "result": "wrapper failed after broad Playwright output cleanup deleted its directory",
+      "facts": "Initial API/learner/admin builds and API smoke returned 0; missing initial logs are not reused as final evidence. Scoped output and protected retained ledger rerun used."
+    },
+    {
+      "attempt": "retained first admin static smoke",
+      "exit_status": 1,
+      "seconds": 10.43,
+      "finding": "Test expected detail.code; private boundary uses error.code. Corrected contract assertion; final static smoke passed."
+    },
+    {
+      "attempt": "first packaged HTTP suite",
+      "exit_status": 1,
+      "seconds": 159.58,
+      "tests_passed": 17,
+      "tests_failed": 1,
+      "finding": "Held save returned 200 and captured pair; test post-commit draft read was pending at timeout. Wait for save response before read; keep stored-pair/newer-text assertions. Full rerun passed."
+    }
+  ],
+  "all_retained_attempt_commands": [
+    {
+      "name": "api-build",
+      "command": [
+        "docker",
+        "build",
+        "--pull",
+        "-f",
+        "backend/Dockerfile",
+        "-t",
+        "meducation-api:l6-step4",
+        "."
+      ],
+      "exit_status": 0,
+      "seconds": 1.4,
+      "log": "var/backups/postgres/l6-step4-verification/api-build.log"
+    },
+    {
+      "name": "learner-build",
+      "command": [
+        "docker",
+        "build",
+        "--pull",
+        "-t",
+        "meducation-learner:l6-step4",
+        "."
+      ],
+      "exit_status": 0,
+      "seconds": 0.98,
+      "log": "var/backups/postgres/l6-step4-verification/learner-build.log"
+    },
+    {
+      "name": "admin-build",
+      "command": [
+        "docker",
+        "build",
+        "--pull",
+        "--target",
+        "admin",
+        "-t",
+        "meducation-admin:l6-step4",
+        "."
+      ],
+      "exit_status": 0,
+      "seconds": 0.72,
+      "log": "var/backups/postgres/l6-step4-verification/admin-build.log"
+    },
+    {
+      "name": "api-smoke",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-api.py",
+        "--image",
+        "meducation-api:l6-step4",
+        "--report",
+        "var/backups/postgres/l6-step4-verification/api-smoke.json"
+      ],
+      "exit_status": 0,
+      "seconds": 28.41,
+      "log": "var/backups/postgres/l6-step4-verification/api-smoke.log"
+    },
+    {
+      "name": "learner-smoke",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-learner.py",
+        "--frontend-image",
+        "meducation-learner:l6-step4",
+        "--api-image",
+        "meducation-api:l6-step4",
+        "--browser",
+        "--report",
+        "var/backups/postgres/l6-step4-verification/learner-smoke.json"
+      ],
+      "exit_status": 0,
+      "seconds": 150.23,
+      "log": "var/backups/postgres/l6-step4-verification/learner-smoke.log"
+    },
+    {
+      "name": "admin-static",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-admin-static.py",
+        "--frontend-image",
+        "meducation-admin:l6-step4",
+        "--api-image",
+        "meducation-api:l6-step4",
+        "--output",
+        "var/backups/postgres/l6-step4-verification/admin-static.json"
+      ],
+      "exit_status": 1,
+      "seconds": 10.43,
+      "log": "var/backups/postgres/l6-step4-verification/admin-static.log"
+    },
+    {
+      "name": "admin-static",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-admin-static.py",
+        "--frontend-image",
+        "meducation-admin:l6-step4",
+        "--api-image",
+        "meducation-api:l6-step4",
+        "--output",
+        "var/backups/postgres/l6-step4-verification/admin-static.json"
+      ],
+      "exit_status": 0,
+      "seconds": 10.53,
+      "log": "var/backups/postgres/l6-step4-verification/admin-static-final.log"
+    },
+    {
+      "name": "admin-http",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-admin-http.py",
+        "--image",
+        "meducation-api:l6-step4",
+        "--frontend-image",
+        "meducation-admin:l6-step4",
+        "--output",
+        "var/backups/postgres/l6-step4-verification/admin-http.json"
+      ],
+      "exit_status": 1,
+      "seconds": 159.58,
+      "log": "var/backups/postgres/l6-step4-verification/admin-http-final.log"
+    },
+    {
+      "name": "admin-http",
+      "command": [
+        ".venv/bin/python",
+        "scripts/containers/smoke-admin-http.py",
+        "--image",
+        "meducation-api:l6-step4",
+        "--frontend-image",
+        "meducation-admin:l6-step4",
+        "--output",
+        "var/backups/postgres/l6-step4-verification/admin-http.json"
+      ],
+      "exit_status": 0,
+      "seconds": 128.03,
+      "log": "var/backups/postgres/l6-step4-verification/admin-http-rerun.log"
+    }
+  ],
+  "cleanup": {
+    "admin_static": "pass",
+    "independent_fixture_container_listing": "empty for Step 4 API/proxy/admin/editor prefixes",
+    "independent_fixture_network_listing": "empty for Step 4 proxy/admin/editor prefixes",
+    "routine_authority_access": "none; no authority read/write/grant/publication/allocation/restore operation",
+    "cloud_resources_created": false
+  },
+  "retained_evidence_root": "var/backups/postgres/l6-step4-verification",
+  "retained_report_sha256": {
+    "api-smoke.json": "d4698c5d91dccadcbbf27bf01930df8174a7bb44482eac677a14c0d8fb24b881",
+    "learner-smoke.json": "7201cbe2639c4212d0fa734932e420dde8e2396f4ce5ade9a8588e2263ac290c",
+    "admin-static.json": "1ccd4009525a584019160d0dec876ea16ca17de9d0f73b47a94e2762165cb7f8",
+    "admin-http.json": "72f526eee7cc495f73ba8dab0fa2039a86e80669bc21eba2ccfeb29796163516",
+    "commands.json": "96584ee9269ed31af2b5ef532e7b30410f8c17c6287999c17e57eb59ebe36942",
+    "final-tail-commands.json": "4d1c9c4457e2839f874293ff82c27307c7ea1497a68467dd18903bcf59663b6f",
+    "http-rerun-command.json": "7b58ae55770820c807b083b41cacf38398bd878c7c38d6fb85e99d15765a444e",
+    "environment-inventory-check.json": "88bc8135941ac649d46563af07b2890ac7a61daa5398b19cca823289c0917820",
+    "host-build.log": "a83330a69e31c4028fffe19a501aa0c3710980d6b21d8d7bc12f8e869986db25",
+    "lint.log": "b79424c260805ea379b520f69ed0752150dae18ba143fdab532f1065408a8cda",
+    "format.log": "71a0a87702be87008f07c4da26bd47d9922dbc8d8c68df5a5c6b4fa271527796",
+    "artifact-contracts.log": "38bf24267db03310365955764b71bd4f29748bf900d301e5eceacc8debbc6cba"
+  },
+  "completion_audit": "No blocking local Step 4 findings. The handoff identifies supported artifacts/recipes and explicit unimplemented hosted capabilities; no public-launch or full L6 acceptance implied."
+}

@@ -96,8 +96,8 @@ therefore cannot expose the synthetic identity flow.
 
 ## Roles, locking and recovery
 
-Run the explicit local bootstrap job **before** upgrading head
-`0005_reserved_parents`. Bootstrap creates owner-managed `content` and `admin_auth`
+Run the explicit local bootstrap job **before** upgrading the packaged head
+`0006_allocation_fence`. Bootstrap creates owner-managed `content` and `admin_auth`
 schemas without granting application database CREATE. New `meducation_session`
 and `meducation_editor` roles start NOLOGIN when their optional credentials are
 absent. To enable the local experiment, supply both distinct
@@ -143,8 +143,10 @@ supported grants. Before any restored database serves admin traffic, stop/drain
 old workers, change the externally configured epoch, clear login transactions and
 restart all workers with the new configuration. Restoring rows is not permission
 to reuse old cookies. Auth keys/epochs/role passwords remain external to content
-and backup artifacts. Retained authored-content/session recovery acceptance is
-still a later L4 gate; current recovery checks include schema/grant compatibility.
+and backup artifacts. Local retained authored-content/session recovery is accepted under the
+[local-only policy](L4-authoritative-recovery.md#current-local-only-policy-override--2026-10-14);
+off-device and hosted recovery remain unaccepted. Existing checks include exact
+schema/grant/history parity, session quarantine and protected allocation recovery.
 
 ## Verification
 

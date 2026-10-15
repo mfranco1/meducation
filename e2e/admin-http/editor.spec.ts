@@ -435,11 +435,17 @@ test('keeps newer text typed while an imported save is in flight', async ({ page
     await wait;
     await route.continue();
   });
+  const saved = page.waitForResponse(
+    (response) => response.url().endsWith('/api/admin/draft/save') && response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Save import', exact: true }).click();
   await ready;
   const text = JSON.stringify({ ...item, stem: 'Newer text during imported save' });
   await editor.fill(text);
   release();
+  // The imported write is deliberately held in flight above. Observe its
+  // committed receipt before issuing the post-commit read through auth pools.
+  expect((await saved).status()).toBe(200);
   await expect.poll(async () => (await draft(page)).pair.quizzes.questions[0].stem).toBe('Captured imported stem');
   await expect(editor).toHaveValue(text);
 });

@@ -6,7 +6,7 @@ bundled-bank fallback. A disabled identity service, uninitialized draft or netwo
 failure produces a retry/sign-in state. Sign-in opens a completion window and
 retains the original mounted editor. Production provider acceptance remains
 pending: the current backend accepts only explicitly enabled synthetic loopback
-identity. This is local preparation, not a hosted release or authority cutover.
+identity. The designated local authority cutover is complete; this does not accept hosted identity or authorize another authority replacement.
 
 `VITE_ADMIN_SOURCE=http npm run dev` selects HTTP mode during development. Its
 same-origin `/api` proxy must reach the explicitly configured local API; configure
@@ -116,8 +116,8 @@ step-up, successful fresh step-up with dirty text and stale-save rejection after
 another tab commits, logout during save, grouped/import creates and keyboard/overflow at
 390/1048/1440px. Existing JSON editor, learner progress and review browser suites
 remain separate regression gates. Hosted identity/TLS/routing, durable authored
-recovery, authority cutover, native CI and manual assistive-technology/device
-acceptance remain later tracked obligations.
+off-device recovery, candidate-input native CI and manual assistive-technology/device
+acceptance remain separately tracked obligations.
 
 The native container CI acceptance runner now invokes this complete editor suite
 against its freshly built installed API image, after learner browser acceptance
@@ -129,3 +129,18 @@ The [local outcome audit](work/ongoing/L4-local-outcome-audit.md) records the la
 12-case installed-image suite and full-runner verification. Native CI passed for
 the earlier L4 implementation at `f99a18e`; the additional case needs changed-source
 CI evidence. Hosted and retained-recovery gates remain distinct.
+
+## Optional packaged serving path
+
+The root Dockerfile's `admin` target now packages and audits the HTTP editor and
+popup completion with a real no-store static entry. The default target remains
+learner-only. `smoke-admin-http.py --frontend-image IMAGE` tests those packaged
+assets with the existing isolated signed-identity fixture, while omitting the
+option retains fresh host `dist` mounting. [L6 handoff](L6-deployment-handoff.md)
+owns build, serving, secret and deployment gates. The packaged production API
+still refuses production identity; serving assets does not enable private access.
+
+Current local learner/editor acceptance is recorded in the
+[L6 Step 3 receipt](work/ongoing/L6-step3-acceptance-evidence.json); the older L4
+counts above describe their original stage. Packaged serving acceptance and
+changed-input candidate/native CI have their own L6 Step 4/5 evidence.

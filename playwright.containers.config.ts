@@ -18,7 +18,7 @@ export default defineConfig({
   fullyParallel: false,
   workers: 1,
   retries: 0,
-  outputDir: 'test-results-containers',
+  outputDir: 'test-results-containers/learner',
   expect: { timeout: 15_000 },
   reporter: 'list',
   use: { baseURL, trace: 'retain-on-failure' },

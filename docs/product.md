@@ -71,3 +71,15 @@ The designated local PostgreSQL database is the writable authority. The JSON
 development editor remains a separate reviewed-download mode for exports/fixtures.
 Hosted identity/provider and off-device retention acceptance remain deferred;
 see [local authoring](local-authoring.md) for the current operating policy.
+
+## Authoritative content and optional editor delivery
+
+Published learner content comes from the designated PostgreSQL authority. Saving
+a paired HTTP draft does not publish it; publication or retained activation is
+explicit. JSON exports/archives and development fixture editing do not replace
+that authority. The default static image serves only the learner entry; a
+separate optional admin image serves HTTP editor assets. Private APIs enforce
+session/origin/CSRF/freshness policy independently of those assets. Production
+identity integration remains disabled pending real adapter and MFA acceptance.
+The [deployment handoff](L6-deployment-handoff.md) records remaining hosting,
+retention and browser/device gates; local acceptance is not public launch.

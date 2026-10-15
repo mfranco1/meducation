@@ -37,6 +37,7 @@ def main():
               "backend/requirements.lock", "backend/requirements-build.lock", "ops/containers/nginx.conf",
               "ops/containers/proxy.conf", "src/content/questionBank.generated.json", "src/content/flashcardBank.generated.json"]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "scripts/containers").rglob("*.py")]
+    inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "scripts/containers").glob("*.mjs")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.py")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.sql")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/tests").glob("*.py")]
@@ -117,8 +118,14 @@ def main():
         # Complete learner/browser work before replacing the shared dist assets.
         run("build-http-admin", ["npm", "run", "build:admin"], timeout=300,
             environment={**os.environ, "VITE_ADMIN_SOURCE": "http"})
+        run("admin-artifact-contracts", ["node", "--test", "scripts/containers/check-admin-artifacts.test.mjs"], timeout=60)
+        run("build-admin-image", ["docker", "build", "--target", "admin", "-t", "meducation-admin:local", "."], timeout=900)
+        run("admin-static", [sys.executable, str(ROOT / "scripts/containers/smoke-admin-static.py"),
+                             "--frontend-image", "meducation-admin:local", "--api-image", "meducation-api:local",
+                             "--output", str(output / "admin-static.json")], timeout=300)
         run("admin-http", [sys.executable, str(ROOT / "scripts/containers/smoke-admin-http.py"),
                            "--image", "meducation-api:local",
+                           "--frontend-image", "meducation-admin:local",
                            "--output", str(output / "admin-http.json")], timeout=900)
         if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != value for name, value in report["inputs_sha256"].items()):
             raise RuntimeError("Acceptance inputs changed during execution")
