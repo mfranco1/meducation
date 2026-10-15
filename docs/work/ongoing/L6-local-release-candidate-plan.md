@@ -1,6 +1,6 @@
 # L6 — Local release candidate
 
-Created: 2026-10-15 (Asia/Manila). Status: Steps 1–4 local gates complete; stopped at the Step 4 gate. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. The user authorized continuation through Step 4. Steps 5–6 remain pending.
+Created: 2026-10-15 (Asia/Manila). Status: Steps 1–4 local gates complete; Step 5 local automated gates passed; candidate-input CI pending. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. The user authorized continuation through Step 5. Candidate CI and Step 6 remain pending.
 
 Parent: [local-first production preparation](local-first-production-preparation.md#l6--local-release-candidate).
 Predecessor: [L5 plan](../done/L5-resilience-and-local-operations-plan.md) and
@@ -173,18 +173,18 @@ capabilities remain explicit. No account, domain, database or deployment is crea
 
 ## Step 5 — Execute the complete candidate verification
 
-- [ ] Run `npm run verify:full` on the candidate and retain step-level results.
+- [x] Run `npm run verify:full` on the candidate and retain step-level results.
   This covers frontend checks/units, archive validation, policy packaging, ordinary
   backend checks, typecheck and learner/JSON-fixture admin browser/build checks.
   Backend PG skips and archive validation do not satisfy Step 2 or real-PG gates.
-- [ ] Run fresh native `scripts/containers/acceptance.py` on the available matching
+- [x] Run fresh native `scripts/containers/acceptance.py` on the available matching
   architecture. Its current stages include repeated clean builds, installed API,
   Compose/tools/schema, full PG, restart, twenty-launch smoke, concrete historical
   image rollback/recovery, PG/proxy learner and HTTP editor acceptance. Inspect its
   current command inventory before running; do not assume stage coverage from the
   runner name. Full native acceptance subsumes those same focused runs when it
   executes them successfully on the same inputs.
-- [ ] Run the dedicated accepted-engine backup suites and any new Step 2/3 checks
+- [x] Run the dedicated accepted-engine backup suites and any new Step 2/3 checks
   absent from that runner. Follow [testing guidance](../../testing.md) and
   [container runbook](../../local-containers.md); builds/suites sharing `dist` must
   run sequentially. Focused `--keyword`, `--grep` and small-fixture trials never
@@ -193,7 +193,7 @@ capabilities remain explicit. No account, domain, database or deployment is crea
   frontend, browser and native AMD64/ARM64. Record commit, run/jobs and retained
   artifact identities. A local ARM64 pass or older L5 run cannot certify changed
   L6 inputs. Freeze final source/content fingerprints and compare installed modules.
-- [ ] Record every command, exit status, duration, platform, skip/advisory and
+- [x] Record every command, exit status, duration, platform, skip/advisory and
   fixture cleanup outcome. Preserve failures and later successful reruns. Rerun
   affected gates after fixes; after final acceptance, additional documentation-only
   evidence entries may reuse unchanged runtime checks with explicit input equality.
@@ -299,3 +299,23 @@ Development failures are retained, not counted as passes. After output isolation
 Ruff, lint/architecture, format, host build/typecheck, artifact contracts, environment-name inventory, affected link/section anchors and diff/integrity checks pass. An independent Docker listing found no smoke containers/networks. All previous repository receipts and protected selected export remain unchanged. Prior raw synthetic test directories were ephemeral and the initial broad container-output cleanup removed them; protected private export/screenshots and frozen receipt JSON were preserved. New learner traces are scoped under `test-results-containers/learner/`, and Step 4 retained logs/reports are outside all Playwright cleanup paths.
 
 Completion audit: **no blocking local Step 4 findings**. Public launch remains blocked by the listed hosted bootstrap/TLS/routing/pooling/suspend/region/latency/budget, production identity/MFA, off-device retained recovery and Firefox/manual-device/reader/persisted-return gates. No cloud account/domain/database/deployment was created and the routine authority was not read or written during Step 4. Step 5 complete candidate verification is next, after continuation at this agreed gate.
+
+## Step 5 execution — 2026-10-15
+
+Verification started from clean commit `7046c4b9e2df1a2e52c131d66770239fbddb59c3`. Protected command logs, per-step timings, initial/final input fingerprints and disposable fixture reports are retained under `var/backups/postgres/l6-step5-20261015T073009Z/`, outside Playwright cleanup paths. The selected Step 2 export remains immutable. No routine authority recovery or writes are part of these checks.
+
+Two full-run failures are retained. Attempt 1 passed all 605 application units but Vitest discovered the new Node-runner artifact contract file and failed with no Vitest suite; its `.test.mjs` pattern is now excluded from Vitest while native acceptance retains the explicit eight-test Node stage. Attempt 2 passed 604 units but the backup-availability flashcard unit exhausted its default one-second query while lazily importing the study screen. That test now explicitly awaits the presentation module before admission; its assertions/timeouts are unchanged, and fresh browser suites retain lazy-loading acceptance. Attempt 3 passed all 605 application units, archive validation, policy packaging, backend Ruff/mypy and ordinary backend tests (238 passed, 186 PG skips; two deliberate weak-key negative-test warnings). Remaining full/native/browser checks are in progress.
+
+Public GitHub REST reports no Actions run for `7046c4b`; its latest success remains L5 commit `7128a97`, run `38686411130`. The test/config fixes also require candidate-input CI. No L6 CI pass is inferred, and Step 5 remains open until all local and five-job CI requirements pass.
+
+Full verification attempt 3 passed all 14 stages, including 605 units, 43 learner browser cases and 12 JSON-fixture admin cases. Native ARM64 acceptance has passed two pull/no-cache image builds and both installed API/learner proxy rounds, installed authoring policy, Compose, PostgreSQL tools/toolchain, 184 real-PG cases (two restart-only skips), the separate 18-case restart-enabled suite, five load-harness contracts, 13 export-input contracts and the twenty-launch load smoke. Historical rollback-image build passed; archive recovery and remaining browser/editor stages are still in progress. These interim results do not close Step 5.
+
+Final local Step 5 outcome: **all automated local gates pass; Step 5 remains incomplete pending candidate-input CI**. The [local receipt](L6-step5-local-evidence.json) preserves both failed full-run attempts, the successful third attempt, per-stage commands/exit codes/durations, native image identities, exact input equality and protected report fingerprints. The fresh native run passed all **23 stages** (2,262.43s summed command time), including full archive recovery (867.89s internal / 884.89s wrapper), installed current/prior module equality to their Git revisions (47/45 Python/SQL files), **44 PG/proxy learner browser cases** without skips and **18 packaged HTTP editor cases**. Both native clean builds used `--pull --no-cache`; their differing image IDs are recorded without a byte-identical output claim.
+
+Additional fresh learner build and dedicated accepted-engine checks passed **50 Chromium/WebKit backup cases**, with zero skips/retries/flaky results, plus **six selected/synthetic learner display cases**, complete pinned-export PG17 parity/re-export/learner route contracts, and **six selected/synthetic packaged HTTP editor display cases**. The paired export, archives, 469 tracked non-document inputs and all previous frozen receipts remain unchanged from their applicable snapshots. New source/test fixes are explicitly fingerprinted on top of `7046c4b`. An independent read-only Docker names audit found no fixture containers, networks or volumes; fixture reports also record successful scoped cleanup. The routine authority was neither read nor written during Step 5; its latest observation remains the Step 2 handoff.
+
+Advisories retain their disposition: existing Vite chunk size; deliberate weak-key auth negative tests; SQLAlchemy `Result.tuples()` deprecations; build-stage pip root warning (runtime remains non-root); Playwright color-environment warning; Vitest environment performance suggestion; and 32 unchanged editorial review notes. Ordinary backend PG skips and the two full-PG restart-only skips are covered by their separate native gates. Firefox/manual mobile/screen-reader/persisted-return and hosted/public-launch obligations remain open.
+
+The final public GitHub REST recheck still found **zero runs for `7046c4b`**; the latest observed success is the earlier L5 run. The two tested verification fixes must be included in the commit pushed for Checks. Passing backend, frontend, browser-smoke, native AMD64 and native ARM64 jobs on those exact inputs and retained artifact metadata are still required. No CI receipt is fabricated, no commit/push was performed, and Step 6 has not started. Documentation-only closeout reuses the passing runtime gates under explicit unchanged input equality.
+
+Completion audit: **no blocking local Step 5 findings**. Final JSON parsing, 93 relative Markdown targets, `git diff --check`, equality of 469 tracked non-document inputs to the passing run and all 50 prior frozen receipt hashes pass. The remaining in-scope blocker is candidate-input five-job CI; Step 5 is not marked complete and Step 6 is not started.

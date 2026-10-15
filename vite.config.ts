@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => {
       maxWorkers: 2,
       environment: 'jsdom',
       setupFiles: './src/test/setup.ts',
-      exclude: [...configDefaults.exclude, 'e2e/**', 'scripts/architecture/**'],
+      exclude: [...configDefaults.exclude, 'e2e/**', 'scripts/architecture/**', 'scripts/containers/*.test.mjs'],
     },
   };
 });

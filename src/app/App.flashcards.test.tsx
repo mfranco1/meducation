@@ -29,6 +29,8 @@ it('shows unreadable saved progress on the dashboard before a deck is opened', a
 });
 
 it('disables progress backup during flashcard study with save-and-leave guidance', async () => {
+  // This checks backup availability after admission; browser tests cover cold lazy loading.
+  await import('../features/flashcards/screens/FlashcardStudyScreen');
   runtimeQuestionBank.configureLocal([], [], []);
   runtimeFlashcardBank.configureLocal(
     [{ id: 's-backup', name: 'Backup cards', accent: '#123456', deckCount: 1, deckIds: ['d-backup'] }],

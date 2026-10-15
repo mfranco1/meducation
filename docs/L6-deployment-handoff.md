@@ -2,7 +2,9 @@
 
 This is the operational entry point for the local release candidate. L6 is still
 incomplete until the [candidate plan](work/ongoing/L6-local-release-candidate-plan.md)
-finishes full local verification and candidate-input native AMD64/ARM64 CI. No
+finishes candidate-input five-job CI and its final release decision. Step 5 full
+local/native ARM64 verification has passed in the
+[local receipt](work/ongoing/L6-step5-local-evidence.json). No
 provider account, domain, hosted database or deployment was created. Local
 acceptance does not approve public launch.
 
@@ -393,3 +395,17 @@ cases pass. The one PG-only source-switch skip in JSON proxy mode is explicit;
 Step 5's PG proxy/native gate must execute that case. This is neither a native
 AMD64 pass nor complete candidate acceptance. No provider/device/retention gate
 is closed by these local artifact checks.
+
+## Step 5 local verification refresh
+
+The [Step 5 receipt](work/ongoing/L6-step5-local-evidence.json) supersedes Step 4's
+focused packaging trials for full local verification. Both fresh native ARM64
+clean-build rounds passed; the second API/learner images are
+`sha256:18adf2da81c8bb7ddd875039ea07b543f9cb07f861f9bbafb39a6054c109b54d` and
+`sha256:969bb67be7485bd468718995642cd580eb11c7d22b2231ff52cb957d38f4fea5`.
+The optional admin image retains the Step 4 ID above. Full PG/proxy acceptance
+passed 44 browser cases, including the previously skipped publication switch;
+packaged HTTP editor acceptance passed 18. Complete recovery/rollback, dedicated
+50-case Chromium/WebKit backup acceptance and selected immutable export parity
+also passed. Candidate-input five-job CI and the final Step 6 decision remain
+required; no local ARM64 result establishes native AMD64 acceptance.
