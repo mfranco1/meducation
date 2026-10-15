@@ -524,3 +524,17 @@ pool cleanup and failures; its separate `--restartable --keyword l5` stage cover
 actual stop/start and DB-dependent diagnostic authorization. All fixtures are
 disposable and never target routine authority volumes. Native changed-source
 AMD64/ARM64 acceptance remains a later L5 gate.
+
+## L5 provisional load smoke
+
+Native acceptance also runs five negative harness contracts and
+`scripts/containers/load-postgres.py --rounds 1 --output test-results/container-acceptance/postgres-load.json`
+against the newly built API image. The smoke uses an owned disposable PG17 volume,
+one worker, two reader connections and twenty simultaneous mixed quiz/flashcard
+launches per round. It checks cold/warm launch correctness, both publication
+boundaries, actual database stop/start recovery and connection cleanup. The
+subprocess budget is 600 seconds; each measured round retains its stricter
+60-second assertion. Longer samples remain an explicit operator command in the
+[L5 operations runbook](L5-local-operations.md#twenty-learner-api-launch-characterization).
+This adds a gate to future native AMD64/ARM64 jobs; local execution does not certify
+that those changed-source jobs have passed.

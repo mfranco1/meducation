@@ -99,6 +99,11 @@ def main():
         run("postgres-resilience", [sys.executable, str(ROOT / "scripts/containers/test-postgres-content.py"),
                                     "--restartable", "--keyword", "l5",
                                     "--output", str(output / "postgres-resilience.json")], timeout=600)
+        run("load-harness-contracts", [sys.executable, "-m", "pytest",
+                                       "scripts/containers/test_load_rounds.py", "-q"], timeout=60)
+        run("postgres-load", [sys.executable, str(ROOT / "scripts/containers/load-postgres.py"),
+                              "--api-image", "meducation-api:local", "--rounds", "1",
+                              "--output", str(output / "postgres-load.json")], timeout=600)
         run("release-recovery", [sys.executable, str(ROOT / "scripts/containers/verify-postgres-release.py"),
                                  "--output", str(output / "release-recovery.json")], timeout=1200)
         run("postgres-browser", [sys.executable, str(ROOT / "scripts/containers/smoke-postgres-learner.py"),

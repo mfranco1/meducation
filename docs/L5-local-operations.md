@@ -171,3 +171,60 @@ Do not infer data loss from readiness, a 503 or a log category. Preserve authore
 state, retained dumps and allocation journals. Reconcile an uncertain editor
 operation through its existing operation ID and current context before deciding
 whether another explicit attempt is safe. No automatic write replay is permitted.
+
+## Twenty-learner API launch characterization
+
+Use the installed API image and disposable fixtures only:
+
+```sh
+.venv/bin/python scripts/containers/load-postgres.py --api-image meducation-api:local --rounds 3 --output test-results/l5-load.json
+```
+
+`--rounds 1` is the bounded native acceptance smoke; `--rounds 10` collects longer
+samples. `--items-per-bank` defaults to 200 and accepts 2–2000. This creates one
+synthetic subject, quiz and deck, with deterministic clones of the existing
+browser fixture records and new fixture-only IDs. It never imports or edits the
+routine bank. PG17 runs on an exact owned labeled volume so stop/start preserves
+the disposable publication. Cleanup verifies ownership and removes that volume,
+both containers and their network. HTTP and PostgreSQL bind only to loopback;
+credentials live in private temporary files and are excluded from reports.
+
+The host, engine and installed image must share a native architecture. The fixture
+runs one Uvicorn worker and the installed PostgreSQL reader with two connections,
+zero overflow. A mounted fixture module adds counters and reset endpoints only
+to this isolated process; it is absent from the shipped image. Installed Python
+module hashes must match the recorded source before measurements begin.
+
+Each round synchronizes twenty starts: ten quiz launches and ten flashcard
+launches. Every successful launch reads subjects, selected membership and ordered
+bodies, checks ETags/revisions at every step, and compares membership, counts and
+complete returned bodies with the expected fixture. All twenty must finish
+within a 60-second round deadline. Requests have at most fifteen seconds each
+and use the remaining round budget; the harness performs no automatic retries.
+The fixed seed controls launch-kind order, not thread scheduling.
+
+A separate warmup is excluded from measured samples. Each cold round clears the
+API catalog cache and disposes idle reader connections; each following warm round
+retains them. **Cold means API caches/connections, not PostgreSQL or OS buffer
+caches.** Reports record p50/p95/max for successful launches only, individual launch
+outcomes, round duration, HTTP statuses, SQL cursor statements, separate pre-pings,
+connection establishment/checkouts, peak/end occupancy, and admission failures.
+Driver startup/transaction-control protocol traffic is outside the SQL cursor
+counter. Both occupancy counters must return to zero, peak occupancy must stay
+within two, overflow must remain disabled and admission failures must be zero.
+
+Separate synchronized cohorts cross A→B publication after catalogs and B→A
+reactivation after membership. Each requires twenty explicit 409 outcomes, then a
+new cohort must launch the current bodies correctly. Another cohort loads catalogs
+before a real owned-PG stop; twenty expected 503 outcomes must be followed by
+successful launches after restarting that same fixture database. Writes are
+single explicit fixture operator calls, never automatic admin write replay.
+409/503 outcomes retain their own durations and never enter success percentiles.
+The five harness contract tests also require rejection of wrong revisions,
+reordered membership, wrong bodies, unexpected conflicts and timeouts.
+
+These measurements characterize this synthetic API workload on the recorded
+machine. They do not measure browser rendering, proxy throughput, broad catalog
+scale, hosted networking or concurrent editor activity, and do not define a
+production latency SLO. Keep runtime worker/pool settings unchanged unless a
+measured failure supports a specific adjustment, then repeat the baseline.

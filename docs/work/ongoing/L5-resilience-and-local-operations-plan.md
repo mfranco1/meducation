@@ -1,8 +1,8 @@
 # L5 — Resilience and local operations
 
 Started: 2026-10-14. Plan reviewed and revised: 2026-10-14 for implementation
-on 2026-10-15 (Asia/Manila). Status: Steps 1–3 local gates complete;
-Steps 4–5 pending. The plan review alone
+on 2026-10-15 (Asia/Manila). Status: Steps 1–4 local gates complete;
+Step 5 pending. The plan review alone
 did not establish runtime behavior or L5 acceptance.
 
 The designated local PostgreSQL database is now the only writable paired-bank
@@ -17,7 +17,8 @@ The older Step 1 evidence below remains a historical record.
 Parent: [production preparation](local-first-production-preparation.md#l5--resilience-scale-to-zero-readiness-and-local-operations).
 Follow [work tracking](../README.md): implement a coherent step, record results and
 limitations, then stop at its gate until continuation is authorized. The prior
-request prepared the plan only; continuation on 2026-10-15 authorizes Step 2.
+request prepared the plan only; subsequent continuation on 2026-10-15 authorized
+Steps 2–4 in sequence. Step 5 awaits continuation.
 
 ## Scope and implementation baseline
 
@@ -173,20 +174,20 @@ backend/container runbooks; preserve uncertain-write reconciliation with no repl
 
 ## Step 4 — Provisional concurrency/load characterization
 
-- [ ] Add a reproducible isolated fixture harness using the installed API and real
+- [x] Add a reproducible isolated fixture harness using the installed API and real
   PG17, one API worker and the existing two-reader pool. Exercise **20 simultaneous
   learner launches**, each performing catalog → membership → body with revision
   validation; include quiz and flashcard traffic, not 20 health requests.
-- [ ] Run separate cold-cache and warm-cache rounds with synchronized starts;
+- [x] Run separate cold-cache and warm-cache rounds with synchronized starts;
   record fixture size/digests, seed, environment/architecture, image/source hashes,
   concurrency, round count, p50/p95/max launch latency, HTTP/SQL counts, status/error
   counts, checked-out/peak connections and pool admission failures. Separate warmup
   from measured rounds. Use scoped test instrumentation, not a telemetry service.
-- [ ] Healthy fixed-release rounds require all 20 launches to finish correctly
+- [x] Healthy fixed-release rounds require all 20 launches to finish correctly
   within a declared harness deadline, zero unexpected errors/timeouts and no pool
   leaks or limit violations. Start with a 60-second per-round harness deadline;
   latency percentiles are characterization, not a promised production SLO.
-- [ ] Separately exercise publication during load and DB outage/recovery. Classify
+- [x] Separately exercise publication during load and DB outage/recovery. Classify
   expected 409/503 responses separately; never count failures as successful fast
   launches. Assert no mixed content, no hung harness and successful subsequent
   recovery. No automatic admin write replay. Tune only after measuring a failure;
@@ -231,11 +232,12 @@ explicit operator commands. Do not relax assertions to hide saturation. A failed
 
 ## Verification and next implementation session
 
-Start Step 2 by recording `git status`, the current commit and protected export
-hashes, then add focused failing freshness tests around the existing launch paths.
-Do not rerun or manipulate the routine DB to reproduce Step 1. Preserve existing
-uncommitted tracker/evidence work. Confirm Docker is available before fixture tests;
-if it is unavailable, report the unrun gate rather than counting skipped DB tests.
+Start Step 5 by recording `git status`, the current commit and protected export
+hashes. Select the concrete compatible prior application/schema pair before the
+rollback drill; use only owned disposable restore/publication fixtures. Preserve
+existing uncommitted tracker/evidence work. Confirm Docker is available before
+fixture tests; report unavailable prerequisites as unrun gates. Never manipulate
+the routine authority to reproduce an outage or restore.
 
 Use [testing guidance](../../testing.md) for exact environment setup and suite
 ownership. The implementation evidence must include:
@@ -410,3 +412,73 @@ stage gate. Step 4's reproducible twenty-learner load characterization is next;
 Step 5 rollback/restore/native CI and overall L5 acceptance remain open. Local
 verification does not establish hosted TLS/pooling/identity/suspend behavior or
 off-device retention. Existing Firefox/manual-device obligations remain separate.
+
+## Step 4 implementation and local acceptance — 2026-10-15
+
+Continuation authorized Step 4. Started from clean HEAD `8c6400480ef174d1d9b218f9b7304b5273decdab`;
+both protected export hashes still match the Step 3 baseline. Added
+`scripts/containers/load-postgres.py`, its synchronized HTTP round helper, a mounted
+fixture-only instrumentation module and five negative harness contracts. The
+[operations runbook](../../L5-local-operations.md#twenty-learner-api-launch-characterization)
+defines commands, cold/warm semantics, counters, deadlines and limitations.
+
+The harness creates an exact owned labeled PG17 volume/network/container pair,
+uses the installed API wheel in one worker with the existing two-reader pool,
+and binds fixture services only to loopback. It verifies every installed Python
+module against current source before measuring. A deterministic fixture contains
+one subject/quiz/deck, 200 questions and 200 cards (47,083/30,811 input bytes);
+fixture hashes, seed 50420, source/image fingerprints and environment are retained
+in [frozen Step 4 evidence](L5-step4-local-evidence.json). The routine authority,
+content, journals and credentials were never used or modified.
+
+Step 4 acceptance:
+
+- Two independent `--rounds 3` characterizations and the final `--rounds 1` smoke
+  passed: **32 measured twenty-launch rounds**, **460 successful launches**,
+  **120 expected 409 launches**, **60 expected 503 launches**, and **1,800 measured
+  HTTP requests**. Three separate twenty-launch warmups are excluded from those
+  totals and from measured percentiles.
+- Every successful launch checks its subject catalog, membership IDs/counts,
+  ETags/revisions and exact ordered bodies. Publication crosses both catalog →
+  membership and membership → body boundaries, followed by successful launches
+  of the current release. Actual owned-DB stop/start produces explicit unavailable
+  responses followed by successful recovery; there is no automatic write replay.
+- All cohorts finish within the 60-second round deadline; the largest measured
+  round was **2.647 seconds**. Peak checked-out reader connections remained **2**,
+  end occupancy was **0**, overflow stayed disabled and pool admission failures
+  were **0**. Separate SQL cursor/pre-ping/connection counts are retained. Cold
+  fixed-release rounds used 215 cursor statements; warm rounds used 210. This
+  counts complete launch traffic, not readiness requests.
+- The first characterization shared the host with normal build/lint/type checks:
+  aggregate cold p50/p95/max was 1,106.5/2,396.8/2,442.5 ms and warm was
+  1,279.5/2,337.6/2,405.6 ms. The independent repetition after those checks completed
+  measured cold 272.5/373.1/383.8 ms and warm 254.8/324.5/337.9 ms. Retain both;
+  these machine/workload observations do not define a production SLO. No runtime
+  tuning was justified or performed.
+- The final native-sized smoke completed in **52.924 seconds**, including setup,
+  source verification, all transition/recovery cohorts and cleanup. Native
+  acceptance now runs the five negative harness tests and `--rounds 1` with a
+  600-second subprocess budget. Full changed-source native jobs remain Step 5.
+- Harness negative tests **5 passed** (wrong revision, reordered membership,
+  incorrect body, unexpected conflict, timeout). Build/typecheck, lint/architecture
+  (288 modules/1,255 imports), architecture tests **10 passed**, formatting, all
+  backend/container-helper Ruff checks, mypy (41 runtime source files), Python
+  compilation and diff checks passed. The existing bundle-size advisory remains.
+- No production runtime or UI code changed. The existing Step 3 image was reused
+  only after installed-module/source equality passed; unchanged frontend unit/
+  browser and full PG content suites were not rerun for this tooling-only stage.
+  Each accepted report confirms owned-fixture cleanup; the final labeled Docker
+  container, volume and network inventories are empty.
+
+During harness development, a real outage exposed SQLAlchemy check-ins after
+failed pre-pings without matching checkouts. Fixture accounting now tracks actual
+checkout records; the accepted outage/recovery runs verify both that counter and
+the engine's own checked-out count return to zero. This did not require a runtime
+pool change or weaker assertions.
+
+Completion audit: **Step 4 local gate complete, no blocking findings**. Stop at
+this agreed stage gate. Step 5 retained-release activation, fresh-DB restoration,
+compatible application/schema rollback and changed-source AMD64/ARM64 CI are next;
+overall L5 remains ongoing. Hosted networking/TLS/suspend/MFA, concurrent editor
+load, broader catalog scale, real devices and off-device retention remain distinct
+obligations. The synthetic API measurements do not certify them.

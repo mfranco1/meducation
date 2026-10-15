@@ -277,3 +277,16 @@ and Nginx access/error logs do not contain them. Native proxy 400/413/502 and AP
 The refused upstream location and exception route are fixture-only, never shipped.
 Rebuild the learner image and run `smoke-learner.py --browser` for proxy/loading
 regressions. Serialize browser suites and shared `dist` builds.
+
+L5's provisional twenty-learner load gate uses
+`.venv/bin/python scripts/containers/load-postgres.py --api-image meducation-api:local --rounds 3 --output test-results/l5-load.json`.
+It runs real synchronized catalog → membership → body requests against the
+installed one-worker API and disposable PG17, including quiz/flashcard content
+validation, cold/warm samples, publication conflicts and stop/restart recovery.
+The fixture-only instrumentation asserts the existing two-reader budget, zero
+leaks and zero admission failures. Run
+`.venv/bin/python -m pytest scripts/containers/test_load_rounds.py -q` for the five
+negative harness contracts. Native container acceptance runs those contracts and
+`--rounds 1` with a 600-second subprocess budget; changed-source native CI remains
+a separate acceptance requirement. See the
+[measurement semantics and limitations](L5-local-operations.md#twenty-learner-api-launch-characterization).
