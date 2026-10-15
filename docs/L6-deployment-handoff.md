@@ -1,17 +1,18 @@
 # L6 deployment handoff
 
-This is the operational entry point for the local release candidate. L6 is still
-incomplete until the [candidate plan](work/ongoing/L6-local-release-candidate-plan.md)
-finishes candidate-input five-job CI and its final release decision. Step 5 full
-local/native ARM64 verification has passed in the
-[local receipt](work/ongoing/L6-step5-local-evidence.json). No
-provider account, domain, hosted database or deployment was created. Local
-acceptance does not approve public launch.
+This is the operational entry point for the accepted local release candidate.
+The [completed candidate plan](work/done/L6-local-release-candidate-plan.md) and
+[final decision](work/done/L6-final-decision-evidence.json) accept source
+`d54b8596a2199e8bc204d5f16927dae5c5af16d1` with full local verification and
+[independently verified five-job CI](work/done/L6-step5-native-ci-evidence.json),
+including native AMD64/ARM64. No provider account, domain, hosted database or
+deployment was created. Public launch remains blocked by the
+[ongoing deployment checklist](work/ongoing/L6-public-deployment-acceptance.md).
 
 The designated local PostgreSQL authority remains the only writable paired bank.
 The pinned content specimen is release `3e3604bf-dedf-470e-adf6-4dccc1bab5f9`,
 publication sequence **3**, packaged schema **`0006_allocation_fence`**, observed
-unchanged at the [Step 2 handoff](work/ongoing/L6-step2-content-evidence.json).
+unchanged at the [Step 2 handoff](work/done/L6-step2-content-evidence.json).
 Its protected export stays outside Git. It is not asserted to be the newest
 publication indefinitely; recheck the active identity before transfer. Repository
 JSON is archive/fixture/read-only fallback and cannot substitute for that export.
@@ -69,7 +70,7 @@ local fixture), set `MEDUCATION_CONTENT_SOURCE=postgres`, and supply its reader
 URL/environment. Never use the archive preview as proof of live DB parity.
 Nginx's included upstream is `api:8000` with Docker DNS; another host topology
 needs an explicit proxy configuration/resolver and its own routing acceptance.
-The handoff's [Step 4 receipt](work/ongoing/L6-step4-deployment-evidence.json)
+The handoff's [Step 4 receipt](work/done/L6-step4-deployment-evidence.json)
 records actual local image IDs, audits, commands, platform and limitations.
 
 ## Configuration and secret responsibility
@@ -356,9 +357,11 @@ admission. Do not revoke routine writers to make a release check run.
 
 ## Remaining deployment gates and evidence owners
 
-The release operator owns fresh full candidate/native five-job CI and exact final
-source/content/artifact identities (L6 Steps 5–6). Local ARM64 packaging does not
-certify AMD64 execution. The provider/database operator owns chosen region/PG17
+The release operator owns refreshing candidate verification when relevant inputs
+change. L6 Steps 5–6 now accept the pinned local candidate with five-job CI and
+exact recorded source/content/local artifact identities. The ongoing checklist
+assigns each subsequent gate an evidence owner and closure condition.
+The provider/database operator owns chosen region/PG17
 capabilities, quotas/budgets/alerts, verified role bootstrap/TLS, direct/pool and
 suspend/wake behavior, retained restore/off-device journals and measured latency
 from the Philippines. Recheck official provider documentation at selection time;
@@ -380,7 +383,7 @@ handoff, and no manual/provider gap is counted as passing local automation.
 
 ## Local Step 4 packaging receipt
 
-[Step 4 evidence](work/ongoing/L6-step4-deployment-evidence.json) records passing
+[Step 4 evidence](work/done/L6-step4-deployment-evidence.json) records passing
 Linux ARM64 builds/packaging: API image
 `sha256:02b79878958ffa95ffd3ec9a9fca8663a0e9918f9cd3136f3ccf1cd3eb0c855d`,
 learner image
@@ -398,7 +401,7 @@ is closed by these local artifact checks.
 
 ## Step 5 local verification refresh
 
-The [Step 5 receipt](work/ongoing/L6-step5-local-evidence.json) supersedes Step 4's
+The [Step 5 receipt](work/done/L6-step5-local-evidence.json) supersedes Step 4's
 focused packaging trials for full local verification. Both fresh native ARM64
 clean-build rounds passed; the second API/learner images are
 `sha256:18adf2da81c8bb7ddd875039ea07b543f9cb07f861f9bbafb39a6054c109b54d` and
@@ -407,5 +410,8 @@ The optional admin image retains the Step 4 ID above. Full PG/proxy acceptance
 passed 44 browser cases, including the previously skipped publication switch;
 packaged HTTP editor acceptance passed 18. Complete recovery/rollback, dedicated
 50-case Chromium/WebKit backup acceptance and selected immutable export parity
-also passed. Candidate-input five-job CI and the final Step 6 decision remain
-required; no local ARM64 result establishes native AMD64 acceptance.
+also passed. The subsequent five-job CI now passes at `d54b859`, including both
+native architectures; the final decision accepts the local candidate. CI artifact
+metadata/digests are frozen, with payloads retained on GitHub until 2026-10-29.
+The source and protected export remain byte-identical to the passing local inputs;
+local image IDs above do not identify a published registry manifest.

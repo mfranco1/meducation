@@ -63,4 +63,4 @@ Remaining launch obligations and closure evidence owners:
 - **B14 actual assistive technology** — owner/operator records VoiceOver/Safari or NVDA/browser versions and entry/dialog labels, announcements, focus trapping/return, replacement/error/recovery/success behavior. Automated semantics/focus assertions do not close this gate; no reader session was observed here.
 - **Persisted BFCache and freeze-return** — owner/operator records a real persisted return/freeze lifecycle and safe re-admission before writes. `[false, false]` does not close this observation gap, and no synthetic event is counted as device evidence.
 
-These remain public-launch blockers, with the original aggregate boxes open. They do not erase the accepted local desktop results. [Final L6 Step 3 evidence](L6-step3-acceptance-evidence.json) records passing HTTP/visual checks and preserves these launch blockers.
+These remain public-launch blockers, with the original aggregate boxes open. They do not erase the accepted local desktop results. [Final L6 Step 3 evidence](../done/L6-step3-acceptance-evidence.json) records passing HTTP/visual checks and preserves these launch blockers.

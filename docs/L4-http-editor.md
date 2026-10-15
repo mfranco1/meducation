@@ -141,6 +141,6 @@ owns build, serving, secret and deployment gates. The packaged production API
 still refuses production identity; serving assets does not enable private access.
 
 Current local learner/editor acceptance is recorded in the
-[L6 Step 3 receipt](work/ongoing/L6-step3-acceptance-evidence.json); the older L4
+[L6 Step 3 receipt](work/done/L6-step3-acceptance-evidence.json); the older L4
 counts above describe their original stage. Packaged serving acceptance and
 changed-input candidate/native CI have their own L6 Step 4/5 evidence.

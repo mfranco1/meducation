@@ -1,0 +1,283 @@
+{
+  "stage": "L6 Step 6 release-candidate decision",
+  "date": "2026-10-15 (Asia/Manila)",
+  "decision": "local candidate accepted; public launch blocked by listed gates",
+  "source_commit": "d54b8596a2199e8bc204d5f16927dae5c5af16d1",
+  "closeout_scope": "Documentation/evidence only; no runtime, content, database or deployment mutation. Prior pending statements are historical; this decision supersedes their current status.",
+  "content": {
+    "release_id": "3e3604bf-dedf-470e-adf6-4dccc1bab5f9",
+    "publication_sequence": 3,
+    "schema_head": "0006_allocation_fence",
+    "paired_sha256": {
+      "flashcardBank.json": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7",
+      "questionBank.json": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+      "manifest.json": "30709d9dde9f6d22f06a21c8eb27d61b2d11366878172adb8bcfbe7ad291eed9"
+    },
+    "source_parity": {
+      "result": "pass",
+      "sourceSha256": {
+        "quiz": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+        "flashcard": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
+      },
+      "releaseId": "b19c15e5-66d2-4bf8-b2d2-ac18d31d571a",
+      "revisions": {
+        "quiz": "sha256-11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
+        "flashcard": "sha256-78dc0f035e3e42c81fcbfc92ea3a5963fc3807186ea82b7ee9bc84cfe6a02f19"
+      },
+      "routesChecked": 348,
+      "counts": {
+        "subjects": 13,
+        "quizzes": 111,
+        "questions": 11687,
+        "decks": 98,
+        "cards": 1712
+      },
+      "checks": [
+        "all reconstructed typed fields/optional presence/string/array order",
+        "both exact serialized artifacts and revision hashes",
+        "all learner catalogs/bodies/counts/membership and ETag/304/409",
+        "reader connection cleanup"
+      ]
+    },
+    "scope": "Pinned immutable Step 2 export; paired parity only. Latest live authority was last observed in Step 2; no authority access during Step 5."
+  },
+  "content_identity_policy": "Pinned immutable Step 2 release accepted; latest routine-authority observation remains 2026-10-15T06:35:24.737829+00:00. No fresh live-current claim; recheck before transfer and decide explicitly whether newer publication requires recapture/retest. Serialized flashcard file digest differs from semantic revision digest by design; both are retained in Step 2 receipt.",
+  "local_images": {
+    "clean_build_rounds": [
+      {
+        "iteration": 1,
+        "images": {
+          "meducation-api:local": "sha256:161c4e224546d2d6df030acc1eaf2d0fb499d54f0e8f76b97f1211101f69f981",
+          "meducation-learner:local": "sha256:2c40df3729ad46e176093635faee7ffa78d436a95252e7059e3d48ffaba8e703"
+        }
+      },
+      {
+        "iteration": 2,
+        "images": {
+          "meducation-api:local": "sha256:18adf2da81c8bb7ddd875039ea07b543f9cb07f861f9bbafb39a6054c109b54d",
+          "meducation-learner:local": "sha256:969bb67be7485bd468718995642cd580eb11c7d22b2231ff52cb957d38f4fea5"
+        }
+      }
+    ],
+    "optional_admin": "sha256:e3ce2cb83c34b22d7be16c8657b46bfbaf45dbd9055dced71c4b802d9d7cf363",
+    "installed_current_and_prior": {
+      "current": {
+        "image_id": "sha256:18adf2da81c8bb7ddd875039ea07b543f9cb07f861f9bbafb39a6054c109b54d",
+        "source_commit": "7046c4b9e2df1a2e52c131d66770239fbddb59c3",
+        "schema_head": "0006_allocation_fence",
+        "installed_module_count": 47,
+        "installed_source_matches_git_revision": true,
+        "module_fingerprint_sha256": "75539f04e8d23cb6a32b2495265bffcbf75dc56854a78e1be8c412794f9dcb7f"
+      },
+      "prior": {
+        "image_id": "sha256:aa8ec5f3c4850fa67430e36344a5d8db7008fac35e9bf8efb027f5a7bdd0a74e",
+        "source_commit": "bb8f354971cf5914eaad50feb24671b833ae679c",
+        "schema_head": "0006_allocation_fence",
+        "installed_module_count": 45,
+        "installed_source_matches_git_revision": true,
+        "module_fingerprint_sha256": "9fd86476e658c5603a3d5deea7b6d7b63914a1f50e976c473340ab35d54b5bab"
+      }
+    }
+  },
+  "ci": {
+    "receipt": "L6-step5-native-ci-evidence.json",
+    "run": {
+      "id": 38706549031,
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38706549031",
+      "head_sha": "d54b8596a2199e8bc204d5f16927dae5c5af16d1",
+      "head_branch": "master",
+      "event": "push",
+      "run_attempt": 1,
+      "status": "completed",
+      "conclusion": "success",
+      "created_at": "2026-10-15T08:33:46Z",
+      "updated_at": "2026-10-15T08:53:25Z"
+    },
+    "job_conclusions": {
+      "browser-smoke": "success",
+      "frontend": "success",
+      "backend": "success",
+      "Containers (amd64)": "success",
+      "Containers (arm64)": "success"
+    },
+    "artifact_metadata": [
+      {
+        "id": 11959467508,
+        "name": "container-acceptance-arm64",
+        "size_in_bytes": 3340979,
+        "digest": "sha256:0aefc3573caca3287c3d307e90fe864671210b380968e5f8c0750e4bd607ec54",
+        "expired": false,
+        "created_at": "2026-10-15T08:53:21Z",
+        "expires_at": "2026-10-29T08:53:19Z"
+      },
+      {
+        "id": 11959367646,
+        "name": "container-acceptance-amd64",
+        "size_in_bytes": 3453620,
+        "digest": "sha256:b1b4b489aaf81de6895ff4429aa3ed1368b8f592918d43529e2904b265967b9a",
+        "expired": false,
+        "created_at": "2026-10-15T08:52:30Z",
+        "expires_at": "2026-10-29T08:52:29Z"
+      },
+      {
+        "id": 11958945927,
+        "name": "progress-backup-accepted-engines",
+        "size_in_bytes": 4914,
+        "digest": "sha256:2ee30d098de3796b539dbc74e7f459e1e527a2d82c4ba2e48ad8617c6888dfea",
+        "expired": false,
+        "created_at": "2026-10-15T08:38:41Z",
+        "expires_at": "2026-10-29T08:38:41Z"
+      }
+    ],
+    "artifact_scope": "Public API metadata independently inspected; payloads not downloaded. GitHub retention expires 2026-10-29; local image IDs do not assert per-platform registry manifest digests."
+  },
+  "requirements": [
+    {
+      "parent_requirement": "Complete verification and repeatable CI",
+      "verdict": "accepted",
+      "receipts": [
+        "L6-step5-local-evidence.json",
+        "L6-step5-native-ci-evidence.json"
+      ],
+      "evidence": {
+        "full_runner_steps": 14,
+        "frontend_units": 605,
+        "architecture_tests": 10,
+        "ordinary_backend": {
+          "passed": 238,
+          "skipped": 186,
+          "skip_disposition": "PG cases covered by real-PG suite plus restart-only gate"
+        },
+        "learner_host_browser": 43,
+        "json_admin_browser": 12,
+        "native_stages": 23,
+        "native_command_seconds": 2262.43,
+        "postgres": {
+          "passed": 184,
+          "skipped": 2,
+          "skip_disposition": "both require --restartable; passed in separate 18-test restart-enabled suite"
+        },
+        "restart_postgres": 18,
+        "load_harness_contracts": 5,
+        "release_input_contracts": 13,
+        "load_rounds": 1,
+        "load_launches": 20,
+        "native_postgres_learner_browser": 44,
+        "artifact_contracts": 8,
+        "packaged_http_editor_browser": 18,
+        "progress_backup": {
+          "startTime": "2026-10-15T08:19:19.269Z",
+          "duration": 91857.607,
+          "expected": 50,
+          "skipped": 0,
+          "unexpected": 0,
+          "flaky": 0
+        },
+        "selected_learner_display": 6,
+        "selected_editor_display": 6
+      }
+    },
+    {
+      "parent_requirement": "Actual content parity and learner/editor acceptance",
+      "verdict": "accepted locally with explicit public-device gaps",
+      "receipts": [
+        "L6-step2-content-evidence.json",
+        "L6-step3-acceptance-evidence.json",
+        "L6-step5-local-evidence.json"
+      ],
+      "evidence": "Exact selected paired export/PG17/re-export/all 348 learner routes, rich rendering/exact editor display and all functional suites; source keys and verified answers preserved. 32 unchanged editorial notes are separate content-review obligations."
+    },
+    {
+      "parent_requirement": "Provider-neutral deployment inputs",
+      "verdict": "accepted",
+      "receipts": [
+        "L6-step4-deployment-evidence.json"
+      ],
+      "documents": [
+        "../../L6-deployment-handoff.md"
+      ],
+      "evidence": "Pinned image recipes and local identities, optional HTTP admin packaging/serving, environment/secret ownership, explicit migration/transfer/admission, routing, smoke and distinct rollback/recovery commands."
+    },
+    {
+      "parent_requirement": "Outstanding deployment acceptance",
+      "verdict": "handoff accepted; subsequent hosted/public gates pending",
+      "documents": [
+        "../ongoing/L6-public-deployment-acceptance.md",
+        "../ongoing/L0-browser-acceptance.md",
+        "../ongoing/L4-local-authoring-admin-access-plan.md"
+      ],
+      "evidence": "Owners and concrete closure conditions for actual provider/TLS/roles/region/latency/quotas, pooling/suspend, real identity/MFA, stable domain/origin transfer, independent retained recovery and final deployed acceptance. No provisioning authorized or performed."
+    }
+  ],
+  "tested_modes": [
+    "local full frontend/backend and JSON development-admin regressions",
+    "native installed API and learner proxy on disposable PG17; Linux ARM64 locally and native AMD64/ARM64 CI",
+    "optional packaged HTTP editor with isolated synthetic identity, private denial and log canaries",
+    "selected immutable private export parity/display locally; public CI synthetic/archive fixtures only"
+  ],
+  "browser_coverage": {
+    "local_versions": {
+      "chromium": {
+        "version": "153.0.8010.12",
+        "executable": "/Users/noodle.zip/Library/Caches/ms-playwright/chromium-1243/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
+      },
+      "webkit": {
+        "version": "26.6",
+        "executable": "/Users/noodle.zip/Library/Caches/ms-playwright/webkit-2359/pw_run.sh"
+      }
+    },
+    "automated": "43 host learner, 12 JSON admin, 44 PG/proxy learner, 18 packaged HTTP editor, 50 Chromium/WebKit backup and six selected/synthetic display cases per learner/editor context. These are recorded local counts, not inferred CI payload counts.",
+    "presentation": "390/1048/1440px automation, enlarged text/reduced motion/focus/status/keyboard; available visual inspection scope in Step 3.",
+    "unobserved": [
+      "Firefox (user-deferred)",
+      "actual iOS Safari and Android Chrome file workflows",
+      "actual screen-reader sessions",
+      "persisted BFCache/freeze-return (observed back navigation was fresh-load only)"
+    ]
+  },
+  "audit": {
+    "blocking_local_findings": [],
+    "frozen_prior_json_receipts_unchanged": 51,
+    "tracked_non_document_inputs_equal_ci_and_local_run": 469,
+    "retained_local_step5_artifacts_rehashed": 68,
+    "selected_export_files_rehashed": 3,
+    "installed_current_sources_equal_ci_commit": 47,
+    "required_closeout_checks": [
+      "npm run build (TypeScript + Vite)",
+      "relative Markdown paths/anchors and JSON parse",
+      "git diff --check",
+      "unchanged frozen receipts and runtime/content fingerprints"
+    ],
+    "closeout_results": {
+      "build_and_typecheck": "pass; fresh npm run build, existing >500 kB Vite chunk advisory only",
+      "relative_markdown_paths_and_anchors": {
+        "checked": 125,
+        "result": "pass"
+      },
+      "all_work_tracker_json_parse": "pass",
+      "git_diff_check": "pass",
+      "runtime_inputs_unchanged": 469,
+      "previous_frozen_receipts_unchanged": 51,
+      "ci_skipped_steps": [
+        [
+          "browser-smoke",
+          "Retain host browser failure traces"
+        ]
+      ],
+      "reused_runtime_gates": "All runtime/config files equal passing local Step 5 and CI commit; no repeated expensive fixtures required."
+    }
+  },
+  "public_launch_blockers": [
+    "Current provider/PG17 selection, bootstrap/roles/TLS, Philippine latency, quotas/budgets/alerts and actual pooling/suspend/wake evidence",
+    "Production identity adapter implementation plus real MFA freshness, rotation/logout/recovery; public private-admin stays disabled",
+    "Stable domain/origin-transfer UX and deployed routing/cache/body/proxy/secret/smoke acceptance",
+    "User-deferred off-device retention/full backup/allocation journals/restore and L4 archival closure",
+    "Firefox and actual mobile/screen-reader/persisted-return acceptance"
+  ],
+  "tracking": "L6 plan and all seven receipts archived together. Parent remains ongoing for explicit L4 obligations; browser and deployment trackers remain ongoing.",
+  "limitations": [
+    "No exhaustive proof of absence of bugs. No newly verified medical answers.",
+    "No user authorization to publish, provision, deploy, merge or commit inferred from this local acceptance.",
+    "No content export or paired parity replaces full authority/session/grant/history/journal recovery."
+  ]
+}

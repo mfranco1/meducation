@@ -1,8 +1,8 @@
 # L6 — Local release candidate
 
-Created: 2026-10-15 (Asia/Manila). Status: Steps 1–4 local gates complete; Step 5 local automated gates passed; candidate-input CI pending. L5 changed-source CI is independently verified at `7128a97`. The user's 2026-10-15 request authorizes starting L6; execution follows the documented step gates. The user authorized continuation through Step 5. Candidate CI and Step 6 remain pending.
+Created: 2026-10-15 (Asia/Manila). Completed: 2026-10-15. Status: Steps 1–6 complete; local candidate accepted at `d54b8596a2199e8bc204d5f16927dae5c5af16d1`, with independently verified five-job CI. Public launch remains blocked by the ongoing browser, deployment and L4 retained-recovery obligations. The user authorized continuation after candidate CI passed.
 
-Parent: [local-first production preparation](local-first-production-preparation.md#l6--local-release-candidate).
+Parent: [local-first production preparation](../ongoing/local-first-production-preparation.md#l6--local-release-candidate).
 Predecessor: [L5 plan](../done/L5-resilience-and-local-operations-plan.md) and
 [L5 handoff](../../L5-local-operations.md#l6-handoff).
 Follow [work tracking](../README.md): implement one coherent step, record evidence
@@ -118,7 +118,7 @@ normalization. Current content need not be copied into CI or committed to Git.
   390/1048/1440px editor coverage and learner regressions as the baseline.
 - [x] Track actual iOS Safari/Android Chrome file workflows, screen-reader usage
   and persisted BFCache/freeze-return observations in the existing
-  [browser acceptance tracker](L0-browser-acceptance.md). Record devices/versions,
+  [browser acceptance tracker](../ongoing/L0-browser-acceptance.md). Record devices/versions,
   actual observed navigation and evidence. Emulation and synthetic events do not
   close these cases. If equipment/user participation is unavailable, retain them
   explicitly as public-launch blockers; do not invent passes or repeatedly retry
@@ -189,7 +189,7 @@ capabilities remain explicit. No account, domain, database or deployment is crea
   [container runbook](../../local-containers.md); builds/suites sharing `dist` must
   run sequentially. Focused `--keyword`, `--grep` and small-fixture trials never
   replace final complete gates.
-- [ ] Obtain passing candidate-input CI in `.github/workflows/checks.yml`: backend,
+- [x] Obtain passing candidate-input CI in `.github/workflows/checks.yml`: backend,
   frontend, browser and native AMD64/ARM64. Record commit, run/jobs and retained
   artifact identities. A local ARM64 pass or older L5 run cannot certify changed
   L6 inputs. Freeze final source/content fingerprints and compare installed modules.
@@ -204,11 +204,11 @@ runner is missing evidence, not success. No relaxed assertion hides a failure.
 
 ## Step 6 — Release-candidate decision and subsequent deployment gates
 
-- [ ] Audit each parent L6 requirement against the ledger and actual artifacts.
+- [x] Audit each parent L6 requirement against the ledger and actual artifacts.
   State code commit, content release/digests, schema, image identities, tested modes
   and precisely which browser/device coverage exists. Apply the repository
   completion-audit workflow at implementation closeout.
-- [ ] Keep a deployment checklist with evidence owner and closure condition for:
+- [x] Keep a deployment checklist with evidence owner and closure condition for:
   chosen host/PG17 region, quotas/budgets/alerts and measured Philippine latency;
   verified TLS and role/endpoint compatibility; actual pooling/suspend/wake;
   real identity adapter, MFA freshness, key rotation/logout/recovery; stable domain
@@ -216,11 +216,11 @@ runner is missing evidence, not success. No relaxed assertion hides a failure.
   Firefox/manual mobile/assistive technology/persisted-return follow-ups; and final
   deployed routing/cache/secret/smoke acceptance. Recheck provider documentation at
   selection time; provisional Neon/API-host/OIDC choices are not commitments.
-- [ ] Distinguish “local candidate accepted, public launch blocked by listed gates”
+- [x] Distinguish “local candidate accepted, public launch blocked by listed gates”
   from an incomplete local candidate. Manual launch obligations may remain in their
   ongoing tracker; required local correctness/content/native checks may not be
   silently deferred. Parent L6 closure must explicitly preserve these limitations.
-- [ ] Update the parent, link the handoff and archive this plan with its frozen
+- [x] Update the parent, link the handoff and archive this plan with its frozen
   evidence only after local gates pass. Keep unfinished browser/deployment trackers
   ongoing and fix links. Do not mark public deployment complete or provision it.
 
@@ -243,10 +243,10 @@ The [baseline receipt](L6-step1-baseline-evidence.json) identifies code, runtime
 
 ### Parent requirement evidence ledger
 
-- **Complete verification and repeatable CI** — Step 5 owns `npm run verify:full`, fresh native `scripts/containers/acceptance.py`, dedicated accepted-engine backup suites, and new candidate-input five-job CI. Reserve `L6-step5-local-evidence.json` and `L6-step5-native-ci-evidence.json`; retain command exit/duration, scoped native reports, skips and fixture cleanup. L5's receipt establishes the dependency only. Status: pending.
+- **Complete verification and repeatable CI** — Step 5 owns `npm run verify:full`, fresh native `scripts/containers/acceptance.py`, dedicated accepted-engine backup suites, and new candidate-input five-job CI. Reserve `L6-step5-local-evidence.json` and `L6-step5-native-ci-evidence.json`; retain command exit/duration, scoped native reports, skips and fixture cleanup. L5's receipt establishes the dependency only. Final status: accepted by the local receipt and independently verified candidate CI receipt below.
 - **Actual content parity and learner/editor acceptance** — Step 2 owns the supported read-only publication lookup, protected immutable `export-release`, `validate-export`, `audit-export` and explicit paired-input PG17 round-trip/route comparison. Reserve `L6-step2-content-evidence.json`. Step 3 owns fresh learner/HTTP admin builds, dedicated progress-backup Chromium/WebKit runs, existing learner/editor rich-content and workflow suites, and available visual checks; reserve `L6-step3-acceptance-evidence.json`. Step 2 is now accepted in [the content receipt](L6-step2-content-evidence.json), including authority release/digests, draft distinction and final publication recheck. Step 3 rendering/workflow acceptance is now locally accepted in [its receipt](L6-step3-acceptance-evidence.json); manual launch obligations remain in the browser tracker. Repository archive validation cannot close these gates.
-- **Provider-neutral deployment inputs** — Step 4 owns `docs/L6-deployment-handoff.md`, fresh image identities/build commands, optional admin serving recipe, environment/secret inventory, explicit schema/transfer/recovery sequence and smoke/rollback commands. Reserve `L6-step4-deployment-evidence.json`; exact recipes must follow current runbooks and use disposable resources. Status: pending.
-- **Outstanding deployment acceptance** — Steps 4/6 own named evidence owners and closure conditions for provider/region/latency/budgets, TLS/routing/pooling/suspend, real identity adapter/MFA/rotation, domain/origin transfer and off-device retention/journals/restore. [Browser acceptance](L0-browser-acceptance.md) retains Firefox and actual mobile/assistive-technology/persisted-return gaps. Reserve `L6-final-decision-evidence.json`. All remain public-launch obligations; no cloud provisioning or identity bypass is authorized.
+- **Provider-neutral deployment inputs** — Step 4 owns `docs/L6-deployment-handoff.md`, fresh image identities/build commands, optional admin serving recipe, environment/secret inventory, explicit schema/transfer/recovery sequence and smoke/rollback commands. Reserve `L6-step4-deployment-evidence.json`; exact recipes must follow current runbooks and use disposable resources. Final status: Step 4 accepted; handoff and final checklist linked below.
+- **Outstanding deployment acceptance** — Steps 4/6 own named evidence owners and closure conditions for provider/region/latency/budgets, TLS/routing/pooling/suspend, real identity adapter/MFA/rotation, domain/origin transfer and off-device retention/journals/restore. [Browser acceptance](../ongoing/L0-browser-acceptance.md) retains Firefox and actual mobile/assistive-technology/persisted-return gaps. Reserve `L6-final-decision-evidence.json`. All remain public-launch obligations; no cloud provisioning or identity bypass is authorized.
 
 Validation: `npm run build` passed TypeScript and production bundling, retaining the existing >500 kB chunk advisory. All 81 local Markdown paths in affected documents resolve; the repository-wide scan also found four pre-existing unrelated missing targets (one illustrative content image and three historical tracker links), recorded in the baseline receipt. Runtime/config fingerprints and archived receipt hashes match; `git diff --check` passed. Completion audit: no blocking Step 1 findings. Stop after the Step 1 gate per the agreed work-tracking sequence; Step 2 requires continuation. This does not accept the overall L6 candidate.
 
@@ -278,7 +278,7 @@ The first full learner run preserved **42 passes and one failure**: a pre-existi
 
 Visual inspection covered synthetic rich content at 390/1440px, real export content at 390px, and synthetic/real HTTP editor JSON at 390px plus desktop editor layout. Automated assertions cover 390/1048/1440px, 20px root text, reduced motion, focus and reachable Done/Save actions. Tables scroll within their bounded region, long choices wrap, explanations/pearls and inline/display math render, local KaTeX fonts load, and hostile markup does not execute. Authenticated functional editor scenarios cover paired save versus publish, reservations/imports, stale tabs/reset/Undo, expiry/step-up, pending text, uncertain writes, retained activation/export and publication while study/review is open. Protected diagnostic/log canaries also pass. Synthetic identity does not establish real hosted MFA. Both HTTP fixture runs cleaned up; independent Docker listing found no editor fixture containers/networks.
 
-[The frozen receipt](L6-step3-acceptance-evidence.json) records command outcomes, input/image/report fingerprints, selected-record hashes and visual/automation scope without raw private content or progress. Original export and previous receipts are unchanged. Public-launch blockers remain individually tracked in [browser acceptance](L0-browser-acceptance.md#l6-accepted-engine-refresh--2026-10-15): Firefox remains user-deferred; actual iOS/Android file workflows, actual screen-reader sessions, and persisted BFCache/freeze-return are unobserved. Chromium/WebKit back navigation observed `[false,false]` fresh-load paths only. New accepted-engine CI coverage is wired but **not yet certified by candidate-input CI**; Step 5 owns that full native/five-job gate.
+[The frozen receipt](L6-step3-acceptance-evidence.json) records command outcomes, input/image/report fingerprints, selected-record hashes and visual/automation scope without raw private content or progress. Original export and previous receipts are unchanged. Public-launch blockers remain individually tracked in [browser acceptance](../ongoing/L0-browser-acceptance.md#l6-accepted-engine-refresh--2026-10-15): Firefox remains user-deferred; actual iOS/Android file workflows, actual screen-reader sessions, and persisted BFCache/freeze-return are unobserved. Chromium/WebKit back navigation observed `[false,false]` fresh-load paths only. New accepted-engine CI coverage is wired but **not yet certified by candidate-input CI**; Step 5 owns that full native/five-job gate.
 
 Completion audit: **no blocking local Step 3 findings**. No full candidate/public-launch acceptance is implied. Parent L6 requirements remain open for Steps 4–6. Step 4 provider-neutral deployment inputs is next, after continuation at this agreed stage gate.
 
@@ -319,3 +319,15 @@ Advisories retain their disposition: existing Vite chunk size; deliberate weak-k
 The final public GitHub REST recheck still found **zero runs for `7046c4b`**; the latest observed success is the earlier L5 run. The two tested verification fixes must be included in the commit pushed for Checks. Passing backend, frontend, browser-smoke, native AMD64 and native ARM64 jobs on those exact inputs and retained artifact metadata are still required. No CI receipt is fabricated, no commit/push was performed, and Step 6 has not started. Documentation-only closeout reuses the passing runtime gates under explicit unchanged input equality.
 
 Completion audit: **no blocking local Step 5 findings**. Final JSON parsing, 93 relative Markdown targets, `git diff --check`, equality of 469 tracked non-document inputs to the passing run and all 50 prior frozen receipt hashes pass. The remaining in-scope blocker is candidate-input five-job CI; Step 5 is not marked complete and Step 6 is not started.
+
+## Steps 5–6 final acceptance — 2026-10-15
+
+The user supplied passing [Checks run 38706549031](https://github.com/mfranco1/meducation/actions/runs/38706549031) and authorized continuation. Independent public GitHub REST inspection confirms commit `d54b8596a2199e8bc204d5f16927dae5c5af16d1`, attempt 1, completed successfully at 16:53:25 Asia/Manila. All five jobs passed: backend, frontend, browser-smoke, Containers (amd64) and Containers (arm64). Both native acceptance and artifact-upload steps passed; browser accepted-engine backup execution/upload passed. The only skipped job step is the intentionally failure-only browser trace upload. The [new CI receipt](L6-step5-native-ci-evidence.json) freezes job/step conclusions and three artifact IDs, SHA-256 digests and expiration dates (2026-10-29). Artifact payloads were not downloaded; no CI per-platform image digest is invented.
+
+All 469 tracked non-document inputs match both the passing local Step 5 manifest and the CI commit, including its two verification fixes. All 68 retained local Step 5 artifacts and the three protected export files were rehashed successfully. The installed API's 47 Python/SQL source files match both the locally tested `7046c4b` tree and `d54b859`; the local receipt retains installed current/prior image identities and module fingerprints. Both native CI jobs independently executed the source-comparison recovery assertions. This documentation-only closeout reuses those exact runtime gates; it does not rerun expensive unaffected fixtures. A fresh build/typecheck and documentation/evidence checks verify the closeout itself.
+
+Final decision: **local candidate accepted; public launch blocked by listed gates**. The [final decision receipt](L6-final-decision-evidence.json) maps all four parent requirements to actual receipts, source/content/schema/images, build modes and observed browser coverage. The selected content remains release `3e3604bf-dedf-470e-adf6-4dccc1bab5f9`, sequence 3, schema `0006_allocation_fence`; both serialized file hashes and semantic revision digests are recorded separately. Latest authority observation remains Step 2; this closeout accepts that immutable pinned release and does not assert a fresh live publication lookup. No authority reads/writes, content changes, allocation, publication or cloud provisioning occurred here.
+
+The [ongoing deployment checklist](../ongoing/L6-public-deployment-acceptance.md) assigns owners and concrete closure conditions for region/PG17/TLS/roles, latency/quotas/budgets, pooling/suspend, production identity/MFA/rotation/logout/recovery, stable domain/origin transfer, retained off-device recovery/journals, browser/device/reader/persisted-return and final deployed routing/cache/secrets/smoke. Firefox and off-device retention remain user-deferred obligations. Actual mobile file workflows, screen-reader use and persisted return remain unobserved. Local desktop automation, synthetic identity and disposable recovery do not close those gates. The parent remains ongoing for its explicit L4 archival/recovery obligations; L6 and its receipts move together to done. Historical pending statements above describe their original observation times.
+
+Final closeout checks: fresh `npm run build` passed TypeScript and production bundling (existing >500 kB chunk advisory); all 125 affected relative Markdown paths/anchors and all tracker JSON parse; `git diff --check` passes. All 469 source/config fingerprints and 51 prior frozen JSON receipt hashes are unchanged, including moved L6 snapshots. Completion audit: **no blocking local findings**. The deployment checklist and public-launch limitations above remain open.
