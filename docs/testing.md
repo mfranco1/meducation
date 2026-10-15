@@ -290,3 +290,13 @@ negative harness contracts. Native container acceptance runs those contracts and
 `--rounds 1` with a 600-second subprocess budget; changed-source native CI remains
 a separate acceptance requirement. See the
 [measurement semantics and limitations](L5-local-operations.md#twenty-learner-api-launch-characterization).
+
+The HTTP editor browser suite uses `e2e/admin-http/fixtures.ts` for automatic
+per-test authentication rate-bucket cleanup in its disposable database. Every
+spec in this serial suite must import `test` from that fixture. A fresh browser
+context does not reset the shared global authentication bucket. The mounted
+`editor_http.py` fixture exposes the cleanup endpoint; it is never installed in
+the application image. `auth-rate.spec.ts` fills the global budget in consecutive
+scenarios and verifies that the real per-browser/global limits still return 429
+within each scenario. Keep this suite at one worker against a shared fixture DB;
+parallel workers require separate fixture databases.

@@ -193,6 +193,15 @@ def authorize(request: Request):
     )
 
 
+@app.post("/fixture/reset-auth-rate-limits")
+def reset_auth_rate_limits():
+    # Per-test cleanup of this disposable fixture only. Keep the real limiter
+    # enabled so each scenario still exercises production admission behavior.
+    with engines["session"].begin() as connection:
+        connection.execute(text("DELETE FROM admin_auth.rate_limits"))
+    return {"fixture": "auth-rate-limits-reset"}
+
+
 @app.post("/fixture/expire")
 def expire():
     with engines["session"].begin() as c:

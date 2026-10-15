@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test('L5 explicit diagnostics require the existing session, Origin and CSRF and expose sanitized dependency outcomes', async ({
   page,

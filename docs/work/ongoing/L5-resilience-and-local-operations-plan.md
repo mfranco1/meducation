@@ -482,3 +482,50 @@ compatible application/schema rollback and changed-source AMD64/ARM64 CI are nex
 overall L5 remains ongoing. Hosted networking/TLS/suspend/MFA, concurrent editor
 load, broader catalog scale, real devices and off-device retention remain distinct
 obligations. The synthetic API measurements do not certify them.
+
+## Native CI authentication isolation follow-up — 2026-10-15
+
+Run [38677611981](https://github.com/mfranco1/meducation/actions/runs/38677611981)
+at `d17347b91ed3356aae7dc4267dabb50d5755a26f` failed in the final HTTP editor
+browser stage on both native architectures. The retained reports show both image
+builds and every preceding container stage passed, including the new twenty-launch
+smoke (AMD64 14.146 seconds, ARM64 16.877 seconds). This is partial changed-source
+CI evidence, not acceptance of the overall jobs.
+
+The downloaded browser traces confirm `POST /api/admin/auth/login` returned 429
+for the imported-save test on both architectures and for the following freshness
+test on AMD64. The page remained signed out, so the missing Quizzes button was a
+consequence of authentication admission. The serial suite shared a database-wide
+30-request/minute bucket across fresh browser contexts. Login and step-up routes
+consume that budget independently of browser-context isolation; quicker runners
+can exhaust it before the last scenarios.
+
+The fixture-only `editor_http.py` now provides explicit rate-bucket cleanup, and
+all HTTP editor specs import the auto fixture from `e2e/admin-http/fixtures.ts`.
+It clears only disposable rate-limit rows before each test. Production limiter
+thresholds, auth/session logic and timeouts are unchanged. Two consecutive
+regressions each consume all thirty global slots, check the per-browser six-call
+limit and require a new browser to receive 429 at the global limit. This proves
+within-test enforcement alongside isolation between tests. Tests remain serial;
+parallel workers would need independent fixture databases. No raw CI trace,
+credential, cookie or request payload is copied into repository evidence.
+
+Follow-up verification: the full isolated HTTP editor suite **16 passed (1.8m)**,
+including both originally failing cases and both rate-budget regressions. The
+post-browser operational logging/proxy canaries also passed, and the disposable
+editor container/network inventories are empty. An earlier run alongside
+build/type/lint checks passed the auth regressions and original failures but hit
+a first-save polling deadline while the save was still pending; that run is not
+counted as acceptance. The serial rerun retained the same assertions/timeouts.
+
+HTTP admin build, build/typecheck, lint/architecture (288 modules/1,255 imports),
+formatting, backend/container-helper Ruff, fixture Python compilation and diff
+checks passed. Protected export hashes remain unchanged. Sanitized failed-run
+trace observations, passing local output and implementation fingerprints are in
+[follow-up evidence](L5-ci-auth-rate-isolation-evidence.json).
+
+Completion audit: **local CI-failure fix verified, no blocking local findings**.
+Corrected-source full AMD64/ARM64 jobs still require a new run after commit/push;
+this fix does not close the overall native CI gate. Step 5 operational recovery
+and rollback acceptance remain open. No production authentication threshold,
+runtime service, routine authority or authored content changed.

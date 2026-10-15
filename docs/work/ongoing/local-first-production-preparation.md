@@ -267,3 +267,11 @@ Completed L1 work and evidence are tracked in [the progress backup plan](../done
   checks passed. [Evidence](L5-step4-local-evidence.json) retains machine/fixture/
   source/image fingerprints and limitations. Step 5 recovery/rollback/native CI
   remains open; no routine authority change or runtime tuning occurred.
+
+- [x] L5 native CI follow-up: run 38677611981 built both architectures and passed
+  the new load gate, then failed late browser sign-ins with HTTP 429. Isolated
+  test rate-bucket cleanup now prevents cross-scenario exhaustion while two new
+  regressions retain production per-browser/global admission checks. The full
+  local HTTP suite **16 passed**; [follow-up evidence](L5-ci-auth-rate-isolation-evidence.json)
+  records the diagnosis and limits. Corrected-source native CI must be rerun;
+  overall L5 and Step 5 remain open.

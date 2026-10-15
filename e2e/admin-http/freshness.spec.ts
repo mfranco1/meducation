@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, test } from './fixtures';
 import type { PairedSnapshot } from '../../src/admin/data/PairedHttpClient';
 
 test('L5 open learner tabs revalidate cached launches and preserve active study through publication', async ({
