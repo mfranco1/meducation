@@ -23,13 +23,12 @@ import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
 import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
 import { HttpQuestionBankGateway } from './data/HttpQuestionBankGateway';
-import { AdminActionCanceled } from './core/AdminActionCanceled';
 import { useAdminConfirmation } from './useAdminConfirmation';
 import { useAdminEditor } from './useAdminEditor';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 import { applyFlashcardOperations, type FlashcardAdminOperation } from './core/flashcardChangeSet';
 import { parseChangeSet } from './core/changeSetSchema';
-import type { AdminDraftState } from './core/workspaceStatus';
+import { AdminActionCanceled, type AdminDraftState } from './data/PairedHttpClient';
 
 export function AdminWorkspace({
   gateway,

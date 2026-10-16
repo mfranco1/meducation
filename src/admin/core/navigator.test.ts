@@ -1,6 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import type { StoredFlashcard } from '../../content/schema/schema';
-import { FLASHCARD_PAGE_SIZE, selectFlashcardPage } from './flashcardNavigator';
+import fixture from '../../../tests/fixtures/question-bank.json';
+import type { StoredFlashcard, StoredQuestionBank } from '../../content/schema/schema';
+import { ADMIN_PAGE_SIZE, selectFlashcardPage, selectQuizNavigatorPage } from './navigator';
+
+describe('quiz navigation', () => {
+  it('reaches items beyond 200, searches full stems and clamps pages without changing canonical order', () => {
+    const bank = structuredClone(fixture) as StoredQuestionBank;
+    bank.questions = Array.from({ length: 211 }, (_, index) => ({ ...bank.questions[0], id: `item-${index}`, quizId: 'q1', stem: `${index === 210 ? 'Needle at the end' : 'Question'} ${index}` }));
+    const original = structuredClone(bank);
+    const last = selectQuizNavigatorPage(bank, 's1', 'q1', '', 99);
+    expect(last.page).toBe(8);
+    expect(last.visible.at(-1)?.position).toBe(211);
+    expect(selectQuizNavigatorPage(bank, 's1', 'q1', 'needle', 0).visible[0].question.id).toBe('item-210');
+    expect(selectQuizNavigatorPage(bank, 's1', 'q1', 'item-209', 0).visible[0].position).toBe(210);
+    expect(bank).toEqual(original);
+  });
+});
 
 const cards = Array.from({ length: 53 }, (_, index) => ({
   id: `f${index + 1}`,
@@ -13,7 +28,7 @@ describe('selectFlashcardPage', () => {
   it('keeps canonical positions and limits each page to 25 cards', () => {
     const first = selectFlashcardPage(cards, '', 0);
     const third = selectFlashcardPage(cards, '', 2);
-    expect(first.visible).toHaveLength(FLASHCARD_PAGE_SIZE);
+    expect(first.visible).toHaveLength(ADMIN_PAGE_SIZE);
     expect(third.visible.map(({ card, position }) => [card.id, position])).toEqual([
       ['f51', 51],
       ['f52', 52],

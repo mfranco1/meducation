@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react';
 import { Box, Paper, Stack, Typography } from '@mui/material';
-import { adminEditorLayout } from './adminPanelLayout';
+
+/** Stacked panels fill the available width without stretching their height. */
+const adminEditorLayout = { width: { xs: '100%', lg: 'auto' }, flex: { xs: 'none', lg: 1 }, minWidth: 0 };
 
 export function AdminEditorFrame({ label, children }: { label: string; children: ReactNode }) {
   return (

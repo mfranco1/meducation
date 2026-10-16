@@ -239,3 +239,14 @@ export function compileBulkAddDraft(
     errors: [],
   };
 }
+
+/** Editable JSON contains content only; parent IDs and protocol fields live in panel state. */
+export function bulkAddTemplate(context: BulkAddContext): BulkAddDraft {
+  const item = { stem: '', choices: ['', ''], answer: 'A', rationale: '' };
+  if (context.kind === 'newSubject') return {
+    subject: { name: '' },
+    quizzes: [{ name: '', items: [{ ...item }] }],
+  };
+  if (context.kind === 'subject') return { quizzes: [{ name: '', items: [{ ...item }] }] };
+  return { items: [{ ...item }] };
+}

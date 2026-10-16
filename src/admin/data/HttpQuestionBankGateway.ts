@@ -1,9 +1,8 @@
-import { AdminActionCanceled } from '../core/AdminActionCanceled';
 import type { StoredFlashcardBank } from '../../content/schema/schema';
-import type { AdminChangeSet, AdminBankSnapshot } from '../core/types';
+import type { AdminChangeSet, AdminBankSnapshot, AdminChangePreview } from '../core/types';
 import { previewChangeSet } from '../core/applyChangeSet';
-import type { AdminQuestionBankGateway } from './AdminQuestionBankGateway';
 import {
+  AdminActionCanceled,
   PairedHttpClient,
   expectedContext,
   type PairedSnapshot,
@@ -12,13 +11,19 @@ import {
   type ServerPreview,
 } from './PairedHttpClient';
 
+export type AdminPreviewSummary = Pick<AdminChangePreview, 'issues' | 'summary'> & {
+  preparedChangeSet?: AdminChangeSet;
+  idMappings?: Record<string, string>;
+};
+
 export interface PreparedSaveReview {
   reason: string;
   expected: ReturnType<typeof expectedContext>;
   impact: ServerPreview;
 }
 
-export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
+/** Adapts pure edit helpers to server snapshots, ID reservations, reviewed previews and saves. */
+export class HttpQuestionBankGateway {
   current: PairedSnapshot;
   private readonly listeners = new Set<() => void>();
   subscribe(listener: () => void): () => void {

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { AdminHttpError, PairedHttpClient } from './PairedHttpClient';
+import { AdminHttpError, PairedHttpClient, workspaceStatus } from './PairedHttpClient';
 
 const ok = (body: unknown) =>
   new Response(JSON.stringify(body), { status: 200, headers: { 'Content-Type': 'application/json' } });
@@ -106,4 +106,39 @@ it('surfaces authentication requirements until a fresh session is explicitly est
   await client.refreshSession();
   expect(client.authenticationRequired).toBe(false);
   expect(fetcher).toHaveBeenCalledTimes(3);
+});
+
+
+const statusSnapshot = {
+  draft: { basePublicationSequence: '2', digests: { quizRevision: 'q2', flashcardRevision: 'f2' } },
+  publication: { sequence: '2', digests: { quizRevision: 'q2', flashcardRevision: 'f2' } },
+};
+const clean = { quizzes: false, flashcards: false };
+describe('workspace status', () => {
+  it('distinguishes unsaved text, saved draft and publication independently', () => {
+    expect(workspaceStatus(statusSnapshot, clean, false)).toMatchObject({ label: 'Up to date', draftChanged: false });
+    const changed = {
+      ...statusSnapshot,
+      draft: { ...statusSnapshot.draft, digests: { quizRevision: 'q3', flashcardRevision: 'f2' } },
+    };
+    expect(workspaceStatus(changed, clean, false)).toMatchObject({ label: 'Draft changes', publishBlocked: '' });
+    expect(workspaceStatus(changed, { quizzes: false, flashcards: true }, false)).toMatchObject({
+      label: 'Unsaved edits',
+      draftChanged: true,
+    });
+    expect(workspaceStatus(changed, { quizzes: true, flashcards: true }, false).publishBlocked).toContain(
+      'Quizzes and Flashcards',
+    );
+    expect(workspaceStatus(changed, { quizzes: true, flashcards: true }, true).label).toBe('Check save status');
+  });
+  it('blocks publication for stale bases and unchanged drafts, and permits an initial release', () => {
+    expect(workspaceStatus(statusSnapshot, clean, false).publishBlocked).toContain('no saved draft changes');
+    expect(
+      workspaceStatus({ ...statusSnapshot, publication: { ...statusSnapshot.publication, sequence: '3' } }, clean, false)
+        .publishBlocked,
+    ).toContain('Reset');
+    expect(
+      workspaceStatus({ ...statusSnapshot, publication: { sequence: '2', digests: null } }, clean, false).publishBlocked,
+    ).toBe('');
+  });
 });

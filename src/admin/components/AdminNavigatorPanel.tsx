@@ -13,11 +13,13 @@ import {
   Typography,
 } from '@mui/material';
 import type { StoredQuestionBank } from '../../content/schema/schema';
-import { selectQuizNavigatorPage } from '../core/quizNavigator';
+import { selectQuizNavigatorPage } from '../core/navigator';
 import type { Selection } from '../useAdminEditor';
 import { AdminRecordSelection, useAdminRecordSelection } from './AdminRecordSelection';
-import { adminNavigatorLayout } from './adminPanelLayout';
+
 import { AdminParentActions } from './AdminParentActions';
+
+export const adminNavigatorLayout = { width: { xs: '100%', lg: 320 }, flexShrink: 0, minWidth: 0 };
 
 interface Props {
   disabled?: boolean;

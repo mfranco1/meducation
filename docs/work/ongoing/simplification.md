@@ -6,7 +6,8 @@ Goal: remove accumulated complexity and prepare for hosted production using mana
 
 1. **Docs and process** (done).
 2. **Scripts and CI** (done): one container smoke (`npm run test:containers`), single-arch CI, two Playwright configs. Left: `control-resilience-fixture.py` stays for two backend DB-outage tests.
-3. **Frontend**: simplify progress backup/restore (drop Web Locks coordination, admission and restore journal; keep file validation); merge parallel quiz/flashcard admin code; collapse admin gateway layers; replace the custom boundary ESLint plugin with `no-restricted-imports`; merge tiny files; remove implementation-coupled tests.
+3. **Frontend**: progress backup simplified (done). Admin: gateway interface, in-memory test gateway and tiny files removed (done). Remaining: replace the custom boundary ESLint plugin with `no-restricted-imports`; merge tiny files outside admin; remove implementation-coupled tests.
+   - Follow-up decision: quiz and flashcard admin save models differ (quiz change sets with server-reserved IDs vs whole-bank flashcard operations). Unifying them onto one model would let the two panels, bulk-add drafts and change-set modules merge; this is a behavior/design change, not a cleanup.
 4. **Backend** (needs a `pg_dump` and restore check first): random IDs instead of the allocation fence and journals; one validation layer (drop PL/pgSQL JSON validation); store releases as immutable JSON with role grants instead of triggers; remove obsolete parity/transfer code; admin auth via managed identity or auth proxy.
 
 ## Carried over

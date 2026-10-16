@@ -2,8 +2,7 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../content/schema/schema';
 import type { AdminChangeSet } from './core/types';
-import type { AdminQuestionBankGateway } from './data/AdminQuestionBankGateway';
-import { InMemoryQuestionBankGateway } from '../test/InMemoryQuestionBankGateway';
+import { createAdminGateway } from '../test/adminGateway';
 import { useAdminEditor } from './useAdminEditor';
 
 const bank = (): StoredQuestionBank => ({
@@ -39,7 +38,7 @@ describe('admin editor workflows', () => {
       ...originalCards,
       decks: [{ ...originalCards.decks[0], subjectId: 's2' }],
     };
-    const gateway = new InMemoryQuestionBankGateway(source, originalCards);
+    const gateway = createAdminGateway(source, originalCards);
     const confirm = vi.fn().mockReturnValue(false);
     const { result } = renderHook(() => useAdminEditor(gateway, { confirm }));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
@@ -64,20 +63,17 @@ describe('admin editor workflows', () => {
     expect(result.current.summary).toContain('Paired draft saved');
   });
   it('invalidates a pending preview when the draft changes and serializes commands', async () => {
-    const delegate = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
+    const gateway = createAdminGateway(bank(), emptyFlashcardBank);
     let release!: () => void;
     const gate = new Promise<void>((resolve) => {
       release = resolve;
     });
-    const gateway: AdminQuestionBankGateway = {
-      load: () => delegate.load(),
-      preview: vi.fn(async (changeSet: AdminChangeSet) => {
-        await gate;
-        return delegate.preview(changeSet);
-      }),
-      apply: vi.fn((changeSet) => delegate.apply(changeSet)),
-      applyCoordinated: (changes, flashcards) => delegate.applyCoordinated(changes, flashcards),
-    };
+    const preview = gateway.preview.bind(gateway);
+    vi.spyOn(gateway, 'preview').mockImplementation(async (changeSet) => {
+      await gate;
+      return preview(changeSet);
+    });
+    vi.spyOn(gateway, 'apply');
     const { result } = renderHook(() => useAdminEditor(gateway));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
     await act(async () => {
@@ -107,7 +103,7 @@ describe('admin editor workflows', () => {
   });
 
   it('validates a bulk draft, exposes generated IDs, and stages only after confirmation', async () => {
-    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
+    const gateway = createAdminGateway(bank(), emptyFlashcardBank);
     const { result } = renderHook(() => useAdminEditor(gateway));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
     await act(async () => {
@@ -129,17 +125,17 @@ describe('admin editor workflows', () => {
     await act(async () => {
       await result.current.validateBulkDraft();
     });
-    expect(result.current.pendingBulk?.generatedIds).toEqual(['s2', 'q2', 'i2']);
+    expect(result.current.pendingBulk?.generatedIds).toEqual(['s91', 'q91', 'i91']);
     expect(result.current.snapshot?.bank.subjects).toHaveLength(1);
     await act(async () => {
       await result.current.stageValidatedBulk();
     });
     expect(result.current.snapshot?.bank.subjects).toHaveLength(2);
-    expect(result.current.snapshot?.bank.questions[1].quizId).toBe('q2');
+    expect(result.current.snapshot?.bank.questions[1].quizId).toBe('q91');
   });
   it('preserves a declined draft during browsing and protects it before unload', async () => {
     const confirm = vi.fn().mockReturnValue(false);
-    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
+    const gateway = createAdminGateway(bank(), emptyFlashcardBank);
     const { result } = renderHook(() => useAdminEditor(gateway, { confirm }));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
     await act(async () => {
@@ -171,7 +167,7 @@ describe('admin editor workflows', () => {
       { ...source.questions[0], id: 'i3', quizId: 'q2' },
       { ...source.questions[0], id: 'i4' },
     );
-    const gateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
+    const gateway = createAdminGateway(source, emptyFlashcardBank);
     const { result } = renderHook(() => useAdminEditor(gateway));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
     const target = { kind: 'question' as const, parentId: 'q1' };
@@ -198,27 +194,14 @@ describe('admin editor workflows', () => {
     });
     expect(result.current.issues.filter((issue) => issue.level === 'error')).toEqual([]);
     expect(result.current.snapshot?.bank.questions.map((row) => row.id)).toEqual(['i3', 'i4']);
-    expect(gateway.appliedOperations()).toHaveLength(2);
   });
 });
 
 it('compares newer text with the committed record even when the author types the original source again', async () => {
   const source = bank();
-  const delegate = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
-  let finish!: () => void;
-  const hold = new Promise<void>((resolve) => {
-    finish = resolve;
-  });
-  const apply = vi.fn(async (changeSet: AdminChangeSet) => {
-    await hold;
-    return delegate.apply(changeSet);
-  });
-  const gateway: AdminQuestionBankGateway = {
-    load: () => delegate.load(),
-    preview: (changeSet) => delegate.preview(changeSet),
-    apply,
-    applyCoordinated: (changes, cards) => delegate.applyCoordinated(changes, cards),
-  };
+  const gateway = createAdminGateway(source, emptyFlashcardBank);
+  const finish = gateway.holdSave();
+  const saveStarted = () => expect(gateway.fetcher).toHaveBeenCalledWith('/api/admin/draft/save', expect.anything());
   const { result } = renderHook(() => useAdminEditor(gateway));
   await waitFor(() => expect(result.current.snapshot).toBeDefined());
   await act(async () => {
@@ -230,7 +213,7 @@ it('compares newer text with the committed record even when the author types the
   act(() => {
     saving = result.current.stageSingle();
   });
-  await waitFor(() => expect(apply).toHaveBeenCalledOnce());
+  await waitFor(saveStarted);
   act(() => result.current.editRecord(original));
   await act(async () => {
     finish();
@@ -243,26 +226,9 @@ it('compares newer text with the committed record even when the author types the
 
 it('adopts a reserved create ID while preserving newer authored subject text', async () => {
   const source = bank();
-  const delegate = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
-  let finish!: () => void;
-  const hold = new Promise<void>((resolve) => {
-    finish = resolve;
-  });
-  const apply = vi.fn(async (changeSet: AdminChangeSet) => {
-    await hold;
-    return delegate.apply(changeSet);
-  });
-  const gateway: AdminQuestionBankGateway = {
-    load: () => delegate.load(),
-    apply,
-    applyCoordinated: (changes, cards) => delegate.applyCoordinated(changes, cards),
-    preview: async (changeSet) => {
-      const prepared = structuredClone(changeSet);
-      const first = prepared.operations[0];
-      if (first.op === 'subject.create') first.value.id = 's91';
-      return { ...(await delegate.preview(prepared)), preparedChangeSet: prepared };
-    },
-  };
+  const gateway = createAdminGateway(source, emptyFlashcardBank);
+  const finish = gateway.holdSave();
+  const saveStarted = () => expect(gateway.fetcher).toHaveBeenCalledWith('/api/admin/draft/save', expect.anything());
   const { result } = renderHook(() => useAdminEditor(gateway));
   await waitFor(() => expect(result.current.snapshot).toBeDefined());
   act(() => {
@@ -274,7 +240,7 @@ it('adopts a reserved create ID while preserving newer authored subject text', a
   act(() => {
     saving = result.current.stageSingle();
   });
-  await waitFor(() => expect(apply).toHaveBeenCalledOnce());
+  await waitFor(saveStarted);
   act(() => result.current.editRecord(JSON.stringify({ ...template, name: 'Newer exact subject $x^2$\n' })));
   await act(async () => {
     finish();

@@ -1,8 +1,10 @@
 import { Paper, Stack, Typography } from '@mui/material';
 import { AdminIssues } from './AdminIssues';
-import { adminStatusLayout } from './adminPanelLayout';
+
 import type { StoredQuestionBank } from '../../content/schema/schema';
 import type { ValidationIssue } from '../../content/validation/validate';
+
+const adminStatusLayout = { width: { xs: '100%', lg: 280 }, flexShrink: 0, minWidth: 0 };
 
 interface Props {
   bank: StoredQuestionBank;

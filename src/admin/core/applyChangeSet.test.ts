@@ -2,9 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
 import { previewChangeSet as previewWithBank } from './applyChangeSet';
 import { parseChangeSet } from './changeSetSchema';
-import { serializeBank } from './serializeBank';
 import type { AdminChangeSet, ContentAddOperation } from './types';
-import { InMemoryQuestionBankGateway } from '../../test/InMemoryQuestionBankGateway';
 
 const bank = (): StoredQuestionBank => ({
   schemaVersion: 4,
@@ -22,26 +20,12 @@ const grouped = (subject: ContentAddOperation['subject'], quizzes: ContentAddOpe
 });
 
 describe('admin change-set processor', () => {
-  it('blocks quiz undo/reset when staged flashcards reference a newly added subject', async () => {
-    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
-    const base = await gateway.load();
-    await gateway.apply({ ...changeSet([{ op: 'subject.create', value: { id: 's2', name: 'New', accent: '#222222' } }]), base: { bankSchemaVersion: 4, revision: base.revision } });
-    gateway.setFlashcardBank({ schemaVersion: 2, decks: [{ id: 'd-new', subjectId: 's2', name: 'Deck' }], cards: [] });
-    await expect(gateway.undo()).rejects.toThrow('unknown subject');
-    await expect(gateway.reset()).rejects.toThrow('unknown subject');
-    expect((await gateway.load()).bank.subjects.map(subject => subject.id)).toEqual(['s1', 's2']);
-    expect(gateway.appliedOperations()).toHaveLength(1);
-    gateway.setFlashcardBank({ schemaVersion: 2, decks: [], cards: [] });
-    expect((await gateway.undo())?.bank).toEqual(bank());
-  });
-  it('validates shared subjects against the staged flashcard bank snapshot', async () => {
+  it('validates shared subjects against the supplied flashcard bank', () => {
     const flashcards: StoredFlashcardBank = { schemaVersion: 2, decks: [{ id: 'd1', subjectId: 's1', name: 'Deck' }], cards: [] };
-    const gateway = new InMemoryQuestionBankGateway({ ...bank(), quizzes: [], questions: [] }, flashcards);
-    const snapshot = await gateway.load();
-    const removal: AdminChangeSet = { ...changeSet([{ op: 'subject.delete', id: 's1', cascade: true }]), base: { bankSchemaVersion: 4, revision: snapshot.revision } };
-    expect((await gateway.preview(removal)).issues.some(issue => issue.level === 'error')).toBe(true);
-    gateway.setFlashcardBank({ schemaVersion: 2, decks: [], cards: [] });
-    expect((await gateway.preview(removal)).issues.some(issue => issue.level === 'error')).toBe(false);
+    const removal = changeSet([{ op: 'subject.delete', id: 's1', cascade: true }]);
+    const source = { ...bank(), quizzes: [], questions: [] };
+    expect(previewChangeSet(source, removal, flashcards).issues.some(issue => issue.level === 'error')).toBe(true);
+    expect(previewChangeSet(source, removal, emptyFlashcardBank).issues.some(issue => issue.level === 'error')).toBe(false);
   });
 
   it('applies a mixed create batch while preserving question grouping', () => {
@@ -172,47 +156,12 @@ describe('admin change-set processor', () => {
     expect(empty.errors[0]).toContain('operations[0].quizzes must be a non-empty array');
   });
 
-  it('rejects version-1 import and replays grouped export to the identical flat bank', async () => {
+  it('rejects version-1 import and replays a grouped add to the identical flat bank', () => {
     const legacy = parseChangeSet({ changeSetVersion: 1, base: { bankSchemaVersion: 4, revision: 'legacy' }, reason: 'Legacy', operations: [{ op: 'question.create', value: { ...item('i2'), quizId: 'q1' } }] });
     expect(legacy.errors).toEqual(['Unsupported change-set version.']);
 
-    const source = bank();
-    const firstGateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
-    const base = await firstGateway.load();
-    const groupedSet = { ...grouped({ create: { id: 's2', name: 'Pearls', accent: '#bc531e' } }, [{ quiz: { create: { id: 'q2', name: 'New quiz' } }, items: [item('i2'), item('i3')] }]), base: { bankSchemaVersion: 4 as const, revision: base.revision } };
-    await firstGateway.apply(groupedSet);
-    const exportedOperations = firstGateway.appliedOperations();
-    expect(exportedOperations).toEqual(groupedSet.operations);
-
-    const replayGateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
-    const replayBase = await replayGateway.load();
-    await replayGateway.apply({ ...groupedSet, base: { ...groupedSet.base, revision: replayBase.revision } });
-    expect(serializeBank((await replayGateway.load()).bank)).toBe(serializeBank((await firstGateway.load()).bank));
-  });
-
-  it('undoes exactly one staged grouped batch', async () => {
-    const source = bank();
-    const gateway = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
-    const base = await gateway.load();
-    const batch = { ...grouped({ existingId: 's1' }, [{ quiz: { existingId: 'q1' }, items: [item('i2')] }]), base: { bankSchemaVersion: 4 as const, revision: base.revision } };
-    await gateway.apply(batch);
-    expect(gateway.appliedOperations()).toEqual(batch.operations);
-    const afterUndo = await gateway.undo();
-    expect(afterUndo?.bank).toEqual(source);
-    expect(gateway.appliedOperations()).toEqual([]);
-  });
-
-  it('bounds undo history while retaining all staged operations for export', async () => {
-    const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
-    for (let index = 1; index <= 12; index++) {
-      const snapshot = await gateway.load();
-      await gateway.apply({ ...changeSet([{ op: 'subject.update', id: 's1', value: { ...snapshot.bank.subjects[0], name: `Subject ${index}` } }]), base: { bankSchemaVersion: 4, revision: snapshot.revision } });
-    }
-    expect(gateway.appliedOperations()).toHaveLength(12);
-    for (let index = 0; index < 10; index++) expect(await gateway.undo()).toBeDefined();
-    expect((await gateway.load()).bank.subjects[0].name).toBe('Subject 2');
-    expect(gateway.appliedOperations()).toHaveLength(2);
-    expect(await gateway.undo()).toBeUndefined();
-    expect((await gateway.reset()).bank).toEqual(bank());
+    const groupedSet = grouped({ create: { id: 's2', name: 'Pearls', accent: '#bc531e' } }, [{ quiz: { create: { id: 'q2', name: 'New quiz' } }, items: [item('i2'), item('i3')] }]);
+    const first = previewChangeSet(bank(), groupedSet).bank;
+    expect(first.questions.map(question => question.id)).toEqual(['i1', 'i2', 'i3']);
   });
 });

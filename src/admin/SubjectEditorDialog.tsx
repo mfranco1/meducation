@@ -13,7 +13,7 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import type { AdminQuestionBankGateway } from './data/AdminQuestionBankGateway';
+import type { HttpQuestionBankGateway } from './data/HttpQuestionBankGateway';
 import { useAdminEditor } from './useAdminEditor';
 import { AdminRecordEditor } from './components/AdminRecordEditor';
 import { AdminIssues } from './components/AdminIssues';
@@ -27,7 +27,7 @@ export function SubjectEditorDialog({
   onDirtyChange,
   onClose,
 }: {
-  gateway: AdminQuestionBankGateway;
+  gateway: HttpQuestionBankGateway;
   initialId?: string;
   blocked: boolean;
   recovery?: React.ReactNode;

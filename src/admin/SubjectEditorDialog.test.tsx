@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { SubjectEditorDialog } from './SubjectEditorDialog';
-import { InMemoryQuestionBankGateway } from '../test/InMemoryQuestionBankGateway';
+import { createAdminGateway } from '../test/adminGateway';
 import { emptyFlashcardBank, storedQuestionBank } from '../test/contentFixtures';
 
 it('edits a shared subject without changing other records and closes only after saving', async () => {
-  const gateway = new InMemoryQuestionBankGateway(structuredClone(storedQuestionBank), emptyFlashcardBank);
+  const gateway = createAdminGateway(structuredClone(storedQuestionBank), emptyFlashcardBank);
   const close = vi.fn();
   render(
     <SubjectEditorDialog
@@ -28,7 +28,7 @@ it('edits a shared subject without changing other records and closes only after 
   expect(next.bank.questions).toEqual(storedQuestionBank.questions);
 });
 it('keeps exact invalid subject JSON on a declined close without saving', async () => {
-  const gateway = new InMemoryQuestionBankGateway(structuredClone(storedQuestionBank), emptyFlashcardBank);
+  const gateway = createAdminGateway(structuredClone(storedQuestionBank), emptyFlashcardBank);
   const close = vi.fn();
   render(<SubjectEditorDialog gateway={gateway} blocked={false} onDirtyChange={() => {}} onClose={close} />);
   await waitFor(() => expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument());
@@ -44,7 +44,7 @@ it('keeps exact invalid subject JSON on a declined close without saving', async 
 });
 
 it('waits for command admission before initializing a subject editor', async () => {
-  const gateway = new InMemoryQuestionBankGateway(structuredClone(storedQuestionBank), emptyFlashcardBank);
+  const gateway = createAdminGateway(structuredClone(storedQuestionBank), emptyFlashcardBank);
   const props = { gateway, initialId: storedQuestionBank.subjects[0].id, onDirtyChange: vi.fn(), onClose: vi.fn() };
   const view = render(<SubjectEditorDialog {...props} blocked />);
   const editor = screen.getByRole('textbox', { name: 'JSON' });

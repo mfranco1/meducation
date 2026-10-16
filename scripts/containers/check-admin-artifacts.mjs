@@ -14,9 +14,7 @@ export function auditAdmin(root) {
   if (!maps.length) throw new Error('Hidden JS source maps are required for the admin audit.');
   const sources = [...new Set(maps.flatMap((file) => JSON.parse(readFileSync(file, 'utf8')).sources))];
   const forbidden = sources.filter((source) =>
-    /(?:^|\/)src\/(?:test\/|qa\/|admin\/(?:LocalAdminApp\.|data\/InMemoryQuestionBankGateway\.)|content\/(?:questionBank|flashcardBank)\.generated\.json$)/.test(
-      source,
-    ),
+    /(?:^|\/)src\/(?:test\/|content\/(?:questionBank|flashcardBank)\.generated\.json$)/.test(source),
   );
   if (forbidden.length) throw new Error(`Unexpected admin modules: ${forbidden.join(', ')}`);
   for (const required of ['/src/admin/main.tsx', '/src/admin/HttpAdminApp.tsx', '/src/admin/SessionCompletion.tsx']) {

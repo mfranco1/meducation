@@ -1,9 +1,8 @@
-import { AdminActionCanceled } from '../core/AdminActionCanceled';
 import { describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
 import { emptyFlashcardBank, storedQuestionBank } from '../../test/contentFixtures';
 import { HttpQuestionBankGateway } from './HttpQuestionBankGateway';
-import { PairedHttpClient, type PairedSnapshot, type ServerPreview } from './PairedHttpClient';
+import { AdminActionCanceled, PairedHttpClient, type PairedSnapshot, type ServerPreview } from './PairedHttpClient';
 const snapshot = (): PairedSnapshot => ({
   contractVersion: 1,
   pair: { quizzes: structuredClone(storedQuestionBank), flashcards: structuredClone(emptyFlashcardBank) },

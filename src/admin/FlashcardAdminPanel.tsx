@@ -1,5 +1,5 @@
 import { adoptReservedDraftId } from './core/recordDraft';
-import { AdminActionCanceled } from './core/AdminActionCanceled';
+import { AdminActionCanceled } from './data/PairedHttpClient';
 import { AdminRecordEditor } from './components/AdminRecordEditor';
 import { AdminParentActions } from './components/AdminParentActions';
 import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from './components/AdminEditorFrame';
@@ -20,7 +20,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { serializeFlashcardBank } from './core/flashcardSerialization';
 import type {
   StoredFlashcardBank,
   StoredFlashcardDeck,
@@ -32,8 +31,8 @@ import type { Subject } from '../domain/types';
 import { applyFlashcardOperations, type FlashcardAdminOperation } from './core/flashcardChangeSet';
 import { FlashcardBulkAddDialog, type FlashcardBulkPreviewSnapshot } from './FlashcardBulkAddDialog';
 import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
-import { selectFlashcardPage } from './core/flashcardNavigator';
-import { adminNavigatorLayout } from './components/adminPanelLayout';
+import { ADMIN_PAGE_SIZE, selectFlashcardPage } from './core/navigator';
+import { adminNavigatorLayout } from './components/AdminNavigatorPanel';
 import { AdminRecordSelection, useAdminRecordSelection } from './components/AdminRecordSelection';
 import { AdminIssues } from './components/AdminIssues';
 import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
@@ -98,6 +97,7 @@ export function FlashcardAdminPanel({
   }>();
   const [loadedEditor, setLoadedEditor] = useState('');
   const [busy, setBusy] = useState(false);
+  const locked = busy || externalBusy;
   const subjectSnapshot = JSON.stringify(subjects);
   const exportContext = quizRevision;
   const editorDirty = editor !== loadedEditor;
@@ -163,27 +163,30 @@ export function FlashcardAdminPanel({
   }, [discardRequest]);
   const confirmation = useAdminConfirmation([editor, reason, bank, subjects, busy, externalBusy]);
   const discardDraft = () => confirmation.request('Discard the unsaved flashcard editor text to continue?');
-  const changeBrowseSubject = async (subjectId: string) => {
-    if (subjectId === browseSubjectId || busy || externalBusy || (editorDirty && !(await discardDraft()))) return;
+  const focusDeck = (subjectId: string, deckId: string, page = 0) => {
     setBrowseSubjectId(subjectId);
-    setBrowseDeckId('');
+    setBrowseDeckId(deckId);
     setCardQuery('');
-    setCardPage(0);
+    setCardPage(page);
+  };
+  const pageOfCard = (cards: StoredFlashcard[], deckId: string, id: string) =>
+    Math.max(0, Math.floor(cards.filter((card) => card.deckId === deckId).findIndex((card) => card.id === id) / ADMIN_PAGE_SIZE));
+  const changeBrowseSubject = async (subjectId: string) => {
+    if (subjectId === browseSubjectId || locked || (editorDirty && !(await discardDraft()))) return;
+    focusDeck(subjectId, '');
     setSelection(undefined);
     setEditor('');
     setLoadedEditor('');
   };
   const changeBrowseDeck = async (deckId: string) => {
-    if (deckId === browseDeckId || busy || externalBusy || (editorDirty && !(await discardDraft()))) return;
-    setBrowseDeckId(deckId);
-    setCardQuery('');
-    setCardPage(0);
+    if (deckId === browseDeckId || locked || (editorDirty && !(await discardDraft()))) return;
+    focusDeck(browseSubjectId, deckId);
     setSelection(undefined);
     setEditor('');
     setLoadedEditor('');
   };
   const load = async (next: Selected, value: unknown) => {
-    if (busy || externalBusy) return;
+    if (locked) return;
     if (next?.id && next.kind === selection?.kind && next.id === selection.id) return;
     if (editorDirty && !(await discardDraft())) return;
     setSelection(next);
@@ -193,7 +196,7 @@ export function FlashcardAdminPanel({
     setIssues([]);
   };
   const commitOperations = (batch: FlashcardAdminOperation[]) => {
-    if (busy || externalBusy) return;
+    if (locked) return;
     if (!reason.trim()) {
       setIssues(['Enter a change reason before saving.']);
       return;
@@ -241,7 +244,7 @@ export function FlashcardAdminPanel({
   ): Promise<string | undefined> => {
     if (!bulkDestination) return 'The bulk destination is no longer selected. Open the batch again.';
     if (
-      snapshot.bankJson !== serializeFlashcardBank(bank) ||
+      snapshot.bankJson !== JSON.stringify(bank) ||
       snapshot.subjectSnapshot !== subjectSnapshot ||
       snapshot.destination !== JSON.stringify(bulkDestination.context) ||
       snapshot.reason !== reason ||
@@ -261,29 +264,15 @@ export function FlashcardAdminPanel({
       setLoadedEditor('');
       setBulkDestination(undefined);
       setBulkDraftDirty(false);
-      let first = batch.find((operation) => operation.op === 'card.create' || operation.op === 'deck.create');
+      const first = batch.find((operation) => operation.op === 'card.create' || operation.op === 'deck.create');
+      const created = <T extends { id: string }>(rows: T[], old: T[]) => rows.find((row) => !old.some((o) => o.id === row.id));
       if (first?.op === 'card.create') {
-        const value = candidate.cards.find((row) => !bank.cards.some((old) => old.id === row.id));
-        if (value) first = { ...first, value };
-      }
-      if (first?.op === 'deck.create') {
-        const value = candidate.decks.find((row) => !bank.decks.some((old) => old.id === row.id));
-        if (value) first = { ...first, value };
-      }
-      if (first?.op === 'card.create') {
-        const deck = candidate.decks.find((item) => item.id === first.value.deckId);
-        if (deck) setBrowseSubjectId(deck.subjectId);
-        setBrowseDeckId(first.value.deckId);
-        setCardQuery('');
-        const position = candidate.cards
-          .filter((card) => card.deckId === first.value.deckId)
-          .findIndex((card) => card.id === first.value.id);
-        setCardPage(Math.max(0, Math.floor(position / 25)));
+        const card = created(candidate.cards, bank.cards) ?? first.value;
+        const deck = candidate.decks.find((item) => item.id === card.deckId);
+        focusDeck(deck?.subjectId ?? browseSubjectId, card.deckId, pageOfCard(candidate.cards, card.deckId, card.id));
       } else if (first?.op === 'deck.create') {
-        setBrowseSubjectId(first.value.subjectId);
-        setBrowseDeckId(first.value.id);
-        setCardQuery('');
-        setCardPage(0);
+        const deck = created(candidate.decks, bank.decks) ?? first.value;
+        focusDeck(deck.subjectId, deck.id);
       }
     } catch (error) {
       return error instanceof Error ? error.message : 'Unable to save the bulk flashcard batch.';
@@ -293,7 +282,7 @@ export function FlashcardAdminPanel({
     return undefined;
   };
   const openBulk = async (context: FlashcardBulkAddContext, label: string) => {
-    if (busy || externalBusy || (editorDirty && !(await discardDraft()))) return;
+    if (locked || (editorDirty && !(await discardDraft()))) return;
     if (editorDirty) {
       setSelection(undefined);
       setEditor('');
@@ -303,7 +292,7 @@ export function FlashcardAdminPanel({
     setBulkDestination({ context, label });
   };
   const stage = async () => {
-    if (!selection || busy || externalBusy) return;
+    if (!selection || locked) return;
     let value: unknown;
     try {
       value = JSON.parse(editor);
@@ -337,21 +326,11 @@ export function FlashcardAdminPanel({
     setLoadedEditor(text);
     if (editVersion.current === version) setEditor(text);
     else if (!selection.id) setEditor((latest) => adoptReservedDraftId(latest, provisionalId, record.id as string));
-    if (selection.kind === 'deck') {
-      setBrowseSubjectId(record.subjectId as string);
-      setBrowseDeckId(record.id as string);
-      setCardQuery('');
-      setCardPage(0);
-    } else {
+    if (selection.kind === 'deck') focusDeck(record.subjectId as string, record.id as string);
+    else {
       const deckId = record.deckId as string;
       const deck = bank.decks.find((item) => item.id === deckId);
-      if (deck) setBrowseSubjectId(deck.subjectId);
-      setBrowseDeckId(deckId);
-      setCardQuery('');
-      const position = candidate.cards
-        .filter((item) => item.deckId === deckId)
-        .findIndex((item) => item.id === record.id);
-      setCardPage(Math.max(0, Math.floor(position / 25)));
+      focusDeck(deck?.subjectId ?? browseSubjectId, deckId, pageOfCard(candidate.cards, deckId, record.id as string));
     }
   };
   const createRecord = (kind: Kind) => {
@@ -365,14 +344,14 @@ export function FlashcardAdminPanel({
   };
   const deletionKey = useMemo(() => JSON.stringify([bank, subjects]), [bank, subjects]);
   const remove = (kind: Kind, id: string) => {
-    if (busy || externalBusy) return;
+    if (locked) return;
     const row = kind === 'deck' ? bank.decks.find((row) => row.id === id) : bank.cards.find((row) => row.id === id);
     if (!row) return;
     setDeleteError('');
     setDeleteRequest({ selection: { kind, id }, label: 'name' in row ? row.name : row.front, reviewKey: deletionKey });
   };
   const confirmDelete = async () => {
-    if (!deleteRequest || busy || externalBusy) return;
+    if (!deleteRequest || locked) return;
     if (deleteRequest.reviewKey !== deletionKey) {
       setDeleteError('The content changed. Cancel and review the deletion again.');
       return;
@@ -451,7 +430,7 @@ export function FlashcardAdminPanel({
       >
         <Stack
           component="fieldset"
-          disabled={busy || externalBusy}
+          disabled={locked}
           spacing={1}
           sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
         >
@@ -574,13 +553,7 @@ export function FlashcardAdminPanel({
                       const card = bank.cards.find((item) => item.id === selection.id);
                       if (!card) return;
                       const parent = bank.decks.find((deck) => deck.id === card.deckId);
-                      if (parent) setBrowseSubjectId(parent.subjectId);
-                      setBrowseDeckId(card.deckId);
-                      setCardQuery('');
-                      const position = bank.cards
-                        .filter((item) => item.deckId === card.deckId)
-                        .findIndex((item) => item.id === card.id);
-                      setCardPage(Math.max(0, Math.floor(position / 25)));
+                      focusDeck(parent?.subjectId ?? browseSubjectId, card.deckId, pageOfCard(bank.cards, card.deckId, card.id));
                     }}
                   >
                     Show in list
@@ -755,14 +728,14 @@ export function FlashcardAdminPanel({
               <AdminIssues issues={warnings} />
             </Alert>
           )}
-          <AdminEditorActions dirty={editorDirty} busy={busy || externalBusy} statusVisible={Boolean(selection)}>
+          <AdminEditorActions dirty={editorDirty} busy={locked} statusVisible={Boolean(selection)}>
             {selection && (
-              <Button variant="contained" disabled={!selection || busy || externalBusy} onClick={stage}>
+              <Button variant="contained" disabled={!selection || locked} onClick={stage}>
                 Review save
               </Button>
             )}
             <Button
-              disabled={busy || externalBusy}
+              disabled={locked}
               size="small"
               aria-haspopup="menu"
               onClick={(event) => setActionAnchor(event.currentTarget)}
@@ -832,7 +805,7 @@ export function FlashcardAdminPanel({
         bank={quizBank}
         flashcardBank={bank}
         currentReviewKey={deletionKey}
-        busy={busy || externalBusy}
+        busy={locked}
         error={deleteError}
         onClose={() => setDeleteRequest(undefined)}
         onConfirm={confirmDelete}
@@ -856,7 +829,7 @@ export function FlashcardAdminPanel({
             onEdit?.();
           }}
           exportContext={exportContext}
-          busy={busy || externalBusy}
+          busy={locked}
           onClose={() => setBulkDestination(undefined)}
           onDraftDirtyChange={setBulkDraftDirty}
           onStage={commitBulkOperations}

@@ -53,7 +53,7 @@ Stems, rationales and card faces use the rich policy (GFM, a limited HTML subset
 ## Admin and editor
 
 - `admin.html` is a separate optional entry (`npm run build:admin`); learner builds omit it. Static assets and build flags grant nothing.
-- `PairedHttpClient` (`src/admin/data`) owns session, CSRF, one-attempt writes and uncertain-operation reconciliation. `HttpQuestionBankGateway` adapts pure edit helpers to server snapshots, reservations and previews. `useAdminEditor` and `AdminWorkspace` own editing state; search, pagination and deletion impact stay in `admin/core`.
+- `PairedHttpClient` (`src/admin/data`) owns session, CSRF, one-attempt writes, uncertain-operation reconciliation and workspace status. `HttpQuestionBankGateway` is the only gateway; it adapts pure edit helpers to server snapshots, reservations and previews. `useAdminEditor` and `AdminWorkspace` own quiz editing state and `FlashcardAdminPanel` the flashcard state; search and pagination (`core/navigator.ts`) stay in `admin/core`, and the delete dialog computes deletion impact. Admin hook and dialog tests run the real gateway over a fake `fetch` (`src/test/adminGateway.ts`).
 - The server owns paired history, undo and reset. Panels keep only unsaved text and the current server snapshot.
 - `backend/.../auth` verifies OIDC identity, stores sessions in `admin_auth`, and authorizes the whole `/api/admin` prefix. `backend/.../admin` implements preview, save, undo, reset, publish, activate and export under the editor role. SQL functions enforce transactions and privileges; the editor role cannot write tables directly. Details: [operations](operations.md#editor-login-and-sessions).
 - Public learner routes use the reader role and ignore admin cookies.

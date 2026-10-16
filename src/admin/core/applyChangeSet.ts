@@ -1,11 +1,28 @@
 import type { StoredFlashcardBank, StoredQuestion, StoredQuestionBank, StoredQuiz } from '../../content/schema/schema';
-import type { ValidationIssue } from '../../content/validation/validate';
+import type { Question, Quiz } from '../../domain/types';
+import { validateQuestionMarkdown } from '../../content/validation/markdownValidation';
+import { validateQuestionBank, validateStoredQuestionBank, type ValidationIssue } from '../../content/validation/validate';
 import { cloneBank } from './serializeBank';
-import { validateAdminBank } from './validateAdminBank';
-import { emptyFlashcardBank } from './flashcardSerialization';
 import type { AdminChangePreview, AdminChangeSet, AdminOperation, ContentAddOperation } from './types';
 
 class OperationError extends Error {}
+
+const emptyFlashcardBank: StoredFlashcardBank = { schemaVersion: 2, decks: [], cards: [] };
+
+function validateAdminBank(bank: StoredQuestionBank, flashcards: StoredFlashcardBank = emptyFlashcardBank): ValidationIssue[] {
+  const questionCount = new Map<string, number>();
+  bank.questions.forEach(question => questionCount.set(question.quizId, (questionCount.get(question.quizId) ?? 0) + 1));
+  const quizzes: Quiz[] = bank.quizzes.map(quiz => ({ ...quiz, questionCount: questionCount.get(quiz.id) ?? 0 }));
+  const questions: Question[] = bank.questions.map(question => ({ ...question, metadata: question.metadata ?? {} }));
+  const subjectIds = new Set(bank.subjects.map(subject => subject.id));
+  const danglingFlashcardSubjects = new Set(flashcards.decks.map(deck => deck.subjectId).filter(id => !subjectIds.has(id)));
+  return [
+    ...validateStoredQuestionBank(bank),
+    ...validateQuestionBank(bank.subjects, quizzes, questions),
+    ...validateQuestionMarkdown(questions),
+    ...[...danglingFlashcardSubjects].map(subjectId => ({ level: 'error' as const, message: `Subject ${subjectId} is still referenced by flashcard decks; move or remove those decks first.` })),
+  ];
+}
 
 const summary = () => ({ creates: 0, updates: 0, deletes: 0, moves: 0, cascadedQuestions: 0, cascadedQuizzes: 0 });
 const byId = <T extends { id: string }>(items: T[], id: string) => items.findIndex(item => item.id === id);

@@ -1,14 +1,13 @@
-import { adoptReservedDraftId } from './core/recordDraft';
-import { AdminActionCanceled } from './core/AdminActionCanceled';
+import { adoptReservedDraftId, newQuestion, newQuiz, newSubject } from './core/recordDraft';
+import { AdminActionCanceled } from './data/PairedHttpClient';
 import { useAdminConfirmation } from './useAdminConfirmation';
 import { useEffect, useRef, useState } from 'react';
 import type { StoredFlashcardBank } from '../content/schema/schema';
 import type { ValidationIssue } from '../content/validation/validate';
 import { parseChangeSet } from './core/changeSetSchema';
-import { compileBulkAddDraft, type BulkAddContext } from './core/bulkAddDraft';
-import { bulkAddTemplate, newQuestion, newQuiz, newSubject } from './core/templates';
+import { bulkAddTemplate, compileBulkAddDraft, type BulkAddContext } from './core/bulkAddDraft';
 import type { AdminBankSnapshot, AdminChangeSet } from './core/types';
-import type { AdminQuestionBankGateway } from './data/AdminQuestionBankGateway';
+import type { HttpQuestionBankGateway } from './data/HttpQuestionBankGateway';
 
 export type EntityKind = 'subject' | 'quiz' | 'question';
 export type Selection = { kind: EntityKind; id?: string; parentId?: string };
@@ -25,7 +24,7 @@ export type BulkTarget =
 
 /** Owns the mutable state shared by all admin editing workflows. */
 export function useAdminEditor(
-  gateway: AdminQuestionBankGateway,
+  gateway: HttpQuestionBankGateway,
   options: { confirm?: (message: string) => boolean; blocked?: boolean; draftLabel?: string } = {},
 ) {
   const [snapshot, setSnapshot] = useState<AdminBankSnapshot>();
@@ -53,7 +52,7 @@ export function useAdminEditor(
   const selectedSubjectId = selection.kind === 'subject' ? selection.id : selectedQuiz?.subjectId;
   const selectedSubject = snapshot?.bank.subjects.find((subject) => subject.id === selectedSubjectId);
   const invalidateDraft = () => {
-    gateway.invalidate?.();
+    gateway.invalidate();
     editVersion.current += 1;
     setPendingBulk(undefined);
   };
@@ -90,10 +89,10 @@ export function useAdminEditor(
       if (current) setLoadError('Unable to load the canonical bank. Reload to try again.');
     });
     void load();
-    const unsubscribe = gateway.subscribe?.(() => { void load(); });
+    const unsubscribe = gateway.subscribe(() => { void load(); });
     return () => {
       current = false;
-      unsubscribe?.();
+      unsubscribe();
     };
   }, [gateway]);
 

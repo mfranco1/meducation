@@ -17,7 +17,6 @@ import {
 } from '@mui/material';
 import type { Subject } from '../domain/types';
 import type { StoredFlashcardBank } from '../content/schema/schema';
-import { serializeFlashcardBank } from './core/flashcardSerialization';
 import {
   compileFlashcardBulkAddDraft,
   flashcardBulkAddTemplate,
@@ -49,7 +48,7 @@ function flashcardBulkPreviewKey(
   reason: string,
   exportContext: string,
 ): string {
-  return JSON.stringify([serializeFlashcardBank(bank), JSON.stringify(subjects), context, text, reason, exportContext]);
+  return JSON.stringify([JSON.stringify(bank), JSON.stringify(subjects), context, text, reason, exportContext]);
 }
 
 export function FlashcardBulkAddDialog({
@@ -99,7 +98,7 @@ export function FlashcardBulkAddDialog({
   const generation = useRef(0);
   const draftDirty = text !== template;
   const snapshot: FlashcardBulkPreviewSnapshot = {
-    bankJson: serializeFlashcardBank(bank),
+    bankJson: JSON.stringify(bank),
     subjectSnapshot: JSON.stringify(subjects),
     destination: JSON.stringify(context),
     reason,
