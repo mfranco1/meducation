@@ -9,7 +9,8 @@ async function login(page: Page) {
 }
 async function refreshAuthentication(page: Page) {
   const opened = page.waitForEvent('popup');
-  await page.getByRole('button', { name: 'Refresh authentication' }).click();
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Refresh authentication' }).click();
   const popup = await opened;
   // Session probes can set/clear cookies. Do not race them against the OIDC
   // callback; closure means the editor received completion and refreshed context.
@@ -53,18 +54,24 @@ test('edits both banks, reloads saved drafts, publishes, activates and exports t
   await page.getByRole('button', { name: 'Save draft', exact: true }).click();
   await expect.poll(async () => (await draft(page)).pair.flashcards.decks[0].name).toBe('HTTP paired deck');
   await page.reload();
-  await expect(page.getByRole('button', { name: 'Review publication' })).toBeVisible();
+  await page.getByRole('button', { name: 'Review & publish', exact: true }).click();
   await page.getByRole('button', { name: 'Review publication' }).click();
   await page.getByRole('button', { name: 'Confirm publication' }).click();
   await expect
     .poll(async () => (await (await page.request.get('/api/v1/quizzes/q1/questions')).json()).questions[0].stem)
     .toBe('HTTP paired saved stem');
-  await page.getByRole('button', { name: 'Load retained releases' }).click();
-  await page.getByLabel('Retained release').selectOption(original.publication.releaseId);
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Published versions…' }).click();
+  await page.getByLabel('Published version', { exact: true }).selectOption(original.publication.releaseId);
+  await page.getByRole('button', { name: 'Use this published version…' }).click();
   await page.getByRole('button', { name: 'Review activation' }).click();
   await page.getByRole('button', { name: 'Confirm activation' }).click();
   await expect.poll(async () => (await draft(page)).publication.releaseId).toBe(original.publication.releaseId);
   expect((await draft(page)).pair.quizzes.questions[0].stem).toBe('HTTP paired saved stem');
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Export content…' }).click();
+  await page.getByRole('combobox', { name: 'Export target' }).click();
+  await page.getByRole('option', { name: 'Current published version', exact: true }).click();
   const download = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Export paired ZIP' }).click();
   expect((await download).suggestedFilename()).toBe('meducation-release.zip');
@@ -108,8 +115,8 @@ test('reconciles a lost commit response and rejects another tab stale save witho
     .getByRole('region', { name: 'Quiz editor' })
     .getByRole('button', { name: 'Save draft', exact: true })
     .click();
-  await expect(page.getByRole('button', { name: 'Reconcile operation' })).toBeEnabled();
-  await page.getByRole('button', { name: 'Reconcile operation' }).click();
+  await expect(page.getByRole('button', { name: 'Check save status', exact: true })).toBeEnabled();
+  await page.getByRole('button', { name: 'Check save status', exact: true }).click();
   await expect(page.getByText(/operation committed/)).toBeVisible();
   expect(await editor.inputValue()).toContain('Lost response saved stem');
   await otherEditor.fill(JSON.stringify({ ...old, stem: 'Stale second tab' }, null, 2));
@@ -121,14 +128,15 @@ test('reconciles a lost commit response and rejects another tab stale save witho
   await expect(second.getByText(/draft or publication changed/).first()).toBeVisible();
   expect(await otherEditor.inputValue()).toContain('Stale second tab');
   expect((await draft(page)).pair.quizzes.questions[0].stem).toBe('Lost response saved stem');
-  await second.getByRole('button', { name: 'Reset paired draft' }).click();
+  await second.getByRole('button', { name: 'More', exact: true }).click();
+  await second.getByRole('menuitem', { name: 'Reset draft to published version…' }).click();
   await expect(second.getByText(/draft or publication changed/).first()).toBeVisible();
   expect(await otherEditor.inputValue()).toContain('Stale second tab');
   await second.close();
 });
 
 for (const width of [390, 1048, 1440])
-  test(`HTTP editor keyboard access and layout at ${width}px`, async ({ page }) => {
+  test(`HTTP editor keyboard access and layout at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
     await login(page);
     await page.getByRole('button', { name: 'Quizzes', exact: true }).focus();
@@ -143,6 +151,9 @@ for (const width of [390, 1048, 1440])
       .poll(() => save.evaluate((element) => getComputedStyle(element).backgroundColor))
       .toBe('rgb(185, 81, 27)');
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+    const header = await page.getByRole('banner').boundingBox();
+    expect(header!.height).toBeLessThanOrEqual(width === 390 ? 180 : 110);
+    await page.getByRole('banner').screenshot({ path: testInfo.outputPath(`admin-header-${width}.png`) });
   });
 
 test('invalidates a reserved bulk preview when text changes without saving it', async ({ page }) => {
@@ -194,7 +205,8 @@ test('canceled step-up keeps text and does not refresh factor or resend publicat
     });
   });
   const before = (await draft(page)).publication.sequence;
-  await page.getByRole('button', { name: 'Refresh authentication' }).click();
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Refresh authentication' }).click();
   await expect(editor).toHaveValue(text);
   await expect.poll(async () => (await (await page.request.get('/api/admin/session')).json()).fresh).toBe(false);
   expect((await draft(page)).publication.sequence).toBe(before);
@@ -263,7 +275,8 @@ test('logout wins before an in-flight save reaches the API and keeps unsaved tex
     .getByRole('button', { name: 'Save draft', exact: true })
     .click();
   await ready;
-  await page.getByRole('button', { name: 'Sign out', exact: true }).click();
+  await page.getByRole('button', { name: 'Account', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
   await expect
     .poll(async () => (await (await page.request.get('/api/admin/session')).json()).authenticated)
     .toBe(false);
@@ -358,7 +371,8 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
     .toBe(false);
   const deleted = await draft(page);
   expect(deleted.pair.flashcards.decks.some((row: { id: string }) => row.id === savedDeck.id)).toBe(false);
-  await page.getByRole('button', { name: 'Undo saved batch' }).click();
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Undo last saved change…' }).click();
   await expect
     .poll(async () => (await draft(page)).pair.flashcards.cards.some((row: { id: string }) => row.id === savedCard.id))
     .toBe(true);

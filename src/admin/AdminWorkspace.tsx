@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Alert,
   Autocomplete,
@@ -14,7 +14,6 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { AppBrand } from '../shared/ui/brand/AppBrand';
 import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
 import { adminEditorLayout } from './components/adminPanelLayout';
@@ -26,22 +25,30 @@ import { useAdminEditor } from './useAdminEditor';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 import { applyFlashcardOperations, type FlashcardAdminOperation } from './core/flashcardChangeSet';
 import { parseChangeSet } from './core/changeSetSchema';
+import type { AdminDraftState } from './core/workspaceStatus';
 
 export function AdminWorkspace({
   gateway,
-  controls,
+  header,
+  feedback,
   onDirtyChange,
 }: {
   gateway: HttpQuestionBankGateway;
-  controls?: ReactNode;
-  onDirtyChange?: (dirty: boolean) => void;
+  header?: ReactNode;
+  feedback?: ReactNode;
+  onDirtyChange?: (dirty: AdminDraftState) => void;
 }) {
   const [section, setSection] = useState<'quizzes' | 'flashcards'>('quizzes');
   const [deleteRequest, setDeleteRequest] = useState<DeleteRequest>();
   const [flashcardDiscardRequest, setFlashcardDiscardRequest] = useState(0);
   const [deleteReason, setDeleteReason] = useState('Remove obsolete content');
   const [deleteError, setDeleteError] = useState('');
+  const [flashcardDirty, setFlashcardDirty] = useState(false);
   const flashcardDraft = useRef(false);
+  const reportFlashcardDirty = useCallback((dirty: boolean) => {
+    flashcardDraft.current = dirty;
+    setFlashcardDirty(dirty);
+  }, []);
   const [bulkSubjectQuery, setBulkSubjectQuery] = useState<string>();
   const [bulkQuizQuery, setBulkQuizQuery] = useState<string>();
   const [recordAnchor, setRecordAnchor] = useState<HTMLElement | null>(null);
@@ -78,8 +85,8 @@ export function AdminWorkspace({
     savePairedChange,
   } = useAdminEditor(gateway);
   useEffect(() => {
-    onDirtyChange?.(editorDirty || flashcardDraft.current);
-  }, [editorDirty, onDirtyChange]);
+    onDirtyChange?.({ quizzes: editorDirty, flashcards: flashcardDirty });
+  }, [editorDirty, flashcardDirty, onDirtyChange]);
   const bulkSubjectId = bulkTarget.kind === 'newSubject' ? undefined : bulkTarget.subjectId;
   const bulkSubject = snapshot?.bank.subjects.find((subject) => subject.id === bulkSubjectId);
   const bulkQuizzes = useMemo(
@@ -163,31 +170,9 @@ export function AdminWorkspace({
     }
   };
 
-  const header = (
-    <Box component="header" sx={{ py: 1.5, borderBottom: 1, borderColor: 'divider', bgcolor: 'background.paper' }}>
-      <Container maxWidth={false}>
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          alignItems={{ sm: 'center' }}
-          justifyContent="space-between"
-          spacing={1.5}
-        >
-          <Stack direction="row" alignItems="center" spacing={1.5}>
-            <AppBrand />
-            <Typography variant="body2" color="text.secondary">
-              Admin
-            </Typography>
-          </Stack>
-          <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap" useFlexGap>
-            {controls}
-          </Stack>
-        </Stack>
-      </Container>
-    </Box>
-  );
-
   return (
     <AppShell header={header} busy={Boolean(!snapshot && !loadError)}>
+      {feedback}
       {!snapshot ? (
         loadError ? (
           <Container sx={{ py: 8 }}>
@@ -199,14 +184,21 @@ export function AdminWorkspace({
       ) : (
         <Container maxWidth={false} sx={{ py: 2 }}>
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
-            <Button variant={section === 'quizzes' ? 'contained' : 'outlined'} onClick={() => setSection('quizzes')}>
-              Quizzes
+            <Button
+              aria-label="Quizzes"
+              aria-describedby={editorDirty ? 'quizzes-unsaved' : undefined}
+              variant={section === 'quizzes' ? 'contained' : 'outlined'}
+              onClick={() => setSection('quizzes')}
+            >
+              Quizzes{editorDirty && <span id="quizzes-unsaved"> • Unsaved</span>}
             </Button>
             <Button
+              aria-label="Flashcards"
+              aria-describedby={flashcardDirty ? 'flashcards-unsaved' : undefined}
               variant={section === 'flashcards' ? 'contained' : 'outlined'}
               onClick={() => setSection('flashcards')}
             >
-              Flashcards
+              Flashcards{flashcardDirty && <span id="flashcards-unsaved"> • Unsaved</span>}
             </Button>
           </Stack>
           <Box sx={{ display: section === 'flashcards' ? 'block' : 'none' }}>
@@ -214,10 +206,7 @@ export function AdminWorkspace({
               discardRequest={flashcardDiscardRequest}
               serverBank={snapshot.flashcards!}
               onSaveBank={(bank, reason) => gateway.saveFlashcards(bank, reason)}
-              onDraftChange={(dirty) => {
-                flashcardDraft.current = dirty;
-                onDirtyChange?.(dirty || editorDirty);
-              }}
+              onDraftChange={reportFlashcardDirty}
               subjects={snapshot.bank.subjects}
               onAddSubject={() => {
                 setSection('quizzes');

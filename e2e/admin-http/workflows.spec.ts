@@ -73,7 +73,8 @@ test('selected quiz deletion can be cancelled and one server undo restores the e
   await review.getByRole('button', { name: 'Save selected items deletion' }).click();
   await expect(rows).toHaveCount(1);
   expect((await draft(page)).publication).toEqual(before.publication);
-  await page.getByRole('button', { name: 'Undo saved batch' }).click();
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Undo last saved change…' }).click();
   await expect(rows).toHaveCount(count);
   expect((await draft(page)).pair).toEqual(before.pair);
 });
@@ -93,7 +94,8 @@ test('selected flashcard deletion saves to PostgreSQL and one server undo restor
   await review.getByRole('button', { name: 'Save selected cards deletion' }).click();
   await expect(rows).toHaveCount(0);
   expect((await draft(page)).publication).toEqual(before.publication);
-  await page.getByRole('button', { name: 'Undo saved batch' }).click();
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Undo last saved change…' }).click();
   await expect(rows).toHaveCount(count);
   expect((await draft(page)).pair).toEqual(before.pair);
 });
@@ -113,6 +115,9 @@ test('declining a shared subject deletion preserves hidden unsaved flashcard tex
   await editor.fill(text);
   const before = await draft(page);
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Workspace status: Unsaved edits', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Review & publish', exact: true })).toBeDisabled();
+  await expect(page.getByText('Save or discard unsaved edits in Flashcards before publishing.')).toBeVisible();
   const quizNav = await selectQuiz(page);
   await quizNav.getByRole('button', { name: 'Delete', exact: true }).first().click();
   page.removeAllListeners('dialog');
@@ -227,7 +232,8 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
     .poll(async () => (await draft(page)).pair.flashcards.decks.some((row) => row.id === source.id))
     .toBe(false);
   expect((await draft(page)).pair.flashcards.cards.some((row) => row.id === first.id)).toBe(false);
-  await page.getByRole('button', { name: 'Undo saved batch' }).click();
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Undo last saved change…' }).click();
   await expect.poll(async () => (await draft(page)).pair).toEqual(beforeDelete.pair);
   const final = await draft(page);
   expect(final.publication).toEqual(initial.publication);

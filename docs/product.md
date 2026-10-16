@@ -67,7 +67,7 @@ after sign-in. Saved drafts remain unpublished until explicit reviewed publicati
 retained activation preserves draft content. Save, paired Undo/reset and publication
 show captured context. Session expiry, conflicts and uncertain responses retain
 unsaved text, with explicit session refresh/review and operation reconciliation.
-The designated local PostgreSQL database is the writable authority. Development and production use the same authenticated HTTP editor. Local JSON
+The header offers workspace status, Review & publish, More utilities, and Account. Unsaved quiz and flashcard indicators update across section switches. Publication reason and confirmation appear in a dedicated dialog. More opens paired content export with an explicit saved-draft/current-publication/selected-publication target, or an on-demand paginated published-version list for export and reviewed activation. Check save status remains visible when a write outcome is uncertain. The designated local PostgreSQL database is the writable authority. Development and production use the same authenticated HTTP editor. Local JSON
 authoring, file import/replay, replacement exports and per-section histories are
 retired. Content-only JSON fields remain inputs to previewed PostgreSQL saves.
 Hosted identity/provider and off-device retention acceptance remain deferred;

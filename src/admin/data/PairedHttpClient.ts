@@ -37,7 +37,7 @@ export interface ServerPreview {
   affectedIds: Record<string, string[]>;
   totalAffected: Record<string, number>;
   requiresFreshAuthentication: boolean;
-  validation: { warnings: Array<{ message?: string; path?: string }> };
+  validation: { warnings: number };
 }
 export class AdminHttpError extends Error {
   constructor(

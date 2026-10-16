@@ -93,6 +93,8 @@ npm run test:e2e:admin
 
 The learner npm pretest builds production output with automatic retries disabled. Docker must be running: Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds the explicit small quiz/flashcard fixtures into a uniquely owned disposable PG17 tmpfs container and serves the real PostgreSQL API on port 8765. Vite preview proxies `/api` there. Override the API port with `MEDUCATION_E2E_API_PORT`; the service is separate from the designated authority and never reads its credentials or content. The wrapper rejects non-fixture input paths and non-loopback origins, generates disposable role credentials, and removes only its labelled container on shutdown. The progress-backup browser config shares this setup. The admin suite uses the same guarded runner on port 8766 with the explicit `base` pair from `tests/fixtures/paired-authoring-cases.json`, and a Vite development server on port 4174. Its test-only `/fixture` proxy is enabled only by the runner. Fixtures never replace authored canonical records.
 
+Admin header coverage verifies status precedence, visible blocked-publication explanations, grouped utilities/account actions, and explicit paired export targets. HTTP browser workflows exercise publication/version dialogs and the renamed Check save status recovery action; header geometry is captured at 390/1048/1440px alongside existing panel checks. Full redesign acceptance (shared save dialogs, structured forms, and manual accessibility checks) remains tracked in `docs/work/ongoing/admin-ux-redesign-plan.md`.
+
 ## Suite ownership and fixtures
 
 Admin core/panel tests use explicit synthetic banks from `src/test/contentFixtures.ts`
