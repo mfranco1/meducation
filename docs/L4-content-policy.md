@@ -1,5 +1,7 @@
 # Paired authoring content-policy boundary
 
+Current content-source policy: [ADR 0006](decisions/0006-postgres-only-content.md) retires JSON runtime/read fallback and file-authoring workflows. Older cutover design statements below are historical; retained exports and recovery imports never select a runtime source.
+
 Current status: local PostgreSQL authority cutover is user-approved. See the
 [local authority runbook](local-authoring.md). Authority statements in the original
 design-stage snapshot below describe the pre-cutover stage.

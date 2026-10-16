@@ -12,7 +12,8 @@ The current product is local-first and private, but the architecture should rema
 - TypeScript
 - Vite
 - Material UI
-- localStorage for current persistence
+- FastAPI and PostgreSQL for paired content persistence
+- localStorage for learner progress
 
 Do not add backend infrastructure unless explicitly requested.
 
@@ -22,7 +23,13 @@ Do not add backend infrastructure unless explicitly requested.
 
 The designated local PostgreSQL database is the only writable authority for the paired quiz/flashcard bank. Use the authenticated HTTP editor and server-reserved stable IDs. Saving a paired draft does not publish it.
 
-`src/content/questionBank.generated.json` and `src/content/flashcardBank.generated.json` are labeled deterministic exports, archives or explicit read-only fallbacks. Never replace database-only work with a stale JSON snapshot. Trusted imports are reviewed recovery/migration jobs. Before authoritative creates, require the admitted allocation fence and current locally retained journals (off-device retention is user-deferred for this local cutover) described in `docs/L4-authoritative-recovery.md`.
+PostgreSQL is also the only runtime content source. Repository JSON databases,
+offline content mode and file-backed authoring are retired. Captured database
+exports are read-only inspection/recovery artifacts, never application sources.
+Never replace database-only work with a stale snapshot. Trusted imports are
+reviewed recovery/migration jobs. Before authoritative creates, require the
+admitted allocation fence and current locally retained journals (off-device
+retention is user-deferred) described in `docs/L4-authoritative-recovery.md`.
 
 Never silently modify, rewrite, correct, reorder, simplify, or otherwise alter:
 

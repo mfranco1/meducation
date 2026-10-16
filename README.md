@@ -1,12 +1,12 @@
 # Meducation
 
-For current local database authoring, follow the [local authority runbook](docs/local-authoring.md). Legacy JSON-editor instructions below apply only to explicit development fixtures.
+For current local database authoring, follow the [local authority runbook](docs/local-authoring.md).
 
-Content authoring uses the designated local PostgreSQL database through the authenticated paired HTTP editor. Published learner content remains read-only and learner progress remains in the browser. Repository JSON/local-content mode is an explicitly labeled read-only export/archive fallback; it cannot overwrite later database-only work. Hosted provider acceptance remains a separate gate. See [the recovery runbook](docs/L4-authoritative-recovery.md).
+Content authoring uses the designated local PostgreSQL database through the authenticated paired HTTP editor. Published learner content remains read-only and learner progress remains in the browser. JSON databases and offline/file-backed content modes are retired; database-derived exports are read-only recovery/inspection artifacts. Hosted provider acceptance remains a separate gate. See [the recovery runbook](docs/L4-authoritative-recovery.md).
 
 Meducation is a browser-based study platform built with React, TypeScript, Vite, and Material UI. It offers subject-based quizzes with Fast Feedback or Exam Mode, resumable attempts, score history, and flashcard decks with saved study progress.
 
-The app runs locally without an account. By default, the existing read-only FastAPI service delivers the canonical quiz and flashcard content. Attempts, scores, and flashcard checkpoints are stored in your browser's `localStorage`; the API does not persist learner progress. An explicit local-content mode also loads the repository's JSON banks without the API.
+The app runs locally without an account. By default, the existing read-only FastAPI service delivers the canonical quiz and flashcard content. Attempts, scores, and flashcard checkpoints are stored in your browser's `localStorage`; the API does not persist learner progress.
 
 ## Install and run
 
@@ -59,7 +59,7 @@ npm run build
 
 `npm run build` type-checks the project and creates a production build in `dist/`. To view that build locally, run `npx vite preview` and open the URL it prints. API-mode preview also needs the content API running. Production API-mode hosting must route `/api` to the service. See [testing guidance](docs/testing.md) for backend and browser checks.
 
-For a local production preview through the actual static server and API reverse proxy, use the [container runbook](docs/local-containers.md). It retains the host Vite development path and browser-local progress. The stack includes an optional independent PG17 service and matching recovery tools; application database integration remains future work.
+For a local production preview through the actual static server and API reverse proxy, use the [container runbook](docs/local-containers.md). It retains the host Vite development path and browser-local progress. The stack uses PostgreSQL with a separate reader configuration and matching recovery tools. It is independent of the designated local authority.
 
 ### Local content editor
 
@@ -79,7 +79,7 @@ PostgreSQL is the only writable authority for quiz and flashcard content. Edit t
 
 For a content check, export the selected current draft/release and run `validate-export`/`audit-export` as described in [content management](docs/content-management.md). The npm validator requires two explicit file paths and checks their structure and rendering policy; it cannot establish live database currency. Small synthetic fixtures keep CI independent of private content.
 
-Repository JSON archives are pending final removal with their remaining backend/container consumers. They must never replace database-only changes.
+Repository JSON databases and offline mode are retired. Current content comes only from PostgreSQL; database exports remain inspection/recovery artifacts.
 
 ## Project layout
 
@@ -88,7 +88,7 @@ Repository JSON archives are pending final removal with their remaining backend/
 - `src/shared/` — theme and reusable shell, loading, catalog, study, notification, and rich-content presentation
 - `src/admin/` — authenticated paired PostgreSQL draft editor
 - `src/domain/` — quiz types and rules
-- `src/content/` — stored schema, validation, API loading, and rich-text modules; historical bank archives await final removal
+- `src/content/` — stored schema, validation, API loading, and rich-text modules
 - `src/persistence/` — browser storage implementation
 - `src/analytics/` — score summaries
 - `scripts/content/` — explicit paired-file validation and packaged content policy

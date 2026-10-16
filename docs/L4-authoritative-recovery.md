@@ -1,5 +1,7 @@
 # L4 authoritative recovery preparation
 
+Current content-source policy: [ADR 0006](decisions/0006-postgres-only-content.md) retires JSON runtime/read fallback and file-authoring workflows. Older cutover design statements below are historical; retained exports and recovery imports never select a runtime source.
+
 Status: Local PostgreSQL cutover is user-authorized on 2026-10-14. Protected local dumps, exports and allocation journals are retained outside the volume. Off-device retention is explicitly deferred for this local stage.
 The isolated rehearsal and export tools below do not authorize cutover, certify a
 retained backup, or enable a hosted identity provider. The [L4 tracker](work/ongoing/L4-local-authoring-admin-access-plan.md#step-6--rehearse-authoritative-recovery-and-prepare-tooling)
@@ -120,9 +122,8 @@ An ID issued afterward may have appeared in an editor/export even if its draft
 was never saved. Restoring the earlier dump can reuse that ID. Content loss within
 the RPO does not permit identity reuse.
 
-Migration `0006_allocation_fence` implements opt-in protection. Existing
-JSON-authoritative fixtures keep their existing allocation mode. Before cutover,
-a trusted migrator job must enable protection with a bounded range for every
+Migration `0006_allocation_fence` implements opt-in protection. The designated
+authority requires protection before allocation. A trusted migrator job enables it with a bounded range for every
 kind (`s/q/i/d/f`). Once enabled, new IDs must be server-allocated numeric IDs
 strictly below their admitted exclusive ceilings. The database trigger rejects
 range exhaustion and unseen trusted-import IDs atomically; editor/operator roles
@@ -237,7 +238,7 @@ acceptance. The role-separated implementation in
 in a uniquely owned tmpfs cluster, never against routine content. Run:
 
 ```sh
-.venv/bin/python scripts/containers/verify-postgres-release.py --output /private/tmp/l4-recovery.json
+.venv/bin/python scripts/containers/verify-postgres-release.py --small-fixture --output /private/tmp/l4-recovery.json
 .venv/bin/python scripts/containers/test-postgres-content.py --keyword recovery --output /private/tmp/l4-recovery-tests.json
 ```
 

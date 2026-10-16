@@ -15,7 +15,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--run-id", required=True)
     parser.add_argument(
-        "--action", choices=["json", "postgres", "changed", "original"], required=True
+        "--action", choices=["restart", "changed", "original"], required=True
     )
     args = parser.parse_args()
     if not re.fullmatch("[0-9a-f]{32}", args.run_id):
@@ -78,7 +78,6 @@ SELECT content.activate_release(gen_random_uuid(),(SELECT release_id FROM conten
             entry.split("=", 1)[0]: entry.split("=", 1)[1]
             for entry in api["Config"]["Env"]
         }
-        values["MEDUCATION_CONTENT_SOURCE"] = args.action
         env.write_text(
             "".join(
                 key + "=" + value + "\n"
@@ -87,15 +86,8 @@ SELECT content.activate_release(gen_random_uuid(),(SELECT release_id FROM conten
             )
         )
         os.chmod(env, 0o600)
-        options = []
-        for mount in api["Mounts"]:
-            if mount["Type"] == "bind":
-                if mount["RW"]:
-                    parser.error("Unexpected writable API mount")
-                options += [
-                    "--mount",
-                    f"type=bind,src={mount['Source']},dst={mount['Destination']},readonly",
-                ]
+        if any(m["Type"] in ("bind", "volume") for m in api["Mounts"]):
+            parser.error("PostgreSQL API must not mount content files or volumes")
         docker("stop", "--time", "15", prefix + "-api")
         docker("rm", prefix + "-api")
         docker(
@@ -118,10 +110,9 @@ SELECT content.activate_release(gen_random_uuid(),(SELECT release_id FROM conten
             "ALL",
             "--security-opt",
             "no-new-privileges:true",
-            *options,
             api["Image"],
         )
-    print("Fixture API source switched")
+    print("Fixture PostgreSQL API recreated")
 
 
 if __name__ == "__main__":

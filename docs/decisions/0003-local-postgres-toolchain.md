@@ -1,5 +1,7 @@
 # Local Postgres and Python toolchain
 
+Current content-source policy: [ADR 0006](0006-postgres-only-content.md) supersedes historical JSON authority, read modes and file-based editor workflows below. PostgreSQL is the only runtime and writable source.
+
 Status: selected; L2 API/learner/Compose/Postgres runtime verified on native ARM64; synthetic backup/restore verified on native ARM64; native AMD64/ARM64 L2 CI passed per user confirmation. L3 Step 2 is complete with user-confirmed passing native CI after the browser fix. L3 schema/transactions/readers, actual-bank parity/recovery and PG browser acceptance are verified with passing native AMD64/ARM64 CI. Baseline observed 2026-10-13. Gate: [L0 Step 7](../work/done/L0-local-contracts-plan.md). Historical metadata: [toolchain evidence](../work/done/L0-step7-toolchain-evidence.json). Current implementation: [L2 tracker](../work/done/L2-containers-local-services-plan.md) and [L3 tracker](../work/done/L3-postgres-schema-migration-parity-plan.md).
 
 ## L3 final verification follow-up — 2026-10-14

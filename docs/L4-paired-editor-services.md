@@ -1,5 +1,7 @@
 # L4 paired editor services
 
+Current content-source policy: [ADR 0006](decisions/0006-postgres-only-content.md) supersedes historical JSON authority, read modes and file-based editor workflows below. PostgreSQL is the only runtime and writable source.
+
 Step 4 adds private HTTP services behind the verified session boundary in
 [L4 admin sessions](L4-admin-session-boundary.md). This is local backend acceptance;
 the hosted identity adapter remains disabled. The [HTTP browser editor](L4-http-editor.md) now uses these services, with a

@@ -14,8 +14,8 @@ The pinned content specimen is release `3e3604bf-dedf-470e-adf6-4dccc1bab5f9`,
 publication sequence **3**, packaged schema **`0006_allocation_fence`**, observed
 unchanged at the [Step 2 handoff](work/done/L6-step2-content-evidence.json).
 Its protected export stays outside Git. It is not asserted to be the newest
-publication indefinitely; recheck the active identity before transfer. Repository
-JSON is archive/fixture/read-only fallback and cannot substitute for that export.
+publication indefinitely; recheck the active identity before transfer. Repository JSON databases and offline fallback are retired; only an explicitly
+selected database export is a valid content acceptance input.
 Learner progress remains browser-local, with its own [backup/restore](progress-backup.md).
 
 ## Build and serve the local artifacts
@@ -46,28 +46,14 @@ bounded proxy. Their audits are `/opt/learner-artifacts.json` or
 `/opt/admin-artifacts.json`, outside `/opt/meducation/html`; maps and Vite build
 manifests are removed before runtime. API packaging uses the installed wheel,
 locked Python dependencies and bundled development-time content-policy worker;
-it runs as 10001:10001 with one Uvicorn process. Its included JSON archives serve
-explicit fixtures only; PostgreSQL mode has no archive fallback.
+it runs as 10001:10001 with one Uvicorn process. It contains no corpus archives or file-source settings.
 
-For a **loopback archive-only preview**, create new owned resources with no DB
-or credentials. These names must be unused; do not replace routine services:
-
-```sh
-docker network create meducation-rc-preview
-docker run --detach --name meducation-rc-api --network meducation-rc-preview --network-alias api --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true meducation-api:l6-step4
-docker run --detach --name meducation-rc-web --network meducation-rc-preview --publish 127.0.0.1:4178:8080 --read-only --tmpfs /tmp --cap-drop ALL --security-opt no-new-privileges:true meducation-admin:l6-step4
-```
-
-Open `http://127.0.0.1:4178/` or `/admin.html`. Admin assets load, while private
-requests fail closed with `503 admin_disabled`. For the learner-only preview,
-choose the learner image when creating the new web container. Stop/remove only
-these exact owned containers/network after preview; no volume is created.
-[Existing container commands](local-containers.md) own routine lifecycle rules.
-
-For a future PostgreSQL reader service, inject only the protected runtime file
-through the selected runner's secret mechanism (Docker `--env-file` for an owned
-local fixture), set `MEDUCATION_CONTENT_SOURCE=postgres`, and supply its reader
-URL/environment. Never use the archive preview as proof of live DB parity.
+For an owned loopback PostgreSQL preview, follow [local container setup](local-containers.md).
+Supply only a protected reader env file to the API, initialize/migrate/publish
+through explicit jobs, and keep the database separate from the designated
+authority. Missing reader/schema/publication fails startup; there is no archive
+preview mode. Private APIs remain disabled until separately configured and
+accepted. Do not use synthetic fixture acceptance as proof of live DB currency.
 Nginx's included upstream is `api:8000` with Docker DNS; another host topology
 needs an explicit proxy configuration/resolver and its own routing acceptance.
 The handoff's [Step 4 receipt](work/done/L6-step4-deployment-evidence.json)
@@ -104,15 +90,15 @@ Public **build-time** settings, owned by the release operator:
 
 **API runtime** settings, injected by the operator:
 
-- `MEDUCATION_CONTENT_SOURCE=postgres`, `MEDUCATION_DATABASE_ENVIRONMENT=production`
+- `MEDUCATION_DATABASE_ENVIRONMENT=production`
   and secret `MEDUCATION_DATABASE_URL` select the reader. Its role must be
   `meducation_reader`, with explicit host/database/password and verified TLS
   (`postgresql+psycopg`, `sslmode=verify-full`) outside explicit local fixtures.
   A provider CA/trust-root and actual handshake are deployment acceptance items.
 - `MEDUCATION_ALLOWED_ORIGINS` is a public-read CORS CSV, empty for a strictly
   same-origin installation. It never grants private authorization.
-- `MEDUCATION_BANK_PATH`, `MEDUCATION_FLASHCARD_BANK_PATH` are runtime archive
-  paths for explicit JSON fixtures. They cannot replace unavailable DB content.
+- Bank-path settings and JSON service mode are retired. The image has no corpus
+  files; tests seed explicit synthetic fixtures into disposable PostgreSQL.
 - `MEDUCATION_ADMIN_ENABLED=false` is the current public runtime default.
   After a real adapter exists, session/editor URLs are separate secrets in the
   same authority database; do not give the worker operator/owner credentials.
@@ -310,7 +296,7 @@ node --test scripts/containers/check-admin-artifacts.test.mjs
 
 Keep reports outside Playwright's cleaned output directories. Container learner
 traces now use `test-results-containers/learner/`; HTTP editor traces use its
-separate `admin-http/` sibling. These scripts use archive/synthetic fixtures and
+separate `admin-http/` sibling. These scripts use explicit synthetic PostgreSQL fixtures and
 never certify the current authority by themselves. The HTTP fixture supplies
 synthetic signed identity and fixture-only routes/config; its successful authoring
 is not hosted MFA acceptance. The optional static smoke uses the actual shipped
@@ -348,7 +334,7 @@ explicit intent. Do not replay writes automatically or silently use archives.
   recovery runbook. Never keep two writable authorities of the same lineage.
 
 Rehearse the three distinct mechanisms only in owned fixtures using
-`build-rollback-api.py` then `verify-postgres-release.py --api-image IMAGE
+`build-rollback-api.py` then `verify-postgres-release.py --small-fixture --api-image IMAGE
 --previous-api-image PRIOR_IMAGE --output NEW_RECOVERY_REPORT.json` as documented
 in [L5 recovery drills](L5-local-operations.md#distinct-recovery-and-rollback-drills).
 The offline `scripts/local-authoring/verify-backup.py` is deliberately **not** a
@@ -394,7 +380,7 @@ The learner audit has 735 modules; admin has 862 modules and 103 shipped files.
 Both exclude bundled banks; learner excludes admin/QA, and admin excludes fixture
 authoring/QA. All optional admin asset hashes matched through actual Nginx. API
 smoke, six learner proxy groups, 43 learner browser cases and 18 packaged-editor
-cases pass. The one PG-only source-switch skip in JSON proxy mode is explicit;
+cases pass. The dedicated PostgreSQL API-recreation scenario runs only in its owned browser harness;
 Step 5's PG proxy/native gate must execute that case. This is neither a native
 AMD64 pass nor complete candidate acceptance. No provider/device/retention gate
 is closed by these local artifact checks.

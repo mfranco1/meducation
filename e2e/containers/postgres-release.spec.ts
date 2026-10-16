@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { expect, test } from '@playwright/test';
 
 // Exact owned-container controls exist only in the isolated Postgres launcher.
-test('unchanged backend switches retain active study and scores; changed publication requires restart', async ({
+test('PostgreSQL API recreation retains active study and scores; changed publication requires restart', async ({
   page,
 }) => {
   test.skip(process.env.MEDUCATION_POSTGRES_BROWSER !== '1', 'Dedicated Postgres smoke only');
@@ -66,7 +66,7 @@ test('unchanged backend switches retain active study and scores; changed publica
     const original = await capture();
     expect(original.quiz.completed.length).toBe(1);
     const etag = (await page.request.get('/api/v1/subjects')).headers().etag;
-    for (const action of ['json', 'postgres']) {
+    for (const action of ['restart']) {
       control(action);
       await waitReady();
       expect((await page.request.get('/api/v1/subjects')).headers().etag).toBe(etag);
@@ -93,7 +93,7 @@ test('unchanged backend switches retain active study and scores; changed publica
     expect(restarted.quiz.completed).toEqual(original.quiz.completed);
   } finally {
     control('original');
-    control('postgres');
+    control('restart');
     await waitReady();
   }
 });

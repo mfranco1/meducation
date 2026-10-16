@@ -6,11 +6,8 @@ explicitly deferred off-device backups. The dedicated target is database
 `meducation-authority-data`, PostgreSQL 17.11, loopback port 5433. It is separate
 from the old optional Compose development database. Do not remove this volume.
 
-The authenticated HTTP editor is the normal writable workflow. The paired JSON
-files in `src/content` are the initial cutover exports/archives and explicit
-read-only learner fallbacks. They become stale after database-only edits; checking
-those files does not validate current authored content. There is no automatic
-reimport, JSON editor fallback or write retry. Public learner progress stays in
+The authenticated HTTP editor is the normal writable workflow. Repository JSON databases and offline modes are retired. There is no automatic
+import, JSON fallback or write retry. Public learner progress stays in
 browser storage. No hosted services were provisioned.
 
 ## Start and edit
@@ -44,7 +41,7 @@ Private runtime credentials are in ignored `var/local-authority/runtime.env`;
 owner/operator/bootstrap credentials are separately in `operator.env`. Both are
 0600 beneath a 0700 directory. The API never receives owner/operator credentials.
 Retain these files securely; database dumps do not include configuration or keys.
-Use this launcher rather than the legacy JSON archive API startup command.
+This launcher validates the designated PostgreSQL target before starting its API.
 
 ## Back up and check current content
 
@@ -119,7 +116,7 @@ full-authority backup/recovery rehearsal. It does not run writer retirement or
 change the routine database. Recheck the actual publication in the HTTP editor
 at handoff; an earlier pinned export can pass while a newer release is current.
 
-The default archive/recovery mode and its CI invocation remain separate. Do not
+The explicit `--small-fixture` recovery regression and its CI invocation remain separate. Do not
 combine `--export-directory` with `--small-fixture` or application rollback image
 arguments. Current private content and authority credentials are never CI inputs.
 
@@ -153,13 +150,9 @@ reconcile the latest complete journals, verify the app/schema/content and restar
 compatible workers. Preserve the original target until the replacement is verified.
 See [authoritative recovery](L4-authoritative-recovery.md#fresh-restoration-procedure).
 
-`scripts/local-authoring/check.mjs` is the initial cutover browser check: it logs
-in/out and compares the initial draft with the frozen JSON pair without editing.
-It intentionally fails after genuine DB-only edits; it is not ongoing health or
-permission to overwrite current content. `cutover.py` initializes only a new
-target and refuses existing state/containers/volumes; never rerun it as recovery.
-The one-use `finish-cutover.py` records the reviewed continuation of the initial
-rehearsal interruption and refuses completed or changed revisions.
+The initial cutover's one-use creation/continuation scripts and archive-comparison
+browser check are retired. They are not recovery workflows. Use retained full
+backups and the explicit restore/quarantine/allocation-journal procedure for recovery.
 
 Development and production editors both use authenticated HTTP access to
 PostgreSQL. The old fixture JSON editor and its source flags have been removed;

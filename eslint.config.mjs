@@ -6,7 +6,7 @@ import architecture from './scripts/architecture/eslint-plugin.mjs';
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'src/content/questionBank.generated.json', 'e2e/**'],
+    ignores: ['dist/**', 'node_modules/**', 'e2e/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

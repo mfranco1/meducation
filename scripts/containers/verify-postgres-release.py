@@ -1,4 +1,4 @@
-"""Selected-export parity or archive-fixture recovery in an owned disposable PG17 cluster."""
+"""Selected-export parity or synthetic-fixture recovery in an owned disposable PG17 cluster."""
 
 import argparse
 import copy
@@ -122,8 +122,8 @@ def main():
     os.umask(0o077)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, required=True)
-    inputs = parser.add_mutually_exclusive_group()
-    inputs.add_argument("--small-fixture", action="store_true", help="Development-only browser fixture; not archive-corpus acceptance")
+    inputs = parser.add_mutually_exclusive_group(required=True)
+    inputs.add_argument("--small-fixture", action="store_true", help="Explicit synthetic fixture for recovery regression; never authority data")
     inputs.add_argument("--export-directory", type=Path, help="Explicit protected export-release directory; parity only, no authority recovery")
     parser.add_argument("--api-image")
     parser.add_argument("--previous-api-image")
@@ -131,7 +131,7 @@ def main():
     if bool(args.api_image) != bool(args.previous_api_image):
         parser.error("Supply both current and previous images for the application rollback drill")
     if args.export_directory and args.api_image:
-        parser.error("Selected-export mode verifies paired parity only; run archive recovery separately")
+        parser.error("Selected-export mode verifies paired parity only; run synthetic recovery separately")
     if args.export_directory and (
         args.output.resolve().is_relative_to(args.export_directory.resolve()) or args.output.exists()
     ):
@@ -249,11 +249,7 @@ def main():
             bootstrap(source_admin, passwords)
             upgrade(migrator)
             print("Capturing and validating disposable input copies", flush=True)
-            source_q, source_f = (
-                (ROOT / "e2e/fixtures/bank.json", ROOT / "e2e/fixtures/flashcard-bank.json")
-                if args.small_fixture else
-                (ROOT / "src/content/questionBank.generated.json", ROOT / "src/content/flashcardBank.generated.json")
-            )
+            source_q, source_f = ROOT / "e2e/fixtures/bank.json", ROOT / "e2e/fixtures/flashcard-bank.json"
             if selected is None:
                 pair = capture_pair(source_q, source_f, repository=ROOT)
             print("Importing paired fixture into disposable database", flush=True)
@@ -664,7 +660,7 @@ def main():
                     raise RuntimeError("Authored input changed during verification")
             report = {
                 "result": "pass",
-                "input_scope": "small-browser-fixture" if args.small_fixture else "repository-archive-corpus",
+                "input_scope": "small-browser-fixture",
                 "postgres_image": PG_IMAGE,
                 "platform": "linux/"
                 + docker("image", "inspect", "--format", "{{.Architecture}}", PG_IMAGE),

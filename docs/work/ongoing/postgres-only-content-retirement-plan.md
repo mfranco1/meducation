@@ -2,9 +2,140 @@
 
 Date: 2026-10-15. Planning baseline: `c9a7154`.
 
-Status: implementation in progress, authorized by the user's follow-up to start
-and continue. Keep this tracker in `ongoing` until implementation and its
-acceptance gates pass. Do not infer completion from individual passing slices.
+Status: implementation complete and locally verified. Final acceptance remains
+open for current-worktree native AMD64/ARM64 CI. Keep this tracker in `ongoing`
+until that evidence is available; earlier CI does not certify these changes.
+
+## Final local completion audit — 2026-10-16
+
+No blocking local implementation findings remain against the requested retirement.
+PostgreSQL is the sole runtime/writable content source; authenticated HTTP owns
+normal paired CRUD and publication. Removed both old repository banks, offline
+learner/JSON authoring sources and one-use file workflows. Shared schemas,
+provenance, deterministic exports, reviewed DB recovery imports and browser
+learner progress remain. The backend's single accepted `postgres` compatibility
+value is a rejection guard for old JSON configuration, not a selectable backend.
+
+Final acceptance evidence:
+
+- `npm run verify:full` passed: lint/format, architecture 10, frontend 92 files /
+  579 tests, explicit fixture validation/policy generation, Ruff/mypy, backend
+  242 passed / 186 separately gated skips, type-check, fresh learner/admin builds,
+  learner browser 43 and authenticated PostgreSQL admin browser 26.
+- Fresh packaged learner browser 44 and packaged admin nginx browser 26 passed.
+  API/proxy/Compose/policy/admin-static container gates passed; Compose verified
+  named-volume persistence across restart and recreation.
+- Explicit export/release-input contracts 27, admin artifact contracts 10 and
+  Ruff over every container helper passed. Final format and `git diff --check`
+  passed after the final guidance changes.
+- Protected selected-export validation/audit and independent PostgreSQL route /
+  reconstruction / exact export parity passed with the old banks absent.
+- Synthetic full restore/recovery passed, including roles/ACLs, all tables and
+  sequences, sessions/epoch quarantine, allocation journals/admission/no ID reuse,
+  retained activation, current/prior installed application compatibility and
+  unchanged later authoring. Both recovery and selected parity report cleanup pass.
+- Restartable PostgreSQL resilience: 18 passed / 168 deselected. Existing ordinary
+  PG integration evidence remains 184 passed / 2 restartable-only skipped.
+- Chromium/WebKit progress backup and restore: 50 passed. Firefox remains the
+  previously user-deferred acceptance gap; no new Firefox claim is made.
+- Final read-only `authority-after-acceptance.json`: all content tables and local
+  allocation journals match baseline, both private archive copies are exact,
+  and both repository banks are absent. No authority writes, IDs, migrations or
+  restarts occurred. Final Docker inventory contains only the running authority;
+  no disposable test containers or Compose test volumes remain.
+
+Logs/reports follow `/tmp/meducation-retirement-*-final.{log,json}`; the protected
+preservation/size records remain under the ignored baseline directory. The final
+remaining-gates report is `/tmp/meducation-retirement-remaining-gates.json`.
+
+Verification limits: the complete repeated no-cache/native acceptance runner and
+current native AMD64/ARM64 CI have not been invoked for this worktree. Its local
+constituent workflow/container/recovery gates above passed. Existing chunk-size
+and SQLAlchemy deprecation advisories remain; the two backend warnings use
+intentional weak-key fixtures. No new manual device/screen-reader, hosted identity,
+off-device retention or public deployment acceptance is claimed. No commit, push,
+publication or deployment was performed. Final CI evidence is the only remaining
+retirement acceptance gate; broader launch gates stay with their own trackers.
+
+## Continuation checkpoint — 2026-10-16
+
+- Removed the two tracked generated banks (17,109,825 bytes) after matching their
+  baseline hashes. Exact private copies remain in the ignored protected baseline
+  directory under `retired-repository-archives/`; no authority writes occurred.
+- Retired one-use local-authoring cutover/check/finish scripts. Updated current
+  architecture, schemas, operator/container/testing guidance, repository rules
+  and skills for PostgreSQL-only operation; ADR 0006 records the decision.
+- Converted packaged API/proxy/admin-static/Compose smokes to owned, isolated
+  PostgreSQL fixtures. Fresh corpus-free API/learner/admin images built. API (4),
+  proxy (5), Compose persistence/recreation (6), policy, and admin-static gates
+  passed; reports are `/tmp/meducation-retirement-*-final.json`.
+- Recovery verification now requires explicit `--small-fixture` or
+  `--export-directory`; acceptance supplies the synthetic selector. Removed
+  JSON source switching from the PostgreSQL continuity browser test.
+- Build/type-check after corpus deletion passed. Remaining gates: fresh packaged
+  PostgreSQL learner/admin browsers, broad verification, export parity/recovery,
+  final authority/journal comparison, reference audit, and size measurement.
+
+### Current verification evidence
+
+- Packaged PostgreSQL learner suite: 44 passed, including recreation and changed
+  publication. Report `/tmp/meducation-retirement-postgres-browser-final.json`.
+- Release-input and explicit export-tool contracts: 27 passed. Admin artifact
+  audit contracts: 10 passed. Ruff over all container helpers passed.
+- Protected published export validation and explanation audit passed. Reports:
+  `/tmp/meducation-retirement-selected-{validation,audit}-final.json`.
+- Final preservation report `authority-after-retirement.json` confirms all content
+  tables and journals unchanged, original archives retained exactly, and both
+  repository banks absent. No authoritative writes, allocation or restart.
+- Full `npm run verify:full` passed: 92 frontend files / 579 tests and backend 242
+  passed / 186 skipped (real PostgreSQL cases have separate passing evidence),
+  lint/format/architecture/Ruff/mypy/type-check passed. Fresh learner browser 43
+  and authenticated PostgreSQL admin browser 26 passed. Learner/admin builds
+  and explicit fixture validation/policy generation passed. Log:
+  `/tmp/meducation-retirement-verify-full-final.log`.
+- CI replacement jobs remain configured for native AMD64 and ARM64. This local
+  continuation has not invoked hosted CI, manual device or screen-reader checks;
+  earlier native CI results do not certify this worktree.
+
+### Final comparable size measurement
+
+Fresh corpus-free packaged web-root totals (per-file Node gzip/Brotli; maps and
+inspection manifests removed): learner 2,449,765 raw / 1,299,004 gzip / 1,212,334
+Brotli bytes; admin 2,756,230 / 1,396,860 / 1,300,400 bytes. Compared with the fresh
+planning baseline, learner savings are 2,097 / 1,233 / 743 bytes; admin savings
+26,578 / 6,364 / 6,224 bytes. The corpus was already excluded from frontend
+bundles, so the frontend improvement is modest. The API image lost 17,129,798 bytes
+(405,070,500 to 387,940,702). The two deleted tracked archives total 17,109,825
+bytes. Git history, old images/caches and ignored private backups are retained.
+Private detailed inventory: `final-packaged-asset-sizes.json` in the baseline folder.
+
+### Packaged editor and final audit follow-up
+
+- Fresh packaged API + admin nginx browser suite: 26 passed. Report:
+  `/tmp/meducation-retirement-packaged-admin-final.json` (ARM64).
+- Corrected remaining active architecture/regression/diagnostic guidance for
+  removed fallback and file replay/factory paths. Older cutover design pages and
+  affected ongoing roadmaps now explicitly point to ADR 0006/current retirement.
+  Frozen patches and machine snapshots remain untouched.
+- Temporary final-gate orchestration initially resolved the virtualenv Python
+  symlink to system Python, so parity stopped on missing SQLAlchemy before any
+  DB work. Corrected the temporary runner to preserve the virtualenv path and
+  resumed only the remaining gates; this was not an application failure.
+
+### Selected-release parity after archive removal
+
+`verify-postgres-release.py --export-directory` passed against the protected
+published pair with both repository banks absent. It checked manifest/schema/rich
+policy, independent learner-route/conditional expectations, every authored field,
+order and optional presence, exact paired reconstruction/re-export hashes and
+revisions, and unchanged original export; cleanup passed. Report:
+`/tmp/meducation-retirement-selected-parity-final.json`.
+
+A large-JSON audit found no renamed tracked corpus. The remaining large
+`content/explanation-audit.json` is ignored historical review material with no
+runtime consumer, retained separately as documented. Current code references to
+old filenames are limited to negative guards/tests and compatible database export
+ZIP names. No full bank has been moved into a fixture, module, shard or web root.
 
 ## Execution checkpoint — 2026-10-15
 
@@ -168,15 +299,18 @@ acceptance gates pass. Do not infer completion from individual passing slices.
 
 ### Resume without repeating completed work
 
-Frontend JSON authoring/local adapters are removed and verified. Backend JSON mode
-is removed and its 184 ordinary PostgreSQL integration cases passed.
-Next migrate the JSON-oriented API/learner/static-admin/Compose smoke callers,
-then build/test the corpus-free images. Retire one-use cutover/archive checks and
-make `verify-postgres-release.py` require explicit small fixtures or selected
-protected exports before deleting both repository banks. Keep privileged
-selected-export/recovery/backup tools and learner progress. Reuse the protected
-baseline and never reimport it into the authority. Keep this tracker ongoing until
-all phases and final gates pass.
+Frontend/backend JSON sources and repository banks are removed. Packaged smoke
+callers now use owned PostgreSQL fixtures; fresh images and five non-browser
+container gates passed. The final read-only authority comparison passed (all
+content tables and allocation journals unchanged; retained archive copies exact).
+27 release-input/export-tool tests passed. API image is 387,940,702 bytes versus
+405,070,500 at baseline (17,129,798 fewer bytes).
+
+Next finish packaged learner/admin browsers, full verification, selected-export
+parity and synthetic recovery. Update final measurements and checklist only from
+actual passing evidence. Keep this tracker ongoing until the relevant gates pass.
+Do not reimport the baseline into the authority. Private artifacts and originals
+remain ignored under the protected backup directory.
 
 ## Outcome and scope
 
@@ -271,7 +405,7 @@ removed before final acceptance.
 
 ### 0. Capture current authority and dependency baselines
 
-- [ ] Inventory tracked bank references, runtime selection flags, local-adapter
+- [x] Inventory tracked bank references, runtime selection flags, local-adapter
   imports, file-replacement instructions, test runners, fixtures, Docker copies,
   and scripts. Classify each as remove, rewrite, or retain with a stated reason.
   Include `package.json`, all Playwright configs, `.github/workflows/checks.yml`,
@@ -281,11 +415,11 @@ removed before final acceptance.
   inventories and exact paired exports for the current draft and published pair.
   Keep private content/credentials out of Git and CI evidence. Validate exports
   using the existing explicit export tools; never substitute repository archives.
-- [ ] Confirm available retained recovery evidence and preserve allocation fence,
+- [x] Confirm available retained recovery evidence and preserve allocation fence,
   current local journals, credentials and auth epoch. Do not run the offline
   `verify-backup.py` against routine writers merely to collect a baseline; its
   documented writer-retirement procedure is a separate recovery operation.
-- [ ] Measure fresh learner/admin builds, raw and compressed asset sizes, backend
+- [x] Measure fresh learner/admin builds, raw and compressed asset sizes, backend
   image contents/size and tracked source footprint. Record build mode and commit.
   Existing `dist` is not a comparable baseline without a fresh build.
 
@@ -295,7 +429,7 @@ write/import, database reset, or volume recreation occurs during inventory.
 
 ### 1. Establish PostgreSQL-backed test infrastructure and parity
 
-- [ ] Extract/reuse the isolated PG17 setup from
+- [x] Extract/reuse the isolated PG17 setup from
   `scripts/containers/fixtures/editor_http.py`, `smoke-admin-http.py`, and existing
   database integration harnesses. Use synthetic content, dedicated credentials,
   schema/bootstrap jobs and unique owned targets. Tests must reject the designated
@@ -314,7 +448,7 @@ write/import, database reset, or volume recreation occurs during inventory.
   ordering, optional presence, provenance, revisions and serialized bytes. Keep
   independent expected digests/contract cases and HTTP conditional assertions.
   Continue selected-release verification using explicit protected DB exports.
-- [ ] Migrate JSON-adapter tests into retained schema/protocol/serialization tests
+- [x] Migrate JSON-adapter tests into retained schema/protocol/serialization tests
   or real PostgreSQL behavior tests. Delete tests only for behavior intentionally
   removed; preserve the underlying regression coverage.
 
@@ -372,7 +506,7 @@ session can read it. Unpublished edits do not reach learner APIs.
   types/pure helpers into their owning schema/domain/content modules. Reuse
   `src/admin/core/flashcardSerialization.ts` where appropriate; do not move
   admin-owned utilities into learner imports or duplicate revision algorithms.
-- [ ] Remove obsolete source-selection variables/types/examples. Reject explicit
+- [x] Remove obsolete source-selection variables/types/examples. Reject explicit
   legacy local/JSON mode configuration with an actionable migration error at
   build/startup instead of silently honoring it or falling back.
 
@@ -398,7 +532,7 @@ there is no disk-based alternative bank. Learner progress formats remain intact.
   pinned paired publication, revision/ETag contracts, strict initialization,
   schema validation, bounded caches, cleanup/reconnect and readiness semantics.
   Runtime startup must never bootstrap, migrate, import, or create an authority.
-- [ ] Preserve the existing database permission split and authenticated authoring
+- [x] Preserve the existing database permission split and authenticated authoring
   boundary. Reader credentials cannot edit; no privileged URL fallback is added.
 
 Gate: all supported API launch paths require PostgreSQL; invalid credentials,
@@ -412,21 +546,21 @@ consulting files. Auth/session/CSRF/freshness and concurrency tests still pass.
   authoritative content validation/audit through a pinned DB draft/release export
   produced by the existing HTTP/operator paths. A no-target command must fail
   with usage, never silently choose an archive or developer's authority.
-- [ ] Update every caller in package scripts, full verification, browser configs,
+- [x] Update every caller in package scripts, full verification, browser configs,
   CI, docs and container helpers in the same stage. Reports must identify the
   selected draft/release and captured digests; exported artifacts cannot claim
   database currency without an explicit comparison to current DB context.
-- [ ] Retain `validate-paired-files.ts`, packaged content policy, deterministic
+- [x] Retain `validate-paired-files.ts`, packaged content policy, deterministic
   serialization and export validators where required for server validation or
   reviewed recovery. They must take explicit input paths, with no bank defaults.
-- [ ] Retire one-use `cutover.py`, `finish-cutover.py` and initial-archive
+- [x] Retire one-use `cutover.py`, `finish-cutover.py` and initial-archive
   `check.mjs` once their only active references are removed. Replace routine
   health guidance with DB/API/editor checks; historical evidence remains frozen.
-- [ ] Retain and update `serve.py`, `job.py`, `backup.py`, `verify-backup.py`,
+- [x] Retain and update `serve.py`, `job.py`, `backup.py`, `verify-backup.py`,
   allocation journals and full recovery procedures. Replace every parity/recovery
   default that selects repository banks with an explicit DB-derived export or
   synthetic fixture. No new export is written into `src/content`.
-- [ ] Audit root `content/` reports/extractions and source-material references.
+- [x] Audit root `content/` reports/extractions and source-material references.
   Remove obsolete tracked generators/report references where justified. Keep
   ignored private originals/provenance and protected recovery files separately;
   they are not a runtime source and are not swept by an automated JSON deletion.
@@ -437,33 +571,33 @@ have separate, truthful targets. Full PostgreSQL restore/recovery remains usable
 
 ### 6. Make packaging and standard verification PostgreSQL-only
 
-- [ ] Remove bank `COPY` directives and bank-path environment variables from
+- [x] Remove bank `COPY` directives and bank-path environment variables from
   `backend/Dockerfile`; narrow policy-build copies where useful. Remove obsolete
   frontend flags and update `.dockerignore`, image audits and audit tests.
   Preserve packaged validators, read-only/non-root images, role separation and
   learner/admin asset isolation.
-- [ ] Make base Compose require an explicit PostgreSQL reader configuration,
+- [x] Make base Compose require an explicit PostgreSQL reader configuration,
   with an optional owned disposable development DB setup. Retire/merge the
   old JSON/postgres override split. Do not silently attach the designated
   authority volume to a new service or create another routine content authority.
   Continue supporting the existing local launcher and explicit production DB
   connection/routing configuration; document migrations as separate operator jobs.
-- [ ] Rewrite JSON-only API/learner/static-admin/policy smoke tests and archive
+- [x] Rewrite JSON-only API/learner/static-admin/policy smoke tests and archive
   load/resilience/rollback paths under `scripts/containers`. Use seeded disposable
   PostgreSQL for runtime tests and explicit artifacts for transfer/recovery tests.
   Update acceptance hashes, audit expectations, release-input tests and fixtures.
   Recovery rollback must not reactivate a JSON content backend or rewind the
   designated authority. Historical rollback images may be exercised only in
   isolated recovery compatibility tests, never offered as current service mode.
-- [ ] Make `playwright.config.ts`, `playwright.admin.config.ts`,
+- [x] Make `playwright.config.ts`, `playwright.admin.config.ts`,
   `playwright.admin-http.config.ts`, progress-backup/container configs, CI and
   `verify-full.mjs` agree on PostgreSQL fixture lifecycle. Consolidate duplicated
   admin runners while retaining all relevant coverage. Build learner/admin
   outputs and run their browser suites sequentially because they share `dist`.
-- [ ] Require real PostgreSQL CRUD/learner tests in CI, not only mocks or skipped
+- [x] Require real PostgreSQL CRUD/learner tests in CI, not only mocks or skipped
   database tests. Reuse PG17 pinning and native AMD64/ARM64 container jobs. No
   production/private content, credentials or exports become CI inputs/artifacts.
-- [ ] Extend architecture/artifact guards to reject production local-bank
+- [x] Extend architecture/artifact guards to reject production local-bank
   imports, file adapters, offline selectors and shipped corpus/test fixtures.
   Keep independent negative regression cases, even if those mention retired
   filenames in synthetic test graphs. Check full content is absent from chunks,
@@ -475,29 +609,29 @@ corpus; required CI exercises the replacement workflow end to end.
 
 ### 7. Delete banks, reconcile documentation, and accept the retirement
 
-- [ ] Delete both `src/content/*.generated.json` banks once preceding consumers
+- [x] Delete both `src/content/*.generated.json` banks once preceding consumers
   are replaced. Add no copies under another tracked path, encoded module, public
   shard, fixture corpus, generated cache, or shipped archive. Run final verification
   with those files physically absent, not just ignored by the selected mode.
-- [ ] Update `AGENTS.md`, `README.md`, `backend/README.md`, `.env.example`,
+- [x] Update `AGENTS.md`, `README.md`, `backend/README.md`, `.env.example`,
   `backend/.env.example`, `ops/containers/.env.example`, `ops/content-authority.json`,
   `.prettierignore`, and relevant package/config comments. State PostgreSQL-only
   runtime, HTTP CRUD, explicit operator recovery, and no offline source.
-- [ ] Rewrite active sections in `docs/architecture.md`, `product.md`,
+- [x] Rewrite active sections in `docs/architecture.md`, `product.md`,
   `question-schema.md`, `flashcard-schema.md`, `content-management.md`,
   `testing.md`, `testing-regressions.md`, `local-authoring.md`,
   `local-containers.md`, `L4-http-editor.md`, `L4-authoritative-recovery.md`,
   `L6-deployment-handoff.md`, and `ops/containers/README.md`. Include fresh-clone
   setup, startup failure, CRUD/publication, backup/restore, fixture tests and
   validation commands. Stored-bank representations are contracts, not files to edit.
-- [ ] Record a short superseding architecture decision for retirement of source
+- [x] Record a short superseding architecture decision for retirement of source
   selection/file authoring; link superseded decisions without rewriting their
   historical implementation evidence. Update affected ongoing trackers where
   needed; do not rewrite completed trackers or frozen snapshots to appear current.
-- [ ] Review repository-local skill guidance that still assumes read-only JSON
+- [x] Review repository-local skill guidance that still assumes read-only JSON
   services/local adapters; update it to current contracts so later work does not
   revive retired modes. Inspect broader tooling references before deleting helpers.
-- [ ] Reconcile pre/post authority inventories, exact paired bytes and digests,
+- [x] Reconcile pre/post authority inventories, exact paired bytes and digests,
   draft/history/publication identity and allocation state. Use read-only checks
   against the routine authority; run destructive CRUD/restart/recovery tests only
   against owned disposable targets. Account for legitimate concurrent user edits

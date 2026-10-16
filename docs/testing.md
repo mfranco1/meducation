@@ -5,11 +5,11 @@ Current database content checks must select a fresh draft/release export explici
 For a pinned published operator export, use the [selected-content parity command](local-authoring.md#verify-a-pinned-published-content-candidate).
 `verify-postgres-release.py --export-directory` checks that explicit paired export
 in an owned disposable PG17 cluster and re-exports exact digests; it does not
-replace default archive recovery or full-authority retained recovery. Native
+replace explicit synthetic recovery or full-authority retained recovery. Native
 acceptance also runs `python -m pytest scripts/containers/test_release_inputs.py -q`
 for synthetic admission, mutation and protected-output regressions, without
-authority credentials or private content. A `--small-fixture` archive run remains
-a development regression, never the complete archive-corpus acceptance gate.
+authority credentials or private content. A `--small-fixture` run is a synthetic recovery regression; current authority
+parity requires an explicitly selected fresh protected export.
 
 Run checks appropriate to the change and follow the [regression requirements](testing-regressions.md) for affected behavior. CI executes frontend, backend, and browser checks in [checks.yml](../.github/workflows/checks.yml). Do not hand off a change while relevant gates fail.
 
@@ -120,7 +120,7 @@ Use small versioned fixtures for schema, relationships, canonical ordering, spar
 
 `npm run lint` checks source, maintenance scripts, and ESLint/Vite/Playwright configurations, then runs the whole dependency graph. `npm run check:architecture` runs the graph alone. `npm run test:architecture` checks adversarial normalized/type/dynamic imports, alias resolution, peer-feature/presentation restrictions, storage access, transitive cycles, and eager learner banks/validators. [Architecture](architecture.md#checked-dependency-boundaries) defines the policy and its limits.
 
-`npm run format:check` covers root JSON/tool configurations, TypeScript browser tests, maintenance TypeScript/JavaScript, and `src/shared/theme.ts`. Application-wide formatting remains incremental. `.prettierignore` protects canonical banks, fixture bytes, dependency locks, private source material, and generated output. Keep formatting-only work separate from behavior and dependency changes. A future alias must resolve consistently in TypeScript, Vite, tests, scripts, and architecture checks.
+`npm run format:check` covers root JSON/tool configurations, TypeScript browser tests, maintenance TypeScript/JavaScript, and `src/shared/theme.ts`. Application-wide formatting remains incremental. `.prettierignore` protects fixture bytes, dependency locks, private source material, and generated output. Keep formatting-only work separate from behavior and dependency changes. A future alias must resolve consistently in TypeScript, Vite, tests, scripts, and architecture checks.
 
 ## Selecting verification
 
@@ -186,7 +186,7 @@ L2 Step 2 adds `scripts/containers/smoke-api.py` against a separately built API 
 
 L2 Step 3 adds `scripts/containers/smoke-learner.py --browser` and `playwright.containers.config.ts`; follow the [container runbook](local-containers.md). The script checks the shipped assets/proxy/DNS behavior and runs learner workflows through Nginx with fixture API mounts. The config starts no host servers, requires a loopback `MEDUCATION_CONTAINER_URL`, and isolates output in `test-results-containers/`. Container-specific cases under `e2e/containers` are excluded from the host config. The keyboard manual-retry fixture uses a non-retryable response so it tests the action independently of the production build's automatic retry policy; other transient-error cases retain retryable responses. Run host and container browser suites sequentially. The container config now also runs the L1 paired progress-backup suite and a scoped frontend recreation test; record actual results per platform.
 
-L2 Step 4 adds `scripts/containers/smoke-compose.py` after `docker compose build api frontend`. It uses a generated project/credential file/volume, checks default JSON operation and optional DB/port variants, rejects missing credentials, verifies TCP authentication and sentinel persistence after restart/recreation, then removes only its labeled disposable volume. `wait-compose.py` shares deadline-bounded, read-only readiness helpers with this smoke. Run Ruff on all three new Python files when changing them. No application DB schema/roles/import/parity or backup acceptance is implied; those remain later gates.
+L2 Step 4 adds `scripts/containers/smoke-compose.py` after `docker compose build api frontend`. It uses a generated project/credential file/volume, checks PostgreSQL-only API operation and private/loopback DB port variants, rejects missing credentials, verifies TCP authentication and sentinel persistence after restart/recreation, then removes only its labeled disposable volume. `wait-compose.py` shares deadline-bounded, read-only readiness helpers with this smoke. Run Ruff on all three new Python files when changing them. Its synthetic seed uses explicit role bootstrap/migration/import; full authoritative recovery remains separate.
 
 L2 Step 5 adds `scripts/containers/postgres.py`, its `postgres_tools.py` helpers and `smoke-postgres-tools.py`. Run Ruff on these files and the isolated smoke. It checks authenticated PG17 tools, escaped ephemeral pgpass, atomic 0600 custom dumps, preservation after failed dump, fresh-target restore/data/sequence equivalence, transaction rollback on a truncated archive, existing/reserved-target refusals and exact-label/unreferenced-volume deletion. No developer data is used. Runbook commands and synthetic evidence do not establish L3 least-privilege roles, schema head or canonical bank recovery parity.
 
@@ -241,7 +241,7 @@ pending-text preservation and keyboard/overflow at 390/1048/1440px. Use `--grep`
 only for development; the complete run is the acceptance gate. Its fixture module
 is never packaged. The [HTTP editor runbook](L4-http-editor.md) records boundaries.
 Keep this run separate from builds/learner/admin browser suites sharing `dist`.
-`verify:full` retains the ordinary backend, learner and JSON-development admin
+`verify:full` retains the ordinary backend, learner and PostgreSQL HTTP admin
 regressions; its database skips do not replace the separate real PG17 suite.
 Hosted/provider and manual assistive-technology/device acceptance remain pending.
 

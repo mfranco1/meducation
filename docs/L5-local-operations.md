@@ -38,8 +38,7 @@ same ID in `error.requestId`.
 The result reports reader `connectivity`, supported PG17/packaged `schema`, and
 complete active `publication`, plus session/editor connectivity. Values are
 `ok`, `unavailable`, `unsupported`, `missing`, `not_checked` or `not_applicable`.
-JSON fallback mode has no reader dependency, so its reader fields are
-`not_applicable`; this does not certify a writable authority. No URLs, credentials,
+The PostgreSQL reader is always checked; no JSON fallback mode exists. No URLs, credentials,
 SQL, authored text, content hashes or release IDs are returned. A schema mismatch
 stops publication inspection. A failed transaction is closed/rolled back before
 subsequent requests use its pool.
@@ -279,7 +278,7 @@ Run all three drills with an installed current image and retained specimen:
 
 ```sh
 .venv/bin/python scripts/containers/build-rollback-api.py
-.venv/bin/python scripts/containers/verify-postgres-release.py --api-image meducation-api:local --previous-api-image meducation-api:l5-rollback-prior --output test-results/l5-operational-recovery.json
+.venv/bin/python scripts/containers/verify-postgres-release.py --small-fixture --api-image meducation-api:local --previous-api-image meducation-api:l5-rollback-prior --output test-results/l5-operational-recovery.json
 ```
 
 The builder extracts the exact historical Git commit into a temporary directory

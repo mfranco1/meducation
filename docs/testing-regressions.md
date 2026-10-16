@@ -73,9 +73,9 @@ Dashboard active-subject work must cover empty, single-subject, filtering, recen
 - Shared dashboard stat-card tests cover quiz and flashcard icon decoration, accessible card groups, supporting units, responsive row composition, null/loading versus zero/unavailable values, lowest-subject placement, styling customization, result-variant compatibility, and flashcard average integer/fraction display. Browser checks cover both dashboard rows at desktop, tablet, and narrow widths, long values, independent retry controls, and no horizontal overflow; visual review compares the warm card treatment with the supplied reference.
 - Compare stat-card rectangles from one `evaluateAll` browser task. The responsive drawer animates available width during initial load and breakpoint changes; independent `boundingBox` calls can sample different frames and report unequal widths for an equal-width row. Keep the existing width tolerance, alignment, narrow-screen stacking and overflow assertions.
 - Subject tests cover the shared shimmer and catalog recovery; session/App/browser tests cover deck-launch progress, safe screen-scoped failure toast, retained deck rows, and retry through Study/Resume without creating progress on failure.
-- Bulk-add coverage checks all three contextual JSON shapes, mixed empty and populated decks, rich-content validation with nested paths, generated-ID stability, preview staleness, source immutability, atomic rollback, one-step Undo, and replay parity.
-- The learner Playwright flow uses `e2e/fixtures/flashcard-bank.json` with the separate `MEDUCATION_FLASHCARD_BANK_PATH`; it studies, saves, resumes, finishes, and checks the dashboard without quiz analytics.
-- Run `npm run test:e2e:admin` for the dedicated Vite dev-server authoring flow, which creates records, imports bulk JSON from paste and file, previews/stages batches, verifies one-step Undo, and replays the exported v2 change set.
+- Bulk-add coverage checks all three contextual JSON shapes, mixed empty and populated decks, rich-content validation with nested paths, generated-ID stability, preview staleness, source immutability, atomic rollback, server paired Undo, and database-derived export parity.
+- The learner Playwright flow uses `e2e/fixtures/flashcard-bank.json` seeded explicitly into disposable PostgreSQL; it studies, saves, resumes, finishes, and checks the dashboard without quiz analytics.
+- Run `npm run test:e2e:admin` for the authenticated PostgreSQL authoring flow, which creates records, previews content-only bulk JSON, saves paired drafts, verifies server Undo, publishes, activates and exports.
 - The frontend flashcard admin panel suite and backend quiz request tests use `tests/fixtures/empty-flashcard-bank.json` as an explicit baseline.
 - Authored canonical flashcards are validated by the content gate; adding decks or cards must not change those tests’ starting catalog.
 
@@ -90,8 +90,8 @@ Dashboard active-subject work must cover empty, single-subject, filtering, recen
 ### Checkpoint recovery and authoring parity
 
 - Flashcard regressions cover stable IDs/content/order and rejection of orphan references, abandoned/concurrent launches, unmount cancellation, fresh checkpoints after delayed loads, failed launch/restart/navigation/finish writes, bounded digest storage and rejection of serialized-content signatures, frozen stable snapshots, temporary storage recovery, invalid timestamps, exact catalog membership, and canonical ordering across subjects.
-- Admin tests cover rich-content rejection, unstaged draft guards, reorder/export replay parity, imported-history undo, stale subject previews, legacy change-set rejection, and shared-subject protection during undo/reset in both authoring sections.
-- Coordinated bundle tests verify atomic paired staging when individual imports would require invalid intermediate subjects, stale revision rejection, invalid-pair rollback, and quiz-draft protection.
+- Admin tests cover rich-content rejection, unstaged draft guards, reorder/database-export parity, server-history undo, stale subject previews, legacy change-set rejection, and shared-subject protection during undo/reset in both authoring sections.
+- Paired-save tests verify atomic staging across shared subjects, stale revision rejection, invalid-pair rollback, and quiz-draft protection.
 - Browser flows cover direct deck listing, reload/resume, abandoned loads, keyboard Retry, and admin update/move/reorder/cascade-delete/undo/export.
 - CI runs learner and admin browser suites and both production build modes.
 

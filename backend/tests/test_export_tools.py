@@ -71,7 +71,7 @@ def export_fixture(folder, *, target="release", operator=False):
 
 @pytest.mark.parametrize("kind", ["operator", "release", "draft"])
 def test_selected_exports_validate_and_audit_without_database_or_bundled_content(tmp_path, kind):
-    export_fixture(
+    _, names = export_fixture(
         tmp_path, target=kind if kind != "operator" else "release", operator=kind == "operator"
     )
     before = {p.name: p.read_bytes() for p in tmp_path.iterdir()}
@@ -80,12 +80,8 @@ def test_selected_exports_validate_and_audit_without_database_or_bundled_content
     assert report["currentDatabaseCompared"] is False
     assert report["context"]["unpublished"] is (kind == "draft")
     assert report["explanations"]["questions"] == 1
-    assert (
-        report["artifactsSha256"]["quiz"]
-        != hashlib.sha256(
-            (ROOT / "src/content/questionBank.generated.json").read_bytes()
-        ).hexdigest()
-    )
+    assert report["artifactsSha256"]["quiz"] == hashlib.sha256(before[names[0]]).hexdigest()
+    assert not (ROOT / "src/content/questionBank.generated.json").exists()
     assert {p.name: p.read_bytes() for p in tmp_path.iterdir()} == before
 
 

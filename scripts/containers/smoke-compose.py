@@ -11,6 +11,7 @@ import uuid
 from pathlib import Path
 
 from compose_support import docker, service_container, wait_services
+from postgres_fixture import seed_database
 
 ROOT = Path(__file__).resolve().parents[2]
 PSQL = ('export PGPASSWORD="$POSTGRES_PASSWORD"; exec psql --host 127.0.0.1 '
@@ -35,10 +36,12 @@ def main():
         env_file = Path(temp) / ".env"
         env_file.write_text("MEDUCATION_FRONTEND_PORT=0\nMEDUCATION_POSTGRES_PORT=0\n")
         env_file.chmod(0o600)
+        fixture_override = Path(temp) / "fixture.json"
+        fixture_override.write_text(json.dumps({"services": {"postgres": {"environment": {"POSTGRES_DB": "meducation_test_smoke"}}}}))
 
         def compose(*command, db=False, port=False, input_text=None, timeout=60):
             flags = ["docker", "compose", "--project-name", project, "--env-file", str(env_file),
-                     "--file", str(ROOT / "compose.yaml")]
+                     "--file", str(ROOT / "compose.yaml"), "--file", str(fixture_override)]
             if port:
                 flags += ["--file", str(ROOT / "ops/containers/compose.db-port.yaml")]
             if db:
@@ -76,19 +79,7 @@ def main():
             require(not model["services"]["api"].get("ports"), "API port must be private")
             compose("config", "--quiet", db=True)
             compose("config", "--quiet", db=True, port=True)
-            report["checks"].append("default/DB/DB-port configs validate; no DB config needed for JSON")
-            compose("up", "--detach", "--no-build", "api", "frontend", timeout=120)
-            wait_services(project, ["api", "frontend"])
-            require(service_container(project, "postgres") is None, "JSON startup created Postgres")
-            subjects = api_subjects()
-            require(subjects["subjects"], "Canonical subjects absent")
-            for service in ["api", "frontend"]:
-                settings = inspection(service)
-                keys = [entry.split("=", 1)[0] for entry in settings["Config"]["Env"]]
-                require(not any("POSTGRES" in k or "DATABASE_URL" in k for k in keys), "DB credentials entered app service")
-            report["checks"].append("JSON stack healthy through real proxy, no DB container or app DB credentials")
-            print("JSON-only Compose stack passed.", flush=True)
-
+            report["checks"].append("default/DB/DB-port configs validate; API requires explicit reader configuration")
             compose("up", "--detach", "postgres", db=True, timeout=120)
             try:
                 wait_services(project, ["postgres"], timeout=15)
@@ -97,11 +88,11 @@ def main():
                 require(not failed["Running"] and failed["ExitCode"] == 1, "Missing-password failure was not the startup guard")
             else:
                 raise RuntimeError("Postgres accepted missing development credentials")
-            require(api_subjects() == subjects, "Failed optional DB affected JSON API")
-            report["checks"].append("missing DB password rejects startup; JSON API stays available")
+            report["checks"].append("missing DB password rejects startup")
 
+            bootstrap_password = secrets.token_urlsafe(32)
             with env_file.open("a") as file:
-                file.write("MEDUCATION_POSTGRES_BOOTSTRAP_PASSWORD=" + secrets.token_urlsafe(32) + "\n")
+                file.write("MEDUCATION_POSTGRES_BOOTSTRAP_PASSWORD=" + bootstrap_password + "\n")
             compose("up", "--detach", "--force-recreate", "postgres", db=True, timeout=120)
             wait_services(project, ["postgres"])
             require(sql("SELECT 1;\n") == "1", "Authenticated TCP SQL check failed")
@@ -125,6 +116,30 @@ def main():
                                   "image": pg["Image"], "volume_destination": mounts[0]["Destination"]}
             report["checks"].append("native PG17 healthy, authenticated TCP SELECT 1, correct volume, no published port")
             print("Postgres startup and authenticated readiness passed.", flush=True)
+
+            # Expose only the owned temporary DB to seed via separated role connections.
+            compose("up", "--detach", "--force-recreate", "postgres", db=True, port=True, timeout=120)
+            wait_services(project, ["postgres"])
+            seeded_pg = inspection("postgres")
+            require(seeded_pg["Config"]["Labels"]["com.docker.compose.project"] == project, "Refusing unowned seed target")
+            binding = seeded_pg["NetworkSettings"]["Ports"]["5432/tcp"][0]
+            require(binding["HostIp"] == "127.0.0.1", "Seed port must be loopback")
+            reader_env = seed_database(binding["HostPort"], bootstrap_password, Path(temp))
+            with env_file.open("a") as stream:
+                stream.write(reader_env.read_text())
+            compose("up", "--detach", "--force-recreate", "postgres", db=True, timeout=120)
+            wait_services(project, ["postgres"])
+            require(not any(inspection("postgres")["NetworkSettings"]["Ports"].values()), "Default DB port must be private")
+            compose("up", "--detach", "--no-build", "api", "frontend", db=True, timeout=120)
+            wait_services(project, ["api", "frontend"])
+            subjects = api_subjects()
+            require(subjects["subjects"], "PostgreSQL fixture subjects absent")
+            frontend_keys = [v.split("=", 1)[0] for v in inspection("frontend")["Config"]["Env"]]
+            require(not any("DATABASE_URL" in key or "POSTGRES" in key for key in frontend_keys), "DB credentials reached frontend")
+            api_env = dict(v.split("=", 1) for v in inspection("api")["Config"]["Env"])
+            require("meducation_reader:" in api_env["MEDUCATION_DATABASE_URL"], "API needs reader-only credentials")
+            require(not any(key.endswith(("OPERATOR_DATABASE_URL", "MIGRATION_DATABASE_URL", "BOOTSTRAP_DATABASE_URL")) for key in api_env), "Privileged job credentials reached API")
+            report["checks"].append("PostgreSQL-only stack healthy through proxy; private DB; API reader isolation; frontend has no DB credentials")
 
             token = uuid.uuid4().hex
             sql("CREATE DATABASE l2_smoke;\n\\connect l2_smoke\n"
@@ -150,7 +165,7 @@ def main():
             bindings = inspection("postgres")["NetworkSettings"]["Ports"]["5432/tcp"]
             require(len(bindings) == 1 and bindings[0]["HostIp"] == "127.0.0.1", "DB override is not loopback-only")
             require(sentinel() == token and api_subjects() == subjects, "Port override affected data/API")
-            report["checks"].append("optional DB host port is loopback-only; sentinel and JSON API unchanged")
+            report["checks"].append("optional DB host port is loopback-only; sentinel and PostgreSQL API unchanged")
             sql("DROP DATABASE l2_smoke;\n")
             report["result"] = "pass"
         finally:

@@ -6,11 +6,15 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 import time
 import urllib.error
 import urllib.request
 import uuid
+from contextlib import ExitStack
 from pathlib import Path
+
+from postgres_fixture import postgres_fixture
 
 ROOT = Path(__file__).resolve().parents[2]
 UNAVAILABLE_API = """
@@ -81,6 +85,7 @@ def main():
     run_id = uuid.uuid4().hex
     network_name = "meducation-l2-proxy-" + run_id
     containers = []
+    resources = ExitStack()
     report = {
         "frontend_image": frontend["Id"], "api_image": api_image["Id"],
         "image_platform": f"{frontend['Os']}/{frontend['Architecture']}", "checks": [],
@@ -102,6 +107,8 @@ def main():
         containers.remove(container)
 
     try:
+        folder = Path(resources.enter_context(tempfile.TemporaryDirectory(prefix=network_name)))
+        reader_env = resources.enter_context(postgres_fixture(network_name, network_name, folder))
         front = start("frontend", frontend["Id"], "--publish", "127.0.0.1::8080")
         # Track by exact generated name so browser recreation cleanup removes the replacement.
         front = inspect(front)["Name"].lstrip("/")
@@ -132,7 +139,7 @@ def main():
         require(request(origin, "/api/v1/subjects")[0] == 502, "Absent API must fail visibly")
         report["checks"].append("non-root/read-only static startup independent of API; shipped artifact hashes/cache/missing-file policies")
 
-        api = start("api-first", api_image["Id"], "--network-alias", "api")
+        api = start("api-first", api_image["Id"], "--network-alias", "api", "--env-file", str(reader_env))
         wait_for(lambda: healthy(api), "canonical API health")
         wait_for(lambda: request(origin, "/health/ready")[0] == 200, "proxied readiness")
         status, headers, subjects = request(origin, "/api/v1/subjects")
@@ -165,7 +172,7 @@ def main():
         require(request(origin, "/")[0] == 200 and healthy(front), "API outage broke static serving")
         remove(api)
         start("address-holder", api_image["Id"], "--no-healthcheck", command=("python", "-c", "import time; time.sleep(600)"))
-        api = start("api-recreated", api_image["Id"], "--network-alias", "api")
+        api = start("api-recreated", api_image["Id"], "--network-alias", "api", "--env-file", str(reader_env))
         new_ip = inspect(api)["NetworkSettings"]["Networks"][network_name]["IPAddress"]
         require(new_ip != old_ip, "DNS recreation test needs a changed API address")
         wait_for(lambda: healthy(api), "recreated API health")
@@ -185,13 +192,7 @@ def main():
         remove(stub)
 
         if args.browser:
-            mounts = []
-            for host, setting, target in [
-                ("e2e/fixtures/bank.json", "MEDUCATION_BANK_PATH", "/fixtures/bank.json"),
-                ("e2e/fixtures/flashcard-bank.json", "MEDUCATION_FLASHCARD_BANK_PATH", "/fixtures/flashcards.json"),
-            ]:
-                mounts += ["--mount", f"type=bind,source={ROOT / host},target={target},readonly", "--env", f"{setting}={target}"]
-            fixture_api = start("fixture-api", api_image["Id"], "--network-alias", "api", *mounts)
+            fixture_api = start("fixture-api", api_image["Id"], "--network-alias", "api", "--env-file", str(reader_env))
             wait_for(lambda: healthy(fixture_api), "fixture API health")
             wait_for(lambda: 'Browser Test Subject' in request(origin, "/api/v1/subjects")[2].decode(), "fixture DNS recovery")
             env = {**os.environ, "MEDUCATION_CONTAINER_URL": origin,
@@ -219,6 +220,7 @@ def main():
     finally:
         for container in reversed(containers):
             docker("rm", "--force", container)
+        resources.close()
         docker("network", "rm", network)
     if args.report:
         args.report.write_text(json.dumps(report, indent=2) + "\n")

@@ -1,5 +1,4 @@
-# Canonical banks, byte-sensitive fixtures, and dependency/package metadata
-src/content/*.generated.json
+# Byte-sensitive fixtures and dependency/package metadata
 tests/fixtures/**
 e2e/fixtures/**
 package-lock.json

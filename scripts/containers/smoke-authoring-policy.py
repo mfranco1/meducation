@@ -134,7 +134,7 @@ print(json.dumps({'policyVersion': p.policy_version, 'warnings': p.warnings,
             assert summary["policyVersion"] == 1
             report["fixturePair"] = summary
             report["nodeVersion"] = docker("exec", api, "node", "--version")
-            report["checks"].append("installed wheel validates actual banks with exact artifact bytes")
+            report["checks"].append("installed wheel validates explicit synthetic pair with exact artifact bytes")
             report["imageId"] = docker("image", "inspect", "--format", "{{.Id}}", args.image)
             report["platform"] = docker("image", "inspect", "--format", "{{.Os}}/{{.Architecture}}", args.image)
             report["result"] = "pass"

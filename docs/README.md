@@ -1,6 +1,6 @@
 # Contributor documentation
 
-Start with the repository [README](../README.md) for frontend setup, default API mode, explicit local-content mode, build commands, and the local editor. [Backend setup](../backend/README.md) owns Python environment and content-service instructions.
+Start with the repository [README](../README.md) for frontend setup, PostgreSQL content service, build commands, and the local editor. [Backend setup](../backend/README.md) owns Python environment and content-service instructions.
 
 ## Find the right guidance
 
@@ -9,7 +9,7 @@ Start with the repository [README](../README.md) for frontend setup, default API
 - **Edit or review content:** [content management](content-management.md) covers staged authoring, exports, validation, provenance, and [ignored local material](content-management.md#local-source-material-and-generated-output). [Question schema](question-schema.md) and [flashcard schema](flashcard-schema.md) define the canonical contracts.
 - **Change the UI:** [design system](design-system.md) owns theme, accessibility, responsive study layouts, feedback, and loading conventions. Preserve source wording while changing presentation.
 - **Verify a change:** [testing](testing.md) covers frontend, backend, content, and browser checks, fixture ownership, and [detailed regression requirements](testing-regressions.md).
-- **Understand repository rules:** [AGENTS.md](../AGENTS.md) defines the invariants and contribution policy. [Architecture decisions](decisions/) record consequential choices; read their status alongside the current architecture.
+- **Understand repository rules:** [AGENTS.md](../AGENTS.md) defines the invariants and contribution policy. [PostgreSQL-only content policy](decisions/0006-postgres-only-content.md) defines the retirement of JSON sources. [Architecture decisions](decisions/) record consequential choices; read their status alongside the current architecture.
 - **Follow active work:** [work tracking](work/README.md) explains where to create ongoing trackers and record stage gates. [Completed trackers](work/done/) preserve history; their past paths and counts are not the current specification.
 
 ## Repository agent skills

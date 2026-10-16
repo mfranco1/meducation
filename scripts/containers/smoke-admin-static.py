@@ -3,13 +3,16 @@
 import argparse
 import hashlib
 import json
+import tempfile
 import time
 import urllib.error
 import urllib.request
 import uuid
+from contextlib import ExitStack
 from pathlib import Path
 
 from compose_support import docker
+from postgres_fixture import postgres_fixture
 
 
 def request(origin, path):
@@ -30,11 +33,14 @@ def main():
     name = "meducation-admin-static-" + uuid.uuid4().hex[:12]
     label = "meducation.admin-static=" + name
     containers = []
+    resources = ExitStack()
     report = None
     docker("network", "create", "--label", label, name)
     try:
+        folder = Path(resources.enter_context(tempfile.TemporaryDirectory(prefix=name)))
+        reader_env = resources.enter_context(postgres_fixture(name, name, folder))
         for suffix, image, options in (
-            ("api", args.api_image, ["--network-alias", "api"]),
+            ("api", args.api_image, ["--network-alias", "api", "--env-file", str(reader_env)]),
             ("frontend", args.frontend_image, ["--publish", "127.0.0.1::8080"]),
         ):
             container = name + "-" + suffix
@@ -82,7 +88,7 @@ def main():
                   "checks": ["all packaged artifact hashes through real nginx", "admin entry/callback no-store",
                              "disabled private API remains 503/no-store; public API no-cache", "immutable hashed assets",
                              "missing assets/maps/manifests/audit never SPA fallback", "non-root/read-only tmpfs runtime"],
-                  "artifacts": audit, "scope": "archive API fixture with admin disabled; no authority DB or hosted identity"}
+                  "artifacts": audit, "scope": "PostgreSQL synthetic fixture with admin disabled; no authority DB or hosted identity"}
     finally:
         for container in docker("ps", "--all", "--quiet", "--filter", "label=" + label).splitlines():
             info = json.loads(docker("inspect", container))[0]
@@ -90,6 +96,7 @@ def main():
             assert info["Name"].lstrip("/") in containers
             docker("rm", "--force", container)
         assert json.loads(docker("network", "inspect", name))[0]["Labels"]["meducation.admin-static"] == name
+        resources.close()
         docker("network", "rm", name)
         if report is not None:
             report["cleanup"] = "pass"

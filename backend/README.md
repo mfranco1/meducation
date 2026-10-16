@@ -146,7 +146,7 @@ Local restart evidence does not establish hosted suspend/wake latency.
 
 ## Paired content import, activation and export
 
-Keep canonical JSON authoritative. Install the Python development environment and
+PostgreSQL remains authoritative. These file inputs are reviewed recovery/migration artifacts, never a routine authoring database. Install the Python development environment and
 run `npm ci` in the repository. Validation/import requires `--repository` pointing
 to that checkout: the job runs existing TypeScript stored/domain/Markdown and
 flashcard validators against private copies of the exact captured input bytes.
@@ -194,7 +194,7 @@ migration, activation and export use the installed Python package. Run the
 for roundtrip, source-capture, injected rollback, replay/concurrency, corrupt-row
 rejection and CLI evidence. Fixture and actual-bank learner DB/API parity, PG reverse-proxy/browser and
 restore acceptance are verified, including both native CI architectures. After activation,
-select `MEDUCATION_CONTENT_SOURCE=postgres` with only the reader URL to run the
+configure only the PostgreSQL reader URL to run the
 learner API. No JSON fallback or worker migration/import is performed.
 
 Each content request opens one paired view, selects the publication once and
@@ -212,118 +212,74 @@ when an old catalog/ETag is cached. Recurring `/health/live` and `/health/ready`
 perform no SQL; readiness means initialization completed, not live DB reachability.
 The same bounded reader engine is disposed on failed startup and shutdown.
 
-## JSON API container
+## PostgreSQL API container
 
-From the repository root, build the production API image:
-
-```sh
-docker build --pull -f backend/Dockerfile -t meducation-api:l2-step2 .
-```
-
-The multi-stage image installs a non-editable wheel and the locked runtime
-dependencies under pinned Python 3.14.8. It includes byte-identical copies of
-both archived banks at `/app/content/` with explicit path settings, runs as
-UID/GID 10001, and has a bounded `/health/ready` healthcheck. The builder's
-tools, host `.env` files and private source material are excluded from runtime.
-See [build inputs and maintenance](../ops/containers/README.md) for image pins,
-context rules and lock updates.
-
-Run an isolated local API on loopback port 8800:
+Build the installed wheel/runtime and corpus-free image:
 
 ```sh
-docker run --rm --name meducation-api-local --read-only --tmpfs /tmp \
-  --cap-drop ALL --security-opt no-new-privileges:true \
-  --publish 127.0.0.1:8800:8000 meducation-api:l2-step2
+docker build -f backend/Dockerfile -t meducation-api:local .
 ```
 
-Inspect `/health/live` and `/health/ready` at `http://127.0.0.1:8800`, and stop
-with Ctrl+C or `docker stop --time 15 meducation-api-local`. The process uses
-one Uvicorn worker without reload. Local CORS defaults allow only
-`http://127.0.0.1:4173` and `http://localhost:4173`; override
-`MEDUCATION_ALLOWED_ORIGINS` explicitly when needed. This standalone port does
-not change the existing Vite proxy to port 8000. The [container stack](../docs/local-containers.md) provides the same-origin
-reverse proxy and an independent optional Postgres service with PG17 recovery
-tools. Application schema/roles/DB reads are implemented; generic JSON Compose does not configure the authority.
+The image runs as UID/GID 10001 under pinned Python, with locked dependencies
+and the packaged content-policy worker. It includes no authored banks, file-source
+repositories, developer env files or compiler. Supply a protected reader env file
+for an initialized PostgreSQL target; missing/unusable configuration fails startup.
+The default CORS origins are loopback 4173. See [local containers](../docs/local-containers.md)
+for Compose startup, network routing, image audits and lifecycle commands. Workers
+never bootstrap, migrate or import. The browser never receives database credentials.
 
-Exercise the actual image with the repeatable API smoke command:
+Run the isolated installed-image checks after building:
 
 ```sh
-.venv/bin/python scripts/containers/smoke-api.py --image meducation-api:l2-step2
+.venv/bin/python scripts/containers/smoke-api.py --image meducation-api:local
+.venv/bin/python scripts/containers/smoke-learner.py --api-image meducation-api:local --frontend-image meducation-learner:local
 ```
 
-The smoke uses unique disposable containers and an automatically allocated
-loopback port. It checks canonical file hashes and representative API content,
-locked dependencies, non-root/read-only execution, health, cache/conflict/error
-responses, explicit CORS and graceful shutdown. Synthetic invalid-bank mounts
-exercise startup rejection without changing canonical files. It removes only
-its own containers and requires no database or host source mount for successful
-startup. Add `--report /absolute/path/report.json` to retain machine evidence.
+The API smoke seeds small explicit synthetic data into an owned PostgreSQL
+container. It audits wheel/lock/runtime integrity and corpus absence, exact
+content/order/provenance, conditional responses, CORS, shutdown and redacted
+fail-closed startup. The proxy smoke retains artifact hashes/cache boundaries,
+upstream failures and DNS recovery after API recreation. No authority data or
+credentials are used.
 
 ## Actual-bank parity and isolated recovery acceptance
 
-Run these jobs from the repository root with the Python development lock and
-`npm ci` installed. The routine local PostgreSQL database is authoritative; these
-jobs use repository JSON archives as read-only fixture inputs, which may be older
-than that authority. They create unique PG17 tmpfs clusters and disposable targets;
-no routine database/volume is read or changed, and source files stay unchanged.
+Current-content checks require an explicit protected draft/release export.
+Synthetic recovery tests require `--small-fixture`; there is no implicit
+repository corpus. Neither workflow can replace the designated authority.
 
 ```sh
-.venv/bin/python scripts/containers/verify-postgres-release.py --output test-results/l3-step6-recovery.json
-.venv/bin/python scripts/containers/smoke-postgres-learner.py --api-image meducation-api:local --frontend-image meducation-learner:local --output test-results/l3-step6-browser.json
+.venv/bin/python scripts/containers/verify-postgres-release.py --small-fixture --output /tmp/meducation-fixture-recovery.json
+.venv/bin/python scripts/containers/verify-postgres-release.py --export-directory /protected/selected-export --output /protected/new-parity-report.json
+.venv/bin/python scripts/containers/smoke-postgres-learner.py --api-image meducation-api:local --frontend-image meducation-learner:local --output /tmp/meducation-pg-browser.json
 ```
 
-For all three L5 operational drills, first build the pinned retained image with
-`scripts/containers/build-rollback-api.py`, then pass `--api-image meducation-api:local
---previous-api-image meducation-api:l5-rollback-prior` to the first command. See the
-[rollback/restore runbook](../docs/L5-local-operations.md#distinct-recovery-and-rollback-drills).
-Its default mode omits installed application rollback; `--small-fixture` is only
-for development and does not certify archive-corpus parity.
+These jobs create owned disposable PG17 targets. Selected-export acceptance
+checks exact normalized fields, optional presence, rich strings, ordering,
+artifacts/revisions and every applicable learner route against independent
+captured-input expectations, including ETags/304/409. It never starts a JSON
+reference API or writes to the authority. Reports prove captured identity and
+internal parity, not indefinite database currency.
 
-The first command captures/validates both archive banks, bootstraps/migrates,
-imports and explicitly activates them. It checks every normalized field,
-optional omission, rich string, global/choice order, both artifacts/digests and
-all applicable learner routes/counts/membership/ETags/304/409. Current content
-produces 348 routes, but counts are derived from input and not hard-coded tests.
-A private draft and burned reservations exercise non-public recovery state.
-PG17 `pg_dump` authenticates as backup, produces a temporary 0600 custom archive
-with no owner/ACL, and restores in one transaction into a fresh database through
-the migrator with `--role meducation_owner`. Only the newly created target gets
-temporary owner CREATE privilege, revoked afterward. Bootstrap/default grants
-and `db/recovery.py` selected reader/operator permissions are reapplied explicitly.
-All table hashes/counts and sequence values must match, source state must remain
-unchanged, and fresh readers repeat full reconstruction/API parity after restore.
-Credentials/archive and containers are cleaned; this is acceptance evidence, not
-a retained/off-device backup or a production RPO guarantee. After a real restore,
-restart workers/caches and reconcile lost post-backup allocations before authoring.
+Synthetic recovery covers role permissions, transactions, PG17 backup and
+fresh-target restore, session quarantine and compatible reader cleanup. For
+installed application rollback drills, build the pinned retained image using
+`scripts/containers/build-rollback-api.py` and supply both `--api-image` and
+`--previous-api-image` with `--small-fixture`. Historical images are built from
+retained Git history and run against PostgreSQL; they are not current JSON
+application sources. See [the rollback/restore runbook](../docs/L5-local-operations.md#distinct-recovery-and-rollback-drills).
 
-For an already initialized _disposable local_ target named `meducation_verify_*`,
-the standalone CLI uses matching explicit operator/reader URLs:
+The browser launcher seeds explicit e2e fixtures, starts the installed PostgreSQL
+reader and shipped Nginx, and runs learner/progress-backup/recreation workflows.
+It verifies active quiz identity/responses, flashcard checkpoints and scores
+survive API recreation at the same origin. Explicit changed publication still
+requires the existing restart decision. Controls verify exact owned labels and
+keep synthetic operator credentials out of browser state/command arguments.
 
-```sh
-.venv/bin/meducation-db parity --quiz-file /protected/selected-export/questionBank.json --flashcard-file /protected/selected-export/flashcardBank.json --repository . --release-id "RELEASE_UUID" --report new-parity-report.json
-```
-
-It performs no import/activation or authored-file write. The selected pair must
-be active for API parity. The report path must be new. Failure diagnostics name
-mismatch paths without printing values, SQL or credentials. Parity requires
-Node and development TestClient dependencies; the learner runtime gains neither.
-
-The browser launcher loads only existing e2e fixtures into the isolated PG
-cluster, starts the installed reader API and shipped Nginx learner proxy, and
-runs existing Chromium learner/progress-backup/recreation flows. One extra test
-switches the exact owned API between JSON and Postgres at the same origin,
-verifies active quiz identity/responses/signature, flashcard checkpoints and
-completed history remain unchanged, then explicitly publishes changed fixture
-content and verifies the existing restart prompt and preserved completed scores.
-Controls verify exact generated container/network labels and never address a
-routine service. Synthetic operator credentials stay in private files, not the
-browser or command arguments.
-
-Native AMD64/ARM64 acceptance runs fixture PG tests, actual-bank recovery and the
-PG proxy/browser suite. The expensive container browser suite runs once in PG
-mode; default JSON HTTP/proxy checks remain on both clean builds and the host
-JSON browser job remains separate. Local ARM64 passes do not close the native
-CI gate without both new jobs passing. [Run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502) passed both architectures at the current implementation commit. See the [L4 handoff](../docs/L4-authoring-handoff.md) for private editing and cutover requirements.
+Native AMD64/ARM64 acceptance uses explicit PostgreSQL fixtures and selected
+exports; no archive database or JSON service is supported. Local native evidence
+applies only to that architecture. Changed-source CI results must be recorded
+separately from historical runs; no hosted/provider acceptance is implied.
 
 ## Packaged authoring content policy
 

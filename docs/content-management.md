@@ -12,9 +12,7 @@ bank. Read [the question schema](question-schema.md) and
 
 The authenticated editor is the only normal CRUD workflow. Local JSON fixture
 authoring, change-set file import/replay, per-section file replacement exports,
-and browser-local content history have been removed. Existing repository JSON
-archives remain temporarily while their backend/tooling consumers are retired;
-they are not a current database or a source of recovery currency.
+and browser-local content history have been removed. Repository JSON databases are removed. Captured database exports are inspection/recovery artifacts, not a runtime source.
 
 When editing content:
 
@@ -22,7 +20,7 @@ When editing content:
 2. Make intentional question, choice, answer, stem, or rationale changes directly in the matching record. Stems and rationales support GFM, the limited HTML documented in `question-schema.md`, and KaTeX math. Use `$...$` for inline formulas and a separate-line `$$` block for display formulas. Escape ambiguous literal money with `\$`; the validator catches malformed or unsupported math. Use meaningful alt text for every image. Use app-local paths such as `![Nerve diagram](/content/figures/nerve.png)` today; a future remote HTTPS image origin requires the public `VITE_CONTENT_IMAGE_ORIGINS` allowlist and matching trusted backend validator configuration before canonical authoring. `CONTENT_IMAGE_ORIGINS` configures maintenance validators, not API runtime configuration. Choices, choice explanations, and sources remain restricted Markdown.
 3. Keep answer provenance explicit: retain `answer`, add `verifiedAnswer` only after review, and use `answerNote` or `rationaleMeta.answerReviewNote` when a key is uncertain. Do not add `sourceAnswer` or `answerSource`; verification state is derived from whether a verified answer exists.
 4. Keep provenance, sources, review data, and answer-review notes in `question.rationaleMeta`; do not create a second explanation body or JSON overlay. The application never calls an LLM at runtime.
-5. For fixture changes run `npm run validate:content`, `npm test`, and `npm run build`. Canonical HTTP changes instead require a fresh selected export and its validation/audit; repository archive checks cannot certify the live database.
+5. For fixture changes run `npm run validate:content -- <quiz-file> <flashcard-file>`, `npm test`, and `npm run build`. Canonical HTTP changes instead require a fresh selected export and its validation/audit; repository archive checks cannot certify the live database.
 
 ## Authenticated paired editor
 
@@ -82,7 +80,9 @@ deck, item, or card; parent deletion requires explicit cascade review.
 
 ## Local source material and generated output
 
-The tracked `src/content/questionBank.generated.json` and `src/content/flashcardBank.generated.json` are historical cutover exports pending final removal of container/recovery-test consumers. Frontend local adapters and implicit archive validators are removed. Current authority content is preserved in PostgreSQL and its protected recovery artifacts; never import these archives over database-only edits.
+The former repository quiz/flashcard JSON databases and frontend local adapters
+are removed. PostgreSQL and protected recovery artifacts preserve current
+content. Never import an old snapshot over database-only edits.
 
 Other content folders are intentionally ignored by Git and are not included in a clone or Git-based backup:
 

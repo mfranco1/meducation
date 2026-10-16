@@ -86,6 +86,7 @@ def test_selected_export_rejects_bad_pair_or_provenance(selected, tmp_path, faul
 @pytest.mark.parametrize(
     "options",
     [
+        [],
         ["--small-fixture", "--export-directory", "missing"],
         ["--export-directory", "missing", "--api-image", "current", "--previous-api-image", "prior"],
         ["--export-directory", "missing"],
@@ -102,7 +103,7 @@ def test_invalid_selected_mode_never_calls_docker(tmp_path, options):
     )
     assert result.returncode != 0
     assert any(message in result.stderr for message in (
-        "not allowed with argument", "parity only", "Content verification failed; no SQL",
+        "one of the arguments", "not allowed with argument", "parity only", "Content verification failed; no SQL",
     ))
     assert "Docker command failed" not in result.stderr
     assert "No such file or directory: 'docker'" not in result.stderr

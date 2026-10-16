@@ -1,5 +1,7 @@
 # 0005 — Paired content releases and Postgres schema
 
+Current content-source policy: [ADR 0006](0006-postgres-only-content.md) supersedes historical JSON authority, read modes and file-based editor workflows below. PostgreSQL is the only runtime and writable source.
+
 Date: 2026-10-13. Status: L3 Step 3 schema and transactional enforcement implemented and locally verified; paired file importer/exporter implemented; paired learner adapters implemented; actual-bank parity/recovery and PG browser acceptance verified with passing native AMD64/ARM64 CI. Gate: [L3 Step 1](../work/done/L3-postgres-schema-migration-parity-plan.md#step-1--record-schema-identity-and-consistency-decisions).
 
 ## L3 final verification follow-up — 2026-10-14

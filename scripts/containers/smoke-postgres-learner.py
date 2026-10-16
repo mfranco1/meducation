@@ -215,7 +215,7 @@ def main():
             api_env.write_text(
                 "MEDUCATION_CONTENT_SOURCE=postgres\nMEDUCATION_DATABASE_ENVIRONMENT=local\nMEDUCATION_DATABASE_URL="
                 + reader.render_as_string(hide_password=False)
-                + "\nMEDUCATION_BANK_PATH=/fixtures/q.json\nMEDUCATION_FLASHCARD_BANK_PATH=/fixtures/f.json\n"
+                + "\n"
             )
             api_env.chmod(0o600)
             start(
@@ -232,10 +232,6 @@ def main():
                 "ALL",
                 "--security-opt",
                 "no-new-privileges:true",
-                "--mount",
-                f"type=bind,src={qp},dst=/fixtures/q.json,readonly",
-                "--mount",
-                f"type=bind,src={fp},dst=/fixtures/f.json,readonly",
             )
             wait(prefix + "-api")
             start(
@@ -305,7 +301,7 @@ def main():
                 "checks": [
                     "installed reader API + actual shipped proxy",
                     "all existing learner/progress-backup/recreation Chromium flows",
-                    "unchanged reimport and JSON/Postgres backend switching retain study/history",
+                    "unchanged reimport and PostgreSQL API recreation retain study/history",
                     "changed-content conflict/restart behavior",
                 ],
                 "isolation": "owned labeled network/tmpfs PG; disposable fixtures only; no routine DB/volume",

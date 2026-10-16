@@ -3,7 +3,6 @@
 import argparse
 import hashlib
 import json
-import os
 import platform
 import subprocess
 import sys
@@ -35,7 +34,7 @@ def main():
               "reproducibility": "two no-cache builds from pinned inputs; output/content/runtime verified, no byte-identical digest promise"}
     inputs = [".github/workflows/checks.yml", "Dockerfile", "backend/Dockerfile", "compose.yaml", ".dockerignore", "package-lock.json",
               "backend/requirements.lock", "backend/requirements-build.lock", "ops/containers/nginx.conf",
-              "ops/containers/proxy.conf", "src/content/questionBank.generated.json", "src/content/flashcardBank.generated.json"]
+              "ops/containers/proxy.conf"]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "scripts/containers").rglob("*.py")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "scripts/containers").glob("*.mjs")]
     inputs += [str(p.relative_to(ROOT)) for p in (ROOT / "backend/src/meducation_api").rglob("*.py")]
@@ -110,7 +109,7 @@ def main():
                               "--output", str(output / "postgres-load.json")], timeout=600)
         run("build-rollback-api", [sys.executable, str(ROOT / "scripts/containers/build-rollback-api.py")], timeout=1000)
         run("release-recovery", [sys.executable, str(ROOT / "scripts/containers/verify-postgres-release.py"),
-                                 "--api-image", "meducation-api:local", "--previous-api-image", "meducation-api:l5-rollback-prior",
+                                 "--small-fixture", "--api-image", "meducation-api:local", "--previous-api-image", "meducation-api:l5-rollback-prior",
                                  "--output", str(output / "release-recovery.json")], timeout=1200)
         run("postgres-browser", [sys.executable, str(ROOT / "scripts/containers/smoke-postgres-learner.py"),
                                  "--api-image", "meducation-api:local", "--frontend-image", "meducation-learner:local",

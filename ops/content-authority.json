@@ -15,7 +15,7 @@
     "quiz": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
     "flashcard": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
   },
-  "repositoryJsonRole": "cutover export/archive; stale after DB-only edits",
+  "repositoryJsonRole": "retired; no repository JSON database or runtime fallback",
   "recoveryPolicy": "protected local dump/export and two local allocation journals; off-device explicitly user-deferred",
   "identity": "explicit loopback development substitute; real hosted MFA remains pending",
   "allocationLineage": "2c1d2873-cd27-4cfc-b865-fb5aa6e30cac",
