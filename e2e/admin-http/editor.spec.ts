@@ -390,6 +390,10 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
     .click();
   await nav.getByRole('button', { name: 'Delete', exact: true }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: 'Review subject deletion' }).click();
+  await page
+    .getByRole('dialog', { name: 'Discard unsaved edits?', exact: true })
+    .getByRole('button', { name: 'Discard edits', exact: true })
+    .click();
   await confirmDraftSave(page);
   await expect
     .poll(async () => (await draft(page)).pair.quizzes.subjects.some((row: { id: string }) => row.id === subject.id))

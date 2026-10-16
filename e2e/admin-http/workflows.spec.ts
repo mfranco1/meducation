@@ -131,16 +131,12 @@ test('declining a shared subject deletion preserves hidden unsaved flashcard tex
   await expect(page.getByText('Save or discard unsaved edits in Flashcards before publishing.')).toBeVisible();
   const quizNav = await selectQuiz(page);
   await quizNav.getByRole('button', { name: 'Delete', exact: true }).first().click();
-  page.removeAllListeners('dialog');
-  let discarded = false;
-  page.on('dialog', async (dialog) => {
-    discarded = true;
-    expect(dialog.message()).toContain('unstaged flashcard drafts');
-    await dialog.dismiss();
-  });
   const review = page.getByRole('dialog', { name: 'Delete subject?' });
   await review.getByRole('button', { name: 'Review subject deletion' }).click();
-  await expect.poll(() => discarded).toBe(true);
+  const discard = page.getByRole('dialog', { name: 'Discard unsaved edits?', exact: true });
+  await expect(discard).toContainText('unsaved flashcard drafts');
+  await expect(discard.getByRole('button', { name: 'Keep editing' })).toBeFocused();
+  await discard.getByRole('button', { name: 'Keep editing' }).click();
   await expect(review).toBeVisible();
   await review.getByRole('button', { name: 'Cancel', exact: true }).click();
   await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
@@ -200,8 +196,12 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
       ],
     }),
   );
+  await add.getByRole('textbox', { name: 'Change reason' }).fill('Reviewed deck and card batch');
   await add.getByRole('button', { name: 'Preview', exact: true }).click();
   await add.getByRole('button', { name: 'Review save', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: 'Review draft save', exact: true })).toContainText(
+    'Reviewed deck and card batch',
+  );
   await confirmDraftSave(page);
   await expect(add).not.toBeVisible();
   await expect
@@ -284,12 +284,43 @@ test('cancelled quiz context changes restore picker text and preserve the unsave
   const text = JSON.stringify({ ...JSON.parse(await editor.inputValue()), name: 'Unsaved subject name' });
   await editor.fill(text);
   const before = await draft(page);
-  page.removeAllListeners('dialog');
-  page.on('dialog', (dialog) => void dialog.dismiss());
   const picker = nav.getByRole('combobox', { name: 'Subject', exact: true });
   await picker.fill('Context destination subject');
   await page.getByRole('option', { name: /Context destination subject/ }).click();
+  await page
+    .getByRole('dialog', { name: 'Discard unsaved edits?', exact: true })
+    .getByRole('button', { name: 'Keep editing' })
+    .click();
   await expect(picker).toHaveValue('Anatomía · s1');
   await expect(editor).toHaveValue(text);
+  expect((await draft(page)).draft.revision).toBe(before.draft.revision);
+});
+
+test('flashcard batch close preserves exact JSON until explicit discard and reason changes invalidate preview', async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await login(page);
+  const nav = await selectFlashcards(page);
+  const before = await draft(page);
+  await nav.getByRole('button', { name: 'Add', exact: true }).first().click();
+  const batch = page.getByRole('dialog', { name: 'Add Decks', exact: true });
+  const text = JSON.stringify({ decks: [{ name: 'Unsaved batch $x^2$' }] });
+  await batch.getByRole('textbox', { name: 'JSON', exact: true }).fill(text);
+  await batch.getByRole('button', { name: 'Preview', exact: true }).click();
+  await expect(batch.getByRole('button', { name: 'Review save', exact: true })).toBeEnabled();
+  await batch.getByRole('textbox', { name: 'Change reason', exact: true }).fill('Different captured reason');
+  await expect(batch.getByRole('button', { name: 'Review save', exact: true })).toHaveCount(0);
+  await expect(batch.getByRole('button', { name: 'Preview', exact: true })).toBeEnabled();
+  await batch.getByRole('button', { name: 'Cancel', exact: true }).click();
+  const discard = page.getByRole('dialog', { name: 'Discard unsaved edits?', exact: true });
+  await expect(discard.getByRole('button', { name: 'Keep editing', exact: true })).toBeFocused();
+  await page.screenshot({ path: testInfo.outputPath('admin-discard-390.png'), fullPage: true });
+  await page.keyboard.press('Escape');
+  await expect(batch.getByRole('textbox', { name: 'JSON', exact: true })).toHaveValue(text);
+  await batch.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await discard.getByRole('button', { name: 'Discard edits', exact: true }).click();
+  await expect(batch).not.toBeVisible();
+  expect((await draft(page)).pair).toEqual(before.pair);
   expect((await draft(page)).draft.revision).toBe(before.draft.revision);
 });

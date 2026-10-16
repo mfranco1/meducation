@@ -21,6 +21,8 @@ import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
 import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
 import { HttpQuestionBankGateway } from './data/HttpQuestionBankGateway';
+import { AdminActionCanceled } from './core/AdminActionCanceled';
+import { useAdminConfirmation } from './useAdminConfirmation';
 import { useAdminEditor } from './useAdminEditor';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 import { applyFlashcardOperations, type FlashcardAdminOperation } from './core/flashcardChangeSet';
@@ -47,6 +49,7 @@ export function AdminWorkspace({
   const [flashcardDiscardRequest, setFlashcardDiscardRequest] = useState(0);
   const [deleteReason, setDeleteReason] = useState('Remove obsolete content');
   const [deleteError, setDeleteError] = useState('');
+  const [flashcardEditVersion, setFlashcardEditVersion] = useState(0);
   const [flashcardDirty, setFlashcardDirty] = useState(false);
   const flashcardDraft = useRef(false);
   const reportFlashcardDirty = useCallback((dirty: boolean) => {
@@ -57,6 +60,7 @@ export function AdminWorkspace({
   const [bulkQuizQuery, setBulkQuizQuery] = useState<string>();
   const [recordAnchor, setRecordAnchor] = useState<HTMLElement | null>(null);
   const {
+    discardDialog,
     snapshot,
     selection,
     mode,
@@ -88,6 +92,7 @@ export function AdminWorkspace({
     browseContext,
     savePairedChange,
   } = useAdminEditor(gateway, { blocked: externalBusy });
+  const confirmation = useAdminConfirmation([editor, flashcardEditVersion, gateway.current, externalBusy]);
   const busy = editorBusy || (externalBusy ? 'Another authoring command is in progress' : undefined);
   useEffect(() => {
     onDirtyChange?.({ quizzes: editorDirty, flashcards: flashcardDirty });
@@ -139,8 +144,9 @@ export function AdminWorkspace({
         request.ids,
         snapshot.revision,
       );
-      if (staged) setDeleteRequest(undefined);
-      else setDeleteError('The deletion did not pass validation. No changes were saved.');
+      if (staged === true) setDeleteRequest(undefined);
+      else if (staged === 'canceled') setDeleteError('');
+      else setDeleteError('The deletion was not saved. Your edits are kept.');
       return;
     }
     const parentId = request.selection.id;
@@ -148,7 +154,7 @@ export function AdminWorkspace({
     try {
       if (
         flashcardDraft.current &&
-        !window.confirm('Discard the unstaged flashcard drafts and save the paired subject deletion?')
+        !(await confirmation.request('Discard unsaved flashcard drafts after saving this paired subject deletion?'))
       )
         return;
       const savedFlashcards = gateway.getFlashcardBank();
@@ -171,6 +177,10 @@ export function AdminWorkspace({
       setDeleteError('');
       setDeleteRequest(undefined);
     } catch (error) {
+      if (error instanceof AdminActionCanceled) {
+        setDeleteError('');
+        return;
+      }
       setDeleteError(error instanceof Error ? error.message : 'The paired subject deletion could not be saved.');
     }
   };
@@ -178,6 +188,8 @@ export function AdminWorkspace({
   return (
     <AppShell header={header} busy={Boolean(!snapshot && !loadError)}>
       {feedback}
+      {discardDialog}
+      {confirmation.dialog}
       {!snapshot ? (
         loadError ? (
           <Container sx={{ py: 8 }}>
@@ -214,7 +226,10 @@ export function AdminWorkspace({
               serverBank={snapshot.flashcards!}
               onSaveBank={(bank, reason) => gateway.saveFlashcards(bank, reason)}
               onDraftChange={reportFlashcardDirty}
-              onEdit={() => gateway.invalidate()}
+              onEdit={() => {
+                setFlashcardEditVersion((value) => value + 1);
+                gateway.invalidate();
+              }}
               subjects={snapshot.bank.subjects}
               onAddSubject={() => {
                 setSection('quizzes');

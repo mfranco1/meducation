@@ -1,7 +1,7 @@
 # Admin UX redesign implementation plan
 
 Date: 2026-10-16
-Status: stage 1 implemented and verified; stage 2 save/publication/history review and recovery slice implemented. Native unsaved-discard flows and the remaining stage 2 work are open; stages 3–5 remain planned.
+Status: stages 1–2 implemented and verified at their automated checkpoints. Unified workspace/batch framing, structured authoring, and integrated manual acceptance remain in stages 3–5.
 Scope: the full authenticated admin experience, beginning with the crowded header. This document proposes UI changes; it does not authorize content deletion or publication.
 
 ## Outcome
@@ -180,7 +180,7 @@ Current design documentation contains stale per-section export/file-replacement 
 - [x] Inspect workflows, UI, theme, contracts, and regression coverage.
 - [x] Record design, component ownership, sequencing, and acceptance criteria.
 - [x] **1. Header and state foundation.** Extract compact header and menus; centralize reactive dirty/recovery/busy facts; move publication/export/version controls into focused dialogs. Preserve existing editors and transport behavior. Checkpoint: every existing header capability is reachable, recovery is surfaced contextually, and exports have explicit targets.
-- [ ] **2. Shared review and recovery interactions.** Replace native save/discard/undo/reset confirmations with MUI flows; extract the gateway review/commit boundary; render server publication impact and warnings. Checkpoint: no mutation replay, stale review, hidden-draft loss, or double confirmation.
+- [x] **2. Shared review and recovery interactions.** Replace native save/discard/undo/reset confirmations with MUI flows; extract the gateway review/commit boundary; render server publication impact and warnings. Checkpoint: no mutation replay, stale review, hidden-draft loss, or double confirmation.
 - [ ] **3. Unified workspace and batch creation.** Consistent navigators, contextual Add menus, content empty states, editor action/status region, subject dialog, and shared batch flow framing. Checkpoint: both sections support the same discoverable browse/add/review/save pattern at all target widths.
 - [ ] **4. Structured authoring.** Implement exact-preserving adapters; simple entity forms first, question form second; shared rendering preview; advanced JSON retained. Checkpoint: round-trip parity and all supported optional fields/choice IDs/order/provenance survive untouched.
 - [ ] **5. Integrated acceptance and documentation.** Run regression gates, inspect visual/accessibility states, update design/product/content/testing docs, and record evidence. Move this tracker to `docs/work/done` only when implementation and required verification are complete.
@@ -273,3 +273,28 @@ Verification evidence for this continuation:
 - Passing browser cases also cover cancel/review/retry with zero writes on cancellation, uncertain reset plus expired-session reauthentication/reconciliation without replay, two-tab conflicts, fresh authentication, logout/newer typing during held saves, publication/activation/export, learner freshness, and both panels/header at 390/1048/1440px.
 - Earlier overlapping and interrupted unit/browser runs are not passes. The serial frontend run and completed browser evidence above supersede those attempts. The activation test waits for its explicit committed response before polling state.
 - No backend checks, `verify:full`, canonical-content validation, or manual assistive-technology/device acceptance is claimed for this intermediate UI slice. No authority content changed.
+
+
+## Implementation progress — discard flows, save feedback, and flashcard reasons
+
+Stage 2 continuation, implemented and verified:
+
+- Replaced remaining in-app native prompts with a shared responsive discard dialog for quiz/flashcard navigation, record replacement, batch closing, and hidden drafts during paired subject deletion. Keep editing receives initial focus; Escape/cancel preserves text. Changed text/context, shared blocking, or unmount declines a pending decision. Browser unload retains its required native protection.
+- Navigation waits for the captured decision before changing pickers/selection. Exact editor text stays mounted while the decision is pending. Batch close remains blocked during an active save.
+- Introduced a typed explicit save-cancellation outcome. Quiz status and flashcard feedback preserve text without reporting a failed request or failed validation. Real validation/request failures remain errors.
+- Added editable required change reasons to flashcard records and batches. Editing a reason invalidates prepared server/batch review; empty reasons cannot start preview/save.
+- Added regression coverage for keep/discard and focus restoration, changed-context/unmount cancellation, exact retained record/batch text, captured reasons, and browser hidden-draft decisions.
+
+No content, backend, or learner-persistence changes. The stage 2 checkpoint is complete; stages 3–5 remain open. The tracker stays ongoing.
+
+Verification evidence:
+
+- `npx vitest run --maxWorkers=1`: 99 files / 603 tests passed in a clean full run. Earlier failures from unawaited asynchronous test actions and an ambiguous status-role assertion were corrected before this run; those earlier runs are not passes.
+- `npm run lint`: passed; architecture valid (297 modules / 1,256 imports). `npm run test:architecture`: 10 passed.
+- `npm run build`: passed, including TypeScript checking and the default learner build; optional admin entry remains absent. Existing learner chunk-size advisory remains. `npm run build:admin`: passed with the optional editor entry included.
+- Admin browser suite: 28 of 29 passed in the complete run. The new batch-discard test expected a disabled Review save button after a reason change, but the existing action changes back to Preview. Corrected the assertion to require Preview and no Review save action. The targeted rerun passed on a fresh disposable PostgreSQL fixture, including 390px layout, initial focus, Escape preservation, explicit discard, unchanged database state, and invalidated reason review. No second complete all-green 29-test run is claimed.
+- The other 28 browser scenarios passed together, including paired subject deletion with explicit hidden-draft discard, declined hidden-draft preservation, canceled quiz context changes, exact content/provenance, CRUD/order/moves, undo, publication/activation/export, fresh/expired authentication, held-write text retention/logout, uncertain outcomes without replay, and 390/1048/1440px layout checks.
+- Inspected the new 390px discard screenshot: full-screen dialog text and both footer actions fit the viewport. This is visual inspection of one automated Chromium state; manual assistive-technology/device, zoom, reduced-motion and broader integrated acceptance remain stage 5 work.
+- Two browser attempts failed before tests because disposable PostgreSQL readiness/startup timed out. Docker subsequently responded; the completed run and targeted result above supersede those startup attempts. The authority database was not used or altered.
+- `npm run format:check` and `git diff --check`: passed; repeated at handoff. Changed source/test formatting checked too.
+- Learner application code is unchanged; this continuation reran the full frontend suite and both production builds. The earlier 43-scenario learner browser pass remains historical evidence, not a newly executed learner-browser run. Backend checks, canonical-content validation and `verify:full` are not claimed for this UI checkpoint.

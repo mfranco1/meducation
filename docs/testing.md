@@ -379,3 +379,5 @@ synthetic PG17/API/identity/proxy configuration stays fixture-only. Omitting tha
 option retains the existing fresh-host-assets path. Native acceptance builds and
 checks this optional image after learner work, then uses it for the full HTTP
 suite. New CI wiring still requires passing changed-input jobs.
+
+Admin discard regression coverage checks explicit keep/discard decisions, focus return, context invalidation and unmount cancellation. Browser acceptance includes hidden flashcard drafts during paired subject deletion, canceled quiz context changes, batch close cancellation, and invalidating batch preview after an edited change reason. Explicit save cancellation is tested separately from request failures.

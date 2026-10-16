@@ -1,3 +1,4 @@
+import { AdminActionCanceled } from '../core/AdminActionCanceled';
 import type { StoredFlashcardBank } from '../../content/schema/schema';
 import type { AdminChangeSet, AdminBankSnapshot } from '../core/types';
 import { previewChangeSet } from '../core/applyChangeSet';
@@ -193,8 +194,8 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
       this.pendingReview = { view, settle };
       for (const listener of this.reviewListeners) listener();
     });
-    if (decision !== true)
-      throw new Error(typeof decision === 'string' ? decision : 'Save canceled; unsaved text is kept.');
+    if (decision === false) throw new AdminActionCanceled();
+    if (typeof decision === 'string') throw new Error(decision);
     if (this.current !== captured || this.prepared !== prepared)
       throw new Error('The save review changed. Preview again; your text is kept.');
     const receipt = await this.client.mutate<{ snapshot: PairedSnapshot }>('/draft/save', {

@@ -1,3 +1,5 @@
+import { AdminActionCanceled } from './core/AdminActionCanceled';
+import { useAdminConfirmation } from './useAdminConfirmation';
 import { useEffect, useRef, useState } from 'react';
 import type { StoredFlashcardBank } from '../content/schema/schema';
 import type { ValidationIssue } from '../content/validation/validate';
@@ -25,7 +27,6 @@ export function useAdminEditor(
   gateway: AdminQuestionBankGateway,
   options: { confirm?: (message: string) => boolean; blocked?: boolean } = {},
 ) {
-  const confirmAction = options.confirm ?? ((message: string) => window.confirm(message));
   const [snapshot, setSnapshot] = useState<AdminBankSnapshot>();
   const [selection, setSelection] = useState<Selection>({ kind: 'subject' });
   const [mode, setMode] = useState<EditorMode>('single');
@@ -41,6 +42,8 @@ export function useAdminEditor(
   const [bulkTarget, setBulkTarget] = useState<BulkTarget>({ kind: 'newSubject' });
   const [busy, setBusy] = useState<string>();
   const [loadError, setLoadError] = useState<string>();
+  const confirmation = useAdminConfirmation([editor, reason, snapshot, options.blocked]);
+  const confirmAction = options.confirm ?? confirmation.request;
   const busyRef = useRef(false);
   const editVersion = useRef(0);
   const selectedQuizId =
@@ -61,6 +64,11 @@ export function useAdminEditor(
     try {
       return await action(() => editVersion.current === version);
     } catch (error) {
+      if (error instanceof AdminActionCanceled) {
+        setIssues([]);
+        setSummary(error.message);
+        return 'canceled' as const;
+      }
       setIssues([{ level: 'error', message: error instanceof Error ? error.message : `${label} failed.` }]);
       setSummary('Request failed. Your text is kept; reconcile uncertain operations before a new write.');
       return false;
@@ -108,9 +116,9 @@ export function useAdminEditor(
     return () => removeEventListener('beforeunload', beforeUnload);
   }, [editorDirty]);
 
-  const discardDraft = () => !editorDirty || confirmAction('Discard the unstaged quiz edits?');
-  const browseContext = (subjectId: string, quizId?: string) => {
-    if (busyRef.current || options.blocked || !discardDraft()) return false;
+  const discardDraft = () => confirmAction('Discard the unsaved quiz editor text to continue?');
+  const browseContext = async (subjectId: string, quizId?: string) => {
+    if (busyRef.current || options.blocked || (editorDirty && !(await discardDraft()))) return false;
     invalidateDraft();
     setSelection(
       quizId ? { kind: 'quiz', id: quizId, parentId: subjectId } : { kind: 'subject', id: subjectId || undefined },
@@ -121,8 +129,8 @@ export function useAdminEditor(
     setIssues([]);
     return true;
   };
-  const loadEntity = (next: Selection, value: unknown) => {
-    if (busyRef.current || options.blocked || !discardDraft()) return false;
+  const loadEntity = async (next: Selection, value: unknown) => {
+    if (busyRef.current || options.blocked || (editorDirty && !(await discardDraft()))) return false;
     invalidateDraft();
     const text = JSON.stringify(value, null, 2);
     setSelection(next);
@@ -190,8 +198,8 @@ export function useAdminEditor(
     setIssues([]);
     setSummary('');
   };
-  const chooseBulkTarget = (kind: BulkTarget['kind'], context?: { subjectId?: string; quizId?: string }) => {
-    if (!snapshot || busyRef.current || options.blocked || !discardDraft()) return;
+  const chooseBulkTarget = async (kind: BulkTarget['kind'], context?: { subjectId?: string; quizId?: string }) => {
+    if (!snapshot || busyRef.current || options.blocked || (editorDirty && !(await discardDraft()))) return;
     invalidateDraft();
     setMode('bulk');
     setPendingBulk(undefined);
@@ -224,8 +232,15 @@ export function useAdminEditor(
       setSummary('Choose a subject and quiz to add items.');
     }
   };
-  const chooseBulkSubject = (subjectId: string) => {
-    if (!snapshot || bulkTarget.kind === 'newSubject' || busyRef.current || options.blocked || !discardDraft()) return;
+  const chooseBulkSubject = async (subjectId: string) => {
+    if (
+      !snapshot ||
+      bulkTarget.kind === 'newSubject' ||
+      busyRef.current ||
+      options.blocked ||
+      (editorDirty && !(await discardDraft()))
+    )
+      return;
     invalidateDraft();
     setPendingBulk(undefined);
     setIssues([]);
@@ -240,14 +255,14 @@ export function useAdminEditor(
     setLoadedEditor('');
     setSummary('Choose a quiz to add items.');
   };
-  const chooseBulkQuiz = (quizId: string) => {
+  const chooseBulkQuiz = async (quizId: string) => {
     if (
       !snapshot ||
       bulkTarget.kind !== 'quiz' ||
       !bulkTarget.subjectId ||
       busyRef.current ||
       options.blocked ||
-      !discardDraft()
+      (editorDirty && !(await discardDraft()))
     )
       return;
     invalidateDraft();
@@ -268,11 +283,6 @@ export function useAdminEditor(
       `${preview.summary.creates} create, ${preview.summary.updates} update, ${preview.summary.deletes} delete, ${preview.summary.moves} move; cascade impact: ${preview.summary.cascadedQuizzes} quiz(zes), ${preview.summary.cascadedQuestions} item(s).`,
     );
     if (preview.issues.some((issue) => issue.level === 'error')) return;
-    if (
-      (preview.summary.cascadedQuizzes || preview.summary.cascadedQuestions) &&
-      !confirmAction('This change cascades to child records. Save it?')
-    )
-      return;
     if (!isCurrent()) return;
     changeSet = preview.preparedChangeSet ?? changeSet;
     const next = await gateway.apply(changeSet);
@@ -341,6 +351,11 @@ export function useAdminEditor(
       setIssues([]);
       setSummary('Paired draft saved. Saving does not publish.');
     } catch (error) {
+      if (error instanceof AdminActionCanceled) {
+        setIssues([]);
+        setSummary(error.message);
+        return false;
+      }
       setPendingBulk(undefined);
       setIssues([
         {
@@ -359,7 +374,8 @@ export function useAdminEditor(
     expectedRevision?: string,
   ) => {
     if (!snapshot || (!target.id && !ids?.length)) return false;
-    if (!discardDraft()) return false;
+    if (editorDirty && !(await discardDraft()))
+      throw new AdminActionCanceled('Deletion canceled; unsaved text is kept.');
     if (expectedRevision && expectedRevision !== snapshot.revision)
       throw new Error('The deletion review is stale. Review the current content again.');
     const targets = [...new Set(ids ?? [target.id!])];
@@ -404,8 +420,8 @@ export function useAdminEditor(
     setSummary('Paired draft saved. Saving does not publish.');
     return true;
   };
-  const showSingle = () => {
-    if (busyRef.current || options.blocked || !discardDraft()) return;
+  const showSingle = async () => {
+    if (busyRef.current || options.blocked || (editorDirty && !(await discardDraft()))) return;
     invalidateDraft();
     setMode('single');
   };
@@ -428,8 +444,11 @@ export function useAdminEditor(
 
   const savePairedChange = async (changeSet: AdminChangeSet, flashcards: StoredFlashcardBank) => {
     if (busyRef.current || options.blocked) throw new Error('Wait for the current quiz authoring command to finish.');
-    if (editorDirty && !confirmAction('Discard the current quiz editor draft and save the reviewed paired change?'))
-      throw new Error('The paired change was not saved; the quiz editor draft was kept.');
+    if (
+      editorDirty &&
+      !(await confirmAction('Discard the quiz editor text after saving the reviewed paired deletion?'))
+    )
+      throw new AdminActionCanceled('The paired change was not saved; the quiz editor draft was kept.');
     busyRef.current = true;
     setBusy('Saving paired draft');
     const version = editVersion.current;
@@ -457,6 +476,7 @@ export function useAdminEditor(
   };
 
   return {
+    discardDialog: confirmation.dialog,
     snapshot,
     selection,
     mode,

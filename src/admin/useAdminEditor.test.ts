@@ -80,7 +80,9 @@ describe('admin editor workflows', () => {
     };
     const { result } = renderHook(() => useAdminEditor(gateway));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
-    act(() => result.current.loadEntity({ kind: 'subject', id: 's1' }, bank().subjects[0]));
+    await act(async () => {
+      await result.current.loadEntity({ kind: 'subject', id: 's1' }, bank().subjects[0]);
+    });
     act(() => result.current.editRecord(JSON.stringify({ ...bank().subjects[0], name: 'First' })));
     let staging!: Promise<void>;
     act(() => {
@@ -105,7 +107,9 @@ describe('admin editor workflows', () => {
     const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
     const { result } = renderHook(() => useAdminEditor(gateway));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
-    act(() => result.current.chooseBulkTarget('newSubject'));
+    await act(async () => {
+      await result.current.chooseBulkTarget('newSubject');
+    });
     act(() =>
       result.current.editRecord(
         JSON.stringify({
@@ -135,11 +139,13 @@ describe('admin editor workflows', () => {
     const gateway = new InMemoryQuestionBankGateway(bank(), emptyFlashcardBank);
     const { result } = renderHook(() => useAdminEditor(gateway, { confirm }));
     await waitFor(() => expect(result.current.snapshot).toBeDefined());
-    act(() => result.current.loadEntity({ kind: 'question', id: 'i1', parentId: 'q1' }, bank().questions[0]));
+    await act(async () => {
+      await result.current.loadEntity({ kind: 'question', id: 'i1', parentId: 'q1' }, bank().questions[0]);
+    });
     act(() => result.current.editRecord('Unstaged draft'));
-    act(() => {
-      expect(result.current.browseContext('s1')).toBe(false);
-      result.current.chooseBulkTarget('newSubject');
+    await act(async () => {
+      expect(await result.current.browseContext('s1')).toBe(false);
+      await result.current.chooseBulkTarget('newSubject');
     });
     expect(result.current.editor).toBe('Unstaged draft');
     expect(result.current.mode).toBe('single');
@@ -147,8 +153,8 @@ describe('admin editor workflows', () => {
     window.dispatchEvent(unload);
     expect(unload.defaultPrevented).toBe(true);
     confirm.mockReturnValue(true);
-    act(() => {
-      expect(result.current.browseContext('s1', 'q1')).toBe(true);
+    await act(async () => {
+      expect(await result.current.browseContext('s1', 'q1')).toBe(true);
     });
     expect(result.current.editor).toBe('');
     expect(result.current.selectedQuiz?.id).toBe('q1');

@@ -38,7 +38,7 @@ export function AdminStatusPanel({ bank, issues, questionPaths = {}, summary, ed
                 : 'Saved draft'}
         </Typography>
         {summary && summary !== 'Load a record or add content.' && (
-          <Typography variant="body2" color="text.secondary">
+          <Typography aria-live="polite" variant="body2" color="text.secondary">
             {summary}
           </Typography>
         )}

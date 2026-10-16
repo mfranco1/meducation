@@ -1,3 +1,4 @@
+import { useAdminConfirmation } from './useAdminConfirmation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Alert,
@@ -56,6 +57,7 @@ export function FlashcardBulkAddDialog({
   bank,
   subjects,
   reason,
+  onReasonChange,
   exportContext,
   busy,
   onClose,
@@ -70,6 +72,7 @@ export function FlashcardBulkAddDialog({
   bank: StoredFlashcardBank;
   subjects: readonly Subject[];
   reason: string;
+  onReasonChange?: (value: string) => void;
   exportContext: string;
   busy: boolean;
   onClose: () => void;
@@ -104,9 +107,11 @@ export function FlashcardBulkAddDialog({
   }, [draftDirty, onDraftDirtyChange]);
   useEffect(() => () => onDraftDirtyChange(false), [onDraftDirtyChange]);
 
-  const requestClose = () => {
+  const confirmation = useAdminConfirmation([text, previewKey, busy]);
+  const requestClose = async () => {
+    if (busy) return;
+    if (draftDirty && !(await confirmation.request('Discard the unsaved flashcard batch JSON?'))) return;
     generation.current++;
-    if (draftDirty && !window.confirm('Discard the unstaged bulk JSON draft?')) return;
     onDraftDirtyChange(false);
     onClose();
   };
@@ -132,6 +137,10 @@ export function FlashcardBulkAddDialog({
 
   const previewDraft = () => {
     setPreview(undefined);
+    if (!reason.trim()) {
+      setMessage('Enter a change reason before previewing.');
+      return;
+    }
     setMessage(undefined);
     setDiagnostics([]);
     let value: unknown;
@@ -178,9 +187,23 @@ export function FlashcardBulkAddDialog({
 
   return (
     <Dialog open={open} onClose={requestClose} fullWidth maxWidth="md" aria-labelledby="flashcard-bulk-title">
+      {confirmation.dialog}
       <DialogTitle id="flashcard-bulk-title">Add {context.kind === 'deck' ? 'Cards' : 'Decks'}</DialogTitle>
       <DialogContent>
         {recovery}
+        {onReasonChange && (
+          <TextField
+            label="Change reason"
+            required
+            error={!reason.trim()}
+            helperText={!reason.trim() ? 'Enter a reason for this saved batch.' : undefined}
+            value={reason}
+            disabled={busy}
+            fullWidth
+            sx={{ my: 2 }}
+            onChange={(event) => onReasonChange(event.target.value)}
+          />
+        )}
         <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary">
             Destination · {destinationLabel}

@@ -210,3 +210,25 @@ it('keeps save-status recovery reachable inside a blocked bulk dialog without di
   expect(signIn).toHaveBeenCalledOnce();
   expect(json).toHaveValue(text);
 });
+
+it('keeps dirty record text until an explicit discard and saves the entered reason', async () => {
+  const { save } = mount();
+  chooseDeck();
+  fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
+  const text = JSON.stringify({ ...bank().cards[0], back: 'Exact newer text\n$x^2$' });
+  fireEvent.change(editor(), { target: { value: text } });
+  action('New deck');
+  const discard = screen.getByRole('dialog', { name: 'Discard unsaved edits?' });
+  fireEvent.click(within(discard).getByRole('button', { name: 'Keep editing' }));
+  await waitFor(() => expect(editor()).toHaveValue(text));
+  expect(save).not.toHaveBeenCalled();
+  fireEvent.change(screen.getByRole('textbox', { name: 'Change reason' }), {
+    target: { value: 'Preserve source formatting' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+  await waitFor(() => expect(save).toHaveBeenCalledWith(expect.anything(), 'Preserve source formatting'));
+  expect(save.mock.calls[0][0].cards[0].back).toBe('Exact newer text\n$x^2$');
+  action('New deck');
+  // After a successful save there is no unsaved record text to discard.
+  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+});

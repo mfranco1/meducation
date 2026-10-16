@@ -30,10 +30,14 @@ The quiz editor offers **Record** and **Add** modes; both sections use labelled
 record list. Flashcards browse by subject/deck, search front/back/ID, and show up
 to 25 cards per page.
 
-Bulk flows require **Preview**, followed by **Save draft**. Changing text,
+Bulk flows require **Preview**, followed by **Review save** and the final
+**Save draft** server confirmation. Flashcard record and batch Change reason
+fields are editable and required. Changing text,
 destination, reason, or server context invalidates the preview. New IDs come from
 owned server reservations; the complete valid pair saves in one transaction.
-Unsaved record text is protected when changing context or leaving the page and
+In-app context changes and batch closing use **Discard unsaved edits?** with
+**Keep editing** selected initially. Declining or invalidating the captured
+decision retains exact text. Native browser prompts protect page unload. Unsaved record text
 remains mounted across section switches. Failed writes preserve text and never
 fall back to local storage.
 
@@ -70,7 +74,7 @@ Example content-only draft for a new subject and quiz:
 }
 ```
 
-The workspace reason is recorded with the paired save. Choose **Preview**, inspect reserved IDs and validation feedback, then choose **Save draft**. The server owns durable ID reservations; the panel assigns choice labels from array order and the default subject accent. Add more quizzes as entries in `quizzes`, and more questions as entries in each quiz's `items` list. Editing the draft, changing the destination, or changing the current snapshot invalidates the preview.
+The workspace reason is recorded with the paired save. Choose **Preview**, inspect reserved IDs and validation feedback, then choose **Review save** and confirm **Save draft**. The server owns durable ID reservations; the panel assigns choice labels from array order and the default subject accent. Add more quizzes as entries in `quizzes`, and more questions as entries in each quiz's `items` list. Editing the draft, changing the destination, or changing the current snapshot invalidates the preview.
 
 The shared header provides PostgreSQL draft history and database-derived exports.
 Deletion review lists complete affected counts and pages through record identities.

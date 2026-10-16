@@ -1,3 +1,5 @@
+import { AdminActionCanceled } from './core/AdminActionCanceled';
+import { useAdminConfirmation } from './useAdminConfirmation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Autocomplete,
@@ -85,7 +87,9 @@ export function FlashcardAdminPanel({
   const [actionAnchor, setActionAnchor] = useState<HTMLElement | null>(null);
   const [editor, setEditor] = useState('');
   const editVersion = useRef(0);
-  const reason = 'Flashcard content edit';
+  const [reason, setReason] = useState('Flashcard content edit');
+  const [notice, setNotice] = useState('');
+  const lastSaveCanceled = useRef(false);
   const [issues, setIssues] = useState<string[]>([]);
   const [bulkDraftDirty, setBulkDraftDirty] = useState(false);
   const [bulkDestination, setBulkDestination] = useState<{
@@ -157,9 +161,10 @@ export function FlashcardAdminPanel({
     setBulkDestination(undefined);
     setBulkDraftDirty(false);
   }, [discardRequest]);
-  const discardDraft = () => !editorDirty || window.confirm('Discard the unstaged record edits?');
-  const changeBrowseSubject = (subjectId: string) => {
-    if (subjectId === browseSubjectId || busy || externalBusy || !discardDraft()) return;
+  const confirmation = useAdminConfirmation([editor, reason, bank, subjects, busy, externalBusy]);
+  const discardDraft = () => confirmation.request('Discard the unsaved flashcard editor text to continue?');
+  const changeBrowseSubject = async (subjectId: string) => {
+    if (subjectId === browseSubjectId || busy || externalBusy || (editorDirty && !(await discardDraft()))) return;
     setBrowseSubjectId(subjectId);
     setBrowseDeckId('');
     setCardQuery('');
@@ -168,8 +173,8 @@ export function FlashcardAdminPanel({
     setEditor('');
     setLoadedEditor('');
   };
-  const changeBrowseDeck = (deckId: string) => {
-    if (deckId === browseDeckId || busy || externalBusy || !discardDraft()) return;
+  const changeBrowseDeck = async (deckId: string) => {
+    if (deckId === browseDeckId || busy || externalBusy || (editorDirty && !(await discardDraft()))) return;
     setBrowseDeckId(deckId);
     setCardQuery('');
     setCardPage(0);
@@ -177,10 +182,10 @@ export function FlashcardAdminPanel({
     setEditor('');
     setLoadedEditor('');
   };
-  const load = (next: Selected, value: unknown) => {
+  const load = async (next: Selected, value: unknown) => {
     if (busy || externalBusy) return;
     if (next?.id && next.kind === selection?.kind && next.id === selection.id) return;
-    if (!discardDraft()) return;
+    if (editorDirty && !(await discardDraft())) return;
     setSelection(next);
     const text = JSON.stringify(value, null, 2);
     setEditor(text);
@@ -189,12 +194,24 @@ export function FlashcardAdminPanel({
   };
   const commitOperations = (batch: FlashcardAdminOperation[]) => {
     if (busy || externalBusy) return;
+    if (!reason.trim()) {
+      setIssues(['Enter a change reason before saving.']);
+      return;
+    }
+    lastSaveCanceled.current = false;
+    setNotice('');
     try {
       const candidate = applyFlashcardOperations(bank, subjects, batch);
       setBusy(true);
       return onSaveBank(candidate, reason)
         .then(install)
         .catch((error) => {
+          if (error instanceof AdminActionCanceled) {
+            lastSaveCanceled.current = true;
+            setIssues([]);
+            setNotice(error.message);
+            return undefined;
+          }
           setIssues([error instanceof Error ? error.message : 'Unable to save. Unsaved text is kept.']);
           return undefined;
         })
@@ -274,8 +291,8 @@ export function FlashcardAdminPanel({
     }
     return undefined;
   };
-  const openBulk = (context: FlashcardBulkAddContext, label: string) => {
-    if (busy || externalBusy || !discardDraft()) return;
+  const openBulk = async (context: FlashcardBulkAddContext, label: string) => {
+    if (busy || externalBusy || (editorDirty && !(await discardDraft()))) return;
     if (editorDirty) {
       setSelection(undefined);
       setEditor('');
@@ -359,7 +376,7 @@ export function FlashcardAdminPanel({
       setDeleteError('The content changed. Cancel and review the deletion again.');
       return;
     }
-    if (!discardDraft()) return;
+    if (editorDirty && !(await discardDraft())) return;
     const ids = deleteRequest.ids ?? [deleteRequest.selection.id!];
     const batch = ids.map((id) =>
       deleteRequest.selection.kind === 'deck'
@@ -367,7 +384,7 @@ export function FlashcardAdminPanel({
         : { op: 'card.delete' as const, id },
     );
     if (!(await commitOperations(batch))) {
-      setDeleteError('The deletion failed validation. No changes were saved.');
+      setDeleteError(lastSaveCanceled.current ? '' : 'The deletion was not saved. Review the listed issues.');
       return;
     }
     setDeleteRequest(undefined);
@@ -696,6 +713,22 @@ export function FlashcardAdminPanel({
             fullWidth
             InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
           />
+          <TextField
+            label="Change reason"
+            required
+            error={!reason.trim()}
+            helperText={!reason.trim() ? 'Enter a reason for this saved change.' : undefined}
+            value={reason}
+            onChange={(event) => {
+              onEdit?.();
+              setReason(event.target.value);
+            }}
+          />
+          {notice && (
+            <Alert severity="info" role="status">
+              {notice}
+            </Alert>
+          )}
           {issues.length > 0 && (
             <Alert severity="error">
               <AdminIssues issues={issues.map((message) => ({ level: 'error', message }))} />
@@ -773,6 +806,7 @@ export function FlashcardAdminPanel({
           </Stack>
         </Stack>
       </Paper>
+      {confirmation.dialog}
       <AdminDeleteDialog
         recovery={recovery}
         commitLabel={reviewBeforeSave ? 'Review' : 'Save'}
@@ -794,6 +828,10 @@ export function FlashcardAdminPanel({
           bank={bank}
           subjects={subjects}
           reason={reason}
+          onReasonChange={(value) => {
+            onEdit?.();
+            setReason(value);
+          }}
           exportContext={exportContext}
           busy={busy || externalBusy}
           onClose={() => setBulkDestination(undefined)}

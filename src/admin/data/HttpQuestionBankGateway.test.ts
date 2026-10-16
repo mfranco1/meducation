@@ -1,3 +1,4 @@
+import { AdminActionCanceled } from '../core/AdminActionCanceled';
 import { describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
 import { emptyFlashcardBank, storedQuestionBank } from '../../test/contentFixtures';
@@ -47,6 +48,7 @@ describe('prepared HTTP save reviews', () => {
     await expect(gateway.undo()).rejects.toThrow('current authoring command');
     await expect(client.runCommand(async () => undefined)).rejects.toThrow('current authoring command');
     gateway.cancelSaveReview();
+    expect(await outcome).toBeInstanceOf(AdminActionCanceled);
     expect((await outcome).message).toContain('canceled');
     expect(fetcher).toHaveBeenCalledTimes(1);
     expect(client.commandBusy).toBe(false);
