@@ -1,3 +1,4 @@
+import { adoptReservedDraftId } from './core/recordDraft';
 import { AdminActionCanceled } from './core/AdminActionCanceled';
 import { useAdminConfirmation } from './useAdminConfirmation';
 import { useEffect, useRef, useState } from 'react';
@@ -277,6 +278,8 @@ export function useAdminEditor(
   const stageSingle = async (isCurrent: () => boolean) => {
     let changeSet = buildSingleChangeSet();
     if (!changeSet) return;
+    const initialOperation = changeSet.operations[0];
+    const provisionalId = initialOperation && 'value' in initialOperation ? initialOperation.value.id : undefined;
     const preview = await gateway.preview(changeSet);
     if (!isCurrent()) return;
     setIssues(preview.issues);
@@ -293,11 +296,13 @@ export function useAdminEditor(
       const createdId = firstOperation && 'value' in firstOperation ? firstOperation.value.id : undefined;
       if (createdId) setSelection((previous) => ({ ...previous, id: createdId }));
     }
-    if (isCurrent()) {
-      const operation = changeSet.operations[0];
-      const text = operation && 'value' in operation ? JSON.stringify(operation.value, null, 2) : editor;
-      setEditor(text);
-      setLoadedEditor(text);
+    const operation = changeSet.operations[0];
+    const savedText = operation && 'value' in operation ? JSON.stringify(operation.value, null, 2) : editor;
+    setLoadedEditor(savedText);
+    if (isCurrent()) setEditor(savedText);
+    else if (!selection.id && provisionalId && operation && 'value' in operation) {
+      const reservedId = operation.value.id;
+      setEditor((latest) => adoptReservedDraftId(latest, provisionalId, reservedId));
     }
     setIssues([]);
     setSummary('Paired draft saved. Saving does not publish.');
@@ -347,11 +352,15 @@ export function useAdminEditor(
     if (!pendingBulk) return;
     try {
       const next = await gateway.apply(pendingBulk.changeSet);
-      if (isCurrent()) setLoadedEditor(editor);
+      setLoadedEditor(editor);
       setSnapshot(next);
       setPendingBulk(undefined);
       setIssues([]);
-      setSummary('Paired draft saved. Saving does not publish.');
+      setSummary(
+        isCurrent()
+          ? 'Paired draft saved. Saving does not publish.'
+          : 'The captured batch was saved. Newer text is kept. Review or remove already saved entries before another batch save.',
+      );
     } catch (error) {
       if (error instanceof AdminActionCanceled) {
         setIssues([]);

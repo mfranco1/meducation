@@ -29,6 +29,7 @@ for (const candidate of contentCases()) {
     await nav.getByRole('combobox', { name: 'Quiz', exact: true }).click();
     await page.getByRole('listbox').getByRole('option').first().click();
     await nav.getByRole('button', { name: new RegExp(`^1\\. ${item.id}\\b`) }).click();
+    await page.getByRole('region', { name: 'Quiz editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
     const editor = page
       .getByRole('region', { name: 'Quiz editor' })
       .getByRole('textbox', { name: 'JSON', exact: true });

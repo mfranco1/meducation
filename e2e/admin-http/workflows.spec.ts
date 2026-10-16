@@ -119,6 +119,7 @@ test('declining a shared subject deletion preserves hidden unsaved flashcard tex
     .filter({ has: page.locator('.MuiListItemText-root') })
     .first()
     .click();
+  await page.getByRole('region', { name: 'Flashcard editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
   const editor = page
     .getByRole('region', { name: 'Flashcard editor' })
     .getByRole('textbox', { name: 'JSON', exact: true });
@@ -218,6 +219,7 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
   const first = created.cards.find((row) => row.front === 'CRUD first')!;
   await nav.getByRole('button', { name: /CRUD second/ }).click();
   const editor = page.getByRole('region', { name: 'Flashcard editor' });
+  await editor.getByRole('tab', { name: 'JSON', exact: true }).click();
   await editor
     .getByRole('textbox', { name: 'JSON', exact: true })
     .fill(JSON.stringify({ ...second, back: 'Updated exact back\n' }));
@@ -276,6 +278,7 @@ test('cancelled quiz context changes restore picker text and preserve the unsave
     .getByRole('button', { name: 'Add subject', exact: true })
     .click();
   const subjectDialog = page.getByRole('dialog', { name: 'Manage subjects', exact: true });
+  await subjectDialog.getByRole('tab', { name: 'JSON', exact: true }).click();
   const subjectEditor = subjectDialog.getByRole('textbox', { name: 'JSON', exact: true });
   await expect(subjectEditor).not.toHaveValue('');
   await subjectEditor.fill(
@@ -294,6 +297,7 @@ test('cancelled quiz context changes restore picker text and preserve the unsave
   const nav = await selectQuiz(page);
   await nav.getByRole('button', { name: 'Quiz actions', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Edit quiz', exact: true }).click();
+  await page.getByRole('region', { name: 'Quiz editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
   const editor = page.getByRole('region', { name: 'Quiz editor' }).getByRole('textbox', { name: 'JSON', exact: true });
   const text = JSON.stringify({ ...JSON.parse(await editor.inputValue()), name: 'Unsaved quiz name' });
   await editor.fill(text);
@@ -350,6 +354,7 @@ test('shared subject editing stays in Flashcards and preserves both hidden recor
     .filter({ has: page.locator('.MuiListItemText-root') })
     .first()
     .click();
+  await page.getByRole('region', { name: 'Quiz editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
   const quizEditor = page
     .getByRole('region', { name: 'Quiz editor' })
     .getByRole('textbox', { name: 'JSON', exact: true });
@@ -362,6 +367,7 @@ test('shared subject editing stays in Flashcards and preserves both hidden recor
     .filter({ has: page.locator('.MuiListItemText-root') })
     .first()
     .click();
+  await page.getByRole('region', { name: 'Flashcard editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
   const flashEditor = page
     .getByRole('region', { name: 'Flashcard editor' })
     .getByRole('textbox', { name: 'JSON', exact: true });
@@ -374,6 +380,7 @@ test('shared subject editing stays in Flashcards and preserves both hidden recor
   const before = await draft(page);
   await flashNav.getByRole('button', { name: 'Manage subjects…', exact: true }).click();
   const subjectDialog = page.getByRole('dialog', { name: 'Manage subjects', exact: true });
+  await subjectDialog.getByRole('tab', { name: 'JSON', exact: true }).click();
   const subjectEditor = subjectDialog.getByRole('textbox', { name: 'JSON', exact: true });
   await expect(subjectEditor).not.toHaveValue('');
   const original = JSON.parse(await subjectEditor.inputValue());
@@ -401,3 +408,79 @@ test('shared subject editing stays in Flashcards and preserves both hidden recor
   await expect.poll(async () => (await draft(page)).pair).toEqual(before.pair);
   await expect(quizEditor).toHaveValue(quizText);
 });
+
+for (const kind of ['subject', 'quiz', 'deck', 'card', 'question'] as const) {
+  test(`structured ${kind} editing preserves untouched fields and exact source through save and undo`, async ({
+    page,
+  }, testInfo) => {
+    await login(page);
+    const before = await draft(page);
+    const flash = kind === 'deck' || kind === 'card';
+    const nav = flash ? await selectFlashcards(page) : await selectQuiz(page);
+    let editor = page.getByRole('region', { name: flash ? 'Flashcard editor' : 'Quiz editor', exact: true });
+    if (kind === 'subject') {
+      await nav.getByRole('button', { name: 'Manage subjects…', exact: true }).click();
+      editor = page.getByRole('dialog', { name: 'Manage subjects', exact: true });
+    } else if (kind === 'quiz' || kind === 'deck') {
+      await nav.getByRole('button', { name: kind === 'quiz' ? 'Quiz actions' : 'Deck actions', exact: true }).click();
+      await page.getByRole('menuitem', { name: kind === 'quiz' ? 'Edit quiz' : 'Edit deck', exact: true }).click();
+    } else {
+      await nav
+        .getByRole('button')
+        .filter({ has: page.locator('.MuiListItemText-root') })
+        .first()
+        .click();
+    }
+    const field = kind === 'question' ? 'Question stem' : kind === 'card' ? 'Front' : 'Name';
+    await expect(editor.getByRole('textbox', { name: field, exact: true })).toBeVisible();
+    await editor.getByRole('tab', { name: 'JSON', exact: true }).click();
+    const raw = await editor.getByRole('textbox', { name: 'JSON', exact: true }).inputValue();
+    const original = JSON.parse(raw);
+    await editor.getByRole('tab', { name: 'Preview', exact: true }).click();
+    await editor.getByRole('tab', { name: 'JSON', exact: true }).click();
+    await expect(editor.getByRole('textbox', { name: 'JSON', exact: true })).toHaveValue(raw);
+    await editor.getByRole('tab', { name: 'Edit', exact: true }).click();
+    expect((await draft(page)).draft.revision).toBe(before.draft.revision);
+    await expect(editor.getByRole('textbox', { name: 'ID', exact: true })).toHaveAttribute('readonly', '');
+    if (kind === 'question')
+      await expect(editor.getByRole('textbox', { name: 'Source answer', exact: true })).toHaveAttribute('readonly', '');
+    const value = `Exact ${kind}  $x^2$\n<b>source</b>  `;
+    await editor.getByRole('textbox', { name: field, exact: true }).fill(value);
+    await editor.getByRole('tab', { name: 'JSON', exact: true }).click();
+    const expected = { ...original, [kind === 'question' ? 'stem' : kind === 'card' ? 'front' : 'name']: value };
+    expect(JSON.parse(await editor.getByRole('textbox', { name: 'JSON', exact: true }).inputValue())).toEqual(expected);
+    await editor.getByRole('tab', { name: 'Preview', exact: true }).click();
+    if (kind === 'question') await expect(editor.locator('.katex').first()).toBeVisible();
+    if (kind === 'question') {
+      await page.setViewportSize({ width: 390, height: 900 });
+      await editor.screenshot({ path: testInfo.outputPath('structured-question-preview-390.png') });
+      await page.setViewportSize({ width: 1440, height: 1000 });
+      await editor.getByRole('tab', { name: 'Edit', exact: true }).click();
+      await editor.screenshot({ path: testInfo.outputPath('structured-question-edit-1440.png') });
+    }
+    await editor.getByRole('button', { name: 'Review save', exact: true }).click();
+    await confirmDraftSave(page);
+    const savedRecord = async () => {
+      const pair = (await draft(page)).pair;
+      const records =
+        kind === 'subject'
+          ? pair.quizzes.subjects
+          : kind === 'quiz'
+            ? pair.quizzes.quizzes
+            : kind === 'question'
+              ? pair.quizzes.questions
+              : kind === 'deck'
+                ? pair.flashcards.decks
+                : pair.flashcards.cards;
+      return records.find((record) => record.id === original.id);
+    };
+    await expect.poll(savedRecord).toEqual(expected);
+    await page.getByRole('button', { name: 'More', exact: true }).click();
+    await page.getByRole('menuitem', { name: 'Undo last saved change…', exact: true }).click();
+    await page
+      .getByRole('dialog', { name: 'Undo last saved change', exact: true })
+      .getByRole('button', { name: 'Undo saved change', exact: true })
+      .click();
+    await expect.poll(async () => (await draft(page)).pair).toEqual(before.pair);
+  });
+}

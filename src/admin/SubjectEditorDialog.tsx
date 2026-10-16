@@ -15,6 +15,7 @@ import {
 } from '@mui/material';
 import type { AdminQuestionBankGateway } from './data/AdminQuestionBankGateway';
 import { useAdminEditor } from './useAdminEditor';
+import { AdminRecordEditor } from './components/AdminRecordEditor';
 import { AdminIssues } from './components/AdminIssues';
 
 /** Subjects are shared by both banks; this editor never switches or clears either workspace. */
@@ -85,15 +86,14 @@ export function SubjectEditorDialog({
             <Typography variant="subtitle2">
               {state.selection.id ? `Edit subject · ${state.selection.id}` : 'New subject'}
             </Typography>
-            <TextField
-              label="JSON"
-              value={state.editor}
-              multiline
-              minRows={6}
-              fullWidth
-              onChange={(event) => {
+            <AdminRecordEditor
+              kind="subject"
+              existing={Boolean(state.selection.id)}
+              expectedId={state.selection.id}
+              text={state.editor}
+              onChange={(value) => {
                 editVersion.current++;
-                state.editRecord(event.target.value);
+                state.editRecord(value);
               }}
             />
             <TextField

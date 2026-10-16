@@ -61,6 +61,7 @@ export function FlashcardBulkAddDialog({
   subjects,
   reason,
   onReasonChange,
+  onEdit,
   exportContext,
   busy,
   onClose,
@@ -76,6 +77,7 @@ export function FlashcardBulkAddDialog({
   subjects: readonly Subject[];
   reason: string;
   onReasonChange?: (value: string) => void;
+  onEdit?: () => void;
   exportContext: string;
   busy: boolean;
   onClose: () => void;
@@ -129,6 +131,7 @@ export function FlashcardBulkAddDialog({
     try {
       const contents = await file.text();
       if (generation.current !== token) return;
+      onEdit?.();
       setText(contents);
       setPreview(undefined);
       setDiagnostics([]);
@@ -242,6 +245,7 @@ export function FlashcardBulkAddDialog({
             value={text}
             onChange={(event) => {
               generation.current++;
+              onEdit?.();
               setText(event.target.value);
               setDiagnostics([]);
               setMessage(undefined);

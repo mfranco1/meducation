@@ -201,3 +201,91 @@ describe('admin editor workflows', () => {
     expect(gateway.appliedOperations()).toHaveLength(2);
   });
 });
+
+it('compares newer text with the committed record even when the author types the original source again', async () => {
+  const source = bank();
+  const delegate = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
+  let finish!: () => void;
+  const hold = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  const apply = vi.fn(async (changeSet: AdminChangeSet) => {
+    await hold;
+    return delegate.apply(changeSet);
+  });
+  const gateway: AdminQuestionBankGateway = {
+    load: () => delegate.load(),
+    preview: (changeSet) => delegate.preview(changeSet),
+    apply,
+    applyCoordinated: (changes, cards) => delegate.applyCoordinated(changes, cards),
+  };
+  const { result } = renderHook(() => useAdminEditor(gateway));
+  await waitFor(() => expect(result.current.snapshot).toBeDefined());
+  await act(async () => {
+    await result.current.loadEntity({ kind: 'subject', id: 's1' }, source.subjects[0]);
+  });
+  const original = result.current.editor;
+  act(() => result.current.editRecord(JSON.stringify({ ...source.subjects[0], name: 'Captured saved value' })));
+  let saving!: ReturnType<typeof result.current.stageSingle>;
+  act(() => {
+    saving = result.current.stageSingle();
+  });
+  await waitFor(() => expect(apply).toHaveBeenCalledOnce());
+  act(() => result.current.editRecord(original));
+  await act(async () => {
+    finish();
+    await saving;
+  });
+  expect(result.current.editor).toBe(original);
+  expect(result.current.editorDirty).toBe(true);
+  expect(result.current.snapshot!.bank.subjects[0].name).toBe('Captured saved value');
+});
+
+it('adopts a reserved create ID while preserving newer authored subject text', async () => {
+  const source = bank();
+  const delegate = new InMemoryQuestionBankGateway(source, emptyFlashcardBank);
+  let finish!: () => void;
+  const hold = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  const apply = vi.fn(async (changeSet: AdminChangeSet) => {
+    await hold;
+    return delegate.apply(changeSet);
+  });
+  const gateway: AdminQuestionBankGateway = {
+    load: () => delegate.load(),
+    apply,
+    applyCoordinated: (changes, cards) => delegate.applyCoordinated(changes, cards),
+    preview: async (changeSet) => {
+      const prepared = structuredClone(changeSet);
+      const first = prepared.operations[0];
+      if (first.op === 'subject.create') first.value.id = 's91';
+      return { ...(await delegate.preview(prepared)), preparedChangeSet: prepared };
+    },
+  };
+  const { result } = renderHook(() => useAdminEditor(gateway));
+  await waitFor(() => expect(result.current.snapshot).toBeDefined());
+  act(() => {
+    result.current.loadNew('subject');
+  });
+  const template = JSON.parse(result.current.editor);
+  act(() => result.current.editRecord(JSON.stringify({ ...template, name: 'Captured new subject' })));
+  let saving!: ReturnType<typeof result.current.stageSingle>;
+  act(() => {
+    saving = result.current.stageSingle();
+  });
+  await waitFor(() => expect(apply).toHaveBeenCalledOnce());
+  act(() => result.current.editRecord(JSON.stringify({ ...template, name: 'Newer exact subject $x^2$\n' })));
+  await act(async () => {
+    finish();
+    await saving;
+  });
+  expect(JSON.parse(result.current.editor)).toEqual({
+    ...template,
+    id: 's91',
+    name: 'Newer exact subject $x^2$\n',
+  });
+  expect(result.current.selection.id).toBe('s91');
+  expect(result.current.editorDirty).toBe(true);
+  expect(result.current.snapshot!.bank.subjects.at(-1)!.name).toBe('Captured new subject');
+});

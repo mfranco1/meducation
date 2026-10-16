@@ -23,6 +23,7 @@ async function question(page: Page) {
   await nav.getByRole('combobox', { name: 'Quiz', exact: true }).click();
   await page.getByRole('listbox').getByRole('option').first().click();
   await nav.getByRole('button', { name: /1\. i1/ }).click();
+  await page.getByRole('region', { name: 'Quiz editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
   return page.getByRole('region', { name: 'Quiz editor' }).getByRole('textbox', { name: 'JSON', exact: true });
 }
 async function draft(page: Page) {
@@ -50,6 +51,7 @@ test('edits both banks, reloads saved drafts, publishes, activates and exports t
   await page.getByRole('listbox').getByRole('option').first().click();
   await page.getByRole('button', { name: 'Deck actions', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Edit deck', exact: true }).click();
+  await page.getByRole('region', { name: 'Flashcard editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
   const flash = page.getByRole('textbox', { name: 'JSON', exact: true });
   const deck = JSON.parse(await flash.inputValue());
   await flash.fill(JSON.stringify({ ...deck, name: 'HTTP paired deck' }, null, 2));
@@ -382,6 +384,7 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
   expect(savedCard.deckId).toBe(savedDeck.id);
   expect(savedCard.back).toBe('Exact grouped back\n');
   await page.getByRole('navigation', { name: 'Flashcards in selected deck' }).getByRole('button').first().click();
+  await page.getByRole('region', { name: 'Flashcard editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
   await page
     .getByRole('textbox', { name: 'JSON', exact: true })
     .fill(JSON.stringify({ ...savedCard, back: 'Hidden unsaved card text' }));

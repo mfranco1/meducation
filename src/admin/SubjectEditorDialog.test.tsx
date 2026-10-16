@@ -16,8 +16,9 @@ it('edits a shared subject without changing other records and closes only after 
       onClose={close}
     />,
   );
+  await waitFor(() => expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('tab', { name: 'JSON' }));
   const editor = screen.getByRole('textbox', { name: 'JSON' });
-  await waitFor(() => expect(editor).not.toHaveValue(''));
   const original = JSON.parse((editor as HTMLInputElement).value);
   fireEvent.change(editor, { target: { value: JSON.stringify({ ...original, name: 'Exact shared subject $x^2$' }) } });
   fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
@@ -30,8 +31,9 @@ it('keeps exact invalid subject JSON on a declined close without saving', async 
   const gateway = new InMemoryQuestionBankGateway(structuredClone(storedQuestionBank), emptyFlashcardBank);
   const close = vi.fn();
   render(<SubjectEditorDialog gateway={gateway} blocked={false} onDirtyChange={() => {}} onClose={close} />);
+  await waitFor(() => expect(screen.getByRole('textbox', { name: 'Name' })).toBeInTheDocument());
+  fireEvent.click(screen.getByRole('tab', { name: 'JSON' }));
   const editor = screen.getByRole('textbox', { name: 'JSON' });
-  await waitFor(() => expect(editor).not.toHaveValue(''));
   fireEvent.change(editor, { target: { value: '{ exact invalid source\n' } });
   fireEvent.click(screen.getByRole('button', { name: 'Close' }));
   const discard = await screen.findByRole('dialog', { name: 'Discard unsaved edits?' });
@@ -50,6 +52,11 @@ it('waits for command admission before initializing a subject editor', async () 
   expect(editor).toHaveValue('');
   expect(screen.getByRole('button', { name: 'Review save' })).toBeDisabled();
   view.rerender(<SubjectEditorDialog {...props} blocked={false} />);
-  await waitFor(() => expect(editor).not.toHaveValue(''));
-  expect(JSON.parse((editor as HTMLInputElement).value)).toEqual(storedQuestionBank.subjects[0]);
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue(storedQuestionBank.subjects[0].name),
+  );
+  fireEvent.click(screen.getByRole('tab', { name: 'JSON' }));
+  expect(JSON.parse((screen.getByRole('textbox', { name: 'JSON' }) as HTMLInputElement).value)).toEqual(
+    storedQuestionBank.subjects[0],
+  );
 });

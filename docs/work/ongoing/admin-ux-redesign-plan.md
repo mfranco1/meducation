@@ -1,7 +1,7 @@
 # Admin UX redesign implementation plan
 
 Date: 2026-10-16
-Status: stages 1–3 implemented and verified at their automated checkpoints. Structured authoring and integrated/manual acceptance remain in stages 4–5.
+Status: stages 1–4 implemented and verified at their automated checkpoints, with full-run browser timing limitations recorded below. Integrated/manual acceptance remains in stage 5.
 Scope: the full authenticated admin experience, beginning with the crowded header. This document proposes UI changes; it does not authorize content deletion or publication.
 
 ## Outcome
@@ -182,7 +182,7 @@ Current design documentation contains stale per-section export/file-replacement 
 - [x] **1. Header and state foundation.** Extract compact header and menus; centralize reactive dirty/recovery/busy facts; move publication/export/version controls into focused dialogs. Preserve existing editors and transport behavior. Checkpoint: every existing header capability is reachable, recovery is surfaced contextually, and exports have explicit targets.
 - [x] **2. Shared review and recovery interactions.** Replace native save/discard/undo/reset confirmations with MUI flows; extract the gateway review/commit boundary; render server publication impact and warnings. Checkpoint: no mutation replay, stale review, hidden-draft loss, or double confirmation.
 - [x] **3. Unified workspace and batch creation.** Consistent navigators, contextual Add menus, content empty states, editor action/status region, subject dialog, and shared batch flow framing. Checkpoint: both sections support the same discoverable browse/add/review/save pattern at all target widths.
-- [ ] **4. Structured authoring.** Implement exact-preserving adapters; simple entity forms first, question form second; shared rendering preview; advanced JSON retained. Checkpoint: round-trip parity and all supported optional fields/choice IDs/order/provenance survive untouched.
+- [x] **4. Structured authoring.** Implement exact-preserving adapters; simple entity forms first, question form second; shared rendering preview; advanced JSON retained. Checkpoint: round-trip parity and all supported optional fields/choice IDs/order/provenance survive untouched.
 - [ ] **5. Integrated acceptance and documentation.** Run regression gates, inspect visual/accessibility states, update design/product/content/testing docs, and record evidence. Move this tracker to `docs/work/done` only when implementation and required verification are complete.
 
 Each checkpoint is a small coherent reviewable change. Do not present stage 1 as completion of the full redesign.
@@ -326,3 +326,31 @@ Verification evidence:
 - Final targeted browser rerun: 10 passed on a fresh disposable PostgreSQL fixture. This covers the isolated flashcard deletion/undo (9s), all three keyboard/layout widths, both-panel geometry at 390/1048/1440px, canceled context navigation, the new cleared-JSON regression, and shared-subject editing with accessible dirty descriptions and exact hidden quiz/flashcard text retention. The last case verifies only the subject was saved, then Undo restores the exact paired content while both unsaved editors remain intact. Across the complete attempt and targeted run, all 31 current scenarios have passing evidence; no all-green complete 31-test run is claimed.
 - Inspected desktop two-column workspace, mobile stacked workspace, and the 390px shared-subject dialog screenshots. Controls and dialog footer fit; the empty editor no longer displays a blank multiline field. Broader manual assistive-technology/device, 200% zoom and integrated acceptance remain stage 5 work.
 - Canonical content, stable IDs/provenance contracts, backend endpoints and learner progress are unchanged. Browser writes use disposable fixtures. No new backend infrastructure, canonical-content validation, backend suite, new standalone learner-browser run, or `verify:full` pass is claimed for this UI checkpoint. Earlier learner-browser evidence remains historical; full learner unit coverage and both production builds were rerun here.
+
+
+## Implementation progress — stage 4 structured authoring
+
+Stage 4 implemented and verified:
+
+- Added pure JSON-draft adapters for subjects, quizzes, decks, cards and questions. No-op edits retain the complete raw JSON text; intentional field edits preserve untouched values, optional presence, ordered choices and original answer provenance.
+- Added Edit / Preview / JSON views to all record editors, including shared subjects. Unsupported/invalid form structures stay editable as exact JSON; view changes do not call the edit callback. Preview uses the shared rich/restricted content renderer.
+- Structured forms expose required fields, read-only IDs/relationships, optional-presence controls, question answer-review/provenance/classification fields, and explicit choice-text/add/remove/move actions. Existing source answers remain read-only; verified answers remain distinct.
+- JSON remains available for advanced source corrections and established reviewed relationship moves. Full schema validation and the existing server review/reservation/one-attempt commit lifecycle remain authoritative.
+
+The stage-4 checkpoint is complete. Stage 5 remains open for broader integrated/manual acceptance. No canonical content or backend contract changed.
+
+Additional stage-4 corrections:
+
+- Committed single-record receipts always update the saved baseline, so typing the original value during a held save remains correctly dirty. A committed create adopts its reserved ID in newer valid text only when that text still has the captured provisional ID; invalid or deliberately changed JSON is kept exact.
+- Flashcard navigation remains blocked during a save while record text stays editable. A batch receipt keeps newer batch text and requires another deliberate review, with guidance about removing already saved entries. Quiz batches use the same captured-save feedback.
+- Browser acceptance caught single-line name inputs converting pasted newlines to spaces. Name fields now use auto-sizing textareas and preserve exact line breaks. All five structured browser cases verify unchanged view switching, exact single-field saved records and paired Undo.
+- Updated architecture, product, design, content-management and regression documentation for the final implementation. IDs/relationships remain read-only in forms; existing supported advanced moves and deliberate source corrections retain explicit review.
+
+Final verification evidence:
+
+- Full frontend suite: 102 files / 630 tests passed. After the final name-field, difficulty-option and captured-batch feedback changes, all admin tests passed again: 25 files / 115 tests. An earlier reserved-create test used an invalid compact-ID fixture; it was corrected to `s91` before the full passing run.
+- Final lint/architecture (307 modules / 1,297 imports), typecheck/default learner build, optional admin build, changed-source formatting, repository formatting and diff checks passed. Architecture regression tests: 10 passed. Existing build chunk-size advisories remain.
+- First complete admin browser run: 33 of 36 passed; the three new name-field tests exposed the newline conversion defect before any save. The corrected complete rerun passed 35 of 36. Subject, quiz, card and question form saves and all 31 existing scenarios passed together. Deck-form editing preserved exact draft text, but its save request was still pending when the overall 60-second test budget expired; no timeout or product behavior was changed to hide that result.
+- The isolated deck-form rerun on a fresh disposable PostgreSQL fixture passed in 14.4 seconds with the same timeout, including exact multiline name, server save comparison and paired Undo. All 36 current browser scenarios have passing evidence across these runs; no all-green complete 36-test run is claimed.
+- Inspected the 390px question Preview and 1440px question Edit screenshots. Content/actions fit their panels; rich math renders, restricted choice source stays restricted, original/verified/runtime answers remain distinct, and optional sections are collapsed accessibly. This is Chromium visual inspection, not manual assistive-technology/device certification.
+- No blocking implementation finding remains at this checkpoint. Stage 5 must retain the complete-run timing limitation and broader manual keyboard/assistive-technology/device, zoom and reduced-motion acceptance. This tracker stays ongoing. No backend suite, new standalone learner-browser run, canonical-content validation or `verify:full` pass is claimed. Learner code, authority content, schemas, backend endpoints and progress persistence are unchanged; all browser writes used disposable fixtures.

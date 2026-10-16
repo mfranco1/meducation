@@ -1,4 +1,6 @@
+import { adoptReservedDraftId } from './core/recordDraft';
 import { AdminActionCanceled } from './core/AdminActionCanceled';
+import { AdminRecordEditor } from './components/AdminRecordEditor';
 import { AdminParentActions } from './components/AdminParentActions';
 import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from './components/AdminEditorFrame';
 import { useAdminConfirmation } from './useAdminConfirmation';
@@ -95,6 +97,7 @@ export function FlashcardAdminPanel({
   const [notice, setNotice] = useState('');
   const lastSaveCanceled = useRef(false);
   const [issues, setIssues] = useState<string[]>([]);
+  const bulkEditVersion = useRef(0);
   const [bulkDraftDirty, setBulkDraftDirty] = useState(false);
   const [bulkDestination, setBulkDestination] = useState<{
     context: FlashcardBulkAddContext;
@@ -253,11 +256,14 @@ export function FlashcardAdminPanel({
       snapshot.exportContext !== exportContext
     )
       return 'The workspace changed after preview. Preview the batch again.';
+    const version = bulkEditVersion.current;
     try {
       let candidate = applyFlashcardOperations(bank, subjects, batch);
       setBusy(true);
       candidate = await onSaveBank(candidate, reason);
       setBank(candidate);
+      if (bulkEditVersion.current !== version)
+        return 'The captured batch was saved. Newer text is kept. Review or remove already saved entries before another batch save.';
       setIssues([]);
       setSelection(undefined);
       setEditor('');
@@ -329,6 +335,7 @@ export function FlashcardAdminPanel({
       value,
     } as FlashcardAdminOperation;
     const version = editVersion.current;
+    const provisionalId = record.id as string;
     const staged = commitOperation(op);
     const candidate = staged instanceof Promise ? await staged : staged;
     if (!candidate) return;
@@ -336,10 +343,9 @@ export function FlashcardAdminPanel({
     const text = JSON.stringify(actual, null, 2);
     Object.assign(record, actual);
     setSelection({ kind: selection.kind, id: record.id as string });
-    if (editVersion.current === version) {
-      setEditor(text);
-      setLoadedEditor(text);
-    }
+    setLoadedEditor(text);
+    if (editVersion.current === version) setEditor(text);
+    else if (!selection.id) setEditor((latest) => adoptReservedDraftId(latest, provisionalId, record.id as string));
     if (selection.kind === 'deck') {
       setBrowseSubjectId(record.subjectId as string);
       setBrowseDeckId(record.id as string);
@@ -440,8 +446,7 @@ export function FlashcardAdminPanel({
   const siblingIndex = siblingRows.findIndex((row) => row.id === selection?.id);
   return (
     <Stack
-      component="fieldset"
-      disabled={busy || externalBusy}
+      component="div"
       sx={{ border: 0, p: 0, m: 0, minWidth: 0, width: '100%' }}
       direction={{ xs: 'column', lg: 'row' }}
       spacing={2}
@@ -453,7 +458,12 @@ export function FlashcardAdminPanel({
         variant="outlined"
         sx={{ ...adminNavigatorLayout, p: 2 }}
       >
-        <Stack spacing={1}>
+        <Stack
+          component="fieldset"
+          disabled={busy || externalBusy}
+          spacing={1}
+          sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
+        >
           <Autocomplete
             inputValue={subjectQuery ?? subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''}
             onInputChange={(_, value, reason) => {
@@ -717,21 +727,16 @@ export function FlashcardAdminPanel({
             </AdminEditorEmpty>
           ) : (
             <>
-              <TextField
-                label="JSON"
-                slotProps={{ inputLabel: { shrink: true } }}
-                sx={{ mt: 1 }}
-                value={editor}
-                onChange={(event) => {
+              <AdminRecordEditor
+                kind={selection.kind}
+                existing={Boolean(selection.id)}
+                expectedId={selection.id}
+                text={editor}
+                onChange={(value) => {
                   editVersion.current++;
                   onEdit?.();
-                  setEditor(event.target.value);
+                  setEditor(value);
                 }}
-                multiline
-                minRows={14}
-                maxRows={24}
-                fullWidth
-                InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
               />
               <TextField
                 label="Change reason"
@@ -853,8 +858,13 @@ export function FlashcardAdminPanel({
           subjects={subjects}
           reason={reason}
           onReasonChange={(value) => {
+            bulkEditVersion.current++;
             onEdit?.();
             setReason(value);
+          }}
+          onEdit={() => {
+            bulkEditVersion.current++;
+            onEdit?.();
           }}
           exportContext={exportContext}
           busy={busy || externalBusy}

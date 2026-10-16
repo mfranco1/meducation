@@ -34,7 +34,11 @@ function action(name: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Record actions' }));
   fireEvent.click(screen.getByRole('menuitem', { name }));
 }
-const editor = () => screen.getByRole('textbox', { name: 'JSON' });
+const editor = () => {
+  const tab = screen.queryByRole('tab', { name: 'JSON' });
+  if (tab) fireEvent.click(tab);
+  return screen.getByRole('textbox', { name: 'JSON' });
+};
 function edit(value: unknown) {
   fireEvent.change(editor(), { target: { value: JSON.stringify(value) } });
 }
@@ -237,4 +241,54 @@ it('keeps dirty record text until an explicit discard and saves the entered reas
   action('New deck');
   // After a successful save there is no unsaved record text to discard.
   await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+});
+
+it('keeps a newer form draft editable during a held create and adopts only the reserved ID', async () => {
+  let finish!: (value: StoredFlashcardBank) => void;
+  const save = vi.fn(
+    () =>
+      new Promise<StoredFlashcardBank>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  mount(save);
+  chooseSubject();
+  action('New deck');
+  fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Captured name' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+  await waitFor(() => expect(save).toHaveBeenCalledOnce());
+  expect(screen.getByRole('textbox', { name: 'Name' })).not.toBeDisabled();
+  fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Newer exact $x^2$ name' } });
+  finish({ ...bank(), decks: [...bank().decks, { id: 'd-reserved', subjectId: 's1', name: 'Captured name' }] });
+  await waitFor(() => expect(screen.getByRole('textbox', { name: 'ID' })).toHaveValue('d-reserved'));
+  expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Newer exact $x^2$ name');
+  expect(screen.getByText('Unsaved edits')).toBeVisible();
+  expect(save).toHaveBeenCalledOnce();
+});
+
+it('keeps newer batch JSON after a captured batch commits without replaying it', async () => {
+  let finish!: (value: StoredFlashcardBank) => void;
+  const save = vi.fn(
+    () =>
+      new Promise<StoredFlashcardBank>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  mount(save);
+  chooseSubject();
+  fireEvent.click(
+    within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: 'Add decks' }),
+  );
+  const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
+  const json = within(dialog).getByRole('textbox', { name: 'JSON' });
+  fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Captured batch' }] }) } });
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Save draft' }));
+  await waitFor(() => expect(save).toHaveBeenCalledOnce());
+  const newer = JSON.stringify({ decks: [{ name: 'Newer exact batch\n' }] });
+  fireEvent.change(json, { target: { value: newer } });
+  finish({ ...bank(), decks: [...bank().decks, { id: 'd-reserved', subjectId: 's1', name: 'Captured batch' }] });
+  await waitFor(() => expect(within(dialog).getByText(/captured batch was saved/)).toBeVisible());
+  expect(json).toHaveValue(newer);
+  expect(save).toHaveBeenCalledOnce();
 });

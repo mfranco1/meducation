@@ -17,6 +17,7 @@ import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
 import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from './components/AdminEditorFrame';
 import { AdminBatchHeader } from './components/AdminBatchHeader';
+import { AdminRecordEditor } from './components/AdminRecordEditor';
 import { SubjectEditorDialog } from './SubjectEditorDialog';
 import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
@@ -383,23 +384,29 @@ export function AdminWorkspace({
                     onChange={(event) => editReason(event.target.value)}
                     fullWidth
                   />
-                  <TextField
-                    label="JSON"
-                    slotProps={{ inputLabel: { shrink: true } }}
-                    sx={{ mt: 1 }}
-                    value={editor}
-                    onChange={(event) => editRecord(event.target.value)}
-                    multiline
-                    minRows={16}
-                    maxRows={24}
-                    fullWidth
-                    InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
-                    placeholder={
-                      mode === 'single'
-                        ? 'Select an entity or create a template.'
-                        : 'Edit subject, quiz, and item content.'
-                    }
-                  />
+                  {mode === 'single' ? (
+                    <AdminRecordEditor
+                      kind={selection.kind}
+                      existing={Boolean(selection.id)}
+                      expectedId={selection.id}
+                      text={editor}
+                      onChange={editRecord}
+                    />
+                  ) : (
+                    <TextField
+                      label="JSON"
+                      slotProps={{ inputLabel: { shrink: true } }}
+                      sx={{ mt: 1 }}
+                      value={editor}
+                      onChange={(event) => editRecord(event.target.value)}
+                      multiline
+                      minRows={16}
+                      maxRows={24}
+                      fullWidth
+                      InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
+                      placeholder="Edit subject, quiz, and item content."
+                    />
+                  )}
                   <AdminEditorActions dirty={editorDirty} busy={Boolean(busy)}>
                     <Button
                       variant="contained"
