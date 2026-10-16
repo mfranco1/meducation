@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Alert,
   Box,
@@ -50,6 +50,7 @@ function flashcardBulkPreviewKey(
 
 export function FlashcardBulkAddDialog({
   open,
+  recovery,
   context,
   destinationLabel,
   bank,
@@ -63,6 +64,7 @@ export function FlashcardBulkAddDialog({
   commitLabel = 'Save draft',
 }: {
   open: boolean;
+  recovery?: ReactNode;
   context: FlashcardBulkAddContext;
   destinationLabel: string;
   bank: StoredFlashcardBank;
@@ -178,6 +180,7 @@ export function FlashcardBulkAddDialog({
     <Dialog open={open} onClose={requestClose} fullWidth maxWidth="md" aria-labelledby="flashcard-bulk-title">
       <DialogTitle id="flashcard-bulk-title">Add {context.kind === 'deck' ? 'Cards' : 'Decks'}</DialogTitle>
       <DialogContent>
+        {recovery}
         <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2" color="text.secondary">
             Destination · {destinationLabel}

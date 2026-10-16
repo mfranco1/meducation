@@ -1,5 +1,5 @@
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
+import { confirmDraftSave, expect, test } from './fixtures';
 
 async function login(page: Page) {
   await page.goto('/admin.html');
@@ -37,8 +37,9 @@ test('edits both banks, reloads saved drafts, publishes, activates and exports t
   await editor.fill(JSON.stringify({ ...item, stem: 'HTTP paired saved stem' }, null, 2));
   await page
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
+  await confirmDraftSave(page);
   await expect.poll(async () => (await draft(page)).pair.quizzes.questions[0].stem).toBe('HTTP paired saved stem');
   const learner = await page.request.get('/api/v1/quizzes/q1/questions');
   expect((await learner.json()).questions[0].stem).toBe(original.pair.quizzes.questions[0].stem);
@@ -51,7 +52,8 @@ test('edits both banks, reloads saved drafts, publishes, activates and exports t
   const flash = page.getByRole('textbox', { name: 'JSON', exact: true });
   const deck = JSON.parse(await flash.inputValue());
   await flash.fill(JSON.stringify({ ...deck, name: 'HTTP paired deck' }, null, 2));
-  await page.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await page.getByRole('button', { name: 'Review save', exact: true }).click();
+  await confirmDraftSave(page);
   await expect.poll(async () => (await draft(page)).pair.flashcards.decks[0].name).toBe('HTTP paired deck');
   await page.reload();
   await page.getByRole('button', { name: 'Review & publish', exact: true }).click();
@@ -65,7 +67,11 @@ test('edits both banks, reloads saved drafts, publishes, activates and exports t
   await page.getByLabel('Published version', { exact: true }).selectOption(original.publication.releaseId);
   await page.getByRole('button', { name: 'Use this published version…' }).click();
   await page.getByRole('button', { name: 'Review activation' }).click();
+  const activated = page.waitForResponse(
+    (response) => response.url().endsWith('/activate') && response.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: 'Confirm activation' }).click();
+  expect((await activated).status()).toBe(200);
   await expect.poll(async () => (await draft(page)).publication.releaseId).toBe(original.publication.releaseId);
   expect((await draft(page)).pair.quizzes.questions[0].stem).toBe('HTTP paired saved stem');
   await page.getByRole('button', { name: 'More', exact: true }).click();
@@ -86,7 +92,7 @@ test('keeps text across expiry and reauthentication, and never automatically res
   await page.request.post('/fixture/expire');
   await page
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
   await expect(editor).toHaveValue(text);
   await expect(page.getByText(/session expired/).first()).toBeVisible();
@@ -113,8 +119,9 @@ test('reconciles a lost commit response and rejects another tab stale save witho
   });
   await page
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
+  await confirmDraftSave(page);
   await expect(page.getByRole('button', { name: 'Check save status', exact: true })).toBeEnabled();
   await page.getByRole('button', { name: 'Check save status', exact: true }).click();
   await expect(page.getByText(/operation committed/)).toBeVisible();
@@ -123,14 +130,22 @@ test('reconciles a lost commit response and rejects another tab stale save witho
   second.on('dialog', (dialog) => void dialog.accept());
   await second
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
   await expect(second.getByText(/draft or publication changed/).first()).toBeVisible();
   expect(await otherEditor.inputValue()).toContain('Stale second tab');
   expect((await draft(page)).pair.quizzes.questions[0].stem).toBe('Lost response saved stem');
   await second.getByRole('button', { name: 'More', exact: true }).click();
   await second.getByRole('menuitem', { name: 'Reset draft to published version…' }).click();
+  await second
+    .getByRole('dialog', { name: 'Reset draft to published version', exact: true })
+    .getByRole('button', { name: 'Reset draft', exact: true })
+    .click();
   await expect(second.getByText(/draft or publication changed/).first()).toBeVisible();
+  await second
+    .getByRole('dialog', { name: 'Reset draft to published version', exact: true })
+    .getByRole('button', { name: 'Cancel', exact: true })
+    .click();
   expect(await otherEditor.inputValue()).toContain('Stale second tab');
   await second.close();
 });
@@ -146,7 +161,7 @@ for (const width of [390, 1048, 1440])
     await expect(editor).toBeFocused();
     const save = page
       .getByRole('region', { name: 'Quiz editor' })
-      .getByRole('button', { name: 'Save draft', exact: true });
+      .getByRole('button', { name: 'Review save', exact: true });
     await expect
       .poll(() => save.evaluate((element) => getComputedStyle(element).backgroundColor))
       .toBe('rgb(185, 81, 27)');
@@ -179,7 +194,7 @@ test('invalidates a reserved bulk preview when text changes without saving it', 
   await editor.fill(JSON.stringify(candidate));
   await page.getByRole('region', { name: 'Quiz editor' }).getByRole('button', { name: 'Preview', exact: true }).click();
   await expect(
-    page.getByRole('region', { name: 'Quiz editor' }).getByRole('button', { name: 'Save draft', exact: true }),
+    page.getByRole('region', { name: 'Quiz editor' }).getByRole('button', { name: 'Review save', exact: true }),
   ).toBeVisible();
   candidate.items[0].stem = 'Changed after preview';
   await editor.fill(JSON.stringify(candidate));
@@ -228,8 +243,9 @@ test('successful fresh step-up preserves text and still rejects a draft changed 
   await other.fill(JSON.stringify({ ...original, stem: 'Other tab committed before step-up' }, null, 2));
   await second
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
+  await confirmDraftSave(second);
   await expect
     .poll(async () => (await draft(page)).pair.quizzes.questions[0].stem)
     .toBe('Other tab committed before step-up');
@@ -243,7 +259,7 @@ test('successful fresh step-up preserves text and still rejects a draft changed 
   expect((await draft(page)).publication.sequence).toBe(before.publication.sequence);
   await page
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
   await expect(page.getByText(/draft or publication changed/).first()).toBeVisible();
   await expect(editor).toHaveValue(pending);
@@ -272,8 +288,9 @@ test('logout wins before an in-flight save reaches the API and keeps unsaved tex
   });
   await page
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
+  await confirmDraftSave(page);
   await ready;
   await page.getByRole('button', { name: 'Account', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Sign out', exact: true }).click();
@@ -315,8 +332,9 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
   await page.getByRole('region', { name: 'Quiz editor' }).getByRole('button', { name: 'Preview', exact: true }).click();
   await page
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
+  await confirmDraftSave(page);
   await expect
     .poll(async () =>
       (await draft(page)).pair.quizzes.subjects.some((row: { name: string }) => row.name === 'HTTP grouped subject'),
@@ -346,8 +364,14 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
     }),
   );
   await add.getByRole('button', { name: 'Preview', exact: true }).click();
-  await add.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await add.getByRole('button', { name: 'Review save', exact: true }).click();
+  await confirmDraftSave(page);
   await expect(add).not.toBeVisible();
+  await expect
+    .poll(async () =>
+      (await draft(page)).pair.flashcards.decks.some((row: { name: string }) => row.name === 'Reserved bulk deck'),
+    )
+    .toBe(true);
   const paired = (await draft(page)).pair;
   const savedDeck = paired.flashcards.decks.find((row: { name: string }) => row.name === 'Reserved bulk deck');
   const savedCard = paired.flashcards.cards.find((row: { front: string }) => row.front === 'Exact grouped front $x^2$');
@@ -365,7 +389,8 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
     .getByRole('option', { name: new RegExp('HTTP grouped subject') })
     .click();
   await nav.getByRole('button', { name: 'Delete', exact: true }).first().click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Save subject deletion' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Review subject deletion' }).click();
+  await confirmDraftSave(page);
   await expect
     .poll(async () => (await draft(page)).pair.quizzes.subjects.some((row: { id: string }) => row.id === subject.id))
     .toBe(false);
@@ -373,6 +398,10 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
   expect(deleted.pair.flashcards.decks.some((row: { id: string }) => row.id === savedDeck.id)).toBe(false);
   await page.getByRole('button', { name: 'More', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Undo last saved change…' }).click();
+  await page
+    .getByRole('dialog', { name: 'Undo last saved change', exact: true })
+    .getByRole('button', { name: 'Undo saved change', exact: true })
+    .click();
   await expect
     .poll(async () => (await draft(page)).pair.flashcards.cards.some((row: { id: string }) => row.id === savedCard.id))
     .toBe(true);
@@ -403,8 +432,9 @@ test('keeps newer text typed while a draft save is in flight', async ({ page }) 
   );
   await page
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
+  await confirmDraftSave(page);
   await ready;
   const text = JSON.stringify({ ...item, stem: 'Newer text during draft save' });
   await editor.fill(text);
@@ -414,4 +444,75 @@ test('keeps newer text typed while a draft save is in flight', async ({ page }) 
   expect((await saved).status()).toBe(200);
   await expect.poll(async () => (await draft(page)).pair.quizzes.questions[0].stem).toBe('Captured saved stem');
   await expect(editor).toHaveValue(text);
+});
+
+test('canceling server save review preserves text and requires fresh explicit confirmation', async ({ page }) => {
+  await login(page);
+  const editor = await question(page);
+  const before = await draft(page);
+  const item = JSON.parse(await editor.inputValue());
+  const text = JSON.stringify({ ...item, stem: 'Canceled save review keeps $x^2$\nsource text' }, null, 2);
+  await editor.fill(text);
+  let writes = 0;
+  page.on('request', (request) => {
+    if (request.url().endsWith('/api/admin/draft/save')) writes++;
+  });
+  const trigger = page
+    .getByRole('region', { name: 'Quiz editor' })
+    .getByRole('button', { name: 'Review save', exact: true });
+  await trigger.click();
+  const review = page.getByRole('dialog', { name: 'Review draft save', exact: true });
+  await expect(review.getByRole('button', { name: 'Keep editing', exact: true })).toBeFocused();
+  await expect(review.getByLabel('Server change summary')).toContainText('Questions');
+  await review.getByRole('button', { name: 'Keep editing', exact: true }).click();
+  await expect(review).not.toBeVisible();
+  await expect(editor).toHaveValue(text);
+  expect((await draft(page)).draft.revision).toBe(before.draft.revision);
+  expect(writes).toBe(0);
+  await trigger.click();
+  await confirmDraftSave(page);
+  await expect.poll(async () => (await draft(page)).pair.quizzes.questions[0].stem).toBe(JSON.parse(text).stem);
+  expect(writes).toBe(1);
+});
+
+test('uncertain reset can close its review and reconcile without losing editor text or retrying', async ({ page }) => {
+  await login(page);
+  const editor = await question(page);
+  const text = JSON.stringify({
+    ...JSON.parse(await editor.inputValue()),
+    stem: 'Unsaved text kept through uncertain reset',
+  });
+  await editor.fill(text);
+  let attempts = 0;
+  let aborted!: () => void;
+  const responseLost = new Promise<void>((resolve) => {
+    aborted = resolve;
+  });
+  await page.route('**/api/admin/draft/reset', async (route) => {
+    attempts++;
+    await route.fetch();
+    await route.abort('failed');
+    aborted();
+  });
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Reset draft to published version…' }).click();
+  const review = page.getByRole('dialog', { name: 'Reset draft to published version', exact: true });
+  await review.getByRole('button', { name: 'Reset draft', exact: true }).click();
+  await responseLost;
+  await expect(review.getByRole('button', { name: 'Cancel', exact: true })).toBeEnabled();
+  await expect(review.getByRole('button', { name: 'Reset draft', exact: true })).toBeDisabled();
+  await review.getByRole('button', { name: 'Cancel', exact: true }).click();
+  await expect(review).not.toBeVisible();
+  await page.request.post('/fixture/expire');
+  await page.getByRole('button', { name: 'Check save status', exact: true }).click();
+  const signIn = page.getByRole('button', { name: 'Sign in to continue', exact: true });
+  await expect(signIn).toBeEnabled();
+  const opened = page.waitForEvent('popup');
+  await signIn.click();
+  const popup = await opened;
+  await expect.poll(() => popup.isClosed()).toBe(true);
+  await page.getByRole('button', { name: 'Check save status', exact: true }).click();
+  await expect(page.getByText(/operation committed/)).toBeVisible();
+  await expect(editor).toHaveValue(text);
+  expect(attempts).toBe(1);
 });

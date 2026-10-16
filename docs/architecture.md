@@ -226,11 +226,16 @@ creation-intent bindings and immutable history with a bounded Undo stack.
 [Paired-service contracts](L4-paired-editor-services.md) document exact replay,
 freshness, stale-base handling and request-driven publication visibility.
 
-`src/admin/AdminApp.tsx` selects an isolated JSON development entry or the HTTP
-entry; HTTP production builds exclude canonical banks. `PairedHttpClient` owns
-session/CSRF, one-attempt writes and explicit uncertain-operation reconciliation.
+`src/admin/AdminApp.tsx` lazily selects the HTTP editor or its authentication
+completion surface; editor builds exclude canonical banks. `PairedHttpClient` owns
+session/CSRF, one-attempt writes, explicit uncertain-operation reconciliation, and
+synchronous shared command admission for header and editor operations.
 `HttpQuestionBankGateway` adapts pure edit helpers to paired server snapshots,
-reservations and validation; it owns no local durable history. `AdminWorkspace`
+reservations and validation; it owns no local durable history. It exposes a captured
+prepared-save review with explicit confirm/cancel methods instead of opening browser
+dialogs. Review identity, context, reason and fingerprint remain enforced in data;
+MUI save/publication/history dialogs and readable impact presentation live in admin
+components. Authentication may proceed during a write without replaying it. `AdminWorkspace`
 and the existing panels retain browsing/text while shared server Undo/reset and
 publication controls operate on one paired context. Reserved parents in migration
 `0005_reserved_parents` permit atomic grouped creates with owned same-context IDs.

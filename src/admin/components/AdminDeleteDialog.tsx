@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
 import { deletionReview, type DeletionTarget } from '../core/deletionReview';
@@ -12,6 +12,7 @@ export interface DeleteRequest {
 
 export function AdminDeleteDialog({
   request,
+  recovery,
   bank,
   flashcardBank,
   error,
@@ -22,6 +23,7 @@ export function AdminDeleteDialog({
   onConfirm,
 }: {
   request?: DeleteRequest;
+  recovery?: ReactNode;
   bank: StoredQuestionBank;
   flashcardBank: StoredFlashcardBank;
   error?: string;
@@ -56,6 +58,7 @@ export function AdminDeleteDialog({
     >
       <DialogTitle id="admin-delete-title">Delete {action}?</DialogTitle>
       <DialogContent>
+        {recovery}
         <Stack spacing={1.5}>
           <Typography>
             {request?.label}

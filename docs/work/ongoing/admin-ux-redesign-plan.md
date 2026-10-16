@@ -1,7 +1,7 @@
 # Admin UX redesign implementation plan
 
 Date: 2026-10-16
-Status: first stage-1 header/dialog slice implemented and verified; shared busy admission remains open. Stages 2–5 are not implemented.
+Status: stage 1 implemented and verified; stage 2 save/publication/history review and recovery slice implemented. Native unsaved-discard flows and the remaining stage 2 work are open; stages 3–5 remain planned.
 Scope: the full authenticated admin experience, beginning with the crowded header. This document proposes UI changes; it does not authorize content deletion or publication.
 
 ## Outcome
@@ -179,7 +179,7 @@ Current design documentation contains stale per-section export/file-replacement 
 
 - [x] Inspect workflows, UI, theme, contracts, and regression coverage.
 - [x] Record design, component ownership, sequencing, and acceptance criteria.
-- [ ] **1. Header and state foundation.** Extract compact header and menus; centralize reactive dirty/recovery/busy facts; move publication/export/version controls into focused dialogs. Preserve existing editors and transport behavior. Checkpoint: every existing header capability is reachable, recovery is surfaced contextually, and exports have explicit targets.
+- [x] **1. Header and state foundation.** Extract compact header and menus; centralize reactive dirty/recovery/busy facts; move publication/export/version controls into focused dialogs. Preserve existing editors and transport behavior. Checkpoint: every existing header capability is reachable, recovery is surfaced contextually, and exports have explicit targets.
 - [ ] **2. Shared review and recovery interactions.** Replace native save/discard/undo/reset confirmations with MUI flows; extract the gateway review/commit boundary; render server publication impact and warnings. Checkpoint: no mutation replay, stale review, hidden-draft loss, or double confirmation.
 - [ ] **3. Unified workspace and batch creation.** Consistent navigators, contextual Add menus, content empty states, editor action/status region, subject dialog, and shared batch flow framing. Checkpoint: both sections support the same discoverable browse/add/review/save pattern at all target widths.
 - [ ] **4. Structured authoring.** Implement exact-preserving adapters; simple entity forms first, question form second; shared rendering preview; advanced JSON retained. Checkpoint: round-trip parity and all supported optional fields/choice IDs/order/provenance survive untouched.
@@ -245,3 +245,31 @@ Verification evidence for this slice:
 - `git diff --check`: passed; repeated after this evidence update. Source and browser-test formatting checked at handoff.
 
 Initial simultaneous browser/unit/build execution encountered timeouts under load and was interrupted; those incomplete runs are not passes. The final unit and learner browser results above are sequential reruns. Backend checks and `verify:full` are not claimed: no API/schema/transport contract changed, and this is an intermediate UI slice. Manual assistive-technology/device acceptance and the remaining redesign checkpoints remain open.
+
+## Implementation progress — shared admission and prepared save review
+
+Continuation scope: finish the shared busy foundation and implement the save/publication/history review portion of stage 2. Native unsaved-discard guards and editable reasons for flashcard saves remain follow-up work; stage 2 is not complete.
+
+- Added synchronous command admission in `PairedHttpClient`, covering each HTTP editor preview, reservation, review, and commit. Header operations use the same gate. Account actions remain available during an editor write and never replay content mutations. Reconciliation alone can admit a command with an uncertain receipt.
+- Both editors receive shared blocking state; browsing guards and write actions respect it while JSON text can still retain newer typing during an in-flight save. Flashcard text edits now invalidate prepared paired reviews too.
+- Removed `window.confirm` from `HttpQuestionBankGateway`. The gateway exposes a captured prepared-save review and explicit confirm/cancel methods. Confirmation is bound to the live review object, captured context, candidate, reason, and fingerprint; invalidation cancels a displayed review and rejects late preview responses. The command gate stays held while review is pending.
+- Added responsive MUI save review with initial focus on Keep editing. Editor/batch/deletion preparation actions say Review save/Review deletion; the final Save draft action occurs in the server review dialog. Existing complete local cascade inventories remain available before server review.
+- Added readable server impact counts for subjects/quizzes/questions/decks/cards, numeric warning counts, expandable affected IDs, and truthful Showing N of M disclosure for capped lists. Save, publication, and activation use the same presentation.
+- Replaced native Undo/reset confirmations with focused MUI history dialogs, captured context, paired-scope explanations, retained-history/unsaved-text guidance, and stale/busy rejection.
+- Added regression coverage for cancellation, review identity, duplicate confirmation, late previews, complete-command admission, uncertain writes, initial focus, capped IDs, and explicit browser save confirmation.
+
+Canonical content and backend endpoints are unchanged; all browser mutations use disposable PostgreSQL fixtures. Stage 1's shared busy foundation is now complete. Stage 2 remains open for native unsaved-discard replacement, cancellation/status feedback, editable flashcard save reasons, and broader accessibility acceptance. This tracker remains ongoing.
+
+- Recovery/sign-in actions are available inside blocked batch, deletion, and history dialogs. Expired/fresh authentication requirements block new writes until an explicit successful session refresh. Reauthentication invalidates prepared reviews without retrying mutations.
+- Authentication completion immediately invalidates save/publication/history reviews. If a header request is still running, only a session refresh is queued afterward; no content mutation is queued or replayed.
+- Nested save review explicitly focuses Keep editing after its opening transition, so a parent batch/deletion dialog cannot retain focus.
+
+Verification evidence for this continuation:
+
+- Full frontend suite, run serially with `npx vitest run --maxWorkers=1`: 98 files / 600 tests passed. This includes the unchanged learner navigation test that timed out in an earlier interrupted run.
+- Final lint/architecture, typecheck, enabled admin production build, formatting and diff checks passed. Architecture valid: 294 modules / 1,242 imports. Architecture regression tests: 10 passed.
+- Learner production build/typecheck and browser suite: passed; 43 Chromium scenarios on disposable PostgreSQL. The existing learner chunk-size advisory remains. Subsequent changes remain within the optional admin implementation and admin browser tests.
+- Admin browser suite: 26 of 28 scenarios passed in the complete run. Both failures were test timing assumptions: after explicit confirmation, a parent batch dialog can be hidden by the closing server-review dialog before the save completes. The grouped-create and deck/card CRUD tests now wait for the expected saved database records. Their targeted rerun on a fresh disposable PostgreSQL fixture passed both scenarios, covering reserved IDs, exact text/provenance, ordering, cross-deck moves, deletion and undo. A second all-green complete 28-test run is not claimed.
+- Passing browser cases also cover cancel/review/retry with zero writes on cancellation, uncertain reset plus expired-session reauthentication/reconciliation without replay, two-tab conflicts, fresh authentication, logout/newer typing during held saves, publication/activation/export, learner freshness, and both panels/header at 390/1048/1440px.
+- Earlier overlapping and interrupted unit/browser runs are not passes. The serial frontend run and completed browser evidence above supersede those attempts. The activation test waits for its explicit committed response before polling state.
+- No backend checks, `verify:full`, canonical-content validation, or manual assistive-technology/device acceptance is claimed for this intermediate UI slice. No authority content changed.

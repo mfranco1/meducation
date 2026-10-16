@@ -66,3 +66,44 @@ it('bounds a stalled write and preserves its uncertain receipt for reconciliatio
   expect(fetcher).toHaveBeenCalledTimes(1);
   expect((await client.reconcile()).committed).toBe(true);
 });
+
+it('admits a whole command before its first await and releases after failure', async () => {
+  const client = new PairedHttpClient(vi.fn<typeof fetch>());
+  const activity: boolean[] = [];
+  client.subscribe(() => activity.push(client.commandBusy));
+  let finish!: () => void;
+  const first = client.runCommand(
+    () =>
+      new Promise<void>((resolve) => {
+        finish = resolve;
+      }),
+  );
+  expect(client.commandBusy).toBe(true);
+  await expect(client.runCommand(async () => undefined)).rejects.toThrow('current authoring command');
+  finish();
+  await first;
+  await expect(
+    client.runCommand(async () => {
+      throw new Error('Preview failed');
+    }),
+  ).rejects.toThrow('Preview failed');
+  expect(client.commandBusy).toBe(false);
+  expect(activity).toEqual([true, false, true, false]);
+});
+
+it('surfaces authentication requirements until a fresh session is explicitly established', async () => {
+  const fetcher = vi
+    .fn<typeof fetch>()
+    .mockResolvedValueOnce(new Response('{}', { status: 403 }))
+    .mockResolvedValueOnce(ok({ authenticated: true, fresh: false, csrfToken: 'old' }))
+    .mockResolvedValueOnce(ok({ authenticated: true, fresh: true, csrfToken: 'new' }));
+  const client = new PairedHttpClient(fetcher);
+  await expect(client.post('/publish/preview', {})).rejects.toBeInstanceOf(AdminHttpError);
+  expect(client.authenticationRequired).toBe(true);
+  await expect(client.runCommand(async () => undefined)).rejects.toThrow('Sign in');
+  await client.refreshSession();
+  expect(client.authenticationRequired).toBe(true);
+  await client.refreshSession();
+  expect(client.authenticationRequired).toBe(false);
+  expect(fetcher).toHaveBeenCalledTimes(3);
+});

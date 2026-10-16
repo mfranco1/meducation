@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import type { PairedSnapshot } from '../../src/admin/data/PairedHttpClient';
-import { expect, test } from './fixtures';
+import { confirmDraftSave, expect, test } from './fixtures';
 
 async function login(page: Page) {
   await page.goto('/admin.html');
@@ -51,7 +51,8 @@ test('selected quiz deletion can be cancelled and one server undo restores the e
     }),
   );
   await editor.getByRole('button', { name: 'Preview', exact: true }).click();
-  await editor.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await editor.getByRole('button', { name: 'Review save', exact: true }).click();
+  await confirmDraftSave(page);
   await expect
     .poll(async () => (await draft(page)).pair.quizzes.questions.some((row) => row.stem === 'Batch deletion second'))
     .toBe(true);
@@ -70,11 +71,16 @@ test('selected quiz deletion can be cancelled and one server undo restores the e
   expect((await draft(page)).draft.revision).toBe(before.draft.revision);
   await expect(rows).toHaveCount(count);
   await nav.getByRole('button', { name: 'Delete selected…' }).click();
-  await review.getByRole('button', { name: 'Save selected items deletion' }).click();
+  await review.getByRole('button', { name: 'Review selected items deletion' }).click();
+  await confirmDraftSave(page);
   await expect(rows).toHaveCount(1);
   expect((await draft(page)).publication).toEqual(before.publication);
   await page.getByRole('button', { name: 'More', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Undo last saved change…' }).click();
+  await page
+    .getByRole('dialog', { name: 'Undo last saved change', exact: true })
+    .getByRole('button', { name: 'Undo saved change', exact: true })
+    .click();
   await expect(rows).toHaveCount(count);
   expect((await draft(page)).pair).toEqual(before.pair);
 });
@@ -91,11 +97,16 @@ test('selected flashcard deletion saves to PostgreSQL and one server undo restor
   await nav.getByRole('button', { name: 'Delete selected…' }).click();
   const review = page.getByRole('dialog', { name: 'Delete selected cards?' });
   await expect(review).toContainText(`${count} cards`);
-  await review.getByRole('button', { name: 'Save selected cards deletion' }).click();
+  await review.getByRole('button', { name: 'Review selected cards deletion' }).click();
+  await confirmDraftSave(page);
   await expect(rows).toHaveCount(0);
   expect((await draft(page)).publication).toEqual(before.publication);
   await page.getByRole('button', { name: 'More', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Undo last saved change…' }).click();
+  await page
+    .getByRole('dialog', { name: 'Undo last saved change', exact: true })
+    .getByRole('button', { name: 'Undo saved change', exact: true })
+    .click();
   await expect(rows).toHaveCount(count);
   expect((await draft(page)).pair).toEqual(before.pair);
 });
@@ -128,7 +139,7 @@ test('declining a shared subject deletion preserves hidden unsaved flashcard tex
     await dialog.dismiss();
   });
   const review = page.getByRole('dialog', { name: 'Delete subject?' });
-  await review.getByRole('button', { name: 'Save subject deletion' }).click();
+  await review.getByRole('button', { name: 'Review subject deletion' }).click();
   await expect.poll(() => discarded).toBe(true);
   await expect(review).toBeVisible();
   await review.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -190,8 +201,12 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
     }),
   );
   await add.getByRole('button', { name: 'Preview', exact: true }).click();
-  await add.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await add.getByRole('button', { name: 'Review save', exact: true }).click();
+  await confirmDraftSave(page);
   await expect(add).not.toBeVisible();
+  await expect
+    .poll(async () => (await draft(page)).pair.flashcards.cards.some((row) => row.front === 'CRUD second'))
+    .toBe(true);
   const created = (await draft(page)).pair.flashcards;
   const source = created.decks.find((row) => row.name === 'CRUD source deck')!;
   const destination = created.decks.find((row) => row.name === 'CRUD destination deck')!;
@@ -202,12 +217,14 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
   await editor
     .getByRole('textbox', { name: 'JSON', exact: true })
     .fill(JSON.stringify({ ...second, back: 'Updated exact back\n' }));
-  await editor.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await editor.getByRole('button', { name: 'Review save', exact: true }).click();
+  await confirmDraftSave(page);
   await expect
     .poll(async () => (await draft(page)).pair.flashcards.cards.find((row) => row.id === second.id)?.back)
     .toBe('Updated exact back\n');
   await editor.getByRole('button', { name: 'Record actions' }).click();
   await page.getByRole('menuitem', { name: 'Move up', exact: true }).click();
+  await confirmDraftSave(page);
   await expect
     .poll(async () =>
       (await draft(page)).pair.flashcards.cards.filter((row) => row.deckId === source.id).map((row) => row.id),
@@ -216,7 +233,8 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
   await editor
     .getByRole('textbox', { name: 'JSON', exact: true })
     .fill(JSON.stringify({ ...second, deckId: destination.id, back: 'Updated exact back\n' }));
-  await editor.getByRole('button', { name: 'Save draft', exact: true }).click();
+  await editor.getByRole('button', { name: 'Review save', exact: true }).click();
+  await confirmDraftSave(page);
   await expect
     .poll(async () => (await draft(page)).pair.flashcards.cards.find((row) => row.id === second.id)?.deckId)
     .toBe(destination.id);
@@ -227,13 +245,18 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
   await nav.getByRole('button', { name: 'Delete', exact: true }).last().click();
   const review = page.getByRole('dialog', { name: 'Delete deck?' });
   await expect(review).toContainText('1 cards');
-  await review.getByRole('button', { name: 'Save deck deletion' }).click();
+  await review.getByRole('button', { name: 'Review deck deletion' }).click();
+  await confirmDraftSave(page);
   await expect
     .poll(async () => (await draft(page)).pair.flashcards.decks.some((row) => row.id === source.id))
     .toBe(false);
   expect((await draft(page)).pair.flashcards.cards.some((row) => row.id === first.id)).toBe(false);
   await page.getByRole('button', { name: 'More', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Undo last saved change…' }).click();
+  await page
+    .getByRole('dialog', { name: 'Undo last saved change', exact: true })
+    .getByRole('button', { name: 'Undo saved change', exact: true })
+    .click();
   await expect.poll(async () => (await draft(page)).pair).toEqual(beforeDelete.pair);
   const final = await draft(page);
   expect(final.publication).toEqual(initial.publication);
@@ -248,8 +271,9 @@ test('cancelled quiz context changes restore picker text and preserve the unsave
   await editor.fill(JSON.stringify({ ...JSON.parse(await editor.inputValue()), name: 'Context destination subject' }));
   await page
     .getByRole('region', { name: 'Quiz editor' })
-    .getByRole('button', { name: 'Save draft', exact: true })
+    .getByRole('button', { name: 'Review save', exact: true })
     .click();
+  await confirmDraftSave(page);
   await expect
     .poll(async () =>
       (await draft(page)).pair.quizzes.subjects.some((row) => row.name === 'Context destination subject'),

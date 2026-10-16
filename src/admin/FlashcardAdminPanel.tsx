@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   Autocomplete,
   Checkbox,
@@ -42,14 +42,17 @@ export function FlashcardAdminPanel({
   subjects,
   serverBank,
   onSaveBank,
+  recovery,
   quizRevision,
   quizBank,
   onDeleteSubject,
   onAddSubject,
   onEditSubject,
   onDraftChange,
+  onEdit,
   discardRequest = 0,
   externalBusy = false,
+  reviewBeforeSave = false,
 }: {
   subjects: readonly Subject[];
   serverBank: StoredFlashcardBank;
@@ -60,8 +63,11 @@ export function FlashcardAdminPanel({
   onAddSubject?: () => void;
   onEditSubject?: (subjectId: string, subjectName: string) => void;
   onDraftChange?: (dirty: boolean) => void;
+  onEdit?: () => void;
   discardRequest?: number;
   externalBusy?: boolean;
+  recovery?: ReactNode;
+  reviewBeforeSave?: boolean;
 }) {
   const [bank, setBank] = useState(() => clone(serverBank));
   useEffect(() => {
@@ -182,6 +188,7 @@ export function FlashcardAdminPanel({
     setIssues([]);
   };
   const commitOperations = (batch: FlashcardAdminOperation[]) => {
+    if (busy || externalBusy) return;
     try {
       const candidate = applyFlashcardOperations(bank, subjects, batch);
       setBusy(true);
@@ -278,7 +285,7 @@ export function FlashcardAdminPanel({
     setBulkDestination({ context, label });
   };
   const stage = async () => {
-    if (!selection) return;
+    if (!selection || busy || externalBusy) return;
     let value: unknown;
     try {
       value = JSON.parse(editor);
@@ -680,6 +687,7 @@ export function FlashcardAdminPanel({
             value={editor}
             onChange={(event) => {
               editVersion.current++;
+              onEdit?.();
               setEditor(event.target.value);
             }}
             multiline
@@ -699,10 +707,15 @@ export function FlashcardAdminPanel({
             </Alert>
           )}
           <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <Button variant="contained" disabled={!selection} onClick={stage}>
-              Save draft
+            <Button variant="contained" disabled={!selection || busy || externalBusy} onClick={stage}>
+              {reviewBeforeSave ? 'Review save' : 'Save draft'}
             </Button>
-            <Button size="small" aria-haspopup="menu" onClick={(event) => setActionAnchor(event.currentTarget)}>
+            <Button
+              disabled={busy || externalBusy}
+              size="small"
+              aria-haspopup="menu"
+              onClick={(event) => setActionAnchor(event.currentTarget)}
+            >
               Record actions
             </Button>
             <Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
@@ -761,6 +774,8 @@ export function FlashcardAdminPanel({
         </Stack>
       </Paper>
       <AdminDeleteDialog
+        recovery={recovery}
+        commitLabel={reviewBeforeSave ? 'Review' : 'Save'}
         request={deleteRequest}
         bank={quizBank ?? { schemaVersion: 4, subjects: [...subjects], quizzes: [], questions: [] }}
         flashcardBank={bank}
@@ -772,6 +787,7 @@ export function FlashcardAdminPanel({
       />
       {bulkDestination && (
         <FlashcardBulkAddDialog
+          recovery={recovery}
           open
           context={bulkDestination.context}
           destinationLabel={bulkDestination.label}
@@ -783,7 +799,7 @@ export function FlashcardAdminPanel({
           onClose={() => setBulkDestination(undefined)}
           onDraftDirtyChange={setBulkDraftDirty}
           onStage={commitBulkOperations}
-          commitLabel="Save draft"
+          commitLabel={reviewBeforeSave ? 'Review save' : 'Save draft'}
         />
       )}
     </Stack>

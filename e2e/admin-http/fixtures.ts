@@ -1,4 +1,4 @@
-import { expect, test as base } from '@playwright/test';
+import { expect, test as base, type Page } from '@playwright/test';
 
 export { expect } from '@playwright/test';
 
@@ -14,3 +14,9 @@ export const test = base.extend<{ authRateIsolation: void }>({
     { auto: true },
   ],
 });
+
+export async function confirmDraftSave(page: Page) {
+  const review = page.getByRole('dialog', { name: 'Review draft save', exact: true });
+  await expect(review.getByRole('button', { name: 'Keep editing', exact: true })).toBeFocused();
+  await review.getByRole('button', { name: 'Save draft', exact: true }).click();
+}

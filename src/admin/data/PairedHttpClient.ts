@@ -72,6 +72,8 @@ export class PairedHttpClient {
   session?: SessionStatus;
   pending?: PendingOperation;
   inFlight = false;
+  commandBusy = false;
+  authenticationRequired = false;
   private readonly listeners = new Set<() => void>();
   subscribe(listener: () => void): () => void {
     this.listeners.add(listener);
@@ -81,6 +83,20 @@ export class PairedHttpClient {
   }
   private notify(): void {
     for (const listener of this.listeners) listener();
+  }
+  /** Admit one complete editor command, including preview and review, synchronously. */
+  async runCommand<T>(action: () => Promise<T>, allowPending = false): Promise<T> {
+    if (this.commandBusy || this.inFlight) throw new Error('Wait for the current authoring command to finish.');
+    if (this.pending && !allowPending) throw new Error('Check save status before another authoring command.');
+    if (this.authenticationRequired && !allowPending) throw new Error('Sign in to continue; your text is kept.');
+    this.commandBusy = true;
+    this.notify();
+    try {
+      return await action();
+    } finally {
+      this.commandBusy = false;
+      this.notify();
+    }
   }
   constructor(
     private readonly fetcher: typeof fetch = (...args) => fetch(...args),
@@ -103,6 +119,10 @@ export class PairedHttpClient {
         signal: controller.signal,
       });
       if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          this.authenticationRequired = true;
+          this.notify();
+        }
         const value = await response.json().catch(() => ({}));
         const issues = Array.isArray(value?.error?.issues)
           ? value.error.issues
@@ -122,6 +142,8 @@ export class PairedHttpClient {
   }
   async refreshSession(): Promise<SessionStatus> {
     this.session = await this.request<SessionStatus>('/session');
+    this.authenticationRequired = !this.session.authenticated || (this.authenticationRequired && !this.session.fresh);
+    this.notify();
     return this.session;
   }
   get<T>(path: string): Promise<T> {

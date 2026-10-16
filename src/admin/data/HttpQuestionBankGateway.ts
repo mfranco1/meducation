@@ -11,6 +11,12 @@ import {
   type ServerPreview,
 } from './PairedHttpClient';
 
+export interface PreparedSaveReview {
+  reason: string;
+  expected: ReturnType<typeof expectedContext>;
+  impact: ServerPreview;
+}
+
 export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
   current: PairedSnapshot;
   private readonly listeners = new Set<() => void>();
@@ -22,6 +28,34 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
   }
   private prepared?: { key: string; command: Record<string, unknown>; review: ServerPreview };
   private bindings: Binding[] = [];
+  private generation = 0;
+  private readonly reviewListeners = new Set<() => void>();
+  private pendingReview?: { view: PreparedSaveReview; settle: (decision: boolean | string) => void };
+  get saveReview(): PreparedSaveReview | undefined {
+    return this.pendingReview?.view;
+  }
+  subscribeSaveReview(listener: () => void): () => void {
+    this.reviewListeners.add(listener);
+    return () => {
+      this.reviewListeners.delete(listener);
+    };
+  }
+  private settleReview(decision: boolean | string): void {
+    const pending = this.pendingReview;
+    if (!pending) return;
+    this.pendingReview = undefined;
+    pending.settle(decision);
+    for (const listener of this.reviewListeners) listener();
+  }
+  confirmSaveReview(view: PreparedSaveReview): boolean {
+    if (this.pendingReview?.view !== view) return false;
+    this.settleReview(true);
+    return true;
+  }
+  cancelSaveReview(): void {
+    this.settleReview(false);
+  }
+
   constructor(
     readonly client: PairedHttpClient,
     snapshot: PairedSnapshot,
@@ -29,6 +63,8 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
     this.current = snapshot;
   }
   async accept(value: PairedSnapshot): Promise<AdminBankSnapshot> {
+    this.generation += 1;
+    this.settleReview('The saved context changed. Review again; your text is kept.');
     this.current = value;
     this.prepared = undefined;
     this.bindings = [];
@@ -39,6 +75,8 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
     return this.accept(await this.client.get<PairedSnapshot>('/draft'));
   }
   invalidate(): void {
+    this.generation += 1;
+    this.settleReview('The save review changed. Preview again; your text is kept.');
     this.prepared = undefined;
     for (const listener of this.listeners) listener();
   }
@@ -52,7 +90,11 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
       flashcards: structuredClone(this.current.pair.flashcards),
     };
   }
-  private async allocate(pair: PairedSnapshot['pair'], reason: string): Promise<Record<string, string>> {
+  private async allocate(
+    pair: PairedSnapshot['pair'],
+    reason: string,
+    generation: number,
+  ): Promise<Record<string, string>> {
     const mapping: Record<string, string> = {};
     const groups: Array<{
       kind: Slot['kind'];
@@ -88,6 +130,7 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
         if (!reused) destinations.set(parentId, [...(destinations.get(parentId) ?? []), row]);
       }
       for (const [parentId, rows] of destinations) {
+        if (generation !== this.generation) throw new Error('The context changed during allocation. Review again.');
         const slots: Slot[] = [{ kind: group.kind, count: rows.length, ...(parentId ? { parentId } : {}) }];
         const receipt = await this.client.mutate<{
           result: { reservationId: string; allocatedIds: Record<string, string[]> };
@@ -112,14 +155,16 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
     for (const row of pair.flashcards.cards) row.deckId = mapping[row.deckId] ?? row.deckId;
     return mapping;
   }
-  async reviewPair(
+  private async reviewPair(
     pair: PairedSnapshot['pair'],
     reason: string,
   ): Promise<{ pair: PairedSnapshot['pair']; review: ServerPreview; mapping: Record<string, string> }> {
     const captured = this.current;
+    const generation = this.generation;
     const candidate = structuredClone(pair);
-    const mapping = await this.allocate(candidate, reason);
-    if (this.current !== captured) throw new Error('The paired context changed during allocation. Review again.');
+    const mapping = await this.allocate(candidate, reason, generation);
+    if (this.current !== captured || generation !== this.generation)
+      throw new Error('The paired context changed during allocation. Review again.');
     const bindings = this.bindings.map(({ reservationId, slots }) => ({ reservationId, slots }));
     const command = {
       expected: expectedContext(this.current),
@@ -129,25 +174,54 @@ export class HttpQuestionBankGateway implements AdminQuestionBankGateway {
       intent: { reservations: bindings },
     };
     const review = await this.client.post<ServerPreview>('/draft/preview', command);
+    if (this.current !== captured || generation !== this.generation)
+      throw new Error('The draft changed during preview. Review again.');
     this.prepared = { key: JSON.stringify([candidate, reason]), command, review };
     return { pair: candidate, review, mapping };
   }
-  async savePair(pair: PairedSnapshot['pair'], reason: string): Promise<AdminBankSnapshot> {
+  private async savePair(pair: PairedSnapshot['pair'], reason: string): Promise<AdminBankSnapshot> {
     const prepared = this.prepared;
     if (!prepared || prepared.key !== JSON.stringify([pair, reason]))
       throw new Error('Preview the current paired draft again before saving.');
-    if (
-      !window.confirm(`Save paired draft revision ${this.current.draft.revision}, publication ${this.current.publication.sequence}? Saving does not publish. ${reason}
-Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.review.totalAffected.updated}; deleted: ${prepared.review.totalAffected.deleted}.`)
-    )
-      throw new Error('Save canceled; unsaved text is kept.');
+    const captured = this.current;
+    const view: PreparedSaveReview = {
+      reason,
+      expected: expectedContext(captured),
+      impact: structuredClone(prepared.review),
+    };
+    const decision = await new Promise<boolean | string>((settle) => {
+      this.pendingReview = { view, settle };
+      for (const listener of this.reviewListeners) listener();
+    });
+    if (decision !== true)
+      throw new Error(typeof decision === 'string' ? decision : 'Save canceled; unsaved text is kept.');
+    if (this.current !== captured || this.prepared !== prepared)
+      throw new Error('The save review changed. Preview again; your text is kept.');
     const receipt = await this.client.mutate<{ snapshot: PairedSnapshot }>('/draft/save', {
       ...prepared.command,
       previewFingerprint: prepared.review.previewFingerprint,
     });
     return this.accept(receipt.snapshot);
   }
-  async preview(changeSet: AdminChangeSet) {
+  preview(changeSet: AdminChangeSet) {
+    return this.client.runCommand(() => this.previewChange(changeSet));
+  }
+  apply(changeSet: AdminChangeSet) {
+    return this.client.runCommand(() => this.applyChange(changeSet));
+  }
+  applyCoordinated(changeSet: AdminChangeSet, flashcards: StoredFlashcardBank) {
+    return this.client.runCommand(() => this.applyCoordinatedChange(changeSet, flashcards));
+  }
+  saveFlashcards(bank: StoredFlashcardBank, reason: string) {
+    return this.client.runCommand(() => this.saveFlashcardChange(bank, reason));
+  }
+  undo() {
+    return this.client.runCommand(() => this.undoChange());
+  }
+  reset() {
+    return this.client.runCommand(() => this.resetChange());
+  }
+  private async previewChange(changeSet: AdminChangeSet) {
     const loaded = await this.load();
     if (loaded.revision !== changeSet.base.revision) throw new Error('The edit was prepared from a stale draft.');
     const local = previewChangeSet(loaded.bank, changeSet, this.getFlashcardBank());
@@ -173,12 +247,12 @@ Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.
     remap(preparedChangeSet);
     return { issues: local.issues, summary: local.summary, preparedChangeSet, idMappings: result.mapping };
   }
-  async apply(changeSet: AdminChangeSet): Promise<AdminBankSnapshot> {
+  private async applyChange(changeSet: AdminChangeSet): Promise<AdminBankSnapshot> {
     const loaded = await this.load();
     const local = previewChangeSet(loaded.bank, changeSet, this.getFlashcardBank());
     return this.savePair({ quizzes: local.bank, flashcards: this.getFlashcardBank() }, changeSet.reason);
   }
-  async applyCoordinated(
+  private async applyCoordinatedChange(
     changeSet: AdminChangeSet,
     flashcards: StoredFlashcardBank,
   ): Promise<AdminBankSnapshot> {
@@ -189,12 +263,12 @@ Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.
     const result = await this.reviewPair({ quizzes: local.bank, flashcards }, changeSet.reason);
     return this.savePair(result.pair, changeSet.reason);
   }
-  async saveFlashcards(bank: StoredFlashcardBank, reason: string): Promise<StoredFlashcardBank> {
+  private async saveFlashcardChange(bank: StoredFlashcardBank, reason: string): Promise<StoredFlashcardBank> {
     const result = await this.reviewPair({ quizzes: (await this.load()).bank, flashcards: bank }, reason);
     await this.savePair(result.pair, reason);
     return this.getFlashcardBank();
   }
-  async undo(): Promise<AdminBankSnapshot | undefined> {
+  private async undoChange(): Promise<AdminBankSnapshot | undefined> {
     if (!this.current.undo.available) return undefined;
     const receipt = await this.client.mutate<{ snapshot: PairedSnapshot }>('/draft/undo', {
       expected: expectedContext(this.current),
@@ -203,7 +277,7 @@ Created: ${prepared.review.affectedIds.created.join(', ')}; updated: ${prepared.
     });
     return this.accept(receipt.snapshot);
   }
-  async reset(): Promise<AdminBankSnapshot> {
+  private async resetChange(): Promise<AdminBankSnapshot> {
     const receipt = await this.client.mutate<{ snapshot: PairedSnapshot }>('/draft/reset', {
       expected: expectedContext(this.current),
       reason: 'Reset the draft to the current publication',

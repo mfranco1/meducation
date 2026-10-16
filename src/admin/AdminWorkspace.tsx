@@ -31,11 +31,15 @@ export function AdminWorkspace({
   gateway,
   header,
   feedback,
+  recovery,
+  externalBusy = false,
   onDirtyChange,
 }: {
   gateway: HttpQuestionBankGateway;
   header?: ReactNode;
   feedback?: ReactNode;
+  recovery?: ReactNode;
+  externalBusy?: boolean;
   onDirtyChange?: (dirty: AdminDraftState) => void;
 }) {
   const [section, setSection] = useState<'quizzes' | 'flashcards'>('quizzes');
@@ -65,7 +69,7 @@ export function AdminWorkspace({
     setFilter,
     pendingBulk,
     bulkTarget,
-    busy,
+    busy: editorBusy,
     loadError,
     selectedQuiz,
     selectedSubject,
@@ -83,7 +87,8 @@ export function AdminWorkspace({
     stageDelete,
     browseContext,
     savePairedChange,
-  } = useAdminEditor(gateway);
+  } = useAdminEditor(gateway, { blocked: externalBusy });
+  const busy = editorBusy || (externalBusy ? 'Another authoring command is in progress' : undefined);
   useEffect(() => {
     onDirtyChange?.({ quizzes: editorDirty, flashcards: flashcardDirty });
   }, [editorDirty, flashcardDirty, onDirtyChange]);
@@ -203,10 +208,13 @@ export function AdminWorkspace({
           </Stack>
           <Box sx={{ display: section === 'flashcards' ? 'block' : 'none' }}>
             <FlashcardAdminPanel
+              recovery={recovery}
+              reviewBeforeSave
               discardRequest={flashcardDiscardRequest}
               serverBank={snapshot.flashcards!}
               onSaveBank={(bank, reason) => gateway.saveFlashcards(bank, reason)}
               onDraftChange={reportFlashcardDirty}
+              onEdit={() => gateway.invalidate()}
               subjects={snapshot.bank.subjects}
               onAddSubject={() => {
                 setSection('quizzes');
@@ -352,7 +360,7 @@ export function AdminWorkspace({
                         mode === 'single' ? stageSingle : pendingBulkCurrent ? stageValidatedBulk : validateBulkDraft
                       }
                     >
-                      {mode === 'single' || pendingBulkCurrent ? 'Save draft' : 'Preview'}
+                      {mode === 'single' || pendingBulkCurrent ? 'Review save' : 'Preview'}
                     </Button>
                     {mode === 'single' && (
                       <>
@@ -450,6 +458,8 @@ export function AdminWorkspace({
             </Stack>
           )}
           <AdminDeleteDialog
+            recovery={recovery}
+            commitLabel="Review"
             currentReviewKey={deletionKey}
             busy={Boolean(busy)}
             request={deleteRequest}

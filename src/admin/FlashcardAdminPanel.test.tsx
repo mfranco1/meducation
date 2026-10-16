@@ -1,6 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { AdminRecoveryBanner } from './components/AdminRecoveryBanner';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 import { theme } from '../shared/theme';
 import type { StoredFlashcardBank } from '../content/schema/schema';
@@ -152,4 +153,60 @@ describe('PostgreSQL flashcard editor', () => {
     expect(within(dialog).queryByRole('button', { name: 'Save draft' })).toBeNull();
     expect(save).not.toHaveBeenCalled();
   });
+});
+
+it('blocks flashcard saves during another command while allowing newer text to be kept', () => {
+  const { props, rerender, save } = mount();
+  chooseDeck();
+  fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
+  const onEdit = vi.fn();
+  rerender(
+    <ThemeProvider theme={theme}>
+      <FlashcardAdminPanel {...props} externalBusy onEdit={onEdit} />
+    </ThemeProvider>,
+  );
+  expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Record actions' })).toBeDisabled();
+  const text = JSON.stringify({ ...bank().cards[0], front: 'Newer text while another command is running' });
+  fireEvent.change(editor(), { target: { value: text } });
+  expect(editor()).toHaveValue(text);
+  expect(onEdit).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
+});
+
+it('keeps save-status recovery reachable inside a blocked bulk dialog without discarding its JSON', () => {
+  const { props, rerender, save } = mount();
+  chooseSubject();
+  fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+  const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
+  const json = within(dialog).getByRole('textbox', { name: 'JSON' });
+  const text = '{"decks":[{"name":"Retained batch","cards":[{"front":"Exact front","back":"Exact back"}]}]}';
+  fireEvent.change(json, { target: { value: text } });
+  const check = vi.fn();
+  rerender(
+    <ThemeProvider theme={theme}>
+      <FlashcardAdminPanel {...props} externalBusy recovery={<AdminRecoveryBanner busy={false} onCheck={check} />} />
+    </ThemeProvider>,
+  );
+  expect(json).toHaveValue(text);
+  expect(within(dialog).getByRole('button', { name: 'Preview' })).toBeDisabled();
+  const recovery = within(dialog).getByRole('button', { name: 'Check save status' });
+  expect(recovery).toBeEnabled();
+  fireEvent.click(recovery);
+  expect(check).toHaveBeenCalledOnce();
+  expect(save).not.toHaveBeenCalled();
+  const signIn = vi.fn();
+  rerender(
+    <ThemeProvider theme={theme}>
+      <FlashcardAdminPanel
+        {...props}
+        externalBusy
+        recovery={<AdminRecoveryBanner busy={false} onCheck={check} onSignIn={signIn} />}
+      />
+    </ThemeProvider>,
+  );
+  expect(within(dialog).getByRole('button', { name: 'Check save status' })).toBeDisabled();
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Sign in to continue' }));
+  expect(signIn).toHaveBeenCalledOnce();
+  expect(json).toHaveValue(text);
 });

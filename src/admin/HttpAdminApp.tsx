@@ -15,13 +15,17 @@ import {
   useTheme,
 } from '@mui/material';
 import { AppBrand } from '../shared/ui/brand/AppBrand';
+import { AdminDraftHistoryDialog, type DraftHistoryReview } from './components/AdminDraftHistoryDialog';
+import { AdminSaveReviewDialog } from './components/AdminSaveReviewDialog';
+import { AdminRecoveryBanner } from './components/AdminRecoveryBanner';
+import { AdminImpactSummary } from './components/AdminImpactSummary';
 import { AdminHeader } from './components/AdminHeader';
 import { AdminExportDialog, type ExportTarget } from './components/AdminExportDialog';
 import { AdminVersionsDialog } from './components/AdminVersionsDialog';
 import { workspaceStatus, type AdminDraftState } from './core/workspaceStatus';
 import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
 import { AdminWorkspace } from './AdminWorkspace';
-import { HttpQuestionBankGateway } from './data/HttpQuestionBankGateway';
+import { HttpQuestionBankGateway, type PreparedSaveReview } from './data/HttpQuestionBankGateway';
 import { PairedHttpClient, expectedContext, type PairedSnapshot, type ServerPreview } from './data/PairedHttpClient';
 
 const client = new PairedHttpClient();
@@ -42,12 +46,15 @@ export default function HttpAdminApp() {
   const [releaseCursor, setReleaseCursor] = useState<string | null>(null);
   const [releaseId, setReleaseId] = useState('');
   const [review, setReview] = useState<Review>();
+  const [historyReview, setHistoryReview] = useState<DraftHistoryReview>();
+  const [saveReview, setSaveReview] = useState<PreparedSaveReview>();
   const [task, setTask] = useState<'publish' | 'activate' | 'export' | 'versions' | 'status'>();
   const [dirty, setDirty] = useState<AdminDraftState>({ quizzes: false, flashcards: false });
   const [notice, setNotice] = useState('');
   const [exportInitial, setExportInitial] = useState<ExportTarget>('draft');
   const reviewGeneration = useRef(0);
   const running = useRef(false);
+  const sessionRefreshQueued = useRef(false);
   const narrow = useMediaQuery(useTheme().breakpoints.down('sm'));
   const [pulse, setPulse] = useState(0);
   const unsaved = useRef(false);
@@ -58,13 +65,14 @@ export default function HttpAdminApp() {
     setDirty(value);
     setReview(undefined);
   }, []);
-  const run = async (action: () => Promise<void>, allowInFlight = false) => {
-    if (running.current || (!allowInFlight && client.inFlight)) return;
+  const run = async (action: () => Promise<void>, mode: 'command' | 'gateway' | 'account' | 'recovery' = 'command') => {
+    if (running.current || (mode !== 'account' && (client.inFlight || client.commandBusy))) return;
     running.current = true;
     setBusy(true);
     setError('');
     try {
-      await action();
+      if (mode === 'account' || mode === 'gateway') await action();
+      else await client.runCommand(action, mode === 'recovery');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Editor request failed. Your text is kept.');
       setReview(undefined);
@@ -72,9 +80,13 @@ export default function HttpAdminApp() {
       running.current = false;
       setBusy(false);
       setPulse((p) => p + 1);
+      // Only the session read may be queued after authentication; content writes never replay.
+      if (sessionRefreshQueued.current) void run(bootstrap, 'account');
     }
   };
   const bootstrap = async () => {
+    sessionRefreshQueued.current = false;
+    setHistoryReview(undefined);
     const status = await client.refreshSession();
     setSession(status);
     if (!gateway && status.authenticated)
@@ -112,6 +124,14 @@ export default function HttpAdminApp() {
     [gateway],
   );
   useEffect(() => {
+    if (!gateway) return;
+    const unsubscribe = gateway.subscribeSaveReview(() => setSaveReview(gateway.saveReview));
+    return () => {
+      unsubscribe();
+      gateway.cancelSaveReview();
+    };
+  }, [gateway]);
+  useEffect(() => {
     const complete = (event: MessageEvent) => {
       if (
         event.origin !== location.origin ||
@@ -121,7 +141,11 @@ export default function HttpAdminApp() {
         return;
       popup.current?.close();
       popup.current = undefined;
-      void run(bootstrap);
+      gateway?.invalidate();
+      setHistoryReview(undefined);
+      setReview(undefined);
+      sessionRefreshQueued.current = true;
+      if (!running.current) void run(bootstrap, 'account');
     };
     addEventListener('message', complete);
     return () => removeEventListener('message', complete);
@@ -129,10 +153,11 @@ export default function HttpAdminApp() {
   // Account actions remain available during an editor write and never replay that write.
   const login = () =>
     run(async () => {
+      setHistoryReview(undefined);
       setReview(undefined);
       gateway?.invalidate();
       popup.current = await client.authenticate(Boolean(session?.authenticated));
-    }, true);
+    }, 'account');
   const reconcile = () =>
     run(async () => {
       const result = await client.reconcile();
@@ -142,7 +167,7 @@ export default function HttpAdminApp() {
           ? 'The operation committed. Current context loaded; your unsaved text is kept. Review again.'
           : 'No committed receipt was found. Refresh context and preview again before a new write.',
       );
-    });
+    }, 'recovery');
   const publicationPreview = (action: Review['action']) =>
     run(async () => {
       if (!gateway || unsaved.current)
@@ -199,7 +224,7 @@ export default function HttpAdminApp() {
     });
   const recovering = Boolean(client.pending && !client.inFlight);
   const status = gateway ? workspaceStatus(gateway.current, dirty, recovering) : undefined;
-  const blocked = busy || client.inFlight || recovering;
+  const blocked = busy || client.commandBusy || client.inFlight || recovering || client.authenticationRequired;
   const loadVersions = (cursor?: string) =>
     run(async () => {
       const page = await client.get<{ releases: typeof releases; nextCursor: string | null }>(
@@ -240,26 +265,14 @@ export default function HttpAdminApp() {
             await gateway.refresh();
           })
         }
-        onUndo={() =>
-          void run(async () => {
-            if (
-              window.confirm(
-                `Undo paired draft ${gateway.current.draft.revision} to saved snapshot ${gateway.current.undo.targetRevision}? This changes both banks without publishing. Unsaved text is kept for review.`,
-              )
-            )
-              await gateway.undo();
-          })
-        }
-        onReset={() =>
-          void run(async () => {
-            if (
-              window.confirm(
-                `Reset both draft banks at revision ${gateway.current.draft.revision} to publication ${gateway.current.publication.sequence}? Displaced saved content is retained in history. Unsaved text is kept.`,
-              )
-            )
-              await gateway.reset();
-          })
-        }
+        onUndo={() => {
+          setError('');
+          setHistoryReview({ action: 'undo', snapshot: gateway.current });
+        }}
+        onReset={() => {
+          setError('');
+          setHistoryReview({ action: 'reset', snapshot: gateway.current });
+        }}
         onLogin={() => void login()}
         onLogout={() =>
           void run(async () => {
@@ -267,30 +280,32 @@ export default function HttpAdminApp() {
             setSession(await client.refreshSession());
             gateway.invalidate();
             closeTask();
-          }, true)
+          }, 'account')
         }
         sessionDetails={
           <Typography variant="body2">
-            {session?.authenticated ? 'Signed in' : 'Session expired'} ·{' '}
-            {session?.fresh ? 'Authentication fresh' : 'Fresh authentication may be required'}
+            {client.authenticationRequired
+              ? 'Sign in required'
+              : session?.authenticated
+                ? 'Signed in'
+                : 'Session expired'}{' '}
+            · {session?.fresh ? 'Authentication fresh' : 'Fresh authentication may be required'}
           </Typography>
         }
       />
     ) : undefined;
+  const recovery =
+    recovering || client.authenticationRequired ? (
+      <AdminRecoveryBanner
+        busy={busy}
+        uncertain={recovering}
+        onCheck={() => void reconcile()}
+        onSignIn={client.authenticationRequired ? () => void login() : undefined}
+      />
+    ) : undefined;
   const feedback = (
     <Stack spacing={1} sx={{ px: { xs: 2, sm: 3 }, pt: 1 }} data-state={pulse}>
-      {recovering && (
-        <Alert
-          severity="warning"
-          action={
-            <Button color="inherit" disabled={busy} onClick={reconcile}>
-              Check save status
-            </Button>
-          }
-        >
-          We could not confirm whether this saved. Check save status before another write.
-        </Alert>
-      )}
+      {recovery}
       {error && (
         <Alert severity="error" onClose={() => setError('')}>
           {error}
@@ -299,18 +314,6 @@ export default function HttpAdminApp() {
       {notice && (
         <Alert severity="info" onClose={() => setNotice('')}>
           {notice}
-        </Alert>
-      )}
-      {gateway && session && !session.authenticated && (
-        <Alert
-          severity="warning"
-          action={
-            <Button color="inherit" disabled={busy} onClick={login}>
-              Sign in to continue
-            </Button>
-          }
-        >
-          Your session expired. Your editing text is kept.
         </Alert>
       )}
       {status?.staleBase && (
@@ -323,7 +326,14 @@ export default function HttpAdminApp() {
   return (
     <>
       {gateway ? (
-        <AdminWorkspace gateway={gateway} header={header} feedback={feedback} onDirtyChange={reportDirty} />
+        <AdminWorkspace
+          gateway={gateway}
+          header={header}
+          feedback={feedback}
+          recovery={recovery}
+          externalBusy={blocked}
+          onDirtyChange={reportDirty}
+        />
       ) : (
         <Container sx={{ py: 6 }}>
           <Stack spacing={3} alignItems="flex-start">
@@ -345,6 +355,31 @@ export default function HttpAdminApp() {
       )}
       {gateway && (
         <>
+          <AdminDraftHistoryDialog
+            review={historyReview}
+            recovery={recovery}
+            busy={busy || client.commandBusy || client.inFlight}
+            blocked={blocked}
+            stale={Boolean(historyReview && historyReview.snapshot !== gateway.current)}
+            error={error}
+            onCancel={() => setHistoryReview(undefined)}
+            onConfirm={() =>
+              void run(async () => {
+                if (!historyReview || historyReview.snapshot !== gateway.current)
+                  throw new Error('The context changed. Review again.');
+                if (historyReview.action === 'undo') await gateway.undo();
+                else await gateway.reset();
+                setHistoryReview(undefined);
+              }, 'gateway')
+            }
+          />
+          <AdminSaveReviewDialog
+            review={saveReview}
+            onCancel={() => gateway.cancelSaveReview()}
+            onConfirm={() => {
+              if (saveReview) gateway.confirmSaveReview(saveReview);
+            }}
+          />
           {task === 'export' && (
             <AdminExportDialog
               open
@@ -458,23 +493,7 @@ export default function HttpAdminApp() {
                   Draft {review.expected.draftRevision} · publication {review.expected.publicationSequence}. Fresh
                   authentication is required.
                 </Typography>
-                <Box component="pre" sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>
-                  {JSON.stringify(
-                    {
-                      counts: review.preview.counts,
-                      affectedIds: review.preview.affectedIds,
-                      totalAffected: review.preview.totalAffected,
-                    },
-                    null,
-                    2,
-                  )}
-                </Box>
-                {review.preview.validation.warnings > 0 && (
-                  <Alert severity="warning">
-                    {review.preview.validation.warnings} validation warning(s). Review editor validation before
-                    publishing.
-                  </Alert>
-                )}
+                <AdminImpactSummary preview={review.preview} />
               </>
             )}
           </Stack>

@@ -23,7 +23,7 @@ export type BulkTarget =
 /** Owns the mutable state shared by all admin editing workflows. */
 export function useAdminEditor(
   gateway: AdminQuestionBankGateway,
-  options: { confirm?: (message: string) => boolean } = {},
+  options: { confirm?: (message: string) => boolean; blocked?: boolean } = {},
 ) {
   const confirmAction = options.confirm ?? ((message: string) => window.confirm(message));
   const [snapshot, setSnapshot] = useState<AdminBankSnapshot>();
@@ -54,7 +54,7 @@ export function useAdminEditor(
     setPendingBulk(undefined);
   };
   const runCommand = async (label: string, action: (isCurrent: () => boolean) => Promise<void | boolean>) => {
-    if (busyRef.current) return false;
+    if (busyRef.current || options.blocked) return false;
     busyRef.current = true;
     setBusy(label);
     const version = editVersion.current;
@@ -110,7 +110,7 @@ export function useAdminEditor(
 
   const discardDraft = () => !editorDirty || confirmAction('Discard the unstaged quiz edits?');
   const browseContext = (subjectId: string, quizId?: string) => {
-    if (busyRef.current || !discardDraft()) return false;
+    if (busyRef.current || options.blocked || !discardDraft()) return false;
     invalidateDraft();
     setSelection(
       quizId ? { kind: 'quiz', id: quizId, parentId: subjectId } : { kind: 'subject', id: subjectId || undefined },
@@ -122,7 +122,7 @@ export function useAdminEditor(
     return true;
   };
   const loadEntity = (next: Selection, value: unknown) => {
-    if (busyRef.current || !discardDraft()) return false;
+    if (busyRef.current || options.blocked || !discardDraft()) return false;
     invalidateDraft();
     const text = JSON.stringify(value, null, 2);
     setSelection(next);
@@ -191,7 +191,7 @@ export function useAdminEditor(
     setSummary('');
   };
   const chooseBulkTarget = (kind: BulkTarget['kind'], context?: { subjectId?: string; quizId?: string }) => {
-    if (!snapshot || busyRef.current || !discardDraft()) return;
+    if (!snapshot || busyRef.current || options.blocked || !discardDraft()) return;
     invalidateDraft();
     setMode('bulk');
     setPendingBulk(undefined);
@@ -225,7 +225,7 @@ export function useAdminEditor(
     }
   };
   const chooseBulkSubject = (subjectId: string) => {
-    if (!snapshot || bulkTarget.kind === 'newSubject' || busyRef.current || !discardDraft()) return;
+    if (!snapshot || bulkTarget.kind === 'newSubject' || busyRef.current || options.blocked || !discardDraft()) return;
     invalidateDraft();
     setPendingBulk(undefined);
     setIssues([]);
@@ -241,7 +241,15 @@ export function useAdminEditor(
     setSummary('Choose a quiz to add items.');
   };
   const chooseBulkQuiz = (quizId: string) => {
-    if (!snapshot || bulkTarget.kind !== 'quiz' || !bulkTarget.subjectId || busyRef.current || !discardDraft()) return;
+    if (
+      !snapshot ||
+      bulkTarget.kind !== 'quiz' ||
+      !bulkTarget.subjectId ||
+      busyRef.current ||
+      options.blocked ||
+      !discardDraft()
+    )
+      return;
     invalidateDraft();
     const quiz = snapshot.bank.quizzes.find(
       (candidate) => candidate.id === quizId && candidate.subjectId === bulkTarget.subjectId,
@@ -397,7 +405,7 @@ export function useAdminEditor(
     return true;
   };
   const showSingle = () => {
-    if (busyRef.current || !discardDraft()) return;
+    if (busyRef.current || options.blocked || !discardDraft()) return;
     invalidateDraft();
     setMode('single');
   };
@@ -419,7 +427,7 @@ export function useAdminEditor(
   };
 
   const savePairedChange = async (changeSet: AdminChangeSet, flashcards: StoredFlashcardBank) => {
-    if (busyRef.current) throw new Error('Wait for the current quiz authoring command to finish.');
+    if (busyRef.current || options.blocked) throw new Error('Wait for the current quiz authoring command to finish.');
     if (editorDirty && !confirmAction('Discard the current quiz editor draft and save the reviewed paired change?'))
       throw new Error('The paired change was not saved; the quiz editor draft was kept.');
     busyRef.current = true;

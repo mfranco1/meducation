@@ -41,7 +41,7 @@ for (const candidate of contentCases()) {
       await expect(editor).toBeFocused();
       const save = page
         .getByRole('region', { name: 'Quiz editor' })
-        .getByRole('button', { name: 'Save draft', exact: true });
+        .getByRole('button', { name: 'Review save', exact: true });
       await save.scrollIntoViewIfNeeded();
       await expect(save).toBeInViewport();
       await page.screenshot({ path: testInfo.outputPath(`editor-content-${width}.png`), fullPage: true });
