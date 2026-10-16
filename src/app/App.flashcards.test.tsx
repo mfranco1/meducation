@@ -1,14 +1,12 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
 import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
 import { installFlashcardApiFixture } from '../test/runtimeContentFixtures';
 import App from './App';
 import { theme } from '../shared/theme';
-import { learnerProgressAdmission } from '../persistence/progressAdmission';
 
-beforeEach(() => learnerProgressAdmission.admit({ mode: 'shared', valid: true, release: () => undefined }, () => 'clear'));
-afterEach(() => { learnerProgressAdmission.close(); vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
 it('shows unreadable saved progress on the dashboard before a deck is opened', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-corrupt', subjects: [] });

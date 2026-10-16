@@ -19,7 +19,7 @@ export function progressFileCapabilities() {
 }
 
 /** One download resource at a time; retain its URL briefly so the browser can consume it. */
-export function downloadProgressJson(json: string, date = new Date().toISOString(), prefix = 'meducation-progress'): string | undefined {
+export function downloadProgressJson(json: string, date = new Date().toISOString()): string | undefined {
   if (!progressFileCapabilities().download) return 'This browser cannot download progress files. Use another supported browser.';
   revokeProgressDownload();
   let url: string | undefined;
@@ -27,7 +27,7 @@ export function downloadProgressJson(json: string, date = new Date().toISOString
     url = URL.createObjectURL(new Blob([json], { type: 'application/json' }));
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `${prefix}-${/^\d{4}-\d\d-\d\d/.exec(date)?.[0] ?? new Date().toISOString().slice(0, 10)}.json`;
+    anchor.download = `meducation-progress-${/^\d{4}-\d\d-\d\d/.exec(date)?.[0] ?? new Date().toISOString().slice(0, 10)}.json`;
     anchor.click();
     activeDownload = { url, timer: window.setTimeout(revokeProgressDownload, 1_000) };
     return undefined;

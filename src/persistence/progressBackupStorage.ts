@@ -1,89 +1,26 @@
 import { emptyProgress, decodeProgress, progressKey } from './progressCodec';
 import { decodeFlashcardProgress, flashcardProgressKey } from './flashcardProgressCodec';
 import type { FlashcardProgressState } from '../domain/flashcardStudy';
-import type { ProgressPair } from './progressRestore';
-import { encodeProgressBackup, summarizeProgressBackup, type ProgressBackupSummary } from './progressBackupCodec';
-import { progressRestoreJournalKey } from './progressKeys';
+import {
+  encodeProgressBackup,
+  summarizeProgressBackup,
+  type ProgressBackupSummary,
+  type ProgressBackupV1,
+} from './progressBackupCodec';
 
-export const RAW_PROGRESS_RECOVERY_FORMAT = 'meducation-progress-recovery-raw';
-export const RAW_PROGRESS_RECOVERY_MAX_BYTES = 64 * 1024 * 1024;
+/** Raw stored values of both progress keys; null means the key is absent. */
+export interface ProgressPair { quiz: string | null; flashcards: string | null }
+export interface ProgressStoragePort {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+  removeItem(key: string): void;
+}
 
 export type ProgressBackupExportResult =
   | { ok: true; json: string; summary: ProgressBackupSummary }
-  | { ok: false; error: 'corrupt-progress' | 'invalid-progress' };
-export type RawProgressRecoveryResult = { ok: true; json: string } | { ok: false; error: 'too-large' };
+  | { ok: false; error: 'corrupt-progress' | 'invalid-progress' | 'unavailable' };
 
-/** Exact JSON string size, including controls and lone surrogates, without allocating an escaped copy. */
-function rawJsonBytes(value: string | null): number {
-  if (value === null) return 4;
-  let size = 2;
-  for (const character of value) {
-    const point = character.codePointAt(0)!;
-    if (point === 0x22 || point === 0x5c || [8, 9, 10, 12, 13].includes(point)) size += 2;
-    else if (point < 0x20 || (point >= 0xd800 && point <= 0xdfff)) size += 6;
-    else size += point <= 0x7f ? 1 : point <= 0x7ff ? 2 : point <= 0xffff ? 3 : 4;
-    if (size > RAW_PROGRESS_RECOVERY_MAX_BYTES) break;
-  }
-  return size;
-}
-
-/** Preserve exact fixed-key values; size-check before allocating their escaped JSON output. */
-export function encodeRawProgressRecovery(
-  pair: ProgressPair,
-  capturedAt = new Date().toISOString(),
-  journalRaw: string | null = null,
-  mayBeInconsistent = true,
-): RawProgressRecoveryResult {
-  const recovery = {
-    format: RAW_PROGRESS_RECOVERY_FORMAT, version: 1, capturedAt, mayBeInconsistent,
-    quizKey: progressKey, quizRaw: null as string | null,
-    flashcardsKey: flashcardProgressKey, flashcardsRaw: null as string | null,
-    journalKey: progressRestoreJournalKey, journalRaw: null as string | null,
-  };
-  const size = new TextEncoder().encode(JSON.stringify(recovery)).byteLength
-    + rawJsonBytes(pair.quiz) + rawJsonBytes(pair.flashcards) + rawJsonBytes(journalRaw) - 12;
-  if (size > RAW_PROGRESS_RECOVERY_MAX_BYTES) return { ok: false, error: 'too-large' };
-  return { ok: true, json: JSON.stringify({ ...recovery, quizRaw: pair.quiz, flashcardsRaw: pair.flashcards, journalRaw }) };
-}
-
-export type RawProgressCaptureResult =
-  { ok: true; json: string } | { ok: false; error: 'unavailable' | 'changed' | 'too-large' };
-
-/** Best-effort fixed-key capture for boot recovery; repeated reads catch observed mutations only. */
-export function captureRawProgressRecovery(
-  storage: Pick<Storage, 'getItem'>,
-  capturedAt = new Date().toISOString(),
-): RawProgressCaptureResult {
-  try {
-    const read = () => ({
-      quiz: storage.getItem(progressKey),
-      flashcards: storage.getItem(flashcardProgressKey),
-      journal: storage.getItem(progressRestoreJournalKey),
-    });
-    const first = read();
-    const second = read();
-    if (first.quiz !== second.quiz || first.flashcards !== second.flashcards || first.journal !== second.journal)
-      return { ok: false, error: 'changed' };
-    const encoded = encodeRawProgressRecovery(
-      { quiz: first.quiz, flashcards: first.flashcards },
-      capturedAt,
-      first.journal,
-      true,
-    );
-    return encoded.ok ? encoded : { ok: false, error: encoded.error };
-  } catch {
-    return { ok: false, error: 'unavailable' };
-  }
-}
-
-/** Read the browser's fixed recovery keys without exposing storage access to app/UI modules. */
-export function captureBrowserRawProgressRecovery(capturedAt = new Date().toISOString()): RawProgressCaptureResult {
-  try {
-    return captureRawProgressRecovery(localStorage, capturedAt);
-  } catch {
-    return { ok: false, error: 'unavailable' };
-  }
-}
+const restoreNoticeKey = 'meducation.progress.restore.notice';
 
 const emptyFlashcardProgress = (): FlashcardProgressState => ({
   schemaVersion: 2,
@@ -92,7 +29,7 @@ const emptyFlashcardProgress = (): FlashcardProgressState => ({
   completionCounts: {},
 });
 
-/** Decode an exclusive raw pair; absent keys mean empty, malformed bytes never do. */
+/** Decode a raw pair; absent keys mean empty, malformed bytes never do. */
 export function encodeBackupFromProgressPair(
   pair: ProgressPair,
   exportedAt = new Date().toISOString(),
@@ -100,21 +37,69 @@ export function encodeBackupFromProgressPair(
   let quiz;
   let flashcards: FlashcardProgressState | undefined;
   try {
-    if (pair.quiz === null) quiz = emptyProgress();
-    else quiz = decodeProgress(JSON.parse(pair.quiz) as unknown);
-    if (pair.flashcards === null) flashcards = emptyFlashcardProgress();
-    else flashcards = decodeFlashcardProgress(JSON.parse(pair.flashcards) as unknown);
+    quiz = pair.quiz === null ? emptyProgress() : decodeProgress(JSON.parse(pair.quiz) as unknown);
+    flashcards = pair.flashcards === null ? emptyFlashcardProgress() : decodeFlashcardProgress(JSON.parse(pair.flashcards) as unknown);
   } catch {
     return { ok: false, error: 'corrupt-progress' };
   }
   if (!quiz || !flashcards) return { ok: false, error: 'corrupt-progress' };
   const json = encodeProgressBackup(quiz, flashcards, exportedAt);
   if (!json) return { ok: false, error: 'invalid-progress' };
+  const summary = summarizeProgressBackup(JSON.parse(json) as ProgressBackupV1);
+  return summary ? { ok: true, json, summary } : { ok: false, error: 'invalid-progress' };
+}
+
+export function readProgressPair(storage: ProgressStoragePort): ProgressPair {
+  return { quiz: storage.getItem(progressKey), flashcards: storage.getItem(flashcardProgressKey) };
+}
+
+function writeRaw(storage: ProgressStoragePort, key: string, value: string | null): void {
+  if (value === null) storage.removeItem(key);
+  else storage.setItem(key, value);
+}
+
+/**
+ * Replace both progress values with a validated backup. If either write throws,
+ * the previously stored raw values of both keys are put back and false is returned.
+ */
+export function restoreProgressBackup(
+  storage: ProgressStoragePort,
+  backup: ProgressBackupV1,
+  randomUUID: () => string = () => crypto.randomUUID(),
+): boolean {
+  let previous: ProgressPair;
+  try { previous = readProgressPair(storage); } catch { return false; }
   try {
-    const parsed = JSON.parse(json) as Parameters<typeof summarizeProgressBackup>[0];
-    const summary = summarizeProgressBackup(parsed);
-    return summary ? { ok: true, json, summary } : { ok: false, error: 'invalid-progress' };
+    storage.setItem(progressKey, JSON.stringify({ ...backup.quiz, revision: randomUUID() }));
+    storage.setItem(flashcardProgressKey, JSON.stringify({ ...backup.flashcards, revision: randomUUID() }));
+    return true;
   } catch {
-    return { ok: false, error: 'invalid-progress' };
+    try {
+      writeRaw(storage, progressKey, previous.quiz);
+      writeRaw(storage, flashcardProgressKey, previous.flashcards);
+    } catch { /* Nothing more can be done; the caller still reports failure. */ }
+    return false;
   }
+}
+
+export function exportBrowserProgress(): ProgressBackupExportResult {
+  try { return encodeBackupFromProgressPair(readProgressPair(localStorage)); }
+  catch { return { ok: false, error: 'unavailable' }; }
+}
+
+export function restoreBrowserProgress(backup: ProgressBackupV1): boolean {
+  try { return restoreProgressBackup(localStorage, backup); }
+  catch { return false; }
+}
+
+/** Ephemeral success notice across the reload; never part of a progress backup. */
+export function rememberProgressRestore(): void {
+  try { sessionStorage.setItem(restoreNoticeKey, '1'); } catch { /* The restore itself succeeded. */ }
+}
+export function consumeProgressRestoreNotice(): boolean {
+  try {
+    const restored = sessionStorage.getItem(restoreNoticeKey) === '1';
+    sessionStorage.removeItem(restoreNoticeKey);
+    return restored;
+  } catch { return false; }
 }

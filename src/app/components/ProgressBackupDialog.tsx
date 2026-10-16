@@ -18,7 +18,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
   const input = useRef<HTMLInputElement>(null);
   const preview = controller.preview;
   const warning = emptyWarning(controller);
-  const locked = controller.committing || controller.recoveryRequired;
+  const locked = controller.committing;
   const files = progressFileCapabilities();
 
   return <Dialog
@@ -38,7 +38,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
           Your progress is saved in this browser. Clearing site data removes it; backups let you keep a copy or move progress to another browser. Backups can include question content for unfinished quizzes, so share them only if you intend to share that data.
         </Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <Button variant="contained" onClick={() => void controller.download()} disabled={controller.busy || locked || !files.download}>Download backup</Button>
+          <Button variant="contained" onClick={controller.download} disabled={controller.busy || locked || !files.download}>Download backup</Button>
           <Button variant="outlined" onClick={() => input.current?.click()} disabled={controller.busy || locked || !files.read}>Choose backup file</Button>
           <Box component="input" ref={input} type="file" accept=".json,application/json" aria-label="Choose progress backup file" sx={{ display: 'none' }} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             const file = event.currentTarget.files?.[0];
@@ -47,10 +47,8 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
           }} />
         </Stack>
         {(!files.read || !files.download) && <Alert severity="warning">This browser cannot {!files.read ? 'read selected' : 'download'} progress files. Use another supported browser for that action.</Alert>}
-        {controller.restoreUnavailable && <Alert severity="warning">Saved progress can only be read. Reload after fixing browser storage access before restoring a backup.</Alert>}
         {controller.busy && <Typography role="status" aria-live="polite">{controller.status ?? 'Working with progress backup…'}</Typography>}
-        {controller.error && <Alert severity={controller.recoveryRequired ? 'error' : 'warning'} role="alert">{controller.error}</Alert>}
-        {controller.recoveryRequired && <Button variant="outlined" onClick={() => void controller.retryRecovery()} disabled={controller.busy}>Retry recovery</Button>}
+        {controller.error && <Alert severity="warning" role="alert">{controller.error}</Alert>}
         {preview && <>
           <Box>
             <Typography variant="subtitle1" fontWeight={700}>Backup preview</Typography>
@@ -71,20 +69,16 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
           </Box>
           {warning && <Alert severity="warning">{warning}</Alert>}
           {preview.currentBackup
-            ? <Button variant="text" onClick={() => void controller.downloadCurrent()} disabled={controller.busy || locked || !files.download}>Download current backup first</Button>
+            ? <Button variant="text" onClick={controller.downloadCurrent} disabled={controller.busy || locked || !files.download}>Download current backup first</Button>
             : preview.currentProgressIssue
-              ? <Stack spacing={1}><Alert severity="warning">Some saved progress could not be read. Restoring this backup will replace it.</Alert>{preview.rawRecovery
-                ? <><Typography variant="body2">A raw recovery copy preserves the exact saved values for separate inspection. It may contain invalid data and cannot be imported as a progress backup.</Typography><Button variant="outlined" onClick={controller.downloadRawRecovery} disabled={controller.busy || locked || !files.download}>Download raw recovery copy</Button></>
-                : preview.rawRecoveryTooLarge
-                  ? <Typography variant="body2">The raw recovery copy is larger than the 64 MiB limit and cannot be downloaded here.</Typography>
-                  : null}</Stack>
+              ? <Alert severity="warning">Some saved progress could not be read. Restoring this backup will replace it.</Alert>
               : null}
         </>}
       </Stack>
     </DialogContent>
     <DialogActions>
       <Button onClick={() => controller.close()} disabled={locked}>Cancel</Button>
-      {preview && <Button variant="contained" color="primary" onClick={() => void controller.restore()} disabled={controller.busy || locked || controller.restoreUnavailable}>Restore backup</Button>}
+      {preview && <Button variant="contained" color="primary" onClick={controller.restore} disabled={controller.busy || locked}>Restore backup</Button>}
     </DialogActions>
   </Dialog>;
 }

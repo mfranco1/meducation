@@ -36,7 +36,7 @@ export class LocalFlashcardProgressRepository {
   private readonly listeners = new Set<() => void>();
   private listening = false;
 
-  constructor(private readonly suppliedStorage?: StoragePort, private readonly admission?: { readonly ready: boolean; readonly canRead: boolean; assertReady(): void; assertReadable(): void }) {}
+  constructor(private readonly suppliedStorage?: StoragePort) {}
   private storage(): StoragePort {
     const storage = this.suppliedStorage ?? localStorage;
     if (storage !== this.observedStorage) {
@@ -49,8 +49,6 @@ export class LocalFlashcardProgressRepository {
   }
 
   private state(): FlashcardProgressState {
-    if (this.admission && !this.admission.canRead && this.cached) return this.cached;
-    this.admission?.assertReadable();
     try {
       const storage = this.storage();
       if (this.cached && this.storageError !== unavailableMessage) return this.cached;
@@ -76,15 +74,6 @@ export class LocalFlashcardProgressRepository {
 
   getSnapshot = () => this.state();
 
-  /** Rehydrate after an exclusive paired operation before notifying subscribers. */
-  refreshAfterPairedOperation() {
-    this.admission?.assertReadable();
-    this.cached = undefined;
-    this.observedRevision = undefined;
-    this.storageError = undefined;
-    this.state();
-    this.listeners.forEach((listener) => listener());
-  }
   getStorageError = () => this.storageError;
   getCheckpoint(deckId: string) {
     return this.state().checkpoints[deckId];
@@ -92,7 +81,6 @@ export class LocalFlashcardProgressRepository {
 
   private readonly onStorage = (event: StorageEvent) => {
     if (event.key !== null && event.key !== flashcardProgressKey) return;
-    if (this.admission && !this.admission.canRead) return;
     this.cached = undefined;
     this.listeners.forEach((listener) => listener());
   };
@@ -113,7 +101,6 @@ export class LocalFlashcardProgressRepository {
   };
 
   private commit(change: (state: FlashcardProgressState) => FlashcardProgressState | undefined) {
-    this.admission?.assertReady();
     const state = this.state();
     if (this.storageError)
       throw new FlashcardPersistenceError(

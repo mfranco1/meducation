@@ -10,15 +10,12 @@ function controller(overrides: Partial<ProgressBackupController> = {}): Progress
     open: true,
     busy: false,
     committing: false,
-    recoveryRequired: false,
     show: vi.fn(),
     close: vi.fn(),
     chooseFile: vi.fn(async () => undefined),
-    download: vi.fn(async () => undefined),
-    downloadCurrent: vi.fn(async () => undefined),
-    downloadRawRecovery: vi.fn(),
-    restore: vi.fn(async () => undefined),
-    retryRecovery: vi.fn(async () => undefined),
+    download: vi.fn(),
+    downloadCurrent: vi.fn(),
+    restore: vi.fn(),
     ...overrides,
   };
 }
@@ -31,7 +28,6 @@ describe('progress backup dialog', () => {
       preview: {
         backup: fixture as unknown as ProgressBackupV1,
         summary: { retainedCompletedAttempts: 0, savedQuizzes: 0, savedFlashcardDecks: 0, quizCompletions: 0, flashcardCompletions: 0, totalRecordedCompletions: '0' },
-        original: { quiz: null, flashcards: null },
         currentBackup: '{"valid":true}',
       },
     });
@@ -45,10 +41,9 @@ describe('progress backup dialog', () => {
     expect(actions.restore).toHaveBeenCalledOnce();
   });
 
-  it('prevents dismissal while restore or recovery is in progress', () => {
-    const actions = controller({ busy: true, recoveryRequired: true });
+  it('prevents dismissal while a restore is in progress', () => {
+    const actions = controller({ busy: true, committing: true });
     render(<ProgressBackupDialog controller={actions} />);
-    expect(screen.getByRole('button', { name: 'Retry recovery' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
     fireEvent.keyDown(screen.getByRole('dialog', { name: 'Progress backup' }), { key: 'Escape' });
     expect(actions.close).not.toHaveBeenCalled();

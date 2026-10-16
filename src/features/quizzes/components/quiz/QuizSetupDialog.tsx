@@ -8,13 +8,12 @@ type SetupMode = FeedbackMode | 'browse';
 interface QuizSetupDialogProps {
   open: boolean;
   quiz: Quiz;
-  readOnly?: boolean;
   onClose: () => void;
   onStart: (quiz: Quiz, mode: FeedbackMode) => void;
   onBrowse: (quiz: Quiz) => void;
 }
 
-export function QuizSetupDialog({ open, quiz, readOnly = false, onClose, onStart, onBrowse }: QuizSetupDialogProps) {
+export function QuizSetupDialog({ open, quiz, onClose, onStart, onBrowse }: QuizSetupDialogProps) {
   const [mode, setMode] = useState<SetupMode>('immediate');
 
   useEffect(() => {
@@ -32,7 +31,7 @@ export function QuizSetupDialog({ open, quiz, readOnly = false, onClose, onStart
           <ToggleButton value="immediate">Fast Feedback</ToggleButton><ToggleButton value="exam">Exam Mode</ToggleButton><ToggleButton value="browse">Browse Answers</ToggleButton>
         </ToggleButtonGroup>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>{mode === 'immediate' ? 'Selecting an answer locks it and shows the explanation right away.' : mode === 'exam' ? 'Answers remain hidden until you finish and submit the entire test.' : 'Browse every question with the correct answer and explanation shown. Nothing is recorded.'}</Typography>
-        <Button fullWidth variant="contained" size="large" sx={{ mt: 4 }} disabled={readOnly && mode !== 'browse'} onClick={() => mode === 'browse' ? onBrowse(quiz) : onStart(quiz, mode)}>{mode === 'browse' ? 'Open quiz' : 'Begin Quiz'}</Button>
+        <Button fullWidth variant="contained" size="large" sx={{ mt: 4 }} onClick={() => mode === 'browse' ? onBrowse(quiz) : onStart(quiz, mode)}>{mode === 'browse' ? 'Open quiz' : 'Begin Quiz'}</Button>
       </CardContent></Card>
     </DialogContent>
   </Dialog>;

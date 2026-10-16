@@ -7,7 +7,6 @@ import App from './App';
 import { theme } from '../shared/theme';
 import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
 import { installQuizApiFixture } from '../test/runtimeContentFixtures';
-import { learnerProgressAdmission } from '../persistence/progressAdmission';
 
 function completed(quizId: string, subjectId: string, percentage: number): CompletedAttempt {
   const at = '2026-10-02T00:00:00.000Z';
@@ -33,9 +32,8 @@ beforeEach(() => {
     removeItem: (key: string) => values.delete(key),
     clear: () => values.clear(),
   });
-  learnerProgressAdmission.admit({ mode: 'shared', valid: true, release: () => undefined }, () => 'clear');
 });
-afterEach(() => { learnerProgressAdmission.close(); vi.unstubAllGlobals(); });
+afterEach(() => { vi.unstubAllGlobals(); });
 
 describe('progressive dashboard statistics', () => {
   it('calculates all subject scores after the summary request without opening a subject', async () => {
@@ -289,25 +287,4 @@ describe('progressive dashboard statistics', () => {
     expect(screen.queryByRole('dialog', { name: 'Progress backup' })).toBeNull();
     expect(screen.getByText('Question 1 of 1')).toBeVisible();
   });
-  it('allows content browsing without saved-progress writes when coordination is unsupported', async () => {
-    learnerProgressAdmission.close();
-    learnerProgressAdmission.admitReadOnly(() => 'clear');
-    const subject = { id: 's4', name: 'Safe subject', accent: '#123456' };
-    const quiz = { id: 'q4', subjectId: subject.id, name: 'Safe quiz', questionCount: 1, questionIds: ['i4'] };
-    installQuizApiFixture(
-      [subject], [quiz], [{ id: 'i4', quizId: quiz.id, stem: 'Safe browse stem', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }], answer: 'A', rationale: 'Explanation', metadata: { topic: 'Fixture' } }],
-    );
-    render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
-
-    expect(screen.getByRole('alert')).toHaveTextContent('study, resume and backup are unavailable');
-    fireEvent.click(screen.getByRole('button', { name: 'Open Safe subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Browse quiz' }));
-    expect(screen.getByRole('button', { name: 'Begin Quiz' })).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: 'Browse Answers' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Open quiz' }));
-    await waitFor(() => expect(screen.getByText('Safe browse stem')).toBeVisible(), { timeout: 10_000 });
-    expect(new LocalAttemptRepository().getActive(quiz.id)).toBeUndefined();
-    expect(localStorage.getItem('meducation.progress.v2')).toBeNull();
-  });
-
 });

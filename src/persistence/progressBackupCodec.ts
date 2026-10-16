@@ -16,7 +16,7 @@ const MAX_QUIZ_SIGNATURE_BYTES = 512 * 1024;
 const DANGEROUS_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
 const MILESTONES = new Set([3, 5, 10, 25, 50]);
 
-export type BackupErrorCategory = 'too-large' | 'malformed-json' | 'wrong-format' | 'unsupported-version' | 'invalid-progress' | 'unsupported-browser' | 'storage-error' | 'recovery-required';
+export type BackupErrorCategory = 'too-large' | 'malformed-json' | 'wrong-format' | 'unsupported-version' | 'invalid-progress';
 export type BackupParseResult = { ok: true; value: ProgressBackupV1 } | { ok: false; error: BackupErrorCategory };
 
 export interface QuizBackupV2 {

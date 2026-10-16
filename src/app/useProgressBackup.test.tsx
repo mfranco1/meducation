@@ -1,68 +1,85 @@
 import { act, renderHook } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import emptyBackup from '../../tests/fixtures/progress-backups/empty-v1.json';
-import { learnerProgressAdmission } from '../persistence/progressAdmission';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import populated from '../../tests/fixtures/progress-backups/populated-v1.json';
+import { progressKey } from '../persistence/progressCodec';
+import { flashcardProgressKey } from '../persistence/flashcardProgressCodec';
+import { consumeProgressRestoreNotice } from '../persistence/progressBackupStorage';
 import { useProgressBackup } from './useProgressBackup';
 
-function deferred<T>() {
-  let resolve!: (value: T) => void;
-  const promise = new Promise<T>(accept => { resolve = accept; });
-  return { promise, resolve };
-}
+const fileOf = (body: string) => ({ size: new TextEncoder().encode(body).length, text: async () => body });
 
-describe('progress backup interaction lifetime', () => {
-  afterEach(() => { learnerProgressAdmission.close(); vi.unstubAllGlobals(); });
+describe('progress backup dialog flow', () => {
+  const values = new Map<string, string>();
+  let failingKey: string | undefined;
+  const reload = vi.fn();
+
+  beforeEach(() => {
+    values.clear();
+    failingKey = undefined;
+    reload.mockClear();
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        if (key === failingKey) throw new DOMException('Quota exceeded', 'QuotaExceededError');
+        values.set(key, value);
+      },
+      removeItem: (key: string) => values.delete(key),
+    });
+    vi.stubGlobal('location', { ...window.location, reload });
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  async function preview(body: string) {
+    const hook = renderHook(() => useProgressBackup());
+    act(() => hook.result.current.show());
+    await act(async () => hook.result.current.chooseFile(fileOf(body)));
+    return hook;
+  }
+
+  it('previews a valid file without writing, then replaces both stores and reloads on confirm', async () => {
+    const { result } = await preview(JSON.stringify(populated));
+    expect(result.current.preview?.summary.quizCompletions).toBe(2);
+    expect(result.current.error).toBeUndefined();
+    expect(values.size).toBe(0);
+    act(() => result.current.restore());
+    expect(values.has(progressKey)).toBe(true);
+    expect(values.has(flashcardProgressKey)).toBe(true);
+    expect(reload).toHaveBeenCalledOnce();
+    expect(consumeProgressRestoreNotice()).toBe(true);
+  });
+
+  it('reports that nothing changed when a write fails, and does not reload', async () => {
+    values.set(progressKey, 'existing-quiz');
+    values.set(flashcardProgressKey, 'existing-cards');
+    const { result } = await preview(JSON.stringify(populated));
+    failingKey = flashcardProgressKey;
+    act(() => result.current.restore());
+    expect(result.current.error).toContain('Nothing was changed');
+    expect(result.current.committing).toBe(false);
+    expect(values.get(progressKey)).toBe('existing-quiz');
+    expect(values.get(flashcardProgressKey)).toBe('existing-cards');
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('rejects an invalid file with an error, no preview and no changes', async () => {
+    values.set(progressKey, 'existing-quiz');
+    const { result } = await preview('{"format":"nope"}');
+    expect(result.current.preview).toBeUndefined();
+    expect(result.current.error).toContain('not a Meducation progress backup');
+    expect(values.get(progressKey)).toBe('existing-quiz');
+  });
 
   it('allows cancel while File.text is pending and ignores its late result', async () => {
-    learnerProgressAdmission.admit({ mode: 'shared', valid: true, release: () => undefined }, () => 'clear');
-    const fileRead = deferred<string>();
-    const { result } = renderHook(() => useProgressBackup(vi.fn()));
-    let pending!: Promise<void>;
+    const { result } = renderHook(() => useProgressBackup());
+    let finish!: (text: string) => void;
+    const pending = new Promise<string>(resolve => { finish = resolve; });
+    let reading!: Promise<void>;
     act(() => result.current.show());
-    act(() => { pending = result.current.chooseFile({ size: 10, text: () => fileRead.promise }); });
+    act(() => { reading = result.current.chooseFile({ size: 10, text: () => pending }); });
     expect(result.current.busy).toBe(true);
-    expect(result.current.status).toBe('Reading backup…');
     act(() => result.current.close());
-    expect(result.current.open).toBe(false);
-    await act(async () => {
-      fileRead.resolve(JSON.stringify(emptyBackup));
-      await pending;
-    });
+    await act(async () => { finish(JSON.stringify(populated)); await reading; });
     expect(result.current.open).toBe(false);
     expect(result.current.preview).toBeUndefined();
   });
-});
-
-it('unlocks the dialog after retrying a committed restore whose cleanup was interrupted', async () => {
-  const values = new Map<string, string>();
-  let denyCleanup = false;
-  vi.stubGlobal('localStorage', {
-    getItem: (key: string) => values.get(key) ?? null,
-    setItem: (key: string, value: string) => values.set(key, value),
-    removeItem: (key: string) => {
-      if (denyCleanup && key === 'meducation.progress.restore.v1') throw new Error('unavailable');
-      values.delete(key);
-    },
-  });
-  vi.stubGlobal('navigator', { locks: { request: (_name: string, _options: unknown, callback: (lock: object) => Promise<void>) => callback({}) } });
-  learnerProgressAdmission.admit({ mode: 'shared', valid: true, release: () => undefined }, () => 'clear');
-  const refresh = vi.fn();
-  const { result } = renderHook(() => useProgressBackup(refresh));
-  act(() => result.current.show());
-  await act(async () => result.current.chooseFile({ size: 100, text: async () => JSON.stringify(emptyBackup) }));
-  expect(result.current.preview).toBeDefined();
-  denyCleanup = true;
-  await act(async () => result.current.restore());
-  expect(result.current.committing).toBe(true);
-  expect(result.current.recoveryRequired).toBe(true);
-  denyCleanup = false;
-  await act(async () => result.current.retryRecovery());
-  expect(values.has('meducation.progress.restore.v1')).toBe(false);
-  expect(result.current.committing).toBe(false);
-  expect(result.current.recoveryRequired).toBe(false);
-  expect(result.current.preview).toBeUndefined();
-  act(() => result.current.close());
-  expect(result.current.open).toBe(false);
-  learnerProgressAdmission.close();
-  vi.unstubAllGlobals();
 });

@@ -29,7 +29,7 @@ export class LocalAttemptRepository implements AttemptRepository {
   private readonly listeners = new Set<() => void>();
   private listening = false;
 
-  constructor(private readonly suppliedStorage?: StoragePort, private readonly admission?: { readonly ready: boolean; readonly canRead: boolean; assertReady(): void; assertReadable(): void }) {}
+  constructor(private readonly suppliedStorage?: StoragePort) {}
 
   private storage(): StoragePort {
     const storage = this.suppliedStorage ?? localStorage;
@@ -43,8 +43,6 @@ export class LocalAttemptRepository implements AttemptRepository {
   }
 
   private state(): ProgressState {
-    if (this.admission && !this.admission.canRead && this.cachedState) return this.cachedState;
-    this.admission?.assertReadable();
     try {
       const storage = this.storage();
       if (this.cachedState) return this.cachedState;
@@ -73,19 +71,8 @@ export class LocalAttemptRepository implements AttemptRepository {
 
   getSnapshot = (): ProgressState => this.state();
 
-  /** Rehydrate after an exclusive paired operation before notifying subscribers. */
-  refreshAfterPairedOperation(): void {
-    this.admission?.assertReadable();
-    this.cachedState = undefined;
-    this.observedRevision = undefined;
-    this.storageError = undefined;
-    this.state();
-    for (const listener of this.listeners) listener();
-  }
-
   private readonly onStorage = (event: StorageEvent) => {
     if (event.key !== null && event.key !== progressKey) return;
-    if (this.admission && !this.admission.canRead) return;
     this.cachedState = undefined;
     for (const listener of this.listeners) listener();
   };
@@ -110,7 +97,6 @@ export class LocalAttemptRepository implements AttemptRepository {
   }
 
   private commit(change: (state: ProgressState) => ProgressState | undefined): void {
-    this.admission?.assertReady();
     const state = this.state();
     if (this.storageError) throw new PersistenceError(this.storageError === corruptMessage ? 'corrupt' : 'unavailable', this.storageError);
     try {

@@ -1,16 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import quizPayload from '../../tests/fixtures/progress-backups/populated-v1.json';
-import {
-  captureRawProgressRecovery,
-  encodeBackupFromProgressPair,
-  encodeRawProgressRecovery,
-  RAW_PROGRESS_RECOVERY_FORMAT,
-} from './progressBackupStorage';
-import { parseProgressBackup } from './progressBackupCodec';
-import type { ProgressPair } from './progressRestore';
+import { encodeBackupFromProgressPair, restoreProgressBackup, type ProgressPair } from './progressBackupStorage';
+import { parseProgressBackup, type ProgressBackupV1 } from './progressBackupCodec';
 import { progressKey } from './progressCodec';
 import { flashcardProgressKey } from './flashcardProgressCodec';
-import { progressRestoreJournalKey } from './progressKeys';
 
 describe('backup from captured storage pair', () => {
   it('treats absent keys as valid empty progress and does not write', () => {
@@ -75,83 +68,55 @@ describe('backup from captured storage pair', () => {
       });
     expect(pair).toEqual(original);
   });
+});
 
-  it('preserves exact raw values in a separate recovery format rejected by the normal importer', () => {
-    const pair = { quiz: '{\u0000corrupt\nbytes', flashcards: null };
-    const result = encodeRawProgressRecovery(pair, '2026-10-13T00:00:00.000Z');
-    expect(result.ok).toBe(true);
-    if (result.ok) {
-      const decoded = JSON.parse(result.json) as {
-        format: string;
-        quizRaw: string | null;
-        flashcardsRaw: string | null;
-        journalRaw: string | null;
-        mayBeInconsistent: boolean;
-      };
-      expect(decoded).toMatchObject({
-        format: RAW_PROGRESS_RECOVERY_FORMAT,
-        quizRaw: pair.quiz,
-        flashcardsRaw: null,
-        journalRaw: null,
-        mayBeInconsistent: true,
-      });
-      expect(parseProgressBackup(result.json)).toEqual({ ok: false, error: 'wrong-format' });
+describe('restoreProgressBackup', () => {
+  const backup = parseProgressBackup(JSON.stringify(quizPayload));
+  if (!backup.ok) throw new Error('fixture must be a valid backup');
+  const target: ProgressBackupV1 = backup.value;
+
+  function memoryStorage(initial: Record<string, string>, failingKey?: string) {
+    const values = new Map(Object.entries(initial));
+    return {
+      values,
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => {
+        if (key === failingKey) throw new DOMException('Quota exceeded', 'QuotaExceededError');
+        values.set(key, value);
+      },
+      removeItem: (key: string) => { values.delete(key); },
+    };
+  }
+
+  it('round-trips an export through a restore into both stores', () => {
+    const storage = memoryStorage({});
+    expect(restoreProgressBackup(storage, target)).toBe(true);
+    const exported = encodeBackupFromProgressPair({ quiz: storage.getItem(progressKey), flashcards: storage.getItem(flashcardProgressKey) });
+    expect(exported.ok).toBe(true);
+    if (exported.ok) {
+      const parsed = JSON.parse(exported.json) as ProgressBackupV1;
+      expect(parsed.quiz).toEqual(target.quiz);
+      expect(parsed.flashcards).toEqual(target.flashcards);
     }
   });
 
-  it('captures the fixed three raw keys twice and labels the best-effort capture', () => {
-    const values = new Map([
-      [progressKey, 'quiz raw'],
-      [flashcardProgressKey, 'flash raw'],
-      [progressRestoreJournalKey, 'journal raw'],
-    ]);
-    const result = captureRawProgressRecovery(
-      { getItem: (key) => values.get(key) ?? null },
-      '2026-10-13T00:00:00.000Z',
-    );
-    expect(result.ok).toBe(true);
-    if (result.ok)
-      expect(JSON.parse(result.json)).toMatchObject({
-        quizKey: progressKey,
-        quizRaw: 'quiz raw',
-        flashcardsKey: flashcardProgressKey,
-        flashcardsRaw: 'flash raw',
-        journalKey: progressRestoreJournalKey,
-        journalRaw: 'journal raw',
-        mayBeInconsistent: true,
-      });
+  it('replaces existing values in both stores', () => {
+    const storage = memoryStorage({ [progressKey]: 'old-quiz', [flashcardProgressKey]: 'old-cards' });
+    expect(restoreProgressBackup(storage, target)).toBe(true);
+    expect(storage.getItem(progressKey)).not.toBe('old-quiz');
+    expect(storage.getItem(flashcardProgressKey)).not.toBe('old-cards');
   });
 
-  it('does not fabricate raw nulls when reads fail or values change during capture', () => {
-    expect(
-      captureRawProgressRecovery({
-        getItem: () => {
-          throw new Error('denied');
-        },
-      }),
-    ).toEqual({ ok: false, error: 'unavailable' });
-    let reads = 0;
-    const changed = captureRawProgressRecovery({ getItem: (key) => (key === progressKey ? `value-${reads++}` : null) });
-    expect(changed).toEqual({ ok: false, error: 'changed' });
+  it('leaves both stores at their original values when the second write fails', () => {
+    const storage = memoryStorage({ [progressKey]: 'old-quiz', [flashcardProgressKey]: 'old-cards' }, flashcardProgressKey);
+    expect(restoreProgressBackup(storage, target)).toBe(false);
+    expect(storage.getItem(progressKey)).toBe('old-quiz');
+    expect(storage.getItem(flashcardProgressKey)).toBe('old-cards');
   });
 
-  it('round-trips lone surrogate code units without replacement', () => {
-    const pair = { quiz: `before\ud800after`, flashcards: `\udfff` };
-    const result = encodeRawProgressRecovery(pair);
-    expect(result.ok).toBe(true);
-    if (result.ok)
-      expect(JSON.parse(result.json)).toMatchObject({ quizRaw: pair.quiz, flashcardsRaw: pair.flashcards });
+  it('removes keys that were absent before a failed restore', () => {
+    const storage = memoryStorage({}, flashcardProgressKey);
+    expect(restoreProgressBackup(storage, target)).toBe(false);
+    expect(storage.values.size).toBe(0);
   });
 });
-
-it('accepts the exact 64 MiB escaped recovery ceiling and rejects one more byte before output allocation', () => {
-  const capturedAt = '2026-10-13T00:00:00.000Z';
-  const base = encodeRawProgressRecovery({ quiz: null, flashcards: null }, capturedAt);
-  if (!base.ok) throw new Error('empty raw recovery must be encodable');
-  const allowance = 64 * 1024 * 1024 - base.json.length + 2; // Replace null (4 bytes) with string quotes (2 bytes).
-  const quiz = '\u0000'.repeat(Math.floor(allowance / 6)) + 'a'.repeat(allowance % 6);
-  const exact = encodeRawProgressRecovery({ quiz, flashcards: null }, capturedAt);
-  expect(exact.ok).toBe(true);
-  if (exact.ok) expect(exact.json.length).toBe(64 * 1024 * 1024);
-  expect(encodeRawProgressRecovery({ quiz: quiz + 'a', flashcards: null }, capturedAt)).toEqual({ ok: false, error: 'too-large' });
-}, 15_000);

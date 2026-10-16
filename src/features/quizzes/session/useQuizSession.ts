@@ -9,7 +9,6 @@ import {
 import { contentSignature } from '../../../domain/contentSignature';
 import type { Attempt, AttemptRepository, CompletedAttempt, FeedbackMode, Quiz, QuizRepository, Subject } from '../../../domain/types';
 import { PersistenceError } from '../../../persistence/localRepository';
-import { learnerProgressAdmission } from '../../../persistence/progressAdmission';
 import { subjectForQuiz, type QuizSessionView } from './navigation';
 
 export type QuizExitDestination = 'subject' | 'dashboard' | 'flashcards';
@@ -160,7 +159,6 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   useEffect(() => {
     if (view.page !== 'quiz') return;
     const pauseOnPageHide = () => {
-      if (learnerProgressAdmission.consumePageHideWriteSuppression()) return;
       try { attempts.saveActive(pauseAttempt(view.attempt)); }
       catch { console.error('Progress could not be saved while leaving the page.'); }
     };
