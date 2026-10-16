@@ -4,8 +4,8 @@ Goal: remove accumulated complexity and prepare for hosted production using mana
 
 ## Phases
 
-1. **Docs and process** (in progress): rewrite AGENTS.md; delete completed/stale trackers and evidence; merge stage-named runbooks (L4/L5/L6, local-authoring, local-containers) into `docs/operations.md`; shorten architecture, testing, ADRs and READMEs; trim agent skills.
-2. **Scripts and CI**: reduce `scripts/containers` and `scripts/testing` probes to one image smoke test; drop the dual-architecture container matrix, rollback drills and load rounds from CI; reduce Playwright configs.
+1. **Docs and process** (done).
+2. **Scripts and CI** (done): one container smoke (`npm run test:containers`), single-arch CI, two Playwright configs. Left: `control-resilience-fixture.py` stays for two backend DB-outage tests.
 3. **Frontend**: simplify progress backup/restore (drop Web Locks coordination, admission and restore journal; keep file validation); merge parallel quiz/flashcard admin code; collapse admin gateway layers; replace the custom boundary ESLint plugin with `no-restricted-imports`; merge tiny files; remove implementation-coupled tests.
 4. **Backend** (needs a `pg_dump` and restore check first): random IDs instead of the allocation fence and journals; one validation layer (drop PL/pgSQL JSON validation); store releases as immutable JSON with role grants instead of triggers; remove obsolete parity/transfer code; admin auth via managed identity or auth proxy.
 

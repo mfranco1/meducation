@@ -23,9 +23,6 @@ venv/
 !.env.example
 coverage/
 test-results/
-test-results-containers/
-test-results-progress-backup/
-test-results-progress-backup-report.json
 playwright-report/
 
 # Local off-volume database backups (not automatically off-device).

@@ -1,10 +1,10 @@
 # Testing
 
-Pick checks by the contract you changed. Do not add tests that mirror implementation or incidental styling. Assert observable outcomes and safety invariants. CI (`.github/workflows/checks.yml`) runs the host gates, browser suites and native container acceptance.
+Pick checks by the contract you changed. Do not add tests that mirror implementation or incidental styling. Assert observable outcomes and safety invariants. CI (`.github/workflows/checks.yml`) runs the host gates, browser suites and the container smoke.
 
 ## Suites and commands
 
-Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operations](operations.md#prerequisites), `npx playwright install chromium webkit`. Browser suites need Docker.
+Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operations](operations.md#prerequisites), `npx playwright install chromium`. Browser suites need Docker.
 
 | Suite | Command |
 | --- | --- |
@@ -14,17 +14,16 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | Architecture tooling tests | `npm run test:architecture` |
 | Typecheck / build | `npm run typecheck`, `npm run build` (learner `build:learner`, admin `build:admin`) |
 | Content validation | `npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json` |
-| Backend | `.venv/bin/ruff check backend/src backend/tests`, `.venv/bin/mypy backend/src`, `.venv/bin/python -m pytest backend/tests -q` |
+| Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python -m pytest backend/tests -q` |
 | Real PostgreSQL backend cases | `.venv/bin/python scripts/containers/test-postgres-content.py` (`--keyword` to focus; `--restartable` for outage drills) |
-| Learner browser | `npm run test:e2e` (builds with retries off); `npm run test:e2e:prepared` after `npm run build:learner:smoke` |
-| Progress backup browser | `npm run test:e2e:progress-backup` (Chromium and WebKit are the accepted engines) |
+| Learner browser (Chromium; includes progress backup) | `npm run test:e2e` (builds with content retries off) |
 | Admin browser | `npm run test:e2e:admin` |
 | Everything | `npm run verify:full` (stops at the first failure) |
-| Container browser/native acceptance | `npm run test:e2e:containers`; `.venv/bin/python scripts/containers/acceptance.py` on native amd64 or arm64 |
+| Container smoke | `npm run test:containers` |
 
 Pytest skips real-PostgreSQL cases unless an isolated test database exists; a skip is not database acceptance. Run `test-postgres-content.py` for that gate.
 
-Learner, progress-backup and admin browser suites share `dist` and ports; run them sequentially, and never rebuild `dist` while one is running. Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds synthetic fixtures into a disposable PG17 tmpfs container with generated credentials (API port 8765 for learner, 8766 for admin; override with `MEDUCATION_E2E_API_PORT`). It never reads authority credentials or content.
+Learner and admin browser suites share ports and `dist`; run them sequentially, and never rebuild `dist` while one is running. Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds synthetic fixtures into a disposable PG17 tmpfs container with generated credentials (API port 8765 for learner, 8766 for admin; override with `MEDUCATION_E2E_API_PORT`). It never reads authority credentials or content.
 
 ## What to run
 
@@ -32,10 +31,10 @@ Learner, progress-backup and admin browser suites share `dist` and ports; run th
 - Learner UI, navigation, sessions, loaders: affected learner browser flows on a fresh learner build; the full learner suite for shared navigation or loading.
 - Admin UI, gateway, authoring: admin browser suite and `build:admin`.
 - Shared UI, content rendering, entry points, lazy boundaries: build both entries and run affected flows in both apps. The ordinary build must omit `admin.html`; the admin build must include it.
-- Persistence, backup, recovery: failure, interruption and stale-tab tests plus the progress-backup suite.
+- Persistence, backup, recovery: failure, interruption and stale-tab tests plus the learner browser suite.
 - Backend, stored contracts, policy, shared fixtures: Ruff, mypy, pytest and the real-PostgreSQL gate. Run `npm run build:content-policy` first.
 - Schema, serialization or content changes: validate and compare a fresh selected export (`validate-export`, `audit-export`); fixtures never certify live content.
-- Container, database, recovery or release changes: the relevant `scripts/containers` smokes against freshly built images, and full native acceptance for release certification.
+- Container, database, recovery or release changes: `npm run test:containers`.
 - Boundary policy changes: `npm run test:architecture`.
 - Documentation only: check links and commands and run `git diff --check`.
 
@@ -61,4 +60,4 @@ Learner, progress-backup and admin browser suites share `dist` and ports; run th
 - Layouts have no horizontal overflow at 390, 1048 and 1440 px.
 - Recovery restores exact tables, sequences and grants, quarantines restored sessions, and reconciles allocation journals.
 
-Automated role, focus and layout checks do not replace manual VoiceOver or NVDA review. Firefox is not an accepted engine for the progress-backup suite.
+Automated role, focus and layout checks do not replace manual VoiceOver or NVDA review.

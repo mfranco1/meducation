@@ -1,7 +1,6 @@
 """Restore a retained local dump into a fresh disposable DB; never restore over authority."""
 
 import hashlib
-import importlib.util
 import json
 import shutil
 import subprocess
@@ -91,12 +90,77 @@ def main():
             engine.dispose()
 
 
+def snapshot(engine):
+    state = {}
+    with engine.connect() as connection:
+        tables = (
+            connection.execute(
+                text(
+                    "SELECT schemaname,tablename FROM pg_tables WHERE schemaname IN ('content','admin_auth') ORDER BY schemaname,tablename"
+                )
+            )
+            .tuples()
+            .all()
+        )
+        for schema, table in tables:
+            rows = [
+                json.dumps(row, sort_keys=True, default=str, separators=(",", ":"))
+                for row in connection.execute(
+                    text(f'SELECT to_jsonb(t) FROM "{schema}"."{table}" t')
+                ).scalars()
+            ]
+            state[schema + "." + table] = {
+                "count": len(rows),
+                "sha256": hashlib.sha256("\n".join(sorted(rows)).encode()).hexdigest(),
+            }
+        state["sequences"] = [
+            tuple(row)
+            for row in (
+                connection.execute(
+                    text(
+                        "SELECT sequencename,last_value FROM pg_sequences WHERE schemaname='content' ORDER BY sequencename"
+                    )
+                ).tuples()
+            )
+        ]
+    return state
+
+
+def permission_snapshot(engine):
+    # Effective privileges include PUBLIC leakage and implicit owner privileges.
+    with engine.connect() as connection:
+        result = connection.exec_driver_sql("""
+WITH roles AS (SELECT unnest(ARRAY['meducation_owner','meducation_reader','meducation_backup',
+ 'meducation_operator','meducation_session','meducation_editor','meducation_migrator']) AS role),
+permissions AS (
+ SELECT r.role,'schema' AS kind,n.nspname AS object,p.privilege,
+ has_schema_privilege(r.role,n.oid,p.privilege) AS granted
+ FROM pg_namespace n CROSS JOIN roles r CROSS JOIN (VALUES ('USAGE'),('CREATE')) p(privilege)
+ WHERE n.nspname IN ('content','admin_auth')
+ UNION ALL
+ SELECT r.role,'relation',n.nspname||'.'||c.relname,p.privilege,
+ has_table_privilege(r.role,c.oid,p.privilege)
+ FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace CROSS JOIN roles r
+ CROSS JOIN (VALUES ('SELECT'),('INSERT'),('UPDATE'),('DELETE'),('TRUNCATE'),('REFERENCES'),('TRIGGER')) p(privilege)
+ WHERE n.nspname IN ('content','admin_auth') AND c.relkind IN ('r','v')
+ UNION ALL
+ SELECT r.role,'sequence',n.nspname||'.'||c.relname,p.privilege,
+ has_sequence_privilege(r.role,c.oid,p.privilege)
+ FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace CROSS JOIN roles r
+ CROSS JOIN (VALUES ('SELECT'),('USAGE'),('UPDATE')) p(privilege)
+ WHERE n.nspname IN ('content','admin_auth') AND c.relkind='S'
+ UNION ALL
+ SELECT r.role,'function',n.nspname||'.'||p.proname||'('||pg_get_function_identity_arguments(p.oid)||')',
+ 'EXECUTE',has_function_privilege(r.role,p.oid,'EXECUTE')
+ FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace CROSS JOIN roles r
+ WHERE n.nspname IN ('content','admin_auth')
+)
+SELECT role,kind,object,privilege,granted FROM permissions ORDER BY role,kind,object,privilege
+""").tuples().all()
+        return [tuple(row) for row in result]
+
+
 def verify_retained_backup(started, root, state, env, base, name, original, engines):
-    spec = importlib.util.spec_from_file_location(
-        "recovery_probe", ROOT / "scripts/containers/verify-postgres-release.py"
-    )
-    probe = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(probe)
     require_retired_writers(original)
     archive = retain_backup()
     with original.connect() as c:
@@ -111,8 +175,8 @@ def verify_retained_backup(started, root, state, env, base, name, original, engi
                 "SELECT revision FROM content.draft"
             ).scalar_one(),
         }
-    before = probe.snapshot(original)
-    before_acl = probe.permission_snapshot(original)
+    before = snapshot(original)
+    before_acl = permission_snapshot(original)
     created = False
     try:
         with original.connect().execution_options(isolation_level="AUTOCOMMIT") as c:
@@ -174,9 +238,9 @@ def verify_retained_backup(started, root, state, env, base, name, original, engi
         engines.append(mig)
         with mig.begin() as c:
             restore_content_permissions(c)
-        if not (probe.snapshot(restored) == before):
+        if not (snapshot(restored) == before):
             raise RuntimeError("Table/sequence restoration differs")
-        if not (probe.permission_snapshot(restored) == before_acl):
+        if not (permission_snapshot(restored) == before_acl):
             raise RuntimeError("Effective ACL restoration differs")
         with original.connect() as source, restored.connect() as target:
             qt, ft, _ = reconstruct_release(source, UUID(state["releaseId"]))
@@ -276,7 +340,7 @@ def verify_retained_backup(started, root, state, env, base, name, original, engi
                 != retained
             ):
                 raise RuntimeError("Retained activation deleted later releases")
-        if not (probe.snapshot(original) == before):
+        if not (snapshot(original) == before):
             raise RuntimeError("Authority changed during verification")
         report = {
             "result": "pass",

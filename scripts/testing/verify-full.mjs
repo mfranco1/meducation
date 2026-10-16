@@ -10,25 +10,11 @@ const steps = [
     ['run', 'validate:content', '--', 'tests/fixtures/question-bank.json', 'tests/fixtures/empty-flashcard-bank.json'],
   ],
   ['npm', ['run', 'build:content-policy']],
-  [
-    '.venv/bin/ruff',
-    [
-      'check',
-      'backend/src',
-      'backend/tests',
-      'scripts/testing/serve-postgres-fixture.py',
-      'scripts/containers/fixtures/editor_http.py',
-    ],
-  ],
+  ['.venv/bin/ruff', ['check', 'backend', 'scripts']],
   ['.venv/bin/mypy', ['backend/src']],
   ['.venv/bin/python', ['-m', 'pytest', 'backend/tests', '-q']],
   ['npm', ['run', 'typecheck']],
-  ['npm', ['run', 'build:learner:smoke']],
-  ['npm', ['run', 'test:e2e:prepared']],
-  [
-    'npx',
-    ['playwright', 'test', '--config=playwright.progress-backup.config.ts', '--project=chromium', '--project=webkit'],
-  ],
+  ['npm', ['run', 'test:e2e']],
   ['npm', ['run', 'build:admin']],
   ['npm', ['run', 'test:e2e:admin']],
 ];

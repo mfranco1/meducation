@@ -28,7 +28,7 @@ jobs:
       - run: npm run build:content-policy
       - name: Check Python style and types
         run: |
-          .venv/bin/ruff check backend/src backend/tests scripts/testing/serve-postgres-fixture.py scripts/containers/fixtures/editor_http.py
+          .venv/bin/ruff check backend scripts
           .venv/bin/mypy backend/src
       - name: Test backend
         run: .venv/bin/python -m pytest backend/tests -q
@@ -72,96 +72,39 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build:content-policy
-      - run: npx playwright install --with-deps chromium webkit
-      - run: npm run build:learner:smoke
-      - run: npm run test:e2e:prepared
-      - name: Paired progress backup on accepted engines
-        run: npx playwright test --config=playwright.progress-backup.config.ts --project=chromium --project=webkit
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
       - run: npm run test:e2e:admin
-      - name: Retain accepted-engine backup evidence
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: progress-backup-accepted-engines
-          path: |
-            test-results-progress-backup/
-            test-results-progress-backup-report.json
-          retention-days: 14
-          if-no-files-found: warn
-      - name: Retain host browser failure traces
+      - name: Upload browser traces
         if: failure()
         uses: actions/upload-artifact@v7
         with:
-          name: host-browser-failures
-          path: test-results/
-          retention-days: 14
-          if-no-files-found: warn
+          name: browser-traces
+          path: |
+            test-results/
+            test-results-admin/
+          retention-days: 7
+          if-no-files-found: ignore
 
   containers:
-    name: Containers (${{ matrix.architecture }})
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-24.04
-            architecture: amd64
-          - runner: ubuntu-24.04-arm
-            architecture: arm64
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 60
-    permissions:
-      contents: read
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0 # Retained application rollback builds a concrete historical revision.
       - uses: actions/setup-python@v6
         with:
           python-version-file: backend/.python-version
           cache: pip
           cache-dependency-path: backend/requirements-dev.lock
-      - name: Install verification environment
+      - name: Install backend environment
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install -r backend/requirements-dev.lock
+          .venv/bin/python -m pip install --no-deps -e backend
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
       - run: npm ci
       - run: npm run build:content-policy
-      - run: npx playwright install --with-deps chromium
-      - name: Check container helpers
-        run: .venv/bin/ruff check scripts/containers
-      - name: Repeated clean builds and native acceptance
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          REF_TYPE: ${{ github.ref_type }}
-          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          # Keep the existing matrix check names. Manual/tag runs and unknown bases
-          # always run full acceptance; ordinary UI/docs changes use the host gates.
-          if [[ "$EVENT_NAME" != workflow_dispatch && "$REF_TYPE" != tag ]] &&
-             git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null &&
-             git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
-               Dockerfile backend compose.yaml .dockerignore ops scripts public \
-               .github/workflows package.json package-lock.json vite.config.ts \
-               'tsconfig*.json' 'playwright*.config.ts' \
-               index.html admin.html src/main.tsx src/app/lazyScreens.tsx \
-               src/admin/main.tsx src/admin/AdminApp.tsx src/admin/SessionCompletion.tsx \
-               src/content src/domain src/persistence tests/fixtures e2e; then
-            echo 'Full native acceptance is not needed for these paths; host build/browser gates still apply.'
-          else
-            .venv/bin/python scripts/containers/acceptance.py --expected-architecture ${{ matrix.architecture }}
-          fi
-      - name: Retain scoped evidence and failure traces
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: container-acceptance-${{ matrix.architecture }}
-          path: |
-            test-results/container-acceptance/
-            test-results-containers/
-          retention-days: 14
-          if-no-files-found: warn
+      - run: npm run test:containers

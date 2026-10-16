@@ -133,7 +133,15 @@ Real recovery:
 4. Rotate `MEDUCATION_ADMIN_EPOCH`. Run `allocation-recover` against the latest complete journals; without them keep allocation disabled.
 5. Compare content, then switch reader/session/editor connections together, restart workers and verify learner reads and a fresh editor login. Keep the original until verified.
 
-Generic development helper for Compose Postgres: `scripts/containers/postgres.py` (`versions`, `psql`, `dump --output`, `restore --input --database`, `discard-volume --discard-disposable-data`). `restore` creates a new verification database and refuses existing ones; `discard-volume` removes only the verified `meducation-local_postgres-data` volume while stopped. It is not a production backup design.
+Development dump and restore use plain Postgres tools in the Compose container (add the same `--env-file` and `-f` flags as the start command):
+
+```sh
+docker compose --profile db exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump --host 127.0.0.1 --username "$POSTGRES_USER" --format=custom "$POSTGRES_DB"' > meducation.dump
+docker compose --profile db exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 --username "$POSTGRES_USER" --dbname postgres -c "CREATE DATABASE meducation_verify"'
+docker compose --profile db exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --host 127.0.0.1 --username "$POSTGRES_USER" --dbname meducation_verify --no-owner --no-acl --exit-on-error' < meducation.dump
+```
+
+Restore into a fresh database, never over the original. This is not a production backup design.
 
 Learner progress backups are separate and browser-local ([product](product.md#progress-backup-and-restore)). Private source material (`tn-pdfs/`, `content/`) is ignored by Git and needs its own backup.
 
@@ -147,7 +155,7 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 ```
 
 - Images: API (installed wheel, user 10001, one Uvicorn process, no content corpus), learner and admin (non-root Nginx 101 on port 8080, read-only filesystem). The default `learner` target returns 404 for `/admin.html`; `admin` serves it `no-store`. Admin assets still need an authenticated API.
-- Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 22, Nginx unprivileged). Update tag and digest together and rebuild on native amd64 and arm64. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
+- Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 22, Nginx unprivileged). Update tag and digest together and rebuild. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
 - Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB, and logs only fixed route families. Private responses are `no-store`.
 - Runtime pools: reader, session and editor each at most two connections; migrations and jobs use direct unpooled connections.
-- Container smoke and acceptance scripts live in `scripts/containers/` (`acceptance.py`, `smoke-*.py`, `verify-postgres-release.py`); CI runs them on native amd64 and arm64. See [testing](testing.md).
+- Container smoke: `npm run test:containers` (`scripts/containers/smoke.py`) builds the API and learner images, starts an isolated Compose project with a disposable Postgres seeded from the synthetic `e2e/fixtures` banks, checks the learner page, `/api/v1/subjects` through Nginx, the health routes and the 404 for `/admin.html`, then removes the project and volume. CI runs it on amd64. The learner build fails inside the Dockerfile if it ships admin or content-bank modules (`scripts/containers/check-learner-artifacts.mjs`).
