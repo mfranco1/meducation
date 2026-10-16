@@ -1,6 +1,6 @@
 # Flashcard schema
 
-PostgreSQL is the sole writable content authority. This page defines the schema-v2 flashcard representation used in paired drafts/releases and deterministic JSON exports. The paired quiz subject registry remains authoritative for deck references. Preserve exact strings, array order, omitted fields and stable server-reserved IDs. JSON file editing below describes fixture/archive representations only. See [the recovery runbook](L4-authoritative-recovery.md).
+Defines the schema-v2 flashcard document stored in paired drafts and releases and written to deterministic `flashcardBank.json` exports. The shared subject registry in the quiz document stays authoritative for deck references. Preserve exact strings, array order, omitted fields and server-reserved IDs.
 
 The PostgreSQL flashcard document and its deterministic `flashcardBank.json` exports use schema v2 with flat `decks` and `cards` arrays. Shared subject records remain authoritative in the paired database quiz bank (represented in its deterministic `questionBank.json` export); flashcards refer to stable subject IDs and never copy subject rows.
 
@@ -38,20 +38,14 @@ Array order is canonical within each parent: deck order within a subject and car
 
 Card `front` and `back` use the same restricted rich Markdown, HTML, image, URL, and math policy as quiz stems and rationales. `sources` uses the restricted source Markdown policy. `reviewNote` is plain text. The learner renders both faces using the shared sanitized Markdown renderer. Quiz `metadata.topic` remains free text and is not a foreign key to the flashcard hierarchy.
 
-The runtime and authoring change sets accept version 2 only. The completed schema-v1 migration tool has been retired.
+## Bulk JSON
 
-## Admin bulk JSON
-
-The local admin accepts content-only JSON from the selected destination. For a deck, use `{ "cards": [...] }`, where each card requires non-empty `front` and `back` strings and may include `sources` and `reviewNote`. For a subject, use `{ "decks": [...] }`, where each deck requires a non-empty `name` and may include `description` and `cards`; omitted or empty `cards` creates an empty deck. Nested cards use the same fields as cards added to an existing deck.
-
-The admin rejects unknown fields, IDs, parent references, null values, blank required text, invalid Markdown, and empty top-level batches with JSON-path diagnostics. It allocates IDs, previews the ordered candidate and warnings, then stages all records as one undoable batch. Editing the draft or changing the bank, subjects, destination, reason, or coordinated export context makes the preview stale. Paste JSON into the editor or load a `.json` file; technical change-set import remains a separate workflow.
+Bulk adds are content-only: a deck takes `{ "cards": [...] }` and a subject takes `{ "decks": [...] }` ([content management](content-management.md#editor-workflow)). The editor rejects unknown fields, IDs, parent references, nulls, blank required text and invalid Markdown with JSON-path diagnostics, then previews the ordered candidate before the server reserves IDs.
 
 ## PostgreSQL mapping
 
-The [selected L3 database mapping](decisions/0005-paired-content-releases-and-postgres-schema.md) adds `release_id` to `subjects(id, name, accent, position)`, `decks(id, subject_id, name, description, position)`, and `flashcards(id, deck_id, front, back, sources, review_note, position)`. Composite keys and foreign keys keep relationships within one paired release. `position` is a zero-based global collection ordinal; filtering that order gives canonical sibling order. The `subjects` table is shared with quizzes. Foreign keys are indexed and parent deletes are restricted. Finalized release rows are immutable; L4 admin cascades affect the paired draft before publication. Migration `0001_content` implements these constraints; the learner Postgres adapter now reads decks/cards and subject summaries from the same pinned release as quiz content.
-
-Learner checkpoints are not content. They belong in a separate progress repository and, eventually, a user-scoped table keyed by `(user_id, deck_id)` with current card ID, content signature, update time, and opened/flagged card IDs. They must not be written into this canonical bank. The local progress envelope is schema v2 under `meducation.flashcards.progress.v2`; only this key is read. Checkpoints contain a SHA-256 content signature and opened/flagged ID arrays. Serialized-content signatures and v1 checkpoints are no longer supported. Malformed current state is preserved and surfaced for recovery.
+Tables `subjects`, `decks` and `flashcards` carry `release_id` and a zero-based global `position`; composite keys keep relationships inside one paired release, and finalized rows are immutable ([ADR 0005](decisions/0005-paired-content-releases-and-postgres-schema.md)). Learner checkpoints are not content: they are stored separately in browser progress under `meducation.flashcards.progress.v2` with a SHA-256 content signature and opened and flagged card IDs, and are never written into this bank.
 
 ## Validation
 
-Edit flashcards through the authenticated paired PostgreSQL draft, preserving stable IDs, parent relationships, order, and rich content. Validate a fresh selected database export with `validate-export`; `npm run validate:content -- <quiz-file> <flashcard-file>` checks only the explicitly selected pair and its shared-subject references.
+Validate a fresh selected database export with `validate-export`; `npm run validate:content -- <quiz-file> <flashcard-file>` checks only an explicitly selected pair and its shared-subject references.

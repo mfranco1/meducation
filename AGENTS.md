@@ -1,147 +1,77 @@
 # AGENTS.md
 
-## Project
+## Project and scope
 
-This is a browser-based interactive study platform built around a canonical, versioned question bank.
+A browser-based study app (quizzes and flashcards) built on a canonical question bank of about 12k questions and 1.7k cards.
 
-The current product is local-first and private. Implement current requirements; public hosting, cloud persistence, and additional infrastructure require explicit scope.
+It is being prepared for hosted production: anonymous learners read published content and keep their progress in browser localStorage; a small number of authenticated editors author and publish content. Initial audience is a few hundred users.
+
+Build for that and nothing larger. Use managed platform services (managed Postgres with point-in-time recovery, a managed identity provider or auth proxy, platform logs and deploys) instead of custom infrastructure. Do not design for multiple regions, multiple CPU architectures, speculative scale, or disaster scenarios the platform already covers.
 
 ## Stack
 
-- React
-- TypeScript
-- Vite
-- Material UI
-- FastAPI and PostgreSQL for paired content persistence
-- localStorage for learner progress
+React, TypeScript, Vite, Material UI; FastAPI and PostgreSQL for content; localStorage for learner progress.
 
-Do not add backend infrastructure unless explicitly requested.
+## Engineering rules
 
-## Core Invariants
+Optimize for simplicity, clarity and fast iteration. Fewer moving parts and less code are positive outcomes when correctness and security are preserved.
 
-### 1. Canonical question bank is authoritative
+- Implement the simplest correct solution for current requirements. No speculative features or architecture for hypothetical needs.
+- Extend or simplify existing code before adding files, layers, interfaces, adapters, services or configuration. A little duplication beats a premature abstraction.
+- Prefer framework, platform and existing-dependency features over hand-rolled equivalents.
+- Validate at genuine trust boundaries (HTTP input, uploaded files, stored data). Do not re-validate the same data in several layers or guard impossible states.
+- When replacing or removing functionality, delete the obsolete code, its tests, its docs and its scripts in the same change.
+- Do not add new infrastructure, CI jobs, operational scripts, drills, probes or load tests unless the user asks for them in the current task.
+- Never sacrifice security, correctness or necessary error handling for brevity.
 
-The designated local PostgreSQL database is the only writable authority for the paired quiz/flashcard bank. Use the authenticated HTTP editor and server-reserved stable IDs. Saving a paired draft does not publish it.
+After implementing, review the diff and remove anything that does not materially contribute: abstractions, boilerplate, dead code, redundant tests, unneeded docs.
 
-PostgreSQL is also the only runtime content source. Repository JSON databases,
-offline content mode and file-backed authoring are retired. Captured database
-exports are read-only inspection/recovery artifacts, never application sources.
-Never replace database-only work with a stale snapshot. Trusted imports are
-reviewed recovery/migration jobs. Before authoritative creates, require the
-admitted allocation fence and current locally retained journals (off-device
-retention is user-deferred) described in `docs/L4-authoritative-recovery.md`.
+## Content invariants
 
-Never silently modify, rewrite, correct, reorder, simplify, or otherwise alter:
+### Canonical bank
 
-- Question stems
-- Answer choices
-- Choice ordering
-- Numbers
-- Units
-- Medical terminology
-- Meaningful formatting
+PostgreSQL is the only authority and runtime source for the paired quiz/flashcard bank. Edit through the authenticated HTTP editor. Saving a draft does not publish it. Database exports are read-only artifacts, never application sources; never replace database work with an older snapshot.
 
-Make intentional corrections directly in the canonical record and preserve their rationale through answer provenance, review notes, or a documented content change.
+Never silently modify, rewrite, correct, reorder or simplify question stems, answer choices, choice ordering, numbers, units, medical terminology or meaningful formatting. Make intentional corrections in the canonical record and record the rationale in answer provenance or review notes.
 
-### 2. Preserve answer provenance
+### Answer provenance
 
-Provided answer keys may be wrong.
+Provided answer keys may be wrong. Never overwrite the original answer key; keep source and verified answers distinguishable. The quiz uses the verified answer when one exists.
 
-Never overwrite the original answer key. Keep source and verified answers distinguishable.
+### No runtime generative AI
 
-The runtime quiz should use the verified answer when one exists.
+The application must not call an LLM at runtime. Rationales, explanations and metadata are static content.
 
-### 3. No runtime generative AI
+### Stable IDs
 
-The application must not require or call an LLM at runtime.
+Question, quiz, subject, deck, card and attempt IDs never change once established.
 
-Rationales, choice explanations, pearls, and metadata are development-time/static content.
+## Code organization
 
-### 4. Separate concerns
-
-Keep domain/quiz logic independent from React UI.
-
-Keep persistence behind an abstraction rather than scattering localStorage access throughout the application.
-
-Keep question content separate from application code.
-
-### 5. Stable IDs
-
-Question, quiz, subject, and attempt identifiers must remain stable once established.
-
-Do not regenerate IDs casually.
-
-## Repository Guidance
-
-Before making significant changes:
-
-1. Inspect the existing implementation.
-2. Read the relevant documentation for the area being changed.
-3. Reuse existing patterns where appropriate.
-4. Make the smallest coherent change.
-5. Run relevant validation/tests/build checks.
-
-Do not rewrite working code solely to impose a preferred architecture.
-
-Follow the [repository ownership and checked dependency boundaries](docs/architecture.md#repository-ownership) when placing or importing modules.
+Keep domain logic independent of React, keep localStorage access inside `src/persistence`, and keep content out of application code. See [architecture](docs/architecture.md) for module boundaries.
 
 ## Documentation
 
-Use the repository documentation as the source of truth for details:
+Docs describe the current system only, briefly. No dated status layers, history narratives, superseded designs or restatements of what the code already says; git history is the archive.
 
-- `docs/architecture.md` — system architecture and boundaries
-- `docs/product.md` — product behavior and UX requirements
-- `docs/question-schema.md` — question-bank structure and content rules
-- `docs/content-management.md` — question-bank editing, enrichment, and validation
-- `docs/design-system.md` — visual design and UI conventions
-- `docs/testing.md` — testing and verification strategy
+- `docs/architecture.md`: module boundaries and data flow
+- `docs/product.md`: product behavior
+- `docs/question-schema.md`, `docs/flashcard-schema.md`: content contracts
+- `docs/content-management.md`: authoring and validation
+- `docs/design-system.md`: UI conventions
+- `docs/testing.md`: how to verify changes
+- `docs/operations.md`: running, backing up and deploying
 
-If these documents do not yet exist, create them when the corresponding work requires them.
+Update the relevant doc in the same change when behavior or commands change. Do not create new docs without a clear need.
 
-### Progress Tracking
+## Work tracking
 
-Use one concise Markdown tracker for sustained work. Routine edits do not need separate plans or machine-readable evidence files unless they establish a necessary contract or acceptance result.
+Routine work needs no tracker. For multi-session work, keep one short Markdown tracker (under about 100 lines) in `docs/work/ongoing` with scope, remaining steps and decisions. Delete it when the work is done. Do not create evidence JSON files, logs of check runs, or "done" archives.
 
-- docs/work/ongoing - directory for ongoing progress trackers. Create new trackers here.
-- docs/work/done - directory for completed trackers. Move trackers here once the task being tracked is completed.
+## Tests
 
-If these directories and files do not exist yet, create them when the corresponding work requires them.
+Test observable behavior: what a user sees or what a caller gets. Do not assert call sequences, internal structure or implementation details, and do not duplicate the same coverage across unit, integration and browser suites. Use small synthetic fixtures.
 
 ## Verification
 
-After making changes, run the relevant project checks defined by the repository.
-
-At minimum, ensure the project type-checks and builds successfully when those scripts are available.
-
-For content changes, run question-bank validation.
-
-Do not claim a change is complete if relevant checks are failing.
-
-## Scope
-
-More-specific `AGENTS.md` files may add or override guidance for their directory.
-
-Prefer repository invariants and documented source-of-truth files over duplicating detailed implementation instructions here.
-
-## Engineering Philosophy
-
-Optimize for simplicity, clarity, maintainability, and fast iteration.
-
-- Implement the simplest correct solution that satisfies current requirements.
-- Prefer modifying existing code over introducing new files, layers, or abstractions.
-- Reuse existing utilities, components, patterns, and framework capabilities before building new ones.
-- Avoid speculative features, premature optimization, and architecture for hypothetical future needs.
-- Do not introduce interfaces, factories, adapters, service layers, generic utilities, or configuration unless they solve a concrete, present problem.
-- Prefer direct, readable code over excessive indirection. A little duplication is acceptable when it improves clarity.
-- Keep dependencies minimal. Use existing dependencies or native functionality when practical.
-- Avoid excessive defensive programming for impossible states or already-validated internal data. Validate at genuine trust boundaries.
-- Keep tests focused on meaningful behavior, edge cases, and regressions. Avoid redundant or implementation-coupled tests.
-- When replacing functionality, remove obsolete code and unnecessary compatibility layers when safe.
-- Follow existing conventions when useful, but challenge patterns that introduce unnecessary complexity.
-- Treat fewer moving parts and less code as positive outcomes, provided correctness, readability, and maintainability are preserved.
-
-Before implementing, consider whether the task can be solved by simplifying or extending existing code.
-
-After implementing, review the diff for unnecessary abstractions, duplication, boilerplate, and dead code. Remove anything that does not materially contribute to the solution.
-
-Do not sacrifice security, correctness, or necessary error handling for brevity.
+Before claiming a change is complete, run the checks relevant to it (see [testing](docs/testing.md)). At minimum `npm run build` for frontend changes and the backend tests for backend changes. Report failures honestly.

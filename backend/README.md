@@ -1,367 +1,44 @@
-# Meducation content API
+# Meducation API
 
-For the initialized local authority, use the [local authoring launcher and jobs](../docs/local-authoring.md).
+FastAPI service that publishes the active paired quiz/flashcard release from PostgreSQL, hosts the authenticated editor services under `/api/admin`, and ships the `meducation-db` job CLI. It reads only PostgreSQL; workers never migrate or import. Learner progress is not stored here.
 
-Use PostgreSQL published-only learner delivery and authenticated paired HTTP authoring for the designated authoritative target. JSON service mode and routine file authoring are retired; JSON remains a request/export/recovery format. Explicit migrator jobs own schema/ACL/session/allocation recovery; workers never migrate or import. Restore into a separate target, quarantine sessions and protected allocation, rotate external auth epoch, reconcile complete independent journals, then restart compatible workers/caches. Hosted identity remains disabled until its separate acceptance gate passes. See [the recovery runbook](../docs/L4-authoritative-recovery.md).
+## Setup
 
-The API reads only PostgreSQL. Flashcard decks reference shared quiz-bank
-subjects directly. Attempts, checkpoints and scoring remain browser-local.
-Small synthetic inputs may seed disposable test databases; they cannot configure
-a file-backed production service.
-
-From the repository root, create the isolated environment if it does not exist:
+From the repository root:
 
 ```sh
 python3.14 -m venv .venv
 .venv/bin/python -m pip install -r backend/requirements-dev.lock
 .venv/bin/python -m pip install --no-deps -e backend
+npm run build:content-policy
+```
+
+Copy `backend/.env.example` to ignored `backend/.env`. Set a reader-role `MEDUCATION_DATABASE_URL` (and `MEDUCATION_DATABASE_ENVIRONMENT=local` for non-TLS loopback use) for an initialized PostgreSQL 17 schema with an active publication. The API refuses to start without them.
+
+```sh
 .venv/bin/python -m uvicorn meducation_api.main:app --reload --host 127.0.0.1 --port 8000 --no-proxy-headers
 ```
 
-For configuration overrides, copy `backend/.env.example` to ignored
-`backend/.env`. Set a reader-role `MEDUCATION_DATABASE_URL` for an initialized
-PostgreSQL 17 schema and active paired publication before starting the API. Local
-non-TLS connections also require explicit `MEDUCATION_DATABASE_ENVIRONMENT=local`.
-The default environment is production, which requires verified TLS. A missing
-reader connection fails API startup; operator-only jobs can still load settings
-without a reader URL. Explicit `MEDUCATION_CONTENT_SOURCE=json` is rejected;
-remove legacy bank-path settings, which have no runtime consumers.
+Interactive docs are at `/docs` in development. On Windows use `.venv\Scripts\Activate.ps1`. Start the frontend as described in the [root README](../README.md).
 
-Run the frontend separately using [frontend setup](../README.md#install-and-run).
-Production hosting must route `/api` to FastAPI. See
-[local editor setup](../README.md#local-content-editor) for authenticated authoring.
+Database setup, jobs (`bootstrap-local`, `upgrade`, import, activate, export, recovery), roles, editor login, backups and containers are in [docs/operations.md](../docs/operations.md).
 
-On startup the service checks schema/publication readiness, without migrating or
-importing. Every content request pins the current immutable PostgreSQL publication.
-The flashcard API exposes shared-subject inventory, deck summaries and ordered
-card bodies under `/api/v1/flashcards`. Its revision also changes when shared
-subject records change. Private paired HTTP services own controlled writes.
-Interactive API documentation is available at `/docs` in development.
+## Locks
 
-On Windows, activate `.venv\Scripts\Activate.ps1` and use `python -m pip ...`
-and `python -m uvicorn ...` from the repository root.
-
-Python installation may generate `backend/src/meducation_api.egg-info/` metadata.
-It is ignored build output and should not be committed. The package source,
-`pyproject.toml`, and requirements locks are tracked; installing the package
-regenerates its metadata.
-
-## L3 database toolchain and explicit jobs
-
-The database toolchain, paired import/export and PostgreSQL learner adapters are
-available. Explicit jobs own migration and reviewed recovery imports. Workers
-require an initialized schema and active pair, never import or migrate at startup,
-and cannot fall back to JSON.
-
-Install the updated development lock using the setup commands above. Python 3.14
-uses locked Psycopg binary 3.3.6, SQLAlchemy 2.1.4 and Alembic 1.20.0. Regenerate
-the locks intentionally with Python 3.14 and pip-tools, retaining existing pins:
+Regenerate intentionally with Python 3.14:
 
 ```sh
 .venv/bin/pip-compile --output-file=backend/requirements.lock backend/pyproject.toml
 .venv/bin/pip-compile --extra=dev --output-file=backend/requirements-dev.lock backend/pyproject.toml
 ```
 
-An explicit local bootstrap job creates/reconciles only the `meducation_*` roles,
-owns schema `content` with the NOLOGIN owner, restricts PUBLIC schema/database
-permissions, and grants backup access to future owner-created content objects.
-It also updates the four login passwords from the configured values. It refuses
-unexpected role memberships/schema ownership rather than taking over other data.
-Run it only against the intended local development database. Public learner
-reader access is granted to selected finalized-release views by migration `0001_content`; reader
-and operator roles receive no blanket table/write/function access at bootstrap.
-
-Start local PG17 using the [container runbook](../docs/local-containers.md), with
-the optional loopback port override for host-based jobs. Configure the commented
-examples in ignored `backend/.env`: explicit local DB environment, bootstrap
-connection, and four distinct passwords of at least 16 characters. Encode URL
-passwords; keep them out of command arguments and logs. Bootstrap credentials are
-never passed to the API. Jobs do not substitute runtime credentials for missing
-migration credentials.
+## Tests
 
 ```sh
-.venv/bin/meducation-db bootstrap-local
-.venv/bin/meducation-db head
-.venv/bin/meducation-db upgrade
+.venv/bin/ruff check backend/src backend/tests
+.venv/bin/mypy backend/src
+.venv/bin/python -m pytest backend/tests -q
+.venv/bin/python scripts/containers/test-postgres-content.py   # real PostgreSQL 17 cases in a disposable container
 ```
 
-`head` reports `0005_reserved_parents`; `upgrade` applies the packaged transactional
-content schema and private authored-publication extension and is safe to repeat. The installed package contains Alembic revisions
-and SQL resources under `meducation_api/migrations`, so the same explicit job
-runs from the API wheel/image without a source checkout. It creates an empty
-draft and unpublished pointer; it does not import authored content. Destructive
-downgrade is refused. Use a disposable database for schema experiments and a
-compatible app/schema or separate-database restoration for recovery.
-
-`db/operations.py` provides private bound transaction calls for paired release
-storage/finalization, activation, draft save/reset and independently committed ID
-reservations. Configure the separate `meducation_operator` URL only for operator
-jobs; never pass it to the learner API. Operational roles cannot write tables
-directly. The operator CLI composes these primitives for file import, activation and export;
-no admin gateway is exposed.
-See the [schema decision](../docs/decisions/0005-paired-content-releases-and-postgres-schema.md)
-for replay, actor, allocation and privileged-maintenance boundaries.
-
-Normal pytest skips the 78 real-Postgres cases without an explicitly isolated
-test target. Run `.venv/bin/python scripts/containers/test-postgres-content.py`
-from the root to create a unique tmpfs PG17 test container, bootstrap/migrate and
-exercise those cases. It cleans up its container and never uses the routine DB.
-
-The container starts one explicit API worker. Runtime has a reader pool and, when
-private admin authentication is enabled, separate session and editor pools. Each
-pool has size 2, zero overflow and a five-second checkout wait; the aggregate is
-at most six runtime connections per enabled API process (two without admin).
-Connection establishment has a five-second driver timeout. Increasing the worker
-or instance count multiplies these limits and needs separate capacity verification.
-Operator jobs use direct, unpooled connections; migrations SET ROLE to
-the NOLOGIN owner inside a transaction. Hosted configuration requires explicit
-`sslmode=verify-full` and forces `gssencmode=disable`; local non-TLS configuration requires a loopback or the
-Compose `postgres` hostname and `MEDUCATION_DATABASE_ENVIRONMENT=local`.
-One-time schema/head/active-release checks dispose connections on startup failure;
-recurring health routes do not query Postgres. Successful DB learner startup is
-available after explicit bootstrap, migration, paired import and activation.
-
-Runtime pools use request-driven checkout pre-ping to replace stale idle sockets;
-there are no timer-driven SQL pings. A transaction interrupted after checkout
-still fails and is not replayed automatically, particularly for uncertain writes.
-Reader startup and request transactions set a ten-second statement timeout and
-three-second lock timeout locally. Failed requests release/roll back their
-connection and return the existing safe `content_unavailable` response. These
-limits bound SQL waits, not an absolute request deadline through a network
-blackhole. See [SQLAlchemy's disconnect handling](https://docs.sqlalchemy.org/en/21/core/pooling.html#disconnect-handling-pessimistic).
-
-Run the isolated restart acceptance with:
-
-```sh
-.venv/bin/python scripts/containers/test-postgres-content.py --restartable --keyword l5 --output /tmp/meducation-resilience.json
-```
-
-This uses a uniquely labeled temporary volume and fixed loopback port so data
-survives fixture stop/start. The controller checks the exact container label,
-volume and port before either action; cleanup removes only its owned fixture.
-It tests stale reader/session/editor sockets, reader lock timeout cleanup and
-actual database restart recovery, including query-free health routes during the
-outage. Native container CI runs this separately from the default tmpfs suite.
-Local restart evidence does not establish hosted suspend/wake latency.
-
-## Paired content import, activation and export
-
-PostgreSQL remains authoritative. These file inputs are reviewed recovery/migration artifacts, never a routine authoring database. Install the Python development environment and
-run `npm ci` in the repository. Validation/import requires `--repository` pointing
-to that checkout: the job runs existing TypeScript stored/domain/Markdown and
-flashcard validators against private copies of the exact captured input bytes.
-It never validates a different bundled bank or rereads source files after capture.
-Both files are limited to 64 MiB each. Python first rejects duplicate keys,
-nonfinite numbers, null/unknown fields, bad relationships and unpaired Unicode
-surrogates; the TypeScript gate adds rich-content and reviewed-note policy.
-Warnings are reported as a count and do not block existing reviewed content.
-No input text, database URL or SQL is printed.
-
-```sh
-.venv/bin/meducation-db validate-pair --quiz-file /protected/selected-export/questionBank.json --flashcard-file /protected/selected-export/flashcardBank.json --repository .
-.venv/bin/meducation-db import-pair --reviewed-recovery-import --quiz-file /protected/selected-export/questionBank.json --flashcard-file /protected/selected-export/flashcardBank.json --repository . --operation-id "IMPORT_OPERATION_UUID" --actor "local-operator" --reason "Initial reviewed JSON copy"
-.venv/bin/meducation-db activate --release-id "RELEASE_UUID" --expected-sequence 0 --operation-id "ACTIVATION_OPERATION_UUID" --actor "local-operator" --reason "Explicit first activation"
-.venv/bin/meducation-db export-release --release-id "RELEASE_UUID" --output var/content-export-new
-```
-
-Replace the UUID placeholders before execution. Choose and retain one operation
-UUID per intent; retry with the same files/actor/reason/UUID to obtain the recorded
-result. Changed intent needs a new UUID. Import prints release identity, both
-revision hashes, captured source hashes and warning count. It never activates;
-reimporting an old pair cannot silently roll back the active pointer. Activation
-uses a separate UUID and expected sequence; zero applies only to a fresh
-unpublished database. Later activation requires the current sequence, which can
-be observed in an export manifest. Replay returns the original event without
-moving a subsequently changed pointer. Both actions require the configured
-operator connection; bootstrap/migration credentials are never substituted.
-
-Create the export parent first; the output directory itself must be new.
-`questionBank.json` and `flashcardBank.json` are reconstructed independently from
-normalized rows and global ordinals. Artifact key order is only a template;
-field/value/array differences fail rather than being repaired. Both serialized
-artifacts and revision hashes must match. `manifest.json`, written last, contains
-release ID, schema versions, digests, artifact checksums and publication context
-from one read-only repeatable snapshot. No manifest fields enter bank schemas.
-An ordinary write failure removes only the newly created output. A process crash
-may leave an incomplete directory: absence of the manifest means incomplete;
-retain source/DB data and choose a new output directory for retry. Existing
-outputs and canonical files are never overwritten.
-
-Validation/import is a host operator workflow requiring Node and the checkout;
-the production learner image does not gain Node or a runtime validator. Head,
-migration, activation and export use the installed Python package. Run the
-[disposable PG integration launcher](../docs/testing.md#local-preparation-acceptance)
-for roundtrip, source-capture, injected rollback, replay/concurrency, corrupt-row
-rejection and CLI evidence. Fixture and actual-bank learner DB/API parity, PG reverse-proxy/browser and
-restore acceptance are verified, including both native CI architectures. After activation,
-configure only the PostgreSQL reader URL to run the
-learner API. No JSON fallback or worker migration/import is performed.
-
-Each content request opens one paired view, selects the publication once and
-pins its release/digests for both repositories. All catalog/body SQL includes the
-pinned release ID. Catalog cache entries contain only immutable release-scoped
-subjects, quizzes, decks and ordered membership IDs; at most two releases are
-retained per worker. Every request still selects the current pointer, so publication
-and old-release reactivation take effect without an API restart. Eviction does
-not invalidate an in-flight view. Bodies come from normalized rows. The response
-dependency releases its one connection after complete synchronous payload
-construction, before sending the response, including 304/404/409 and failures.
-
-Database request failures return a sanitized 503 `content_unavailable`, even
-when an old catalog/ETag is cached. Recurring `/health/live` and `/health/ready`
-perform no SQL; readiness means initialization completed, not live DB reachability.
-The same bounded reader engine is disposed on failed startup and shutdown.
-
-## PostgreSQL API container
-
-Build the installed wheel/runtime and corpus-free image:
-
-```sh
-docker build -f backend/Dockerfile -t meducation-api:local .
-```
-
-The image runs as UID/GID 10001 under pinned Python, with locked dependencies
-and the packaged content-policy worker. It includes no authored banks, file-source
-repositories, developer env files or compiler. Supply a protected reader env file
-for an initialized PostgreSQL target; missing/unusable configuration fails startup.
-The default CORS origins are loopback 4173. See [local containers](../docs/local-containers.md)
-for Compose startup, network routing, image audits and lifecycle commands. Workers
-never bootstrap, migrate or import. The browser never receives database credentials.
-
-Run the isolated installed-image checks after building:
-
-```sh
-.venv/bin/python scripts/containers/smoke-api.py --image meducation-api:local
-.venv/bin/python scripts/containers/smoke-learner.py --api-image meducation-api:local --frontend-image meducation-learner:local
-```
-
-The API smoke seeds small explicit synthetic data into an owned PostgreSQL
-container. It audits wheel/lock/runtime integrity and corpus absence, exact
-content/order/provenance, conditional responses, CORS, shutdown and redacted
-fail-closed startup. The proxy smoke retains artifact hashes/cache boundaries,
-upstream failures and DNS recovery after API recreation. No authority data or
-credentials are used.
-
-## Actual-bank parity and isolated recovery acceptance
-
-Current-content checks require an explicit protected draft/release export.
-Synthetic recovery tests require `--small-fixture`; there is no implicit
-repository corpus. Neither workflow can replace the designated authority.
-
-```sh
-.venv/bin/python scripts/containers/verify-postgres-release.py --small-fixture --output /tmp/meducation-fixture-recovery.json
-.venv/bin/python scripts/containers/verify-postgres-release.py --export-directory /protected/selected-export --output /protected/new-parity-report.json
-.venv/bin/python scripts/containers/smoke-postgres-learner.py --api-image meducation-api:local --frontend-image meducation-learner:local --output /tmp/meducation-pg-browser.json
-```
-
-These jobs create owned disposable PG17 targets. Selected-export acceptance
-checks exact normalized fields, optional presence, rich strings, ordering,
-artifacts/revisions and every applicable learner route against independent
-captured-input expectations, including ETags/304/409. It never starts a JSON
-reference API or writes to the authority. Reports prove captured identity and
-internal parity, not indefinite database currency.
-
-Synthetic recovery covers role permissions, transactions, PG17 backup and
-fresh-target restore, session quarantine and compatible reader cleanup. For
-installed application rollback drills, build the pinned retained image using
-`scripts/containers/build-rollback-api.py` and supply both `--api-image` and
-`--previous-api-image` with `--small-fixture`. Historical images are built from
-retained Git history and run against PostgreSQL; they are not current JSON
-application sources. See [the rollback/restore runbook](../docs/L5-local-operations.md#distinct-recovery-and-rollback-drills).
-
-The browser launcher seeds explicit e2e fixtures, starts the installed PostgreSQL
-reader and shipped Nginx, and runs learner/progress-backup/recreation workflows.
-It verifies active quiz identity/responses, flashcard checkpoints and scores
-survive API recreation at the same origin. Explicit changed publication still
-requires the existing restart decision. Controls verify exact owned labels and
-keep synthetic operator credentials out of browser state/command arguments.
-
-Native AMD64/ARM64 acceptance uses explicit PostgreSQL fixtures and selected
-exports; no archive database or JSON service is supported. Local native evidence
-applies only to that architecture. Changed-source CI results must be recorded
-separately from historical runs; no hosted/provider acceptance is implied.
-
-## Packaged authoring content policy
-
-Run `npm ci` and `npm run build:content-policy` from the repository root before
-backend tests or local draft-save jobs. The API image builds these resources and
-ships Node 22 plus the self-contained validator in the Python wheel; runtime
-requests do not invoke tsx or require the checkout. Missing resources/Node fail
-closed for authoring while learner reads retain their separate read-only path.
-See [policy limits and acceptance](../docs/L4-content-policy.md). Rebuild after
-editing shared policy or limits. The default validator approves local images only;
-HTTP integration must inject any approved origins from trusted backend settings.
-`admin/authoring.py` supplies internal paired preview/save/publish with fresh validation,
-context checks and atomic authored provenance. Its actor is trusted backend/operator
-context, not browser authentication. Step 3 now supplies a disabled-by-default, loopback-only synthetic OIDC/session
-boundary; production provider assurance is still unaccepted.
-[Step 4 paired content HTTP services](../docs/L4-paired-editor-services.md) now
-provide guarded reservations, draft history, publication, activation and export.
-[Step 5 editor session integration](../docs/L4-http-editor.md) is now implemented locally. See
-[session roles, configuration and verification](../docs/L4-admin-session-boundary.md).
-
-[Step 5 HTTP editor](../docs/L4-http-editor.md) supplies the private browser gateway.
-Packaged head is `0006_allocation_fence`; migration/bootstrap remain explicit
-operator jobs. The designated local PostgreSQL authority cutover is complete.
-
-## L4 recovery preparation jobs
-
-The [authoritative recovery runbook](../docs/L4-authoritative-recovery.md) describes
-fresh-target role/ACL restoration, session quarantine, external epoch rotation,
-selected-export checks and pending retained-copy/allocation gates. Explicit migrator
-jobs `restore-permissions` and `invalidate-restored-sessions` never run in workers.
-Offline `validate-export`/`audit-export` commands need a selected export directory,
-the repository validation toolchain and a new private report path; they do not load
-repository banks or require DB credentials. Their manifests identify draft/release
-context without claiming live database currency. JSON checks remain archive/fixture-only; the local PostgreSQL authority is unchanged.
-
-Migration `0006_allocation_fence` adds opt-in independently retained allocation
-ceilings. `allocation-range` and `allocation-recover` are explicit migrator jobs;
-private editor/operator transactions cannot change their admission state. Session
-quarantine pauses protected allocation. Two durable agreeing journal chains must
-be recorded before the DB admits a range; restore reconciliation burns all earlier
-permitted ranges. Destination independence is an operator acceptance gate. Follow
-[the allocation procedure](../docs/L4-authoritative-recovery.md#allocation-safety-is-a-separate-gate)
-before enabling it; the designated PostgreSQL authority remains unchanged.
-
-### Learner launch freshness (L5)
-
-The PostgreSQL source selects the active publication on every content request;
-there is no pointer TTL or background keepalive. A response pins one release.
-Learner explicit launches now re-fetch their bank's subject catalog even with a
-cached body, and block revision conflicts until reload. Admission requires check
-start evidence younger than 30 seconds; failed/slow validation blocks new launches.
-Active study and results review retain their content. This is not an outage or
-hosted suspend/wake guarantee. See [the contract](../docs/product.md#content-freshness-at-launch).
-
-Isolated one-quiz/one-deck PG17 measurements (excluding startup validation): a cold
-browser launch sends four HTTP requests (initial subjects, membership, launch
-subjects check, body). With a cold server catalog, quiz uses 18 SQL statements plus
-four checkout pre-pings; flashcards use 19 plus four pre-pings because deck catalog
-construction also reads its card IDs. A fully cached body needs one HTTP request,
-three SQL statements (two SET LOCAL limits, one pointer read), plus one pre-ping.
-Health calls add none. Counts depend on fixture size for flashcard catalog bodies;
-no pointer-cache optimization is justified by these measurements.
-
-### L5 explicit diagnostics and failure visibility
-
-POST `{}` to `/api/admin/diagnostics` only from the existing signed-in editor
-session with exact Origin and current CSRF. It checks reader connectivity,
-packaged PG17 schema and active publication, plus session/editor connectivity,
-without test writes or additional pools. The held session connection is reused;
-concurrent diagnostics do not nest checkout. Session outages may return sanitized
-`session_unavailable` before the diagnostic runs. Liveness/readiness stay SQL-free.
-
-[The operations runbook](../docs/L5-local-operations.md) owns response states,
-connection/time budgets, generated request correlation, log redaction, local
-outage checks and the configuration audit. Worker request JSON logs use route
-templates and fixed categories; Uvicorn access paths and native HTTP Nginx error
-contexts cannot disclose request inputs. No new grants, runtime polling or write
-replay were added. Transaction-pooled endpoints/provider TLS/suspend behavior
-remain unverified deployment gates; use direct endpoints for operator jobs.
-
-The [L6 deployment handoff](../docs/L6-deployment-handoff.md) records complete
-configuration/secret ownership, explicit bootstrap/migration/selected transfer,
-optional admin packaging, routing and smoke/recovery ordering. Hosted role
-bootstrap and identity adapters remain implementation/acceptance gaps;
-`bootstrap-local` refuses production and must not be used to bypass TLS validation.
+Pytest skips the PostgreSQL cases unless an isolated test database is provided; run the script above for that gate. More in [docs/testing.md](../docs/testing.md).

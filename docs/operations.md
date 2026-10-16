@@ -1,0 +1,153 @@
+# Operations
+
+How to run, back up, restore and package the local system. PostgreSQL is the only writable content authority and the only runtime content source. Learner progress stays in the browser.
+
+Hosted deployment is being prepared. It will use managed Postgres and managed identity; nothing here describes a hosted setup, and the synthetic local identity below is never enabled in production.
+
+## Prerequisites
+
+- Node 22 and npm; Python 3.14; Docker (PostgreSQL 17 runs in a container).
+- Frontend: `npm ci`. Backend (repository root):
+
+```sh
+python3.14 -m venv .venv
+.venv/bin/python -m pip install -r backend/requirements-dev.lock
+.venv/bin/python -m pip install --no-deps -e backend
+npm run build:content-policy   # packages the shared authoring policy into the wheel resources
+```
+
+## Configuration
+
+Frontend build-time settings are in `.env.example` (`VITE_CONTENT_MAX_RETRIES`, `VITE_CONTENT_RETRY_BASE_DELAY_MS`, `VITE_CONTENT_RETRY_MAX_DELAY_MS`, `VITE_BUILD_ADMIN`, `VITE_CONTENT_IMAGE_ORIGINS`). `VITE_*` values are public; never put secrets in them.
+
+Backend settings use the `MEDUCATION_` prefix; copy `backend/.env.example` to ignored `backend/.env`.
+
+| Setting | Purpose |
+| --- | --- |
+| `MEDUCATION_DATABASE_ENVIRONMENT` | `production` (default, verified TLS required) or `local` (loopback/Compose non-TLS) |
+| `MEDUCATION_DATABASE_URL` | API reader (`meducation_reader`); required to start the API |
+| `MEDUCATION_MIGRATION_DATABASE_URL` | jobs: `meducation_migrator` (upgrade, restore-permissions, allocation) |
+| `MEDUCATION_OPERATOR_DATABASE_URL` | jobs: `meducation_operator` (import, activate, export) |
+| `MEDUCATION_BOOTSTRAP_DATABASE_URL` | local role bootstrap only |
+| `MEDUCATION_POSTGRES_{MIGRATOR,READER,BACKUP,OPERATOR}_PASSWORD` | distinct role passwords, 16+ characters |
+| `MEDUCATION_POSTGRES_{SESSION,EDITOR}_PASSWORD` | optional pair that enables the editor roles |
+| `MEDUCATION_ALLOWED_ORIGINS` | CORS origins for public reads |
+| `MEDUCATION_ADMIN_*` | editor identity and session configuration (below) |
+
+Rules: URLs use `postgresql+psycopg://` with URL-encoded passwords. API workers receive only the reader URL (plus session/editor URLs when admin is enabled); job credentials are never given to workers, and a job never substitutes runtime credentials. Roles: `meducation_owner` (NOLOGIN DDL owner), `meducation_migrator`, `meducation_operator`, `meducation_reader`, `meducation_backup`, `meducation_session`, `meducation_editor`, `meducation_bootstrap` (local only). Changing a password in an env file does not rotate an existing role.
+
+## Local PostgreSQL and the API
+
+Compose project `meducation-local` provides an independent PostgreSQL preview; the `db` profile starts `postgres`.
+
+```sh
+cp ops/containers/.env.example ops/containers/.env   # set MEDUCATION_POSTGRES_BOOTSTRAP_PASSWORD; add reader/migrator URLs
+docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml \
+  -f ops/containers/compose.db-port.yaml --profile db up -d postgres   # db-port override publishes 127.0.0.1:5433
+```
+
+Initialize with explicit jobs (they never run at API startup), using `backend/.env` for credentials:
+
+```sh
+.venv/bin/meducation-db bootstrap-local   # roles and schemas; local environment only
+.venv/bin/meducation-db upgrade           # packaged migrations; safe to repeat
+.venv/bin/meducation-db head              # packaged schema head
+```
+
+Start the services:
+
+```sh
+.venv/bin/python -m uvicorn meducation_api.main:app --reload --host 127.0.0.1 --port 8000 --no-proxy-headers
+npm run dev                                # learner at http://localhost:5173, /api proxied to port 8000
+```
+
+The API fails startup without a reader URL, initialized schema and an active publication. Health: `/health/live`, `/health/ready` (initialization only; neither queries Postgres after startup).
+
+## Database CLI (`meducation-db`)
+
+Entry point `meducation_api.db.cli`; also runs as `python -m meducation_api.db.cli`.
+
+- Schema and roles: `bootstrap-local`, `head`, `upgrade`, `restore-permissions`, `invalidate-restored-sessions`.
+- Paired files (trusted, reviewed recovery or migration only): `validate-pair`, `import-pair`, `parity` take `--quiz-file`, `--flashcard-file`, `--repository`. `import-pair` also needs `--operation-id`, `--actor`, `--reason`; imports into the authority database additionally need `--reviewed-recovery-import`. Import does not activate.
+- Releases: `activate --release-id --expected-sequence --operation-id --actor --reason`; `export-release --release-id --output NEW_DIR` (refuses existing directories).
+- Export checks: `validate-export` and `audit-export` take `--directory`, `--repository`, `--report`. They verify captured bytes, hashes and policy and refuse to overwrite reports. Digests prove internal consistency, not live currency; export fresh from the target when currency matters. `npm run validate:content -- <quiz-file> <flashcard-file>` checks an explicitly selected pair the same way.
+- Allocation: `allocation-range`, `allocation-recover` (see below).
+
+An import is never a way to replace database-only work with an older snapshot.
+
+## Local authority (maintainer machine)
+
+The designated authority is database `meducation_authority` in container `meducation-authority-postgres` (volume `meducation-authority-data`, PostgreSQL 17, loopback port 5433), separate from the Compose preview. Do not remove the volume. Private credentials live in ignored `var/local-authority/` (`runtime.env` for the API, `operator.env` for jobs and backup; mode 0600 in a 0700 directory). Database dumps do not contain these files or the auth keys; retain them separately.
+
+```sh
+docker start meducation-authority-postgres
+.venv/bin/python scripts/local-authoring/serve.py            # API on 127.0.0.1:8001 with local development identity
+MEDUCATION_API_PORT=8001 npm run dev -- --host 127.0.0.1 --port 5173 --strictPort
+```
+
+Open `http://127.0.0.1:5173/admin.html`. `.venv/bin/python scripts/local-authoring/job.py <meducation-db action>` runs CLI jobs with the operator credentials.
+
+## Editor login and sessions
+
+- `/admin.html` is built only with `npm run build:admin` (or `VITE_BUILD_ADMIN=true`) and served in development. Build flags and static assets grant no access; the API authorizes every `/api/admin` request.
+- Authentication is an OIDC authorization-code flow with S256 PKCE, handled by the backend (Authlib, joserfc). Sessions are opaque, stored hashed in the `admin_auth` schema, expire after 30 idle minutes or 8 absolute hours, and require a factor within 15 minutes for publish, activate, reset and export. Writes need exact Origin and a session CSRF header and are never replayed after reauthentication.
+- Only a synthetic loopback issuer exists. `serve.py` provides it: sign in, then confirm "Continue as local editor (development only)". It simulates identity and fresh-factor assurance, provides no real MFA, and binds only `127.0.0.1`. Never expose it through a tunnel. Production configuration with admin enabled refuses to start.
+- Settings (`MEDUCATION_ADMIN_*`): `ENABLED` (default false), `ENVIRONMENT`, `ADAPTER`, `ORIGIN`, `ISSUER`, `AUTHORIZATION_ENDPOINT`, `TOKEN_ENDPOINT`, `JWKS_URI`, `CLIENT_ID`, `CLIENT_SECRET`, `EDITOR_SUBJECT` (exact issuer subject), `EPOCH` (external revocation generation), `ENCRYPTION_KEY` (Fernet), `SESSION_DATABASE_URL`, `EDITOR_DATABASE_URL`. Changing the allowlist or epoch invalidates all sessions; `SessionStore.revoke_all()` and disabling admin are the emergency controls.
+- Explicit diagnostics: signed-in `POST /api/admin/diagnostics` with `{}` and the CSRF token returns bounded reader/schema/publication/session/editor status without URLs, SQL or content.
+
+## Authoring and publication
+
+- The editor loads one paired draft. **Save draft** writes a new paired revision after a server preview; it does not publish. IDs come from server reservations that stay burned if a preview is abandoned.
+- Undo and reset change the draft. **Publish** finalizes the draft as a new immutable release, activates it and advances the draft base in one transaction; a stale base requires reset. Retained releases can be activated again; activation keeps the draft.
+- **Export paired ZIP** exports the saved draft or a retained release (deterministic, 128 MiB cap). It is not a backup.
+- Requests are limited to 64 MiB; validation limits live in `src/content/validation/authoringLimits.json` (generated into the wheel by `npm run build:content-policy`). Uncertain writes are reconciled, not resent.
+
+## ID allocation fence
+
+Migration `0006_allocation_fence` bounds new IDs to admitted ranges. An editor reservation is rejected beyond the ceiling. Extend a range only with the migrator job, which writes a hash-chained record to two journal directories before raising the database ceiling:
+
+```sh
+.venv/bin/python scripts/local-authoring/job.py allocation-range \
+  --primary var/backups/postgres/allocation-primary --independent var/backups/postgres/allocation-local-copy \
+  --local-copy-only --reason "Extend local authoring range"
+```
+
+`--independent-copy-confirmed` attests an off-device second destination; `--rehearsal` is for disposable test databases; `--local-copy-only` is limited to the loopback authority (off-device retention is deferred). Never delete, truncate or rewind journals. Unused range tails stay burned. If journals and database disagree, allocation stays closed; do not repeat a failed extension, inspect first.
+
+## Backup and restore
+
+```sh
+.venv/bin/python scripts/local-authoring/backup.py         # new 0600 full dump + checksum sidecar in var/backups/postgres/
+.venv/bin/python scripts/local-authoring/verify-backup.py  # offline restore rehearsal into a disposable database
+```
+
+`backup.py` dumps `content` and `admin_auth` as PG17 custom format, validates the table of contents and never replaces earlier archives. Run it after meaningful authoring sessions and at least daily while editing. Copies live outside the Docker volume but on this machine only; they do not survive loss of the host. Journals and `runtime.env`/`operator.env` are not in the dump.
+
+`verify-backup.py` requires writer access to be retired first, restores into a `meducation_verify_*` database, checks tables, sequences, grants and exports, quarantines sessions and allocation, and removes only its own database. It never touches the authority.
+
+Real recovery:
+
+1. Stop writers; retire writer CONNECT and drain connections. Keep the damaged database and any newer journals.
+2. Restore the dump into a fresh empty database from `template0` with matching PG17 tools (`pg_restore --single-transaction --exit-on-error --no-owner --no-acl`), after bootstrapping roles.
+3. Point job credentials at the target and run `restore-permissions`, then `invalidate-restored-sessions` (revokes sessions, clears login transactions, pauses allocation).
+4. Rotate `MEDUCATION_ADMIN_EPOCH`. Run `allocation-recover` against the latest complete journals; without them keep allocation disabled.
+5. Compare content, then switch reader/session/editor connections together, restart workers and verify learner reads and a fresh editor login. Keep the original until verified.
+
+Generic development helper for Compose Postgres: `scripts/containers/postgres.py` (`versions`, `psql`, `dump --output`, `restore --input --database`, `discard-volume --discard-disposable-data`). `restore` creates a new verification database and refuses existing ones; `discard-volume` removes only the verified `meducation-local_postgres-data` volume while stopped. It is not a production backup design.
+
+Learner progress backups are separate and browser-local ([product](product.md#progress-backup-and-restore)). Private source material (`tn-pdfs/`, `content/`) is ignored by Git and needs its own backup.
+
+## Containers
+
+```sh
+docker compose build api frontend
+docker build --target admin -t meducation-admin:local .      # optional packaged editor assets
+docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/compose.postgres.yaml \
+  --profile db up -d api frontend                            # learner at http://127.0.0.1:4173
+```
+
+- Images: API (installed wheel, user 10001, one Uvicorn process, no content corpus), learner and admin (non-root Nginx 101 on port 8080, read-only filesystem). The default `learner` target returns 404 for `/admin.html`; `admin` serves it `no-store`. Admin assets still need an authenticated API.
+- Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 22, Nginx unprivileged). Update tag and digest together and rebuild on native amd64 and arm64. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
+- Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB, and logs only fixed route families. Private responses are `no-store`.
+- Runtime pools: reader, session and editor each at most two connections; migrations and jobs use direct unpooled connections.
+- Container smoke and acceptance scripts live in `scripts/containers/` (`acceptance.py`, `smoke-*.py`, `verify-postgres-release.py`); CI runs them on native amd64 and arm64. See [testing](testing.md).
