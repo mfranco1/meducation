@@ -381,3 +381,6 @@ checks this optional image after learner work, then uses it for the full HTTP
 suite. New CI wiring still requires passing changed-input jobs.
 
 Admin discard regression coverage checks explicit keep/discard decisions, focus return, context invalidation and unmount cancellation. Browser acceptance includes hidden flashcard drafts during paired subject deletion, canceled quiz context changes, batch close cancellation, and invalidating batch preview after an edited change reason. Explicit save cancellation is tested separately from request failures.
+
+
+Workspace redesign checks cover semantic content tabs, explicit parent menus and add actions, absent JSON/save controls in unselected editors, two-column/stacked geometry at 390/1048/1440px, and shared batch framing. Subject-dialog unit/browser coverage checks exact source retention, cancel/no-write behavior, and preserving unsaved quiz/flashcard records while saving only a shared subject from Flashcards.

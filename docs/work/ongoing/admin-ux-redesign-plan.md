@@ -1,7 +1,7 @@
 # Admin UX redesign implementation plan
 
 Date: 2026-10-16
-Status: stages 1–2 implemented and verified at their automated checkpoints. Unified workspace/batch framing, structured authoring, and integrated manual acceptance remain in stages 3–5.
+Status: stages 1–3 implemented and verified at their automated checkpoints. Structured authoring and integrated/manual acceptance remain in stages 4–5.
 Scope: the full authenticated admin experience, beginning with the crowded header. This document proposes UI changes; it does not authorize content deletion or publication.
 
 ## Outcome
@@ -181,7 +181,7 @@ Current design documentation contains stale per-section export/file-replacement 
 - [x] Record design, component ownership, sequencing, and acceptance criteria.
 - [x] **1. Header and state foundation.** Extract compact header and menus; centralize reactive dirty/recovery/busy facts; move publication/export/version controls into focused dialogs. Preserve existing editors and transport behavior. Checkpoint: every existing header capability is reachable, recovery is surfaced contextually, and exports have explicit targets.
 - [x] **2. Shared review and recovery interactions.** Replace native save/discard/undo/reset confirmations with MUI flows; extract the gateway review/commit boundary; render server publication impact and warnings. Checkpoint: no mutation replay, stale review, hidden-draft loss, or double confirmation.
-- [ ] **3. Unified workspace and batch creation.** Consistent navigators, contextual Add menus, content empty states, editor action/status region, subject dialog, and shared batch flow framing. Checkpoint: both sections support the same discoverable browse/add/review/save pattern at all target widths.
+- [x] **3. Unified workspace and batch creation.** Consistent navigators, contextual Add menus, content empty states, editor action/status region, subject dialog, and shared batch flow framing. Checkpoint: both sections support the same discoverable browse/add/review/save pattern at all target widths.
 - [ ] **4. Structured authoring.** Implement exact-preserving adapters; simple entity forms first, question form second; shared rendering preview; advanced JSON retained. Checkpoint: round-trip parity and all supported optional fields/choice IDs/order/provenance survive untouched.
 - [ ] **5. Integrated acceptance and documentation.** Run regression gates, inspect visual/accessibility states, update design/product/content/testing docs, and record evidence. Move this tracker to `docs/work/done` only when implementation and required verification are complete.
 
@@ -298,3 +298,31 @@ Verification evidence:
 - Two browser attempts failed before tests because disposable PostgreSQL readiness/startup timed out. Docker subsequently responded; the completed run and targeted result above supersede those startup attempts. The authority database was not used or altered.
 - `npm run format:check` and `git diff --check`: passed; repeated at handoff. Changed source/test formatting checked too.
 - Learner application code is unchanged; this continuation reran the full frontend suite and both production builds. The earlier 43-scenario learner browser pass remains historical evidence, not a newly executed learner-browser run. Backend checks, canonical-content validation and `verify:full` are not claimed for this UI checkpoint.
+
+
+## Implementation progress — stage 3 workspace and batch framing
+
+Stage 3 implemented and verified:
+
+- Replaced section buttons with accessible content tabs while keeping both sections' drafts mounted.
+- Added explicit Add quizzes/questions/decks/cards actions and shared labelled parent-action menus, retaining cascade review and canonical-order lists/pagination.
+- Added shared editor/empty/action frames. Unselected content no longer exposes a blank JSON editor or disabled save control. Quiz validation/details now live inside the editor, yielding two desktop columns.
+- Added a shared subject dialog from either section, using the existing editor/gateway lifecycle and preserving hidden quiz/flashcard drafts. Structured subject fields remain stage 4; JSON is preserved for this stage.
+- Added common Content → Review → Save draft framing, destination context, the 10,000-record limit, and explicit provisional versus server-reserved ID guidance for both batch workflows. Flashcard batch dialogs fill narrow viewports.
+
+No content/backend contracts changed. The stage 3 checkpoint is complete; this tracker remains ongoing for stages 4–5. Existing advanced JSON authoring is retained until the structured-editor stage, and populated quiz creation uses the grouped quiz-and-questions batch rather than offering an invalid empty-quiz save.
+
+Final review corrections:
+
+- Both tab panels remain mounted, including navigator state. Unsaved indicators have accessible descriptions while retaining stable tab names.
+- Shared command blocking also disables the quiz navigator and prevents opening a subject dialog mid-command. A blocked dialog defers initialization until admitted instead of becoming stuck with an empty editor.
+- Empty-state presentation distinguishes no loaded record from an intentionally cleared JSON draft. Clearing all selected quiz JSON keeps the editor mounted and editable.
+
+Verification evidence:
+
+- Full frontend suite: 100 files / 606 tests passed (`npx vitest run --maxWorkers=1`). After the final empty-editor condition was tightened, the affected controller/subject-dialog tests passed again: 2 files / 8 tests. The earlier 605-test full pass and initial admin run with old empty/generic-action expectations are superseded by this evidence.
+- Final lint/architecture: passed (302 modules / 1,278 imports). Architecture regression tests: 10 passed. Final `npm run build` (including typecheck and default learner isolation), `npm run build:admin`, formatting and diff checks passed.
+- Complete admin browser attempt: 29 of 30 passed. Flashcard deletion/undo committed and restored its UI, but the final database read exceeded the overall 60-second test budget amid slow fixture requests (initial draft read ~8.6s, save ~9.8s, undo ~11.9s). No product or test timeout was changed to mask this failure.
+- Final targeted browser rerun: 10 passed on a fresh disposable PostgreSQL fixture. This covers the isolated flashcard deletion/undo (9s), all three keyboard/layout widths, both-panel geometry at 390/1048/1440px, canceled context navigation, the new cleared-JSON regression, and shared-subject editing with accessible dirty descriptions and exact hidden quiz/flashcard text retention. The last case verifies only the subject was saved, then Undo restores the exact paired content while both unsaved editors remain intact. Across the complete attempt and targeted run, all 31 current scenarios have passing evidence; no all-green complete 31-test run is claimed.
+- Inspected desktop two-column workspace, mobile stacked workspace, and the 390px shared-subject dialog screenshots. Controls and dialog footer fit; the empty editor no longer displays a blank multiline field. Broader manual assistive-technology/device, 200% zoom and integrated acceptance remain stage 5 work.
+- Canonical content, stable IDs/provenance contracts, backend endpoints and learner progress are unchanged. Browser writes use disposable fixtures. No new backend infrastructure, canonical-content validation, backend suite, new standalone learner-browser run, or `verify:full` pass is claimed for this UI checkpoint. Earlier learner-browser evidence remains historical; full learner unit coverage and both production builds were rerun here.

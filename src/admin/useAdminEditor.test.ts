@@ -84,7 +84,7 @@ describe('admin editor workflows', () => {
       await result.current.loadEntity({ kind: 'subject', id: 's1' }, bank().subjects[0]);
     });
     act(() => result.current.editRecord(JSON.stringify({ ...bank().subjects[0], name: 'First' })));
-    let staging!: Promise<void>;
+    let staging!: Promise<unknown>;
     act(() => {
       staging = result.current.stageSingle();
     });
@@ -101,6 +101,9 @@ describe('admin editor workflows', () => {
     expect(gateway.apply).not.toHaveBeenCalled();
     expect(result.current.snapshot?.bank.subjects[0].name).toBe('Subject');
     expect(result.current.busy).toBeUndefined();
+    act(() => result.current.editRecord(''));
+    expect(result.current.recordLoaded).toBe(true);
+    expect(result.current.editorDirty).toBe(true);
   });
 
   it('validates a bulk draft, exposes generated IDs, and stages only after confirmation', async () => {

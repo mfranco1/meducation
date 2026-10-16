@@ -17,9 +17,11 @@ import { selectQuizNavigatorPage } from '../core/quizNavigator';
 import type { EntityKind, Selection } from '../useAdminEditor';
 import { AdminRecordSelection, useAdminRecordSelection } from './AdminRecordSelection';
 import { adminNavigatorLayout } from './adminPanelLayout';
+import { AdminParentActions } from './AdminParentActions';
 import { AdminAddSubjectButton } from './AdminAddSubjectButton';
 
 interface Props {
+  disabled?: boolean;
   bank: StoredQuestionBank;
   selection: Selection;
   selectedSubjectId?: string;
@@ -29,12 +31,14 @@ interface Props {
   loadEntity: (selection: Selection, value: unknown) => void;
   loadNew: (kind: EntityKind) => void;
   chooseBulkTarget?: (kind: 'subject' | 'quiz', context?: { subjectId?: string; quizId?: string }) => void;
+  onManageSubjects?: (id?: string) => void;
   onDeleteItems?: (ids: string[]) => void;
   onBrowseChange?: (subjectId: string, quizId?: string) => boolean | Promise<boolean>;
   onDelete?: (selection: Selection, label: string) => void;
 }
 
 export function AdminNavigatorPanel({
+  disabled = false,
   bank,
   selection,
   selectedSubjectId,
@@ -47,6 +51,7 @@ export function AdminNavigatorPanel({
   onDelete,
   onBrowseChange,
   onDeleteItems,
+  onManageSubjects,
 }: Props) {
   const [subjectId, setSubjectId] = useState(selectedSubjectId ?? '');
   const [quizId, setQuizId] = useState(selectedQuizId ?? '');
@@ -85,7 +90,7 @@ export function AdminNavigatorPanel({
   };
   return (
     <Paper component="section" aria-label="Quiz navigator" variant="outlined" sx={{ ...adminNavigatorLayout, p: 2 }}>
-      <Stack spacing={1}>
+      <Stack component="fieldset" disabled={disabled} spacing={1} sx={{ m: 0, p: 0, border: 0, minWidth: 0 }}>
         <Autocomplete
           inputValue={subjectQuery ?? (subject ? `${subject.name} · ${subject.id}` : '')}
           onInputChange={(_, value, reason) => {
@@ -102,21 +107,25 @@ export function AdminNavigatorPanel({
           }}
           renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
         />
+        {onManageSubjects && (
+          <Button size="small" color="inherit" onClick={() => onManageSubjects(subject?.id)}>
+            Manage subjects…
+          </Button>
+        )}
         {subject && (
           <Stack direction="row" spacing={1} alignItems="center">
             <Button size="small" onClick={() => chooseBulkTarget?.('subject', { subjectId: subject.id })}>
-              Add
+              Add quizzes
             </Button>
-            <Button size="small" onClick={() => loadEntity({ kind: 'subject', id: subject.id }, subject)}>
-              Edit
-            </Button>
-            <Button
-              size="small"
-              color="error"
-              onClick={() => onDelete?.({ kind: 'subject', id: subject.id }, subject.name)}
-            >
-              Delete
-            </Button>
+            <AdminParentActions
+              entity="Subject"
+              onEdit={() =>
+                onManageSubjects
+                  ? onManageSubjects(subject.id)
+                  : loadEntity({ kind: 'subject', id: subject.id }, subject)
+              }
+              onDelete={() => onDelete?.({ kind: 'subject', id: subject.id }, subject.name)}
+            />
           </Stack>
         )}
         {subject && (
@@ -138,7 +147,7 @@ export function AdminNavigatorPanel({
         )}
         {!subject && (
           <Stack direction="row">
-            <AdminAddSubjectButton onClick={() => loadNew('subject')} />
+            <AdminAddSubjectButton onClick={() => (onManageSubjects ? onManageSubjects() : loadNew('subject'))} />
           </Stack>
         )}
         {quiz && (
@@ -147,18 +156,13 @@ export function AdminNavigatorPanel({
               size="small"
               onClick={() => chooseBulkTarget?.('quiz', { subjectId: subject!.id, quizId: quiz.id })}
             >
-              Add
+              Add questions
             </Button>
-            <Button size="small" onClick={() => loadEntity({ kind: 'quiz', id: quiz.id, parentId: subject!.id }, quiz)}>
-              Edit
-            </Button>
-            <Button
-              size="small"
-              color="error"
-              onClick={() => onDelete?.({ kind: 'quiz', id: quiz.id, parentId: subject!.id }, quiz.name)}
-            >
-              Delete
-            </Button>
+            <AdminParentActions
+              entity="Quiz"
+              onEdit={() => loadEntity({ kind: 'quiz', id: quiz.id, parentId: subject!.id }, quiz)}
+              onDelete={() => onDelete?.({ kind: 'quiz', id: quiz.id, parentId: subject!.id }, quiz.name)}
+            />
           </Stack>
         )}
         {quiz && (

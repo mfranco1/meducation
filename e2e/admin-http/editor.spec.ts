@@ -4,7 +4,7 @@ import { confirmDraftSave, expect, test } from './fixtures';
 async function login(page: Page) {
   await page.goto('/admin.html');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
   page.on('dialog', (dialog) => void dialog.accept());
 }
 async function refreshAuthentication(page: Page) {
@@ -43,12 +43,13 @@ test('edits both banks, reloads saved drafts, publishes, activates and exports t
   await expect.poll(async () => (await draft(page)).pair.quizzes.questions[0].stem).toBe('HTTP paired saved stem');
   const learner = await page.request.get('/api/v1/quizzes/q1/questions');
   expect((await learner.json()).questions[0].stem).toBe(original.pair.quizzes.questions[0].stem);
-  await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+  await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
   await page.getByRole('combobox', { name: 'Subject', exact: true }).click();
   await page.getByRole('listbox').getByRole('option').first().click();
   await page.getByRole('combobox', { name: 'Deck', exact: true }).click();
   await page.getByRole('listbox').getByRole('option').first().click();
-  await page.getByRole('button', { name: 'Edit', exact: true }).last().click();
+  await page.getByRole('button', { name: 'Deck actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Edit deck', exact: true }).click();
   const flash = page.getByRole('textbox', { name: 'JSON', exact: true });
   const deck = JSON.parse(await flash.inputValue());
   await flash.fill(JSON.stringify({ ...deck, name: 'HTTP paired deck' }, null, 2));
@@ -154,8 +155,8 @@ for (const width of [390, 1048, 1440])
   test(`HTTP editor keyboard access and layout at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
     await login(page);
-    await page.getByRole('button', { name: 'Quizzes', exact: true }).focus();
-    await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toBeFocused();
+    await page.getByRole('tab', { name: 'Quizzes', exact: true }).focus();
+    await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeFocused();
     const editor = await question(page);
     await editor.focus();
     await expect(editor).toBeFocused();
@@ -177,8 +178,7 @@ test('invalidates a reserved bulk preview when text changes without saving it', 
   const before = await draft(page);
   await page
     .getByRole('region', { name: 'Quiz navigator' })
-    .getByRole('button', { name: 'Add', exact: true })
-    .last()
+    .getByRole('button', { name: 'Add questions', exact: true })
     .click();
   const editor = page.getByRole('region', { name: 'Quiz editor' }).getByRole('textbox', { name: 'JSON', exact: true });
   const candidate = {
@@ -306,7 +306,7 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
   await login(page);
   await question(page);
   const nav = page.getByRole('region', { name: 'Quiz navigator' });
-  await nav.getByRole('button', { name: 'Add', exact: true }).first().click();
+  await nav.getByRole('button', { name: 'Add quizzes', exact: true }).click();
   const editor = page.getByRole('region', { name: 'Quiz editor' }).getByRole('textbox', { name: 'JSON', exact: true });
   await page.getByLabel('Destination', { exact: true }).click();
   await page.getByRole('option', { name: 'Create a subject and quizzes' }).click();
@@ -348,10 +348,13 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
   expect(item.quizId).toBe(quiz.id);
   expect(item.answer).toBe('A');
   expect(item.verifiedAnswer).toBe('B');
-  await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+  await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
   await page.getByRole('combobox', { name: 'Subject', exact: true }).click();
   await page.getByRole('listbox').getByRole('option', { name: 'HTTP grouped subject', exact: true }).click();
-  await page.getByRole('button', { name: 'Add', exact: true }).first().click();
+  await page
+    .getByRole('region', { name: 'Flashcard navigator' })
+    .getByRole('button', { name: 'Add decks', exact: true })
+    .click();
   const add = page.getByRole('dialog', { name: 'Add Decks' });
   await add.getByRole('textbox', { name: 'JSON' }).fill(
     JSON.stringify({
@@ -382,13 +385,14 @@ test('grouped quiz and flashcard creates use reserved IDs and one paired save', 
   await page
     .getByRole('textbox', { name: 'JSON', exact: true })
     .fill(JSON.stringify({ ...savedCard, back: 'Hidden unsaved card text' }));
-  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await page.getByRole('tab', { name: 'Quizzes', exact: true }).click();
   await nav.getByRole('combobox', { name: 'Subject', exact: true }).click();
   await page
     .getByRole('listbox')
     .getByRole('option', { name: new RegExp('HTTP grouped subject') })
     .click();
-  await nav.getByRole('button', { name: 'Delete', exact: true }).first().click();
+  await nav.getByRole('button', { name: 'Subject actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete subject…', exact: true }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Review subject deletion' }).click();
   await page
     .getByRole('dialog', { name: 'Discard unsaved edits?', exact: true })
@@ -519,4 +523,18 @@ test('uncertain reset can close its review and reconcile without losing editor t
   await expect(page.getByText(/operation committed/)).toBeVisible();
   await expect(editor).toHaveValue(text);
   expect(attempts).toBe(1);
+});
+
+test('a selected quiz editor remains editable after all JSON text is cleared', async ({ page }) => {
+  await login(page);
+  const editor = await question(page);
+  const original = await editor.inputValue();
+  const before = await draft(page);
+  await editor.fill('');
+  await expect(editor).toBeVisible();
+  await expect(editor).toBeEditable();
+  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toHaveAccessibleDescription(/Unsaved/);
+  await editor.fill(original);
+  await expect(editor).toHaveValue(original);
+  expect((await draft(page)).pair).toEqual(before.pair);
 });

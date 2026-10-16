@@ -1,3 +1,4 @@
+import { AdminBatchHeader } from './components/AdminBatchHeader';
 import { useAdminConfirmation } from './useAdminConfirmation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
@@ -11,6 +12,8 @@ import {
   Stack,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import type { Subject } from '../domain/types';
 import type { StoredFlashcardBank } from '../content/schema/schema';
@@ -83,6 +86,7 @@ export function FlashcardBulkAddDialog({
     snapshot: FlashcardBulkPreviewSnapshot,
   ) => string | undefined | Promise<string | undefined>;
 }) {
+  const narrow = useMediaQuery(useTheme().breakpoints.down('sm'));
   const template = useMemo(() => flashcardBulkAddTemplate(context), [context]);
   const [text, setText] = useState(template);
   const [preview, setPreview] = useState<Preview>();
@@ -186,7 +190,14 @@ export function FlashcardBulkAddDialog({
   const previewIsStale = Boolean(preview && !previewCurrent);
 
   return (
-    <Dialog open={open} onClose={requestClose} fullWidth maxWidth="md" aria-labelledby="flashcard-bulk-title">
+    <Dialog
+      open={open}
+      onClose={requestClose}
+      fullScreen={narrow}
+      fullWidth
+      maxWidth="md"
+      aria-labelledby="flashcard-bulk-title"
+    >
       {confirmation.dialog}
       <DialogTitle id="flashcard-bulk-title">Add {context.kind === 'deck' ? 'Cards' : 'Decks'}</DialogTitle>
       <DialogContent>
@@ -205,9 +216,7 @@ export function FlashcardBulkAddDialog({
           />
         )}
         <Stack spacing={2} sx={{ pt: 1 }}>
-          <Typography variant="body2" color="text.secondary">
-            Destination · {destinationLabel}
-          </Typography>
+          <AdminBatchHeader destination={destinationLabel} reviewReady={Boolean(previewCurrent)} />
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Button onClick={() => void copyTemplate()} disabled={busy || loadingFile}>
               Copy template

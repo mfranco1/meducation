@@ -7,7 +7,6 @@ import {
   Container,
   Menu,
   MenuItem,
-  Paper,
   Stack,
   Tab,
   Tabs,
@@ -16,7 +15,9 @@ import {
 } from '@mui/material';
 import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
-import { adminEditorLayout } from './components/adminPanelLayout';
+import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from './components/AdminEditorFrame';
+import { AdminBatchHeader } from './components/AdminBatchHeader';
+import { SubjectEditorDialog } from './SubjectEditorDialog';
 import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
 import { AdminStatusPanel } from './components/AdminStatusPanel';
 import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
@@ -44,6 +45,9 @@ export function AdminWorkspace({
   externalBusy?: boolean;
   onDirtyChange?: (dirty: AdminDraftState) => void;
 }) {
+  const [subjectTarget, setSubjectTarget] = useState<{ id?: string }>();
+  const [subjectDirty, setSubjectDirty] = useState(false);
+  const reportSubjectDirty = useCallback((dirty: boolean) => setSubjectDirty(dirty), []);
   const [section, setSection] = useState<'quizzes' | 'flashcards'>('quizzes');
   const [deleteRequest, setDeleteRequest] = useState<DeleteRequest>();
   const [flashcardDiscardRequest, setFlashcardDiscardRequest] = useState(0);
@@ -65,6 +69,7 @@ export function AdminWorkspace({
     selection,
     mode,
     editor,
+    recordLoaded,
     reason,
     issues,
     summary,
@@ -94,9 +99,12 @@ export function AdminWorkspace({
   } = useAdminEditor(gateway, { blocked: externalBusy });
   const confirmation = useAdminConfirmation([editor, flashcardEditVersion, gateway.current, externalBusy]);
   const busy = editorBusy || (externalBusy ? 'Another authoring command is in progress' : undefined);
+  const openSubject = (id?: string) => {
+    if (!busy) setSubjectTarget({ id });
+  };
   useEffect(() => {
-    onDirtyChange?.({ quizzes: editorDirty, flashcards: flashcardDirty });
-  }, [editorDirty, flashcardDirty, onDirtyChange]);
+    onDirtyChange?.({ quizzes: editorDirty || subjectDirty, flashcards: flashcardDirty || subjectDirty });
+  }, [editorDirty, flashcardDirty, subjectDirty, onDirtyChange]);
   const bulkSubjectId = bulkTarget.kind === 'newSubject' ? undefined : bulkTarget.subjectId;
   const bulkSubject = snapshot?.bank.subjects.find((subject) => subject.id === bulkSubjectId);
   const bulkQuizzes = useMemo(
@@ -200,25 +208,32 @@ export function AdminWorkspace({
         )
       ) : (
         <Container maxWidth={false} sx={{ py: 2 }}>
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ mb: 2 }}>
-            <Button
+          <Tabs
+            value={section}
+            onChange={(_, value) => setSection(value)}
+            aria-label="Content workspace"
+            sx={{ mb: 2 }}
+          >
+            <Tab
+              value="quizzes"
+              id="quizzes-tab"
+              aria-controls="quizzes-panel"
               aria-label="Quizzes"
-              aria-describedby={editorDirty ? 'quizzes-unsaved' : undefined}
-              variant={section === 'quizzes' ? 'contained' : 'outlined'}
-              onClick={() => setSection('quizzes')}
-            >
-              Quizzes{editorDirty && <span id="quizzes-unsaved"> • Unsaved</span>}
-            </Button>
-            <Button
+              aria-describedby={editorDirty || subjectDirty ? 'quizzes-unsaved' : undefined}
+              label={<>Quizzes{(editorDirty || subjectDirty) && <span id="quizzes-unsaved"> • Unsaved</span>}</>}
+            />
+            <Tab
+              value="flashcards"
+              id="flashcards-tab"
+              aria-controls="flashcards-panel"
               aria-label="Flashcards"
-              aria-describedby={flashcardDirty ? 'flashcards-unsaved' : undefined}
-              variant={section === 'flashcards' ? 'contained' : 'outlined'}
-              onClick={() => setSection('flashcards')}
-            >
-              Flashcards{flashcardDirty && <span id="flashcards-unsaved"> • Unsaved</span>}
-            </Button>
-          </Stack>
-          <Box sx={{ display: section === 'flashcards' ? 'block' : 'none' }}>
+              aria-describedby={flashcardDirty || subjectDirty ? 'flashcards-unsaved' : undefined}
+              label={
+                <>Flashcards{(flashcardDirty || subjectDirty) && <span id="flashcards-unsaved"> • Unsaved</span>}</>
+              }
+            />
+          </Tabs>
+          <Box role="tabpanel" id="flashcards-panel" aria-labelledby="flashcards-tab" hidden={section !== 'flashcards'}>
             <FlashcardAdminPanel
               recovery={recovery}
               reviewBeforeSave
@@ -231,77 +246,87 @@ export function AdminWorkspace({
                 gateway.invalidate();
               }}
               subjects={snapshot.bank.subjects}
-              onAddSubject={() => {
-                setSection('quizzes');
-                loadNew('subject');
-              }}
-              onEditSubject={(id) => {
-                const subject = snapshot.bank.subjects.find((item) => item.id === id);
-                if (subject) {
-                  setSection('quizzes');
-                  loadEntity({ kind: 'subject', id }, subject);
-                }
-              }}
+              onAddSubject={() => openSubject()}
+              onManageSubjects={(id) => openSubject(id)}
+              onEditSubject={(id) => openSubject(id)}
               onDeleteSubject={(id, name) => requestDelete({ kind: 'subject', id }, name)}
               quizRevision={snapshot.revision}
               externalBusy={Boolean(busy)}
             />
           </Box>
-          {section === 'quizzes' && (
-            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
-              <AdminNavigatorPanel
-                onBrowseChange={browseContext}
-                bank={snapshot.bank}
-                selection={selection}
-                selectedSubjectId={selectedSubject?.id}
-                selectedQuizId={selectedQuiz?.id}
-                filter={filter}
-                setFilter={setFilter}
-                loadEntity={loadEntity}
-                loadNew={loadNew}
-                chooseBulkTarget={chooseBulkTarget}
-                onDelete={requestDelete}
-                onDeleteItems={(ids) =>
-                  requestDelete({ kind: 'question', parentId: selectedQuiz?.id }, `${ids.length} selected items`, ids)
-                }
-              />
-              <Paper
-                component="section"
-                aria-label="Quiz editor"
-                variant="outlined"
-                sx={{ ...adminEditorLayout, p: 2 }}
+          <Stack
+            hidden={section !== 'quizzes'}
+            sx={{ display: section === 'quizzes' ? 'flex' : 'none' }}
+            role="tabpanel"
+            id="quizzes-panel"
+            aria-labelledby="quizzes-tab"
+            direction={{ xs: 'column', lg: 'row' }}
+            spacing={2}
+            alignItems="flex-start"
+          >
+            <AdminNavigatorPanel
+              disabled={Boolean(busy)}
+              onManageSubjects={(id) => openSubject(id)}
+              onBrowseChange={browseContext}
+              bank={snapshot.bank}
+              selection={selection}
+              selectedSubjectId={selectedSubject?.id}
+              selectedQuizId={selectedQuiz?.id}
+              filter={filter}
+              setFilter={setFilter}
+              loadEntity={loadEntity}
+              loadNew={loadNew}
+              chooseBulkTarget={chooseBulkTarget}
+              onDelete={requestDelete}
+              onDeleteItems={(ids) =>
+                requestDelete({ kind: 'question', parentId: selectedQuiz?.id }, `${ids.length} selected items`, ids)
+              }
+            />
+            <AdminEditorFrame label="Quiz editor">
+              <Tabs
+                value={mode}
+                onChange={(_, value) => {
+                  if (value === 'bulk')
+                    chooseBulkTarget(
+                      selection.kind === 'question' || selection.kind === 'quiz'
+                        ? 'quiz'
+                        : selection.kind === 'subject' && selection.id
+                          ? 'subject'
+                          : 'newSubject',
+                    );
+                  else showSingle();
+                }}
               >
-                <Tabs
-                  value={mode}
-                  onChange={(_, value) => {
-                    if (value === 'bulk')
-                      chooseBulkTarget(
-                        selection.kind === 'question' || selection.kind === 'quiz'
-                          ? 'quiz'
-                          : selection.kind === 'subject' && selection.id
-                            ? 'subject'
-                            : 'newSubject',
-                      );
-                    else showSingle();
-                  }}
+                <Tab value="single" label="Record" />
+                <Tab value="bulk" label="Add" />
+              </Tabs>
+              {mode === 'bulk' && (
+                <TextField
+                  select
+                  label="Destination"
+                  value={bulkTarget.kind}
+                  onChange={(event) => chooseBulkTarget(event.target.value as 'newSubject' | 'subject' | 'quiz')}
+                  fullWidth
+                  sx={{ mt: 2 }}
                 >
-                  <Tab value="single" label="Record" />
-                  <Tab value="bulk" label="Add" />
-                </Tabs>
-                {mode === 'bulk' && (
-                  <TextField
-                    select
-                    label="Destination"
-                    value={bulkTarget.kind}
-                    onChange={(event) => chooseBulkTarget(event.target.value as 'newSubject' | 'subject' | 'quiz')}
-                    fullWidth
-                    sx={{ mt: 2 }}
+                  <MenuItem value="newSubject">Create a subject and quizzes</MenuItem>
+                  <MenuItem value="subject">Add quizzes to a subject</MenuItem>
+                  <MenuItem value="quiz">Add items to a quiz</MenuItem>
+                </TextField>
+              )}
+              {mode === 'single' && !recordLoaded ? (
+                <AdminEditorEmpty
+                  title={!selectedSubject ? 'Choose a subject' : !selectedQuiz ? 'Choose a quiz' : 'Choose a question'}
+                >
+                  <Button
+                    onClick={() =>
+                      selectedSubject ? chooseBulkTarget(selectedQuiz ? 'quiz' : 'subject') : setSubjectTarget({})
+                    }
                   >
-                    <MenuItem value="newSubject">Create a subject and quizzes</MenuItem>
-                    <MenuItem value="subject">Add quizzes to a subject</MenuItem>
-                    <MenuItem value="quiz">Add items to a quiz</MenuItem>
-                  </TextField>
-                )}
+                    {selectedQuiz ? 'Add questions' : selectedSubject ? 'Add quizzes' : 'Add subject'}
+                  </Button>
+                </AdminEditorEmpty>
+              ) : (
                 <Stack spacing={2} sx={{ mt: 2 }}>
                   {mode === 'bulk' && bulkTarget.kind !== 'newSubject' && (
                     <Autocomplete
@@ -340,8 +365,16 @@ export function AdminWorkspace({
                     />
                   )}
                   {mode === 'bulk' && (
+                    <AdminBatchHeader destination={bulkTargetLabel} reviewReady={pendingBulkCurrent} reserved />
+                  )}
+                  {mode === 'single' && (
+                    <Typography variant="h6">
+                      {selection.id ? 'Edit' : 'New'} {selection.kind === 'question' ? 'question' : selection.kind}
+                    </Typography>
+                  )}
+                  {mode === 'single' && (
                     <Typography variant="body2" color="text.secondary">
-                      {bulkTargetLabel}
+                      {[selectedSubject?.name, selectedQuiz?.name, selection.id].filter(Boolean).join(' / ')}
                     </Typography>
                   )}
                   <TextField
@@ -367,7 +400,7 @@ export function AdminWorkspace({
                         : 'Edit subject, quiz, and item content.'
                     }
                   />
-                  <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
+                  <AdminEditorActions dirty={editorDirty} busy={Boolean(busy)}>
                     <Button
                       variant="contained"
                       disabled={Boolean(busy) || (mode === 'single' && !editor.trim())}
@@ -395,7 +428,7 @@ export function AdminWorkspace({
                           <MenuItem
                             onClick={() => {
                               setRecordAnchor(null);
-                              loadNew('subject');
+                              openSubject();
                             }}
                           >
                             New subject
@@ -404,10 +437,10 @@ export function AdminWorkspace({
                             disabled={!selectedSubject}
                             onClick={() => {
                               setRecordAnchor(null);
-                              loadNew('quiz');
+                              chooseBulkTarget('subject');
                             }}
                           >
-                            New quiz
+                            Add quizzes
                           </MenuItem>
                           <MenuItem
                             disabled={!selectedQuiz}
@@ -431,7 +464,7 @@ export function AdminWorkspace({
                         </Menu>
                       </>
                     )}
-                  </Stack>
+                  </AdminEditorActions>
                   {pendingBulkCurrent && pendingBulk && (
                     <Alert
                       severity={
@@ -443,16 +476,21 @@ export function AdminWorkspace({
                       }
                     >
                       <Typography variant="body2">
-                        {pendingBulk.generatedIds.length} generated IDs. First IDs:{' '}
+                        {pendingBulk.generatedIds.length} server-reserved IDs. First IDs:{' '}
                         {pendingBulk.generatedIds.slice(0, 12).join(', ')}
                       </Typography>
                       {pendingBulk.generatedIds.length > 12 && (
                         <details>
-                          <summary>Review all generated IDs</summary>
+                          <summary>Review all server-reserved IDs</summary>
                           <Typography
                             variant="caption"
                             component="pre"
-                            sx={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', maxHeight: 180, overflow: 'auto' }}
+                            sx={{
+                              whiteSpace: 'pre-wrap',
+                              overflowWrap: 'anywhere',
+                              maxHeight: 180,
+                              overflow: 'auto',
+                            }}
                           >
                             {pendingBulk.generatedIds.join('\n')}
                           </Typography>
@@ -461,8 +499,9 @@ export function AdminWorkspace({
                     </Alert>
                   )}
                 </Stack>
-              </Paper>
+              )}
               <AdminStatusPanel
+                embedded
                 bank={snapshot.bank}
                 issues={issues}
                 questionPaths={pendingBulkCurrent ? pendingBulk?.questionPaths : undefined}
@@ -470,7 +509,18 @@ export function AdminWorkspace({
                 editorDirty={editorDirty}
                 busy={busy}
               />
-            </Stack>
+            </AdminEditorFrame>
+          </Stack>
+          {subjectTarget && (
+            <SubjectEditorDialog
+              key={subjectTarget.id ?? 'new'}
+              gateway={gateway}
+              initialId={subjectTarget.id}
+              blocked={Boolean(busy)}
+              recovery={recovery}
+              onDirtyChange={reportSubjectDirty}
+              onClose={() => setSubjectTarget(undefined)}
+            />
           )}
           <AdminDeleteDialog
             recovery={recovery}

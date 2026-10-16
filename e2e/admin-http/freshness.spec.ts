@@ -11,7 +11,7 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   test.setTimeout(120_000);
   await page.goto('/admin.html');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
   const snapshot = async () => (await (await page.request.get('/api/admin/draft')).json()) as PairedSnapshot;
   const expected = (value: PairedSnapshot) => ({
     draftRevision: value.draft.revision,

@@ -1,4 +1,6 @@
 import { AdminActionCanceled } from './core/AdminActionCanceled';
+import { AdminParentActions } from './components/AdminParentActions';
+import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from './components/AdminEditorFrame';
 import { useAdminConfirmation } from './useAdminConfirmation';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
@@ -29,7 +31,7 @@ import { applyFlashcardOperations, type FlashcardAdminOperation } from './core/f
 import { FlashcardBulkAddDialog, type FlashcardBulkPreviewSnapshot } from './FlashcardBulkAddDialog';
 import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
 import { selectFlashcardPage } from './core/flashcardNavigator';
-import { adminEditorLayout, adminNavigatorLayout } from './components/adminPanelLayout';
+import { adminNavigatorLayout } from './components/adminPanelLayout';
 import { AdminRecordSelection, useAdminRecordSelection } from './components/AdminRecordSelection';
 import { AdminIssues } from './components/AdminIssues';
 import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
@@ -50,6 +52,7 @@ export function FlashcardAdminPanel({
   onDeleteSubject,
   onAddSubject,
   onEditSubject,
+  onManageSubjects,
   onDraftChange,
   onEdit,
   discardRequest = 0,
@@ -63,6 +66,7 @@ export function FlashcardAdminPanel({
   quizBank?: StoredQuestionBank;
   onDeleteSubject?: (subjectId: string, subjectName: string) => void;
   onAddSubject?: () => void;
+  onManageSubjects?: (id?: string) => void;
   onEditSubject?: (subjectId: string, subjectName: string) => void;
   onDraftChange?: (dirty: boolean) => void;
   onEdit?: () => void;
@@ -466,6 +470,11 @@ export function FlashcardAdminPanel({
             }}
             renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
           />
+          {onManageSubjects && (
+            <Button size="small" color="inherit" onClick={() => onManageSubjects(browseSubjectId || undefined)}>
+              Manage subjects…
+            </Button>
+          )}
           {!browseSubjectId && onAddSubject && (
             <Stack direction="row">
               <AdminAddSubjectButton onClick={onAddSubject} />
@@ -482,27 +491,19 @@ export function FlashcardAdminPanel({
                   )
                 }
               >
-                Add
+                Add decks
               </Button>
-              <Button
-                size="small"
-                onClick={() => {
-                  const subject = subjects.find((item) => item.id === browseSubjectId);
+              <AdminParentActions
+                entity="Subject"
+                onEdit={() => {
+                  const subject = subjects.find((row) => row.id === browseSubjectId);
                   if (subject) onEditSubject?.(subject.id, subject.name);
                 }}
-              >
-                Edit
-              </Button>
-              <Button
-                size="small"
-                color="error"
-                onClick={() => {
-                  const subject = subjects.find((item) => item.id === browseSubjectId);
+                onDelete={() => {
+                  const subject = subjects.find((row) => row.id === browseSubjectId);
                   if (subject) onDeleteSubject?.(subject.id, subject.name);
                 }}
-              >
-                Delete
-              </Button>
+              />
             </Stack>
           )}
           {browseSubjectId && (
@@ -537,22 +538,18 @@ export function FlashcardAdminPanel({
                     )
                   }
                 >
-                  Add
+                  Add cards
                 </Button>
-                <Button
-                  size="small"
-                  onClick={() =>
-                    load(
+                <AdminParentActions
+                  entity="Deck"
+                  onEdit={() =>
+                    void load(
                       { kind: 'deck', id: browseDeckId },
                       browseDecks.find((deck) => deck.id === browseDeckId),
                     )
                   }
-                >
-                  Edit
-                </Button>
-                <Button size="small" color="error" onClick={() => remove('deck', browseDeckId)}>
-                  Delete
-                </Button>
+                  onDelete={() => remove('deck', browseDeckId)}
+                />
               </Stack>
               <TextField
                 label="Search cards in this deck"
@@ -690,40 +687,65 @@ export function FlashcardAdminPanel({
           )}
         </Stack>
       </Paper>
-      <Paper component="section" aria-label="Flashcard editor" variant="outlined" sx={{ ...adminEditorLayout, p: 2 }}>
+      <AdminEditorFrame label="Flashcard editor">
         <Stack spacing={2}>
           {selection && (
             <Typography variant="h6">
               {selection.id ? 'Edit' : 'Create'} {selection.kind}
             </Typography>
           )}
-          <TextField
-            label="JSON"
-            slotProps={{ inputLabel: { shrink: true } }}
-            sx={{ mt: 1 }}
-            value={editor}
-            onChange={(event) => {
-              editVersion.current++;
-              onEdit?.();
-              setEditor(event.target.value);
-            }}
-            multiline
-            minRows={14}
-            maxRows={24}
-            fullWidth
-            InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
-          />
-          <TextField
-            label="Change reason"
-            required
-            error={!reason.trim()}
-            helperText={!reason.trim() ? 'Enter a reason for this saved change.' : undefined}
-            value={reason}
-            onChange={(event) => {
-              onEdit?.();
-              setReason(event.target.value);
-            }}
-          />
+          {!selection ? (
+            <AdminEditorEmpty
+              title={!browseSubjectId ? 'Choose a subject' : !browseDeckId ? 'Choose a deck' : 'Choose a card'}
+            >
+              {browseSubjectId ? (
+                <Button
+                  onClick={() =>
+                    openBulk(
+                      browseDeckId
+                        ? { kind: 'deck', deckId: browseDeckId }
+                        : { kind: 'subject', subjectId: browseSubjectId },
+                      browseDeck?.name ?? subjects.find((row) => row.id === browseSubjectId)?.name ?? '',
+                    )
+                  }
+                >
+                  {browseDeckId ? 'Add cards' : 'Add decks'}
+                </Button>
+              ) : onAddSubject ? (
+                <Button onClick={onAddSubject}>Add subject</Button>
+              ) : null}
+            </AdminEditorEmpty>
+          ) : (
+            <>
+              <TextField
+                label="JSON"
+                slotProps={{ inputLabel: { shrink: true } }}
+                sx={{ mt: 1 }}
+                value={editor}
+                onChange={(event) => {
+                  editVersion.current++;
+                  onEdit?.();
+                  setEditor(event.target.value);
+                }}
+                multiline
+                minRows={14}
+                maxRows={24}
+                fullWidth
+                InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
+              />
+              <TextField
+                label="Change reason"
+                required
+                error={!reason.trim()}
+                helperText={!reason.trim() ? 'Enter a reason for this saved change.' : undefined}
+                value={reason}
+                onChange={(event) => {
+                  onEdit?.();
+                  setReason(event.target.value);
+                }}
+              />
+            </>
+          )}
           {notice && (
             <Alert severity="info" role="status">
               {notice}
@@ -739,10 +761,12 @@ export function FlashcardAdminPanel({
               <AdminIssues issues={warnings} />
             </Alert>
           )}
-          <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap">
-            <Button variant="contained" disabled={!selection || busy || externalBusy} onClick={stage}>
-              {reviewBeforeSave ? 'Review save' : 'Save draft'}
-            </Button>
+          <AdminEditorActions dirty={editorDirty} busy={busy || externalBusy} statusVisible={Boolean(selection)}>
+            {selection && (
+              <Button variant="contained" disabled={!selection || busy || externalBusy} onClick={stage}>
+                {reviewBeforeSave ? 'Review save' : 'Save draft'}
+              </Button>
+            )}
             <Button
               disabled={busy || externalBusy}
               size="small"
@@ -803,9 +827,9 @@ export function FlashcardAdminPanel({
                 </MenuItem>
               )}
             </Menu>
-          </Stack>
+          </AdminEditorActions>
         </Stack>
-      </Paper>
+      </AdminEditorFrame>
       {confirmation.dialog}
       <AdminDeleteDialog
         recovery={recovery}

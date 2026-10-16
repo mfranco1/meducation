@@ -130,3 +130,6 @@ bytes, content revisions and (for HTTP exports) ordered identity inventories,
 then run paired content policy checks. Reports retain selected publication or
 unpublished draft context and do not claim current database currency. The npm validator checks only explicitly selected file paths. Follow [the authoritative recovery preparation runbook](L4-authoritative-recovery.md#explicit-export-validation-and-audit).
 These tools do not change canonical authority or replace a retained full backup.
+
+
+Use **Manage subjects…** from either navigator to create or edit a shared subject without switching sections. Its JSON editor uses the same preview/reservation/save review as other authoring and retains invalid or unsaved text on canceled close. Other open quiz/flashcard drafts are excluded from that save and remain available. Use **Add quizzes / Add questions / Add decks / Add cards** for contextual batches; parent **Subject / Quiz / Deck actions** menus provide edit/delete. Empty-quiz creation uses the grouped quiz-and-questions flow so required question content can be validated together.

@@ -264,3 +264,6 @@ no raw request/exception content enters events. Middleware keeps per-request
 observations across threadpool calls without exposing them in domain/content DTOs.
 [Local operations](L5-local-operations.md) defines the limits, proxy log policy,
 configuration audit and remaining provider gates.
+
+
+Admin workspace framing stays under `src/admin/components`: parent action menus, editor/empty/action slots and batch progress receive presentation data and callbacks. `SubjectEditorDialog` composes `useAdminEditor` against the same cached gateway as the two section editors; it does not fetch or persist a separate bank. All subject commands use the existing shared HTTP admission and prepared review lifecycle. Subject-dialog dirty state participates in both sections' publication eligibility. No learner presentation or persistence dependency was added.

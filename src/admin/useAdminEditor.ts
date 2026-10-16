@@ -25,7 +25,7 @@ export type BulkTarget =
 /** Owns the mutable state shared by all admin editing workflows. */
 export function useAdminEditor(
   gateway: AdminQuestionBankGateway,
-  options: { confirm?: (message: string) => boolean; blocked?: boolean } = {},
+  options: { confirm?: (message: string) => boolean; blocked?: boolean; draftLabel?: string } = {},
 ) {
   const [snapshot, setSnapshot] = useState<AdminBankSnapshot>();
   const [selection, setSelection] = useState<Selection>({ kind: 'subject' });
@@ -116,7 +116,8 @@ export function useAdminEditor(
     return () => removeEventListener('beforeunload', beforeUnload);
   }, [editorDirty]);
 
-  const discardDraft = () => confirmAction('Discard the unsaved quiz editor text to continue?');
+  const discardDraft = () =>
+    confirmAction(`Discard the unsaved ${options.draftLabel ?? 'quiz editor'} text to continue?`);
   const browseContext = async (subjectId: string, quizId?: string) => {
     if (busyRef.current || options.blocked || (editorDirty && !(await discardDraft()))) return false;
     invalidateDraft();
@@ -300,6 +301,7 @@ export function useAdminEditor(
     }
     setIssues([]);
     setSummary('Paired draft saved. Saving does not publish.');
+    return true;
   };
   const validateBulkDraft = async (isCurrent: () => boolean) => {
     if (!snapshot || !bulkContext) {
@@ -481,6 +483,7 @@ export function useAdminEditor(
     selection,
     mode,
     editor,
+    recordLoaded: loadedEditor !== '',
     reason,
     issues,
     summary,
@@ -505,9 +508,7 @@ export function useAdminEditor(
     editRecord,
     editReason,
     savePairedChange,
-    stageSingle: async () => {
-      await runCommand('Save draft', stageSingle);
-    },
+    stageSingle: () => runCommand('Save draft', stageSingle),
     validateBulkDraft: () => runCommand('Validation', validateBulkDraft),
     stageValidatedBulk: () => runCommand('Save draft', stageValidatedBulk),
     stageDelete: (target?: Selection, changeReason?: string, ids?: string[], expectedRevision?: string) =>

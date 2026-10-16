@@ -5,7 +5,7 @@ test('L5 explicit diagnostics require the existing session, Origin and CSRF and 
 }) => {
   await page.goto('/admin.html');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
   const session = await (await page.request.get('/api/admin/session')).json();
   const origin = new URL(page.url()).origin;
   for (const headers of [

@@ -85,3 +85,6 @@ session/origin/CSRF/freshness policy independently of those assets. Production
 identity integration remains disabled pending real adapter and MFA acceptance.
 The [deployment handoff](L6-deployment-handoff.md) records remaining hosting,
 retention and browser/device gates; local acceptance is not public launch.
+
+
+Admin authors browse through Quizzes/Flashcards tabs, select a subject and quiz/deck, then choose a record or use explicit content-add actions. Empty editors show context guidance. Parent edit/delete actions live in labelled menus; deletion retains its paired cascade review. Manage subjects is available in either section and edits the shared subject in a dialog, preserving both sections' unsaved records. Quiz validation/details stay with the editor. Batch composition shares Content → Review → Save draft framing, with a visible destination and truthful provisional/reserved ID guidance.

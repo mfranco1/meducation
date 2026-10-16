@@ -59,9 +59,11 @@ describe('admin quiz navigator presentation contracts', () => {
       { kind: 'question', id: questions[0].id, parentId: 'q1' },
       questions[0],
     );
-    fireEvent.change(screen.getByRole('textbox', { name: 'Search items in this quiz' }), { target: { value: 'Subject One' } });
+    fireEvent.change(screen.getByRole('textbox', { name: 'Search items in this quiz' }), {
+      target: { value: 'Subject One' },
+    });
     expect(setFilter).toHaveBeenCalledExactlyOnceWith('Subject One');
-    fireEvent.click(screen.getAllByRole('button', { name: 'Add' }).at(-1)!);
+    fireEvent.click(screen.getByRole('button', { name: 'Add questions' }));
     expect(chooseBulkTarget).toHaveBeenCalledExactlyOnceWith('quiz', { subjectId: 's1', quizId: 'q1' });
   });
 });

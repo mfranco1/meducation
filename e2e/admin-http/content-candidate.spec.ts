@@ -21,7 +21,7 @@ for (const candidate of contentCases()) {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await page.goto('/admin.html');
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
     await page.addStyleTag({ content: 'html {font-size:20px}' });
     const nav = page.getByRole('region', { name: 'Quiz navigator' });
     await nav.getByRole('combobox', { name: 'Subject', exact: true }).click();

@@ -5,7 +5,7 @@ import { confirmDraftSave, expect, test } from './fixtures';
 async function login(page: Page) {
   await page.goto('/admin.html');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
   page.on('dialog', (dialog) => void dialog.accept());
 }
 async function draft(page: Page): Promise<PairedSnapshot> {
@@ -22,7 +22,7 @@ async function selectQuiz(page: Page) {
   return nav;
 }
 async function selectFlashcards(page: Page) {
-  await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+  await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
   await page.getByRole('combobox', { name: 'Subject', exact: true }).fill('Anatomía');
   await page.getByRole('option', { name: 'Anatomía', exact: true }).click();
   await page.getByRole('combobox', { name: 'Deck', exact: true }).click();
@@ -34,7 +34,7 @@ test('selected quiz deletion can be cancelled and one server undo restores the e
   await login(page);
   const nav = await selectQuiz(page);
   // Ensure a non-empty quiz remains after the selected batch is deleted.
-  await nav.getByRole('button', { name: 'Add', exact: true }).last().click();
+  await nav.getByRole('button', { name: 'Add questions', exact: true }).click();
   const editor = page.getByRole('region', { name: 'Quiz editor' });
   await editor.getByRole('textbox', { name: 'JSON', exact: true }).fill(
     JSON.stringify({
@@ -125,12 +125,13 @@ test('declining a shared subject deletion preserves hidden unsaved flashcard tex
   const text = JSON.stringify({ ...JSON.parse(await editor.inputValue()), front: 'Hidden unsaved flashcard text' });
   await editor.fill(text);
   const before = await draft(page);
-  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await page.getByRole('tab', { name: 'Quizzes', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Workspace status: Unsaved edits', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Review & publish', exact: true })).toBeDisabled();
   await expect(page.getByText('Save or discard unsaved edits in Flashcards before publishing.')).toBeVisible();
   const quizNav = await selectQuiz(page);
-  await quizNav.getByRole('button', { name: 'Delete', exact: true }).first().click();
+  await quizNav.getByRole('button', { name: 'Subject actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete subject…', exact: true }).click();
   const review = page.getByRole('dialog', { name: 'Delete subject?' });
   await review.getByRole('button', { name: 'Review subject deletion' }).click();
   const discard = page.getByRole('dialog', { name: 'Discard unsaved edits?', exact: true });
@@ -139,21 +140,21 @@ test('declining a shared subject deletion preserves hidden unsaved flashcard tex
   await discard.getByRole('button', { name: 'Keep editing' }).click();
   await expect(review).toBeVisible();
   await review.getByRole('button', { name: 'Cancel', exact: true }).click();
-  await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+  await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
   await expect(editor).toHaveValue(text);
   expect((await draft(page)).pair).toEqual(before.pair);
   expect((await draft(page)).draft.revision).toBe(before.draft.revision);
 });
 
 for (const width of [390, 1048, 1440]) {
-  test(`both PostgreSQL editor panels use available width at ${width}px`, async ({ page }) => {
+  test(`both PostgreSQL editor panels use available width at ${width}px`, async ({ page }, testInfo) => {
     await page.setViewportSize({ width, height: 900 });
     await login(page);
     for (const [section, prefix] of [
       ['Quizzes', 'Quiz'],
       ['Flashcards', 'Flashcard'],
     ]) {
-      await page.getByRole('button', { name: section, exact: true }).click();
+      await page.getByRole('tab', { name: section, exact: true }).click();
       const navigator = page.getByRole('region', { name: `${prefix} navigator` });
       const editor = page.getByRole('region', { name: `${prefix} editor` });
       await expect(editor).toBeVisible();
@@ -168,9 +169,12 @@ for (const width of [390, 1048, 1440]) {
         expect(Math.abs(edit.y - nav.y)).toBeLessThan(2);
         expect(edit.x).toBeGreaterThan(nav.x + nav.width);
       }
-      expect(nav.height).toBeLessThan(edit.height);
+      // Empty editors are compact; navigator height is determined by its own content.
+      expect(nav.width).toBeGreaterThan(0);
+      await expect(editor.getByRole('textbox', { name: 'JSON', exact: true })).toHaveCount(0);
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await expect.poll(() => navigator.evaluate((el) => getComputedStyle(el).borderRadius)).toBe('14px');
+      await page.screenshot({ path: testInfo.outputPath(`workspace-${prefix}-${width}.png`), fullPage: true });
     }
   });
 }
@@ -180,7 +184,7 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
   await selectFlashcards(page);
   const initial = await draft(page);
   const nav = page.getByRole('region', { name: 'Flashcard navigator' });
-  await nav.getByRole('button', { name: 'Add', exact: true }).first().click();
+  await nav.getByRole('button', { name: 'Add decks', exact: true }).click();
   const add = page.getByRole('dialog', { name: 'Add Decks' });
   await add.getByRole('textbox', { name: 'JSON' }).fill(
     JSON.stringify({
@@ -242,7 +246,8 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
   await picker.fill(source.name);
   await page.getByRole('option', { name: 'CRUD source deck · 1 cards', exact: true }).click();
   const beforeDelete = await draft(page);
-  await nav.getByRole('button', { name: 'Delete', exact: true }).last().click();
+  await nav.getByRole('button', { name: 'Deck actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete deck…', exact: true }).click();
   const review = page.getByRole('dialog', { name: 'Delete deck?' });
   await expect(review).toContainText('1 cards');
   await review.getByRole('button', { name: 'Review deck deletion' }).click();
@@ -266,11 +271,18 @@ test('saves deck and card CRUD, order, and cross-deck moves through paired draft
 
 test('cancelled quiz context changes restore picker text and preserve the unsaved record', async ({ page }) => {
   await login(page);
-  await page.getByRole('button', { name: 'Add subject', exact: true }).click();
-  const editor = page.getByRole('region', { name: 'Quiz editor' }).getByRole('textbox', { name: 'JSON', exact: true });
-  await editor.fill(JSON.stringify({ ...JSON.parse(await editor.inputValue()), name: 'Context destination subject' }));
   await page
-    .getByRole('region', { name: 'Quiz editor' })
+    .getByRole('region', { name: 'Quiz navigator' })
+    .getByRole('button', { name: 'Add subject', exact: true })
+    .click();
+  const subjectDialog = page.getByRole('dialog', { name: 'Manage subjects', exact: true });
+  const subjectEditor = subjectDialog.getByRole('textbox', { name: 'JSON', exact: true });
+  await expect(subjectEditor).not.toHaveValue('');
+  await subjectEditor.fill(
+    JSON.stringify({ ...JSON.parse(await subjectEditor.inputValue()), name: 'Context destination subject' }),
+  );
+  await page
+    .getByRole('dialog', { name: 'Manage subjects', exact: true })
     .getByRole('button', { name: 'Review save', exact: true })
     .click();
   await confirmDraftSave(page);
@@ -280,8 +292,10 @@ test('cancelled quiz context changes restore picker text and preserve the unsave
     )
     .toBe(true);
   const nav = await selectQuiz(page);
-  await nav.getByRole('button', { name: 'Edit', exact: true }).first().click();
-  const text = JSON.stringify({ ...JSON.parse(await editor.inputValue()), name: 'Unsaved subject name' });
+  await nav.getByRole('button', { name: 'Quiz actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Edit quiz', exact: true }).click();
+  const editor = page.getByRole('region', { name: 'Quiz editor' }).getByRole('textbox', { name: 'JSON', exact: true });
+  const text = JSON.stringify({ ...JSON.parse(await editor.inputValue()), name: 'Unsaved quiz name' });
   await editor.fill(text);
   const before = await draft(page);
   const picker = nav.getByRole('combobox', { name: 'Subject', exact: true });
@@ -303,7 +317,7 @@ test('flashcard batch close preserves exact JSON until explicit discard and reas
   await login(page);
   const nav = await selectFlashcards(page);
   const before = await draft(page);
-  await nav.getByRole('button', { name: 'Add', exact: true }).first().click();
+  await nav.getByRole('button', { name: 'Add decks', exact: true }).click();
   const batch = page.getByRole('dialog', { name: 'Add Decks', exact: true });
   const text = JSON.stringify({ decks: [{ name: 'Unsaved batch $x^2$' }] });
   await batch.getByRole('textbox', { name: 'JSON', exact: true }).fill(text);
@@ -323,4 +337,67 @@ test('flashcard batch close preserves exact JSON until explicit discard and reas
   await expect(batch).not.toBeVisible();
   expect((await draft(page)).pair).toEqual(before.pair);
   expect((await draft(page)).draft.revision).toBe(before.draft.revision);
+});
+
+test('shared subject editing stays in Flashcards and preserves both hidden record drafts', async ({
+  page,
+}, testInfo) => {
+  await page.setViewportSize({ width: 390, height: 900 });
+  await login(page);
+  const quizNav = await selectQuiz(page);
+  await quizNav
+    .getByRole('button')
+    .filter({ has: page.locator('.MuiListItemText-root') })
+    .first()
+    .click();
+  const quizEditor = page
+    .getByRole('region', { name: 'Quiz editor' })
+    .getByRole('textbox', { name: 'JSON', exact: true });
+  const quizText = JSON.stringify({ ...JSON.parse(await quizEditor.inputValue()), stem: 'Hidden exact quiz $x^2$\n' });
+  await quizEditor.fill(quizText);
+  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toHaveAccessibleDescription(/Unsaved/);
+  const flashNav = await selectFlashcards(page);
+  await flashNav
+    .getByRole('button')
+    .filter({ has: page.locator('.MuiListItemText-root') })
+    .first()
+    .click();
+  const flashEditor = page
+    .getByRole('region', { name: 'Flashcard editor' })
+    .getByRole('textbox', { name: 'JSON', exact: true });
+  const flashText = JSON.stringify({
+    ...JSON.parse(await flashEditor.inputValue()),
+    front: 'Hidden exact flashcard\n',
+  });
+  await flashEditor.fill(flashText);
+  await expect(page.getByRole('tab', { name: 'Flashcards', exact: true })).toHaveAccessibleDescription(/Unsaved/);
+  const before = await draft(page);
+  await flashNav.getByRole('button', { name: 'Manage subjects…', exact: true }).click();
+  const subjectDialog = page.getByRole('dialog', { name: 'Manage subjects', exact: true });
+  const subjectEditor = subjectDialog.getByRole('textbox', { name: 'JSON', exact: true });
+  await expect(subjectEditor).not.toHaveValue('');
+  const original = JSON.parse(await subjectEditor.inputValue());
+  await subjectEditor.fill(JSON.stringify({ ...original, name: 'Shared subject reviewed edit' }));
+  await subjectDialog.screenshot({ path: testInfo.outputPath('shared-subject-390.png') });
+  await subjectDialog.getByRole('button', { name: 'Review save', exact: true }).click();
+  await confirmDraftSave(page);
+  await expect
+    .poll(async () => (await draft(page)).pair.quizzes.subjects.find((row) => row.id === original.id)?.name)
+    .toBe('Shared subject reviewed edit');
+  await expect(subjectDialog).not.toBeVisible();
+  await expect(page.getByRole('tab', { name: 'Flashcards', exact: true })).toHaveAttribute('aria-selected', 'true');
+  await expect(flashEditor).toHaveValue(flashText);
+  await page.getByRole('tab', { name: 'Quizzes', exact: true }).click();
+  await expect(quizEditor).toHaveValue(quizText);
+  const saved = await draft(page);
+  expect(saved.pair.quizzes.questions).toEqual(before.pair.quizzes.questions);
+  expect(saved.pair.flashcards).toEqual(before.pair.flashcards);
+  await page.getByRole('button', { name: 'More', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Undo last saved change…', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: 'Undo last saved change', exact: true })
+    .getByRole('button', { name: 'Undo saved change', exact: true })
+    .click();
+  await expect.poll(async () => (await draft(page)).pair).toEqual(before.pair);
+  await expect(quizEditor).toHaveValue(quizText);
 });

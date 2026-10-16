@@ -90,7 +90,7 @@ describe('PostgreSQL flashcard editor', () => {
         <FlashcardAdminPanel {...props} discardRequest={1} />
       </ThemeProvider>,
     );
-    await waitFor(() => expect(editor()).toHaveValue(''));
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'JSON' })).not.toBeInTheDocument());
   });
 
   it('rejects malformed edits before making a durable request', async () => {
@@ -106,7 +106,9 @@ describe('PostgreSQL flashcard editor', () => {
   it('requires a valid bulk preview and saves nested decks and cards in one request', async () => {
     const { save } = mount();
     chooseSubject();
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    fireEvent.click(
+      within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: 'Add decks' }),
+    );
     const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
     const json = within(dialog).getByRole('textbox', { name: 'JSON' });
     fireEvent.change(json, {
@@ -137,7 +139,9 @@ describe('PostgreSQL flashcard editor', () => {
   it('does not save an invalid nested card or reuse a preview after its text changes', async () => {
     const { save } = mount();
     chooseSubject();
-    fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+    fireEvent.click(
+      within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: 'Add decks' }),
+    );
     const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
     const json = within(dialog).getByRole('textbox', { name: 'JSON' });
     fireEvent.change(json, {
@@ -177,7 +181,9 @@ it('blocks flashcard saves during another command while allowing newer text to b
 it('keeps save-status recovery reachable inside a blocked bulk dialog without discarding its JSON', () => {
   const { props, rerender, save } = mount();
   chooseSubject();
-  fireEvent.click(screen.getByRole('button', { name: 'Add' }));
+  fireEvent.click(
+    within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: 'Add decks' }),
+  );
   const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
   const json = within(dialog).getByRole('textbox', { name: 'JSON' });
   const text = '{"decks":[{"name":"Retained batch","cards":[{"front":"Exact front","back":"Exact back"}]}]}';
