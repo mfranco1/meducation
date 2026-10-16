@@ -4,7 +4,7 @@
 
 This is a browser-based interactive study platform built around a canonical, versioned question bank.
 
-The current product is local-first and private, but the architecture should remain suitable for eventual public/commercial use and backend/cloud persistence.
+The current product is local-first and private. Implement current requirements; public hosting, cloud persistence, and additional infrastructure require explicit scope.
 
 ## Stack
 
@@ -100,7 +100,7 @@ If these documents do not yet exist, create them when the corresponding work req
 
 ### Progress Tracking
 
-Use md file trackers for tracking progress on ongoing work.
+Use one concise Markdown tracker for sustained work. Routine edits do not need separate plans or machine-readable evidence files unless they establish a necessary contract or acceptance result.
 
 - docs/work/ongoing - directory for ongoing progress trackers. Create new trackers here.
 - docs/work/done - directory for completed trackers. Move trackers here once the task being tracked is completed.
@@ -122,3 +122,26 @@ Do not claim a change is complete if relevant checks are failing.
 More-specific `AGENTS.md` files may add or override guidance for their directory.
 
 Prefer repository invariants and documented source-of-truth files over duplicating detailed implementation instructions here.
+
+## Engineering Philosophy
+
+Optimize for simplicity, clarity, maintainability, and fast iteration.
+
+- Implement the simplest correct solution that satisfies current requirements.
+- Prefer modifying existing code over introducing new files, layers, or abstractions.
+- Reuse existing utilities, components, patterns, and framework capabilities before building new ones.
+- Avoid speculative features, premature optimization, and architecture for hypothetical future needs.
+- Do not introduce interfaces, factories, adapters, service layers, generic utilities, or configuration unless they solve a concrete, present problem.
+- Prefer direct, readable code over excessive indirection. A little duplication is acceptable when it improves clarity.
+- Keep dependencies minimal. Use existing dependencies or native functionality when practical.
+- Avoid excessive defensive programming for impossible states or already-validated internal data. Validate at genuine trust boundaries.
+- Keep tests focused on meaningful behavior, edge cases, and regressions. Avoid redundant or implementation-coupled tests.
+- When replacing functionality, remove obsolete code and unnecessary compatibility layers when safe.
+- Follow existing conventions when useful, but challenge patterns that introduce unnecessary complexity.
+- Treat fewer moving parts and less code as positive outcomes, provided correctness, readability, and maintainability are preserved.
+
+Before implementing, consider whether the task can be solved by simplifying or extending existing code.
+
+After implementing, review the diff for unnecessary abstractions, duplication, boilerplate, and dead code. Remove anything that does not materially contribute to the solution.
+
+Do not sacrifice security, correctness, or necessary error handling for brevity.

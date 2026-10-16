@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { theme } from '../../../shared/theme';
-import { activeSubjectStats, type SubjectStat } from '../selectors/dashboard';
+import { activeSubjectStats, type SubjectStat } from '../selectors/progress';
 import { DashboardScreen } from './DashboardScreen';
 
 const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };
@@ -53,16 +53,9 @@ describe('dashboard catalog states', () => {
       </ThemeProvider>,
     );
     expect(screen.getByRole('alert')).toHaveTextContent('We can’t load your stats and subjects right now.');
-    expect(
-      screen.getByTestId('dashboard-error-banner').parentElement?.querySelector('.MuiContainer-root'),
-    ).toBeVisible();
-    expect(screen.getByTestId('dashboard-error-banner').parentElement?.firstElementChild).toBe(
-      screen.getByTestId('dashboard-error-banner'),
-    );
     expect(screen.getByText('Average')).toBeVisible();
     expect(screen.getByText('Lowest')).toBeVisible();
     expect(screen.queryByText('Couldn’t load subjects')).toBeNull();
-    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
@@ -103,7 +96,7 @@ describe('dashboard catalog states', () => {
     expect(screen.queryByTestId('dashboard-error-banner')).toBeNull();
   });
 
-  it('keeps the existing shimmer skeletons during automatic retries', () => {
+  it('shows retry progress without treating the catalog as empty', () => {
     render(
       <ThemeProvider theme={theme}>
         <DashboardScreen attempts={[]} subjectStats={[]} retrying onSelectSubject={() => {}} />
@@ -111,8 +104,7 @@ describe('dashboard catalog states', () => {
     );
     expect(screen.getByText('Retrying…')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
-    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
-    expect(document.querySelectorAll('.MuiSkeleton-root').length).toBeGreaterThan(0);
+    expect(screen.queryByText('No subjects are available yet.')).toBeNull();
   });
 });
 

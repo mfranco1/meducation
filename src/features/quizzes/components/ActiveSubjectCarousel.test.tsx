@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { SubjectStat } from '../selectors/dashboard';
+import type { SubjectStat } from '../selectors/progress';
 import { theme } from '../../../shared/theme';
 import { ActiveSubjectCarousel } from './ActiveSubjectCarousel';
 

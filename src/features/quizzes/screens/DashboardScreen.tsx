@@ -7,7 +7,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CompletedAttempt, Subject } from '../../../domain/types';
-import { activeSubjectStats, type SubjectStat } from '../selectors/dashboard';
+import { activeSubjectStats, type SubjectStat } from '../selectors/progress';
 import { ActiveSubjectCarousel } from '../components/ActiveSubjectCarousel';
 import { StatCard } from '../../../shared/ui/catalog/StatCard';
 import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
@@ -24,7 +24,7 @@ import { CatalogPageTransition } from '../../../shared/ui/catalog/CatalogPageTra
 
 type CatalogPageChange = { id: number; from: SubjectStat[]; resetKey: string; direction: 'next' | 'previous' };
 
-export type { SubjectStat } from '../selectors/dashboard';
+export type { SubjectStat } from '../selectors/progress';
 
 function StatFailure({
   label,

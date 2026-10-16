@@ -81,31 +81,21 @@ export function useAdminEditor(
 
   useEffect(() => {
     let current = true;
-    gateway
-      .load()
-      .then((loaded) => {
-        if (!current) return;
-        setSnapshot(loaded);
-        setLoadError(undefined);
-      })
-      .catch(() => {
-        if (current) setLoadError('Unable to load the canonical bank. Reload to try again.');
-      });
+    const load = () => gateway.load().then((loaded) => {
+      if (!current) return;
+      setSnapshot(loaded);
+      setPendingBulk(undefined);
+      setLoadError(undefined);
+    }).catch(() => {
+      if (current) setLoadError('Unable to load the canonical bank. Reload to try again.');
+    });
+    void load();
+    const unsubscribe = gateway.subscribe?.(() => { void load(); });
     return () => {
       current = false;
+      unsubscribe?.();
     };
   }, [gateway]);
-
-  useEffect(
-    () =>
-      gateway.subscribe?.(() => {
-        void gateway.load().then((next) => {
-          setSnapshot(next);
-          setPendingBulk(undefined);
-        });
-      }),
-    [gateway],
-  );
 
   useEffect(() => {
     const beforeUnload = (event: BeforeUnloadEvent) => {

@@ -37,7 +37,6 @@ import { adminNavigatorLayout } from './components/adminPanelLayout';
 import { AdminRecordSelection, useAdminRecordSelection } from './components/AdminRecordSelection';
 import { AdminIssues } from './components/AdminIssues';
 import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
-import { AdminAddSubjectButton } from './components/AdminAddSubjectButton';
 
 type Kind = 'deck' | 'card';
 type Selected = { kind: Kind; id: string } | undefined;
@@ -46,7 +45,7 @@ const clone = (bank: StoredFlashcardBank): StoredFlashcardBank => structuredClon
 /** Edits a server snapshot; only a successful HTTP receipt installs a saved bank. */
 export function FlashcardAdminPanel({
   subjects,
-  serverBank,
+  serverBank: bank,
   onSaveBank,
   recovery,
   quizRevision,
@@ -59,28 +58,22 @@ export function FlashcardAdminPanel({
   onEdit,
   discardRequest = 0,
   externalBusy = false,
-  reviewBeforeSave = false,
 }: {
   subjects: readonly Subject[];
   serverBank: StoredFlashcardBank;
   onSaveBank: (bank: StoredFlashcardBank, reason: string) => Promise<StoredFlashcardBank>;
   quizRevision: string;
-  quizBank?: StoredQuestionBank;
-  onDeleteSubject?: (subjectId: string, subjectName: string) => void;
-  onAddSubject?: () => void;
-  onManageSubjects?: (id?: string) => void;
-  onEditSubject?: (subjectId: string, subjectName: string) => void;
+  quizBank: StoredQuestionBank;
+  onDeleteSubject: (subjectId: string, subjectName: string) => void;
+  onAddSubject: () => void;
+  onManageSubjects: (id?: string) => void;
+  onEditSubject: (subjectId: string, subjectName: string) => void;
   onDraftChange?: (dirty: boolean) => void;
   onEdit?: () => void;
   discardRequest?: number;
   externalBusy?: boolean;
   recovery?: ReactNode;
-  reviewBeforeSave?: boolean;
 }) {
-  const [bank, setBank] = useState(() => clone(serverBank));
-  useEffect(() => {
-    setBank(clone(serverBank));
-  }, [serverBank]);
   const [selection, setSelection] = useState<Selected>();
   const [browseSubjectId, setBrowseSubjectId] = useState('');
   const [browseDeckId, setBrowseDeckId] = useState('');
@@ -228,7 +221,6 @@ export function FlashcardAdminPanel({
       return undefined;
     }
     function install(candidate: StoredFlashcardBank) {
-      setBank(candidate);
       if (!candidate.decks.some((deck) => deck.id === browseDeckId)) {
         setBrowseDeckId('');
         setCardQuery('');
@@ -261,7 +253,6 @@ export function FlashcardAdminPanel({
       let candidate = applyFlashcardOperations(bank, subjects, batch);
       setBusy(true);
       candidate = await onSaveBank(candidate, reason);
-      setBank(candidate);
       if (bulkEditVersion.current !== version)
         return 'The captured batch was saved. Newer text is kept. Review or remove already saved entries before another batch save.';
       setIssues([]);
@@ -480,14 +471,12 @@ export function FlashcardAdminPanel({
             }}
             renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
           />
-          {onManageSubjects && (
-            <Button size="small" color="inherit" onClick={() => onManageSubjects(browseSubjectId || undefined)}>
-              Manage subjects…
-            </Button>
-          )}
-          {!browseSubjectId && onAddSubject && (
+          <Button size="small" color="inherit" onClick={() => onManageSubjects(browseSubjectId || undefined)}>
+            Manage subjects…
+          </Button>
+          {!browseSubjectId && (
             <Stack direction="row">
-              <AdminAddSubjectButton onClick={onAddSubject} />
+              <Button size="small" onClick={onAddSubject}>Add subject</Button>
             </Stack>
           )}
           {browseSubjectId && (
@@ -507,11 +496,11 @@ export function FlashcardAdminPanel({
                 entity="Subject"
                 onEdit={() => {
                   const subject = subjects.find((row) => row.id === browseSubjectId);
-                  if (subject) onEditSubject?.(subject.id, subject.name);
+                  if (subject) onEditSubject(subject.id, subject.name);
                 }}
                 onDelete={() => {
                   const subject = subjects.find((row) => row.id === browseSubjectId);
-                  if (subject) onDeleteSubject?.(subject.id, subject.name);
+                  if (subject) onDeleteSubject(subject.id, subject.name);
                 }}
               />
             </Stack>
@@ -769,7 +758,7 @@ export function FlashcardAdminPanel({
           <AdminEditorActions dirty={editorDirty} busy={busy || externalBusy} statusVisible={Boolean(selection)}>
             {selection && (
               <Button variant="contained" disabled={!selection || busy || externalBusy} onClick={stage}>
-                {reviewBeforeSave ? 'Review save' : 'Save draft'}
+                Review save
               </Button>
             )}
             <Button
@@ -838,9 +827,9 @@ export function FlashcardAdminPanel({
       {confirmation.dialog}
       <AdminDeleteDialog
         recovery={recovery}
-        commitLabel={reviewBeforeSave ? 'Review' : 'Save'}
+        commitLabel="Review"
         request={deleteRequest}
-        bank={quizBank ?? { schemaVersion: 4, subjects: [...subjects], quizzes: [], questions: [] }}
+        bank={quizBank}
         flashcardBank={bank}
         currentReviewKey={deletionKey}
         busy={busy || externalBusy}
@@ -871,7 +860,7 @@ export function FlashcardAdminPanel({
           onClose={() => setBulkDestination(undefined)}
           onDraftDirtyChange={setBulkDraftDirty}
           onStage={commitBulkOperations}
-          commitLabel={reviewBeforeSave ? 'Review save' : 'Save draft'}
+          commitLabel="Review save"
         />
       )}
     </Stack>

@@ -304,7 +304,7 @@ verified output behavior; image digests are not promised byte-identical.
 The [Checks workflow](../.github/workflows/checks.yml) keeps host jobs and adds
 separate native `ubuntu-24.04` AMD64 and `ubuntu-24.04-arm` ARM64 jobs, with
 bounded execution, read-only repository permission and scoped evidence/trace
-artifacts retained for 14 days. [GitHub runner architecture reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
+artifacts retained for 14 days. Full acceptance runs for manual/tag builds and relevant infrastructure/runtime-contract changes; UI/docs-only changes use host gates while preserving the matrix check names. See [selection policy](testing.md#local-preparation-acceptance). [GitHub runner architecture reference](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
 A configured job is not execution evidence: both platforms must actually pass
 before L2 closes. Runner availability/eligibility and hosted execution remain
 unverified until the workflow runs for this revision.

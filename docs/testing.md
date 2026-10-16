@@ -11,7 +11,7 @@ for synthetic admission, mutation and protected-output regressions, without
 authority credentials or private content. A `--small-fixture` run is a synthetic recovery regression; current authority
 parity requires an explicitly selected fresh protected export.
 
-Run checks appropriate to the change and follow the [regression requirements](testing-regressions.md) for affected behavior. CI executes frontend, backend, and browser checks in [checks.yml](../.github/workflows/checks.yml). Do not hand off a change while relevant gates fail.
+Select checks by the changed contracts using [Selecting verification](#selecting-verification) and the [regression requirements](testing-regressions.md). Reuse relevant passing results until affected inputs change; do not add tests that merely mirror implementation or incidental styling. CI executes frontend, backend, and browser checks in [checks.yml](../.github/workflows/checks.yml). Do not hand off a change while relevant gates fail.
 
 ## Commands
 
@@ -28,17 +28,17 @@ Choose affected tests using the ownership and regression guidance below. UI, sha
 
 ### Full verification
 
-After Chromium has been installed, the backend development environment is set up, and Docker is running for the disposable PostgreSQL browser fixtures, run:
+After Chromium and WebKit have been installed, the backend development environment is set up, and Docker is running for the disposable PostgreSQL browser fixtures, run:
 
 ```sh
 npm run verify:full
 ```
 
-The runner stops at the first failed step. It runs lint, formatting, architecture tests, the complete unit suite, explicit synthetic pair validation, backend Ruff/mypy/pytest, and TypeScript checking. It then creates a fresh learner production bundle with retries disabled, runs the learner browser suite against that bundle, creates the enabled optional admin production bundle, and runs the admin browser suite. Both browser suites use fixture banks; neither changes authored content. The learner bundle has a fresh build before preview starts. The admin build follows learner tests because both builds write to `dist`.
+The runner stops at the first failed step. It runs lint, formatting, architecture tests, the complete unit suite, explicit synthetic pair validation, backend Ruff/mypy/pytest, and TypeScript checking. It then creates a fresh learner production bundle with retries disabled, runs the learner browser suite against that bundle, runs the dedicated progress-backup suite once per accepted engine (Chromium/WebKit), creates the enabled optional admin production bundle, and runs the admin browser suite. All browser suites use fixture banks; none changes authored content. The learner bundle has a fresh build before preview starts. The admin build follows learner tests because both builds write to `dist`.
 
 `npm run test:e2e` remains self-contained and builds fresh output with retries disabled before running Chromium. `npm run test:e2e:prepared` skips that build and is intended for `verify:full` immediately after `npm run build:learner:smoke`; do not use it with an old or differently configured `dist`. `npm run test:e2e:admin` runs against Vite's development server and does not need production output.
 
-The dedicated progress-backup config runs Chromium, Firefox and WebKit when all
+Progress backup is excluded from the ordinary learner suite to avoid duplicate Chromium execution. The dedicated progress-backup config runs Chromium, Firefox and WebKit when all
 projects are selected. For the currently accepted engines, run
 `npx playwright test --config=playwright.progress-backup.config.ts --project=chromium --project=webkit`
 after a fresh learner build. It writes isolated traces to
@@ -86,7 +86,7 @@ npm run build:content-policy
 Follow [backend setup](../backend/README.md) to install the locked environment. For browser flows, install Chromium once and run the suites sequentially:
 
 ```sh
-npx playwright install chromium
+npx playwright install chromium webkit
 npm run test:e2e
 npm run test:e2e:admin
 ```
@@ -128,7 +128,16 @@ Use small versioned fixtures for schema, relationships, canonical ordering, spar
 
 ## Selecting verification
 
-For source/config moves, run frontend gates and compare protected canonical hashes. For shared UI, feature, content-loader, or entry changes, also run both browser suites and both build modes; retain saved-attempt/checkpoint behavior, lazy screen imports, KaTeX assets, and accessible desktop/mobile layouts. The learner local mode and bundled `/#content-qa` viewer are retired. Exercise API loading/failure/freshness paths and content-candidate rendering instead. For backend packaging, stored contracts, or shared fixture changes, run Python checks as well.
+For each coherent code change, run focused behavior tests, affected lint/architecture checks, and the required TypeScript/production build (`npm run build`). Choose additional gates by the affected contract:
+
+- Learner UI, navigation, sessions, or loaders: run the relevant learner browser workflows on a fresh learner build. Run the full learner suite when shared navigation/loading or cross-screen behavior changes.
+- Admin UI, gateway, or authoring: run the relevant admin browser workflows and optional admin build. Use the complete editor suite for shared save/review/state changes.
+- Shared UI/content rendering, entry points, or dependency/lazy boundaries used by both apps: build both entries and run the affected workflows in both apps. A single unused module deletion does not require unrelated browser suites.
+- Persistence/backup/recovery: retain focused failure, interruption, stale-tab, and compatibility tests; run the dedicated backup browser suite for changes to its behavior. Do not change isolation to hide failures.
+- Backend, shared stored contracts, policy, or fixtures consumed by Python: run the relevant Ruff/mypy/pytest and explicit disposable PostgreSQL/policy gates. Content or serialization changes require selected current export/fixture validation and parity checks; ordinary source moves do not require authority access.
+- Container/runtime packaging, database/recovery, or release changes: run the relevant installed-image gates and full native acceptance for release certification. Host tests do not certify installed images or either native architecture.
+
+Documentation-only changes need link/command review and `git diff --check`, not application builds. Boundary policy/resolver changes also require `test:architecture`. Keep full release/recovery acceptance separate from routine iteration. Tests should assert observable outcomes or meaningful safety/performance invariants; small files, repeated fixtures, or incidental MUI classes do not by themselves justify new helpers or tests.
 
 Before handoff, confirm affected obligations in [the regression reference](testing-regressions.md), run `git diff --check`, and record results and existing advisories in the work tracker. Preserve stable IDs, ordering, answer provenance, current storage contracts, and export/replay behavior. Use a dedicated candidate/parity check for future schema migrations.
 
@@ -136,251 +145,50 @@ Automated role/label, keyboard/focus, reduced-motion, and mobile/desktop checks 
 
 ## Local-preparation acceptance
 
-L3 Steps 2–3 add strict settings/lifecycle and paired-artifact fixture tests to
-normal backend Ruff/mypy/pytest. After building `meducation-api:l3-step5`, run
-`scripts/containers/smoke-db-toolchain.py --image meducation-api:l3-step5` to test
-the installed wheel against isolated PG17: binary imports/libpq, repeatable
-bootstrap and real packaged migration, restricted role/PUBLIC privileges,
-backup grants, an independent synthetic migration, round trip and rollback.
+Ordinary Python tests skip real PostgreSQL cases without an explicitly isolated test database; skips are not database acceptance. Run `.venv/bin/python scripts/containers/test-postgres-content.py` for the complete disposable PG17 gate. Use `--keyword` only for focused iteration. After migration or packaging changes, build a fresh API image and run `smoke-db-toolchain.py` against its installed wheel.
 
-Run `.venv/bin/python scripts/containers/test-postgres-content.py` separately for
-80 real-Postgres schema/operation/file-transfer/learner cases. It creates and cleans a unique tmpfs
-PG17 container with disposable credentials; it never targets the routine DB.
-Normal pytest skips these cases unless an explicitly isolated test URL is
-provided; skips are not Postgres acceptance. The suite checks SQL stored-contract
-validation, exact fixture artifacts/digests/order/provenance, relational and
-finalization constraints, protected histories, draft isolation, atomic activation,
-idempotent replay and concurrent imports/reservations/publications. Existing
-native AMD64/ARM64 container acceptance jobs invoke both checks. Local ARM64
-results do not certify execution of these new tests on AMD64. Step 4 adds captured-file validation/import, CLI roundtrip/replay/stale
-activation, independent export ordering/omissions/digest checks, corrupt-row
-rejection and interrupted-output cleanup. Normal tests exercise source byte
-capture, TypeScript rich-policy rejection, duplicate/unpaired-surrogate input
-and reconstruction mismatch detection. Without `npm ci`, the two normal
-Python cross-runtime capture/policy cases explicitly skip; native container jobs
-have Node dependencies and exercise the gate, including rich-policy rejection.
-Other Python cases remain independent of Node. Step 5 covers both repository
-protocols and all learner endpoints against JSON fixtures, 200/304/404/409
-precedence, publication during response construction, shared-subject digest
-changes, old-release reactivation, bounded cache eviction and connection cleanup
-on catalog/body/reconnect failures. Paired-source injection/response cleanup
-also has DB-independent tests. Step 6 adds actual reader-socket termination and
-aborted-transaction cleanup/reconnect checks. Run the separate
-[actual-bank/recovery and PG proxy/browser commands](../backend/README.md#actual-bank-parity-and-isolated-recovery-acceptance).
-They compare all records/routes/digests, all restored draft/history/allocation and
-sequence state, and exact backend-switch/restart progress behavior. The reports
-are independent of Playwright's cleaned output directory. Native acceptance now
-runs these on both architectures, with one container browser run in PG mode.
-Both native jobs passed in [run 38427563502](https://github.com/mfranco1/meducation/actions/runs/38427563502) at the current implementation commit; do not reuse that result for changed inputs without rechecking. Follow the
-[job/runbook commands](local-containers.md#l3-explicit-database-jobs-and-toolchain-verification).
+The existing native matrix check names remain unchanged. Manual workflow runs and tag pushes always run full native acceptance; ordinary push/PR jobs run it when backend, container/ops/scripts, dependency/configuration, content/domain/persistence, fixture or browser-test paths change. Unknown comparison bases run it conservatively. Learner/admin UI, documentation and skill-only changes retain the ordinary host gates without the repeated native build/load/rollback drills. Setup/helper checks still run in both matrix jobs.
 
-[Completed L0 decisions](work/done/L0-local-contracts-plan.md) are design/feasibility evidence. Their tests do not certify future application implementations. Keep frozen evidence under docs/work/done; record new feature results in ongoing stage trackers, without overwriting historical snapshots.
+Full native acceptance uses `.venv/bin/python scripts/containers/acceptance.py` on matching native AMD64 and ARM64 hosts/engines. It performs repeated clean builds, API/learner/proxy checks, least-privilege/schema/parity checks, load characterization, backup/restore and rollback drills, and packaged editor checks. Follow [container commands](local-containers.md) and [database acceptance](../backend/README.md#actual-bank-parity-and-isolated-recovery-acceptance). A local pass on one architecture does not certify the other or public deployment. Retain exact text, ordering, provenance, sequences, role grants, and recovery evidence.
 
-For [L1 progress backups](work/done/L1-progress-backup-plan.md), use disposable synthetic progress and record engine/version, command and observed results in [B01–B14](work/ongoing/L0-browser-acceptance.md). Run `npm run test:e2e:progress-backup -- --project=chromium`, `--project=firefox` or `--project=webkit` sequentially against a fresh learner bundle. The dedicated config covers download and exact paired round trips, capabilities, recovery admission, cooperating tabs/races, file cancellation, focus, narrow/enlarged-text/reduced-motion interaction, network failures, actual quota and real navigation. The default full runner is Chromium only.
+Progress-backup accepted-engine checks and their retained browser/device follow-ups live in [B01–B14](work/ongoing/L0-browser-acceptance.md). Chromium/WebKit acceptance does not imply Firefox, real mobile/assistive-technology, or persisted BFCache acceptance. Use disposable progress. The optional `scripts/testing/probe-progress-*.mjs` tools model decisions; they do not test the application or replace production interruption/recovery tests.
 
-The production restore tests inject interruption before/after every storage call and every recovery call, then reconstruct repositories and recover twice. Raw serialization tests include the exact escaped 64 MiB limit and lone surrogates; codec tests include the combined UTF-8 file limit and malformed contracts. File-resource tests check download initiation, URL replacement/cleanup and failure handling. Reuse session/repository regressions for timer pause, signature mismatch, deduplication, snapshots and retained statistics; do not substitute a design probe for production functions.
-
-L1 closed on 2026-10-13 with passing Chromium/WebKit checks and the user's explicit Firefox testing deferral. B01–B12 retain the full-engine acceptance follow-up in the ongoing checklist. Firefox's host profile-launch failure remains unverified until a working run; a reinstall or OS-launched empty browser is not application acceptance. Record actual pageshow paths: the tested Chromium/WebKit configurations take safe fresh loads, while persisted BFCache returns remain unobserved. B13–B14 and real mobile/Safari lifecycle observations remain public-launch gates. See the [recovery runbook](progress-backup.md) for diagnosis using copies.
-
-Retained design probes remain optional supporting tools: `node scripts/testing/probe-progress-restore.mjs`, `node scripts/testing/probe-progress-backup-limits.mjs`, and `node scripts/testing/probe-progress-coordination.mjs chromium webkit`. They generate temporary reports under /private/tmp and must not run against personal storage. Do not count model passes as application tests.
-
-For L2/L3, follow [toolchain gates](decisions/0003-local-postgres-toolchain.md): reachable Docker, native Linux ARM64/AMD64 builds, clean locked Python resolution/imports, roles/URL separation, explicit migrations, exact canonical-text/ID/order/provenance parity and fresh-DB dump/restore. Metadata availability is not a running container. Use PG17 tools rather than the observed host PG14 dump. JSON/fixture tests remain independent of a production DB.
-
-L2 Step 2 adds `scripts/containers/smoke-api.py` against a separately built API image; follow [API container commands](../backend/README.md#json-api-container). It uses disposable read-only containers, synthetic failure inputs and loopback ports to verify actual packaging/startup/content/health/shutdown. This check is separate from the host pytest suite and `verify:full`. Run Ruff on the smoke script when changing it. Record the tested native platform; an ARM64 pass does not satisfy AMD64 acceptance or the later real-proxy/browser/DB gates.
-
-L2 Step 3 adds `scripts/containers/smoke-learner.py --browser` and `playwright.containers.config.ts`; follow the [container runbook](local-containers.md). The script checks the shipped assets/proxy/DNS behavior and runs learner workflows through Nginx with fixture API mounts. The config starts no host servers, requires a loopback `MEDUCATION_CONTAINER_URL`, and isolates output in `test-results-containers/`. Container-specific cases under `e2e/containers` are excluded from the host config. The keyboard manual-retry fixture uses a non-retryable response so it tests the action independently of the production build's automatic retry policy; other transient-error cases retain retryable responses. Run host and container browser suites sequentially. The container config now also runs the L1 paired progress-backup suite and a scoped frontend recreation test; record actual results per platform.
-
-L2 Step 4 adds `scripts/containers/smoke-compose.py` after `docker compose build api frontend`. It uses a generated project/credential file/volume, checks PostgreSQL-only API operation and private/loopback DB port variants, rejects missing credentials, verifies TCP authentication and sentinel persistence after restart/recreation, then removes only its labeled disposable volume. `wait-compose.py` shares deadline-bounded, read-only readiness helpers with this smoke. Run Ruff on all three new Python files when changing them. Its synthetic seed uses explicit role bootstrap/migration/import; full authoritative recovery remains separate.
-
-L2 Step 5 adds `scripts/containers/postgres.py`, its `postgres_tools.py` helpers and `smoke-postgres-tools.py`. Run Ruff on these files and the isolated smoke. It checks authenticated PG17 tools, escaped ephemeral pgpass, atomic 0600 custom dumps, preservation after failed dump, fresh-target restore/data/sequence equivalence, transaction rollback on a truncated archive, existing/reserved-target refusals and exact-label/unreferenced-volume deletion. No developer data is used. Runbook commands and synthetic evidence do not establish L3 least-privilege roles, schema head or canonical bank recovery parity.
-
-L2 Step 6 uses `scripts/containers/acceptance.py` for two `--pull --no-cache` builds, both API/learner runtime smokes, a second-build Chromium suite, optional Compose/Postgres persistence and dump/restore. It rejects mismatched host/engine/image architecture. The existing Checks workflow adds native AMD64/ARM64 jobs and retains scoped logs/evidence/traces. Evidence output is separate from Playwright's cleaned output directory. `recreate-smoke-frontend.py` checks exact generated name/label/network/binding before replacing the frontend at the same origin. Run Ruff on container helpers, lint/architecture, format, build/typecheck and the actual acceptance runner after changes. CI configuration alone is not a passing native run. Failure commands print a bounded tail of their scoped log into Actions output; full container logs/traces remain artifacts. Host browser failures also retain `test-results/` artifacts. Hover assertions explicitly establish pointer position before checking a non-hover state; an initial pointer over the drawer must not be mistaken for a product failure.
-
-For L4, follow [authentication gates](decisions/0004-single-editor-authentication.md): production-shaped injected tokens/code flow/session store, negative authorization/CSRF/expiry/revocation tests, dev-mode production rejection and all private HTTP routes. Final provider mapping/fresh-MFA evidence is pending before production integration; local mocks cannot certify hosted factor challenge, key rotation, logout, recovery or plan entitlements. Auth/session records restored from backup must be invalidated with a fresh external epoch. No private-token/real-progress fixtures or secrets in logs.
-
-L4 adds the [paired authoring validation boundary](L4-content-policy.md). Build resources with `npm run build:content-policy` before backend tests/authoring jobs. The full runner and backend/native CI do this explicitly. Run `scripts/containers/smoke-authoring-policy.py` with the freshly built API image for the installed-wheel/real-nginx request-limit gate. Test-only smoke routes are never shipped; authenticated preview/publication routes remain later L4 work.
-
-L4 Step 2 internal authoring adds real PG17 coverage in
-`backend/tests/test_postgres_content.py`: all 98 cases pass, including rejected
-preview/save/publish preservation, committed reservation retention, exact paired
-reconstruction/provenance, ownership, stale context, distinct repeated releases,
-original-result replay, concurrency, injected transaction/commit failures and
-upgrade from populated L3 head. Run the disposable PostgreSQL launcher separately
-from ordinary pytest (which skips these cases without its database environment).
-After migration/resource changes, rebuild the API image and run
-`scripts/containers/smoke-db-toolchain.py` against the installed wheel. Local
-ARM64 evidence does not certify hosted or new native AMD64/ARM64 CI acceptance.
-
-L4 Step 3 adds `backend/tests/test_auth.py` signed-token/JWKS/transport fixtures
-and private-cookie/session/role tests in the real PG launcher, including a real
-loopback code/PKCE issuer. Follow the [session runbook](L4-admin-session-boundary.md).
-Synthetic MFA/time claims prove local checks only; hosted factor policy/freshness
-and editor dirty-text/session UX acceptance remain distinct gates. New native CI
-results must be verified separately from the local ARM64 image/recovery evidence.
+Use PG17 backup tools, explicit migrations, isolated credentials, and uniquely owned disposable resources. See [toolchain requirements](decisions/0003-local-postgres-toolchain.md) and [progress recovery](progress-backup.md). Never run fixture/recovery experiments against personal progress or the authority database.
 
 ## L4 private paired services
 
-[Service contracts](L4-paired-editor-services.md) are tested through authenticated
-HTTP and the actual editor role against disposable PG17. Run
-`.venv/bin/python scripts/containers/test-postgres-content.py` for the complete
-regression gate; `--keyword` is for focused development only. Ordinary pytest
-skips these database cases without isolated credentials and is not their acceptance.
-Failure injection covers history/audit and deferred commit, plus every authored
-publication boundary. Replays, burned reservations, stale intent/context, bounded
-Undo, retained activation, server-derived fresh-auth, expiry during validation,
-concurrent saves/reservations, pinned paired reader visibility and deterministic
-private-data-free ZIPs are included. Installed-image migration/policy smokes cover
-packaging; actual corpus recovery checks compatibility only. Hosted identity,
-browser editor integration, authored-history recovery/off-device retention and
-new native CI remain later gates.
+[Service contracts](L4-paired-editor-services.md) are tested through authenticated HTTP and the actual editor role in the disposable PG17 suite. Preserve atomic saves/publications, original-result replay, burned reservations, stale context/intent handling, bounded Undo, retained activation, fresh authentication, failure rollback, pinned paired visibility, and private-data-free exports.
+
+Build the shared policy with `npm run build:content-policy` before Python authoring tests/jobs. After policy or packaging changes, run `smoke-authoring-policy.py` against the fresh installed API image. [Policy](L4-content-policy.md) and [session](L4-admin-session-boundary.md) runbooks own the detailed checks. Signed synthetic tokens/session tests do not certify a hosted identity provider or MFA acceptance. Restored sessions require quarantine and a fresh external epoch.
 
 ## L4 HTTP editor browser gate
 
-Build the installed API image and fresh optional HTTP admin bundle, then run
-`.venv/bin/python scripts/containers/smoke-admin-http.py`. It creates disposable
-PG17/API/nginx resources and exercises signed synthetic login, paired edits,
-server reservations, grouped/import conversion, saved reload, publication,
-activation/export, expiry/step-up/logout, stale tabs/reset, uncertain commits,
-pending-text preservation and keyboard/overflow at 390/1048/1440px. Use `--grep`
-only for development; the complete run is the acceptance gate. Its fixture module
-is never packaged. The [HTTP editor runbook](L4-http-editor.md) records boundaries.
-Keep this run separate from builds/learner/admin browser suites sharing `dist`.
-`verify:full` retains the ordinary backend, learner and PostgreSQL HTTP admin
-regressions; its database skips do not replace the separate real PG17 suite.
-Hosted/provider and manual assistive-technology/device acceptance remain pending.
+`npm run test:e2e:admin` uses a dedicated disposable PG17/API/identity fixture with a Vite development server. `npm run build:admin` checks optional production compilation separately; a dev-server browser pass does not establish packaged behavior.
 
-The learner Playwright configuration excludes `e2e/admin-http`; those tests require
-their dedicated isolated API/proxy/identity fixture and must not run against the
-ordinary read-only learner server. Protocol-null admission and expiry after SQL
-writes have focused backend regressions in addition to the complete database gate.
+For installed API/Nginx/editor acceptance, build fresh API/admin artifacts and run `.venv/bin/python scripts/containers/smoke-admin-http.py` with the appropriate image options. The complete suite covers login, exact paired edits, reservations, save/reload, publication, activation/export, expiry/logout, stale tabs, uncertain commits, pending text and narrow/desktop keyboard/layout behavior. Use `--grep` for focused development only. See [HTTP editor boundaries](L4-http-editor.md).
+
+Keep these commands sequential with other suites/builds sharing `dist`. The fixture is never packaged. Specs import `test` from `e2e/admin-http/fixtures.ts` to reset shared authentication rate buckets; keep one worker per fixture database. A new browser context alone does not reset the global bucket. Private editor tests must not run against the ordinary learner-only fixture.
 
 ## L4 recovery preparation checks
 
-The extended `scripts/containers/verify-postgres-release.py` rehearses L4 paired
-history/authored publication/editor reservations plus exact fresh-DB table/sequence
-and effective privilege parity. It checks restored session quarantine and pending
-callback rejection without altering content, selected authored-export parity and
-fresh learner readers. Its credentials/archive are disposable; it cannot certify
-retained/off-device recovery or post-backup allocation safety. Run the focused real
-PG17 regressions with `scripts/containers/test-postgres-content.py --keyword recovery`.
-Offline export tests live in `backend/tests/test_export_tools.py` and require the
-repository Node validation toolchain, independently of production credentials.
-See [the recovery runbook](L4-authoritative-recovery.md) for commands and open gates.
+[Authoritative recovery](L4-authoritative-recovery.md) owns retained-backup restoration, all-table/sequence/effective-grant parity, restored-session quarantine, writer retirement, allocation fencing and independent-journal reconciliation. `verify-postgres-release.py --small-fixture` rehearses these with disposable data; `--export-directory` verifies a selected immutable export's parity only. Neither proves off-device retention or routine-authority recovery.
 
-Allocation protection adds `backend/tests/test_allocation_fence.py` for journal
-integrity, private paths/locks, immutable records and isolated-rehearsal admission.
-Real PG17 cases test exhaustion rollback, editor/import bypass denial, concurrent
-boundary allocation, incomplete/foreign/stale evidence and failed commits leaving
-ahead journals. The full restore rehearsal deliberately loses post-backup
-allocations and reconciles from independently retained test ceilings before creating
-new IDs. Those temporary journals do not count as off-device retention acceptance.
-
-Native container acceptance now builds the optional HTTP admin after the learner
-browser stages, then runs the installed API/PG17/Nginx synthetic-session editor
-suite on both AMD64/ARM64 matrix runners. Evidence includes HTTP fixture/admin
-source hashes and scoped editor reports/traces. The PG subprocess has a ten-minute
-budget and the matrix job a sixty-minute budget for the expanded L4 workload.
-Pipeline wiring and local ARM64 evidence are distinct from observed final-commit
-GitHub matrix results; no CI result is inferred from a local run. Backup deferral
-keeps retained-copy/cutover gates open independently of these fixture jobs.
+Run `backend/tests/test_allocation_fence.py` and the real PG17 recovery regressions when those paths change. Preserve exhaustion/concurrency rollback, bypass denial, stale/foreign/incomplete evidence rejection, and ahead-journal recovery. Rebuild installed images after migration/resource changes. Ordinary pytest, a synthetic recovery report, and native CI do not close deferred retained-copy/provider acceptance gates.
 
 ## L5 launch freshness
 
-`launchFreshness.test.ts`, runtime bank tests and quiz/deck session tests cover
-monotonic evidence expiry, cache hits, failed checks, cancellation, deduplication
-and explicit restart admission. `e2e/admin-http/freshness.spec.ts` runs through the
-installed API/nginx/PG17 editor fixture: cached launch conflict, explicit reload
-and saved-content restart, publication during confirmation, outage response,
-unchanged-content resume, active quiz/deck preservation and transient results
-review. Use a fresh `VITE_CONTENT_MAX_RETRIES=0 npm run
-build:admin`, then `smoke-admin-http.py --image <fresh-image> --grep L5` for focused
-development; the complete HTTP editor gate must still pass. The real PG suite
-adds independent readers, A → B → A, other-bank-only publication, and measured
-HTTP/SQL/pre-ping counts. No routine-authority or provider acceptance is implied.
+`launchFreshness.test.ts`, runtime-bank and session tests cover monotonic expiry, cache hits, failed checks, cancellation, deduplication and explicit restart admission. The HTTP editor browser suite's `freshness.spec.ts` covers cached conflict/reload/restart, publication during confirmation, outage, unchanged-content resume, active study and transient review preservation.
+
+For focused installed-image work, use a fresh retries-disabled admin build and `smoke-admin-http.py --grep L5`; retain the complete suite for acceptance. Real PG tests add independent readers, A → B → A, other-bank-only publication, and request/SQL/pool budgets. See [current launch requirements](product.md#content-freshness-at-launch).
 
 ## L5 protected diagnostics and operational canaries
 
-`backend/tests/test_operations.py` verifies generated IDs, route templates,
-sanitized 500s, access/error filters, driver categories and CORS separation.
-Real PG tests cover two concurrent diagnostics with bounded role pools, no nested
-session checkout or activity/test writes, schema/publication failure outcomes,
-Origin/CSRF/auth failures, pool/connection failures and request-driven recovery.
-The dedicated `--restartable --keyword l5` gate verifies actual PG stop/start,
-closed session-dependent diagnostics and SQL-free health during the outage.
+`backend/tests/test_operations.py` and real PG tests cover sanitized events/500s, CORS, authenticated diagnostics, bounded pools, failure/reconnect behavior and no study writes. Run the PG launcher with `--restartable --keyword l5` for actual outage/recovery. The full installed HTTP editor smoke also probes secret canaries through API/Nginx logs; never print or retain failed raw canary logs. Fixture-only routes must remain unpackaged.
 
-Rebuild the installed API and use a fresh HTTP admin bundle before
-`smoke-admin-http.py`. Its complete browser suite includes protected diagnostic
-requests; subsequent probes put synthetic secret canaries in request paths,
-queries, method, headers, body and exceptions, and assert that actual Uvicorn/API
-and Nginx access/error logs do not contain them. Native proxy 400/413/502 and API
-500 paths retain structured events. Failed raw logs are not printed or retained.
-The refused upstream location and exception route are fixture-only, never shipped.
-Rebuild the learner image and run `smoke-learner.py --browser` for proxy/loading
-regressions. Serialize browser suites and shared `dist` builds.
-
-L5's provisional twenty-learner load gate uses
-`.venv/bin/python scripts/containers/load-postgres.py --api-image meducation-api:local --rounds 3 --output test-results/l5-load.json`.
-It runs real synchronized catalog → membership → body requests against the
-installed one-worker API and disposable PG17, including quiz/flashcard content
-validation, cold/warm samples, publication conflicts and stop/restart recovery.
-The fixture-only instrumentation asserts the existing two-reader budget, zero
-leaks and zero admission failures. Run
-`.venv/bin/python -m pytest scripts/containers/test_load_rounds.py -q` for the five
-negative harness contracts. Native container acceptance runs those contracts and
-`--rounds 1` with a 600-second subprocess budget; changed-source native CI remains
-a separate acceptance requirement. See the
-[measurement semantics and limitations](L5-local-operations.md#twenty-learner-api-launch-characterization).
-
-The HTTP editor browser suite uses `e2e/admin-http/fixtures.ts` for automatic
-per-test authentication rate-bucket cleanup in its disposable database. Every
-spec in this serial suite must import `test` from that fixture. A fresh browser
-context does not reset the shared global authentication bucket. The mounted
-`editor_http.py` fixture exposes the cleanup endpoint; it is never installed in
-the application image. `auth-rate.spec.ts` fills the global budget in consecutive
-scenarios and verifies that the real per-browser/global limits still return 429
-within each scenario. Keep this suite at one worker against a shared fixture DB;
-parallel workers require separate fixture databases.
-
-L5 operational acceptance extends `verify-postgres-release.py` with three separate
-drills: retained-release activation/pinned views, fresh-target backup restoration,
-and compatible installed application rollback. Native CI first runs
-`scripts/containers/build-rollback-api.py` from the pinned retained commit (full
-Git history is required), then passes `--api-image meducation-api:local
---previous-api-image meducation-api:l5-rollback-prior` to the recovery script.
-Both images must match their selected Python/SQL source fingerprints and schema
-head. Current → prior → current must preserve exact database state and fresh
-learner content. An incompatible fixture schema marker must refuse startup and
-recover by roll-forward, without a data/schema downgrade. Source application
-connections are revoked/drained before a restored lineage can admit allocations.
-The restore checks remain exact for all-table history/state and effective grants,
-then require auth quarantine/new epoch and independent-journal reconciliation.
-See [drill commands and limits](L5-local-operations.md#distinct-recovery-and-rollback-drills).
-
-The retained-backup command's writer-retirement precondition is covered by
-`test_l5_retained_restore_requires_source_writer_retirement` in the real PG suite.
-It rejects live writer grants, an already-open writer after CONNECT revocation,
-and each independently enabled writer role; it permits read-only backup/reader
-connections after retirement. The test uses the disposable PG launcher only.
-It also verifies exclusive source-database rehearsal admission and lock release
-after both completion and interruption. Neither this test nor the L5 drills invoke
-the routine authority's recovery script.
+[Local operations](L5-local-operations.md) owns the twenty-learner load characterization, independent retained-release activation, fresh-target restore, and compatible application rollback commands and limits. Run `python -m pytest scripts/containers/test_load_rounds.py -q` when the harness changes. Native acceptance runs one load round and the rollback/recovery drills; explicit characterization uses three rounds. Keep retained-image source/schema fingerprints, all-table parity, source writer retirement, fresh auth epoch, and allocation reconciliation. No data/schema downgrade is permitted.
 
 ## Optional packaged HTTP admin
 
-Build the default learner and optional `admin` targets from the root Dockerfile;
-follow [the deployment handoff](L6-deployment-handoff.md#build-and-serve-the-local-artifacts).
-`node --test scripts/containers/check-admin-artifacts.test.mjs` rejects fixture
-authoring/bank/QA modules, missing HTTP/popup entries and unexpected routing
-templates. `smoke-admin-static.py` checks every shipped asset hash, real Nginx
-entry/cache/API separation, hidden/missing artifact denial and disabled private
-API responses. `smoke-admin-http.py --frontend-image IMAGE` runs the complete
-HTTP editor suite with packaged assets instead of a host `dist` mount; its
-synthetic PG17/API/identity/proxy configuration stays fixture-only. Omitting that
-option retains the existing fresh-host-assets path. Native acceptance builds and
-checks this optional image after learner work, then uses it for the full HTTP
-suite. New CI wiring still requires passing changed-input jobs.
+Follow [artifact deployment](L6-deployment-handoff.md#build-and-serve-the-local-artifacts). `node --test scripts/containers/check-admin-artifacts.test.mjs` verifies entry/module/routing exclusions. `smoke-admin-static.py` verifies shipped hashes, Nginx cache/API separation, and missing/disabled entry handling. `smoke-admin-http.py --frontend-image IMAGE` exercises the actual packaged assets; omitting the option uses fresh host assets. Native acceptance builds/checks this image after learner work.
 
-Admin discard regression coverage checks explicit keep/discard decisions, focus return, context invalidation and unmount cancellation. Browser acceptance includes hidden flashcard drafts during paired subject deletion, canceled quiz context changes, batch close cancellation, and invalidating batch preview after an edited change reason. Explicit save cancellation is tested separately from request failures.
-
-
-Workspace redesign checks cover semantic content tabs, explicit parent menus and add actions, absent JSON/save controls in unselected editors, two-column/stacked geometry at 390/1048/1440px, and shared batch framing. Subject-dialog unit/browser coverage checks exact source retention, cancel/no-write behavior, and preserving unsaved quiz/flashcard records while saving only a shared subject from Flashcards.
+For admin state/UI changes retain explicit keep/discard and save cancellation, focus return, stale context/unmount handling, hidden drafts during paired deletion, reason/preview invalidation, exact JSON/form/source/choice preservation, newer text during save, and subject edits without clearing either workspace. Check affected responsive layouts at 390/1048/1440px. Detailed observable obligations live in [the regression reference](testing-regressions.md), not historical completion reports.

@@ -25,6 +25,10 @@ const steps = [
   ['npm', ['run', 'typecheck']],
   ['npm', ['run', 'build:learner:smoke']],
   ['npm', ['run', 'test:e2e:prepared']],
+  [
+    'npx',
+    ['playwright', 'test', '--config=playwright.progress-backup.config.ts', '--project=chromium', '--project=webkit'],
+  ],
   ['npm', ['run', 'build:admin']],
   ['npm', ['run', 'test:e2e:admin']],
 ];

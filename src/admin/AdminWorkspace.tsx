@@ -237,9 +237,9 @@ export function AdminWorkspace({
           <Box role="tabpanel" id="flashcards-panel" aria-labelledby="flashcards-tab" hidden={section !== 'flashcards'}>
             <FlashcardAdminPanel
               recovery={recovery}
-              reviewBeforeSave
               discardRequest={flashcardDiscardRequest}
               serverBank={snapshot.flashcards!}
+              quizBank={snapshot.bank}
               onSaveBank={(bank, reason) => gateway.saveFlashcards(bank, reason)}
               onDraftChange={reportFlashcardDirty}
               onEdit={() => {
@@ -276,7 +276,6 @@ export function AdminWorkspace({
               filter={filter}
               setFilter={setFilter}
               loadEntity={loadEntity}
-              loadNew={loadNew}
               chooseBulkTarget={chooseBulkTarget}
               onDelete={requestDelete}
               onDeleteItems={(ids) =>

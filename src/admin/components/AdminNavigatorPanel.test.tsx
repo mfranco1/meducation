@@ -10,7 +10,7 @@ const bank = fixture as StoredQuestionBank;
 
 describe('admin quiz navigator presentation contracts', () => {
   it('offers subject creation when no subject is selected', () => {
-    const loadNew = vi.fn();
+    const onManageSubjects = vi.fn();
     render(
       <ThemeProvider theme={theme}>
         <AdminNavigatorPanel
@@ -19,17 +19,16 @@ describe('admin quiz navigator presentation contracts', () => {
           filter=""
           setFilter={vi.fn()}
           loadEntity={vi.fn()}
-          loadNew={loadNew}
+          onManageSubjects={onManageSubjects}
         />
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Add subject' }));
-    expect(loadNew).toHaveBeenCalledExactlyOnceWith('subject');
+    expect(onManageSubjects).toHaveBeenCalledExactlyOnceWith();
   });
 
   it('browses the selected quiz in canonical order and passes unchanged records to the editor', () => {
     const loadEntity = vi.fn();
-    const loadNew = vi.fn();
     const setFilter = vi.fn();
     const chooseBulkTarget = vi.fn();
     render(
@@ -42,8 +41,8 @@ describe('admin quiz navigator presentation contracts', () => {
           filter=""
           setFilter={setFilter}
           loadEntity={loadEntity}
-          loadNew={loadNew}
           chooseBulkTarget={chooseBulkTarget}
+          onManageSubjects={vi.fn()}
         />
       </ThemeProvider>,
     );

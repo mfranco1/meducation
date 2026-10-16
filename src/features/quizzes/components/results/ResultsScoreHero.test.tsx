@@ -169,12 +169,6 @@ describe('ResultsScoreHero', () => {
     expect(screen.getByTestId('score-percentage')).toHaveTextContent('100%');
     expect(screen.getByTestId('score-ring-arc')).toHaveAttribute('stroke-dashoffset', '0');
     expect(screen.getByTestId('score-ring-arc')).toHaveAttribute('stroke', '#2f7a55');
-    expect(screen.getByTestId('score-percentage')).toHaveStyle({
-      width: '100%',
-      textAlign: 'center',
-      fontVariantNumeric: 'tabular-nums',
-      whiteSpace: 'nowrap',
-    });
   });
 
   it('shows final number, arc, and color immediately with reduced motion on load or mid-animation', () => {

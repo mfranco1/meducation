@@ -57,7 +57,3 @@ export interface AdminChangePreview {
     cascadedQuizzes: number;
   };
 }
-
-export interface AppliedAdminChange extends AdminChangeSet {
-  appliedAtRevision: string;
-}

@@ -30,7 +30,6 @@ export class RuntimeFlashcardBank {
   private readonly pending = new Map<string, Promise<unknown>>();
   private readonly controllers = new Map<string, AbortController>();
   private listeners = new Set<() => void>();
-  private generation = 0;
   private version = 0;
 
   private readonly freshness: LaunchFreshness;
@@ -100,7 +99,6 @@ export class RuntimeFlashcardBank {
     if (this.getState('subjects') === 'ready') return this.subjects;
     const existing = this.pending.get('subjects') as Promise<FlashcardSubjectSummary[]> | undefined;
     if (existing) return existing;
-    const generation = this.generation;
     const controller = new AbortController();
     this.controllers.set('subjects', controller);
     this.states.set('subjects', 'loading');
@@ -109,7 +107,7 @@ export class RuntimeFlashcardBank {
     const request = this.transport
       .get<unknown>('/api/v1/flashcards/subjects', { policy: this.retryPolicy, signal: controller.signal })
       .then((payload) => {
-        if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
+        if (controller.signal.aborted) throw genericFailure('cancelled');
         if (!isFlashcardSubjectResponse(payload))
           throw new ContentLoadError('invalid', 'The flashcard catalog is incomplete. Retry later.');
         this.revision = payload.revision;
@@ -121,7 +119,6 @@ export class RuntimeFlashcardBank {
       .catch((error) => {
         if (
           !controller.signal.aborted &&
-          generation === this.generation &&
           !(error instanceof ContentLoadError && error.kind === 'cancelled')
         ) {
           this.states.set('subjects', 'error');
@@ -146,7 +143,6 @@ export class RuntimeFlashcardBank {
     const key = `catalog:${subjectId}`;
     const existing = this.pending.get(key) as Promise<FlashcardCatalogResponse> | undefined;
     if (existing) return existing;
-    const generation = this.generation;
     const controller = new AbortController();
     this.controllers.set(key, controller);
     this.states.set(key, 'loading');
@@ -158,7 +154,7 @@ export class RuntimeFlashcardBank {
         { policy: this.retryPolicy, signal: controller.signal },
       )
       .then((payload) => {
-        if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
+        if (controller.signal.aborted) throw genericFailure('cancelled');
         const subject = this.subjects.find((item) => item.id === subjectId);
         if (!subject || !isFlashcardCatalog(payload, subjectId, subject.deckCount))
           throw new ContentLoadError('invalid', 'The flashcard deck catalog is incomplete. Retry later.');
@@ -179,7 +175,6 @@ export class RuntimeFlashcardBank {
       .catch((error) => {
         if (
           !controller.signal.aborted &&
-          generation === this.generation &&
           !(error instanceof ContentLoadError && error.kind === 'cancelled')
         ) {
           this.states.set(key, 'error');
@@ -204,7 +199,6 @@ export class RuntimeFlashcardBank {
     const key = `cards:${deckId}`;
     const existing = this.pending.get(key) as Promise<StoredFlashcard[]> | undefined;
     if (existing) return existing;
-    const generation = this.generation;
     const controller = new AbortController();
     this.controllers.set(key, controller);
     this.states.set(key, 'loading');
@@ -216,9 +210,9 @@ export class RuntimeFlashcardBank {
         { policy: this.retryPolicy, signal: controller.signal },
       )
       .then((payload) => {
-        if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
+        if (controller.signal.aborted) throw genericFailure('cancelled');
         const deck = this.getDeck(deckId);
-        if (controller.signal.aborted || !deck || !isFlashcardList(payload, deckId, deck.cardIds))
+        if (!deck || !isFlashcardList(payload, deckId, deck.cardIds))
           throw new ContentLoadError('invalid', 'The flashcard deck is incomplete. Retry later.');
         if (payload.revision !== this.revision) throw revisionError();
         if (payload.cards.length !== deck.cardCount)
@@ -234,7 +228,6 @@ export class RuntimeFlashcardBank {
       .catch((error) => {
         if (
           !controller.signal.aborted &&
-          generation === this.generation &&
           !(error instanceof ContentLoadError && error.kind === 'cancelled')
         ) {
           this.states.set(key, 'error');

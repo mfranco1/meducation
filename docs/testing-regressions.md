@@ -1,6 +1,6 @@
 # Regression requirements
 
-Use this reference when changing the corresponding behavior. [Testing](testing.md) owns commands, fixture policy, suite ownership, and handoff checks. These are current regression obligations; past execution results belong in [completed work](work/done/).
+Use this reference when changing the corresponding behavior. [Testing](testing.md) owns commands, fixture policy, suite ownership, and handoff checks. Select affected scenarios; this is not a mandate to add a test per bullet or rerun unrelated suites. Prefer observable outcomes over incidental DOM classes, exact CSS spelling, or private counters. These are current regression obligations; past execution results belong in [completed work](work/done/).
 
 ## Navigation and shared presentation
 

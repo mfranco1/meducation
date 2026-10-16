@@ -3,6 +3,7 @@ import baseConfig from './playwright.config';
 
 export default defineConfig({
   ...baseConfig,
+  testIgnore: [],
   outputDir: 'test-results-progress-backup',
   reporter: [['list'], ['json', { outputFile: 'test-results-progress-backup-report.json' }]],
   testMatch: '**/progress-backup.spec.ts',

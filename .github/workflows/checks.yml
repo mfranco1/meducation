@@ -3,6 +3,7 @@ name: Checks
 on:
   push:
   pull_request:
+  workflow_dispatch:
 
 jobs:
   backend:
@@ -133,7 +134,27 @@ jobs:
       - name: Check container helpers
         run: .venv/bin/ruff check scripts/containers
       - name: Repeated clean builds and native acceptance
-        run: .venv/bin/python scripts/containers/acceptance.py --expected-architecture ${{ matrix.architecture }}
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          # Keep the existing matrix check names. Manual/tag runs and unknown bases
+          # always run full acceptance; ordinary UI/docs changes use the host gates.
+          if [[ "$EVENT_NAME" != workflow_dispatch && "$REF_TYPE" != tag ]] &&
+             git cat-file -e "$BASE_SHA^{commit}" 2>/dev/null &&
+             git diff --quiet "$BASE_SHA" "$HEAD_SHA" -- \
+               Dockerfile backend compose.yaml .dockerignore ops scripts public \
+               .github/workflows package.json package-lock.json vite.config.ts \
+               'tsconfig*.json' 'playwright*.config.ts' \
+               index.html admin.html src/main.tsx src/app/lazyScreens.tsx \
+               src/admin/main.tsx src/admin/AdminApp.tsx src/admin/SessionCompletion.tsx \
+               src/content src/domain src/persistence tests/fixtures e2e; then
+            echo 'Full native acceptance is not needed for these paths; host build/browser gates still apply.'
+          else
+            .venv/bin/python scripts/containers/acceptance.py --expected-architecture ${{ matrix.architecture }}
+          fi
       - name: Retain scoped evidence and failure traces
         if: always()
         uses: actions/upload-artifact@v7

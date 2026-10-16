@@ -5,6 +5,8 @@ description: Assess Meducation designs or implementations for module ownership, 
 
 # Meducation architecture review
 
+Follow the [central simplicity policy](../../../AGENTS.md#engineering-philosophy): extend existing code, justify new moving parts, and remove obsolete code. Ownership boundaries do not require separate files or abstractions.
+
 ## Ground the assessment
 
 Read [AGENTS.md](../../../AGENTS.md), applicable nested instructions, [current architecture](../../../docs/architecture.md), and [ownership decision](../../../docs/decisions/0001-repository-ownership-and-boundaries.md). Inspect the actual modules and `scripts/architecture/boundaries.mjs`; current documentation and executable policy outrank paths in completed trackers. If they disagree, identify the discrepancy rather than quietly changing enforcement.
@@ -16,10 +18,10 @@ Establish the requested scope and the concrete pressure driving the review. For 
 - Keep `src/app` as learner composition/navigation and concrete service wiring. Quiz and flashcard features own their respective screens, sessions, and selectors; they cannot import sibling features or app/admin/QA.
 - Domain owns pure rules/types/contracts. Analytics owns pure aggregation. Persistence owns storage repositories/codecs. Keep React/MUI out of these layers and content; browser storage access belongs in persistence. Concrete feature storage imports belong in sessions, with selector contract-type access as allowed by policy.
 - Shared UI accepts data/callbacks and serves demonstrated reuse or an application-wide responsibility. Avoid feature-dependent shared components, broad barrels, forwarding modules, and speculative abstractions.
-- Content owns stored schemas, read-only local adapters, API delivery, validation, and framework-independent rendering policies. Admin core/data remains independent of presentation; authoring and QA may consume shared UI/content validation through allowed edges.
+- Content owns stored schemas, PostgreSQL-backed API delivery, validation, and framework-independent rendering policies. Admin core/data remains independent of presentation; authoring may consume shared UI/content validation through allowed edges.
 - Preserve stable identifiers, authored text/order, source versus verified answers, storage formats, deterministic serialization/revision parity, and export/replay contracts. Read the relevant schema/content documents linked by architecture when these are affected.
 - Inspect static, type-only, re-export, and dynamic edges; ownership restrictions apply to types too. Preserve learner startup and route splitting: eager canonical-bank or validation-pipeline loading is a regression. The import graph does not prove arbitrary runtime behavior.
-- Recognize the existing read-only Python service. Keep learner progress local and behind interfaces; do not introduce backend infrastructure or speculative cloud persistence without explicit scope. No runtime generative AI.
+- Recognize the existing PostgreSQL learner delivery and authenticated paired-authoring service. Keep learner progress local and behind interfaces; do not introduce backend infrastructure or speculative cloud persistence without explicit scope. No runtime generative AI.
 
 Assess failure boundaries as well as happy paths: API revision conflicts, stale loads, storage failure, and paired authoring transactions should retain their owning layer and recovery contract. Use [product behavior](../../../docs/product.md) to judge observable consequences, not a preferred architecture alone.
 

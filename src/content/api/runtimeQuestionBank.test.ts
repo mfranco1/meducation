@@ -174,9 +174,9 @@ describe('runtime question bank', () => {
     try {
       const pending = bank.ensureSubjects();
       await vi.waitFor(() => expect(bank.getCatalogState()).toBe('retrying'));
-      expect(bank.getCatalogRetryAttempt()).toBe(1);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
       await vi.advanceTimersByTimeAsync(500);
-      await vi.waitFor(() => expect(bank.getCatalogRetryAttempt()).toBe(2));
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
       await vi.advanceTimersByTimeAsync(1000);
       await expect(pending).resolves.toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(3);
@@ -315,7 +315,8 @@ describe('runtime question bank', () => {
     try {
       const request = bank.ensureQuestions('q1');
       const cancelled = expect(request).rejects.toMatchObject({ kind: 'cancelled' });
-      await vi.waitFor(() => expect(bank.getQuestionState('q1')).toBe('retrying'));
+      await vi.advanceTimersByTimeAsync(0);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
       bank.cancelQuestionLoad('q1');
       await cancelled;
       await vi.advanceTimersByTimeAsync(2000);

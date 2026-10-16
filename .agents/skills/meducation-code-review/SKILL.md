@@ -5,6 +5,8 @@ description: Review Meducation diffs, commits, or pull requests for actionable c
 
 # Meducation code review
 
+Follow the [central simplicity policy](../../../AGENTS.md#engineering-philosophy): extend existing code, justify new moving parts, and remove obsolete code. Ownership boundaries do not require separate files or abstractions.
+
 ## Establish scope
 
 Read [AGENTS.md](../../../AGENTS.md) and applicable nested instructions. Use the requested diff/base; if none is supplied, inspect staged, unstaged, and relevant untracked changes and state that scope. For branch reviews, resolve the comparison base rather than assuming a branch name. Read surrounding code, callers, contracts, and tests before judging a changed line.
@@ -27,6 +29,6 @@ Prioritize demonstrated regressions over speculative risks or style preferences.
 
 Use [testing](../../../docs/testing.md) and [regression requirements](../../../docs/testing-regressions.md) to select focused reproductions and tests. Use synthetic fixtures; never mutate canonical banks or personal browser progress to demonstrate a bug. Report commands actually run and gaps. If fixes are authorized, run all affected repository gates, including the minimum typecheck/build, before claiming completion.
 
-Return findings first, ordered by severity. For each finding give a short title, a narrow file/line location, the triggering scenario, actual versus expected behavior, and the concrete impact. Use P0 for an unconditional release-blocking defect, P1 for urgent serious breakage/data loss, P2 for a normal actionable defect, and P3 for a minor defect. Explain conditional assumptions; distinguish existing problems from defects introduced by the reviewed changes. Keep optional improvements separate from bugs and do not inflate finding counts.
+Return findings first, ordered by severity. For each finding give a short title, a narrow file/line location, the triggering scenario, actual versus expected behavior, and the concrete impact. Use P0 for an unconditional release-blocking defect, P1 for urgent serious breakage/data loss, P2 for a normal actionable defect, and P3 for a minor defect. Explain conditional assumptions; distinguish existing problems from defects introduced by the reviewed changes. Keep optional improvements separate from bugs and do not inflate finding counts. For simplification findings, identify the current maintenance cost and smaller alternative. Short files, small duplication, test injection, and necessary safety checks are not defects by themselves.
 
 If no actionable findings are supported, say so and state remaining test limitations. Passing tests alone do not establish correctness. Record sustained review work and findings in an ongoing tracker per repository guidance; close the review task only after its agreed review scope and checks are satisfied, without implying the reviewed implementation is ready if blockers remain.

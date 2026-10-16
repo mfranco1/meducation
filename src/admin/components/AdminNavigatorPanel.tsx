@@ -14,11 +14,10 @@ import {
 } from '@mui/material';
 import type { StoredQuestionBank } from '../../content/schema/schema';
 import { selectQuizNavigatorPage } from '../core/quizNavigator';
-import type { EntityKind, Selection } from '../useAdminEditor';
+import type { Selection } from '../useAdminEditor';
 import { AdminRecordSelection, useAdminRecordSelection } from './AdminRecordSelection';
 import { adminNavigatorLayout } from './adminPanelLayout';
 import { AdminParentActions } from './AdminParentActions';
-import { AdminAddSubjectButton } from './AdminAddSubjectButton';
 
 interface Props {
   disabled?: boolean;
@@ -29,9 +28,8 @@ interface Props {
   filter: string;
   setFilter: (value: string) => void;
   loadEntity: (selection: Selection, value: unknown) => void;
-  loadNew: (kind: EntityKind) => void;
   chooseBulkTarget?: (kind: 'subject' | 'quiz', context?: { subjectId?: string; quizId?: string }) => void;
-  onManageSubjects?: (id?: string) => void;
+  onManageSubjects: (id?: string) => void;
   onDeleteItems?: (ids: string[]) => void;
   onBrowseChange?: (subjectId: string, quizId?: string) => boolean | Promise<boolean>;
   onDelete?: (selection: Selection, label: string) => void;
@@ -46,7 +44,6 @@ export function AdminNavigatorPanel({
   filter,
   setFilter,
   loadEntity,
-  loadNew,
   chooseBulkTarget,
   onDelete,
   onBrowseChange,
@@ -107,11 +104,9 @@ export function AdminNavigatorPanel({
           }}
           renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
         />
-        {onManageSubjects && (
-          <Button size="small" color="inherit" onClick={() => onManageSubjects(subject?.id)}>
-            Manage subjects…
-          </Button>
-        )}
+        <Button size="small" color="inherit" onClick={() => onManageSubjects(subject?.id)}>
+          Manage subjects…
+        </Button>
         {subject && (
           <Stack direction="row" spacing={1} alignItems="center">
             <Button size="small" onClick={() => chooseBulkTarget?.('subject', { subjectId: subject.id })}>
@@ -119,11 +114,7 @@ export function AdminNavigatorPanel({
             </Button>
             <AdminParentActions
               entity="Subject"
-              onEdit={() =>
-                onManageSubjects
-                  ? onManageSubjects(subject.id)
-                  : loadEntity({ kind: 'subject', id: subject.id }, subject)
-              }
+              onEdit={() => onManageSubjects(subject.id)}
               onDelete={() => onDelete?.({ kind: 'subject', id: subject.id }, subject.name)}
             />
           </Stack>
@@ -147,7 +138,7 @@ export function AdminNavigatorPanel({
         )}
         {!subject && (
           <Stack direction="row">
-            <AdminAddSubjectButton onClick={() => (onManageSubjects ? onManageSubjects() : loadNew('subject'))} />
+            <Button size="small" onClick={() => onManageSubjects()}>Add subject</Button>
           </Stack>
         )}
         {quiz && (

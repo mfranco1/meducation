@@ -152,10 +152,6 @@ export function recoverProgressPair(storage: ProgressStoragePort, lease: Progres
   if (inspected.kind === 'invalid') return { kind: 'recovery-required' };
   return recoverSelectedPair(storage, inspected.journal, lease);
 }
-export function recoverBrowserProgressPair(lease: ProgressLease): ProgressRecoveryResult {
-  try { return recoverProgressPair(localStorage, lease); }
-  catch { return { kind: 'recovery-required' }; }
-}
 
 function recoverProgressOperation(storage: ProgressStoragePort, lease: ProgressLease, operationId: string): ProgressRecoveryResult {
   if (!exclusive(lease)) return { kind: 'recovery-required' };

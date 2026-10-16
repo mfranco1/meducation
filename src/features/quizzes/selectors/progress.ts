@@ -2,7 +2,6 @@ import { mostRecentScore, scoreTrend } from '../../../analytics/analytics';
 import type { Attempt, Quiz, QuizRepository, RecentScore, Subject } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
 import { questionIndexFor } from '../../../domain/quizEngine';
-import { sortQuizProgressByRecentActivity } from './quizProgress';
 
 export interface QuizProgress {
   quiz: Quiz;
@@ -105,4 +104,20 @@ export function quizProgressForSubject(
     };
   });
   return sortQuizProgressByRecentActivity(progress, quizId => progressView.activityAt[quizId]);
+}
+
+/** Returns active subjects in most-recent active-quiz order, preserving catalog order for ties. */
+export function activeSubjectStats(subjectStats: SubjectStat[]): SubjectStat[] {
+  return subjectStats
+    .map((stat, index) => ({ stat, index }))
+    .filter(({ stat }) => stat.activeQuizCount > 0)
+    .sort((left, right) => (right.stat.latestActiveAt ?? '').localeCompare(left.stat.latestActiveAt ?? '') || left.index - right.index)
+    .map(({ stat }) => stat);
+}
+
+export function sortQuizProgressByRecentActivity(progress: QuizProgress[], latestActivityAt: (quizId: string) => string | undefined): QuizProgress[] {
+  return progress
+    .map((item, index) => ({ item, index, activityAt: latestActivityAt(item.quiz.id) }))
+    .sort((left, right) => (right.activityAt ?? '').localeCompare(left.activityAt ?? '') || left.index - right.index)
+    .map(({ item }) => item);
 }

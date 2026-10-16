@@ -5,6 +5,8 @@ description: Audit Meducation work against the requested outcome, repository inv
 
 # Meducation completion audit
 
+Follow the [central simplicity policy](../../../AGENTS.md#engineering-philosophy): extend existing code, justify new moving parts, and remove obsolete code. Ownership boundaries do not require separate files or abstractions.
+
 ## Establish the completion contract
 
 Work from the repository root. Read [AGENTS.md](../../../AGENTS.md), applicable nested instructions, the user's accepted scope, and the active tracker under `docs/work/ongoing`. Follow [work tracking](../../../docs/work/README.md). Separate completion of the authorized task or stage from readiness for public release; an unfinished roadmap is not automatically a blocker for a smaller task.
@@ -19,7 +21,7 @@ Use the current owner documents rather than historical completed trackers:
 - [Product](../../../docs/product.md) and [design system](../../../docs/design-system.md): changed learner/admin behavior, accessible states, and responsive presentation.
 - [Content management](../../../docs/content-management.md), [question schema](../../../docs/question-schema.md), and [flashcard schema](../../../docs/flashcard-schema.md): read when content, serialization, validation, rendering, or shared subjects are affected.
 
-Confirm canonical banks retain exact authored text, meaningful formatting, ordering, stable IDs, and original answer provenance unless the task explicitly includes documented content changes. The verified answer must take precedence when present. Keep progress storage contracts intact and runtime generative AI absent. Account for the existing read-only content service without expanding backend scope.
+Confirm canonical banks retain exact authored text, meaningful formatting, ordering, stable IDs, and original answer provenance unless the task explicitly includes documented content changes. The verified answer must take precedence when present. Keep progress storage contracts intact and runtime generative AI absent. Preserve the existing PostgreSQL delivery and authenticated paired-authoring contracts without expanding backend scope.
 
 ## Require evidence appropriate to the change
 

@@ -61,19 +61,16 @@ describe('StatCard', () => {
     const card = screen.getByRole('group', { name: 'Completed quizzes' });
     expect(within(card).getByText('123456789')).toBeVisible();
     expect(within(card).getByText(subject)).toBeVisible();
-    expect(within(card).getByText(subject)).toHaveStyle({ overflowWrap: 'anywhere' });
   });
 
-  it('allows caller styling and retains results variant, badge, and footer', () => {
+  it('retains results variant, badge, and footer', () => {
     renderCard({
       variant: 'results',
       badge: 'Best',
       supportingText: 'ignored in results',
       footer: <span>Details</span>,
-      sx: { backgroundColor: 'rgb(1, 2, 3)' },
     });
     const card = screen.getByRole('group', { name: 'Completed quizzes' });
-    expect(card).toHaveStyle({ backgroundColor: 'rgb(1, 2, 3)' });
     expect(within(card).getByText('Best')).toBeVisible();
     expect(within(card).getByText('Details')).toBeVisible();
     expect(within(card).queryByText('ignored in results')).not.toBeInTheDocument();

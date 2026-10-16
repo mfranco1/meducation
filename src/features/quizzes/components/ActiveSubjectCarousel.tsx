@@ -1,4 +1,4 @@
-import type { SubjectStat } from '../selectors/dashboard';
+import type { SubjectStat } from '../selectors/progress';
 import { StudyItemCarousel } from '../../../shared/ui/catalog/StudyItemCarousel';
 import { ContinueStudyCard } from '../../../shared/ui/catalog/ContinueStudyCard';
 import { StudyCardIllustration } from '../../../shared/ui/catalog/StudyCardIllustration';

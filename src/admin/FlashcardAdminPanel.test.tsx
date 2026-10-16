@@ -12,13 +12,20 @@ const bank = (): StoredFlashcardBank => ({
   decks: [{ id: 'd1', subjectId: 's1', name: 'Deck' }],
   cards: [{ id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' }],
 });
-function mount(save = vi.fn(async (next: StoredFlashcardBank) => next)) {
-  const props = { subjects, serverBank: bank(), quizRevision: 'quiz-revision', onSaveBank: save };
-  const view = render(
-    <ThemeProvider theme={theme}>
-      <FlashcardAdminPanel {...props} />
-    </ThemeProvider>,
-  );
+function mount(save = vi.fn<(next: StoredFlashcardBank, reason: string) => Promise<StoredFlashcardBank>>(async next => next)) {
+  const props: Parameters<typeof FlashcardAdminPanel>[0] = {
+    subjects, serverBank: bank(), quizRevision: 'quiz-revision', onSaveBank: save,
+    quizBank: { schemaVersion: 4 as const, subjects, quizzes: [], questions: [] },
+    onAddSubject: vi.fn(), onManageSubjects: vi.fn(), onEditSubject: vi.fn(), onDeleteSubject: vi.fn(),
+  };
+  const renderEditor = () => <ThemeProvider theme={theme}><FlashcardAdminPanel {...props} /></ThemeProvider>;
+  props.onSaveBank = async (next, reason) => {
+    const saved = await save(next, reason);
+    props.serverBank = saved;
+    view.rerender(renderEditor());
+    return saved;
+  };
+  const view = render(renderEditor());
   return { ...view, save, props };
 }
 function chooseSubject() {
@@ -52,7 +59,7 @@ describe('PostgreSQL flashcard editor', () => {
     action('New deck');
     const template = JSON.parse((editor() as HTMLInputElement).value);
     edit({ ...template, name: 'New saved deck' });
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
     await waitFor(() => expect(editor()).toHaveValue(JSON.stringify(saved.decks[1], null, 2)));
     expect(save).toHaveBeenCalledTimes(1);
     expect(save.mock.calls[0][0].decks.at(-1)!.id).toBe(template.id);
@@ -67,7 +74,7 @@ describe('PostgreSQL flashcard editor', () => {
     fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
     const text = JSON.stringify({ ...bank().cards[0], front: 'Unsaved front' });
     fireEvent.change(editor(), { target: { value: text } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
     expect(await screen.findByText(/Draft context changed/)).toBeVisible();
     expect(editor()).toHaveValue(text);
     expect(save).toHaveBeenCalledTimes(1);
@@ -102,7 +109,7 @@ describe('PostgreSQL flashcard editor', () => {
     chooseDeck();
     fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
     edit({ ...bank().cards[0], id: 'f2', front: 'Changed ID' });
-    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
     expect(await screen.findByText(/IDs are stable and cannot be changed/)).toBeVisible();
     expect(save).not.toHaveBeenCalled();
   });
@@ -125,9 +132,9 @@ describe('PostgreSQL flashcard editor', () => {
         }),
       },
     });
-    expect(within(dialog).queryByRole('button', { name: 'Save draft' })).toBeNull();
+    expect(within(dialog).queryByRole('button', { name: 'Review save' })).toBeNull();
     fireEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
-    fireEvent.click(await within(dialog).findByRole('button', { name: 'Save draft' }));
+    fireEvent.click(await within(dialog).findByRole('button', { name: 'Review save' }));
     await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
     const candidate = save.mock.calls[0][0];
     expect(candidate.decks.map((row) => row.name)).toEqual(['Deck', 'Nested deck', 'Empty deck']);
@@ -156,9 +163,9 @@ describe('PostgreSQL flashcard editor', () => {
     expect(save).not.toHaveBeenCalled();
     fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Valid', cards: [] }] }) } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
-    await within(dialog).findByRole('button', { name: 'Save draft' });
+    await within(dialog).findByRole('button', { name: 'Review save' });
     fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Changed', cards: [] }] }) } });
-    expect(within(dialog).queryByRole('button', { name: 'Save draft' })).toBeNull();
+    expect(within(dialog).queryByRole('button', { name: 'Review save' })).toBeNull();
     expect(save).not.toHaveBeenCalled();
   });
 });
@@ -173,7 +180,7 @@ it('blocks flashcard saves during another command while allowing newer text to b
       <FlashcardAdminPanel {...props} externalBusy onEdit={onEdit} />
     </ThemeProvider>,
   );
-  expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+  expect(screen.getByRole('button', { name: 'Review save' })).toBeDisabled();
   expect(screen.getByRole('button', { name: 'Record actions' })).toBeDisabled();
   const text = JSON.stringify({ ...bank().cards[0], front: 'Newer text while another command is running' });
   fireEvent.change(editor(), { target: { value: text } });
@@ -235,7 +242,7 @@ it('keeps dirty record text until an explicit discard and saves the entered reas
   fireEvent.change(screen.getByRole('textbox', { name: 'Change reason' }), {
     target: { value: 'Preserve source formatting' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
   await waitFor(() => expect(save).toHaveBeenCalledWith(expect.anything(), 'Preserve source formatting'));
   expect(save.mock.calls[0][0].cards[0].back).toBe('Exact newer text\n$x^2$');
   action('New deck');
@@ -255,7 +262,7 @@ it('keeps a newer form draft editable during a held create and adopts only the r
   chooseSubject();
   action('New deck');
   fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Captured name' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+  fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
   await waitFor(() => expect(save).toHaveBeenCalledOnce());
   expect(screen.getByRole('textbox', { name: 'Name' })).not.toBeDisabled();
   fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Newer exact $x^2$ name' } });
@@ -283,7 +290,7 @@ it('keeps newer batch JSON after a captured batch commits without replaying it',
   const json = within(dialog).getByRole('textbox', { name: 'JSON' });
   fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Captured batch' }] }) } });
   fireEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Save draft' }));
+  fireEvent.click(within(dialog).getByRole('button', { name: 'Review save' }));
   await waitFor(() => expect(save).toHaveBeenCalledOnce());
   const newer = JSON.stringify({ decks: [{ name: 'Newer exact batch\n' }] });
   fireEvent.change(json, { target: { value: newer } });

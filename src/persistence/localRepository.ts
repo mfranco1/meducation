@@ -143,7 +143,6 @@ export class LocalAttemptRepository implements AttemptRepository {
   }
 
   getActive(quizId: string): Attempt | undefined { return this.state().active[quizId]; }
-  hasActiveAttempts(): boolean { return Object.keys(this.state().active).length > 0; }
 
   saveActive(attempt: Attempt): void {
     this.commit(state => {
