@@ -1,0 +1,697 @@
+{
+  "evidenceType": "GitHub Actions public API run and job metadata",
+  "run": {
+    "id": 38837554356,
+    "html_url": "https://github.com/mfranco1/meducation/actions/runs/38837554356",
+    "name": "Checks",
+    "event": "push",
+    "head_sha": "fa6ae1b2e9e316c8415abb6d5fab1a8785cbe562",
+    "head_branch": "master",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-16T01:53:37Z",
+    "updated_at": "2026-10-16T02:06:45Z"
+  },
+  "jobs": [
+    {
+      "id": 116769951597,
+      "name": "frontend",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38837554356/job/116769951597",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-16T01:53:40Z",
+      "completed_at": "2026-10-16T01:55:35Z",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-16T01:53:41Z",
+          "completed_at": "2026-10-16T01:53:43Z"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-16T01:53:43Z",
+          "completed_at": "2026-10-16T01:53:44Z"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-16T01:53:44Z",
+          "completed_at": "2026-10-16T01:53:51Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-16T01:53:51Z",
+          "completed_at": "2026-10-16T01:54:02Z"
+        },
+        {
+          "name": "Run npm run lint",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-16T01:54:02Z",
+          "completed_at": "2026-10-16T01:54:08Z"
+        },
+        {
+          "name": "Run npm run format:check",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-16T01:54:08Z",
+          "completed_at": "2026-10-16T01:54:09Z"
+        },
+        {
+          "name": "Run npm run test:architecture",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-16T01:54:09Z",
+          "completed_at": "2026-10-16T01:54:10Z"
+        },
+        {
+          "name": "Run npm run test:ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-16T01:54:10Z",
+          "completed_at": "2026-10-16T01:55:16Z"
+        },
+        {
+          "name": "Run npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-16T01:55:16Z",
+          "completed_at": "2026-10-16T01:55:17Z"
+        },
+        {
+          "name": "Run npm run typecheck",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-16T01:55:17Z",
+          "completed_at": "2026-10-16T01:55:23Z"
+        },
+        {
+          "name": "Run npm run build:learner",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-16T01:55:23Z",
+          "completed_at": "2026-10-16T01:55:27Z"
+        },
+        {
+          "name": "Build the optional local admin entry",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-16T01:55:27Z",
+          "completed_at": "2026-10-16T01:55:32Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-10-16T01:55:32Z",
+          "completed_at": "2026-10-16T01:55:32Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 24,
+          "started_at": "2026-10-16T01:55:32Z",
+          "completed_at": "2026-10-16T01:55:32Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 25,
+          "started_at": "2026-10-16T01:55:32Z",
+          "completed_at": "2026-10-16T01:55:32Z"
+        }
+      ]
+    },
+    {
+      "id": 116769951698,
+      "name": "Containers (arm64)",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38837554356/job/116769951698",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-16T01:53:42Z",
+      "completed_at": "2026-10-16T02:06:21Z",
+      "labels": [
+        "ubuntu-24.04-arm"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-16T01:53:43Z",
+          "completed_at": "2026-10-16T01:53:45Z"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-16T01:53:45Z",
+          "completed_at": "2026-10-16T01:53:49Z"
+        },
+        {
+          "name": "Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-16T01:53:49Z",
+          "completed_at": "2026-10-16T01:53:54Z"
+        },
+        {
+          "name": "Install verification environment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-16T01:53:54Z",
+          "completed_at": "2026-10-16T01:54:08Z"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-16T01:54:08Z",
+          "completed_at": "2026-10-16T01:54:09Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-16T01:54:09Z",
+          "completed_at": "2026-10-16T01:54:18Z"
+        },
+        {
+          "name": "Run npm run build:content-policy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-16T01:54:18Z",
+          "completed_at": "2026-10-16T01:54:19Z"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-16T01:54:19Z",
+          "completed_at": "2026-10-16T01:54:45Z"
+        },
+        {
+          "name": "Check container helpers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-16T01:54:45Z",
+          "completed_at": "2026-10-16T01:54:45Z"
+        },
+        {
+          "name": "Repeated clean builds and native acceptance",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-16T01:54:45Z",
+          "completed_at": "2026-10-16T02:06:17Z"
+        },
+        {
+          "name": "Retain scoped evidence and failure traces",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-16T02:06:17Z",
+          "completed_at": "2026-10-16T02:06:18Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-16T02:06:18Z",
+          "completed_at": "2026-10-16T02:06:18Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-16T02:06:18Z",
+          "completed_at": "2026-10-16T02:06:19Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-10-16T02:06:19Z",
+          "completed_at": "2026-10-16T02:06:19Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-10-16T02:06:19Z",
+          "completed_at": "2026-10-16T02:06:19Z"
+        }
+      ]
+    },
+    {
+      "id": 116769951715,
+      "name": "browser-smoke",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38837554356/job/116769951715",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-16T01:53:40Z",
+      "completed_at": "2026-10-16T02:03:08Z",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-16T01:53:41Z",
+          "completed_at": "2026-10-16T01:53:43Z"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-16T01:53:43Z",
+          "completed_at": "2026-10-16T01:53:44Z"
+        },
+        {
+          "name": "Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-16T01:53:44Z",
+          "completed_at": "2026-10-16T01:53:53Z"
+        },
+        {
+          "name": "Install backend environment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-16T01:53:53Z",
+          "completed_at": "2026-10-16T01:54:16Z"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-16T01:54:16Z",
+          "completed_at": "2026-10-16T01:54:18Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-16T01:54:18Z",
+          "completed_at": "2026-10-16T01:54:31Z"
+        },
+        {
+          "name": "Run npm run build:content-policy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-16T01:54:31Z",
+          "completed_at": "2026-10-16T01:54:32Z"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium webkit",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-16T01:54:32Z",
+          "completed_at": "2026-10-16T01:55:17Z"
+        },
+        {
+          "name": "Run npm run build:learner:smoke",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-16T01:55:17Z",
+          "completed_at": "2026-10-16T01:55:22Z"
+        },
+        {
+          "name": "Run npm run test:e2e:prepared",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-16T01:55:22Z",
+          "completed_at": "2026-10-16T01:56:58Z"
+        },
+        {
+          "name": "Paired progress backup on accepted engines",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-16T01:56:58Z",
+          "completed_at": "2026-10-16T01:58:40Z"
+        },
+        {
+          "name": "Run npm run test:e2e:admin",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 12,
+          "started_at": "2026-10-16T01:58:40Z",
+          "completed_at": "2026-10-16T02:03:04Z"
+        },
+        {
+          "name": "Retain accepted-engine backup evidence",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 13,
+          "started_at": "2026-10-16T02:03:04Z",
+          "completed_at": "2026-10-16T02:03:05Z"
+        },
+        {
+          "name": "Retain host browser failure traces",
+          "status": "completed",
+          "conclusion": "skipped",
+          "number": 14,
+          "started_at": "2026-10-16T02:03:05Z",
+          "completed_at": "2026-10-16T02:03:05Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 26,
+          "started_at": "2026-10-16T02:03:05Z",
+          "completed_at": "2026-10-16T02:03:05Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 27,
+          "started_at": "2026-10-16T02:03:05Z",
+          "completed_at": "2026-10-16T02:03:05Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 28,
+          "started_at": "2026-10-16T02:03:05Z",
+          "completed_at": "2026-10-16T02:03:05Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 29,
+          "started_at": "2026-10-16T02:03:05Z",
+          "completed_at": "2026-10-16T02:03:06Z"
+        }
+      ]
+    },
+    {
+      "id": 116769951838,
+      "name": "Containers (amd64)",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38837554356/job/116769951838",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-16T01:53:41Z",
+      "completed_at": "2026-10-16T02:06:44Z",
+      "labels": [
+        "ubuntu-24.04"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-16T01:53:42Z",
+          "completed_at": "2026-10-16T01:53:44Z"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-16T01:53:44Z",
+          "completed_at": "2026-10-16T01:53:48Z"
+        },
+        {
+          "name": "Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-16T01:53:48Z",
+          "completed_at": "2026-10-16T01:53:52Z"
+        },
+        {
+          "name": "Install verification environment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-16T01:53:52Z",
+          "completed_at": "2026-10-16T01:54:06Z"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-16T01:54:06Z",
+          "completed_at": "2026-10-16T01:54:09Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-16T01:54:09Z",
+          "completed_at": "2026-10-16T01:54:19Z"
+        },
+        {
+          "name": "Run npm run build:content-policy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-16T01:54:19Z",
+          "completed_at": "2026-10-16T01:54:19Z"
+        },
+        {
+          "name": "Run npx playwright install --with-deps chromium",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-16T01:54:19Z",
+          "completed_at": "2026-10-16T01:54:38Z"
+        },
+        {
+          "name": "Check container helpers",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-16T01:54:38Z",
+          "completed_at": "2026-10-16T01:54:38Z"
+        },
+        {
+          "name": "Repeated clean builds and native acceptance",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 10,
+          "started_at": "2026-10-16T01:54:38Z",
+          "completed_at": "2026-10-16T02:06:39Z"
+        },
+        {
+          "name": "Retain scoped evidence and failure traces",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 11,
+          "started_at": "2026-10-16T02:06:39Z",
+          "completed_at": "2026-10-16T02:06:41Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 20,
+          "started_at": "2026-10-16T02:06:41Z",
+          "completed_at": "2026-10-16T02:06:41Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 21,
+          "started_at": "2026-10-16T02:06:41Z",
+          "completed_at": "2026-10-16T02:06:41Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 22,
+          "started_at": "2026-10-16T02:06:41Z",
+          "completed_at": "2026-10-16T02:06:41Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 23,
+          "started_at": "2026-10-16T02:06:41Z",
+          "completed_at": "2026-10-16T02:06:41Z"
+        }
+      ]
+    },
+    {
+      "id": 116769951884,
+      "name": "backend",
+      "html_url": "https://github.com/mfranco1/meducation/actions/runs/38837554356/job/116769951884",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-16T01:53:40Z",
+      "completed_at": "2026-10-16T01:54:34Z",
+      "labels": [
+        "ubuntu-latest"
+      ],
+      "steps": [
+        {
+          "name": "Set up job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 1,
+          "started_at": "2026-10-16T01:53:41Z",
+          "completed_at": "2026-10-16T01:53:43Z"
+        },
+        {
+          "name": "Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 2,
+          "started_at": "2026-10-16T01:53:43Z",
+          "completed_at": "2026-10-16T01:53:44Z"
+        },
+        {
+          "name": "Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 3,
+          "started_at": "2026-10-16T01:53:44Z",
+          "completed_at": "2026-10-16T01:53:47Z"
+        },
+        {
+          "name": "Install backend environment",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 4,
+          "started_at": "2026-10-16T01:53:47Z",
+          "completed_at": "2026-10-16T01:54:02Z"
+        },
+        {
+          "name": "Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 5,
+          "started_at": "2026-10-16T01:54:02Z",
+          "completed_at": "2026-10-16T01:54:04Z"
+        },
+        {
+          "name": "Run npm ci",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 6,
+          "started_at": "2026-10-16T01:54:04Z",
+          "completed_at": "2026-10-16T01:54:13Z"
+        },
+        {
+          "name": "Run npm run build:content-policy",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 7,
+          "started_at": "2026-10-16T01:54:13Z",
+          "completed_at": "2026-10-16T01:54:13Z"
+        },
+        {
+          "name": "Check Python style and types",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 8,
+          "started_at": "2026-10-16T01:54:13Z",
+          "completed_at": "2026-10-16T01:54:22Z"
+        },
+        {
+          "name": "Test backend",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 9,
+          "started_at": "2026-10-16T01:54:22Z",
+          "completed_at": "2026-10-16T01:54:31Z"
+        },
+        {
+          "name": "Post Run actions/setup-node@v7",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 16,
+          "started_at": "2026-10-16T01:54:31Z",
+          "completed_at": "2026-10-16T01:54:31Z"
+        },
+        {
+          "name": "Post Run actions/setup-python@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 17,
+          "started_at": "2026-10-16T01:54:31Z",
+          "completed_at": "2026-10-16T01:54:31Z"
+        },
+        {
+          "name": "Post Run actions/checkout@v6",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 18,
+          "started_at": "2026-10-16T01:54:31Z",
+          "completed_at": "2026-10-16T01:54:31Z"
+        },
+        {
+          "name": "Complete job",
+          "status": "completed",
+          "conclusion": "success",
+          "number": 19,
+          "started_at": "2026-10-16T01:54:31Z",
+          "completed_at": "2026-10-16T01:54:31Z"
+        }
+      ]
+    }
+  ],
+  "scope": "Exact local implementation HEAD verified clean before documentation closeout. Native AMD64/ARM64 repeated-build acceptance, backend, frontend and browser jobs all passed. Job/step metadata verified; individual uploaded evidence artifacts were not downloaded. No hosted deployment or deferred device/identity/retention acceptance is implied."
+}

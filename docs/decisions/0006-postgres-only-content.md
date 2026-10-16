@@ -1,6 +1,10 @@
 # PostgreSQL-only content delivery and authoring
 
-Date: 2026-10-15. Status: implemented; local acceptance passed, current native CI pending.
+Date: 2026-10-15. Status: implemented and accepted; local checks and native AMD64/ARM64 CI passed.
+
+[CI run 38837554356](https://github.com/mfranco1/meducation/actions/runs/38837554356)
+passed all five jobs at `fa6ae1b2e9e316c8415abb6d5fab1a8785cbe562`; see the
+[completed retirement tracker](../work/done/postgres-only-content-retirement-plan.md).
 
 The designated PostgreSQL database is the only writable authority and runtime
 source for the paired quiz/flashcard bank. This supersedes the JSON service,

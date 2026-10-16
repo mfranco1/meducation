@@ -1,6 +1,6 @@
 # L4 — Local database authoring and admin access
 
-Content-source update (2026-10-16): the [PostgreSQL-only retirement](postgres-only-content-retirement-plan.md) removes repository JSON databases, runtime read fallbacks and file-authoring modes. PostgreSQL and authenticated HTTP CRUD are the current contract; earlier stage statements and machine evidence below remain historical. This does not close unrelated hosted identity, retention, device or deployment gates.
+Content-source update (2026-10-16): the [PostgreSQL-only retirement](../done/postgres-only-content-retirement-plan.md) removes repository JSON databases, runtime read fallbacks and file-authoring modes. PostgreSQL and authenticated HTTP CRUD are the current contract; earlier stage statements and machine evidence below remain historical. This does not close unrelated hosted identity, retention, device or deployment gates.
 
 Created: 2026-10-14. Status: Steps 1–5 local gates complete. Steps 6–7 locally complete under the user's 2026-10-14 local-only retention override: the designated PostgreSQL database is authoritative, protected local dumps/exports and allocation journals are retained and a fresh separate-target restore passed. Off-device/hardware-loss recovery is explicitly deferred. Step 8 full local verification/audit and all five changed-source CI jobs pass at `bc90d75`, including native AMD64/ARM64. Final tracker archival remains pending (earlier CI at `f99a18e` is historical). Hosted provider/fresh-factor and manual device/accessibility acceptance remain separate open gates.
 

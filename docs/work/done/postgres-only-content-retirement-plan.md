@@ -2,9 +2,28 @@
 
 Date: 2026-10-15. Planning baseline: `c9a7154`.
 
-Status: implementation complete and locally verified. Final acceptance remains
-open for current-worktree native AMD64/ARM64 CI. Keep this tracker in `ongoing`
-until that evidence is available; earlier CI does not certify these changes.
+Status: complete. Implementation, local verification and native AMD64/ARM64 CI
+passed at `fa6ae1b2e9e316c8415abb6d5fab1a8785cbe562`.
+
+## Final CI acceptance and closeout — 2026-10-16
+
+Independently verified [GitHub Actions run 38837554356](https://github.com/mfranco1/meducation/actions/runs/38837554356)
+through public API run/job metadata. Its exact commit matches the clean local
+implementation HEAD, `fa6ae1b2e9e316c8415abb6d5fab1a8785cbe562`. All five jobs
+completed successfully: frontend, backend, browser-smoke, Containers (amd64), and
+Containers (arm64). Both native jobs passed “Repeated clean builds and native
+acceptance” on their respective native runner labels. The browser job also passed
+paired progress backup on the accepted engines and authenticated admin coverage.
+
+[Retained CI metadata](postgres-only-content-retirement-ci-evidence.json) records
+run identity, commit, runner labels and job/step outcomes. Individual uploaded
+artifacts were not downloaded; no claims beyond verified job/step outcomes are
+made. This supersedes the pending-CI status in the earlier local checkpoints.
+No blocking retirement findings remain. The requested JSON database/workflow
+retirement is complete, and this tracker and its CI evidence are moved to `done`.
+Broader hosted identity, off-device retention and device/accessibility gates stay
+with their existing trackers. This documentation closeout made no application,
+authoritative database, allocation journal, deployment or publication changes.
 
 ## Final local completion audit — 2026-10-16
 
@@ -636,7 +655,7 @@ corpus; required CI exercises the replacement workflow end to end.
   against the routine authority; run destructive CRUD/restart/recovery tests only
   against owned disposable targets. Account for legitimate concurrent user edits
   explicitly rather than overwriting them to match an earlier baseline.
-- [ ] Run the completion audit, attach evidence/results and final size comparison,
+- [x] Run the completion audit, attach evidence/results and final size comparison,
   and move this tracker to `docs/work/done` only after all in-scope gates pass.
 
 ## Required acceptance evidence

@@ -1,6 +1,6 @@
 # Public deployment acceptance after L6
 
-Content-source update (2026-10-16): the [PostgreSQL-only retirement](postgres-only-content-retirement-plan.md) removes repository JSON databases, runtime read fallbacks and file-authoring modes. PostgreSQL and authenticated HTTP CRUD are the current contract; earlier stage statements and machine evidence below remain historical. This does not close unrelated hosted identity, retention, device or deployment gates.
+Content-source update (2026-10-16): the [PostgreSQL-only retirement](../done/postgres-only-content-retirement-plan.md) removes repository JSON databases, runtime read fallbacks and file-authoring modes. PostgreSQL and authenticated HTTP CRUD are the current contract; earlier stage statements and machine evidence below remain historical. This does not close unrelated hosted identity, retention, device or deployment gates.
 
 Created: 2026-10-15 (Asia/Manila). Status: pending; local candidate accepted, public launch blocked. This checklist records subsequent obligations only; it does not authorize provisioning or deployment.
 

@@ -1,6 +1,6 @@
 # L4 local outcome audit — 2026-10-14
 
-Content-source update (2026-10-16): the [PostgreSQL-only retirement](postgres-only-content-retirement-plan.md) removes repository JSON databases, runtime read fallbacks and file-authoring modes. PostgreSQL and authenticated HTTP CRUD are the current contract; earlier stage statements and machine evidence below remain historical. This does not close unrelated hosted identity, retention, device or deployment gates.
+Content-source update (2026-10-16): the [PostgreSQL-only retirement](../done/postgres-only-content-retirement-plan.md) removes repository JSON databases, runtime read fallbacks and file-authoring modes. PostgreSQL and authenticated HTTP CRUD are the current contract; earlier stage statements and machine evidence below remain historical. This does not close unrelated hosted identity, retention, device or deployment gates.
 
 Later status: the user-approved local cutover supersedes the pending authority
 and external-copy gates below. See [Step 7 evidence](L4-step7-cutover-evidence.json).
