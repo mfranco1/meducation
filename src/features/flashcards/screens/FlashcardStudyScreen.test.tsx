@@ -56,7 +56,7 @@ describe('FlashcardStudyScreen', () => {
     expect(screen.getByText(/A bold answer with/)).toHaveStyle({ fontWeight: '700' });
     fireEvent.click(screen.getByRole('link', { name: 'a source' }));
     expect(onReveal).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' }));
+    fireEvent.click(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }));
     expect(onReveal).toHaveBeenCalledOnce();
   });
 
@@ -106,7 +106,7 @@ describe('FlashcardStudyScreen', () => {
     render(<ThemeProvider theme={theme}><KeyboardDeck /></ThemeProvider>);
 
     fireEvent.keyDown(window, { code: 'Space' });
-    const revealedAnswer = screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' });
+    const revealedAnswer = screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' });
     expect(revealedAnswer).toHaveFocus();
     expect(document.querySelector('[data-space-nav-focus-ring="suppressed"]')).toBeInTheDocument();
     fireEvent.keyDown(revealedAnswer, { key: 'Tab' });
@@ -115,10 +115,23 @@ describe('FlashcardStudyScreen', () => {
     expect(screen.getByText('Card 2 of 2')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeInTheDocument();
     fireEvent.keyDown(window, { code: 'Space' });
-    expect(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' })).toBeInTheDocument();
+    expect(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' })).toBeInTheDocument();
     fireEvent.keyDown(window, { code: 'Space' });
     expect(screen.getByText('Card 2 of 2')).toBeInTheDocument();
     expect(onFinish).not.toHaveBeenCalled();
+  });
+
+  it('uses Enter like Space to reveal and then advance', () => {
+    function KeyboardDeck() {
+      const [index, setIndex] = useState(0);
+      const [revealed, setRevealed] = useState(false);
+      return <FlashcardStudyScreen deck={deck} cards={cards} index={index} revealed={revealed} onReveal={() => setRevealed(value => !value)} onNext={() => { setIndex(value => value + 1); setRevealed(false); }} onPrevious={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} />;
+    }
+    render(<ThemeProvider theme={theme}><KeyboardDeck /></ThemeProvider>);
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'Enter' });
+    expect(screen.getByText('Card 2 of 2')).toBeInTheDocument();
   });
 
   it('uses unmodified arrow keys for bounded previous and next navigation', () => {

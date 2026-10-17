@@ -23,11 +23,12 @@ Meducation is a local-first study app for quizzes and flashcards. Content comes 
 - **Browse Answers** is read-only, shows correct answers and explanations, and writes nothing, so it is excluded from activity, scores and trends.
 - After an Exam submission, **Review results** shows every submitted answer read-only with All, Wrong and Flagged filters and requires confirmation to leave; leaving ends the transient review and keeps the score. Results show an animated score ring that respects reduced motion.
 - Left and Right Arrow move through questions in the active quiz, Browse and Review. They never finish or exit, pause while a drawer or dialog is open, and leave answer radios, editable controls and links alone.
+- Keys 1-9 or A-I choose the matching answer: Exam Mode selects (changeable) and Fast Feedback submits. They pause like arrows, but a focused answer radio does not block them.
 - Saved attempts record a per-quiz content signature. If it is missing or the questions or answers changed, Resume explains and offers an explicit restart; keeping the saved attempt leaves it untouched. Storage failures never advance to a success screen. A stale tab must reload before editing; use one tab per test.
 
 ## Flashcards
 
-- The front stays visible above an answer panel. Click or Space reveals a bold rich answer with its source; Space on a revealed card advances; clicking a revealed answer hides it. Left and Right navigate from anywhere on the screen (never wrapping), and the last card still requires **Finish**.
+- The front stays visible above an answer panel. Click, Space or Enter reveals a bold rich answer with its source; Space or Enter on a revealed card advances; clicking a revealed answer hides it. Left and Right navigate from anywhere on the screen (never wrapping), and the last card still requires **Finish**.
 - A Cards navigator filters All, Hidden and Flagged in deck order. Opened and flagged cards persist across resume; resume shows the saved card's front. Finish clears the active position and increments the deck's completion count; save-and-exit and restart do not.
 - The dashboard shows **Completed**, **Average** and **Highest** (decks finished, decks per local day including idle days, and the best single day). Daily figures begin with the first finish after daily tracking started and keep the local date recorded at finish.
 

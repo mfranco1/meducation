@@ -1,9 +1,10 @@
-/** Shared guards for study shortcuts. Keep native editing and widget keys untouched. */
-export function canHandleStudyShortcut(event: KeyboardEvent, key: 'arrow' | 'space') {
+/** Shared guards for study shortcuts. Keep native editing and widget keys untouched. Use 'space' for Space and Enter; 'choice' lets a focused answer radio through. */
+export function canHandleStudyShortcut(event: KeyboardEvent, key: 'arrow' | 'space' | 'choice') {
   if (event.defaultPrevented || event.isComposing || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return false;
   const target = event.target;
   if (target instanceof HTMLElement) {
-    if (target.isContentEditable || target.closest('[contenteditable="true"], input, textarea, select, a, [aria-modal="true"]')) return false;
+    const isChoiceRadio = key === 'choice' && target.matches('input[type="radio"]');
+    if (target.isContentEditable || (!isChoiceRadio && target.closest('[contenteditable="true"], input, textarea, select, a, [aria-modal="true"]'))) return false;
     if (key === 'space' && target.closest('button, [role="button"]')) return false;
     if (key === 'arrow' && target.closest('[role="tablist"], [role="tab"], [role="slider"], [role="spinbutton"], [role="menu"], [role="menubar"], [role="menuitem"], [role="listbox"], [role="option"], [role="tree"], [role="treeitem"], [role="grid"], [role="radiogroup"], [role="radio"]')) return false;
   }

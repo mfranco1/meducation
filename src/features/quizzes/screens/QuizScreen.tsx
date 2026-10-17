@@ -14,6 +14,7 @@ import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavig
 import { Stopwatch } from '../components/quiz/Stopwatch';
 import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
 import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/StudyHeader';
+import { canHandleStudyShortcut } from '../../../shared/ui/study/studyKeyboard';
 import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
 
 interface QuizScreenProps {
@@ -70,6 +71,19 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     setSubmitOpen(false);
     onFinish();
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      const choiceIndex = /^[1-9]$/.test(key) ? Number(key) - 1 : /^[a-i]$/.test(key) ? key.charCodeAt(0) - 97 : -1;
+      const choice = question.choices[choiceIndex];
+      if (!choice || navigatorOpen || submitOpen || event.repeat || !canHandleStudyShortcut(event, 'choice')) return;
+      event.preventDefault();
+      select(choice.id);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
 
   useEffect(() => {
     if (!correctAnswerBurst) return;

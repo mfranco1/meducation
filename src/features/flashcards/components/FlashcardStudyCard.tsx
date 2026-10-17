@@ -140,7 +140,7 @@ export function FlashcardStudyCard({
                 disableRipple
                 onClick={onReveal}
                 onKeyDown={(event) => {
-                  if (event.code === 'Space' && !event.repeat) onSuppressFocusRing();
+                  if ((event.code === 'Space' || event.key === 'Enter') && !event.repeat) onSuppressFocusRing();
                 }}
                 aria-label="Reveal answer"
                 aria-hidden={revealed}
@@ -185,7 +185,7 @@ export function FlashcardStudyCard({
               <Box
                 ref={setBackFaceRef}
                 role="group"
-                aria-label="Answer revealed. Click to hide or press Space to continue."
+                aria-label="Answer revealed. Click to hide or press Space or Enter to continue."
                 tabIndex={revealed ? 0 : -1}
                 aria-hidden={!revealed}
                 inert={!revealed}

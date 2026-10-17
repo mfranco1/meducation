@@ -61,8 +61,8 @@ export function FlashcardStudyScreen({
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      const isSpace = event.code === 'Space';
-      if (!isSpace || !canHandleStudyShortcut(event, 'space') || saving || !card || navigatorOpen) return;
+      const isActivate = event.code === 'Space' || event.key === 'Enter';
+      if (!isActivate || !canHandleStudyShortcut(event, 'space') || saving || !card || navigatorOpen) return;
       if (event.repeat) {
         event.preventDefault();
         return;

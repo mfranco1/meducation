@@ -49,6 +49,29 @@ describe('quiz streak celebrations', () => {
 
   });
 
+  it('chooses answers with number and letter keys, selecting in Exam Mode and locking in Fast Feedback', () => {
+    const threeChoices: Question = { ...questions[0], choices: [{ id: 'A', text: 'First' }, { id: 'B', text: 'Second' }, { id: 'C', text: 'Third' }], verifiedAnswer: 'B' };
+    const renderWith = (attempt: Attempt) => render(<ThemeProvider theme={theme}><QuizHarnessFor attempt={attempt} /></ThemeProvider>);
+    function QuizHarnessFor({ attempt: initial }: { attempt: Attempt }) {
+      const [attempt, setAttempt] = useState(initial);
+      return <QuizScreen quiz={quiz} attempt={attempt} index={0} questions={[threeChoices]} onCheckpoint={next => setAttempt(next)} onFinish={() => {}} onRequestExit={() => {}} />;
+    }
+    const { unmount } = renderWith({ ...startingAttempt, feedbackMode: 'exam' });
+    fireEvent.keyDown(window, { key: '2' });
+    expect(screen.getByRole('radio', { name: /Second/ })).toBeChecked();
+    fireEvent.keyDown(window, { key: 'c' });
+    expect(screen.getByRole('radio', { name: /Third/ })).toBeChecked();
+    expect(screen.queryByText('Rationale')).toBeNull();
+    unmount();
+
+    renderWith(startingAttempt);
+    fireEvent.keyDown(screen.getByRole('radio', { name: /First/ }), { key: 'B' });
+    expect(screen.getByRole('radio', { name: /Second/ })).toBeChecked();
+    expect(screen.getByText('Rationale')).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'c' });
+    expect(screen.getByRole('radio', { name: /Second/ })).toBeChecked();
+  });
+
   it('renders a LaTeX stem and revealed rationale in Fast Feedback', () => {
     const mathQuestion: Question = {
       ...questions[0], stem: 'Calculate $x^2$.', rationale: 'Use $x^2+y^2=z^2$.',
