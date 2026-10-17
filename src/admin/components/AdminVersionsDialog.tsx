@@ -13,7 +13,8 @@ import {
 } from '@mui/material';
 export interface PublishedVersion {
   releaseId: string;
-  latestPublicationSequence: string;
+  latestPublicationSequence: number | null;
+  active?: boolean;
 }
 export function AdminVersionsDialog({
   open,
@@ -53,7 +54,7 @@ export function AdminVersionsDialog({
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {error && <Alert severity="error">{error}</Alert>}
-          <Typography>Using a published version changes learner content and preserves the saved draft.</Typography>
+          <Typography>Using a published version changes learner content and preserves the draft.</Typography>
           {busy && <Typography role="status">Loading versions…</Typography>}
           {!error && !busy && !versions.length && <Alert severity="info">No published versions found.</Alert>}
           <TextField
@@ -67,7 +68,7 @@ export function AdminVersionsDialog({
             <option value="">Choose a version</option>
             {versions.map((v) => (
               <option key={v.releaseId} value={v.releaseId}>
-                Publication {v.latestPublicationSequence} · {v.releaseId}
+                Publication {v.latestPublicationSequence ?? '—'} · {v.releaseId}{v.active ? ' · current' : ''}
               </option>
             ))}
           </TextField>

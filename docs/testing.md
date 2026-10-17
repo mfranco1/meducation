@@ -29,7 +29,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 
 - Any code change: focused tests, `npm run lint`, `npm run build`.
 - Learner UI, navigation, sessions, loaders: affected learner browser flows on a fresh learner build; the full learner suite for shared navigation or loading.
-- Admin UI, gateway, authoring: admin browser suite and `build:admin`.
+- Admin UI, record store, authoring: admin browser suite and `build:admin`.
 - Shared UI, content rendering, entry points, lazy boundaries: build both entries and run affected flows in both apps. The ordinary build must omit `admin.html`; the admin build must include it.
 - Persistence and backup: codec validation, restore rollback and dialog-flow unit tests plus the learner browser suite.
 - Backend, stored contracts, policy, shared fixtures: Ruff, mypy, pytest and the real-PostgreSQL gate. Run `npm run build:content-policy` first.
@@ -40,9 +40,9 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 
 ## Fixtures and ownership
 
-- `tests/fixtures/`: `bank-contract-cases.json` (shared by TypeScript and Python stored-bank validators), `paired-authoring-cases.json` (rich content, limits and edit cases), `api-response-cases.json`, `storage-boundary-cases.json`, `question-bank.json`, `empty-flashcard-bank.json`, `flashcard-bank-contract.json`, `progress-backups/`.
+- `tests/fixtures/`: `bank-contract-cases.json` (shared by TypeScript and Python stored-bank validators), `paired-authoring-cases.json` (rich content, limits and edit cases), `api-response-cases.json`, `storage-boundary-cases.json`, `question-bank.json`, `empty-flashcard-bank.json`, `draft-roundtrip-pair.json` (every optional field and non-canonical key order), `flashcard-bank-contract.json`, `progress-backups/`.
 - `src/test/`: Vitest setup (`setup.ts`), `contentFixtures.ts` (admin banks) and `runtimeContentFixtures.ts` (API DTOs). Fixture IDs must stay valid under the API decoders.
-- `e2e/`: learner and `admin-http` specs plus `e2e/fixtures` banks seeded into disposable PostgreSQL. `backend/tests`: backend and PostgreSQL tests with fixtures in `fixture_content.py`.
+- `e2e/`: learner and `admin-http` specs plus `e2e/fixtures` banks seeded into disposable PostgreSQL. `backend/tests`: backend and PostgreSQL tests (`test_postgres_content.py`, `test_draft_records.py`) with fixtures in `fixture_content.py`.
 - Unit tests live beside their modules. Architecture tests use Node's runner and are excluded from Vitest.
 - Do not assert production record counts or individual authored records; use small versioned fixtures.
 
@@ -53,8 +53,8 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Progress reads use only current v2 keys; malformed stored state is preserved and surfaced; failed writes never advance to a success screen; a stale tab must reload.
 - Changed content never silently resumes an old attempt or checkpoint.
 - Backup restore replaces both progress stores and restores both original values if a write fails.
-- Saving a draft never publishes; protected writes need session, Origin, CSRF and freshness; uncertain writes are reconciled, never blindly resent; unsaved editor text survives expiry, conflict and cancel.
-- Reservations stay burned; allocation stays closed outside admitted ranges.
+- Saving a draft record never publishes; protected writes need session, Origin, CSRF and freshness; stale versions return 409 and rejected writes leave no change row; unsaved editor text survives expiry, conflict and cancel.
+- Draft IDs are never reused after delete or restore; an unchanged draft rebuilds byte-identical release artifacts.
 - Learner content loading retries and times out within bounds, ignores stale responses, and shows recoverable states without altering saved progress.
 - Keyboard shortcuts pause for dialogs and drawers and keep native behavior in form controls; reduced motion is honored.
 - Layouts have no horizontal overflow at 390, 1048 and 1440 px.

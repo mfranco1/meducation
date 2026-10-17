@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { storedQuestionBank, storedFlashcardBank } from '../../test/contentFixtures';
 import {
   addDraftChoice,
-  adoptReservedDraftId,
+  adoptServerId,
+  newRecordTemplate,
+  planSave,
+  toRecordText,
   moveDraftChoice,
   patchChoiceText,
   patchNestedDraft,
@@ -111,14 +114,47 @@ describe('exact-preserving record draft adapters', () => {
   });
 });
 
-it('adopts only the committed reservation ID in newer valid drafts and keeps invalid or deliberately changed source exact', () => {
-  const newer = { ...source, id: 'provisional', stem: 'Newer authored source\n$x^2$' };
-  expect(JSON.parse(adoptReservedDraftId(JSON.stringify(newer), 'provisional', 'i-reserved'))).toEqual({
-    ...newer,
-    id: 'i-reserved',
-  });
+it('adopts the server ID only for a new record draft, keeping newer or invalid source exact', () => {
+  const newer = { ...source, id: '', stem: 'Newer authored source\n$x^2$' };
+  expect(JSON.parse(adoptServerId(JSON.stringify(newer), 'i91'))).toEqual({ ...newer, id: 'i91' });
   const invalid = '{ exact newer invalid\n';
-  expect(adoptReservedDraftId(invalid, 'provisional', 'i-reserved')).toBe(invalid);
+  expect(adoptServerId(invalid, 'i91')).toBe(invalid);
   const different = JSON.stringify({ ...newer, id: 'deliberately-changed' });
-  expect(adoptReservedDraftId(different, 'provisional', 'i-reserved')).toBe(different);
+  expect(adoptServerId(different, 'i91')).toBe(different);
+});
+
+describe('record save planning', () => {
+  const stored = { ...storedQuestionBank.questions[0], version: 3 };
+  it('shows the stored record without its concurrency version', () => {
+    expect(JSON.parse(toRecordText(stored))).toEqual(storedQuestionBank.questions[0]);
+  });
+  it('patches only changed fields and removes optional fields the author deleted', () => {
+    const edited = { ...storedQuestionBank.questions[0], stem: 'Changed', answerNote: 'Added' } as Record<string, unknown>;
+    delete edited.rationale;
+    delete edited.pearls;
+    const plan = planSave('question', JSON.stringify(edited), stored);
+    expect(plan).toEqual({ fields: { stem: 'Changed', answerNote: 'Added', rationale: null, ...('pearls' in stored ? { pearls: null } : {}) }, parentId: stored.quizId, moveTo: undefined });
+  });
+  it('sends nothing for unchanged text and plans a move when only the parent changed', () => {
+    expect(planSave('question', toRecordText(stored), stored)).toMatchObject({ fields: {}, moveTo: undefined });
+    expect(planSave('question', JSON.stringify({ ...stored, quizId: 'q9' }), stored)).toMatchObject({ fields: {}, moveTo: 'q9' });
+  });
+  it('creates from every authored field, leaving the ID and parent to the server call', () => {
+    const plan = planSave('quiz', JSON.stringify(newRecordTemplate('quiz', 's1')));
+    expect(plan).toEqual({ fields: { name: '' }, parentId: 's1', moveTo: undefined });
+    expect(planSave('subject', JSON.stringify(newRecordTemplate('subject')))).toMatchObject({ fields: { name: '', accent: '#bc531e' } });
+  });
+  it('refuses unusable text and ID changes before any request, and passes unknown fields to the server', () => {
+    expect(planSave('question', '{ nope', stored)).toEqual({ error: 'Record JSON is invalid.' });
+    expect(planSave('question', '[]', stored)).toEqual({ error: 'Record must be a JSON object.' });
+    expect(planSave('question', JSON.stringify({ ...stored, id: 'i2' }), stored)).toEqual({
+      error: 'IDs are stable and cannot be changed.',
+    });
+    expect(planSave('card', JSON.stringify({ id: '', deckId: '', front: 'a', back: 'b' }))).toEqual({
+      error: 'deckId must name the parent record.',
+    });
+    expect(planSave('subject', JSON.stringify({ id: 's1', name: 'N', accent: '#fff', legacy: 1 }), { id: 's1', name: 'N', accent: '#fff' })).toMatchObject({
+      fields: { legacy: 1 },
+    });
+  });
 });

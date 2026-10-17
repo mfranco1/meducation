@@ -1,41 +1,41 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { AdminRecoveryBanner } from './components/AdminRecoveryBanner';
+import { describe, expect, it, vi } from 'vitest';
 import { FlashcardAdminPanel } from './FlashcardAdminPanel';
 import { theme } from '../shared/theme';
-import type { StoredFlashcardBank } from '../content/schema/schema';
+import { createAdminStore } from '../test/adminGateway';
+import { storedFlashcardBank, storedQuestionBank } from '../test/contentFixtures';
 
-const subjects = [{ id: 's1', name: 'Subject', accent: '#123456' }];
-const bank = (): StoredFlashcardBank => ({
-  schemaVersion: 2,
-  decks: [{ id: 'd1', subjectId: 's1', name: 'Deck' }],
-  cards: [{ id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' }],
-});
-function mount(save = vi.fn<(next: StoredFlashcardBank, reason: string) => Promise<StoredFlashcardBank>>(async next => next)) {
-  const props: Parameters<typeof FlashcardAdminPanel>[0] = {
-    subjects, serverBank: bank(), quizRevision: 'quiz-revision', onSaveBank: save,
-    quizBank: { schemaVersion: 4 as const, subjects, quizzes: [], questions: [] },
-    onAddSubject: vi.fn(), onManageSubjects: vi.fn(), onEditSubject: vi.fn(), onDeleteSubject: vi.fn(),
+function mount(blocked = false) {
+  const store = createAdminStore(structuredClone(storedQuestionBank), structuredClone(storedFlashcardBank));
+  const props = {
+    onDelete: vi.fn(),
+    onAddSubject: vi.fn(),
+    onEditSubject: vi.fn(),
+    onManageSubjects: vi.fn(),
+    onDeleteSubject: vi.fn(),
+    onDirtyChange: vi.fn(),
   };
-  const renderEditor = () => <ThemeProvider theme={theme}><FlashcardAdminPanel {...props} /></ThemeProvider>;
-  props.onSaveBank = async (next, reason) => {
-    const saved = await save(next, reason);
-    props.serverBank = saved;
-    view.rerender(renderEditor());
-    return saved;
-  };
-  const view = render(renderEditor());
-  return { ...view, save, props };
+  const element = (isBlocked: boolean) => (
+    <ThemeProvider theme={theme}>
+      <FlashcardAdminPanel store={store} blocked={isBlocked} {...props} />
+    </ThemeProvider>
+  );
+  const view = render(element(blocked));
+  return { store, props, ...view, setBlocked: (value: boolean) => view.rerender(element(value)) };
 }
-function chooseSubject() {
+const requests = (store: ReturnType<typeof mount>['store']) =>
+  store.fetcher.mock.calls.map(([url, init]) => `${init?.method ?? 'GET'} ${String(url).replace('/api/admin', '')}`);
+async function chooseSubject() {
   fireEvent.click(screen.getAllByTitle('Open')[0]);
-  fireEvent.click(screen.getByRole('option', { name: 'Subject' }));
+  fireEvent.click(screen.getByRole('option', { name: 'Subject One' }));
+  await screen.findByRole('combobox', { name: 'Deck' });
 }
-function chooseDeck() {
-  chooseSubject();
+async function chooseDeck() {
+  await chooseSubject();
   fireEvent.click(screen.getAllByTitle('Open')[1]);
-  fireEvent.click(screen.getByRole('option', { name: 'Deck · 1 cards' }));
+  fireEvent.click(screen.getByRole('option', { name: 'Cranial nerves · 2 cards' }));
+  await screen.findByRole('button', { name: /^1\. CN/ });
 }
 function action(name: string) {
   fireEvent.click(screen.getByRole('button', { name: 'Record actions' }));
@@ -46,256 +46,185 @@ const editor = () => {
   if (tab) fireEvent.click(tab);
   return screen.getByRole('textbox', { name: 'JSON' });
 };
-function edit(value: unknown) {
-  fireEvent.change(editor(), { target: { value: JSON.stringify(value) } });
-}
-afterEach(() => vi.restoreAllMocks());
+const openFirstCard = () => fireEvent.click(screen.getByRole('button', { name: /^1\. CN/ }));
+const card = storedFlashcardBank.cards[0];
+const openBulk = (button: string) => {
+  fireEvent.click(within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: button }));
+  return screen.getByRole('dialog', { name: button === 'Add decks' ? 'Add Decks' : 'Add Cards' });
+};
 
-describe('PostgreSQL flashcard editor', () => {
-  it('installs only the successful receipt and adopts reserved IDs for new records', async () => {
-    const saved = { ...bank(), decks: [...bank().decks, { id: 'd42', subjectId: 's1', name: 'New saved deck' }] };
-    const { save } = mount(vi.fn().mockResolvedValue(saved));
-    chooseSubject();
+describe('flashcard editor over the record API', () => {
+  it('creates a deck with one POST, adopts the server ID and shows it in the deck list', async () => {
+    const { store } = mount();
+    await chooseSubject();
     action('New deck');
-    const template = JSON.parse((editor() as HTMLInputElement).value);
-    edit({ ...template, name: 'New saved deck' });
-    fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
-    await waitFor(() => expect(editor()).toHaveValue(JSON.stringify(saved.decks[1], null, 2)));
-    expect(save).toHaveBeenCalledTimes(1);
-    expect(save.mock.calls[0][0].decks.at(-1)!.id).toBe(template.id);
+    expect(screen.getByRole('textbox', { name: 'ID' })).toHaveValue('');
+    fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'New saved deck' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'ID' })).toHaveValue('d-new91'));
+    expect(requests(store)).toEqual(['POST /draft/decks', 'GET /draft']);
+    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ parentId: 's1', fields: { name: 'New saved deck' } });
     expect(screen.getByRole('combobox', { name: 'Deck' })).toHaveValue('New saved deck · 0 cards');
-    expect(screen.queryByRole('button', { name: 'Workspace' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
   });
 
-  it('keeps unsaved text and the saved bank when HTTP rejects a write', async () => {
-    const { save } = mount(vi.fn().mockRejectedValue(new Error('Draft context changed')));
-    chooseDeck();
-    fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
-    const text = JSON.stringify({ ...bank().cards[0], front: 'Unsaved front' });
+  it('saves a card edit as one patch of the changed field and shows the returned record', async () => {
+    const { store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    fireEvent.change(editor(), { target: { value: JSON.stringify({ ...card, back: 'Exact newer text\n$x^2$' }) } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(store.find('card', 'f-1')).toMatchObject({ back: 'Exact newer text\n$x^2$', version: 2 }));
+    expect(requests(store)).toEqual(['PUT /draft/cards/f-1']);
+    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({
+      expectedVersion: 1,
+      fields: { back: 'Exact newer text\n$x^2$' },
+    });
+    expect(await screen.findByText(/Saved to the draft/)).toBeVisible();
+  });
+
+  it('keeps unsaved text and shows the server issues when the server rejects a write', async () => {
+    const { store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    store.rejectNext([{ path: '$.record.front', code: 'unsafe', message: 'Unsupported HTML.' }]);
+    const text = JSON.stringify({ ...card, front: '<script>x</script>' });
     fireEvent.change(editor(), { target: { value: text } });
-    fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
-    expect(await screen.findByText(/Draft context changed/)).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('$.record.front: Unsupported HTML.')).toBeVisible();
     expect(editor()).toHaveValue(text);
-    expect(save).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: /1\. Front/ })).toHaveTextContent('Front');
+    expect(screen.getByRole('button', { name: /^1\. CN/ })).toHaveTextContent('CN');
+    expect(store.find('card', 'f-1')).toMatchObject({ version: 1 });
   });
 
-  it('protects unsaved text across a server refresh and clears it only on explicit discard', async () => {
-    const { props, rerender } = mount();
-    chooseDeck();
-    fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
-    edit({ ...bank().cards[0], front: 'Unsaved text' });
-    const text = (editor() as HTMLInputElement).value;
-    rerender(
-      <ThemeProvider theme={theme}>
-        <FlashcardAdminPanel
-          {...props}
-          serverBank={{ ...bank(), cards: [{ ...bank().cards[0], back: 'Server update' }] }}
-        />
-      </ThemeProvider>,
-    );
+  it('shows the server version on a conflict and keeps the author text until they choose', async () => {
+    const { store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    store.editElsewhere('cards', 'f-1', { back: 'Changed by someone else' });
+    const text = JSON.stringify({ ...card, front: 'My front' });
+    fireEvent.change(editor(), { target: { value: text } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText(/changed on the server after you opened it/)).toBeVisible();
     expect(editor()).toHaveValue(text);
-    rerender(
-      <ThemeProvider theme={theme}>
-        <FlashcardAdminPanel {...props} discardRequest={1} />
-      </ThemeProvider>,
-    );
-    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'JSON' })).not.toBeInTheDocument());
+    fireEvent.click(screen.getByText('Server version'));
+    expect(screen.getByLabelText('Server version')).toHaveTextContent('Changed by someone else');
+    fireEvent.click(screen.getByRole('button', { name: 'Keep my text' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(store.find('card', 'f-1')).toMatchObject({ front: 'My front', back: 'Changed by someone else', version: 3 }));
   });
 
-  it('rejects malformed edits before making a durable request', async () => {
-    const { save } = mount();
-    chooseDeck();
-    fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
-    edit({ ...bank().cards[0], id: 'f2', front: 'Changed ID' });
-    fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
+  it('rejects an ID change before making any request', async () => {
+    const { store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    fireEvent.change(editor(), { target: { value: JSON.stringify({ ...card, id: 'f-9' }) } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText(/IDs are stable and cannot be changed/)).toBeVisible();
-    expect(save).not.toHaveBeenCalled();
+    expect(store.fetcher).not.toHaveBeenCalled();
   });
 
-  it('requires a valid bulk preview and saves nested decks and cards in one request', async () => {
-    const { save } = mount();
-    chooseSubject();
-    fireEvent.click(
-      within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: 'Add decks' }),
-    );
-    const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
-    const json = within(dialog).getByRole('textbox', { name: 'JSON' });
-    fireEvent.change(json, {
+  it('adds nested decks and cards in bulk: one create per deck and one bulk request per populated deck', async () => {
+    const { store } = mount();
+    await chooseSubject();
+    const dialog = openBulk('Add decks');
+    fireEvent.change(within(dialog).getByRole('textbox', { name: 'JSON' }), {
       target: {
         value: JSON.stringify({
-          decks: [
-            { name: 'Nested deck', cards: [{ front: 'Exact $x^2$ front', back: 'Back\n' }] },
-            { name: 'Empty deck' },
-          ],
+          decks: [{ name: 'Nested deck', cards: [{ front: 'Exact $x^2$ front', back: 'Back\n' }] }, { name: 'Empty deck' }],
         }),
       },
     });
-    expect(within(dialog).queryByRole('button', { name: 'Review save' })).toBeNull();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
-    fireEvent.click(await within(dialog).findByRole('button', { name: 'Review save' }));
-    await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
-    const candidate = save.mock.calls[0][0];
-    expect(candidate.decks.map((row) => row.name)).toEqual(['Deck', 'Nested deck', 'Empty deck']);
-    expect(candidate.cards[1]).toMatchObject({
-      deckId: candidate.decks[1].id,
-      front: 'Exact $x^2$ front',
-      back: 'Back\n',
-    });
-    expect(candidate.cards[0]).toEqual(bank().cards[0]);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-  });
-
-  it('does not save an invalid nested card or reuse a preview after its text changes', async () => {
-    const { save } = mount();
-    chooseSubject();
-    fireEvent.click(
-      within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: 'Add decks' }),
-    );
-    const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
-    const json = within(dialog).getByRole('textbox', { name: 'JSON' });
-    fireEvent.change(json, {
-      target: { value: JSON.stringify({ decks: [{ name: 'Invalid', cards: [{ front: 'Front' }] }] }) },
+    expect(requests(store)).toEqual([
+      'POST /draft/decks',
+      'POST /draft/decks/d-new91/cards/bulk',
+      'POST /draft/decks',
+      'GET /draft',
+    ]);
+    expect(JSON.parse(store.fetcher.mock.calls[1][1]!.body as string)).toEqual({
+      records: [{ front: 'Exact $x^2$ front', back: 'Back\n' }],
     });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
-    await waitFor(() => expect(within(dialog).getByRole('alert')).toBeVisible());
-    expect(save).not.toHaveBeenCalled();
-    fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Valid', cards: [] }] }) } });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
-    await within(dialog).findByRole('button', { name: 'Review save' });
-    fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Changed', cards: [] }] }) } });
-    expect(within(dialog).queryByRole('button', { name: 'Review save' })).toBeNull();
-    expect(save).not.toHaveBeenCalled();
+    expect(store.snapshot.decks.map((deck) => deck.name)).toEqual(['Cranial nerves', 'No cards yet', 'Nested deck', 'Empty deck']);
+    expect(screen.getByRole('combobox', { name: 'Deck' })).toHaveValue('Nested deck · 1 cards');
   });
-});
 
-it('blocks flashcard saves during another command while allowing newer text to be kept', () => {
-  const { props, rerender, save } = mount();
-  chooseDeck();
-  fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
-  const onEdit = vi.fn();
-  rerender(
-    <ThemeProvider theme={theme}>
-      <FlashcardAdminPanel {...props} externalBusy onEdit={onEdit} />
-    </ThemeProvider>,
-  );
-  expect(screen.getByRole('button', { name: 'Review save' })).toBeDisabled();
-  expect(screen.getByRole('button', { name: 'Record actions' })).toBeDisabled();
-  const text = JSON.stringify({ ...bank().cards[0], front: 'Newer text while another command is running' });
-  fireEvent.change(editor(), { target: { value: text } });
-  expect(editor()).toHaveValue(text);
-  expect(onEdit).toHaveBeenCalledOnce();
-  expect(save).not.toHaveBeenCalled();
-});
-
-it('keeps save-status recovery reachable inside a blocked bulk dialog without discarding its JSON', () => {
-  const { props, rerender, save } = mount();
-  chooseSubject();
-  fireEvent.click(
-    within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: 'Add decks' }),
-  );
-  const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
-  const json = within(dialog).getByRole('textbox', { name: 'JSON' });
-  const text = '{"decks":[{"name":"Retained batch","cards":[{"front":"Exact front","back":"Exact back"}]}]}';
-  fireEvent.change(json, { target: { value: text } });
-  const check = vi.fn();
-  rerender(
-    <ThemeProvider theme={theme}>
-      <FlashcardAdminPanel {...props} externalBusy recovery={<AdminRecoveryBanner busy={false} onCheck={check} />} />
-    </ThemeProvider>,
-  );
-  expect(json).toHaveValue(text);
-  expect(within(dialog).getByRole('button', { name: 'Preview' })).toBeDisabled();
-  const recovery = within(dialog).getByRole('button', { name: 'Check save status' });
-  expect(recovery).toBeEnabled();
-  fireEvent.click(recovery);
-  expect(check).toHaveBeenCalledOnce();
-  expect(save).not.toHaveBeenCalled();
-  const signIn = vi.fn();
-  rerender(
-    <ThemeProvider theme={theme}>
-      <FlashcardAdminPanel
-        {...props}
-        externalBusy
-        recovery={<AdminRecoveryBanner busy={false} onCheck={check} onSignIn={signIn} />}
-      />
-    </ThemeProvider>,
-  );
-  expect(within(dialog).getByRole('button', { name: 'Check save status' })).toBeDisabled();
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Sign in to continue' }));
-  expect(signIn).toHaveBeenCalledOnce();
-  expect(json).toHaveValue(text);
-});
-
-it('keeps dirty record text until an explicit discard and saves the entered reason', async () => {
-  const { save } = mount();
-  chooseDeck();
-  fireEvent.click(screen.getByRole('button', { name: /1\. Front/ }));
-  const text = JSON.stringify({ ...bank().cards[0], back: 'Exact newer text\n$x^2$' });
-  fireEvent.change(editor(), { target: { value: text } });
-  action('New deck');
-  const discard = screen.getByRole('dialog', { name: 'Discard unsaved edits?' });
-  fireEvent.click(within(discard).getByRole('button', { name: 'Keep editing' }));
-  await waitFor(() => expect(editor()).toHaveValue(text));
-  expect(save).not.toHaveBeenCalled();
-  fireEvent.change(screen.getByRole('textbox', { name: 'Change reason' }), {
-    target: { value: 'Preserve source formatting' },
+  it('does not send an invalid batch and keeps the batch JSON when the server stops part-way', async () => {
+    const { store } = mount();
+    await chooseSubject();
+    const dialog = openBulk('Add decks');
+    const json = within(dialog).getByRole('textbox', { name: 'JSON' });
+    fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Invalid', cards: [{ front: 'Front' }] }] }) } });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('$.decks[0].cards[0].back'));
+    expect(store.fetcher).not.toHaveBeenCalled();
+    const text = JSON.stringify({ decks: [{ name: 'Half saved', cards: [{ front: 'F', back: 'B' }] }] });
+    fireEvent.change(json, { target: { value: text } });
+    store.rejectNext([{ path: '$.records[0].front', code: 'blank', message: 'Front is required.' }], /\/bulk$/);
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
+    expect(await within(dialog).findByText(/Already saved to the draft: parents d-new91/)).toBeVisible();
+    expect(within(dialog).getByText(/\$\.records\[0\]\.front: Front is required\./)).toBeVisible();
+    expect(json).toHaveValue(text);
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
-  await waitFor(() => expect(save).toHaveBeenCalledWith(expect.anything(), 'Preserve source formatting'));
-  expect(save.mock.calls[0][0].cards[0].back).toBe('Exact newer text\n$x^2$');
-  action('New deck');
-  // After a successful save there is no unsaved record text to discard.
-  await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-});
 
-it('keeps a newer form draft editable during a held create and adopts only the reserved ID', async () => {
-  let finish!: (value: StoredFlashcardBank) => void;
-  const save = vi.fn(
-    () =>
-      new Promise<StoredFlashcardBank>((resolve) => {
-        finish = resolve;
-      }),
-  );
-  mount(save);
-  chooseSubject();
-  action('New deck');
-  fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Captured name' } });
-  fireEvent.click(screen.getByRole('button', { name: 'Review save' }));
-  await waitFor(() => expect(save).toHaveBeenCalledOnce());
-  expect(screen.getByRole('textbox', { name: 'Name' })).not.toBeDisabled();
-  fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'Newer exact $x^2$ name' } });
-  finish({ ...bank(), decks: [...bank().decks, { id: 'd-reserved', subjectId: 's1', name: 'Captured name' }] });
-  await waitFor(() => expect(screen.getByRole('textbox', { name: 'ID' })).toHaveValue('d-reserved'));
-  expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue('Newer exact $x^2$ name');
-  expect(screen.getByText('Unsaved edits')).toBeVisible();
-  expect(save).toHaveBeenCalledOnce();
-});
+  it('moves a card up or down with the move route and follows it in the list', async () => {
+    const { store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    fireEvent.click(screen.getByRole('button', { name: 'Record actions' }));
+    expect(screen.getByRole('menuitem', { name: 'Move up' })).toHaveAttribute('aria-disabled', 'true');
+    fireEvent.click(screen.getByRole('menuitem', { name: 'Move down' }));
+    await waitFor(() => expect(store.snapshot.cards.map((row) => row.id)).toEqual(['f-2', 'f-1']));
+    expect(requests(store)).toEqual(['POST /draft/cards/f-1/move', 'GET /draft']);
+    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ expectedVersion: 1, afterId: 'f-2' });
+    await waitFor(() => expect(screen.getByRole('button', { name: /^2\. CN/ })).toHaveClass('Mui-selected'));
+  });
 
-it('keeps newer batch JSON after a captured batch commits without replaying it', async () => {
-  let finish!: (value: StoredFlashcardBank) => void;
-  const save = vi.fn(
-    () =>
-      new Promise<StoredFlashcardBank>((resolve) => {
-        finish = resolve;
-      }),
-  );
-  mount(save);
-  chooseSubject();
-  fireEvent.click(
-    within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: 'Add decks' }),
-  );
-  const dialog = screen.getByRole('dialog', { name: 'Add Decks' });
-  const json = within(dialog).getByRole('textbox', { name: 'JSON' });
-  fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Captured batch' }] }) } });
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Preview' }));
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Review save' }));
-  await waitFor(() => expect(save).toHaveBeenCalledOnce());
-  const newer = JSON.stringify({ decks: [{ name: 'Newer exact batch\n' }] });
-  fireEvent.change(json, { target: { value: newer } });
-  finish({ ...bank(), decks: [...bank().decks, { id: 'd-reserved', subjectId: 's1', name: 'Captured batch' }] });
-  await waitFor(() => expect(within(dialog).getByText(/captured batch was saved/)).toBeVisible());
-  expect(json).toHaveValue(newer);
-  expect(save).toHaveBeenCalledOnce();
+  it('asks for delete confirmation through the shared dialog instead of deleting', async () => {
+    const { props, store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    action('Delete…');
+    expect(props.onDelete).toHaveBeenCalledWith({ selection: { kind: 'card', id: 'f-1' }, label: 'f-1' });
+    expect(store.fetcher).not.toHaveBeenCalled();
+  });
+
+  it('keeps dirty record text until an explicit discard', async () => {
+    const { store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    const text = JSON.stringify({ ...card, back: 'Exact newer text\n$x^2$' });
+    fireEvent.change(editor(), { target: { value: text } });
+    action('New deck');
+    const discard = screen.getByRole('dialog', { name: 'Discard unsaved edits?' });
+    fireEvent.click(within(discard).getByRole('button', { name: 'Keep editing' }));
+    await waitFor(() => expect(editor()).toHaveValue(text));
+    expect(store.fetcher).not.toHaveBeenCalled();
+    action('New deck');
+    fireEvent.click(within(screen.getByRole('dialog', { name: 'Discard unsaved edits?' })).getByRole('button', { name: 'Discard edits' }));
+    await waitFor(() => expect(JSON.parse((editor() as HTMLInputElement).value)).toMatchObject({ id: '', name: 'New deck' }));
+  });
+
+  it('blocks saves during another command while allowing newer text to be kept', async () => {
+    const { setBlocked, store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    setBlocked(true);
+    expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Record actions' })).toBeDisabled();
+    const text = JSON.stringify({ ...card, front: 'Newer text while another command is running' });
+    fireEvent.change(editor(), { target: { value: text } });
+    expect(editor()).toHaveValue(text);
+    expect(store.fetcher).not.toHaveBeenCalled();
+  });
+
+  it('removes a record from view when it disappears from the server', async () => {
+    const { store } = mount();
+    await chooseDeck();
+    openFirstCard();
+    await store.remove('card', [{ id: 'f-1', version: 1 }]);
+    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'JSON' })).toBeNull());
+    expect(screen.queryByText(/olfactorius/)).toBeNull();
+  });
 });

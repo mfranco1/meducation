@@ -72,15 +72,8 @@ test('ESLint preserves composition and shared rendering without letting tests by
   );
   assert.equal(boundaryErrors(await lint("export { App } from '../app/App';", 'src/domain/probe.test.ts')).length, 1);
   assert.equal(
-    boundaryErrors(
-      await lint("export * from '../../admin/core/serializeBank';", 'src/content/validation/bankContract.test.ts'),
-    ).length,
-    0,
-  );
-  assert.equal(
-    boundaryErrors(
-      await lint("export * from '../../admin/core/serializeBank';", 'src/content/validation/probe.test.ts'),
-    ).length,
+    boundaryErrors(await lint("export * from '../../admin/core/navigator';", 'src/content/validation/probe.test.ts'))
+      .length,
     1,
   );
 });

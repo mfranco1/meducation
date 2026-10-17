@@ -1,177 +1,82 @@
-"""Bounded wire contracts; no actor or authentication fields from browsers."""
+"""Bounded wire contracts for the record editor; no actor or authentication fields."""
 
 import re
 from typing import Annotated, Any, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from meducation_api.auth.oidc import AuthError
 
-Decimal = Annotated[str, Field(pattern=r"^(0|[1-9][0-9]{0,18})$")]
-Fingerprint = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
-Reason = Annotated[str, Field(min_length=1, max_length=2000)]
+RecordId = Annotated[str, Field(pattern=r"^[a-zA-Z0-9-]{1,128}$")]
+Version = Annotated[int, Field(ge=1, le=2147483647)]
+MAX_BULK = 1000
+RECORD_BYTES = 1024 * 1024
+BULK_BYTES = 16 * 1024 * 1024
 
 
 class Contract(BaseModel):
     model_config = ConfigDict(extra="forbid", strict=True)
 
 
-class Expected(Contract):
-    draftRevision: Decimal
-    publicationSequence: Decimal
-
-    @model_validator(mode="after")
-    def bounded(self) -> Expected:
-        if any(
-            int(v) > 9223372036854775807 for v in (self.draftRevision, self.publicationSequence)
-        ):
-            raise ValueError("Revision exceeds bigint")
-        return self
+class Create(Contract):
+    parentId: RecordId | None = None
+    # Omitted: append after the parent's last child. Explicit null: first child.
+    afterId: RecordId | None = None
+    fields: dict[str, Any]
 
 
-class Slot(Contract):
-    kind: Literal["s", "q", "i", "d", "f"]
-    count: Annotated[int, Field(ge=1, le=10000)]
-    parentId: str | None = None
-
-    @model_validator(mode="after")
-    def destination(self) -> Slot:
-        if self.kind == "s" and self.parentId is not None or self.kind != "s" and not self.parentId:
-            raise ValueError("Creation destination required")
-        return self
+class Update(Contract):
+    expectedVersion: Version
+    # Top-level merge patch: a key set to null removes that optional field.
+    fields: dict[str, Any]
 
 
-class Intent(Contract):
-    slots: Annotated[list[Slot], Field(min_length=1, max_length=10000)]
+class Delete(Contract):
+    expectedVersion: Version
+    cascade: bool = False
 
 
-class Binding(Intent):
-    reservationId: str
+class Move(Contract):
+    expectedVersion: Version
+    parentId: RecordId | None = None
+    afterId: RecordId | None = None
 
 
-class SaveIntent(Contract):
-    reservations: Annotated[list[Binding], Field(max_length=10000)]
+class Bulk(Contract):
+    afterId: RecordId | None = None
+    records: Annotated[list[dict[str, Any]], Field(min_length=1, max_length=MAX_BULK)]
 
 
-class ContextCommand(Contract):
-    expected: Expected
-    reason: Reason
-
-    @model_validator(mode="after")
-    def nonblank(self) -> ContextCommand:
-        if not self.reason.strip():
-            raise ValueError("Reason required")
-        return self
+class Revert(Contract):
+    expectedVersion: Version | None = None
 
 
-class Mutation(ContextCommand):
-    operationId: str
+class Empty(Contract):
+    pass
 
 
-class Reservation(Mutation):
-    counts: dict[str, int]
-    intent: Intent
-
-    @model_validator(mode="after")
-    def counts_match(self) -> Reservation:
-        totals: dict[str, int] = {}
-        for slot in self.intent.slots:
-            totals[slot.kind] = totals.get(slot.kind, 0) + slot.count
-        if totals != self.counts or not 1 <= sum(totals.values()) <= 10000:
-            raise ValueError("Counts must match creation slots")
-        return self
-
-
-class Candidate(ContextCommand):
-    pair: dict[str, Any]
-    reservationIds: Annotated[list[str], Field(max_length=10000)]
-    intent: SaveIntent
-
-    @model_validator(mode="after")
-    def unique_bindings(self) -> Candidate:
-        ids = self.reservationIds
-        if len(set(ids)) != len(ids) or sorted(ids) != sorted(
-            b.reservationId for b in self.intent.reservations
-        ):
-            raise ValueError("Reservation bindings differ")
-        return self
-
-
-class Save(Candidate):
-    operationId: str
-    previewFingerprint: Fingerprint
-
-
-class Publish(Mutation):
-    previewFingerprint: Fingerprint
-
-
-class Undo(Mutation):
-    targetRevision: Decimal
+class Activate(Contract):
+    expectedPublicationSequence: Annotated[int, Field(ge=0)] | None = None
 
 
 class Export(Contract):
     target: Literal["draft", "release"]
-    draftRevision: Decimal | None = None
-    expected: Expected | None = None
     releaseId: str | None = None
 
-    @model_validator(mode="after")
-    def selection(self) -> Export:
-        if (
-            self.target == "draft"
-            and (self.draftRevision is None or self.expected is None or self.releaseId is not None)
-            or self.target == "release"
-            and (
-                self.releaseId is None
-                or self.draftRevision is not None
-                or self.expected is not None
-            )
-        ):
-            raise ValueError("Exact export target required")
-        return self
 
-
-def parse_contract(cls: type[Contract], value: Any) -> dict[str, Any]:
+def parse_contract(cls: type[Contract], value: Any) -> tuple[dict[str, Any], set[str]]:
+    """Validated fields plus the keys the client actually sent (null vs omitted)."""
     try:
-
-        def protocol_nulls(node: Any) -> None:
-            if node is None:
-                raise ValueError("Omit optional protocol fields instead of null")
-            if isinstance(node, dict):
-                for key, child in node.items():
-                    # Stored bank violations retain the shared content-policy diagnostics.
-                    if key != "pair":
-                        protocol_nulls(child)
-            elif isinstance(node, list):
-                for child in node:
-                    protocol_nulls(child)
-
-        protocol_nulls(value)
-        result = cls.model_validate(value).model_dump(exclude_none=True)
-
-        def uuids(node: Any) -> None:
-            if isinstance(node, dict):
-                for k, v in node.items():
-                    if (
-                        k in ("draftRevision", "publicationSequence", "targetRevision")
-                        and int(v) > 9223372036854775807
-                    ):
-                        raise ValueError("Revision exceeds bigint")
-                    if k in ("operationId", "reservationId", "releaseId"):
-                        uuid_value(v)
-                    elif k == "reservationIds":
-                        for item in v:
-                            uuid_value(item)
-                    elif k != "pair":
-                        uuids(v)
-            elif isinstance(node, list):
-                for item in node:
-                    uuids(item)
-
-        uuids(result)
-        return result
+        if not isinstance(value, dict):
+            raise TypeError("Object required")
+        parsed = cls.model_validate(value)
+        result = parsed.model_dump()
+        if "releaseId" in result and result["releaseId"] is not None:
+            result["releaseId"] = uuid_value(result["releaseId"])
+        if cls is Export and (result["target"] == "release") != (result["releaseId"] is not None):
+            raise ValueError("Exact export target required")
+        return result, set(value)
     except ValidationError, ValueError, TypeError:
         raise AuthError(400, "invalid_admin_envelope") from None
 

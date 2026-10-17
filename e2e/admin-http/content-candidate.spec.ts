@@ -7,15 +7,19 @@ for (const candidate of contentCases()) {
     await page.route('**/api/admin/draft', async (route) => {
       const response = await route.fetch();
       const body = await response.json();
-      body.pair = {
-        quizzes: { schemaVersion: 4, subjects: [subject], quizzes: [quiz], questions: [item] },
-        flashcards: { schemaVersion: 2, decks: [], cards: [] },
-      };
+      const versioned = <T extends object>(row: T) => ({ ...row, version: 1 });
+      Object.assign(body, {
+        subjects: [versioned(subject)],
+        quizzes: [versioned(quiz)],
+        questions: [versioned(item)],
+        decks: [],
+        cards: [],
+      });
       await route.fulfill({ response, json: body });
     });
     let writes = 0;
     page.on('request', (request) => {
-      if (request.method() === 'POST' && /\/api\/admin\/(draft|publish|ids)/.test(request.url())) writes++;
+      if (request.method() !== 'GET' && /\/api\/admin\/draft/.test(request.url())) writes++;
     });
     await page.setViewportSize({ width: 390, height: 900 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
@@ -40,9 +44,7 @@ for (const candidate of contentCases()) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await editor.focus();
       await expect(editor).toBeFocused();
-      const save = page
-        .getByRole('region', { name: 'Quiz editor' })
-        .getByRole('button', { name: 'Review save', exact: true });
+      const save = page.getByRole('region', { name: 'Quiz editor' }).getByRole('button', { name: 'Save', exact: true });
       await save.scrollIntoViewIfNeeded();
       await expect(save).toBeInViewport();
       await page.screenshot({ path: testInfo.outputPath(`editor-content-${width}.png`), fullPage: true });

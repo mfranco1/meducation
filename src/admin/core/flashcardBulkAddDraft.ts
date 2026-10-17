@@ -1,7 +1,5 @@
-import type { Subject } from '../../domain/types';
-import { validateFlashcardBank } from '../../content/validation/flashcardValidation';
-import type { StoredFlashcard, StoredFlashcardBank, StoredFlashcardDeck } from '../../content/schema/schema';
-import type { FlashcardAdminOperation } from './flashcardChangeSet';
+import type { StoredFlashcardBank } from '../../content/schema/schema';
+import type { BulkPlan } from '../data/DraftStore';
 
 export type FlashcardBulkAddContext = { kind: 'subject'; subjectId: string } | { kind: 'deck'; deckId: string };
 
@@ -25,19 +23,6 @@ export interface FlashcardBulkDiagnostic {
   level: 'error' | 'warning';
   path: string;
   message: string;
-}
-
-export interface CompiledFlashcardBulkAdd {
-  candidate: StoredFlashcardBank;
-  operations: FlashcardAdminOperation[];
-  generatedIds: string[];
-  diagnostics: FlashcardBulkDiagnostic[];
-  deckSummaries: Array<{
-    id: string;
-    name: string;
-    cardCount: number;
-    cards: Array<{ id: string; front: string; back: string; sources?: string; reviewNote?: string }>;
-  }>;
 }
 
 type JsonObject = Record<string, unknown>;
@@ -152,96 +137,49 @@ export function parseFlashcardBulkAddDraft(
     : { draft: { kind: 'decks', decks }, diagnostics };
 }
 
-function nextId(prefix: 'd' | 'f', used: Set<string>, idFactory: () => string): string {
-  for (let attempt = 0; attempt < 100; attempt++) {
-    const id = `${prefix}-${idFactory()}`;
-    if (!used.has(id)) {
-      used.add(id);
-      return id;
-    }
-  }
-  throw new Error(`Unable to allocate a unique ${prefix === 'd' ? 'deck' : 'card'} ID.`);
+export interface CompiledFlashcardBulkAdd {
+  plan: BulkPlan;
+  deckSummaries: Array<{ name: string; cardCount: number }>;
 }
 
-/** Compiles a parsed draft once. The returned IDs and operation list should be retained through Stage. */
+/** Turns a parsed draft into the records to create; the server assigns every ID. */
 export function compileFlashcardBulkAddDraft(
   draft: FlashcardBulkAddDraft,
   context: FlashcardBulkAddContext,
   bank: StoredFlashcardBank,
-  subjects: readonly Subject[],
-  idFactory: () => string = () => crypto.randomUUID(),
+  subjects: readonly { id: string }[],
 ): { compiled?: CompiledFlashcardBulkAdd; diagnostics: FlashcardBulkDiagnostic[] } {
-  const diagnostics: FlashcardBulkDiagnostic[] = [];
+  const fail = (message: string) => ({ diagnostics: [{ level: 'error' as const, path: '$', message }] });
   if (context.kind === 'subject' && !subjects.some((subject) => subject.id === context.subjectId))
-    return { diagnostics: [{ level: 'error', path: '$', message: 'selected subject no longer exists.' }] };
+    return fail('selected subject no longer exists.');
   const selectedDeck = context.kind === 'deck' ? bank.decks.find((deck) => deck.id === context.deckId) : undefined;
-  if (context.kind === 'deck' && !selectedDeck)
-    return { diagnostics: [{ level: 'error', path: '$', message: 'selected deck no longer exists.' }] };
-  if ((context.kind === 'deck') !== (draft.kind === 'cards'))
+  if (context.kind === 'deck' && !selectedDeck) return fail('selected deck no longer exists.');
+  if ((context.kind === 'deck') !== (draft.kind === 'cards')) return fail('draft type does not match the selected destination.');
+  if (draft.kind === 'cards')
     return {
-      diagnostics: [{ level: 'error', path: '$', message: 'draft type does not match the selected destination.' }],
+      compiled: {
+        plan: { groups: [{ parentId: selectedDeck!.id, childKind: 'cards', children: draft.cards.map((card) => ({ ...card })) }] },
+        deckSummaries: [{ name: selectedDeck!.name, cardCount: draft.cards.length }],
+      },
+      diagnostics: [],
     };
-
-  const used = new Set([...bank.decks.map((deck) => deck.id), ...bank.cards.map((card) => card.id)]);
-  const operations: FlashcardAdminOperation[] = [];
-  const generatedIds: string[] = [];
-  const pathById = new Map<string, string>();
-  const pathByWarning = new Map<string, string>();
-  const deckSummaries: CompiledFlashcardBulkAdd['deckSummaries'] = [];
-  const createCard = (card: FlashcardCardDraft, deckId: string, path: string) => {
-    const id = nextId('f', used, idFactory);
-    generatedIds.push(id);
-    pathById.set(id, path);
-    const value: StoredFlashcard = {
-      id,
-      deckId,
-      front: card.front,
-      back: card.back,
-      ...(card.sources === undefined ? {} : { sources: card.sources }),
-      ...(card.reviewNote === undefined ? {} : { reviewNote: card.reviewNote }),
-    };
-    operations.push({ op: 'card.create', value });
-    return value;
-  };
-
-  if (draft.kind === 'cards') {
-    const deck = selectedDeck!;
-    const cards = draft.cards.map((card, index) => createCard(card, deck.id, `$.cards[${index}]`));
-    deckSummaries.push({ id: deck.id, name: deck.name, cardCount: cards.length, cards });
-  } else {
-    draft.decks.forEach((deckDraft, deckIndex) => {
-      const deckId = nextId('d', used, idFactory);
-      generatedIds.push(deckId);
-      pathById.set(deckId, `$.decks[${deckIndex}]`);
-      pathByWarning.set(
-        `Duplicate sibling name “${deckDraft.name}” under ${(context as Extract<FlashcardBulkAddContext, { kind: 'subject' }>).subjectId}; records retain distinct IDs.`,
-        `$.decks[${deckIndex}].name`,
-      );
-      const value: StoredFlashcardDeck = {
-        id: deckId,
+  return {
+    compiled: {
+      plan: {
         subjectId: (context as Extract<FlashcardBulkAddContext, { kind: 'subject' }>).subjectId,
-        name: deckDraft.name,
-        ...(deckDraft.description === undefined ? {} : { description: deckDraft.description }),
-      };
-      operations.push({ op: 'deck.create', value });
-      const cards = (deckDraft.cards ?? []).map((card, cardIndex) =>
-        createCard(card, deckId, `$.decks[${deckIndex}].cards[${cardIndex}]`),
-      );
-      deckSummaries.push({ id: deckId, name: deckDraft.name, cardCount: cards.length, cards });
-    });
-  }
-
-  const candidate: StoredFlashcardBank = structuredClone(bank);
-  for (const operation of operations) {
-    if (operation.op === 'deck.create') candidate.decks.push(structuredClone(operation.value));
-    else if (operation.op === 'card.create') candidate.cards.push(structuredClone(operation.value));
-  }
-  for (const issue of validateFlashcardBank(candidate, subjects)) {
-    const path = issue.questionId ? (pathById.get(issue.questionId) ?? '$') : (pathByWarning.get(issue.message) ?? '$');
-    diagnostics.push({ level: issue.level, path, message: issue.message });
-  }
-  if (diagnostics.some((issue) => issue.level === 'error')) return { diagnostics };
-  return { compiled: { candidate, operations, generatedIds, diagnostics, deckSummaries }, diagnostics };
+        groups: draft.decks.map((deck) => ({
+          create: {
+            kind: 'decks' as const,
+            fields: { name: deck.name, ...(deck.description === undefined ? {} : { description: deck.description }) },
+          },
+          childKind: 'cards' as const,
+          children: (deck.cards ?? []).map((card) => ({ ...card })),
+        })),
+      },
+      deckSummaries: draft.decks.map((deck) => ({ name: deck.name, cardCount: deck.cards?.length ?? 0 })),
+    },
+    diagnostics: [],
+  };
 }
 
 export function flashcardBulkAddTemplate(context: FlashcardBulkAddContext): string {

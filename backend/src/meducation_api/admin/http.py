@@ -1,34 +1,45 @@
-"""Private paired HTTP operations behind the verified session prefix boundary."""
+"""Private record-editor HTTP routes behind the verified session prefix boundary."""
 
 import base64
+import gzip
+import hashlib
 import json
+import re
 import tempfile
 import zipfile
 from collections.abc import Iterator
 from typing import Any
+from uuid import UUID
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse, StreamingResponse
 from sqlalchemy import Engine
 from starlette.concurrency import run_in_threadpool
 
 from meducation_api.admin.contracts import (
-    Candidate,
-    ContextCommand,
+    BULK_BYTES,
+    RECORD_BYTES,
+    Activate,
+    Bulk,
+    Contract,
+    Create,
+    Delete,
+    Empty,
     Export,
-    Mutation,
-    Publish,
-    Reservation,
-    Save,
-    Undo,
+    Move,
+    Revert,
+    Update,
     parse_contract,
     uuid_value,
 )
-from meducation_api.admin.service import EditorService, digests, wire_result
+from meducation_api.admin.service import MISSING, DraftError, DraftService
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.oidc import AuthError
 from meducation_api.content_policy import ContentPolicyError, read_json_body
+from meducation_api.db.draft import KINDS, Kind
 from meducation_api.db.engine import create_database_engine, database_url
+
+BULK_PARENTS = {("quizzes", "questions"), ("decks", "cards")}
 
 
 def install_editor(app: FastAPI, config: AuthSettings) -> None:
@@ -44,19 +55,28 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
         )
     app.state.editor_engine = engine
 
-    def service(request: Request) -> EditorService:
+    def service(request: Request) -> DraftService:
         if engine is None:
             raise AuthError(503, "admin_disabled")
-        return EditorService(engine, request.app.state.auth.store, request.state.principal)
+        return DraftService(engine, request.app.state.auth.store, request.state.principal)
 
-    async def command(request: Request, cls: type[Any]) -> dict[str, Any]:
-        return parse_contract(cls, await read_json_body(request))
+    async def command(
+        request: Request, cls: type[Contract], limit: int = RECORD_BYTES
+    ) -> tuple[dict[str, Any], set[str]]:
+        return parse_contract(cls, await read_json_body(request, limit))
+
+    def kind_of(name: str) -> Kind:
+        if name not in KINDS:
+            raise DraftError(404, "route_not_found", "Unknown record kind.")
+        return KINDS[name]
 
     def identifier(value: str) -> str:
-        try:
-            return uuid_value(value)
-        except ValueError:
-            raise AuthError(400, "invalid_identifier") from None
+        if not re.fullmatch(r"[a-zA-Z0-9-]{1,128}", value):
+            raise AuthError(400, "invalid_identifier")
+        return value
+
+    def after(value: dict[str, Any], sent: set[str]) -> Any:
+        return value["afterId"] if "afterId" in sent else MISSING
 
     @app.exception_handler(ContentPolicyError)
     async def content_error(request: Request, error: ContentPolicyError) -> JSONResponse:
@@ -64,149 +84,198 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
         data["error"]["requestId"] = request.state.request_id
         return JSONResponse(data, status_code=error.status, headers={"Cache-Control": "no-store"})
 
+    @app.exception_handler(DraftError)
+    async def draft_error(request: Request, error: DraftError) -> JSONResponse:
+        return JSONResponse(
+            {
+                "error": {
+                    "code": error.code,
+                    "message": str(error),
+                    "requestId": request.state.request_id,
+                    **error.extra,
+                }
+            },
+            status_code=error.status,
+            headers={"Cache-Control": "no-store"},
+        )
+
+    def compressed(request: Request, value: dict[str, Any]) -> Response:
+        body = json.dumps(
+            value, ensure_ascii=False, allow_nan=False, separators=(",", ":")
+        ).encode()
+        headers = {"Vary": "Accept-Encoding", "Cache-Control": "no-store"}
+        if "gzip" in request.headers.get("accept-encoding", "").lower():
+            body = gzip.compress(body, compresslevel=6, mtime=0)
+            headers["Content-Encoding"] = "gzip"
+        return Response(body, media_type="application/json", headers=headers)
+
     @app.get("/api/admin/draft", include_in_schema=False)
-    def load(request: Request) -> dict[str, Any]:
-        return service(request).load()
+    async def load(request: Request) -> Response:
+        return compressed(request, await run_in_threadpool(service(request).snapshot))
 
-    @app.post("/api/admin/reservations", include_in_schema=False)
-    async def reserve(request: Request) -> dict[str, Any]:
-        value = await command(request, Reservation)
-        return await run_in_threadpool(service(request).mutate, "reserve", value)
+    @app.get("/api/admin/draft/changes", include_in_schema=False)
+    async def changes(request: Request) -> dict[str, Any]:
+        params = dict(request.query_params)
+        if set(params) - {"since", "limit"} or len(params) != len(
+            list(request.query_params.multi_items())
+        ):
+            raise AuthError(400, "invalid_pagination")
+        values = {"since": 0, "limit": 500}
+        for key, raw in params.items():
+            if not raw.isascii() or not raw.isdecimal() or len(raw) > 18:
+                raise AuthError(400, "invalid_pagination")
+            values[key] = int(raw)
+        if not 1 <= values["limit"] <= 1000:
+            raise AuthError(400, "invalid_pagination")
+        return await run_in_threadpool(service(request).changes, values["since"], values["limit"])
 
-    @app.post("/api/admin/draft/preview", include_in_schema=False)
-    async def preview(request: Request) -> dict[str, Any]:
+    @app.post("/api/admin/draft/changes/{change_id}/revert", include_in_schema=False)
+    async def revert(change_id: str, request: Request) -> dict[str, Any]:
+        if not change_id.isascii() or not change_id.isdecimal() or len(change_id) > 18:
+            raise AuthError(400, "invalid_identifier")
+        value, _ = await command(request, Revert)
         return await run_in_threadpool(
-            service(request).preview, "save", await command(request, Candidate)
+            service(request).revert, int(change_id), value["expectedVersion"]
         )
 
-    @app.post("/api/admin/draft/save", include_in_schema=False)
-    async def save(request: Request) -> dict[str, Any]:
-        return await run_in_threadpool(
-            service(request).mutate, "save", await command(request, Save)
-        )
+    @app.post("/api/admin/draft/discard", include_in_schema=False)
+    async def discard(request: Request) -> Response:
+        await command(request, Empty)
+        return compressed(request, await run_in_threadpool(service(request).discard))
 
-    @app.post("/api/admin/draft/undo", include_in_schema=False)
-    async def undo(request: Request) -> dict[str, Any]:
-        return await run_in_threadpool(
-            service(request).mutate, "undo", await command(request, Undo)
-        )
-
-    @app.post("/api/admin/draft/reset", include_in_schema=False)
-    async def reset(request: Request) -> dict[str, Any]:
-        return await run_in_threadpool(
-            service(request).mutate, "reset", await command(request, Mutation)
-        )
-
-    @app.post("/api/admin/publish/preview", include_in_schema=False)
-    async def publication_preview(request: Request) -> dict[str, Any]:
-        return await run_in_threadpool(
-            service(request).preview, "publish", await command(request, ContextCommand)
-        )
-
-    @app.post("/api/admin/publish", include_in_schema=False)
+    @app.post("/api/admin/draft/publish", include_in_schema=False)
     async def publish(request: Request) -> dict[str, Any]:
+        await command(request, Empty)
+        return await run_in_threadpool(service(request).publish)
+
+    @app.post("/api/admin/draft/{parent}/{parent_id}/{child}/bulk", include_in_schema=False)
+    async def bulk(parent: str, parent_id: str, child: str, request: Request) -> JSONResponse:
+        if (parent, child) not in BULK_PARENTS:
+            raise DraftError(404, "route_not_found", "Bulk create is for questions and cards.")
+        value, sent = await command(request, Bulk, BULK_BYTES)
+        result = await run_in_threadpool(
+            service(request).bulk,
+            KINDS[child],
+            identifier(parent_id),
+            after(value, sent),
+            value["records"],
+        )
+        return JSONResponse(result, status_code=201)
+
+    @app.post("/api/admin/draft/{kind}", include_in_schema=False)
+    async def create(kind: str, request: Request) -> JSONResponse:
+        record_kind = kind_of(kind)
+        value, sent = await command(request, Create)
+        result = await run_in_threadpool(
+            service(request).create,
+            record_kind,
+            value["parentId"],
+            after(value, sent),
+            value["fields"],
+        )
+        return JSONResponse(result, status_code=201)
+
+    @app.put("/api/admin/draft/{kind}/{record_id}", include_in_schema=False)
+    async def update(kind: str, record_id: str, request: Request) -> dict[str, Any]:
+        record_kind = kind_of(kind)
+        value, _ = await command(request, Update)
         return await run_in_threadpool(
-            service(request).mutate, "publish", await command(request, Publish)
+            service(request).update,
+            record_kind,
+            identifier(record_id),
+            value["expectedVersion"],
+            value["fields"],
         )
 
-    @app.post("/api/admin/releases/{release_id}/activation-preview", include_in_schema=False)
-    async def activation_preview(release_id: str, request: Request) -> dict[str, Any]:
+    @app.delete("/api/admin/draft/{kind}/{record_id}", include_in_schema=False)
+    async def delete(kind: str, record_id: str, request: Request) -> dict[str, Any]:
+        record_kind = kind_of(kind)
+        value, _ = await command(request, Delete)
         return await run_in_threadpool(
-            service(request).preview,
-            "activate",
-            await command(request, ContextCommand),
-            release_id=identifier(release_id),
+            service(request).delete,
+            record_kind,
+            identifier(record_id),
+            value["expectedVersion"],
+            value["cascade"],
+        )
+
+    @app.post("/api/admin/draft/{kind}/{record_id}/move", include_in_schema=False)
+    async def move(kind: str, record_id: str, request: Request) -> dict[str, Any]:
+        record_kind = kind_of(kind)
+        value, sent = await command(request, Move)
+        return await run_in_threadpool(
+            service(request).move,
+            record_kind,
+            identifier(record_id),
+            value["expectedVersion"],
+            value["parentId"],
+            after(value, sent),
         )
 
     @app.post("/api/admin/releases/{release_id}/activate", include_in_schema=False)
     async def activate(release_id: str, request: Request) -> dict[str, Any]:
+        try:
+            target = UUID(uuid_value(release_id))
+        except ValueError:
+            raise AuthError(400, "invalid_identifier") from None
+        value, _ = await command(request, Activate)
         return await run_in_threadpool(
-            service(request).mutate,
-            "activate",
-            await command(request, Publish),
-            release_id=identifier(release_id),
+            service(request).activate, target, value["expectedPublicationSequence"]
         )
 
     @app.get("/api/admin/releases", include_in_schema=False)
-    def releases(request: Request) -> dict[str, Any]:
+    async def releases(request: Request) -> dict[str, Any]:
         if set(request.query_params) - {"cursor", "limit"} or len(
             list(request.query_params.multi_items())
         ) != len(request.query_params):
             raise AuthError(400, "invalid_pagination")
-        arg: dict[str, Any] = {"limit": 20}
+        limit, cursor = 20, None
         try:
             if "limit" in request.query_params:
                 raw = request.query_params["limit"]
                 if not raw.isascii() or not raw.isdecimal() or not 1 <= int(raw) <= 50:
                     raise ValueError
-                arg["limit"] = int(raw)
+                limit = int(raw)
             if "cursor" in request.query_params:
                 raw = request.query_params["cursor"]
                 if len(raw) > 100:
                     raise ValueError
-                arg["cursor"] = identifier(base64.urlsafe_b64decode(raw + "===").decode())
+                cursor = uuid_value(base64.urlsafe_b64decode(raw + "===").decode())
         except ValueError, UnicodeError:
             raise AuthError(400, "invalid_pagination") from None
-        result = service(request).read("releases", arg)
+        result = await run_in_threadpool(service(request).releases, limit, cursor)
         rows = result["releases"]
         result["nextCursor"] = (
             base64.urlsafe_b64encode(rows[-1]["releaseId"].encode()).decode().rstrip("=")
-            if len(rows) == arg["limit"]
+            if len(rows) == limit
             else None
         )
         return result
 
-    @app.get("/api/admin/operations/{operation_id}", include_in_schema=False)
-    def operation(operation_id: str, request: Request) -> dict[str, Any]:
-        try:
-            value = service(request).read("operation", {"operationId": identifier(operation_id)})
-        except AuthError as error:
-            if error.status == 404:
-                raise AuthError(404, "operation_not_found") from None
-            raise
-        return {
-            "operationId": operation_id,
-            "action": value["action"],
-            "fingerprint": value["fingerprint"],
-            "result": wire_result(value["result"]["result"]),
-        }
-
-    def archive(svc: EditorService, value: dict[str, Any]) -> tuple[Any, str]:
-        ctx = svc.context()
-        if value["target"] == "draft":
-            svc.expected(ctx, value)
-            if ctx["revision"] != value["draftRevision"]:
-                raise AuthError(409, "draft_or_publication_stale")
-            selected = ctx
-        else:
-            selected = svc.read("release", {"releaseId": value["releaseId"]})
-        pair = svc.validator.documents(selected["quizDocument"], selected["flashcardDocument"])
-        revisions = selected["digests"]
-        q, f = pair.quiz_artifact, pair.flashcard_artifact
+    def archive(svc: DraftService, value: dict[str, Any]) -> tuple[Any, str]:
+        q, f, context = svc.export_pair(value["releaseId"])
         parsed = [json.loads(q), json.loads(f)]
         ids = {
             k: [row["id"] for row in parsed[index][k]]
             for index, keys in ((0, ("subjects", "quizzes", "questions")), (1, ("decks", "cards")))
             for k in keys
         }
+        draft = value["target"] == "draft"
         manifest = {
-            "contractVersion": 1,
+            "contractVersion": 2,
             "target": value["target"],
-            "unpublished": value["target"] == "draft",
-            "releaseId": None if value["target"] == "draft" else value["releaseId"],
-            "draftRevision": ctx["revision"] if value["target"] == "draft" else None,
-            "baseReleaseId": ctx["baseReleaseId"] if value["target"] == "draft" else None,
-            "basePublicationSequence": ctx["baseSequence"] if value["target"] == "draft" else None,
-            "publication": {
-                "releaseId": ctx["releaseId"],
-                "sequence": ctx["sequence"],
-                "selectedIsCurrent": value["target"] == "release"
-                and ctx["releaseId"] == value["releaseId"],
-            },
+            "unpublished": draft,
+            "releaseId": value["releaseId"],
+            "latestChangeId": context.get("latestChangeId"),
+            "baseReleaseId": context.get("baseReleaseId"),
+            "publication": context["publication"],
             "schemas": {"quizzes": 4, "flashcards": 2},
             "ids": ids,
-            "digests": digests(q, f, revisions),
-            "validation": {"policyVersion": pair.policy_version, "warnings": pair.warnings},
+            "digests": {
+                "quizSha256": hashlib.sha256(q.encode()).hexdigest(),
+                "flashcardSha256": hashlib.sha256(f.encode()).hexdigest(),
+                **context["revisions"],
+            },
         }
         files = {
             "questionBank.generated.json": q.encode(),
@@ -233,7 +302,7 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
 
     @app.post("/api/admin/exports", include_in_schema=False)
     async def export(request: Request) -> StreamingResponse:
-        value = await command(request, Export)
+        value, _ = await command(request, Export)
         stream, filename = await run_in_threadpool(archive, service(request), value)
 
         def chunks() -> Iterator[bytes]:

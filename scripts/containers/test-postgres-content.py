@@ -130,6 +130,7 @@ def main():
                 "-m",
                 "pytest",
                 "backend/tests/test_postgres_content.py",
+                "backend/tests/test_draft_records.py",
                 "-q",
                 "--tb=short",
                 "--maxfail=" + str(args.maxfail),

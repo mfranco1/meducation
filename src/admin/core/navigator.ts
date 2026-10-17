@@ -1,4 +1,4 @@
-import type { StoredFlashcard, StoredQuestionBank } from '../../content/schema/schema';
+import type { StoredFlashcard, StoredQuestion, StoredQuiz } from '../../content/schema/schema';
 
 export const ADMIN_PAGE_SIZE = 25;
 
@@ -19,8 +19,8 @@ function paginate<T>(matches: T[], page: number) {
   };
 }
 
-export function selectQuizNavigatorPage(
-  bank: StoredQuestionBank,
+export function selectQuizNavigatorPage<Q extends StoredQuestion, Z extends StoredQuiz>(
+  bank: { quizzes: Z[]; questions: Q[] },
   subjectId: string | undefined,
   quizId: string | undefined,
   query: string,
@@ -41,7 +41,7 @@ export function selectQuizNavigatorPage(
   return { quizzes, ...paginate(matches, page) };
 }
 
-export function selectFlashcardPage(cards: readonly StoredFlashcard[], query: string, page: number) {
+export function selectFlashcardPage<C extends StoredFlashcard>(cards: readonly C[], query: string, page: number) {
   const normalized = query.trim().toLocaleLowerCase();
   const matches = cards
     .map((card, index) => ({ card, position: index + 1 }))

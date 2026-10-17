@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import fixtures from '../../../tests/fixtures/bank-contract-cases.json';
 import type { Question, Quiz } from '../../domain/types';
-import { revisionForBank } from '../../admin/core/serializeBank';
 import type { StoredQuestionBank } from '../schema/schema';
 import { validateQuestionBank, validateStoredQuestionBank } from './validate';
 
@@ -53,9 +52,4 @@ describe('shared stored-bank contract fixtures', () => {
   for (const fixture of fixtures.cases) {
     it(fixture.id, () => expect(accepts(bankFor(fixture.change))).toBe(fixture.valid));
   }
-
-  it('matches the API revision for Unicode content and preserved field order', async () => {
-    expect(await revisionForBank(bankFor('none')))
-      .toBe('sha256-3428200bbea813f67a79fb5a36bbaa0a83b0148cd4dfdfc5cef5cdb32045b8d8');
-  });
 });

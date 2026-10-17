@@ -4,9 +4,17 @@ import { describe, expect, it, vi } from 'vitest';
 import fixture from '../../../tests/fixtures/question-bank.json';
 import type { StoredQuestionBank } from '../../content/schema/schema';
 import { theme } from '../../shared/theme';
+import type { DraftQuizBank } from '../data/DraftStore';
 import { AdminNavigatorPanel } from './AdminNavigatorPanel';
 
-const bank = fixture as StoredQuestionBank;
+const source = fixture as StoredQuestionBank;
+const versioned = <T extends object>(rows: T[]) => rows.map((row) => ({ ...row, version: 1 }));
+const bank: DraftQuizBank = {
+  schemaVersion: 4,
+  subjects: versioned(source.subjects),
+  quizzes: versioned(source.quizzes),
+  questions: versioned(source.questions),
+};
 
 describe('admin quiz navigator presentation contracts', () => {
   it('offers subject creation when no subject is selected', () => {

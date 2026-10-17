@@ -70,8 +70,9 @@ Entry point `meducation_api.db.cli`; also runs as `python -m meducation_api.db.c
 - Schema and roles: `bootstrap-local`, `head`, `upgrade`, `restore-permissions`, `invalidate-restored-sessions`.
 - Paired files (trusted, reviewed recovery or migration only): `validate-pair`, `import-pair`, `parity` take `--quiz-file`, `--flashcard-file`, `--repository`. `import-pair` also needs `--operation-id`, `--actor`, `--reason`; imports into the authority database additionally need `--reviewed-recovery-import`. Import does not activate.
 - Releases: `activate --release-id --expected-sequence --operation-id --actor --reason`; `export-release --release-id --output NEW_DIR` (refuses existing directories).
+- Draft IDs: `advance-id-sequences --by N` moves the subject, quiz and question ID sequences N past the largest ID ever used (migrator credentials). Run it after restoring an older backup.
 - Export checks: `validate-export` and `audit-export` take `--directory`, `--repository`, `--report`. They verify captured bytes, hashes and policy and refuse to overwrite reports. Digests prove internal consistency, not live currency; export fresh from the target when currency matters. `npm run validate:content -- <quiz-file> <flashcard-file>` checks an explicitly selected pair the same way.
-- Allocation: `allocation-range`, `allocation-recover` (see below).
+- Allocation: `allocation-range`, `allocation-recover` (operator reservations only; see below).
 
 An import is never a way to replace database-only work with an older snapshot.
 
@@ -90,21 +91,21 @@ Open `http://127.0.0.1:5173/admin.html`. `.venv/bin/python scripts/local-authori
 ## Editor login and sessions
 
 - `/admin.html` is built only with `npm run build:admin` (or `VITE_BUILD_ADMIN=true`) and served in development. Build flags and static assets grant no access; the API authorizes every `/api/admin` request.
-- Authentication is an OIDC authorization-code flow with S256 PKCE, handled by the backend (Authlib, joserfc). Sessions are opaque, stored hashed in the `admin_auth` schema, expire after 30 idle minutes or 8 absolute hours, and require a factor within 15 minutes for publish, activate, reset and export. Writes need exact Origin and a session CSRF header and are never replayed after reauthentication.
+- Authentication is an OIDC authorization-code flow with S256 PKCE, handled by the backend (Authlib, joserfc). Sessions are opaque, stored hashed in the `admin_auth` schema, expire after 30 idle minutes or 8 absolute hours, and require a factor within 15 minutes for publish, discard, activate and export. Writes need exact Origin and a session CSRF header and are never replayed after reauthentication.
 - Only a synthetic loopback issuer exists. `serve.py` provides it: sign in, then confirm "Continue as local editor (development only)". It simulates identity and fresh-factor assurance, provides no real MFA, and binds only `127.0.0.1`. Never expose it through a tunnel. Production configuration with admin enabled refuses to start.
 - Settings (`MEDUCATION_ADMIN_*`): `ENABLED` (default false), `ENVIRONMENT`, `ADAPTER`, `ORIGIN`, `ISSUER`, `AUTHORIZATION_ENDPOINT`, `TOKEN_ENDPOINT`, `JWKS_URI`, `CLIENT_ID`, `CLIENT_SECRET`, `EDITOR_SUBJECT` (exact issuer subject), `EPOCH` (external revocation generation), `ENCRYPTION_KEY` (Fernet), `SESSION_DATABASE_URL`, `EDITOR_DATABASE_URL`. Changing the allowlist or epoch invalidates all sessions; `SessionStore.revoke_all()` and disabling admin are the emergency controls.
 - Explicit diagnostics: signed-in `POST /api/admin/diagnostics` with `{}` and the CSRF token returns bounded reader/schema/publication/session/editor status without URLs, SQL or content.
 
 ## Authoring and publication
 
-- The editor loads one paired draft. **Save draft** writes a new paired revision after a server preview; it does not publish. IDs come from server reservations that stay burned if a preview is abandoned.
-- Undo and reset change the draft. **Publish** finalizes the draft as a new immutable release, activates it and advances the draft base in one transaction; a stale base requires reset. Retained releases can be activated again; activation keeps the draft.
-- **Export paired ZIP** exports the saved draft or a retained release (deterministic, 128 MiB cap). It is not a backup.
-- Requests are limited to 64 MiB; validation limits live in `src/content/validation/authoringLimits.json` (generated into the wheel by `npm run build:content-policy`). Uncertain writes are reconciled, not resent.
+- The editor reads and writes individual draft records ([record API](content-management.md#record-api-and-publication)). Each write is validated, versioned and logged in `content.draft_changes`; it never publishes. New subject, quiz and question IDs come from sequences (`content.draft_subject_ids`, `draft_quiz_ids`, `draft_question_ids`); decks and cards use `d-`/`f-` plus a UUID.
+- **Publish** validates the full pair, stores an immutable release through `content.store_release`, activates it and records the published change ID, in one transaction. **Discard** resets the draft to the active release. Retained releases can be activated again; activation keeps the draft.
+- **Export paired ZIP** exports the draft or a retained release (deterministic, 128 MiB cap). It is not a backup.
+- Migration `0007_draft_records` copies the base release into the draft tables. It refuses to run if the old paired draft has unpublished changes, and it checks that the rebuilt documents are byte-identical to the base release.
 
 ## ID allocation fence
 
-Migration `0006_allocation_fence` bounds new IDs to admitted ranges. An editor reservation is rejected beyond the ceiling. Extend a range only with the migrator job, which writes a hash-chained record to two journal directories before raising the database ceiling:
+Migration `0006_allocation_fence` bounds operator reservations (`reserve_ids`) to admitted ranges. The record editor does not use reservations; since `0007` publication registers draft IDs without the fence, and step 4c removes it. Extend a range only with the migrator job, which writes a hash-chained record to two journal directories before raising the database ceiling:
 
 ```sh
 .venv/bin/python scripts/local-authoring/job.py allocation-range \
@@ -130,7 +131,7 @@ Real recovery:
 1. Stop writers; retire writer CONNECT and drain connections. Keep the damaged database and any newer journals.
 2. Restore the dump into a fresh empty database from `template0` with matching PG17 tools (`pg_restore --single-transaction --exit-on-error --no-owner --no-acl`), after bootstrapping roles.
 3. Point job credentials at the target and run `restore-permissions`, then `invalidate-restored-sessions` (revokes sessions, clears login transactions, pauses allocation).
-4. Rotate `MEDUCATION_ADMIN_EPOCH`. Run `allocation-recover` against the latest complete journals; without them keep allocation disabled.
+4. Rotate `MEDUCATION_ADMIN_EPOCH`. Run `advance-id-sequences --by N` with N larger than the number of records that could have been created after the backup (for example 10000), so IDs learners may have seen are not reused. Run `allocation-recover` against the latest complete journals; without them keep operator allocation disabled.
 5. Compare content, then switch reader/session/editor connections together, restart workers and verify learner reads and a fresh editor login. Keep the original until verified.
 
 Development dump and restore use plain Postgres tools in the Compose container (add the same `--env-file` and `-f` flags as the start command):
@@ -156,6 +157,6 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 
 - Images: API (installed wheel, user 10001, one Uvicorn process, no content corpus), learner and admin (non-root Nginx 101 on port 8080, read-only filesystem). The default `learner` target returns 404 for `/admin.html`; `admin` serves it `no-store`. Admin assets still need an authenticated API.
 - Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 22, Nginx unprivileged). Update tag and digest together and rebuild. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
-- Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB, and logs only fixed route families. Private responses are `no-store`.
+- Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB (the API itself limits draft bodies to 1 MiB, 16 MiB for bulk), and logs only fixed route families. Private responses are `no-store`.
 - Runtime pools: reader, session and editor each at most two connections; migrations and jobs use direct unpooled connections.
 - Container smoke: `npm run test:containers` (`scripts/containers/smoke.py`) builds the API and learner images, starts an isolated Compose project with a disposable Postgres seeded from the synthetic `e2e/fixtures` banks, checks the learner page, `/api/v1/subjects` through Nginx, the health routes and the 404 for `/admin.html`, then removes the project and volume. CI runs it on amd64. The learner build fails inside the Dockerfile if it ships admin or content-bank modules (`scripts/containers/check-learner-artifacts.mjs`).

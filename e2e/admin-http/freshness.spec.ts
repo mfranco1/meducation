@@ -1,7 +1,5 @@
-import { randomUUID } from 'node:crypto';
 import type { Page } from '@playwright/test';
-import { expect, test } from './fixtures';
-import type { PairedSnapshot } from '../../src/admin/data/PairedHttpClient';
+import { adminApi, draft, expect, test } from './fixtures';
 
 test('L5 open learner tabs revalidate cached launches and preserve active study through publication', async ({
   page,
@@ -12,52 +10,29 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   await page.goto('/admin.html');
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
   await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
-  const snapshot = async () => (await (await page.request.get('/api/admin/draft')).json()) as PairedSnapshot;
-  const expected = (value: PairedSnapshot) => ({
-    draftRevision: value.draft.revision,
-    publicationSequence: value.publication.sequence,
-  });
-  const post = async (path: string, data: unknown) => {
-    const session = await (await page.request.get('/api/admin/session')).json();
-    const response = await page.request.post('/api/admin' + path, {
-      data,
-      headers: { Origin: new URL(page.url()).origin, 'X-CSRF-Token': session.csrfToken },
-    });
-    expect(response.status(), await response.text()).toBe(200);
+  const snapshot = () => draft(page);
+  const send = async (method: 'POST' | 'PUT', path: string, data: unknown) => {
+    const response = await adminApi(page, method, path, data);
+    expect(response.status(), await response.text()).toBeLessThan(300);
     return response.json();
   };
-  await post('/draft/reset', {
-    expected: expected(await snapshot()),
-    operationId: randomUUID(),
-    reason: 'L5 isolated freshness baseline',
-  });
+  // Start from the published content, whatever earlier tests left in the draft.
+  await send('POST', '/draft/discard', {});
   const original = await snapshot();
-  const subject = original.pair.quizzes.subjects[0];
-  const stem = original.pair.quizzes.questions[0].stem;
-  const front = original.pair.flashcards.cards[0].front;
+  const subject = original.subjects[0];
+  const stem = original.questions[0].stem;
+  const front = original.cards[0].front;
   const publish = async (nextStem: string, nextFront: string) => {
-    let current = await snapshot();
-    const pair = structuredClone(current.pair);
-    pair.quizzes.questions[0].stem = nextStem;
-    pair.flashcards.cards[0].front = nextFront;
-    const save = {
-      expected: expected(current),
-      reason: 'L5 isolated freshness publication',
-      pair,
-      reservationIds: [],
-      intent: { reservations: [] },
-    };
-    const review = await post('/draft/preview', save);
-    current = (
-      await post('/draft/save', { ...save, operationId: randomUUID(), previewFingerprint: review.previewFingerprint })
-    ).snapshot;
-    const command = { expected: expected(current), reason: 'L5 isolated freshness publication' };
-    const publication = await post('/publish/preview', command);
-    await post('/publish', {
-      ...command,
-      operationId: randomUUID(),
-      previewFingerprint: publication.previewFingerprint,
+    const current = await snapshot();
+    await send('PUT', `/draft/questions/${current.questions[0].id}`, {
+      expectedVersion: current.questions[0].version,
+      fields: { stem: nextStem },
     });
+    await send('PUT', `/draft/cards/${current.cards[0].id}`, {
+      expectedVersion: current.cards[0].version,
+      fields: { front: nextFront },
+    });
+    await send('POST', '/draft/publish', {});
   };
   const openSubject = async (learner: Page) =>
     learner

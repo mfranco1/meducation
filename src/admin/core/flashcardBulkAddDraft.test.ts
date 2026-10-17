@@ -5,7 +5,6 @@ import {
   flashcardBulkAddTemplate,
   parseFlashcardBulkAddDraft,
 } from './flashcardBulkAddDraft';
-import { applyFlashcardOperations } from './flashcardChangeSet';
 
 const subjectContext = { kind: 'subject', subjectId: 's1' } as const;
 
@@ -23,8 +22,7 @@ describe('flashcard bulk add drafts', () => {
     });
   });
 
-  it('compiles nested decks and cards in input order with empty and populated decks', () => {
-    const source = structuredClone(storedFlashcardBank);
+  it('plans nested decks and cards in input order, with empty and populated decks and exact optional fields', () => {
     const parsed = parseFlashcardBulkAddDraft(
       {
         decks: [
@@ -40,54 +38,32 @@ describe('flashcard bulk add drafts', () => {
       },
       subjectContext,
     );
-    expect(parsed.draft).toBeDefined();
-    const compiled = compileFlashcardBulkAddDraft(
-      parsed.draft!,
-      subjectContext,
-      source,
-      storedQuestionBank.subjects,
-      (() => {
-        const ids = ['deck-one', 'deck-two', 'card-one', 'card-two'];
-        return () => ids.shift()!;
-      })(),
-    );
+    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, subjectContext, storedFlashcardBank, storedQuestionBank.subjects);
     expect(compiled.diagnostics).toEqual([]);
-    expect(compiled.compiled?.operations.map((operation) => operation.op)).toEqual([
-      'deck.create',
-      'deck.create',
-      'card.create',
-      'card.create',
-    ]);
-    expect(compiled.compiled?.candidate.decks.slice(source.decks.length).map((deck) => deck.name)).toEqual(['Empty deck', 'Populated deck']);
-    expect(compiled.compiled?.candidate.cards.slice(source.cards.length).map((card) => [card.front, card.back])).toEqual([
-      ['**One**', 'Answer one'],
-      ['Two', 'Answer two'],
-    ]);
-    expect(compiled.compiled?.candidate.cards[source.cards.length]).toMatchObject({ sources: 'Source', reviewNote: 'Review later' });
-    expect(compiled.compiled?.generatedIds).toEqual(['d-deck-one', 'd-deck-two', 'f-card-one', 'f-card-two']);
-    expect(source).toEqual(storedFlashcardBank);
-    expect(applyFlashcardOperations(source, storedQuestionBank.subjects, compiled.compiled!.operations)).toEqual(
-      compiled.compiled?.candidate,
-    );
+    expect(compiled.compiled?.plan).toEqual({
+      subjectId: 's1',
+      groups: [
+        { create: { kind: 'decks', fields: { name: 'Empty deck', description: 'Keep this description' } }, childKind: 'cards', children: [] },
+        {
+          create: { kind: 'decks', fields: { name: 'Populated deck' } },
+          childKind: 'cards',
+          children: [
+            { front: '**One**', back: 'Answer one', sources: 'Source', reviewNote: 'Review later' },
+            { front: 'Two', back: 'Answer two' },
+          ],
+        },
+      ],
+    });
+    expect(compiled.compiled?.deckSummaries).toEqual([{ name: 'Empty deck', cardCount: 0 }, { name: 'Populated deck', cardCount: 2 }]);
   });
 
-  it('compiles cards into a selected existing deck without editing its original cards', () => {
-    const source = {
-      schemaVersion: 2 as const,
-      decks: [{ id: 'd-existing', subjectId: 's1', name: 'Existing' }],
-      cards: [{ id: 'f-existing', deckId: 'd-existing', front: 'Keep', back: 'Existing content' }],
-    };
-    const context = { kind: 'deck', deckId: 'd-existing' } as const;
+  it('plans cards for a selected existing deck', () => {
+    const context = { kind: 'deck', deckId: 'd-cranial' } as const;
     const parsed = parseFlashcardBulkAddDraft({ cards: [{ front: 'Added', back: 'Answer' }] }, context);
-    const compiled = compileFlashcardBulkAddDraft(
-      parsed.draft!,
-      context,
-      source,
-      storedQuestionBank.subjects,
-      () => 'new',
-    );
-    expect(compiled.compiled?.candidate.cards.map((card) => card.id)).toEqual(['f-existing', 'f-new']);
-    expect(source.cards).toHaveLength(1);
+    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, context, storedFlashcardBank, storedQuestionBank.subjects);
+    expect(compiled.compiled?.plan).toEqual({
+      groups: [{ parentId: 'd-cranial', childKind: 'cards', children: [{ front: 'Added', back: 'Answer' }] }],
+    });
   });
 
   it('reports strict nested paths for technical fields, nulls, blank content, and malformed types', () => {
@@ -124,51 +100,5 @@ describe('flashcard bulk add drafts', () => {
       storedQuestionBank.subjects,
     );
     expect(compiled.diagnostics[0].message).toContain('selected deck no longer exists');
-  });
-
-  it('rejects unsafe rich content atomically and reports the source JSON path', () => {
-    const parsed = parseFlashcardBulkAddDraft(
-      { decks: [{ name: 'Unsafe', cards: [{ front: '<script>alert(1)</script>', back: 'Safe' }] }] },
-      subjectContext,
-    );
-    const source = structuredClone(storedFlashcardBank);
-    const compiled = compileFlashcardBulkAddDraft(
-      parsed.draft!,
-      subjectContext,
-      source,
-      storedQuestionBank.subjects,
-      () => 'unsafe',
-    );
-    expect(compiled.compiled).toBeUndefined();
-    expect(compiled.diagnostics).toEqual([
-      expect.objectContaining({
-        level: 'error',
-        path: '$.decks[0].cards[0]',
-        message: expect.stringContaining('unsupported HTML'),
-      }),
-    ]);
-    expect(source).toEqual(storedFlashcardBank);
-  });
-
-  it('keeps duplicate deck names as separate records and reports a warning', () => {
-    const parsed = parseFlashcardBulkAddDraft({ decks: [{ name: 'Same' }, { name: 'same' }] }, subjectContext);
-    const compiled = compileFlashcardBulkAddDraft(
-      parsed.draft!,
-      subjectContext,
-      storedFlashcardBank,
-      storedQuestionBank.subjects,
-      (() => {
-        let id = 0;
-        return () => `duplicate-${id++}`;
-      })(),
-    );
-    expect(compiled.compiled?.candidate.decks).toHaveLength(storedFlashcardBank.decks.length + 2);
-    expect(compiled.diagnostics).toEqual([
-      expect.objectContaining({
-        level: 'warning',
-        path: '$.decks[1].name',
-        message: expect.stringContaining('Duplicate sibling name'),
-      }),
-    ]);
   });
 });

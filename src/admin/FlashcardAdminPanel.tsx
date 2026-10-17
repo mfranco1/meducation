@@ -1,18 +1,10 @@
-import { adoptReservedDraftId } from './core/recordDraft';
-import { AdminActionCanceled } from './data/PairedHttpClient';
-import { AdminRecordEditor } from './components/AdminRecordEditor';
-import { AdminParentActions } from './components/AdminParentActions';
-import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from './components/AdminEditorFrame';
-import { useAdminConfirmation } from './useAdminConfirmation';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   Autocomplete,
-  Checkbox,
   Alert,
   Box,
   Button,
-  Menu,
-  MenuItem,
+  Checkbox,
   ListItemButton,
   ListItemText,
   Paper,
@@ -20,116 +12,62 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import type {
-  StoredFlashcardBank,
-  StoredFlashcardDeck,
-  StoredFlashcard,
-  StoredQuestionBank,
-} from '../content/schema/schema';
-import { validateFlashcardBank } from '../content/validation/flashcardValidation';
 import type { Subject } from '../domain/types';
-import { applyFlashcardOperations, type FlashcardAdminOperation } from './core/flashcardChangeSet';
-import { FlashcardBulkAddDialog, type FlashcardBulkPreviewSnapshot } from './FlashcardBulkAddDialog';
-import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
-import { ADMIN_PAGE_SIZE, selectFlashcardPage } from './core/navigator';
+import { AdminRecordEditor } from './components/AdminRecordEditor';
+import { AdminParentActions } from './components/AdminParentActions';
+import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from './components/AdminEditorFrame';
+import { AdminRecordFeedback } from './components/AdminRecordFeedback';
+import { AdminRecordMenu } from './components/AdminRecordMenu';
 import { adminNavigatorLayout } from './components/AdminNavigatorPanel';
 import { AdminRecordSelection, useAdminRecordSelection } from './components/AdminRecordSelection';
-import { AdminIssues } from './components/AdminIssues';
-import { AdminDeleteDialog, type DeleteRequest } from './components/AdminDeleteDialog';
+import type { DeleteRequest } from './components/AdminDeleteDialog';
+import { FlashcardBulkAddDialog } from './FlashcardBulkAddDialog';
+import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
+import { ADMIN_PAGE_SIZE, selectFlashcardPage } from './core/navigator';
+import { reorderTarget } from './core/reorder';
+import { errorMessages } from './data/PairedHttpClient';
+import type { BulkPlan, DraftStore, StoredRecord } from './data/DraftStore';
+import { useRecordEditor } from './useRecordEditor';
 
-type Kind = 'deck' | 'card';
-type Selected = { kind: Kind; id: string } | undefined;
-const clone = (bank: StoredFlashcardBank): StoredFlashcardBank => structuredClone(bank);
-
-/** Edits a server snapshot; only a successful HTTP receipt installs a saved bank. */
+/** Decks and cards: browse by subject and deck, edit one record, add in bulk, reorder, delete. */
 export function FlashcardAdminPanel({
-  subjects,
-  serverBank: bank,
-  onSaveBank,
-  recovery,
-  quizRevision,
-  quizBank,
-  onDeleteSubject,
+  store,
+  blocked = false,
+  onDelete,
   onAddSubject,
   onEditSubject,
   onManageSubjects,
-  onDraftChange,
-  onEdit,
-  discardRequest = 0,
-  externalBusy = false,
+  onDeleteSubject,
+  onDirtyChange,
 }: {
-  subjects: readonly Subject[];
-  serverBank: StoredFlashcardBank;
-  onSaveBank: (bank: StoredFlashcardBank, reason: string) => Promise<StoredFlashcardBank>;
-  quizRevision: string;
-  quizBank: StoredQuestionBank;
-  onDeleteSubject: (subjectId: string, subjectName: string) => void;
+  store: DraftStore;
+  blocked?: boolean;
+  onDelete: (request: DeleteRequest) => void;
   onAddSubject: () => void;
   onManageSubjects: (id?: string) => void;
-  onEditSubject: (subjectId: string, subjectName: string) => void;
-  onDraftChange?: (dirty: boolean) => void;
-  onEdit?: () => void;
-  discardRequest?: number;
-  externalBusy?: boolean;
-  recovery?: ReactNode;
+  onEditSubject: (subjectId: string) => void;
+  onDeleteSubject: (subjectId: string, subjectName: string) => void;
+  onDirtyChange?: (dirty: boolean) => void;
 }) {
-  const [selection, setSelection] = useState<Selected>();
+  const bank = store.flashcardBank;
+  const subjects: readonly Subject[] = store.quizBank.subjects;
   const [browseSubjectId, setBrowseSubjectId] = useState('');
   const [browseDeckId, setBrowseDeckId] = useState('');
   const [subjectQuery, setSubjectQuery] = useState<string>();
   const [deckQuery, setDeckQuery] = useState<string>();
   const [cardQuery, setCardQuery] = useState('');
   const [cardPage, setCardPage] = useState(0);
-  const [deleteRequest, setDeleteRequest] = useState<DeleteRequest>();
-  const [deleteError, setDeleteError] = useState('');
-  const [actionAnchor, setActionAnchor] = useState<HTMLElement | null>(null);
-  const [editor, setEditor] = useState('');
-  const editVersion = useRef(0);
-  const [reason, setReason] = useState('Flashcard content edit');
-  const [notice, setNotice] = useState('');
-  const lastSaveCanceled = useRef(false);
-  const [issues, setIssues] = useState<string[]>([]);
-  const bulkEditVersion = useRef(0);
-  const [bulkDraftDirty, setBulkDraftDirty] = useState(false);
-  const [bulkDestination, setBulkDestination] = useState<{
-    context: FlashcardBulkAddContext;
-    label: string;
-  }>();
-  const [loadedEditor, setLoadedEditor] = useState('');
-  const [busy, setBusy] = useState(false);
-  const locked = busy || externalBusy;
-  const subjectSnapshot = JSON.stringify(subjects);
-  const exportContext = quizRevision;
-  const editorDirty = editor !== loadedEditor;
-  const warnings = useMemo(
-    () => validateFlashcardBank(bank, subjects).filter((issue) => issue.level === 'warning'),
-    [bank, subjects],
-  );
-  useEffect(() => {
-    if (browseSubjectId && !subjects.some((subject) => subject.id === browseSubjectId)) {
-      setBrowseSubjectId('');
-      setBrowseDeckId('');
-      setCardQuery('');
-      setCardPage(0);
-    } else if (browseDeckId && !bank.decks.some((deck) => deck.id === browseDeckId)) {
-      setBrowseDeckId('');
-      setCardQuery('');
-      setCardPage(0);
-    }
-  }, [bank.decks, browseDeckId, browseSubjectId, subjects]);
-  useEffect(() => {
-    const protectDraft = (event: BeforeUnloadEvent) => {
-      if (editorDirty || bulkDraftDirty) {
-        event.preventDefault();
-        event.returnValue = '';
-      }
-    };
-    addEventListener('beforeunload', protectDraft);
-    return () => removeEventListener('beforeunload', protectDraft);
-  }, [editorDirty, bulkDraftDirty]);
+  const [bulk, setBulk] = useState<{ context: FlashcardBulkAddContext; label: string }>();
+  const [bulkDirty, setBulkDirty] = useState(false);
+  const [working, setWorking] = useState(false);
+  const [actionError, setActionError] = useState('');
+  const editor = useRecordEditor(store, { blocked, draftLabel: 'flashcard', fallback: () => undefined });
+  const selection = editor.selection;
+  const locked = working || editor.busy || blocked;
+
   const decksBySubject = useMemo(
     () =>
-      bank.decks.reduce<Record<string, StoredFlashcardDeck[]>>(
+      bank.decks.reduce<Record<string, typeof bank.decks>>(
         (groups, deck) => ((groups[deck.subjectId] ??= []).push(deck), groups),
         {},
       ),
@@ -137,7 +75,7 @@ export function FlashcardAdminPanel({
   );
   const cardsByDeck = useMemo(
     () =>
-      bank.cards.reduce<Record<string, StoredFlashcard[]>>(
+      bank.cards.reduce<Record<string, typeof bank.cards>>(
         (groups, card) => ((groups[card.deckId] ??= []).push(card), groups),
         {},
       ),
@@ -152,268 +90,108 @@ export function FlashcardAdminPanel({
     deckCards.map((row) => row.id),
   );
   useEffect(() => {
-    onDraftChange?.(editorDirty || bulkDraftDirty);
-  }, [editorDirty, bulkDraftDirty, onDraftChange]);
+    onDirtyChange?.(editor.dirty || bulkDirty);
+  }, [editor.dirty, bulkDirty, onDirtyChange]);
   useEffect(() => {
-    setSelection(undefined);
-    setEditor('');
-    setLoadedEditor('');
-    setBulkDestination(undefined);
-    setBulkDraftDirty(false);
-  }, [discardRequest]);
-  const confirmation = useAdminConfirmation([editor, reason, bank, subjects, busy, externalBusy]);
-  const discardDraft = () => confirmation.request('Discard the unsaved flashcard editor text to continue?');
-  const focusDeck = (subjectId: string, deckId: string, page = 0) => {
+    if (browseSubjectId && !subjects.some((subject) => subject.id === browseSubjectId)) {
+      setBrowseSubjectId('');
+      setBrowseDeckId('');
+    } else if (browseDeckId && !bank.decks.some((deck) => deck.id === browseDeckId)) setBrowseDeckId('');
+  }, [bank.decks, browseDeckId, browseSubjectId, subjects]);
+  // Follow the open record: after a save or reorder the list shows the deck and page that hold it.
+  const openKind = selection?.kind;
+  const openId = selection?.id;
+  const openParent = selection?.parentId;
+  useEffect(() => {
+    if (!openId) return;
+    if (openKind === 'deck') {
+      const deck = store.flashcardBank.decks.find((row) => row.id === openId);
+      if (deck) {
+        setBrowseSubjectId(deck.subjectId);
+        setBrowseDeckId(deck.id);
+      }
+    } else if (openKind === 'card' && openParent) {
+      const deck = store.flashcardBank.decks.find((row) => row.id === openParent);
+      if (!deck) return;
+      const cards = store.flashcardBank.cards.filter((row) => row.deckId === openParent);
+      setBrowseSubjectId(deck.subjectId);
+      setBrowseDeckId(deck.id);
+      setCardPage((page) => {
+        const index = cards.findIndex((row) => row.id === openId);
+        return index < 0 ? page : Math.floor(index / ADMIN_PAGE_SIZE);
+      });
+    }
+  }, [store, openKind, openId, openParent]);
+
+  const changeBrowse = async (subjectId: string, deckId: string) => {
+    if (locked || !(await editor.select(undefined))) return;
     setBrowseSubjectId(subjectId);
     setBrowseDeckId(deckId);
     setCardQuery('');
-    setCardPage(page);
+    setCardPage(0);
   };
-  const pageOfCard = (cards: StoredFlashcard[], deckId: string, id: string) =>
-    Math.max(0, Math.floor(cards.filter((card) => card.deckId === deckId).findIndex((card) => card.id === id) / ADMIN_PAGE_SIZE));
-  const changeBrowseSubject = async (subjectId: string) => {
-    if (subjectId === browseSubjectId || locked || (editorDirty && !(await discardDraft()))) return;
-    focusDeck(subjectId, '');
-    setSelection(undefined);
-    setEditor('');
-    setLoadedEditor('');
+  const openRecord = (kind: 'deck' | 'card', record: StoredRecord & { deckId?: string; subjectId?: string }) =>
+    void editor.load({ kind, id: record.id, parentId: record.deckId ?? record.subjectId }, record);
+  const createRecord = (kind: 'deck' | 'card') => {
+    const parentId = kind === 'deck' ? browseSubjectId : browseDeckId;
+    if (parentId) void editor.loadNew(kind, parentId);
   };
-  const changeBrowseDeck = async (deckId: string) => {
-    if (deckId === browseDeckId || locked || (editorDirty && !(await discardDraft()))) return;
-    focusDeck(browseSubjectId, deckId);
-    setSelection(undefined);
-    setEditor('');
-    setLoadedEditor('');
-  };
-  const load = async (next: Selected, value: unknown) => {
-    if (locked) return;
-    if (next?.id && next.kind === selection?.kind && next.id === selection.id) return;
-    if (editorDirty && !(await discardDraft())) return;
-    setSelection(next);
-    const text = JSON.stringify(value, null, 2);
-    setEditor(text);
-    setLoadedEditor(text);
-    setIssues([]);
-  };
-  const commitOperations = (batch: FlashcardAdminOperation[]) => {
-    if (locked) return;
-    if (!reason.trim()) {
-      setIssues(['Enter a change reason before saving.']);
-      return;
-    }
-    lastSaveCanceled.current = false;
-    setNotice('');
+  const run = async (action: () => Promise<unknown>) => {
+    setWorking(true);
+    setActionError('');
     try {
-      const candidate = applyFlashcardOperations(bank, subjects, batch);
-      setBusy(true);
-      return onSaveBank(candidate, reason)
-        .then(install)
-        .catch((error) => {
-          if (error instanceof AdminActionCanceled) {
-            lastSaveCanceled.current = true;
-            setIssues([]);
-            setNotice(error.message);
-            return undefined;
-          }
-          setIssues([error instanceof Error ? error.message : 'Unable to save. Unsaved text is kept.']);
-          return undefined;
-        })
-        .finally(() => setBusy(false));
+      await action();
     } catch (error) {
-      setIssues([error instanceof Error ? error.message : 'Unable to save this operation.']);
-      return undefined;
-    }
-    function install(candidate: StoredFlashcardBank) {
-      if (!candidate.decks.some((deck) => deck.id === browseDeckId)) {
-        setBrowseDeckId('');
-        setCardQuery('');
-        setCardPage(0);
-      }
-      if (!subjects.some((subject) => subject.id === browseSubjectId)) {
-        setBrowseSubjectId('');
-        setBrowseDeckId('');
-      }
-      setIssues([]);
-      return candidate;
-    }
-  };
-  const commitOperation = (operation: FlashcardAdminOperation) => commitOperations([operation]);
-  const commitBulkOperations = async (
-    batch: readonly FlashcardAdminOperation[],
-    snapshot: FlashcardBulkPreviewSnapshot,
-  ): Promise<string | undefined> => {
-    if (!bulkDestination) return 'The bulk destination is no longer selected. Open the batch again.';
-    if (
-      snapshot.bankJson !== JSON.stringify(bank) ||
-      snapshot.subjectSnapshot !== subjectSnapshot ||
-      snapshot.destination !== JSON.stringify(bulkDestination.context) ||
-      snapshot.reason !== reason ||
-      snapshot.exportContext !== exportContext
-    )
-      return 'The workspace changed after preview. Preview the batch again.';
-    const version = bulkEditVersion.current;
-    try {
-      let candidate = applyFlashcardOperations(bank, subjects, batch);
-      setBusy(true);
-      candidate = await onSaveBank(candidate, reason);
-      if (bulkEditVersion.current !== version)
-        return 'The captured batch was saved. Newer text is kept. Review or remove already saved entries before another batch save.';
-      setIssues([]);
-      setSelection(undefined);
-      setEditor('');
-      setLoadedEditor('');
-      setBulkDestination(undefined);
-      setBulkDraftDirty(false);
-      const first = batch.find((operation) => operation.op === 'card.create' || operation.op === 'deck.create');
-      const created = <T extends { id: string }>(rows: T[], old: T[]) => rows.find((row) => !old.some((o) => o.id === row.id));
-      if (first?.op === 'card.create') {
-        const card = created(candidate.cards, bank.cards) ?? first.value;
-        const deck = candidate.decks.find((item) => item.id === card.deckId);
-        focusDeck(deck?.subjectId ?? browseSubjectId, card.deckId, pageOfCard(candidate.cards, card.deckId, card.id));
-      } else if (first?.op === 'deck.create') {
-        const deck = created(candidate.decks, bank.decks) ?? first.value;
-        focusDeck(deck.subjectId, deck.id);
-      }
-    } catch (error) {
-      return error instanceof Error ? error.message : 'Unable to save the bulk flashcard batch.';
+      setActionError(errorMessages(error).join(' '));
     } finally {
-      setBusy(false);
+      setWorking(false);
     }
-    return undefined;
+  };
+  const siblings =
+    selection?.kind === 'deck'
+      ? bank.decks.filter((row) => row.subjectId === selection.parentId)
+      : bank.cards.filter((row) => row.deckId === selection?.parentId);
+  const siblingIndex = siblings.findIndex((row) => row.id === selection?.id);
+  const reorder = (direction: -1 | 1) =>
+    run(async () => {
+      if (!selection?.id) return;
+      const { kind, id } = selection;
+      const record = store.find(kind, id);
+      const target = reorderTarget(siblings, id, direction);
+      if (!record || !target) return;
+      await store.move(kind, id, record.version, target);
+      if (kind === 'card') {
+        const visible = selectFlashcardPage(store.flashcardBank.cards.filter((row) => row.deckId === selection.parentId), cardQuery, 0);
+        const index = visible.matches.findIndex(({ card }) => card.id === id);
+        if (index >= 0) setCardPage(Math.floor(index / ADMIN_PAGE_SIZE));
+      }
+    });
+  const saveBulk = async (plan: BulkPlan) => {
+    setWorking(true);
+    try {
+      const result = await store.addTree(plan);
+      const deckId = result.parentIds[0] ?? plan.groups[0]?.parentId;
+      if (deckId) {
+        const deck = store.flashcardBank.decks.find((row) => row.id === deckId);
+        if (deck) {
+          setBrowseSubjectId(deck.subjectId);
+          setBrowseDeckId(deck.id);
+          setCardQuery('');
+          setCardPage(0);
+        }
+      }
+      return undefined;
+    } catch (error) {
+      return errorMessages(error);
+    } finally {
+      setWorking(false);
+    }
   };
   const openBulk = async (context: FlashcardBulkAddContext, label: string) => {
-    if (locked || (editorDirty && !(await discardDraft()))) return;
-    if (editorDirty) {
-      setSelection(undefined);
-      setEditor('');
-      setLoadedEditor('');
-    }
-    setBulkDraftDirty(false);
-    setBulkDestination({ context, label });
+    if (locked || (editor.dirty && !(await editor.select(undefined)))) return;
+    setBulk({ context, label });
   };
-  const stage = async () => {
-    if (!selection || locked) return;
-    let value: unknown;
-    try {
-      value = JSON.parse(editor);
-    } catch {
-      setIssues(['Record JSON is invalid.']);
-      return;
-    }
-    if (!value || typeof value !== 'object' || Array.isArray(value)) {
-      setIssues(['Record must be a JSON object.']);
-      return;
-    }
-    const record = value as Record<string, unknown>;
-    if (selection.id && record.id !== selection.id) {
-      setIssues(['IDs are stable and cannot be changed.']);
-      return;
-    }
-    const op = {
-      op: `${selection.kind}.${selection.id ? 'update' : 'create'}`,
-      ...(selection.id ? { id: selection.id } : {}),
-      value,
-    } as FlashcardAdminOperation;
-    const version = editVersion.current;
-    const provisionalId = record.id as string;
-    const staged = commitOperation(op);
-    const candidate = staged instanceof Promise ? await staged : staged;
-    if (!candidate) return;
-    const actual = selection.id ? value : selection.kind === 'deck' ? candidate.decks.at(-1) : candidate.cards.at(-1);
-    const text = JSON.stringify(actual, null, 2);
-    Object.assign(record, actual);
-    setSelection({ kind: selection.kind, id: record.id as string });
-    setLoadedEditor(text);
-    if (editVersion.current === version) setEditor(text);
-    else if (!selection.id) setEditor((latest) => adoptReservedDraftId(latest, provisionalId, record.id as string));
-    if (selection.kind === 'deck') focusDeck(record.subjectId as string, record.id as string);
-    else {
-      const deckId = record.deckId as string;
-      const deck = bank.decks.find((item) => item.id === deckId);
-      focusDeck(deck?.subjectId ?? browseSubjectId, deckId, pageOfCard(candidate.cards, deckId, record.id as string));
-    }
-  };
-  const createRecord = (kind: Kind) => {
-    const parentId = kind === 'deck' ? browseSubjectId : browseDeckId;
-    if (!parentId) return;
-    const value =
-      kind === 'deck'
-        ? { id: `d-${crypto.randomUUID()}`, subjectId: parentId, name: 'New deck' }
-        : { id: `f-${crypto.randomUUID()}`, deckId: parentId, front: 'Question', back: 'Answer' };
-    load({ kind, id: '' }, value);
-  };
-  const deletionKey = useMemo(() => JSON.stringify([bank, subjects]), [bank, subjects]);
-  const remove = (kind: Kind, id: string) => {
-    if (locked) return;
-    const row = kind === 'deck' ? bank.decks.find((row) => row.id === id) : bank.cards.find((row) => row.id === id);
-    if (!row) return;
-    setDeleteError('');
-    setDeleteRequest({ selection: { kind, id }, label: 'name' in row ? row.name : row.front, reviewKey: deletionKey });
-  };
-  const confirmDelete = async () => {
-    if (!deleteRequest || locked) return;
-    if (deleteRequest.reviewKey !== deletionKey) {
-      setDeleteError('The content changed. Cancel and review the deletion again.');
-      return;
-    }
-    if (editorDirty && !(await discardDraft())) return;
-    const ids = deleteRequest.ids ?? [deleteRequest.selection.id!];
-    const batch = ids.map((id) =>
-      deleteRequest.selection.kind === 'deck'
-        ? { op: 'deck.delete' as const, id, cascade: true as const }
-        : { op: 'card.delete' as const, id },
-    );
-    if (!(await commitOperations(batch))) {
-      setDeleteError(lastSaveCanceled.current ? '' : 'The deletion was not saved. Review the listed issues.');
-      return;
-    }
-    setDeleteRequest(undefined);
-    recordSelection.clear();
-    setSelection(undefined);
-    setEditor('');
-    setLoadedEditor('');
-  };
-  const reorder = async (direction: -1 | 1) => {
-    if (!selection) return;
-    const candidate = clone(bank);
-    const rows = selection.kind === 'deck' ? candidate.decks : candidate.cards;
-    const row = rows.find((item) => item.id === selection.id);
-    if (!row) return;
-    const parentId =
-      selection.kind === 'deck' && 'subjectId' in row ? row.subjectId : 'deckId' in row ? row.deckId : '';
-    const hasSameParent = (item: typeof row) =>
-      selection.kind === 'deck'
-        ? 'subjectId' in item && item.subjectId === parentId
-        : 'deckId' in item && item.deckId === parentId;
-    const siblings = rows.map((item, index) => ({ item, index })).filter(({ item }) => hasSameParent(item));
-    const siblingPosition = siblings.findIndex(({ item }) => item.id === selection.id);
-    const target = siblings[siblingPosition + direction];
-    if (!target) return;
-    const afterPosition = direction === -1 ? siblingPosition - 2 : siblingPosition + 1;
-    const afterId = siblings[afterPosition]?.item.id;
-    const result = commitOperation({
-      op: `${selection.kind}.move`,
-      id: selection.id,
-      ...(afterId ? { afterId } : { first: true }),
-    } as FlashcardAdminOperation);
-    const resultBank = result instanceof Promise ? await result : result;
-    if (resultBank && selection.kind === 'card') {
-      const card = resultBank.cards.find((item) => item.id === selection.id);
-      if (!card) return;
-      const visible = selectFlashcardPage(
-        resultBank.cards.filter((item) => item.deckId === card.deckId),
-        cardQuery,
-        0,
-      ).matches;
-      const position = visible.findIndex(({ card: item }) => item.id === card.id);
-      if (position >= 0) setCardPage(Math.floor(position / 25));
-    }
-  };
-  const siblingRows =
-    selection?.kind === 'deck'
-      ? bank.decks.filter((row) => row.subjectId === bank.decks.find((item) => item.id === selection.id)?.subjectId)
-      : bank.cards.filter((row) => row.deckId === bank.cards.find((item) => item.id === selection?.id)?.deckId);
-  const siblingIndex = siblingRows.findIndex((row) => row.id === selection?.id);
+  const subjectName = subjects.find((subject) => subject.id === browseSubjectId)?.name ?? '';
   return (
     <Stack
       component="div"
@@ -428,12 +206,7 @@ export function FlashcardAdminPanel({
         variant="outlined"
         sx={{ ...adminNavigatorLayout, p: 2 }}
       >
-        <Stack
-          component="fieldset"
-          disabled={locked}
-          spacing={1}
-          sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}
-        >
+        <Stack component="fieldset" disabled={locked} spacing={1} sx={{ border: 0, p: 0, m: 0, minWidth: 0 }}>
           <Autocomplete
             inputValue={subjectQuery ?? subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''}
             onInputChange={(_, value, reason) => {
@@ -444,7 +217,7 @@ export function FlashcardAdminPanel({
             getOptionLabel={(subject) => subject.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             onChange={(_, subject) => {
-              changeBrowseSubject(subject?.id ?? '');
+              if ((subject?.id ?? '') !== browseSubjectId) void changeBrowse(subject?.id ?? '', '');
               setSubjectQuery(undefined);
               setDeckQuery(undefined);
             }}
@@ -455,32 +228,20 @@ export function FlashcardAdminPanel({
           </Button>
           {!browseSubjectId && (
             <Stack direction="row">
-              <Button size="small" onClick={onAddSubject}>Add subject</Button>
+              <Button size="small" onClick={onAddSubject}>
+                Add subject
+              </Button>
             </Stack>
           )}
           {browseSubjectId && (
             <Stack direction="row" spacing={0.5}>
-              <Button
-                size="small"
-                onClick={() =>
-                  openBulk(
-                    { kind: 'subject', subjectId: browseSubjectId },
-                    subjects.find((subject) => subject.id === browseSubjectId)?.name ?? '',
-                  )
-                }
-              >
+              <Button size="small" onClick={() => void openBulk({ kind: 'subject', subjectId: browseSubjectId }, subjectName)}>
                 Add decks
               </Button>
               <AdminParentActions
                 entity="Subject"
-                onEdit={() => {
-                  const subject = subjects.find((row) => row.id === browseSubjectId);
-                  if (subject) onEditSubject(subject.id, subject.name);
-                }}
-                onDelete={() => {
-                  const subject = subjects.find((row) => row.id === browseSubjectId);
-                  if (subject) onDeleteSubject(subject.id, subject.name);
-                }}
+                onEdit={() => onEditSubject(browseSubjectId)}
+                onDelete={() => onDeleteSubject(browseSubjectId, subjectName)}
               />
             </Stack>
           )}
@@ -497,36 +258,26 @@ export function FlashcardAdminPanel({
               getOptionLabel={(deck) => `${deck.name} · ${cardsByDeck[deck.id]?.length ?? 0} cards`}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               onChange={(_, deck) => {
-                changeBrowseDeck(deck?.id ?? '');
+                if ((deck?.id ?? '') !== browseDeckId) void changeBrowse(browseSubjectId, deck?.id ?? '');
                 setDeckQuery(undefined);
               }}
               renderInput={(params) => <TextField {...params} label="Deck" size="small" />}
             />
           )}
           {browseSubjectId && !browseDecks.length && <Typography variant="body2">No decks in this subject.</Typography>}
-          {browseDeckId && browseDecks.some((deck) => deck.id === browseDeckId) && (
+          {browseDeck && (
             <>
               <Stack direction="row" spacing={0.5} flexWrap="wrap">
                 <Button
                   size="small"
-                  onClick={() =>
-                    openBulk(
-                      { kind: 'deck', deckId: browseDeckId },
-                      `${subjects.find((subject) => subject.id === browseSubjectId)?.name ?? ''} / ${browseDecks.find((deck) => deck.id === browseDeckId)?.name ?? ''}`,
-                    )
-                  }
+                  onClick={() => void openBulk({ kind: 'deck', deckId: browseDeck.id }, `${subjectName} / ${browseDeck.name}`)}
                 >
                   Add cards
                 </Button>
                 <AdminParentActions
                   entity="Deck"
-                  onEdit={() =>
-                    void load(
-                      { kind: 'deck', id: browseDeckId },
-                      browseDecks.find((deck) => deck.id === browseDeckId),
-                    )
-                  }
-                  onDelete={() => remove('deck', browseDeckId)}
+                  onEdit={() => openRecord('deck', browseDeck)}
+                  onDelete={() => onDelete({ selection: { kind: 'deck', id: browseDeck.id }, label: browseDeck.name })}
                 />
               </Stack>
               <TextField
@@ -543,34 +294,16 @@ export function FlashcardAdminPanel({
                   ? `${cardResults.matches.length} matches of ${deckCards.length} cards`
                   : `${deckCards.length} cards`}
               </Typography>
-              {selection?.kind === 'card' &&
-                selection.id &&
-                bank.cards.some((card) => card.id === selection.id) &&
-                !cardResults.visible.some(({ card }) => card.id === selection.id) && (
-                  <Button
-                    size="small"
-                    onClick={() => {
-                      const card = bank.cards.find((item) => item.id === selection.id);
-                      if (!card) return;
-                      const parent = bank.decks.find((deck) => deck.id === card.deckId);
-                      focusDeck(parent?.subjectId ?? browseSubjectId, card.deckId, pageOfCard(bank.cards, card.deckId, card.id));
-                    }}
-                  >
-                    Show in list
-                  </Button>
-                )}
               <AdminRecordSelection
                 selection={recordSelection}
                 pageIds={cardResults.visible.map(({ card }) => card.id)}
-                onDelete={(ids) => {
-                  setDeleteError('');
-                  setDeleteRequest({
-                    selection: { kind: 'card', parentId: browseDeckId },
+                onDelete={(ids) =>
+                  onDelete({
+                    selection: { kind: 'card', parentId: browseDeck.id },
                     ids,
                     label: `${ids.length} selected cards`,
-                    reviewKey: deletionKey,
-                  });
-                }}
+                  })
+                }
               />
               <Box
                 component="nav"
@@ -589,7 +322,7 @@ export function FlashcardAdminPanel({
                     )}
                     <ListItemButton
                       selected={selection?.kind === 'card' && selection.id === card.id}
-                      onClick={() => load({ kind: 'card', id: card.id }, card)}
+                      onClick={() => openRecord('card', card)}
                       sx={{ borderRadius: '10px', mx: 0.5, width: 'calc(100% - 8px)' }}
                     >
                       <ListItemText
@@ -661,179 +394,103 @@ export function FlashcardAdminPanel({
       </Paper>
       <AdminEditorFrame label="Flashcard editor">
         <Stack spacing={2}>
-          {selection && (
+          {selection && editor.open && (
             <Typography variant="h6">
               {selection.id ? 'Edit' : 'Create'} {selection.kind}
             </Typography>
           )}
-          {!selection ? (
+          {!selection || !editor.open ? (
             <AdminEditorEmpty
               title={!browseSubjectId ? 'Choose a subject' : !browseDeckId ? 'Choose a deck' : 'Choose a card'}
             >
               {browseSubjectId ? (
                 <Button
                   onClick={() =>
-                    openBulk(
+                    void openBulk(
                       browseDeckId
                         ? { kind: 'deck', deckId: browseDeckId }
                         : { kind: 'subject', subjectId: browseSubjectId },
-                      browseDeck?.name ?? subjects.find((row) => row.id === browseSubjectId)?.name ?? '',
+                      browseDeck?.name ?? subjectName,
                     )
                   }
                 >
                   {browseDeckId ? 'Add cards' : 'Add decks'}
                 </Button>
-              ) : onAddSubject ? (
+              ) : (
                 <Button onClick={onAddSubject}>Add subject</Button>
-              ) : null}
+              )}
             </AdminEditorEmpty>
           ) : (
-            <>
-              <AdminRecordEditor
-                kind={selection.kind}
-                existing={Boolean(selection.id)}
-                expectedId={selection.id}
-                text={editor}
-                onChange={(value) => {
-                  editVersion.current++;
-                  onEdit?.();
-                  setEditor(value);
-                }}
-              />
-              <TextField
-                label="Change reason"
-                required
-                error={!reason.trim()}
-                helperText={!reason.trim() ? 'Enter a reason for this saved change.' : undefined}
-                value={reason}
-                onChange={(event) => {
-                  onEdit?.();
-                  setReason(event.target.value);
-                }}
-              />
-            </>
+            <AdminRecordEditor
+              kind={selection.kind}
+              existing={Boolean(selection.id)}
+              expectedId={selection.id}
+              text={editor.text}
+              onChange={editor.edit}
+            />
           )}
-          {notice && (
-            <Alert severity="info" role="status">
-              {notice}
+          {actionError && (
+            <Alert severity="error" onClose={() => setActionError('')}>
+              {actionError}
             </Alert>
           )}
-          {issues.length > 0 && (
-            <Alert severity="error">
-              <AdminIssues issues={issues.map((message) => ({ level: 'error', message }))} />
-            </Alert>
-          )}
-          {warnings.length > 0 && (
-            <Alert severity="warning">
-              <AdminIssues issues={warnings} />
-            </Alert>
-          )}
-          <AdminEditorActions dirty={editorDirty} busy={locked} statusVisible={Boolean(selection)}>
-            {selection && (
-              <Button variant="contained" disabled={!selection || locked} onClick={stage}>
-                Review save
+          <AdminRecordFeedback
+            issues={editor.issues}
+            notice={editor.notice}
+            conflict={editor.conflict}
+            busy={locked}
+            onUseServer={editor.takeServerVersion}
+            onKeepMine={editor.keepMine}
+          />
+          <AdminEditorActions dirty={editor.dirty} busy={locked} statusVisible={Boolean(selection && editor.open)}>
+            {selection && editor.open && (
+              <Button variant="contained" disabled={locked} onClick={() => void editor.save()}>
+                Save
               </Button>
             )}
-            <Button
+            <AdminRecordMenu
               disabled={locked}
-              size="small"
-              aria-haspopup="menu"
-              onClick={(event) => setActionAnchor(event.currentTarget)}
-            >
-              Record actions
-            </Button>
-            <Menu anchorEl={actionAnchor} open={Boolean(actionAnchor)} onClose={() => setActionAnchor(null)}>
-              <MenuItem
-                disabled={!browseSubjectId}
-                onClick={() => {
-                  setActionAnchor(null);
-                  createRecord('deck');
-                }}
-              >
-                New deck
-              </MenuItem>
-              <MenuItem
-                disabled={!browseDeckId}
-                onClick={() => {
-                  setActionAnchor(null);
-                  createRecord('card');
-                }}
-              >
-                New card
-              </MenuItem>
-              {selection?.id && (
-                <MenuItem
-                  onClick={() => {
-                    setActionAnchor(null);
-                    remove(selection.kind, selection.id);
-                  }}
-                >
-                  Delete…
-                </MenuItem>
-              )}
-              {selection?.id && (
-                <MenuItem
-                  disabled={siblingIndex <= 0}
-                  onClick={() => {
-                    setActionAnchor(null);
-                    reorder(-1);
-                  }}
-                >
-                  Move up
-                </MenuItem>
-              )}
-              {selection?.id && (
-                <MenuItem
-                  disabled={siblingIndex < 0 || siblingIndex + 1 >= siblingRows.length}
-                  onClick={() => {
-                    setActionAnchor(null);
-                    reorder(1);
-                  }}
-                >
-                  Move down
-                </MenuItem>
-              )}
-            </Menu>
+              items={[
+                { label: 'New deck', disabled: !browseSubjectId, onClick: () => createRecord('deck') },
+                { label: 'New card', disabled: !browseDeckId, onClick: () => createRecord('card') },
+                {
+                  label: 'Delete…',
+                  hidden: !selection?.id,
+                  onClick: () =>
+                    selection?.id &&
+                    onDelete({
+                      selection: { kind: selection.kind, id: selection.id },
+                      label: selection.kind === 'deck' ? (browseDeck?.name ?? selection.id) : selection.id,
+                    }),
+                },
+                {
+                  label: 'Move up',
+                  hidden: !selection?.id,
+                  disabled: editor.dirty || siblingIndex <= 0,
+                  onClick: () => void reorder(-1),
+                },
+                {
+                  label: 'Move down',
+                  hidden: !selection?.id,
+                  disabled: editor.dirty || siblingIndex < 0 || siblingIndex + 1 >= siblings.length,
+                  onClick: () => void reorder(1),
+                },
+              ]}
+            />
           </AdminEditorActions>
         </Stack>
       </AdminEditorFrame>
-      {confirmation.dialog}
-      <AdminDeleteDialog
-        recovery={recovery}
-        commitLabel="Review"
-        request={deleteRequest}
-        bank={quizBank}
-        flashcardBank={bank}
-        currentReviewKey={deletionKey}
-        busy={locked}
-        error={deleteError}
-        onClose={() => setDeleteRequest(undefined)}
-        onConfirm={confirmDelete}
-      />
-      {bulkDestination && (
+      {editor.discardDialog}
+      {bulk && (
         <FlashcardBulkAddDialog
-          recovery={recovery}
-          open
-          context={bulkDestination.context}
-          destinationLabel={bulkDestination.label}
+          context={bulk.context}
+          destinationLabel={bulk.label}
           bank={bank}
           subjects={subjects}
-          reason={reason}
-          onReasonChange={(value) => {
-            bulkEditVersion.current++;
-            onEdit?.();
-            setReason(value);
-          }}
-          onEdit={() => {
-            bulkEditVersion.current++;
-            onEdit?.();
-          }}
-          exportContext={exportContext}
           busy={locked}
-          onClose={() => setBulkDestination(undefined)}
-          onDraftDirtyChange={setBulkDraftDirty}
-          onStage={commitBulkOperations}
-          commitLabel="Review save"
+          onClose={() => setBulk(undefined)}
+          onDraftDirtyChange={setBulkDirty}
+          onSave={saveBulk}
         />
       )}
     </Stack>

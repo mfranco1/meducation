@@ -1,10 +1,10 @@
-import type { StoredQuestionBank, StoredSubject } from '../../content/schema/schema';
-import type { AdminChangeSet, ContentAddOperation, GroupedQuestionInput, GroupedQuizAdd, GroupedSubjectRef } from './types';
+import type { StoredQuestionBank } from '../../content/schema/schema';
+import type { BulkPlan } from '../data/DraftStore';
 
 export type BulkAddContext =
-  | { kind: 'newSubject'; revision: string }
-  | { kind: 'subject'; subjectId: string; revision: string }
-  | { kind: 'quiz'; subjectId: string; quizId: string; revision: string };
+  | { kind: 'newSubject' }
+  | { kind: 'subject'; subjectId: string }
+  | { kind: 'quiz'; subjectId: string; quizId: string };
 
 export interface BulkAddItemDraft {
   stem: string;
@@ -145,96 +145,43 @@ export function parseBulkAddDraft(value: unknown, context: BulkAddContext): { dr
   return errors.length ? { errors } : { draft: { quizzes: parsed.quizzes! }, errors };
 }
 
-function nextId(prefix: 's' | 'q' | 'i', used: Set<string>, next: Map<string, number>): string {
-  let candidate = next.get(prefix) ?? 1;
-  while (used.has(`${prefix}${candidate}`)) candidate += 1;
-  const id = `${prefix}${candidate}`;
-  used.add(id);
-  next.set(prefix, candidate + 1);
-  return id;
-}
+const itemFields = (item: BulkAddItemDraft) => ({
+  ...item,
+  choices: item.choices.map((text, index) => ({ id: choiceLabel(index), text })),
+});
 
-function initialAllocator(bank: StoredQuestionBank): { used: Record<'s' | 'q' | 'i', Set<string>>; next: Map<string, number> } {
-  const used = {
-    s: new Set(bank.subjects.map(entity => entity.id)),
-    q: new Set(bank.quizzes.map(entity => entity.id)),
-    i: new Set(bank.questions.map(entity => entity.id)),
-  };
-  const afterMaximum = (prefix: 's' | 'q' | 'i', values: Set<string>) => {
-    let candidate = values.size ? Math.max(...Array.from(values, id => Number(id.slice(1)) || 0)) + 1 : 1;
-    while (values.has(`${prefix}${candidate}`)) candidate += 1;
-    return candidate;
-  };
-  return { used, next: new Map([['s', afterMaximum('s', used.s)], ['q', afterMaximum('q', used.q)], ['i', afterMaximum('i', used.i)]]) };
-}
-
-function compileItems(items: BulkAddItemDraft[], allocator: ReturnType<typeof initialAllocator>, path: string, questionPaths: Record<string, string>): GroupedQuestionInput[] {
-  return items.map((item, itemIndex) => {
-    const id = nextId('i', allocator.used.i, allocator.next);
-    const choices = item.choices.map((text, choiceIndex) => ({ id: choiceLabel(choiceIndex), text }));
-    questionPaths[id] = `${path}[${itemIndex}]`;
-    return { ...item, id, choices } as unknown as GroupedQuestionInput;
-  });
-}
-
-export interface CompiledBulkAddDraft {
-  changeSet: AdminChangeSet;
-  questionPaths: Record<string, string>;
-  generatedIds: string[];
-}
-
+/** Parses the editable JSON into the records to create. Parent IDs come from the chosen destination. */
 export function compileBulkAddDraft(
   value: unknown,
   context: BulkAddContext,
   bank: StoredQuestionBank,
-  currentRevision: string,
-  reason: string,
-): { compiled?: CompiledBulkAddDraft; errors: string[] } {
-  if (context.revision !== currentRevision) return { errors: ['This draft was created from an older snapshot. Reload its template before staging.'] };
-  if (!reason.trim()) return { errors: ['Change reason is required.'] };
+): { plan?: BulkPlan; errors: string[] } {
   const parsed = parseBulkAddDraft(value, context);
   if (!parsed.draft) return { errors: parsed.errors };
   const draft = parsed.draft;
-
-  const allocator = initialAllocator(bank);
-  const questionPaths: Record<string, string> = {};
-  if (context.kind === 'newSubject' && !('subject' in draft)) return { errors: ['New subject draft is missing subject content.'] };
-  const subjectRef: GroupedSubjectRef = context.kind === 'newSubject'
-    ? { create: { id: nextId('s', allocator.used.s, allocator.next), name: (draft as Extract<BulkAddDraft, { subject: { name: string } }>).subject.name, accent: '#bc531e' } satisfies StoredSubject }
-    : { existingId: context.subjectId };
-  const subjectId = 'create' in subjectRef ? subjectRef.create.id : subjectRef.existingId;
-
-  let quizzesDraft: BulkAddQuizDraft[];
-  let existingQuizId: string | undefined;
   if (context.kind === 'quiz') {
     if (!('items' in draft)) return { errors: ['Selected quiz draft must contain an items array.'] };
-    existingQuizId = context.quizId;
-    const selectedQuiz = bank.quizzes.find(quiz => quiz.id === existingQuizId);
-    if (!selectedQuiz || selectedQuiz.subjectId !== subjectId) return { errors: ['Selected quiz is not part of the selected subject in this snapshot.'] };
-    quizzesDraft = [{ name: selectedQuiz.name, items: draft.items }];
-  } else {
-    if ('items' in draft) return { errors: ['Subject draft must contain a quizzes array.'] };
-    quizzesDraft = draft.quizzes;
+    const selectedQuiz = bank.quizzes.find((quiz) => quiz.id === context.quizId);
+    if (!selectedQuiz || selectedQuiz.subjectId !== context.subjectId)
+      return { errors: ['Selected quiz is not part of the selected subject.'] };
+    return {
+      plan: { groups: [{ parentId: selectedQuiz.id, childKind: 'questions', children: draft.items.map(itemFields) }] },
+      errors: [],
+    };
   }
-
-  const groupedQuizzes: GroupedQuizAdd[] = quizzesDraft.map((quizDraft, quizIndex) => {
-    const quizPath = existingQuizId ? '$.items' : `$.quizzes[${quizIndex}].items`;
-    const quizId = existingQuizId ?? nextId('q', allocator.used.q, allocator.next);
-    const quiz = existingQuizId ? { existingId: quizId } : { create: { id: quizId, name: quizDraft.name } };
-    return { quiz, items: compileItems(quizDraft.items, allocator, quizPath, questionPaths) };
-  });
-
-  const operation: ContentAddOperation = { op: 'content.add', subject: subjectRef, quizzes: groupedQuizzes };
-  const allocated = [
-    ...('create' in subjectRef ? [subjectRef.create.id] : []),
-    ...groupedQuizzes.flatMap(quiz => 'create' in quiz.quiz ? [quiz.quiz.create.id] : []),
-    ...Object.keys(questionPaths),
-  ];
+  if ('items' in draft) return { errors: ['Subject draft must contain a quizzes array.'] };
+  if (context.kind === 'newSubject' && !('subject' in draft))
+    return { errors: ['New subject draft is missing subject content.'] };
   return {
-    compiled: {
-      changeSet: { changeSetVersion: 2, base: { bankSchemaVersion: 4, revision: context.revision }, reason, operations: [operation] },
-      questionPaths,
-      generatedIds: allocated,
+    plan: {
+      ...(context.kind === 'subject'
+        ? { subjectId: context.subjectId }
+        : { subject: { name: (draft as { subject: { name: string } }).subject.name, accent: '#bc531e' } }),
+      groups: draft.quizzes.map((quiz) => ({
+        create: { kind: 'quizzes' as const, fields: { name: quiz.name } },
+        childKind: 'questions' as const,
+        children: quiz.items.map(itemFields),
+      })),
     },
     errors: [],
   };

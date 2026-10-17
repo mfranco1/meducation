@@ -4,7 +4,6 @@ import copy
 import json
 import subprocess
 from pathlib import Path
-from uuid import uuid4
 
 import pytest
 from fastapi import FastAPI, Request
@@ -18,8 +17,6 @@ from meducation_api.content_policy import (
     policy_limits,
     read_json_body,
 )
-from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.db.operations import save_draft
 
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = json.loads((ROOT / "tests/fixtures/paired-authoring-cases.json").read_bytes())
@@ -74,27 +71,6 @@ def test_shape_diagnostics_have_paths_without_private_content():
         PairedContentValidator().validate(pair)
     assert caught.value.issues[0].path == "$.pair.quizzes.questions[0].choices[0]"
     assert "None" not in str(caught.value)
-
-
-def test_invalid_pair_never_calls_database_or_mutates_input():
-    pair = candidate()
-    pair["quizzes"]["questions"][0]["stem"] = (
-        '<img src="/content/a" alt="private" onerror="private">'
-    )
-    before = copy.deepcopy(pair)
-    # No fake database behavior: None must never be dereferenced for invalid content.
-    with pytest.raises(ContentDatabaseError, match="policy validation"):
-        save_draft(
-            None,
-            operation_id=uuid4(),
-            quiz_text=json.dumps(pair["quizzes"]),
-            flashcard_text=json.dumps(pair["flashcards"]),
-            expected_revision=0,
-            base_sequence=0,
-            actor="test-only",
-            reason="Reviewed fixture",
-        )
-    assert pair == before
 
 
 def test_worker_timeout_outage_and_slots_fail_closed(monkeypatch):

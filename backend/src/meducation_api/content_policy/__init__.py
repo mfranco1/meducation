@@ -103,6 +103,11 @@ class ContentPolicyError(ValueError):
         }
 
 
+def artifact_text(value: Any) -> str:
+    """The deterministic stored-artifact serialization shared by releases and the draft."""
+    return json.dumps(value, ensure_ascii=False, allow_nan=False, indent=2) + "\n"
+
+
 @dataclass(frozen=True)
 class ValidatedPair:
     # Immutable artifact strings; do not return mutable parsed objects as validation proof.
@@ -217,18 +222,17 @@ def _resources(value: Any, limits: dict[str, int]) -> None:
                 pending.append((key, depth + 1, path))
 
 
-async def read_json_body(request: Request) -> Any:
+async def read_json_body(request: Request, limit: int | None = None) -> Any:
     if not _BODY_SLOTS.acquire(blocking=False):
         raise ContentPolicyError(503, "content_policy_busy")
     try:
-        return await _read_json_body(request)
+        return await _read_json_body(request, limit or policy_limits()["requestBytes"])
     finally:
         _BODY_SLOTS.release()
 
 
-async def _read_json_body(request: Request) -> Any:
+async def _read_json_body(request: Request, limit: int) -> Any:
     """Call after authorization; never let FastAPI parse an unbounded admin body."""
-    limit = policy_limits()["requestBytes"]
     if request.headers.get("content-encoding", "identity") != "identity":
         raise ContentPolicyError(415, "unsupported_encoding")
     if (
@@ -247,7 +251,7 @@ async def _read_json_body(request: Request) -> Any:
         async with asyncio.timeout(30):
             async for chunk in request.stream():
                 if len(body) + len(chunk) > limit:
-                    _reject("$", "body_limit", "Request exceeds the 64 MiB limit.", 413)
+                    _reject("$", "body_limit", "Request exceeds the route body limit.", 413)
                 body.extend(chunk)
     except ClientDisconnect:
         raise ContentPolicyError(400, "body_incomplete") from None
@@ -328,14 +332,8 @@ class PairedContentValidator:
                 raise ContentPolicyError(422, "invalid_content", issues, result["totalIssues"])
             # Serialize original validated objects, never Pydantic model defaults.
             return ValidatedPair(
-                quiz_artifact=json.dumps(
-                    pair["quizzes"], ensure_ascii=False, allow_nan=False, indent=2
-                )
-                + "\n",
-                flashcard_artifact=json.dumps(
-                    pair["flashcards"], ensure_ascii=False, allow_nan=False, indent=2
-                )
-                + "\n",
+                quiz_artifact=artifact_text(pair["quizzes"]),
+                flashcard_artifact=artifact_text(pair["flashcards"]),
                 policy_version=limits["policyVersion"],
                 warnings=result["warnings"],
             )

@@ -5,23 +5,23 @@ import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/sche
 import { AdminDeleteDialog, deletionReview } from './AdminDeleteDialog';
 import flashcards from '../../../tests/fixtures/flashcard-bank-contract.json';
 
-it('requires a current review and disables repeated confirmation while saving', () => {
+it('shows the impact counts, confirms once and cannot be repeated while deleting', () => {
   const bank = fixture as StoredQuestionBank;
   const props = {
     bank,
     flashcardBank: { schemaVersion: 2 as const, decks: [], cards: [] },
-    request: { selection: { kind: 'quiz' as const, id: 'q1' }, label: 'First quiz', reviewKey: 'original' },
+    request: { selection: { kind: 'quiz' as const, id: 'q1' }, label: 'First quiz' },
     onClose: vi.fn(),
     onConfirm: vi.fn(),
   };
-  const { rerender } = render(<AdminDeleteDialog {...props} currentReviewKey="changed" />);
-  expect(screen.getByRole('button', { name: 'Save quiz deletion' })).toBeDisabled();
-  expect(screen.getByRole('alert')).toHaveTextContent('content changed');
-  rerender(<AdminDeleteDialog {...props} currentReviewKey="original" />);
-  fireEvent.click(screen.getByRole('button', { name: 'Save quiz deletion' }));
+  const { rerender } = render(<AdminDeleteDialog {...props} />);
+  expect(screen.getByText(/Affected: 0 subjects · 1 quizzes · 2 items/)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: 'Delete quiz' }));
   expect(props.onConfirm).toHaveBeenCalledTimes(1);
-  rerender(<AdminDeleteDialog {...props} currentReviewKey="original" busy />);
-  expect(screen.getByRole('button', { name: 'Save quiz deletion' })).toBeDisabled();
+  rerender(<AdminDeleteDialog {...props} busy />);
+  expect(screen.getByRole('button', { name: 'Delete quiz' })).toBeDisabled();
+  rerender(<AdminDeleteDialog {...props} error="This record changed on the server." />);
+  expect(screen.getByRole('alert')).toHaveTextContent('changed on the server');
 });
 
 it('includes the complete shared-subject cascade and isolates selected leaf records', () => {

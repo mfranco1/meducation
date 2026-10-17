@@ -234,7 +234,7 @@ export function AdminRecordEditor({
             helperText={
               existing
                 ? 'Stable ID · read-only'
-                : 'Provisional ID · the server reserves a stable ID during save review.'
+                : 'The server assigns a stable ID when you save.'
             }
           />
           {['subjectId', 'quizId', 'deckId']
@@ -245,7 +245,7 @@ export function AdminRecordEditor({
                 label={key === 'subjectId' ? 'Subject ID' : key === 'quizId' ? 'Quiz ID' : 'Deck ID'}
                 value={record[key]}
                 slotProps={{ input: { readOnly: true } }}
-                helperText="Relationship · read-only in this form. Use an explicit reviewed move operation."
+                helperText="Relationship · read-only in this form. Edit it in JSON to move the record."
               />
             ))}
           {(kind === 'subject' || kind === 'quiz' || kind === 'deck') && input('name', 'Name')}

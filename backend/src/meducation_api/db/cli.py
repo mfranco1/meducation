@@ -61,6 +61,8 @@ def main() -> None:
     command.add_argument("--operation-id", type=UUID, required=True)
     command.add_argument("--actor", required=True)
     command.add_argument("--reason", required=True)
+    command = commands.add_parser("advance-id-sequences")
+    command.add_argument("--by", type=int, required=True)
     command = commands.add_parser("export-release")
     command.add_argument("--release-id", type=UUID, required=True)
     command.add_argument("--output", type=Path, required=True)
@@ -101,6 +103,7 @@ def main() -> None:
             "upgrade",
             "restore-permissions",
             "invalidate-restored-sessions",
+            "advance-id-sequences",
             "allocation-range",
             "allocation-recover",
         ):
@@ -152,6 +155,13 @@ def main() -> None:
                     rehearsal=args.rehearsal,
                 )
                 print(json.dumps(result))
+            elif args.action == "advance-id-sequences":
+                from meducation_api.db.recovery import advance_ids
+
+                if args.by < 1:
+                    raise ContentDatabaseError("--by must be a positive number of IDs.")
+                with engine.begin() as connection:
+                    print(json.dumps({"nextIds": advance_ids(connection, args.by)}))
             elif args.action in ("restore-permissions", "invalidate-restored-sessions"):
                 from meducation_api.db.recovery import (
                     invalidate_restored_sessions,

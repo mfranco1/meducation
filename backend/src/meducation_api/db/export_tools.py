@@ -35,7 +35,8 @@ def inspect_export(directory: Path, *, repository: Path, audit: bool = False) ->
             }
             if manifest["schemaVersions"] != {"quiz": 4, "flashcard": 2}:
                 raise ValueError("Unsupported export schema")
-        elif manifest.get("contractVersion") == 1:
+        elif manifest.get("contractVersion") in (1, 2):
+            version = manifest["contractVersion"]
             names = ("questionBank.generated.json", "flashcardBank.generated.json")
             expected = {
                 "quiz": manifest["digests"]["quizSha256"],
@@ -52,12 +53,18 @@ def inspect_export(directory: Path, *, repository: Path, audit: bool = False) ->
                 raise ValueError("Invalid export target")
             if manifest["schemas"] != {"quizzes": 4, "flashcards": 2}:
                 raise ValueError("Unsupported export schema")
+            # v1 drafts carried a document revision; v2 drafts carry the latest change ID.
+            draft_keys = (
+                ("draftRevision", "basePublicationSequence")
+                if version == 1
+                else ("latestChangeId",)
+            )
             if target == "release":
                 UUID(manifest["releaseId"])
-            elif (
-                manifest["releaseId"] is not None
-                or not isinstance(manifest["draftRevision"], str)
-                or not manifest["draftRevision"].isdecimal()
+            elif manifest["releaseId"] is not None or not (
+                isinstance(manifest[draft_keys[0]], str) and manifest[draft_keys[0]].isdecimal()
+                if version == 1
+                else type(manifest[draft_keys[0]]) is int and manifest[draft_keys[0]] >= 0
             ):
                 raise ValueError("Invalid draft context")
             context = {
@@ -66,10 +73,9 @@ def inspect_export(directory: Path, *, repository: Path, audit: bool = False) ->
                     "target",
                     "unpublished",
                     "releaseId",
-                    "draftRevision",
                     "baseReleaseId",
-                    "basePublicationSequence",
                     "publication",
+                    *draft_keys,
                 )
             }
         else:
@@ -106,7 +112,7 @@ def inspect_export(directory: Path, *, repository: Path, audit: bool = False) ->
         }
         if actual_revisions != revisions:
             raise ValueError("Export content revisions differ")
-        if manifest.get("contractVersion") == 1:
+        if manifest.get("contractVersion") in (1, 2):
             ids = {
                 key: [row["id"] for row in document[key]]
                 for document, keys in (

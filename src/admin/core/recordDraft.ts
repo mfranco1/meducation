@@ -1,5 +1,3 @@
-import type { StoredQuestionBank } from '../../content/schema/schema';
-
 /** Form adapters patch one JSON draft. They never normalize untouched source or infer defaults. */
 export type RecordKind = 'subject' | 'quiz' | 'question' | 'deck' | 'card';
 export type DraftRecord = Record<string, unknown>;
@@ -180,26 +178,83 @@ export function removeDraftChoice(text: string, index: number): string {
   );
 }
 
-/** Only a server reservation may replace a new record's provisional ID after a committed save. */
-export function adoptReservedDraftId(text: string, provisional: string, reserved: string): string {
-  if (provisional === reserved) return text;
+/** Server-assigned IDs: a new record is drafted with an empty ID that the server fills in. */
+export function adoptServerId(text: string, id: string): string {
   try {
     const row: unknown = JSON.parse(text);
-    if (!isDraftObject(row) || row.id !== provisional) return text;
-    return JSON.stringify({ ...row, id: reserved }, null, 2);
+    if (!isDraftObject(row) || row.id !== '') return text;
+    return JSON.stringify({ ...row, id }, null, 2);
   } catch {
     return text;
   }
 }
 
-function nextId(bank: StoredQuestionBank, prefix: 's' | 'q' | 'i'): string {
-  const values = prefix === 's' ? bank.subjects : prefix === 'q' ? bank.quizzes : bank.questions;
-  const maximum = values.reduce((largest, value) => Math.max(largest, Number(value.id.slice(1)) || 0), 0);
-  return `${prefix}${maximum + 1}`;
+export const PARENT_KEY: Partial<Record<RecordKind, string>> = {
+  quiz: 'subjectId',
+  question: 'quizId',
+  deck: 'subjectId',
+  card: 'deckId',
+};
+/** The editable JSON of a stored record: the server's concurrency token is not authored content. */
+export function toRecordText(record: object): string {
+  const content = { ...(record as DraftRecord) };
+  delete content.version;
+  return JSON.stringify(content, null, 2);
+}
+export function newRecordTemplate(kind: RecordKind, parentId = ''): DraftRecord {
+  switch (kind) {
+    case 'subject':
+      return { id: '', name: '', accent: '#bc531e' };
+    case 'quiz':
+      return { id: '', subjectId: parentId, name: '' };
+    case 'question':
+      return {
+        id: '',
+        quizId: parentId,
+        stem: '',
+        choices: [
+          { id: 'A', text: '' },
+          { id: 'B', text: '' },
+        ],
+        answer: 'A',
+        rationale: '',
+      };
+    case 'deck':
+      return { id: '', subjectId: parentId, name: 'New deck' };
+    case 'card':
+      return { id: '', deckId: parentId, front: 'Question', back: 'Answer' };
+  }
 }
 
-export const newSubject = (bank: StoredQuestionBank) => ({ id: nextId(bank, 's'), name: '', accent: '#bc531e' });
-export const newQuiz = (bank: StoredQuestionBank, subjectId = '') => ({ id: nextId(bank, 'q'), subjectId, name: '' });
-export const newQuestion = (bank: StoredQuestionBank, quizId = '') => ({
-  id: nextId(bank, 'i'), quizId, stem: '', choices: [{ id: 'A', text: '' }, { id: 'B', text: '' }], answer: 'A', rationale: '',
-});
+/** Turns edited JSON into what the server needs: a field patch, and a new parent if the relationship changed. */
+export function planSave(
+  kind: RecordKind,
+  text: string,
+  baseline?: DraftRecord,
+): { error: string } | { fields: DraftRecord; parentId?: string; moveTo?: string } {
+  let row: unknown;
+  try {
+    row = JSON.parse(text);
+  } catch {
+    return { error: 'Record JSON is invalid.' };
+  }
+  if (!isDraftObject(row)) return { error: 'Record must be a JSON object.' };
+  if (baseline && row.id !== baseline.id) return { error: 'IDs are stable and cannot be changed.' };
+  const parentKey = PARENT_KEY[kind];
+  const parentId = parentKey ? row[parentKey] : undefined;
+  if (parentKey && (typeof parentId !== 'string' || !parentId))
+    return { error: `${parentKey} must name the parent record.` };
+  const patch: DraftRecord = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (key === 'id' || key === 'version' || key === parentKey) continue;
+    if (!baseline || JSON.stringify(baseline[key]) !== JSON.stringify(value)) patch[key] = value;
+  }
+  if (baseline)
+    for (const key of editableFields(kind)) if (Object.hasOwn(baseline, key) && !Object.hasOwn(row, key)) patch[key] = null;
+  return {
+    fields: patch,
+    parentId: parentId as string | undefined,
+    moveTo: baseline && parentKey && baseline[parentKey] !== parentId ? (parentId as string) : undefined,
+  };
+}
+export const editableFields = (kind: RecordKind): readonly string[] => fields[kind];

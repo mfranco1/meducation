@@ -7,8 +7,28 @@ Goal: remove accumulated complexity and prepare for hosted production using mana
 1. **Docs and process** (done).
 2. **Scripts and CI** (done): one container smoke (`npm run test:containers`), single-arch CI, two Playwright configs. Left: `control-resilience-fixture.py` stays for two backend DB-outage tests.
 3. **Frontend**: progress backup simplified (done). Admin: gateway interface, in-memory test gateway and tiny files removed (done). Remaining: replace the custom boundary ESLint plugin with `no-restricted-imports`; merge tiny files outside admin; remove implementation-coupled tests.
-   - Follow-up decision: quiz and flashcard admin save models differ (quiz change sets with server-reserved IDs vs whole-bank flashcard operations). Unifying them onto one model would let the two panels, bulk-add drafts and change-set modules merge; this is a behavior/design change, not a cleanup.
-4. **Backend** (needs a `pg_dump` and restore check first): random IDs instead of the allocation fence and journals; one validation layer (drop PL/pgSQL JSON validation); store releases as immutable JSON with role grants instead of triggers; remove obsolete parity/transfer code; admin auth via managed identity or auth proxy.
+   - Follow-up decision: quiz and flashcard admin save models differ (quiz change sets with server-reserved IDs vs whole-bank flashcard operations). Unifying them onto one model would let the two panels, bulk-add drafts and change-set modules merge; this is a behavior/design change, not a cleanup. Resolved in 4b: both panels use the record API.
+4. **Backend: per-record editor** (design below). Backup taken 2026-10-17: `var/backups/postgres/20261016T160123Z-6a36e7c0.dump`. Draft equalled the active release at that time (no unpublished work).
+   - 4a. Backend: draft record tables + record API + publish from rows; remove whole-pair save, reservations, undo/reset revisions and fence checks on the editor path. Implemented (migration `0007_draft_records`, `/api/admin/draft` record API); not yet applied to the authority database.
+   - 4b. Admin frontend switched to the record API; change sets, ID reservation/remapping, prepared previews, save-review, undo/reset/history UI and client bank serialization deleted (done). Quiz and flashcard panels share one editing hook and one delete flow; added a Changes dialog with Revert and Discard unpublished changes; publish is one confirmation.
+   - 4c. Cleanup: drop retired SQL functions/tables (reservations, entity_ids, fence, draft docs, PL/pgSQL JSON validation, operations replay), `scripts/local-authoring` journal/fence tooling, parity/transfer code that only served file imports.
+   - 4d. Admin auth via managed identity or auth proxy once the host is chosen. Single editor.
+
+## Phase 4 design: per-record editor
+
+Decisions: single editor; no multi-step undo (per-record revert and "discard unpublished changes" suffice). Learner delivery and release tables are unchanged.
+
+- **Draft tables** `content.draft_{subjects,quizzes,questions,decks,flashcards}`: same content columns as the release tables, without `release_id`; `id` primary key; `version integer` for optimistic concurrency; `position numeric` as the global sort key (copied from the release's global position; inserts take the midpoint between neighbours, appends take max+1). Parent FKs with no cascade; the API cascades explicitly.
+- **IDs**: `s`/`q`/`i` from per-kind sequences starting after the current maximum; decks and cards use `d-<uuid>`/`f-<uuid>` like existing records. Assigned on insert, never changed. After restoring an older backup, advance the sequences (one CLI command) so IDs that learners may have seen are not reused.
+- **History** `content.draft_changes` (id, at, actor, kind, entity id, action, before jsonb, after jsonb). It is the audit trail and the source for "revert this record". `content.draft_state` holds the base release and the change id at the last publish.
+- **API** under `/api/admin/draft` (existing session, CSRF and fresh-auth guards):
+  - `GET /draft` returns all records (gzip) plus a `changed` flag.
+  - `POST`/`PUT {expectedVersion}`/`DELETE {expectedVersion, cascade}` for each kind; `POST .../bulk` creates many children of one parent in one transaction; `PUT .../move` changes the parent or position.
+  - `POST /draft/changes/{id}/revert`; `POST /draft/discard` resets the draft to the active release.
+  - A stale version returns 409.
+- **Validation**: on each write, the shared policy validator runs on a mini pair (the record plus its ancestors); the full pair is validated at publish. One validator, no PL/pgSQL JSON checks.
+- **Publish**: build both documents from draft rows ordered by `position`, serialize deterministically, and reuse the existing release store + activate path. An unchanged draft yields byte-identical documents (this is also the migration check).
+- **Migration 0007**: refuse unless the draft documents equal the base release artifacts; copy the base release rows into the draft tables; initialize the sequences; verify that a rebuild matches the release artifacts byte for byte.
 
 ## Carried over
 

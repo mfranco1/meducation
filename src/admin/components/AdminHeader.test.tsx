@@ -3,19 +3,20 @@ import { expect, it, vi } from 'vitest';
 import { AdminHeader } from './AdminHeader';
 it('keeps the blocked-publication explanation visible and utilities in labelled menus', () => {
   const onExport = vi.fn();
+  const onChanges = vi.fn();
+  const onDiscard = vi.fn();
   render(
     <AdminHeader
       status="Unsaved edits"
       publishBlocked="Save edits in Flashcards before publishing."
       busy={false}
-      undoAvailable
-      publicationAvailable
+      discardAvailable
       onStatus={() => {}}
       onPublish={() => {}}
       onExport={onExport}
       onVersions={() => {}}
-      onUndo={() => {}}
-      onReset={() => {}}
+      onChanges={onChanges}
+      onDiscard={onDiscard}
       onRefresh={() => {}}
       onLogin={() => {}}
       onLogout={() => {}}
@@ -28,6 +29,13 @@ it('keeps the blocked-publication explanation visible and utilities in labelled 
   fireEvent.click(screen.getByRole('button', { name: 'More' }));
   fireEvent.click(screen.getByRole('menuitem', { name: 'Export content…' }));
   expect(onExport).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole('button', { name: 'More' }));
+  expect(screen.queryByRole('menuitem', { name: /undo|reset/i })).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Changes…' }));
+  expect(onChanges).toHaveBeenCalledOnce();
+  fireEvent.click(screen.getByRole('button', { name: 'More' }));
+  fireEvent.click(screen.getByRole('menuitem', { name: 'Discard unpublished changes…' }));
+  expect(onDiscard).toHaveBeenCalledOnce();
   fireEvent.click(screen.getByRole('button', { name: 'Account' }));
   expect(screen.getByRole('menuitem', { name: 'Refresh authentication' })).toBeVisible();
   expect(screen.getByRole('menuitem', { name: 'Sign out' })).toBeVisible();

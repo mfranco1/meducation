@@ -12,9 +12,9 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import type { StoredQuestionBank } from '../../content/schema/schema';
+import type { DraftQuizBank, StoredRecord } from '../data/DraftStore';
 import { selectQuizNavigatorPage } from '../core/navigator';
-import type { Selection } from '../useAdminEditor';
+import type { Selection } from '../useRecordEditor';
 import { AdminRecordSelection, useAdminRecordSelection } from './AdminRecordSelection';
 
 import { AdminParentActions } from './AdminParentActions';
@@ -23,13 +23,13 @@ export const adminNavigatorLayout = { width: { xs: '100%', lg: 320 }, flexShrink
 
 interface Props {
   disabled?: boolean;
-  bank: StoredQuestionBank;
+  bank: DraftQuizBank;
   selection: Selection;
   selectedSubjectId?: string;
   selectedQuizId?: string;
   filter: string;
   setFilter: (value: string) => void;
-  loadEntity: (selection: Selection, value: unknown) => void;
+  loadEntity: (selection: Selection, record: StoredRecord) => void;
   chooseBulkTarget?: (kind: 'subject' | 'quiz', context?: { subjectId?: string; quizId?: string }) => void;
   onManageSubjects: (id?: string) => void;
   onDeleteItems?: (ids: string[]) => void;

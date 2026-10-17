@@ -8,14 +8,13 @@ interface Props {
   publishBlocked: string;
   busy: boolean;
   accountBusy?: boolean;
-  undoAvailable: boolean;
-  publicationAvailable: boolean;
+  discardAvailable: boolean;
   onStatus: () => void;
   onPublish: () => void;
   onExport: () => void;
   onVersions: () => void;
-  onUndo: () => void;
-  onReset: () => void;
+  onChanges: () => void;
+  onDiscard: () => void;
   onRefresh: () => void;
   onLogin: () => void;
   onLogout: () => void;
@@ -113,8 +112,8 @@ export function AdminHeader(props: Props) {
         {item('Published versions…', props.onVersions)}
         {item('Refresh content', props.onRefresh)}
         <Divider />
-        {item('Undo last saved change…', props.onUndo, !props.undoAvailable)}
-        {item('Reset draft to published version…', props.onReset, !props.publicationAvailable)}
+        {item('Changes…', props.onChanges)}
+        {item('Discard unpublished changes…', props.onDiscard, !props.discardAvailable)}
       </Menu>
       <Menu id="admin-account-menu" anchorEl={account} open={Boolean(account)} onClose={() => setAccount(null)}>
         <Box sx={{ px: 2, py: 1, maxWidth: 300 }}>{props.sessionDetails}</Box>

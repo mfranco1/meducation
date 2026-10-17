@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import {
-  Alert,
   Autocomplete,
   Button,
   Dialog,
@@ -13,117 +12,106 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import type { HttpQuestionBankGateway } from './data/HttpQuestionBankGateway';
-import { useAdminEditor } from './useAdminEditor';
+import type { DraftStore } from './data/DraftStore';
+import { useRecordEditor } from './useRecordEditor';
 import { AdminRecordEditor } from './components/AdminRecordEditor';
-import { AdminIssues } from './components/AdminIssues';
+import { AdminRecordFeedback } from './components/AdminRecordFeedback';
 
 /** Subjects are shared by both banks; this editor never switches or clears either workspace. */
 export function SubjectEditorDialog({
-  gateway,
+  store,
   initialId,
   blocked,
-  recovery,
   onDirtyChange,
   onClose,
 }: {
-  gateway: HttpQuestionBankGateway;
+  store: DraftStore;
   initialId?: string;
   blocked: boolean;
-  recovery?: React.ReactNode;
   onDirtyChange: (dirty: boolean) => void;
   onClose: () => void;
 }) {
-  const state = useAdminEditor(gateway, { blocked, draftLabel: 'shared subject' });
+  const editor = useRecordEditor(store, { blocked, draftLabel: 'shared subject', fallback: () => undefined });
   const initialized = useRef(false);
   const editVersion = useRef(0);
   const narrow = useMediaQuery(useTheme().breakpoints.down('sm'));
+  const subjects = store.quizBank.subjects;
   useEffect(() => {
-    if (!state.snapshot || initialized.current || blocked) return;
+    if (initialized.current || blocked) return;
     initialized.current = true;
-    const subject = state.snapshot.bank.subjects.find((row) => row.id === initialId);
-    if (subject) void state.loadEntity({ kind: 'subject', id: subject.id }, subject);
-    else state.loadNew('subject');
-  }, [initialId, blocked, state]);
+    const subject = store.find('subject', initialId ?? '');
+    if (subject) void editor.load({ kind: 'subject', id: subject.id }, subject);
+    else void editor.loadNew('subject');
+  });
   useEffect(() => {
-    onDirtyChange(state.editorDirty);
-  }, [onDirtyChange, state.editorDirty]);
+    onDirtyChange(editor.dirty);
+  }, [onDirtyChange, editor.dirty]);
   useEffect(() => () => onDirtyChange(false), [onDirtyChange]);
   const close = async () => {
-    if (state.busy || (state.editorDirty && !(await state.discardDraft()))) return;
+    if (editor.busy || (editor.dirty && !(await editor.discardDraft()))) return;
     onClose();
   };
   const save = async () => {
     const version = editVersion.current;
-    const saved = await state.stageSingle();
-    if (saved === true && version === editVersion.current) onClose();
+    if ((await editor.save()) && version === editVersion.current) onClose();
   };
   return (
     <>
-      {state.discardDialog}
+      {editor.discardDialog}
       <Dialog open fullWidth fullScreen={narrow} aria-labelledby="subject-editor-title" onClose={() => void close()}>
         <DialogTitle id="subject-editor-title">Manage subjects</DialogTitle>
         <DialogContent>
           <Stack spacing={2} sx={{ pt: 1 }}>
-            {recovery}
             <Typography variant="body2">
-              Subjects are shared by quizzes and flashcards. Saving updates the paired draft.
+              Subjects are shared by quizzes and flashcards. Saving updates the draft; it does not publish.
             </Typography>
             <Autocomplete
-              options={state.snapshot?.bank.subjects ?? []}
-              value={state.snapshot?.bank.subjects.find((row) => row.id === state.selection.id) ?? null}
+              options={subjects}
+              value={subjects.find((row) => row.id === editor.selection?.id) ?? null}
               getOptionLabel={(row) => `${row.name} · ${row.id}`}
               isOptionEqualToValue={(a, b) => a.id === b.id}
-              disabled={Boolean(state.busy) || blocked}
+              disabled={editor.busy || blocked}
               onChange={(_, row) => {
-                if (row) void state.loadEntity({ kind: 'subject', id: row.id }, row);
+                if (row) void editor.load({ kind: 'subject', id: row.id }, row);
               }}
               renderInput={(params) => <TextField {...params} label="Saved subject" />}
             />
-            <Button disabled={Boolean(state.busy) || blocked} onClick={() => state.loadNew('subject')}>
+            <Button disabled={editor.busy || blocked} onClick={() => void editor.loadNew('subject')}>
               Add subject
             </Button>
             <Typography variant="subtitle2">
-              {state.selection.id ? `Edit subject · ${state.selection.id}` : 'New subject'}
+              {editor.selection?.id ? `Edit subject · ${editor.selection.id}` : 'New subject'}
             </Typography>
             <AdminRecordEditor
               kind="subject"
-              existing={Boolean(state.selection.id)}
-              expectedId={state.selection.id}
-              text={state.editor}
+              existing={Boolean(editor.selection?.id)}
+              expectedId={editor.selection?.id}
+              text={editor.text}
               onChange={(value) => {
                 editVersion.current++;
-                state.editRecord(value);
+                editor.edit(value);
               }}
             />
-            <TextField
-              label="Change reason"
-              required
-              value={state.reason}
-              onChange={(event) => {
-                editVersion.current++;
-                state.editReason(event.target.value);
-              }}
+            <AdminRecordFeedback
+              issues={editor.issues}
+              notice=""
+              conflict={editor.conflict}
+              busy={editor.busy}
+              onUseServer={editor.takeServerVersion}
+              onKeepMine={editor.keepMine}
             />
-            {state.loadError && <Alert severity="error">{state.loadError}</Alert>}
-            {state.issues.length > 0 && <AdminIssues issues={state.issues} />}
-            {state.summary && (
-              <Typography role="status" variant="body2">
-                {state.summary}
-              </Typography>
-            )}
           </Stack>
         </DialogContent>
         <DialogActions>
-          <Button autoFocus disabled={Boolean(state.busy)} onClick={() => void close()}>
+          <Button autoFocus disabled={editor.busy} onClick={() => void close()}>
             Close
           </Button>
           <Button
             variant="contained"
-            disabled={Boolean(state.busy) || blocked || !state.editor.trim()}
+            disabled={editor.busy || blocked || !editor.text.trim()}
             onClick={() => void save()}
           >
-            Review save
+            Save
           </Button>
         </DialogActions>
       </Dialog>

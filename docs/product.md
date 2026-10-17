@@ -40,4 +40,4 @@ Meducation is a local-first study app for quizzes and flashcards. Content comes 
 
 ## Content editor
 
-The optional `/admin.html` editor (signed-in, HTTP-backed) is described in [content management](content-management.md#editor-workflow). Its visible contract: workspace status distinguishes saved-unpublished from published; save, undo, reset and publication show captured server context; expiry, conflicts and uncertain responses keep unsaved text and offer refresh or reconciliation; the header groups Review & publish, More utilities (export, published versions) and Account.
+The optional `/admin.html` editor (signed-in, HTTP-backed) is described in [content management](content-management.md#editor-workflow). Its visible contract: workspace status distinguishes unsaved text, unpublished draft changes and published content; Save writes one record to the draft; expiry, version conflicts and rejected content keep unsaved text; the header groups Review & publish, More utilities (export, published versions, Changes with per-record Revert, Discard unpublished changes) and Account.

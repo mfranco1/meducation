@@ -2,8 +2,20 @@
 
 from sqlalchemy import Connection
 
+from meducation_api.db.draft import advance_id_sequences
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.db.migrate import migration_head
+
+
+def advance_ids(connection: Connection, by: int) -> dict[str, int]:
+    """After restoring an older backup, skip IDs that may have been issued since."""
+    connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
+    if (
+        connection.exec_driver_sql("SELECT version_num FROM content.alembic_version").scalar_one()
+        != migration_head()
+    ):
+        raise ContentDatabaseError("Schema head is unsupported; sequences not changed.")
+    return advance_id_sequences(connection, by)
 
 
 def invalidate_restored_sessions(connection: Connection) -> dict[str, int]:
@@ -60,4 +72,14 @@ GRANT SELECT ON ALL TABLES IN SCHEMA admin_auth TO meducation_backup;
 GRANT USAGE ON SCHEMA content TO meducation_editor;
 GRANT SELECT ON content.draft,content.active_publication,content.published_releases TO meducation_editor;
 GRANT EXECUTE ON FUNCTION content.editor_read(text,text,text,text,jsonb),content.editor_replay(text,text,text,uuid,text,jsonb),content.editor_apply(text,text,text,uuid,text,jsonb,integer),content.editor_check_creates(text,text,text,text,text,uuid[],jsonb,bigint,bigint) TO meducation_editor;
+GRANT SELECT,INSERT,UPDATE,DELETE ON content.draft_subjects,content.draft_quizzes,
+content.draft_questions,content.draft_decks,content.draft_flashcards TO meducation_editor;
+GRANT SELECT,INSERT ON content.draft_changes TO meducation_editor;
+GRANT SELECT,UPDATE ON content.draft_state TO meducation_editor;
+GRANT USAGE,SELECT ON SEQUENCE content.draft_subject_ids,content.draft_quiz_ids,
+content.draft_question_ids,content.draft_changes_change_id_seq TO meducation_editor;
+GRANT SELECT ON content.releases,content.publication_events,content.entity_ids TO meducation_editor;
+GRANT EXECUTE ON FUNCTION content.nonblank(text),
+content.store_release(uuid,text,text,jsonb,text,text,uuid[]),
+content.activate_release(uuid,uuid,bigint,text,text) TO meducation_editor;
 """)

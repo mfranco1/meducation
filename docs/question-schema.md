@@ -1,6 +1,6 @@
 # Question schema
 
-Defines the schema-v4 quiz document stored in paired drafts and releases and written to deterministic `questionBank.json` exports. Preserve array and choice order, exact authored strings, omitted optional fields, source and verified answers, and established IDs. New IDs come from server reservations ([content management](content-management.md)).
+Defines the schema-v4 quiz document stored in paired drafts and releases and written to deterministic `questionBank.json` exports. Preserve array and choice order, exact authored strings, omitted optional fields, source and verified answers, and established IDs. The server assigns new IDs when a record is created ([content management](content-management.md#record-api-and-publication)).
 
 The PostgreSQL quiz document and its deterministic `questionBank.json` exports have `schemaVersion: 4` and top-level `subjects`, `quizzes`, and `questions` collections. IDs are compact, type-prefixed strings: subjects use `s*`, quizzes use `q*`, and questions use `i*`. `Quiz.subjectId` is the only stored subject relationship; a question stores `quizId` but not a redundant subject ID. Questions are grouped by quiz in canonical array order; their position within each quiz determines the one-based learner display number. The database stores a zero-based global collection ordinal per table to reconstruct each array exactly ([ADR 0005](decisions/0005-paired-content-releases-and-postgres-schema.md)).
 

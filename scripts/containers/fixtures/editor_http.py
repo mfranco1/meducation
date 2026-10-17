@@ -23,8 +23,9 @@ from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.oidc import OIDCClient
 from meducation_api.auth.store import SessionStore
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
+from meducation_api.db.draft import reset_draft
 from meducation_api.db.migrate import upgrade
-from meducation_api.db.operations import activate_release, save_draft, store_release
+from meducation_api.db.operations import activate_release, store_release
 from meducation_api.main import create_app
 from meducation_api.settings import Settings
 from sqlalchemy import create_engine, text
@@ -83,16 +84,8 @@ with engines["operator"].begin() as c:
         actor="fixture",
         reason="Disposable browser publication",
     )
-    save_draft(
-        c,
-        operation_id=uuid4(),
-        quiz_text=q,
-        flashcard_text=f,
-        expected_revision=0,
-        base_sequence=1,
-        actor="fixture",
-        reason="Disposable browser draft",
-    )
+with engines["editor"].begin() as c:
+    reset_draft(c, release.release_id)
 settings = AuthSettings(
     _env_file=None,
     enabled=True,

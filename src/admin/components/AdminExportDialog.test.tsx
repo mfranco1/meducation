@@ -3,7 +3,7 @@ import { expect, it, vi } from 'vitest';
 import { AdminExportDialog } from './AdminExportDialog';
 
 it.each([
-  ['Saved draft', 'draft', 'Saved draft 42'],
+  ['Saved draft', 'draft', 'Saved draft (change 42)'],
   ['Current published version', 'current', 'Published version current-release'],
   ['Selected published version', 'selected', 'Published version older-release'],
 ])('exports the explicit %s target and identifies omitted unsaved text', (label, target, context) => {
@@ -14,7 +14,7 @@ it.each([
       busy={false}
       currentReleaseId="current-release"
       selectedReleaseId="older-release"
-      draftRevision="42"
+      draftLabel="(change 42)"
       onClose={() => {}}
       onExport={onExport}
     />,
@@ -34,7 +34,7 @@ it('opens a selected version export explicitly and prevents duplicate submit whi
       initialTarget="selected"
       currentReleaseId="current"
       selectedReleaseId="older"
-      draftRevision="42"
+      draftLabel="(change 42)"
       onClose={() => {}}
       onExport={() => {}}
     />,

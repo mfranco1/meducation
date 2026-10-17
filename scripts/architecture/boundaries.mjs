@@ -23,11 +23,8 @@ export function importProblem(from, target, typeOnly = false) {
     return 'Analytics can depend only on domain and analytics modules.';
   if (source.startsWith('persistence/') && !/^(domain|persistence)\//.test(destination))
     return 'Persistence can depend only on domain and persistence modules.';
-  if (source.startsWith('content/') && !/^(domain|content)\//.test(destination)) {
-    // This existing contract test compares the Python revision with authoring serialization.
-    if (from === 'src/content/validation/bankContract.test.ts' && target === 'src/admin/core/serializeBank.ts') return;
+  if (source.startsWith('content/') && !/^(domain|content)\//.test(destination))
     return 'Content cannot depend on application, presentation, or storage implementations.';
-  }
   if (source.startsWith('shared/') && !/^(domain|analytics|content|shared)\//.test(destination))
     return 'Shared presentation cannot depend on composition, features, admin, QA, or storage.';
   if (source.startsWith('features/')) {

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
 interface DeletionTarget {
@@ -32,29 +32,22 @@ export interface DeleteRequest {
   selection: DeletionTarget;
   label: string;
   ids?: string[];
-  reviewKey?: string;
 }
 
 export function AdminDeleteDialog({
   request,
-  recovery,
   bank,
   flashcardBank,
   error,
-  currentReviewKey,
   busy = false,
-  commitLabel = 'Save',
   onClose,
   onConfirm,
 }: {
   request?: DeleteRequest;
-  recovery?: ReactNode;
   bank: StoredQuestionBank;
   flashcardBank: StoredFlashcardBank;
   error?: string;
-  currentReviewKey?: string;
   busy?: boolean;
-  commitLabel?: string;
   onClose: () => void;
   onConfirm: () => void;
 }) {
@@ -69,7 +62,6 @@ export function AdminDeleteDialog({
   const { records, summary } = request
     ? deletionReview(bank, flashcardBank, selection, request.ids)
     : { records: [], summary: '' };
-  const stale = request?.reviewKey !== undefined && request.reviewKey !== currentReviewKey;
   const name = selection.kind === 'question' ? 'item' : selection.kind;
   const action = request?.ids ? `selected ${name}s` : name;
   return (
@@ -83,23 +75,17 @@ export function AdminDeleteDialog({
     >
       <DialogTitle id="admin-delete-title">Delete {action}?</DialogTitle>
       <DialogContent>
-        {recovery}
         <Stack spacing={1.5}>
           <Typography>
             {request?.label}
             {selection.id ? ` · ${selection.id}` : ''}
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            This deletion saves a paired draft in PostgreSQL. Use Undo saved batch to restore it. Saving does not
-            publish. Saved learner progress remains stored, but references to removed content may no longer be
-            accessible.
+            Deleting removes these records from the draft immediately and does not publish. Restore them from Changes
+            while those changes are still listed. Saved learner progress remains stored, but references to removed
+            content may no longer be accessible.
           </Typography>
           <Typography variant="body2">Affected: {summary}.</Typography>
-          {stale && (
-            <Alert severity="error">
-              The content changed during this review. Cancel and review the deletion again.
-            </Alert>
-          )}
           {error && <Alert severity="error">{error}</Alert>}
           {records.length > 0 && (
             <>
@@ -142,8 +128,8 @@ export function AdminDeleteDialog({
         <Button ref={cancelRef} autoFocus disabled={busy} onClick={onClose}>
           Cancel
         </Button>
-        <Button color="error" variant="contained" disabled={busy || stale || !records.length} onClick={onConfirm}>
-          {commitLabel} {action} deletion
+        <Button color="error" variant="contained" disabled={busy || !records.length} onClick={onConfirm}>
+          Delete {action}
         </Button>
       </DialogActions>
     </Dialog>

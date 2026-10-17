@@ -1,84 +1,58 @@
-import type { StoredQuestionBank, StoredFlashcardBank } from '../../content/schema/schema';
-
 export interface SessionStatus {
   authenticated: boolean;
   csrfToken: string;
   expiresAt?: number;
   fresh?: boolean;
 }
-export interface PairedSnapshot {
-  contractVersion: 1;
-  pair: { quizzes: StoredQuestionBank; flashcards: StoredFlashcardBank };
-  draft: {
-    revision: string;
-    baseReleaseId: string | null;
-    basePublicationSequence: string;
-    digests: { quizSha256: string; flashcardSha256: string; quizRevision: string; flashcardRevision: string };
-  };
-  publication: {
-    releaseId: string | null;
-    sequence: string;
-    digests: { quizRevision: string; flashcardRevision: string } | null;
-  };
-  undo: { available: boolean; targetRevision: string | null; depth: number };
+export interface ServerIssue {
+  path: string;
+  code?: string;
+  message: string;
 }
-export interface Slot {
-  kind: 's' | 'q' | 'i' | 'd' | 'f';
-  count: number;
-  parentId?: string;
+/** The structured part of a server error that the editor can act on. */
+export interface ErrorBody {
+  message?: string;
+  issues?: ServerIssue[];
+  current?: unknown;
+  children?: Record<string, number>;
 }
-export interface Binding {
-  reservationId: string;
-  slots: Slot[];
-}
-export interface ServerPreview {
-  previewFingerprint: string;
-  counts: Record<string, { before: number; after: number; created: number; updated: number; deleted: number }>;
-  affectedIds: Record<string, string[]>;
-  totalAffected: Record<string, number>;
-  requiresFreshAuthentication: boolean;
-  validation: { warnings: number };
+
+function describe(status: number, code: string, body: ErrorBody): string {
+  const issues = (body.issues ?? [])
+    .slice(0, 5)
+    .map((issue) => `${String(issue.path ?? '').slice(0, 200)}: ${String(issue.message ?? '').slice(0, 500)}`)
+    .join('; ');
+  if (code === 'admin_disabled') return 'Private editor access is disabled for this backend.';
+  if (code === 'version_conflict') return 'This record changed on the server. Your unsaved text is kept.';
+  if (status === 401) return 'Your session expired. Your unsaved text is kept. Sign in and try again.';
+  if (status === 403) return 'Sign in again to refresh authentication, then try again. Your unsaved text is kept.';
+  if (issues) return 'The server rejected the content. Your unsaved text is kept. ' + issues;
+  return 'The editor request failed. Your unsaved text is kept.' + (body.message ? ' ' + body.message : '');
 }
 export class AdminHttpError extends Error {
   constructor(
     readonly status: number,
     readonly code: string,
-    details = '',
+    readonly body: ErrorBody = {},
   ) {
-    super(
-      code === 'draft_base_stale'
-        ? 'The draft base differs from the current publication. Explicitly reset the paired draft before publishing; your unsaved text is kept.'
-        : code === 'draft_uninitialized'
-          ? 'The paired draft is not initialized. An operator must initialize it before editing.'
-          : code === 'admin_disabled'
-            ? 'Private editor access is disabled for this backend.'
-            : status === 401
-              ? 'Your session expired. Your unsaved text is kept. Sign in and preview again.'
-              : status === 409
-                ? 'The draft or publication changed. Your unsaved text is kept. Refresh context and review again.'
-                : status === 403
-                  ? 'Sign in again to refresh authentication, then review and confirm again.'
-                  : 'The editor request failed. Your unsaved text is kept.' + details,
-    );
+    super(describe(status, code, body));
   }
 }
-/** An explicit declined review is an ordinary editing outcome, not a failed request. */
-export class AdminActionCanceled extends Error {
-  constructor(message = 'Save canceled; unsaved text is kept.') {
-    super(message);
-    this.name = 'AdminActionCanceled';
-  }
-}
-export interface PendingOperation {
-  operationId: string;
-  path: string;
+/** Readable lines for any editor failure, one per server issue when there are several. */
+export function errorMessages(error: unknown): string[] {
+  if (error instanceof AdminHttpError && error.body.issues?.length)
+    return [
+      'The server rejected the content. Your unsaved text is kept.',
+      ...error.body.issues.slice(0, 20).map((issue) => `${issue.path}: ${issue.message}`),
+    ];
+  return [error instanceof Error ? error.message : 'Editor request failed. Your text is kept.'];
 }
 
-/** One attempt per write. Cookies are HttpOnly; CSRF and uncertain receipts stay in memory. */
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
+/** One attempt per request. Cookies are HttpOnly; the CSRF token stays in memory. */
 export class PairedHttpClient {
   session?: SessionStatus;
-  pending?: PendingOperation;
-  inFlight = false;
   commandBusy = false;
   authenticationRequired = false;
   private readonly listeners = new Set<() => void>();
@@ -91,11 +65,10 @@ export class PairedHttpClient {
   private notify(): void {
     for (const listener of this.listeners) listener();
   }
-  /** Admit one complete editor command, including preview and review, synchronously. */
-  async runCommand<T>(action: () => Promise<T>, allowPending = false): Promise<T> {
-    if (this.commandBusy || this.inFlight) throw new Error('Wait for the current authoring command to finish.');
-    if (this.pending && !allowPending) throw new Error('Check save status before another authoring command.');
-    if (this.authenticationRequired && !allowPending) throw new Error('Sign in to continue; your text is kept.');
+  /** Admit one complete editor command, which may be several requests, synchronously. */
+  async runCommand<T>(action: () => Promise<T>): Promise<T> {
+    if (this.commandBusy) throw new Error('Wait for the current authoring command to finish.');
+    if (this.authenticationRequired) throw new Error('Sign in to continue; your text is kept.');
     this.commandBusy = true;
     this.notify();
     try {
@@ -109,19 +82,17 @@ export class PairedHttpClient {
     private readonly fetcher: typeof fetch = (...args) => fetch(...args),
     private readonly timeoutMs = 180000,
   ) {}
-  private async request<T>(path: string, body?: unknown, binary = false): Promise<T> {
+  private async request<T>(method: Method, path: string, body?: unknown, binary = false): Promise<T> {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
       const response = await this.fetcher('/api/admin' + path, {
-        method: body === undefined ? 'GET' : 'POST',
+        method,
         credentials: 'same-origin',
         cache: 'no-store',
         headers:
-          body === undefined
-            ? {}
-            : { 'Content-Type': 'application/json', 'X-CSRF-Token': this.session?.csrfToken ?? '' },
-        body: body === undefined ? undefined : JSON.stringify(body),
+          method === 'GET' ? {} : { 'Content-Type': 'application/json', 'X-CSRF-Token': this.session?.csrfToken ?? '' },
+        body: method === 'GET' || body === undefined ? undefined : JSON.stringify(body),
         redirect: 'error',
         signal: controller.signal,
       });
@@ -131,16 +102,8 @@ export class PairedHttpClient {
           this.notify();
         }
         const value = await response.json().catch(() => ({}));
-        const issues = Array.isArray(value?.error?.issues)
-          ? value.error.issues
-              .slice(0, 5)
-              .map(
-                (issue: { path?: string; message?: string }) =>
-                  `${String(issue.path ?? '').slice(0, 200)}: ${String(issue.message ?? '').slice(0, 500)}`,
-              )
-              .join('; ')
-          : '';
-        throw new AdminHttpError(response.status, value?.error?.code ?? 'request_failed', issues ? ' ' + issues : '');
+        const { code, ...rest } = (value?.error ?? {}) as { code?: string } & ErrorBody;
+        throw new AdminHttpError(response.status, code ?? 'request_failed', rest);
       }
       return (binary ? await response.blob() : await response.json()) as T;
     } finally {
@@ -148,50 +111,22 @@ export class PairedHttpClient {
     }
   }
   async refreshSession(): Promise<SessionStatus> {
-    this.session = await this.request<SessionStatus>('/session');
+    this.session = await this.request<SessionStatus>('GET', '/session');
     this.authenticationRequired = !this.session.authenticated || (this.authenticationRequired && !this.session.fresh);
     this.notify();
     return this.session;
   }
   get<T>(path: string): Promise<T> {
-    return this.request<T>(path);
+    return this.request<T>('GET', path);
   }
   post<T>(path: string, body: unknown): Promise<T> {
-    return this.request<T>(path, body);
+    return this.request<T>('POST', path, body);
   }
-  async mutate<T>(path: string, body: Record<string, unknown>): Promise<T> {
-    if (this.pending) throw new Error('Reconcile the uncertain operation before another write.');
-    const operationId = crypto.randomUUID();
-    this.pending = { operationId, path };
-    this.inFlight = true;
-    this.notify();
-    try {
-      const result = await this.post<T>(path, { ...body, operationId });
-      this.pending = undefined;
-      return result;
-    } catch (error) {
-      // An explicit rejection has no commit; lost/5xx responses are uncertain.
-      if (error instanceof AdminHttpError && error.status < 500) this.pending = undefined;
-      throw error;
-    } finally {
-      this.inFlight = false;
-      this.notify();
-    }
+  put<T>(path: string, body: unknown): Promise<T> {
+    return this.request<T>('PUT', path, body);
   }
-  async reconcile(): Promise<{ committed: boolean; result?: Record<string, unknown> }> {
-    if (this.inFlight) throw new Error('Wait for the current operation to finish.');
-    if (!this.pending) throw new Error('There is no uncertain operation.');
-    try {
-      const result = await this.get<{ result: Record<string, unknown> }>('/operations/' + this.pending.operationId);
-      this.pending = undefined;
-      return { committed: true, result: result.result };
-    } catch (error) {
-      if (error instanceof AdminHttpError && error.status === 404) {
-        this.pending = undefined;
-        return { committed: false };
-      }
-      throw error;
-    }
+  delete<T>(path: string, body: unknown): Promise<T> {
+    return this.request<T>('DELETE', path, body);
   }
   async authenticate(reauthenticate = false): Promise<Window> {
     // Open synchronously before awaiting network, preserving the mounted editor.
@@ -213,42 +148,6 @@ export class PairedHttpClient {
     }
   }
   async export(body: unknown): Promise<Blob> {
-    return this.request<Blob>('/exports', body, true);
+    return this.request<Blob>('POST', '/exports', body, true);
   }
-}
-export const expectedContext = (snapshot: PairedSnapshot) => ({
-  draftRevision: snapshot.draft.revision,
-  publicationSequence: snapshot.publication.sequence,
-});
-
-interface StatusSnapshot {
-  draft: { basePublicationSequence: string; digests: { quizRevision: string; flashcardRevision: string } };
-  publication: { sequence: string; digests: { quizRevision: string; flashcardRevision: string } | null };
-}
-export interface AdminDraftState {
-  quizzes: boolean;
-  flashcards: boolean;
-}
-export function workspaceStatus(snapshot: StatusSnapshot, dirty: AdminDraftState, recovering: boolean) {
-  const draftChanged =
-    snapshot.draft.digests.quizRevision !== snapshot.publication.digests?.quizRevision ||
-    snapshot.draft.digests.flashcardRevision !== snapshot.publication.digests?.flashcardRevision;
-  const staleBase = snapshot.draft.basePublicationSequence !== snapshot.publication.sequence;
-  const unsaved = dirty.quizzes || dirty.flashcards;
-  const publishBlocked = recovering
-    ? 'Check save status before publishing.'
-    : unsaved
-      ? `Save or discard unsaved edits in ${[dirty.quizzes && 'Quizzes', dirty.flashcards && 'Flashcards'].filter(Boolean).join(' and ')} before publishing.`
-      : staleBase
-        ? 'Reset the draft to the current published version before publishing.'
-        : !draftChanged
-          ? 'There are no saved draft changes to publish.'
-          : '';
-  return {
-    draftChanged,
-    staleBase,
-    unsaved,
-    publishBlocked,
-    label: recovering ? 'Check save status' : unsaved ? 'Unsaved edits' : draftChanged ? 'Draft changes' : 'Up to date',
-  };
 }

@@ -1,0 +1,168 @@
+{
+  "quizzes": {
+    "schemaVersion": 4,
+    "subjects": [
+      {
+        "id": "s3",
+        "name": "Neuroanatomía β",
+        "accent": "#a1b2c3"
+      },
+      {
+        "id": "s12",
+        "accent": "#000000",
+        "name": "Order differs"
+      }
+    ],
+    "quizzes": [
+      {
+        "id": "q7",
+        "subjectId": "s3",
+        "name": "Nervios — 1"
+      },
+      {
+        "name": "Second quiz",
+        "id": "q8",
+        "subjectId": "s12"
+      }
+    ],
+    "questions": [
+      {
+        "id": "i10",
+        "quizId": "q7",
+        "stem": "Which nerve? $x^2$ **bold**",
+        "choices": [
+          {
+            "id": "A",
+            "text": "Vagus"
+          },
+          {
+            "text": "Phrenic",
+            "id": "B"
+          },
+          {
+            "id": "C",
+            "text": "Ulnar 5 mg/kg"
+          }
+        ],
+        "answer": "A",
+        "verifiedAnswer": "B",
+        "answerNote": "Source key disputed.",
+        "rationale": "Because β.",
+        "rationaleMeta": {
+          "provenance": "ai_draft_reviewed",
+          "reviewedAt": "2026-01-02",
+          "reviewNote": "Checked",
+          "answerReviewNote": "See note",
+          "sources": "Textbook p. 4"
+        },
+        "choiceExplanations": {
+          "B": "Correct",
+          "A": "Wrong",
+          "C": "Wrong too"
+        },
+        "pearls": [
+          "Pearl one",
+          "Pearl two"
+        ],
+        "metadata": {
+          "topic": "Nerves",
+          "subtopic": "Cranial",
+          "system": "Neuro",
+          "difficulty": "hard",
+          "questionType": "recall",
+          "tags": [
+            "t1",
+            "t2"
+          ]
+        }
+      },
+      {
+        "id": "i11",
+        "quizId": "q7",
+        "stem": "Plain",
+        "choices": [
+          {
+            "id": "A",
+            "text": "x"
+          },
+          {
+            "id": "B",
+            "text": "y"
+          }
+        ],
+        "answer": "B",
+        "rationale": "r",
+        "metadata": {
+          "tags": [
+            "only"
+          ],
+          "topic": "T"
+        },
+        "answerNote": ""
+      },
+      {
+        "quizId": "q8",
+        "id": "i12",
+        "rationale": "Order differs at top level",
+        "stem": "S",
+        "choices": [
+          {
+            "id": "A",
+            "text": "x"
+          },
+          {
+            "id": "B",
+            "text": "y"
+          }
+        ],
+        "answer": "A",
+        "pearls": []
+      }
+    ]
+  },
+  "flashcards": {
+    "schemaVersion": 2,
+    "decks": [
+      {
+        "id": "d-7c1f",
+        "subjectId": "s3",
+        "name": "Deck ñ",
+        "description": "Described"
+      },
+      {
+        "id": "dlegacy-2",
+        "subjectId": "s12",
+        "name": "Bare"
+      },
+      {
+        "name": "Empty description",
+        "id": "d-x",
+        "subjectId": "s3",
+        "description": ""
+      }
+    ],
+    "cards": [
+      {
+        "id": "f-1",
+        "deckId": "d-7c1f",
+        "front": "Front $\\alpha$",
+        "back": "Back",
+        "sources": "Source",
+        "reviewNote": "Review"
+      },
+      {
+        "id": "f-2",
+        "deckId": "dlegacy-2",
+        "back": "Back first",
+        "front": "Front"
+      },
+      {
+        "id": "f-3",
+        "deckId": "d-7c1f",
+        "front": "F",
+        "back": "B",
+        "reviewNote": "Only review"
+      }
+    ]
+  }
+}

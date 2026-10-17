@@ -20,7 +20,7 @@ export function AdminExportDialog({
   error,
   currentReleaseId,
   selectedReleaseId,
-  draftRevision,
+  draftLabel,
   initialTarget = 'draft',
   onClose,
   onExport,
@@ -31,7 +31,7 @@ export function AdminExportDialog({
   error?: string;
   currentReleaseId: string | null;
   selectedReleaseId: string;
-  draftRevision: string;
+  draftLabel: string;
   onClose: () => void;
   onExport: (target: ExportTarget) => void;
 }) {
@@ -70,7 +70,7 @@ export function AdminExportDialog({
           </TextField>
           <Typography sx={{ overflowWrap: 'anywhere' }}>
             {target === 'draft'
-              ? `Saved draft ${draftRevision}`
+              ? `Saved draft ${draftLabel}`
               : `Published version ${release || 'Choose a version in Published versions first'}`}
           </Typography>
         </Stack>

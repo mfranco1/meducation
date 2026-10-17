@@ -135,17 +135,16 @@ def install_auth(
                     raise AuthError(415, "json_required")
             if path not in exemptions:
                 fresh = path in {
-                    "/api/admin/publish",
+                    "/api/admin/draft/publish",
+                    "/api/admin/draft/discard",
                     "/api/admin/exports",
-                    "/api/admin/draft/reset",
-                } or path.endswith("/activate")
+                } or (path.startswith("/api/admin/releases/") and path.endswith("/activate"))
                 guard = runtime.store.guard(
                     request.cookies.get(config.cookie),
                     csrf=request.headers.get("x-csrf-token"),
                     write=request.method not in ("GET", "HEAD"),
                     fresh=fresh,
-                    interactive=path not in {"/api/admin/access", "/api/admin/diagnostics"}
-                    and not path.startswith("/api/admin/operations/"),
+                    interactive=path not in {"/api/admin/access", "/api/admin/diagnostics"},
                 )
                 principal = await run_in_threadpool(guard.__enter__)
                 request.state.principal = principal
