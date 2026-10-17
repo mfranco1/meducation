@@ -1,6 +1,6 @@
 # Meducation API
 
-FastAPI service that publishes the active paired quiz/flashcard release from PostgreSQL, hosts the authenticated editor services under `/api/admin`, and ships the `meducation-db` job CLI. It reads only PostgreSQL; workers never migrate or import. Learner progress is not stored here.
+FastAPI service that publishes the active paired quiz/flashcard release from PostgreSQL, hosts the authenticated editor services under `/api/admin`, and ships the `meducation-db` job CLI. It reads only PostgreSQL; workers never migrate. Learner progress is not stored here.
 
 ## Setup
 
@@ -21,7 +21,7 @@ Copy `backend/.env.example` to ignored `backend/.env`. Set a reader-role `MEDUCA
 
 Interactive docs are at `/docs` in development. On Windows use `.venv\Scripts\Activate.ps1`. Start the frontend as described in the [root README](../README.md).
 
-Database setup, jobs (`bootstrap-local`, `upgrade`, import, activate, export, recovery), roles, editor login, backups and containers are in [docs/operations.md](../docs/operations.md).
+Database setup, jobs (`bootstrap-local`, `upgrade`, activate, export, recovery), roles, editor login, backups and containers are in [docs/operations.md](../docs/operations.md).
 
 ## Locks
 

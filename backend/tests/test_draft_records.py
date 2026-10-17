@@ -1,4 +1,4 @@
-"""Real PG17: migration 0007 round trip and the per-record draft HTTP API."""
+"""Real PG17: migrations 0007 and 0008 and the per-record draft HTTP API."""
 
 import gzip
 import json
@@ -26,7 +26,7 @@ from test_postgres_content import (
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.draft import build_documents, revisions
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.db.migrate import migration_config, upgrade
+from meducation_api.db.migrate import migration_config, migration_head, upgrade
 from meducation_api.db.recovery import advance_ids
 
 pytestmark = pytest.mark.postgres
@@ -59,6 +59,10 @@ def at_revision(db, revision):
         connection.exec_driver_sql("DROP SCHEMA admin_auth CASCADE")
         connection.exec_driver_sql("DROP SCHEMA content CASCADE")
     bootstrap(db.admin, RolePasswords(_env_file=None))
+    to_revision(db, revision)
+
+
+def to_revision(db, revision):
     with db.migrator.begin() as connection:
         connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
         config = migration_config()
@@ -104,10 +108,8 @@ def test_migration_0007_rebuilds_byte_identical_artifacts_and_revisions(db, name
         scalar(db.backup, "SELECT base_release_id FROM content.draft_state") == release.release_id
     )
     assert scalar(db.backup, "SELECT count(*) FROM content.draft_changes") == 0
-    # New numeric IDs start after every ID ever registered.
-    top = scalar(
-        db.backup, "SELECT max(substring(id FROM 2)::int) FROM content.entity_ids WHERE kind='i'"
-    )
+    # New numeric IDs start after every ID in any release.
+    top = scalar(db.backup, "SELECT max(substring(id FROM 2)::int) FROM content.questions")
     with db.editor.begin() as connection:
         assert (
             connection.exec_driver_sql("SELECT nextval('content.draft_question_ids')").scalar_one()
@@ -132,6 +134,67 @@ def test_migration_0007_refuses_unpublished_draft_changes(db):
         scalar(db.reader, "SELECT version_num FROM content.schema_version")
         == "0006_allocation_fence"
     )
+
+
+def test_migration_0008_retires_legacy_objects_and_keeps_editing_and_publication(db):
+    at_revision(db, "0006_allocation_fence")
+    release = store(db)
+    publication = publish(db, release)
+    with db.operator.connect() as connection:
+        artifacts = connection.execute(
+            text("SELECT quiz_artifact,flashcard_artifact FROM content.releases")
+        ).one()
+    legacy_draft(db, *artifacts, publication.publication_sequence)
+    to_revision(db, "0007_draft_records")
+    tables = ("releases", "publication_events", "draft_subjects", "draft_questions", "draft_state")
+    before = {
+        t: scalar(
+            db.backup,
+            f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{t} t",
+        )
+        for t in tables
+    }
+    upgrade(db.migrator)
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
+    after = {
+        t: scalar(
+            db.backup,
+            f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{t} t",
+        )
+        for t in tables
+    }
+    assert after == before
+    legacy = (
+        "content.draft",
+        "content.draft_history",
+        "content.entity_ids",
+        "content.id_reservations",
+        "content.allocation_fence",
+    )
+    assert [scalar(db.backup, "SELECT to_regclass(:n)", {"n": n}) for n in legacy] == [None] * 5
+    assert scalar(
+        db.backup,
+        "SELECT count(*) FROM pg_proc WHERE pronamespace='content'::regnamespace "
+        "AND proname ~ '^(editor_|reserve_ids|save_draft|publish_draft|validate_pair)'",
+    ) == 0
+    client, runtime, h = auth_app(db, postgres=True)
+    with client:
+        auth_login(client, runtime, h)
+        ok(
+            call(
+                client,
+                "PUT",
+                "/draft/questions/i1",
+                {"expectedVersion": 1, "fields": {"stem": "After upgrade"}},
+            )
+        )
+        assert ok(call(client, "POST", "/draft/publish"))["published"] is True
+        stem = client.get("/api/v1/quizzes/q1/questions").json()["questions"][0]["stem"]
+        assert stem == "After upgrade"
+        again = {"expectedVersion": 2, "fields": {"stem": "Again"}}
+        change = ok(call(client, "PUT", "/draft/questions/i1", again))["changeId"]
+        ok(call(client, "POST", f"/draft/changes/{change}/revert", {"expectedVersion": 3}))
+        assert ok(call(client, "POST", "/draft/discard"))["changed"] is False
 
 
 # HTTP helpers -------------------------------------------------------------------------

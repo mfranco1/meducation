@@ -1,5 +1,6 @@
 """Synthetic PostgreSQL seed for the container smoke test only."""
 
+import hashlib
 import secrets
 import sys
 from pathlib import Path
@@ -10,8 +11,11 @@ sys.path.insert(0, str(ROOT / "backend/src"))
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.engine import create_database_engine
 from meducation_api.db.migrate import upgrade
-from meducation_api.db.operations import activate_release
-from meducation_api.db.transfer import capture_pair, import_pair
+from meducation_api.db.operations import (
+    activate_release,
+    paired_artifacts,
+    store_release,
+)
 from sqlalchemy import URL
 
 
@@ -52,19 +56,24 @@ def seed_database(port, password, folder, *, database="meducation_test_smoke"):
         bootstrap(engine("bootstrap"), passwords)
         upgrade(engine("migrator"))
         operator = engine("operator")
-        pair = capture_pair(
-            ROOT / "e2e/fixtures/bank.json",
-            ROOT / "e2e/fixtures/flashcard-bank.json",
-            repository=ROOT,
-        )
-        release = import_pair(
-            operator,
-            pair,
-            operation_id=uuid4(),
-            actor="container-smoke",
-            reason="Explicit synthetic fixture seed",
-        )
+        raw = [
+            (ROOT / "e2e/fixtures" / name).read_text()
+            for name in ("bank.json", "flashcard-bank.json")
+        ]
+        quiz, flashcards = paired_artifacts(*raw)
         with operator.begin() as connection:
+            release = store_release(
+                connection,
+                operation_id=uuid4(),
+                quiz_text=quiz,
+                flashcard_text=flashcards,
+                source_hashes={
+                    key: hashlib.sha256(value.encode()).hexdigest()
+                    for key, value in zip(("quiz", "flashcard"), raw, strict=True)
+                },
+                actor="container-smoke",
+                reason="Explicit synthetic fixture seed",
+            )
             activate_release(
                 connection,
                 operation_id=uuid4(),

@@ -19,12 +19,8 @@ from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.draft import reset_draft
 from meducation_api.db.engine import ContentDatabaseError, create_database_engine
 from meducation_api.db.migrate import migration_config, migration_head, upgrade
-from meducation_api.db.operations import (
-    activate_release,
-    paired_artifacts,
-    reserve_ids,
-    store_release,
-)
+from meducation_api.db.operations import activate_release, paired_artifacts, store_release
+from meducation_api.db.recovery import advance_ids
 
 pytestmark = pytest.mark.postgres
 ROOT = Path(__file__).resolve().parents[2]
@@ -123,7 +119,7 @@ def artifacts(q=None, f=None):
     )
 
 
-def store(db, op=None, q=None, f=None, reservations=()):
+def store(db, op=None, q=None, f=None):
     qt, ft = artifacts(q, f)
     with db.operator.begin() as connection:
         return store_release(
@@ -137,7 +133,6 @@ def store(db, op=None, q=None, f=None, reservations=()):
             },
             actor=ACTOR,
             reason=REASON,
-            reservations=reservations,
         )
 
 
@@ -153,32 +148,21 @@ def publish(db, release, expected=0, op=None):
         )
 
 
-def reserve(db, op=None, counts=None, draft=0, publication=0):
-    return reserve_ids(
-        db.operator,
-        operation_id=op or uuid4(),
-        counts={"i": 2} if counts is None else counts,
-        expected_draft_revision=draft,
-        expected_publication_sequence=publication,
-        intent="Create fixture records",
-        actor=ACTOR,
-        reason=REASON,
-    )
-
-
 def seed(db, q=None, f=None):
-    """Store and activate a release, then reset the draft to it."""
+    """Store and activate a release, load it into the draft and move the ID sequences past it."""
     release = store(db, q=q, f=f)
     sequence = scalar(db.reader, "SELECT publication_sequence FROM content.active_publication")
     publish(db, release, expected=sequence)
     with db.editor.begin() as connection:
         reset_draft(connection, release.release_id)
+    with db.migrator.begin() as connection:
+        advance_ids(connection, 0)
     return release
 
 
 STATE_TABLES = (
     "active_publication", "releases", "operations", "audit_events", "publication_events",
-    "entity_ids", "id_reservations", "draft_subjects", "draft_quizzes", "draft_questions",
+    "draft_subjects", "draft_quizzes", "draft_questions",
     "draft_decks", "draft_flashcards", "draft_changes", "draft_state",
 )
 
@@ -205,7 +189,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0007_draft_records"
+    assert migration_head() == "0008_retire_legacy"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -213,26 +197,25 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         for sql in (
             "CREATE TABLE content.forbidden(id int)",
             "SET ROLE meducation_owner",
-            "UPDATE content.draft SET revision=2",
+            "UPDATE content.draft_state SET published_change_id=2",
         ):
             with pytest.raises(SQLAlchemyError), engine.begin() as connection:
                 connection.exec_driver_sql(sql)
     for sql in (
-        "SELECT * FROM content.draft",
+        "SELECT * FROM content.draft_state",
         "SELECT * FROM content.releases",
         "SELECT * FROM content.audit_events",
-        "SELECT * FROM content.entity_ids",
         "SELECT content.claim_operation(NULL,NULL,NULL,NULL,NULL)",
     ):
         with pytest.raises(SQLAlchemyError), db.reader.connect() as connection:
             connection.exec_driver_sql(sql)
-    assert scalar(db.backup, "SELECT count(*) FROM content.draft") == 1
+    assert scalar(db.backup, "SELECT count(*) FROM content.draft_state") == 1
     with pytest.raises(RuntimeError, match="destructive"), db.migrator.begin() as connection:
         connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0007_draft_records"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0008_retire_legacy"
 
 
 def test_release_omission_provenance_order_and_digest(db):
@@ -271,13 +254,6 @@ def test_release_omission_provenance_order_and_digest(db):
             text("SELECT rationale_meta IS NULL FROM content.questions WHERE release_id=:id"),
             {"id": release.release_id},
         ).scalar_one()
-    assert (
-        scalar(
-            db.operator,
-            "SELECT count(*) FROM content.entity_ids WHERE origin='imported' AND materialized",
-        )
-        == 5
-    )
     assert scalar(db.reader, "SELECT count(*) FROM content.published_questions") == 1
     assert (
         scalar(
@@ -303,7 +279,7 @@ def test_import_replay_duplicate_pair_and_conflicting_operation(db):
     assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
 
 
-def test_transaction_failure_preserves_active_and_rolls_back_new_ids(db):
+def test_transaction_failure_preserves_active_and_rolls_back_new_release(db):
     first = store(db)
     active = publish(db, first)
     q, f = banks()
@@ -324,15 +300,13 @@ def test_transaction_failure_preserves_active_and_rolls_back_new_ids(db):
         scalar(db.reader, "SELECT publication_sequence FROM content.active_publication")
         == active.publication_sequence
     )
-    assert scalar(db.operator, "SELECT count(*) FROM content.entity_ids WHERE id='s500'") == 0
+    assert scalar(db.operator, "SELECT count(*) FROM content.subjects WHERE id='s500'") == 0
     assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
-    assert scalar(db.operator, "SELECT next_number FROM content.id_counters WHERE kind='s'") == 2
 
 
 def test_immutable_release_rows_and_append_only_history(db):
     release = store(db)
     publish(db, release)
-    reserve(db)
     for table in (
         "releases",
         "subjects",
@@ -343,8 +317,6 @@ def test_immutable_release_rows_and_append_only_history(db):
         "audit_events",
         "import_events",
         "publication_events",
-        "id_reservations",
-        "entity_ids",
         "operations",
     ):
         with pytest.raises(SQLAlchemyError):
@@ -353,8 +325,6 @@ def test_immutable_release_rows_and_append_only_history(db):
         "UPDATE content.questions SET stem='Changed'",
         "UPDATE content.releases SET quiz_revision=quiz_revision",
         "UPDATE content.audit_events SET reason='Changed'",
-        "UPDATE content.id_counters SET next_number=1 WHERE kind='i'",
-        "UPDATE content.entity_ids SET materialized=false",
         "UPDATE content.publication_events SET prior_sequence=1",
     ):
         with pytest.raises(SQLAlchemyError):
@@ -379,9 +349,6 @@ def test_cross_release_foreign_key_and_global_ordinal_constraints(db):
     with pytest.raises(SQLAlchemyError), db.migrator.begin() as connection:
         connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
         connection.exec_driver_sql("ALTER TABLE content.subjects DISABLE TRIGGER subject_guard")
-        connection.exec_driver_sql(
-            "INSERT INTO content.entity_ids(kind,id,origin,materialized) VALUES('s','s99','imported',true)"
-        )
         connection.execute(
             text(
                 "INSERT INTO content.subjects(release_id,id,position,name,accent) VALUES(:id,'s99',0,'Test','#123456')"
@@ -448,71 +415,7 @@ def test_activation_rollback_replay_and_stale_preconditions(db):
         )
 
 
-def test_reservations_durable_idempotent_seeded_across_rollback(db):
-    store(db)
-    op = uuid4()
-    assert reserve(db, op) == {"i": ["i2", "i3"]}
-    assert reserve(db, op) == {"i": ["i2", "i3"]}
-    with pytest.raises(ContentDatabaseError):
-        reserve(db, op, {"i": 3})
-    q, f = banks()
-    q["questions"].append({**copy.deepcopy(q["questions"][0]), "id": "i2"})
-    with pytest.raises(ContentDatabaseError):
-        store(db, q=q, f=f)
-    release = store(db, q=q, f=f, reservations=[op])
-    published = publish(db, release)
-    base = store(db)
-    publish(db, base, published.publication_sequence)
-    assert reserve(
-        db,
-        publication=scalar(
-            db.reader, "SELECT publication_sequence FROM content.active_publication"
-        ),
-    ) == {"i": ["i4", "i5"]}
-
-
-def test_failed_apply_keeps_separately_committed_reservation(db):
-    store(db)
-    op = uuid4()
-    reserve(db, op)
-    q, f = banks()
-    q["questions"].append({**copy.deepcopy(q["questions"][0]), "id": "i2"})
-    qt, ft = artifacts(q, f)
-    with pytest.raises(RuntimeError), db.operator.begin() as connection:
-        store_release(
-            connection,
-            operation_id=uuid4(),
-            quiz_text=qt,
-            flashcard_text=ft,
-            source_hashes={"quiz": "a" * 64, "flashcard": "b" * 64},
-            actor=ACTOR,
-            reason=REASON,
-            reservations=[op],
-        )
-        raise RuntimeError("rollback apply")
-    assert (
-        scalar(
-            db.operator,
-            "SELECT count(*) FROM content.id_reservations WHERE operation_id=:id",
-            {"id": op},
-        )
-        == 1
-    )
-    assert reserve(db) == {"i": ["i4", "i5"]}
-    assert scalar(db.operator, "SELECT materialized FROM content.entity_ids WHERE id='i2'") is False
-
-
-def test_stale_reservation_context(db):
-    store(db)
-    op = uuid4()
-    reserve(db, op, draft=99)
-    q, f = banks()
-    q["questions"].append({**copy.deepcopy(q["questions"][0]), "id": "i2"})
-    with pytest.raises(ContentDatabaseError):
-        store(db, q=q, f=f, reservations=[op])
-
-
-def test_concurrent_duplicate_import_and_allocation(db):
+def test_concurrent_duplicate_stores_share_one_release(db):
     gate = Barrier(4)
 
     def concurrent_import():
@@ -522,25 +425,6 @@ def test_concurrent_duplicate_import_and_allocation(db):
     with ThreadPoolExecutor(max_workers=4) as executor:
         releases = list(executor.map(lambda _: concurrent_import(), range(4)))
     assert len({r.release_id for r in releases}) == 1
-    gate = Barrier(8)
-
-    def concurrent_reserve():
-        gate.wait()
-        return reserve(db, counts={"i": 1})["i"][0]
-
-    with ThreadPoolExecutor(max_workers=8) as executor:
-        allocated = list(executor.map(lambda _: concurrent_reserve(), range(8)))
-    assert set(allocated) == {"i" + str(n) for n in range(2, 10)}
-    op = uuid4()
-    gate = Barrier(4)
-
-    def same_operation():
-        gate.wait()
-        return reserve(db, op, counts={"d": 1})
-
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        results = list(executor.map(lambda _: same_operation(), range(4)))
-    assert results == [{"d": ["d1"]}] * 4
 
 
 def test_competing_publications_only_one_precondition_wins(db):
@@ -558,16 +442,6 @@ def test_competing_publications_only_one_precondition_wins(db):
         results = list(executor.map(lambda _: activate(), range(4)))
     assert sum(r is not None for r in results) == 1
     assert scalar(db.operator, "SELECT count(*) FROM content.publication_events") == 1
-
-
-@pytest.mark.parametrize(
-    "counts", [{}, {"x": 1}, {"i": -1}, {"i": 0}, {"i": True}, {"i": 1.5}, {"i": 10001}]
-)
-def test_invalid_reservation_requests_do_not_mutate(db, counts):
-    with pytest.raises(ContentDatabaseError):
-        reserve(db, counts=counts)
-    assert scalar(db.operator, "SELECT count(*) FROM content.id_reservations") == 0
-    assert scalar(db.operator, "SELECT next_number FROM content.id_counters WHERE kind='i'") == 1
 
 
 def test_database_function_accepts_validated_pair(db):
@@ -596,9 +470,7 @@ def test_database_function_accepts_validated_pair(db):
 @pytest.mark.parametrize(
     "mutate",
     [
-        "unknown-field",
         "null",
-        "invalid-choice",
         "wrong-version",
         "duplicate-id",
         "broken-deck",
@@ -607,14 +479,10 @@ def test_database_function_accepts_validated_pair(db):
         "blank-control",
     ],
 )
-def test_sql_boundary_rejects_invalid_pairs_without_events(db, mutate):
+def test_release_constraints_reject_invalid_pairs_without_events(db, mutate):
     q, f = banks()
-    if mutate == "unknown-field":
-        q["questions"][0]["legacyHint"] = "invalid"
-    elif mutate == "null":
+    if mutate == "null":
         q["questions"][0]["metadata"] = None
-    elif mutate == "invalid-choice":
-        q["questions"][0]["choices"][0]["id"] = "Z"
     elif mutate == "wrong-version":
         q["schemaVersion"] = 4.0
     elif mutate == "duplicate-id":
@@ -684,50 +552,6 @@ def test_runtime_schema_ready_requires_explicit_activation_and_disposes(db):
         assert runtime.engine.pool.checkedout() == 0
     assert runtime.engine.pool.checkedout() == 0
     assert runtime.engine.pool.checkedin() == 0
-
-
-def test_allocation_exhaustion_and_opaque_id_preservation(db):
-    q, f = banks()
-    q["questions"][0]["id"] = "i9007199254740991"
-    store(db, q=q, f=f)
-    with pytest.raises(ContentDatabaseError):
-        reserve(db, counts={"i": 1})
-    assert (
-        scalar(db.operator, "SELECT next_number FROM content.id_counters WHERE kind='i'")
-        == 9007199254740992
-    )
-    assert (
-        scalar(
-            db.operator,
-            "SELECT count(*) FROM content.entity_ids WHERE id IN ('dlegacy-X','flegacy-X')",
-        )
-        == 2
-    )
-    assert scalar(db.operator, "SELECT count(*) FROM content.id_reservations") == 0
-
-
-def test_concurrent_import_and_reservation_do_not_collide(db):
-    q, f = banks()
-    q["subjects"][0]["id"] = "s100"
-    q["quizzes"][0]["subjectId"] = "s100"
-    f["decks"][0]["subjectId"] = "s100"
-    gate = Barrier(2)
-
-    def importing():
-        gate.wait()
-        return store(db, q=q, f=f)
-
-    def allocating():
-        gate.wait()
-        return reserve(db, counts={"s": 1})
-
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        future = executor.submit(importing)
-        allocated = executor.submit(allocating).result()
-        future.result()
-    assert allocated["s"][0] in ("s1", "s101")
-    assert reserve(db, counts={"s": 1})["s"][0] in ("s101", "s102")
-    assert scalar(db.operator, "SELECT count(*) FROM content.entity_ids WHERE kind='s'") == 3
 
 
 def test_global_order_independent_of_parent_and_object_key_order(db):
@@ -854,41 +678,8 @@ def test_other_transaction_cannot_extend_uncommitted_or_finalized_release(db):
     assert scalar(db.reader, "SELECT count(*) FROM content.published_subjects") == 1
 
 
-from test_bank_contract import FIXTURES, bank_for
-
-
-@pytest.mark.parametrize("case", FIXTURES["cases"], ids=lambda case: case["id"])
-def test_shared_stored_contract_cases_at_sql_boundary(db, case):
-    q = bank_for(case["change"])
-    f = {"schemaVersion": 2, "decks": [], "cards": []}
-    qt, ft = [json.dumps(v, ensure_ascii=False, indent=2) + "\n" for v in (q, f)]
-
-    def invoke():
-        with db.operator.begin() as connection:
-            return connection.execute(
-                text(
-                    "SELECT content.store_release(:op,:q,:f,CAST(:hashes AS jsonb),:actor,:reason)"
-                ),
-                {
-                    "op": uuid4(),
-                    "q": qt,
-                    "f": ft,
-                    "hashes": json.dumps({"quiz": "a" * 64, "flashcard": "b" * 64}),
-                    "actor": ACTOR,
-                    "reason": REASON,
-                },
-            ).scalar_one()
-
-    if case["valid"]:
-        assert invoke()["quiz_revision"].startswith("sha256-")
-    else:
-        with pytest.raises(SQLAlchemyError):
-            invoke()
-        assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 0
-
-
-def test_file_import_export_exact_roundtrip_and_replay(db, tmp_path):
-    from meducation_api.db.transfer import capture_pair, export_release, import_pair
+def test_export_roundtrips_stored_artifacts_and_refuses_overwrite(db, tmp_path):
+    from meducation_api.db.transfer import export_release
 
     q, f = banks()
     q["subjects"][0] = dict(reversed(list(q["subjects"][0].items())))
@@ -900,20 +691,13 @@ def test_file_import_export_exact_roundtrip_and_replay(db, tmp_path):
     q["questions"][0]["stem"] = 'Unicode β **bold** $x^2$\nEscaped "quote" and \\ slash'
     f["decks"].append({"id": "dempty", "subjectId": q["subjects"][0]["id"], "name": "Empty"})
     f["decks"].reverse()
-    paths = tmp_path / "source-q.json", tmp_path / "source-f.json"
-    for path, value in zip(paths, (q, f), strict=True):
-        path.write_text(json.dumps(value, ensure_ascii=False))
-    before = [p.read_bytes() for p in paths]
-    pair = capture_pair(*paths, repository=ROOT)
-    op = uuid4()
-    release = import_pair(db.operator, pair, operation_id=op, actor=ACTOR, reason=REASON)
-    assert import_pair(db.operator, pair, operation_id=op, actor=ACTOR, reason=REASON) == release
-    assert scalar(db.operator, "SELECT count(*) FROM content.publication_events") == 0
+    qt, ft = artifacts(q, f)
+    release = store(db, q=q, f=f)
     publication = publish(db, release)
     output = tmp_path / "export"
     manifest = export_release(db.operator, release.release_id, output)
-    assert (output / "questionBank.json").read_text() == pair.quiz_artifact
-    assert (output / "flashcardBank.json").read_text() == pair.flashcard_artifact
+    assert (output / "questionBank.json").read_text() == qt
+    assert (output / "flashcardBank.json").read_text() == ft
     assert manifest["revisions"] == {
         "quiz": release.quiz_revision,
         "flashcard": release.flashcard_revision,
@@ -921,84 +705,9 @@ def test_file_import_export_exact_roundtrip_and_replay(db, tmp_path):
     assert manifest["publication"]["observedActiveSequence"] == publication.publication_sequence
     assert manifest["publication"]["selectedReleaseSequences"] == [publication.publication_sequence]
     assert json.loads((output / "manifest.json").read_text()) == manifest
-    reimport = capture_pair(
-        output / "questionBank.json", output / "flashcardBank.json", repository=ROOT
-    )
-    assert (
-        import_pair(db.operator, reimport, operation_id=uuid4(), actor=ACTOR, reason=REASON)
-        == release
-    )
-    assert [p.read_bytes() for p in paths] == before
     with pytest.raises(ContentDatabaseError):
         export_release(db.operator, release.release_id, output)
-    assert (output / "questionBank.json").read_text() == pair.quiz_artifact
-
-
-def test_captured_pair_not_reread_and_concurrent_file_import_is_idempotent(db, tmp_path):
-    from meducation_api.db.transfer import capture_pair, import_pair
-
-    q, f = banks()
-    paths = tmp_path / "q.json", tmp_path / "f.json"
-    for path, value in zip(paths, (q, f), strict=True):
-        path.write_text(json.dumps(value))
-    pair = capture_pair(*paths, repository=ROOT)
-    paths[1].write_text("invalid after validation")
-    with ThreadPoolExecutor(max_workers=2) as executor:
-        releases = list(
-            executor.map(
-                lambda _: import_pair(
-                    db.operator, pair, operation_id=uuid4(), actor=ACTOR, reason=REASON
-                ),
-                range(2),
-            )
-        )
-    assert releases[0] == releases[1]
-    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
-    assert scalar(db.operator, "SELECT count(*) FROM content.import_events") == 2
-    assert scalar(db.operator, "SELECT count(*) FROM content.publication_events") == 0
-    assert (
-        scalar(db.operator, "SELECT DISTINCT flashcard_source_sha256 FROM content.import_events")
-        == pair.flashcard_source_sha256
-    )
-
-
-def test_file_import_failure_preserves_source_and_active_state(db, tmp_path, monkeypatch):
-    from meducation_api.db import transfer
-
-    original = store(db)
-    publish(db, original)
-    q, f = banks()
-    q["questions"][0]["stem"] = "Different fixture"
-    paths = tmp_path / "q.json", tmp_path / "f.json"
-    for path, value in zip(paths, (q, f), strict=True):
-        path.write_text(json.dumps(value))
-    pair = transfer.capture_pair(*paths, repository=ROOT)
-    before = [p.read_bytes() for p in paths]
-    real_store = transfer.store_release
-
-    def fail_after_rows(*args, **kwargs):
-        real_store(*args, **kwargs)
-        raise RuntimeError("Injected mid-import failure")
-
-    monkeypatch.setattr(transfer, "store_release", fail_after_rows)
-    with pytest.raises(RuntimeError, match="Injected"):
-        transfer.import_pair(db.operator, pair, operation_id=uuid4(), actor=ACTOR, reason=REASON)
-    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
-    assert scalar(db.operator, "SELECT count(*) FROM content.import_events") == 1
-    assert (
-        scalar(db.operator, "SELECT release_id FROM content.active_publication")
-        == original.release_id
-    )
-    assert [p.read_bytes() for p in paths] == before
-    paths[1].write_text("null")
-    with pytest.raises(ContentDatabaseError):
-        transfer.capture_pair(*paths, repository=ROOT)
-    paths[1].write_text(json.dumps(f))
-    q["questions"][0]["stem"] = "<script>private()</script>"
-    paths[0].write_text(json.dumps(q))
-    with pytest.raises(ContentDatabaseError, match="repository content validation"):
-        transfer.capture_pair(*paths, repository=ROOT)
-    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
+    assert (output / "questionBank.json").read_text() == qt
 
 
 def test_export_rejects_owner_corruption_without_repair_or_files(db, tmp_path):
@@ -1026,14 +735,11 @@ def test_export_rejects_owner_corruption_without_repair_or_files(db, tmp_path):
     assert not (tmp_path / "unknown").exists()
 
 
-def test_cli_validate_import_activate_export_and_stale_replay(db, tmp_path):
+def test_cli_activate_export_and_stale_replay(db, tmp_path):
     import subprocess
     import sys
 
-    q, f = banks()
-    paths = tmp_path / "q.json", tmp_path / "f.json"
-    for path, value in zip(paths, (q, f), strict=True):
-        path.write_text(json.dumps(value))
+    release = str(store(db).release_id)
     env = {k: v for k, v in os.environ.items() if not k.startswith("MEDUCATION_")}
     env.update(
         {
@@ -1056,61 +762,31 @@ def test_cli_validate_import_activate_export_and_stale_replay(db, tmp_path):
             check=False,
         )
 
-    files = ("--quiz-file", paths[0], "--flashcard-file", paths[1], "--repository", ROOT)
+    def activation(op, sequence=0):
+        return (
+            "activate",
+            "--release-id",
+            release,
+            "--expected-sequence",
+            sequence,
+            "--operation-id",
+            op,
+            "--actor",
+            ACTOR,
+            "--reason",
+            REASON,
+        )
+
     op = uuid4()
-    intent = ("--operation-id", op, "--actor", ACTOR, "--reason", REASON)
-    assert invoke("validate-pair", *files).returncode == 0
-    first = invoke("import-pair", *files, *intent)
-    assert first.returncode == 0, first.stderr
-    replay = invoke("import-pair", *files, *intent)
-    assert json.loads(replay.stdout) == json.loads(first.stdout)
-    release = json.loads(first.stdout)["releaseId"]
-    activation = (
-        "--release-id",
-        release,
-        "--expected-sequence",
-        0,
-        "--operation-id",
-        uuid4(),
-        "--actor",
-        ACTOR,
-        "--reason",
-        REASON,
-    )
-    activated = invoke("activate", *activation)
+    activated = invoke(*activation(op))
     assert activated.returncode == 0, activated.stderr
-    assert invoke("activate", *activation).stdout == activated.stdout
-    stale = invoke(
-        "activate",
-        "--release-id",
-        release,
-        "--expected-sequence",
-        0,
-        "--operation-id",
-        uuid4(),
-        "--actor",
-        ACTOR,
-        "--reason",
-        REASON,
-    )
+    assert invoke(*activation(op)).stdout == activated.stdout
+    stale = invoke(*activation(uuid4()))
     assert stale.returncode == 1 and "SQL" not in stale.stdout
-    exported = invoke(
-        "export-release", "--release-id", release, "--output", tmp_path / "cli-export"
-    )
-    assert exported.returncode == 0, exported.stderr
-    assert (
-        invoke(
-            "export-release", "--release-id", release, "--output", tmp_path / "cli-export"
-        ).returncode
-        == 1
-    )
-    paths[1].write_text("null")
-    failed = invoke(
-        "import-pair", *files, "--operation-id", uuid4(), "--actor", ACTOR, "--reason", REASON
-    )
-    assert failed.returncode == 1
-    assert db.operator.url.password not in failed.stderr + failed.stdout
-    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
+    assert db.operator.url.password not in stale.stderr + stale.stdout
+    output = tmp_path / "cli-export"
+    assert invoke("export-release", "--release-id", release, "--output", output).returncode == 0
+    assert invoke("export-release", "--release-id", release, "--output", output).returncode == 1
 
 
 def test_export_write_failure_cleans_only_new_output(db, tmp_path, monkeypatch):
@@ -1445,10 +1121,9 @@ def test_upgrade_populated_l3_schema_preserves_content_and_protected_history(db)
         config.attributes["connection"] = connection
         command.upgrade(config, "0001_content")
     original = store(db)
-    publication = publish(db, original)
-    reserve(db, draft=0, publication=publication.publication_sequence)
-    tables = ("draft", "active_publication", "releases", "operations", "audit_events",
-              "import_events", "publication_events", "entity_ids", "id_counters", "id_reservations")
+    publish(db, original)
+    tables = ("active_publication", "releases", "operations", "audit_events",
+              "import_events", "publication_events")
     def snapshot():
         return {table: scalar(db.operator, f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{table} t") for table in tables}
     before = snapshot()
@@ -1567,9 +1242,9 @@ def test_auth_role_isolation_and_cookie_login_logout(db):
     for engine in (db.session, db.editor):
         for statement in (
             "SET ROLE meducation_owner",
-            "INSERT INTO content.entity_ids(kind,id,materialized) VALUES('i','ibypass',true)",
-            "SELECT content.store_release(NULL,NULL,NULL,NULL,NULL,NULL,NULL)",
-            "UPDATE content.draft SET revision=999",
+            "INSERT INTO content.subjects(release_id,id,position,name,accent) VALUES(gen_random_uuid(),'s9',0,'x','#fff')",
+            "SELECT content.store_release(NULL,NULL,NULL,NULL,NULL,NULL)",
+            "UPDATE content.draft_changes SET actor='bypass'",
         ):
             with pytest.raises(SQLAlchemyError), engine.begin() as c:
                 c.execute(text(statement))
@@ -1941,7 +1616,7 @@ def test_recovery_reapplied_acl_preserves_editor_and_session_role_boundaries(db)
             connection.execute(text('SELECT * FROM admin_auth.sessions'))
     for engine in (db.editor, db.session, db.backup, db.reader):
         with pytest.raises(SQLAlchemyError), engine.begin() as connection:
-            connection.execute(text('UPDATE content.draft SET revision=999'))
+            connection.execute(text("UPDATE content.draft_changes SET actor='bypass'"))
     assert scalar(db.backup, 'SELECT count(*) FROM admin_auth.sessions') == 1
 
 
@@ -1973,152 +1648,6 @@ def test_recovery_tools_check_real_deterministic_http_exports(db, tmp_path, targ
         serialized = json.dumps(report)
         assert runtime.config.epoch not in serialized
         assert runtime.config.client_secret.get_secret_value() not in serialized
-
-
-def allocation_journals(tmp_path):
-    primary, independent = tmp_path / 'primary', tmp_path / 'independent'
-    primary.mkdir(mode=0o700)
-    independent.mkdir(mode=0o700)
-    return primary, independent
-
-
-def allocation_range(db, journals, *, recovery=False, size=2):
-    from meducation_api.db.allocation_fence import issue_range
-    return issue_range(db.migrator, primary=journals[0], independent=journals[1],
-                       size=size, recovery=recovery, reason='Isolated allocation fixture', rehearsal=True)
-
-
-def allocation_reserve(db, count=1):
-    return reserve_ids(db.operator, operation_id=uuid4(), counts={'i': count},
-                       expected_draft_revision=0, expected_publication_sequence=0,
-                       intent='Independent range fixture', actor=ACTOR, reason=REASON)
-
-
-def test_allocation_fence_exhaustion_rolls_back_and_extension_burns_unused_tails(db, tmp_path):
-    journals = allocation_journals(tmp_path)
-    admitted = allocation_range(db, journals)
-    allocated = allocation_reserve(db, 2)['i']
-    assert max(int(value[1:]) for value in allocated) < admitted['ceilings']['i']
-    before = content_state(db)
-    with pytest.raises(ContentDatabaseError):
-        allocation_reserve(db)
-    assert content_state(db) == before
-    # No explicit DML/function privilege can bypass the fence through a reader/editor.
-    for engine in (db.editor, db.reader, db.operator, db.session, db.backup):
-        with pytest.raises(SQLAlchemyError), engine.begin() as c:
-            c.execute(text('UPDATE content.allocation_fence SET required=false'))
-    second = allocation_range(db, journals)
-    ids = allocation_reserve(db)['i']
-    assert int(ids[0][1:]) >= admitted['ceilings']['i']
-    assert second['generation'] == 2
-    assert scalar(db.backup, 'SELECT count(*) FROM content.allocation_fence_events') == 2
-
-
-def test_allocation_fence_partial_independent_write_never_admits_range(db, tmp_path, monkeypatch):
-    from meducation_api.db import allocation_fence as fence
-    journals = allocation_journals(tmp_path)
-    append = fence.append_record
-    def fail_second(folder, record):
-        if folder == journals[1]:
-            raise OSError('independent destination unavailable')
-        append(folder, record)
-    before = content_state(db)
-    with monkeypatch.context() as patch:
-        patch.setattr(fence, 'append_record', fail_second)
-        with pytest.raises(ContentDatabaseError):
-            allocation_range(db, journals)
-    assert content_state(db) == before
-    assert scalar(db.operator, 'SELECT required FROM content.allocation_fence') is False
-    with pytest.raises(ContentDatabaseError, match='differ'):
-        allocation_range(db, journals)
-    # Reviewed completion of the second immutable copy repairs evidence only.
-    append(journals[1], fence.read_journal(journals[0])[0])
-    with pytest.raises(ContentDatabaseError, match='explicit recovery'):
-        allocation_range(db, journals)
-    recovered = allocation_range(db, journals, recovery=True)
-    assert recovered['generation'] == 2
-    assert int(allocation_reserve(db)['i'][0][1:]) >= 3
-
-
-def test_allocation_fence_missing_old_foreign_and_divergent_evidence_fail_closed(db, tmp_path):
-    from meducation_api.db.allocation_fence import append_record
-    from meducation_api.db.recovery import invalidate_restored_sessions
-    journals = allocation_journals(tmp_path)
-    allocation_range(db, journals)
-    allocation_range(db, journals)
-    with db.migrator.begin() as c:
-        invalidate_restored_sessions(c)
-    before = content_state(db)
-    with pytest.raises(ContentDatabaseError):
-        allocation_reserve(db)
-    # Both copies are stale: DB digest/generation detects the missing latest record.
-    for folder in journals:
-        (folder / '00000000000000000002.json').unlink()
-    with pytest.raises(ContentDatabaseError, match='older'):
-        allocation_range(db, journals, recovery=True)
-    for folder in journals:
-        (folder / '00000000000000000001.json').unlink()
-    with pytest.raises(ContentDatabaseError, match='missing'):
-        allocation_range(db, journals, recovery=True)
-    # Evidence copied from another lineage must never reset this database's identity.
-    for folder in journals:
-        append_record(folder, {'version': 1, 'lineage': str(uuid4()), 'generation': 1,
-                              'previous': None, 'schemaHead': migration_head(), 'recovery': False,
-                              'floors': dict.fromkeys(('s','q','i','d','f'), 1),
-                              'ceilings': dict.fromkeys(('s','q','i','d','f'), 5)})
-    with pytest.raises(ContentDatabaseError):
-        allocation_range(db, journals, recovery=True)
-    assert content_state(db) == before
-    assert scalar(db.operator, 'SELECT paused FROM content.allocation_fence') is True
-
-
-def test_allocation_fence_commit_failure_leaves_ahead_evidence_for_explicit_recovery(db, tmp_path):
-    from meducation_api.db.recovery import invalidate_restored_sessions
-    journals = allocation_journals(tmp_path)
-    first = allocation_range(db, journals)
-    owner_execute(db, "CREATE FUNCTION content.fail_fence_fixture() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN RAISE EXCEPTION 'Fixture deferred failure'; END $$")
-    owner_execute(db, 'CREATE CONSTRAINT TRIGGER fail_fence AFTER INSERT ON content.allocation_fence_events DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE FUNCTION content.fail_fence_fixture()')
-    before = content_state(db)
-    with pytest.raises(ContentDatabaseError):
-        allocation_range(db, journals)
-    assert content_state(db) == before
-    assert scalar(db.operator, 'SELECT generation FROM content.allocation_fence') == 1
-    owner_execute(db, 'DROP TRIGGER fail_fence ON content.allocation_fence_events')
-    with pytest.raises(ContentDatabaseError, match='explicit recovery'):
-        allocation_range(db, journals)
-    with db.migrator.begin() as c:
-        invalidate_restored_sessions(c)
-    recovered = allocation_range(db, journals, recovery=True)
-    assert recovered['generation'] == 3
-    assert int(allocation_reserve(db)['i'][0][1:]) >= first['ceilings']['i'] + 2
-
-
-def test_concurrent_allocation_fence_boundary_has_one_atomic_winner(db, tmp_path):
-    allocation_range(db, allocation_journals(tmp_path), size=1)
-    def allocate():
-        try:
-            return allocation_reserve(db)
-        except ContentDatabaseError:
-            return None
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        outcomes = list(pool.map(lambda _: allocate(), range(2)))
-    assert sum(value is not None for value in outcomes) == 1
-    assert scalar(db.operator, 'SELECT count(*) FROM content.id_reservations') == 1
-
-
-def test_allocation_fence_prefix_fsync_failure_cannot_admit_another_range(db, tmp_path, monkeypatch):
-    from meducation_api.db import allocation_fence as fence
-    journals = allocation_journals(tmp_path)
-    allocation_range(db, journals)
-    before = content_state(db)
-    generation = scalar(db.operator, 'SELECT generation FROM content.allocation_fence')
-    with monkeypatch.context() as patch:
-        patch.setattr(fence.os, 'fsync', lambda _: (_ for _ in ()).throw(OSError('flush failed')))
-        with pytest.raises(ContentDatabaseError):
-            allocation_range(db, journals)
-    assert scalar(db.operator, 'SELECT generation FROM content.allocation_fence') == generation
-    assert content_state(db) == before
-    assert len(fence.read_journal(journals[0])) == len(fence.read_journal(journals[1])) == 1
 
 
 @pytest.mark.parametrize('role', ['reader', 'session', 'editor'])

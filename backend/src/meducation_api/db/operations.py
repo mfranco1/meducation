@@ -1,12 +1,11 @@
-"""Release store/activation and operator reservation primitives."""
+"""Release store and activation."""
 
 import json
-from collections.abc import Sequence
 from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
 
-from sqlalchemy import Connection, Engine, text
+from sqlalchemy import Connection, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.content_policy import artifact_text
@@ -82,12 +81,11 @@ def store_release(
     source_hashes: dict[str, str],
     actor: str,
     reason: str,
-    reservations: Sequence[UUID] = (),
 ) -> ReleaseIdentity:
     qtext, ftext = paired_artifacts(quiz_text, flashcard_text)
     result = _call(
         connection,
-        "SELECT content.store_release(:op, :q, :f, CAST(:hashes AS jsonb), :actor, :reason, CAST(:reservations AS uuid[]))",
+        "SELECT content.store_release(:op, :q, :f, CAST(:hashes AS jsonb), :actor, :reason)",
         {
             "op": operation_id,
             "q": qtext,
@@ -95,7 +93,6 @@ def store_release(
             "hashes": json.dumps(source_hashes),
             "actor": actor,
             "reason": reason,
-            "reservations": list(reservations),
         },
     )
     return ReleaseIdentity(
@@ -124,37 +121,3 @@ def activate_release(
         },
     )
     return Publication(UUID(result["release_id"]), result["publication_sequence"])
-
-
-def reserve_ids(
-    engine: Engine,
-    *,
-    operation_id: UUID,
-    counts: dict[str, int],
-    expected_draft_revision: int,
-    expected_publication_sequence: int,
-    intent: str,
-    actor: str,
-    reason: str,
-) -> dict[str, list[str]]:
-    """Commit reservations separately, before entering a draft/release transaction."""
-    with engine.begin() as connection:
-        result = _call(
-            connection,
-            "SELECT content.reserve_ids(:op, CAST(:counts AS jsonb), :draft, :publication, :intent, :actor, :reason)",
-            {
-                "op": operation_id,
-                "counts": json.dumps(counts),
-                "draft": expected_draft_revision,
-                "publication": expected_publication_sequence,
-                "intent": intent,
-                "actor": actor,
-                "reason": reason,
-            },
-        )
-    if not all(
-        isinstance(ids, list) and all(isinstance(value, str) for value in ids)
-        for ids in result.values()
-    ):
-        raise ContentDatabaseError("Invalid reservation result.")
-    return result

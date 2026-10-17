@@ -38,7 +38,6 @@ def invalidate_restored_sessions(connection: Connection) -> dict[str, int]:
         "UPDATE admin_auth.sessions SET revoked=true WHERE NOT revoked"
     ).rowcount
     cleared = connection.exec_driver_sql("DELETE FROM admin_auth.logins").rowcount
-    connection.exec_driver_sql("UPDATE content.allocation_fence SET paused=true WHERE required")
     return {"revokedSessions": revoked, "clearedLoginTransactions": cleared}
 
 
@@ -57,29 +56,22 @@ GRANT SELECT ON ALL SEQUENCES IN SCHEMA content TO meducation_backup;
 GRANT SELECT ON content.schema_version,content.active_publication,content.published_releases,
 content.published_subjects,content.published_quizzes,content.published_questions,
 content.published_decks,content.published_flashcards TO meducation_reader;
-GRANT EXECUTE ON FUNCTION content.reserve_ids(uuid,jsonb,bigint,bigint,text,text,text),
-content.store_release(uuid,text,text,jsonb,text,text,uuid[]),
-content.activate_release(uuid,uuid,bigint,text,text),
-content.save_draft(uuid,text,text,bigint,bigint,text,text,uuid[]),
-content.authored_publish_result(uuid,text,text,bigint,bigint,integer,text,text,text),
-content.publish_draft(uuid,text,text,bigint,bigint,integer,text,text,text),
-content.reviewed_save_result(uuid,text,text,bigint,bigint,bigint,integer,text,uuid[],text,text),
-content.save_reviewed_draft(uuid,text,text,bigint,bigint,bigint,integer,text,uuid[],text,text) TO meducation_operator;
+GRANT EXECUTE ON FUNCTION content.store_release(uuid,text,text,jsonb,text,text),
+content.activate_release(uuid,uuid,bigint,text,text) TO meducation_operator;
 REVOKE ALL ON SCHEMA admin_auth FROM PUBLIC;
 GRANT USAGE ON SCHEMA admin_auth TO meducation_session,meducation_backup;
 GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA admin_auth TO meducation_session;
 GRANT SELECT ON ALL TABLES IN SCHEMA admin_auth TO meducation_backup;
 GRANT USAGE ON SCHEMA content TO meducation_editor;
-GRANT SELECT ON content.draft,content.active_publication,content.published_releases TO meducation_editor;
-GRANT EXECUTE ON FUNCTION content.editor_read(text,text,text,text,jsonb),content.editor_replay(text,text,text,uuid,text,jsonb),content.editor_apply(text,text,text,uuid,text,jsonb,integer),content.editor_check_creates(text,text,text,text,text,uuid[],jsonb,bigint,bigint) TO meducation_editor;
+GRANT SELECT ON content.active_publication,content.published_releases TO meducation_editor;
 GRANT SELECT,INSERT,UPDATE,DELETE ON content.draft_subjects,content.draft_quizzes,
 content.draft_questions,content.draft_decks,content.draft_flashcards TO meducation_editor;
 GRANT SELECT,INSERT ON content.draft_changes TO meducation_editor;
 GRANT SELECT,UPDATE ON content.draft_state TO meducation_editor;
 GRANT USAGE,SELECT ON SEQUENCE content.draft_subject_ids,content.draft_quiz_ids,
 content.draft_question_ids,content.draft_changes_change_id_seq TO meducation_editor;
-GRANT SELECT ON content.releases,content.publication_events,content.entity_ids TO meducation_editor;
+GRANT SELECT ON content.releases,content.publication_events TO meducation_editor;
 GRANT EXECUTE ON FUNCTION content.nonblank(text),
-content.store_release(uuid,text,text,jsonb,text,text,uuid[]),
+content.store_release(uuid,text,text,jsonb,text,text),
 content.activate_release(uuid,uuid,bigint,text,text) TO meducation_editor;
 """)

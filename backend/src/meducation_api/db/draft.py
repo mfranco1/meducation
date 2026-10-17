@@ -318,20 +318,16 @@ def first_difference(built: Iterable[str], expected: Iterable[str]) -> str | Non
 
 
 def id_floor(connection: Connection, kind: Kind) -> int:
-    """Largest numeric suffix ever used for a kind: releases, drafts, registry, counters."""
+    """Largest numeric suffix ever used for a kind, across every release and the draft."""
     pattern = "^" + kind.prefix + "[1-9][0-9]*$"
     release_table = {"s": "subjects", "q": "quizzes", "i": "questions"}[kind.prefix]
     value: Any = connection.execute(
         text(f"""
 SELECT coalesce(max(n),0) FROM (
-  SELECT substring(id FROM 2)::numeric n FROM content.entity_ids WHERE kind=:k AND id ~ :p
-  UNION ALL SELECT next_number-1 FROM content.id_counters WHERE kind=:k
-  UNION ALL SELECT substring(id FROM 2)::numeric FROM content.{release_table} WHERE id ~ :p
+  SELECT substring(id FROM 2)::numeric n FROM content.{release_table} WHERE id ~ :p
   UNION ALL SELECT substring(id FROM 2)::numeric FROM content.{kind.table} WHERE id ~ :p
-  UNION ALL SELECT substring(e->>'id' FROM 2)::numeric FROM content.draft d,
-    json_array_elements(d.quiz_document::json->:collection) e WHERE e->>'id' ~ :p
 ) ids"""),
-        {"k": kind.prefix, "p": pattern, "collection": kind.collection},
+        {"p": pattern},
     ).scalar_one()
     return int(value)
 
@@ -368,7 +364,7 @@ def advance_id_sequences(connection: Connection, by: int) -> dict[str, int]:
 
 
 def allocate_ids(connection: Connection, kind: Kind, count: int) -> list[str]:
-    """New, never-used IDs; numeric kinds skip any value already registered."""
+    """New IDs: UUID-based for decks and cards, sequence numbers (never reused) otherwise."""
     if not kind.numeric_ids:
         return list(
             connection.execute(
@@ -376,20 +372,8 @@ def allocate_ids(connection: Connection, kind: Kind, count: int) -> list[str]:
                 {"p": kind.prefix, "n": count},
             ).scalars()
         )
-    allocated: list[str] = []
-    while len(allocated) < count:
-        numbers: list[int] = list(
-            connection.execute(
-                text("SELECT nextval(CAST(:s AS regclass)) FROM generate_series(1,:n)"),
-                {"s": kind.sequence, "n": count - len(allocated)},
-            ).scalars()
-        )
-        candidates = [kind.prefix + str(number) for number in numbers]
-        taken: set[str] = set(
-            connection.execute(
-                text("SELECT id FROM content.entity_ids WHERE kind=:k AND id = ANY(:ids)"),
-                {"k": kind.prefix, "ids": candidates},
-            ).scalars()
-        )
-        allocated += [value for value in candidates if value not in taken]
-    return allocated
+    numbers = connection.execute(
+        text("SELECT nextval(CAST(:s AS regclass)) FROM generate_series(1,:n)"),
+        {"s": kind.sequence, "n": count},
+    )
+    return [kind.prefix + str(row[0]) for row in numbers]

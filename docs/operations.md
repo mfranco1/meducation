@@ -26,8 +26,8 @@ Backend settings use the `MEDUCATION_` prefix; copy `backend/.env.example` to ig
 | --- | --- |
 | `MEDUCATION_DATABASE_ENVIRONMENT` | `production` (default, verified TLS required) or `local` (loopback/Compose non-TLS) |
 | `MEDUCATION_DATABASE_URL` | API reader (`meducation_reader`); required to start the API |
-| `MEDUCATION_MIGRATION_DATABASE_URL` | jobs: `meducation_migrator` (upgrade, restore-permissions, allocation) |
-| `MEDUCATION_OPERATOR_DATABASE_URL` | jobs: `meducation_operator` (import, activate, export) |
+| `MEDUCATION_MIGRATION_DATABASE_URL` | jobs: `meducation_migrator` (upgrade, restore-permissions, ID sequences) |
+| `MEDUCATION_OPERATOR_DATABASE_URL` | jobs: `meducation_operator` (activate, export) |
 | `MEDUCATION_BOOTSTRAP_DATABASE_URL` | local role bootstrap only |
 | `MEDUCATION_POSTGRES_{MIGRATOR,READER,BACKUP,OPERATOR}_PASSWORD` | distinct role passwords, 16+ characters |
 | `MEDUCATION_POSTGRES_{SESSION,EDITOR}_PASSWORD` | optional pair that enables the editor roles |
@@ -61,20 +61,18 @@ Start the services:
 npm run dev                                # learner at http://localhost:5173, /api proxied to port 8000
 ```
 
-The API fails startup without a reader URL, initialized schema and an active publication. Health: `/health/live`, `/health/ready` (initialization only; neither queries Postgres after startup).
+A new database has no content; restore an authority dump (below) before starting the API. The API fails startup without a reader URL, initialized schema and an active publication. Health: `/health/live`, `/health/ready` (initialization only; neither queries Postgres after startup).
 
 ## Database CLI (`meducation-db`)
 
 Entry point `meducation_api.db.cli`; also runs as `python -m meducation_api.db.cli`.
 
 - Schema and roles: `bootstrap-local`, `head`, `upgrade`, `restore-permissions`, `invalidate-restored-sessions`.
-- Paired files (trusted, reviewed recovery or migration only): `validate-pair`, `import-pair`, `parity` take `--quiz-file`, `--flashcard-file`, `--repository`. `import-pair` also needs `--operation-id`, `--actor`, `--reason`; imports into the authority database additionally need `--reviewed-recovery-import`. Import does not activate.
 - Releases: `activate --release-id --expected-sequence --operation-id --actor --reason`; `export-release --release-id --output NEW_DIR` (refuses existing directories).
-- Draft IDs: `advance-id-sequences --by N` moves the subject, quiz and question ID sequences N past the largest ID ever used (migrator credentials). Run it after restoring an older backup.
+- Draft IDs: `advance-id-sequences --by N` moves the subject, quiz and question ID sequences N past the largest ID in any release or the draft (migrator credentials). Run it after restoring an older backup.
 - Export checks: `validate-export` and `audit-export` take `--directory`, `--repository`, `--report`. They verify captured bytes, hashes and policy and refuse to overwrite reports. Digests prove internal consistency, not live currency; export fresh from the target when currency matters. `npm run validate:content -- <quiz-file> <flashcard-file>` checks an explicitly selected pair the same way.
-- Allocation: `allocation-range`, `allocation-recover` (operator reservations only; see below).
 
-An import is never a way to replace database-only work with an older snapshot.
+There is no file import: a new database receives its content from a `pg_restore` of an authority dump (see Backup and restore), and ordinary changes go through the editor. An export is never a way to replace database-only work with an older snapshot.
 
 ## Local authority (maintainer machine)
 
@@ -101,19 +99,6 @@ Open `http://127.0.0.1:5173/admin.html`. `.venv/bin/python scripts/local-authori
 - The editor reads and writes individual draft records ([record API](content-management.md#record-api-and-publication)). Each write is validated, versioned and logged in `content.draft_changes`; it never publishes. New subject, quiz and question IDs come from sequences (`content.draft_subject_ids`, `draft_quiz_ids`, `draft_question_ids`); decks and cards use `d-`/`f-` plus a UUID.
 - **Publish** validates the full pair, stores an immutable release through `content.store_release`, activates it and records the published change ID, in one transaction. **Discard** resets the draft to the active release. Retained releases can be activated again; activation keeps the draft.
 - **Export paired ZIP** exports the draft or a retained release (deterministic, 128 MiB cap). It is not a backup.
-- Migration `0007_draft_records` copies the base release into the draft tables. It refuses to run if the old paired draft has unpublished changes, and it checks that the rebuilt documents are byte-identical to the base release.
-
-## ID allocation fence
-
-Migration `0006_allocation_fence` bounds operator reservations (`reserve_ids`) to admitted ranges. The record editor does not use reservations; since `0007` publication registers draft IDs without the fence, and step 4c removes it. Extend a range only with the migrator job, which writes a hash-chained record to two journal directories before raising the database ceiling:
-
-```sh
-.venv/bin/python scripts/local-authoring/job.py allocation-range \
-  --primary var/backups/postgres/allocation-primary --independent var/backups/postgres/allocation-local-copy \
-  --local-copy-only --reason "Extend local authoring range"
-```
-
-`--independent-copy-confirmed` attests an off-device second destination; `--rehearsal` is for disposable test databases; `--local-copy-only` is limited to the loopback authority (off-device retention is deferred). Never delete, truncate or rewind journals. Unused range tails stay burned. If journals and database disagree, allocation stays closed; do not repeat a failed extension, inspect first.
 
 ## Backup and restore
 
@@ -122,16 +107,16 @@ Migration `0006_allocation_fence` bounds operator reservations (`reserve_ids`) t
 .venv/bin/python scripts/local-authoring/verify-backup.py  # offline restore rehearsal into a disposable database
 ```
 
-`backup.py` dumps `content` and `admin_auth` as PG17 custom format, validates the table of contents and never replaces earlier archives. Run it after meaningful authoring sessions and at least daily while editing. Copies live outside the Docker volume but on this machine only; they do not survive loss of the host. Journals and `runtime.env`/`operator.env` are not in the dump.
+`backup.py` dumps `content` and `admin_auth` as PG17 custom format, validates the table of contents and never replaces earlier archives. Run it after meaningful authoring sessions and at least daily while editing. Copies live outside the Docker volume but on this machine only; they do not survive loss of the host. `runtime.env` and `operator.env` are not in the dump.
 
-`verify-backup.py` requires writer access to be retired first, restores into a `meducation_verify_*` database, checks tables, sequences, grants and exports, quarantines sessions and allocation, and removes only its own database. It never touches the authority.
+`verify-backup.py` requires writer access to be retired first, restores into a `meducation_verify_*` database, checks tables, sequences, grants and exports, quarantines sessions, advances the ID sequences, and removes only its own database. It never touches the authority.
 
 Real recovery:
 
-1. Stop writers; retire writer CONNECT and drain connections. Keep the damaged database and any newer journals.
-2. Restore the dump into a fresh empty database from `template0` with matching PG17 tools (`pg_restore --single-transaction --exit-on-error --no-owner --no-acl`), after bootstrapping roles.
-3. Point job credentials at the target and run `restore-permissions`, then `invalidate-restored-sessions` (revokes sessions, clears login transactions, pauses allocation).
-4. Rotate `MEDUCATION_ADMIN_EPOCH`. Run `advance-id-sequences --by N` with N larger than the number of records that could have been created after the backup (for example 10000), so IDs learners may have seen are not reused. Run `allocation-recover` against the latest complete journals; without them keep operator allocation disabled.
+1. Stop writers; retire writer CONNECT and drain connections. Keep the damaged database.
+2. Restore the dump into a fresh empty database from `template0` with matching PG17 tools (`pg_restore --single-transaction --exit-on-error --no-owner --no-acl`), after bootstrapping roles. A fresh hosted database is initialized the same way from a dump of the authority.
+3. Point job credentials at the target and run `restore-permissions`, then `invalidate-restored-sessions` (revokes sessions and clears login transactions).
+4. Rotate `MEDUCATION_ADMIN_EPOCH`. Run `advance-id-sequences --by N` with N larger than the number of records that could have been created after the backup (for example 10000), so IDs learners may have seen are not reused.
 5. Compare content, then switch reader/session/editor connections together, restart workers and verify learner reads and a fresh editor login. Keep the original until verified.
 
 Development dump and restore use plain Postgres tools in the Compose container (add the same `--env-file` and `-f` flags as the start command):

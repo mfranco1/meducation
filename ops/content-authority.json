@@ -7,18 +7,14 @@
   "apiPort": 8001,
   "frontendOrigin": "http://127.0.0.1:5173",
   "cutoverDate": "2026-10-14",
-  "schema": "0006_allocation_fence",
   "initialReleaseId": "3e3604bf-dedf-470e-adf6-4dccc1bab5f9",
   "initialPublicationSequence": 3,
-  "initialDraftRevision": 5,
   "frozenSourceSha256": {
     "quiz": "11b3fd084f4462c16805069883f53defd538a4d0bcd4d3537ab4c101bd7a3901",
     "flashcard": "fa6c863dd11085311111f9715a4a5e291a5e9e6a28ac03e4e51a83d0c4443ac7"
   },
   "repositoryJsonRole": "retired; no repository JSON database or runtime fallback",
-  "recoveryPolicy": "protected local dump/export and two local allocation journals; off-device explicitly user-deferred",
+  "recoveryPolicy": "protected local dump/export; off-device explicitly user-deferred",
   "identity": "explicit loopback development substitute; real hosted MFA remains pending",
-  "allocationLineage": "2c1d2873-cd27-4cfc-b865-fb5aa6e30cac",
-  "initialAllocationRecordSha256": "c0c66d1028c8847bdee8e7b2a2347f5ae4a8dd2787630f78d03eb60797776714",
   "localRestoreSeconds": 29.69
 }

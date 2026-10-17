@@ -26,6 +26,7 @@ from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.draft import reset_draft
 from meducation_api.db.migrate import upgrade
 from meducation_api.db.operations import activate_release, store_release
+from meducation_api.db.recovery import advance_ids
 from meducation_api.main import create_app
 from meducation_api.settings import Settings
 from sqlalchemy import create_engine, text
@@ -86,6 +87,8 @@ with engines["operator"].begin() as c:
     )
 with engines["editor"].begin() as c:
     reset_draft(c, release.release_id)
+with engines["migrator"].begin() as c:
+    advance_ids(c, 0)
 settings = AuthSettings(
     _env_file=None,
     enabled=True,

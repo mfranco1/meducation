@@ -48,7 +48,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 
 ## Behavioral invariants to keep covered
 
-- Authored text, choice order, IDs, optional-field presence and source/verified answers survive every round trip (import, export, save, replay).
+- Authored text, choice order, IDs, optional-field presence and source/verified answers survive every round trip (save, publish, export).
 - Verified answers take precedence at scoring; source answers are never overwritten.
 - Progress reads use only current v2 keys; malformed stored state is preserved and surfaced; failed writes never advance to a success screen; a stale tab must reload.
 - Changed content never silently resumes an old attempt or checkpoint.
@@ -58,6 +58,6 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Learner content loading retries and times out within bounds, ignores stale responses, and shows recoverable states without altering saved progress.
 - Keyboard shortcuts pause for dialogs and drawers and keep native behavior in form controls; reduced motion is honored.
 - Layouts have no horizontal overflow at 390, 1048 and 1440 px.
-- Recovery restores exact tables, sequences and grants, quarantines restored sessions, and reconciles allocation journals.
+- Recovery restores exact tables, sequences and grants, quarantines restored sessions, and advances ID sequences.
 
 Automated role, focus and layout checks do not replace manual VoiceOver or NVDA review.

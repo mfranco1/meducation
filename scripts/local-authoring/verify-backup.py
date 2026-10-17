@@ -2,10 +2,8 @@
 
 import hashlib
 import json
-import shutil
 import subprocess
 import sys
-import tempfile
 import time
 from contextlib import contextmanager
 from pathlib import Path
@@ -16,11 +14,11 @@ sys.path.insert(0, str(ROOT / "backend/src"))
 sys.path.insert(0, str(ROOT / "scripts/containers"))
 from backup import main as retain_backup
 from dotenv import dotenv_values
-from meducation_api.db.allocation_fence import issue_range, read_journal
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.engine import create_database_engine, database_url
-from meducation_api.db.operations import activate_release, reserve_ids
+from meducation_api.db.operations import activate_release
 from meducation_api.db.recovery import (
+    advance_ids,
     invalidate_restored_sessions,
     restore_content_permissions,
 )
@@ -171,9 +169,6 @@ def verify_retained_backup(started, root, state, env, base, name, original, engi
             **state,
             "releaseId": str(current[0]),
             "publicationSequence": current[1],
-            "draftRevision": c.exec_driver_sql(
-                "SELECT revision FROM content.draft"
-            ).scalar_one(),
         }
     before = snapshot(original)
     before_acl = permission_snapshot(original)
@@ -249,43 +244,21 @@ def verify_retained_backup(started, root, state, env, base, name, original, engi
                 raise RuntimeError("Local cutover verification failed")
         with mig.begin() as c:
             quarantine = invalidate_restored_sessions(c)
-        with tempfile.TemporaryDirectory(
-            prefix="meducation-cutover-journals-"
-        ) as folder:
-            paths = [Path(folder) / "primary", Path(folder) / "copy"]
-            for target, source in zip(
-                paths, ["allocation-primary", "allocation-local-copy"], strict=True
-            ):
-                shutil.copytree(ROOT / "var/backups/postgres" / source, target)
-            old = read_journal(paths[0])[-1]
-            recovered = issue_range(
-                mig,
-                primary=paths[0],
-                independent=paths[1],
-                size=1000,
-                recovery=True,
-                reason="Disposable retained local backup recovery acceptance",
-                rehearsal=True,
-            )
-            op = database_url(
-                SecretStr(env["MEDUCATION_OPERATOR_DATABASE_URL"]),
-                role="meducation_operator",
-                local=True,
-            )
-            operator = create_database_engine(op.set(database=name), operator=True)
-            engines.append(operator)
-            ids = reserve_ids(
-                operator,
-                operation_id=uuid4(),
-                counts={"i": 1},
-                expected_draft_revision=state["draftRevision"],
-                expected_publication_sequence=state["publicationSequence"],
-                intent="Local backup acceptance",
-                actor="cutover-recovery-check",
-                reason="Burn all prior admitted ranges on restored disposable target",
-            )
-            if not (int(ids["i"][0][1:]) >= old["ceilings"]["i"]):
-                raise RuntimeError("Local cutover verification failed")
+        with mig.begin() as c:
+            next_ids = advance_ids(c, 1000)
+        with restored.connect() as c:
+            top = c.exec_driver_sql(
+                "SELECT max(substring(id FROM 2)::bigint) FROM content.questions"
+            ).scalar_one()
+        if not (next_ids["i"] > top + 1000):
+            raise RuntimeError("Restored ID sequences were not advanced")
+        op = database_url(
+            SecretStr(env["MEDUCATION_OPERATOR_DATABASE_URL"]),
+            role="meducation_operator",
+            local=True,
+        )
+        operator = create_database_engine(op.set(database=name), operator=True)
+        engines.append(operator)
         from fastapi.testclient import TestClient
         from meducation_api.auth.config import AuthSettings
         from meducation_api.main import create_app
@@ -354,15 +327,13 @@ def verify_retained_backup(started, root, state, env, base, name, original, engi
                 "exact effective role privileges",
                 "exact selected paired artifacts",
                 "restored sessions revoked and login transactions cleared",
-                "protected allocation quarantine and copied-journal recovery",
-                "all prior admitted question IDs burned before resumed allocation",
+                "draft ID sequences advanced past every recorded ID",
                 "compatible restored app/schema and paired reader startup",
                 "previous-release activation and return preserve later releases",
                 "original authority state unchanged",
             ],
             "quarantine": quarantine,
-            "allocationRecovery": recovered,
-            "newIds": ids,
+            "nextIds": next_ids,
         }
         (ROOT / "var/backups/postgres/local-restore-evidence.json").write_text(
             json.dumps(report, indent=2) + "\n"

@@ -12,7 +12,7 @@ One frontend package and one Python package. Root HTML entries and tool configur
 - `src/domain`: pure rules, types, repository interfaces. `src/analytics`: pure aggregation. `src/persistence`: storage repositories and codecs.
 - `src/content`: `schema` (stored contracts), `api` (transport, decoders, runtime repositories), `validation`, `richText`.
 - `src/admin`: authoring composition and presentation, with `core` (pure operations) and `data` (HTTP gateway) kept free of UI.
-- `backend/src/meducation_api`: `main.py` routes, `repositories` (PostgreSQL readers), `db` (engines, migrations, jobs, transfer), `auth` (OIDC and sessions), `admin` (paired editor services), `content_policy` (packaged validator).
+- `backend/src/meducation_api`: `main.py` routes, `repositories` (PostgreSQL readers), `db` (engines, migrations, jobs, draft records, exports), `auth` (OIDC and sessions), `admin` (paired editor services), `content_policy` (packaged validator).
 - `scripts/content`, `scripts/architecture`, `scripts/containers`, `scripts/local-authoring`, `scripts/testing`: maintenance tooling outside the application graph.
 - Tests sit beside their modules; `src/test` has setup and fixtures, `tests/fixtures` shared contracts, `e2e` browser workflows.
 

@@ -1,4 +1,4 @@
-"""Captured paired-file import and independently reconstructed immutable exports."""
+"""Validated capture of paired files and independently reconstructed immutable exports."""
 
 import hashlib
 import json
@@ -14,7 +14,7 @@ from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.db.operations import ReleaseIdentity, paired_artifacts, store_release
+from meducation_api.db.operations import paired_artifacts
 
 MAX_FILE_BYTES = 64 * 1024 * 1024
 
@@ -91,26 +91,6 @@ def capture_pair(quiz: Path, flashcard: Path, *, repository: Path) -> CapturedPa
     except OSError, UnicodeError, ValueError, subprocess.SubprocessError:
         raise ContentDatabaseError(
             "Content capture/validation failed; no input or paths logged."
-        ) from None
-
-
-def import_pair(
-    engine: Engine, pair: CapturedPair, *, operation_id: UUID, actor: str, reason: str
-) -> ReleaseIdentity:
-    try:
-        with engine.begin() as connection:
-            return store_release(
-                connection,
-                operation_id=operation_id,
-                quiz_text=pair.quiz_artifact,
-                flashcard_text=pair.flashcard_artifact,
-                source_hashes=pair.source_hashes,
-                actor=actor,
-                reason=reason,
-            )
-    except SQLAlchemyError:
-        raise ContentDatabaseError(
-            "Content import failed atomically; no SQL or credentials logged."
         ) from None
 
 

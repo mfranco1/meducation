@@ -1,4 +1,4 @@
-"""Explicit bootstrap, migration and paired content jobs with sanitized output."""
+"""Explicit bootstrap, migration, release and export jobs with sanitized output."""
 
 import argparse
 import json
@@ -12,7 +12,7 @@ from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.engine import ContentDatabaseError, create_database_engine, database_url
 from meducation_api.db.migrate import migration_head, upgrade
 from meducation_api.db.operations import activate_release
-from meducation_api.db.transfer import capture_pair, export_release, import_pair
+from meducation_api.db.transfer import export_release
 from meducation_api.settings import Settings
 
 
@@ -32,29 +32,6 @@ def main() -> None:
         command.add_argument("--directory", type=Path, required=True)
         command.add_argument("--repository", type=Path, required=True)
         command.add_argument("--report", type=Path, required=True)
-    for action in ("allocation-range", "allocation-recover"):
-        command = commands.add_parser(action)
-        command.add_argument("--primary", type=Path, required=True)
-        command.add_argument("--independent", type=Path, required=True)
-        command.add_argument("--size", type=int, default=1000)
-        command.add_argument("--reason", required=True)
-        confirmation = command.add_mutually_exclusive_group(required=True)
-        confirmation.add_argument("--independent-copy-confirmed", action="store_true")
-        confirmation.add_argument("--rehearsal", action="store_true")
-        confirmation.add_argument("--local-copy-only", action="store_true")
-    for action in ("validate-pair", "import-pair", "parity"):
-        command = commands.add_parser(action)
-        command.add_argument("--quiz-file", type=Path, required=True)
-        command.add_argument("--flashcard-file", type=Path, required=True)
-        command.add_argument("--repository", type=Path, required=True)
-        if action == "parity":
-            command.add_argument("--release-id", type=UUID, required=True)
-            command.add_argument("--report", type=Path, required=True)
-        if action == "import-pair":
-            command.add_argument("--reviewed-recovery-import", action="store_true")
-            command.add_argument("--operation-id", type=UUID, required=True)
-            command.add_argument("--actor", required=True)
-            command.add_argument("--reason", required=True)
     command = commands.add_parser("activate")
     command.add_argument("--release-id", type=UUID, required=True)
     command.add_argument("--expected-sequence", type=int, required=True)
@@ -87,12 +64,6 @@ def main() -> None:
                 "Selected export checked; context recorded in the new private report. Live database currency was not checked."
             )
             return
-        pair = None
-        if args.action in ("validate-pair", "import-pair", "parity"):
-            pair = capture_pair(args.quiz_file, args.flashcard_file, repository=args.repository)
-            if args.action == "validate-pair":
-                print(json.dumps({"sourceSha256": pair.source_hashes, "warnings": pair.warnings}))
-                return
         settings = Settings()
         if args.action == "bootstrap-local":
             if settings.database_environment != "local":
@@ -104,8 +75,6 @@ def main() -> None:
             "restore-permissions",
             "invalidate-restored-sessions",
             "advance-id-sequences",
-            "allocation-range",
-            "allocation-recover",
         ):
             secret, role = settings.migration_database_url, "meducation_migrator"
             passwords = None
@@ -117,44 +86,17 @@ def main() -> None:
                 "The explicit job connection is missing; runtime credentials are never substituted."
             )
         url = database_url(secret, role=role, local=settings.database_environment == "local")
-        if (
-            args.action == "import-pair"
-            and url.database == "meducation_authority"
-            and not args.reviewed_recovery_import
-        ):
-            raise ContentDatabaseError(
-                "Authority imports require --reviewed-recovery-import; use HTTP authoring for ordinary edits."
-            )
         engine = create_database_engine(url, operator=True)
         try:
             if args.action == "bootstrap-local":
                 assert passwords is not None
                 bootstrap(engine, passwords)
                 print(
-                    "Local roles/schema reconciled. Content migration/import remain explicit jobs."
+                    "Local roles/schema reconciled. Schema migration remains an explicit job."
                 )
             elif args.action == "upgrade":
                 upgrade(engine)
                 print("Content schema upgraded to the packaged head.")
-            elif args.action in ("allocation-range", "allocation-recover"):
-                from meducation_api.db.allocation_fence import issue_range
-
-                if args.local_copy_only and settings.database_environment != "local":
-                    raise ContentDatabaseError(
-                        "Local-only retention requires explicit local configuration."
-                    )
-                result = issue_range(
-                    engine,
-                    primary=args.primary,
-                    independent=args.independent,
-                    size=args.size,
-                    recovery=args.action == "allocation-recover",
-                    reason=args.reason,
-                    independent_copy_confirmed=args.independent_copy_confirmed,
-                    local_copy_only=args.local_copy_only,
-                    rehearsal=args.rehearsal,
-                )
-                print(json.dumps(result))
             elif args.action == "advance-id-sequences":
                 from meducation_api.db.recovery import advance_ids
 
@@ -179,53 +121,7 @@ def main() -> None:
                     )
                 else:
                     print(json.dumps(result))
-                    print(
-                        "Keep workers stopped until the external admin epoch is rotated and allocation recovery is resolved."
-                    )
-            elif args.action == "import-pair":
-                assert pair is not None
-                release = import_pair(
-                    engine,
-                    pair,
-                    operation_id=args.operation_id,
-                    actor=args.actor,
-                    reason=args.reason,
-                )
-                print(
-                    json.dumps(
-                        {
-                            "releaseId": str(release.release_id),
-                            "quizRevision": release.quiz_revision,
-                            "flashcardRevision": release.flashcard_revision,
-                            "sourceSha256": pair.source_hashes,
-                            "warnings": pair.warnings,
-                        }
-                    )
-                )
-            elif args.action == "parity":
-                from meducation_api.db.parity import verify_parity
-
-                assert pair is not None
-                try:
-                    report = verify_parity(engine, settings, pair, args.release_id)
-                except ContentDatabaseError as error:
-                    with args.report.open("x", encoding="utf-8") as output:
-                        output.write(
-                            json.dumps(
-                                {
-                                    "result": "fail",
-                                    "sourceSha256": pair.source_hashes,
-                                    "releaseId": str(args.release_id),
-                                    "mismatch": str(error),
-                                },
-                                indent=2,
-                            )
-                            + "\n"
-                        )
-                    raise
-                with args.report.open("x", encoding="utf-8") as output:
-                    output.write(json.dumps(report, indent=2) + "\n")
-                print(json.dumps(report))
+                    print("Keep workers stopped until the external admin epoch is rotated.")
             elif args.action == "activate":
                 with engine.begin() as connection:
                     publication = activate_release(
