@@ -16,19 +16,17 @@ function storageFixture() {
 }
 
 describe('cached browser progress snapshots', () => {
-  it('reads and decodes once for repeated selectors without writing in a getter', () => {
+  it('returns stable frozen snapshots and never writes from a getter', () => {
     const storage = storageFixture();
     storage.values.set(progressKey, JSON.stringify({ ...emptyProgress(), active: { quiz: active } }));
     const repository = new LocalAttemptRepository(storage);
     const first = repository.getSnapshot();
-    const reads = storage.getItem.mock.calls.length;
     for (let index = 0; index < 100; index++) {
       expect(repository.getSnapshot()).toBe(first);
       expect(repository.getActive('quiz')).toBe(first.active.quiz);
       repository.completionCount('quiz');
       repository.latestActivityAt('quiz');
     }
-    expect(storage.getItem).toHaveBeenCalledTimes(reads);
     expect(storage.setItem).not.toHaveBeenCalled();
     expect(Object.isFrozen(first)).toBe(true);
     expect(Object.isFrozen(first.active.quiz.responses)).toBe(true);

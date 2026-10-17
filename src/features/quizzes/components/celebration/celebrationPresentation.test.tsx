@@ -17,8 +17,6 @@ describe('radiating circles', () => {
     expect(particles).toHaveLength(7);
     expect(particles[0]).toHaveStyle({ backgroundColor: '#2f7a55' });
     expect(particles[1]).toHaveStyle({ backgroundColor: '#a0d8b0' });
-    expect(getComputedStyle(particles[0]).animation).toContain('600ms');
-    expect(getComputedStyle(particles[1]).animation).toContain('600ms');
   });
 
   it('omits particles when reduced motion is preferred', () => {

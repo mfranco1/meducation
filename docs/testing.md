@@ -9,9 +9,8 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | Suite | Command |
 | --- | --- |
 | Unit (Vitest) | `npm test` (`npm run test:ci` uses two workers; `npm run test:watch` while developing) |
-| Lint + dependency graph | `npm run lint` |
+| Lint + import boundaries | `npm run lint` |
 | Formatting | `npm run format:check` |
-| Architecture tooling tests | `npm run test:architecture` |
 | Typecheck / build | `npm run typecheck`, `npm run build` (learner `build:learner`, admin `build:admin`) |
 | Content validation | `npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json` |
 | Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python -m pytest backend/tests -q` |
@@ -35,7 +34,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Backend, stored contracts, policy, shared fixtures: Ruff, mypy, pytest and the real-PostgreSQL gate. Run `npm run build:content-policy` first.
 - Schema, serialization or content changes: validate and compare a fresh selected export (`validate-export`, `audit-export`); fixtures never certify live content.
 - Container, database, recovery or release changes: `npm run test:containers`.
-- Boundary policy changes: `npm run test:architecture`.
+- Boundary policy changes: `npm run lint` after adding a temporary violating import.
 - Documentation only: check links and commands and run `git diff --check`.
 
 ## Fixtures and ownership
@@ -43,7 +42,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - `tests/fixtures/`: `bank-contract-cases.json` (shared by TypeScript and Python stored-bank validators), `paired-authoring-cases.json` (rich content, limits and edit cases), `api-response-cases.json`, `storage-boundary-cases.json`, `question-bank.json`, `empty-flashcard-bank.json`, `draft-roundtrip-pair.json` (every optional field and non-canonical key order), `flashcard-bank-contract.json`, `progress-backups/`.
 - `src/test/`: Vitest setup (`setup.ts`), `contentFixtures.ts` (admin banks) and `runtimeContentFixtures.ts` (API DTOs). Fixture IDs must stay valid under the API decoders.
 - `e2e/`: learner and `admin-http` specs plus `e2e/fixtures` banks seeded into disposable PostgreSQL. `backend/tests`: backend and PostgreSQL tests (`test_postgres_content.py`, `test_draft_records.py`) with fixtures in `fixture_content.py`.
-- Unit tests live beside their modules. Architecture tests use Node's runner and are excluded from Vitest.
+- Unit tests live beside their modules.
 - Do not assert production record counts or individual authored records; use small versioned fixtures.
 
 ## Behavioral invariants to keep covered

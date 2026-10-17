@@ -1,6 +1,5 @@
 import type { FlashcardCard } from './types';
 import type { FlashcardDailyStats } from './flashcardDailyStats';
-import { sha256Text } from './contentDigest';
 
 export interface FlashcardCheckpoint {
   deckId: string;
@@ -17,6 +16,11 @@ export interface FlashcardProgressState {
   checkpoints: Record<string, FlashcardCheckpoint>;
   completionCounts: Record<string, number>;
   dailyStats?: FlashcardDailyStats;
+}
+
+async function sha256Text(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
+  return `sha256-${[...new Uint8Array(digest)].map(byte => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
 function serializedStudyContent(cards: readonly FlashcardCard[]): string {

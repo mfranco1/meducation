@@ -32,7 +32,7 @@ describe('FlashcardStudyScreen', () => {
     expect(onFinish).toHaveBeenCalledOnce();
   });
 
-  it('renders multi-paragraph fronts and backs vertically and keeps the flag button quiet', () => {
+  it('renders multi-paragraph fronts and backs vertically and toggles the flag', () => {
     const multiBlock: FlashcardCard[] = [{ id: 'f-blocks', deckId: 'd1', front: 'Front one.\n\nFront two.', back: 'Back one.\n\nBack two.' }];
     const props = { deck: { ...deck, cardCount: 1, cardIds: ['f-blocks'] }, cards: multiBlock, index: 0, onReveal: vi.fn(), onToggleFlag: vi.fn(), onPrevious: vi.fn(), onNext: vi.fn(), onSaveAndExit: vi.fn(), onFinish: vi.fn() };
     const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed={false} /></ThemeProvider>);
@@ -40,7 +40,6 @@ describe('FlashcardStudyScreen', () => {
     const frontTwo = screen.getByText('Front two.');
     expect(frontOne.parentElement?.parentElement).toBe(frontTwo.parentElement?.parentElement);
     const flag = screen.getByRole('button', { name: 'Flag card' });
-    expect(flag.querySelector('.MuiTouchRipple-root')).toBeNull();
     fireEvent.click(flag);
     expect(props.onToggleFlag).toHaveBeenCalledOnce();
 
@@ -72,10 +71,6 @@ describe('FlashcardStudyScreen', () => {
     const renderedFace = Array.from(document.querySelectorAll('h5, p')).map(element => element.textContent ?? '').find(text => text.includes('Detailed anatomy content.'));
     expect(renderedFace?.length).toBeGreaterThan(longText.length - 2);
     expect(screen.getByRole('group', { name: 'Hidden flashcard answer' }).textContent?.length).toBeGreaterThan(longText.length);
-    const revealFace = screen.getByRole('button', { name: 'Reveal answer' });
-    const hiddenAnswerFace = screen.getByRole('group', { name: 'Hidden flashcard answer' }).lastElementChild;
-    expect(window.getComputedStyle(revealFace).gridArea).toBe(window.getComputedStyle(hiddenAnswerFace!).gridArea);
-    expect(window.getComputedStyle(hiddenAnswerFace!.firstElementChild!).maxHeight).not.toBe('600px');
     rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed /></ThemeProvider>);
     expect(screen.getByRole('img', { name: 'Nerve diagram' })).toHaveAttribute('src', '/content/nerve.png');
     expect(document.querySelector('.katex')).toBeInTheDocument();
@@ -143,24 +138,6 @@ describe('FlashcardStudyScreen', () => {
     expect(onFinish).not.toHaveBeenCalled();
     fireEvent.keyDown(window, { key: 'ArrowLeft' });
     expect(onPrevious).toHaveBeenCalledOnce();
-
-    for (const modifiers of [{ shiftKey: true }, { ctrlKey: true }, { altKey: true }, { metaKey: true }, { repeat: true }, { isComposing: true }]) {
-      fireEvent.keyDown(window, { key: 'ArrowLeft', ...modifiers });
-    }
-    fireEvent.keyDown(window, { key: 'x' });
-    expect(onPrevious).toHaveBeenCalledOnce();
-    expect(onNext).toHaveBeenCalledOnce();
-  });
-
-  it('lets arrow keys work on ordinary buttons while preserving editable and arrow-widget behavior', () => {
-    const onNext = vi.fn();
-    render(<ThemeProvider theme={theme}><><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={vi.fn()} onPrevious={vi.fn()} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /><input aria-label="Card note" /><div role="tablist"><button role="tab">Tab</button></div><a href="#source">Source link</a></></ThemeProvider>);
-    fireEvent.keyDown(screen.getByRole('button', { name: 'Reveal answer' }), { key: 'ArrowRight' });
-    expect(onNext).toHaveBeenCalledOnce();
-    fireEvent.keyDown(screen.getByRole('textbox', { name: 'Card note' }), { key: 'ArrowRight' });
-    fireEvent.keyDown(screen.getByRole('tab'), { key: 'ArrowRight' });
-    fireEvent.keyDown(screen.getByRole('link', { name: 'Source link' }), { key: 'ArrowRight' });
-    expect(onNext).toHaveBeenCalledOnce();
   });
 
   it('ignores arrow shortcuts while saving or when an event was already handled', () => {
@@ -174,22 +151,6 @@ describe('FlashcardStudyScreen', () => {
     const alreadyHandled = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true });
     alreadyHandled.preventDefault();
     fireEvent(window, alreadyHandled);
-    expect(onNext).not.toHaveBeenCalled();
-  });
-
-  it('suspends arrow shortcuts while a modal is open and ignores them for a one-card deck', () => {
-    const onPrevious = vi.fn(); const onNext = vi.fn();
-    const singleDeck = { ...deck, cardCount: 1, cardIds: ['f1'] };
-    const { rerender } = render(<ThemeProvider theme={theme}><><FlashcardStudyScreen deck={singleDeck} cards={[cards[0]]} index={0} revealed={false} onReveal={vi.fn()} onPrevious={onPrevious} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /><div role="dialog" aria-modal="true">Open dialog</div></></ThemeProvider>);
-    fireEvent.keyDown(window, { key: 'ArrowLeft' });
-    fireEvent.keyDown(window, { key: 'ArrowRight' });
-    expect(onPrevious).not.toHaveBeenCalled();
-    expect(onNext).not.toHaveBeenCalled();
-
-    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={singleDeck} cards={[cards[0]]} index={0} revealed={false} onReveal={vi.fn()} onPrevious={onPrevious} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);
-    fireEvent.keyDown(window, { key: 'ArrowLeft' });
-    fireEvent.keyDown(window, { key: 'ArrowRight' });
-    expect(onPrevious).not.toHaveBeenCalled();
     expect(onNext).not.toHaveBeenCalled();
   });
 

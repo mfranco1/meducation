@@ -10,7 +10,7 @@ Shared presentation had grown inside learner directories and feature work was sp
 
 Keep one frontend package and one backend package, with the root Vite entries and tool configuration unchanged. Group learner work in `src/features/quizzes` and `src/features/flashcards`; keep `src/app` for composition and navigation. Put reusable presentation in `src/shared/ui`. Keep domain, persistence and analytics flat and independent of React. Keep authoring in `src/admin` with `core`, `data` and presentation separated. Organize content by schema, validation, API delivery and rich-text policy.
 
-Dependency direction: app wires concrete repositories; features use domain, selectors, content interfaces and shared UI and never import app, admin or sibling features; shared UI never imports app, features or admin; content, domain and analytics never import UI; browser storage access stays in persistence; admin core and data do not depend on presentation. Imports stay relative until an alias resolves consistently in TypeScript, Vite, tests, scripts and lint. The rules are enforced by `scripts/architecture/boundaries.mjs`.
+Dependency direction: app wires concrete repositories; features use domain, selectors, content interfaces and shared UI and never import app, admin or sibling features; shared UI never imports app, features or admin; content, domain and analytics never import UI; browser storage access stays in persistence; admin core and data do not depend on presentation. Imports stay relative until an alias resolves consistently in TypeScript, Vite, tests, scripts and lint. The rules are enforced by lint (`eslint.config.mjs`).
 
 ## Consequences
 

@@ -830,26 +830,3 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   ).toBe(true);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
-
-test('records first-quiz latency from the production build under throttled network', async ({
-  page,
-  context,
-}, testInfo) => {
-  test.setTimeout(60_000);
-  const devtools = await context.newCDPSession(page);
-  await devtools.send('Network.enable');
-  await devtools.send('Network.emulateNetworkConditionsByRule', {
-    matchedNetworkConditions: [
-      { urlPattern: '', latency: 150, downloadThroughput: 200_000, uploadThroughput: 200_000 },
-    ],
-  });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Start quiz' }).click();
-  const started = Date.now();
-  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
-  await expect(page.getByText('What is')).toBeVisible();
-  const durationMs = Date.now() - started;
-  await testInfo.attach('throttled-first-quiz-ms.txt', { body: String(durationMs), contentType: 'text/plain' });
-  console.info(`First quiz screen after Begin Quiz: ${durationMs} ms (production build, 150 ms latency, 200 kB/s)`);
-});

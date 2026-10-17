@@ -8,7 +8,6 @@ import type { Attempt, Question, Quiz } from '../../../domain/types';
 import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
 import { celebrationForStreak, type CelebrationEvent } from '../components/celebration/celebrationCatalog';
 import { RadiatingCircles } from '../components/celebration/RadiatingCircles';
-import { shouldTriggerCorrectAnswerBurst } from '../components/celebration/correctAnswerBurst';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
@@ -50,7 +49,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     if (response.locked) return;
     const result = commitAnswer(attempt, question, choice);
     onCheckpoint(result.attempt);
-    if (shouldTriggerCorrectAnswerBurst({ feedbackMode: attempt.feedbackMode, answerCorrect: isCorrect(question, choice), answerUnderReview, responseLocked: response.locked })) {
+    if (attempt.feedbackMode === 'immediate' && isCorrect(question, choice) && !answerUnderReview) {
       setCorrectAnswerBurst({ questionId: question.id, choiceId: choice, eventId: ++correctAnswerBurstSequence.current });
     }
     if (result.streakMilestone) setCelebrationQueue(queue => [...queue, celebrationForStreak(result.streakMilestone!)]);

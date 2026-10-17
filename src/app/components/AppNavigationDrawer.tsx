@@ -8,11 +8,10 @@ import { brand } from '../../shared/brand';
 import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { DrawerEdgeToggle } from './drawer/DrawerEdgeToggle';
 import { DrawerSurface } from './drawer/DrawerSurface';
-import {
-  learnerDrawerCollapsedWidth,
-  learnerDrawerBrandSeparatorOffset,
-  learnerDrawerExpandedWidth,
-} from './drawer/drawerDimensions';
+
+const learnerDrawerExpandedWidth = 240;
+const learnerDrawerCollapsedWidth = 64;
+const learnerDrawerBrandSeparatorOffset = 96;
 
 export type LearnerSection = 'quizzes' | 'flashcards';
 

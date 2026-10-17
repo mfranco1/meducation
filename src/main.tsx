@@ -1,13 +1,20 @@
 import { StrictMode } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { Alert, Button, CssBaseline, Container, ThemeProvider } from '@mui/material';
 import { theme } from './shared/theme';
-import { BootFailure } from './shared/ui/loading/BootFailure';
 import { AppShell } from './shared/ui/shell/AppShell';
 import { AppNavigationDrawer } from './app/components/AppNavigationDrawer';
 import { ScreenLoading } from './shared/ui/loading/ScreenLoading';
 import { brand } from './shared/brand';
+
+function BootFailure() {
+  return <Container maxWidth="sm" sx={{ py: 6 }}>
+    <Alert severity="error" action={<Button color="inherit" onClick={() => window.location.reload()}>Reload</Button>}>
+      The app could not start. Reload to try again.
+    </Alert>
+  </Container>;
+}
 
 const root = createRoot(document.getElementById('root')!);
 const render = (content: ReactNode) =>

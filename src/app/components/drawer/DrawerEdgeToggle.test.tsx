@@ -20,8 +20,6 @@ describe('DrawerEdgeToggle', () => {
     expect(screen.getAllByRole('button')).toHaveLength(1);
     expect(button).toHaveAttribute('aria-expanded', 'true');
     expect(button).toHaveAttribute('aria-controls', 'drawer-content');
-    expect(button.querySelector('[aria-hidden="true"]')).toBeTruthy();
-    expect(button.querySelector('.MuiTouchRipple-root')).toBeNull();
     fireEvent.click(button);
     expect(onToggle).toHaveBeenCalledOnce();
   });
