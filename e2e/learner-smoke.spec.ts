@@ -132,7 +132,7 @@ test('abandoned flashcard loads do not reopen study or create progress', async (
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Study deck' }).click();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
   await requestedPromise;
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   release();
@@ -141,7 +141,7 @@ test('abandoned flashcard loads do not reopen study or create progress', async (
   await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Study deck' }).click();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
 });
 
@@ -162,7 +162,7 @@ test('a failed flashcard deck request shows a toast and recovers through the dec
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Study deck' }).click();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
   await started;
   await expect(page.getByRole('progressbar', { name: 'Loading flashcard deck' })).toBeVisible();
   releaseFailure();
@@ -170,9 +170,13 @@ test('a failed flashcard deck request shows a toast and recovers through the dec
   await expect(page.getByRole('alert')).toContainText('Unable to load deck');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Browser Test Deck' })).toBeVisible();
+  for (const width of [320, 390, 1048, 1440]) {
+    await page.setViewportSize({ width, height: 800 });
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
   expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v2'))).toBeNull();
   await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
-  const retry = page.getByRole('button', { name: 'Study deck', exact: true });
+  const retry = page.getByRole('button', { name: /^Study deck/ });
   await retry.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
@@ -201,8 +205,8 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByTestId('screen-transition')).toHaveCSS('opacity', '1');
   await page.screenshot({ path: subjectScreenshot });
   await testInfo.attach('flashcard-subject-desktop.png', { path: subjectScreenshot, contentType: 'image/png' });
-  await expect(page.getByRole('button', { name: 'Study deck' })).toBeVisible();
-  const studyButton = page.getByRole('button', { name: 'Study deck' });
+  await expect(page.getByRole('button', { name: /^Study deck/ })).toBeVisible();
+  const studyButton = page.getByRole('button', { name: /^Study deck/ });
   await studyButton.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 1 of 2')).toBeVisible();
@@ -311,7 +315,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.keyboard.press('ArrowRight');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Save and exit deck' }).click();
-  await expect(page.getByRole('button', { name: 'Resume deck' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Resume deck/ })).toBeVisible();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Topic' })).toHaveCount(0);
   await page.reload();
@@ -319,7 +323,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByRole('region', { name: 'Continue Studying' })).toBeVisible();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
-  await page.getByRole('button', { name: 'Resume deck' }).click();
+  await page.getByRole('button', { name: /^Resume deck/ }).click();
   await expect(page.getByText('What is the terminal nerve of the posterior cord?')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toBeVisible();
   await page.getByRole('button', { name: 'Reveal answer' }).click();
@@ -336,12 +340,12 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await expect(page.getByText('Completed 1 time')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Study deck' })).toBeVisible();
-  await page.getByRole('button', { name: 'Study deck' }).click();
+  await expect(page.getByRole('button', { name: /^Study deck/ })).toBeVisible();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
   await page.getByRole('button', { name: 'Card 2, unopened' }).click();
   await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByText('Completed 2 times')).toBeVisible();
-  await page.getByRole('button', { name: 'Study deck' }).click();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
   await page.getByRole('button', { name: 'Card 2, unopened' }).click();
   await page.getByRole('button', { name: 'Save and exit deck' }).click();
   await expect(page.getByText('Completed 2 times')).toBeVisible();
@@ -370,7 +374,7 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
   await expect(page.getByText('2 questions')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: /^Start quiz/ }).click();
   const firstQuizStart = Date.now();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByText('What is')).toBeVisible();
@@ -430,7 +434,7 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
 
   await page.reload();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
-  await page.getByRole('button', { name: 'Resume quiz' }).click();
+  await page.getByRole('button', { name: /^Resume quiz/ }).click();
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
   await expect(page.getByRole('radio', { name: /A\. Four/ })).toBeChecked();
   await page.getByRole('button', { name: 'Continue' }).click();
@@ -440,7 +444,7 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await expect(page.getByText('2 correct · 0 incorrect · 0 unanswered')).toBeVisible();
   await page.getByRole('button', { name: 'Back to quizzes' }).click();
 
-  await page.getByRole('button', { name: 'Retake quiz' }).click();
+  await page.getByRole('button', { name: /^Retake quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();
   await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
@@ -461,7 +465,7 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Done' }).click();
-  await expect(page.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Retake quiz/ })).toBeVisible();
 });
 
 test('left navigation switches dashboards in collapsed and mobile layouts', async ({ page }, testInfo) => {
@@ -608,7 +612,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
 
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
-  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Flashcards' }).click();
@@ -617,14 +621,14 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
-  await page.getByRole('button', { name: 'Resume quiz' }).click();
+  await page.getByRole('button', { name: /^Resume quiz/ }).click();
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
 });
 
 test('Exam Mode submission offers a one-time read-only review', async ({ page }, testInfo) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('button', { name: 'Exam Mode' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await page.getByRole('radio', { name: /B\. Five/ }).check();
@@ -667,7 +671,7 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page },
   await expect(page.getByText('What is')).toBeVisible();
   await page.getByRole('button', { name: 'Leave review' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Leave', exact: true }).click();
-  await expect(page.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Retake quiz/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Review results' })).toHaveCount(0);
 });
 
@@ -756,7 +760,7 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
   await page.keyboard.press('Enter');
   await expect(banner.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
   releaseRetry();
-  await expect(page.getByRole('button', { name: 'Start quiz' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Start quiz/ })).toBeVisible();
   expect(failures).toBe(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
@@ -773,14 +777,14 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   );
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
 
   const toast = page.getByRole('alert');
   await expect(toast).toContainText('Unable to load questions');
   await expect(toast).toContainText('Browser Test Quiz');
   await expect(toast).not.toContainText('private backend detail');
-  await expect(page.getByRole('button', { name: 'Start quiz' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /^Start quiz/ })).toBeEnabled();
   const box = await toast.boundingBox();
   expect(box).not.toBeNull();
   expect(box!.x + box!.width).toBeGreaterThan(370);
@@ -789,7 +793,7 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   await page.getByRole('button', { name: 'All subjects' }).click();
   await expect(toast).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByRole('alert')).toBeVisible();
   await page.reload();
@@ -818,7 +822,7 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
   await expect(loading).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();
   await expect(page.locator('.katex')).toBeVisible();

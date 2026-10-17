@@ -7,6 +7,7 @@ import {
   openQuestion,
   quizEditor,
   refreshAuthentication,
+  selectFlashcards,
   saveButton,
   test,
 } from './fixtures';
@@ -28,11 +29,7 @@ test('edits a question and a deck, publishes so learners see it, activates the e
   // Saving is not publishing: learners still read the published stem.
   const learner = await page.request.get('/api/v1/quizzes/q1/questions');
   expect((await learner.json()).questions[0].stem).toBe(original.questions[0].stem);
-  await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Subject', exact: true }).click();
-  await page.getByRole('listbox').getByRole('option').first().click();
-  await page.getByRole('combobox', { name: 'Deck', exact: true }).click();
-  await page.getByRole('listbox').getByRole('option').first().click();
+  await selectFlashcards(page);
   await page.getByRole('button', { name: 'Deck actions', exact: true }).click();
   await page.getByRole('menuitem', { name: 'Edit deck', exact: true }).click();
   await page.getByRole('region', { name: 'Flashcard editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();

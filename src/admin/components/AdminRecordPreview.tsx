@@ -26,7 +26,7 @@ export function AdminRecordPreview({ kind, record }: { kind: RecordKind; record:
   return (
     <Stack spacing={2} component="section" aria-label="Rendered content preview" sx={{ overflowWrap: 'anywhere' }}>
       <Typography variant="caption">Unsaved preview · saving and publication are separate actions.</Typography>
-      {kind === 'subject' || kind === 'quiz' || kind === 'deck' ? (
+      {kind === 'subject' || kind === 'topic' || kind === 'quiz' || kind === 'deck' ? (
         <Typography variant="h6">{String(record.name)}</Typography>
       ) : null}
       {kind === 'subject' && note('Accent', record.accent)}

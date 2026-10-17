@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "subjects": [
     {
       "id": "s1",
@@ -12,20 +12,32 @@
       "accent": "#654321"
     }
   ],
+  "topics": [
+    {
+      "id": "t1",
+      "subjectId": "s1",
+      "name": "Topic 1"
+    },
+    {
+      "id": "t2",
+      "subjectId": "s2",
+      "name": "Topic 2"
+    }
+  ],
   "quizzes": [
     {
       "id": "q1",
-      "subjectId": "s1",
+      "topicId": "t1",
       "name": "First quiz"
     },
     {
       "id": "q2",
-      "subjectId": "s2",
+      "topicId": "t2",
       "name": "Other subject quiz"
     },
     {
       "id": "q3",
-      "subjectId": "s1",
+      "topicId": "t1",
       "name": "Second quiz"
     }
   ],

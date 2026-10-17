@@ -32,7 +32,7 @@ it('disables progress backup during flashcard study with save-and-leave guidance
   runtimeQuestionBank.configureApi({ revision: 'empty', subjects: [] });
   await installFlashcardApiFixture(
     [{ id: 's3', name: 'Backup cards', accent: '#123456', deckCount: 1, deckIds: ['d-backup'] }],
-    [{ id: 'd-backup', subjectId: 's3', name: 'Backup deck', cardCount: 1, cardIds: ['f-backup'] }],
+    [{ id: 'd-backup', subjectId: 's3', topicId: 't3', name: 'Backup deck', cardCount: 1, cardIds: ['f-backup'] }],
     [{ id: 'f-backup', deckId: 'd-backup', front: 'Front', back: 'Back' }],
   );
   const values = new Map<string, string>();
@@ -40,7 +40,7 @@ it('disables progress backup during flashcard study with save-and-leave guidance
   render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
   fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Open Backup cards' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Study deck' }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Study deck/  }));
   expect(await screen.findByText('Card 1 of 1')).toBeVisible();
 
   const backupButton = screen.getByRole('button', { name: 'Progress backup' });
@@ -54,7 +54,7 @@ it('shows a visible persistence error when a deck cannot be launched', async () 
   runtimeQuestionBank.configureApi({ revision: 'rev-quota', subjects: [] });
   await installFlashcardApiFixture(
     [{ id: 's1', name: 'Flash subject', accent: '#123456', deckCount: 1, deckIds: ['d1'] }],
-    [{ id: 'd1', subjectId: 's1', name: 'Test deck', cardCount: 1, cardIds: ['f1'] }],
+    [{ id: 'd1', subjectId: 's1', topicId: 't1', name: 'Test deck', cardCount: 1, cardIds: ['f1'] }],
     [{ id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' }],
   );
   vi.stubGlobal(
@@ -74,9 +74,9 @@ it('shows a visible persistence error when a deck cannot be launched', async () 
   );
   fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
   fireEvent.click(screen.getByRole('button', { name: 'Open Flash subject' }));
-  fireEvent.click(screen.getByRole('button', { name: 'Study deck' }));
+  fireEvent.click(screen.getByRole('button', { name: /^Study deck/  }));
   expect(await screen.findByRole('alert')).toHaveTextContent('Flashcard progress could not be saved');
-  expect(screen.getByRole('button', { name: 'Study deck' })).toBeVisible();
+  expect(screen.getByRole('button', { name: /^Study deck/  })).toBeVisible();
   expect(screen.queryByRole('button', { name: 'Reveal answer' })).toBeNull();
 });
 
@@ -84,7 +84,7 @@ it('saves arrow-key navigation on the destination card when exiting', async () =
   runtimeQuestionBank.configureApi({ revision: 'rev-arrow', subjects: [] });
   await installFlashcardApiFixture(
     [{ id: 's4', name: 'Arrow subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow'] }],
-    [{ id: 'd-arrow', subjectId: 's4', name: 'Arrow deck', cardCount: 2, cardIds: ['f-arrow-1', 'f-arrow-2'] }],
+    [{ id: 'd-arrow', subjectId: 's4', topicId: 't4', name: 'Arrow deck', cardCount: 2, cardIds: ['f-arrow-1', 'f-arrow-2'] }],
     [
       { id: 'f-arrow-1', deckId: 'd-arrow', front: 'First front', back: 'First back' },
       { id: 'f-arrow-2', deckId: 'd-arrow', front: 'Second front', back: 'Second back' },
@@ -96,7 +96,7 @@ it('saves arrow-key navigation on the destination card when exiting', async () =
 
   fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Open Arrow subject' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Study deck' }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Study deck/  }));
   // The study screen loads lazily; allow its module to settle under full-suite contention.
   expect(await screen.findByText('Card 1 of 2', {}, { timeout: 10_000 })).toBeInTheDocument();
   expect(document.querySelector('[aria-modal="true"]')).toHaveStyle({ visibility: 'hidden' });
@@ -106,14 +106,14 @@ it('saves arrow-key navigation on the destination card when exiting', async () =
   expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Save and exit deck' }));
   // The subject checkpoint reflects the destination selected with Arrow Right.
-  expect(await screen.findByText('Card 2 of 2')).toBeInTheDocument();
+  expect(await screen.findByText('In progress: card 2 of 2')).toBeInTheDocument();
 });
 
 it('keeps the current card open and reports an error when arrow navigation cannot save', async () => {
   runtimeQuestionBank.configureApi({ revision: 'rev-arrow-quota', subjects: [] });
   await installFlashcardApiFixture(
     [{ id: 's5', name: 'Arrow quota subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow-quota'] }],
-    [{ id: 'd-arrow-quota', subjectId: 's5', name: 'Arrow quota deck', cardCount: 2, cardIds: ['f-arrow-q1', 'f-arrow-q2'] }],
+    [{ id: 'd-arrow-quota', subjectId: 's5', topicId: 't5', name: 'Arrow quota deck', cardCount: 2, cardIds: ['f-arrow-q1', 'f-arrow-q2'] }],
     [
       { id: 'f-arrow-q1', deckId: 'd-arrow-quota', front: 'Saved first front', back: 'Saved first back' },
       { id: 'f-arrow-q2', deckId: 'd-arrow-quota', front: 'Saved second front', back: 'Saved second back' },
@@ -135,7 +135,7 @@ it('keeps the current card open and reports an error when arrow navigation canno
 
   fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
   fireEvent.click(await screen.findByRole('button', { name: 'Open Arrow quota subject' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Study deck' }));
+  fireEvent.click(await screen.findByRole('button', { name: /^Study deck/  }));
   // The study screen loads lazily; allow its module to settle under full-suite contention.
   expect(await screen.findByText('Card 1 of 2', {}, { timeout: 10_000 })).toBeInTheDocument();
   fireEvent.keyDown(window, { key: 'ArrowRight' });

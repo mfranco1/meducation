@@ -20,7 +20,11 @@ from meducation_api.auth.store import Principal, SessionStore
 from meducation_api.content_policy import ContentPolicyError, PairedContentValidator, PolicyIssue
 from meducation_api.db.draft import (
     CHILDREN,
+    FLASHCARD_KINDS,
+    FLASHCARD_SCHEMA,
     KINDS,
+    QUIZ_KINDS,
+    QUIZ_SCHEMA,
     Kind,
     allocate_ids,
     build_documents,
@@ -233,11 +237,11 @@ class DraftService:
                 for n, record in enumerate(records)
             ]
         pair = {
-            "quizzes": {
-                "schemaVersion": 4,
-                **{n: collections[n] for n in ("subjects", "quizzes", "questions")},
+            "quizzes": {"schemaVersion": QUIZ_SCHEMA, **{n: collections[n] for n in QUIZ_KINDS}},
+            "flashcards": {
+                "schemaVersion": FLASHCARD_SCHEMA,
+                **{n: collections[n] for n in FLASHCARD_KINDS},
             },
-            "flashcards": {"schemaVersion": 2, **{n: collections[n] for n in ("decks", "cards")}},
         }
         try:
             self.validator.validate(pair)
@@ -600,6 +604,13 @@ class DraftService:
             if change is None:
                 raise DraftError(404, "change_not_found", "The change does not exist.")
             kind = KINDS[change["kind"]]
+            snapshot = change["before"] or change["after"]
+            if not set(snapshot) <= {*kind.keys, "version", "position"} or (
+                kind.parent_key and kind.parent_key not in snapshot
+            ):
+                raise DraftError(
+                    409, "change_obsolete", "The change predates the current content schema."
+                )
             current = self._get(c, kind, change["entity_id"])
             before = change["before"]
             response: dict[str, Any] = {"kind": kind.name, "id": change["entity_id"]}
@@ -738,12 +749,13 @@ class DraftService:
                         "SELECT t.release_id,t.quiz_revision,t.flashcard_revision,t.created_at,"
                         "(SELECT max(publication_sequence) FROM content.publication_events p "
                         "WHERE p.release_id=t.release_id) AS latest FROM content.releases t "
-                        "WHERE state='finalized' AND (CAST(:cursor AS uuid) IS NULL OR "
+                        "WHERE state='finalized' AND quiz_schema_version=:schema "
+                        "AND (CAST(:cursor AS uuid) IS NULL OR "
                         "(created_at,release_id)<(SELECT created_at,release_id FROM content.releases "
                         "WHERE release_id=CAST(:cursor AS uuid))) "
                         "ORDER BY created_at DESC,release_id DESC LIMIT :limit"
                     ),
-                    {"cursor": cursor, "limit": limit},
+                    {"cursor": cursor, "limit": limit, "schema": QUIZ_SCHEMA},
                 )
                 .mappings()
                 .all()
@@ -772,9 +784,9 @@ class DraftService:
             if not c.execute(
                 text(
                     "SELECT EXISTS(SELECT 1 FROM content.releases WHERE release_id=:r "
-                    "AND state='finalized')"
+                    "AND state='finalized' AND quiz_schema_version=:schema)"
                 ),
-                {"r": release_id},
+                {"r": release_id, "schema": QUIZ_SCHEMA},
             ).scalar_one():
                 raise DraftError(404, "release_not_found", "The release does not exist.")
             try:

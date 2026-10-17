@@ -29,8 +29,12 @@ def bank_for(change: str) -> dict:
         bank["questions"].append(copy.deepcopy(question))
     elif change == "unknown_quiz":
         question["quizId"] = "q9"
+    elif change == "unknown_topic":
+        bank["quizzes"][0]["topicId"] = "t9"
+    elif change == "unknown_topic_subject":
+        bank["topics"][0]["subjectId"] = "s9"
     elif change == "schema_version":
-        bank["schemaVersion"] = 3
+        bank["schemaVersion"] = 4
     elif change == "provided_answer":
         question["answer"] = "Z"
     elif change == "choice_label":
@@ -44,7 +48,7 @@ def bank_for(change: str) -> dict:
     elif change == "rationale_provenance":
         question["rationaleMeta"] = {"provenance": "unreviewed"}
     elif change == "noncontiguous":
-        bank["quizzes"].append({"id": "q2", "subjectId": "s1", "name": "Second quiz"})
+        bank["quizzes"].append({"id": "q2", "topicId": "t1", "name": "Second quiz"})
         bank["questions"].append({**copy.deepcopy(question), "id": "i2", "quizId": "q2"})
         bank["questions"].append({**copy.deepcopy(question), "id": "i3"})
     elif change == "verified_answer":
@@ -70,7 +74,7 @@ def bank_for(change: str) -> dict:
 def test_shared_stored_bank_contract(case: dict) -> None:
     bank = bank_for(case["change"])
     if case["valid"]:
-        assert Bank.model_validate(bank).schemaVersion == 4
+        assert Bank.model_validate(bank).schemaVersion == 5
     else:
         with pytest.raises(ValidationError):
             Bank.model_validate(bank)
@@ -83,8 +87,8 @@ def test_shared_unicode_revision() -> None:
 
     text, _ = paired_artifacts(
         json.dumps(bank_for("none"), ensure_ascii=False),
-        '{"schemaVersion":2,"decks":[],"cards":[]}',
+        '{"schemaVersion":3,"decks":[],"cards":[]}',
     )
     assert "sha256-" + hashlib.sha256(text.encode()).hexdigest() == (
-        "sha256-3428200bbea813f67a79fb5a36bbaa0a83b0148cd4dfdfc5cef5cdb32045b8d8"
+        "sha256-ce281fa0805a571bb15440016da485e92e8a64238e15f66a8f11289338836403"
     )

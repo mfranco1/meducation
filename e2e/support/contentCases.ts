@@ -8,15 +8,18 @@ export interface ContentCase {
   label: string;
   item: Item;
   subject: StoredQuestionBank['subjects'][number];
+  topic: StoredQuestionBank['topics'][number];
   quiz: StoredQuestionBank['quizzes'][number];
 }
 
 const subject = { id: 's1', name: 'Content acceptance', accent: '#b9511b' };
-const quiz = { id: 'q1', subjectId: 's1', name: 'Rich content acceptance' };
+const topic = { id: 't1', subjectId: 's1', name: 'Acceptance topic' };
+const quiz = { id: 'q1', topicId: 't1', name: 'Rich content acceptance' };
 const synthetic: ContentCase[] = [
   {
     label: 'synthetic-rich',
     subject,
+    topic,
     quiz,
     item: {
       id: 'i1',
@@ -36,6 +39,7 @@ const synthetic: ContentCase[] = [
   {
     label: 'synthetic-hostile',
     subject,
+    topic,
     quiz,
     item: {
       id: 'i2',
@@ -80,11 +84,13 @@ export function contentCases(): ContentCase[] {
     ...synthetic,
     ...[...selected].map((item, index) => {
       const quiz = bank.quizzes.find((q) => q.id === item.quizId)!;
+      const topic = bank.topics.find((t) => t.id === quiz.topicId)!;
       return {
         label: `selected-export-${index + 1}`,
         item,
         quiz,
-        subject: bank.subjects.find((s) => s.id === quiz.subjectId)!,
+        topic,
+        subject: bank.subjects.find((s) => s.id === topic.subjectId)!,
       };
     }),
   ];

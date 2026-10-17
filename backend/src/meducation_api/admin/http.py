@@ -256,9 +256,10 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
         q, f, context = svc.export_pair(value["releaseId"])
         parsed = [json.loads(q), json.loads(f)]
         ids = {
-            k: [row["id"] for row in parsed[index][k]]
-            for index, keys in ((0, ("subjects", "quizzes", "questions")), (1, ("decks", "cards")))
-            for k in keys
+            k: [row["id"] for row in rows]
+            for document in parsed
+            for k, rows in document.items()
+            if k != "schemaVersion"
         }
         draft = value["target"] == "draft"
         manifest = {
@@ -269,7 +270,10 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
             "latestChangeId": context.get("latestChangeId"),
             "baseReleaseId": context.get("baseReleaseId"),
             "publication": context["publication"],
-            "schemas": {"quizzes": 4, "flashcards": 2},
+            "schemas": {
+                "quizzes": parsed[0]["schemaVersion"],
+                "flashcards": parsed[1]["schemaVersion"],
+            },
             "ids": ids,
             "digests": {
                 "quizSha256": hashlib.sha256(q.encode()).hexdigest(),

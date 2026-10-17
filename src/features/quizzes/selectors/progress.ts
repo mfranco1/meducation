@@ -10,6 +10,7 @@ export interface QuizProgress {
   latestScore?: number;
   trend?: ReturnType<typeof scoreTrend>;
   currentQuestion?: number;
+  activityAt?: string;
 }
 
 export interface SubjectStat {
@@ -86,7 +87,7 @@ export function quizProgressForSubject(
   progressView: ProgressView,
   subjectId: string,
 ): QuizProgress[] {
-  const progress = questionBank.listQuizzes(subjectId).map(quiz => {
+  return questionBank.listQuizzes(subjectId).map(quiz => {
     const active = progressView.snapshot.active[quiz.id];
     const latest = progressView.snapshot.latestScores[quiz.id];
     const scores = progressView.scoresByQuiz.get(quiz.id) ?? [];
@@ -96,6 +97,7 @@ export function quizProgressForSubject(
       completionCount: progressView.snapshot.completionCounts[quiz.id] ?? 0,
       latestScore: latest?.percentage,
       trend: trendFor(latest, scores),
+      activityAt: progressView.activityAt[quiz.id],
       currentQuestion: active
         ? quiz.questionIds
           ? Math.max(0, quiz.questionIds.indexOf(active.currentQuestionId ?? '')) + 1
@@ -103,7 +105,6 @@ export function quizProgressForSubject(
         : undefined,
     };
   });
-  return sortQuizProgressByRecentActivity(progress, quizId => progressView.activityAt[quizId]);
 }
 
 /** Returns active subjects in most-recent active-quiz order, preserving catalog order for ties. */
@@ -113,11 +114,4 @@ export function activeSubjectStats(subjectStats: SubjectStat[]): SubjectStat[] {
     .filter(({ stat }) => stat.activeQuizCount > 0)
     .sort((left, right) => (right.stat.latestActiveAt ?? '').localeCompare(left.stat.latestActiveAt ?? '') || left.index - right.index)
     .map(({ stat }) => stat);
-}
-
-export function sortQuizProgressByRecentActivity(progress: QuizProgress[], latestActivityAt: (quizId: string) => string | undefined): QuizProgress[] {
-  return progress
-    .map((item, index) => ({ item, index, activityAt: latestActivityAt(item.quiz.id) }))
-    .sort((left, right) => (right.activityAt ?? '').localeCompare(left.activityAt ?? '') || left.index - right.index)
-    .map(({ item }) => item);
 }

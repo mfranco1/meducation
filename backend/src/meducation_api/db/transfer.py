@@ -13,6 +13,7 @@ from uuid import UUID
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from meducation_api.db.draft import FLASHCARD_SCHEMA, QUIZ_KINDS, QUIZ_SCHEMA, revisions
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.db.operations import paired_artifacts
 
@@ -97,7 +98,8 @@ def capture_pair(quiz: Path, flashcard: Path, *, repository: Path) -> CapturedPa
 # Only these fixed tables/columns are used; identifiers never come from user input.
 _COLLECTIONS = (
     ("subjects", "subjects", {"id": "id", "name": "name", "accent": "accent"}),
-    ("quizzes", "quizzes", {"id": "id", "subjectId": "subject_id", "name": "name"}),
+    ("topics", "topics", {"id": "id", "subjectId": "subject_id", "name": "name"}),
+    ("quizzes", "quizzes", {"id": "id", "topicId": "topic_id", "name": "name"}),
     (
         "questions",
         "questions",
@@ -121,7 +123,7 @@ _COLLECTIONS = (
         "decks",
         {
             "id": "id",
-            "subjectId": "subject_id",
+            "topicId": "topic_id",
             "name": "name",
             "description": "description",
         },
@@ -158,10 +160,6 @@ def _ordered(actual: Any, template: Any, path: str = "$") -> Any:
     return actual
 
 
-def _digest(value: str) -> str:
-    return "sha256-" + hashlib.sha256(value.encode("utf-8")).hexdigest()
-
-
 def reconstruct_release(
     connection: Connection, release_id: UUID
 ) -> tuple[str, str, dict[str, Any]]:
@@ -175,8 +173,10 @@ def reconstruct_release(
     )
     if release is None:
         raise ContentDatabaseError("Selected finalized release does not exist.")
-    q: dict[str, Any] = {"schemaVersion": 4}
-    f: dict[str, Any] = {"schemaVersion": 2}
+    if release["quiz_schema_version"] != QUIZ_SCHEMA:
+        raise ContentDatabaseError("Selected release predates the current content schema.")
+    q: dict[str, Any] = {"schemaVersion": QUIZ_SCHEMA}
+    f: dict[str, Any] = {"schemaVersion": FLASHCARD_SCHEMA}
     for name, table, fields in _COLLECTIONS:
         rows = (
             connection.execute(
@@ -188,7 +188,7 @@ def reconstruct_release(
         )
         if [row["position"] for row in rows] != list(range(len(rows))):
             raise ContentDatabaseError("Release collection ordinals differ.")
-        (q if name in ("subjects", "quizzes", "questions") else f)[name] = [
+        (q if name in QUIZ_KINDS else f)[name] = [
             {key: row[column] for key, column in fields.items() if row[column] is not None}
             for row in rows
         ]
@@ -196,17 +196,12 @@ def reconstruct_release(
         json.dumps(_ordered(q, json.loads(release["quiz_artifact"])), ensure_ascii=False),
         json.dumps(_ordered(f, json.loads(release["flashcard_artifact"])), ensure_ascii=False),
     )
-    subjects = json.dumps(
-        [{key: s[key] for key in ("id", "name", "accent")} for s in q["subjects"]],
-        ensure_ascii=False,
-        allow_nan=False,
-        separators=(",", ":"),
-    )
+    computed = revisions(qt, ft)
     if (
         qt != release["quiz_artifact"]
         or ft != release["flashcard_artifact"]
-        or _digest(qt) != release["quiz_revision"]
-        or _digest("flashcards-v2\n" + subjects + "\n" + ft) != release["flashcard_revision"]
+        or computed["quizRevision"] != release["quiz_revision"]
+        or computed["flashcardRevision"] != release["flashcard_revision"]
     ):
         raise ContentDatabaseError("Release artifacts/revisions differ from normalized content.")
     active = (
@@ -230,7 +225,7 @@ def reconstruct_release(
     manifest = {
         "manifestVersion": 1,
         "releaseId": str(release_id),
-        "schemaVersions": {"quiz": 4, "flashcard": 2},
+        "schemaVersions": {"quiz": QUIZ_SCHEMA, "flashcard": FLASHCARD_SCHEMA},
         "revisions": {"quiz": release["quiz_revision"], "flashcard": release["flashcard_revision"]},
         "artifactsSha256": {
             "quiz": hashlib.sha256(qt.encode()).hexdigest(),

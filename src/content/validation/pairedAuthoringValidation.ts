@@ -28,8 +28,8 @@ const question: Shape = {
   },
 };
 const pairShape: Shape = { required: {
-  quizzes: { required: { schemaVersion: 'number', subjects: [{ required: { id: 'string', name: 'string', accent: 'string' } }], quizzes: [{ required: { id: 'string', subjectId: 'string', name: 'string' } }], questions: [question] } },
-  flashcards: { required: { schemaVersion: 'number', decks: [{ required: { id: 'string', subjectId: 'string', name: 'string' }, optional: { description: 'string' } }], cards: [{ required: { id: 'string', deckId: 'string', front: 'string', back: 'string' }, optional: { sources: 'string', reviewNote: 'string' } }] } },
+  quizzes: { required: { schemaVersion: 'number', subjects: [{ required: { id: 'string', name: 'string', accent: 'string' } }], topics: [{ required: { id: 'string', subjectId: 'string', name: 'string' } }], quizzes: [{ required: { id: 'string', topicId: 'string', name: 'string' } }], questions: [question] } },
+  flashcards: { required: { schemaVersion: 'number', decks: [{ required: { id: 'string', topicId: 'string', name: 'string' }, optional: { description: 'string' } }], cards: [{ required: { id: 'string', deckId: 'string', front: 'string', back: 'string' }, optional: { sources: 'string', reviewNote: 'string' } }] } },
 } };
 const knownKeys = new Set<string>();
 function collectKeys(rule: Rule): void {
@@ -100,12 +100,9 @@ export function validateAuthoringPair(value: unknown): PolicyResult {
   const pair = value as { quizzes: StoredQuestionBank; flashcards: StoredFlashcardBank };
   const bank = pair.quizzes;
   const questions = bank.questions.map(item => ({ ...item, metadata: item.metadata ?? {} }));
-  const counts = new Map<string, number>();
-  questions.forEach(item => counts.set(item.quizId, (counts.get(item.quizId) ?? 0) + 1));
-  const quizzes = bank.quizzes.map(item => ({ ...item, questionCount: counts.get(item.id) ?? 0 }));
   for (const [path, found] of [
-    ['$.pair.quizzes', [...validateStoredQuestionBank(bank), ...validateQuestionBank(bank.subjects, quizzes, questions)]],
-    ['$.pair.flashcards', validateStoredFlashcardBank(pair.flashcards, bank.subjects)],
+    ['$.pair.quizzes', [...validateStoredQuestionBank(bank), ...validateQuestionBank(bank.subjects, bank.topics, bank.quizzes, questions)]],
+    ['$.pair.flashcards', validateStoredFlashcardBank(pair.flashcards, bank.topics)],
   ] as const) {
     for (const foundIssue of found) if (foundIssue.level === 'error') issue(path, 'stored_contract', 'Stored content violates schema, ordering, provenance or references.');
   }
@@ -131,7 +128,7 @@ export function validateAuthoringPair(value: unknown): PolicyResult {
   });
   const siblingNames = new Set<string>();
   for (const deck of pair.flashcards.decks) {
-    const key = JSON.stringify([deck.subjectId, deck.name.trim().toLocaleLowerCase()]);
+    const key = JSON.stringify([deck.topicId, deck.name.trim().toLocaleLowerCase()]);
     if (siblingNames.has(key)) warnings++;
     siblingNames.add(key);
   }

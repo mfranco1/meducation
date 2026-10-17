@@ -9,13 +9,13 @@ it('shows the impact counts, confirms once and cannot be repeated while deleting
   const bank = fixture as StoredQuestionBank;
   const props = {
     bank,
-    flashcardBank: { schemaVersion: 2 as const, decks: [], cards: [] },
+    flashcardBank: { schemaVersion: 3 as const, decks: [], cards: [] },
     request: { selection: { kind: 'quiz' as const, id: 'q1' }, label: 'First quiz' },
     onClose: vi.fn(),
     onConfirm: vi.fn(),
   };
   const { rerender } = render(<AdminDeleteDialog {...props} />);
-  expect(screen.getByText(/Affected: 0 subjects · 1 quizzes · 2 items/)).toBeVisible();
+  expect(screen.getByText(/Affected: 0 subjects · 0 topics · 1 quizzes · 2 items/)).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Delete quiz' }));
   expect(props.onConfirm).toHaveBeenCalledTimes(1);
   rerender(<AdminDeleteDialog {...props} busy />);
@@ -31,7 +31,9 @@ it('includes the complete shared-subject cascade and isolates selected leaf reco
   const review = deletionReview(bank, cards, { kind: 'subject', id: 's1' });
   expect(review.records).toContain('Subject · Subject One · s1');
   expect(review.records).not.toContain('Subject · Subject Two · s2');
-  for (const deck of cards.decks.filter(row => row.subjectId === 's1')) {
+  expect(review.records).toContain('Topic · Topic 1 · t1');
+  expect(review.records).not.toContain('Topic · Topic 2 · t2');
+  for (const deck of cards.decks.filter(row => row.topicId === 't1')) {
     expect(review.records).toContain(`Deck · ${deck.name} · ${deck.id}`);
     for (const card of cards.cards.filter(row => row.deckId === deck.id)) expect(review.records).toContain(`Card · ${card.id}`);
   }

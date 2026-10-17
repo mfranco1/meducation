@@ -7,7 +7,7 @@ export function AdminParentActions({
   onEdit,
   onDelete,
 }: {
-  entity: 'Subject' | 'Quiz' | 'Deck';
+  entity: 'Subject' | 'Topic' | 'Quiz' | 'Deck';
   disabled?: boolean;
   onEdit: () => void;
   onDelete: () => void;

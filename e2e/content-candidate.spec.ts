@@ -3,7 +3,8 @@ import { contentCases } from './support/contentCases';
 
 for (const candidate of contentCases()) {
   test(`L6 learner content acceptance ${candidate.label}`, async ({ page }, testInfo) => {
-    const { item, subject, quiz } = candidate;
+    const { item, subject, topic } = candidate;
+    const quiz = { ...candidate.quiz, subjectId: subject.id };
     const revision = 'sha256-synthetic-content-acceptance';
     await page.route('**/api/v1/**', async (route) => {
       const path = new URL(route.request().url()).pathname;
@@ -11,7 +12,11 @@ for (const candidate of contentCases()) {
         path === '/api/v1/subjects'
           ? { revision, subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }
           : path === `/api/v1/subjects/${subject.id}/quizzes`
-            ? { revision, quizzes: [{ ...quiz, questionCount: 1, questionIds: [item.id] }] }
+            ? {
+                revision,
+                topics: [topic],
+                quizzes: [{ ...quiz, questionCount: 1, questionIds: [item.id] }],
+              }
             : path === `/api/v1/quizzes/${quiz.id}/questions`
               ? { revision, questions: [item] }
               : path === `/api/v1/quizzes/${quiz.id}`
@@ -27,7 +32,7 @@ for (const candidate of contentCases()) {
       .getByRole('button', { name: `Open ${subject.name}`, exact: true })
       .last()
       .click();
-    await page.getByRole('button', { name: 'Start quiz', exact: true }).click();
+    await page.getByRole('button', { name: /^Start quiz/ }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();
     await expect(page.getByRole('list', { name: 'Answer choices' })).toBeVisible();

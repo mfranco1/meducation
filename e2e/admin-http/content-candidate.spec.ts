@@ -3,13 +3,14 @@ import { contentCases } from '../support/contentCases';
 
 for (const candidate of contentCases()) {
   test(`L6 HTTP editor exact content display ${candidate.label}`, async ({ page }, testInfo) => {
-    const { item, subject, quiz } = candidate;
+    const { item, subject, topic, quiz } = candidate;
     await page.route('**/api/admin/draft', async (route) => {
       const response = await route.fetch();
       const body = await response.json();
       const versioned = <T extends object>(row: T) => ({ ...row, version: 1 });
       Object.assign(body, {
         subjects: [versioned(subject)],
+        topics: [versioned(topic)],
         quizzes: [versioned(quiz)],
         questions: [versioned(item)],
         decks: [],
@@ -28,10 +29,10 @@ for (const candidate of contentCases()) {
     await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
     await page.addStyleTag({ content: 'html {font-size:20px}' });
     const nav = page.getByRole('region', { name: 'Quiz navigator' });
-    await nav.getByRole('combobox', { name: 'Subject', exact: true }).click();
-    await page.getByRole('listbox').getByRole('option').first().click();
-    await nav.getByRole('combobox', { name: 'Quiz', exact: true }).click();
-    await page.getByRole('listbox').getByRole('option').first().click();
+    for (const name of ['Subject', 'Topic', 'Quiz']) {
+      await nav.getByRole('combobox', { name, exact: true }).click();
+      await page.getByRole('listbox').getByRole('option').first().click();
+    }
     await nav.getByRole('button', { name: new RegExp(`^1\\. ${item.id}\\b`) }).click();
     await page.getByRole('region', { name: 'Quiz editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
     const editor = page

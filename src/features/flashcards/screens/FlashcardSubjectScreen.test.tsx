@@ -8,10 +8,11 @@ import { FlashcardSubjectScreen } from './FlashcardSubjectScreen';
 const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b' };
 const catalog: FlashcardCatalogResponse = {
   revision: 'sha256-test',
+  topics: [{ id: 't1', subjectId: 's1', name: 'Upper limb' }, { id: 't2', subjectId: 's1', name: 'Thorax' }],
   decks: [
-    { id: 'd1', subjectId: 's1', name: 'Brachial plexus', cardCount: 2, cardIds: ['f1', 'f2'] },
-    { id: 'd2', subjectId: 's1', name: 'Shoulder', cardCount: 0, cardIds: [] },
-    { id: 'd3', subjectId: 's1', name: 'Heart', cardCount: 1, cardIds: ['f3'] },
+    { id: 'd1', subjectId: 's1', topicId: 't1', name: 'Brachial plexus', cardCount: 2, cardIds: ['f1', 'f2'] },
+    { id: 'd2', subjectId: 's1', topicId: 't1', name: 'Shoulder', cardCount: 0, cardIds: [] },
+    { id: 'd3', subjectId: 's1', topicId: 't2', name: 'Heart', cardCount: 1, cardIds: ['f3'] },
   ],
 };
 
@@ -30,18 +31,23 @@ describe('FlashcardSubjectScreen', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('lists all subject decks directly and launches a selected non-empty deck', () => {
+  it('groups decks by topic, launches a selected deck and switches topics', () => {
     const onSelectDeck = vi.fn();
-    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{}} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={onSelectDeck} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{ d3: 1 }} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={onSelectDeck} /></ThemeProvider>);
     expect(screen.getByRole('heading', { name: 'Anatomy' })).toBeVisible();
-    expect(screen.getAllByRole('button', { name: 'Study deck' })).toHaveLength(2);
+    expect(screen.getByText('2 topics')).toBeVisible();
+    expect(screen.getByText('1 / 3 decks completed')).toBeVisible();
+    expect(screen.getByRole('button', { name: /Upper limb/ })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByText('2 decks')).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Brachial plexus' })).toBeVisible();
-    expect(screen.getByRole('heading', { name: 'Heart' })).toBeVisible();
-    expect(screen.queryByText(/topic/i)).toBeNull();
-    const studyButtons = screen.getAllByRole('button', { name: 'Study deck' });
-    expect(studyButtons[0]).toBeEnabled();
-    fireEvent.click(studyButtons[0]);
+    expect(screen.queryByRole('heading', { name: 'Heart' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Study deck: Brachial plexus' }));
     expect(onSelectDeck).toHaveBeenCalledWith(catalog.decks[0]);
+
+    fireEvent.click(screen.getByRole('button', { name: /Thorax/ }));
+    expect(screen.getByRole('heading', { name: 'Heart' })).toBeVisible();
+    expect(screen.getByText('Completed 1 time')).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Brachial plexus' })).toBeNull();
   });
 
   it('shows an empty state and disables empty decks', () => {
@@ -64,7 +70,7 @@ describe('FlashcardSubjectScreen', () => {
     render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{}} loadingDeckId="d1" onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('heading', { name: 'Brachial plexus' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Loading deck…' })).toBeDisabled();
-    expect(screen.getAllByRole('button', { name: 'Study deck' })).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /^Study deck/ })).toBeNull();
   });
 
   it('shows singular and plural completion pills alongside a saved position', () => {
@@ -73,8 +79,9 @@ describe('FlashcardSubjectScreen', () => {
     };
     render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={checkpoints} completionCounts={{ d1: 1, d3: 3 }} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByText('Completed 1 time')).toBeVisible();
-    expect(screen.getByText('Card 2 of 2')).toBeVisible();
-    expect(screen.getByText('Completed 3 times')).toBeVisible();
+    expect(screen.getByText('In progress: card 2 of 2')).toBeVisible();
     expect(screen.queryByText('Completed 0 times')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Thorax/ }));
+    expect(screen.getByText('Completed 3 times')).toBeVisible();
   });
 });

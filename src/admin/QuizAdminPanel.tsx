@@ -13,7 +13,7 @@ import { QuizBulkAdd, type BulkTarget } from './QuizBulkAdd';
 import { useAdminConfirmation } from './useAdminConfirmation';
 import { useRecordEditor, type Selection } from './useRecordEditor';
 
-/** Subjects, quizzes and questions: browse, edit one record, add in bulk, reorder, delete. */
+/** Subjects, topics, quizzes and questions: browse, edit one record, add in bulk, reorder, delete. */
 export function QuizAdminPanel({
   store,
   blocked = false,
@@ -29,7 +29,7 @@ export function QuizAdminPanel({
 }) {
   const bank = store.quizBank;
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
-  const [bulkTarget, setBulkTarget] = useState<BulkTarget>({ kind: 'newSubject' });
+  const [bulkTarget, setBulkTarget] = useState<BulkTarget>({ kind: 'newTopic' });
   const [bulkDirty, setBulkDirty] = useState(false);
   const [filter, setFilter] = useState('');
   const [working, setWorking] = useState(false);
@@ -40,10 +40,12 @@ export function QuizAdminPanel({
     initial: { kind: 'subject' },
     fallback: (lost) =>
       lost.kind === 'question'
-        ? { kind: 'quiz', id: lost.parentId, parentId: store.quizBank.quizzes.find((quiz) => quiz.id === lost.parentId)?.subjectId }
+        ? { kind: 'quiz', id: lost.parentId, parentId: store.quizBank.quizzes.find((quiz) => quiz.id === lost.parentId)?.topicId }
         : lost.kind === 'quiz'
-          ? { kind: 'subject', id: lost.parentId }
-          : { kind: 'subject' },
+          ? { kind: 'topic', id: lost.parentId, parentId: store.quizBank.topics.find((topic) => topic.id === lost.parentId)?.subjectId }
+          : lost.kind === 'topic'
+            ? { kind: 'subject', id: lost.parentId }
+            : { kind: 'subject' },
   });
   const confirmation = useAdminConfirmation([mode, bulkDirty]);
   const selection: Selection = editor.selection ?? { kind: 'subject' };
@@ -51,8 +53,21 @@ export function QuizAdminPanel({
   const selectedQuizId =
     selection.kind === 'quiz' ? selection.id : selection.kind === 'question' ? selection.parentId : undefined;
   const selectedQuiz = bank.quizzes.find((quiz) => quiz.id === selectedQuizId);
+  const selectedTopicId =
+    selection.kind === 'topic'
+      ? selection.id
+      : selection.kind === 'quiz' && !selection.id
+        ? selection.parentId
+        : selectedQuiz?.topicId;
+  const selectedTopic = bank.topics.find((topic) => topic.id === selectedTopicId);
   const selectedSubject = bank.subjects.find(
-    (subject) => subject.id === (selection.kind === 'subject' ? selection.id : selectedQuiz?.subjectId),
+    (subject) =>
+      subject.id ===
+      (selection.kind === 'subject'
+        ? selection.id
+        : selection.kind === 'topic' && !selection.id
+          ? selection.parentId
+          : selectedTopic?.subjectId),
   );
   useEffect(() => {
     onDirtyChange?.(editor.dirty || bulkDirty);
@@ -68,24 +83,29 @@ export function QuizAdminPanel({
     setBulkTarget(target);
     setMode('bulk');
   };
-  const bulkFor = (kind: 'subject' | 'quiz') =>
-    chooseBulk(
-      kind === 'subject'
-        ? { kind, subjectId: selectedSubject?.id }
-        : { kind, subjectId: selectedSubject?.id, quizId: selectedQuiz?.id },
-    );
-  const browse = async (subjectId: string, quizId?: string) => {
+  const bulkFor = (kind: BulkTarget['kind']) =>
+    chooseBulk({ kind, subjectId: selectedSubject?.id, topicId: selectedTopic?.id, quizId: selectedQuiz?.id });
+  const browse = async (subjectId: string, topicId?: string, quizId?: string) => {
     if (!(await leaveBulk())) return false;
     const moved = await editor.select(
-      quizId ? { kind: 'quiz', id: quizId, parentId: subjectId } : { kind: 'subject', id: subjectId || undefined },
+      quizId
+        ? { kind: 'quiz', id: quizId, parentId: topicId }
+        : topicId
+          ? { kind: 'topic', id: topicId, parentId: subjectId }
+          : { kind: 'subject', id: subjectId || undefined },
     );
     if (moved) setMode('single');
     return moved;
   };
+  const newTopic = async (subjectId: string) => {
+    if ((await leaveBulk()) && (await editor.loadNew('topic', subjectId))) setMode('single');
+  };
   const siblings =
-    selection.kind === 'quiz'
-      ? bank.quizzes.filter((row) => row.subjectId === selection.parentId)
-      : bank.questions.filter((row) => row.quizId === selection.parentId);
+    selection.kind === 'topic'
+      ? bank.topics.filter((row) => row.subjectId === selection.parentId)
+      : selection.kind === 'quiz'
+        ? bank.quizzes.filter((row) => row.topicId === selection.parentId)
+        : bank.questions.filter((row) => row.quizId === selection.parentId);
   const siblingIndex = siblings.findIndex((row) => row.id === selection.id);
   const reorder = async (direction: -1 | 1) => {
     if (!selection.id) return;
@@ -103,7 +123,7 @@ export function QuizAdminPanel({
       setWorking(false);
     }
   };
-  const movable = Boolean(selection.id) && (selection.kind === 'quiz' || selection.kind === 'question');
+  const movable = Boolean(selection.id) && selection.kind !== 'subject';
 
   return (
     <Stack
@@ -120,7 +140,9 @@ export function QuizAdminPanel({
         bank={bank}
         selection={selection}
         selectedSubjectId={selectedSubject?.id}
+        selectedTopicId={selectedTopic?.id}
         selectedQuizId={selectedQuiz?.id}
+        onNewTopic={(subjectId) => void newTopic(subjectId)}
         filter={filter}
         setFilter={setFilter}
         loadEntity={(next, record) => {
@@ -128,9 +150,7 @@ export function QuizAdminPanel({
             .then((left) => left && editor.load(next, record))
             .then((ok) => ok && setMode('single'));
         }}
-        chooseBulkTarget={(kind, context) =>
-          chooseBulk(kind === 'subject' ? { kind, subjectId: context?.subjectId } : { kind, ...context })
-        }
+        chooseBulkTarget={(kind, context) => chooseBulk({ kind, ...context })}
         onDelete={(target, label) => onDelete({ selection: target, label })}
         onDeleteItems={(ids) =>
           onDelete({ selection: { kind: 'question', parentId: selectedQuiz?.id }, label: `${ids.length} selected items`, ids })
@@ -141,13 +161,7 @@ export function QuizAdminPanel({
           value={mode}
           onChange={(_, value) => {
             if (value === 'bulk')
-              chooseBulk(
-                selection.kind === 'question' || selection.kind === 'quiz'
-                  ? { kind: 'quiz', subjectId: selectedSubject?.id, quizId: selectedQuiz?.id }
-                  : selection.kind === 'subject' && selection.id
-                    ? { kind: 'subject', subjectId: selection.id }
-                    : { kind: 'newSubject' },
-              );
+              bulkFor(selectedQuiz ? 'quiz' : selectedTopic ? 'topic' : 'newTopic');
             else void showSingle();
           }}
         >
@@ -161,11 +175,11 @@ export function QuizAdminPanel({
             blocked={locked}
             onTargetChange={setBulkTarget}
             onDirtyChange={setBulkDirty}
-            onAdded={({ subjectId, quizId }) => {
+            onAdded={({ subjectId, topicId, quizId }) => {
               void editor
                 .select(
-                  quizId && subjectId
-                    ? { kind: 'quiz', id: quizId, parentId: subjectId }
+                  quizId && topicId
+                    ? { kind: 'quiz', id: quizId, parentId: topicId }
                     : { kind: 'subject', id: subjectId },
                 )
                 .then((ok) => ok && setMode('single'));
@@ -173,10 +187,26 @@ export function QuizAdminPanel({
           />
         ) : !editor.open ? (
           <AdminEditorEmpty
-            title={!selectedSubject ? 'Choose a subject' : !selectedQuiz ? 'Choose a quiz' : 'Choose a question'}
+            title={
+              !selectedSubject
+                ? 'Choose a subject'
+                : !selectedTopic
+                  ? 'Choose a topic'
+                  : !selectedQuiz
+                    ? 'Choose a quiz'
+                    : 'Choose a question'
+            }
           >
-            <Button onClick={() => (selectedSubject ? bulkFor(selectedQuiz ? 'quiz' : 'subject') : onManageSubjects())}>
-              {selectedQuiz ? 'Add questions' : selectedSubject ? 'Add quizzes' : 'Add subject'}
+            <Button
+              onClick={() =>
+                !selectedSubject
+                  ? onManageSubjects()
+                  : !selectedTopic
+                    ? void newTopic(selectedSubject.id)
+                    : bulkFor(selectedQuiz ? 'quiz' : 'topic')
+              }
+            >
+              {!selectedSubject ? 'Add subject' : !selectedTopic ? 'New topic' : selectedQuiz ? 'Add questions' : 'Add quizzes'}
             </Button>
           </AdminEditorEmpty>
         ) : (
@@ -185,7 +215,7 @@ export function QuizAdminPanel({
               {selection.id ? 'Edit' : 'New'} {selection.kind}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {[selectedSubject?.name, selectedQuiz?.name, selection.id].filter(Boolean).join(' / ')}
+              {[selectedSubject?.name, selectedTopic?.name, selectedQuiz?.name, selection.id].filter(Boolean).join(' / ')}
             </Typography>
             <AdminRecordEditor
               kind={selection.kind}
@@ -215,7 +245,12 @@ export function QuizAdminPanel({
                 disabled={locked}
                 items={[
                   { label: 'New subject', onClick: () => onManageSubjects() },
-                  { label: 'Add quizzes', disabled: !selectedSubject, onClick: () => bulkFor('subject') },
+                  {
+                    label: 'New topic',
+                    disabled: !selectedSubject,
+                    onClick: () => selectedSubject && void newTopic(selectedSubject.id),
+                  },
+                  { label: 'Add quizzes', disabled: !selectedTopic, onClick: () => bulkFor('topic') },
                   {
                     label: 'New item',
                     disabled: !selectedQuiz,

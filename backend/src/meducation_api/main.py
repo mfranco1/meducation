@@ -22,6 +22,7 @@ from meducation_api.repositories.question_bank import (
     QuestionBankRepository,
     Quiz,
     Subject,
+    Topic,
 )
 from meducation_api.repositories.source import ContentSource, ContentView
 from meducation_api.settings import Settings
@@ -38,12 +39,14 @@ class SubjectCatalogResponse(BaseModel):
 
 
 class CatalogQuiz(Quiz):
+    subjectId: str
     questionCount: int
     questionIds: list[str]
 
 
 class QuizCatalogResponse(BaseModel):
     revision: str
+    topics: list[Topic]
     quizzes: list[CatalogQuiz]
 
 
@@ -63,12 +66,14 @@ class FlashcardSubjectListResponse(BaseModel):
 
 
 class FlashcardDeckSummary(FlashcardDeck):
+    subjectId: str
     cardCount: int
     cardIds: list[str]
 
 
 class FlashcardCatalogResponse(BaseModel):
     revision: str
+    topics: list[Topic]
     decks: list[FlashcardDeckSummary]
 
 
@@ -175,6 +180,7 @@ def create_app(
     def catalog_quiz(bank: QuestionBankRepository, quiz: Quiz, count: int) -> CatalogQuiz:
         return CatalogQuiz(
             **quiz.model_dump(),
+            subjectId=bank.topic_subject(quiz.topicId),
             questionCount=count,
             questionIds=bank.list_question_ids(quiz.id),
         )
@@ -228,9 +234,11 @@ def create_app(
             decks = bank.list_catalog(subject_id)
             return FlashcardCatalogResponse(
                 revision=bank.revision,
+                topics=bank.list_topics(subject_id),
                 decks=[
                     FlashcardDeckSummary(
                         **deck.model_dump(exclude_none=True),
+                        subjectId=subject_id,
                         cardCount=count,
                         cardIds=[card.id for card in bank.list_cards(deck.id)],
                     )
@@ -270,6 +278,7 @@ def create_app(
         return content_response(
             lambda: QuizCatalogResponse(
                 revision=bank.revision,
+                topics=bank.list_topics(subject_id),
                 quizzes=[
                     catalog_quiz(bank, quiz, count) for quiz, count in bank.list_quizzes(subject_id)
                 ],

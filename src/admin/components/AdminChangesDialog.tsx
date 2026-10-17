@@ -19,6 +19,7 @@ import type { DraftChange } from '../data/DraftStore';
 const PAGE = 25;
 const LABEL: Record<DraftChange['kind'], string> = {
   subjects: 'subject',
+  topics: 'topic',
   quizzes: 'quiz',
   questions: 'question',
   decks: 'deck',

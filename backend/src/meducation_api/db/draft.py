@@ -8,7 +8,7 @@ columns, which keep their own key order. Documents are built from rows ordered b
 
 import hashlib
 import json
-from collections.abc import Iterable, Mapping
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 from uuid import UUID
@@ -17,6 +17,9 @@ from sqlalchemy import Connection, text
 
 from meducation_api.content_policy import artifact_text
 from meducation_api.db.engine import ContentDatabaseError
+
+QUIZ_SCHEMA = 5
+FLASHCARD_SCHEMA = 3
 
 
 @dataclass(frozen=True)
@@ -42,12 +45,14 @@ class Kind:
 
     @property
     def numeric_ids(self) -> bool:
-        return self.prefix in ("s", "q", "i")
+        return self.prefix in ("s", "t", "q", "i")
 
     @property
     def sequence(self) -> str:
         return (
-            "content.draft_" + {"s": "subject", "q": "quiz", "i": "question"}[self.prefix] + "_ids"
+            "content.draft_"
+            + {"s": "subject", "t": "topic", "q": "quiz", "i": "question"}[self.prefix]
+            + "_ids"
         )
 
 
@@ -66,14 +71,25 @@ KINDS: dict[str, Kind] = {
             (("name", "name", False), ("accent", "accent", False)),
         ),
         Kind(
+            "topics",
+            "draft_topics",
+            "topics",
+            "quizzes",
+            "t",
+            "subjects",
+            "subjectId",
+            "subject_id",
+            (("name", "name", False),),
+        ),
+        Kind(
             "quizzes",
             "draft_quizzes",
             "quizzes",
             "quizzes",
             "q",
-            "subjects",
-            "subjectId",
-            "subject_id",
+            "topics",
+            "topicId",
+            "topic_id",
             (("name", "name", False),),
         ),
         Kind(
@@ -104,9 +120,9 @@ KINDS: dict[str, Kind] = {
             "decks",
             "flashcards",
             "d",
-            "subjects",
-            "subjectId",
-            "subject_id",
+            "topics",
+            "topicId",
+            "topic_id",
             (("name", "name", False), ("description", "description", False)),
         ),
         Kind(
@@ -128,13 +144,14 @@ KINDS: dict[str, Kind] = {
     )
 }
 CHILDREN: dict[str, tuple[str, ...]] = {
-    "subjects": ("quizzes", "decks"),
+    "subjects": ("topics",),
+    "topics": ("quizzes", "decks"),
     "quizzes": ("questions",),
     "decks": ("cards",),
     "questions": (),
     "cards": (),
 }
-QUIZ_KINDS = ("subjects", "quizzes", "questions")
+QUIZ_KINDS = ("subjects", "topics", "quizzes", "questions")
 FLASHCARD_KINDS = ("decks", "cards")
 
 
@@ -205,13 +222,16 @@ def rows(connection: Connection, kind: Kind) -> list[dict[str, Any]]:
 
 
 def documents_from_records(records: Mapping[str, list[dict[str, Any]]]) -> tuple[str, str]:
-    quizzes = {"schemaVersion": 4, **{name: records[name] for name in QUIZ_KINDS}}
-    flashcards = {"schemaVersion": 2, **{name: records[name] for name in FLASHCARD_KINDS}}
+    quizzes = {"schemaVersion": QUIZ_SCHEMA, **{name: records[name] for name in QUIZ_KINDS}}
+    flashcards = {
+        "schemaVersion": FLASHCARD_SCHEMA,
+        **{name: records[name] for name in FLASHCARD_KINDS},
+    }
     return artifact_text(quizzes), artifact_text(flashcards)
 
 
 def build_documents(connection: Connection) -> tuple[str, str]:
-    """Quiz (schema v4) and flashcard (schema v2) artifacts from draft rows."""
+    """Quiz and flashcard artifacts from draft rows."""
     return documents_from_records(
         {
             name: [record_from_row(kind, row) for row in rows(connection, kind)]
@@ -222,20 +242,24 @@ def build_documents(connection: Connection) -> tuple[str, str]:
 
 def revisions(quiz_text: str, flashcard_text: str) -> dict[str, str]:
     """Content revisions as `content.checked_artifacts` computes them."""
-    subjects = json.dumps(
-        [
-            {key: s[key] for key in ("id", "name", "accent")}
-            for s in json.loads(quiz_text)["subjects"]
-        ],
-        ensure_ascii=False,
-        allow_nan=False,
-        separators=(",", ":"),
-    )
+    bank = json.loads(quiz_text)
+    registry = [
+        json.dumps(
+            [{key: record[key] for key in keys} for record in bank[name]],
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+        )
+        for name, keys in (
+            ("subjects", ("id", "name", "accent")),
+            ("topics", ("id", "subjectId", "name")),
+        )
+    ]
     return {
         "quizRevision": "sha256-" + hashlib.sha256(quiz_text.encode()).hexdigest(),
         "flashcardRevision": "sha256-"
         + hashlib.sha256(
-            ("flashcards-v2\n" + subjects + "\n" + flashcard_text).encode()
+            "\n".join(["flashcards-v3", *registry, flashcard_text]).encode()
         ).hexdigest(),
     }
 
@@ -258,6 +282,8 @@ def load_release(
     if artifacts is None:
         raise ContentDatabaseError("Selected finalized release does not exist.")
     documents = {"quizzes": json.loads(artifacts[0]), "flashcards": json.loads(artifacts[1])}
+    if documents["quizzes"]["schemaVersion"] != QUIZ_SCHEMA:
+        raise ContentDatabaseError("Selected release predates the current content schema.")
     for name, kind in KINDS.items():
         records = documents[kind.bank][kind.collection]
         if records:
@@ -277,7 +303,7 @@ def load_release(
 def clear(connection: Connection) -> dict[tuple[str, str], int]:
     """Delete every draft row (children first); return the replaced versions."""
     replaced: dict[tuple[str, str], int] = {}
-    for name in ("questions", "cards", "quizzes", "decks", "subjects"):
+    for name in ("questions", "cards", "quizzes", "decks", "topics", "subjects"):
         for row in connection.execute(
             text(f"DELETE FROM content.{KINDS[name].table} RETURNING id,version")
         ):
@@ -297,30 +323,10 @@ def reset_draft(connection: Connection, release_id: UUID) -> None:
     )
 
 
-def first_difference(built: Iterable[str], expected: Iterable[str]) -> str | None:
-    """Name the first collection/record that differs, without content."""
-    for actual_text, expected_text in zip(built, expected, strict=True):
-        if actual_text == expected_text:
-            continue
-        actual, wanted = json.loads(actual_text), json.loads(expected_text)
-        for collection in wanted:
-            if collection == "schemaVersion":
-                continue
-            left, right = actual.get(collection, []), wanted[collection]
-            for index in range(max(len(left), len(right))):
-                a = left[index] if index < len(left) else None
-                b = right[index] if index < len(right) else None
-                if a is None or b is None or json.dumps(a) != json.dumps(b):
-                    identifier = (b or a or {}).get("id")
-                    return f"{collection}[{index}] ({identifier})"
-        return "document envelope"
-    return None
-
-
 def id_floor(connection: Connection, kind: Kind) -> int:
     """Largest numeric suffix ever used for a kind, across every release and the draft."""
     pattern = "^" + kind.prefix + "[1-9][0-9]*$"
-    release_table = {"s": "subjects", "q": "quizzes", "i": "questions"}[kind.prefix]
+    release_table = {"s": "subjects", "t": "topics", "q": "quizzes", "i": "questions"}[kind.prefix]
     value: Any = connection.execute(
         text(f"""
 SELECT coalesce(max(n),0) FROM (

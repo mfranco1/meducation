@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def files(tmp_path):
     q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    f = {"schemaVersion": 2, "decks": [], "cards": []}
+    f = {"schemaVersion": 3, "decks": [], "cards": []}
     paths = tmp_path / "quiz.json", tmp_path / "flashcards.json"
     for path, doc in zip(paths, (q, f), strict=True):
         path.write_text(json.dumps(doc, ensure_ascii=False))
@@ -46,7 +46,7 @@ def test_capture_rejects_both_structure_and_rich_policy_without_rewriting(tmp_pa
     paths = files(tmp_path)
     repository = ROOT
     if case == "invalid-second":
-        paths[1].write_text('{"schemaVersion":2,"decks":[],"cards":null}')
+        paths[1].write_text('{"schemaVersion":3,"decks":[],"cards":null}')
     elif case == "rich-policy":
         if not (ROOT / "node_modules/tsx/dist/loader.mjs").is_file():
             pytest.skip("Cross-runtime policy requires npm ci; native PG jobs exercise the gate")
@@ -63,7 +63,7 @@ def test_capture_rejects_both_structure_and_rich_policy_without_rewriting(tmp_pa
         paths[0].write_text(
             paths[0]
             .read_text()
-            .replace('"schemaVersion": 4', '"schemaVersion":4,"schemaVersion":4')
+            .replace('"schemaVersion": 5', '"schemaVersion":5,"schemaVersion":5')
         )
     before = [p.read_bytes() for p in paths]
     with pytest.raises(ContentDatabaseError) as error:

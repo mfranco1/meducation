@@ -16,14 +16,11 @@ try {
   const bank = JSON.parse(readFileSync(quizPath, 'utf8')) as StoredQuestionBank;
   const flashcards = JSON.parse(readFileSync(flashcardPath, 'utf8')) as StoredFlashcardBank;
   const questions = bank.questions.map((question) => ({ ...question, metadata: question.metadata ?? {} }));
-  const counts = new Map<string, number>();
-  questions.forEach((question) => counts.set(question.quizId, (counts.get(question.quizId) ?? 0) + 1));
-  const quizzes = bank.quizzes.map((quiz) => ({ ...quiz, questionCount: counts.get(quiz.id) ?? 0 }));
   const issues = [
     ...validateStoredQuestionBank(bank),
-    ...validateQuestionBank(bank.subjects, quizzes, questions),
+    ...validateQuestionBank(bank.subjects, bank.topics, bank.quizzes, questions),
     ...validateQuestionMarkdown(questions),
-    ...validateFlashcardBank(flashcards, bank.subjects),
+    ...validateFlashcardBank(flashcards, bank.topics),
   ];
   const errors = issues.filter((issue) => issue.level === 'error').length;
   const warnings = issues.filter((issue) => issue.level === 'warning').length;

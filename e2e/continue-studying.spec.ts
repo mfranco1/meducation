@@ -99,7 +99,7 @@ test('quiz Continue Studying card is responsive and opens the active subject', a
   await page.setViewportSize({ width: 1280, height: 844 });
   await page.goto('/');
   await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Start quiz' }).click();
+  await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await page.getByRole('radio', { name: /A\. Four/ }).check();
   await page.reload();
@@ -123,7 +123,7 @@ test('quiz Continue Studying card is responsive and opens the active subject', a
   await action.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Resume quiz' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeVisible();
 });
 
 test('flashcard Continue Studying card shows deck activity and opens the saved subject', async ({ page }, testInfo) => {
@@ -131,7 +131,7 @@ test('flashcard Continue Studying card shows deck activity and opens the saved s
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: 'Study deck' }).click();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
   await page.getByRole('button', { name: 'Save and exit deck' }).click();
   await page.getByRole('button', { name: 'All subjects' }).click();
 
@@ -155,5 +155,5 @@ test('flashcard Continue Studying card shows deck activity and opens the saved s
   await action.focus();
   await page.keyboard.press('Space');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Resume deck' })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Resume deck/ })).toBeVisible();
 });

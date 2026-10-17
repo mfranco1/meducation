@@ -4,7 +4,7 @@ Deferred on 2026-10-17 while learner content, data model and UI work come first.
 
 ## Current state
 
-- The per-record editor and migrations through `0008_retire_legacy` are live on the local authority database (`docs/operations.md`).
+- The per-record editor and migrations through `0009_topics` are live on the local authority database (`docs/operations.md`).
 - Admin auth is the backend's own OIDC code flow (Authlib/joserfc), opaque sessions in `admin_auth`, CSRF header, exact Origin and a 15-minute fresh factor for publish, discard, activate and export (`backend/src/meducation_api/auth`). Only the synthetic loopback issuer exists; production configuration with admin enabled refuses to start.
 - A new hosted database is initialized by `pg_restore` of an authority dump, then `restore-permissions`, `invalidate-restored-sessions` and `advance-id-sequences`.
 

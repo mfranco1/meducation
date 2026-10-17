@@ -4,14 +4,16 @@ import type {
   StoredQuestion,
   StoredQuiz,
   StoredSubject,
+  StoredTopic,
 } from '../../content/schema/schema';
 import type { RecordKind } from '../core/recordDraft';
 import { AdminHttpError, errorMessages, PairedHttpClient } from './PairedHttpClient';
 
 export type Versioned<T> = T & { version: number };
-export type ApiKind = 'subjects' | 'quizzes' | 'questions' | 'decks' | 'cards';
+export type ApiKind = 'subjects' | 'topics' | 'quizzes' | 'questions' | 'decks' | 'cards';
 export const API_KIND: Record<RecordKind, ApiKind> = {
   subject: 'subjects',
+  topic: 'topics',
   quiz: 'quizzes',
   question: 'questions',
   deck: 'decks',
@@ -22,23 +24,25 @@ export const RECORD_KIND = Object.fromEntries(Object.entries(API_KIND).map(([kin
   RecordKind
 >;
 export type StoredRecord = Versioned<
-  StoredSubject | StoredQuiz | StoredQuestion | StoredFlashcardDeck | StoredFlashcard
+  StoredSubject | StoredTopic | StoredQuiz | StoredQuestion | StoredFlashcardDeck | StoredFlashcard
 >;
 export type Fields = Record<string, unknown>;
 
 export interface DraftQuizBank {
-  schemaVersion: 4;
+  schemaVersion: 5;
   subjects: Versioned<StoredSubject>[];
+  topics: Versioned<StoredTopic>[];
   quizzes: Versioned<StoredQuiz>[];
   questions: Versioned<StoredQuestion>[];
 }
 export interface DraftFlashcardBank {
-  schemaVersion: 2;
+  schemaVersion: 3;
   decks: Versioned<StoredFlashcardDeck>[];
   cards: Versioned<StoredFlashcard>[];
 }
 export interface DraftSnapshot {
   subjects: Versioned<StoredSubject>[];
+  topics: Versioned<StoredTopic>[];
   quizzes: Versioned<StoredQuiz>[];
   questions: Versioned<StoredQuestion>[];
   decks: Versioned<StoredFlashcardDeck>[];
@@ -79,14 +83,15 @@ export interface BulkGroup {
   childKind: 'questions' | 'cards';
   children: Fields[];
 }
-/** Optionally a new subject, then groups of children under the subject (new parents) or existing parents. */
+/** Optionally a new topic under `subjectId`, then groups of children under the topic (new parents) or existing parents. */
 export interface BulkPlan {
-  subject?: Fields;
   subjectId?: string;
+  topic?: Fields;
+  topicId?: string;
   groups: BulkGroup[];
 }
 export interface BulkResult {
-  subjectId?: string;
+  topicId?: string;
   parentIds: string[];
   created: number;
 }
@@ -101,7 +106,7 @@ export class BulkFailure extends Error {
   }
 }
 
-const COLLECTIONS: ApiKind[] = ['subjects', 'quizzes', 'questions', 'decks', 'cards'];
+const COLLECTIONS: ApiKind[] = ['subjects', 'topics', 'quizzes', 'questions', 'decks', 'cards'];
 const sameId = (id: string) => (row: { id: string }) => row.id === id;
 
 /**
@@ -130,9 +135,9 @@ export class DraftStore {
     };
   }
   private derive(): void {
-    const { subjects, quizzes, questions, decks, cards } = this.snapshot;
-    this.quizBank = { schemaVersion: 4, subjects, quizzes, questions };
-    this.flashcardBank = { schemaVersion: 2, decks, cards };
+    const { subjects, topics, quizzes, questions, decks, cards } = this.snapshot;
+    this.quizBank = { schemaVersion: 5, subjects, topics, quizzes, questions };
+    this.flashcardBank = { schemaVersion: 3, decks, cards };
   }
   private install(snapshot: DraftSnapshot): void {
     this.snapshot = snapshot;
@@ -212,15 +217,15 @@ export class DraftStore {
         });
     });
   }
-  /** Add children in bulk, creating a new subject and quiz/deck parents first when the plan asks for them. */
+  /** Add children in bulk, creating a new topic and quiz/deck parents first when the plan asks for them. */
   async addTree(plan: BulkPlan): Promise<BulkResult> {
     return this.write(async () => {
       const result: BulkResult = { parentIds: [], created: 0 };
       let step = 'starting';
       const saved = () =>
-        result.created || result.subjectId || result.parentIds.length
+        result.created || result.topicId || result.parentIds.length
           ? `Already saved to the draft: ${[
-              plan.subject && result.subjectId ? `subject ${result.subjectId}` : '',
+              plan.topic && result.topicId ? `topic ${result.topicId}` : '',
               result.parentIds.length ? `parents ${result.parentIds.join(', ')}` : '',
               result.created ? `${result.created} record(s) in bulk` : '',
             ]
@@ -228,12 +233,16 @@ export class DraftStore {
               .join('; ')}.`
           : '';
       try {
-        let subjectId = plan.subjectId;
-        if (plan.subject) {
-          step = 'creating the subject';
-          subjectId = (await this.client.post<{ record: { id: string } }>('/draft/subjects', { fields: plan.subject }))
-            .record.id;
-          result.subjectId = subjectId;
+        let topicId = plan.topicId;
+        if (plan.topic) {
+          step = 'creating the topic';
+          topicId = (
+            await this.client.post<{ record: { id: string } }>('/draft/topics', {
+              parentId: plan.subjectId,
+              fields: plan.topic,
+            })
+          ).record.id;
+          result.topicId = topicId;
         }
         for (const group of plan.groups) {
           let parentId = group.parentId;
@@ -241,7 +250,7 @@ export class DraftStore {
             step = `creating ${group.create.kind === 'quizzes' ? 'a quiz' : 'a deck'}`;
             parentId = (
               await this.client.post<{ record: { id: string } }>(`/draft/${group.create.kind}`, {
-                parentId: subjectId,
+                parentId: topicId,
                 fields: group.create.fields,
               })
             ).record.id;
@@ -256,7 +265,7 @@ export class DraftStore {
             result.created += group.children.length;
           }
         }
-        result.subjectId ??= subjectId;
+        result.topicId ??= topicId;
         return result;
       } catch (error) {
         throw new BulkFailure(error, step, saved());

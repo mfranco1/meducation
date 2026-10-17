@@ -9,6 +9,7 @@ import hashlib
 import json
 from contextlib import contextmanager
 
+from meducation_api.db.draft import revisions
 from meducation_api.main import create_app
 from meducation_api.repositories.question_bank import Bank, FlashcardBank, FlashcardSubjectSummary
 from meducation_api.repositories.source import ContentView
@@ -22,7 +23,8 @@ def revision(value):
 class FixtureQuestionRepository:
     def __init__(self, value):
         self.bank = Bank.model_validate(value)
-        self.revision = revision(json.dumps(value, ensure_ascii=False, indent=2) + "\n")
+        self.text = json.dumps(value, ensure_ascii=False, indent=2) + "\n"
+        self.revision = revision(self.text)
 
     def list_subjects(self):
         return self.bank.subjects[:]
@@ -30,15 +32,21 @@ class FixtureQuestionRepository:
     def has_subject(self, id):
         return any(row.id == id for row in self.bank.subjects)
 
+    def list_topics(self, id):
+        return [row for row in self.bank.topics if row.subjectId == id]
+
+    def topic_subject(self, id):
+        return next(row.subjectId for row in self.bank.topics if row.id == id)
+
     def subject_quiz_summary(self, id):
-        ids = [row.id for row in self.bank.quizzes if row.subjectId == id]
+        ids = [row.id for row, _ in self.list_quizzes(id)]
         return len(ids), ids
 
     def list_quizzes(self, id):
         return [
             (row, len(self.list_questions(row.id)))
             for row in self.bank.quizzes
-            if row.subjectId == id
+            if self.topic_subject(row.topicId) == id
         ]
 
     def get_quiz(self, id):
@@ -53,22 +61,22 @@ class FixtureQuestionRepository:
 
 
 class FixtureFlashcardRepository:
-    def __init__(self, value, subjects):
+    def __init__(self, value, questions):
         self.bank = FlashcardBank.model_validate(value)
-        self.subjects = subjects
-        assert all(any(s.id == d.subjectId for s in subjects) for d in self.bank.decks)
-        self.revision = revision(
-            "flashcards-v2\n"
-            + json.dumps(
-                [s.model_dump() for s in subjects], ensure_ascii=False, separators=(",", ":")
-            )
-            + "\n"
-            + json.dumps(value, ensure_ascii=False, indent=2)
-            + "\n"
-        )
+        self.questions = questions
+        self.subjects = questions.list_subjects()
+        self.revision = revisions(
+            questions.text, json.dumps(value, ensure_ascii=False, indent=2) + "\n"
+        )["flashcardRevision"]
 
     def has_subject(self, id):
         return any(row.id == id for row in self.subjects)
+
+    def list_topics(self, id):
+        return self.questions.list_topics(id)
+
+    def topic_subject(self, id):
+        return self.questions.topic_subject(id)
 
     def list_subjects(self):
         return [
@@ -83,7 +91,9 @@ class FixtureFlashcardRepository:
 
     def list_catalog(self, id):
         return [
-            (row, len(self.list_cards(row.id))) for row in self.bank.decks if row.subjectId == id
+            (row, len(self.list_cards(row.id)))
+            for row in self.bank.decks
+            if self.topic_subject(row.topicId) == id
         ]
 
     def has_deck(self, id):
@@ -97,16 +107,14 @@ class FixtureContentSource:
     def __init__(self, quizzes, flashcards=None, *, questions=None):
         self.quizzes = copy.deepcopy(quizzes)
         self.flashcards = copy.deepcopy(
-            flashcards if flashcards is not None else {"schemaVersion": 2, "decks": [], "cards": []}
+            flashcards if flashcards is not None else {"schemaVersion": 3, "decks": [], "cards": []}
         )
         self.questions = questions
         self._view = None
 
     def __enter__(self):
         questions = self.questions or FixtureQuestionRepository(self.quizzes)
-        self._view = ContentView(
-            questions, FixtureFlashcardRepository(self.flashcards, questions.list_subjects())
-        )
+        self._view = ContentView(questions, FixtureFlashcardRepository(self.flashcards, questions))
         return self
 
     def __exit__(self, *args):

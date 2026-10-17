@@ -1,5 +1,6 @@
-import type { Subject } from '../../domain/types';
+import type { Subject, Topic } from '../../domain/types';
 import type { StoredFlashcard, StoredFlashcardDeck } from '../schema/schema';
+import { isTopicList } from './apiDecoders';
 import { nonempty, onlyKeys, record, unique } from './jsonGuards';
 
 export interface FlashcardSubjectSummary extends Subject {
@@ -8,6 +9,7 @@ export interface FlashcardSubjectSummary extends Subject {
   emptyDeckIds?: string[];
 }
 export interface FlashcardDeckSummary extends StoredFlashcardDeck {
+  subjectId: string;
   cardCount: number;
   cardIds: string[];
 }
@@ -17,6 +19,7 @@ export interface FlashcardSubjectResponse {
 }
 export interface FlashcardCatalogResponse {
   revision: string;
+  topics: Topic[];
   decks: FlashcardDeckSummary[];
 }
 export interface FlashcardListResponse {
@@ -79,17 +82,25 @@ export function isFlashcardCatalog(
 ): value is FlashcardCatalogResponse {
   if (
     !record(value) ||
-    !onlyKeys(value, ['revision', 'decks']) ||
+    !onlyKeys(value, ['revision', 'topics', 'decks']) ||
     !nonempty(value.revision) ||
+    !isTopicList(value.topics, subjectId) ||
     !Array.isArray(value.decks)
   )
     return false;
+  const topicIds = value.topics.map((topic) => topic.id);
   if (expectedDeckCount !== undefined && value.decks.length !== expectedDeckCount) return false;
   const deckIds: string[] = [];
   const decksValid = value.decks.every((deck: unknown) => {
-    if (!record(deck) || !onlyKeys(deck, ['id', 'subjectId', 'name', 'description', 'cardCount', 'cardIds']))
+    if (!record(deck) || !onlyKeys(deck, ['id', 'subjectId', 'topicId', 'name', 'description', 'cardCount', 'cardIds']))
       return false;
-    if (!nonempty(deck.id) || !/^d[a-zA-Z0-9-]+$/.test(deck.id) || deck.subjectId !== subjectId || !nonempty(deck.name))
+    if (
+      !nonempty(deck.id) ||
+      !/^d[a-zA-Z0-9-]+$/.test(deck.id) ||
+      deck.subjectId !== subjectId ||
+      !topicIds.includes(deck.topicId as string) ||
+      !nonempty(deck.name)
+    )
       return false;
     if (deck.description !== undefined && typeof deck.description !== 'string') return false;
     if (

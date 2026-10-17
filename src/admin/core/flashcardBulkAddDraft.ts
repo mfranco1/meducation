@@ -1,7 +1,7 @@
 import type { StoredFlashcardBank } from '../../content/schema/schema';
 import type { BulkPlan } from '../data/DraftStore';
 
-export type FlashcardBulkAddContext = { kind: 'subject'; subjectId: string } | { kind: 'deck'; deckId: string };
+export type FlashcardBulkAddContext = { kind: 'topic'; topicId: string } | { kind: 'deck'; deckId: string };
 
 export interface FlashcardCardDraft {
   front: string;
@@ -147,11 +147,11 @@ export function compileFlashcardBulkAddDraft(
   draft: FlashcardBulkAddDraft,
   context: FlashcardBulkAddContext,
   bank: StoredFlashcardBank,
-  subjects: readonly { id: string }[],
+  topics: readonly { id: string }[],
 ): { compiled?: CompiledFlashcardBulkAdd; diagnostics: FlashcardBulkDiagnostic[] } {
   const fail = (message: string) => ({ diagnostics: [{ level: 'error' as const, path: '$', message }] });
-  if (context.kind === 'subject' && !subjects.some((subject) => subject.id === context.subjectId))
-    return fail('selected subject no longer exists.');
+  if (context.kind === 'topic' && !topics.some((topic) => topic.id === context.topicId))
+    return fail('selected topic no longer exists.');
   const selectedDeck = context.kind === 'deck' ? bank.decks.find((deck) => deck.id === context.deckId) : undefined;
   if (context.kind === 'deck' && !selectedDeck) return fail('selected deck no longer exists.');
   if ((context.kind === 'deck') !== (draft.kind === 'cards')) return fail('draft type does not match the selected destination.');
@@ -166,7 +166,7 @@ export function compileFlashcardBulkAddDraft(
   return {
     compiled: {
       plan: {
-        subjectId: (context as Extract<FlashcardBulkAddContext, { kind: 'subject' }>).subjectId,
+        topicId: (context as Extract<FlashcardBulkAddContext, { kind: 'topic' }>).topicId,
         groups: draft.decks.map((deck) => ({
           create: {
             kind: 'decks' as const,

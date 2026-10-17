@@ -21,12 +21,12 @@ function paginate<T>(matches: T[], page: number) {
 
 export function selectQuizNavigatorPage<Q extends StoredQuestion, Z extends StoredQuiz>(
   bank: { quizzes: Z[]; questions: Q[] },
-  subjectId: string | undefined,
+  topicId: string | undefined,
   quizId: string | undefined,
   query: string,
   page: number,
 ) {
-  const quizzes = bank.quizzes.filter((quiz) => !subjectId || quiz.subjectId === subjectId);
+  const quizzes = bank.quizzes.filter((quiz) => !topicId || quiz.topicId === topicId);
   const quizIds = new Set(quizzes.map((quiz) => quiz.id));
   const positions = new Map<string, number>();
   const normalized = query.trim().toLocaleLowerCase();

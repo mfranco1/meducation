@@ -26,14 +26,16 @@ interface Props {
   bank: DraftQuizBank;
   selection: Selection;
   selectedSubjectId?: string;
+  selectedTopicId?: string;
   selectedQuizId?: string;
   filter: string;
   setFilter: (value: string) => void;
   loadEntity: (selection: Selection, record: StoredRecord) => void;
-  chooseBulkTarget?: (kind: 'subject' | 'quiz', context?: { subjectId?: string; quizId?: string }) => void;
+  chooseBulkTarget?: (kind: 'topic' | 'quiz', context: { subjectId: string; topicId: string; quizId?: string }) => void;
+  onNewTopic: (subjectId: string) => void;
   onManageSubjects: (id?: string) => void;
   onDeleteItems?: (ids: string[]) => void;
-  onBrowseChange?: (subjectId: string, quizId?: string) => boolean | Promise<boolean>;
+  onBrowseChange?: (subjectId: string, topicId?: string, quizId?: string) => boolean | Promise<boolean>;
   onDelete?: (selection: Selection, label: string) => void;
 }
 
@@ -42,6 +44,7 @@ export function AdminNavigatorPanel({
   bank,
   selection,
   selectedSubjectId,
+  selectedTopicId,
   selectedQuizId,
   filter,
   setFilter,
@@ -50,39 +53,53 @@ export function AdminNavigatorPanel({
   onDelete,
   onBrowseChange,
   onDeleteItems,
+  onNewTopic,
   onManageSubjects,
 }: Props) {
   const [subjectId, setSubjectId] = useState(selectedSubjectId ?? '');
+  const [topicId, setTopicId] = useState(selectedTopicId ?? '');
   const [quizId, setQuizId] = useState(selectedQuizId ?? '');
   const [subjectQuery, setSubjectQuery] = useState<string>();
+  const [topicQuery, setTopicQuery] = useState<string>();
   const [quizQuery, setQuizQuery] = useState<string>();
   const [page, setPage] = useState(0);
   useEffect(() => {
     setSubjectId(selectedSubjectId ?? '');
+    setTopicId(selectedTopicId ?? '');
     setQuizId(selectedQuizId ?? '');
     setPage(0);
-  }, [selectedSubjectId, selectedQuizId]);
+  }, [selectedSubjectId, selectedTopicId, selectedQuizId]);
 
   const subject = bank.subjects.find((item) => item.id === subjectId) ?? null;
-  const quizzes = useMemo(() => bank.quizzes.filter((quiz) => quiz.subjectId === subjectId), [bank.quizzes, subjectId]);
+  const topics = useMemo(() => bank.topics.filter((topic) => topic.subjectId === subjectId), [bank.topics, subjectId]);
+  const topic = topics.find((item) => item.id === topicId) ?? null;
+  const quizzes = useMemo(() => bank.quizzes.filter((quiz) => quiz.topicId === topicId), [bank.quizzes, topicId]);
   const quiz = quizzes.find((item) => item.id === quizId) ?? null;
   const results = useMemo(
-    () => selectQuizNavigatorPage(bank, subjectId || undefined, quizId || undefined, filter, page),
-    [bank, subjectId, quizId, filter, page],
+    () => selectQuizNavigatorPage(bank, topicId || undefined, quizId || undefined, filter, page),
+    [bank, topicId, quizId, filter, page],
   );
   const recordSelection = useAdminRecordSelection(
-    JSON.stringify([subjectId, quizId, filter]),
+    JSON.stringify([subjectId, topicId, quizId, filter]),
     bank.questions.filter((row) => row.quizId === quizId).map((row) => row.id),
   );
   const changeSubject = async (id: string) => {
     if (onBrowseChange && !(await onBrowseChange(id))) return;
     setSubjectId(id);
+    setTopicId('');
+    setQuizId('');
+    setFilter('');
+    setPage(0);
+  };
+  const changeTopic = async (id: string) => {
+    if (onBrowseChange && !(await onBrowseChange(subjectId, id))) return;
+    setTopicId(id);
     setQuizId('');
     setFilter('');
     setPage(0);
   };
   const changeQuiz = async (id: string) => {
-    if (onBrowseChange && !(await onBrowseChange(subjectId, id))) return;
+    if (onBrowseChange && !(await onBrowseChange(subjectId, topicId, id))) return;
     setQuizId(id);
     setFilter('');
     setPage(0);
@@ -102,6 +119,7 @@ export function AdminNavigatorPanel({
           onChange={(_, value) => {
             changeSubject(value?.id ?? '');
             setSubjectQuery(undefined);
+            setTopicQuery(undefined);
             setQuizQuery(undefined);
           }}
           renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
@@ -111,8 +129,8 @@ export function AdminNavigatorPanel({
         </Button>
         {subject && (
           <Stack direction="row" spacing={1} alignItems="center">
-            <Button size="small" onClick={() => chooseBulkTarget?.('subject', { subjectId: subject.id })}>
-              Add quizzes
+            <Button size="small" onClick={() => onNewTopic(subject.id)}>
+              New topic
             </Button>
             <AdminParentActions
               entity="Subject"
@@ -122,6 +140,39 @@ export function AdminNavigatorPanel({
           </Stack>
         )}
         {subject && (
+          <Autocomplete
+            inputValue={topicQuery ?? (topic ? `${topic.name} · ${topic.id}` : '')}
+            onInputChange={(_, value, reason) => {
+              if (reason === 'input') setTopicQuery(value);
+            }}
+            options={topics}
+            value={topic}
+            getOptionLabel={(item) => `${item.name} · ${item.id}`}
+            isOptionEqualToValue={(a, b) => a.id === b.id}
+            onChange={(_, value) => {
+              changeTopic(value?.id ?? '');
+              setTopicQuery(undefined);
+              setQuizQuery(undefined);
+            }}
+            renderInput={(params) => <TextField {...params} label="Topic" size="small" />}
+          />
+        )}
+        {subject && topic && (
+          <Stack direction="row" spacing={1} alignItems="center">
+            <Button
+              size="small"
+              onClick={() => chooseBulkTarget?.('topic', { subjectId: subject.id, topicId: topic.id })}
+            >
+              Add quizzes
+            </Button>
+            <AdminParentActions
+              entity="Topic"
+              onEdit={() => loadEntity({ kind: 'topic', id: topic.id, parentId: subject.id }, topic)}
+              onDelete={() => onDelete?.({ kind: 'topic', id: topic.id, parentId: subject.id }, topic.name)}
+            />
+          </Stack>
+        )}
+        {topic && (
           <Autocomplete
             inputValue={quizQuery ?? (quiz ? `${quiz.name} · ${quiz.id}` : '')}
             onInputChange={(_, value, reason) => {
@@ -143,18 +194,18 @@ export function AdminNavigatorPanel({
             <Button size="small" onClick={() => onManageSubjects()}>Add subject</Button>
           </Stack>
         )}
-        {quiz && (
+        {subject && topic && quiz && (
           <Stack direction="row" spacing={1}>
             <Button
               size="small"
-              onClick={() => chooseBulkTarget?.('quiz', { subjectId: subject!.id, quizId: quiz.id })}
+              onClick={() => chooseBulkTarget?.('quiz', { subjectId: subject.id, topicId: topic.id, quizId: quiz.id })}
             >
               Add questions
             </Button>
             <AdminParentActions
               entity="Quiz"
-              onEdit={() => loadEntity({ kind: 'quiz', id: quiz.id, parentId: subject!.id }, quiz)}
-              onDelete={() => onDelete?.({ kind: 'quiz', id: quiz.id, parentId: subject!.id }, quiz.name)}
+              onEdit={() => loadEntity({ kind: 'quiz', id: quiz.id, parentId: topic.id }, quiz)}
+              onDelete={() => onDelete?.({ kind: 'quiz', id: quiz.id, parentId: topic.id }, quiz.name)}
             />
           </Stack>
         )}
@@ -183,7 +234,7 @@ export function AdminNavigatorPanel({
         )}
         <Box
           component="nav"
-          aria-label={quiz ? `Items in ${quiz.name}` : 'Quizzes in selected subject'}
+          aria-label={quiz ? `Items in ${quiz.name}` : 'Quizzes in selected topic'}
           sx={{ overflowY: 'auto', maxHeight: { xs: '40dvh', lg: '50vh' } }}
         >
           {quiz ? (
@@ -219,9 +270,13 @@ export function AdminNavigatorPanel({
                 </Stack>
               ))}
             </List>
-          ) : subject && !quizzes.length ? (
+          ) : subject && !topics.length ? (
             <Typography variant="body2" sx={{ p: 1 }}>
-              No quizzes in this subject.
+              No topics in this subject.
+            </Typography>
+          ) : topic && !quizzes.length ? (
+            <Typography variant="body2" sx={{ p: 1 }}>
+              No quizzes in this topic.
             </Typography>
           ) : null}
           {quiz && !results.matches.length && (

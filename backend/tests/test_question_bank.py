@@ -8,9 +8,10 @@ from meducation_api.repositories.question_bank import Bank
 @pytest.fixture
 def bank_data() -> dict:
     return {
-        "schemaVersion": 4,
+        "schemaVersion": 5,
         "subjects": [{"id": "s1", "name": "Subject", "accent": "#123456"}],
-        "quizzes": [{"id": "q1", "subjectId": "s1", "name": "Quiz"}],
+        "topics": [{"id": "t1", "subjectId": "s1", "name": "Topic"}],
+        "quizzes": [{"id": "q1", "topicId": "t1", "name": "Quiz"}],
         "questions": [
             {
                 "id": "i1",
@@ -34,7 +35,7 @@ def bank_input(bank_data):
 
 
 def test_bank_rejects_invalid_version_and_answer(bank_data: dict) -> None:
-    wrong_version = {**bank_data, "schemaVersion": 3}
+    wrong_version = {**bank_data, "schemaVersion": 4}
     with pytest.raises(ValueError, match="Unsupported question bank schema"):
         Bank.model_validate(wrong_version)
     wrong_answer = {**bank_data, "questions": [{**bank_data["questions"][0], "answer": "Z"}]}
@@ -57,6 +58,9 @@ def test_content_api_and_revision_conflicts(bank_input: dict) -> None:
         assert subjects.json()["subjects"][0]["quizCount"] == 1
         assert subjects.json()["subjects"][0]["quizIds"] == ["q1"]
         quizzes = client.get("/api/v1/subjects/s1/quizzes")
+        assert quizzes.json()["topics"] == [{"id": "t1", "subjectId": "s1", "name": "Topic"}]
+        assert quizzes.json()["quizzes"][0]["subjectId"] == "s1"
+        assert quizzes.json()["quizzes"][0]["topicId"] == "t1"
         assert quizzes.json()["quizzes"][0]["questionCount"] == 1
         assert quizzes.json()["quizzes"][0]["questionIds"] == ["i1"]
         questions = client.get(f"/api/v1/quizzes/q1/questions?revision={revision}")

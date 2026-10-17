@@ -10,7 +10,7 @@ const cards = [
   { id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' },
   { id: 'f2', deckId: 'd1', front: 'Second', back: 'Answer' },
 ];
-const deck: FlashcardDeckSummary = { id: 'd1', subjectId: 's1', name: 'Deck', cardCount: 2, cardIds: ['f1', 'f2'] };
+const deck: FlashcardDeckSummary = { id: 'd1', subjectId: 's1', topicId: 't1', name: 'Deck', cardCount: 2, cardIds: ['f1', 'f2'] };
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: Error) => void;

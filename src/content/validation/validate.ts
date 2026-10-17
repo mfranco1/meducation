@@ -1,5 +1,5 @@
-import type { Question, Quiz, Subject } from '../../domain/types';
-import type { StoredFlashcardBank, StoredQuestionBank } from '../schema/schema';
+import type { Question, Subject } from '../../domain/types';
+import type { StoredFlashcardBank, StoredQuestionBank, StoredQuiz, StoredTopic } from '../schema/schema';
 
 export interface ValidationIssue {
   level: 'error' | 'warning';
@@ -10,14 +10,16 @@ export interface ValidationIssue {
 const metadataKeys = new Set(['topic', 'subtopic', 'system', 'difficulty', 'questionType', 'tags']);
 const rationaleMetaKeys = new Set(['sources', 'answerReviewNote', 'provenance', 'reviewedAt', 'reviewNote']);
 const subjectKeys = new Set(['id', 'name', 'accent']);
-const quizKeys = new Set(['id', 'subjectId', 'name']);
+const topicKeys = new Set(['id', 'subjectId', 'name']);
+const quizKeys = new Set(['id', 'topicId', 'name']);
 const questionKeys = new Set(['id', 'quizId', 'stem', 'choices', 'answer', 'verifiedAnswer', 'answerNote', 'rationale', 'rationaleMeta', 'choiceExplanations', 'pearls', 'metadata']);
 const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
-export function validateQuestionBank(subjects: Subject[], quizzes: Quiz[], questions: Question[]): ValidationIssue[] {
+export function validateQuestionBank(subjects: Subject[], topics: StoredTopic[], quizzes: StoredQuiz[], questions: Question[]): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const subjectIds = new Set<string>();
-  const quizById = new Map<string, Quiz>();
+  const topicIds = new Set<string>();
+  const quizById = new Map<string, StoredQuiz>();
   const seenQuestionIds = new Set<string>();
   const closedQuizIds = new Set<string>();
   let currentQuizId: string | undefined;
@@ -29,12 +31,20 @@ export function validateQuestionBank(subjects: Subject[], quizzes: Quiz[], quest
     else subjectIds.add(subject.id);
   });
 
+  topics.forEach(topic => {
+    if (!topic.name.trim()) issues.push({ level: 'error', message: `Topic ${topic.id} has an empty name` });
+    if (!topic.id) issues.push({ level: 'error', message: 'Missing topic ID' });
+    else if (topicIds.has(topic.id)) issues.push({ level: 'error', message: `Duplicate topic ID: ${topic.id}` });
+    else topicIds.add(topic.id);
+    if (!subjectIds.has(topic.subjectId)) issues.push({ level: 'error', message: `Topic ${topic.id} has an invalid subject reference` });
+  });
+
   quizzes.forEach(quiz => {
     if (!quiz.name.trim()) issues.push({ level: 'error', message: `Quiz ${quiz.id} has an empty name` });
     if (!quiz.id) issues.push({ level: 'error', message: 'Missing quiz ID' });
     else if (quizById.has(quiz.id)) issues.push({ level: 'error', message: `Duplicate quiz ID: ${quiz.id}` });
     else quizById.set(quiz.id, quiz);
-    if (!subjectIds.has(quiz.subjectId)) issues.push({ level: 'error', message: `Quiz ${quiz.id} has an invalid subject reference` });
+    if (!topicIds.has(quiz.topicId)) issues.push({ level: 'error', message: `Quiz ${quiz.id} has an invalid topic reference` });
   });
 
   questions.forEach(question => {
@@ -71,11 +81,15 @@ export function validateQuestionBank(subjects: Subject[], quizzes: Quiz[], quest
 
 export function validateStoredQuestionBank(bank: StoredQuestionBank): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
-  if (bank.schemaVersion !== 4) issues.push({ level: 'error', message: `Unsupported question bank schema version: ${bank.schemaVersion}` });
-  if (Object.keys(bank).some(key => !['schemaVersion', 'subjects', 'quizzes', 'questions'].includes(key))) issues.push({ level: 'error', message: 'Bank stores an unknown field' });
+  if (bank.schemaVersion !== 5) issues.push({ level: 'error', message: `Unsupported question bank schema version: ${bank.schemaVersion}` });
+  if (Object.keys(bank).some(key => !['schemaVersion', 'subjects', 'topics', 'quizzes', 'questions'].includes(key))) issues.push({ level: 'error', message: 'Bank stores an unknown field' });
   bank.subjects.forEach(subject => {
     if ('description' in subject) issues.push({ level: 'error', message: `Subject ${subject.id} stores a redundant description` });
     if (Object.keys(subject).some(key => !subjectKeys.has(key) && key !== 'description')) issues.push({ level: 'error', message: `Subject ${subject.id} stores an unknown field` });
+  });
+  bank.topics.forEach(topic => {
+    if (Object.keys(topic).some(key => !topicKeys.has(key))) issues.push({ level: 'error', message: `Topic ${topic.id} stores an unknown field` });
+    if (!/^t[1-9]\d*$/.test(topic.id)) issues.push({ level: 'error', message: `Topic ${topic.id} does not use a compact ID` });
   });
   bank.quizzes.forEach(quiz => {
     if ('questionCount' in quiz) issues.push({ level: 'error', message: `Quiz ${quiz.id} stores a derived question count` });
@@ -122,22 +136,22 @@ export function validateStoredQuestionBank(bank: StoredQuestionBank): Validation
   return issues;
 }
 
-export function validateStoredFlashcardBank(bank: StoredFlashcardBank, subjects: Subject[]): ValidationIssue[] {
+export function validateStoredFlashcardBank(bank: StoredFlashcardBank, topics: readonly StoredTopic[]): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
   const issue = (message: string, id?: string) => issues.push({ level: 'error', message, ...(id ? { questionId: id } : {}) });
   const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
   if (!object(bank)) return [{ level: 'error', message: 'Flashcard bank must be an object' }];
-  if (bank.schemaVersion !== 2) issue(`Unsupported flashcard bank schema version: ${bank.schemaVersion}`);
+  if (bank.schemaVersion !== 3) issue(`Unsupported flashcard bank schema version: ${bank.schemaVersion}`);
   if (Object.keys(bank).some(key => !['schemaVersion', 'decks', 'cards'].includes(key))) issue('Flashcard bank stores an unknown field');
   if (!Array.isArray(bank.decks) || !Array.isArray(bank.cards)) {
     issue('Flashcard bank must contain deck and card arrays');
     return issues;
   }
 
-  const subjectIds = new Set(subjects.map(subject => subject.id));
+  const topicIds = new Set(topics.map(topic => topic.id));
   const deckIds = new Set<string>();
   const cardIds = new Set<string>();
-  const deckKeys = new Set(['id', 'subjectId', 'name', 'description']);
+  const deckKeys = new Set(['id', 'topicId', 'name', 'description']);
   const cardKeys = new Set(['id', 'deckId', 'front', 'back', 'sources', 'reviewNote']);
   const decksById = new Map<string, StoredFlashcardBank['decks'][number]>();
 
@@ -148,7 +162,7 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, subjects:
     if (typeof deck.id !== 'string' || !deck.id || deckIds.has(deck.id)) { issue('Missing or duplicate deck ID', deck.id); return; }
     deckIds.add(deck.id);
     decksById.set(deck.id, deck);
-    if (typeof deck.subjectId !== 'string' || !subjectIds.has(deck.subjectId)) issue('Deck references an unknown subject', deck.id);
+    if (typeof deck.topicId !== 'string' || !topicIds.has(deck.topicId)) issue('Deck references an unknown topic', deck.id);
     if (typeof deck.name !== 'string' || !deck.name.trim()) issue('Deck name must not be empty', deck.id);
     if (deck.description !== undefined && typeof deck.description !== 'string') issue('Invalid deck description', deck.id);
   });
@@ -166,11 +180,4 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, subjects:
     if (card.reviewNote !== undefined && typeof card.reviewNote !== 'string') issue('Invalid card review note', card.id);
   });
   return issues;
-}
-
-export function validateFlashcardSubjectReferences(bank: StoredFlashcardBank, subjects: Subject[]): ValidationIssue[] {
-  const subjectIds = new Set(subjects.map(subject => subject.id));
-  return bank.decks
-    .filter(deck => !subjectIds.has(deck.subjectId))
-    .map(deck => ({ level: 'error' as const, message: `Deck ${deck.id} references an unknown subject ${deck.subjectId}.` }));
 }

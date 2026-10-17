@@ -23,9 +23,15 @@ class Subject(StoredModel):
     accent: str
 
 
-class Quiz(StoredModel):
+class Topic(StoredModel):
     id: str
     subjectId: str
+    name: str
+
+
+class Quiz(StoredModel):
+    id: str
+    topicId: str
     name: str
 
 
@@ -69,30 +75,39 @@ class Question(StoredModel):
 class Bank(StoredModel):
     schemaVersion: int = Field(strict=True)
     subjects: list[Subject]
+    topics: list[Topic]
     quizzes: list[Quiz]
     questions: list[Question]
 
     @model_validator(mode="after")
     def validate_relationships(self) -> Bank:
-        if self.schemaVersion != 4:
+        if self.schemaVersion != 5:
             raise ValueError(f"Unsupported question bank schema version: {self.schemaVersion}")
         self._unique_ids("subject", [item.id for item in self.subjects])
+        self._unique_ids("topic", [item.id for item in self.topics])
         self._unique_ids("quiz", [item.id for item in self.quizzes])
         self._unique_ids("question", [item.id for item in self.questions])
         if any(re.fullmatch(r"s[1-9]\d*", item.id) is None for item in self.subjects):
             raise ValueError("Subject IDs must use the compact s-number format.")
+        if any(re.fullmatch(r"t[1-9]\d*", item.id) is None for item in self.topics):
+            raise ValueError("Topic IDs must use the compact t-number format.")
         if any(re.fullmatch(r"q[1-9]\d*", item.id) is None for item in self.quizzes):
             raise ValueError("Quiz IDs must use the compact q-number format.")
         if any(re.fullmatch(r"i[1-9]\d*", item.id) is None for item in self.questions):
             raise ValueError("Question IDs must use the compact i-number format.")
         if any(not item.name.strip() for item in self.subjects):
             raise ValueError("Subject names must not be empty.")
+        if any(not item.name.strip() for item in self.topics):
+            raise ValueError("Topic names must not be empty.")
         if any(not item.name.strip() for item in self.quizzes):
             raise ValueError("Quiz names must not be empty.")
         subject_ids = {item.id for item in self.subjects}
+        topic_ids = {item.id for item in self.topics}
         quiz_ids = {item.id for item in self.quizzes}
-        if any(item.subjectId not in subject_ids for item in self.quizzes):
-            raise ValueError("A quiz references an unknown subject.")
+        if any(item.subjectId not in subject_ids for item in self.topics):
+            raise ValueError("A topic references an unknown subject.")
+        if any(item.topicId not in topic_ids for item in self.quizzes):
+            raise ValueError("A quiz references an unknown topic.")
         if any(item.quizId not in quiz_ids for item in self.questions):
             raise ValueError("A question references an unknown quiz.")
         question_counts = {quiz_id: 0 for quiz_id in quiz_ids}
@@ -162,6 +177,10 @@ class QuestionBankRepository(Protocol):
 
     def has_subject(self, subject_id: str) -> bool: ...
 
+    def list_topics(self, subject_id: str) -> list[Topic]: ...
+
+    def topic_subject(self, topic_id: str) -> str: ...
+
     def subject_quiz_summary(self, subject_id: str) -> tuple[int, list[str]]: ...
 
     def list_quizzes(self, subject_id: str) -> list[tuple[Quiz, int]]: ...
@@ -175,7 +194,7 @@ class QuestionBankRepository(Protocol):
 
 class FlashcardDeck(StoredModel):
     id: str
-    subjectId: str
+    topicId: str
     name: str
     description: str | None = None
 
@@ -196,7 +215,7 @@ class FlashcardBank(StoredModel):
 
     @model_validator(mode="after")
     def validate_relationships(self) -> FlashcardBank:
-        if self.schemaVersion != 2:
+        if self.schemaVersion != 3:
             raise ValueError(f"Unsupported flashcard bank schema version: {self.schemaVersion}")
         Bank._unique_ids("deck", [item.id for item in self.decks])
         Bank._unique_ids("flashcard", [item.id for item in self.cards])
@@ -224,6 +243,10 @@ class FlashcardCatalogRepository(Protocol):
     def revision(self) -> str: ...
 
     def has_subject(self, subject_id: str) -> bool: ...
+
+    def list_topics(self, subject_id: str) -> list[Topic]: ...
+
+    def topic_subject(self, topic_id: str) -> str: ...
 
     def list_subjects(self) -> list[FlashcardSubjectSummary]: ...
 

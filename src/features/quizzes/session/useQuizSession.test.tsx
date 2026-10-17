@@ -6,7 +6,7 @@ import type { Attempt, AttemptRepository, Question, Quiz, QuizRepository } from 
 import { useQuizSession } from './useQuizSession';
 
 const subject = { id: 'subject', name: 'Subject', accent: '#123456' };
-const quiz: Quiz = { id: 'quiz', subjectId: subject.id, name: 'Quiz', questionCount: 2 };
+const quiz: Quiz = { id: 'quiz', subjectId: subject.id, topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
   { id: 'q1', quizId: quiz.id, stem: 'One', choices: [{ id: 'A', text: 'A' }], verifiedAnswer: 'A', rationale: '', metadata: {} },
   { id: 'q2', quizId: quiz.id, stem: 'Two', choices: [{ id: 'A', text: 'A' }], verifiedAnswer: 'A', rationale: '', metadata: {} },

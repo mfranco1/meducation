@@ -26,14 +26,17 @@ function mount(blocked = false) {
 }
 const requests = (store: ReturnType<typeof mount>['store']) =>
   store.fetcher.mock.calls.map(([url, init]) => `${init?.method ?? 'GET'} ${String(url).replace('/api/admin', '')}`);
-async function chooseSubject() {
+async function chooseTopic() {
   fireEvent.click(screen.getAllByTitle('Open')[0]);
   fireEvent.click(screen.getByRole('option', { name: 'Subject One' }));
+  await screen.findByRole('combobox', { name: 'Topic' });
+  fireEvent.click(screen.getAllByTitle('Open')[1]);
+  fireEvent.click(screen.getByRole('option', { name: 'Topic 1' }));
   await screen.findByRole('combobox', { name: 'Deck' });
 }
 async function chooseDeck() {
-  await chooseSubject();
-  fireEvent.click(screen.getAllByTitle('Open')[1]);
+  await chooseTopic();
+  fireEvent.click(screen.getAllByTitle('Open')[2]);
   fireEvent.click(screen.getByRole('option', { name: 'Cranial nerves · 2 cards' }));
   await screen.findByRole('button', { name: /^1\. CN/ });
 }
@@ -56,14 +59,14 @@ const openBulk = (button: string) => {
 describe('flashcard editor over the record API', () => {
   it('creates a deck with one POST, adopts the server ID and shows it in the deck list', async () => {
     const { store } = mount();
-    await chooseSubject();
+    await chooseTopic();
     action('New deck');
     expect(screen.getByRole('textbox', { name: 'ID' })).toHaveValue('');
     fireEvent.change(screen.getByRole('textbox', { name: 'Name' }), { target: { value: 'New saved deck' } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(screen.getByRole('textbox', { name: 'ID' })).toHaveValue('d-new91'));
     expect(requests(store)).toEqual(['POST /draft/decks', 'GET /draft']);
-    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ parentId: 's1', fields: { name: 'New saved deck' } });
+    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ parentId: 't1', fields: { name: 'New saved deck' } });
     expect(screen.getByRole('combobox', { name: 'Deck' })).toHaveValue('New saved deck · 0 cards');
     expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
   });
@@ -126,7 +129,7 @@ describe('flashcard editor over the record API', () => {
 
   it('adds nested decks and cards in bulk: one create per deck and one bulk request per populated deck', async () => {
     const { store } = mount();
-    await chooseSubject();
+    await chooseTopic();
     const dialog = openBulk('Add decks');
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'JSON' }), {
       target: {
@@ -152,7 +155,7 @@ describe('flashcard editor over the record API', () => {
 
   it('does not send an invalid batch and keeps the batch JSON when the server stops part-way', async () => {
     const { store } = mount();
-    await chooseSubject();
+    await chooseTopic();
     const dialog = openBulk('Add decks');
     const json = within(dialog).getByRole('textbox', { name: 'JSON' });
     fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Invalid', cards: [{ front: 'Front' }] }] }) } });

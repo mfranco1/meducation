@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../../content/schema/schema';
+import type { RecordKind } from '../core/recordDraft';
 interface DeletionTarget {
-  kind: 'subject' | 'quiz' | 'question' | 'deck' | 'card';
+  kind: RecordKind;
   id?: string;
   parentId?: string;
 }
@@ -12,20 +13,23 @@ export function deletionReview(bank: StoredQuestionBank, flashcards: StoredFlash
   const selected = new Set(ids ?? (target.id ? [target.id] : []));
   const subjects = target.kind === 'subject' ? bank.subjects.filter(row => selected.has(row.id)) : [];
   const subjectIds = new Set(subjects.map(row => row.id));
-  const quizzes = bank.quizzes.filter(row => target.kind === 'quiz' ? selected.has(row.id) : subjectIds.has(row.subjectId));
+  const topics = bank.topics.filter(row => target.kind === 'topic' ? selected.has(row.id) : subjectIds.has(row.subjectId));
+  const topicIds = new Set(topics.map(row => row.id));
+  const quizzes = bank.quizzes.filter(row => target.kind === 'quiz' ? selected.has(row.id) : topicIds.has(row.topicId));
   const quizIds = new Set(quizzes.map(row => row.id));
   const questions = bank.questions.filter(row => target.kind === 'question' ? selected.has(row.id) : quizIds.has(row.quizId));
-  const decks = flashcards.decks.filter(row => target.kind === 'deck' ? selected.has(row.id) : subjectIds.has(row.subjectId));
+  const decks = flashcards.decks.filter(row => target.kind === 'deck' ? selected.has(row.id) : topicIds.has(row.topicId));
   const deckIds = new Set(decks.map(row => row.id));
   const cards = flashcards.cards.filter(row => target.kind === 'card' ? selected.has(row.id) : deckIds.has(row.deckId));
   const records = [
     ...subjects.map(row => `Subject · ${row.name} · ${row.id}`),
+    ...topics.map(row => `Topic · ${row.name} · ${row.id}`),
     ...quizzes.map(row => `Quiz · ${row.name} · ${row.id}`),
     ...questions.map(row => `Item · ${row.id}`),
     ...decks.map(row => `Deck · ${row.name} · ${row.id}`),
     ...cards.map(row => `Card · ${row.id}`),
   ];
-  return { records, summary: `${subjects.length} subjects · ${quizzes.length} quizzes · ${questions.length} items · ${decks.length} decks · ${cards.length} cards` };
+  return { records, summary: `${subjects.length} subjects · ${topics.length} topics · ${quizzes.length} quizzes · ${questions.length} items · ${decks.length} decks · ${cards.length} cards` };
 }
 
 export interface DeleteRequest {

@@ -3,11 +3,15 @@
     { "id": "s1", "name": "Subject One", "accent": "#123456" },
     { "id": "s2", "name": "Subject Two", "accent": "#654321" }
   ],
+  "topics": [
+    { "id": "t1", "subjectId": "s1", "name": "Topic One" },
+    { "id": "t2", "subjectId": "s2", "name": "Topic Two" }
+  ],
   "bank": {
-    "schemaVersion": 2,
+    "schemaVersion": 3,
     "decks": [
-      { "id": "d-cranial", "subjectId": "s1", "name": "Cranial nerves" },
-      { "id": "d-empty", "subjectId": "s1", "name": "No cards yet" }
+      { "id": "d-cranial", "topicId": "t1", "name": "Cranial nerves" },
+      { "id": "d-empty", "topicId": "t1", "name": "No cards yet" }
     ],
     "cards": [
       {

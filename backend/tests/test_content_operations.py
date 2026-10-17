@@ -13,7 +13,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def pair():
     q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    f = {"schemaVersion": 2, "decks": [], "cards": []}
+    f = {"schemaVersion": 3, "decks": [], "cards": []}
     return q, f
 
 
@@ -39,12 +39,12 @@ def test_bad_pairs_fail_before_sql_without_exposing_content(mutate):
     elif mutate == "nonfinite":
         q["schemaVersion"] = float("nan")
     elif mutate == "missing-subject":
-        f["decks"] = [{"id": "d1", "subjectId": "s99", "name": "Unknown"}]
+        f["decks"] = [{"id": "d1", "topicId": "t99", "name": "Unknown"}]
     elif mutate == "unknown-field":
         q["questions"][0]["legacyHint"] = "invalid"
     text = json.dumps(q, ensure_ascii=False)
     if mutate == "duplicate":
-        text = text.replace('"schemaVersion": 4', '"schemaVersion": 4, "schemaVersion": 4', 1)
+        text = text.replace('"schemaVersion": 5', '"schemaVersion": 5, "schemaVersion": 5', 1)
     with pytest.raises(ContentDatabaseError) as error:
         paired_artifacts(text, json.dumps(f))
     assert "Private fixture text" not in str(error.value)

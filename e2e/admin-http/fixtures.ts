@@ -48,21 +48,20 @@ export async function adminApi(page: Page, method: 'POST' | 'PUT' | 'DELETE', pa
 export const quizEditor = (page: Page) => page.getByRole('region', { name: 'Quiz editor' });
 export const flashcardEditor = (page: Page) => page.getByRole('region', { name: 'Flashcard editor' });
 
+async function pickFirst(page: Page, scope: Page | ReturnType<Page['getByRole']>, name: string) {
+  await scope.getByRole('combobox', { name, exact: true }).click();
+  await page.getByRole('listbox').getByRole('option').first().click();
+}
 export async function selectQuiz(page: Page) {
   const nav = page.getByRole('region', { name: 'Quiz navigator' });
-  await nav.getByRole('combobox', { name: 'Subject', exact: true }).fill('Anatomía');
-  await page.getByRole('option', { name: 'Anatomía · s1', exact: true }).click();
-  await nav.getByRole('combobox', { name: 'Quiz', exact: true }).click();
-  await page.getByRole('listbox').getByRole('option').first().click();
+  for (const name of ['Subject', 'Topic', 'Quiz']) await pickFirst(page, nav, name);
   return nav;
 }
 export async function selectFlashcards(page: Page) {
   await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Subject', exact: true }).fill('Anatomía');
-  await page.getByRole('option', { name: 'Anatomía', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Deck', exact: true }).click();
-  await page.getByRole('listbox').getByRole('option').first().click();
-  return page.getByRole('region', { name: 'Flashcard navigator' });
+  const nav = page.getByRole('region', { name: 'Flashcard navigator' });
+  for (const name of ['Subject', 'Topic', 'Deck']) await pickFirst(page, nav, name);
+  return nav;
 }
 /** Opens the first question of the seeded quiz and returns its JSON text box. */
 export async function openQuestion(page: Page) {

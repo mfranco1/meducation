@@ -6,9 +6,15 @@ export interface StoredSubject {
   accent: string;
 }
 
-export interface StoredQuiz {
+export interface StoredTopic {
   id: string;
   subjectId: string;
+  name: string;
+}
+
+export interface StoredQuiz {
+  id: string;
+  topicId: string;
   name: string;
 }
 
@@ -28,15 +34,16 @@ export interface StoredQuestion {
 }
 
 export interface StoredQuestionBank {
-  schemaVersion: 4;
+  schemaVersion: 5;
   subjects: StoredSubject[];
+  topics: StoredTopic[];
   quizzes: StoredQuiz[];
   questions: StoredQuestion[];
 }
 
 export interface StoredFlashcardDeck {
   id: string;
-  subjectId: string;
+  topicId: string;
   name: string;
   description?: string;
 }
@@ -44,7 +51,7 @@ export interface StoredFlashcardDeck {
 export type StoredFlashcard = FlashcardCard;
 
 export interface StoredFlashcardBank {
-  schemaVersion: 2;
+  schemaVersion: 3;
   decks: StoredFlashcardDeck[];
   cards: StoredFlashcard[];
 }

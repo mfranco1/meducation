@@ -12,7 +12,7 @@ import {
   test,
 } from './fixtures';
 
-test('adds a subject, quiz and questions in bulk, then decks and cards; deletes the subject with its cascade and reverts it', async ({
+test('adds a topic, quiz and questions in bulk, then decks and cards; deletes the topic with its cascade and reverts it', async ({
   page,
 }) => {
   await login(page);
@@ -21,10 +21,10 @@ test('adds a subject, quiz and questions in bulk, then decks and cards; deletes 
   await nav.getByRole('button', { name: 'Add quizzes', exact: true }).click();
   const editor = quizEditor(page).getByRole('textbox', { name: 'JSON', exact: true });
   await page.getByLabel('Destination', { exact: true }).click();
-  await page.getByRole('option', { name: 'Create a subject and quizzes' }).click();
+  await page.getByRole('option', { name: 'Create a topic and quizzes' }).click();
   await editor.fill(
     JSON.stringify({
-      subject: { name: 'HTTP grouped subject' },
+      topic: { name: 'HTTP grouped topic' },
       quizzes: [
         {
           name: 'HTTP grouped quiz',
@@ -47,10 +47,11 @@ test('adds a subject, quiz and questions in bulk, then decks and cards; deletes 
     .poll(async () => (await draft(page)).questions.some((row) => row.stem === 'Grouped second stem'))
     .toBe(true);
   const saved = await draft(page);
-  const subject = saved.subjects.find((row) => row.name === 'HTTP grouped subject')!;
+  const topic = saved.topics.find((row) => row.name === 'HTTP grouped topic')!;
   const quiz = saved.quizzes.find((row) => row.name === 'HTTP grouped quiz')!;
   const items = saved.questions.filter((row) => row.quizId === quiz.id);
-  expect(quiz.subjectId).toBe(subject.id);
+  expect(quiz.topicId).toBe(topic.id);
+  expect(topic.subjectId).toBe(original.subjects[0].id);
   expect(items.map((row) => row.stem)).toEqual(['Grouped source stem', 'Grouped second stem']);
   expect(items[0]).toMatchObject({ answer: 'A', verifiedAnswer: 'B' });
   expect(items[0].choices).toEqual([
@@ -58,15 +59,15 @@ test('adds a subject, quiz and questions in bulk, then decks and cards; deletes 
     { id: 'B', text: 'Beta' },
   ]);
   // IDs are the server's: they continue the existing numbering.
-  expect(subject.id).not.toBe('s1');
+  expect(topic.id).not.toBe('t1');
   expect(saved.changed).toBe(true);
   await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
-  await page.getByRole('combobox', { name: 'Subject', exact: true }).click();
-  await page.getByRole('listbox').getByRole('option', { name: 'HTTP grouped subject', exact: true }).click();
-  await page
-    .getByRole('region', { name: 'Flashcard navigator' })
-    .getByRole('button', { name: 'Add decks', exact: true })
-    .click();
+  const flashNav = page.getByRole('region', { name: 'Flashcard navigator' });
+  await flashNav.getByRole('combobox', { name: 'Subject', exact: true }).click();
+  await page.getByRole('listbox').getByRole('option').first().click();
+  await flashNav.getByRole('combobox', { name: 'Topic', exact: true }).click();
+  await page.getByRole('listbox').getByRole('option', { name: 'HTTP grouped topic', exact: true }).click();
+  await flashNav.getByRole('button', { name: 'Add decks', exact: true }).click();
   const add = page.getByRole('dialog', { name: 'Add Decks' });
   await add.getByRole('textbox', { name: 'JSON' }).fill(
     JSON.stringify({
@@ -83,26 +84,26 @@ test('adds a subject, quiz and questions in bulk, then decks and cards; deletes 
   const paired = await draft(page);
   const deck = paired.decks.find((row) => row.name === 'Bulk deck')!;
   const card = paired.cards.find((row) => row.front === 'Exact grouped front $x^2$')!;
-  expect(deck.subjectId).toBe(subject.id);
+  expect(deck.topicId).toBe(topic.id);
   expect(card).toMatchObject({ deckId: deck.id, back: 'Exact grouped back\n', reviewNote: 'Static review' });
-  // Cancel keeps everything; confirming deletes the subject with its quizzes, items, decks and cards.
+  // Cancel keeps everything; confirming deletes the topic with its quizzes, items, decks and cards.
   await page.getByRole('tab', { name: 'Quizzes', exact: true }).click();
-  await nav.getByRole('combobox', { name: 'Subject', exact: true }).click();
+  await nav.getByRole('combobox', { name: 'Topic', exact: true }).click();
   await page
     .getByRole('listbox')
-    .getByRole('option', { name: /HTTP grouped subject/ })
+    .getByRole('option', { name: /HTTP grouped topic/ })
     .click();
-  await nav.getByRole('button', { name: 'Subject actions', exact: true }).click();
-  await page.getByRole('menuitem', { name: 'Delete subject…', exact: true }).click();
-  const review = page.getByRole('dialog', { name: 'Delete subject?' });
-  await expect(review).toContainText('1 subjects · 1 quizzes · 2 items · 1 decks · 1 cards');
+  await nav.getByRole('button', { name: 'Topic actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete topic…', exact: true }).click();
+  const review = page.getByRole('dialog', { name: 'Delete topic?' });
+  await expect(review).toContainText('1 topics · 1 quizzes · 2 items · 1 decks · 1 cards');
   await expect(review.getByRole('button', { name: 'Cancel', exact: true })).toBeFocused();
   await review.getByRole('button', { name: 'Cancel', exact: true }).click();
   expect((await draft(page)).latestChangeId).toBe(paired.latestChangeId);
-  await nav.getByRole('button', { name: 'Subject actions', exact: true }).click();
-  await page.getByRole('menuitem', { name: 'Delete subject…', exact: true }).click();
-  await review.getByRole('button', { name: 'Delete subject', exact: true }).click();
-  await expect.poll(async () => (await draft(page)).subjects.some((row) => row.id === subject.id)).toBe(false);
+  await nav.getByRole('button', { name: 'Topic actions', exact: true }).click();
+  await page.getByRole('menuitem', { name: 'Delete topic…', exact: true }).click();
+  await review.getByRole('button', { name: 'Delete topic', exact: true }).click();
+  await expect.poll(async () => (await draft(page)).topics.some((row) => row.id === topic.id)).toBe(false);
   const deleted = await draft(page);
   for (const [rows, id] of [
     [deleted.quizzes, quiz.id],
@@ -111,11 +112,11 @@ test('adds a subject, quiz and questions in bulk, then decks and cards; deletes 
   ] as const)
     expect((rows as { id: string }[]).some((row) => row.id === id)).toBe(false);
   expect(deleted.questions.some((row) => row.quizId === quiz.id)).toBe(false);
-  // Revert is per record: the subject comes back; its deleted children are separate changes.
+  // Revert is per record: the topic comes back; its deleted children are separate changes.
   await revertLatest(page);
   const restored = await draft(page);
-  expect(restored.subjects.find((row) => row.id === subject.id)).toMatchObject({ name: 'HTTP grouped subject' });
-  expect(restored.subjects.map((row) => row.id)).toEqual([...original.subjects.map((row) => row.id), subject.id]);
+  expect(restored.topics.find((row) => row.id === topic.id)).toMatchObject({ name: 'HTTP grouped topic' });
+  expect(restored.topics.map((row) => row.id)).toEqual([...original.topics.map((row) => row.id), topic.id]);
 });
 
 test('selected question deletion can be canceled, deletes only the selection, and one revert restores a question', async ({

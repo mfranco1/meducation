@@ -9,7 +9,7 @@ describe('shared flashcard authoring validation', () => {
     bank.cards[0].front = '<img src="javascript:alert(1)" alt="Unsafe">';
     bank.cards[0].back = '$\\unknowncommand$';
     bank.cards[0].sources = '![Not allowed](/image.png)';
-    const errors = validateFlashcardBank(bank, fixture.subjects).filter((issue) => issue.level === 'error');
+    const errors = validateFlashcardBank(bank, fixture.topics).filter((issue) => issue.level === 'error');
     expect(errors.map((issue) => issue.message)).toEqual(
       expect.arrayContaining([
         expect.stringContaining('unsupported image URL'),
@@ -19,17 +19,17 @@ describe('shared flashcard authoring validation', () => {
     );
   });
 
-  it('warns on duplicate deck names within a subject without confusing identity across subjects', () => {
+  it('warns on duplicate deck names within a topic without confusing identity across topics', () => {
     const bank = structuredClone(fixture.bank) as StoredFlashcardBank;
-    bank.decks.push({ id: 'd-dupe', subjectId: 's1', name: ' Cranial nerves ' });
-    bank.decks.push({ id: 'd-other', subjectId: 's2', name: 'Cranial nerves' });
-    const warnings = validateFlashcardBank(bank, fixture.subjects);
+    bank.decks.push({ id: 'd-dupe', topicId: 't1', name: ' Cranial nerves ' });
+    bank.decks.push({ id: 'd-other', topicId: 't2', name: 'Cranial nerves' });
+    const warnings = validateFlashcardBank(bank, fixture.topics);
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toMatchObject({ level: 'warning', message: expect.stringContaining('Duplicate sibling name') });
   });
 
   it('reports structural failures without trying to parse malformed card records', () => {
     const bank = { ...fixture.bank, cards: [null] } as unknown as StoredFlashcardBank;
-    expect(validateFlashcardBank(bank, fixture.subjects)[0].message).toBe('Card record must be an object');
+    expect(validateFlashcardBank(bank, fixture.topics)[0].message).toBe('Card record must be an object');
   });
 });

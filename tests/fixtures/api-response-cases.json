@@ -5,7 +5,8 @@
   },
   "quizzes": {
     "revision": "revision-1",
-    "quizzes": [{ "id": "q1", "subjectId": "s1", "name": "Quiz", "questionCount": 1, "questionIds": ["i1"] }]
+    "topics": [{ "id": "t1", "subjectId": "s1", "name": "Topic" }],
+    "quizzes": [{ "id": "q1", "topicId": "t1", "subjectId": "s1", "name": "Quiz", "questionCount": 1, "questionIds": ["i1"] }]
   },
   "questions": {
     "revision": "revision-1",

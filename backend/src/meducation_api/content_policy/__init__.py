@@ -24,6 +24,7 @@ _FORBIDDEN = {"__proto__", "prototype", "constructor"}
 _SCHEMA_KEYS = {
     "schemaVersion",
     "subjects",
+    "topics",
     "quizzes",
     "questions",
     "decks",
@@ -32,6 +33,7 @@ _SCHEMA_KEYS = {
     "name",
     "accent",
     "subjectId",
+    "topicId",
     "quizId",
     "deckId",
     "stem",

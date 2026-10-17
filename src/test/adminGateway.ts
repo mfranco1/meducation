@@ -4,22 +4,24 @@ import { DraftStore, type ApiKind, type DraftSnapshot } from '../admin/data/Draf
 import { PairedHttpClient } from '../admin/data/PairedHttpClient';
 
 type Row = Record<string, unknown> & { id: string; version: number };
-const KINDS: ApiKind[] = ['subjects', 'quizzes', 'questions', 'decks', 'cards'];
+const KINDS: ApiKind[] = ['subjects', 'topics', 'quizzes', 'questions', 'decks', 'cards'];
 const PARENT: Record<ApiKind, [string, ApiKind] | undefined> = {
   subjects: undefined,
-  quizzes: ['subjectId', 'subjects'],
+  topics: ['subjectId', 'subjects'],
+  quizzes: ['topicId', 'topics'],
   questions: ['quizId', 'quizzes'],
-  decks: ['subjectId', 'subjects'],
+  decks: ['topicId', 'topics'],
   cards: ['deckId', 'decks'],
 };
 const CHILDREN: Record<ApiKind, ApiKind[]> = {
-  subjects: ['quizzes', 'decks'],
+  subjects: ['topics'],
+  topics: ['quizzes', 'decks'],
   quizzes: ['questions'],
   questions: [],
   decks: ['cards'],
   cards: [],
 };
-const PREFIX: Record<ApiKind, string> = { subjects: 's', quizzes: 'q', questions: 'i', decks: 'd-new', cards: 'f-new' };
+const PREFIX: Record<ApiKind, string> = { subjects: 's', topics: 't', quizzes: 'q', questions: 'i', decks: 'd-new', cards: 'f-new' };
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
 const failure = (status: number, code: string, extra: Record<string, unknown> = {}) =>
@@ -27,7 +29,7 @@ const failure = (status: number, code: string, extra: Record<string, unknown> = 
 
 /**
  * A small in-memory fake of the record API behind a real `PairedHttpClient` and `DraftStore`:
- * sequential IDs (s91, q91, i91, d-new91, f-new91), per-record versions, optimistic concurrency, cascade
+ * sequential IDs (s91, t91, q91, i91, d-new91, f-new91), per-record versions, optimistic concurrency, cascade
  * deletes, a change log with revert, discard and publish. Content is not validated unless `rejectNext` is armed.
  */
 export function createAdminStore(quizzes: StoredQuestionBank, flashcards: StoredFlashcardBank) {

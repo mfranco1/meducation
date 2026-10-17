@@ -248,7 +248,7 @@ export function AdminRecordEditor({
                 helperText="Relationship · read-only in this form. Edit it in JSON to move the record."
               />
             ))}
-          {(kind === 'subject' || kind === 'quiz' || kind === 'deck') && input('name', 'Name')}
+          {(kind === 'subject' || kind === 'topic' || kind === 'quiz' || kind === 'deck') && input('name', 'Name')}
           {kind === 'subject' && input('accent', 'Accent')}
           {kind === 'deck' && optional('description', 'Description')}
           {kind === 'card' && (

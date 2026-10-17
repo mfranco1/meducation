@@ -1,7 +1,7 @@
 {
   "base": {
     "quizzes": {
-      "schemaVersion": 4,
+      "schemaVersion": 5,
       "subjects": [
         {
           "id": "s1",
@@ -9,10 +9,17 @@
           "accent": "#123456"
         }
       ],
+      "topics": [
+        {
+          "id": "t1",
+          "subjectId": "s1",
+          "name": "Topic"
+        }
+      ],
       "quizzes": [
         {
           "id": "q1",
-          "subjectId": "s1",
+          "topicId": "t1",
           "name": "Café Quiz"
         }
       ],
@@ -38,11 +45,11 @@
       ]
     },
     "flashcards": {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "decks": [
         {
           "id": "d1",
-          "subjectId": "s1",
+          "topicId": "t1",
           "name": "Deck"
         }
       ],
@@ -501,7 +508,7 @@
       ]
     },
     {
-      "id": "unknown_subject",
+      "id": "unknown_topic",
       "valid": false,
       "changes": [
         {
@@ -509,9 +516,9 @@
             "flashcards",
             "decks",
             0,
-            "subjectId"
+            "topicId"
           ],
-          "value": "s99"
+          "value": "t99"
         }
       ]
     },
@@ -536,6 +543,13 @@
           "path": [
             "quizzes",
             "subjects"
+          ],
+          "value": []
+        },
+        {
+          "path": [
+            "quizzes",
+            "topics"
           ],
           "value": []
         },
@@ -585,7 +599,7 @@
         {
           "path": [
             "quizzes",
-            "quizzes",
+            "topics",
             0,
             "subjectId"
           ],
@@ -593,12 +607,30 @@
         },
         {
           "path": [
+            "quizzes",
+            "topics",
+            0,
+            "id"
+          ],
+          "value": "t2"
+        },
+        {
+          "path": [
+            "quizzes",
+            "quizzes",
+            0,
+            "topicId"
+          ],
+          "value": "t2"
+        },
+        {
+          "path": [
             "flashcards",
             "decks",
             0,
-            "subjectId"
+            "topicId"
           ],
-          "value": "s2"
+          "value": "t2"
         }
       ]
     },

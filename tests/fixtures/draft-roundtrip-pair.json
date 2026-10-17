@@ -1,6 +1,6 @@
 {
   "quizzes": {
-    "schemaVersion": 4,
+    "schemaVersion": 5,
     "subjects": [
       {
         "id": "s3",
@@ -13,16 +13,28 @@
         "name": "Order differs"
       }
     ],
+    "topics": [
+      {
+        "id": "t3",
+        "subjectId": "s3",
+        "name": "Tema β"
+      },
+      {
+        "name": "Order differs",
+        "subjectId": "s12",
+        "id": "t12"
+      }
+    ],
     "quizzes": [
       {
         "id": "q7",
-        "subjectId": "s3",
+        "topicId": "t3",
         "name": "Nervios — 1"
       },
       {
         "name": "Second quiz",
         "id": "q8",
-        "subjectId": "s12"
+        "topicId": "t12"
       }
     ],
     "questions": [
@@ -121,23 +133,23 @@
     ]
   },
   "flashcards": {
-    "schemaVersion": 2,
+    "schemaVersion": 3,
     "decks": [
       {
         "id": "d-7c1f",
-        "subjectId": "s3",
+        "topicId": "t3",
         "name": "Deck ñ",
         "description": "Described"
       },
       {
         "id": "dlegacy-2",
-        "subjectId": "s12",
+        "topicId": "t12",
         "name": "Bare"
       },
       {
         "name": "Empty description",
         "id": "d-x",
-        "subjectId": "s3",
+        "topicId": "t3",
         "description": ""
       }
     ],

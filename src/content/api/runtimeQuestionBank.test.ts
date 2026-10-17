@@ -3,7 +3,8 @@ import { RuntimeQuestionBank, runtimeQuestionBank } from './runtimeQuestionBank'
 import { ContentLoadError, getJsonWithRetry, type JsonTransport } from './contentTransport';
 
 const subject = { id: 's1', name: 'Subject', accent: '#123456' };
-const quiz = { id: 'q1', subjectId: 's1', name: 'Quiz', questionCount: 1, questionIds: ['i1'] };
+const quiz = { id: 'q1', subjectId: 's1', topicId: 't1', name: 'Quiz', questionCount: 1, questionIds: ['i1'] };
+const topics = [{ id: 't1', subjectId: 's1', name: 'Topic' }];
 const question = {
   id: 'i1', quizId: 'q1', stem: 'Question', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }],
   answer: 'A', rationale: 'Reason', metadata: {},
@@ -16,7 +17,7 @@ describe('runtime question bank', () => {
   it('loads only subject summaries before a selected subject catalog', async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-0', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }) })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-0', quizzes: [quiz] }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-0', topics, quizzes: [quiz] }) });
     vi.stubGlobal('fetch', fetchMock);
 
     await runtimeQuestionBank.ensureSubjects();
@@ -36,7 +37,7 @@ describe('runtime question bank', () => {
     });
     vi.stubGlobal('fetch', fetchMock);
     runtimeQuestionBank.configureApi({ revision: 'rev-1', subjects: [subject] }, [
-      { revision: 'rev-1', quizzes: [quiz] },
+      { revision: 'rev-1', topics, quizzes: [quiz] },
     ]);
 
     expect(runtimeQuestionBank.listSubjects()).toEqual([subject]);
@@ -56,14 +57,14 @@ describe('runtime question bank', () => {
       json: async () => ({ revision: 'rev-2', questions: [question] }),
     }));
     runtimeQuestionBank.configureApi({ revision: 'rev-1', subjects: [subject] }, [
-      { revision: 'rev-1', quizzes: [quiz] },
+      { revision: 'rev-1', topics, quizzes: [quiz] },
     ]);
     await expect(runtimeQuestionBank.ensureQuestions('q1')).rejects.toMatchObject({ kind: 'revision' });
     expect(runtimeQuestionBank.listQuestions('q1')).toEqual([]);
   });
 
   it('loads only the selected subject catalog and deduplicates requests', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-3', quizzes: [quiz] }) });
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-3', topics, quizzes: [quiz] }) });
     vi.stubGlobal('fetch', fetchMock);
     runtimeQuestionBank.configureApi({ revision: 'rev-3', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
 
@@ -122,7 +123,7 @@ describe('runtime question bank', () => {
     bank.configureApi({ revision: 'rev-6', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
     const fetchMock = vi.fn()
       .mockImplementationOnce(() => new Promise(() => undefined))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-6', quizzes: [quiz] }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-6', topics, quizzes: [quiz] }) });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -138,7 +139,7 @@ describe('runtime question bank', () => {
 
   it('times out question loading without caching content, then retries', async () => {
     const bank = new RuntimeQuestionBank(noRetries);
-    bank.configureApi({ revision: 'rev-7', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'rev-7', quizzes: [quiz] }]);
+    bank.configureApi({ revision: 'rev-7', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'rev-7', topics, quizzes: [quiz] }]);
     const fetchMock = vi.fn()
       .mockImplementationOnce(() => new Promise(() => undefined))
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-7', questions: [{ ...question, metadata: undefined }] }) });
@@ -158,7 +159,7 @@ describe('runtime question bank', () => {
   it('treats a malformed quiz response as recoverable content failure', async () => {
     const bank = new RuntimeQuestionBank();
     bank.configureApi({ revision: 'rev-8', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ quizzes: [quiz] }) }));
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ topics, quizzes: [quiz] }) }));
     await expect(bank.ensureQuizzes('s1')).rejects.toMatchObject({ kind: 'invalid' });
     expect(bank.getQuizState('s1')).toBe('error');
   });
@@ -227,7 +228,7 @@ describe('runtime question bank', () => {
       { ...subject, quizCount: 1, quizIds: ['q1'] },
       { ...secondSubject, quizCount: 1, quizIds: ['q2'] },
     ] });
-    const response = (id: string, subjectId: string, questionId: string) => ({ ok: true, json: async () => ({ revision: 'rev-subjects', quizzes: [{ id, subjectId, name: 'Quiz', questionCount: 1, questionIds: [questionId] }] }) });
+    const response = (id: string, subjectId: string, questionId: string) => ({ ok: true, json: async () => ({ revision: 'rev-subjects', topics: [{ id: `t${subjectId.slice(1)}`, subjectId, name: 'Topic' }], quizzes: [{ id, subjectId, topicId: `t${subjectId.slice(1)}`, name: 'Quiz', questionCount: 1, questionIds: [questionId] }] }) });
     const fetchMock = vi.fn()
       .mockRejectedValueOnce(new TypeError('offline'))
       .mockRejectedValueOnce(new TypeError('offline'))
@@ -263,7 +264,7 @@ describe('runtime question bank', () => {
     bank.configureApi({ revision: 'rev-retry-after', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
     const fetchMock = vi.fn()
       .mockResolvedValueOnce({ ok: false, status: 503, headers: { get: () => '1' } })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-retry-after', quizzes: [{ ...quiz, questionIds: ['i1'] }] }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-retry-after', topics, quizzes: [{ ...quiz, questionIds: ['i1'] }] }) });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -308,7 +309,7 @@ describe('runtime question bank', () => {
 
   it('cancels a question retry during backoff without starting another attempt', async () => {
     const bank = new RuntimeQuestionBank({ maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 4000 }, () => 0);
-    bank.configureApi({ revision: 'rev-cancel', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'rev-cancel', quizzes: [quiz] }]);
+    bank.configureApi({ revision: 'rev-cancel', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'rev-cancel', topics, quizzes: [quiz] }]);
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('offline'));
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
@@ -369,7 +370,7 @@ describe('runtime question bank', () => {
     const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
     const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
     const oldRequest = bank.ensureSubjects();
-    bank.configureApi({ revision: 'new', subjects: [subject] }, [{ revision: 'new', quizzes: [quiz] }]);
+    bank.configureApi({ revision: 'new', subjects: [subject] }, [{ revision: 'new', topics, quizzes: [quiz] }]);
     resolveOld({ revision: 'old', subjects: [{ ...subject, quizCount: 0, quizIds: [] }] });
     await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
     expect(bank.listSubjectSummaries()[0].quizIds).toEqual(['q1']);
@@ -385,8 +386,8 @@ describe('runtime question bank', () => {
     const oldRequest = bank.ensureQuizzes('s1');
     await vi.waitFor(() => expect(bank.getQuizState('s1')).toBe('loading'));
     const replacement = { ...quiz, id: 'q2', questionIds: ['i2'] };
-    bank.configureApi({ revision: 'new', subjects: [{ ...subject, quizCount: 1, quizIds: ['q2'] }] }, [{ revision: 'new', quizzes: [replacement] }]);
-    resolveOld({ revision: 'old', quizzes: [quiz] });
+    bank.configureApi({ revision: 'new', subjects: [{ ...subject, quizCount: 1, quizIds: ['q2'] }] }, [{ revision: 'new', topics, quizzes: [replacement] }]);
+    resolveOld({ revision: 'old', topics, quizzes: [quiz] });
     await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
     expect(bank.listQuizzes('s1')).toEqual([replacement]);
     expect(bank.getQuizState('s1')).toBe('ready');
@@ -397,9 +398,9 @@ describe('runtime question bank', () => {
     const pending = new Promise<unknown>(resolve => { resolveOld = resolve; });
     const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
     const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
-    bank.configureApi({ revision: 'old', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'old', quizzes: [quiz] }]);
+    bank.configureApi({ revision: 'old', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'old', topics, quizzes: [quiz] }]);
     const oldRequest = bank.ensureQuestions('q1');
-    bank.configureApi({ revision: 'new', subjects: [subject] }, [{ revision: 'new', quizzes: [quiz] }]);
+    bank.configureApi({ revision: 'new', subjects: [subject] }, [{ revision: 'new', topics, quizzes: [quiz] }]);
     resolveOld({ revision: 'old', questions: [question] });
     await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
     expect(bank.listQuestions('q1')).toEqual([]);
@@ -411,7 +412,7 @@ describe('quiz launch freshness', () => {
     const subjects = [{ ...subject, quizCount: 1, quizIds: [quiz.id] }];
     const transport = { get: vi.fn().mockResolvedValue({ revision: 'rev-1', subjects }) };
     const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
-    bank.configureApi({ revision: 'rev-1', subjects }, [{ revision: 'rev-1', quizzes: [quiz] }]);
+    bank.configureApi({ revision: 'rev-1', subjects }, [{ revision: 'rev-1', topics, quizzes: [quiz] }]);
     transport.get.mockResolvedValueOnce({ revision: 'rev-1', questions: [{ ...question, metadata: undefined }] });
     const active = await bank.ensureQuestions(quiz.id);
     (await bank.validateLaunch(quiz))();

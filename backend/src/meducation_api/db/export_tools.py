@@ -8,6 +8,8 @@ from typing import Any
 from uuid import UUID
 
 from meducation_api.content_policy import ContentPolicyError, parse_json
+from meducation_api.db.draft import FLASHCARD_SCHEMA, QUIZ_SCHEMA
+from meducation_api.db.draft import revisions as content_revisions
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.db.transfer import _read, capture_pair
 
@@ -33,7 +35,7 @@ def inspect_export(directory: Path, *, repository: Path, audit: bool = False) ->
                 "releaseId": str(UUID(manifest["releaseId"])),
                 "publication": manifest["publication"],
             }
-            if manifest["schemaVersions"] != {"quiz": 4, "flashcard": 2}:
+            if manifest["schemaVersions"] != {"quiz": QUIZ_SCHEMA, "flashcard": FLASHCARD_SCHEMA}:
                 raise ValueError("Unsupported export schema")
         elif manifest.get("contractVersion") in (1, 2):
             version = manifest["contractVersion"]
@@ -51,7 +53,7 @@ def inspect_export(directory: Path, *, repository: Path, audit: bool = False) ->
                 target == "draft"
             ):
                 raise ValueError("Invalid export target")
-            if manifest["schemas"] != {"quizzes": 4, "flashcards": 2}:
+            if manifest["schemas"] != {"quizzes": QUIZ_SCHEMA, "flashcards": FLASHCARD_SCHEMA}:
                 raise ValueError("Unsupported export schema")
             # v1 drafts carried a document revision; v2 drafts carry the latest change ID.
             draft_keys = (
@@ -95,31 +97,19 @@ def inspect_export(directory: Path, *, repository: Path, audit: bool = False) ->
                 path.write_bytes(value)
             pair = capture_pair(*paths, repository=repository)
         bank, flashcards = json.loads(pair.quiz_artifact), json.loads(pair.flashcard_artifact)
-        subjects = json.dumps(
-            [
-                {key: subject[key] for key in ("id", "name", "accent")}
-                for subject in bank["subjects"]
-            ],
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
+        computed = content_revisions(pair.quiz_artifact, pair.flashcard_artifact)
         actual_revisions = {
-            "quiz": "sha256-" + hashlib.sha256(pair.quiz_artifact.encode()).hexdigest(),
-            "flashcard": "sha256-"
-            + hashlib.sha256(
-                ("flashcards-v2\n" + subjects + "\n" + pair.flashcard_artifact).encode()
-            ).hexdigest(),
+            "quiz": computed["quizRevision"],
+            "flashcard": computed["flashcardRevision"],
         }
         if actual_revisions != revisions:
             raise ValueError("Export content revisions differ")
         if manifest.get("contractVersion") in (1, 2):
             ids = {
-                key: [row["id"] for row in document[key]]
-                for document, keys in (
-                    (bank, ("subjects", "quizzes", "questions")),
-                    (flashcards, ("decks", "cards")),
-                )
-                for key in keys
+                key: [row["id"] for row in rows]
+                for document in (bank, flashcards)
+                for key, rows in document.items()
+                if key != "schemaVersion"
             }
             if ids != manifest["ids"]:
                 raise ValueError("Export identity inventory differs")

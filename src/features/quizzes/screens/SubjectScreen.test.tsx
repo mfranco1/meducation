@@ -6,7 +6,8 @@ import { theme } from '../../../shared/theme';
 import { SubjectScreen, type QuizProgress } from './SubjectScreen';
 
 const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };
-const quiz = { id: 'quiz', subjectId: subject.id, name: 'Practice test 1', questionCount: 10 };
+const topics = [{ id: 't1', subjectId: subject.id, name: 'Cell biology' }, { id: 't2', subjectId: subject.id, name: 'Metabolism' }];
+const quiz = { id: 'quiz', subjectId: subject.id, topicId: 't1', name: 'Practice test 1', questionCount: 10 };
 const activeAttempt: Attempt = {
   id: 'attempt',
   quizId: quiz.id,
@@ -22,6 +23,7 @@ function renderSubject(progress: Partial<QuizProgress>) {
   const onBrowseQuiz = vi.fn<(quiz: Quiz) => void>();
   render(<ThemeProvider theme={theme}><SubjectScreen
     subject={subject}
+    topics={topics}
     progress={[{ quiz, completionCount: 0, ...progress }]}
     onBack={() => {}}
     onResumeQuiz={onResumeQuiz}
@@ -34,7 +36,7 @@ function renderSubject(progress: Partial<QuizProgress>) {
 describe('subject quiz action', () => {
   it('shows the shared empty display only after quiz loading finishes and keeps back navigation available', () => {
     const onBack = vi.fn();
-    const props = { subject, progress: [], onBack, onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
+    const props = { subject, topics, progress: [], onBack, onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
     const { rerender } = render(<ThemeProvider theme={theme}><SubjectScreen {...props} loading /></ThemeProvider>);
 
     expect(screen.queryByRole('heading', { name: 'No quizzes available yet' })).toBeNull();
@@ -48,7 +50,7 @@ describe('subject quiz action', () => {
 
   it('keeps shimmer placeholders and exposes one full-width recovery banner after failure', () => {
     const onRetry = vi.fn();
-    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} progress={[]} error={new Error('raw backend detail')} recovery={{ failed: true, retrying: false, busy: false }} onRetry={onRetry} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[]} error={new Error('raw backend detail')} recovery={{ failed: true, retrying: false, busy: false }} onRetry={onRetry} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
     expect(screen.getByRole('region', { name: 'Content recovery' })).toBeVisible();
     expect(screen.getByRole('alert')).toHaveTextContent(`We can’t load quizzes for ${subject.name} right now.`);
     expect(screen.queryByRole('heading', { name: 'No quizzes available yet' })).toBeNull();
@@ -62,7 +64,7 @@ describe('subject quiz action', () => {
 
   it('keeps shimmer quiz skeletons visible during automatic retries without reconnecting copy', () => {
     render(<ThemeProvider theme={theme}><SubjectScreen
-      subject={subject} progress={[]} retrying recovery={{ failed: true, retryAt: Date.now() + 5_000, retrying: true, busy: false }} onBack={() => {}} onResumeQuiz={() => {}}
+      subject={subject} topics={topics} progress={[]} retrying recovery={{ failed: true, retryAt: Date.now() + 5_000, retrying: true, busy: false }} onBack={() => {}} onResumeQuiz={() => {}}
       onStartQuiz={() => {}} onBrowseQuiz={() => {}}
     /></ThemeProvider>);
     expect(screen.getByRole('status', { name: 'Retrying quizzes' })).toBeVisible();
@@ -72,31 +74,31 @@ describe('subject quiz action', () => {
     expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
   });
 
-  it('labels a never-started quiz as Start quiz', () => {
+  it('labels a never-started quiz as Start', () => {
     renderSubject({});
 
-    expect(screen.getByRole('button', { name: 'Start quiz' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Start quiz: Practice test 1' })).toBeVisible();
   });
 
-  it('labels a completed quiz as Retake quiz', () => {
+  it('labels a completed quiz as Retake', () => {
     renderSubject({ completionCount: 1 });
 
-    expect(screen.getByRole('button', { name: 'Retake quiz' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Retake quiz: Practice test 1' })).toBeVisible();
   });
 
   it('prioritizes Resume test when a saved attempt exists', () => {
     const { onResumeQuiz } = renderSubject({ active: activeAttempt, completionCount: 1, currentQuestion: 3 });
 
-    expect(screen.getByRole('button', { name: 'Resume quiz' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Retake quiz' })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Resume quiz' }));
+    expect(screen.getByRole('button', { name: 'Resume quiz: Practice test 1' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Retake quiz: Practice test 1' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Resume quiz: Practice test 1' }));
     expect(onResumeQuiz).toHaveBeenCalledWith(quiz);
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   it.each([
-    [{}, 'Start quiz'],
-    [{ completionCount: 1 }, 'Retake quiz'],
+    [{}, 'Start quiz: Practice test 1'],
+    [{ completionCount: 1 }, 'Retake quiz: Practice test 1'],
   ])('opens setup for %s', (progress, actionLabel) => {
     renderSubject(progress);
 
@@ -111,20 +113,20 @@ describe('subject quiz action', () => {
   it('starts a selected mode and resets it when setup is reopened', () => {
     const { onStartQuiz } = renderSubject({});
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     fireEvent.click(screen.getByRole('button', { name: 'Exam Mode' }));
     expect(screen.getByText('Answers remain hidden until you finish and submit the entire test.')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'exam');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     expect(screen.getByText('Selecting an answer locks it and shows the explanation right away.')).toBeVisible();
   });
 
   it('starts in Fast Feedback mode by default', () => {
     const { onStartQuiz } = renderSubject({});
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
     expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate');
@@ -132,7 +134,7 @@ describe('subject quiz action', () => {
 
   it('opens the read-only answer browser through its separate callback', () => {
     const { onBrowseQuiz, onStartQuiz } = renderSubject({});
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     const dialog = screen.getByRole('dialog', { name: quiz.name });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Browse Answers' }));
     expect(within(dialog).getByText('Browse every question with the correct answer and explanation shown. Nothing is recorded.')).toBeVisible();
@@ -143,10 +145,10 @@ describe('subject quiz action', () => {
 
   it('resets Browse Answers to Fast Feedback when setup is reopened', () => {
     const { onBrowseQuiz } = renderSubject({});
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     fireEvent.click(screen.getByRole('button', { name: 'Browse Answers' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close quiz setup' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     expect(screen.getByText('Selecting an answer locks it and shows the explanation right away.')).toBeVisible();
     expect(onBrowseQuiz).not.toHaveBeenCalled();
   });
@@ -154,7 +156,7 @@ describe('subject quiz action', () => {
   it('dismisses setup without starting a quiz', () => {
     const { onStartQuiz } = renderSubject({});
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     fireEvent.click(screen.getByRole('button', { name: 'Close quiz setup' }));
 
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -164,11 +166,49 @@ describe('subject quiz action', () => {
   it('dismisses setup with Escape without starting a quiz', () => {
     const { onStartQuiz } = renderSubject({});
 
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(onStartQuiz).not.toHaveBeenCalled();
+  });
+});
+
+describe('subject topics', () => {
+  const other = { id: 'other', subjectId: subject.id, topicId: 't2', name: 'Glycolysis quiz', questionCount: 1 };
+  const done = { id: 'done', subjectId: subject.id, topicId: 't1', name: 'Second quiz', questionCount: 5 };
+
+  function renderTopics(progress: QuizProgress[], onStartQuiz = vi.fn()) {
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={[...topics, { id: 't3', subjectId: subject.id, name: 'Empty topic' }]} progress={progress} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={onStartQuiz} onBrowseQuiz={() => {}} /></ThemeProvider>);
+  }
+
+  it('lists topics that have quizzes with progress and switches the quiz list on selection', () => {
+    renderTopics([{ quiz, completionCount: 1, latestScore: 80 }, { quiz: done, completionCount: 0 }, { quiz: other, completionCount: 0 }]);
+
+    expect(screen.getByText('2 topics')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Empty topic/ })).toBeNull();
+    expect(screen.getByText('1 / 3 quizzes completed')).toBeVisible();
+    expect(screen.getByText('33%')).toBeVisible();
+    expect(screen.getByRole('button', { name: /Cell biology/ })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('heading', { name: 'Practice test 1' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Second quiz' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Glycolysis quiz' })).toBeNull();
+    expect(screen.getByText('1 of 2 quizzes completed')).toBeVisible();
+
+    fireEvent.click(screen.getByRole('button', { name: /Metabolism/ }));
+    expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByRole('heading', { name: 'Glycolysis quiz' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Practice test 1' })).toBeNull();
+    expect(screen.getByText('Not started')).toBeVisible();
+  });
+
+  it('opens on the topic with the most recent activity and shows relative activity and in-progress status', () => {
+    const recent = new Date(Date.now() - 2 * 86_400_000).toISOString();
+    renderTopics([{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0, active: { ...activeAttempt, quizId: other.id }, currentQuestion: 1, activityAt: recent }]);
+
+    expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveAttribute('aria-current', 'true');
+    expect(screen.getByText('In progress: question 1 of 1')).toBeVisible();
+    expect(screen.getByText('2 days ago')).toBeVisible();
   });
 });
 
@@ -177,7 +217,7 @@ describe('subject quiz score summaries', () => {
     renderSubject({ completionCount: 2, latestScore: 75 });
 
     expect(screen.getByText('Completed 2 times')).toBeVisible();
-    expect(screen.getByText('Latest score 75%')).toBeVisible();
+    expect(screen.getByText('Score 75%')).toBeVisible();
     expect(screen.queryByText(/Lowest score/)).toBeNull();
     expect(screen.queryByRole('img')).toBeNull();
   });
@@ -189,7 +229,7 @@ describe('subject quiz score summaries', () => {
   ] as const)('shows the %s indicator inside the latest-score pill', (trend, label) => {
     renderSubject({ completionCount: 2, latestScore: 75, trend });
 
-    const latestScore = screen.getByText('Latest score 75%');
+    const latestScore = screen.getByText('Score 75%');
     expect(latestScore.closest('.MuiChip-root')).toContainElement(screen.getByRole('img', { name: label }));
   });
 });

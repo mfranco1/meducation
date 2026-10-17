@@ -6,7 +6,7 @@ import { theme } from '../../../shared/theme';
 import { QuizScreen } from './QuizScreen';
 import type { Attempt, Question, Quiz } from '../../../domain/types';
 
-const quiz: Quiz = { id: 'quiz', subjectId: 'subject', name: 'Quiz', questionCount: 7 };
+const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 7 };
 const questions: Question[] = Array.from({ length: 7 }, (_, index) => ({
   id: `q${index + 1}`, quizId: quiz.id, stem: `Question ${index + 1}`, choices: [{ id: 'A', text: `Incorrect ${index + 1}` }, { id: 'B', text: `Correct ${index + 1}` }], verifiedAnswer: 'B', rationale: 'Rationale', metadata: {},
 }));

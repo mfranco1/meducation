@@ -1,5 +1,5 @@
 /** Form adapters patch one JSON draft. They never normalize untouched source or infer defaults. */
-export type RecordKind = 'subject' | 'quiz' | 'question' | 'deck' | 'card';
+export type RecordKind = 'subject' | 'topic' | 'quiz' | 'question' | 'deck' | 'card';
 export type DraftRecord = Record<string, unknown>;
 export interface DraftChoice {
   id: string;
@@ -8,6 +8,7 @@ export interface DraftChoice {
 }
 const fields: Record<RecordKind, readonly string[]> = {
   subject: ['name', 'accent'],
+  topic: ['name'],
   quiz: ['name'],
   deck: ['name', 'description'],
   card: ['front', 'back', 'sources', 'reviewNote'],
@@ -34,10 +35,10 @@ export function readRecordDraft(text: string, kind: RecordKind): DraftRecord | u
     const required =
       kind === 'subject'
         ? ['name', 'accent']
-        : kind === 'quiz'
+        : kind === 'topic'
           ? ['name', 'subjectId']
-          : kind === 'deck'
-            ? ['name', 'subjectId']
+          : kind === 'quiz' || kind === 'deck'
+            ? ['name', 'topicId']
             : kind === 'card'
               ? ['front', 'back', 'deckId']
               : ['stem', 'rationale', 'quizId'];
@@ -190,9 +191,10 @@ export function adoptServerId(text: string, id: string): string {
 }
 
 export const PARENT_KEY: Partial<Record<RecordKind, string>> = {
-  quiz: 'subjectId',
+  topic: 'subjectId',
+  quiz: 'topicId',
   question: 'quizId',
-  deck: 'subjectId',
+  deck: 'topicId',
   card: 'deckId',
 };
 /** The editable JSON of a stored record: the server's concurrency token is not authored content. */
@@ -205,8 +207,10 @@ export function newRecordTemplate(kind: RecordKind, parentId = ''): DraftRecord 
   switch (kind) {
     case 'subject':
       return { id: '', name: '', accent: '#bc531e' };
-    case 'quiz':
+    case 'topic':
       return { id: '', subjectId: parentId, name: '' };
+    case 'quiz':
+      return { id: '', topicId: parentId, name: '' };
     case 'question':
       return {
         id: '',
@@ -220,7 +224,7 @@ export function newRecordTemplate(kind: RecordKind, parentId = ''): DraftRecord 
         rationale: '',
       };
     case 'deck':
-      return { id: '', subjectId: parentId, name: 'New deck' };
+      return { id: '', topicId: parentId, name: 'New deck' };
     case 'card':
       return { id: '', deckId: parentId, front: 'Question', back: 'Answer' };
   }

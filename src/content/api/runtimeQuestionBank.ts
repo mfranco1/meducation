@@ -82,13 +82,13 @@ export class RuntimeQuestionBank implements QuizRepository {
       const quizIds = subject.quizIds ?? quizzes.map(quiz => quiz.id);
       return { ...subject, quizCount: subject.quizCount ?? quizIds.length, quizIds };
     });
-    this.cache.replaceCatalog(subjectResponse.subjects, allQuizzes);
+    this.cache.replaceCatalog(subjectResponse.subjects, quizResponses.flatMap(response => response.topics), allQuizzes);
     this.catalogState = 'ready';
     this.catalogError = undefined;
     this.catalogRetryAt = undefined;
     this.quizStates.clear(); this.quizErrors.clear(); this.quizRecovery.clear(); this.quizRetryAt.clear(); this.quizRetryAfterAt.clear(); this.quizRetryNow.clear(); this.pendingCatalogs.clear();
     for (const response of quizResponses) {
-      const subjectId = response.quizzes[0]?.subjectId;
+      const subjectId = response.topics[0]?.subjectId;
       if (subjectId) this.quizStates.set(subjectId, 'ready');
     }
     this.notify();
@@ -96,6 +96,7 @@ export class RuntimeQuestionBank implements QuizRepository {
   }
 
   listSubjects() { return this.cache.listSubjects(); }
+  listTopics(subjectId: string) { return this.cache.listTopics(subjectId); }
   listQuizzes(subjectId: string) { return this.cache.listQuizzes(subjectId); }
   listQuestions(quizId: string) { return this.cache.listQuestions(quizId); }
 
@@ -175,7 +176,7 @@ export class RuntimeQuestionBank implements QuizRepository {
         if (responseRevision(response) !== this.revision) throw revisionError();
         const expectedQuizIds = this.summaries.find(subject => subject.id === subjectId)?.quizIds;
         if (!expectedQuizIds || !isQuizCatalog(response, subjectId, expectedQuizIds)) throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
-        this.cache.setQuizzes(subjectId, response.quizzes);
+        this.cache.setQuizzes(subjectId, response.topics, response.quizzes);
         this.quizStates.set(subjectId, 'ready'); this.quizRecovery.delete(subjectId); this.quizRetryAt.delete(subjectId); this.quizRetryAfterAt.delete(subjectId); this.quizRetryNow.delete(subjectId); this.notify();
         return response.quizzes;
       } catch (error) {

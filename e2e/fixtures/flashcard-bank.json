@@ -1,6 +1,6 @@
 {
-  "schemaVersion": 2,
-  "decks": [{ "id": "d-browser", "subjectId": "s1", "name": "Browser Test Deck" }],
+  "schemaVersion": 3,
+  "decks": [{ "id": "d-browser", "topicId": "t1", "name": "Browser Test Deck" }],
   "cards": [
     {
       "id": "f-browser-1",

@@ -1,9 +1,9 @@
-import type { Question, Quiz, Subject } from '../../domain/types';
+import type { Question, Quiz, Subject, Topic } from '../../domain/types';
 import { nonempty, onlyKeys, record, unique } from './jsonGuards';
 
 export interface SubjectSummary extends Subject { quizCount: number; quizIds: string[] }
 export interface SubjectCatalogResponse { revision: string; subjects: SubjectSummary[] }
-export interface QuizCatalogResponse { revision: string; quizzes: Quiz[] }
+export interface QuizCatalogResponse { revision: string; topics: Topic[]; quizzes: Quiz[] }
 export interface QuestionListResponse { revision: string; questions: Question[] }
 
 const optionalString = (value: unknown) => value === undefined || typeof value === 'string';
@@ -42,12 +42,20 @@ export function isSubjectCatalog(value: unknown): value is SubjectCatalogRespons
   return unique(subjects.map((subject: SubjectSummary) => subject.id)) && unique(allQuizIds);
 }
 
+/** A subject's topics, in order; quiz and deck catalogs must reference only these. */
+export function isTopicList(value: unknown, subjectId: string): value is Topic[] {
+  return Array.isArray(value) && value.every((topic: unknown) => record(topic) && onlyKeys(topic, ['id', 'subjectId', 'name'])
+    && nonempty(topic.id) && /^t[1-9]\d*$/.test(topic.id) && topic.subjectId === subjectId && nonempty(topic.name))
+    && unique(value.map((topic: Topic) => topic.id));
+}
+
 export function isQuizCatalog(value: unknown, subjectId: string, expectedQuizIds: string[]): value is QuizCatalogResponse {
-  if (!record(value) || !nonempty(value.revision) || !Array.isArray(value.quizzes)) return false;
+  if (!record(value) || !nonempty(value.revision) || !isTopicList(value.topics, subjectId) || !Array.isArray(value.quizzes)) return false;
+  const topicIds = value.topics.map(topic => topic.id);
   const allQuestionIds: string[] = [];
   if (!value.quizzes.every((entry: unknown) => {
-    if (!record(entry) || !onlyKeys(entry, ['id', 'subjectId', 'name', 'questionCount', 'questionIds'])) return false;
-    if (!nonempty(entry.id) || !/^q[1-9]\d*$/.test(entry.id) || entry.subjectId !== subjectId || !nonempty(entry.name)) return false;
+    if (!record(entry) || !onlyKeys(entry, ['id', 'subjectId', 'topicId', 'name', 'questionCount', 'questionIds'])) return false;
+    if (!nonempty(entry.id) || !/^q[1-9]\d*$/.test(entry.id) || entry.subjectId !== subjectId || !topicIds.includes(entry.topicId as string) || !nonempty(entry.name)) return false;
     if (!ids(entry.questionIds, /^i[1-9]\d*$/) || !Number.isInteger(entry.questionCount) || entry.questionCount !== entry.questionIds.length || entry.questionCount === 0) return false;
     allQuestionIds.push(...entry.questionIds);
     return true;

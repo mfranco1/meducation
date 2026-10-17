@@ -1,4 +1,4 @@
-"""Real PG17: migrations 0007 and 0008 and the per-record draft HTTP API."""
+"""Real PG17: draft rebuilds, migration 0009 and the per-record draft HTTP API."""
 
 import gzip
 import json
@@ -17,16 +17,15 @@ from test_postgres_content import (
     auth_login,
     banks,
     content_state,
-    publish,
+    reader_settings,
     scalar,
     seed,
-    store,
 )
 
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.draft import build_documents, revisions
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.db.migrate import migration_config, migration_head, upgrade
+from meducation_api.db.migrate import migration_config, upgrade
 from meducation_api.db.recovery import advance_ids
 
 pytestmark = pytest.mark.postgres
@@ -54,15 +53,11 @@ def fixture_pairs():
     }
 
 
-def at_revision(db, revision):
+def to_revision(db, revision):
     with db.admin.begin() as connection:
         connection.exec_driver_sql("DROP SCHEMA admin_auth CASCADE")
         connection.exec_driver_sql("DROP SCHEMA content CASCADE")
     bootstrap(db.admin, RolePasswords(_env_file=None))
-    to_revision(db, revision)
-
-
-def to_revision(db, revision):
     with db.migrator.begin() as connection:
         connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
         config = migration_config()
@@ -70,131 +65,161 @@ def to_revision(db, revision):
         command.upgrade(config, revision)
 
 
-def legacy_draft(db, q_text, f_text, sequence):
-    with db.operator.begin() as connection:
-        connection.execute(
-            text("SELECT content.save_draft(:op,:q,:f,0,:s,:actor,:reason,'{}')"),
-            {
-                "op": uuid4(),
-                "q": q_text,
-                "f": f_text,
-                "s": sequence,
-                "actor": ACTOR,
-                "reason": REASON,
-            },
-        )
-
-
 @pytest.mark.parametrize("name", list(fixture_pairs()))
-def test_migration_0007_rebuilds_byte_identical_artifacts_and_revisions(db, name):
+def test_draft_rebuilds_byte_identical_artifacts_and_revisions(db, name):
     q, f = fixture_pairs()[name]
-    at_revision(db, "0006_allocation_fence")
-    release = store(db, q=q, f=f)
-    publication = publish(db, release)
+    release = seed(db, q=q, f=f)
     with db.operator.connect() as connection:
-        artifacts = connection.execute(
+        expected = connection.execute(
             text(
-                "SELECT quiz_artifact,flashcard_artifact,quiz_revision,flashcard_revision FROM content.releases WHERE release_id=:r"
+                "SELECT quiz_artifact,flashcard_artifact,quiz_revision,flashcard_revision "
+                "FROM content.releases WHERE release_id=:r"
             ),
             {"r": release.release_id},
         ).one()
-    legacy_draft(db, artifacts[0], artifacts[1], publication.publication_sequence)
-    upgrade(db.migrator)
     with db.editor.connect() as connection:
         built = build_documents(connection)
-    assert built == (artifacts[0], artifacts[1])
-    assert revisions(*built) == {"quizRevision": artifacts[2], "flashcardRevision": artifacts[3]}
-    assert (
-        scalar(db.backup, "SELECT base_release_id FROM content.draft_state") == release.release_id
-    )
-    assert scalar(db.backup, "SELECT count(*) FROM content.draft_changes") == 0
-    # New numeric IDs start after every ID in any release.
-    top = scalar(db.backup, "SELECT max(substring(id FROM 2)::int) FROM content.questions")
-    with db.editor.begin() as connection:
-        assert (
-            connection.exec_driver_sql("SELECT nextval('content.draft_question_ids')").scalar_one()
-            == top + 1
+    assert built == (expected[0], expected[1])
+    assert revisions(*built) == {"quizRevision": expected[2], "flashcardRevision": expected[3]}
+
+
+LEGACY_QUIZ = {
+    "schemaVersion": 4,
+    "subjects": [
+        {"id": "s1", "name": "Anatomy", "accent": "#123456"},
+        {"id": "s2", "name": "Empty", "accent": "#654321"},
+    ],
+    "quizzes": [
+        {"id": "q1", "subjectId": "s1", "name": "Practice Test 1"},
+        {"name": "Practice Test 2", "id": "q2", "subjectId": "s1"},
+    ],
+    "questions": [
+        {
+            "id": f"i{n}",
+            "quizId": f"q{n}",
+            "stem": "Stem",
+            "choices": [{"id": "A", "text": "One"}, {"id": "B", "text": "Two"}],
+            "answer": "A",
+            "rationale": "Because.",
+        }
+        for n in (1, 2)
+    ],
+}
+LEGACY_FLASHCARDS = {
+    "schemaVersion": 2,
+    "decks": [{"id": "d-1", "subjectId": "s1", "name": "Cranial nerves"}],
+    "cards": [{"id": "f-1", "deckId": "d-1", "front": "CN I", "back": "Olfactory"}],
+}
+
+
+def test_migration_0009_groups_existing_content_into_topics(db):
+    """A 0008 draft gains default topics; the next publish serves topics to learners."""
+    to_revision(db, "0008_retire_legacy")
+    from meducation_api.content_policy import artifact_text
+    from meducation_api.db.operations import activate_release
+
+    # The current Python store validates only the current schema; call the 0008 function.
+    with db.operator.begin() as connection:
+        stored = connection.execute(
+            text("SELECT content.store_release(:op,:q,:f,CAST(:h AS jsonb),:a,:r)"),
+            {
+                "op": uuid4(),
+                "q": artifact_text(LEGACY_QUIZ),
+                "f": artifact_text(LEGACY_FLASHCARDS),
+                "h": json.dumps({"quiz": "0" * 64, "flashcard": "0" * 64}),
+                "a": ACTOR,
+                "r": REASON,
+            },
+        ).scalar_one()
+        legacy_id = stored["release_id"]
+        connection.execute(
+            text("SELECT content.activate_release(:op,CAST(:id AS uuid),0,:a,:r)"),
+            {"op": uuid4(), "id": legacy_id, "a": ACTOR, "r": REASON},
         )
-
-
-def test_migration_0007_refuses_unpublished_draft_changes(db):
-    at_revision(db, "0006_allocation_fence")
-    release = store(db)
-    publication = publish(db, release)
-    q, f = banks()
-    q["questions"][0]["stem"] = "Unpublished edit"
-    from meducation_api.db.operations import paired_artifacts
-
-    legacy_draft(
-        db, *paired_artifacts(json.dumps(q), json.dumps(f)), publication.publication_sequence
-    )
-    with pytest.raises(ContentDatabaseError, match="unpublished"):
-        upgrade(db.migrator)
-    assert (
-        scalar(db.reader, "SELECT version_num FROM content.schema_version")
-        == "0006_allocation_fence"
-    )
-
-
-def test_migration_0008_retires_legacy_objects_and_keeps_editing_and_publication(db):
-    at_revision(db, "0006_allocation_fence")
-    release = store(db)
-    publication = publish(db, release)
-    with db.operator.connect() as connection:
-        artifacts = connection.execute(
-            text("SELECT quiz_artifact,flashcard_artifact FROM content.releases")
-        ).one()
-    legacy_draft(db, *artifacts, publication.publication_sequence)
-    to_revision(db, "0007_draft_records")
-    tables = ("releases", "publication_events", "draft_subjects", "draft_questions", "draft_state")
-    before = {
-        t: scalar(
-            db.backup,
-            f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{t} t",
-        )
-        for t in tables
-    }
-    upgrade(db.migrator)
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
-    after = {
-        t: scalar(
-            db.backup,
-            f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{t} t",
-        )
-        for t in tables
-    }
-    assert after == before
-    legacy = (
-        "content.draft",
-        "content.draft_history",
-        "content.entity_ids",
-        "content.id_reservations",
-        "content.allocation_fence",
-    )
-    assert [scalar(db.backup, "SELECT to_regclass(:n)", {"n": n}) for n in legacy] == [None] * 5
-    assert scalar(
-        db.backup,
-        "SELECT count(*) FROM pg_proc WHERE pronamespace='content'::regnamespace "
-        "AND proname ~ '^(editor_|reserve_ids|save_draft|publish_draft|validate_pair)'",
-    ) == 0
-    client, runtime, h = auth_app(db, postgres=True)
-    with client:
-        auth_login(client, runtime, h)
-        ok(
-            call(
-                client,
-                "PUT",
-                "/draft/questions/i1",
-                {"expectedVersion": 1, "fields": {"stem": "After upgrade"}},
+    with db.migrator.begin() as connection:
+        connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
+        for n, subject in enumerate(LEGACY_QUIZ["subjects"]):
+            connection.execute(
+                text("INSERT INTO content.draft_subjects(id,position,name,accent) VALUES(:id,:n,:name,:accent)"),
+                {**subject, "n": n},
+            )
+        connection.execute(
+            text(
+                "INSERT INTO content.draft_quizzes(id,position,field_order,subject_id,name) VALUES"
+                "('q1',0,NULL,'s1','Practice Test 1'),"
+                "('q2',1,ARRAY['name','id','subjectId'],'s1','Practice Test 2')"
             )
         )
+        for n, question in enumerate(LEGACY_QUIZ["questions"]):
+            connection.execute(
+                text(
+                    "INSERT INTO content.draft_questions(id,position,quiz_id,stem,choices,answer,rationale) "
+                    "VALUES(:id,:n,:quizId,:stem,CAST(:choices AS json),:answer,:rationale)"
+                ),
+                {**question, "n": n, "choices": json.dumps(question["choices"])},
+            )
+        connection.exec_driver_sql(
+            "INSERT INTO content.draft_decks(id,position,subject_id,name) VALUES('d-1',0,'s1','Cranial nerves');"
+            "INSERT INTO content.draft_flashcards(id,position,deck_id,front,back) VALUES('f-1',0,'d-1','CN I','Olfactory');"
+            "INSERT INTO content.draft_changes(actor,kind,entity_id,action,before,after) VALUES('editor','quizzes','q1','update',"
+            "'{\"id\":\"q1\",\"subjectId\":\"s1\",\"name\":\"Old\",\"version\":1,\"position\":\"0\"}',"
+            "'{\"id\":\"q1\",\"subjectId\":\"s1\",\"name\":\"Practice Test 1\",\"version\":1,\"position\":\"0\"}')"
+        )
+        connection.execute(
+            text("UPDATE content.draft_state SET base_release_id=:r,published_change_id=1"),
+            {"r": legacy_id},
+        )
+
+    upgrade(db.migrator)
+
+    with db.backup.connect() as connection:
+        topics = connection.execute(
+            text("SELECT id,subject_id,name FROM content.draft_topics ORDER BY position")
+        ).all()
+        quizzes = connection.execute(
+            text("SELECT id,topic_id,version,field_order FROM content.draft_quizzes ORDER BY position")
+        ).all()
+        decks = connection.execute(text("SELECT topic_id,version FROM content.draft_decks")).all()
+    assert [tuple(t) for t in topics] == [("t1", "s1", "Practice Tests"), ("t2", "s1", "Flashcards")]
+    assert [tuple(q) for q in quizzes] == [
+        ("q1", "t1", 2, None),
+        ("q2", "t1", 2, ["name", "id", "topicId"]),
+    ]
+    assert [tuple(d) for d in decks] == [("t2", 2)]
+    with db.editor.begin() as connection:
+        assert connection.exec_driver_sql("SELECT nextval('content.draft_topic_ids')").scalar_one() == 3
+    with pytest.raises(ContentDatabaseError), db.operator.begin() as connection:
+        activate_release(
+            connection,
+            operation_id=uuid4(),
+            release_id=legacy_id,
+            expected_sequence=1,
+            actor=ACTOR,
+            reason=REASON,
+        )
+
+    # The learner API cannot start on a pre-topic release, so edit with the fixture reader.
+    client, runtime, h = auth_app(db)
+    with client:
+        auth_login(client, runtime, h)
+        snapshot = draft(client)
+        assert snapshot["changed"] is True
+        assert [r["name"] for r in snapshot["topics"]] == ["Practice Tests", "Flashcards"]
+        obsolete = call(client, "POST", "/draft/changes/1/revert", {"expectedVersion": 2})
+        assert obsolete.status_code == 409
+        assert obsolete.json()["error"]["code"] == "change_obsolete"
+        assert ok(client.get("/api/admin/releases"))["releases"] == []
         assert ok(call(client, "POST", "/draft/publish"))["published"] is True
-        stem = client.get("/api/v1/quizzes/q1/questions").json()["questions"][0]["stem"]
-        assert stem == "After upgrade"
-        again = {"expectedVersion": 2, "fields": {"stem": "Again"}}
-        change = ok(call(client, "PUT", "/draft/questions/i1", again))["changeId"]
-        ok(call(client, "POST", f"/draft/changes/{change}/revert", {"expectedVersion": 3}))
-        assert ok(call(client, "POST", "/draft/discard"))["changed"] is False
+    from fastapi.testclient import TestClient
+
+    from meducation_api.main import create_app
+
+    with TestClient(create_app(reader_settings(db))) as learner:
+        catalog = learner.get("/api/v1/subjects/s1/quizzes").json()
+        assert [t["name"] for t in catalog["topics"]] == ["Practice Tests", "Flashcards"]
+        assert {q["topicId"] for q in catalog["quizzes"]} == {"t1"}
+        decks = learner.get("/api/v1/flashcards/subjects/s1/catalog").json()["decks"]
+        assert [d["topicId"] for d in decks] == ["t2"]
 
 
 # HTTP helpers -------------------------------------------------------------------------
@@ -253,7 +278,9 @@ def test_get_draft_returns_records_versions_gzip_and_changed_flag(db, editor):
     assert [{k: v for k, v in r.items() if k != "version"} for r in snapshot["cards"]] == f["cards"]
     assert list(snapshot["questions"][0]) == [*q["questions"][0], "version"]  # authored key order
     assert all(
-        r["version"] == 1 for kind in ("subjects", "quizzes", "decks") for r in snapshot[kind]
+        r["version"] == 1
+        for kind in ("subjects", "topics", "quizzes", "decks")
+        for r in snapshot[kind]
     )
     assert snapshot["changed"] is False and snapshot["latestChangeId"] == 0
     assert snapshot["activeReleaseId"] == snapshot["baseReleaseId"]
@@ -275,8 +302,16 @@ def test_crud_for_every_kind_records_changes_and_bumps_versions(db, editor):
     )
     sid = subject["record"]["id"]
     assert sid == "s2" and subject["record"]["version"] == 1
+    topic = ok(
+        call(client, "POST", "/draft/topics", {"parentId": sid, "fields": {"name": "Cardiology"}}),
+        201,
+    )["record"]
+    assert topic == {"id": "t2", "subjectId": sid, "name": "Cardiology", "version": 1}
     quiz = ok(
-        call(client, "POST", "/draft/quizzes", {"parentId": sid, "fields": {"name": "Cardio"}}), 201
+        call(
+            client, "POST", "/draft/quizzes", {"parentId": topic["id"], "fields": {"name": "Cardio"}}
+        ),
+        201,
     )["record"]
     question = ok(
         call(client, "POST", "/draft/questions", {"parentId": quiz["id"], "fields": QUESTION}), 201
@@ -287,7 +322,7 @@ def test_crud_for_every_kind_records_changes_and_bumps_versions(db, editor):
             client,
             "POST",
             "/draft/decks",
-            {"parentId": sid, "fields": {"name": "Deck", "description": "D"}},
+            {"parentId": topic["id"], "fields": {"name": "Deck", "description": "D"}},
         ),
         201,
     )["record"]
@@ -350,6 +385,7 @@ def test_crud_for_every_kind_records_changes_and_bumps_versions(db, editor):
     assert same["changeId"] is None and same["record"]["version"] == 3
     for kind, rid, fields in (
         ("subjects", sid, {"name": "Renamed"}),
+        ("topics", topic["id"], {"name": "Renamed"}),
         ("quizzes", quiz["id"], {"name": "Renamed"}),
         ("decks", deck["id"], {"description": None}),
         ("cards", card["id"], {"sources": "Src", "reviewNote": "R"}),
@@ -365,13 +401,14 @@ def test_crud_for_every_kind_records_changes_and_bumps_versions(db, editor):
         ("decks", deck["id"], 2),
         ("questions", question["id"], 3),
         ("quizzes", quiz["id"], 2),
+        ("topics", topic["id"], 2),
         ("subjects", sid, 2),
     ):
         result = ok(call(client, "DELETE", f"/draft/{kind}/{rid}", {"expectedVersion": version}))
         assert result["deleted"] == [{"kind": kind, "id": rid}]
     changes = ok(client.get("/api/admin/draft/changes"))["changes"]
-    assert [c["action"] for c in changes] == ["create"] * 5 + ["update"] * 6 + ["delete"] * 5
-    assert changes[5]["before"]["version"] == 1 and changes[5]["after"]["stem"] == "Edited"
+    assert [c["action"] for c in changes] == ["create"] * 6 + ["update"] * 7 + ["delete"] * 6
+    assert changes[6]["before"]["version"] == 1 and changes[6]["after"]["stem"] == "Edited"
     assert "position" in changes[0]["after"] and changes[0]["before"] is None
     assert ok(client.get("/api/admin/draft/changes?since=15"))["changes"][0]["changeId"] == 16
     assert draft(client)["changed"] is False
@@ -406,7 +443,7 @@ def test_placement_and_move_keep_sibling_order(db, editor):
             client,
             "POST",
             "/draft/quizzes",
-            {"parentId": "s1", "afterId": None, "fields": {"name": "Earlier"}},
+            {"parentId": "t1", "afterId": None, "fields": {"name": "Earlier"}},
         ),
         201,
     )["record"]["id"]
@@ -476,6 +513,7 @@ def test_cascade_rules(db, editor):
         "quizzes": 1,
         "cards": 1,
         "decks": 1,
+        "topics": 1,
     }
     assert call(client, "DELETE", "/draft/quizzes/q1", {"expectedVersion": 1}).json()["error"][
         "children"
@@ -488,15 +526,18 @@ def test_cascade_rules(db, editor):
         ("quizzes", "q1"),
         ("cards", "flegacy-X"),
         ("decks", "dlegacy-X"),
+        ("topics", "t1"),
         ("subjects", "s1"),
     }
     assert (
-        result["deleted"][-1] == {"kind": "subjects", "id": "s1"} and len(result["changeIds"]) == 5
+        result["deleted"][-1] == {"kind": "subjects", "id": "s1"} and len(result["changeIds"]) == 6
     )
     snapshot = draft(client)
-    assert all(snapshot[k] == [] for k in ("subjects", "quizzes", "questions", "decks", "cards"))
+    assert all(
+        snapshot[k] == [] for k in ("subjects", "topics", "quizzes", "questions", "decks", "cards")
+    )
     assert (
-        scalar(db.backup, "SELECT count(*) FROM content.draft_changes WHERE action='delete'") == 5
+        scalar(db.backup, "SELECT count(*) FROM content.draft_changes WHERE action='delete'") == 6
     )
 
 
@@ -709,7 +750,7 @@ def test_publish_runs_full_validation(db, editor):
     client, _, _ = editor
     ok(
         call(
-            client, "POST", "/draft/quizzes", {"parentId": "s1", "fields": {"name": "Empty quiz"}}
+            client, "POST", "/draft/quizzes", {"parentId": "t1", "fields": {"name": "Empty quiz"}}
         ),
         201,
     )

@@ -20,11 +20,17 @@ const requests = (store: ReturnType<typeof mount>['store']) =>
   store.fetcher.mock.calls.map(([url, init]) => `${init?.method ?? 'GET'} ${String(url).replace('/api/admin', '')}`);
 const navigator = () => within(screen.getByRole('region', { name: 'Quiz navigator' }));
 const frame = () => within(screen.getByRole('region', { name: 'Quiz editor' }));
-async function chooseQuiz() {
+async function chooseSubject() {
   fireEvent.click(navigator().getAllByTitle('Open')[0]);
   fireEvent.click(screen.getByRole('option', { name: 'Subject One · s1' }));
-  await navigator().findByRole('combobox', { name: 'Quiz' });
+  await navigator().findByRole('combobox', { name: 'Topic' });
+}
+async function chooseQuiz() {
+  await chooseSubject();
   fireEvent.click(navigator().getAllByTitle('Open')[1]);
+  fireEvent.click(screen.getByRole('option', { name: 'Topic 1 · t1' }));
+  await navigator().findByRole('combobox', { name: 'Quiz' });
+  fireEvent.click(navigator().getAllByTitle('Open')[2]);
   fireEvent.click(screen.getByRole('option', { name: 'First quiz · q1' }));
   await navigator().findByRole('button', { name: /1\. i1/ });
 }
@@ -76,21 +82,23 @@ describe('quiz editor over the record API', () => {
     expect(store.snapshot.questions.map((row) => row.id)).toEqual(['i1', 'i3', 'i91', 'i2', 'i4']);
   });
 
-  it('adds a subject, quizzes and questions from content-only JSON with one request per step', async () => {
+  it('adds a topic, quizzes and questions from content-only JSON with one request per step', async () => {
     const { store } = mount();
+    await chooseSubject();
     fireEvent.click(frame().getByRole('tab', { name: 'Add' }));
     const json = await frame().findByRole('textbox', { name: 'JSON' });
     fireEvent.change(json, {
       target: {
         value: JSON.stringify({
-          subject: { name: 'Second subject' },
+          topic: { name: 'Second topic' },
           quizzes: [{ name: 'Second quiz', items: [{ stem: 'New stem', choices: ['A', 'B'], answer: 'A', rationale: 'New rationale' }] }],
         }),
       },
     });
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(store.snapshot.subjects).toHaveLength(3));
-    expect(requests(store)).toEqual(['POST /draft/subjects', 'POST /draft/quizzes', 'POST /draft/quizzes/q91/questions/bulk', 'GET /draft']);
+    await waitFor(() => expect(store.snapshot.topics).toHaveLength(3));
+    expect(store.snapshot.topics.find((row) => row.id === 't91')).toMatchObject({ id: 't91', subjectId: 's1', name: 'Second topic' });
+    expect(requests(store)).toEqual(['POST /draft/topics', 'POST /draft/quizzes', 'POST /draft/quizzes/q91/questions/bulk', 'GET /draft']);
     expect(store.snapshot.questions.at(-1)).toMatchObject({ quizId: 'q91', choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }] });
     // The new quiz is selected afterwards.
     await navigator().findByRole('button', { name: /1\. i91/ });
@@ -98,20 +106,21 @@ describe('quiz editor over the record API', () => {
 
   it('does not send invalid batch JSON and keeps it, including after a server refusal', async () => {
     const { store } = mount();
+    await chooseSubject();
     fireEvent.click(frame().getByRole('tab', { name: 'Add' }));
     const json = await frame().findByRole('textbox', { name: 'JSON' });
-    fireEvent.change(json, { target: { value: '{ "subject": { "name": "X" }, "quizzes": [] }' } });
+    fireEvent.change(json, { target: { value: '{ "topic": { "name": "X" }, "quizzes": [] }' } });
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
     expect(await frame().findByText('$.quizzes must be a non-empty array.')).toBeVisible();
     expect(store.fetcher).not.toHaveBeenCalled();
     const text = JSON.stringify({
-      subject: { name: 'X' },
+      topic: { name: 'X' },
       quizzes: [{ name: 'Q', items: [{ stem: 'S', choices: ['A', 'B'], answer: 'A', rationale: 'R' }] }],
     });
     fireEvent.change(json, { target: { value: text } });
     store.rejectNext([{ path: '$.records[0].stem', code: 'blank', message: 'Stem is required.' }], /\/bulk$/);
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
-    expect(await frame().findByText(/Already saved to the draft: subject s91; parents q91/)).toBeVisible();
+    expect(await frame().findByText(/Already saved to the draft: topic t91; parents q91/)).toBeVisible();
     expect(json).toHaveValue(text);
   });
 

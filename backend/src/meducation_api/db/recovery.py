@@ -54,8 +54,8 @@ GRANT USAGE ON SCHEMA content TO meducation_reader,meducation_backup,meducation_
 GRANT SELECT ON ALL TABLES IN SCHEMA content TO meducation_operator,meducation_backup;
 GRANT SELECT ON ALL SEQUENCES IN SCHEMA content TO meducation_backup;
 GRANT SELECT ON content.schema_version,content.active_publication,content.published_releases,
-content.published_subjects,content.published_quizzes,content.published_questions,
-content.published_decks,content.published_flashcards TO meducation_reader;
+content.published_subjects,content.published_topics,content.published_quizzes,
+content.published_questions,content.published_decks,content.published_flashcards TO meducation_reader;
 GRANT EXECUTE ON FUNCTION content.store_release(uuid,text,text,jsonb,text,text),
 content.activate_release(uuid,uuid,bigint,text,text) TO meducation_operator;
 REVOKE ALL ON SCHEMA admin_auth FROM PUBLIC;
@@ -64,12 +64,14 @@ GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA admin_auth TO meducati
 GRANT SELECT ON ALL TABLES IN SCHEMA admin_auth TO meducation_backup;
 GRANT USAGE ON SCHEMA content TO meducation_editor;
 GRANT SELECT ON content.active_publication,content.published_releases TO meducation_editor;
-GRANT SELECT,INSERT,UPDATE,DELETE ON content.draft_subjects,content.draft_quizzes,
-content.draft_questions,content.draft_decks,content.draft_flashcards TO meducation_editor;
+GRANT SELECT,INSERT,UPDATE,DELETE ON content.draft_subjects,content.draft_topics,
+content.draft_quizzes,content.draft_questions,content.draft_decks,content.draft_flashcards
+TO meducation_editor;
 GRANT SELECT,INSERT ON content.draft_changes TO meducation_editor;
 GRANT SELECT,UPDATE ON content.draft_state TO meducation_editor;
-GRANT USAGE,SELECT ON SEQUENCE content.draft_subject_ids,content.draft_quiz_ids,
-content.draft_question_ids,content.draft_changes_change_id_seq TO meducation_editor;
+GRANT USAGE,SELECT ON SEQUENCE content.draft_subject_ids,content.draft_topic_ids,
+content.draft_quiz_ids,content.draft_question_ids,content.draft_changes_change_id_seq
+TO meducation_editor;
 GRANT SELECT ON content.releases,content.publication_events TO meducation_editor;
 GRANT EXECUTE ON FUNCTION content.nonblank(text),
 content.store_release(uuid,text,text,jsonb,text,text),

@@ -5,23 +5,27 @@ import { errorMessages } from './data/PairedHttpClient';
 import type { DraftStore } from './data/DraftStore';
 import { useAdminConfirmation } from './useAdminConfirmation';
 
-export type BulkTarget =
-  | { kind: 'newSubject' }
-  | { kind: 'subject'; subjectId?: string }
-  | { kind: 'quiz'; subjectId?: string; quizId?: string };
+export interface BulkTarget {
+  kind: 'newTopic' | 'topic' | 'quiz';
+  subjectId?: string;
+  topicId?: string;
+  quizId?: string;
+}
 
-const contextOf = (target: BulkTarget): BulkAddContext | undefined =>
-  target.kind === 'newSubject'
-    ? target
-    : target.kind === 'subject'
-      ? target.subjectId
-        ? { kind: 'subject', subjectId: target.subjectId }
+const contextOf = ({ kind, subjectId, topicId, quizId }: BulkTarget): BulkAddContext | undefined =>
+  kind === 'newTopic'
+    ? subjectId
+      ? { kind, subjectId }
+      : undefined
+    : kind === 'topic'
+      ? topicId
+        ? { kind, topicId }
         : undefined
-      : target.subjectId && target.quizId
-        ? { kind: 'quiz', subjectId: target.subjectId, quizId: target.quizId }
+      : topicId && quizId
+        ? { kind, topicId, quizId }
         : undefined;
 
-/** Content-only JSON for new subjects, quizzes and questions. Save creates parents first, then the questions. */
+/** Content-only JSON for new topics, quizzes and questions. Save creates parents first, then the questions. */
 export function QuizBulkAdd({
   store,
   target,
@@ -35,7 +39,7 @@ export function QuizBulkAdd({
   blocked: boolean;
   onTargetChange: (target: BulkTarget) => void;
   onDirtyChange: (dirty: boolean) => void;
-  onAdded: (where: { subjectId?: string; quizId?: string }) => void;
+  onAdded: (where: { subjectId?: string; topicId?: string; quizId?: string }) => void;
 }) {
   const bank = store.quizBank;
   const context = contextOf(target);
@@ -45,6 +49,7 @@ export function QuizBulkAdd({
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [subjectQuery, setSubjectQuery] = useState<string>();
+  const [topicQuery, setTopicQuery] = useState<string>();
   const [quizQuery, setQuizQuery] = useState<string>();
   const dirty = text !== template;
   const confirmation = useAdminConfirmation([text, target, busy]);
@@ -63,7 +68,8 @@ export function QuizBulkAdd({
     setNotice('');
     onTargetChange(next);
   };
-  const subject = bank.subjects.find((row) => row.id === (target.kind === 'newSubject' ? undefined : target.subjectId));
+  const subject = bank.subjects.find((row) => row.id === target.subjectId);
+  const topic = bank.topics.find((row) => row.id === (target.kind === 'newTopic' ? undefined : target.topicId));
   const quiz = bank.quizzes.find((row) => row.id === (target.kind === 'quiz' ? target.quizId : undefined));
   const save = async () => {
     if (!context) return;
@@ -88,7 +94,8 @@ export function QuizBulkAdd({
       setNotice(`Added ${result.created} item(s) to the draft. Saving does not publish.`);
       if (sent === text) setText(template);
       onAdded({
-        subjectId: result.subjectId ?? (context.kind === 'newSubject' ? undefined : context.subjectId),
+        subjectId: target.subjectId,
+        topicId: result.topicId ?? target.topicId,
         quizId: context.kind === 'quiz' ? context.quizId : result.parentIds[0],
       });
     } catch (error) {
@@ -105,15 +112,16 @@ export function QuizBulkAdd({
         select
         label="Destination"
         value={target.kind}
-        onChange={(event) => void retarget({ kind: event.target.value as BulkTarget['kind'] })}
+        onChange={(event) =>
+          void retarget({ kind: event.target.value as BulkTarget['kind'], subjectId: target.subjectId })
+        }
         fullWidth
       >
-        <MenuItem value="newSubject">Create a subject and quizzes</MenuItem>
-        <MenuItem value="subject">Add quizzes to a subject</MenuItem>
+        <MenuItem value="newTopic">Create a topic and quizzes</MenuItem>
+        <MenuItem value="topic">Add quizzes to a topic</MenuItem>
         <MenuItem value="quiz">Add items to a quiz</MenuItem>
       </TextField>
-      {target.kind !== 'newSubject' && (
-        <Autocomplete
+      <Autocomplete
           inputValue={subjectQuery ?? (subject ? `${subject.name} · ${subject.id}` : '')}
           onInputChange={(_, value, reason) => {
             if (reason === 'input') setSubjectQuery(value);
@@ -124,10 +132,29 @@ export function QuizBulkAdd({
           isOptionEqualToValue={(left, right) => left.id === right.id}
           onChange={(_, row) => {
             setSubjectQuery(undefined);
+            setTopicQuery(undefined);
             setQuizQuery(undefined);
             void retarget({ kind: target.kind, subjectId: row?.id });
           }}
           renderInput={(params) => <TextField {...params} label="Subject" />}
+        />
+      {target.kind !== 'newTopic' && (
+        <Autocomplete
+          inputValue={topicQuery ?? (topic ? `${topic.name} · ${topic.id}` : '')}
+          onInputChange={(_, value, reason) => {
+            if (reason === 'input') setTopicQuery(value);
+          }}
+          options={bank.topics.filter((row) => row.subjectId === target.subjectId)}
+          value={topic ?? null}
+          disabled={!target.subjectId}
+          getOptionLabel={(row) => `${row.name} · ${row.id}`}
+          isOptionEqualToValue={(left, right) => left.id === right.id}
+          onChange={(_, row) => {
+            setTopicQuery(undefined);
+            setQuizQuery(undefined);
+            void retarget({ kind: target.kind, subjectId: target.subjectId, topicId: row?.id });
+          }}
+          renderInput={(params) => <TextField {...params} label="Topic" />}
         />
       )}
       {target.kind === 'quiz' && (
@@ -136,27 +163,31 @@ export function QuizBulkAdd({
           onInputChange={(_, value, reason) => {
             if (reason === 'input') setQuizQuery(value);
           }}
-          options={bank.quizzes.filter((row) => row.subjectId === target.subjectId)}
+          options={bank.quizzes.filter((row) => row.topicId === target.topicId)}
           value={quiz ?? null}
-          disabled={!target.subjectId}
+          disabled={!target.topicId}
           getOptionLabel={(row) => `${row.name} · ${row.id}`}
           isOptionEqualToValue={(left, right) => left.id === right.id}
           onChange={(_, row) => {
             setQuizQuery(undefined);
-            void retarget({ kind: 'quiz', subjectId: target.subjectId, quizId: row?.id });
+            void retarget({ kind: 'quiz', subjectId: target.subjectId, topicId: target.topicId, quizId: row?.id });
           }}
           renderInput={(params) => <TextField {...params} label="Quiz" />}
         />
       )}
       <Typography variant="body2">
         Destination ·{' '}
-        {target.kind === 'newSubject'
-          ? 'New subject'
-          : target.kind === 'subject'
-            ? (subject?.name ?? 'Choose a subject')
-            : subject && quiz
-              ? `${subject.name} / ${quiz.name}`
-              : 'Choose a subject and quiz'}
+        {!subject
+          ? 'Choose a subject'
+          : target.kind === 'newTopic'
+            ? `${subject.name} / new topic`
+            : !topic
+              ? 'Choose a topic'
+              : target.kind === 'topic'
+                ? `${subject.name} / ${topic.name}`
+                : quiz
+                  ? `${subject.name} / ${topic.name} / ${quiz.name}`
+                  : 'Choose a quiz'}
         . Up to 1,000 items per quiz. The server assigns every ID; saving does not publish.
       </Typography>
       <TextField
@@ -174,7 +205,7 @@ export function QuizBulkAdd({
         maxRows={24}
         fullWidth
         InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
-        placeholder={context ? 'Edit subject, quiz, and item content.' : 'Choose a destination first.'}
+        placeholder={context ? 'Edit topic, quiz, and item content.' : 'Choose a destination first.'}
       />
       {problems.length > 0 && (
         <Alert severity="error">

@@ -22,16 +22,22 @@ const quizNav = () => within(screen.getByRole('region', { name: 'Quiz navigator'
 async function chooseSubject() {
   fireEvent.click(quizNav().getAllByTitle('Open')[0]);
   fireEvent.click(screen.getByRole('option', { name: 'Subject One · s1' }));
+  await quizNav().findByRole('combobox', { name: 'Topic' });
+}
+async function chooseTopic() {
+  await chooseSubject();
+  fireEvent.click(quizNav().getAllByTitle('Open')[1]);
+  fireEvent.click(screen.getByRole('option', { name: 'Topic 1 · t1' }));
   await quizNav().findByRole('combobox', { name: 'Quiz' });
 }
 
-it('deletes a subject with its quizzes, items, decks and cards through one cascading request', async () => {
+it('deletes a subject with its topics, quizzes, items, decks and cards through one cascading request', async () => {
   const { store } = mount();
   await chooseSubject();
   fireEvent.click(quizNav().getByRole('button', { name: 'Subject actions' }));
   fireEvent.click(screen.getByRole('menuitem', { name: 'Delete subject…' }));
   const dialog = screen.getByRole('dialog', { name: 'Delete subject?' });
-  expect(within(dialog).getByText('Affected: 1 subjects · 2 quizzes · 3 items · 2 decks · 2 cards.')).toBeVisible();
+  expect(within(dialog).getByText('Affected: 1 subjects · 1 topics · 2 quizzes · 3 items · 2 decks · 2 cards.')).toBeVisible();
   expect(store.fetcher).not.toHaveBeenCalled();
   fireEvent.click(within(dialog).getByRole('button', { name: 'Delete subject' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
@@ -43,8 +49,8 @@ it('deletes a subject with its quizzes, items, decks and cards through one casca
 
 it('deletes selected questions one request each, and shows a version conflict without losing the dialog', async () => {
   const { store } = mount();
-  await chooseSubject();
-  fireEvent.click(quizNav().getAllByTitle('Open')[1]);
+  await chooseTopic();
+  fireEvent.click(quizNav().getAllByTitle('Open')[2]);
   fireEvent.click(screen.getByRole('option', { name: 'First quiz · q1' }));
   fireEvent.click(await quizNav().findByRole('button', { name: 'Select' }));
   fireEvent.click(quizNav().getByRole('button', { name: 'Select this page' }));
@@ -66,6 +72,9 @@ it('keeps unsaved text in both tabs and reports it for the publish gate', async 
   const flashNav = within(screen.getByRole('region', { name: 'Flashcard navigator' }));
   fireEvent.click(flashNav.getAllByTitle('Open')[0]);
   fireEvent.click(screen.getByRole('option', { name: 'Subject One' }));
+  await flashNav.findByRole('combobox', { name: 'Topic' });
+  fireEvent.click(flashNav.getAllByTitle('Open')[1]);
+  fireEvent.click(screen.getByRole('option', { name: 'Topic 1' }));
   await flashNav.findByRole('combobox', { name: 'Deck' });
   fireEvent.click(flashNav.getByRole('button', { name: 'Add decks' }));
   fireEvent.change(within(screen.getByRole('dialog')).getByRole('textbox', { name: 'JSON' }), { target: { value: '{ "decks": [] }' } });

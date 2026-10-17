@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Question, Quiz } from '../../../domain/types';
 import { useQuizLaunch } from './useQuizLaunch';
 
-const quiz: Quiz = { id: 'quiz', subjectId: 'subject', name: 'Test', questionCount: 1 };
+const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Test', questionCount: 1 };
 
 function deferred<T>() {
   let resolve!: (value: T) => void;

@@ -21,6 +21,7 @@ from meducation_api.repositories.question_bank import (
     Question,
     Quiz,
     Subject,
+    Topic,
 )
 from meducation_api.repositories.source import ContentView
 from meducation_api.settings import Settings
@@ -29,10 +30,20 @@ from meducation_api.settings import Settings
 @dataclass(frozen=True)
 class Catalog:
     subjects: tuple[Subject, ...]
+    topics: tuple[Topic, ...]
     quizzes: tuple[Quiz, ...]
     question_ids: dict[str, tuple[str, ...]]
     decks: tuple[FlashcardDeck, ...]
     card_ids: dict[str, tuple[str, ...]]
+
+    def topic_subject(self, topic_id: str) -> str:
+        return next(t.subjectId for t in self.topics if t.id == topic_id)
+
+    def list_topics(self, subject_id: str) -> list[Topic]:
+        return [t.model_copy() for t in self.topics if t.subjectId == subject_id]
+
+    def has_subject(self, subject_id: str) -> bool:
+        return any(s.id == subject_id for s in self.subjects)
 
 
 def _rows(connection: Connection, table: str, release: UUID) -> list[dict[str, Any]]:
@@ -51,15 +62,19 @@ def _load_catalog(connection: Connection, release: UUID) -> Catalog:
         Subject.model_validate({k: r[k] for k in ("id", "name", "accent")})
         for r in _rows(connection, "published_subjects", release)
     )
+    topics = tuple(
+        Topic(id=r["id"], subjectId=r["subject_id"], name=r["name"])
+        for r in _rows(connection, "published_topics", release)
+    )
     quizzes = tuple(
-        Quiz(id=r["id"], subjectId=r["subject_id"], name=r["name"])
+        Quiz(id=r["id"], topicId=r["topic_id"], name=r["name"])
         for r in _rows(connection, "published_quizzes", release)
     )
     decks = tuple(
         FlashcardDeck.model_validate(
             {
                 "id": r["id"],
-                "subjectId": r["subject_id"],
+                "topicId": r["topic_id"],
                 "name": r["name"],
                 **({"description": r["description"]} if r["description"] is not None else {}),
             }
@@ -77,7 +92,7 @@ def _load_catalog(connection: Connection, release: UUID) -> Catalog:
         ).mappings():
             groups.setdefault(row[parent], []).append(row["id"])
         memberships.append({key: tuple(ids) for key, ids in groups.items()})
-    return Catalog(subjects, quizzes, memberships[0], decks, memberships[1])
+    return Catalog(subjects, topics, quizzes, memberships[0], decks, memberships[1])
 
 
 class PostgresQuestionBankRepository:
@@ -97,17 +112,23 @@ class PostgresQuestionBankRepository:
         return [s.model_copy(deep=True) for s in self.catalog.subjects]
 
     def has_subject(self, subject_id: str) -> bool:
-        return any(s.id == subject_id for s in self.catalog.subjects)
+        return self.catalog.has_subject(subject_id)
+
+    def list_topics(self, subject_id: str) -> list[Topic]:
+        return self.catalog.list_topics(subject_id)
+
+    def topic_subject(self, topic_id: str) -> str:
+        return self.catalog.topic_subject(topic_id)
 
     def subject_quiz_summary(self, subject_id: str) -> tuple[int, list[str]]:
-        ids = [q.id for q in self.catalog.quizzes if q.subjectId == subject_id]
+        ids = [q.id for q, _ in self.list_quizzes(subject_id)]
         return len(ids), ids
 
     def list_quizzes(self, subject_id: str) -> list[tuple[Quiz, int]]:
         return [
             (q.model_copy(deep=True), len(self.catalog.question_ids.get(q.id, ())))
             for q in self.catalog.quizzes
-            if q.subjectId == subject_id
+            if self.catalog.topic_subject(q.topicId) == subject_id
         ]
 
     def get_quiz(self, quiz_id: str) -> tuple[Quiz, int] | None:
@@ -166,12 +187,20 @@ class PostgresFlashcardCatalogRepository:
         return self._revision
 
     def has_subject(self, subject_id: str) -> bool:
-        return any(s.id == subject_id for s in self.catalog.subjects)
+        return self.catalog.has_subject(subject_id)
+
+    def list_topics(self, subject_id: str) -> list[Topic]:
+        return self.catalog.list_topics(subject_id)
+
+    def topic_subject(self, topic_id: str) -> str:
+        return self.catalog.topic_subject(topic_id)
 
     def list_subjects(self) -> list[FlashcardSubjectSummary]:
         result = []
         for subject in self.catalog.subjects:
-            decks = [d for d in self.catalog.decks if d.subjectId == subject.id]
+            decks = [
+                d for d in self.catalog.decks if self.catalog.topic_subject(d.topicId) == subject.id
+            ]
             result.append(
                 FlashcardSubjectSummary(
                     **subject.model_dump(),
@@ -186,7 +215,7 @@ class PostgresFlashcardCatalogRepository:
         return [
             (d.model_copy(deep=True), len(self.catalog.card_ids.get(d.id, ())))
             for d in self.catalog.decks
-            if d.subjectId == subject_id
+            if self.catalog.topic_subject(d.topicId) == subject_id
         ]
 
     def has_deck(self, deck_id: str) -> bool:
@@ -240,7 +269,7 @@ class PostgresContentSource:
                         text(
                             "SELECT p.release_id,p.publication_sequence,r.quiz_revision,r.flashcard_revision "
                             "FROM content.active_publication p JOIN content.published_releases r USING(release_id) "
-                            "WHERE p.publication_sequence>0"
+                            "WHERE p.publication_sequence>0 AND r.quiz_schema_version=5"
                         )
                     )
                     .mappings()

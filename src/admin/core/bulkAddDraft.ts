@@ -2,9 +2,9 @@ import type { StoredQuestionBank } from '../../content/schema/schema';
 import type { BulkPlan } from '../data/DraftStore';
 
 export type BulkAddContext =
-  | { kind: 'newSubject' }
-  | { kind: 'subject'; subjectId: string }
-  | { kind: 'quiz'; subjectId: string; quizId: string };
+  | { kind: 'newTopic'; subjectId: string }
+  | { kind: 'topic'; topicId: string }
+  | { kind: 'quiz'; topicId: string; quizId: string };
 
 export interface BulkAddItemDraft {
   stem: string;
@@ -38,7 +38,7 @@ export interface BulkAddQuizDraft {
 }
 
 export type BulkAddDraft =
-  | { subject: { name: string }; quizzes: BulkAddQuizDraft[] }
+  | { topic: { name: string }; quizzes: BulkAddQuizDraft[] }
   | { quizzes: BulkAddQuizDraft[] }
   | { items: BulkAddItemDraft[] };
 
@@ -127,16 +127,16 @@ export function parseBulkAddDraft(value: unknown, context: BulkAddContext): { dr
     return errors.length ? { errors } : { draft: { items: parsedItems.map(result => result.item!) }, errors };
   }
 
-  if (context.kind === 'newSubject') {
-    for (const key of Object.keys(value)) if (!['subject', 'quizzes'].includes(key)) errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
-    if (!isObject(value.subject)) errors.push('$.subject must contain editable subject content.');
+  if (context.kind === 'newTopic') {
+    for (const key of Object.keys(value)) if (!['topic', 'quizzes'].includes(key)) errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
+    if (!isObject(value.topic)) errors.push('$.topic must contain editable topic content.');
     else {
-      for (const key of Object.keys(value.subject)) if (key !== 'name') errors.push(`$.subject.${key} is managed by the admin panel or is not editable.`);
-      if (!nonEmptyString(value.subject.name)) errors.push('$.subject.name must be a non-empty string.');
+      for (const key of Object.keys(value.topic)) if (key !== 'name') errors.push(`$.topic.${key} is managed by the admin panel or is not editable.`);
+      if (!nonEmptyString(value.topic.name)) errors.push('$.topic.name must be a non-empty string.');
     }
     const parsed = parseQuizzes(value.quizzes, '$.quizzes');
     errors.push(...parsed.errors);
-    return errors.length ? { errors } : { draft: { subject: { name: (value.subject as JsonObject).name as string }, quizzes: parsed.quizzes! }, errors };
+    return errors.length ? { errors } : { draft: { topic: { name: (value.topic as JsonObject).name as string }, quizzes: parsed.quizzes! }, errors };
   }
 
   for (const key of Object.keys(value)) if (key !== 'quizzes') errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
@@ -162,21 +162,21 @@ export function compileBulkAddDraft(
   if (context.kind === 'quiz') {
     if (!('items' in draft)) return { errors: ['Selected quiz draft must contain an items array.'] };
     const selectedQuiz = bank.quizzes.find((quiz) => quiz.id === context.quizId);
-    if (!selectedQuiz || selectedQuiz.subjectId !== context.subjectId)
-      return { errors: ['Selected quiz is not part of the selected subject.'] };
+    if (!selectedQuiz || selectedQuiz.topicId !== context.topicId)
+      return { errors: ['Selected quiz is not part of the selected topic.'] };
     return {
       plan: { groups: [{ parentId: selectedQuiz.id, childKind: 'questions', children: draft.items.map(itemFields) }] },
       errors: [],
     };
   }
-  if ('items' in draft) return { errors: ['Subject draft must contain a quizzes array.'] };
-  if (context.kind === 'newSubject' && !('subject' in draft))
-    return { errors: ['New subject draft is missing subject content.'] };
+  if ('items' in draft) return { errors: ['Topic draft must contain a quizzes array.'] };
+  if (context.kind === 'newTopic' && !('topic' in draft))
+    return { errors: ['New topic draft is missing topic content.'] };
   return {
     plan: {
-      ...(context.kind === 'subject'
-        ? { subjectId: context.subjectId }
-        : { subject: { name: (draft as { subject: { name: string } }).subject.name, accent: '#bc531e' } }),
+      ...(context.kind === 'topic'
+        ? { topicId: context.topicId }
+        : { subjectId: context.subjectId, topic: { name: (draft as { topic: { name: string } }).topic.name } }),
       groups: draft.quizzes.map((quiz) => ({
         create: { kind: 'quizzes' as const, fields: { name: quiz.name } },
         childKind: 'questions' as const,
@@ -190,10 +190,10 @@ export function compileBulkAddDraft(
 /** Editable JSON contains content only; parent IDs and protocol fields live in panel state. */
 export function bulkAddTemplate(context: BulkAddContext): BulkAddDraft {
   const item = { stem: '', choices: ['', ''], answer: 'A', rationale: '' };
-  if (context.kind === 'newSubject') return {
-    subject: { name: '' },
+  if (context.kind === 'newTopic') return {
+    topic: { name: '' },
     quizzes: [{ name: '', items: [{ ...item }] }],
   };
-  if (context.kind === 'subject') return { quizzes: [{ name: '', items: [{ ...item }] }] };
+  if (context.kind === 'topic') return { quizzes: [{ name: '', items: [{ ...item }] }] };
   return { items: [{ ...item }] };
 }

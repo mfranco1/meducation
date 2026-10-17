@@ -6,7 +6,7 @@ import {
   parseFlashcardBulkAddDraft,
 } from './flashcardBulkAddDraft';
 
-const subjectContext = { kind: 'subject', subjectId: 's1' } as const;
+const topicContext = { kind: 'topic', topicId: 't1' } as const;
 
 describe('flashcard bulk add drafts', () => {
   it('provides parseable templates for both selected destinations', () => {
@@ -14,7 +14,7 @@ describe('flashcard bulk add drafts', () => {
       kind: 'deck',
       deckId: 'd1',
     });
-    const decks = parseFlashcardBulkAddDraft(JSON.parse(flashcardBulkAddTemplate(subjectContext)), subjectContext);
+    const decks = parseFlashcardBulkAddDraft(JSON.parse(flashcardBulkAddTemplate(topicContext)), topicContext);
     expect(cards.draft).toMatchObject({ kind: 'cards', cards: [{ front: 'Question text', back: 'Answer text' }] });
     expect(decks.draft).toMatchObject({
       kind: 'decks',
@@ -36,12 +36,12 @@ describe('flashcard bulk add drafts', () => {
           },
         ],
       },
-      subjectContext,
+      topicContext,
     );
-    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, subjectContext, storedFlashcardBank, storedQuestionBank.subjects);
+    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, topicContext, storedFlashcardBank, storedQuestionBank.topics);
     expect(compiled.diagnostics).toEqual([]);
     expect(compiled.compiled?.plan).toEqual({
-      subjectId: 's1',
+      topicId: 't1',
       groups: [
         { create: { kind: 'decks', fields: { name: 'Empty deck', description: 'Keep this description' } }, childKind: 'cards', children: [] },
         {
@@ -60,7 +60,7 @@ describe('flashcard bulk add drafts', () => {
   it('plans cards for a selected existing deck', () => {
     const context = { kind: 'deck', deckId: 'd-cranial' } as const;
     const parsed = parseFlashcardBulkAddDraft({ cards: [{ front: 'Added', back: 'Answer' }] }, context);
-    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, context, storedFlashcardBank, storedQuestionBank.subjects);
+    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, context, storedFlashcardBank, storedQuestionBank.topics);
     expect(compiled.compiled?.plan).toEqual({
       groups: [{ parentId: 'd-cranial', childKind: 'cards', children: [{ front: 'Added', back: 'Answer' }] }],
     });
@@ -77,7 +77,7 @@ describe('flashcard bulk add drafts', () => {
           },
         ],
       },
-      subjectContext,
+      topicContext,
     );
     expect(parsed.draft).toBeUndefined();
     expect(parsed.diagnostics.map((issue) => issue.path)).toEqual([
@@ -90,14 +90,14 @@ describe('flashcard bulk add drafts', () => {
   });
 
   it('rejects empty batches and a draft intended for a different destination', () => {
-    expect(parseFlashcardBulkAddDraft({ decks: [] }, subjectContext).diagnostics[0].path).toBe('$.decks');
+    expect(parseFlashcardBulkAddDraft({ decks: [] }, topicContext).diagnostics[0].path).toBe('$.decks');
     const context = { kind: 'deck', deckId: 'd-missing' } as const;
     const parsed = parseFlashcardBulkAddDraft({ cards: [{ front: 'Front', back: 'Back' }] }, context);
     const compiled = compileFlashcardBulkAddDraft(
       parsed.draft!,
       context,
       storedFlashcardBank,
-      storedQuestionBank.subjects,
+      storedQuestionBank.topics,
     );
     expect(compiled.diagnostics[0].message).toContain('selected deck no longer exists');
   });

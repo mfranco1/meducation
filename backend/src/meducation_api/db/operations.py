@@ -50,9 +50,9 @@ def paired_artifacts(quiz_text: str, flashcard_text: str) -> tuple[str, str]:
         )
         bank = Bank.model_validate(q, strict=True)
         flashcards = FlashcardBank.model_validate(f, strict=True)
-        subjects = {subject.id for subject in bank.subjects}
-        if any(deck.subjectId not in subjects for deck in flashcards.decks):
-            raise ValueError("Flashcard subject is missing from the paired question bank.")
+        topics = {topic.id for topic in bank.topics}
+        if any(deck.topicId not in topics for deck in flashcards.decks):
+            raise ValueError("Flashcard topic is missing from the paired question bank.")
         return artifact_text(q), artifact_text(f)
     except ValueError, TypeError:
         raise ContentDatabaseError(

@@ -1,7 +1,8 @@
 {
-  "schemaVersion": 4,
+  "schemaVersion": 5,
   "subjects": [{ "id": "s1", "name": "Browser Test Subject", "accent": "#b9511b" }],
-  "quizzes": [{ "id": "q1", "subjectId": "s1", "name": "Browser Test Quiz" }],
+  "topics": [{ "id": "t1", "subjectId": "s1", "name": "Browser Test Topic" }],
+  "quizzes": [{ "id": "q1", "topicId": "t1", "name": "Browser Test Quiz" }],
   "questions": [
     {
       "id": "i1",

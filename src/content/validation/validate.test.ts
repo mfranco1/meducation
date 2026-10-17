@@ -11,17 +11,19 @@ describe('question bank validation', () => {
     };
     const issues = validateQuestionBank(
       [{ id: 's1', name: 'S', accent: '' }],
-      [{ id: 'q1', subjectId: 's1', name: 'Z', questionCount: 2 }],
+      [{ id: 't1', subjectId: 's1', name: 'T' }],
+      [{ id: 'q1', topicId: 't1', name: 'Z' }],
       [question, question],
     );
     expect(issues.filter(issue => issue.level === 'error').length).toBeGreaterThan(2);
   });
 
-  it('rejects legacy fields and non-compact IDs in stored schema version 4', () => {
+  it('rejects legacy fields and non-compact IDs in stored schema version 5', () => {
     const bank = {
-      schemaVersion: 4,
+      schemaVersion: 5,
       subjects: [{ id: 's', name: 'S', accent: '', description: '' }],
-      quizzes: [{ id: 'z', subjectId: 's', name: 'Z', questionCount: 1 }],
+      topics: [{ id: 't', subjectId: 's', name: 'T' }],
+      quizzes: [{ id: 'z', topicId: 't', name: 'Z', questionCount: 1 }],
       questions: [{
         id: 'q', quizId: 'z', subjectId: 's', questionNumber: 1,
         answerSource: 'provided_key', sourceAnswer: 'A', stem: 'x', choices: [],
@@ -39,27 +41,27 @@ describe('question bank validation', () => {
 });
 
 describe('flashcard bank validation', () => {
-  const subjects = [{ id: 's1', name: 'Subject', accent: '#123456' }];
+  const topics = [{ id: 't1', subjectId: 's1', name: 'Topic' }];
   const bank: StoredFlashcardBank = {
-    schemaVersion: 2,
-    decks: [{ id: 'd-basics', subjectId: 's1', name: 'Basics' }],
+    schemaVersion: 3,
+    decks: [{ id: 'd-basics', topicId: 't1', name: 'Basics' }],
     cards: [{ id: 'f-one', deckId: 'd-basics', front: '**Front**', back: 'Back' }],
   };
 
-  it('accepts normalized parent references and shared subject IDs', () => {
-    expect(validateStoredFlashcardBank(bank, subjects)).toEqual([]);
+  it('accepts normalized parent references and shared topic IDs', () => {
+    expect(validateStoredFlashcardBank(bank, topics)).toEqual([]);
   });
 
   it('rejects orphan references, invalid prefixes, empty fields, and unknown keys', () => {
     const invalid = {
       ...bank,
-      decks: [{ ...bank.decks[0], subjectId: 's404', name: '  ', extra: true }],
+      decks: [{ ...bank.decks[0], topicId: 't404', name: '  ', extra: true }],
       cards: [{ ...bank.cards[0], id: 'card', deckId: 'd404', front: ' ', back: 'Back' }],
     } as unknown as StoredFlashcardBank;
-    const messages = validateStoredFlashcardBank(invalid, subjects).map(issue => issue.message);
+    const messages = validateStoredFlashcardBank(invalid, topics).map(issue => issue.message);
     expect(messages).toEqual(expect.arrayContaining([
       expect.stringContaining('unknown field'),
-      expect.stringContaining('unknown subject'),
+      expect.stringContaining('unknown topic'),
       expect.stringContaining('unknown deck'),
       expect.stringContaining('must not be empty'),
       expect.stringContaining('prefix'),

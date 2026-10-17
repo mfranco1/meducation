@@ -1,6 +1,6 @@
 import type { Subject } from '../../../domain/types';
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../../../domain/flashcardStudy';
-import type { FlashcardDeckSummary, FlashcardSubjectSummary } from '../../../content/api/flashcardApiDecoders';
+import type { FlashcardSubjectSummary } from '../../../content/api/flashcardApiDecoders';
 
 export interface FlashcardDashboardSubject {
   subject: Subject;
@@ -27,17 +27,4 @@ export function activeFlashcardSubjects(subjects: FlashcardDashboardSubject[]): 
     .filter(({ subject }) => subject.activeDeckCount > 0)
     .sort((left, right) => (right.subject.latestActiveAt ?? '').localeCompare(left.subject.latestActiveAt ?? '') || left.index - right.index)
     .map(({ subject }) => subject);
-}
-
-export function decksForSubject(decks: readonly FlashcardDeckSummary[], checkpoints: Readonly<Record<string, FlashcardCheckpoint>>): FlashcardDeckSummary[] {
-  return decks.map((deck, index) => ({ deck, index }))
-    .sort((left, right) => {
-      const leftTime = checkpoints[left.deck.id]?.updatedAt;
-      const rightTime = checkpoints[right.deck.id]?.updatedAt;
-      if (leftTime && rightTime) return rightTime.localeCompare(leftTime) || left.index - right.index;
-      if (leftTime) return -1;
-      if (rightTime) return 1;
-      return left.index - right.index;
-    })
-    .map(({ deck }) => deck);
 }

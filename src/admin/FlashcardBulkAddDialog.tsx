@@ -28,7 +28,7 @@ export function FlashcardBulkAddDialog({
   context,
   destinationLabel,
   bank,
-  subjects,
+  topics,
   busy,
   onClose,
   onDraftDirtyChange,
@@ -37,7 +37,7 @@ export function FlashcardBulkAddDialog({
   context: FlashcardBulkAddContext;
   destinationLabel: string;
   bank: StoredFlashcardBank;
-  subjects: readonly { id: string }[];
+  topics: readonly { id: string }[];
   busy: boolean;
   onClose: () => void;
   onDraftDirtyChange: (dirty: boolean) => void;
@@ -106,7 +106,7 @@ export function FlashcardBulkAddDialog({
       setDiagnostics(parsed.diagnostics);
       return;
     }
-    const compiled = compileFlashcardBulkAddDraft(parsed.draft, context, bank, subjects);
+    const compiled = compileFlashcardBulkAddDraft(parsed.draft, context, bank, topics);
     setDiagnostics(compiled.diagnostics);
     if (!compiled.compiled) return;
     const version = generation.current;

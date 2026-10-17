@@ -13,10 +13,14 @@ from meducation_api.repositories.question_bank import FlashcardBank
 @pytest.fixture
 def quiz_bank() -> dict:
     return {
-        "schemaVersion": 4,
+        "schemaVersion": 5,
         "subjects": [
             {"id": "s1", "name": "Subject One", "accent": "#123456"},
             {"id": "s2", "name": "Subject Two", "accent": "#654321"},
+        ],
+        "topics": [
+            {"id": "t1", "subjectId": "s1", "name": "Topic One"},
+            {"id": "t2", "subjectId": "s2", "name": "Topic Two"},
         ],
         "quizzes": [],
         "questions": [],
@@ -57,9 +61,11 @@ def test_flashcard_api_catalog_cards_revision_and_missing_routes(
 
         catalog = client.get(f"/api/v1/flashcards/subjects/s1/catalog?revision={revision}")
         assert catalog.status_code == 200
-        assert set(catalog.json()) == {"revision", "decks"}
+        assert set(catalog.json()) == {"revision", "topics", "decks"}
+        assert [topic["id"] for topic in catalog.json()["topics"]] == ["t1"]
         assert [deck["cardCount"] for deck in catalog.json()["decks"]] == [2, 0]
         assert [deck["subjectId"] for deck in catalog.json()["decks"]] == ["s1", "s1"]
+        assert [deck["topicId"] for deck in catalog.json()["decks"]] == ["t1", "t1"]
         cards = client.get(f"/api/v1/flashcards/decks/d-cranial/cards?revision={revision}")
         assert [card["id"] for card in cards.json()["cards"]] == ["f-1", "f-2"]
         assert catalog.json()["decks"][0]["cardIds"] == ["f-1", "f-2"]

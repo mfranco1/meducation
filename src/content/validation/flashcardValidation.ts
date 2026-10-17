@@ -1,14 +1,13 @@
-import type { Subject } from '../../domain/types';
-import type { StoredFlashcardBank } from '../schema/schema';
+import type { StoredFlashcardBank, StoredTopic } from '../schema/schema';
 import { validateFlashcardMarkdown } from './markdownValidation';
 import { validateStoredFlashcardBank, type ValidationIssue } from './validate';
 
 /** The same authoring/content gate is used for staging, replay, and canonical validation. */
-export function validateFlashcardBank(bank: StoredFlashcardBank, subjects: readonly Subject[]): ValidationIssue[] {
-  const structural = validateStoredFlashcardBank(bank, [...subjects]);
+export function validateFlashcardBank(bank: StoredFlashcardBank, topics: readonly StoredTopic[]): ValidationIssue[] {
+  const structural = validateStoredFlashcardBank(bank, topics);
   if (structural.some((issue) => issue.level === 'error')) return structural;
   const warnings: ValidationIssue[] = [];
-  for (const records of [bank.decks.map((deck) => [deck.subjectId, deck.name])]) {
+  for (const records of [bank.decks.map((deck) => [deck.topicId, deck.name])]) {
     const seen = new Set<string>();
     for (const [parent, name] of records) {
       const key = JSON.stringify([parent, name.trim().toLocaleLowerCase()]);

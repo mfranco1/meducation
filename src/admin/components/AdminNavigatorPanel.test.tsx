@@ -10,8 +10,9 @@ import { AdminNavigatorPanel } from './AdminNavigatorPanel';
 const source = fixture as StoredQuestionBank;
 const versioned = <T extends object>(rows: T[]) => rows.map((row) => ({ ...row, version: 1 }));
 const bank: DraftQuizBank = {
-  schemaVersion: 4,
+  schemaVersion: 5,
   subjects: versioned(source.subjects),
+  topics: versioned(source.topics),
   quizzes: versioned(source.quizzes),
   questions: versioned(source.questions),
 };
@@ -27,6 +28,7 @@ describe('admin quiz navigator presentation contracts', () => {
           filter=""
           setFilter={vi.fn()}
           loadEntity={vi.fn()}
+          onNewTopic={vi.fn()}
           onManageSubjects={onManageSubjects}
         />
       </ThemeProvider>,
@@ -43,13 +45,15 @@ describe('admin quiz navigator presentation contracts', () => {
       <ThemeProvider theme={theme}>
         <AdminNavigatorPanel
           bank={bank}
-          selection={{ kind: 'quiz', id: 'q1', parentId: 's1' }}
+          selection={{ kind: 'quiz', id: 'q1', parentId: 't1' }}
           selectedSubjectId="s1"
+          selectedTopicId="t1"
           selectedQuizId="q1"
           filter=""
           setFilter={setFilter}
           loadEntity={loadEntity}
           chooseBulkTarget={chooseBulkTarget}
+          onNewTopic={vi.fn()}
           onManageSubjects={vi.fn()}
         />
       </ThemeProvider>,
@@ -71,6 +75,6 @@ describe('admin quiz navigator presentation contracts', () => {
     });
     expect(setFilter).toHaveBeenCalledExactlyOnceWith('Subject One');
     fireEvent.click(screen.getByRole('button', { name: 'Add questions' }));
-    expect(chooseBulkTarget).toHaveBeenCalledExactlyOnceWith('quiz', { subjectId: 's1', quizId: 'q1' });
+    expect(chooseBulkTarget).toHaveBeenCalledExactlyOnceWith('quiz', { subjectId: 's1', topicId: 't1', quizId: 'q1' });
   });
 });

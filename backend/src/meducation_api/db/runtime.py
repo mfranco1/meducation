@@ -50,7 +50,7 @@ class PostgresRuntime(AbstractContextManager["PostgresRuntime"]):
                     text(
                         "SELECT p.release_id FROM content.active_publication p "
                         "JOIN content.published_releases r ON r.release_id = p.release_id "
-                        "WHERE p.publication_sequence > 0"
+                        "WHERE p.publication_sequence > 0 AND r.quiz_schema_version = 5"
                     )
                 ).scalar_one_or_none()
                 if publication is None:

@@ -84,7 +84,7 @@ describe('progressive dashboard statistics', () => {
 
   it('recovers a failed subject quiz catalog without changing saved progress', async () => {
     const subject = { id: 's1', name: 'Recovery Subject', accent: '#b9511b' };
-    const quiz = { id: 'q1', subjectId: subject.id, name: 'Recovery Quiz', questionCount: 1, questionIds: ['i1'] };
+    const quiz = { id: 'q1', subjectId: subject.id, topicId: 't1', name: 'Recovery Quiz', questionCount: 1, questionIds: ['i1'] };
     runtimeQuestionBank.configureApi({
       revision: 'rev-subject-recovery',
       subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }],
@@ -96,7 +96,7 @@ describe('progressive dashboard statistics', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 404, headers: { get: () => null } })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-subject-recovery', quizzes: [quiz] }) });
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-subject-recovery', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }) });
     vi.stubGlobal('fetch', fetchMock);
 
     render(
@@ -109,7 +109,7 @@ describe('progressive dashboard statistics', () => {
     expect(screen.getAllByRole('button', { name: 'Retry' })).toHaveLength(1);
     expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByRole('button', { name: 'Retake quiz' })).toBeVisible();
+    expect(await screen.findByRole('button', { name: /^Retake quiz/  })).toBeVisible();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(progressKeys.map((key) => localStorage.getItem(key))).toEqual(before);
     expect(fetchMock.mock.calls.every(([url]) => !String(url).includes('/questions'))).toBe(true);
@@ -119,14 +119,14 @@ describe('progressive dashboard statistics', () => {
     const subject = { id: 's-cancel', name: 'Test Subject', accent: '#b9511b' };
     const quiz = {
       id: 'q-cancel',
-      subjectId: subject.id,
+      subjectId: subject.id, topicId: 't1',
       name: 'Test Quiz',
       questionCount: 1,
       questionIds: ['i-cancel'],
     };
     runtimeQuestionBank.configureApi(
       { revision: 'rev-cancel-app', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] },
-      [{ revision: 'rev-cancel-app', quizzes: [quiz] }],
+      [{ revision: 'rev-cancel-app', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
     );
     let resolveQuestions!: (response: { ok: boolean; json: () => Promise<unknown> }) => void;
     const pendingQuestions = new Promise<{ ok: boolean; json: () => Promise<unknown> }>((resolve) => {
@@ -141,7 +141,7 @@ describe('progressive dashboard statistics', () => {
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Test Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/  }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/subjects');
@@ -170,14 +170,14 @@ describe('progressive dashboard statistics', () => {
     const subject = { id: 's-failure', name: 'Test Subject', accent: '#b9511b' };
     const quiz = {
       id: 'q-failure',
-      subjectId: subject.id,
+      subjectId: subject.id, topicId: 't1',
       name: 'Test Quiz',
       questionCount: 1,
       questionIds: ['i-failure'],
     };
     runtimeQuestionBank.configureApi(
       { revision: 'rev-failure-app', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] },
-      [{ revision: 'rev-failure-app', quizzes: [quiz] }],
+      [{ revision: 'rev-failure-app', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
     );
     const attempts = new LocalAttemptRepository();
     attempts.saveCompleted(completed(quiz.id, subject.id, 80));
@@ -192,7 +192,7 @@ describe('progressive dashboard statistics', () => {
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Test Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Retake quiz' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Retake quiz/  }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
     const questionFailure = await screen.findByRole('alert');
@@ -210,10 +210,10 @@ describe('progressive dashboard statistics', () => {
   });
   it('loads the quiz screen after its questions arrive and keeps the attempt in browser storage', async () => {
     const subject = { id: 's1', name: 'Lazy Subject', accent: '#b9511b' };
-    const quiz = { id: 'q1', subjectId: subject.id, name: 'Lazy Quiz', questionCount: 1, questionIds: ['i1'] };
+    const quiz = { id: 'q1', subjectId: subject.id, topicId: 't1', name: 'Lazy Quiz', questionCount: 1, questionIds: ['i1'] };
     runtimeQuestionBank.configureApi(
       { revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] },
-      [{ revision: 'rev-lazy', quizzes: [quiz] }],
+      [{ revision: 'rev-lazy', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
     );
     vi.stubGlobal(
       'fetch',
@@ -244,7 +244,7 @@ describe('progressive dashboard statistics', () => {
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Lazy Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/  }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
     await waitFor(() => expect(screen.getByText('Lazy question stem')).toBeVisible(), { timeout: 10_000 });
@@ -271,13 +271,13 @@ describe('progressive dashboard statistics', () => {
   });
   it('disables progress backup during active quiz with save-and-leave guidance', async () => {
     const subject = { id: 's3', name: 'Backup subject', accent: '#b9511b' };
-    const quiz = { id: 'q3', subjectId: subject.id, name: 'Backup quiz', questionCount: 1, questionIds: ['i3'] };
+    const quiz = { id: 'q3', subjectId: subject.id, topicId: 't1', name: 'Backup quiz', questionCount: 1, questionIds: ['i3'] };
     installQuizApiFixture(
       [subject], [quiz], [{ id: 'i3', quizId: quiz.id, stem: 'Question', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }], answer: 'A', rationale: 'Fixture explanation', metadata: { topic: 'Fixture' } }],
     );
     render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Open Backup subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: 'Start quiz' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/  }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(await screen.findByText('Question 1 of 1')).toBeVisible();
 

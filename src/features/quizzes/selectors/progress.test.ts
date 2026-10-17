@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { CompletedAttempt, QuizRepository } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
-import { createProgressView, quizProgressForSubject, subjectStatsFor, sortQuizProgressByRecentActivity, type QuizProgress } from './progress';
+import { createProgressView, quizProgressForSubject, subjectStatsFor } from './progress';
 
 const bank: QuizRepository = {
   listSubjects: () => [{ id: 's1', name: 'First', accent: '#111' }, { id: 's2', name: 'Second', accent: '#222' }],
   listQuizzes: subjectId => subjectId === 's1'
-    ? [{ id: 'q1', subjectId, name: 'One', questionCount: 2 }, { id: 'q2', subjectId, name: 'Two', questionCount: 1 }]
-    : [{ id: 'q3', subjectId, name: 'Three', questionCount: 1 }],
+    ? [{ id: 'q1', subjectId, topicId: 't1', name: 'One', questionCount: 2 }, { id: 'q2', subjectId, topicId: 't1', name: 'Two', questionCount: 1 }]
+    : [{ id: 'q3', subjectId, topicId: 't1', name: 'Three', questionCount: 1 }],
   listQuestions: quizId => quizId === 'q1'
     ? [{ id: 'i1', quizId, stem: '', choices: [], rationale: '', metadata: {} }, { id: 'i2', quizId, stem: '', choices: [], rationale: '', metadata: {} }]
     : [{ id: 'i3', quizId, stem: '', choices: [], rationale: '', metadata: {} }],
@@ -64,38 +64,11 @@ describe('learner progress selectors', () => {
     expect(removed[0].latest).toBeUndefined();
   });
 
-  it('orders subject quizzes by activity and carries resume position', () => {
+  it('keeps canonical quiz order and carries resume position and activity', () => {
     const quizzes = quizProgressForSubject(bank, progress, 's1');
-    expect(quizzes.map(item => item.quiz.id)).toEqual(['q2', 'q1']);
-    expect(quizzes[0].currentQuestion).toBe(1);
-    expect(quizzes[1]).toMatchObject({ completionCount: 2, latestScore: 80, trend: 'increase' });
-  });
-});
-
-const progress = (id: string): QuizProgress => ({
-  quiz: { id, subjectId: 'subject', name: id, questionCount: 10 },
-  completionCount: 0,
-});
-
-describe('sortQuizProgressByRecentActivity', () => {
-  it('places the most recently used quiz first without mutating canonical order', () => {
-    const quizzes = [progress('first'), progress('second'), progress('third')];
-    const activity = new Map([
-      ['first', '2026-09-20T00:00:00.000Z'],
-      ['second', '2026-09-22T00:00:00.000Z'],
-    ]);
-
-    const ordered = sortQuizProgressByRecentActivity(quizzes, id => activity.get(id));
-
-    expect(ordered.map(item => item.quiz.id)).toEqual(['second', 'first', 'third']);
-    expect(quizzes.map(item => item.quiz.id)).toEqual(['first', 'second', 'third']);
-  });
-
-  it('keeps canonical order when activity is absent or tied', () => {
-    const quizzes = [progress('first'), progress('second'), progress('third')];
-
-    const ordered = sortQuizProgressByRecentActivity(quizzes, id => id === 'third' ? '2026-09-22T00:00:00.000Z' : undefined);
-
-    expect(ordered.map(item => item.quiz.id)).toEqual(['third', 'first', 'second']);
+    expect(quizzes.map(item => item.quiz.id)).toEqual(['q1', 'q2']);
+    expect(quizzes[1].currentQuestion).toBe(1);
+    expect(quizzes[1].activityAt).toBeDefined();
+    expect(quizzes[0]).toMatchObject({ completionCount: 2, latestScore: 80, trend: 'increase' });
   });
 });

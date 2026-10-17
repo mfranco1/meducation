@@ -15,15 +15,20 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def export_fixture(folder, *, target="release", operator=False):
     q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    f = {"schemaVersion": 2, "decks": [], "cards": []}
+    f = {"schemaVersion": 3, "decks": [], "cards": []}
     raw = [json.dumps(value, ensure_ascii=False).encode() for value in (q, f)]
     hashes = [hashlib.sha256(value).hexdigest() for value in raw]
     qt, ft = paired_artifacts(*(value.decode() for value in raw))
-    subjects = json.dumps(q["subjects"], ensure_ascii=False, separators=(",", ":"))
+    subjects, topics = (
+        json.dumps(q[key], ensure_ascii=False, separators=(",", ":"))
+        for key in ("subjects", "topics")
+    )
     revisions = {
         "quiz": "sha256-" + hashlib.sha256(qt.encode()).hexdigest(),
         "flashcard": "sha256-"
-        + hashlib.sha256(("flashcards-v2\n" + subjects + "\n" + ft).encode()).hexdigest(),
+        + hashlib.sha256(
+            ("flashcards-v3\n" + subjects + "\n" + topics + "\n" + ft).encode()
+        ).hexdigest(),
     }
     release = "11111111-1111-4111-8111-111111111111"
     if operator:
@@ -32,7 +37,7 @@ def export_fixture(folder, *, target="release", operator=False):
             "manifestVersion": 1,
             "revisions": revisions,
             "releaseId": release,
-            "schemaVersions": {"quiz": 4, "flashcard": 2},
+            "schemaVersions": {"quiz": 5, "flashcard": 3},
             "artifactsSha256": dict(zip(("quiz", "flashcard"), hashes, strict=True)),
             "publication": {"observedActiveSequence": 2},
         }
@@ -47,7 +52,7 @@ def export_fixture(folder, *, target="release", operator=False):
             "baseReleaseId": release if target == "draft" else None,
             "basePublicationSequence": "2" if target == "draft" else None,
             "publication": {"releaseId": release, "sequence": "2"},
-            "schemas": {"quizzes": 4, "flashcards": 2},
+            "schemas": {"quizzes": 5, "flashcards": 3},
             "digests": {
                 "quizSha256": hashes[0],
                 "flashcardSha256": hashes[1],
@@ -57,7 +62,7 @@ def export_fixture(folder, *, target="release", operator=False):
             "ids": {
                 key: [row["id"] for row in doc[key]]
                 for doc, keys in (
-                    (q, ("subjects", "quizzes", "questions")),
+                    (q, ("subjects", "topics", "quizzes", "questions")),
                     (f, ("decks", "cards")),
                 )
                 for key in keys

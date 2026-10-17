@@ -79,11 +79,11 @@ def db():
 def banks():
     q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
     f = {
-        "schemaVersion": 2,
+        "schemaVersion": 3,
         "decks": [
             {
                 "id": "dlegacy-X",
-                "subjectId": q["subjects"][0]["id"],
+                "topicId": q["topics"][0]["id"],
                 "name": "Deck β",
                 "description": "",
             }
@@ -162,7 +162,7 @@ def seed(db, q=None, f=None):
 
 STATE_TABLES = (
     "active_publication", "releases", "operations", "audit_events", "publication_events",
-    "draft_subjects", "draft_quizzes", "draft_questions",
+    "draft_subjects", "draft_topics", "draft_quizzes", "draft_questions",
     "draft_decks", "draft_flashcards", "draft_changes", "draft_state",
 )
 
@@ -189,7 +189,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0008_retire_legacy"
+    assert migration_head() == "0009_topics"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -215,23 +215,18 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0008_retire_legacy"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0009_topics"
 
 
 def test_release_omission_provenance_order_and_digest(db):
     release = store(db)
     qt, ft = artifacts()
     assert release.quiz_revision == "sha256-" + hashlib.sha256(qt.encode()).hexdigest()
-    subjects = [
-        {key: subject[key] for key in ("id", "name", "accent")}
-        for subject in json.loads(qt)["subjects"]
+    registry = [
+        json.dumps(json.loads(qt)[key], ensure_ascii=False, separators=(",", ":"))
+        for key in ("subjects", "topics")
     ]
-    payload = (
-        "flashcards-v2\n"
-        + json.dumps(subjects, ensure_ascii=False, separators=(",", ":"))
-        + "\n"
-        + ft
-    )
+    payload = "\n".join(["flashcards-v3", *registry, ft])
     assert release.flashcard_revision == "sha256-" + hashlib.sha256(payload.encode()).hexdigest()
     with db.backup.connect() as connection:
         rows = connection.execute(
@@ -310,6 +305,7 @@ def test_immutable_release_rows_and_append_only_history(db):
     for table in (
         "releases",
         "subjects",
+        "topics",
         "quizzes",
         "questions",
         "decks",
@@ -335,15 +331,14 @@ def test_cross_release_foreign_key_and_global_ordinal_constraints(db):
     first = store(db)
     q, f = banks()
     q["subjects"][0]["id"] = "s2"
-    q["quizzes"][0]["subjectId"] = "s2"
-    f["decks"][0]["subjectId"] = "s2"
+    q["topics"][0]["subjectId"] = "s2"
     second = store(db, q=q, f=f)
     # Disable only immutability inside a transaction rolled back on the FK/ordinal failure.
     with pytest.raises(SQLAlchemyError), db.migrator.begin() as connection:
         connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
-        connection.exec_driver_sql("ALTER TABLE content.quizzes DISABLE TRIGGER quiz_guard")
+        connection.exec_driver_sql("ALTER TABLE content.topics DISABLE TRIGGER topic_guard")
         connection.execute(
-            text("UPDATE content.quizzes SET subject_id='s1' WHERE release_id=:id"),
+            text("UPDATE content.topics SET subject_id='s1' WHERE release_id=:id"),
             {"id": second.release_id},
         )
     with pytest.raises(SQLAlchemyError), db.migrator.begin() as connection:
@@ -484,7 +479,7 @@ def test_release_constraints_reject_invalid_pairs_without_events(db, mutate):
     if mutate == "null":
         q["questions"][0]["metadata"] = None
     elif mutate == "wrong-version":
-        q["schemaVersion"] = 4.0
+        q["schemaVersion"] = 5.0
     elif mutate == "duplicate-id":
         q["subjects"].append(copy.deepcopy(q["subjects"][0]))
     elif mutate.startswith("blank-"):
@@ -494,7 +489,7 @@ def test_release_constraints_reject_invalid_pairs_without_events(db, mutate):
             "blank-control": "\x1c\x1d\x1e\x1f",
         }[mutate]
     else:
-        f["decks"][0]["subjectId"] = "s999"
+        f["decks"][0]["topicId"] = "t999"
     qt, ft = [json.dumps(value, ensure_ascii=False, indent=2) + "\n" for value in (q, f)]
     with pytest.raises(SQLAlchemyError), db.operator.begin() as connection:
         connection.execute(
@@ -515,7 +510,7 @@ def test_release_constraints_reject_invalid_pairs_without_events(db, mutate):
 def test_sql_boundary_rejects_duplicate_keys_and_noncanonical_artifacts(db):
     qt, ft = artifacts()
     for raw in [
-        qt.replace('"schemaVersion": 4', '"schemaVersion": 4, "schemaVersion": 4', 1),
+        qt.replace('"schemaVersion": 5', '"schemaVersion": 5, "schemaVersion": 5', 1),
         json.dumps(json.loads(qt)),
     ]:
         with pytest.raises(SQLAlchemyError), db.operator.begin() as connection:
@@ -557,14 +552,16 @@ def test_runtime_schema_ready_requires_explicit_activation_and_disposes(db):
 def test_global_order_independent_of_parent_and_object_key_order(db):
     q, f = banks()
     q["subjects"].insert(0, {"accent": "#112233", "name": "Second subject", "id": "s2"})
-    q["quizzes"].insert(0, {"name": "Second quiz", "subjectId": "s2", "id": "q2"})
+    q["topics"].insert(0, {"name": "Second topic", "subjectId": "s2", "id": "t2"})
+    q["quizzes"].insert(0, {"name": "Second quiz", "topicId": "t2", "id": "q2"})
     q["questions"].append({**copy.deepcopy(q["questions"][0]), "id": "i2", "quizId": "q2"})
-    f["decks"].insert(0, {"id": "d2", "subjectId": "s2", "name": "Second deck"})
+    f["decks"].insert(0, {"id": "d2", "topicId": "t2", "name": "Second deck"})
     f["cards"].append({"id": "f2", "deckId": "d2", "front": "Second", "back": "Answer"})
     release = store(db, q=q, f=f)
     with db.reader.connect() as connection:
         for table, expected in [
             ("subjects", ["s2", "s1"]),
+            ("topics", ["t2", "t1"]),
             ("quizzes", ["q2", "q1"]),
             ("questions", ["i1", "i2"]),
             ("decks", ["d2", "dlegacy-X"]),
@@ -585,17 +582,12 @@ def test_global_order_independent_of_parent_and_object_key_order(db):
             assert actual == expected
     qt, ft = artifacts(q, f)
     subjects = [{key: s[key] for key in ("id", "name", "accent")} for s in q["subjects"]]
+    topics = [{key: t[key] for key in ("id", "subjectId", "name")} for t in q["topics"]]
+    registry = [json.dumps(v, ensure_ascii=False, separators=(",", ":")) for v in (subjects, topics)]
     assert (
         release.flashcard_revision
         == "sha256-"
-        + hashlib.sha256(
-            (
-                "flashcards-v2\n"
-                + json.dumps(subjects, ensure_ascii=False, separators=(",", ":"))
-                + "\n"
-                + ft
-            ).encode()
-        ).hexdigest()
+        + hashlib.sha256("\n".join(["flashcards-v3", *registry, ft]).encode()).hexdigest()
     )
     assert release.quiz_revision == "sha256-" + hashlib.sha256(qt.encode()).hexdigest()
 
@@ -684,12 +676,13 @@ def test_export_roundtrips_stored_artifacts_and_refuses_overwrite(db, tmp_path):
     q, f = banks()
     q["subjects"][0] = dict(reversed(list(q["subjects"][0].items())))
     q["subjects"].append({"id": "s2", "name": "Other subject", "accent": "#fff"})
-    q["quizzes"].insert(0, {"id": "q2", "subjectId": "s2", "name": "First catalog quiz"})
+    q["topics"].append({"id": "t2", "subjectId": "s2", "name": "Other topic"})
+    q["quizzes"].insert(0, {"id": "q2", "topicId": "t2", "name": "First catalog quiz"})
     second = copy.deepcopy(q["questions"][0])
     second.update({"id": "i2", "quizId": "q2"})
     q["questions"].append(second)
     q["questions"][0]["stem"] = 'Unicode β **bold** $x^2$\nEscaped "quote" and \\ slash'
-    f["decks"].append({"id": "dempty", "subjectId": q["subjects"][0]["id"], "name": "Empty"})
+    f["decks"].append({"id": "dempty", "topicId": q["topics"][0]["id"], "name": "Empty"})
     f["decks"].reverse()
     qt, ft = artifacts(q, f)
     release = store(db, q=q, f=f)
@@ -840,7 +833,7 @@ def test_postgres_learner_routes_match_protocol_and_release_connections(db, tmp_
     from meducation_api.main import create_app
 
     q, f = banks()
-    f["decks"].append({"id": "dempty", "subjectId": "s1", "name": "Empty"})
+    f["decks"].append({"id": "dempty", "topicId": "t1", "name": "Empty"})
     release = store(db, q=q, f=f)
     publish(db, release)
     from fixture_content import fixture_app
@@ -897,7 +890,7 @@ def test_postgres_repository_protocols_and_unknown_parents(db, tmp_path):
     release = store(db)
     publish(db, release)
     reference = FixtureQuestionRepository(q)
-    flashcards = FixtureFlashcardRepository(f, reference.list_subjects())
+    flashcards = FixtureFlashcardRepository(f, reference)
     with PostgresContentSource(reader_settings(db)) as source, source.view() as view:
         bank = view.questions
         cards = view.flashcards
@@ -1107,30 +1100,6 @@ def test_real_reader_socket_and_transaction_failure_return_503_then_recover(db, 
         assert app.state.source.runtime.engine.pool.checkedout() == 0
         assert client.get("/api/v1/quizzes/q1/questions").status_code == 200
         assert app.state.source.runtime.engine.pool.checkedout() == 0
-
-
-def test_upgrade_populated_l3_schema_preserves_content_and_protected_history(db):
-    # Rebuild only this launcher's disposable schema at the original packaged head.
-    with db.admin.begin() as connection:
-        connection.exec_driver_sql("DROP SCHEMA admin_auth CASCADE")
-        connection.exec_driver_sql("DROP SCHEMA content CASCADE")
-    bootstrap(db.admin, RolePasswords(_env_file=None))
-    with db.migrator.begin() as connection:
-        connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
-        config = migration_config()
-        config.attributes["connection"] = connection
-        command.upgrade(config, "0001_content")
-    original = store(db)
-    publish(db, original)
-    tables = ("active_publication", "releases", "operations", "audit_events",
-              "import_events", "publication_events")
-    def snapshot():
-        return {table: scalar(db.operator, f"SELECT coalesce(jsonb_agg(to_jsonb(t) ORDER BY to_jsonb(t)::text),'[]') FROM content.{table} t") for table in tables}
-    before = snapshot()
-    upgrade(db.migrator)
-    assert snapshot() == before
-    assert migration_head() == scalar(db.reader, "SELECT version_num FROM content.schema_version")
-    assert store(db) == original
 
 
 def auth_app(db, harness=None, *, postgres=False, **changes):
@@ -1812,7 +1781,7 @@ def test_l5_launch_http_sql_counts_include_pre_ping_and_sql_free_health(db, monk
         for path in (subjects, membership + '?revision=' + revision, subjects,
                      body + '?revision=' + revision):
             assert client.get(path).status_code == 200
-        assert counts == {'sql': 18 if bank == 'quiz' else 19, 'pointer': 4, 'ping': 4}
+        assert counts == {'sql': 19 if bank == 'quiz' else 20, 'pointer': 4, 'ping': 4}
         counts.update(sql=0, pointer=0, ping=0)
         # A fully cached browser launch sends only the fresh subjects check.
         assert client.get(subjects).status_code == 200

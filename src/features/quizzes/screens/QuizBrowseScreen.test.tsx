@@ -5,7 +5,7 @@ import type { Question, Quiz } from '../../../domain/types';
 import { theme } from '../../../shared/theme';
 import { QuizBrowseScreen } from './QuizBrowseScreen';
 
-const quiz: Quiz = { id: 'quiz', subjectId: 'subject', name: 'Quiz', questionCount: 2 };
+const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
   { id: 'q1', quizId: quiz.id, stem: 'Question one $x^2$ <img src="/content/question.png" alt="Question diagram">', choices: [{ id: 'A', text: 'First choice' }, { id: 'B', text: 'Second choice' }], verifiedAnswer: 'B', rationale: 'Explanation one $E=mc^2$\n\n![Explanation diagram](/content/explanation.png)', metadata: {} },
   { id: 'q2', quizId: quiz.id, stem: 'Question two', choices: [{ id: 'A', text: 'Third choice' }, { id: 'B', text: 'Fourth choice' }], answer: 'A', rationale: 'Explanation two', rationaleMeta: { answerReviewNote: 'Check this source key' }, choiceExplanations: { A: 'Choice detail' }, metadata: {} },

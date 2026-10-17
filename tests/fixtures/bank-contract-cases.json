@@ -1,8 +1,9 @@
 {
   "base": {
-    "schemaVersion": 4,
+    "schemaVersion": 5,
     "subjects": [{ "id": "s1", "name": "Anatomía", "accent": "#123456" }],
-    "quizzes": [{ "id": "q1", "subjectId": "s1", "name": "Café Quiz" }],
+    "topics": [{ "id": "t1", "subjectId": "s1", "name": "Nervios" }],
+    "quizzes": [{ "id": "q1", "topicId": "t1", "name": "Café Quiz" }],
     "questions": [{
       "id": "i1",
       "quizId": "q1",
@@ -18,6 +19,8 @@
     { "id": "valid_nested_metadata", "change": "valid_metadata", "valid": true },
     { "id": "duplicate_question_id", "change": "duplicate_question", "valid": false },
     { "id": "unknown_quiz_reference", "change": "unknown_quiz", "valid": false },
+    { "id": "unknown_topic_reference", "change": "unknown_topic", "valid": false },
+    { "id": "unknown_topic_subject", "change": "unknown_topic_subject", "valid": false },
     { "id": "unsupported_schema", "change": "schema_version", "valid": false },
     { "id": "invalid_provided_answer_with_verified_answer", "change": "provided_answer", "valid": false },
     { "id": "invalid_choice_label", "change": "choice_label", "valid": false },

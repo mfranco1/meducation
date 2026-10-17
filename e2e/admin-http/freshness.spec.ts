@@ -50,28 +50,37 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   const review = await reviewContext.newPage();
   await quiz.goto('/');
   await openSubject(quiz);
-  await quiz.getByRole('button', { name: 'Start quiz', exact: true }).click();
+  await quiz.getByRole('button', { name: /^Start quiz/ }).click();
   await quiz.getByRole('button', { name: 'Exam Mode', exact: true }).click();
   await quiz.getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(quiz.getByText(stem, { exact: true })).toBeVisible();
   await deck.goto('/');
   await deck.getByRole('button', { name: 'Flashcards', exact: true }).click();
   await openSubject(deck);
-  await deck.getByRole('button', { name: 'Study deck' }).first().click();
+  await deck
+    .getByRole('button', { name: /^Study deck/ })
+    .first()
+    .click();
   await expect(deck.getByText(front, { exact: true })).toBeVisible();
   await deck.getByRole('button', { name: 'Save and exit deck' }).click();
   // A failed validation never admits a cached body or changes saved bytes.
   const savedDeck = await progress(deck);
   await deck.route('**/api/v1/flashcards/subjects', (route) => route.fulfill({ status: 503, body: '{}' }));
-  await deck.getByRole('button', { name: 'Resume deck' }).first().click();
+  await deck
+    .getByRole('button', { name: /^Resume deck/ })
+    .first()
+    .click();
   await expect(deck.getByRole('alert')).toContainText('Unable to load deck');
   expect(await progress(deck)).toEqual(savedDeck);
   await deck.unroute('**/api/v1/flashcards/subjects');
-  await deck.getByRole('button', { name: 'Resume deck' }).first().click();
+  await deck
+    .getByRole('button', { name: /^Resume deck/ })
+    .first()
+    .click();
   await expect(deck.getByText(front, { exact: true })).toBeVisible();
   await review.goto('/');
   await openSubject(review);
-  await review.getByRole('button', { name: 'Start quiz', exact: true }).click();
+  await review.getByRole('button', { name: /^Start quiz/ }).click();
   await review.getByRole('button', { name: 'Browse Answers', exact: true }).click();
   await review.getByRole('button', { name: 'Open quiz', exact: true }).click();
   await expect(review.getByText(stem, { exact: true })).toBeVisible();
@@ -83,7 +92,7 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   await expect(deck.getByText(front, { exact: true })).toBeVisible();
   expect(await progress(quiz)).toEqual(beforeQuiz);
   expect(await progress(deck)).toEqual(beforeDeck);
-  await review.getByRole('button', { name: 'Start quiz', exact: true }).click();
+  await review.getByRole('button', { name: /^Start quiz/ }).click();
   await review.getByRole('button', { name: 'Browse Answers', exact: true }).click();
   await review.getByRole('button', { name: 'Open quiz', exact: true }).click();
   await expect(review.getByRole('alert')).toContainText('Reload to continue');
@@ -92,17 +101,20 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   await quiz.getByRole('dialog').getByRole('button', { name: 'Leave', exact: true }).click();
   await openSubject(quiz);
   const pausedQuiz = await progress(quiz);
-  await quiz.getByRole('button', { name: 'Resume quiz' }).click();
+  await quiz.getByRole('button', { name: /^Resume quiz/ }).click();
   await expect(quiz.getByRole('alert')).toContainText('Reload to continue');
   expect(await progress(quiz)).toEqual(pausedQuiz);
   await deck.getByRole('button', { name: 'Save and exit deck' }).click();
   const pausedDeck = await progress(deck);
-  await deck.getByRole('button', { name: 'Resume deck' }).first().click();
+  await deck
+    .getByRole('button', { name: /^Resume deck/ })
+    .first()
+    .click();
   await expect(deck.getByRole('alert')).toContainText('Reload to continue');
   expect(await progress(deck)).toEqual(pausedDeck);
   await quiz.reload();
   await openSubject(quiz);
-  await quiz.getByRole('button', { name: 'Resume quiz' }).click();
+  await quiz.getByRole('button', { name: /^Resume quiz/ }).click();
   await expect(quiz.getByRole('dialog', { name: 'Restart Saved Test?' })).toBeVisible();
   const awaitingRestart = await progress(quiz);
   // Publication while confirmation is pending cannot bypass a fresh check.
@@ -112,20 +124,23 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   expect(await progress(quiz)).toEqual(awaitingRestart);
   await quiz.reload();
   await openSubject(quiz);
-  await quiz.getByRole('button', { name: 'Resume quiz' }).click();
+  await quiz.getByRole('button', { name: /^Resume quiz/ }).click();
   await quiz.getByRole('button', { name: 'Restart', exact: true }).click();
   await expect(quiz.getByText('L5 second published stem', { exact: true })).toBeVisible();
   await deck.reload();
   await deck.getByRole('button', { name: 'Flashcards', exact: true }).click();
   await openSubject(deck);
-  await deck.getByRole('button', { name: 'Resume deck' }).first().click();
+  await deck
+    .getByRole('button', { name: /^Resume deck/ })
+    .first()
+    .click();
   await expect(deck.getByRole('dialog', { name: 'Restart this deck?' })).toBeVisible();
   await deck.getByRole('button', { name: 'Restart deck', exact: true }).click();
   await expect(deck.getByText('L5 newly published front', { exact: true })).toBeVisible();
   // Completed scores and transient results review retain their displayed content.
   await review.goto('/');
   await openSubject(review);
-  await review.getByRole('button', { name: 'Start quiz', exact: true }).click();
+  await review.getByRole('button', { name: /^Start quiz/ }).click();
   await review.getByRole('button', { name: 'Exam Mode', exact: true }).click();
   await review.getByRole('button', { name: 'Begin Quiz' }).click();
   await review.getByRole('radio').first().check();

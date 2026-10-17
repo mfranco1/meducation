@@ -29,7 +29,7 @@ import { errorMessages } from './data/PairedHttpClient';
 import type { BulkPlan, DraftStore, StoredRecord } from './data/DraftStore';
 import { useRecordEditor } from './useRecordEditor';
 
-/** Decks and cards: browse by subject and deck, edit one record, add in bulk, reorder, delete. */
+/** Decks and cards: browse by subject, topic and deck, edit one record, add in bulk, reorder, delete. */
 export function FlashcardAdminPanel({
   store,
   blocked = false,
@@ -51,9 +51,12 @@ export function FlashcardAdminPanel({
 }) {
   const bank = store.flashcardBank;
   const subjects: readonly Subject[] = store.quizBank.subjects;
+  const topics = store.quizBank.topics;
   const [browseSubjectId, setBrowseSubjectId] = useState('');
+  const [browseTopicId, setBrowseTopicId] = useState('');
   const [browseDeckId, setBrowseDeckId] = useState('');
   const [subjectQuery, setSubjectQuery] = useState<string>();
+  const [topicQuery, setTopicQuery] = useState<string>();
   const [deckQuery, setDeckQuery] = useState<string>();
   const [cardQuery, setCardQuery] = useState('');
   const [cardPage, setCardPage] = useState(0);
@@ -65,10 +68,10 @@ export function FlashcardAdminPanel({
   const selection = editor.selection;
   const locked = working || editor.busy || blocked;
 
-  const decksBySubject = useMemo(
+  const decksByTopic = useMemo(
     () =>
       bank.decks.reduce<Record<string, typeof bank.decks>>(
-        (groups, deck) => ((groups[deck.subjectId] ??= []).push(deck), groups),
+        (groups, deck) => ((groups[deck.topicId] ??= []).push(deck), groups),
         {},
       ),
     [bank],
@@ -81,12 +84,14 @@ export function FlashcardAdminPanel({
       ),
     [bank],
   );
-  const browseDecks = decksBySubject[browseSubjectId] ?? [];
+  const browseTopics = topics.filter((topic) => topic.subjectId === browseSubjectId);
+  const browseTopic = browseTopics.find((topic) => topic.id === browseTopicId);
+  const browseDecks = decksByTopic[browseTopicId] ?? [];
   const browseDeck = browseDecks.find((deck) => deck.id === browseDeckId);
   const deckCards = browseDeck ? (cardsByDeck[browseDeck.id] ?? []) : [];
   const cardResults = selectFlashcardPage(deckCards, cardQuery, cardPage);
   const recordSelection = useAdminRecordSelection(
-    JSON.stringify([browseSubjectId, browseDeckId, cardQuery]),
+    JSON.stringify([browseSubjectId, browseTopicId, browseDeckId, cardQuery]),
     deckCards.map((row) => row.id),
   );
   useEffect(() => {
@@ -95,27 +100,38 @@ export function FlashcardAdminPanel({
   useEffect(() => {
     if (browseSubjectId && !subjects.some((subject) => subject.id === browseSubjectId)) {
       setBrowseSubjectId('');
+      setBrowseTopicId('');
+      setBrowseDeckId('');
+    } else if (browseTopicId && !topics.some((topic) => topic.id === browseTopicId)) {
+      setBrowseTopicId('');
       setBrowseDeckId('');
     } else if (browseDeckId && !bank.decks.some((deck) => deck.id === browseDeckId)) setBrowseDeckId('');
-  }, [bank.decks, browseDeckId, browseSubjectId, subjects]);
+  }, [bank.decks, browseDeckId, browseTopicId, browseSubjectId, subjects, topics]);
   // Follow the open record: after a save or reorder the list shows the deck and page that hold it.
   const openKind = selection?.kind;
   const openId = selection?.id;
   const openParent = selection?.parentId;
   useEffect(() => {
     if (!openId) return;
-    if (openKind === 'deck') {
-      const deck = store.flashcardBank.decks.find((row) => row.id === openId);
-      if (deck) {
-        setBrowseSubjectId(deck.subjectId);
-        setBrowseDeckId(deck.id);
-      }
-    } else if (openKind === 'card' && openParent) {
-      const deck = store.flashcardBank.decks.find((row) => row.id === openParent);
-      if (!deck) return;
-      const cards = store.flashcardBank.cards.filter((row) => row.deckId === openParent);
-      setBrowseSubjectId(deck.subjectId);
+    const showDeck = (deckId: string) => {
+      const deck = store.flashcardBank.decks.find((row) => row.id === deckId);
+      const topic = store.quizBank.topics.find((row) => row.id === deck?.topicId);
+      if (!deck || !topic) return false;
+      setBrowseSubjectId(topic.subjectId);
+      setBrowseTopicId(topic.id);
       setBrowseDeckId(deck.id);
+      return true;
+    };
+    if (openKind === 'topic') {
+      const topic = store.quizBank.topics.find((row) => row.id === openId);
+      if (topic) {
+        setBrowseSubjectId(topic.subjectId);
+        setBrowseTopicId(topic.id);
+      }
+    } else if (openKind === 'deck') showDeck(openId);
+    else if (openKind === 'card' && openParent) {
+      if (!showDeck(openParent)) return;
+      const cards = store.flashcardBank.cards.filter((row) => row.deckId === openParent);
       setCardPage((page) => {
         const index = cards.findIndex((row) => row.id === openId);
         return index < 0 ? page : Math.floor(index / ADMIN_PAGE_SIZE);
@@ -123,17 +139,20 @@ export function FlashcardAdminPanel({
     }
   }, [store, openKind, openId, openParent]);
 
-  const changeBrowse = async (subjectId: string, deckId: string) => {
+  const changeBrowse = async (subjectId: string, topicId: string, deckId: string) => {
     if (locked || !(await editor.select(undefined))) return;
     setBrowseSubjectId(subjectId);
+    setBrowseTopicId(topicId);
     setBrowseDeckId(deckId);
     setCardQuery('');
     setCardPage(0);
   };
-  const openRecord = (kind: 'deck' | 'card', record: StoredRecord & { deckId?: string; subjectId?: string }) =>
-    void editor.load({ kind, id: record.id, parentId: record.deckId ?? record.subjectId }, record);
-  const createRecord = (kind: 'deck' | 'card') => {
-    const parentId = kind === 'deck' ? browseSubjectId : browseDeckId;
+  const openRecord = (
+    kind: 'topic' | 'deck' | 'card',
+    record: StoredRecord & { deckId?: string; topicId?: string; subjectId?: string },
+  ) => void editor.load({ kind, id: record.id, parentId: record.deckId ?? record.topicId ?? record.subjectId }, record);
+  const createRecord = (kind: 'topic' | 'deck' | 'card') => {
+    const parentId = kind === 'topic' ? browseSubjectId : kind === 'deck' ? browseTopicId : browseDeckId;
     if (parentId) void editor.loadNew(kind, parentId);
   };
   const run = async (action: () => Promise<unknown>) => {
@@ -148,9 +167,11 @@ export function FlashcardAdminPanel({
     }
   };
   const siblings =
-    selection?.kind === 'deck'
-      ? bank.decks.filter((row) => row.subjectId === selection.parentId)
-      : bank.cards.filter((row) => row.deckId === selection?.parentId);
+    selection?.kind === 'topic'
+      ? topics.filter((row) => row.subjectId === selection.parentId)
+      : selection?.kind === 'deck'
+        ? bank.decks.filter((row) => row.topicId === selection.parentId)
+        : bank.cards.filter((row) => row.deckId === selection?.parentId);
   const siblingIndex = siblings.findIndex((row) => row.id === selection?.id);
   const reorder = (direction: -1 | 1) =>
     run(async () => {
@@ -173,8 +194,10 @@ export function FlashcardAdminPanel({
       const deckId = result.parentIds[0] ?? plan.groups[0]?.parentId;
       if (deckId) {
         const deck = store.flashcardBank.decks.find((row) => row.id === deckId);
-        if (deck) {
-          setBrowseSubjectId(deck.subjectId);
+        const topic = store.quizBank.topics.find((row) => row.id === deck?.topicId);
+        if (deck && topic) {
+          setBrowseSubjectId(topic.subjectId);
+          setBrowseTopicId(topic.id);
           setBrowseDeckId(deck.id);
           setCardQuery('');
           setCardPage(0);
@@ -192,6 +215,7 @@ export function FlashcardAdminPanel({
     setBulk({ context, label });
   };
   const subjectName = subjects.find((subject) => subject.id === browseSubjectId)?.name ?? '';
+  const topicLabel = browseTopic ? `${subjectName} / ${browseTopic.name}` : subjectName;
   return (
     <Stack
       component="div"
@@ -217,8 +241,9 @@ export function FlashcardAdminPanel({
             getOptionLabel={(subject) => subject.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             onChange={(_, subject) => {
-              if ((subject?.id ?? '') !== browseSubjectId) void changeBrowse(subject?.id ?? '', '');
+              if ((subject?.id ?? '') !== browseSubjectId) void changeBrowse(subject?.id ?? '', '', '');
               setSubjectQuery(undefined);
+              setTopicQuery(undefined);
               setDeckQuery(undefined);
             }}
             renderInput={(params) => <TextField {...params} label="Subject" size="small" />}
@@ -235,8 +260,8 @@ export function FlashcardAdminPanel({
           )}
           {browseSubjectId && (
             <Stack direction="row" spacing={0.5}>
-              <Button size="small" onClick={() => void openBulk({ kind: 'subject', subjectId: browseSubjectId }, subjectName)}>
-                Add decks
+              <Button size="small" onClick={() => createRecord('topic')}>
+                New topic
               </Button>
               <AdminParentActions
                 entity="Subject"
@@ -246,6 +271,37 @@ export function FlashcardAdminPanel({
             </Stack>
           )}
           {browseSubjectId && (
+            <Autocomplete
+              inputValue={topicQuery ?? browseTopic?.name ?? ''}
+              onInputChange={(_, value, reason) => {
+                if (reason === 'input') setTopicQuery(value);
+              }}
+              options={browseTopics}
+              value={browseTopic ?? null}
+              getOptionLabel={(topic) => topic.name}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              onChange={(_, topic) => {
+                if ((topic?.id ?? '') !== browseTopicId) void changeBrowse(browseSubjectId, topic?.id ?? '', '');
+                setTopicQuery(undefined);
+                setDeckQuery(undefined);
+              }}
+              renderInput={(params) => <TextField {...params} label="Topic" size="small" />}
+            />
+          )}
+          {browseSubjectId && !browseTopics.length && <Typography variant="body2">No topics in this subject.</Typography>}
+          {browseTopic && (
+            <Stack direction="row" spacing={0.5}>
+              <Button size="small" onClick={() => void openBulk({ kind: 'topic', topicId: browseTopic.id }, topicLabel)}>
+                Add decks
+              </Button>
+              <AdminParentActions
+                entity="Topic"
+                onEdit={() => openRecord('topic', browseTopic)}
+                onDelete={() => onDelete({ selection: { kind: 'topic', id: browseTopic.id }, label: browseTopic.name })}
+              />
+            </Stack>
+          )}
+          {browseTopic && (
             <Autocomplete
               inputValue={
                 deckQuery ?? (browseDeck ? `${browseDeck.name} · ${cardsByDeck[browseDeck.id]?.length ?? 0} cards` : '')
@@ -258,19 +314,19 @@ export function FlashcardAdminPanel({
               getOptionLabel={(deck) => `${deck.name} · ${cardsByDeck[deck.id]?.length ?? 0} cards`}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               onChange={(_, deck) => {
-                if ((deck?.id ?? '') !== browseDeckId) void changeBrowse(browseSubjectId, deck?.id ?? '');
+                if ((deck?.id ?? '') !== browseDeckId) void changeBrowse(browseSubjectId, browseTopicId, deck?.id ?? '');
                 setDeckQuery(undefined);
               }}
               renderInput={(params) => <TextField {...params} label="Deck" size="small" />}
             />
           )}
-          {browseSubjectId && !browseDecks.length && <Typography variant="body2">No decks in this subject.</Typography>}
+          {browseTopic && !browseDecks.length && <Typography variant="body2">No decks in this topic.</Typography>}
           {browseDeck && (
             <>
               <Stack direction="row" spacing={0.5} flexWrap="wrap">
                 <Button
                   size="small"
-                  onClick={() => void openBulk({ kind: 'deck', deckId: browseDeck.id }, `${subjectName} / ${browseDeck.name}`)}
+                  onClick={() => void openBulk({ kind: 'deck', deckId: browseDeck.id }, `${topicLabel} / ${browseDeck.name}`)}
                 >
                   Add cards
                 </Button>
@@ -401,23 +457,31 @@ export function FlashcardAdminPanel({
           )}
           {!selection || !editor.open ? (
             <AdminEditorEmpty
-              title={!browseSubjectId ? 'Choose a subject' : !browseDeckId ? 'Choose a deck' : 'Choose a card'}
+              title={
+                !browseSubjectId
+                  ? 'Choose a subject'
+                  : !browseTopicId
+                    ? 'Choose a topic'
+                    : !browseDeckId
+                      ? 'Choose a deck'
+                      : 'Choose a card'
+              }
             >
-              {browseSubjectId ? (
+              {!browseSubjectId ? (
+                <Button onClick={onAddSubject}>Add subject</Button>
+              ) : !browseTopicId ? (
+                <Button onClick={() => createRecord('topic')}>New topic</Button>
+              ) : (
                 <Button
                   onClick={() =>
                     void openBulk(
-                      browseDeckId
-                        ? { kind: 'deck', deckId: browseDeckId }
-                        : { kind: 'subject', subjectId: browseSubjectId },
-                      browseDeck?.name ?? subjectName,
+                      browseDeckId ? { kind: 'deck', deckId: browseDeckId } : { kind: 'topic', topicId: browseTopicId },
+                      browseDeck?.name ?? topicLabel,
                     )
                   }
                 >
                   {browseDeckId ? 'Add cards' : 'Add decks'}
                 </Button>
-              ) : (
-                <Button onClick={onAddSubject}>Add subject</Button>
               )}
             </AdminEditorEmpty>
           ) : (
@@ -451,7 +515,8 @@ export function FlashcardAdminPanel({
             <AdminRecordMenu
               disabled={locked}
               items={[
-                { label: 'New deck', disabled: !browseSubjectId, onClick: () => createRecord('deck') },
+                { label: 'New topic', disabled: !browseSubjectId, onClick: () => createRecord('topic') },
+                { label: 'New deck', disabled: !browseTopicId, onClick: () => createRecord('deck') },
                 { label: 'New card', disabled: !browseDeckId, onClick: () => createRecord('card') },
                 {
                   label: 'Delete…',
@@ -460,7 +525,12 @@ export function FlashcardAdminPanel({
                     selection?.id &&
                     onDelete({
                       selection: { kind: selection.kind, id: selection.id },
-                      label: selection.kind === 'deck' ? (browseDeck?.name ?? selection.id) : selection.id,
+                      label:
+                        selection.kind === 'deck'
+                          ? (browseDeck?.name ?? selection.id)
+                          : selection.kind === 'topic'
+                            ? (browseTopic?.name ?? selection.id)
+                            : selection.id,
                     }),
                 },
                 {
@@ -486,7 +556,7 @@ export function FlashcardAdminPanel({
           context={bulk.context}
           destinationLabel={bulk.label}
           bank={bank}
-          subjects={subjects}
+          topics={topics}
           busy={locked}
           onClose={() => setBulk(undefined)}
           onDraftDirtyChange={setBulkDirty}

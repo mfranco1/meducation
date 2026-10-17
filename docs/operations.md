@@ -69,7 +69,7 @@ Entry point `meducation_api.db.cli`; also runs as `python -m meducation_api.db.c
 
 - Schema and roles: `bootstrap-local`, `head`, `upgrade`, `restore-permissions`, `invalidate-restored-sessions`.
 - Releases: `activate --release-id --expected-sequence --operation-id --actor --reason`; `export-release --release-id --output NEW_DIR` (refuses existing directories).
-- Draft IDs: `advance-id-sequences --by N` moves the subject, quiz and question ID sequences N past the largest ID in any release or the draft (migrator credentials). Run it after restoring an older backup.
+- Draft IDs: `advance-id-sequences --by N` moves the subject, topic, quiz and question ID sequences N past the largest ID in any release or the draft (migrator credentials). Run it after restoring an older backup.
 - Export checks: `validate-export` and `audit-export` take `--directory`, `--repository`, `--report`. They verify captured bytes, hashes and policy and refuse to overwrite reports. Digests prove internal consistency, not live currency; export fresh from the target when currency matters. `npm run validate:content -- <quiz-file> <flashcard-file>` checks an explicitly selected pair the same way.
 
 There is no file import: a new database receives its content from a `pg_restore` of an authority dump (see Backup and restore), and ordinary changes go through the editor. An export is never a way to replace database-only work with an older snapshot.
@@ -96,8 +96,8 @@ Open `http://127.0.0.1:5173/admin.html`. `.venv/bin/python scripts/local-authori
 
 ## Authoring and publication
 
-- The editor reads and writes individual draft records ([record API](content-management.md#record-api-and-publication)). Each write is validated, versioned and logged in `content.draft_changes`; it never publishes. New subject, quiz and question IDs come from sequences (`content.draft_subject_ids`, `draft_quiz_ids`, `draft_question_ids`); decks and cards use `d-`/`f-` plus a UUID.
-- **Publish** validates the full pair, stores an immutable release through `content.store_release`, activates it and records the published change ID, in one transaction. **Discard** resets the draft to the active release. Retained releases can be activated again; activation keeps the draft.
+- The editor reads and writes individual draft records ([record API](content-management.md#record-api-and-publication)). Each write is validated, versioned and logged in `content.draft_changes`; it never publishes. New subject, topic, quiz and question IDs come from sequences (`content.draft_subject_ids`, `draft_topic_ids`, `draft_quiz_ids`, `draft_question_ids`); decks and cards use `d-`/`f-` plus a UUID.
+- **Publish** validates the full pair, stores an immutable release through `content.store_release`, activates it and records the published change ID, in one transaction. **Discard** resets the draft to the active release. Retained releases at the current content schema can be activated again; activation keeps the draft. Releases from before migration `0009_topics` stay as history: they cannot be activated, loaded into the draft or exported, and the API does not start until a release at the current schema is active, so publish once right after that upgrade.
 - **Export paired ZIP** exports the draft or a retained release (deterministic, 128 MiB cap). It is not a backup.
 
 ## Backup and restore
