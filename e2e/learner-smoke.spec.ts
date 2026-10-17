@@ -211,7 +211,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 1 of 2')).toBeVisible();
   const concealedFace = page.getByRole('button', { name: 'Reveal answer' });
-  const hiddenAnswerFace = page.locator('[aria-label="Answer revealed. Click to hide or press Space to continue."]');
+  const hiddenAnswerFace = page.locator('[aria-label="Answer revealed. Click to hide or press Space or Enter to continue."]');
   const [concealedBounds, hiddenAnswerBounds] = await Promise.all([
     concealedFace.boundingBox(),
     hiddenAnswerFace.boundingBox(),
@@ -270,7 +270,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   const firstPrompt = page.getByRole('heading', { name: /What forms the brachial plexus/ });
   await firstPrompt.click();
   await page.keyboard.press('Space');
-  const revealedFace = page.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' });
+  const revealedFace = page.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' });
   await expect(revealedFace).toBeFocused();
   await expect(page.locator('[data-space-nav-focus-ring="suppressed"]')).toHaveCount(1);
   const reducedMotionState = await revealedFace.evaluate((element) => ({
@@ -290,7 +290,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Card 1, opened' }).click();
   await page.getByRole('button', { name: 'Reveal answer' }).click();
-  await page.getByRole('group', { name: 'Answer revealed. Click to hide or press Space to continue.' }).click();
+  await page.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }).click();
   await page.getByRole('button', { name: 'Flag card' }).click();
   await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toBeVisible();
   await page.getByRole('button', { name: 'Hidden cards, 0' }).click();
