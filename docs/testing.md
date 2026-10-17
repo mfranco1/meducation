@@ -26,7 +26,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 
 ## What to run
 
-- Any code change: focused tests, `npm run lint`, `npm run build`.
+- Any code change: focused tests, `npm run lint`, `npm run format:check`, `npm run build`.
 - Learner UI, navigation, sessions, loaders: affected learner browser flows on a fresh learner build; the full learner suite for shared navigation or loading.
 - Admin UI, record store, authoring: admin browser suite and `build:admin`.
 - Shared UI, content rendering, entry points, lazy boundaries: build both entries and run affected flows in both apps. The ordinary build must omit `admin.html`; the admin build must include it.
