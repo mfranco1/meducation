@@ -35,6 +35,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
   const headingRef = useRef<HTMLHeadingElement>(null);
   const topicButtons = useRef(new Map<string, HTMLElement>());
   const returnTo = useRef<string>(undefined);
+  const focusPending = useRef(false);
   // On small screens an open topic owns a history entry, so browser Back returns to the topic list.
   const ownsHistoryEntry = useRef(false);
   const withSets = topics.filter(topic => sets.some(set => set.topicId === topic.id));
@@ -43,8 +44,14 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
     return [topic.id, { own, completed: own.filter(set => set.completionCount > 0).length }];
   }));
   const latest = sets.reduce<TopicSet | undefined>((best, set) => set.activityAt && set.activityAt > (best?.activityAt ?? '') ? set : best, undefined);
-  const chosen = withSets.find(topic => topic.id === selectedId);
-  const selected = chosen ?? (desktop ? withSets.find(topic => topic.id === latest?.topicId) ?? withSets[0] : undefined);
+  const shown = withSets.find(topic => topic.id === selectedId) ?? withSets.find(topic => topic.id === latest?.topicId) ?? withSets[0];
+  const selected = desktop || selectedId ? shown : undefined;
+  // Narrowing the window keeps the topic that was on screen open instead of returning to the list.
+  const [wasDesktop, setWasDesktop] = useState(desktop);
+  if (wasDesktop !== desktop) {
+    setWasDesktop(desktop);
+    if (!desktop) setSelectedId(shown.id);
+  }
   const panelSx: SxProps<Theme> = desktop ? { display: 'flex', flexDirection: 'column', maxHeight: 'min(720px, calc(100dvh - 48px))' } : {};
   const scrollSx: SxProps<Theme> = { minHeight: 0, p: .5, overflowY: desktop ? 'auto' : undefined };
   const nouns = noun === 'quiz' ? 'quizzes' : 'decks';
@@ -53,6 +60,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
     const onPopState = () => {
       if (!ownsHistoryEntry.current) return;
       ownsHistoryEntry.current = false;
+      focusPending.current = true;
       setSelectedId(undefined);
     };
     addEventListener('popstate', onPopState);
@@ -63,17 +71,22 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
     };
   }, []);
 
+  useEffect(() => {
+    if (desktop || !selectedId || ownsHistoryEntry.current) return;
+    history.pushState(history.state, '');
+    ownsHistoryEntry.current = true;
+  }, [desktop, selectedId]);
+
   const openTopic = (id: string) => {
     returnTo.current = id;
-    if (!desktop && !ownsHistoryEntry.current) {
-      history.pushState(history.state, '');
-      ownsHistoryEntry.current = true;
-    }
+    focusPending.current = true;
     setSelectedId(id);
   };
 
+  // Focus follows the learner's own drill-down, not a window resize.
   useEffect(() => {
-    if (desktop) return;
+    if (desktop || !focusPending.current) return;
+    focusPending.current = false;
     if (selectedId) headingRef.current?.focus();
     else if (returnTo.current) topicButtons.current.get(returnTo.current)?.focus();
   }, [desktop, selectedId]);
@@ -107,7 +120,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
     const { own, completed } = summaries.get(selected.id)!;
     const percent = Math.round((completed / own.length) * 100);
     return <Card component="section" aria-labelledby="topic-summary-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx }}>
-      {!desktop && <Button startIcon={<ArrowBackRoundedIcon />} color="inherit" onClick={() => ownsHistoryEntry.current ? history.back() : setSelectedId(undefined)} sx={{ mb: 1.5 }}>All topics</Button>}
+      {!desktop && <Button startIcon={<ArrowBackRoundedIcon />} color="inherit" onClick={() => history.back()} sx={{ mb: 1.5 }}>Topics</Button>}
       <Typography ref={headingRef} tabIndex={-1} id="topic-summary-heading" variant="h5" component="h2" sx={{ overflowWrap: 'anywhere', outline: 'none' }}>{selected.name}</Typography>
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
         <LinearProgress aria-hidden variant="determinate" value={percent} sx={{ ...trackSx, flex: 1 }} />

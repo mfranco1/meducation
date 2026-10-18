@@ -338,7 +338,6 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByText('Completed 1 time')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
-  await openTopicIfNeeded(page);
   await expect(page.getByText('Completed 1 time')).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))

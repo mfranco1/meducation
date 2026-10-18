@@ -226,7 +226,7 @@ describe('subject topics on small screens', () => {
     expect(screen.getByRole('heading', { name: 'Glycolysis quiz' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Topics' })).toBeNull();
 
-    fireEvent.click(screen.getByRole('button', { name: 'All topics' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Topics' }));
     expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Glycolysis quiz' })).toBeNull();
     expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveFocus();
