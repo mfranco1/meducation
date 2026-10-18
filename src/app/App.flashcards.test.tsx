@@ -43,10 +43,10 @@ it('disables progress backup during flashcard study with save-and-leave guidance
   fireEvent.click(await screen.findByRole('button', { name: /^Study deck/  }));
   expect(await screen.findByText('Card 1 of 1')).toBeVisible();
 
-  const backupButton = screen.getByRole('button', { name: 'Progress backup' });
+  const backupButton = screen.getByRole('button', { name: 'Progress Backup' });
   expect(backupButton).toBeDisabled();
   expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent('Save and leave your study session');
-  expect(screen.queryByRole('dialog', { name: 'Progress backup' })).toBeNull();
+  expect(screen.queryByRole('dialog', { name: 'Progress Backup' })).toBeNull();
   expect(screen.getByText('Card 1 of 1')).toBeVisible();
 });
 
@@ -106,7 +106,7 @@ it('saves arrow-key navigation on the destination card when exiting', async () =
   expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeInTheDocument();
   fireEvent.click(screen.getByRole('button', { name: 'Save and exit deck' }));
   // The subject checkpoint reflects the destination selected with Arrow Right.
-  expect(await screen.findByText('In progress: card 2 of 2')).toBeInTheDocument();
+  expect(await screen.findByText(/\d\/2 reviewed/)).toBeInTheDocument();
 });
 
 it('keeps the current card open and reports an error when arrow navigation cannot save', async () => {

@@ -2,8 +2,9 @@ import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 
+// Tests render the desktop (lg+) layout unless they override matchMedia.
 const matchMedia = (matches = false) => vi.fn().mockImplementation((query: string) => ({
-  matches,
+  matches: matches || query === '(min-width:1200px)',
   media: query,
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),

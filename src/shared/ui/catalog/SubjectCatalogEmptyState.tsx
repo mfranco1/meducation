@@ -28,7 +28,7 @@ export function SubjectCatalogEmptyState({ title, onShowAll }: { title: string; 
           display: 'grid',
           placeItems: 'center',
           position: 'relative',
-          borderRadius: '50%',
+          borderRadius: '20px',
           bgcolor: 'rgba(185, 81, 27, .08)',
         }}
       >

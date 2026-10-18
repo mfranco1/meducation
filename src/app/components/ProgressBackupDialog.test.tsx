@@ -33,7 +33,7 @@ describe('progress backup dialog', () => {
       },
     });
     render(<ProgressBackupDialog controller={actions} />);
-    expect(screen.getByRole('dialog', { name: 'Progress backup' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Progress Backup' })).toBeVisible();
     expect(screen.getByText('This backup has no saved progress. Replacing clears all quiz and flashcard progress in this browser.')).toBeVisible();
     expect(within(screen.getByRole('table', { name: 'Backup comparison' })).getByRole('row', { name: 'Completions 0 61' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Download current progress first' }));
@@ -60,7 +60,7 @@ describe('progress backup dialog', () => {
     const actions = controller({ busy: true, committing: true });
     render(<ProgressBackupDialog controller={actions} />);
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
-    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Progress backup' }), { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Progress Backup' }), { key: 'Escape' });
     expect(actions.close).not.toHaveBeenCalled();
   });
 });

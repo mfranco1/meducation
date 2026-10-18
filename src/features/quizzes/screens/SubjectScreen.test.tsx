@@ -87,7 +87,7 @@ describe('subject quiz action', () => {
   });
 
   it('prioritizes Resume test when a saved attempt exists', () => {
-    const { onResumeQuiz } = renderSubject({ active: activeAttempt, completionCount: 1, currentQuestion: 3 });
+    const { onResumeQuiz } = renderSubject({ active: activeAttempt, completionCount: 1, answeredCount: 3 });
 
     expect(screen.getByRole('button', { name: 'Resume quiz: Practice test 1' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Retake quiz: Practice test 1' })).toBeNull();
@@ -185,7 +185,8 @@ describe('subject topics', () => {
   it('lists topics that have quizzes with progress and switches the quiz list on selection', () => {
     renderTopics([{ quiz, completionCount: 1, latestScore: 80 }, { quiz: done, completionCount: 0 }, { quiz: other, completionCount: 0 }]);
 
-    expect(screen.getByText('2 topics')).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Quizzes' })).toBeVisible();
+    expect(screen.queryByText('2 topics')).toBeNull();
     expect(screen.queryByRole('button', { name: /Empty topic/ })).toBeNull();
     expect(screen.getByText('1 / 3 quizzes completed')).toBeVisible();
     expect(screen.getByText('33%')).toBeVisible();
@@ -199,16 +200,36 @@ describe('subject topics', () => {
     expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('heading', { name: 'Glycolysis quiz' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Practice test 1' })).toBeNull();
-    expect(screen.getByText('Not started')).toBeVisible();
+    expect(screen.queryByText('Not started')).toBeNull();
   });
 
-  it('opens on the topic with the most recent activity and shows relative activity and in-progress status', () => {
+  it('opens on the topic with the most recent activity and shows relative activity and answered progress', () => {
     const recent = new Date(Date.now() - 2 * 86_400_000).toISOString();
-    renderTopics([{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0, active: { ...activeAttempt, quizId: other.id }, currentQuestion: 1, activityAt: recent }]);
+    renderTopics([{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0, active: { ...activeAttempt, quizId: other.id }, answeredCount: 1, activityAt: recent }]);
 
     expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveAttribute('aria-current', 'true');
-    expect(screen.getByText('In progress: question 1 of 1')).toBeVisible();
+    expect(screen.getByText('1/1 answered')).toBeVisible();
+    expect(screen.getByText('100%')).toBeVisible();
     expect(screen.getByText('2 days ago')).toBeVisible();
+  });
+});
+
+describe('subject topics on small screens', () => {
+  it('drills from the topic list into a topic and back', () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    const other = { id: 'other', subjectId: subject.id, topicId: 't2', name: 'Glycolysis quiz', questionCount: 1 };
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0 }]} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+
+    expect(screen.queryByRole('heading', { name: 'Quizzes' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /Metabolism/ }));
+    expect(screen.getByRole('heading', { name: 'Metabolism' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Glycolysis quiz' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Topics' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'All topics' }));
+    expect(screen.getByRole('heading', { name: 'Topics' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: 'Glycolysis quiz' })).toBeNull();
+    expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveFocus();
   });
 });
 

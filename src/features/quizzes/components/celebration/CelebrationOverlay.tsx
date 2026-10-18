@@ -50,7 +50,7 @@ export function CelebrationOverlay({ open, title, message, variant, durationMs =
       }}
     >
       <Stack direction="row" spacing={1.25} alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
-        <Box aria-hidden sx={{ display: 'grid', placeItems: 'center', width: 34, height: 34, borderRadius: '50%', bgcolor: '#d9f0e1', color: 'success.main', flexShrink: 0 }}><CheckRoundedIcon fontSize="small" /></Box>
+        <Box aria-hidden sx={{ display: 'grid', placeItems: 'center', width: 34, height: 34, borderRadius: '10px', bgcolor: '#d9f0e1', color: 'success.main', flexShrink: 0 }}><CheckRoundedIcon fontSize="small" /></Box>
         <Box><Typography fontWeight={800} lineHeight={1.2}>{title}</Typography><Typography variant="body2" color="text.secondary">{message}</Typography></Box>
       </Stack>
       <RadiatingCircles particleCount={particles} durationMs={durationMs - 150} delayMs={90} />

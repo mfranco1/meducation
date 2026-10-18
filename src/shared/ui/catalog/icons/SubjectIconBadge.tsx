@@ -8,7 +8,7 @@ export function SubjectIconBadge({ subjectId }: { subjectId: string }) {
       sx={{
         alignItems: 'center',
         bgcolor: alpha(theme.palette.primary.main, 0.07),
-        borderRadius: '50%',
+        borderRadius: '12px',
         color: 'primary.main',
         display: 'flex',
         flex: '0 0 48px',

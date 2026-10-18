@@ -147,11 +147,17 @@ export function AppNavigationDrawer({
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
             {item('quizzes', 'Quizzes', <QuizRoundedIcon />, active === 'quizzes', compact)}
             {item('flashcards', 'Flashcards', <StyleRoundedIcon />, active === 'flashcards', compact)}
-            <Tooltip title={compact ? (progressBackupDisabledReason ?? 'Progress backup') : progressBackupDisabledReason ?? ''} placement="right" enterDelay={500}>
+          </Box>
+          <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box
+              aria-hidden="true"
+              sx={{ height: '1px', ml: 0, mr: compact ? '12px' : '4px', bgcolor: '#eee5df', opacity: 0.8 }}
+            />
+            <Tooltip title={compact ? (progressBackupDisabledReason ?? 'Progress Backup') : progressBackupDisabledReason ?? ''} placement="right" enterDelay={500}>
               <Box component="span" sx={{ display: 'block' }}>
               <ButtonBase
                 disabled={disabled || !onProgressBackup || Boolean(progressBackupDisabledReason)}
-                aria-label="Progress backup"
+                aria-label="Progress Backup"
                 aria-describedby={progressBackupDisabledReason ? 'progress-backup-disabled-guidance' : undefined}
                 onClick={() => onProgressBackup?.()}
                 sx={{
@@ -162,7 +168,7 @@ export function AppNavigationDrawer({
                 }}
               >
                 <Box aria-hidden="true" sx={{ display: 'flex' }}><BackupRoundedIcon /></Box>
-                {!compact && <Box component="span" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Progress backup</Box>}
+                {!compact && <Box component="span" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Progress Backup</Box>}
               </ButtonBase>
               </Box>
             </Tooltip>

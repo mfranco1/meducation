@@ -4,7 +4,8 @@ Visual and interaction conventions. Use the MUI theme in `src/shared/theme.ts`, 
 
 ## Foundations
 
-- Warm, light palette: primary accent `#b9511b`, off-white surfaces, soft borders, 14px card radius (10px for rows and nav buttons), strong type hierarchy.
+- Warm, light palette: primary accent `#b9511b`, off-white surfaces, soft borders, 14px card radius (10px for rows and nav buttons), strong type hierarchy: panel titles h5, section headings h6, row names bold.
+- Icon backgrounds are pale rounded squares (10–12px radius, 20px for the large empty-state badge), never circles.
 - Correctness combines written feedback, an icon and color. Semantic green, red and warning tones are reserved for correctness, errors and warnings; primary action buttons (Finish, Submit, Save) use the primary color.
 - Feedback tones for correct, incorrect and answer-under-review come from theme tokens; pearls use `primary.light`. Immediate feedback is a compact tinted header over a neutral reading surface with generous line height and constrained measure. Do not repeat answer summaries that the highlighted choices already show.
 - Layouts must not overflow horizontally at 320, 390, 1048 or 1440px; enlarged text must stay usable.
@@ -36,15 +37,15 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 
 ## Learner shell and screens
 
-- Left rail: 240px expanded, 64px collapsed, brand first, then destinations; collapsed items keep accessible names and tooltips. An edge toggle shows an arrow on hover or focus (always on touch) and an orange hover line. Narrow screens reserve the rail and open a labelled overlay.
+- Left rail: 240px expanded, 64px collapsed, brand first, then destinations, with Progress Backup at the bottom below a partial separator; collapsed items keep accessible names and tooltips. An edge toggle shows an arrow on hover or focus (always on touch) and an orange hover line. Narrow screens reserve the rail and open a labelled overlay.
 - Quiz, Browse, Review and flashcard study share the progress header and a right-aligned Previous/Next footer. Review and Browse render radio indicators as decoration, mark the submitted choice, highlight the correct one in green, and show explicit text when a key or explanation is unavailable.
 - Flashcard answer panel: a centered front prompt above an orange panel that flips on a 420ms Y-axis rotation (reduced motion: immediate). Both faces share the intrinsic height of the answer, and the concealed side shows the icon-only logo.
-- Dashboards share the frame, subject grid (1, 2 or 3 columns), icon-and-title cards (1.25rem title, fixed icon badge, never truncated), stat cards and Continue Studying card. Quiz cards have a decorative score track with the visible score as its accessible equivalent; flashcard cards have none.
-- Subject screens (`SubjectBrowseLayout`, `TopicSetBrowser`) have a header with the subject badge, name and progress ring, then two panes: a Topics card beside the selected topic's summary and item list (desktop `lg` and up; stacked below). Topic rows are buttons with `aria-current`, wrapped names, a thin progress bar and a chevron; item rows have a status icon, chips and one primary action.
-- Empty states are transparent and borderless: one concise heading and the regular logo in a pale circle, with a single action only when it resolves the state.
+- Dashboards share the frame, subject grid (1, 2 or 3 columns), icon-and-title cards (1.25rem title, fixed rounded-square icon badge, never truncated), stat cards and Continue Studying card. Quiz cards have a decorative score track with the visible score as its accessible equivalent; flashcard cards have none.
+- Subject screens (`SubjectBrowseLayout`, `TopicSetBrowser`) have a header with the subject badge, name and progress ring. On `lg` and up, a Topics card sits beside one content card (topic summary, separator, Quizzes or Decks list); both are height-bounded and only their lists scroll. Below `lg` they drill down: the Topics list, then the selected topic's content with an All topics back button. Topic rows are buttons with `aria-current`, bold wrapped names, a thin progress bar and a chevron; item rows have a status icon (green check when completed), a green completion chip, score chips, a progress bar of answered questions or reviewed cards when in progress, and one primary action.
+- Empty states are transparent and borderless: one concise heading and the regular logo on a pale rounded square, with a single action only when it resolves the state.
 - Loading keeps the header visible and centers the logo, a 6px indeterminate bar and one status line; sections are `aria-busy` with accessible labels and placeholders outside the focus order. Catalog skeletons use the warm wave shimmer. Failures use a full-width recovery banner below the header (with Retry), a small in-region note, or a persistent bottom-right toast. Error copy is learner-safe.
 - Toasts use semantic severity, stack by viewport position above content and below modals, can be global or screen-scoped, and persistent errors have a keyboard-accessible close.
-- Progress backup is a labelled dialog with a pale-circle icon header, two outlined cards (save, restore) that stack on narrow screens, a file-versus-browser comparison table and one adaptive warning alert; it has a scrollable body, reachable footer, polite status and alert errors; Escape and Cancel work before commit and are disabled during commit. Focus returns to the entry action.
+- Progress Backup is a labelled dialog with a rounded-square icon header, two outlined cards (save, restore) that stack on narrow screens, a file-versus-browser comparison table and one adaptive warning alert; it has a scrollable body, reachable footer, polite status and alert errors; Escape and Cancel work before commit and are disabled during commit. Focus returns to the entry action.
 
 ## Admin
 

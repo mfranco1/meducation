@@ -34,20 +34,16 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completi
 }
 
 function deckSet(deck: FlashcardDeckSummary, checkpoint: FlashcardCheckpoint | undefined, completionCount: number, loading: boolean, onSelect: () => void): TopicSet {
-  const index = checkpoint ? deck.cardIds.indexOf(checkpoint.currentCardId) : -1;
-  const inProgress = checkpoint !== undefined && index >= 0;
+  const inProgress = checkpoint !== undefined && deck.cardIds.includes(checkpoint.currentCardId);
   return {
     id: deck.id,
     topicId: deck.topicId,
     name: deck.name,
     detail: `${deck.cardCount} ${deck.cardCount === 1 ? 'card' : 'cards'}`,
-    completed: completionCount > 0,
+    completionCount,
     activityAt: checkpoint?.updatedAt,
-    chips: [
-      ...completionCount > 0 ? [`Completed ${completionCount} ${completionCount === 1 ? 'time' : 'times'}`] : [],
-      ...inProgress ? [`In progress: card ${index + 1} of ${deck.cardCount}`] : [],
-      ...completionCount === 0 && !inProgress ? ['Not started'] : [],
-    ],
+    progress: inProgress ? { done: checkpoint.openedCardIds.filter(id => deck.cardIds.includes(id)).length, total: deck.cardCount, label: 'reviewed' } : undefined,
+    chips: [],
     action: <Button variant="contained" aria-label={loading || deck.cardCount === 0 ? undefined : `${checkpoint ? 'Resume' : 'Study'} deck: ${deck.name}`} disabled={deck.cardCount === 0 || loading} onClick={onSelect}>
       {loading ? 'Loading deck…' : deck.cardCount === 0 ? 'No cards yet' : checkpoint ? 'Resume' : 'Study'}
     </Button>,

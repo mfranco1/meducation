@@ -64,10 +64,11 @@ describe('learner progress selectors', () => {
     expect(removed[0].latest).toBeUndefined();
   });
 
-  it('keeps canonical quiz order and carries resume position and activity', () => {
+  it('keeps canonical quiz order and carries answered count and activity', () => {
     const quizzes = quizProgressForSubject(bank, progress, 's1');
     expect(quizzes.map(item => item.quiz.id)).toEqual(['q1', 'q2']);
-    expect(quizzes[1].currentQuestion).toBe(1);
+    expect(quizzes[1].answeredCount).toBe(0);
+    expect(quizzes[0].answeredCount).toBeUndefined();
     expect(quizzes[1].activityAt).toBeDefined();
     expect(quizzes[0]).toMatchObject({ completionCount: 2, latestScore: 80, trend: 'increase' });
   });

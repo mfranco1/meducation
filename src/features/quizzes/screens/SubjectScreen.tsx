@@ -15,7 +15,7 @@ export type { QuizProgress } from '../selectors/progress';
 export function SubjectScreen({ subject, topics, progress, loading = false, retrying = false, recovery, loadingQuizIds = new Set<string>(), error, questionError, onRetry = () => undefined, onRetryQuestions = () => undefined, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz }: { subject: Subject; topics: readonly Topic[]; progress: QuizProgress[]; loading?: boolean; retrying?: boolean; recovery?: { failed: boolean; retryAt?: number; retryAfterAt?: number; retrying: boolean; busy: boolean }; loadingQuizIds?: Set<string>; error?: Error; questionError?: Error; onRetry?: () => void; onRetryQuestions?: () => void; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
   const showSets = !(error || loading || retrying) && progress.length > 0;
-  const sets: TopicSet[] = progress.map(({ quiz, active, completionCount, latestScore, trend, currentQuestion, activityAt }) => {
+  const sets: TopicSet[] = progress.map(({ quiz, active, completionCount, latestScore, trend, answeredCount, activityAt }) => {
     const label = active ? 'Resume' : completionCount > 0 ? 'Retake' : 'Start';
     const busy = loadingQuizIds.has(quiz.id);
     return {
@@ -23,12 +23,10 @@ export function SubjectScreen({ subject, topics, progress, loading = false, retr
       topicId: quiz.topicId,
       name: quiz.name,
       detail: `${quiz.questionCount} ${quiz.questionCount === 1 ? 'question' : 'questions'}`,
-      completed: completionCount > 0,
+      completionCount,
       activityAt,
+      progress: active ? { done: Math.min(answeredCount ?? 0, quiz.questionCount), total: quiz.questionCount, label: 'answered' } : undefined,
       chips: [
-        ...completionCount > 0 ? [`Completed ${completionCount} ${completionCount === 1 ? 'time' : 'times'}`] : [],
-        ...active ? [`In progress: question ${currentQuestion} of ${quiz.questionCount}`] : [],
-        ...completionCount === 0 && !active ? ['Not started'] : [],
         ...latestScore !== undefined ? [<Box key="score" component="span" sx={{ alignItems: 'center', display: 'inline-flex', gap: .75 }}>Score {latestScore}%{trend && <ScoreTrendIndicator trend={trend} />}</Box>] : [],
       ],
       action: <Button variant="contained" aria-label={busy ? undefined : `${label} quiz: ${quiz.name}`} disabled={busy} onClick={() => active ? onResumeQuiz(quiz) : setSetupQuiz(quiz)}>{busy ? 'Loading questions…' : label}</Button>,

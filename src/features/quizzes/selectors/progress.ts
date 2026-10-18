@@ -1,7 +1,6 @@
 import { mostRecentScore, scoreTrend } from '../../../analytics/analytics';
 import type { Attempt, Quiz, QuizRepository, RecentScore, Subject } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
-import { questionIndexFor } from '../../../domain/quizEngine';
 
 export interface QuizProgress {
   quiz: Quiz;
@@ -9,7 +8,7 @@ export interface QuizProgress {
   completionCount: number;
   latestScore?: number;
   trend?: ReturnType<typeof scoreTrend>;
-  currentQuestion?: number;
+  answeredCount?: number;
   activityAt?: string;
 }
 
@@ -98,11 +97,7 @@ export function quizProgressForSubject(
       latestScore: latest?.percentage,
       trend: trendFor(latest, scores),
       activityAt: progressView.activityAt[quiz.id],
-      currentQuestion: active
-        ? quiz.questionIds
-          ? Math.max(0, quiz.questionIds.indexOf(active.currentQuestionId ?? '')) + 1
-          : questionIndexFor(questionBank.listQuestions(quiz.id), active.currentQuestionId) + 1
-        : undefined,
+      answeredCount: active && Object.values(active.responses).filter(response => response.selectedChoiceId).length,
     };
   });
 }

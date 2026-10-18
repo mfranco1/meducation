@@ -35,10 +35,8 @@ describe('FlashcardSubjectScreen', () => {
     const onSelectDeck = vi.fn();
     render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{ d3: 1 }} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={onSelectDeck} /></ThemeProvider>);
     expect(screen.getByRole('heading', { name: 'Anatomy' })).toBeVisible();
-    expect(screen.getByText('2 topics')).toBeVisible();
     expect(screen.getByText('1 / 3 decks completed')).toBeVisible();
     expect(screen.getByRole('button', { name: /Upper limb/ })).toHaveAttribute('aria-current', 'true');
-    expect(screen.getByText('2 decks')).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Brachial plexus' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Heart' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Study deck: Brachial plexus' }));
@@ -75,11 +73,11 @@ describe('FlashcardSubjectScreen', () => {
 
   it('shows singular and plural completion pills alongside a saved position', () => {
     const checkpoints = {
-      d1: { deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] },
+      d1: { deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: ['f1'], flaggedCardIds: [] },
     };
     render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={checkpoints} completionCounts={{ d1: 1, d3: 3 }} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByText('Completed 1 time')).toBeVisible();
-    expect(screen.getByText('In progress: card 2 of 2')).toBeVisible();
+    expect(screen.getByText('1/2 reviewed')).toBeVisible();
     expect(screen.queryByText('Completed 0 times')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Thorax/ }));
     expect(screen.getByText('Completed 3 times')).toBeVisible();

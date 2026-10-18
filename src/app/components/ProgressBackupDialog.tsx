@@ -46,8 +46,8 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
     slotProps={{ paper: { 'aria-busy': controller.busy } }}
   >
     <DialogTitle id="progress-backup-title" sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <Box aria-hidden="true" sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: '50%', display: 'grid', placeItems: 'center', color: 'primary.main', bgcolor: theme => alpha(theme.palette.primary.main, 0.12) }}><BackupRoundedIcon /></Box>
-      Progress backup
+      <Box aria-hidden="true" sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: '12px', display: 'grid', placeItems: 'center', color: 'primary.main', bgcolor: theme => alpha(theme.palette.primary.main, 0.12) }}><BackupRoundedIcon /></Box>
+      Progress Backup
     </DialogTitle>
     <DialogContent>
       <Stack spacing={2} sx={{ pt: 1 }}>
