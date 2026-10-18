@@ -17,4 +17,8 @@ describe('active attempt content signature', () => {
     expect(contentSignature([{ ...question, verifiedAnswer: 'A' }])).not.toBe(original);
     expect(contentSignature([question, { ...question, id: 'q2' }])).not.toBe(original);
   });
+
+  it('stores a short hash instead of question text', () => {
+    expect(contentSignature([question])).toMatch(/^[0-9a-f]{1,14}$/);
+  });
 });

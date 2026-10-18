@@ -12,12 +12,9 @@ describe('backup from captured storage pair', () => {
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.summary).toEqual({
-        retainedCompletedAttempts: 0,
         savedQuizzes: 0,
         savedFlashcardDecks: 0,
-        quizCompletions: 0,
-        flashcardCompletions: 0,
-        totalRecordedCompletions: '0',
+        completions: 0,
       });
       expect(JSON.parse(result.json).quiz.completed).toEqual([]);
     }
@@ -45,7 +42,7 @@ describe('backup from captured storage pair', () => {
     }
   });
 
-  it('summarizes saved histories without conflating retained attempts and durable completion totals', () => {
+  it('summarizes saved histories with durable completion totals', () => {
     const backup = structuredClone(quizPayload) as {
       quiz: Record<string, unknown>;
       flashcards: Record<string, unknown>;
@@ -59,12 +56,9 @@ describe('backup from captured storage pair', () => {
     expect(result.ok).toBe(true);
     if (result.ok)
       expect(result.summary).toEqual({
-        retainedCompletedAttempts: 1,
         savedQuizzes: 1,
         savedFlashcardDecks: 1,
-        quizCompletions: 2,
-        flashcardCompletions: 3,
-        totalRecordedCompletions: '5',
+        completions: 5,
       });
     expect(pair).toEqual(original);
   });

@@ -61,9 +61,9 @@ test('downloads a backup and restores it into a fresh browser context', async ({
     expect(await stored(target, quizKey)).toBeNull();
     await target.getByRole('button', { name: 'Progress backup' }).click();
     await target.getByLabel('Choose progress backup file').setInputFiles(downloadPath!);
-    await expect(target.getByRole('heading', { name: 'Backup preview' })).toBeVisible();
+    await expect(target.getByRole('table', { name: 'Backup comparison' })).toBeVisible();
     const reload = target.waitForNavigation({ waitUntil: 'load' });
-    await target.getByRole('button', { name: 'Restore backup' }).click();
+    await target.getByRole('button', { name: 'Replace my progress' }).click();
     await reload;
     await expect(target.getByRole('heading', { name: 'All Subjects' })).toBeFocused();
     await expect(target.getByText('Progress restored.', { exact: true })).toBeVisible();
@@ -85,8 +85,8 @@ test('rejects an invalid backup file without changing progress', async ({ page }
     buffer: Buffer.from('{"format":"something-else"}'),
   });
   await expect(page.getByRole('alert').filter({ hasText: 'not a Meducation progress backup' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Backup preview' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Restore backup' })).toHaveCount(0);
+  await expect(page.getByRole('table', { name: 'Backup comparison' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Replace my progress' })).toHaveCount(0);
   expect([await stored(page, quizKey), await stored(page, flashcardsKey)]).toEqual(before);
 });
 
@@ -97,7 +97,7 @@ test('cancelling at the preview leaves progress intact', async ({ page }) => {
   const before = [await stored(page, quizKey), await stored(page, flashcardsKey)];
   await page.getByRole('button', { name: 'Progress backup' }).click();
   await page.getByLabel('Choose progress backup file').setInputFiles('tests/fixtures/progress-backups/empty-v1.json');
-  await expect(page.getByRole('heading', { name: 'Backup preview' })).toBeVisible();
+  await expect(page.getByRole('table', { name: 'Backup comparison' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel' }).click();
   await expect(page.getByRole('dialog', { name: 'Progress backup' })).toHaveCount(0);
   expect([await stored(page, quizKey), await stored(page, flashcardsKey)]).toEqual(before);

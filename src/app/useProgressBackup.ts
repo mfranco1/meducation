@@ -24,6 +24,7 @@ export interface ProgressBackupController {
   busy: boolean;
   committing: boolean;
   status?: string;
+  notice?: string;
   preview?: ProgressBackupPreview;
   error?: string;
   show(): void;
@@ -57,10 +58,6 @@ function parseErrorMessage(error: string): string {
   }
 }
 
-function downloadJson(json: string): string | undefined {
-  return downloadProgressJson(json, (JSON.parse(json) as { exportedAt: string }).exportedAt);
-}
-
 export function useProgressBackup(): ProgressBackupController {
   const operationGeneration = useRef(0);
   const [open, setOpen] = useState(false);
@@ -69,6 +66,7 @@ export function useProgressBackup(): ProgressBackupController {
   const [status, setStatus] = useState<string>();
   const [preview, setPreview] = useState<ProgressBackupPreview>();
   const [error, setError] = useState<string>();
+  const [notice, setNotice] = useState<string>();
 
   useEffect(
     () => () => {
@@ -81,6 +79,7 @@ export function useProgressBackup(): ProgressBackupController {
   const show = useCallback(() => {
     operationGeneration.current += 1;
     setError(undefined);
+    setNotice(undefined);
     setStatus(undefined);
     setOpen(true);
   }, []);
@@ -89,6 +88,7 @@ export function useProgressBackup(): ProgressBackupController {
     operationGeneration.current += 1;
     setPreview(undefined);
     setError(undefined);
+    setNotice(undefined);
     setStatus(undefined);
     setBusy(false);
     setOpen(false);
@@ -97,6 +97,7 @@ export function useProgressBackup(): ProgressBackupController {
   const chooseFile = useCallback(async (file: Pick<File, 'size' | 'text'>) => {
     const generation = ++operationGeneration.current;
     setError(undefined);
+    setNotice(undefined);
     setStatus('Reading backup…');
     setBusy(true);
     const parsed = await readProgressBackupFile(file);
@@ -118,16 +119,20 @@ export function useProgressBackup(): ProgressBackupController {
     });
   }, []);
 
+  const downloadJson = useCallback((json: string) => {
+    const failure = downloadProgressJson(json, (JSON.parse(json) as { exportedAt: string }).exportedAt);
+    setError(failure);
+    setNotice(failure ? undefined : 'Backup downloaded.');
+  }, []);
+
   const download = useCallback(() => {
     const exported = exportBrowserProgress();
-    setError(
-      exported.ok
-        ? downloadJson(exported.json)
-        : exported.error === 'unavailable'
-          ? 'Current progress could not be read.'
-          : 'Saved progress could not be backed up. It has not been changed.',
-    );
-  }, []);
+    if (exported.ok) return downloadJson(exported.json);
+    setNotice(undefined);
+    setError(exported.error === 'unavailable'
+      ? 'Current progress could not be read.'
+      : 'Saved progress could not be backed up. It has not been changed.');
+  }, [downloadJson]);
 
   const restore = useCallback(() => {
     if (!preview || committing) return;
@@ -148,6 +153,7 @@ export function useProgressBackup(): ProgressBackupController {
     busy,
     committing,
     status,
+    notice,
     preview,
     error,
     show,
@@ -155,7 +161,7 @@ export function useProgressBackup(): ProgressBackupController {
     chooseFile,
     download,
     downloadCurrent: () => {
-      if (preview?.currentBackup) setError(downloadJson(preview.currentBackup));
+      if (preview?.currentBackup) downloadJson(preview.currentBackup);
     },
     restore,
   };

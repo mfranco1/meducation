@@ -43,12 +43,9 @@ export interface ProgressBackupV1 {
   flashcards: FlashcardsBackupV2;
 }
 export interface ProgressBackupSummary {
-  retainedCompletedAttempts: number;
   savedQuizzes: number;
   savedFlashcardDecks: number;
-  quizCompletions: number;
-  flashcardCompletions: number;
-  totalRecordedCompletions: string;
+  completions: number;
 }
 
 const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -301,16 +298,8 @@ export function summarizeProgressBackup(value: ProgressBackupV1): ProgressBackup
     ...Object.keys(value.quiz.latestScores), ...Object.keys(value.quiz.activity),
   ]);
   const deckIds = new Set([...Object.keys(value.flashcards.checkpoints), ...Object.keys(value.flashcards.completionCounts)]);
-  const quizCompletions = Object.values(value.quiz.completionCounts).reduce((sum, count) => sum + count, 0);
-  const flashcardCompletions = Object.values(value.flashcards.completionCounts).reduce((sum, count) => sum + count, 0);
-  return {
-    retainedCompletedAttempts: value.quiz.completed.length,
-    savedQuizzes: quizIds.size,
-    savedFlashcardDecks: deckIds.size,
-    quizCompletions,
-    flashcardCompletions,
-    totalRecordedCompletions: (BigInt(quizCompletions) + BigInt(flashcardCompletions)).toString(),
-  };
+  const completions = [...Object.values(value.quiz.completionCounts), ...Object.values(value.flashcards.completionCounts)].reduce((sum, count) => sum + count, 0);
+  return { savedQuizzes: quizIds.size, savedFlashcardDecks: deckIds.size, completions };
 }
 
 /** Build the exact portable allowlist, pause running timers, and revalidate the result. */

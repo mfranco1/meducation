@@ -44,7 +44,7 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 - Empty states are transparent and borderless: one concise heading and the regular logo in a pale circle, with a single action only when it resolves the state.
 - Loading keeps the header visible and centers the logo, a 6px indeterminate bar and one status line; sections are `aria-busy` with accessible labels and placeholders outside the focus order. Catalog skeletons use the warm wave shimmer. Failures use a full-width recovery banner below the header (with Retry), a small in-region note, or a persistent bottom-right toast. Error copy is learner-safe.
 - Toasts use semantic severity, stack by viewport position above content and below modals, can be global or screen-scoped, and persistent errors have a keyboard-accessible close.
-- Progress backup is a labelled dialog with a scrollable body, reachable footer, polite status and alert errors; Escape and Cancel work before commit and are disabled during commit. Focus returns to the entry action.
+- Progress backup is a labelled dialog with a pale-circle icon header, two outlined cards (save, restore) that stack on narrow screens, a file-versus-browser comparison table and one adaptive warning alert; it has a scrollable body, reachable footer, polite status and alert errors; Escape and Cancel work before commit and are disabled during commit. Focus returns to the entry action.
 
 ## Admin
 
