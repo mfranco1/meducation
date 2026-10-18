@@ -8,6 +8,7 @@ import { brand } from '../../shared/brand';
 import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { DrawerEdgeToggle } from './drawer/DrawerEdgeToggle';
 import { DrawerSurface } from './drawer/DrawerSurface';
+import { reducedMotion } from '../../shared/ui/motion';
 
 const learnerDrawerExpandedWidth = 240;
 const learnerDrawerCollapsedWidth = 64;
@@ -192,7 +193,7 @@ export function AppNavigationDrawer({
           display: 'flex',
           flexDirection: 'column',
           overflow: 'visible',
-          '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+          [reducedMotion]: { transition: 'none' },
         }}
       >
         {contents()}

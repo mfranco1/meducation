@@ -2,6 +2,7 @@ import { Box, Card, CardActionArea, CardContent, Typography } from '@mui/materia
 import type { ReactNode } from 'react';
 import type { Subject } from '../../../domain/types';
 import { SubjectIconBadge } from './icons/SubjectIconBadge';
+import { reducedMotion } from '../motion';
 
 type SubjectCardProps = {
   subject: Subject;
@@ -20,7 +21,7 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
         '&:hover': { borderColor: subject.accent, transform: 'translateY(-2px)' },
         '&:has(.Mui-focusVisible)': { borderColor: subject.accent },
         transition: 'all .18s',
-        '@media (prefers-reduced-motion: reduce)': { transition: 'none', '&:hover': { transform: 'none' } },
+        [reducedMotion]: { transition: 'none', '&:hover': { transform: 'none' } },
       }}
     >
       <CardActionArea

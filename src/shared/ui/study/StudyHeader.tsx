@@ -3,9 +3,9 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { keyframes } from '@emotion/react';
 import { alpha, Box, Button, IconButton, Stack, Typography } from '@mui/material';
 import { useState, type MutableRefObject, type ReactNode } from 'react';
+import { easing, reducedMotion } from '../motion';
 
-const fillTransition = '450ms cubic-bezier(0.22, 1, 0.36, 1)';
-const reducedMotion = '@media (prefers-reduced-motion: reduce)';
+const fillTransition = `450ms ${easing.out}`;
 const glint = keyframes`
   from { opacity: 0; transform: translateX(-28px); }
   35% { opacity: 1; }

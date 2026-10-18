@@ -1,9 +1,9 @@
 import { keyframes } from '@emotion/react';
-import { Box, useMediaQuery } from '@mui/material';
+import { Box } from '@mui/material';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { easing, reducedMotion, useReducedMotion } from '../motion';
 
 const durationMs = 260;
-const easing = 'cubic-bezier(0.2, 0, 0, 1)';
 const incoming = (direction: 'next' | 'previous') => keyframes`
   from { transform: translateX(${direction === 'next' ? '100%' : '-100%'}); }
   to { transform: translateX(0); }
@@ -26,7 +26,7 @@ export function CatalogPageTransition({
   resetKey: string;
   direction: 'next' | 'previous';
 }) {
-  const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const reduced = useReducedMotion();
   const [activeRequest, setActiveRequest] = useState<number | null>(null);
   const currentRef = useRef<HTMLDivElement>(null);
   const previousRef = useRef<HTMLDivElement>(null);
@@ -34,22 +34,22 @@ export function CatalogPageTransition({
   const hasPreviousPage = Boolean(previousPage);
 
   useEffect(() => {
-    if (!requestId || reducedMotion || !hasPreviousPage) {
+    if (!requestId || reduced || !hasPreviousPage) {
       setActiveRequest(null);
       return;
     }
     setActiveRequest(requestId);
-  }, [requestId, resetKey, reducedMotion, hasPreviousPage]);
+  }, [requestId, resetKey, reduced, hasPreviousPage]);
 
   useLayoutEffect(() => {
-    if (!activeRequest || activeRequest !== requestId || !hasPreviousPage || reducedMotion) {
+    if (!activeRequest || activeRequest !== requestId || !hasPreviousPage || reduced) {
       setReservedHeight(undefined);
       return;
     }
     const currentHeight = currentRef.current?.getBoundingClientRect().height ?? 0;
     const previousHeight = previousRef.current?.getBoundingClientRect().height ?? 0;
     setReservedHeight(Math.max(currentHeight, previousHeight) || undefined);
-  }, [activeRequest, hasPreviousPage, reducedMotion, requestId]);
+  }, [activeRequest, hasPreviousPage, reduced, requestId]);
 
   useEffect(() => {
     if (!activeRequest || activeRequest !== requestId) return;
@@ -67,7 +67,7 @@ export function CatalogPageTransition({
     return () => window.removeEventListener('resize', settle);
   }, [activeRequest]);
 
-  const animating = Boolean(activeRequest && activeRequest === requestId && previousPage && !reducedMotion);
+  const animating = Boolean(activeRequest && activeRequest === requestId && previousPage && !reduced);
   return (
     <Box
       sx={{
@@ -87,8 +87,8 @@ export function CatalogPageTransition({
             position: 'absolute',
             inset: '0 4px auto',
             pointerEvents: 'none',
-            animation: `${outgoing(direction)} ${durationMs}ms ${easing} both`,
-            '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+            animation: `${outgoing(direction)} ${durationMs}ms ${easing.standard} both`,
+            [reducedMotion]: { animation: 'none' },
           }}
         >
           {previousPage}
@@ -100,8 +100,8 @@ export function CatalogPageTransition({
           position: animating ? 'absolute' : 'relative',
           inset: animating ? '0 4px auto' : undefined,
           width: animating ? 'calc(100% - 8px)' : undefined,
-          animation: animating ? `${incoming(direction)} ${durationMs}ms ${easing} both` : 'none',
-          '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+          animation: animating ? `${incoming(direction)} ${durationMs}ms ${easing.standard} both` : 'none',
+          [reducedMotion]: { animation: 'none' },
         }}
       >
         {children}

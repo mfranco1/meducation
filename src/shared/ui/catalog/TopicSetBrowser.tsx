@@ -4,6 +4,7 @@ import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUnch
 import { Box, ButtonBase, Card, Chip, LinearProgress, Stack, Typography } from '@mui/material';
 import { useState, type ReactNode } from 'react';
 import type { Topic } from '../../../domain/types';
+import { reducedMotion } from '../motion';
 
 export interface TopicSet {
   id: string;
@@ -16,7 +17,7 @@ export interface TopicSet {
   action: ReactNode;
 }
 
-const trackSx = { height: 6, borderRadius: 3, bgcolor: 'divider', '& .MuiLinearProgress-bar': { borderRadius: 3, '@media (prefers-reduced-motion: reduce)': { transition: 'none' } } };
+const trackSx = { height: 6, borderRadius: 3, bgcolor: 'divider', '& .MuiLinearProgress-bar': { borderRadius: 3, [reducedMotion]: { transition: 'none' } } };
 
 /** Relative to now, in the largest whole unit ("2 days ago"). */
 function relativeTime(iso: string): string {

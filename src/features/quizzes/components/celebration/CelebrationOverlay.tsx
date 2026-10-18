@@ -2,7 +2,8 @@ import { keyframes } from '@emotion/react';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { Box, Stack, Typography } from '@mui/material';
 import { useEffect } from 'react';
-import { RadiatingCircles, useReducedMotion } from './RadiatingCircles';
+import { useReducedMotion } from '../../../../shared/ui/motion';
+import { RadiatingCircles } from './RadiatingCircles';
 
 export type CelebrationVariant = 'streak' | 'perfect';
 

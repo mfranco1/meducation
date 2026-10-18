@@ -2,6 +2,7 @@ import { keyframes } from '@emotion/react';
 import { Box, LinearProgress, Typography } from '@mui/material';
 import { useEffect, type ReactNode } from 'react';
 import { AppBrand } from '../brand/AppBrand';
+import { easing, reducedMotion } from '../motion';
 
 const enterContent = keyframes`
   from { opacity: 0; }
@@ -34,7 +35,7 @@ export function ScreenLoading({ label = 'Loading…' }: { label?: string }) {
           borderRadius: 99,
           bgcolor: 'action.hover',
           '& .MuiLinearProgress-bar': { borderRadius: 99 },
-          '@media (prefers-reduced-motion: reduce)': {
+          [reducedMotion]: {
             '& .MuiLinearProgress-bar': { animation: 'none', transform: 'translateX(-35%)', width: '45%' },
           },
         }}
@@ -65,8 +66,8 @@ export function LoadedScreenContent({
   return (
     <Box
       sx={{
-        animation: animate ? `${enterContent} 170ms cubic-bezier(0.2, 0, 0, 1) both` : 'none',
-        '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+        animation: animate ? `${enterContent} 170ms ${easing.standard} both` : 'none',
+        [reducedMotion]: { animation: 'none' },
       }}
     >
       {children}

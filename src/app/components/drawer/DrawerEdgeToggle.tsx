@@ -1,6 +1,7 @@
 import KeyboardArrowLeftRoundedIcon from '@mui/icons-material/KeyboardArrowLeftRounded';
 import { Box, ButtonBase } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { reducedMotion } from '../../../shared/ui/motion';
 
 export interface DrawerEdgeToggleProps {
   expanded: boolean;
@@ -64,7 +65,7 @@ export function DrawerEdgeToggle({
           opacity: 1,
         },
         '&:disabled': { pointerEvents: 'none' },
-        '@media (prefers-reduced-motion: reduce)': {
+        [reducedMotion]: {
           '&::before': { transition: 'none' },
           '& .drawer-edge-toggle-arrow': { transition: 'none' },
         },

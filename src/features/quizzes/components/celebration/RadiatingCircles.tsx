@@ -1,6 +1,6 @@
 import { keyframes } from '@emotion/react';
 import { Box } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useReducedMotion } from '../../../../shared/ui/motion';
 
 const radiate = keyframes`
   0% { opacity: 0; transform: translate(0, 0) scale(.45); }
@@ -18,18 +18,6 @@ export interface RadiatingCirclesProps {
   verticalSpread?: number;
   particleSize?: number;
   direction?: 'up' | 'both';
-}
-
-export function useReducedMotion() {
-  const [reducedMotion, setReducedMotion] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-  useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
-    const sync = () => setReducedMotion(media.matches);
-    sync();
-    media.addEventListener('change', sync);
-    return () => media.removeEventListener('change', sync);
-  }, []);
-  return reducedMotion;
 }
 
 export function RadiatingCircles({

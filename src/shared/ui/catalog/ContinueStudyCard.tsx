@@ -2,6 +2,7 @@ import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
 import { Box, CardActionArea, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { useId, type ReactNode } from 'react';
+import { reducedMotion } from '../motion';
 
 export type ContinueStudyCardProps = {
   title: string;
@@ -212,7 +213,7 @@ export function ContinueStudyCard({
               mt: '20px',
               px: '22px',
               transition: 'filter 120ms ease',
-              '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+              [reducedMotion]: { transition: 'none' },
               '@container continue-card (min-width: 638px)': { mt: '22px' },
             }}
           >

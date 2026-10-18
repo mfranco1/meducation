@@ -85,9 +85,9 @@ describe('score animation helpers', () => {
     expect(scoreAnimationProgress(0.9) - scoreAnimationProgress(0.89)).toBeLessThan(
       scoreAnimationProgress(0.3) - scoreAnimationProgress(0.29),
     );
-    expect(scoreAnimationDuration(1)).toBeCloseTo(535, 0);
-    expect(scoreAnimationDuration(10)).toBeCloseTo(719, 0);
-    expect(scoreAnimationDuration(100)).toBe(1300);
+    expect(scoreAnimationDuration(1)).toBeCloseTo(660, 0);
+    expect(scoreAnimationDuration(10)).toBeCloseTo(789.7, 0);
+    expect(scoreAnimationDuration(100)).toBe(1200);
   });
 
   it('blends score colors continuously around each threshold', () => {
@@ -111,6 +111,49 @@ describe('score animation helpers', () => {
 });
 
 describe('ResultsScoreHero', () => {
+  it('shows the leading-edge glow mid-animation and reports settling once at the end', () => {
+    const onSettled = vi.fn();
+    renderHero(<ResultsScoreHero percentage={67} onSettled={onSettled} />);
+    frameAt(1000);
+    frameAt(1000 + scoreAnimationDuration(67) * 0.5);
+    expect(screen.getByTestId('score-ring-glow')).toHaveStyle({ opacity: '1' });
+    expect(onSettled).not.toHaveBeenCalled();
+    frameAt(1000 + scoreAnimationDuration(67) + 1);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId('score-ring-glow')).toHaveStyle({ opacity: '0' });
+  });
+
+  it('jumps to the final score on skip and reports settling once', () => {
+    const onSettled = vi.fn();
+    const { rerender } = renderHero(<ResultsScoreHero percentage={67} onSettled={onSettled} />);
+    frameAt(1000);
+    frameAt(1000 + scoreAnimationDuration(67) * 0.3);
+    rerender(<ResultsScoreHero percentage={67} onSettled={onSettled} skip />);
+    expect(screen.getByTestId('score-percentage')).toHaveTextContent('67%');
+    expect(screen.getByTestId('score-ring-glow')).toHaveStyle({ opacity: '0' });
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(frames.size).toBe(0);
+  });
+
+  it('holds a zero score briefly before settling', () => {
+    vi.useFakeTimers();
+    const onSettled = vi.fn();
+    renderHero(<ResultsScoreHero percentage={0} onSettled={onSettled} />);
+    vi.advanceTimersByTime(scoreAnimationDuration(0) - 1);
+    expect(onSettled).not.toHaveBeenCalled();
+    vi.advanceTimersByTime(1);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    vi.useRealTimers();
+  });
+
+  it('settles immediately with reduced motion and shows no glow', () => {
+    setReducedMotion(true);
+    const onSettled = vi.fn();
+    renderHero(<ResultsScoreHero percentage={67} onSettled={onSettled} />);
+    expect(onSettled).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('score-ring-glow')).toBeNull();
+  });
+
   it('keeps the counter, arc, and color on one fast-then-settling timeline', () => {
     const percentage = 67;
     const duration = scoreAnimationDuration(percentage);

@@ -1,7 +1,7 @@
 import { Box, useMediaQuery } from '@mui/material';
 import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { easing } from '../motion';
 
-const easing = 'cubic-bezier(0.2, 0, 0, 1)';
 const slideDurationMs = 220;
 const fadeDurationMs = 150;
 const travelPx = 14;
@@ -25,7 +25,7 @@ export function StudyItemTransition({ index, children }: { index: number; childr
     if (outgoing.index === index || !outgoing.node || !incoming?.animate || !ghostHost.current || reducedMotion) return;
     const step = index - outgoing.index;
     const shift = Math.abs(step) === 1 ? Math.sign(step) * travelPx : 0;
-    const timing = { duration: shift ? slideDurationMs : fadeDurationMs, easing };
+    const timing = { duration: shift ? slideDurationMs : fadeDurationMs, easing: easing.standard };
     const ghost = outgoing.node;
     ghost.setAttribute('aria-hidden', 'true');
     ghost.inert = true;

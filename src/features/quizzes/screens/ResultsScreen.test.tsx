@@ -1,7 +1,8 @@
 import { ThemeProvider } from '@mui/material';
-import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { theme } from '../../../shared/theme';
+import { scoreAnimationDuration } from '../components/results/ResultsScoreHero';
 import { ResultsScreen } from './ResultsScreen';
 import type { CompletedAttempt, Quiz } from '../../../domain/types';
 
@@ -12,10 +13,17 @@ const attemptFor = (correct: number, total: number, percentage: number): Complet
 });
 const renderResults = (attempt: CompletedAttempt) => render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attempt} questions={[]} onBack={() => {}} /></ThemeProvider>);
 
+const stubReducedMotion = (reduce: boolean) => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: reduce && query === '(prefers-reduced-motion: reduce)', media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+};
+
+beforeEach(() => stubReducedMotion(true));
+afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+
 describe('perfect-test celebration', () => {
-  it('celebrates an exact non-empty perfect score', () => {
+  it('celebrates an exact non-empty perfect score', async () => {
     renderResults(attemptFor(3, 3, 100));
-    expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
+    expect(await screen.findByRole('status')).toHaveTextContent('Perfect Test!');
   });
 
   it('does not celebrate rounded 100%, incomplete, or zero-question scores', () => {
@@ -32,7 +40,7 @@ describe('results score hero', () => {
   it('shows the score ring in place of the check and preserves the result summary and back action', () => {
     const onBack = vi.fn();
     render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attemptFor(2, 3, 67)} questions={[]} onBack={onBack} /></ThemeProvider>);
-    expect(screen.getByRole('heading', { name: 'Quiz complete' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Quiz results' })).toBeVisible();
     expect(screen.getByText('Final score: 67%.')).toBeInTheDocument();
     expect(screen.getByText('2 correct · 1 incorrect · 0 unanswered')).toBeVisible();
     expect(screen.getByText('2 correct · 1 incorrect · 0 unanswered')).toHaveStyle({ marginTop: '8px' });
@@ -52,5 +60,62 @@ describe('results score hero', () => {
   it('does not offer review for Fast Feedback results', () => {
     render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={{ ...attemptFor(2, 3, 67), feedbackMode: 'immediate' }} questions={[]} onBack={() => {}} onReview={() => {}} /></ThemeProvider>);
     expect(screen.queryByRole('button', { name: 'Review results' })).toBeNull();
+  });
+});
+
+describe('results reveal', () => {
+  let frame: FrameRequestCallback | undefined;
+  const setupMotion = () => {
+    stubReducedMotion(false);
+    vi.useFakeTimers();
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frame = callback; return 1; });
+    vi.stubGlobal('cancelAnimationFrame', () => {});
+    vi.spyOn(performance, 'now').mockReturnValue(0);
+  };
+
+  it('shows the score alone until the ring settles, then reveals each layer and celebrates a perfect score', () => {
+    setupMotion();
+    renderResults(attemptFor(3, 3, 100));
+    expect(screen.getByTestId('score-percentage')).toBeVisible();
+    expect(screen.getByText('Back to quizzes')).not.toBeVisible();
+    expect(screen.getByText('3 correct · 0 incorrect · 0 unanswered')).not.toBeVisible();
+
+    act(() => frame?.(scoreAnimationDuration(100) + 1));
+    const dwell = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
+    dwell(450);
+    dwell(450);
+    expect(screen.getByText('3 correct · 0 incorrect · 0 unanswered')).toBeVisible();
+    expect(screen.getByText('Total time')).not.toBeVisible();
+    dwell(350);
+    expect(screen.getByText('Total time')).toBeVisible();
+    expect(screen.getByText('Back to quizzes')).not.toBeVisible();
+    dwell(450);
+    expect(screen.getByRole('button', { name: 'Back to quizzes' })).toBeVisible();
+    dwell(449);
+    expect(screen.queryByRole('status')).toBeNull();
+    dwell(1);
+    expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
+  });
+
+  it('advances one layer per tap or Space, finishing the count-up first', () => {
+    setupMotion();
+    renderResults(attemptFor(3, 3, 100));
+    const hidden = (text: string) => expect(screen.getByText(text)).not.toBeVisible();
+    fireEvent.click(screen.getByText('Quiz results'));
+    expect(screen.getByTestId('score-percentage')).toHaveTextContent('100%');
+    hidden('Back to quizzes');
+    fireEvent.click(screen.getByText('Quiz results'));
+    hidden('3 correct · 0 incorrect · 0 unanswered');
+    fireEvent.click(screen.getByText('Quiz results'));
+    expect(screen.getByText('3 correct · 0 incorrect · 0 unanswered')).toBeVisible();
+    hidden('Total time');
+    fireEvent.keyDown(window, { key: ' ' });
+    expect(screen.getByText('Total time')).toBeVisible();
+    hidden('Back to quizzes');
+    fireEvent.click(screen.getByText('Quiz results'));
+    expect(screen.getByRole('button', { name: 'Back to quizzes' })).toBeVisible();
+    expect(screen.queryByRole('status')).toBeNull();
+    fireEvent.click(screen.getByText('Quiz results'));
+    expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
   });
 });

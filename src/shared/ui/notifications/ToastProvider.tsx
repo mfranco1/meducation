@@ -3,6 +3,7 @@ import { Alert, AlertTitle, Button, Fade, IconButton, Stack, useMediaQuery } fro
 import { alpha, useTheme } from '@mui/material/styles';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
+import { easing } from '../motion';
 
 export type ToastSeverity = 'success' | 'info' | 'warning' | 'error';
 export type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
@@ -44,7 +45,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const sequence = useRef(0);
   const theme = useTheme();
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  const fadeEasing = 'cubic-bezier(0.2, 0, 0, 1)';
+  const fadeEasing = easing.standard;
   const dismiss = useCallback((id: string, reason: DismissReason = 'close') => {
     const toast = toastsRef.current.find(item => item.id === id);
     if (!toast || !toast.open) return;

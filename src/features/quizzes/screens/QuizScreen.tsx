@@ -17,6 +17,7 @@ import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
 import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/StudyHeader';
 import { canHandleStudyShortcut } from '../../../shared/ui/study/studyKeyboard';
 import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
+import { reducedMotion } from '../../../shared/ui/motion';
 
 interface QuizScreenProps {
   quiz: Quiz;
@@ -34,7 +35,6 @@ const choicePress = keyframes`
   from { transform: scale(.985); }
   to { transform: none; }
 `;
-const reducedMotion = '@media (prefers-reduced-motion: reduce)';
 
 export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, onRequestExit }: QuizScreenProps) {
   const theme = useTheme();

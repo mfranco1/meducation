@@ -1,9 +1,9 @@
 import { keyframes } from '@emotion/react';
 import { Box } from '@mui/material';
 import { useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { easing, reducedMotion } from '../motion';
 
 export const screenTransitionDurationMs = 170;
-const screenTransitionEasing = 'cubic-bezier(0.2, 0, 0, 1)';
 
 const enter = keyframes`
   from { opacity: 0; top: 6px; }
@@ -30,8 +30,8 @@ export function ScreenTransition({ screenId, children }: { screenId: string; chi
       display: 'flex',
       flexDirection: 'column',
       position: 'relative',
-      animation: shouldAnimate ? `${enter} ${screenTransitionDurationMs}ms ${screenTransitionEasing} both` : 'none',
-      '@media (prefers-reduced-motion: reduce)': { animation: 'none' },
+      animation: shouldAnimate ? `${enter} ${screenTransitionDurationMs}ms ${easing.standard} both` : 'none',
+      [reducedMotion]: { animation: 'none' },
     }}
   >{children}</Box>;
 }

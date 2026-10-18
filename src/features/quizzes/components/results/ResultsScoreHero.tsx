@@ -1,25 +1,22 @@
+import { keyframes } from '@emotion/react';
 import { Box, Typography, useTheme } from '@mui/material';
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
+import { easing, useReducedMotion } from '../../../../shared/ui/motion';
 
-const reducedMotionQuery = '(prefers-reduced-motion: reduce)';
 const fastPhaseEnd = 0.65;
 const scoreAtFastPhaseEnd = 0.85;
 const initialVelocity = 1.4;
 const joinVelocity = 0.7;
 
-function useReducedMotionPreference() {
-  const [reducedMotion, setReducedMotion] = useState(
-    () => typeof window !== 'undefined' && window.matchMedia(reducedMotionQuery).matches,
-  );
-  useEffect(() => {
-    const media = window.matchMedia(reducedMotionQuery);
-    const sync = () => setReducedMotion(media.matches);
-    sync();
-    media.addEventListener('change', sync);
-    return () => media.removeEventListener('change', sync);
-  }, []);
-  return reducedMotion;
-}
+const settlePulse = keyframes`
+  from { transform: scale(1); }
+  40% { transform: scale(1.035); }
+  to { transform: scale(1); }
+`;
+const settleEcho = keyframes`
+  from { transform: scale(1); opacity: .4; }
+  to { transform: scale(1.18); opacity: 0; }
+`;
 
 function hermite(start: number, end: number, startSlope: number, endSlope: number, progress: number) {
   const t2 = progress * progress;
@@ -56,7 +53,7 @@ export function scoreAnimationProgress(progress: number) {
 }
 
 export function scoreAnimationDuration(target: number) {
-  return 450 + 850 * Math.sqrt(target / 100);
+  return 600 + 600 * Math.sqrt(target / 100);
 }
 
 function hexToRgb(hex: string) {
@@ -89,17 +86,36 @@ export function scoreRingColor(score: number, colors: { low: string; fair: strin
   return colors.high;
 }
 
-export function ResultsScoreHero({ percentage }: { percentage: number }) {
+export function ResultsScoreHero({ percentage, onSettled, skip }: { percentage: number; onSettled?: () => void; skip?: boolean }) {
   const theme = useTheme();
   const target = Number.isFinite(percentage) ? Math.min(100, Math.max(0, percentage)) : 0;
-  const reducedMotion = useReducedMotionPreference();
+  const reducedMotion = useReducedMotion();
   const [animatedScore, setAnimatedScore] = useState(() => (reducedMotion ? target : 0));
+  const [settled, setSettled] = useState(false);
+  const settledRef = useRef(false);
+  const onSettledRef = useRef(onSettled);
+  onSettledRef.current = onSettled;
+  const glowFilterId = useId().replace(/:/g, '');
   const duration = scoreAnimationDuration(target);
 
   useEffect(() => {
-    if (reducedMotion || target === 0) {
+    if (skip && settledRef.current) return;
+    settledRef.current = false;
+    const settle = () => {
+      settledRef.current = true;
+      setSettled(true);
+      onSettledRef.current?.();
+    };
+    setSettled(false);
+    if (reducedMotion || skip) {
       setAnimatedScore(target);
+      settle();
       return;
+    }
+    if (target === 0) {
+      setAnimatedScore(0);
+      const timer = setTimeout(settle, duration);
+      return () => clearTimeout(timer);
     }
 
     let frame = 0;
@@ -110,18 +126,26 @@ export function ResultsScoreHero({ percentage }: { percentage: number }) {
       const nextScore = progress >= 1 ? target : target * scoreAnimationProgress(progress);
       setAnimatedScore(nextScore);
       if (progress < 1) frame = requestAnimationFrame(tick);
+      else settle();
     };
     frame = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(frame);
-  }, [duration, reducedMotion, target]);
+  }, [duration, reducedMotion, skip, target]);
 
   const displayedScore = animatedScore >= target ? target : Math.floor(animatedScore);
   const dashOffset = animatedScore >= 100 ? 0 : 100 - animatedScore;
   const showArc = animatedScore > 0;
   const ringColor = scoreRingColor(animatedScore, theme.palette.scoreRing);
+  const glowAngle = (animatedScore / 100) * 2 * Math.PI - Math.PI / 2;
+  const glowX = 50 + 47 * Math.cos(glowAngle);
+  const glowY = 50 + 47 * Math.sin(glowAngle);
+  const pulse = settled && !reducedMotion;
 
   return (
     <Box sx={{ display: 'grid', justifyItems: 'center', textAlign: 'center' }}>
+      <Typography component="h2" variant="overline" color="text.secondary" fontWeight={700} letterSpacing=".12em">
+        Quiz results
+      </Typography>
       <Box
         sx={{
           position: 'relative',
@@ -129,8 +153,22 @@ export function ResultsScoreHero({ percentage }: { percentage: number }) {
           aspectRatio: '1 / 1',
           display: 'grid',
           placeItems: 'center',
+          animation: pulse ? `${settlePulse} 600ms ${easing.out}` : undefined,
         }}
       >
+        {pulse && target > 0 && (
+          <Box
+            aria-hidden="true"
+            sx={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              boxShadow: `0 0 0 3px ${scoreRingColor(target, theme.palette.scoreRing)}`,
+              pointerEvents: 'none',
+              animation: `${settleEcho} 1000ms ease-out both`,
+            }}
+          />
+        )}
         <svg
           aria-hidden="true"
           viewBox="0 0 100 100"
@@ -157,12 +195,23 @@ export function ResultsScoreHero({ percentage }: { percentage: number }) {
               fill="none"
               stroke={ringColor}
               strokeWidth="4"
-              strokeLinecap="butt"
+              strokeLinecap="round"
               pathLength="100"
               strokeDasharray="100"
               strokeDashoffset={dashOffset}
               transform="rotate(-90 50 50)"
             />
+          )}
+          {showArc && !reducedMotion && (
+            <g data-testid="score-ring-glow" style={{ opacity: settled ? 0 : 1, transition: 'opacity 350ms ease-out' }}>
+              <defs>
+                <filter id={glowFilterId} x="-50%" y="-50%" width="200%" height="200%">
+                  <feGaussianBlur stdDeviation="1.6" />
+                </filter>
+              </defs>
+              <circle cx={glowX} cy={glowY} r="4.5" fill={ringColor} opacity=".55" filter={`url(#${glowFilterId})`} />
+              <circle cx={glowX} cy={glowY} r="1.4" fill="#fff" opacity=".8" />
+            </g>
           )}
         </svg>
         <Box
@@ -176,15 +225,6 @@ export function ResultsScoreHero({ percentage }: { percentage: number }) {
           }}
         >
           <Typography
-            component="h2"
-            variant="overline"
-            color="primary.main"
-            fontWeight={800}
-            sx={{ width: '100%', textAlign: 'center' }}
-          >
-            Quiz complete
-          </Typography>
-          <Typography
             aria-hidden="true"
             data-testid="score-percentage"
             variant="h2"
@@ -197,6 +237,14 @@ export function ResultsScoreHero({ percentage }: { percentage: number }) {
             }}
           >
             {displayedScore}%
+          </Typography>
+          <Typography
+            aria-hidden="true"
+            variant="overline"
+            color="text.secondary"
+            sx={{ lineHeight: 1.2, textTransform: 'uppercase' }}
+          >
+            Overall score
           </Typography>
         </Box>
       </Box>

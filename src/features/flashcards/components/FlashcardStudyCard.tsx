@@ -5,6 +5,7 @@ import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { BrandMark } from '../../../shared/ui/brand/BrandMark';
 import { StudyFlagButton } from '../../../shared/ui/study/StudyFlagButton';
 import { FlashcardFaceDecoration } from './FlashcardFaceDecoration';
+import { reducedMotion } from '../../../shared/ui/motion';
 
 const cardThickness =
   'inset 0 1px 0 rgba(255,255,255,.9), 0 1px 0 rgba(118,106,99,.06), 0 3px 8px rgba(57,38,22,.045), 0 8px 16px rgba(57,38,22,.04)';
@@ -97,7 +98,7 @@ export function FlashcardStudyCard({
             perspective: '1200px',
             perspectiveOrigin: '50% 50%',
             width: '100%',
-            '@media (prefers-reduced-motion: reduce)': { perspective: 'none' },
+            [reducedMotion]: { perspective: 'none' },
           }}
         >
           <Box
@@ -106,7 +107,7 @@ export function FlashcardStudyCard({
               transformStyle: 'preserve-3d',
               transition: 'transform 180ms cubic-bezier(.2, 0, 0, 1)',
               '@media (hover: hover) and (pointer: fine)': { '&:hover': { transform: 'translateY(-3px)' } },
-              '@media (prefers-reduced-motion: reduce)': { transform: 'none', transition: 'none' },
+              [reducedMotion]: { transform: 'none', transition: 'none' },
             }}
           >
             <Box
@@ -120,7 +121,7 @@ export function FlashcardStudyCard({
                 transformOrigin: '50% 50%',
                 transform: revealed ? 'rotateY(180deg)' : 'rotateY(0deg)',
                 transition: 'transform 420ms cubic-bezier(.22, .61, .36, 1)',
-                '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+                [reducedMotion]: { transition: 'none' },
               }}
             >
               <ButtonBase
