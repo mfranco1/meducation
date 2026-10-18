@@ -17,9 +17,9 @@ const examAttempt: Attempt = {
 describe('question navigator items', () => {
   it('derives independent answer and flag states without treating a flag as an answer', () => {
     expect(questionNavigationItems(questions, examAttempt)).toEqual([
-      { index: 0, number: 1, answered: true, flagged: true, wrong: false },
-      { index: 1, number: 2, answered: false, flagged: true, wrong: false },
-      { index: 2, number: 3, answered: false, flagged: false, wrong: false },
+      { index: 0, number: 1, answered: true, flagged: true, correct: false, wrong: false },
+      { index: 1, number: 2, answered: false, flagged: true, correct: false, wrong: false },
+      { index: 2, number: 3, answered: false, flagged: false, correct: false, wrong: false },
     ]);
   });
 
@@ -31,7 +31,7 @@ describe('question navigator items', () => {
     expect(filterQuestionNavigationItems(items, 'all')).toEqual(items);
   });
 
-  it('marks only locked incorrect answers in Fast Feedback as wrong', () => {
+  it('marks only locked answers in Fast Feedback as correct or wrong', () => {
     const immediateAttempt: Attempt = {
       ...examAttempt,
       feedbackMode: 'immediate',
@@ -43,7 +43,9 @@ describe('question navigator items', () => {
     };
     const keyedQuestions = questions.map(question => ({ ...question, answer: question.id === 'i1' ? 'B' : question.id === 'i3' ? 'C' : undefined }));
 
-    expect(questionNavigationItems(keyedQuestions, immediateAttempt).map(item => item.wrong)).toEqual([true, false, false]);
+    const items = questionNavigationItems(keyedQuestions, immediateAttempt);
+    expect(items.map(item => item.wrong)).toEqual([true, false, false]);
+    expect(items.map(item => item.correct)).toEqual([false, false, true]);
   });
 
   it('reveals wrong Exam Mode answers only when explicitly requested and excludes unanswered or uncertain keys', () => {

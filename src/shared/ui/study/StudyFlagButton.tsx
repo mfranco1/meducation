@@ -4,7 +4,7 @@ import { keyframes } from '@emotion/react';
 import { Box, IconButton, type SxProps, type Theme } from '@mui/material';
 import { useState } from 'react';
 
-const flutter = keyframes`
+export const flagFlutter = keyframes`
   from { transform: none; }
   20% { transform: rotate(-14deg) skewY(6deg); }
   40% { transform: rotate(9deg) skewY(-4deg); }
@@ -27,7 +27,7 @@ export function StudyFlagButton({ flagged, label, onToggle, size, sx }: { flagge
     }}
     sx={[{ bgcolor: 'transparent', '&:hover': { bgcolor: 'transparent' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }, ...(Array.isArray(sx) ? sx : [sx])]}
   >
-    <Box component="span" onAnimationEnd={() => setFluttering(false)} sx={{ display: 'inline-flex', transformOrigin: '20% 90%', animation: fluttering ? `${flutter} 550ms ease-out` : undefined, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
+    <Box component="span" onAnimationEnd={() => setFluttering(false)} sx={{ display: 'inline-flex', transformOrigin: '20% 90%', animation: fluttering ? `${flagFlutter} 550ms ease-out` : undefined, '@media (prefers-reduced-motion: reduce)': { animation: 'none' } }}>
       {flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}
     </Box>
   </IconButton>;

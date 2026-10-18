@@ -13,19 +13,22 @@ export interface QuestionNavigationItem {
   number: number;
   answered: boolean;
   flagged: boolean;
+  correct: boolean;
   wrong: boolean;
 }
 
 export function questionNavigationItems(questions: Question[], attempt: Attempt, revealAnswers = false): QuestionNavigationItem[] {
   return questions.map((question, index) => {
     const response = attempt.responses[question.id];
-    const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
+    const graded = (attempt.feedbackMode === 'immediate' || revealAnswers) && response?.selectedChoiceId && (revealAnswers || response.locked) && !question.rationaleMeta?.answerReviewNote;
+    const correct = graded ? isCorrect(question, response.selectedChoiceId) : undefined;
     return {
       index,
       number: index + 1,
       answered: Boolean(response?.selectedChoiceId),
       flagged: Boolean(response?.flagged),
-      wrong: (attempt.feedbackMode === 'immediate' || revealAnswers) && Boolean(response?.selectedChoiceId && (revealAnswers || response.locked) && !answerUnderReview && !isCorrect(question, response.selectedChoiceId)),
+      correct: correct === true,
+      wrong: correct === false,
     };
   });
 }
@@ -88,6 +91,6 @@ export function QuestionNavigator({ questions, attempt, currentIndex, filter, on
 }
 
 export function QuestionTile({ item, current, onClick, tileRef, showAnswerStatus = true, itemLabel = 'Question' }: { item: QuestionNavigationItem; current: boolean; onClick: () => void; tileRef?: Ref<HTMLButtonElement>; showAnswerStatus?: boolean; itemLabel?: string }) {
-  const status = showAnswerStatus ? [item.wrong ? 'answered incorrectly' : item.answered ? 'answered' : 'unanswered', item.flagged ? 'flagged' : undefined].filter(Boolean).join(', ') : '';
-  return <StudyNavigatorTile number={item.number} label={itemLabel} current={current} highlighted={item.answered} flagged={item.flagged} wrong={item.wrong} status={status} onClick={onClick} tileRef={tileRef} />;
+  const status = showAnswerStatus ? [item.wrong ? 'answered incorrectly' : item.correct ? 'answered correctly' : item.answered ? 'answered' : 'unanswered', item.flagged ? 'flagged' : undefined].filter(Boolean).join(', ') : '';
+  return <StudyNavigatorTile number={item.number} label={itemLabel} current={current} highlighted={item.answered} flagged={item.flagged} result={item.wrong ? 'incorrect' : item.correct ? 'correct' : undefined} status={status} onClick={onClick} tileRef={tileRef} />;
 }

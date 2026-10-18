@@ -56,6 +56,6 @@ function QuestionGrid({ questions, currentIndex, onNavigate }: { questions: Ques
   useScrollCurrentQuestion(scrollAreaRef, currentTileRef, [currentIndex]);
 
   return <Box ref={scrollAreaRef} aria-label="Question navigator" sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1, maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, overflowY: 'auto', p: .75 }}>
-    {questions.map((question, itemIndex) => <QuestionTile key={question.id} item={{ index: itemIndex, number: itemIndex + 1, answered: false, flagged: false, wrong: false }} current={itemIndex === currentIndex} tileRef={itemIndex === currentIndex ? currentTileRef : undefined} onClick={() => onNavigate(itemIndex)} showAnswerStatus={false} />)}
+    {questions.map((question, itemIndex) => <QuestionTile key={question.id} item={{ index: itemIndex, number: itemIndex + 1, answered: false, flagged: false, correct: false, wrong: false }} current={itemIndex === currentIndex} tileRef={itemIndex === currentIndex ? currentTileRef : undefined} onClick={() => onNavigate(itemIndex)} showAnswerStatus={false} />)}
   </Box>;
 }

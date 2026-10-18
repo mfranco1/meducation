@@ -18,7 +18,7 @@ Meducation is a local-first study app for quizzes and flashcards. Content comes 
 ## Quizzes
 
 - One question at a time, with flags, a stopwatch and result summaries. Starting or retaking opens a setup dialog over the subject screen; dismissing starts nothing.
-- **Fast Feedback** locks the selected answer and reveals correctness and the explanation immediately; the stopwatch freezes when every question is locked. **Exam Mode** reveals nothing until submission and never shows live correctness or streaks. Scoring prefers `verifiedAnswer`; keys under review are labeled and excluded from the wrong-answer filter.
+- **Fast Feedback** locks the selected answer and reveals correctness and the explanation immediately; the stopwatch freezes when every question is locked. **Exam Mode** reveals nothing until submission and never shows live correctness or streaks. Scoring prefers `verifiedAnswer`; keys under review are labeled and excluded from the wrong-answer filter. Navigator tiles for graded answers (locked Fast Feedback answers, or every answer in Review results) are light green when correct and light red when wrong.
 - The quiz and flashcard study headers show the position ("Question 50 of 120"); the progress bar fills by questions answered or cards revealed, with a lighter band marking the position.
 - Correct Fast Feedback answers earn a brief burst and an attempt-local streak with celebrations at 3, 5, 10, 25 and 50; an incorrect answer resets the streak. A perfect score celebrates once.
 - **Browse Answers** is read-only, shows correct answers and explanations, and writes nothing, so it is excluded from activity, scores and trends.
