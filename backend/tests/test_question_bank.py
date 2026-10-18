@@ -77,6 +77,16 @@ def test_content_api_and_revision_conflicts(bank_input: dict) -> None:
         )
 
 
+def test_large_content_responses_are_gzipped(bank_data: dict) -> None:
+    question = {**bank_data["questions"][0], "rationale": "Long rationale. " * 200}
+    with TestClient(fixture_app({**bank_data, "questions": [question]})) as client:
+        questions = client.get("/api/v1/quizzes/q1/questions")
+        assert questions.headers["content-encoding"] == "gzip"
+        assert questions.json()["questions"][0]["rationale"] == question["rationale"]
+        plain = client.get("/api/v1/quizzes/q1/questions", headers={"Accept-Encoding": "identity"})
+        assert "content-encoding" not in plain.headers
+
+
 def test_injected_repository_skips_payload_build_for_conditional_response(
     bank_input: dict,
 ) -> None:

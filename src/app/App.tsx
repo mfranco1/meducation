@@ -225,13 +225,14 @@ function LearnerApp({ onProgressBackup }: { onProgressBackup: () => void }) {
       }}
       onBack={() => { runtimeFlashcardBank.cancel(`catalog:${currentFlashcardSubject.id}`); flashcards.showDashboard(); }}
       onSelectDeck={deck => { void flashcards.launchDeck(deck, currentFlashcardSubject); }}
+      onPrepareDeck={deck => { void runtimeFlashcardBank.ensureCards(deck.id).catch(() => undefined); }}
     />}
     {currentSubject && <SubjectScreen subject={currentSubject} topics={questionBank.listTopics(currentSubject.id)} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
       if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') { window.location.reload(); return; }
       if (currentQuizRecovery?.busy) return;
       if (currentQuizState === 'retrying') questionBank.retryQuizNow(currentSubject.id);
       return questionBank.ensureQuizzes(currentSubject.id).then(() => undefined, () => undefined);
-    }} onBack={() => { cancel(); session.showDashboard(); }} onResumeQuiz={quiz => { preloadQuizScreen(); launch(quiz, () => session.resumeQuiz(quiz)); }} onStartQuiz={(quiz, mode) => { preloadQuizScreen(); launch(quiz, () => session.startQuiz(quiz, mode)); }} onBrowseQuiz={quiz => { preloadBrowseScreen(); launch(quiz, () => session.browseQuiz(quiz)); }} />}
+    }} onBack={() => { cancel(); session.showDashboard(); }} onResumeQuiz={quiz => { preloadQuizScreen(); launch(quiz, () => session.resumeQuiz(quiz)); }} onStartQuiz={(quiz, mode) => { preloadQuizScreen(); launch(quiz, () => session.startQuiz(quiz, mode)); }} onBrowseQuiz={quiz => { preloadBrowseScreen(); launch(quiz, () => session.browseQuiz(quiz)); }} onPrepareQuiz={quiz => { preloadQuizScreen(); void questionBank.ensureQuestions(quiz.id).catch(() => undefined); }} />}
     {view.page === 'quiz' && <QuizScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => requestQuizExit('subject')} />}
     {view.page === 'quiz-browse' && <QuizBrowseScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onNavigate={session.navigateBrowse} onDone={session.leaveBrowse} />}
     {view.page === 'quiz-review' && <QuizReviewScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onNavigate={session.navigateReview} onRequestExit={() => requestReviewExit('subject')} />}

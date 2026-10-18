@@ -12,7 +12,7 @@ Meducation is a local-first study app for quizzes and flashcards. Content comes 
 
 ## Loading and freshness
 
-- The shell and dashboard render before content loads. The subject catalog loads first, a subject's quizzes or decks when selected, and bodies when a session starts. Skeletons reserve layout; failures show a recoverable banner or screen-scoped toast with learner-safe copy and never change saved progress. Retries are automatic with a visible countdown and a manual Retry afterward.
+- The shell and dashboard render before content loads. The subject catalog loads first, a subject's quizzes or decks when selected, and bodies when the learner shows intent (opening quiz setup, pointing at or focusing a deck's Study button) or at launch. Skeletons reserve layout; failures show a recoverable banner or screen-scoped toast with learner-safe copy and never change saved progress. Retries are automatic with a visible countdown and a manual Retry afterward.
 - Every explicit launch (start, retake, resume, browse, open or resume a deck, restart confirmation) revalidates the bank's catalog even when bodies are cached, and the check must be under 30 seconds old when study is admitted. Changed revisions or moved membership block the launch with reload guidance; changed saved content requires an explicit restart. Unavailable checks block new launches and preserve saved data. Active study, answers, timers and checkpoints keep their loaded content. There is no polling or idle refresh.
 
 ## Quizzes

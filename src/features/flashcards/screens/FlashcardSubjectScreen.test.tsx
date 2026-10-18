@@ -31,14 +31,18 @@ describe('FlashcardSubjectScreen', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('groups decks by topic, launches a selected deck and switches topics', () => {
+  it('groups decks by topic, prepares a deck on hover or focus, launches it and switches topics', () => {
     const onSelectDeck = vi.fn();
-    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{ d3: 1 }} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={onSelectDeck} /></ThemeProvider>);
+    const onPrepareDeck = vi.fn();
+    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{ d3: 1 }} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={onSelectDeck} onPrepareDeck={onPrepareDeck} /></ThemeProvider>);
     expect(screen.getByRole('heading', { name: 'Anatomy' })).toBeVisible();
     expect(screen.getByText('1 / 3 decks completed')).toBeVisible();
     expect(screen.getByRole('button', { name: /Upper limb/ })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('heading', { name: 'Brachial plexus' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Heart' })).toBeNull();
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'Study deck: Brachial plexus' }));
+    fireEvent.focus(screen.getByRole('button', { name: 'Study deck: Brachial plexus' }));
+    expect(onPrepareDeck.mock.calls).toEqual([[catalog.decks[0]], [catalog.decks[0]]]);
     fireEvent.click(screen.getByRole('button', { name: 'Study deck: Brachial plexus' }));
     expect(onSelectDeck).toHaveBeenCalledWith(catalog.decks[0]);
 

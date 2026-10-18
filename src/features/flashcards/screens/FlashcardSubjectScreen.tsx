@@ -8,7 +8,7 @@ import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecover
 import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
 import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
 
-export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completionCounts, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck }: {
+export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completionCounts, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck, onPrepareDeck = () => undefined }: {
   subject: Subject;
   catalog?: FlashcardCatalogResponse;
   checkpoints: Readonly<Record<string, FlashcardCheckpoint>>;
@@ -19,10 +19,11 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completi
   onRetry: () => void | Promise<void>;
   onBack: () => void;
   onSelectDeck: (deck: FlashcardDeckSummary) => void;
+  onPrepareDeck?: (deck: FlashcardDeckSummary) => void;
 }) {
   const decks = catalog?.decks ?? [];
   const showSets = !(error || loading) && decks.length > 0;
-  const sets = decks.map(deck => deckSet(deck, checkpoints[deck.id], completionCounts[deck.id] ?? 0, loadingDeckId === deck.id, () => onSelectDeck(deck)));
+  const sets = decks.map(deck => deckSet(deck, checkpoints[deck.id], completionCounts[deck.id] ?? 0, loadingDeckId === deck.id, () => onSelectDeck(deck), () => onPrepareDeck(deck)));
   return <>
     {error && <ContentRecoveryBanner title={`We can’t load flashcard decks for ${subject.name} right now.`} description="Your saved deck positions are safe. Please try again." error={error} onRetry={onRetry} />}
     <SubjectBrowseLayout subjectId={subject.id} subjectName={subject.name} progress={showSets ? { completed: decks.filter(deck => (completionCounts[deck.id] ?? 0) > 0).length, total: decks.length, nouns: 'decks' } : undefined} onBack={onBack}>
@@ -33,7 +34,7 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completi
   </>;
 }
 
-function deckSet(deck: FlashcardDeckSummary, checkpoint: FlashcardCheckpoint | undefined, completionCount: number, loading: boolean, onSelect: () => void): TopicSet {
+function deckSet(deck: FlashcardDeckSummary, checkpoint: FlashcardCheckpoint | undefined, completionCount: number, loading: boolean, onSelect: () => void, onPrepare: () => void): TopicSet {
   const inProgress = checkpoint !== undefined && deck.cardIds.includes(checkpoint.currentCardId);
   return {
     id: deck.id,
@@ -44,7 +45,7 @@ function deckSet(deck: FlashcardDeckSummary, checkpoint: FlashcardCheckpoint | u
     activityAt: checkpoint?.updatedAt,
     progress: inProgress ? { done: checkpoint.openedCardIds.filter(id => deck.cardIds.includes(id)).length, total: deck.cardCount, label: 'reviewed' } : undefined,
     chips: [],
-    action: <Button variant="contained" aria-label={loading || deck.cardCount === 0 ? undefined : `${checkpoint ? 'Resume' : 'Study'} deck: ${deck.name}`} disabled={deck.cardCount === 0 || loading} onClick={onSelect}>
+    action: <Button variant="contained" aria-label={loading || deck.cardCount === 0 ? undefined : `${checkpoint ? 'Resume' : 'Study'} deck: ${deck.name}`} disabled={deck.cardCount === 0 || loading} onPointerEnter={onPrepare} onFocus={onPrepare} onClick={onSelect}>
       {loading ? 'Loading deck…' : deck.cardCount === 0 ? 'No cards yet' : checkpoint ? 'Resume' : 'Study'}
     </Button>,
   };

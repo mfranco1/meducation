@@ -143,8 +143,8 @@ describe('progressive dashboard statistics', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open Test Subject' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/  }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
-    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
-    expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/subjects');
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    expect(fetchMock.mock.calls.map(([url]) => String(url).split('?')[0])).toEqual([`/api/v1/quizzes/${quiz.id}/questions`, '/api/v1/subjects']);
 
     fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
@@ -204,20 +204,18 @@ describe('progressive dashboard statistics', () => {
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
     expect(screen.queryByRole('alert')).toBeNull();
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(progressKeys.map((key) => localStorage.getItem(key))).toEqual(before);
     expect(runtimeQuestionBank.listQuestions(quiz.id)).toEqual([]);
   });
-  it('loads the quiz screen after its questions arrive and keeps the attempt in browser storage', async () => {
+  it('fetches questions when quiz setup opens, loads the quiz screen once they arrive and keeps the attempt in browser storage', async () => {
     const subject = { id: 's1', name: 'Lazy Subject', accent: '#b9511b' };
     const quiz = { id: 'q1', subjectId: subject.id, topicId: 't1', name: 'Lazy Quiz', questionCount: 1, questionIds: ['i1'] };
     runtimeQuestionBank.configureApi(
       { revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] },
       [{ revision: 'rev-lazy', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
     );
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }) }).mockResolvedValue({
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => url === '/api/v1/subjects' ? { ok: true, json: async () => ({ revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }) } : {
         ok: true,
         json: async () => ({
           revision: 'rev-lazy',
@@ -235,8 +233,9 @@ describe('progressive dashboard statistics', () => {
             },
           ],
         }),
-      }),
-    );
+      });
+    vi.stubGlobal('fetch', fetchMock);
+    const questionRequests = () => fetchMock.mock.calls.filter(([url]) => String(url).includes('/questions')).length;
 
     render(
       <ThemeProvider theme={theme}>
@@ -245,11 +244,13 @@ describe('progressive dashboard statistics', () => {
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Lazy Subject' }));
     fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/  }));
+    await waitFor(() => expect(questionRequests()).toBe(1));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
     await waitFor(() => expect(screen.getByText('Lazy question stem')).toBeVisible(), { timeout: 10_000 });
     expect(screen.getByText('Question 1 of 1')).toBeVisible();
     expect(new LocalAttemptRepository().getActive(quiz.id)).toBeDefined();
+    expect(questionRequests()).toBe(1);
   }, 15_000);
   it('navigates between quiz and flashcard dashboards without changing quiz progress', async () => {
     runtimeQuestionBank.configureApi({ revision: 'rev-nav', subjects: [] });

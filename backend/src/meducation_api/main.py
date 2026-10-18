@@ -4,6 +4,7 @@ from typing import cast
 
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
@@ -127,6 +128,8 @@ def create_app(
         allow_methods=["GET", "HEAD"],
         allow_headers=["If-None-Match", "If-Match", "Content-Type"],
     )
+    # Question lists reach ~400 KB of JSON; gzip cuts them about 5x. Zip exports are excluded by default.
+    app.add_middleware(GZipMiddleware, compresslevel=6)
 
     install_auth(app, identity_config, auth_factory)
     install_editor(app, identity_config)

@@ -1,7 +1,6 @@
 """Private record-editor HTTP routes behind the verified session prefix boundary."""
 
 import base64
-import gzip
 import hashlib
 import json
 import re
@@ -99,19 +98,12 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
             headers={"Cache-Control": "no-store"},
         )
 
-    def compressed(request: Request, value: dict[str, Any]) -> Response:
-        body = json.dumps(
-            value, ensure_ascii=False, allow_nan=False, separators=(",", ":")
-        ).encode()
-        headers = {"Vary": "Accept-Encoding", "Cache-Control": "no-store"}
-        if "gzip" in request.headers.get("accept-encoding", "").lower():
-            body = gzip.compress(body, compresslevel=6, mtime=0)
-            headers["Content-Encoding"] = "gzip"
-        return Response(body, media_type="application/json", headers=headers)
+    def no_store(value: dict[str, Any]) -> JSONResponse:
+        return JSONResponse(value, headers={"Cache-Control": "no-store"})
 
     @app.get("/api/admin/draft", include_in_schema=False)
     async def load(request: Request) -> Response:
-        return compressed(request, await run_in_threadpool(service(request).snapshot))
+        return no_store(await run_in_threadpool(service(request).snapshot))
 
     @app.get("/api/admin/draft/changes", include_in_schema=False)
     async def changes(request: Request) -> dict[str, Any]:
@@ -141,7 +133,7 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
     @app.post("/api/admin/draft/discard", include_in_schema=False)
     async def discard(request: Request) -> Response:
         await command(request, Empty)
-        return compressed(request, await run_in_threadpool(service(request).discard))
+        return no_store(await run_in_threadpool(service(request).discard))
 
     @app.post("/api/admin/draft/publish", include_in_schema=False)
     async def publish(request: Request) -> dict[str, Any]:

@@ -12,7 +12,7 @@ import { TopicSetBrowser, type TopicSet } from '../../../shared/ui/catalog/Topic
 import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
 export type { QuizProgress } from '../selectors/progress';
 
-export function SubjectScreen({ subject, topics, progress, loading = false, retrying = false, recovery, loadingQuizIds = new Set<string>(), error, questionError, onRetry = () => undefined, onRetryQuestions = () => undefined, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz }: { subject: Subject; topics: readonly Topic[]; progress: QuizProgress[]; loading?: boolean; retrying?: boolean; recovery?: { failed: boolean; retryAt?: number; retryAfterAt?: number; retrying: boolean; busy: boolean }; loadingQuizIds?: Set<string>; error?: Error; questionError?: Error; onRetry?: () => void; onRetryQuestions?: () => void; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void }) {
+export function SubjectScreen({ subject, topics, progress, loading = false, retrying = false, recovery, loadingQuizIds = new Set<string>(), error, questionError, onRetry = () => undefined, onRetryQuestions = () => undefined, onBack, onResumeQuiz, onStartQuiz, onBrowseQuiz, onPrepareQuiz = () => undefined }: { subject: Subject; topics: readonly Topic[]; progress: QuizProgress[]; loading?: boolean; retrying?: boolean; recovery?: { failed: boolean; retryAt?: number; retryAfterAt?: number; retrying: boolean; busy: boolean }; loadingQuizIds?: Set<string>; error?: Error; questionError?: Error; onRetry?: () => void; onRetryQuestions?: () => void; onBack: () => void; onResumeQuiz: (quiz: Quiz) => void; onStartQuiz: (quiz: Quiz, mode: FeedbackMode) => void; onBrowseQuiz: (quiz: Quiz) => void; onPrepareQuiz?: (quiz: Quiz) => void }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
   const showSets = !(error || loading || retrying) && progress.length > 0;
   const sets: TopicSet[] = progress.map(({ quiz, active, completionCount, latestScore, trend, answeredCount, activityAt }) => {
@@ -29,7 +29,7 @@ export function SubjectScreen({ subject, topics, progress, loading = false, retr
       chips: [
         ...latestScore !== undefined ? [<Box key="score" component="span" sx={{ alignItems: 'center', display: 'inline-flex', gap: .75 }}>Score {latestScore}%{trend && <ScoreTrendIndicator trend={trend} />}</Box>] : [],
       ],
-      action: <Button variant="contained" aria-label={busy ? undefined : `${label} quiz: ${quiz.name}`} disabled={busy} onClick={() => active ? onResumeQuiz(quiz) : setSetupQuiz(quiz)}>{busy ? 'Loading questions…' : label}</Button>,
+      action: <Button variant="contained" aria-label={busy ? undefined : `${label} quiz: ${quiz.name}`} disabled={busy} onClick={() => { if (active) { onResumeQuiz(quiz); return; } onPrepareQuiz(quiz); setSetupQuiz(quiz); }}>{busy ? 'Loading questions…' : label}</Button>,
     };
   });
 
