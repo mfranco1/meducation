@@ -17,6 +17,7 @@ export interface RadiatingCirclesProps {
   horizontalSpread?: number;
   verticalSpread?: number;
   particleSize?: number;
+  direction?: 'up' | 'both';
 }
 
 export function useReducedMotion() {
@@ -39,19 +40,26 @@ export function RadiatingCircles({
   horizontalSpread = 18,
   verticalSpread = 22,
   particleSize = 8,
+  direction = 'up',
 }: RadiatingCirclesProps) {
   const reducedMotion = useReducedMotion();
   if (reducedMotion || particleCount < 1) return null;
 
   return <Box data-testid="radiating-circles" aria-hidden sx={{ position: 'absolute', zIndex: 0, inset: 0, overflow: 'visible', pointerEvents: 'none' }}>
     {Array.from({ length: particleCount }, (_, index) => {
-      const alternate = index % 2 === 1;
-      const left = particleCount === 1 ? 50 : 17 + index * (66 / (particleCount - 1));
+      const mirrored = direction === 'both';
+      const slot = mirrored ? Math.floor(index / 2) : index;
+      const slots = mirrored ? Math.ceil(particleCount / 2) : particleCount;
+      const down = mirrored && index % 2 === 1;
+      const alternate = (slot + (down ? 1 : 0)) % 2 === 1;
+      const left = slots === 1 ? 50 : 17 + slot * (66 / (slots - 1));
+      const top = alternate ? 52 : 34;
+      const rise = verticalSpread + (slot % 3) * (verticalSpread * .6);
       return <Box
         key={index}
         data-testid="radiating-circle"
         sx={{
-          '--particle-x': `${(index - (particleCount - 1) / 2) * horizontalSpread}px`, '--particle-y': `${-verticalSpread - (index % 3) * (verticalSpread * .6)}px`, position: 'absolute', width: alternate ? particleSize * .75 : particleSize, height: alternate ? particleSize * .75 : particleSize, borderRadius: '50%', bgcolor: alternate ? colors[0] : colors[1], top: alternate ? '52%' : '34%', left: `${left}%`, animation: `${radiate} ${durationMs}ms ease-out both`, animationDelay: `${delayMs + index * 28}ms`,
+          '--particle-x': `${(slot - (slots - 1) / 2) * horizontalSpread}px`, '--particle-y': `${down ? rise : -rise}px`, position: 'absolute', width: alternate ? particleSize * .75 : particleSize, height: alternate ? particleSize * .75 : particleSize, borderRadius: '50%', bgcolor: alternate ? colors[0] : colors[1], top: `${down ? 100 - top : top}%`, left: `${left}%`, animation: `${radiate} ${durationMs}ms ease-out both`, animationDelay: `${delayMs + slot * 28}ms`,
         }}
       />;
     })}
