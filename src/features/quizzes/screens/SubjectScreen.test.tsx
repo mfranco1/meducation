@@ -43,8 +43,8 @@ describe('subject quiz action', () => {
     rerender(<ThemeProvider theme={theme}><SubjectScreen {...props} /></ThemeProvider>);
 
     expect(screen.getByRole('heading', { name: 'No quizzes available yet' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'All subjects' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
+    expect(screen.getByRole('button', { name: 'Dashboard' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
     expect(onBack).toHaveBeenCalledOnce();
   });
 
@@ -215,7 +215,7 @@ describe('subject topics', () => {
 });
 
 describe('subject topics on small screens', () => {
-  it('drills from the topic list into a topic and back', () => {
+  it('drills from the topic list into a topic and back', async () => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
     const other = { id: 'other', subjectId: subject.id, topicId: 't2', name: 'Glycolysis quiz', questionCount: 1 };
     render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0 }]} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
@@ -227,9 +227,19 @@ describe('subject topics on small screens', () => {
     expect(screen.queryByRole('heading', { name: 'Topics' })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'All topics' }));
-    expect(screen.getByRole('heading', { name: 'Topics' })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Glycolysis quiz' })).toBeNull();
     expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveFocus();
+  });
+
+  it('returns to the topic list on browser Back', async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }]} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+
+    fireEvent.click(screen.getByRole('button', { name: /Cell biology/ }));
+    expect(screen.queryByRole('heading', { name: 'Topics' })).toBeNull();
+    history.back();
+    expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
   });
 });
 

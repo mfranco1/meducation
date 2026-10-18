@@ -3,6 +3,7 @@ import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import BackupRoundedIcon from '@mui/icons-material/BackupRounded';
 import { Box, ButtonBase, Drawer, Tooltip, useMediaQuery } from '@mui/material';
+import { visuallyHidden } from '@mui/utils';
 import { useTheme } from '@mui/material/styles';
 import { brand } from '../../shared/brand';
 import { AppBrand } from '../../shared/ui/brand/AppBrand';
@@ -172,7 +173,7 @@ export function AppNavigationDrawer({
               </ButtonBase>
               </Box>
             </Tooltip>
-            {progressBackupDisabledReason && <Box id="progress-backup-disabled-guidance" component="span" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', border: 0 }}>{progressBackupDisabledReason}</Box>}
+            {progressBackupDisabledReason && <Box id="progress-backup-disabled-guidance" component="span" sx={visuallyHidden}>{progressBackupDisabledReason}</Box>}
           </Box>
         </Box>
       </DrawerSurface>

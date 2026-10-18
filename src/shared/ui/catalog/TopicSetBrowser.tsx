@@ -35,6 +35,8 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
   const headingRef = useRef<HTMLHeadingElement>(null);
   const topicButtons = useRef(new Map<string, HTMLElement>());
   const returnTo = useRef<string>(undefined);
+  // On small screens an open topic owns a history entry, so browser Back returns to the topic list.
+  const ownsHistoryEntry = useRef(false);
   const withSets = topics.filter(topic => sets.some(set => set.topicId === topic.id));
   const summaries = new Map(withSets.map(topic => {
     const own = sets.filter(set => set.topicId === topic.id);
@@ -46,6 +48,29 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
   const panelSx: SxProps<Theme> = desktop ? { display: 'flex', flexDirection: 'column', maxHeight: 'min(720px, calc(100dvh - 48px))' } : {};
   const scrollSx: SxProps<Theme> = { minHeight: 0, p: .5, overflowY: desktop ? 'auto' : undefined };
   const nouns = noun === 'quiz' ? 'quizzes' : 'decks';
+
+  useEffect(() => {
+    const onPopState = () => {
+      if (!ownsHistoryEntry.current) return;
+      ownsHistoryEntry.current = false;
+      setSelectedId(undefined);
+    };
+    addEventListener('popstate', onPopState);
+    return () => {
+      removeEventListener('popstate', onPopState);
+      // Leaving the subject from an open topic drops its entry so Back isn't a no-op later.
+      if (ownsHistoryEntry.current) history.back();
+    };
+  }, []);
+
+  const openTopic = (id: string) => {
+    returnTo.current = id;
+    if (!desktop && !ownsHistoryEntry.current) {
+      history.pushState(history.state, '');
+      ownsHistoryEntry.current = true;
+    }
+    setSelectedId(id);
+  };
 
   useEffect(() => {
     if (desktop) return;
@@ -62,7 +87,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
         return <li key={topic.id}><ButtonBase
           ref={(node: HTMLElement | null) => { if (node) topicButtons.current.set(topic.id, node); else topicButtons.current.delete(topic.id); }}
           aria-current={isSelected ? 'true' : undefined}
-          onClick={() => { returnTo.current = topic.id; setSelectedId(topic.id); }}
+          onClick={() => openTopic(topic.id)}
           sx={{ alignItems: 'center', borderRadius: '10px', display: 'flex', gap: 1.5, p: 1.5, textAlign: 'left', width: '100%', bgcolor: isSelected ? 'primary.light' : 'transparent', '&:hover': { bgcolor: isSelected ? 'primary.light' : 'action.hover' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' } }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -82,7 +107,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
     const { own, completed } = summaries.get(selected.id)!;
     const percent = Math.round((completed / own.length) * 100);
     return <Card component="section" aria-labelledby="topic-summary-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx }}>
-      {!desktop && <Button startIcon={<ArrowBackRoundedIcon />} color="inherit" onClick={() => setSelectedId(undefined)} sx={{ mb: 1.5 }}>All topics</Button>}
+      {!desktop && <Button startIcon={<ArrowBackRoundedIcon />} color="inherit" onClick={() => ownsHistoryEntry.current ? history.back() : setSelectedId(undefined)} sx={{ mb: 1.5 }}>All topics</Button>}
       <Typography ref={headingRef} tabIndex={-1} id="topic-summary-heading" variant="h5" component="h2" sx={{ overflowWrap: 'anywhere', outline: 'none' }}>{selected.name}</Typography>
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
         <LinearProgress aria-hidden variant="determinate" value={percent} sx={{ ...trackSx, flex: 1 }} />
@@ -99,17 +124,20 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography variant="subtitle1" component="h4" sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{set.name}</Typography>
                 <Typography variant="body2" color="text.secondary">{set.detail}</Typography>
-                <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center" sx={{ mt: 1 }}>
+                {(set.completionCount > 0 || set.chips.length > 0 || (set.activityAt && !set.progress)) && <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center" sx={{ mt: 1 }}>
                   {set.completionCount > 0 && <Chip label={`Completed ${set.completionCount} ${set.completionCount === 1 ? 'time' : 'times'}`} size="small" variant="outlined" color="success" sx={{ bgcolor: (theme: Theme) => alpha(theme.palette.success.main, .12) }} />}
                   {set.chips.map((chip, index) => <Chip key={index} label={chip} size="small" variant="outlined" />)}
-                  {set.activityAt && <Typography variant="caption" color="text.secondary">{relativeTime(set.activityAt)}</Typography>}
-                </Stack>
+                  {set.activityAt && !set.progress && <Typography variant="caption" color="text.secondary">{relativeTime(set.activityAt)}</Typography>}
+                </Stack>}
                 {set.progress && <Box sx={{ mt: 1.25 }}>
                   <Stack direction="row" alignItems="center" spacing={1.5}>
                     <LinearProgress aria-hidden variant="determinate" value={set.progress.total ? (set.progress.done / set.progress.total) * 100 : 0} sx={{ ...trackSx, flex: 1 }} />
                     <Typography variant="body2" color="text.secondary">{set.progress.total ? Math.round((set.progress.done / set.progress.total) * 100) : 0}%</Typography>
                   </Stack>
-                  <Typography variant="caption" color="text.secondary">{`${set.progress.done}/${set.progress.total} ${set.progress.label}`}</Typography>
+                  <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap">
+                    <Typography variant="caption" color="text.secondary">{`${set.progress.done}/${set.progress.total} ${set.progress.label}`}</Typography>
+                    {set.activityAt && <Typography variant="caption" color="text.secondary">{relativeTime(set.activityAt)}</Typography>}
+                  </Stack>
                 </Box>}
               </Box>
             </Stack>

@@ -1,4 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test';
+import { openTopicIfNeeded } from './support/topic';
 
 async function statCardBounds(firstCard: Locator) {
   const cards = firstCard.locator('..').getByRole('group');
@@ -322,13 +323,13 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Save and exit deck' }).click();
   await expect(page.getByRole('button', { name: /^Resume deck/ })).toBeVisible();
-  await expect(page.getByText('Card 2 of 2')).toBeVisible();
+  await expect(page.getByText('2/2 reviewed')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Topic' })).toHaveCount(0);
   await page.reload();
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await expect(page.getByRole('region', { name: 'Continue Studying' })).toBeVisible();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
-  await expect(page.getByText('Card 2 of 2')).toBeVisible();
+  await expect(page.getByText('2/2 reviewed')).toBeVisible();
   await page.getByRole('button', { name: /^Resume deck/ }).click();
   await expect(page.getByText('What is the terminal nerve of the posterior cord?')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Card 1, opened, flagged' })).toBeVisible();
@@ -337,6 +338,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.getByRole('button', { name: 'Finish' }).click();
   await expect(page.getByText('Completed 1 time')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
+  await openTopicIfNeeded(page);
   await expect(page.getByText('Completed 1 time')).toBeVisible();
   await expect
     .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
@@ -355,8 +357,8 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await page.getByRole('button', { name: 'Card 2, unopened' }).click();
   await page.getByRole('button', { name: 'Save and exit deck' }).click();
   await expect(page.getByText('Completed 2 times')).toBeVisible();
-  await expect(page.getByText('Card 2 of 2')).toBeVisible();
-  await page.getByRole('button', { name: 'All subjects' }).click();
+  await expect(page.getByText('0/2 reviewed')).toBeVisible();
+  await page.getByRole('button', { name: 'Dashboard' }).click();
   await expect(page.getByRole('region', { name: 'Continue Studying' })).toBeVisible();
   await expect(page.getByText('Completed', { exact: true })).toBeVisible();
   await expect(page.getByText('Average', { exact: true })).toBeVisible();
@@ -618,6 +620,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
 
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await openTopicIfNeeded(page);
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
@@ -627,6 +630,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await openTopicIfNeeded(page);
   await page.getByRole('button', { name: /^Resume quiz/ }).click();
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
 });
@@ -766,6 +770,7 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
   await page.keyboard.press('Enter');
   await expect(banner.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
   releaseRetry();
+  await openTopicIfNeeded(page);
   await expect(page.getByRole('button', { name: /^Start quiz/ })).toBeVisible();
   expect(failures).toBe(2);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
@@ -783,6 +788,7 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   );
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await openTopicIfNeeded(page);
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
 
@@ -796,9 +802,10 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   expect(box!.x + box!.width).toBeGreaterThan(370);
   expect(box!.y + box!.height).toBeGreaterThan(800);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
-  await page.getByRole('button', { name: 'All subjects' }).click();
+  await page.getByRole('button', { name: 'Dashboard' }).click();
   await expect(toast).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await openTopicIfNeeded(page);
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByRole('alert')).toBeVisible();
@@ -828,6 +835,7 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
   await expect(loading).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await openTopicIfNeeded(page);
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();

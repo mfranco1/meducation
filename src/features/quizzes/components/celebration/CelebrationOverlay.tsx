@@ -45,7 +45,7 @@ export function CelebrationOverlay({ open, title, message, variant, durationMs =
   >
     <Box
       sx={{
-        border: '1px solid', borderColor: '#8bc9a9', borderRadius: 3, bgcolor: '#f1faf4', boxShadow: '0 10px 30px rgba(27, 104, 66, .18)', px: 2.25, py: 1.25,
+        border: '1px solid', borderColor: '#8bc9a9', borderRadius: '14px', bgcolor: '#f1faf4', boxShadow: '0 10px 30px rgba(27, 104, 66, .18)', px: 2.25, py: 1.25,
         animation: `${reducedMotion ? reducedEnter : enter} ${durationMs}ms ease-in-out both`,
       }}
     >

@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openTopicIfNeeded } from './support/topic';
 
 async function attachScreenshot(
   page: import('@playwright/test').Page,
@@ -123,6 +124,7 @@ test('quiz Continue Studying card is responsive and opens the active subject', a
   await action.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await openTopicIfNeeded(page);
   await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeVisible();
 });
 
@@ -133,7 +135,7 @@ test('flashcard Continue Studying card shows deck activity and opens the saved s
   await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await page.getByRole('button', { name: /^Study deck/ }).click();
   await page.getByRole('button', { name: 'Save and exit deck' }).click();
-  await page.getByRole('button', { name: 'All subjects' }).click();
+  await page.getByRole('button', { name: 'Dashboard' }).click();
 
   const region = page.getByRole('region', { name: 'Continue Studying' });
   const card = region.getByRole('button', { name: 'Continue studying Browser Test Subject' });
@@ -155,5 +157,6 @@ test('flashcard Continue Studying card shows deck activity and opens the saved s
   await action.focus();
   await page.keyboard.press('Space');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await openTopicIfNeeded(page);
   await expect(page.getByRole('button', { name: /^Resume deck/ })).toBeVisible();
 });

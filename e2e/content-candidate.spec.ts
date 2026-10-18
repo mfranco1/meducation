@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { openTopicIfNeeded } from './support/topic';
 import { contentCases } from './support/contentCases';
 
 for (const candidate of contentCases()) {
@@ -32,6 +33,7 @@ for (const candidate of contentCases()) {
       .getByRole('button', { name: `Open ${subject.name}`, exact: true })
       .last()
       .click();
+    await openTopicIfNeeded(page);
     await page.getByRole('button', { name: /^Start quiz/ }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();

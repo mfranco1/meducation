@@ -69,6 +69,9 @@ export const theme = createTheme({
         },
       },
     },
+    MuiCircularProgress: {
+      styleOverrides: { circle: { strokeLinecap: 'round' } },
+    },
     MuiButton: {
       styleOverrides: { root: { borderRadius: 10, padding: '9px 16px' } },
     },

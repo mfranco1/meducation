@@ -26,8 +26,8 @@ describe('FlashcardSubjectScreen', () => {
     rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen {...props} catalog={{ ...catalog, decks: [] }} /></ThemeProvider>);
 
     expect(screen.getByRole('heading', { name: 'No flashcard decks available yet' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'All subjects' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
+    expect(screen.getByRole('button', { name: 'Dashboard' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
     expect(onBack).toHaveBeenCalledOnce();
   });
 

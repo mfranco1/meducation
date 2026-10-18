@@ -146,7 +146,7 @@ describe('progressive dashboard statistics', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
     expect(fetchMock.mock.calls[0][0]).toBe('/api/v1/subjects');
 
-    fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
     expect(new LocalAttemptRepository().getActive(quiz.id)).toBeUndefined();
 
@@ -200,7 +200,7 @@ describe('progressive dashboard statistics', () => {
     expect(questionFailure).toHaveTextContent('Test Quiz: Please try again or come back later.');
     expect(screen.queryByText('Unable to load questions', { selector: 'h3' })).toBeNull();
     expect(screen.getByRole('button', { name: 'Close notification' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'All subjects' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
     await waitFor(() => expect(screen.queryByRole('alert')).toBeNull());
     expect(screen.queryByRole('alert')).toBeNull();
