@@ -1,7 +1,7 @@
-import { useRef } from 'react';
-import BackupRoundedIcon from '@mui/icons-material/BackupRounded';
+import { useEffect, useRef } from 'react';
+import SettingsBackupRestoreRoundedIcon from '@mui/icons-material/SettingsBackupRestoreRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import type { ProgressBackupController } from '../useProgressBackup';
 import { progressFileCapabilities } from '../progressBackupFiles';
@@ -24,6 +24,12 @@ const cardSx = { flex: 1, minWidth: 0, p: 2, border: 1, borderColor: 'divider', 
 
 export function ProgressBackupDialog({ controller }: { controller: ProgressBackupController }) {
   const input = useRef<HTMLInputElement>(null);
+  const resetEntry = useRef<HTMLButtonElement>(null);
+  const wasResetStep = useRef(false);
+  useEffect(() => {
+    if (wasResetStep.current && !controller.resetStep) resetEntry.current?.focus();
+    wasResetStep.current = controller.resetStep;
+  }, [controller.resetStep]);
   const preview = controller.preview;
   const warning = replaceWarning(controller);
   const locked = controller.committing;
@@ -34,6 +40,21 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
     ['Flashcard decks', preview.summary.savedFlashcardDecks, current?.savedFlashcardDecks],
     ['Completions', preview.summary.completions, current?.completions],
   ] as const : [];
+
+  const summary = controller.resetSummary;
+  const nothingToReset = summary !== undefined && summary.savedQuizzes === 0 && summary.savedFlashcardDecks === 0 && summary.completions === 0;
+  const resetRows = summary ? [
+    ['Quizzes', summary.savedQuizzes],
+    ['Flashcard decks', summary.savedFlashcardDecks],
+    ['Completions', summary.completions],
+  ] as const : [];
+  const messages = <>
+    {controller.busy && <Typography role="status" aria-live="polite">{controller.status ?? 'Working with progress backup…'}</Typography>}
+    {!controller.busy && controller.notice && <Stack direction="row" spacing={0.75} role="status" aria-live="polite" sx={{ alignItems: 'center', color: 'success.main' }}>
+      <CheckCircleRoundedIcon fontSize="small" aria-hidden="true" /><Typography variant="body2">{controller.notice}</Typography>
+    </Stack>}
+    {controller.error && <Alert severity="warning" role="alert">{controller.error}</Alert>}
+  </>;
 
   return <Dialog
     open={controller.open}
@@ -46,23 +67,51 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
     slotProps={{ paper: { 'aria-busy': controller.busy } }}
   >
     <DialogTitle id="progress-backup-title" sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-      <Box aria-hidden="true" sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: '12px', display: 'grid', placeItems: 'center', color: 'primary.main', bgcolor: theme => alpha(theme.palette.primary.main, 0.12) }}><BackupRoundedIcon /></Box>
-      Progress Backup
+      <Box aria-hidden="true" sx={{ width: 40, height: 40, flexShrink: 0, borderRadius: '12px', display: 'grid', placeItems: 'center', color: 'primary.main', bgcolor: theme => alpha(theme.palette.primary.main, 0.12) }}><SettingsBackupRestoreRoundedIcon /></Box>
+      Progress
     </DialogTitle>
+    {controller.resetStep ? <>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          {nothingToReset ? <Typography id="progress-backup-description">There is no saved progress to reset.</Typography> : <>
+            <Alert severity="error" id="progress-backup-description">This deletes all quiz and flashcard progress in this browser, including quizzes in progress. You cannot undo this.</Alert>
+            {summary
+              ? <Table size="small" aria-label="Progress to delete">
+                <TableBody>
+                  {resetRows.map(([label, count]) => <TableRow key={label}>
+                    <TableCell component="th" scope="row">{label}</TableCell>
+                    <TableCell align="right">{count}</TableCell>
+                  </TableRow>)}
+                </TableBody>
+              </Table>
+              : <Typography>Some saved progress could not be read. Resetting clears it.</Typography>}
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              <Typography variant="body2" color="text.secondary">Download a backup first if you might want this progress later.</Typography>
+              <Button size="small" onClick={controller.download} disabled={controller.busy || locked || !files.download}>Download backup</Button>
+            </Stack>
+          </>}
+          {messages}
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button autoFocus onClick={controller.cancelReset} disabled={locked}>Back</Button>
+        {!nothingToReset && <Button variant="contained" color="error" onClick={controller.reset} disabled={controller.busy || locked}>Reset progress</Button>}
+      </DialogActions>
+    </> : <>
     <DialogContent>
       <Stack spacing={2} sx={{ pt: 1 }}>
-        <Typography id="progress-backup-description" color="text.secondary">Your progress lives in this browser. Save a copy to keep it safe or move it.</Typography>
+        <Typography id="progress-backup-description" color="text.secondary">Your progress is saved in this browser only. Back it up to keep it safe or move it to another device.</Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <Box component="section" aria-labelledby="progress-backup-save" sx={cardSx}>
             <Box>
-              <Typography id="progress-backup-save" variant="subtitle1" fontWeight={700}>Save a copy</Typography>
+              <Typography id="progress-backup-save" variant="subtitle1" fontWeight={500}>Save a copy</Typography>
               <Typography variant="body2" color="text.secondary">Download a small file you can keep.</Typography>
             </Box>
             <Button variant="contained" onClick={controller.download} disabled={controller.busy || locked || !files.download} sx={{ mt: 'auto' }}>Download backup</Button>
           </Box>
           <Box component="section" aria-labelledby="progress-backup-restore" sx={cardSx}>
             <Box>
-              <Typography id="progress-backup-restore" variant="subtitle1" fontWeight={700}>Restore from a file</Typography>
+              <Typography id="progress-backup-restore" variant="subtitle1" fontWeight={500}>Restore from a file</Typography>
               <Typography variant="body2" color="text.secondary">Replaces progress in this browser.</Typography>
             </Box>
             <Button variant="outlined" onClick={() => input.current?.click()} disabled={controller.busy || locked || !files.read} sx={{ mt: 'auto' }}>Choose file</Button>
@@ -74,11 +123,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
           </Box>
         </Stack>
         {(!files.read || !files.download) && <Alert severity="warning">This browser cannot {!files.read ? 'read selected' : 'download'} progress files. Use another supported browser for that action.</Alert>}
-        {controller.busy && <Typography role="status" aria-live="polite">{controller.status ?? 'Working with progress backup…'}</Typography>}
-        {!controller.busy && controller.notice && <Stack direction="row" spacing={0.75} role="status" aria-live="polite" sx={{ alignItems: 'center', color: 'success.main' }}>
-          <CheckCircleRoundedIcon fontSize="small" aria-hidden="true" /><Typography variant="body2">{controller.notice}</Typography>
-        </Stack>}
-        {controller.error && <Alert severity="warning" role="alert">{controller.error}</Alert>}
+        {messages}
         {preview && <>
           <Box>
             <Table size="small" aria-label="Backup comparison">
@@ -103,11 +148,22 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
             ? <Button color="inherit" size="small" onClick={controller.downloadCurrent} disabled={controller.busy || locked || !files.download}>Download current progress first</Button>
             : undefined}>{warning}</Alert>
         </>}
+        {!preview && <>
+          <Divider />
+          <Box component="section" aria-labelledby="progress-reset" sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', gap: 1.5 }}>
+            <Box>
+              <Typography id="progress-reset" variant="subtitle1" fontWeight={500}>Reset progress</Typography>
+              <Typography variant="body2" color="text.secondary">Delete all quiz and flashcard progress in this browser.</Typography>
+            </Box>
+            <Button ref={resetEntry} variant="outlined" color="error" onClick={controller.requestReset} disabled={controller.busy || locked}>Reset progress</Button>
+          </Box>
+        </>}
       </Stack>
     </DialogContent>
     <DialogActions>
       <Button onClick={() => controller.close()} disabled={locked}>Cancel</Button>
       {preview && <Button variant="contained" color="primary" onClick={controller.restore} disabled={controller.busy || locked}>Replace my progress</Button>}
     </DialogActions>
+    </>}
   </Dialog>;
 }

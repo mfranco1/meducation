@@ -33,12 +33,13 @@ Meducation is a local-first study app for quizzes and flashcards. Content comes 
 - A Cards navigator filters All, Hidden and Flagged in deck order. Opened and flagged cards persist across resume; resume shows the saved card's front. Finish clears the active position and increments the deck's completion count; save-and-exit and restart do not.
 - The dashboard shows **Completed**, **Average** and **Highest** (decks finished, decks per local day including idle days, and the best single day). Daily figures begin with the first finish after daily tracking started and keep the local date recorded at finish.
 
-## Progress backup and restore
+## Progress backup, restore and reset
 
-- **Progress backup** in the navigation (available when no study session is active) downloads one versioned JSON file with paired quiz and flashcard progress. A download does not prove the file was saved elsewhere.
+- **Progress** in the navigation (available when no study session is active) opens one dialog for backup, restore and reset. Backup downloads one versioned JSON file with paired quiz and flashcard progress. A download does not prove the file was saved elsewhere.
 - Choosing a file validates it before anything changes and compares its date, saved quizzes, flashcard decks and total completions with this browser's (omitting that column if current progress cannot be read) under one warning that adapts to empty or one-sided backups, offering a backup of current progress first. **Replace my progress** replaces both stores after explicit confirmation (never merges), regenerates storage revisions, keeps timers paused, reloads, announces success and focuses the Quizzes dashboard. Empty backups clear progress with a warning. Unknown content IDs are kept; resume uses the normal changed-content rules.
 - Limits: 4 MiB file, depth 16, 250,000 values; oversized or malformed files are rejected without touching stored progress. Nothing is uploaded.
 - Restore writes both stores in turn. If either write fails (for example on quota), the previous values of both are put back and an error says nothing changed. Other open tabs pick up the change through `storage` events and ask to reload when their copy is stale.
+- **Reset progress** opens a confirmation view that lists the quizzes, flashcard decks and completions to delete, with an optional backup download. Confirming removes both stores (restoring both if either removal fails), reloads and announces that progress was reset. It also works when stored progress cannot be read. With nothing saved, the view only offers Back.
 - Clearing site data removes progress and cannot be recovered by the app.
 
 ## Content editor

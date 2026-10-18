@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
-import BackupRoundedIcon from '@mui/icons-material/BackupRounded';
+import SettingsBackupRestoreRoundedIcon from '@mui/icons-material/SettingsBackupRestoreRounded';
 import { Box, ButtonBase, Drawer, Tooltip, useMediaQuery } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import { useTheme } from '@mui/material/styles';
@@ -21,15 +21,15 @@ export function AppNavigationDrawer({
   active,
   currentPage,
   onNavigate,
-  onProgressBackup,
-  progressBackupDisabledReason,
+  onProgress,
+  progressDisabledReason,
   disabled = false,
 }: {
   active: LearnerSection;
   currentPage?: LearnerSection;
   onNavigate: (section: LearnerSection) => void;
-  onProgressBackup?: () => void;
-  progressBackupDisabledReason?: string;
+  onProgress?: () => void;
+  progressDisabledReason?: string;
   disabled?: boolean;
 }) {
   const theme = useTheme();
@@ -154,13 +154,13 @@ export function AppNavigationDrawer({
               aria-hidden="true"
               sx={{ height: '1px', ml: 0, mr: compact ? '12px' : '4px', bgcolor: '#eee5df', opacity: 0.8 }}
             />
-            <Tooltip title={compact ? (progressBackupDisabledReason ?? 'Progress Backup') : progressBackupDisabledReason ?? ''} placement="right" enterDelay={500}>
+            <Tooltip title={compact ? (progressDisabledReason ?? 'Progress') : progressDisabledReason ?? ''} placement="right" enterDelay={500}>
               <Box component="span" sx={{ display: 'block' }}>
               <ButtonBase
-                disabled={disabled || !onProgressBackup || Boolean(progressBackupDisabledReason)}
-                aria-label="Progress Backup"
-                aria-describedby={progressBackupDisabledReason ? 'progress-backup-disabled-guidance' : undefined}
-                onClick={() => onProgressBackup?.()}
+                disabled={disabled || !onProgress || Boolean(progressDisabledReason)}
+                aria-label="Progress"
+                aria-describedby={progressDisabledReason ? 'progress-disabled-guidance' : undefined}
+                onClick={() => onProgress?.()}
                 sx={{
                   width: '100%', minHeight: 48, px: compact ? 0 : 1.5, borderRadius: '10px', display: 'flex',
                   justifyContent: compact ? 'center' : 'flex-start', gap: 1.5, color: 'text.secondary',
@@ -168,12 +168,12 @@ export function AppNavigationDrawer({
                   '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
                 }}
               >
-                <Box aria-hidden="true" sx={{ display: 'flex' }}><BackupRoundedIcon /></Box>
-                {!compact && <Box component="span" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Progress Backup</Box>}
+                <Box aria-hidden="true" sx={{ display: 'flex' }}><SettingsBackupRestoreRoundedIcon /></Box>
+                {!compact && <Box component="span" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>Progress</Box>}
               </ButtonBase>
               </Box>
             </Tooltip>
-            {progressBackupDisabledReason && <Box id="progress-backup-disabled-guidance" component="span" sx={visuallyHidden}>{progressBackupDisabledReason}</Box>}
+            {progressDisabledReason && <Box id="progress-disabled-guidance" component="span" sx={visuallyHidden}>{progressDisabledReason}</Box>}
           </Box>
         </Box>
       </DrawerSurface>

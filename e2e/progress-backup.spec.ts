@@ -40,7 +40,7 @@ test('downloads a backup and restores it into a fresh browser context', async ({
   await seedProgress(page);
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
-  await page.getByRole('button', { name: 'Progress Backup' }).click();
+  await page.getByRole('button', { name: 'Progress', exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download backup' }).click();
   const download = await downloadPromise;
@@ -59,7 +59,7 @@ test('downloads a backup and restores it into a fresh browser context', async ({
     await target.goto('/');
     await expect(target.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
     expect(await stored(target, quizKey)).toBeNull();
-    await target.getByRole('button', { name: 'Progress Backup' }).click();
+    await target.getByRole('button', { name: 'Progress', exact: true }).click();
     await target.getByLabel('Choose progress backup file').setInputFiles(downloadPath!);
     await expect(target.getByRole('table', { name: 'Backup comparison' })).toBeVisible();
     const reload = target.waitForNavigation({ waitUntil: 'load' });
@@ -78,7 +78,7 @@ test('rejects an invalid backup file without changing progress', async ({ page }
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   const before = [await stored(page, quizKey), await stored(page, flashcardsKey)];
-  await page.getByRole('button', { name: 'Progress Backup' }).click();
+  await page.getByRole('button', { name: 'Progress', exact: true }).click();
   await page.getByLabel('Choose progress backup file').setInputFiles({
     name: 'bad.json',
     mimeType: 'application/json',
@@ -95,10 +95,10 @@ test('cancelling at the preview leaves progress intact', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   const before = [await stored(page, quizKey), await stored(page, flashcardsKey)];
-  await page.getByRole('button', { name: 'Progress Backup' }).click();
+  await page.getByRole('button', { name: 'Progress', exact: true }).click();
   await page.getByLabel('Choose progress backup file').setInputFiles('tests/fixtures/progress-backups/empty-v1.json');
   await expect(page.getByRole('table', { name: 'Backup comparison' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel' }).click();
-  await expect(page.getByRole('dialog', { name: 'Progress Backup' })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Progress', exact: true })).toHaveCount(0);
   expect([await stored(page, quizKey), await stored(page, flashcardsKey)]).toEqual(before);
 });

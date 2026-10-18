@@ -20,7 +20,7 @@ export type ProgressBackupExportResult =
   | { ok: true; json: string; summary: ProgressBackupSummary }
   | { ok: false; error: 'corrupt-progress' | 'invalid-progress' | 'unavailable' };
 
-const restoreNoticeKey = 'meducation.progress.restore.notice';
+const changeNoticeKey = 'meducation.progress.restore.notice';
 
 const emptyFlashcardProgress = (): FlashcardProgressState => ({
   schemaVersion: 2,
@@ -82,6 +82,23 @@ export function restoreProgressBackup(
   }
 }
 
+/** Remove both progress values. If either removal throws, the previous raw values are put back. */
+export function resetProgress(storage: ProgressStoragePort): boolean {
+  let previous: ProgressPair;
+  try { previous = readProgressPair(storage); } catch { return false; }
+  try {
+    storage.removeItem(progressKey);
+    storage.removeItem(flashcardProgressKey);
+    return true;
+  } catch {
+    try {
+      writeRaw(storage, progressKey, previous.quiz);
+      writeRaw(storage, flashcardProgressKey, previous.flashcards);
+    } catch { /* Nothing more can be done; the caller still reports failure. */ }
+    return false;
+  }
+}
+
 export function exportBrowserProgress(): ProgressBackupExportResult {
   try { return encodeBackupFromProgressPair(readProgressPair(localStorage)); }
   catch { return { ok: false, error: 'unavailable' }; }
@@ -92,14 +109,20 @@ export function restoreBrowserProgress(backup: ProgressBackupV1): boolean {
   catch { return false; }
 }
 
-/** Ephemeral success notice across the reload; never part of a progress backup. */
-export function rememberProgressRestore(): void {
-  try { sessionStorage.setItem(restoreNoticeKey, '1'); } catch { /* The restore itself succeeded. */ }
+export function resetBrowserProgress(): boolean {
+  try { return resetProgress(localStorage); }
+  catch { return false; }
 }
-export function consumeProgressRestoreNotice(): boolean {
+
+/** Ephemeral success notice across the reload; never part of a progress backup. */
+export type ProgressChange = 'restored' | 'reset';
+export function rememberProgressChange(kind: ProgressChange): void {
+  try { sessionStorage.setItem(changeNoticeKey, kind); } catch { /* The change itself succeeded. */ }
+}
+export function consumeProgressChangeNotice(): ProgressChange | undefined {
   try {
-    const restored = sessionStorage.getItem(restoreNoticeKey) === '1';
-    sessionStorage.removeItem(restoreNoticeKey);
-    return restored;
-  } catch { return false; }
+    const kind = sessionStorage.getItem(changeNoticeKey);
+    sessionStorage.removeItem(changeNoticeKey);
+    return kind === 'restored' || kind === 'reset' ? kind : undefined;
+  } catch { return undefined; }
 }

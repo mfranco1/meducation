@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import quizPayload from '../../tests/fixtures/progress-backups/populated-v1.json';
-import { encodeBackupFromProgressPair, restoreProgressBackup, type ProgressPair } from './progressBackupStorage';
+import { encodeBackupFromProgressPair, restoreProgressBackup, resetProgress, type ProgressPair } from './progressBackupStorage';
 import { parseProgressBackup, type ProgressBackupV1 } from './progressBackupCodec';
 import { progressKey } from './progressCodec';
 import { flashcardProgressKey } from './flashcardProgressCodec';
@@ -112,5 +112,22 @@ describe('restoreProgressBackup', () => {
     const storage = memoryStorage({}, flashcardProgressKey);
     expect(restoreProgressBackup(storage, target)).toBe(false);
     expect(storage.values.size).toBe(0);
+  });
+
+  it('resets both stores, and restores both originals when a removal fails', () => {
+    const initial = { [progressKey]: 'old-quiz', [flashcardProgressKey]: 'old-cards' };
+    const storage = memoryStorage(initial);
+    expect(resetProgress(storage)).toBe(true);
+    expect(storage.values.size).toBe(0);
+
+    const failing = memoryStorage(initial);
+    const remove = failing.removeItem;
+    failing.removeItem = (key: string) => {
+      if (key === flashcardProgressKey) throw new DOMException('Denied', 'SecurityError');
+      remove(key);
+    };
+    expect(resetProgress(failing)).toBe(false);
+    expect(failing.getItem(progressKey)).toBe('old-quiz');
+    expect(failing.getItem(flashcardProgressKey)).toBe('old-cards');
   });
 });

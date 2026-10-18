@@ -75,5 +75,8 @@ export const theme = createTheme({
     MuiButton: {
       styleOverrides: { root: { borderRadius: 10, padding: '9px 16px' } },
     },
+    MuiDialogTitle: {
+      styleOverrides: { root: { fontWeight: 700 } },
+    },
   },
 });

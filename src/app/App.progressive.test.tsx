@@ -282,10 +282,10 @@ describe('progressive dashboard statistics', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(await screen.findByText('Question 1 of 1')).toBeVisible();
 
-    const backupButton = screen.getByRole('button', { name: 'Progress Backup' });
+    const backupButton = screen.getByRole('button', { name: 'Progress' });
     expect(backupButton).toBeDisabled();
     expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent('Save and leave your study session');
-    expect(screen.queryByRole('dialog', { name: 'Progress Backup' })).toBeNull();
+    expect(screen.queryByRole('dialog', { name: 'Progress' })).toBeNull();
     expect(screen.getByText('Question 1 of 1')).toBeVisible();
   });
 });

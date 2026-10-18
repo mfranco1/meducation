@@ -43,10 +43,10 @@ it('disables progress backup during flashcard study with save-and-leave guidance
   fireEvent.click(await screen.findByRole('button', { name: /^Study deck/  }));
   expect(await screen.findByText('Card 1 of 1')).toBeVisible();
 
-  const backupButton = screen.getByRole('button', { name: 'Progress Backup' });
+  const backupButton = screen.getByRole('button', { name: 'Progress' });
   expect(backupButton).toBeDisabled();
   expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent('Save and leave your study session');
-  expect(screen.queryByRole('dialog', { name: 'Progress Backup' })).toBeNull();
+  expect(screen.queryByRole('dialog', { name: 'Progress' })).toBeNull();
   expect(screen.getByText('Card 1 of 1')).toBeVisible();
 });
 

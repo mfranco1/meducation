@@ -129,7 +129,7 @@ docker compose --profile db exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWO
 
 Restore into a fresh database, never over the original. This is not a production backup design.
 
-Learner progress backups are separate and browser-local ([product](product.md#progress-backup-and-restore)). Private source material (`tn-pdfs/`, `content/`) is ignored by Git and needs its own backup.
+Learner progress backups are separate and browser-local ([product](product.md#progress-backup-restore-and-reset)). Private source material (`tn-pdfs/`, `content/`) is ignored by Git and needs its own backup.
 
 ## Containers
 

@@ -2,7 +2,7 @@
 
 Docs describe the current system. Git history is the archive. Rules for contributors are in [AGENTS.md](../AGENTS.md).
 
-- [Product behavior](product.md): learner flows, freshness, progress backup and restore
+- [Product behavior](product.md): learner flows, freshness, progress backup, restore and reset
 - [Architecture](architecture.md): module ownership, dependency rules, content flow, editor
 - [Question schema](question-schema.md) and [flashcard schema](flashcard-schema.md): stored content contracts
 - [Content management](content-management.md): editing rules, editor workflow, authoring limits

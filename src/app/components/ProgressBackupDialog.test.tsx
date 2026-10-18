@@ -10,12 +10,16 @@ function controller(overrides: Partial<ProgressBackupController> = {}): Progress
     open: true,
     busy: false,
     committing: false,
+    resetStep: false,
     show: vi.fn(),
     close: vi.fn(),
     chooseFile: vi.fn(async () => undefined),
     download: vi.fn(),
     downloadCurrent: vi.fn(),
     restore: vi.fn(),
+    requestReset: vi.fn(),
+    cancelReset: vi.fn(),
+    reset: vi.fn(),
     ...overrides,
   };
 }
@@ -33,7 +37,7 @@ describe('progress backup dialog', () => {
       },
     });
     render(<ProgressBackupDialog controller={actions} />);
-    expect(screen.getByRole('dialog', { name: 'Progress Backup' })).toBeVisible();
+    expect(screen.getByRole('dialog', { name: 'Progress' })).toBeVisible();
     expect(screen.getByText('This backup has no saved progress. Replacing clears all quiz and flashcard progress in this browser.')).toBeVisible();
     expect(within(screen.getByRole('table', { name: 'Backup comparison' })).getByRole('row', { name: 'Completions 0 61' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Download current progress first' }));
@@ -56,11 +60,28 @@ describe('progress backup dialog', () => {
     expect(screen.getByRole('status')).toHaveTextContent('Backup downloaded.');
   });
 
+  it('confirms a reset with the counts to delete', () => {
+    const actions = controller({ resetStep: true, resetSummary: { savedQuizzes: 2, savedFlashcardDecks: 1, completions: 7 } });
+    render(<ProgressBackupDialog controller={actions} />);
+    expect(within(screen.getByRole('table', { name: 'Progress to delete' })).getByRole('row', { name: 'Completions 7' })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Reset progress' }));
+    expect(actions.reset).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    expect(actions.cancelReset).toHaveBeenCalledOnce();
+  });
+
+  it('offers only Back when there is no progress to reset', () => {
+    render(<ProgressBackupDialog controller={controller({ resetStep: true, resetSummary: { savedQuizzes: 0, savedFlashcardDecks: 0, completions: 0 } })} />);
+    expect(screen.getByText('There is no saved progress to reset.')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Reset progress' })).toBeNull();
+  });
+
   it('prevents dismissal while a restore is in progress', () => {
     const actions = controller({ busy: true, committing: true });
     render(<ProgressBackupDialog controller={actions} />);
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
-    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Progress Backup' }), { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('dialog', { name: 'Progress' }), { key: 'Escape' });
     expect(actions.close).not.toHaveBeenCalled();
   });
 });

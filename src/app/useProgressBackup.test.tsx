@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import populated from '../../tests/fixtures/progress-backups/populated-v1.json';
 import { progressKey } from '../persistence/progressCodec';
 import { flashcardProgressKey } from '../persistence/flashcardProgressCodec';
-import { consumeProgressRestoreNotice } from '../persistence/progressBackupStorage';
+import { consumeProgressChangeNotice } from '../persistence/progressBackupStorage';
 import { useProgressBackup } from './useProgressBackup';
 
 const fileOf = (body: string) => ({ size: new TextEncoder().encode(body).length, text: async () => body });
@@ -45,7 +45,7 @@ describe('progress backup dialog flow', () => {
     expect(values.has(progressKey)).toBe(true);
     expect(values.has(flashcardProgressKey)).toBe(true);
     expect(reload).toHaveBeenCalledOnce();
-    expect(consumeProgressRestoreNotice()).toBe(true);
+    expect(consumeProgressChangeNotice()).toBe('restored');
   });
 
   it('reports that nothing changed when a write fails, and does not reload', async () => {
@@ -54,6 +54,38 @@ describe('progress backup dialog flow', () => {
     const { result } = await preview(JSON.stringify(populated));
     failingKey = flashcardProgressKey;
     act(() => result.current.restore());
+    expect(result.current.error).toContain('Nothing was changed');
+    expect(result.current.committing).toBe(false);
+    expect(values.get(progressKey)).toBe('existing-quiz');
+    expect(values.get(flashcardProgressKey)).toBe('existing-cards');
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('reset clears both stores, reloads and leaves a reset notice', () => {
+    values.set(progressKey, 'existing-quiz');
+    values.set(flashcardProgressKey, 'existing-cards');
+    const { result } = renderHook(() => useProgressBackup());
+    act(() => result.current.show());
+    act(() => result.current.requestReset());
+    expect(result.current.resetStep).toBe(true);
+    act(() => result.current.reset());
+    expect(values.size).toBe(0);
+    expect(reload).toHaveBeenCalledOnce();
+    expect(consumeProgressChangeNotice()).toBe('reset');
+  });
+
+  it('failed reset reports an error, keeps both values and does not reload', () => {
+    values.set(progressKey, 'existing-quiz');
+    values.set(flashcardProgressKey, 'existing-cards');
+    const { result } = renderHook(() => useProgressBackup());
+    act(() => result.current.show());
+    act(() => result.current.requestReset());
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => { values.set(key, value); },
+      removeItem: (key: string) => { if (key === flashcardProgressKey) throw new DOMException('Denied', 'SecurityError'); values.delete(key); },
+    });
+    act(() => result.current.reset());
     expect(result.current.error).toContain('Nothing was changed');
     expect(result.current.committing).toBe(false);
     expect(values.get(progressKey)).toBe('existing-quiz');

@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   exportBrowserProgress,
-  rememberProgressRestore,
+  rememberProgressChange,
+  resetBrowserProgress,
   restoreBrowserProgress,
 } from '../persistence/progressBackupStorage';
 import {
@@ -26,6 +27,8 @@ export interface ProgressBackupController {
   status?: string;
   notice?: string;
   preview?: ProgressBackupPreview;
+  resetSummary?: ProgressBackupSummary;
+  resetStep: boolean;
   error?: string;
   show(): void;
   close(): void;
@@ -33,6 +36,9 @@ export interface ProgressBackupController {
   download(): void;
   downloadCurrent(): void;
   restore(): void;
+  requestReset(): void;
+  cancelReset(): void;
+  reset(): void;
 }
 
 function freezeBackup<T>(value: T): T {
@@ -65,6 +71,8 @@ export function useProgressBackup(): ProgressBackupController {
   const [committing, setCommitting] = useState(false);
   const [status, setStatus] = useState<string>();
   const [preview, setPreview] = useState<ProgressBackupPreview>();
+  const [resetStep, setResetStep] = useState(false);
+  const [resetSummary, setResetSummary] = useState<ProgressBackupSummary>();
   const [error, setError] = useState<string>();
   const [notice, setNotice] = useState<string>();
 
@@ -81,6 +89,8 @@ export function useProgressBackup(): ProgressBackupController {
     setError(undefined);
     setNotice(undefined);
     setStatus(undefined);
+    setResetStep(false);
+    setResetSummary(undefined);
     setOpen(true);
   }, []);
   const close = useCallback(() => {
@@ -91,6 +101,8 @@ export function useProgressBackup(): ProgressBackupController {
     setNotice(undefined);
     setStatus(undefined);
     setBusy(false);
+    setResetStep(false);
+    setResetSummary(undefined);
     setOpen(false);
   }, [committing]);
 
@@ -139,7 +151,7 @@ export function useProgressBackup(): ProgressBackupController {
     setCommitting(true);
     setStatus('Restoring progress. Please keep this tab open.');
     if (restoreBrowserProgress(preview.backup)) {
-      rememberProgressRestore();
+      rememberProgressChange('restored');
       window.location.reload();
       return;
     }
@@ -148,6 +160,36 @@ export function useProgressBackup(): ProgressBackupController {
     setStatus(undefined);
   }, [preview, committing]);
 
+  const requestReset = useCallback(() => {
+    setError(undefined);
+    setNotice(undefined);
+    setPreview(undefined);
+    const current = exportBrowserProgress();
+    setResetSummary(current.ok ? current.summary : undefined);
+    setResetStep(true);
+  }, []);
+
+  const cancelReset = useCallback(() => {
+    setResetStep(false);
+    setResetSummary(undefined);
+    setError(undefined);
+    setNotice(undefined);
+  }, []);
+
+  const reset = useCallback(() => {
+    if (committing) return;
+    setCommitting(true);
+    setStatus('Resetting progress. Please keep this tab open.');
+    if (resetBrowserProgress()) {
+      rememberProgressChange('reset');
+      window.location.reload();
+      return;
+    }
+    setError('Progress could not be reset. Nothing was changed. Check browser storage and retry.');
+    setCommitting(false);
+    setStatus(undefined);
+  }, [committing]);
+
   return {
     open,
     busy,
@@ -155,6 +197,8 @@ export function useProgressBackup(): ProgressBackupController {
     status,
     notice,
     preview,
+    resetSummary,
+    resetStep,
     error,
     show,
     close,
@@ -164,5 +208,8 @@ export function useProgressBackup(): ProgressBackupController {
       if (preview?.currentBackup) downloadJson(preview.currentBackup);
     },
     restore,
+    requestReset,
+    cancelReset,
+    reset,
   };
 }
