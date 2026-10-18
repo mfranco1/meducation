@@ -46,6 +46,18 @@ The application must not call an LLM at runtime. Rationales, explanations and me
 
 Question, quiz, subject, deck, card and attempt IDs never change once established.
 
+## Copy
+
+Applies to user-facing copy: UI text, messages and static explanatory content. Never applies to canonical question or card content (see Content invariants).
+
+- Write the copy itself. Don't restate the request, refer to it ("as requested", "here's a version that…"), or add preamble or sign-off.
+- Professional but plain: short sentences, common words, active voice. Address the learner as "you" where needed.
+- Be brief. Say it once. Cut filler, hedges and qualifiers that don't change meaning.
+- No em dashes; use a period, comma, colon or parentheses.
+- Avoid stock AI phrasing: "delve", "seamless", "robust", "leverage", "elevate", "unlock", "dive into", "it's important to note", "whether you're X or Y", "not just X but Y", triplets used for rhythm, rhetorical questions, exclamation marks and emoji.
+- Match existing terminology in the app; don't introduce synonyms for established terms.
+- Error and status messages: say what happened and what the user can do, without blame or technical detail.
+
 ## Code organization
 
 Keep domain logic independent of React, keep localStorage access inside `src/persistence`, and keep content out of application code. See [architecture](docs/architecture.md) for module boundaries.
