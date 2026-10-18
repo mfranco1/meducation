@@ -212,6 +212,33 @@ describe('subject topics', () => {
     expect(screen.getByText('100%')).toBeVisible();
     expect(screen.getByText('2 days ago')).toBeVisible();
   });
+
+  it('filters topics and lists matching quizzes in Results, ignoring case and accents', () => {
+    renderTopics([{ quiz, completionCount: 0 }, { quiz: { ...other, name: 'Glycolysé quiz' }, completionCount: 0 }]);
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'Search topics and quizzes' }), { target: { value: ' GLYCOLYSE ' } });
+    expect(screen.getByRole('status')).toHaveTextContent('1 topic, 1 quiz');
+    expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveTextContent('1 matching quiz');
+    expect(screen.queryByRole('button', { name: /Cell biology/ })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'Results' })).toBeVisible();
+    expect(screen.getByRole('heading', { name: 'Metabolism', level: 3 })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Start quiz: Glycolysé quiz' })).toBeVisible();
+
+    fireEvent.click(screen.getByRole('button', { name: /Metabolism/ }));
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+    expect(screen.queryByRole('heading', { name: 'Results' })).toBeNull();
+    expect(screen.getByRole('button', { name: /Cell biology/ })).toBeVisible();
+  });
+
+  it('explains when nothing matches and clears the search', () => {
+    renderTopics([{ quiz, completionCount: 0 }]);
+
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'zzz' } });
+    expect(screen.getByText('No topics or quizzes match “zzz”')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear' }));
+    expect(screen.getByRole('searchbox')).toHaveValue('');
+    expect(screen.getByRole('heading', { name: 'Practice test 1' })).toBeVisible();
+  });
 });
 
 describe('subject topics on small screens', () => {
@@ -240,6 +267,27 @@ describe('subject topics on small screens', () => {
     expect(screen.queryByRole('heading', { name: 'Topics' })).toBeNull();
     history.back();
     expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
+  });
+});
+
+describe('subject search on small screens', () => {
+  it('shows results under the topic list and keeps the query when a topic is opened and closed', async () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    const other = { id: 'other', subjectId: subject.id, topicId: 't2', name: 'Glycolysis quiz', questionCount: 1 };
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0 }]} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+
+    screen.getByRole('searchbox').focus();
+    fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'glyco' } });
+    expect(screen.getByRole('searchbox')).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Results' })).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Start quiz: Glycolysis quiz' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: /Cell biology/ })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: /Metabolism/ }));
+    expect(screen.queryByRole('searchbox')).toBeNull();
+    history.back();
+    expect(await screen.findByRole('searchbox')).toHaveValue('glyco');
+    expect(screen.getByRole('heading', { name: 'Results' })).toBeVisible();
   });
 });
 
