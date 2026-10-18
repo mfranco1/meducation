@@ -13,6 +13,6 @@ export function Stopwatch({ attempt }: { attempt: Attempt }) {
   }, []);
   return <Stack direction="row" spacing={.75} alignItems="center">
     <TimerOutlinedIcon fontSize="small" />
-    <Typography fontWeight={700}>{formatDuration(elapsedTimeFor(attempt, now))}</Typography>
+    <Typography fontWeight={700} sx={{ fontVariantNumeric: 'tabular-nums' }}>{formatDuration(elapsedTimeFor(attempt, now))}</Typography>
   </Stack>;
 }

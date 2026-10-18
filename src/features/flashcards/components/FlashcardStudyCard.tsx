@@ -1,10 +1,9 @@
-import FlagIcon from '@mui/icons-material/Flag';
-import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
-import { Box, ButtonBase, Card, CardContent, IconButton } from '@mui/material';
+import { Box, ButtonBase, Card, CardContent } from '@mui/material';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { BrandMark } from '../../../shared/ui/brand/BrandMark';
+import { StudyFlagButton } from '../../../shared/ui/study/StudyFlagButton';
 import { FlashcardFaceDecoration } from './FlashcardFaceDecoration';
 
 const cardThickness =
@@ -71,23 +70,12 @@ export function FlashcardStudyCard({
             py: 3,
           }}
         >
-          <IconButton
-            disableRipple
-            aria-label={flagged ? 'Remove card flag' : 'Flag card'}
-            aria-pressed={flagged}
-            onClick={onToggleFlag}
-            sx={{
-              position: 'absolute',
-              top: 0,
-              right: 0,
-              zIndex: 1,
-              bgcolor: 'transparent',
-              '&:hover': { bgcolor: 'transparent' },
-              '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
-            }}
-          >
-            {flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}
-          </IconButton>
+          <StudyFlagButton
+            flagged={flagged}
+            label={flagged ? 'Remove card flag' : 'Flag card'}
+            onToggle={onToggleFlag}
+            sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }}
+          />
           <Box aria-live="polite" sx={{ width: '100%', textAlign: 'center', '& .katex-display': { maxWidth: '100%' } }}>
             <MarkdownContent markdown={card.front} variant="stem" contentKind="rich" align="center" />
           </Box>

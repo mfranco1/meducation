@@ -1,8 +1,6 @@
-import FlagIcon from '@mui/icons-material/Flag';
-import FlagOutlinedIcon from '@mui/icons-material/FlagOutlined';
 import { keyframes } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
-import { Box, Card, CardContent, Container, FormControlLabel, IconButton, Radio, RadioGroup, Stack, Typography, useTheme } from '@mui/material';
+import { Box, Card, CardContent, Container, FormControlLabel, Radio, RadioGroup, Stack, Typography, useTheme } from '@mui/material';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../../domain/types';
@@ -12,6 +10,7 @@ import { RadiatingCircles } from '../components/celebration/RadiatingCircles';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
+import { StudyFlagButton } from '../../../shared/ui/study/StudyFlagButton';
 import { StudyItemTransition } from '../../../shared/ui/study/StudyItemTransition';
 import { Stopwatch } from '../components/quiz/Stopwatch';
 import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
@@ -118,7 +117,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
         <StudyItemTransition index={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
             <Box sx={{ flex: 1, minWidth: 0 }}><MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" /></Box>
-            <IconButton size="small" disableRipple aria-label={response.flagged ? 'Remove question flag' : 'Flag question'} sx={{ p: 0, mt: .5, flexShrink: 0, bgcolor: 'transparent', '&:hover': { bgcolor: 'transparent' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }} onClick={toggleFlag}>{response.flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}</IconButton>
+            <StudyFlagButton size="small" flagged={response.flagged} label={response.flagged ? 'Remove question flag' : 'Flag question'} onToggle={toggleFlag} sx={{ p: 0, mt: .5, flexShrink: 0 }} />
           </Stack>
           <RadioGroup value={response.selectedChoiceId ?? ''} onChange={(_, choice) => select(choice)} sx={{ mt: 3, gap: 1.25 }}>
             {question.choices.map(choice => {
