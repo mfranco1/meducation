@@ -7,6 +7,7 @@ import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { ChoiceExplanations } from '../components/feedback/ChoiceExplanations';
 import { FeedbackPanel, type ReadOnlyFeedbackStatus } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
+import { StudyItemTransition } from '../../../shared/ui/study/StudyItemTransition';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { ReadOnlyChoiceList } from '../components/quiz/ReadOnlyChoiceList';
 import { ReadOnlyQuizFooter, ReadOnlyQuizHeader } from '../components/quiz/ReadOnlyQuizChrome';
@@ -45,7 +46,7 @@ export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequ
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
     <ReadOnlyQuizHeader index={index} total={questions.length} mode="Review results" exitLabel="Leave review" onExit={onRequestExit} finalTimeMs={attempt.score.elapsedMs} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
-      <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+      <StudyItemTransition index={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
           <Box sx={{ flex: 1, minWidth: 0 }}><MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" /></Box>
           {attempt.responses[question.id]?.flagged && <Box role="img" aria-label="Flagged question" sx={{ flexShrink: 0, mt: .5, color: 'primary.main', lineHeight: 0 }}><FlagIcon /></Box>}
@@ -53,7 +54,7 @@ export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequ
         <ReadOnlyChoiceList question={question} selectedChoiceId={selectedChoiceId} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} answerUnderReview={answerUnderReview} mode="review" />
         <FeedbackPanel question={question} selectedChoiceId={selectedChoiceId} readOnlyStatus={status} />
         <ChoiceExplanations question={question} />
-      </CardContent></Card>
+      </CardContent></Card></StudyItemTransition>
       <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onRequestExit} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>
   </Container>;

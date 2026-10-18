@@ -7,6 +7,7 @@ import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/Stu
 import { FlashcardNavigator } from '../components/FlashcardNavigator';
 import { FlashcardStudyCard } from '../components/FlashcardStudyCard';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
+import { StudyItemTransition } from '../../../shared/ui/study/StudyItemTransition';
 import { canHandleStudyShortcut } from '../../../shared/ui/study/studyKeyboard';
 import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
 
@@ -135,16 +136,18 @@ export function FlashcardStudyScreen({
         onClose={() => setNavigatorOpen(false)}
         itemLabel="Cards"
       >
-        <FlashcardStudyCard
-          card={card}
-          revealed={revealed}
-          flagged={flaggedCardIds.includes(card.id)}
-          suppressFocusRing={suppressCardFocusRing}
-          onSuppressFocusRing={() => setSuppressCardFocusRing(true)}
-          onClearFocusRingSuppression={() => setSuppressCardFocusRing(false)}
-          onReveal={onReveal}
-          onToggleFlag={() => onToggleFlag(card.id)}
-        />
+        <StudyItemTransition index={index}>
+          <FlashcardStudyCard
+            card={card}
+            revealed={revealed}
+            flagged={flaggedCardIds.includes(card.id)}
+            suppressFocusRing={suppressCardFocusRing}
+            onSuppressFocusRing={() => setSuppressCardFocusRing(true)}
+            onClearFocusRingSuppression={() => setSuppressCardFocusRing(false)}
+            onReveal={onReveal}
+            onToggleFlag={() => onToggleFlag(card.id)}
+          />
+        </StudyItemTransition>
         <StudyNavigationFooter
           index={index}
           total={cards.length}

@@ -6,6 +6,7 @@ import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { ChoiceExplanations } from '../components/feedback/ChoiceExplanations';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
+import { StudyItemTransition } from '../../../shared/ui/study/StudyItemTransition';
 import { QuestionTile } from '../components/quiz/QuestionNavigator';
 import { ReadOnlyChoiceList } from '../components/quiz/ReadOnlyChoiceList';
 import { ReadOnlyQuizFooter, ReadOnlyQuizHeader } from '../components/quiz/ReadOnlyQuizChrome';
@@ -35,14 +36,14 @@ export function QuizBrowseScreen({ index, questions, onNavigate, onDone }: QuizB
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
     <ReadOnlyQuizHeader index={index} total={questions.length} mode="Browse answers" exitLabel="Leave answer browser" onExit={onDone} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
-        <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+        <StudyItemTransition index={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
           <ReadOnlyChoiceList question={question} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} answerUnderReview={Boolean(question.rationaleMeta?.answerReviewNote)} mode="browse" />
           {!hasCorrectChoice
             ? <FeedbackPanel question={question} readOnlyStatus="unavailable" />
             : <FeedbackPanel question={question} selectedChoiceId={correctAnswer} />}
           <ChoiceExplanations question={question} />
-        </CardContent></Card>
+        </CardContent></Card></StudyItemTransition>
         <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onDone} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>
   </Container>;

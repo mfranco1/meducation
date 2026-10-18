@@ -12,6 +12,7 @@ import { RadiatingCircles } from '../components/celebration/RadiatingCircles';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
+import { StudyItemTransition } from '../../../shared/ui/study/StudyItemTransition';
 import { Stopwatch } from '../components/quiz/Stopwatch';
 import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
 import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/StudyHeader';
@@ -114,7 +115,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     {celebration && <CelebrationOverlay key={celebration.id} open title={celebration.title} message={celebration.message} variant={celebration.variant} onComplete={() => setCelebrationQueue(queue => queue.slice(1))} />}
     <StudyHeader itemLabel="Question" index={index} total={questions.length} exitLabel="Leave test" onExit={onRequestExit} trailing={<Stopwatch attempt={attempt} />} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
-        <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+        <StudyItemTransition index={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
             <Box sx={{ flex: 1, minWidth: 0 }}><MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" /></Box>
             <IconButton size="small" disableRipple aria-label={response.flagged ? 'Remove question flag' : 'Flag question'} sx={{ p: 0, mt: .5, flexShrink: 0, bgcolor: 'transparent', '&:hover': { bgcolor: 'transparent' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }} onClick={toggleFlag}>{response.flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}</IconButton>
@@ -133,7 +134,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
             })}
           </RadioGroup>
           {feedback && <FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} />}
-        </CardContent></Card>
+        </CardContent></Card></StudyItemTransition>
         <StudyNavigationFooter index={index} total={questions.length} onPrevious={() => navigateToQuestion(index - 1)} onNext={() => navigateToQuestion(index + 1)} onFinish={requestSubmit} finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'} nextLabel={feedback ? 'Continue' : 'Next'} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>
     <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
