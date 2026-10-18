@@ -113,7 +113,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
   const celebration = celebrationQueue[0];
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
     {celebration && <CelebrationOverlay key={celebration.id} open title={celebration.title} message={celebration.message} variant={celebration.variant} onComplete={() => setCelebrationQueue(queue => queue.slice(1))} />}
-    <StudyHeader itemLabel="Question" index={index} total={questions.length} exitLabel="Leave test" onExit={onRequestExit} trailing={<Stopwatch attempt={attempt} />} />
+    <StudyHeader itemLabel="Question" index={index} total={questions.length} exitLabel="Leave test" onExit={onRequestExit} completed={questions.filter(item => attempt.responses[item.id]?.selectedChoiceId).length} trailing={<Stopwatch attempt={attempt} />} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <StudyItemTransition index={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>

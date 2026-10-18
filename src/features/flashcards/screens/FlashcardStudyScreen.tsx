@@ -116,6 +116,8 @@ export function FlashcardStudyScreen({
         index={index}
         total={cards.length}
         exitLabel="Save and exit deck"
+        completed={cards.filter((item) => openedCardIds.includes(item.id)).length}
+        completedLabel="revealed"
         onExit={onSaveAndExit}
         disabled={saving}
       />
