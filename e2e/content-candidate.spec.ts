@@ -35,9 +35,9 @@ for (const candidate of contentCases()) {
       .click();
     await openTopicIfNeeded(page);
     await page.getByRole('button', { name: /^Start quiz/ }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
-    await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();
-    await expect(page.getByRole('list', { name: 'Answer choices' })).toBeVisible();
+    await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
+    // Answering in Fast Feedback reveals the rationale, so stem, choices and explanation all render.
+    await page.getByRole('radio').first().check();
     expect(await page.evaluate(() => (window as Window & { __rcExecuted?: boolean }).__rcExecuted)).toBeUndefined();
     await expect(page.locator('a[href^="javascript:"], img[src^="javascript:"], [onerror]')).toHaveCount(0);
     if (candidate.label === 'synthetic-rich') {
@@ -55,13 +55,13 @@ for (const candidate of contentCases()) {
     for (const width of [390, 1048, 1440]) {
       await page.setViewportSize({ width, height: 850 });
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-      const actions = page.getByRole('button', { name: 'Leave answer browser', exact: true });
+      const actions = page.getByRole('button', { name: 'Leave test', exact: true });
       await expect(actions).toBeVisible();
       await actions.focus();
       await expect(actions).toBeFocused();
-      const done = page.getByRole('button', { name: 'Done', exact: true });
-      await done.scrollIntoViewIfNeeded();
-      await expect(done).toBeInViewport();
+      const finish = page.getByRole('button', { name: 'Finish', exact: true });
+      await finish.scrollIntoViewIfNeeded();
+      await expect(finish).toBeInViewport();
       await page.screenshot({ path: testInfo.outputPath(`content-${width}.png`), fullPage: true });
     }
   });

@@ -28,7 +28,7 @@ export function QuizSetupDialog({ open, quiz, onClose, onStart, onBrowse }: Quiz
     <DialogContent>
       <Card><CardContent><Typography variant="h6">Learning Mode</Typography>
         <ToggleButtonGroup value={mode} exclusive onChange={(_, value: SetupMode | null) => value && setMode(value)} fullWidth sx={{ mt: 2, flexWrap: 'wrap', '& .MuiToggleButton-root': { flex: '1 1 30%', px: 1, lineHeight: 1.2 } }}>
-          <ToggleButton value="immediate">Fast Feedback</ToggleButton><ToggleButton value="exam">Exam Mode</ToggleButton><ToggleButton value="browse">Browse Answers</ToggleButton>
+          <ToggleButton value="immediate">Fast Feedback</ToggleButton><ToggleButton value="exam">Exam Mode</ToggleButton>{import.meta.env.DEV && <ToggleButton value="browse">Browse Answers</ToggleButton>}
         </ToggleButtonGroup>
         <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>{mode === 'immediate' ? 'Selecting an answer locks it and shows the explanation right away.' : mode === 'exam' ? 'Answers remain hidden until you finish and submit the entire test.' : 'Browse every question with the correct answer and explanation shown. Nothing is recorded.'}</Typography>
         <Button fullWidth variant="contained" size="large" sx={{ mt: 4 }} onClick={() => mode === 'browse' ? onBrowse(quiz) : onStart(quiz, mode)}>{mode === 'browse' ? 'Open quiz' : 'Begin Quiz'}</Button>

@@ -374,7 +374,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText(/score|completed quizzes/i)).toHaveCount(0);
 });
 
-test('API-backed quiz survives reload, completes, and opens Browse Answers', async ({ page }, testInfo) => {
+test('API-backed quiz survives reload and completes', async ({ page }, testInfo) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
@@ -451,27 +451,6 @@ test('API-backed quiz survives reload, completes, and opens Browse Answers', asy
   await expect(page.getByText('2 correct · 0 incorrect · 0 unanswered')).toBeVisible();
   await page.getByRole('button', { name: 'Back to quizzes' }).click();
 
-  await page.getByRole('button', { name: /^Retake quiz/ }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();
-  await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
-  await expect(page.getByRole('radio')).toHaveCount(0);
-  await testInfo.attach('browse-desktop.png', {
-    body: await page.screenshot({ path: testInfo.outputPath('browse-desktop.png') }),
-    contentType: 'image/png',
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await testInfo.attach('browse-mobile.png', {
-    body: await page.screenshot({ path: testInfo.outputPath('browse-mobile.png') }),
-    contentType: 'image/png',
-  });
-  await page.setViewportSize({ width: 1280, height: 720 });
-  await page.keyboard.press('ArrowRight');
-  await expect(page.getByText('The heart pumps blood.')).toBeVisible();
-  await page.keyboard.press('ArrowLeft');
-  await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Done' }).click();
   await expect(page.getByRole('button', { name: /^Retake quiz/ })).toBeVisible();
 });
 
@@ -836,8 +815,7 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await openTopicIfNeeded(page);
   await page.getByRole('button', { name: /^Start quiz/ }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Browse Answers' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Open quiz' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.locator('.katex')).toBeVisible();
   expect(
     await page.evaluate(async () => {

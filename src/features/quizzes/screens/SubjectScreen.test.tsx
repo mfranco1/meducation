@@ -153,6 +153,17 @@ describe('subject quiz action', () => {
     expect(onBrowseQuiz).not.toHaveBeenCalled();
   });
 
+  it('hides Browse Answers outside the dev server', () => {
+    vi.stubEnv('DEV', false);
+    try {
+      renderSubject({});
+      fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
+      expect(within(screen.getByRole('dialog', { name: quiz.name })).queryByRole('button', { name: 'Browse Answers' })).toBeNull();
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it('dismisses setup without starting a quiz', () => {
     const { onStartQuiz } = renderSubject({});
 
