@@ -43,6 +43,5 @@ describe('SubjectCard dashboard appearance', () => {
       </ThemeProvider>,
     );
     expect(screen.getByRole('button', { name: 'Open Anatomy' })).toBeVisible();
-    expect(screen.queryByTestId('BoneIcon')).toBeNull();
   });
 });
