@@ -1,10 +1,9 @@
 import { keyframes } from '@emotion/react';
-import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { alpha, Box, Stack, Typography, useTheme } from '@mui/material';
 import { useEffect, useId } from 'react';
 import { brand } from '../../../../shared/brand';
 import { easing, useReducedMotion } from '../../../../shared/ui/motion';
-import { type CelebrationLevel, GoldBurst } from './GoldBurst';
+import { type CelebrationLevel, Crackle, GoldBurst, sizzle } from './GoldBurst';
 
 export type CelebrationVariant = 'streak' | 'perfect';
 
@@ -45,6 +44,39 @@ const shine = keyframes`
   0% { transform: translateX(-120%) skewX(-20deg); }
   100% { transform: translateX(680%) skewX(-20deg); }
 `;
+const returnShine = keyframes`
+  0% { transform: translateX(680%) skewX(20deg); }
+  100% { transform: translateX(-120%) skewX(20deg); }
+`;
+const titleSizzle = keyframes`
+  0%, 100% { text-shadow: 0 0 3px var(--sizzle); } 12% { text-shadow: 0 0 7px var(--sizzle); } 27% { text-shadow: 0 0 2px var(--sizzle); }
+  45% { text-shadow: 0 0 8px var(--sizzle); } 61% { text-shadow: 0 0 4px var(--sizzle); } 80% { text-shadow: 0 0 6px var(--sizzle); }
+`;
+const borderSparks = [[8, 0], [23, 0], [41, 0], [58, 0], [76, 0], [92, 0], [14, 100], [33, 100], [52, 100], [70, 100], [88, 100], [0, 50], [100, 50]] as const;
+const titleSparks = [[4, 0], [30, 0], [62, 0], [92, 0], [100, 50], [18, 100], [78, 100]] as const;
+
+function Trophy({ animated }: { animated: boolean }) {
+  const theme = useTheme();
+  const id = useId();
+  const { primary, reward } = theme.palette;
+  const edge = alpha(primary.dark, .25);
+  const leaves = [[18.5, 42.5, -60], [13.8, 39, -42], [10.6, 34, -26], [8.7, 28.3, -10], [8.2, 22.4, 6], [9, 16.6, 22]] as const;
+  const laurel = <>
+    <path d="M23 44.5C11 41 5.6 29 9.4 13" fill="none" stroke={reward.main} strokeWidth="1.2" strokeLinecap="round" />
+    {leaves.map(([cx, cy, angle]) => <ellipse key={cy} cx={cx - 1.6} cy={cy} rx="1.8" ry="3.7" transform={`rotate(${angle} ${cx - 1.6} ${cy})`} fill={`url(#${id})`} stroke={edge} strokeWidth=".3" />)}
+  </>;
+  return <svg aria-hidden viewBox="0 0 48 48" width={56} height={56} style={{ position: 'relative', display: 'block', overflow: 'visible', filter: `drop-shadow(0 2px 4px ${alpha(reward.main, .45)})`, animation: animated ? `${ignite} 520ms ${easing.out} both` : undefined }}>
+    <defs><linearGradient id={id} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor={reward.light} /><stop offset="1" stopColor={reward.main} /></linearGradient></defs>
+    {laurel}
+    <g transform="translate(48 0) scale(-1 1)">{laurel}</g>
+    <path d="M16.8 12.5H13C13 17.5 14.6 20 17.6 21M31.2 12.5H35C35 17.5 33.4 20 30.4 21" fill="none" stroke={reward.main} strokeWidth="1.6" strokeLinecap="round" />
+    <path d="M16 10H32V16C32 22 28.5 26 24 26 19.5 26 16 22 16 16Z" fill={`url(#${id})`} stroke={edge} strokeWidth=".4" />
+    <path d="M19.2 12.5V16C19.2 19 20.4 21.2 22.2 22.4" fill="none" stroke="#fff" strokeOpacity=".7" strokeWidth="1" strokeLinecap="round" />
+    <path d="M22.6 26H25.4V31H22.6Z" fill={reward.main} />
+    <path d="M19 31H29V34H19Z" fill={`url(#${id})`} stroke={edge} strokeWidth=".4" />
+    <path d="M17.5 34H30.5V36.5H17.5Z" fill={reward.main} stroke={edge} strokeWidth=".4" />
+  </svg>;
+}
 
 function StreakFlame({ size, animated }: { size: number; animated: boolean }) {
   const theme = useTheme();
@@ -72,6 +104,9 @@ export function CelebrationOverlay({ open, title, message, variant, level, durat
 
   if (!open) return null;
   const size = flameSizes[level - 1];
+  const perfect = variant === 'perfect';
+  const sizzling = perfect && !reducedMotion;
+  const titleSizzling = level === 5 && !reducedMotion;
   return <Box
     role="status"
     aria-live="polite"
@@ -81,19 +116,21 @@ export function CelebrationOverlay({ open, title, message, variant, level, durat
     <Box
       sx={{
         position: 'relative', border: '1px solid', borderColor: level >= 4 ? 'reward.main' : '#eee5df', borderRadius: 1, bgcolor: 'background.paper', px: 2.5, py: 1.75,
-        boxShadow: t => `0 2px 6px ${alpha(t.palette.primary.dark, .08)}, 0 16px 40px ${alpha(t.palette.primary.dark, .14)}`,
+        boxShadow: t => `0 2px 6px ${alpha(t.palette.primary.dark, .08)}, 0 16px 40px ${alpha(t.palette.primary.dark, .14)}${perfect ? `, 0 0 0 1px ${alpha(t.palette.reward.light, .8)}, 0 0 18px ${alpha(t.palette.reward.main, .45)}` : ''}`,
         animation: `${reducedMotion ? reducedEnter : enter} ${durationMs}ms ease-in-out both`,
       }}
     >
-      {level >= 3 && !reducedMotion && <Box aria-hidden sx={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none', '&::after': { content: '""', position: 'absolute', top: 0, bottom: 0, left: 0, width: '18%', background: t => `linear-gradient(90deg, transparent, rgba(255,255,255,.75), ${alpha(t.palette.reward.light, .35)}, transparent)`, animation: `${shine} 900ms ${easing.out} 700ms both` } }} />}
+      {level >= 3 && !reducedMotion && <Box aria-hidden sx={{ position: 'absolute', inset: 0, overflow: 'hidden', borderRadius: 'inherit', pointerEvents: 'none', '&::after': { content: '""', position: 'absolute', top: 0, bottom: 0, left: 0, width: '18%', background: t => `linear-gradient(90deg, transparent, rgba(255,255,255,.75), ${alpha(t.palette.reward.light, .35)}, transparent)`, animation: `${shine} 900ms ${easing.out} 700ms both` }, ...(perfect && { '&::before': { content: '""', position: 'absolute', top: 0, bottom: 0, left: 0, width: '18%', background: t => `linear-gradient(90deg, transparent, ${alpha(t.palette.reward.light, .35)}, rgba(255,255,255,.75), transparent)`, animation: `${returnShine} 900ms ${easing.out} 1850ms both` } }) }} />}
+      {sizzling && <>
+        <Box aria-hidden sx={{ position: 'absolute', inset: -1, borderRadius: 'inherit', border: '1px solid', borderColor: 'reward.light', boxShadow: t => `0 0 12px ${t.palette.reward.light}, inset 0 0 6px ${alpha(t.palette.reward.light, .6)}`, pointerEvents: 'none', animation: `${sizzle} 800ms linear infinite` }} />
+        <Crackle points={borderSparks} size={4} />
+      </>}
       <Stack direction="row" spacing={2} alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
         <Box aria-hidden sx={{ position: 'relative', display: 'grid', placeItems: 'center', width: 56, height: 56, flexShrink: 0 }}>
           <GoldBurst level={level} durationMs={durationMs} />
-          {variant === 'perfect'
-            ? <Box sx={{ position: 'relative', display: 'grid', placeItems: 'center', width: 44, height: 44, borderRadius: '12px', background: t => `linear-gradient(135deg, ${t.palette.reward.light}, ${t.palette.reward.main})`, color: 'primary.dark' }}><CheckRoundedIcon /></Box>
-            : <StreakFlame size={size} animated={!reducedMotion} />}
+          {perfect ? <Trophy animated={!reducedMotion} /> : <StreakFlame size={size} animated={!reducedMotion} />}
         </Box>
-        <Box sx={{ position: 'relative', zIndex: 1 }}><Typography variant="h6" fontWeight={800} lineHeight={1.2} letterSpacing="-.01em" color="primary.dark">{title}</Typography><Typography variant="body2" color="text.secondary">{message}</Typography></Box>
+        <Box sx={{ position: 'relative', zIndex: 1 }}><Box sx={{ position: 'relative', width: 'fit-content' }}><Typography variant="h6" fontWeight={800} lineHeight={1.2} letterSpacing="-.01em" color="primary.dark" sx={titleSizzling ? { '--sizzle': t => t.palette.reward.light, animation: `${titleSizzle} 900ms linear infinite` } : undefined}>{title}</Typography>{titleSizzling && <Crackle points={titleSparks} size={3} />}</Box><Typography variant="body2" color="text.secondary">{message}</Typography></Box>
       </Stack>
     </Box>
   </Box>;

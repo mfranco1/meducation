@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'; import { blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
+import { describe, expect, it } from 'vitest'; import { blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, scorePercentage, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
 const question: Question={id:'i1',quizId:'q1',stem:'Stem',choices:[{id:'A',text:'A'},{id:'B',text:'B'}],answer:'B',rationale:'Rationale',metadata:{}};
 const attempt=(selectedChoiceId?:string):Attempt=>({id:'a',quizId:'q1',subjectId:'s1',feedbackMode:'exam',contentSignature: 'fixture-content', startedAt:new Date(1000).toISOString(),elapsedMs:0,timerStartedAt:new Date(1000).toISOString(),celebrationProgress:{correctStreak:0,awardedStreakMilestones:[]},responses:selectedChoiceId?{i1:{questionId:'i1',selectedChoiceId,flagged:true,locked:false,timeMs:0}}:{}});
 describe('quiz engine',()=>{it('scores correct, incorrect, and unanswered responses',()=>{expect(scoreAttempt(attempt('B'),[question],3000)).toMatchObject({correct:1,incorrect:0,unanswered:0,percentage:100,elapsedMs:2000});expect(scoreAttempt(attempt('A'),[question],3000).incorrect).toBe(1);expect(scoreAttempt(attempt(),[question],3000).unanswered).toBe(1)});it('finds a saved question checkpoint and falls back to the first question',()=>{const second={...question,id:'q2'};expect(questionIndexFor([question,second],'q2')).toBe(1);expect(questionIndexFor([question,second],'missing')).toBe(0);expect(questionIndexFor([question,second])).toBe(0)});});
@@ -94,5 +94,11 @@ describe('perfect scores',()=>{
     expect(isPerfectScore({ correct: 3, incorrect: 0, unanswered: 0, total: 3, percentage: 100, elapsedMs: 0 })).toBe(true);
     expect(isPerfectScore({ correct: 99, incorrect: 1, unanswered: 0, total: 100, percentage: 100, elapsedMs: 0 })).toBe(false);
     expect(isPerfectScore({ correct: 0, incorrect: 0, unanswered: 0, total: 0, percentage: 100, elapsedMs: 0 })).toBe(false);
+  });
+  it('shows 100% only for a perfect score', () => {
+    expect(scorePercentage(199, 200)).toBe(99);
+    expect(scorePercentage(200, 200)).toBe(100);
+    expect(scorePercentage(1, 3)).toBe(33);
+    expect(scorePercentage(0, 0)).toBe(0);
   });
 });

@@ -1,4 +1,4 @@
-import { isCorrect } from '../domain/quizEngine';
+import { isCorrect, scorePercentage } from '../domain/quizEngine';
 import type { CompletedAttempt, Question, RecentScore } from '../domain/types';
 export interface PerformanceRow { label: string; correct: number; total: number; percentage: number }
 export type ScoreTrend = 'increase' | 'decrease' | 'unchanged';
@@ -37,5 +37,5 @@ export function performanceBy(questions: Question[], attempts: CompletedAttempt[
     const raw = question.metadata[dimension]; const values = Array.isArray(raw) ? raw : raw ? [raw] : [];
     values.forEach(value => { const entry = rows.get(value) ?? { correct: 0, total: 0 }; entry.total++; if (isCorrect(question, response.selectedChoiceId)) entry.correct++; rows.set(value, entry); });
   }));
-  return [...rows].map(([label, value]) => ({ label, ...value, percentage: Math.round(value.correct / value.total * 100) })).sort((a,b) => b.total - a.total);
+  return [...rows].map(([label, value]) => ({ label, ...value, percentage: scorePercentage(value.correct, value.total) })).sort((a,b) => b.total - a.total);
 }

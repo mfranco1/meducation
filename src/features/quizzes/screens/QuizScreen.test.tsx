@@ -12,14 +12,14 @@ const questions: Question[] = Array.from({ length: 7 }, (_, index) => ({
 }));
 const startingAttempt: Attempt = { id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'immediate', elapsedMs: 0, contentSignature: 'fixture-content', startedAt: new Date(0).toISOString(), responses: {}, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] } };
 
-function QuizHarness() {
+function QuizHarness({ items = questions }: { items?: Question[] }) {
   const [attempt, setAttempt] = useState(startingAttempt);
   const [index, setIndex] = useState(0);
   return <ThemeProvider theme={theme}><QuizScreen
     quiz={quiz}
     attempt={attempt}
     index={index}
-    questions={questions}
+    questions={items}
     onCheckpoint={(next, nextIndex) => { setAttempt(next); if (nextIndex !== undefined) setIndex(nextIndex); }}
     onFinish={() => {}}
     onRequestExit={() => {}}
@@ -104,16 +104,16 @@ describe('quiz streak celebrations', () => {
     vi.useRealTimers();
   }, 10_000);
 
-  it('queues Perfect Test after the streak cards when every answer is correct', () => {
+  it('plays only Perfect Test when the last answer also reaches a streak milestone', () => {
     vi.useFakeTimers();
-    render(<QuizHarness />);
-    for (let index = 1; index <= 6; index++) { choose('B', index); continueQuiz(); }
-    choose('B', 7);
+    render(<QuizHarness items={questions.slice(0, 5)} />);
+    for (let index = 1; index <= 4; index++) { choose('B', index); continueQuiz(); }
+    choose('B', 5);
     expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
     act(() => vi.advanceTimersByTime(2500));
-    expect(screen.getByRole('status')).toHaveTextContent('5-in-a-row!');
-    act(() => vi.advanceTimersByTime(2500));
     expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
+    act(() => vi.advanceTimersByTime(3200));
+    expect(screen.queryByRole('status')).toBeNull();
     vi.useRealTimers();
   }, 10_000);
 

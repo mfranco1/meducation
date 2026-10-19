@@ -66,8 +66,9 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     if (attempt.feedbackMode === 'immediate' && isCorrect(question, choice)) {
       setCorrectAnswerBurst({ questionId: question.id, choiceId: choice, eventId: ++correctAnswerBurstSequence.current });
     }
-    if (result.streakMilestone) setCelebrationQueue(queue => [...queue, celebrationForStreak(result.streakMilestone!)]);
-    if (isFullyAnsweredFastFeedback(result.attempt, questions) && isPerfectScore(scoreAttempt(result.attempt, questions))) setCelebrationQueue(queue => [...queue, perfectTestCelebration()]);
+    const perfect = isFullyAnsweredFastFeedback(result.attempt, questions) && isPerfectScore(scoreAttempt(result.attempt, questions));
+    const celebration = perfect ? perfectTestCelebration() : result.streakMilestone && celebrationForStreak(result.streakMilestone);
+    if (celebration) setCelebrationQueue(queue => [...queue, celebration]);
   };
   const toggleFlag = () => onCheckpoint(updateResponse(attempt, { ...response, flagged: !response.flagged }));
   const navigateToQuestion = (targetIndex: number) => {

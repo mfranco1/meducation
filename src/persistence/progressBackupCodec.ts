@@ -1,4 +1,5 @@
 import type { Attempt, CompletedAttempt, RecentScore } from '../domain/types';
+import { scorePercentage } from '../domain/quizEngine';
 import type { FlashcardDailyStats } from '../domain/flashcardDailyStats';
 import { isFlashcardDailyStats } from '../domain/flashcardDailyStats';
 import type { FlashcardCheckpoint } from '../domain/flashcardStudy';
@@ -130,7 +131,8 @@ function validScore(v: unknown, elapsed: unknown): boolean {
     && safeInt(v.percentage) && v.percentage <= 100 && safeNumber(v.elapsedMs) && v.elapsedMs === elapsed
     && addSafe(v.correct, v.incorrect) && addSafe(v.correct + v.incorrect, v.unanswered)
     && v.correct + v.incorrect + v.unanswered === v.total
-    && v.percentage === (v.total ? Math.round(v.correct / v.total * 100) : 0)
+    // Older backups stored the plain rounded value, which could round a non-perfect score up to 100.
+    && (v.percentage === scorePercentage(v.correct, v.total) || v.percentage === (v.total ? Math.round(v.correct / v.total * 100) : 0))
     && Object.values((v as Record<string, unknown>)).length === 6;
 }
 function validQuiz(value: unknown): value is QuizBackupV2 {

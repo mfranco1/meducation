@@ -2,7 +2,14 @@ import { keyframes } from '@emotion/react';
 import { alpha, Box, Typography, useTheme } from '@mui/material';
 import { useEffect, useId, useRef, useState } from 'react';
 import { easing, useReducedMotion } from '../../../../shared/ui/motion';
-import { GoldBurst } from '../celebration/GoldBurst';
+import { Crackle, GoldBurst, sizzle } from '../celebration/GoldBurst';
+
+// Just outside the ring's outer edge (49%), alternating distances so they don't read as a dotted line.
+const ringSparks = Array.from({ length: 24 }, (_, i) => {
+  const angle = (i / 24) * 2 * Math.PI;
+  const radius = i % 2 ? 52 : 55;
+  return [50 + radius * Math.cos(angle), 50 + radius * Math.sin(angle)] as const;
+});
 
 const fastPhaseEnd = 0.65;
 const scoreAtFastPhaseEnd = 0.85;
@@ -13,6 +20,11 @@ const settlePulse = keyframes`
   from { transform: scale(1); }
   40% { transform: scale(1.035); }
   to { transform: scale(1); }
+`;
+const goldWave = keyframes`
+  0% { transform: scale(.92); opacity: 0; }
+  12% { opacity: 1; }
+  100% { transform: scale(1.75); opacity: 0; }
 `;
 const settleEcho = keyframes`
   from { transform: scale(1); opacity: .4; }
@@ -158,26 +170,45 @@ export function ResultsScoreHero({ percentage, perfect, onSettled, skip }: { per
           animation: pulse ? `${settlePulse} 600ms ${easing.out}` : undefined,
         }}
       >
-        {pulse && target > 0 && (
+        {pulse && target > 0 && !gold && (
           <Box
             aria-hidden="true"
             sx={{
               position: 'absolute',
               inset: 0,
               borderRadius: '50%',
-              boxShadow: `0 0 0 3px ${gold ? theme.palette.reward.main : scoreRingColor(target, theme.palette.scoreRing)}`,
+              boxShadow: `0 0 0 3px ${scoreRingColor(target, theme.palette.scoreRing)}`,
               pointerEvents: 'none',
               animation: `${settleEcho} 1000ms ease-out both`,
             }}
           />
         )}
-        {gold && <GoldBurst level={5} durationMs={3200} scale={1.6} />}
+        {pulse && gold && [{ strength: 1, delay: 0, ms: 1400 }, { strength: .55, delay: 220, ms: 1700 }].map(wave => (
+          // Soft shockwave band that starts at the ring (72% of this oversized box) and radiates outward.
+          <Box
+            key={wave.delay}
+            aria-hidden="true"
+            sx={{
+              position: 'absolute',
+              inset: '-15%',
+              borderRadius: '50%',
+              background: `radial-gradient(closest-side, transparent 66%, ${alpha(theme.palette.reward.light, .9 * wave.strength)} 73%, ${alpha(theme.palette.reward.main, .35 * wave.strength)} 78%, transparent 88%)`,
+              filter: 'blur(2px)',
+              pointerEvents: 'none',
+              animation: `${goldWave} ${wave.ms}ms ${easing.out} ${wave.delay}ms both`,
+            }}
+          />
+        ))}
+        {gold && <GoldBurst level={5} durationMs={3200} scale={1.6} sparksOnly />}
+        {gold && !reducedMotion && <>
+          <Box aria-hidden sx={{ position: 'absolute', inset: '2%', borderRadius: '50%', boxShadow: `0 0 18px ${theme.palette.reward.light}, 0 0 6px ${alpha(theme.palette.reward.main, .5)}`, pointerEvents: 'none', animation: `${sizzle} 800ms linear infinite` }} />
+        </>}
         <svg
           aria-hidden="true"
           viewBox="0 0 100 100"
           width="100%"
           height="100%"
-          style={{ position: 'absolute', inset: 0, overflow: 'visible', filter: gold ? `drop-shadow(0 0 6px ${alpha(theme.palette.reward.light, .9)})` : undefined, transition: reducedMotion ? undefined : 'filter 400ms ease-out' }}
+          style={{ position: 'absolute', inset: 0, overflow: 'visible', filter: gold ? `drop-shadow(0 0 8px ${theme.palette.reward.light}) drop-shadow(0 0 22px ${alpha(theme.palette.reward.main, .55)})` : undefined, transition: reducedMotion ? undefined : 'filter 400ms ease-out' }}
         >
           <circle
             data-testid="score-ring-track"
@@ -217,6 +248,7 @@ export function ResultsScoreHero({ percentage, perfect, onSettled, skip }: { per
             </g>
           )}
         </svg>
+        {gold && !reducedMotion && <Crackle points={ringSparks} size={3} travel={.3} />}
         <Box
           sx={{
             position: 'relative',

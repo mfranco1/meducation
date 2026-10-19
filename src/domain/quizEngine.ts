@@ -55,10 +55,12 @@ export function pauseAttempt(attempt: Attempt, nowMs = Date.now()): Attempt {
 export function resumeAttempt(attempt: Attempt, nowMs = Date.now()): Attempt {
   return { ...attempt, elapsedMs: elapsedTimeFor(attempt, nowMs), timerStartedAt: new Date(nowMs).toISOString() };
 }
+/** Rounded percent that only reaches 100 when every item is correct. */
+export const scorePercentage = (correct: number, total: number) => !total ? 0 : correct === total ? 100 : Math.min(99, Math.round((correct / total) * 100));
 export function scoreAttempt(attempt: Attempt, questions: Question[], endMs = Date.now()): AttemptScore {
   let correct = 0, incorrect = 0, unanswered = 0;
   questions.forEach(q => { const response = attempt.responses[q.id]; if (!response?.selectedChoiceId) unanswered++; else if (isCorrect(q, response.selectedChoiceId)) correct++; else incorrect++; });
   const total = questions.length;
-  return { correct, incorrect, unanswered, total, percentage: total ? Math.round((correct / total) * 100) : 0, elapsedMs: elapsedTimeFor(attempt, endMs) };
+  return { correct, incorrect, unanswered, total, percentage: scorePercentage(correct, total), elapsedMs: elapsedTimeFor(attempt, endMs) };
 }
 export const isPerfectScore = (score: AttemptScore) => score.total > 0 && score.correct === score.total;
