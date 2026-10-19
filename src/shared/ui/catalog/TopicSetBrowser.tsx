@@ -42,6 +42,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
   const [selectedId, setSelectedId] = useState<string>();
   const [query, setQuery] = useState('');
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const searchRef = useRef<HTMLInputElement>(null);
   const topicButtons = useRef(new Map<string, HTMLElement>());
   const returnTo = useRef<string>(undefined);
   const focusPending = useRef(false);
@@ -138,14 +139,14 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
   const topicsCard = <Card component="section" aria-labelledby="topics-heading" sx={{ p: 2, ...panelSx }}>
     <Typography id="topics-heading" variant="h5" component="h2" sx={{ px: 1, pb: 1 }}>Topics</Typography>
     <TextField
-      type="search" size="small" placeholder="Search" value={query}
+      type="search" size="small" placeholder="Search" value={query} inputRef={searchRef}
       onChange={event => setQuery(event.target.value)}
       onKeyDown={event => { if (event.key === 'Escape') setQuery(''); }}
       slotProps={{
         htmlInput: { 'aria-label': `Search topics and ${nouns}` },
         input: {
           startAdornment: <InputAdornment position="start"><SearchRoundedIcon aria-hidden fontSize="small" /></InputAdornment>,
-          endAdornment: query && <InputAdornment position="end"><IconButton aria-label="Clear search" edge="end" size="small" onClick={() => setQuery('')}><CloseRoundedIcon fontSize="small" /></IconButton></InputAdornment>,
+          endAdornment: query && <InputAdornment position="end"><IconButton aria-label="Clear search" edge="end" size="small" onClick={() => { setQuery(''); searchRef.current?.focus(); }}><CloseRoundedIcon fontSize="small" /></IconButton></InputAdornment>,
         },
       }}
       // Inset like the topic rows; the browser's own (blue) clear button is replaced by the one above.

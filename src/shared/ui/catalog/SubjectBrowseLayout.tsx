@@ -8,10 +8,10 @@ export function SubjectBrowseLayout({ subjectId, subjectName, progress, onBack, 
   const percent = progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
   return <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 5 } }}>
     <Button startIcon={<ArrowBackRoundedIcon />} onClick={onBack} color="inherit">Dashboard</Button>
-    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2} sx={{ mt: 2, mb: 4 }}>
+    <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={2} sx={{ mt: 2, mb: 4 }}>
       <Stack direction="row" alignItems="center" spacing={2} sx={{ minWidth: 0 }}>
         <SubjectIconBadge subjectId={subjectId} />
-        <Typography variant="h3" sx={{ overflowWrap: 'anywhere' }}>{subjectName}</Typography>
+        <Typography variant="h3" sx={{ overflowWrap: 'break-word', minWidth: 0 }}>{subjectName}</Typography>
       </Stack>
       {progress && progress.total > 0 && <Stack alignItems="center" sx={{ flex: '0 0 auto', textAlign: 'center' }}>
         <Box sx={{ position: 'relative', display: 'inline-flex' }}>
