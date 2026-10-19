@@ -214,6 +214,13 @@ describe('ResultsScoreHero', () => {
     expect(screen.getByTestId('score-ring-arc')).toHaveAttribute('stroke', '#2f7a55');
   });
 
+  it('turns the ring gold once a perfect score settles', () => {
+    renderHero(<ResultsScoreHero percentage={100} perfect />);
+    frameAt(1000);
+    frameAt(1000 + scoreAnimationDuration(100));
+    expect(screen.getByTestId('score-ring-arc')).toHaveAttribute('stroke', theme.palette.reward.main);
+  });
+
   it('shows final number, arc, and color immediately with reduced motion on load or mid-animation', () => {
     setReducedMotion(true);
     const { rerender } = renderHero(<ResultsScoreHero key="attempt-1" percentage={91} />);

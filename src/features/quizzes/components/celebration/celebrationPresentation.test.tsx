@@ -30,10 +30,17 @@ describe('celebration overlay', () => {
   it('announces its copy and completes after its configured duration', () => {
     vi.useFakeTimers();
     const onComplete = vi.fn();
-    renderWithTheme(<CelebrationOverlay open title="3 in a row!" message="Keep going." variant="streak" durationMs={100} onComplete={onComplete} />);
+    renderWithTheme(<CelebrationOverlay open title="3 in a row!" message="Keep going." variant="streak" level={3} durationMs={100} onComplete={onComplete} />);
     expect(screen.getByRole('status')).toHaveTextContent('3 in a row!Keep going.');
-    expect(screen.getByTestId('radiating-circles')).toHaveAttribute('aria-hidden', 'true');
+    expect(screen.getByTestId('gold-burst')).toHaveAttribute('aria-hidden', 'true');
     act(() => vi.advanceTimersByTime(100));
     expect(onComplete).toHaveBeenCalledOnce();
+  });
+
+  it('shows its copy without the gold burst when reduced motion is preferred', () => {
+    window.matchMedia = vi.fn().mockImplementation(query => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    renderWithTheme(<CelebrationOverlay open title="50-in-a-row!" message="Exceptional mastery!" variant="streak" level={5} />);
+    expect(screen.getByRole('status')).toHaveTextContent('50-in-a-row!Exceptional mastery!');
+    expect(screen.queryByTestId('gold-burst')).toBeNull();
   });
 });

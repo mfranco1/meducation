@@ -92,7 +92,8 @@ describe('quiz streak celebrations', () => {
     choose('B', 2); continueQuiz();
     choose('B', 3);
     expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
-    expect(screen.getAllByTestId('radiating-circles')).toHaveLength(2);
+    expect(screen.getAllByTestId('radiating-circles')).toHaveLength(1);
+    expect(screen.getByTestId('gold-burst')).toBeInTheDocument();
     continueQuiz();
     choose('A', 4); continueQuiz();
     act(() => vi.advanceTimersByTime(2500));
@@ -100,6 +101,19 @@ describe('quiz streak celebrations', () => {
     choose('B', 6); continueQuiz();
     choose('B', 7);
     expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
+    vi.useRealTimers();
+  }, 10_000);
+
+  it('queues Perfect Test after the streak cards when every answer is correct', () => {
+    vi.useFakeTimers();
+    render(<QuizHarness />);
+    for (let index = 1; index <= 6; index++) { choose('B', index); continueQuiz(); }
+    choose('B', 7);
+    expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
+    act(() => vi.advanceTimersByTime(2500));
+    expect(screen.getByRole('status')).toHaveTextContent('5-in-a-row!');
+    act(() => vi.advanceTimersByTime(2500));
+    expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
     vi.useRealTimers();
   }, 10_000);
 

@@ -2,10 +2,10 @@ import { keyframes } from '@emotion/react';
 import { useEffect, useRef, useState } from 'react';
 import { Box, Card, CardContent, Container, FormControlLabel, Radio, RadioGroup, Stack, Typography, useTheme } from '@mui/material';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
-import { blankResponse, commitAnswer, isCorrect, updateResponse } from '../../../domain/quizEngine';
+import { blankResponse, commitAnswer, isCorrect, isFullyAnsweredFastFeedback, isPerfectScore, scoreAttempt, updateResponse } from '../../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../../domain/types';
 import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
-import { celebrationForStreak, type CelebrationEvent } from '../components/celebration/celebrationCatalog';
+import { celebrationForStreak, perfectTestCelebration, type CelebrationEvent } from '../components/celebration/celebrationCatalog';
 import { RadiatingCircles } from '../components/celebration/RadiatingCircles';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
@@ -67,6 +67,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
       setCorrectAnswerBurst({ questionId: question.id, choiceId: choice, eventId: ++correctAnswerBurstSequence.current });
     }
     if (result.streakMilestone) setCelebrationQueue(queue => [...queue, celebrationForStreak(result.streakMilestone!)]);
+    if (isFullyAnsweredFastFeedback(result.attempt, questions) && isPerfectScore(scoreAttempt(result.attempt, questions))) setCelebrationQueue(queue => [...queue, perfectTestCelebration()]);
   };
   const toggleFlag = () => onCheckpoint(updateResponse(attempt, { ...response, flagged: !response.flagged }));
   const navigateToQuestion = (targetIndex: number) => {
@@ -115,7 +116,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
 
   const celebration = celebrationQueue[0];
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
-    {celebration && <CelebrationOverlay key={celebration.id} open title={celebration.title} message={celebration.message} variant={celebration.variant} onComplete={() => setCelebrationQueue(queue => queue.slice(1))} />}
+    {celebration && <CelebrationOverlay key={celebration.id} open title={celebration.title} message={celebration.message} variant={celebration.variant} level={celebration.level} onComplete={() => setCelebrationQueue(queue => queue.slice(1))} />}
     <StudyHeader itemLabel="Question" index={index} total={questions.length} exitLabel="Leave test" onExit={onRequestExit} completed={questions.filter(item => attempt.responses[item.id]?.selectedChoiceId).length} trailing={<Stopwatch attempt={attempt} />} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <SwapTransition swapKey={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>

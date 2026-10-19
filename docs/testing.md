@@ -20,6 +20,8 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | Everything | `npm run verify:full` (stops at the first failure) |
 | Container smoke | `npm run test:containers` |
 
+To replay the streak and Perfect Test cards and the perfect-score results animation without taking a quiz, run `npm run dev` and open `/celebrations.html`. The page is dev only and is not part of any build.
+
 Pytest skips real-PostgreSQL cases unless an isolated test database exists; a skip is not database acceptance. Run `test-postgres-content.py` for that gate.
 
 Learner and admin browser suites share ports and `dist`; run them sequentially, and never rebuild `dist` while one is running. Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds synthetic fixtures into a disposable PG17 tmpfs container with generated credentials (API port 8765 for learner, overridable with `MEDUCATION_E2E_API_PORT`; 8766 for admin). It never reads authority credentials or content.

@@ -5,8 +5,6 @@ import { performanceBy } from '../../../analytics/analytics';
 import { isPerfectScore } from '../../../domain/quizEngine';
 import type { CompletedAttempt, Question, Quiz } from '../../../domain/types';
 import { formatDuration } from '../format';
-import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
-import { perfectTestCelebration } from '../components/celebration/celebrationCatalog';
 import { StatCard } from '../../../shared/ui/catalog/StatCard';
 import { easing, reducedMotion, useReducedMotion } from '../../../shared/ui/motion';
 import { ResultsScoreHero } from '../components/results/ResultsScoreHero';
@@ -27,10 +25,8 @@ export function ResultsScreen({ attempt, questions, onBack, onReview }: { quiz: 
   const reduced = useReducedMotion();
   const [stage, setStage] = useState(reduced ? doneStage : 0);
   const [skipCount, setSkipCount] = useState(false);
-  const [perfectCelebrationOpen, setPerfectCelebrationOpen] = useState(false);
   const [introOffset, setIntroOffset] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
-  const perfectCelebration = perfectTestCelebration();
   const nextStage = (current: number) => current === 4 && !hasTopics ? 6 : current + 1;
   const advance = () => {
     if (stage === 0) setSkipCount(true);
@@ -56,17 +52,13 @@ export function ResultsScreen({ attempt, questions, onBack, onReview }: { quiz: 
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
   });
-  useEffect(() => {
-    if (stage === doneStage && isPerfectScore(score)) setPerfectCelebrationOpen(true);
-  }, [stage, score]);
   const shown = (n: number, delayMs = 0) => stage >= n
     ? { animation: `${rise} 420ms ${easing.out} ${delayMs}ms both`, [reducedMotion]: { animation: 'none' } }
     : { visibility: 'hidden' as const };
   return <>
-    <CelebrationOverlay open={perfectCelebrationOpen} title={perfectCelebration.title} message={perfectCelebration.message} variant={perfectCelebration.variant} onComplete={() => setPerfectCelebrationOpen(false)} />
     <Box onClick={advance} sx={{ flex: 1, minHeight: '100%' }}>
     <Container maxWidth="md" sx={{ py: 7 }}>
-    <Stack alignItems="center" textAlign="center"><Box ref={heroRef} sx={{ transform: stage < 2 ? `translateY(${introOffset}px) scale(1.25)` : 'none', transformOrigin: 'center', transition: `transform 550ms ${easing.standard}`, [reducedMotion]: { transform: 'none', transition: 'none' } }}><ResultsScoreHero key={attempt.id} percentage={score.percentage} skip={skipCount} onSettled={() => setStage(current => current === 0 ? 1 : current)} /></Box><Typography color="text.secondary" sx={{ mt: 1, ...shown(3) }}>{score.correct} correct · {score.incorrect} incorrect · {score.unanswered} unanswered</Typography></Stack>
+    <Stack alignItems="center" textAlign="center"><Box ref={heroRef} sx={{ transform: stage < 2 ? `translateY(${introOffset}px) scale(1.25)` : 'none', transformOrigin: 'center', transition: `transform 550ms ${easing.standard}`, [reducedMotion]: { transform: 'none', transition: 'none' } }}><ResultsScoreHero key={attempt.id} percentage={score.percentage} perfect={isPerfectScore(score)} skip={skipCount} onSettled={() => setStage(current => current === 0 ? 1 : current)} /></Box><Typography color="text.secondary" sx={{ mt: 1, ...shown(3) }}>{score.correct} correct · {score.incorrect} incorrect · {score.unanswered} unanswered</Typography></Stack>
     <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mt: 5 }}>
       <StatCard label="Total time" value={formatDuration(score.elapsedMs)} variant="results" sx={shown(4)} />
       <StatCard label="Average / question" value={formatDuration(score.total ? score.elapsedMs / score.total : 0)} variant="results" sx={shown(4, 120)} />

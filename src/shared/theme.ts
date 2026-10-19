@@ -21,14 +21,21 @@ interface ScoreRingPalette {
   high: string;
 }
 
+interface RewardPalette {
+  main: string;
+  light: string;
+}
+
 declare module '@mui/material/styles' {
   interface Palette {
     feedback: FeedbackPalette;
     scoreRing: ScoreRingPalette;
+    reward: RewardPalette;
   }
   interface PaletteOptions {
     feedback?: FeedbackPalette;
     scoreRing?: ScoreRingPalette;
+    reward?: RewardPalette;
   }
 }
 
@@ -41,6 +48,7 @@ export const theme = createTheme({
     success: { main: '#2f7a55' },
     error: { main: '#b73b32' },
     scoreRing: { low: '#b73b32', fair: '#c69a16', good: '#8ab85a', high: '#2f7a55' },
+    reward: { main: '#e0a516', light: '#ffd95a' },
     feedback: {
       correct: { surface: '#e4f2e9', border: '#b9dec6', separator: '#cce6d5' },
       incorrect: {

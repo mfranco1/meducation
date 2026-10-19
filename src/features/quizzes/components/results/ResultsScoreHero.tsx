@@ -1,7 +1,8 @@
 import { keyframes } from '@emotion/react';
-import { Box, Typography, useTheme } from '@mui/material';
+import { alpha, Box, Typography, useTheme } from '@mui/material';
 import { useEffect, useId, useRef, useState } from 'react';
 import { easing, useReducedMotion } from '../../../../shared/ui/motion';
+import { GoldBurst } from '../celebration/GoldBurst';
 
 const fastPhaseEnd = 0.65;
 const scoreAtFastPhaseEnd = 0.85;
@@ -86,7 +87,7 @@ export function scoreRingColor(score: number, colors: { low: string; fair: strin
   return colors.high;
 }
 
-export function ResultsScoreHero({ percentage, onSettled, skip }: { percentage: number; onSettled?: () => void; skip?: boolean }) {
+export function ResultsScoreHero({ percentage, perfect, onSettled, skip }: { percentage: number; perfect?: boolean; onSettled?: () => void; skip?: boolean }) {
   const theme = useTheme();
   const target = Number.isFinite(percentage) ? Math.min(100, Math.max(0, percentage)) : 0;
   const reducedMotion = useReducedMotion();
@@ -135,7 +136,8 @@ export function ResultsScoreHero({ percentage, onSettled, skip }: { percentage: 
   const displayedScore = animatedScore >= target ? target : Math.floor(animatedScore);
   const dashOffset = animatedScore >= 100 ? 0 : 100 - animatedScore;
   const showArc = animatedScore > 0;
-  const ringColor = scoreRingColor(animatedScore, theme.palette.scoreRing);
+  const gold = perfect && settled;
+  const ringColor = gold ? theme.palette.reward.main : scoreRingColor(animatedScore, theme.palette.scoreRing);
   const glowAngle = (animatedScore / 100) * 2 * Math.PI - Math.PI / 2;
   const glowX = 50 + 47 * Math.cos(glowAngle);
   const glowY = 50 + 47 * Math.sin(glowAngle);
@@ -163,18 +165,19 @@ export function ResultsScoreHero({ percentage, onSettled, skip }: { percentage: 
               position: 'absolute',
               inset: 0,
               borderRadius: '50%',
-              boxShadow: `0 0 0 3px ${scoreRingColor(target, theme.palette.scoreRing)}`,
+              boxShadow: `0 0 0 3px ${gold ? theme.palette.reward.main : scoreRingColor(target, theme.palette.scoreRing)}`,
               pointerEvents: 'none',
               animation: `${settleEcho} 1000ms ease-out both`,
             }}
           />
         )}
+        {gold && <GoldBurst level={5} durationMs={3200} scale={1.6} />}
         <svg
           aria-hidden="true"
           viewBox="0 0 100 100"
           width="100%"
           height="100%"
-          style={{ position: 'absolute', inset: 0 }}
+          style={{ position: 'absolute', inset: 0, overflow: 'visible', filter: gold ? `drop-shadow(0 0 6px ${alpha(theme.palette.reward.light, .9)})` : undefined, transition: reducedMotion ? undefined : 'filter 400ms ease-out' }}
         >
           <circle
             data-testid="score-ring-track"

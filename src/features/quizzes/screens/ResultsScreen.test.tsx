@@ -20,19 +20,15 @@ const stubReducedMotion = (reduce: boolean) => {
 beforeEach(() => stubReducedMotion(true));
 afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
 
-describe('perfect-test celebration', () => {
-  it('celebrates an exact non-empty perfect score', async () => {
-    renderResults(attemptFor(3, 3, 100));
-    expect(await screen.findByRole('status')).toHaveTextContent('Perfect Test!');
-  });
-
-  it('does not celebrate rounded 100%, incomplete, or zero-question scores', () => {
-    const { rerender } = renderResults(attemptFor(99, 100, 100));
-    expect(screen.queryByRole('status')).toBeNull();
-    rerender(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attemptFor(2, 3, 67)} questions={[]} onBack={() => {}} /></ThemeProvider>);
-    expect(screen.queryByRole('status')).toBeNull();
-    rerender(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attemptFor(0, 0, 100)} questions={[]} onBack={() => {}} /></ThemeProvider>);
-    expect(screen.queryByRole('status')).toBeNull();
+describe('perfect score ring', () => {
+  it('turns gold only for an exact non-empty perfect score', () => {
+    const arcStroke = () => screen.getByTestId('score-ring-arc').getAttribute('stroke');
+    const { rerender } = renderResults(attemptFor(3, 3, 100));
+    expect(arcStroke()).toBe(theme.palette.reward.main);
+    rerender(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={{ ...attemptFor(99, 100, 100), id: 'rounded' }} questions={[]} onBack={() => {}} /></ThemeProvider>);
+    expect(arcStroke()).not.toBe(theme.palette.reward.main);
+    rerender(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={{ ...attemptFor(0, 0, 100), id: 'empty' }} questions={[]} onBack={() => {}} /></ThemeProvider>);
+    expect(arcStroke()).not.toBe(theme.palette.reward.main);
   });
 });
 
@@ -73,7 +69,7 @@ describe('results reveal', () => {
     vi.spyOn(performance, 'now').mockReturnValue(0);
   };
 
-  it('shows the score alone until the ring settles, then reveals each layer and celebrates a perfect score', () => {
+  it('shows the score alone until the ring settles, then reveals each layer', () => {
     setupMotion();
     renderResults(attemptFor(3, 3, 100));
     expect(screen.getByTestId('score-percentage')).toBeVisible();
@@ -91,10 +87,6 @@ describe('results reveal', () => {
     expect(screen.getByText('Back to quizzes')).not.toBeVisible();
     dwell(450);
     expect(screen.getByRole('button', { name: 'Back to quizzes' })).toBeVisible();
-    dwell(449);
-    expect(screen.queryByRole('status')).toBeNull();
-    dwell(1);
-    expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
   });
 
   it('advances one layer per tap or Space, finishing the count-up first', () => {
@@ -114,8 +106,5 @@ describe('results reveal', () => {
     hidden('Back to quizzes');
     fireEvent.click(screen.getByText('Quiz results'));
     expect(screen.getByRole('button', { name: 'Back to quizzes' })).toBeVisible();
-    expect(screen.queryByRole('status')).toBeNull();
-    fireEvent.click(screen.getByText('Quiz results'));
-    expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
   });
 });
