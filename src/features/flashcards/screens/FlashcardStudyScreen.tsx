@@ -7,7 +7,7 @@ import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/Stu
 import { FlashcardNavigator } from '../components/FlashcardNavigator';
 import { FlashcardStudyCard } from '../components/FlashcardStudyCard';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
-import { StudyItemTransition } from '../../../shared/ui/study/StudyItemTransition';
+import { SwapTransition } from '../../../shared/ui/transitions/SwapTransition';
 import { canHandleStudyShortcut } from '../../../shared/ui/study/studyKeyboard';
 import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
 
@@ -138,7 +138,7 @@ export function FlashcardStudyScreen({
         onClose={() => setNavigatorOpen(false)}
         itemLabel="Cards"
       >
-        <StudyItemTransition index={index}>
+        <SwapTransition swapKey={index}>
           <FlashcardStudyCard
             card={card}
             revealed={revealed}
@@ -149,7 +149,7 @@ export function FlashcardStudyScreen({
             onReveal={onReveal}
             onToggleFlag={() => onToggleFlag(card.id)}
           />
-        </StudyItemTransition>
+        </SwapTransition>
         <StudyNavigationFooter
           index={index}
           total={cards.length}

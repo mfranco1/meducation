@@ -9,6 +9,7 @@ import { visuallyHidden } from '@mui/utils';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import type { Topic } from '../../../domain/types';
 import { reducedMotion } from '../motion';
+import { SwapTransition } from '../transitions/SwapTransition';
 
 export interface TopicSet {
   id: string;
@@ -209,7 +210,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
   </Card>;
 
   return desktop
-    ? <Box sx={{ display: 'grid', gap: 3, alignItems: 'start', gridTemplateColumns: 'minmax(300px, 380px) minmax(0, 1fr)' }}>{topicsCard}{showResults ? resultsCard : content}</Box>
+    ? <Box sx={{ display: 'grid', gap: 3, alignItems: 'start', gridTemplateColumns: 'minmax(300px, 380px) minmax(0, 1fr)' }}>{topicsCard}<SwapTransition swapKey={showResults ? 'results' : selected?.id ?? 'topics'}>{showResults ? resultsCard : content}</SwapTransition></Box>
     // One stable wrapper keeps the search field mounted, and focused, as results appear.
-    : content || <Stack spacing={3}>{topicsCard}{showResults && resultsCard}</Stack>;
+    : <SwapTransition swapKey={selected?.id ?? 'topics'} direction={selected ? 1 : -1}>{content || <Stack spacing={3}>{topicsCard}{showResults && resultsCard}</Stack>}</SwapTransition>;
 }

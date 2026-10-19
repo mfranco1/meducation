@@ -19,13 +19,19 @@ Motion confirms an action, shows where something went, or marks an achievement; 
 - Sequence related content in reading order with 100–150ms staggers instead of animating everything at once; hide not-yet-revealed content with `visibility` so it is not focusable.
 - One-shot flourishes (glint, pulse, echo, particles, flutter) play once per event, use the element's own color, and fade to nothing.
 - Under reduced motion every animation is removed or shown in its final state, and sequences reveal everything at once.
+- In-screen swaps: moving to a neighbour (next or previous, opening a topic, returning to the list) slides 14px over 220ms; replacing unrelated content (a jump, another topic, search results) crossfades over 150ms; content added below the learner's action rises 8px over 200ms; updates that repeat while typing or holding a key stay instant. Use `ScreenTransition` for screens, `SwapTransition` for in-screen swaps and `CatalogPageTransition` for dashboard pagination; new screens reuse them rather than writing their own keyframes.
 
-Current uses:
+Transition map:
 
-- Screen entry is a 170ms fade with a 6px settle; in-screen updates are immediate except dashboard pagination, which slides, and the study card: Next/Previous slide it 14px over 220ms (outgoing card exits the other way) and jumps crossfade over 150ms, while the header, timer and navigator stay still.
+- Screen entry is a 170ms fade with a 6px settle; lazy screen content fades in over the same time.
+- Dashboard pagination slides. The study card slides on Next and Previous (the outgoing card exits the other way) and crossfades on jumps, while the header, timer and navigator stay still.
+- Subject screens below `lg` slide when drilling down: opening a topic forward, Topics or Back backward. On `lg` and up, the topic and search results cards crossfade.
+- The Fast Feedback panel rises in after an answer, not when you revisit the question.
 - The study progress bar fills with a 450ms ease-out; in quizzes and flashcard study a solid fill counts answered questions or revealed cards over a lighter band for the current position, a glint crosses the leading edge when an item completes, and the edge pulses at 25, 50, 75 and 100%.
 - Toasts fade in 180ms and out 140ms. Quiz choices depress to 0.985 scale when pressed or chosen and their radio dot fills with a slight overshoot; a correct Fast Feedback choice bursts particles above and below it. Flagging an item flutters its flag icon and the flag on its navigator tile.
 - Results reveal (~2.6–3.2s): the score ring counts up alone, large and centered, with a glowing rounded leading edge (600–1200ms by score); on settling the glow fades, the ring pulses once with an outward echo and moves up to its place; then the counts, the three stat cards (120ms stagger), the topic card and the actions rise in, one layer at a time. A tap, Space or Enter advances one layer (the first finishes the count-up). A perfect-score celebration follows the last layer.
+- Instant: search filtering and result lists, counters and chips, the timer, error alerts and resizing across breakpoints.
+- Dialogs, menus and the navigation drawer use MUI default transitions; the rail width change uses the theme `shortest` duration.
 
 ## Brand
 

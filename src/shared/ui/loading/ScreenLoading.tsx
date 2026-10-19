@@ -3,6 +3,7 @@ import { Box, LinearProgress, Typography } from '@mui/material';
 import { useEffect, type ReactNode } from 'react';
 import { AppBrand } from '../brand/AppBrand';
 import { easing, reducedMotion } from '../motion';
+import { screenTransitionDurationMs } from '../transitions/ScreenTransition';
 
 const enterContent = keyframes`
   from { opacity: 0; }
@@ -66,7 +67,7 @@ export function LoadedScreenContent({
   return (
     <Box
       sx={{
-        animation: animate ? `${enterContent} 170ms ${easing.standard} both` : 'none',
+        animation: animate ? `${enterContent} ${screenTransitionDurationMs}ms ${easing.standard} both` : 'none',
         [reducedMotion]: { animation: 'none' },
       }}
     >

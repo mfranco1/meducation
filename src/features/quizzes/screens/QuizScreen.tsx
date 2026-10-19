@@ -11,13 +11,13 @@ import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
 import { StudyFlagButton } from '../../../shared/ui/study/StudyFlagButton';
-import { StudyItemTransition } from '../../../shared/ui/study/StudyItemTransition';
+import { SwapTransition } from '../../../shared/ui/transitions/SwapTransition';
 import { Stopwatch } from '../components/quiz/Stopwatch';
 import { SubmitQuizDialog } from '../components/quiz/SubmitQuizDialog';
 import { StudyHeader, StudyNavigationFooter } from '../../../shared/ui/study/StudyHeader';
 import { canHandleStudyShortcut } from '../../../shared/ui/study/studyKeyboard';
 import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
-import { reducedMotion } from '../../../shared/ui/motion';
+import { easing, reducedMotion } from '../../../shared/ui/motion';
 
 interface QuizScreenProps {
   quiz: Quiz;
@@ -30,6 +30,11 @@ interface QuizScreenProps {
 }
 
 interface CorrectAnswerBurst { questionId: string; choiceId: string; eventId: number }
+
+const feedbackRise = keyframes`
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+`;
 
 const choicePress = keyframes`
   from { transform: scale(.985); }
@@ -114,7 +119,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     {celebration && <CelebrationOverlay key={celebration.id} open title={celebration.title} message={celebration.message} variant={celebration.variant} onComplete={() => setCelebrationQueue(queue => queue.slice(1))} />}
     <StudyHeader itemLabel="Question" index={index} total={questions.length} exitLabel="Leave test" onExit={onRequestExit} completed={questions.filter(item => attempt.responses[item.id]?.selectedChoiceId).length} trailing={<Stopwatch attempt={attempt} />} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
-        <StudyItemTransition index={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+        <SwapTransition swapKey={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
             <Box sx={{ flex: 1, minWidth: 0 }}><MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" /></Box>
             <StudyFlagButton size="small" flagged={response.flagged} label={response.flagged ? 'Remove question flag' : 'Flag question'} onToggle={toggleFlag} sx={{ p: 0, mt: .5, flexShrink: 0 }} />
@@ -132,8 +137,8 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
               </Box>;
             })}
           </RadioGroup>
-          {feedback && <FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} />}
-        </CardContent></Card></StudyItemTransition>
+          {feedback && <Box sx={pressedChoice === `${question.id}:${response.selectedChoiceId}` ? { animation: `${feedbackRise} 200ms ${easing.out}`, [reducedMotion]: { animation: 'none' } } : undefined}><FeedbackPanel question={question} selectedChoiceId={response.selectedChoiceId} /></Box>}
+        </CardContent></Card></SwapTransition>
         <StudyNavigationFooter index={index} total={questions.length} onPrevious={() => navigateToQuestion(index - 1)} onNext={() => navigateToQuestion(index + 1)} onFinish={requestSubmit} finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'} nextLabel={feedback ? 'Continue' : 'Next'} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>
     <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
