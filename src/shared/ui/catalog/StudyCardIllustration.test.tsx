@@ -17,7 +17,7 @@ describe('StudyCardIllustration', () => {
     expect(svgs[0]?.querySelector('[data-subject-icon="s6"]')).toBeInTheDocument();
     expect(svgs[1]?.querySelector('[data-subject-icon="unrecognized-subject"]')).toHaveAttribute(
       'data-icon-name',
-      'study-set',
+      'book',
     );
 
     const definitionIds = svgs.map((svg) => new Set([...svg.querySelectorAll('[id]')].map((node) => node.id)));

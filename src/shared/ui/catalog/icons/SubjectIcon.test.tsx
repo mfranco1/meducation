@@ -6,19 +6,19 @@ import { SubjectIcon } from './SubjectIcon';
 
 describe('SubjectIcon', () => {
   it.each([
-    ['s1', 'bone'],
-    ['s2', 'molecule'],
+    ['s1', 'knee-joint'],
+    ['s2', 'dna'],
     ['s3', 'scales'],
     ['s4', 'stethoscope'],
     ['s5', 'virus'],
-    ['s6', 'uterus'],
+    ['s6', 'fetus'],
     ['s7', 'microscope'],
     ['s8', 'infant'],
     ['s9', 'pills'],
-    ['s10', 'heart-rhythm'],
-    ['s11', 'shield'],
+    ['s10', 'heart'],
+    ['s11', 'syringe'],
     ['s12', 'scalpel'],
-    ['unknown', 'study-set'],
+    ['unknown', 'book'],
   ])('maps %s to %s as a decorative icon', (subjectId, iconName) => {
     const { container } = render(
       <ThemeProvider theme={theme}>

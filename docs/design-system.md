@@ -5,7 +5,7 @@ Visual and interaction conventions. Use the MUI theme in `src/shared/theme.ts`, 
 ## Foundations
 
 - Warm, light palette: primary accent `#b9511b`, off-white surfaces, soft borders, 14px card radius (10px for rows and nav buttons), strong type hierarchy: panel titles h5, section headings h6, row names bold.
-- Icon backgrounds are pale rounded squares (10–12px radius, 20px for the large empty-state badge), never circles. Completion rings have rounded arc ends (theme `MuiCircularProgress` override). Subject icons are duotone line art on a 24-unit grid (1.5 stroke, soft tint), all defined in `SubjectIcon`.
+- Icon backgrounds are pale rounded squares (10–12px radius, 20px for the large empty-state badge), never circles. Completion rings have rounded arc ends (theme `MuiCircularProgress` override). Subject icons are duotone glyphs on a 24-unit grid (solid or stroked line art with a soft tint), mostly adapted from Health Icons (MIT), all defined in `SubjectIcon`.
 - Correctness combines written feedback, an icon and color. Semantic green, red and warning tones are reserved for correctness, errors and warnings; primary action buttons (Finish, Submit, Save) use the primary color.
 - Feedback tones for correct, incorrect and unanswered or unavailable answers come from theme tokens (`feedback.correct`, `incorrect`, `review`); pearls use `primary.light`. Immediate feedback is a compact tinted header over a neutral reading surface with generous line height and constrained measure. Do not repeat answer summaries that the highlighted choices already show.
 - Layouts must not overflow horizontally at 320, 390, 1048 or 1440px; enlarged text must stay usable.
