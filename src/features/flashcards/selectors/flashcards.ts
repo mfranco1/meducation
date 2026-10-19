@@ -14,7 +14,7 @@ export function flashcardDashboardSubjects(subjects: readonly FlashcardSubjectSu
     const emptyDeckIds = new Set(subject.emptyDeckIds ?? []);
     const active = subject.deckIds.filter(deckId => !emptyDeckIds.has(deckId)).map(deckId => progress.checkpoints[deckId]).filter((checkpoint): checkpoint is FlashcardCheckpoint => checkpoint !== undefined);
     return {
-      subject: { id: subject.id, name: subject.name, accent: subject.accent },
+      subject: { id: subject.id, name: subject.name, accent: subject.accent, ...(subject.description !== undefined && { description: subject.description }) },
       deckCount: subject.deckCount,
       activeDeckCount: active.length,
       latestActiveAt: active.map(checkpoint => checkpoint.updatedAt).sort().at(-1),

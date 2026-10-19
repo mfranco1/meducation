@@ -61,22 +61,32 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
           }}
         >
           {isDashboardGrid ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', flexWrap: 'nowrap', gap: 1.25, minWidth: 0 }}>
-              <SubjectIconBadge subjectId={subject.id} />
-              <Typography
-                component="h3"
-                sx={{
-                  fontSize: '1.25rem',
-                  fontWeight: 700,
-                  flex: '1 1 auto',
-                  lineHeight: 1.35,
-                  minWidth: 0,
-                  overflowWrap: 'anywhere',
-                  pt: 0,
-                }}
-              >
-                {subject.name}
-              </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'nowrap', gap: 1.25, minWidth: 0 }}>
+              <SubjectIconBadge subjectId={subject.id} size={80} />
+              <Box sx={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column', justifyContent: 'center', minHeight: 80, minWidth: 0 }}>
+                <Typography
+                  component="h3"
+                  sx={{
+                    fontSize: '1.25rem',
+                    fontWeight: 700,
+                    lineHeight: 1.35,
+                    minWidth: 0,
+                    overflowWrap: 'anywhere',
+                    pt: 0,
+                  }}
+                >
+                  {subject.name}
+                </Typography>
+                {subject.description && (
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ display: '-webkit-box', mt: 0.25, overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3 }}
+                  >
+                    {subject.description}
+                  </Typography>
+                )}
+              </Box>
             </Box>
           ) : (
             <Typography variant="h6">{subject.name}</Typography>

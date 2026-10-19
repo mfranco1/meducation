@@ -4,7 +4,7 @@ import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
 import type { FlashcardSubjectSummary } from '../../../content/api/flashcardApiDecoders';
 
 const subjects: FlashcardSubjectSummary[] = [
-  { id: 's1', name: 'One', accent: '#111', deckCount: 2, deckIds: ['d1', 'd2'] },
+  { id: 's1', name: 'One', accent: '#111', description: 'First subject', deckCount: 2, deckIds: ['d1', 'd2'] },
   { id: 's2', name: 'Two', accent: '#222', deckCount: 1, deckIds: ['d3'] },
   { id: 's3', name: 'Three', accent: '#333', deckCount: 0, deckIds: [] },
 ];
@@ -26,6 +26,7 @@ describe('flashcard dashboard and deck selectors', () => {
     expect(summaries.map(item => item.subject.id)).toEqual(['s1', 's2', 's3']);
     expect(activeFlashcardSubjects(summaries).map(item => item.subject.id)).toEqual(['s2', 's1']);
     expect(summaries[0].activeDeckCount).toBe(1);
+    expect(summaries[0].subject.description).toBe('First subject');
   });
 
   it('returns no carousel cards with no checkpoints and one card for one active subject', () => {

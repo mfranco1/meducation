@@ -26,7 +26,7 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completi
   const sets = decks.map(deck => deckSet(deck, checkpoints[deck.id], completionCounts[deck.id] ?? 0, loadingDeckId === deck.id, () => onSelectDeck(deck), () => onPrepareDeck(deck)));
   return <>
     {error && <ContentRecoveryBanner title={`We can’t load flashcard decks for ${subject.name} right now.`} description="Your saved deck positions are safe. Please try again." error={error} onRetry={onRetry} />}
-    <SubjectBrowseLayout subjectId={subject.id} subjectName={subject.name} progress={showSets ? { completed: decks.filter(deck => (completionCounts[deck.id] ?? 0) > 0).length, total: decks.length, nouns: 'decks' } : undefined} onBack={onBack}>
+    <SubjectBrowseLayout subjectId={subject.id} subjectName={subject.name} subjectDescription={subject.description} progress={showSets ? { completed: decks.filter(deck => (completionCounts[deck.id] ?? 0) > 0).length, total: decks.length, nouns: 'decks' } : undefined} onBack={onBack}>
       {error || loading ? <Stack spacing={2} role={loading ? 'status' : undefined} aria-busy={loading} aria-hidden={!loading} aria-label={loading ? 'Loading flashcard decks' : undefined}>{Array.from({ length: 4 }, (_, index) => <LoadingSkeleton key={index} variant="rounded" height={92} />)}</Stack>
         : decks.length === 0 ? <SubjectCatalogEmptyState title="No flashcard decks available yet" />
           : <TopicSetBrowser topics={catalog?.topics ?? []} sets={sets} noun="deck" />}

@@ -25,6 +25,16 @@ describe('SubjectCard dashboard appearance', () => {
     expect(onSelect).toHaveBeenCalledExactlyOnceWith(subject);
   });
 
+  it('shows the subject description when present', () => {
+    const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b', description: 'Structure of the human body' };
+    render(
+      <ThemeProvider theme={theme}>
+        <SubjectCard subject={subject} onSelect={() => undefined} appearance="dashboardGrid" />
+      </ThemeProvider>,
+    );
+    expect(screen.getByText('Structure of the human body')).toBeVisible();
+  });
+
   it('keeps the standard carousel title presentation by default', () => {
     const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b' };
     render(
