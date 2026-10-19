@@ -7,9 +7,9 @@ export interface DraftChoice {
   [key: string]: unknown;
 }
 const fields: Record<RecordKind, readonly string[]> = {
-  subject: ['name', 'accent'],
-  topic: ['name'],
-  quiz: ['name'],
+  subject: ['name', 'accent', 'description'],
+  topic: ['name', 'description'],
+  quiz: ['name', 'description'],
   deck: ['name', 'description'],
   card: ['front', 'back', 'sources', 'reviewNote'],
   question: [
@@ -46,7 +46,7 @@ export function readRecordDraft(text: string, kind: RecordKind): DraftRecord | u
     const strings =
       kind === 'card'
         ? ['sources', 'reviewNote']
-        : kind === 'deck'
+        : kind === 'deck' || kind === 'subject' || kind === 'topic' || kind === 'quiz'
           ? ['description']
           : kind === 'question'
             ? ['answer', 'verifiedAnswer', 'answerNote']

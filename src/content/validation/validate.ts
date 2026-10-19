@@ -9,9 +9,9 @@ export interface ValidationIssue {
 
 const metadataKeys = new Set(['topic', 'subtopic', 'system', 'difficulty', 'questionType', 'tags']);
 const rationaleMetaKeys = new Set(['sources', 'answerReviewNote', 'provenance', 'reviewedAt', 'reviewNote']);
-const subjectKeys = new Set(['id', 'name', 'accent']);
-const topicKeys = new Set(['id', 'subjectId', 'name']);
-const quizKeys = new Set(['id', 'topicId', 'name']);
+const subjectKeys = new Set(['id', 'name', 'accent', 'description']);
+const topicKeys = new Set(['id', 'subjectId', 'name', 'description']);
+const quizKeys = new Set(['id', 'topicId', 'name', 'description']);
 const questionKeys = new Set(['id', 'quizId', 'stem', 'choices', 'answer', 'verifiedAnswer', 'answerNote', 'rationale', 'rationaleMeta', 'choiceExplanations', 'pearls', 'metadata']);
 const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
@@ -79,21 +79,30 @@ export function validateQuestionBank(subjects: Subject[], topics: StoredTopic[],
   return issues;
 }
 
+/** Descriptions are optional plain text: at most 500 characters and no line breaks. */
+export const descriptionMaxLength = 500;
+const invalidDescription = (value: unknown) => value !== undefined && (typeof value !== 'string' || value.length > descriptionMaxLength || /[\r\n]/.test(value));
+
 export function validateStoredQuestionBank(bank: StoredQuestionBank): ValidationIssue[] {
   const issues: ValidationIssue[] = [];
+  const descriptionIssue = (kind: string, record: { id: string; description?: string }) => {
+    if (invalidDescription(record.description)) issues.push({ level: 'error', message: `${kind} ${record.id} has an invalid description` });
+  };
   if (bank.schemaVersion !== 5) issues.push({ level: 'error', message: `Unsupported question bank schema version: ${bank.schemaVersion}` });
   if (Object.keys(bank).some(key => !['schemaVersion', 'subjects', 'topics', 'quizzes', 'questions'].includes(key))) issues.push({ level: 'error', message: 'Bank stores an unknown field' });
   bank.subjects.forEach(subject => {
-    if ('description' in subject) issues.push({ level: 'error', message: `Subject ${subject.id} stores a redundant description` });
-    if (Object.keys(subject).some(key => !subjectKeys.has(key) && key !== 'description')) issues.push({ level: 'error', message: `Subject ${subject.id} stores an unknown field` });
+    if (Object.keys(subject).some(key => !subjectKeys.has(key))) issues.push({ level: 'error', message: `Subject ${subject.id} stores an unknown field` });
+    descriptionIssue('Subject', subject);
   });
   bank.topics.forEach(topic => {
     if (Object.keys(topic).some(key => !topicKeys.has(key))) issues.push({ level: 'error', message: `Topic ${topic.id} stores an unknown field` });
+    descriptionIssue('Topic', topic);
     if (!/^t[1-9]\d*$/.test(topic.id)) issues.push({ level: 'error', message: `Topic ${topic.id} does not use a compact ID` });
   });
   bank.quizzes.forEach(quiz => {
     if ('questionCount' in quiz) issues.push({ level: 'error', message: `Quiz ${quiz.id} stores a derived question count` });
     if (Object.keys(quiz).some(key => !quizKeys.has(key) && key !== 'questionCount')) issues.push({ level: 'error', message: `Quiz ${quiz.id} stores an unknown field` });
+    descriptionIssue('Quiz', quiz);
   });
   bank.subjects.forEach(subject => {
     if (!/^s[1-9]\d*$/.test(subject.id)) issues.push({ level: 'error', message: `Subject ${subject.id} does not use a compact ID` });
@@ -164,7 +173,7 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, topics: r
     decksById.set(deck.id, deck);
     if (typeof deck.topicId !== 'string' || !topicIds.has(deck.topicId)) issue('Deck references an unknown topic', deck.id);
     if (typeof deck.name !== 'string' || !deck.name.trim()) issue('Deck name must not be empty', deck.id);
-    if (deck.description !== undefined && typeof deck.description !== 'string') issue('Invalid deck description', deck.id);
+    if (invalidDescription(deck.description)) issue('Invalid deck description', deck.id);
   });
 
   bank.cards.forEach(card => {

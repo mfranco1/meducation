@@ -58,26 +58,27 @@ def _rows(connection: Connection, table: str, release: UUID) -> list[dict[str, A
 
 
 def _load_catalog(connection: Connection, release: UUID) -> Catalog:
+    def described(r: dict[str, Any], **fields: Any) -> dict[str, Any]:
+        return {
+            **fields,
+            **({"description": r["description"]} if r["description"] is not None else {}),
+        }
+
     subjects = tuple(
-        Subject.model_validate({k: r[k] for k in ("id", "name", "accent")})
+        Subject.model_validate(described(r, id=r["id"], name=r["name"], accent=r["accent"]))
         for r in _rows(connection, "published_subjects", release)
     )
     topics = tuple(
-        Topic(id=r["id"], subjectId=r["subject_id"], name=r["name"])
+        Topic.model_validate(described(r, id=r["id"], subjectId=r["subject_id"], name=r["name"]))
         for r in _rows(connection, "published_topics", release)
     )
     quizzes = tuple(
-        Quiz(id=r["id"], topicId=r["topic_id"], name=r["name"])
+        Quiz.model_validate(described(r, id=r["id"], topicId=r["topic_id"], name=r["name"]))
         for r in _rows(connection, "published_quizzes", release)
     )
     decks = tuple(
         FlashcardDeck.model_validate(
-            {
-                "id": r["id"],
-                "topicId": r["topic_id"],
-                "name": r["name"],
-                **({"description": r["description"]} if r["description"] is not None else {}),
-            }
+            described(r, id=r["id"], topicId=r["topic_id"], name=r["name"])
         )
         for r in _rows(connection, "published_decks", release)
     )
@@ -203,7 +204,7 @@ class PostgresFlashcardCatalogRepository:
             ]
             result.append(
                 FlashcardSubjectSummary(
-                    **subject.model_dump(),
+                    **subject.model_dump(exclude_none=True),
                     deckCount=len(decks),
                     deckIds=[d.id for d in decks],
                     emptyDeckIds=[d.id for d in decks if not self.catalog.card_ids.get(d.id)],

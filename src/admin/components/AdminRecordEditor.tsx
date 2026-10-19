@@ -24,6 +24,7 @@ import {
   type DraftRecord,
   type RecordKind,
 } from '../core/recordDraft';
+import { descriptionMaxLength } from '../../content/validation/validate';
 import { AdminRecordPreview } from './AdminRecordPreview';
 
 function OptionalString({
@@ -32,12 +33,14 @@ function OptionalString({
   onChange,
   multiline = true,
   options,
+  maxLength,
 }: {
   label: string;
   value: string | undefined;
   onChange: (value: string | undefined) => void;
   multiline?: boolean;
   options?: string[];
+  maxLength?: number;
 }) {
   return (
     <Stack spacing={1}>
@@ -56,6 +59,8 @@ function OptionalString({
           multiline={multiline && !options}
           minRows={multiline && !options ? 2 : undefined}
           select={Boolean(options)}
+          slotProps={maxLength ? { htmlInput: { maxLength } } : undefined}
+          helperText={maxLength ? `${value.length}/${maxLength} characters` : undefined}
         >
           {options &&
             ['', ...new Set([...options, ...(value ? [value] : [])])].map((option) => (
@@ -156,11 +161,12 @@ export function AdminRecordEditor({
       }
     />
   );
-  const optional = (field: string, label: string, multiline = true) => (
+  const optional = (field: string, label: string, multiline = true, maxLength?: number) => (
     <OptionalString
       label={label}
       value={record?.[field] as string | undefined}
       multiline={multiline}
+      maxLength={maxLength}
       onChange={(value) => patch(field, value)}
     />
   );
@@ -250,7 +256,7 @@ export function AdminRecordEditor({
             ))}
           {(kind === 'subject' || kind === 'topic' || kind === 'quiz' || kind === 'deck') && input('name', 'Name')}
           {kind === 'subject' && input('accent', 'Accent')}
-          {kind === 'deck' && optional('description', 'Description')}
+          {(kind === 'subject' || kind === 'topic' || kind === 'quiz' || kind === 'deck') && optional('description', 'Description', false, descriptionMaxLength)}
           {kind === 'card' && (
             <>
               {input('front', 'Front', true)}

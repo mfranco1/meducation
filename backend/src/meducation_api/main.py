@@ -174,7 +174,7 @@ def create_app(
         summaries: list[SubjectSummary] = []
         for subject in bank_subjects:
             count, ids = bank.subject_quiz_summary(subject.id)
-            summaries.append(SubjectSummary(**subject.model_dump(), quizCount=count, quizIds=ids))
+            summaries.append(SubjectSummary(**subject.model_dump(exclude_none=True), quizCount=count, quizIds=ids))
         return SubjectCatalogResponse(revision=bank.revision, subjects=summaries)
 
     def flashcard_subject_catalog(bank: FlashcardCatalogRepository) -> FlashcardSubjectListResponse:
@@ -182,7 +182,7 @@ def create_app(
 
     def catalog_quiz(bank: QuestionBankRepository, quiz: Quiz, count: int) -> CatalogQuiz:
         return CatalogQuiz(
-            **quiz.model_dump(),
+            **quiz.model_dump(exclude_none=True),
             subjectId=bank.topic_subject(quiz.topicId),
             questionCount=count,
             questionIds=bank.list_question_ids(quiz.id),

@@ -30,7 +30,7 @@ export function AdminRecordPreview({ kind, record }: { kind: RecordKind; record:
         <Typography variant="h6">{String(record.name)}</Typography>
       ) : null}
       {kind === 'subject' && note('Accent', record.accent)}
-      {kind === 'deck' && record.description !== undefined && note('Description', record.description)}
+      {(kind === 'subject' || kind === 'topic' || kind === 'quiz' || kind === 'deck') && note('Description', record.description)}
       {kind === 'card' && (
         <>
           {rich('Front', String(record.front))}

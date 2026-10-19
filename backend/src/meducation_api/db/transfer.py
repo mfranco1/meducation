@@ -97,9 +97,21 @@ def capture_pair(quiz: Path, flashcard: Path, *, repository: Path) -> CapturedPa
 
 # Only these fixed tables/columns are used; identifiers never come from user input.
 _COLLECTIONS = (
-    ("subjects", "subjects", {"id": "id", "name": "name", "accent": "accent"}),
-    ("topics", "topics", {"id": "id", "subjectId": "subject_id", "name": "name"}),
-    ("quizzes", "quizzes", {"id": "id", "topicId": "topic_id", "name": "name"}),
+    (
+        "subjects",
+        "subjects",
+        {"id": "id", "name": "name", "accent": "accent", "description": "description"},
+    ),
+    (
+        "topics",
+        "topics",
+        {"id": "id", "subjectId": "subject_id", "name": "name", "description": "description"},
+    ),
+    (
+        "quizzes",
+        "quizzes",
+        {"id": "id", "topicId": "topic_id", "name": "name", "description": "description"},
+    ),
     (
         "questions",
         "questions",

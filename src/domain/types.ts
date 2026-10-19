@@ -17,10 +17,10 @@ export interface Question {
   answer?: string; verifiedAnswer?: string; answerNote?: string;
   rationale: string; rationaleMeta?: RationaleMetadata; choiceExplanations?: Record<string, string>; pearls?: string[]; metadata: QuestionMetadata;
 }
-export interface Subject { id: string; name: string; accent: string }
-export interface Topic { id: string; subjectId: string; name: string }
+export interface Subject { id: string; name: string; accent: string; description?: string }
+export interface Topic { id: string; subjectId: string; name: string; description?: string }
 export interface FlashcardCard { id: string; deckId: string; front: string; back: string; sources?: string; reviewNote?: string }
-export interface Quiz { id: string; subjectId: string; topicId: string; name: string; questionCount: number; questionIds?: string[] }
+export interface Quiz { id: string; subjectId: string; topicId: string; name: string; description?: string; questionCount: number; questionIds?: string[] }
 export interface QuestionResponse { questionId: string; selectedChoiceId?: string; flagged: boolean; locked: boolean; timeMs: number }
 export interface CelebrationProgress { correctStreak: number; awardedStreakMilestones: StreakMilestone[] }
 export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; elapsedMs: number; timerStartedAt?: string; currentQuestionId?: string; contentSignature?: string; contentRevision?: string; completedAt?: string; celebrationProgress: CelebrationProgress; responses: Record<string, QuestionResponse> }

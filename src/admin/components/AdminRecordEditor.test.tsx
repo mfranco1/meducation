@@ -75,3 +75,9 @@ it('uses the shared sanitizer for hostile preview source without changing the so
   expect(preview.querySelector('[onerror]')).toBeNull();
   expect(change).not.toHaveBeenCalled();
 });
+
+it('caps descriptions at the stored limit and shows the count', () => {
+  render(<AdminRecordEditor kind="quiz" text={JSON.stringify({ id: 'q1', topicId: 't1', name: 'Quiz', description: 'Short' })} existing onChange={() => {}} />);
+  expect(screen.getByRole('textbox', { name: 'Description' })).toHaveAttribute('maxlength', '500');
+  expect(screen.getByText('5/500 characters')).toBeInTheDocument();
+});

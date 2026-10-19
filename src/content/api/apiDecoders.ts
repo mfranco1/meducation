@@ -33,8 +33,8 @@ export function isSubjectCatalog(value: unknown): value is SubjectCatalogRespons
   const allQuizIds: string[] = [];
   const subjects = value.subjects;
   if (!subjects.every((entry: unknown) => {
-    if (!record(entry) || !onlyKeys(entry, ['id', 'name', 'accent', 'quizCount', 'quizIds'])) return false;
-    if (!nonempty(entry.id) || !/^s[1-9]\d*$/.test(entry.id) || !nonempty(entry.name) || typeof entry.accent !== 'string') return false;
+    if (!record(entry) || !onlyKeys(entry, ['id', 'name', 'accent', 'description', 'quizCount', 'quizIds'])) return false;
+    if (!nonempty(entry.id) || !/^s[1-9]\d*$/.test(entry.id) || !nonempty(entry.name) || typeof entry.accent !== 'string' || !optionalString(entry.description)) return false;
     if (!ids(entry.quizIds, /^q[1-9]\d*$/) || !Number.isInteger(entry.quizCount) || entry.quizCount !== entry.quizIds.length) return false;
     allQuizIds.push(...entry.quizIds);
     return true;
@@ -44,8 +44,8 @@ export function isSubjectCatalog(value: unknown): value is SubjectCatalogRespons
 
 /** A subject's topics, in order; quiz and deck catalogs must reference only these. */
 export function isTopicList(value: unknown, subjectId: string): value is Topic[] {
-  return Array.isArray(value) && value.every((topic: unknown) => record(topic) && onlyKeys(topic, ['id', 'subjectId', 'name'])
-    && nonempty(topic.id) && /^t[1-9]\d*$/.test(topic.id) && topic.subjectId === subjectId && nonempty(topic.name))
+  return Array.isArray(value) && value.every((topic: unknown) => record(topic) && onlyKeys(topic, ['id', 'subjectId', 'name', 'description'])
+    && optionalString(topic.description) && nonempty(topic.id) && /^t[1-9]\d*$/.test(topic.id) && topic.subjectId === subjectId && nonempty(topic.name))
     && unique(value.map((topic: Topic) => topic.id));
 }
 
@@ -54,8 +54,8 @@ export function isQuizCatalog(value: unknown, subjectId: string, expectedQuizIds
   const topicIds = value.topics.map(topic => topic.id);
   const allQuestionIds: string[] = [];
   if (!value.quizzes.every((entry: unknown) => {
-    if (!record(entry) || !onlyKeys(entry, ['id', 'subjectId', 'topicId', 'name', 'questionCount', 'questionIds'])) return false;
-    if (!nonempty(entry.id) || !/^q[1-9]\d*$/.test(entry.id) || entry.subjectId !== subjectId || !topicIds.includes(entry.topicId as string) || !nonempty(entry.name)) return false;
+    if (!record(entry) || !onlyKeys(entry, ['id', 'subjectId', 'topicId', 'name', 'description', 'questionCount', 'questionIds'])) return false;
+    if (!optionalString(entry.description) || !nonempty(entry.id) || !/^q[1-9]\d*$/.test(entry.id) || entry.subjectId !== subjectId || !topicIds.includes(entry.topicId as string) || !nonempty(entry.name)) return false;
     if (!ids(entry.questionIds, /^i[1-9]\d*$/) || !Number.isInteger(entry.questionCount) || entry.questionCount !== entry.questionIds.length || entry.questionCount === 0) return false;
     allQuestionIds.push(...entry.questionIds);
     return true;

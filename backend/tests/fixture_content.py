@@ -81,7 +81,7 @@ class FixtureFlashcardRepository:
     def list_subjects(self):
         return [
             FlashcardSubjectSummary(
-                **s.model_dump(),
+                **s.model_dump(exclude_none=True),
                 deckCount=len(self.list_catalog(s.id)),
                 deckIds=[d.id for d, _ in self.list_catalog(s.id)],
                 emptyDeckIds=[d.id for d, count in self.list_catalog(s.id) if not count],

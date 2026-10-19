@@ -21,7 +21,7 @@ describe('question bank validation', () => {
   it('rejects legacy fields and non-compact IDs in stored schema version 5', () => {
     const bank = {
       schemaVersion: 5,
-      subjects: [{ id: 's', name: 'S', accent: '', description: '' }],
+      subjects: [{ id: 's', name: 'S', accent: '' }],
       topics: [{ id: 't', subjectId: 's', name: 'T' }],
       quizzes: [{ id: 'z', topicId: 't', name: 'Z', questionCount: 1 }],
       questions: [{
@@ -37,6 +37,36 @@ describe('question bank validation', () => {
       expect.stringContaining('derived question count'),
       expect.stringContaining('unknown field'),
     ]));
+  });
+});
+
+describe('description validation', () => {
+  const stored = (description: unknown) => ({
+    schemaVersion: 5,
+    subjects: [{ id: 's1', name: 'S', accent: '', description }],
+    topics: [{ id: 't1', subjectId: 's1', name: 'T', description }],
+    quizzes: [{ id: 'q1', topicId: 't1', name: 'Q', description }],
+    questions: [],
+  }) as unknown as StoredQuestionBank;
+
+  it.each(['', 'Plain text', 'x'.repeat(500)])('accepts %j on subjects, topics and quizzes', description => {
+    expect(validateStoredQuestionBank(stored(description))).toEqual([]);
+  });
+
+  it.each(['x'.repeat(501), 'two\nlines', 'two\rlines', 5])('rejects %j on subjects, topics and quizzes', description => {
+    expect(validateStoredQuestionBank(stored(description)).map(issue => issue.message)).toEqual([
+      'Subject s1 has an invalid description',
+      'Topic t1 has an invalid description',
+      'Quiz q1 has an invalid description',
+    ]);
+  });
+
+  it('applies the same rule to decks', () => {
+    const topics = [{ id: 't1', subjectId: 's1', name: 'Topic' }];
+    const deck = (description: string) => ({ schemaVersion: 3, decks: [{ id: 'd1', topicId: 't1', name: 'D', description }], cards: [] }) as StoredFlashcardBank;
+    expect(validateStoredFlashcardBank(deck('Plain'), topics)).toEqual([]);
+    expect(validateStoredFlashcardBank(deck('a\nb'), topics)).toHaveLength(1);
+    expect(validateStoredFlashcardBank(deck('x'.repeat(501)), topics)).toHaveLength(1);
   });
 });
 

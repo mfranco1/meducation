@@ -189,7 +189,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0009_topics"
+    assert migration_head() == "0010_descriptions"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -215,7 +215,7 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0009_topics"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0010_descriptions"
 
 
 def test_release_omission_provenance_order_and_digest(db):
@@ -581,8 +581,14 @@ def test_global_order_independent_of_parent_and_object_key_order(db):
             )
             assert actual == expected
     qt, ft = artifacts(q, f)
-    subjects = [{key: s[key] for key in ("id", "name", "accent")} for s in q["subjects"]]
-    topics = [{key: t[key] for key in ("id", "subjectId", "name")} for t in q["topics"]]
+    subjects = [
+        {key: s[key] for key in ("id", "name", "accent", "description") if key in s}
+        for s in q["subjects"]
+    ]
+    topics = [
+        {key: t[key] for key in ("id", "subjectId", "name", "description") if key in t}
+        for t in q["topics"]
+    ]
     registry = [json.dumps(v, ensure_ascii=False, separators=(",", ":")) for v in (subjects, topics)]
     assert (
         release.flashcard_revision
@@ -834,6 +840,8 @@ def test_postgres_learner_routes_match_protocol_and_release_connections(db, tmp_
 
     q, f = banks()
     f["decks"].append({"id": "dempty", "topicId": "t1", "name": "Empty"})
+    for key in ("subjects", "topics", "quizzes"):
+        q[key][0]["description"] = "Short text"
     release = store(db, q=q, f=f)
     publish(db, release)
     from fixture_content import fixture_app
@@ -845,6 +853,7 @@ def test_postgres_learner_routes_match_protocol_and_release_connections(db, tmp_
         result = actual.get(path)
         assert result.status_code == reference.status_code == 200
         assert result.json() == reference.json()
+        assert ("Short text" in result.text) == (not path.endswith(("questions", "cards")))
         assert result.headers["etag"] == reference.headers["etag"]
         assert result.headers["cache-control"] == "no-cache"
         assert source.runtime.engine.pool.checkedout() == 0

@@ -28,7 +28,7 @@ const question: Shape = {
   },
 };
 const pairShape: Shape = { required: {
-  quizzes: { required: { schemaVersion: 'number', subjects: [{ required: { id: 'string', name: 'string', accent: 'string' } }], topics: [{ required: { id: 'string', subjectId: 'string', name: 'string' } }], quizzes: [{ required: { id: 'string', topicId: 'string', name: 'string' } }], questions: [question] } },
+  quizzes: { required: { schemaVersion: 'number', subjects: [{ required: { id: 'string', name: 'string', accent: 'string' }, optional: { description: 'string' } }], topics: [{ required: { id: 'string', subjectId: 'string', name: 'string' }, optional: { description: 'string' } }], quizzes: [{ required: { id: 'string', topicId: 'string', name: 'string' }, optional: { description: 'string' } }], questions: [question] } },
   flashcards: { required: { schemaVersion: 'number', decks: [{ required: { id: 'string', topicId: 'string', name: 'string' }, optional: { description: 'string' } }], cards: [{ required: { id: 'string', deckId: 'string', front: 'string', back: 'string' }, optional: { sources: 'string', reviewNote: 'string' } }] } },
 } };
 const knownKeys = new Set<string>();
@@ -104,7 +104,7 @@ export function validateAuthoringPair(value: unknown): PolicyResult {
     ['$.pair.quizzes', [...validateStoredQuestionBank(bank), ...validateQuestionBank(bank.subjects, bank.topics, bank.quizzes, questions)]],
     ['$.pair.flashcards', validateStoredFlashcardBank(pair.flashcards, bank.topics)],
   ] as const) {
-    for (const foundIssue of found) if (foundIssue.level === 'error') issue(path, 'stored_contract', 'Stored content violates schema, ordering, provenance or references.');
+    for (const foundIssue of found) if (foundIssue.level === 'error') issue(path, 'stored_contract', foundIssue.questionId ? `${foundIssue.message} (${foundIssue.questionId})` : foundIssue.message);
   }
   const markupCache = new Map<string, ReturnType<typeof markdownIssues>>();
   const markdown = (text: string, rich: boolean, path: string) => {

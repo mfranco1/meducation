@@ -4,18 +4,21 @@ export interface StoredSubject {
   id: string;
   name: string;
   accent: string;
+  description?: string;
 }
 
 export interface StoredTopic {
   id: string;
   subjectId: string;
   name: string;
+  description?: string;
 }
 
 export interface StoredQuiz {
   id: string;
   topicId: string;
   name: string;
+  description?: string;
 }
 
 export interface StoredQuestion {

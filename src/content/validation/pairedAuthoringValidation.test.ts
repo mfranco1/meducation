@@ -33,6 +33,14 @@ describe('shared HTTP authoring policy', () => {
     expect(found.truncated).toBe(true);
     expect(JSON.stringify(found)).not.toContain('private sentinel');
   });
+  it('names the record and rule that a stored contract issue breaks', () => {
+    const pair = structuredClone(fixtures.base);
+    const quiz = pair.quizzes.quizzes[0] as { id: string; description?: string };
+    quiz.description = 'x'.repeat(501);
+    expect(validateAuthoringPair(pair).issues).toEqual([
+      { path: '$.pair.quizzes', code: 'stored_contract', message: `Quiz ${quiz.id} has an invalid description` },
+    ]);
+  });
   it('admits literal escaped JSON delimiters and rejects oversized text', () => {
     const literal = '{"[]}';
     expect(parseAuthoringJson(JSON.stringify({ x: literal }))).toEqual({ x: literal });

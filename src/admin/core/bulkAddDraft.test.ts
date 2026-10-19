@@ -30,6 +30,20 @@ describe('content-only bulk add drafts', () => {
     });
   });
 
+  it('carries topic and quiz descriptions into the plan', () => {
+    const result = compileBulkAddDraft(
+      { topic: { name: 'Pearls', description: 'Topic text' }, quizzes: [{ name: 'Q', description: 'Quiz text', items: [item('First')] }] },
+      { kind: 'newTopic', subjectId: 's1' },
+      bank(),
+    );
+    expect(result.errors).toEqual([]);
+    expect(result.plan).toMatchObject({
+      topic: { name: 'Pearls', description: 'Topic text' },
+      groups: [{ create: { kind: 'quizzes', fields: { name: 'Q', description: 'Quiz text' } } }],
+    });
+    expect(compileBulkAddDraft({ quizzes: [{ name: 'Q', description: 5, items: [item('One')] }] }, { kind: 'topic', topicId: 't1' }, bank()).errors).toEqual(['$.quizzes[0].description must be a string.']);
+  });
+
   it('adds quizzes to an existing topic', () => {
     const result = compileBulkAddDraft({ quizzes: [{ name: 'Added', items: [item('One')] }] }, { kind: 'topic', topicId: 't1' }, bank());
     expect(result.plan).toMatchObject({ topicId: 't1', groups: [{ create: { kind: 'quizzes', fields: { name: 'Added' } } }] });

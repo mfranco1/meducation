@@ -1,12 +1,12 @@
 {
   "subjects": {
     "revision": "revision-1",
-    "subjects": [{ "id": "s1", "name": "Subject", "accent": "#123456", "quizCount": 1, "quizIds": ["q1"] }]
+    "subjects": [{ "id": "s1", "name": "Subject", "accent": "#123456", "description": "Short text", "quizCount": 1, "quizIds": ["q1"] }]
   },
   "quizzes": {
     "revision": "revision-1",
-    "topics": [{ "id": "t1", "subjectId": "s1", "name": "Topic" }],
-    "quizzes": [{ "id": "q1", "topicId": "t1", "subjectId": "s1", "name": "Quiz", "questionCount": 1, "questionIds": ["i1"] }]
+    "topics": [{ "id": "t1", "subjectId": "s1", "name": "Topic", "description": "Short text" }],
+    "quizzes": [{ "id": "q1", "topicId": "t1", "subjectId": "s1", "name": "Quiz", "description": "Short text", "questionCount": 1, "questionIds": ["i1"] }]
   },
   "questions": {
     "revision": "revision-1",

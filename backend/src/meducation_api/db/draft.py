@@ -68,7 +68,11 @@ KINDS: dict[str, Kind] = {
             None,
             None,
             None,
-            (("name", "name", False), ("accent", "accent", False)),
+            (
+                ("name", "name", False),
+                ("accent", "accent", False),
+                ("description", "description", False),
+            ),
         ),
         Kind(
             "topics",
@@ -79,7 +83,7 @@ KINDS: dict[str, Kind] = {
             "subjects",
             "subjectId",
             "subject_id",
-            (("name", "name", False),),
+            (("name", "name", False), ("description", "description", False)),
         ),
         Kind(
             "quizzes",
@@ -90,7 +94,7 @@ KINDS: dict[str, Kind] = {
             "topics",
             "topicId",
             "topic_id",
-            (("name", "name", False),),
+            (("name", "name", False), ("description", "description", False)),
         ),
         Kind(
             "questions",
@@ -245,14 +249,14 @@ def revisions(quiz_text: str, flashcard_text: str) -> dict[str, str]:
     bank = json.loads(quiz_text)
     registry = [
         json.dumps(
-            [{key: record[key] for key in keys} for record in bank[name]],
+            [{key: record[key] for key in keys if key in record} for record in bank[name]],
             ensure_ascii=False,
             allow_nan=False,
             separators=(",", ":"),
         )
         for name, keys in (
-            ("subjects", ("id", "name", "accent")),
-            ("topics", ("id", "subjectId", "name")),
+            ("subjects", ("id", "name", "accent", "description")),
+            ("topics", ("id", "subjectId", "name", "description")),
         )
     ]
     return {

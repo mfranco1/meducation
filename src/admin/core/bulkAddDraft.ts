@@ -34,11 +34,12 @@ export interface BulkAddItemDraft {
 
 export interface BulkAddQuizDraft {
   name: string;
+  description?: string;
   items: BulkAddItemDraft[];
 }
 
 export type BulkAddDraft =
-  | { topic: { name: string }; quizzes: BulkAddQuizDraft[] }
+  | { topic: { name: string; description?: string }; quizzes: BulkAddQuizDraft[] }
   | { quizzes: BulkAddQuizDraft[] }
   | { items: BulkAddItemDraft[] };
 
@@ -106,12 +107,13 @@ function parseQuizzes(value: unknown, path: string): { quizzes?: BulkAddQuizDraf
   value.forEach((candidate, index) => {
     const quizPath = `${path}[${index}]`;
     if (!isObject(candidate)) { errors.push(`${quizPath} must be an object.`); return; }
-    for (const key of Object.keys(candidate)) if (!['name', 'items'].includes(key)) errors.push(`${quizPath}.${key} is not an editable quiz field.`);
+    for (const key of Object.keys(candidate)) if (!['name', 'description', 'items'].includes(key)) errors.push(`${quizPath}.${key} is not an editable quiz field.`);
     if (!nonEmptyString(candidate.name)) errors.push(`${quizPath}.name must be a non-empty string.`);
+    if (candidate.description !== undefined && !isString(candidate.description)) errors.push(`${quizPath}.description must be a string.`);
     if (!Array.isArray(candidate.items) || !candidate.items.length) { errors.push(`${quizPath}.items must be a non-empty array.`); return; }
     const items = candidate.items.map((item, itemIndex) => parseItem(item, `${quizPath}.items[${itemIndex}]`));
     errors.push(...items.flatMap(result => result.errors));
-    if (items.every(result => result.item)) quizzes.push({ name: candidate.name as string, items: items.map(result => result.item!) });
+    if (items.every(result => result.item)) quizzes.push({ name: candidate.name as string, ...(candidate.description === undefined ? {} : { description: candidate.description as string }), items: items.map(result => result.item!) });
   });
   return errors.length ? { errors } : { quizzes, errors };
 }
@@ -131,12 +133,14 @@ export function parseBulkAddDraft(value: unknown, context: BulkAddContext): { dr
     for (const key of Object.keys(value)) if (!['topic', 'quizzes'].includes(key)) errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
     if (!isObject(value.topic)) errors.push('$.topic must contain editable topic content.');
     else {
-      for (const key of Object.keys(value.topic)) if (key !== 'name') errors.push(`$.topic.${key} is managed by the admin panel or is not editable.`);
+      for (const key of Object.keys(value.topic)) if (!['name', 'description'].includes(key)) errors.push(`$.topic.${key} is managed by the admin panel or is not editable.`);
       if (!nonEmptyString(value.topic.name)) errors.push('$.topic.name must be a non-empty string.');
+      if (value.topic.description !== undefined && !isString(value.topic.description)) errors.push('$.topic.description must be a string.');
     }
     const parsed = parseQuizzes(value.quizzes, '$.quizzes');
     errors.push(...parsed.errors);
-    return errors.length ? { errors } : { draft: { topic: { name: (value.topic as JsonObject).name as string }, quizzes: parsed.quizzes! }, errors };
+    const topic = value.topic as JsonObject;
+    return errors.length ? { errors } : { draft: { topic: { name: topic.name as string, ...(topic.description === undefined ? {} : { description: topic.description as string }) }, quizzes: parsed.quizzes! }, errors };
   }
 
   for (const key of Object.keys(value)) if (key !== 'quizzes') errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
@@ -176,9 +180,9 @@ export function compileBulkAddDraft(
     plan: {
       ...(context.kind === 'topic'
         ? { topicId: context.topicId }
-        : { subjectId: context.subjectId, topic: { name: (draft as { topic: { name: string } }).topic.name } }),
+        : { subjectId: context.subjectId, topic: (draft as { topic: { name: string; description?: string } }).topic }),
       groups: draft.quizzes.map((quiz) => ({
-        create: { kind: 'quizzes' as const, fields: { name: quiz.name } },
+        create: { kind: 'quizzes' as const, fields: { name: quiz.name, ...(quiz.description === undefined ? {} : { description: quiz.description }) } },
         childKind: 'questions' as const,
         children: quiz.items.map(itemFields),
       })),

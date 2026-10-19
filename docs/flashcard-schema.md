@@ -13,7 +13,7 @@ interface StoredFlashcardDeck {
   id: string; // stable opaque ID prefixed with d
   topicId: string; // existing shared topic ID
   name: string;
-  description?: string;
+  description?: string; // plain text, at most 500 characters, no line breaks
 }
 
 interface StoredFlashcard {

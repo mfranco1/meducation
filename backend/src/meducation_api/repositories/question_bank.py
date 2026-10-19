@@ -21,18 +21,21 @@ class Subject(StoredModel):
     id: str
     name: str
     accent: str
+    description: str | None = None
 
 
 class Topic(StoredModel):
     id: str
     subjectId: str
     name: str
+    description: str | None = None
 
 
 class Quiz(StoredModel):
     id: str
     topicId: str
     name: str
+    description: str | None = None
 
 
 class Choice(StoredModel):
