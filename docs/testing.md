@@ -22,7 +22,7 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 
 Pytest skips real-PostgreSQL cases unless an isolated test database exists; a skip is not database acceptance. Run `test-postgres-content.py` for that gate.
 
-Learner and admin browser suites share ports and `dist`; run them sequentially, and never rebuild `dist` while one is running. Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds synthetic fixtures into a disposable PG17 tmpfs container with generated credentials (API port 8765 for learner, 8766 for admin; override with `MEDUCATION_E2E_API_PORT`). It never reads authority credentials or content.
+Learner and admin browser suites share ports and `dist`; run them sequentially, and never rebuild `dist` while one is running. Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds synthetic fixtures into a disposable PG17 tmpfs container with generated credentials (API port 8765 for learner, overridable with `MEDUCATION_E2E_API_PORT`; 8766 for admin). It never reads authority credentials or content.
 
 ## What to run
 
@@ -37,12 +37,9 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Boundary policy changes: `npm run lint` after adding a temporary violating import.
 - Documentation only: check links and commands and run `git diff --check`.
 
-## Fixtures and ownership
+## Fixtures
 
-- `tests/fixtures/`: `bank-contract-cases.json` (shared by TypeScript and Python stored-bank validators), `paired-authoring-cases.json` (rich content, limits and edit cases), `api-response-cases.json`, `storage-boundary-cases.json`, `question-bank.json`, `empty-flashcard-bank.json`, `draft-roundtrip-pair.json` (every optional field and non-canonical key order), `flashcard-bank-contract.json`, `progress-backups/`.
-- `src/test/`: Vitest setup (`setup.ts`), `contentFixtures.ts` (admin banks) and `runtimeContentFixtures.ts` (API DTOs). Fixture IDs must stay valid under the API decoders.
-- `e2e/`: learner and `admin-http` specs plus `e2e/fixtures` banks seeded into disposable PostgreSQL. `backend/tests`: backend and PostgreSQL tests (`test_postgres_content.py`, `test_draft_records.py`) with fixtures in `fixture_content.py`.
-- Unit tests live beside their modules.
+- `tests/fixtures/` holds contracts shared by the TypeScript and Python validators and the browser suites; `src/test/` holds Vitest setup and admin and API fixtures (IDs must stay valid under the API decoders); `e2e/fixtures` banks are seeded into disposable PostgreSQL; backend fixtures are in `backend/tests/fixture_content.py`.
 - Do not assert production record counts or individual authored records; use small versioned fixtures.
 
 ## Behavioral invariants to keep covered
@@ -55,7 +52,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Draft IDs are never reused after delete or restore; an unchanged draft rebuilds byte-identical release artifacts.
 - Learner content loading retries and times out within bounds, ignores stale responses, and shows recoverable states without altering saved progress.
 - Keyboard shortcuts pause for dialogs and drawers and keep native behavior in form controls; reduced motion is honored.
-- Layouts have no horizontal overflow at 390, 1048 and 1440 px.
+- Layouts have no horizontal overflow at the [design-system](design-system.md#foundations) widths.
 - Recovery restores exact tables, sequences and grants, quarantines restored sessions, and advances ID sequences.
 
 Automated role, focus and layout checks do not replace manual VoiceOver or NVDA review.

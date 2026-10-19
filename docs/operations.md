@@ -1,8 +1,6 @@
 # Operations
 
-How to run, back up, restore and package the local system. PostgreSQL is the only writable content authority and the only runtime content source. Learner progress stays in the browser.
-
-Hosted deployment is being prepared. It will use managed Postgres and managed identity; nothing here describes a hosted setup, and the synthetic local identity below is never enabled in production.
+How to run, back up, restore and package the local system. PostgreSQL is the only writable content authority and the only runtime content source. Learner progress stays in the browser. No hosted setup exists yet; the synthetic local identity below is never enabled in production.
 
 ## Prerequisites
 
@@ -34,7 +32,7 @@ Backend settings use the `MEDUCATION_` prefix; copy `backend/.env.example` to ig
 | `MEDUCATION_ALLOWED_ORIGINS` | CORS origins for public reads |
 | `MEDUCATION_ADMIN_*` | editor identity and session configuration (below) |
 
-Rules: URLs use `postgresql+psycopg://` with URL-encoded passwords. API workers receive only the reader URL (plus session/editor URLs when admin is enabled); job credentials are never given to workers, and a job never substitutes runtime credentials. Roles: `meducation_owner` (NOLOGIN DDL owner), `meducation_migrator`, `meducation_operator`, `meducation_reader`, `meducation_backup`, `meducation_session`, `meducation_editor`, `meducation_bootstrap` (local only). Changing a password in an env file does not rotate an existing role.
+Rules: URLs use `postgresql+psycopg://` with URL-encoded passwords; hosted URLs require `sslmode=verify-full`. API workers receive only the reader URL (plus session/editor URLs when admin is enabled); job credentials are never given to workers, and a job never substitutes runtime credentials. Roles: `meducation_owner` (NOLOGIN DDL owner), `meducation_migrator`, `meducation_operator`, `meducation_reader`, `meducation_backup`, `meducation_session`, `meducation_editor`, `meducation_bootstrap` (local only). Changing a password in an env file does not rotate an existing role. Passwords live in ignored env files and are never passed on command lines.
 
 ## Local PostgreSQL and the API
 
@@ -71,6 +69,8 @@ Entry point `meducation_api.db.cli`; also runs as `python -m meducation_api.db.c
 - Releases: `publish-draft --actor` publishes the draft exactly as the editor's **Publish** does, using the editor connection (`MEDUCATION_ADMIN_EDITOR_DATABASE_URL`); it needs no running API. Locally: `.venv/bin/python scripts/local-authoring/job.py publish-draft --actor maintainer:<reason>`. `activate --release-id --expected-sequence --operation-id --actor --reason`; `export-release --release-id --output NEW_DIR` (refuses existing directories).
 - Draft IDs: `advance-id-sequences --by N` moves the subject, topic, quiz and question ID sequences N past the largest ID in any release or the draft (migrator credentials). Run it after restoring an older backup.
 - Export checks: `validate-export` and `audit-export` take `--directory`, `--repository`, `--report`. They verify captured bytes, hashes and policy and refuse to overwrite reports. Digests prove internal consistency, not live currency; export fresh from the target when currency matters. `npm run validate:content -- <quiz-file> <flashcard-file>` checks an explicitly selected pair the same way.
+
+Jobs use direct unpooled connections. A managed Postgres pooler (transaction pooling) may serve runtime connections only after testing session settings and prepared statements.
 
 There is no file import: a new database receives its content from a `pg_restore` of an authority dump (see Backup and restore), and ordinary changes go through the editor. An export is never a way to replace database-only work with an older snapshot.
 
@@ -119,15 +119,7 @@ Real recovery:
 4. Rotate `MEDUCATION_ADMIN_EPOCH`. Run `advance-id-sequences --by N` with N larger than the number of records that could have been created after the backup (for example 10000), so IDs learners may have seen are not reused.
 5. Compare content, then switch reader/session/editor connections together, restart workers and verify learner reads and a fresh editor login. Keep the original until verified.
 
-Development dump and restore use plain Postgres tools in the Compose container (add the same `--env-file` and `-f` flags as the start command):
-
-```sh
-docker compose --profile db exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_dump --host 127.0.0.1 --username "$POSTGRES_USER" --format=custom "$POSTGRES_DB"' > meducation.dump
-docker compose --profile db exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" psql --host 127.0.0.1 --username "$POSTGRES_USER" --dbname postgres -c "CREATE DATABASE meducation_verify"'
-docker compose --profile db exec -T postgres sh -c 'PGPASSWORD="$POSTGRES_PASSWORD" pg_restore --host 127.0.0.1 --username "$POSTGRES_USER" --dbname meducation_verify --no-owner --no-acl --exit-on-error' < meducation.dump
-```
-
-Restore into a fresh database, never over the original. This is not a production backup design.
+Host Postgres clients may be older than 17; run `psql`, `pg_dump` and `pg_restore` from the pinned PG17 container.
 
 Learner progress backups are separate and browser-local ([product](product.md#progress-backup-restore-and-reset)). Private source material (`tn-pdfs/`, `content/`) is ignored by Git and needs its own backup.
 

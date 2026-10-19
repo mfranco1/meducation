@@ -6,42 +6,28 @@ A browser-based study platform (React, TypeScript, Vite, Material UI) with subje
 
 Requirements: Node 22, npm, Python 3.14, Docker (for PostgreSQL 17).
 
-```bash
-npm ci
-```
-
-1. Set up and start PostgreSQL and the content API: [operations](docs/operations.md) and [backend/README.md](backend/README.md). The API listens on `127.0.0.1:8000`.
+1. Install, set up PostgreSQL and start the content API on `127.0.0.1:8000`: [operations](docs/operations.md).
 2. Start the frontend and open the printed URL (usually `http://localhost:5173/`); Vite proxies `/api` to the API:
 
    ```bash
    npm run dev
    ```
 
-Retry settings for content loading are in [.env.example](.env.example). Remove any old `VITE_CONTENT_SOURCE`; it is rejected.
-
-Use **Progress backup** in the app to download or restore progress; clearing site data removes it.
+Use **Progress** in the app to back up or restore progress; clearing site data removes it.
 
 ## Content editor
 
-Open `/admin.html` on the development server with the authoring API running and sign in. Saving writes a paired draft to PostgreSQL; publishing is a separate reviewed action. A production build omits the editor unless you run `npm run build:admin`. See [operations](docs/operations.md#editor-login-and-sessions) and [content management](docs/content-management.md).
+Open `/admin.html` on the development server with the authoring API running and sign in. Saving writes a draft record; publishing is a separate action. See [content management](docs/content-management.md).
 
 ## Check and build
 
-```bash
-npm run lint
-npm run format:check
-npm test
-npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json
-npm run build
-```
-
-`npm run build` type-checks and writes `dist/`. Backend and browser suites are described in [testing](docs/testing.md). Containers: [operations](docs/operations.md#containers).
+`npm run build` type-checks and writes `dist/`. All suites and which to run are in [testing](docs/testing.md).
 
 ## Layout
 
 - `src/app`, `src/features`, `src/shared`: learner composition, quiz and flashcard features, shared UI
 - `src/domain`, `src/analytics`, `src/persistence`, `src/content`: rules, aggregation, browser storage, schemas and validation
-- `src/admin`: authenticated paired-draft editor
+- `src/admin`: authenticated draft editor
 - `backend/`: FastAPI delivery, authoring services, PostgreSQL migrations and jobs
 - `scripts/`, `ops/`, `e2e/`, `tests/fixtures/`: tooling, container config, browser tests, shared fixtures
-- `docs/`: see the [documentation index](docs/README.md); repository rules are in [AGENTS.md](AGENTS.md)
+- `docs/`: listed in [AGENTS.md](AGENTS.md#documentation), which also holds the repository rules

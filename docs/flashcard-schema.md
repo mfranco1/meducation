@@ -1,8 +1,6 @@
 # Flashcard schema
 
-Defines the schema-v4 flashcard document stored in paired drafts and releases and written to deterministic `flashcardBank.json` exports. The shared subject and topic registry in the quiz document stays authoritative for deck references. Preserve exact strings, array order, omitted fields and server-reserved IDs.
-
-The PostgreSQL flashcard document and its deterministic `flashcardBank.json` exports use schema v4 with flat `decks` and `cards` arrays. Shared subject and topic records remain authoritative in the paired database quiz bank (represented in its deterministic `questionBank.json` export); flashcards refer to stable topic IDs and never copy subject or topic rows.
+Defines the schema-v4 flashcard document stored in paired drafts and releases and written to deterministic `flashcardBank.json` exports, with flat `decks` and `cards` arrays. Subjects and topics live in the paired [quiz document](question-schema.md); flashcards refer to stable topic IDs and never copy subject or topic rows. Preserve exact strings, array order, omitted fields and IDs.
 
 The relationship chain is `card.deckId → deck.topicId → topic.subjectId → subject.id`. A deck belongs to one topic, and a card belongs to one deck. Do not store repeated subject names, child ID arrays, or derived card counts in canonical records. Runtime summaries may derive parent details and counts.
 
@@ -31,20 +29,10 @@ interface StoredFlashcardBank {
 }
 ```
 
-IDs are immutable and never encode ordering. New authoring flows allocate IDs once and preserve them through preview, stage, and export. Optional fields are omitted rather than set to `null`. Unknown keys, duplicate IDs, empty names or card faces, and broken references are invalid. Empty decks are allowed for authoring; the learner cannot launch an empty deck.
+IDs are assigned by the server on create, are immutable and never encode ordering. Optional fields are omitted rather than set to `null`. Unknown keys, duplicate IDs, empty names or card faces, and broken references are invalid. Empty decks are allowed for authoring; the learner cannot launch an empty deck.
 
 Array order is canonical within each parent: deck order within a topic and card order within a deck. Moves update parent membership and order while preserving entity IDs and card content. Duplicate sibling deck names warn; distinct IDs remain authoritative.
 
 Card `front` and `back` use the same restricted rich Markdown, HTML, image, URL, and math policy as quiz stems and rationales. `sources` uses the restricted source Markdown policy. The learner renders both faces using the shared sanitized Markdown renderer. Quiz `metadata.topic` remains free text and is not a foreign key to the flashcard hierarchy.
 
-## Bulk JSON
-
-Bulk adds are content-only: a deck takes `{ "cards": [...] }` and a topic takes `{ "decks": [...] }` ([content management](content-management.md#editor-workflow)). The editor rejects unknown fields, IDs, parent references, nulls, blank required text and invalid Markdown with JSON-path diagnostics, then previews the ordered candidate before the server reserves IDs.
-
-## PostgreSQL mapping
-
-Tables `subjects`, `topics`, `decks` and `flashcards` carry `release_id` and a zero-based global `position`; composite keys keep relationships inside one paired release, and finalized rows are immutable ([ADR 0005](decisions/0005-paired-content-releases-and-postgres-schema.md)). Learner checkpoints are not content: they are stored separately in browser progress under `meducation.flashcards.progress.v2` with a SHA-256 content signature and opened and flagged card IDs, and are never written into this bank.
-
-## Validation
-
-Validate a fresh selected database export with `validate-export`; `npm run validate:content -- <quiz-file> <flashcard-file>` checks only an explicitly selected pair and its shared-topic references.
+Bulk-add JSON is described in [content management](content-management.md#editor-workflow). Learner checkpoints are not content; they live in browser progress and are never written into this bank.

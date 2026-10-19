@@ -38,7 +38,7 @@ class AuthSettings(BaseSettings):
     def safety(self) -> AuthSettings:
         if not self.enabled:
             return self
-        # No provider assurance adapter has passed the ADR0004 tenant/fresh-factor gate.
+        # No provider assurance adapter has passed tenant/fresh-factor acceptance yet.
         if self.environment != "local" or self.adapter != "synthetic":
             raise ValueError(
                 "Production admin adapter is disabled pending provider assurance acceptance."

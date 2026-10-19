@@ -44,7 +44,7 @@ The application must not call an LLM at runtime. Rationales, explanations and me
 
 ### Stable IDs
 
-Question, quiz, subject, deck, card and attempt IDs never change once established.
+Question, quiz, subject, topic, deck, card and attempt IDs never change once established.
 
 ## Copy
 
