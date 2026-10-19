@@ -20,7 +20,7 @@ export interface QuestionNavigationItem {
 export function questionNavigationItems(questions: Question[], attempt: Attempt, revealAnswers = false): QuestionNavigationItem[] {
   return questions.map((question, index) => {
     const response = attempt.responses[question.id];
-    const graded = (attempt.feedbackMode === 'immediate' || revealAnswers) && response?.selectedChoiceId && (revealAnswers || response.locked) && !question.rationaleMeta?.answerReviewNote;
+    const graded = (attempt.feedbackMode === 'immediate' || revealAnswers) && response?.selectedChoiceId && (revealAnswers || response.locked);
     const correct = graded ? isCorrect(question, response.selectedChoiceId) : undefined;
     return {
       index,

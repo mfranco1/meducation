@@ -131,19 +131,11 @@ def inspect_export(directory: Path, *, repository: Path, audit: bool = False) ->
                 "withSources": sum(
                     bool(q.get("rationaleMeta", {}).get("sources")) for q in questions
                 ),
-                "aiReviewed": sum(
-                    q.get("rationaleMeta", {}).get("provenance") == "ai_draft_reviewed"
-                    for q in questions
-                ),
-                "answersUnderReview": sum(
-                    bool(q.get("rationaleMeta", {}).get("answerReviewNote")) for q in questions
-                ),
                 "rows": [
                     {
                         "id": q["id"],
                         "quizId": q["quizId"],
                         "rationaleLength": len(q["rationale"]),
-                        "provenance": q.get("rationaleMeta", {}).get("provenance"),
                         "hasSources": bool(q.get("rationaleMeta", {}).get("sources")),
                     }
                     for q in questions

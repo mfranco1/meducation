@@ -8,7 +8,7 @@ from meducation_api.repositories.question_bank import Bank
 @pytest.fixture
 def bank_data() -> dict:
     return {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "subjects": [{"id": "s1", "name": "Subject", "accent": "#123456"}],
         "topics": [{"id": "t1", "subjectId": "s1", "name": "Topic"}],
         "quizzes": [{"id": "q1", "topicId": "t1", "name": "Quiz"}],
@@ -21,8 +21,7 @@ def bank_data() -> dict:
                     {"id": "A", "text": "One"},
                     {"id": "B", "text": "Two"},
                 ],
-                "answer": "A",
-                "verifiedAnswer": "B",
+                "answer": "B",
                 "rationale": "Explanation",
             }
         ],
@@ -35,11 +34,11 @@ def bank_input(bank_data):
 
 
 def test_bank_rejects_invalid_version_and_answer(bank_data: dict) -> None:
-    wrong_version = {**bank_data, "schemaVersion": 4}
+    wrong_version = {**bank_data, "schemaVersion": 5}
     with pytest.raises(ValueError, match="Unsupported question bank schema"):
         Bank.model_validate(wrong_version)
     wrong_answer = {**bank_data, "questions": [{**bank_data["questions"][0], "answer": "Z"}]}
-    with pytest.raises(ValueError, match="unknown provided answer"):
+    with pytest.raises(ValueError, match="unknown answer"):
         Bank.model_validate(wrong_answer)
 
 
@@ -65,7 +64,7 @@ def test_content_api_and_revision_conflicts(bank_input: dict) -> None:
         assert quizzes.json()["quizzes"][0]["questionIds"] == ["i1"]
         questions = client.get(f"/api/v1/quizzes/q1/questions?revision={revision}")
         api_question = questions.json()["questions"][0]
-        assert api_question["verifiedAnswer"] == "B"
+        assert api_question["answer"] == "B"
         assert "metadata" not in api_question
         assert client.get("/api/v1/quizzes/q-missing/questions").status_code == 404
         assert client.get("/api/v1/subjects?revision=stale").status_code == 409
@@ -124,7 +123,6 @@ def test_sparse_nested_metadata_is_preserved_in_api_response(
         question = client.get("/api/v1/quizzes/q1/questions").json()["questions"][0]
         assert question["rationaleMeta"] == {"sources": "Reference"}
         assert question["metadata"] == {"topic": "Anatomy"}
-        assert "answerNote" not in question
 
 
 @pytest.mark.parametrize(

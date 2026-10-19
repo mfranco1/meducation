@@ -11,16 +11,13 @@ const fields: Record<RecordKind, readonly string[]> = {
   topic: ['name', 'description'],
   quiz: ['name', 'description'],
   deck: ['name', 'description'],
-  card: ['front', 'back', 'sources', 'reviewNote'],
+  card: ['front', 'back', 'sources'],
   question: [
     'stem',
     'choices',
     'answer',
-    'verifiedAnswer',
-    'answerNote',
     'rationale',
     'rationaleMeta',
-    'choiceExplanations',
     'pearls',
     'metadata',
   ],
@@ -45,11 +42,11 @@ export function readRecordDraft(text: string, kind: RecordKind): DraftRecord | u
     if (required.some((field) => typeof row[field] !== 'string')) return;
     const strings =
       kind === 'card'
-        ? ['sources', 'reviewNote']
+        ? ['sources']
         : kind === 'deck' || kind === 'subject' || kind === 'topic' || kind === 'quiz'
           ? ['description']
           : kind === 'question'
-            ? ['answer', 'verifiedAnswer', 'answerNote']
+            ? ['answer']
             : [];
     if (strings.some((field) => Object.hasOwn(row, field) && typeof row[field] !== 'string')) return;
     if (kind === 'question') {
@@ -61,7 +58,7 @@ export function readRecordDraft(text: string, kind: RecordKind): DraftRecord | u
       )
         return;
       if (new Set(row.choices.map((choice) => choice.id)).size !== row.choices.length) return;
-      for (const field of ['metadata', 'rationaleMeta', 'choiceExplanations']) {
+      for (const field of ['metadata', 'rationaleMeta']) {
         if (Object.hasOwn(row, field) && !isDraftObject(row[field])) return;
       }
       if (row.pearls !== undefined && (!Array.isArray(row.pearls) || row.pearls.some((v) => typeof v !== 'string')))
@@ -83,12 +80,10 @@ export function readRecordDraft(text: string, kind: RecordKind): DraftRecord | u
       const rationaleMeta = row.rationaleMeta as DraftRecord | undefined;
       if (
         rationaleMeta &&
-        ['sources', 'answerReviewNote', 'provenance', 'reviewedAt', 'reviewNote'].some(
-          (field) => Object.hasOwn(rationaleMeta, field) && typeof rationaleMeta[field] !== 'string',
-        )
+        Object.hasOwn(rationaleMeta, 'sources') &&
+        typeof rationaleMeta.sources !== 'string'
       )
         return;
-      if (row.choiceExplanations && Object.values(row.choiceExplanations).some((v) => typeof v !== 'string')) return;
     }
     return row;
   } catch {
@@ -100,11 +95,10 @@ export function patchRecordDraft(
   kind: RecordKind,
   field: string,
   value: unknown,
-  existing = false,
 ): string {
   const row = readRecordDraft(text, kind);
   if (!row) throw new Error('Keep editing the JSON draft before using the form.');
-  if (!fields[kind].includes(field) || (existing && field === 'answer'))
+  if (!fields[kind].includes(field))
     throw new Error(
       'This field is read-only in the form. Use deliberate advanced JSON editing for source corrections.',
     );
@@ -116,7 +110,7 @@ export function patchRecordDraft(
 }
 export function patchNestedDraft(
   text: string,
-  field: 'metadata' | 'rationaleMeta' | 'choiceExplanations',
+  field: 'metadata' | 'rationaleMeta',
   key: string,
   value: unknown,
 ): string {
@@ -159,18 +153,8 @@ export function removeDraftChoice(text: string, index: number): string {
   const row = readRecordDraft(text, 'question');
   const choices = row?.choices as DraftChoice[] | undefined;
   const choice = choices?.[index];
-  if (
-    !row ||
-    !choices ||
-    !choice ||
-    choices.length <= 2 ||
-    row.answer === choice.id ||
-    row.verifiedAnswer === choice.id
-  )
-    throw new Error('Keep at least two choices and retain every referenced answer choice.');
-  const explanations = row.choiceExplanations as DraftRecord | undefined;
-  if (explanations && Object.hasOwn(explanations, choice.id))
-    throw new Error('Remove the choice explanation explicitly before removing this choice.');
+  if (!row || !choices || !choice || choices.length <= 2 || row.answer === choice.id)
+    throw new Error('Keep at least two choices and retain the answer choice.');
   return patchRecordDraft(
     text,
     'question',

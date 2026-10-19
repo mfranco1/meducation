@@ -7,8 +7,8 @@ import { QuizReviewScreen } from './QuizReviewScreen';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
-  { id: 'q1', quizId: quiz.id, stem: 'First question', choices: [{ id: 'A', text: 'Wrong' }, { id: 'B', text: 'Right' }], verifiedAnswer: 'B', rationale: 'Why B is right.', metadata: {} },
-  { id: 'q2', quizId: quiz.id, stem: 'Second question', choices: [{ id: 'A', text: 'Answer' }], verifiedAnswer: 'A', rationale: 'Why A is right.', metadata: {} },
+  { id: 'q1', quizId: quiz.id, stem: 'First question', choices: [{ id: 'A', text: 'Wrong' }, { id: 'B', text: 'Right' }], answer: 'B', rationale: 'Why B is right.', metadata: {} },
+  { id: 'q2', quizId: quiz.id, stem: 'Second question', choices: [{ id: 'A', text: 'Answer' }], answer: 'A', rationale: 'Why A is right.', metadata: {} },
 ];
 const attempt: CompletedAttempt = {
   id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: 'now', completedAt: 'later',

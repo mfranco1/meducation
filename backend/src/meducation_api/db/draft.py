@@ -18,8 +18,8 @@ from sqlalchemy import Connection, text
 from meducation_api.content_policy import artifact_text
 from meducation_api.db.engine import ContentDatabaseError
 
-QUIZ_SCHEMA = 5
-FLASHCARD_SCHEMA = 3
+QUIZ_SCHEMA = 6
+FLASHCARD_SCHEMA = 4
 
 
 @dataclass(frozen=True)
@@ -109,11 +109,8 @@ KINDS: dict[str, Kind] = {
                 ("stem", "stem", False),
                 ("choices", "choices", True),
                 ("answer", "answer", False),
-                ("verifiedAnswer", "verified_answer", False),
-                ("answerNote", "answer_note", False),
                 ("rationale", "rationale", False),
                 ("rationaleMeta", "rationale_meta", True),
-                ("choiceExplanations", "choice_explanations", True),
                 ("pearls", "pearls", True),
                 ("metadata", "metadata", True),
             ),
@@ -142,7 +139,6 @@ KINDS: dict[str, Kind] = {
                 ("front", "front", False),
                 ("back", "back", False),
                 ("sources", "sources", False),
-                ("reviewNote", "review_note", False),
             ),
         ),
     )

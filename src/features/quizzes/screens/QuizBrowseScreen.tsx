@@ -3,7 +3,6 @@ import { useRef, useState } from 'react';
 import { answerFor } from '../../../domain/quizEngine';
 import type { Question, Quiz } from '../../../domain/types';
 import { FeedbackPanel } from '../components/feedback/FeedbackPanel';
-import { ChoiceExplanations } from '../components/feedback/ChoiceExplanations';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
 import { SwapTransition } from '../../../shared/ui/transitions/SwapTransition';
@@ -38,11 +37,10 @@ export function QuizBrowseScreen({ index, questions, onNavigate, onDone }: QuizB
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <SwapTransition swapKey={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
           <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
-          <ReadOnlyChoiceList question={question} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} answerUnderReview={Boolean(question.rationaleMeta?.answerReviewNote)} mode="browse" />
+          <ReadOnlyChoiceList question={question} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} mode="browse" />
           {!hasCorrectChoice
             ? <FeedbackPanel question={question} readOnlyStatus="unavailable" />
             : <FeedbackPanel question={question} selectedChoiceId={correctAnswer} />}
-          <ChoiceExplanations question={question} />
         </CardContent></Card></SwapTransition>
         <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onDone} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>

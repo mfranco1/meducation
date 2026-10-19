@@ -1,25 +1,18 @@
-export type Difficulty = 'easy' | 'medium' | 'hard' | 'unknown';
-export type RationaleProvenance = 'source_migrated' | 'ai_draft_reviewed';
+export type Difficulty = 'easy' | 'medium' | 'hard';
 export type FeedbackMode = 'immediate' | 'exam';
 export type StreakMilestone = 3 | 5 | 10 | 25 | 50;
 
 export interface Choice { id: string; text: string }
 export interface QuestionMetadata { topic?: string; subtopic?: string; system?: string; difficulty?: Difficulty; questionType?: string; tags?: string[] }
-export interface RationaleMetadata {
-  sources?: string;
-  answerReviewNote?: string;
-  provenance?: RationaleProvenance;
-  reviewedAt?: string;
-  reviewNote?: string;
-}
+export interface RationaleMetadata { sources?: string }
 export interface Question {
   id: string; quizId: string; stem: string; choices: Choice[];
-  answer?: string; verifiedAnswer?: string; answerNote?: string;
-  rationale: string; rationaleMeta?: RationaleMetadata; choiceExplanations?: Record<string, string>; pearls?: string[]; metadata: QuestionMetadata;
+  answer: string;
+  rationale: string; rationaleMeta?: RationaleMetadata; pearls?: string[]; metadata: QuestionMetadata;
 }
 export interface Subject { id: string; name: string; accent: string; description?: string }
 export interface Topic { id: string; subjectId: string; name: string; description?: string }
-export interface FlashcardCard { id: string; deckId: string; front: string; back: string; sources?: string; reviewNote?: string }
+export interface FlashcardCard { id: string; deckId: string; front: string; back: string; sources?: string }
 export interface Quiz { id: string; subjectId: string; topicId: string; name: string; description?: string; questionCount: number; questionIds?: string[] }
 export interface QuestionResponse { questionId: string; selectedChoiceId?: string; flagged: boolean; locked: boolean; timeMs: number }
 export interface CelebrationProgress { correctStreak: number; awardedStreakMilestones: StreakMilestone[] }

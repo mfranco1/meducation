@@ -107,7 +107,7 @@ class FixtureContentSource:
     def __init__(self, quizzes, flashcards=None, *, questions=None):
         self.quizzes = copy.deepcopy(quizzes)
         self.flashcards = copy.deepcopy(
-            flashcards if flashcards is not None else {"schemaVersion": 3, "decks": [], "cards": []}
+            flashcards if flashcards is not None else {"schemaVersion": 4, "decks": [], "cards": []}
         )
         self.questions = questions
         self._view = None

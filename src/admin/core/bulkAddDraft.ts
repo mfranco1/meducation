@@ -11,16 +11,7 @@ export interface BulkAddItemDraft {
   choices: string[];
   answer: string;
   rationale: string;
-  verifiedAnswer?: string;
-  answerNote?: string;
-  rationaleMeta?: {
-    sources?: string;
-    answerReviewNote?: string;
-    provenance?: 'source_migrated' | 'ai_draft_reviewed';
-    reviewedAt?: string;
-    reviewNote?: string;
-  };
-  choiceExplanations?: Record<string, string>;
+  rationaleMeta?: { sources?: string };
   pearls?: string[];
   metadata?: {
     topic?: string;
@@ -47,10 +38,11 @@ type JsonObject = Record<string, unknown>;
 const isObject = (value: unknown): value is JsonObject => typeof value === 'object' && value !== null && !Array.isArray(value);
 const isString = (value: unknown): value is string => typeof value === 'string';
 const nonEmptyString = (value: unknown) => isString(value) && Boolean(value.trim());
+/** A blank description is left unset so an untouched template stores nothing. */
+const optionalDescription = (value: unknown) => (isString(value) && value.trim() ? { description: value } : {});
 const choiceLabel = (index: number) => String.fromCharCode(65 + index);
 
-const itemKeys = ['stem', 'choices', 'answer', 'rationale', 'verifiedAnswer', 'answerNote', 'rationaleMeta', 'choiceExplanations', 'pearls', 'metadata'];
-const metaKeys = ['sources', 'answerReviewNote', 'provenance', 'reviewedAt', 'reviewNote'];
+const itemKeys = ['stem', 'choices', 'answer', 'rationale', 'rationaleMeta', 'pearls', 'metadata'];
 const metadataKeys = ['topic', 'subtopic', 'system', 'difficulty', 'questionType', 'tags'];
 
 function parseItem(value: unknown, path: string): { item?: BulkAddItemDraft; errors: string[] } {
@@ -63,27 +55,15 @@ function parseItem(value: unknown, path: string): { item?: BulkAddItemDraft; err
   }
   const labels = Array.isArray(value.choices) ? value.choices.map((_, index) => choiceLabel(index)) : [];
   if (!isString(value.answer) || !labels.includes(value.answer)) errors.push(`${path}.answer must be one of the generated choice labels: ${labels.join(', ')}.`);
-  if (value.verifiedAnswer !== undefined && (!isString(value.verifiedAnswer) || !labels.includes(value.verifiedAnswer))) errors.push(`${path}.verifiedAnswer must reference a generated choice label.`);
-  if (value.answerNote !== undefined && !isString(value.answerNote)) errors.push(`${path}.answerNote must be a string.`);
 
   if (value.rationaleMeta !== undefined) {
     if (!isObject(value.rationaleMeta)) errors.push(`${path}.rationaleMeta must be an object.`);
     else {
-      for (const key of Object.keys(value.rationaleMeta)) if (!metaKeys.includes(key)) errors.push(`${path}.rationaleMeta.${key} is not an editable rationale field.`);
-      for (const key of ['sources', 'answerReviewNote', 'reviewedAt', 'reviewNote'] as const) {
-        if (value.rationaleMeta[key] !== undefined && !isString(value.rationaleMeta[key])) errors.push(`${path}.rationaleMeta.${key} must be a string.`);
-      }
-      if (value.rationaleMeta.provenance !== undefined && value.rationaleMeta.provenance !== 'source_migrated' && value.rationaleMeta.provenance !== 'ai_draft_reviewed') errors.push(`${path}.rationaleMeta.provenance is unsupported.`);
+      for (const key of Object.keys(value.rationaleMeta)) if (key !== 'sources') errors.push(`${path}.rationaleMeta.${key} is not an editable rationale field.`);
+      if (value.rationaleMeta.sources !== undefined && !isString(value.rationaleMeta.sources)) errors.push(`${path}.rationaleMeta.sources must be a string.`);
     }
   }
 
-  if (value.choiceExplanations !== undefined) {
-    if (!isObject(value.choiceExplanations)) errors.push(`${path}.choiceExplanations must be an object keyed by generated choice labels.`);
-    else for (const [key, explanation] of Object.entries(value.choiceExplanations)) {
-      if (!labels.includes(key)) errors.push(`${path}.choiceExplanations.${key} does not match a generated choice label.`);
-      if (!isString(explanation)) errors.push(`${path}.choiceExplanations.${key} must be a string.`);
-    }
-  }
   if (value.pearls !== undefined && (!Array.isArray(value.pearls) || !value.pearls.every(isString))) errors.push(`${path}.pearls must be an array of strings.`);
 
   if (value.metadata !== undefined) {
@@ -113,7 +93,7 @@ function parseQuizzes(value: unknown, path: string): { quizzes?: BulkAddQuizDraf
     if (!Array.isArray(candidate.items) || !candidate.items.length) { errors.push(`${quizPath}.items must be a non-empty array.`); return; }
     const items = candidate.items.map((item, itemIndex) => parseItem(item, `${quizPath}.items[${itemIndex}]`));
     errors.push(...items.flatMap(result => result.errors));
-    if (items.every(result => result.item)) quizzes.push({ name: candidate.name as string, ...(candidate.description === undefined ? {} : { description: candidate.description as string }), items: items.map(result => result.item!) });
+    if (items.every(result => result.item)) quizzes.push({ name: candidate.name as string, ...optionalDescription(candidate.description), items: items.map(result => result.item!) });
   });
   return errors.length ? { errors } : { quizzes, errors };
 }
@@ -140,7 +120,7 @@ export function parseBulkAddDraft(value: unknown, context: BulkAddContext): { dr
     const parsed = parseQuizzes(value.quizzes, '$.quizzes');
     errors.push(...parsed.errors);
     const topic = value.topic as JsonObject;
-    return errors.length ? { errors } : { draft: { topic: { name: topic.name as string, ...(topic.description === undefined ? {} : { description: topic.description as string }) }, quizzes: parsed.quizzes! }, errors };
+    return errors.length ? { errors } : { draft: { topic: { name: topic.name as string, ...optionalDescription(topic.description) }, quizzes: parsed.quizzes! }, errors };
   }
 
   for (const key of Object.keys(value)) if (key !== 'quizzes') errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
@@ -195,9 +175,9 @@ export function compileBulkAddDraft(
 export function bulkAddTemplate(context: BulkAddContext): BulkAddDraft {
   const item = { stem: '', choices: ['', ''], answer: 'A', rationale: '' };
   if (context.kind === 'newTopic') return {
-    topic: { name: '' },
-    quizzes: [{ name: '', items: [{ ...item }] }],
+    topic: { name: '', description: '' },
+    quizzes: [{ name: '', description: '', items: [{ ...item }] }],
   };
-  if (context.kind === 'topic') return { quizzes: [{ name: '', items: [{ ...item }] }] };
+  if (context.kind === 'topic') return { quizzes: [{ name: '', description: '', items: [{ ...item }] }] };
   return { items: [{ ...item }] };
 }

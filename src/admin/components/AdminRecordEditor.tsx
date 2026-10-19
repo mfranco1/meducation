@@ -139,8 +139,8 @@ export function AdminRecordEditor({
       setError(e instanceof Error ? e.message : 'This field could not be changed. Your draft is kept.');
     }
   };
-  const patch = (field: string, value: unknown) => apply(() => patchRecordDraft(text, kind, field, value, existing));
-  const nested = (field: 'metadata' | 'rationaleMeta' | 'choiceExplanations', key: string, value: unknown) =>
+  const patch = (field: string, value: unknown) => apply(() => patchRecordDraft(text, kind, field, value));
+  const nested = (field: 'metadata' | 'rationaleMeta', key: string, value: unknown) =>
     apply(() => patchNestedDraft(text, field, key, value));
   const input = (field: string, label: string, multiline = false) => (
     <TextField
@@ -171,7 +171,7 @@ export function AdminRecordEditor({
     />
   );
   const nestedString = (
-    field: 'metadata' | 'rationaleMeta' | 'choiceExplanations',
+    field: 'metadata' | 'rationaleMeta',
     key: string,
     label: string,
     options?: string[],
@@ -211,8 +211,7 @@ export function AdminRecordEditor({
       {active === 'json' && (
         <>
           <Typography variant="caption" color="text.secondary">
-            Advanced source editing. Preserve stable IDs and original answer keys; document intentional corrections in
-            the change reason and provenance notes.
+            Advanced source editing. Preserve stable IDs.
           </Typography>
           <TextField
             label="JSON"
@@ -262,7 +261,6 @@ export function AdminRecordEditor({
               {input('front', 'Front', true)}
               {input('back', 'Back', true)}
               {optional('sources', 'Sources')}
-              {optional('reviewNote', 'Review note')}
             </>
           )}
           {kind === 'question' && (
@@ -298,12 +296,7 @@ export function AdminRecordEditor({
                     <Button
                       size="small"
                       color="inherit"
-                      disabled={
-                        choices.length <= 2 ||
-                        record.answer === choice.id ||
-                        record.verifiedAnswer === choice.id ||
-                        Object.hasOwn((record.choiceExplanations ?? {}) as object, choice.id)
-                      }
+                      disabled={choices.length <= 2 || record.answer === choice.id}
                       onClick={() => apply(() => removeDraftChoice(text, index))}
                     >
                       Remove choice {choice.id}
@@ -312,8 +305,7 @@ export function AdminRecordEditor({
                 </Stack>
               ))}
               <Typography variant="caption">
-                Referenced answer choices and choices with explanations must be retained until those references are
-                explicitly changed.
+                The answer choice must be retained until the answer is changed.
               </Typography>
               <Stack spacing={1}>
                 <TextField
@@ -333,73 +325,24 @@ export function AdminRecordEditor({
                   Add choice
                 </Button>
               </Stack>
-              {existing ? (
-                <TextField
-                  label="Source answer"
-                  value={record.answer ?? 'Not provided'}
-                  slotProps={{ input: { readOnly: true } }}
-                  helperText="Original key · use verified answer for a reviewed correction."
-                />
-              ) : (
-                <TextField
-                  select
-                  label="Source answer"
-                  value={record.answer ?? ''}
-                  onChange={(event) => patch('answer', event.target.value || undefined)}
-                >
-                  <MenuItem value="">Not provided</MenuItem>
-                  {choices?.map((choice) => (
-                    <MenuItem key={choice.id} value={choice.id}>
-                      {choice.id}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              )}
               <TextField
                 select
-                label="Verified answer"
-                value={record.verifiedAnswer ?? ''}
-                onChange={(event) => patch('verifiedAnswer', event.target.value || undefined)}
-                helperText="Runtime scoring uses the verified answer when present."
+                required
+                label="Answer"
+                value={record.answer ?? ''}
+                onChange={(event) => patch('answer', event.target.value)}
               >
-                <MenuItem value="">No verified answer</MenuItem>
-                {[
-                  ...new Set([
-                    ...(choices?.map((choice) => choice.id) ?? []),
-                    ...(typeof record.verifiedAnswer === 'string' ? [record.verifiedAnswer] : []),
-                  ]),
-                ].map((id) => (
-                  <MenuItem key={id} value={id}>
-                    {id}
+                {choices?.map((choice) => (
+                  <MenuItem key={choice.id} value={choice.id}>
+                    {choice.id}
                   </MenuItem>
                 ))}
               </TextField>
               {input('rationale', 'Rationale', true)}
+              {nestedString('rationaleMeta', 'sources', 'Sources')}
               <Box component="details">
-                <summary>Answer review and rationale provenance</summary>
+                <summary>Pearls</summary>
                 <Stack spacing={2} sx={{ pt: 2 }}>
-                  {optional('answerNote', 'Answer note')}
-                  {nestedString('rationaleMeta', 'answerReviewNote', 'Answer review note')}
-                  {nestedString('rationaleMeta', 'sources', 'Sources')}
-                  {nestedString('rationaleMeta', 'provenance', 'Rationale provenance', [
-                    'source_migrated',
-                    'ai_draft_reviewed',
-                  ])}
-                  {nestedString('rationaleMeta', 'reviewedAt', 'Reviewed at')}
-                  {nestedString('rationaleMeta', 'reviewNote', 'Rationale review note')}
-                </Stack>
-              </Box>
-              <Box component="details">
-                <summary>Choice explanations and pearls</summary>
-                <Stack spacing={2} sx={{ pt: 2 }}>
-                  {[
-                    ...new Set([
-                      ...(choices?.map((choice) => choice.id) ?? []),
-                      ...Object.keys((record.choiceExplanations ?? {}) as object),
-                    ]),
-                  ].map((id) => (
-                    <Box key={id}>{nestedString('choiceExplanations', id, `Explanation for choice ${id}`)}</Box>
-                  ))}
                   <StringList
                     label="Pearl"
                     values={record.pearls as string[] | undefined}
@@ -419,7 +362,7 @@ export function AdminRecordEditor({
                       )}
                     </Box>
                   ))}
-                  {nestedString('metadata', 'difficulty', 'Difficulty', ['easy', 'medium', 'hard', 'unknown'])}
+                  {nestedString('metadata', 'difficulty', 'Difficulty', ['easy', 'medium', 'hard'])}
                   <StringList
                     label="Tag"
                     values={(record.metadata as DraftRecord | undefined)?.tags as string[] | undefined}

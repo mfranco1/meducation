@@ -47,8 +47,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 
 ## Behavioral invariants to keep covered
 
-- Authored text, choice order, IDs, optional-field presence and source/verified answers survive every round trip (save, publish, export).
-- Verified answers take precedence at scoring; source answers are never overwritten.
+- Authored text, choice order, IDs, optional-field presence and answers survive every round trip (save, publish, export).
 - Progress reads use only current v2 keys; malformed stored state is preserved and surfaced; failed writes never advance to a success screen; a stale tab must reload.
 - Changed content never silently resumes an old attempt or checkpoint.
 - Backup restore replaces both progress stores and restores both original values if a write fails.

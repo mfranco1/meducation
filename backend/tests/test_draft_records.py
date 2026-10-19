@@ -222,6 +222,89 @@ def test_migration_0009_groups_existing_content_into_topics(db):
         assert [d["topicId"] for d in decks] == ["t2"]
 
 
+PRE_0011_QUIZ = {
+    "schemaVersion": 5,
+    "subjects": [{"id": "s1", "name": "Anatomy", "accent": "#123456"}],
+    "topics": [{"id": "t1", "subjectId": "s1", "name": "Nerves"}],
+    "quizzes": [{"id": "q1", "topicId": "t1", "name": "Quiz"}],
+    "questions": [
+        {
+            "id": "i1",
+            "quizId": "q1",
+            "stem": "Stem",
+            "choices": [{"id": "A", "text": "One"}, {"id": "B", "text": "Two"}],
+            "answer": "A",
+            "rationale": "Because.",
+        }
+    ],
+}
+
+
+def test_migration_0011_simplifies_draft_answers_and_retires_old_releases(db):
+    to_revision(db, "0010_descriptions")
+    from meducation_api.content_policy import artifact_text
+    from meducation_api.db.operations import activate_release
+
+    with db.operator.begin() as connection:
+        release_id = connection.execute(
+            text("SELECT content.store_release(:op,:q,:f,CAST(:h AS jsonb),:a,:r)"),
+            {
+                "op": uuid4(),
+                "q": artifact_text(PRE_0011_QUIZ),
+                "f": artifact_text({"schemaVersion": 3, "decks": [], "cards": []}),
+                "h": json.dumps({"quiz": "0" * 64, "flashcard": "0" * 64}),
+                "a": ACTOR,
+                "r": REASON,
+            },
+        ).scalar_one()["release_id"]
+    choices = json.dumps(PRE_0011_QUIZ["questions"][0]["choices"])
+    rows = (
+        # id, answer, verified_answer, rationale_meta, field_order
+        ("i1", None, "B", {"sources": "S", "provenance": "source_migrated"}, ["id", "verifiedAnswer"]),
+        ("i2", "A", None, {"answerReviewNote": "Disputed"}, None),
+        ("i3", "A", None, {"provenance": "source_migrated"}, None),
+    )
+    with db.migrator.begin() as connection:
+        connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
+        connection.exec_driver_sql(
+            "INSERT INTO content.draft_subjects(id,position,name,accent) VALUES('s1',0,'Anatomy','#123456');"
+            "INSERT INTO content.draft_topics(id,position,subject_id,name) VALUES('t1',0,'s1','Nerves');"
+            "INSERT INTO content.draft_quizzes(id,position,topic_id,name) VALUES('q1',0,'t1','Quiz')"
+        )
+        for n, (rid, answer, verified, meta, order) in enumerate(rows):
+            connection.execute(
+                text(
+                    "INSERT INTO content.draft_questions(id,position,field_order,quiz_id,stem,choices,"
+                    "answer,verified_answer,rationale,rationale_meta) VALUES(:id,:n,:order,'q1','Stem',"
+                    "CAST(:choices AS json),:answer,:verified,'Because.',CAST(:meta AS json))"
+                ),
+                {
+                    "id": rid, "n": n, "order": order, "choices": choices, "answer": answer,
+                    "verified": verified, "meta": json.dumps(meta),
+                },
+            )
+
+    upgrade(db.migrator)
+
+    with db.backup.connect() as connection:
+        found = connection.execute(
+            text("SELECT id,answer,rationale_meta,field_order,version FROM content.draft_questions ORDER BY position")
+        ).all()
+    assert [tuple(row) for row in found] == [
+        ("i1", "B", {"sources": "S"}, ["id"], 2),
+        ("i3", "A", None, None, 2),
+    ]
+    with pytest.raises(ContentDatabaseError), db.operator.begin() as connection:
+        activate_release(
+            connection,
+            operation_id=uuid4(),
+            release_id=release_id,
+            expected_sequence=0,
+            actor=ACTOR,
+            reason=REASON,
+        )
+
+
 # HTTP helpers -------------------------------------------------------------------------
 
 
@@ -348,21 +431,20 @@ def test_crud_for_every_kind_records_changes_and_bumps_versions(db, editor):
             "/draft/questions/" + question["id"],
             {
                 "expectedVersion": 1,
-                "fields": {"verifiedAnswer": "A", "answerNote": "Checked", "stem": "Edited"},
+                "fields": {"answer": "A", "stem": "Edited", "pearls": ["P"]},
             },
         )
     )
     record = updated["record"]
-    assert record["version"] == 2 and record["stem"] == "Edited" and record["answer"] == "B"
+    assert record["version"] == 2 and record["stem"] == "Edited" and record["answer"] == "A"
     assert list(record) == [
         "id",
         "quizId",
         "stem",
         "choices",
         "answer",
-        "verifiedAnswer",
-        "answerNote",
         "rationale",
+        "pearls",
         "version",
     ]
     removed = ok(
@@ -370,10 +452,10 @@ def test_crud_for_every_kind_records_changes_and_bumps_versions(db, editor):
             client,
             "PUT",
             "/draft/questions/" + question["id"],
-            {"expectedVersion": 2, "fields": {"answerNote": None}},
+            {"expectedVersion": 2, "fields": {"pearls": None}},
         )
     )
-    assert "answerNote" not in removed["record"] and removed["record"]["version"] == 3
+    assert "pearls" not in removed["record"] and removed["record"]["version"] == 3
     same = ok(
         call(
             client,
@@ -388,7 +470,7 @@ def test_crud_for_every_kind_records_changes_and_bumps_versions(db, editor):
         ("topics", topic["id"], {"name": "Renamed"}),
         ("quizzes", quiz["id"], {"name": "Renamed"}),
         ("decks", deck["id"], {"description": None}),
-        ("cards", card["id"], {"sources": "Src", "reviewNote": "R"}),
+        ("cards", card["id"], {"sources": "Src"}),
     ):
         result = ok(
             call(client, "PUT", f"/draft/{kind}/{rid}", {"expectedVersion": 1, "fields": fields})
@@ -686,7 +768,6 @@ def test_publish_activates_new_release_served_to_learners_and_unchanged_is_noop(
                     "expectedVersion": 1,
                     "fields": {
                         "stem": "Published stem",
-                        "choiceExplanations": None,
                         "pearls": None,
                     },
                 },
@@ -775,8 +856,8 @@ def test_publish_runs_full_validation(db, editor):
         ),
         (
             "/draft/questions",
-            {"parentId": "q1", "fields": {**QUESTION, "choiceExplanations": {"Z": "x"}}},
-            "stored_contract",
+            {"parentId": "q1", "fields": {**QUESTION, "verifiedAnswer": "A"}},
+            "unknown_field",
         ),
         (
             "/draft/questions",

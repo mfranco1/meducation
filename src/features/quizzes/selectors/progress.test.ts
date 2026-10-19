@@ -9,8 +9,8 @@ const bank: QuizRepository = {
     ? [{ id: 'q1', subjectId, topicId: 't1', name: 'One', questionCount: 2 }, { id: 'q2', subjectId, topicId: 't1', name: 'Two', questionCount: 1 }]
     : [{ id: 'q3', subjectId, topicId: 't1', name: 'Three', questionCount: 1 }],
   listQuestions: quizId => quizId === 'q1'
-    ? [{ id: 'i1', quizId, stem: '', choices: [], rationale: '', metadata: {} }, { id: 'i2', quizId, stem: '', choices: [], rationale: '', metadata: {} }]
-    : [{ id: 'i3', quizId, stem: '', choices: [], rationale: '', metadata: {} }],
+    ? [{ id: 'i1', quizId, stem: '', choices: [], answer: 'A', rationale: '', metadata: {} }, { id: 'i2', quizId, stem: '', choices: [], answer: 'A', rationale: '', metadata: {} }]
+    : [{ id: 'i3', quizId, stem: '', choices: [], answer: 'A', rationale: '', metadata: {} }],
 };
 
 const completed = (quizId: string, subjectId: string, percentage: number, completedAt: string): CompletedAttempt => ({

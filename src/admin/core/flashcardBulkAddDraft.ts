@@ -7,7 +7,6 @@ export interface FlashcardCardDraft {
   front: string;
   back: string;
   sources?: string;
-  reviewNote?: string;
 }
 
 export interface FlashcardDeckDraft {
@@ -31,7 +30,7 @@ const isObject = (value: unknown): value is JsonObject =>
 const isString = (value: unknown): value is string => typeof value === 'string';
 const nonBlank = (value: unknown): value is string => isString(value) && Boolean(value.trim());
 const onlyKeys = (value: JsonObject, keys: readonly string[]) => Object.keys(value).every((key) => keys.includes(key));
-const cardKeys = ['front', 'back', 'sources', 'reviewNote'] as const;
+const cardKeys = ['front', 'back', 'sources'] as const;
 
 function parseCard(
   value: unknown,
@@ -50,16 +49,13 @@ function parseCard(
     if (!nonBlank(value[field]))
       diagnostics.push({ level: 'error', path: `${path}.${field}`, message: 'must be a non-empty string.' });
   }
-  for (const field of ['sources', 'reviewNote'] as const) {
-    if (value[field] !== undefined && !isString(value[field]))
-      diagnostics.push({ level: 'error', path: `${path}.${field}`, message: 'must be a string when provided.' });
-  }
+  if (value.sources !== undefined && !isString(value.sources))
+    diagnostics.push({ level: 'error', path: `${path}.sources`, message: 'must be a string when provided.' });
   if (diagnostics.some((issue) => issue.level === 'error' && issue.path.startsWith(`${path}.`))) return undefined;
   return {
     front: value.front as string,
     back: value.back as string,
     ...(value.sources === undefined ? {} : { sources: value.sources as string }),
-    ...(value.reviewNote === undefined ? {} : { reviewNote: value.reviewNote as string }),
   };
 }
 
@@ -126,7 +122,7 @@ export function parseFlashcardBulkAddDraft(
       if (nonBlank(rawDeck.name) && (rawDeck.description === undefined || isString(rawDeck.description))) {
         decks.push({
           name: rawDeck.name,
-          ...(rawDeck.description === undefined ? {} : { description: rawDeck.description as string }),
+          ...(isString(rawDeck.description) && rawDeck.description.trim() ? { description: rawDeck.description } : {}),
           ...(cards === undefined ? {} : { cards }),
         });
       }
@@ -190,7 +186,7 @@ export function flashcardBulkAddTemplate(context: FlashcardBulkAddContext): stri
           decks: [
             {
               name: 'Deck name',
-              description: 'Optional description',
+              description: '',
               cards: [{ front: 'Question text', back: 'Answer text' }],
             },
           ],

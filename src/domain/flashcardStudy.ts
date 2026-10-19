@@ -24,7 +24,7 @@ async function sha256Text(value: string): Promise<string> {
 }
 
 function serializedStudyContent(cards: readonly FlashcardCard[]): string {
-  return JSON.stringify(cards.map(card => [card.id, card.front, card.back, card.sources ?? null, card.reviewNote ?? null]));
+  return JSON.stringify(cards.map(card => [card.id, card.front, card.back, card.sources ?? null]));
 }
 
 /** Compute once at launch: checkpoints contain a bounded digest, never copied card bodies. */

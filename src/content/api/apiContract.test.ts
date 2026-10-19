@@ -72,7 +72,7 @@ describe('API response boundary fixtures', () => {
     expect(isQuestionList(duplicate, 'q1', ['i1'])).toBe(false);
   });
 
-  it('rejects malformed nested metadata and incomplete review provenance', () => {
+  it('rejects malformed nested metadata and removed rationale fields', () => {
     const metadata = structuredClone(fixtures.questions) as unknown as Record<string, unknown>;
     const question = (metadata.questions as Record<string, unknown>[])[0];
     question.metadata = { tags: [2] };
@@ -86,9 +86,7 @@ describe('API response boundary fixtures', () => {
     const response = structuredClone(fixtures.questions) as unknown as Record<string, unknown>;
     const question = (response.questions as Record<string, unknown>[])[0];
     question.metadata = { topic: 'Anatomy', tags: ['reviewed'] };
-    question.rationaleMeta = {
-      provenance: 'ai_draft_reviewed', reviewedAt: '2026-10-02', reviewNote: 'Checked',
-    };
+    question.rationaleMeta = { sources: 'Reference' };
     expect(isQuestionList(response, 'q1', ['i1'])).toBe(true);
   });
 

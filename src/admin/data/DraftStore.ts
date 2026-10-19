@@ -29,14 +29,14 @@ export type StoredRecord = Versioned<
 export type Fields = Record<string, unknown>;
 
 export interface DraftQuizBank {
-  schemaVersion: 5;
+  schemaVersion: 6;
   subjects: Versioned<StoredSubject>[];
   topics: Versioned<StoredTopic>[];
   quizzes: Versioned<StoredQuiz>[];
   questions: Versioned<StoredQuestion>[];
 }
 export interface DraftFlashcardBank {
-  schemaVersion: 3;
+  schemaVersion: 4;
   decks: Versioned<StoredFlashcardDeck>[];
   cards: Versioned<StoredFlashcard>[];
 }
@@ -136,8 +136,8 @@ export class DraftStore {
   }
   private derive(): void {
     const { subjects, topics, quizzes, questions, decks, cards } = this.snapshot;
-    this.quizBank = { schemaVersion: 5, subjects, topics, quizzes, questions };
-    this.flashcardBank = { schemaVersion: 3, decks, cards };
+    this.quizBank = { schemaVersion: 6, subjects, topics, quizzes, questions };
+    this.flashcardBank = { schemaVersion: 4, decks, cards };
   }
   private install(snapshot: DraftSnapshot): void {
     this.snapshot = snapshot;

@@ -13,19 +13,16 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def pair():
     q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    f = {"schemaVersion": 3, "decks": [], "cards": []}
+    f = {"schemaVersion": 4, "decks": [], "cards": []}
     return q, f
 
 
-def test_artifacts_preserve_raw_field_order_omission_and_source_answers():
+def test_artifacts_preserve_raw_field_order_and_omission():
     q, f = pair()
-    q["questions"][0]["verifiedAnswer"] = "B"
-    q["questions"][0]["answerNote"] = ""
     output = paired_artifacts(json.dumps(q, ensure_ascii=False), json.dumps(f))
     assert output == tuple(json.dumps(v, ensure_ascii=False, indent=2) + "\n" for v in (q, f))
     stored = json.loads(output[0])["questions"][0]
-    assert stored["answer"] == "A" and stored["verifiedAnswer"] == "B"
-    assert stored["answerNote"] == "" and "metadata" not in stored
+    assert stored["answer"] == "B" and "metadata" not in stored
 
 
 @pytest.mark.parametrize(
@@ -44,7 +41,7 @@ def test_bad_pairs_fail_before_sql_without_exposing_content(mutate):
         q["questions"][0]["legacyHint"] = "invalid"
     text = json.dumps(q, ensure_ascii=False)
     if mutate == "duplicate":
-        text = text.replace('"schemaVersion": 5', '"schemaVersion": 5, "schemaVersion": 5', 1)
+        text = text.replace('"schemaVersion": 6', '"schemaVersion": 6, "schemaVersion": 6', 1)
     with pytest.raises(ContentDatabaseError) as error:
         paired_artifacts(text, json.dumps(f))
     assert "Private fixture text" not in str(error.value)

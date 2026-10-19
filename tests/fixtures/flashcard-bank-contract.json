@@ -8,7 +8,7 @@
     { "id": "t2", "subjectId": "s2", "name": "Topic Two" }
   ],
   "bank": {
-    "schemaVersion": 3,
+    "schemaVersion": 4,
     "decks": [
       { "id": "d-cranial", "topicId": "t1", "name": "Cranial nerves" },
       { "id": "d-empty", "topicId": "t1", "name": "No cards yet" }

@@ -45,10 +45,6 @@ class Choice(StoredModel):
 
 class RationaleMetadata(StoredModel):
     sources: str | None = None
-    answerReviewNote: str | None = None
-    provenance: Literal["source_migrated", "ai_draft_reviewed"] | None = None
-    reviewedAt: str | None = None
-    reviewNote: str | None = None
 
 
 class QuestionMetadata(StoredModel):
@@ -65,12 +61,9 @@ class Question(StoredModel):
     quizId: str
     stem: str
     choices: list[Choice]
-    answer: str | None = None
-    verifiedAnswer: str | None = None
-    answerNote: str | None = None
+    answer: str
     rationale: str
     rationaleMeta: RationaleMetadata | None = None
-    choiceExplanations: dict[str, str] | None = None
     pearls: list[str] | None = None
     metadata: QuestionMetadata | None = None
 
@@ -84,7 +77,7 @@ class Bank(StoredModel):
 
     @model_validator(mode="after")
     def validate_relationships(self) -> Bank:
-        if self.schemaVersion != 5:
+        if self.schemaVersion != 6:
             raise ValueError(f"Unsupported question bank schema version: {self.schemaVersion}")
         self._unique_ids("subject", [item.id for item in self.subjects])
         self._unique_ids("topic", [item.id for item in self.topics])
@@ -137,26 +130,8 @@ class Bank(StoredModel):
                 f"choice in question {question.id}", [item.id for item in question.choices]
             )
             choice_ids = {item.id for item in question.choices}
-            answer = question.verifiedAnswer or question.answer
-            if answer is None or answer not in choice_ids:
-                raise ValueError(f"Question {question.id} has no valid resolved answer.")
-            if question.answer is not None and question.answer not in choice_ids:
-                raise ValueError(f"Question {question.id} has an unknown provided answer.")
-            if question.verifiedAnswer is not None and question.verifiedAnswer not in choice_ids:
-                raise ValueError(f"Question {question.id} has an unknown verified answer.")
-            if question.choiceExplanations and not set(question.choiceExplanations).issubset(
-                choice_ids
-            ):
-                raise ValueError(
-                    f"Question {question.id} has an explanation for an unknown choice."
-                )
-            meta = question.rationaleMeta
-            if meta is not None and meta.provenance == "ai_draft_reviewed" and not (
-                meta.reviewedAt and meta.reviewNote
-            ):
-                raise ValueError(
-                    f"Question {question.id} has incomplete reviewed-draft provenance."
-                )
+            if question.answer not in choice_ids:
+                raise ValueError(f"Question {question.id} has an unknown answer.")
             metadata = question.metadata
             if metadata is not None and not any(
                 bool(value) for value in metadata.model_dump(exclude_none=True).values()
@@ -208,7 +183,6 @@ class Flashcard(StoredModel):
     front: str
     back: str
     sources: str | None = None
-    reviewNote: str | None = None
 
 
 class FlashcardBank(StoredModel):
@@ -218,7 +192,7 @@ class FlashcardBank(StoredModel):
 
     @model_validator(mode="after")
     def validate_relationships(self) -> FlashcardBank:
-        if self.schemaVersion != 3:
+        if self.schemaVersion != 4:
             raise ValueError(f"Unsupported flashcard bank schema version: {self.schemaVersion}")
         Bank._unique_ids("deck", [item.id for item in self.decks])
         Bank._unique_ids("flashcard", [item.id for item in self.cards])

@@ -1,8 +1,8 @@
 # Flashcard schema
 
-Defines the schema-v3 flashcard document stored in paired drafts and releases and written to deterministic `flashcardBank.json` exports. The shared subject and topic registry in the quiz document stays authoritative for deck references. Preserve exact strings, array order, omitted fields and server-reserved IDs.
+Defines the schema-v4 flashcard document stored in paired drafts and releases and written to deterministic `flashcardBank.json` exports. The shared subject and topic registry in the quiz document stays authoritative for deck references. Preserve exact strings, array order, omitted fields and server-reserved IDs.
 
-The PostgreSQL flashcard document and its deterministic `flashcardBank.json` exports use schema v3 with flat `decks` and `cards` arrays. Shared subject and topic records remain authoritative in the paired database quiz bank (represented in its deterministic `questionBank.json` export); flashcards refer to stable topic IDs and never copy subject or topic rows.
+The PostgreSQL flashcard document and its deterministic `flashcardBank.json` exports use schema v4 with flat `decks` and `cards` arrays. Shared subject and topic records remain authoritative in the paired database quiz bank (represented in its deterministic `questionBank.json` export); flashcards refer to stable topic IDs and never copy subject or topic rows.
 
 The relationship chain is `card.deckId → deck.topicId → topic.subjectId → subject.id`. A deck belongs to one topic, and a card belongs to one deck. Do not store repeated subject names, child ID arrays, or derived card counts in canonical records. Runtime summaries may derive parent details and counts.
 
@@ -22,11 +22,10 @@ interface StoredFlashcard {
   front: string;
   back: string;
   sources?: string;
-  reviewNote?: string;
 }
 
 interface StoredFlashcardBank {
-  schemaVersion: 3;
+  schemaVersion: 4;
   decks: StoredFlashcardDeck[];
   cards: StoredFlashcard[];
 }
@@ -36,7 +35,7 @@ IDs are immutable and never encode ordering. New authoring flows allocate IDs on
 
 Array order is canonical within each parent: deck order within a topic and card order within a deck. Moves update parent membership and order while preserving entity IDs and card content. Duplicate sibling deck names warn; distinct IDs remain authoritative.
 
-Card `front` and `back` use the same restricted rich Markdown, HTML, image, URL, and math policy as quiz stems and rationales. `sources` uses the restricted source Markdown policy. `reviewNote` is plain text. The learner renders both faces using the shared sanitized Markdown renderer. Quiz `metadata.topic` remains free text and is not a foreign key to the flashcard hierarchy.
+Card `front` and `back` use the same restricted rich Markdown, HTML, image, URL, and math policy as quiz stems and rationales. `sources` uses the restricted source Markdown policy. The learner renders both faces using the shared sanitized Markdown renderer. Quiz `metadata.topic` remains free text and is not a foreign key to the flashcard hierarchy.
 
 ## Bulk JSON
 

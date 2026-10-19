@@ -79,7 +79,7 @@ def db():
 def banks():
     q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
     f = {
-        "schemaVersion": 3,
+        "schemaVersion": 4,
         "decks": [
             {
                 "id": "dlegacy-X",
@@ -95,17 +95,13 @@ def banks():
                 "front": "**Front** $x^2$\n",
                 "back": "Back β",
                 "sources": "",
-                "reviewNote": "Review",
             }
         ],
     }
     q["questions"][0].update(
         {
-            "verifiedAnswer": "B",
-            "answerNote": "",
             "metadata": {"topic": "β", "tags": []},
             "pearls": [],
-            "choiceExplanations": {},
         }
     )
     return q, f
@@ -189,7 +185,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0010_descriptions"
+    assert migration_head() == "0011_simple_answers"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -215,10 +211,10 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0010_descriptions"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0011_simple_answers"
 
 
-def test_release_omission_provenance_order_and_digest(db):
+def test_release_omission_order_and_digest(db):
     release = store(db)
     qt, ft = artifacts()
     assert release.quiz_revision == "sha256-" + hashlib.sha256(qt.encode()).hexdigest()
@@ -231,7 +227,7 @@ def test_release_omission_provenance_order_and_digest(db):
     with db.backup.connect() as connection:
         rows = connection.execute(
             text(
-                "SELECT stem, choices, answer, verified_answer, answer_note, metadata, pearls FROM content.questions WHERE release_id=:id"
+                "SELECT stem, choices, answer, metadata, pearls FROM content.questions WHERE release_id=:id"
             ),
             {"id": release.release_id},
         ).one()
@@ -240,8 +236,6 @@ def test_release_omission_provenance_order_and_digest(db):
             question["stem"],
             question["choices"],
             question["answer"],
-            "B",
-            "",
             question["metadata"],
             [],
         )
@@ -510,7 +504,7 @@ def test_release_constraints_reject_invalid_pairs_without_events(db, mutate):
 def test_sql_boundary_rejects_duplicate_keys_and_noncanonical_artifacts(db):
     qt, ft = artifacts()
     for raw in [
-        qt.replace('"schemaVersion": 5', '"schemaVersion": 5, "schemaVersion": 5', 1),
+        qt.replace('"schemaVersion": 6', '"schemaVersion": 6, "schemaVersion": 6', 1),
         json.dumps(json.loads(qt)),
     ]:
         with pytest.raises(SQLAlchemyError), db.operator.begin() as connection:

@@ -133,7 +133,7 @@ export function isFlashcardList(
     return false;
   const cardIds: string[] = [];
   const cardsValid = value.cards.every((card: unknown) => {
-    if (!record(card) || !onlyKeys(card, ['id', 'deckId', 'front', 'back', 'sources', 'reviewNote'])) return false;
+    if (!record(card) || !onlyKeys(card, ['id', 'deckId', 'front', 'back', 'sources'])) return false;
     if (
       !nonempty(card.id) ||
       !/^f[a-zA-Z0-9-]+$/.test(card.id) ||
@@ -143,7 +143,6 @@ export function isFlashcardList(
     )
       return false;
     if (card.sources !== undefined && typeof card.sources !== 'string') return false;
-    if (card.reviewNote !== undefined && typeof card.reviewNote !== 'string') return false;
     cardIds.push(card.id);
     return true;
   });

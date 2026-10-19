@@ -7,8 +7,7 @@ export function contentSignature(questions: Question[]): string {
     question.id,
     question.stem,
     question.choices.map(choice => [choice.id, choice.text]),
-    question.answer ?? null,
-    question.verifiedAnswer ?? null,
+    question.answer,
   ])));
 }
 

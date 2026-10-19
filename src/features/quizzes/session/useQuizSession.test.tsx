@@ -8,8 +8,8 @@ import { useQuizSession } from './useQuizSession';
 const subject = { id: 'subject', name: 'Subject', accent: '#123456' };
 const quiz: Quiz = { id: 'quiz', subjectId: subject.id, topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
-  { id: 'q1', quizId: quiz.id, stem: 'One', choices: [{ id: 'A', text: 'A' }], verifiedAnswer: 'A', rationale: '', metadata: {} },
-  { id: 'q2', quizId: quiz.id, stem: 'Two', choices: [{ id: 'A', text: 'A' }], verifiedAnswer: 'A', rationale: '', metadata: {} },
+  { id: 'q1', quizId: quiz.id, stem: 'One', choices: [{ id: 'A', text: 'A' }], answer: 'A', rationale: '', metadata: {} },
+  { id: 'q2', quizId: quiz.id, stem: 'Two', choices: [{ id: 'A', text: 'A' }], answer: 'A', rationale: '', metadata: {} },
 ];
 const activeAttempt: Attempt = { id: 'saved', quizId: quiz.id, subjectId: subject.id, feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: '2026-09-20T00:00:00.000Z', contentSignature: contentSignature(questions), responses: {} };
 

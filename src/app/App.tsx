@@ -7,7 +7,7 @@ import { LocalAttemptRepository } from '../persistence/localRepository';
 import { LocalFlashcardProgressRepository } from '../persistence/localFlashcardProgressRepository';
 import { consumeProgressChangeNotice } from '../persistence/progressBackupStorage';
 import { averageScore, lowestRecentScore } from '../analytics/analytics';
-import type { Quiz, Subject } from '../domain/types';
+import type { Subject } from '../domain/types';
 import { AppNavigationDrawer, type LearnerSection } from './components/AppNavigationDrawer';
 import { ProgressBackupDialog } from './components/ProgressBackupDialog';
 import { useProgressBackup } from './useProgressBackup';
@@ -34,12 +34,6 @@ import { activeFlashcardSubjects, flashcardDashboardSubjects } from '../features
 
 const attemptRepository = new LocalAttemptRepository();
 const flashcardProgressRepository = new LocalFlashcardProgressRepository();
-
-function ResultReviewWarning({ quiz }: { quiz: Quiz }) {
-  const count = runtimeQuestionBank.listQuestions(quiz.id).filter(question => question.rationaleMeta?.answerReviewNote).length;
-  if (!count) return null;
-  return <Container maxWidth="md" sx={{ pt: 4 }}><Alert severity="warning">This score uses {count} source answer {count === 1 ? 'key' : 'keys'} under review. Interpret the result with that in mind.</Alert></Container>;
-}
 
 function LearnerApp({ onProgress }: { onProgress: () => void }) {
   const toast = useToast();
@@ -237,7 +231,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     {view.page === 'quiz' && <QuizScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => requestQuizExit('subject')} />}
     {view.page === 'quiz-browse' && <QuizBrowseScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onNavigate={session.navigateBrowse} onDone={session.leaveBrowse} />}
     {view.page === 'quiz-review' && <QuizReviewScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onNavigate={session.navigateReview} onRequestExit={() => requestReviewExit('subject')} />}
-    {view.page === 'results' && <><ResultReviewWarning quiz={view.quiz} /><ResultsScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onBack={leaveResults} onReview={() => { preloadReviewScreen(); session.reviewResults(); }} /></>}
+    {view.page === 'results' && <ResultsScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onBack={leaveResults} onReview={() => { preloadReviewScreen(); session.reviewResults(); }} />}
     {view.page === 'flashcards-study' && <FlashcardStudyScreen {...view} cards={runtimeFlashcardBank.listCards(view.deck.id)} openedCardIds={flashcards.openedCardIds} flaggedCardIds={flashcards.flaggedCardIds} persistenceError={flashcards.persistenceError} onReveal={flashcards.toggleReveal} onToggleFlag={flashcards.toggleFlag} onNavigate={flashcards.navigateTo} onPrevious={flashcards.previous} onNext={flashcards.next} onSaveAndExit={flashcards.saveAndExit} onFinish={flashcards.finish} />}
     </ScreenLoadBoundary>
     </ScreenTransition>

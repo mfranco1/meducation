@@ -30,7 +30,7 @@ describe('flashcard bulk add drafts', () => {
           {
             name: 'Populated deck',
             cards: [
-              { front: '**One**', back: 'Answer one', sources: 'Source', reviewNote: 'Review later' },
+              { front: '**One**', back: 'Answer one', sources: 'Source' },
               { front: 'Two', back: 'Answer two' },
             ],
           },
@@ -48,7 +48,7 @@ describe('flashcard bulk add drafts', () => {
           create: { kind: 'decks', fields: { name: 'Populated deck' } },
           childKind: 'cards',
           children: [
-            { front: '**One**', back: 'Answer one', sources: 'Source', reviewNote: 'Review later' },
+            { front: '**One**', back: 'Answer one', sources: 'Source' },
             { front: 'Two', back: 'Answer two' },
           ],
         },

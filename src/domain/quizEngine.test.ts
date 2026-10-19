@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'; import { blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
-const question: Question={id:'i1',quizId:'q1',stem:'Stem',choices:[{id:'A',text:'A'},{id:'B',text:'B'}],verifiedAnswer:'B',rationale:'Rationale',metadata:{}};
+const question: Question={id:'i1',quizId:'q1',stem:'Stem',choices:[{id:'A',text:'A'},{id:'B',text:'B'}],answer:'B',rationale:'Rationale',metadata:{}};
 const attempt=(selectedChoiceId?:string):Attempt=>({id:'a',quizId:'q1',subjectId:'s1',feedbackMode:'exam',contentSignature: 'fixture-content', startedAt:new Date(1000).toISOString(),elapsedMs:0,timerStartedAt:new Date(1000).toISOString(),celebrationProgress:{correctStreak:0,awardedStreakMilestones:[]},responses:selectedChoiceId?{i1:{questionId:'i1',selectedChoiceId,flagged:true,locked:false,timeMs:0}}:{}});
 describe('quiz engine',()=>{it('scores correct, incorrect, and unanswered responses',()=>{expect(scoreAttempt(attempt('B'),[question],3000)).toMatchObject({correct:1,incorrect:0,unanswered:0,percentage:100,elapsedMs:2000});expect(scoreAttempt(attempt('A'),[question],3000).incorrect).toBe(1);expect(scoreAttempt(attempt(),[question],3000).unanswered).toBe(1)});it('finds a saved question checkpoint and falls back to the first question',()=>{const second={...question,id:'q2'};expect(questionIndexFor([question,second],'q2')).toBe(1);expect(questionIndexFor([question,second],'missing')).toBe(0);expect(questionIndexFor([question,second])).toBe(0)});});
 describe('attempt timing',()=>{
@@ -42,7 +42,7 @@ describe('Fast Feedback completion',()=>{
 });
 describe('celebration streaks',()=>{
   const immediateAttempt = (): Attempt => ({ ...attempt(), feedbackMode: 'immediate' });
-  const correctQuestion = (id: string): Question => ({ ...question, id, verifiedAnswer: 'B' });
+  const correctQuestion = (id: string): Question => ({ ...question, id, answer: 'B' });
   it('increments correct commits, resets on an incorrect commit, and fires exact milestones',()=>{
     let current = immediateAttempt();
     for (let index = 1; index <= 3; index++) {

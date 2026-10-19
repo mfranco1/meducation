@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from 'react';
 import { answerFor, isCorrect } from '../../../domain/quizEngine';
 import type { CompletedAttempt, Question, Quiz } from '../../../domain/types';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
-import { ChoiceExplanations } from '../components/feedback/ChoiceExplanations';
 import { FeedbackPanel, type ReadOnlyFeedbackStatus } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
 import { SwapTransition } from '../../../shared/ui/transitions/SwapTransition';
@@ -38,9 +37,8 @@ export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequ
 
   const selectedChoiceId = attempt.responses[question.id]?.selectedChoiceId;
   const correctAnswer = answerFor(question);
-  const answerUnderReview = Boolean(question.rationaleMeta?.answerReviewNote);
   const hasCorrectChoice = correctAnswer !== undefined && question.choices.some(choice => choice.id === correctAnswer);
-  const status: ReadOnlyFeedbackStatus = !hasCorrectChoice ? 'unavailable' : !selectedChoiceId ? 'unanswered' : answerUnderReview ? 'review' : isCorrect(question, selectedChoiceId) ? 'correct' : 'incorrect';
+  const status: ReadOnlyFeedbackStatus = !hasCorrectChoice ? 'unavailable' : !selectedChoiceId ? 'unanswered' : isCorrect(question, selectedChoiceId) ? 'correct' : 'incorrect';
   const navigator = <QuestionNavigator questions={questions} attempt={attempt} currentIndex={index} filter={navigatorFilter} onFilterChange={setNavigatorFilter} onNavigate={target => { onNavigate(target); setNavigatorOpen(false); }} revealAnswers filterSet="review" />;
 
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
@@ -51,9 +49,8 @@ export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequ
           <Box sx={{ flex: 1, minWidth: 0 }}><MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" /></Box>
           {attempt.responses[question.id]?.flagged && <Box role="img" aria-label="Flagged question" sx={{ flexShrink: 0, mt: .5, color: 'primary.main', lineHeight: 0 }}><FlagIcon /></Box>}
         </Stack>
-        <ReadOnlyChoiceList question={question} selectedChoiceId={selectedChoiceId} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} answerUnderReview={answerUnderReview} mode="review" />
+        <ReadOnlyChoiceList question={question} selectedChoiceId={selectedChoiceId} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} mode="review" />
         <FeedbackPanel question={question} selectedChoiceId={selectedChoiceId} readOnlyStatus={status} />
-        <ChoiceExplanations question={question} />
       </CardContent></Card></SwapTransition>
       <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onRequestExit} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     </QuestionNavigationLayout>

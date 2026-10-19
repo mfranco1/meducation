@@ -32,8 +32,7 @@ test('adds a topic, quiz and questions in bulk, then decks and cards; deletes th
             {
               stem: 'Grouped source stem',
               choices: ['Alpha', 'Beta'],
-              answer: 'A',
-              verifiedAnswer: 'B',
+              answer: 'B',
               rationale: 'Static reviewed rationale',
             },
             { stem: 'Grouped second stem', choices: ['Gamma', 'Delta'], answer: 'B', rationale: 'Second rationale' },
@@ -53,7 +52,7 @@ test('adds a topic, quiz and questions in bulk, then decks and cards; deletes th
   expect(quiz.topicId).toBe(topic.id);
   expect(topic.subjectId).toBe(original.subjects[0].id);
   expect(items.map((row) => row.stem)).toEqual(['Grouped source stem', 'Grouped second stem']);
-  expect(items[0]).toMatchObject({ answer: 'A', verifiedAnswer: 'B' });
+  expect(items[0]).toMatchObject({ answer: 'B' });
   expect(items[0].choices).toEqual([
     { id: 'A', text: 'Alpha' },
     { id: 'B', text: 'Beta' },
@@ -74,7 +73,7 @@ test('adds a topic, quiz and questions in bulk, then decks and cards; deletes th
       decks: [
         {
           name: 'Bulk deck',
-          cards: [{ front: 'Exact grouped front $x^2$', back: 'Exact grouped back\n', reviewNote: 'Static review' }],
+          cards: [{ front: 'Exact grouped front $x^2$', back: 'Exact grouped back\n', sources: 'Static source' }],
         },
       ],
     }),
@@ -85,7 +84,7 @@ test('adds a topic, quiz and questions in bulk, then decks and cards; deletes th
   const deck = paired.decks.find((row) => row.name === 'Bulk deck')!;
   const card = paired.cards.find((row) => row.front === 'Exact grouped front $x^2$')!;
   expect(deck.topicId).toBe(topic.id);
-  expect(card).toMatchObject({ deckId: deck.id, back: 'Exact grouped back\n', reviewNote: 'Static review' });
+  expect(card).toMatchObject({ deckId: deck.id, back: 'Exact grouped back\n', sources: 'Static source' });
   // Cancel keeps everything; confirming deletes the topic with its quizzes, items, decks and cards.
   await page.getByRole('tab', { name: 'Quizzes', exact: true }).click();
   await nav.getByRole('combobox', { name: 'Topic', exact: true }).click();
@@ -471,8 +470,6 @@ for (const kind of ['subject', 'quiz', 'deck', 'card', 'question'] as const) {
     await editor.getByRole('tab', { name: 'Edit', exact: true }).click();
     expect((await draft(page)).latestChangeId).toBe(before.latestChangeId);
     await expect(editor.getByRole('textbox', { name: 'ID', exact: true })).toHaveAttribute('readonly', '');
-    if (kind === 'question')
-      await expect(editor.getByRole('textbox', { name: 'Source answer', exact: true })).toHaveAttribute('readonly', '');
     const value = `Exact ${kind}  $x^2$\n<b>source</b>  `;
     await editor.getByRole('textbox', { name: field, exact: true }).fill(value);
     await editor.getByRole('tab', { name: 'JSON', exact: true }).click();

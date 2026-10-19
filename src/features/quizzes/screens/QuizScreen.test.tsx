@@ -8,7 +8,7 @@ import type { Attempt, Question, Quiz } from '../../../domain/types';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 7 };
 const questions: Question[] = Array.from({ length: 7 }, (_, index) => ({
-  id: `q${index + 1}`, quizId: quiz.id, stem: `Question ${index + 1}`, choices: [{ id: 'A', text: `Incorrect ${index + 1}` }, { id: 'B', text: `Correct ${index + 1}` }], verifiedAnswer: 'B', rationale: 'Rationale', metadata: {},
+  id: `q${index + 1}`, quizId: quiz.id, stem: `Question ${index + 1}`, choices: [{ id: 'A', text: `Incorrect ${index + 1}` }, { id: 'B', text: `Correct ${index + 1}` }], answer: 'B', rationale: 'Rationale', metadata: {},
 }));
 const startingAttempt: Attempt = { id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'immediate', elapsedMs: 0, contentSignature: 'fixture-content', startedAt: new Date(0).toISOString(), responses: {}, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] } };
 
@@ -50,7 +50,7 @@ describe('quiz streak celebrations', () => {
   });
 
   it('chooses answers with number and letter keys, selecting in Exam Mode and locking in Fast Feedback', () => {
-    const threeChoices: Question = { ...questions[0], choices: [{ id: 'A', text: 'First' }, { id: 'B', text: 'Second' }, { id: 'C', text: 'Third' }], verifiedAnswer: 'B' };
+    const threeChoices: Question = { ...questions[0], choices: [{ id: 'A', text: 'First' }, { id: 'B', text: 'Second' }, { id: 'C', text: 'Third' }], answer: 'B' };
     const renderWith = (attempt: Attempt) => render(<ThemeProvider theme={theme}><QuizHarnessFor attempt={attempt} /></ThemeProvider>);
     function QuizHarnessFor({ attempt: initial }: { attempt: Attempt }) {
       const [attempt, setAttempt] = useState(initial);

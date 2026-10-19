@@ -8,7 +8,7 @@ const question: Question = {
 
 describe('Markdown validation', () => {
   it('accepts GFM tables and reviewed rationale metadata', () => {
-    expect(validateQuestionMarkdown([{ ...question, rationale: '| Finding | Value |\n| - | - |\n| BP | 140/90 |', rationaleMeta: { provenance: 'ai_draft_reviewed', reviewedAt: '2026-09-20', reviewNote: 'Reviewed against the source question.' } }])).toEqual([]);
+    expect(validateQuestionMarkdown([{ ...question, rationale: '| Finding | Value |\n| - | - |\n| BP | 140/90 |', rationaleMeta: { sources: 'Reference' } }])).toEqual([]);
   });
 
   it('accepts basic HTML and local images in stems and rationales', () => {
@@ -31,10 +31,5 @@ describe('Markdown validation', () => {
     expect(issues.filter(issue => issue.level === 'error')).toHaveLength(5);
     expect(issues.map(issue => issue.message)).toContain('stem contains unsupported HTML element <script>');
     expect(issues.map(issue => issue.message)).toContain('sources contains raw HTML');
-  });
-
-  it('requires reviewed AI rationale metadata', () => {
-    const issues = validateQuestionMarkdown([{ ...question, rationaleMeta: { provenance: 'ai_draft_reviewed' } }]);
-    expect(issues.filter(issue => issue.level === 'error')).toHaveLength(2);
   });
 });

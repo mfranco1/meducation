@@ -30,9 +30,7 @@ const synthetic: ContentCase[] = [
         { id: 'B', text: 'Short choice' },
       ],
       answer: 'A',
-      answerNote: '',
       rationale: 'Explanation with **emphasis** and $\\frac{1}{2}$.',
-      choiceExplanations: { A: 'A bounded explanation.', B: 'Another explanation.' },
       pearls: ['Synthetic pearl.'],
     },
   },
@@ -79,7 +77,6 @@ export function contentCases(): ContentCase[] {
       (a, b) => Math.max(...b.choices.map((c) => c.text.length)) - Math.max(...a.choices.map((c) => c.text.length)),
     )[0],
   );
-  add(bank.questions.find((q) => q.verifiedAnswer !== undefined));
   return [
     ...synthetic,
     ...[...selected].map((item, index) => {

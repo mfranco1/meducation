@@ -22,13 +22,10 @@ const source = {
     { id: 'AA', text: 'Third' },
   ],
   answer: 'custom-2',
-  verifiedAnswer: 'Z',
-  answerNote: 'Original answer retained',
   rationale: '  Exact <p>$x^2$</p>\n',
-  rationaleMeta: { provenance: 'source_migrated', sources: '[source](https://example.com)' },
+  rationaleMeta: { sources: '[source](https://example.com)' },
   metadata: { tags: [' exact ', 'a,b'], topic: 'Sparse' },
   pearls: ['  Exact\npearl'],
-  choiceExplanations: { Z: 'Restricted **source**' },
 };
 describe('exact-preserving record draft adapters', () => {
   it.each([
@@ -42,15 +39,14 @@ describe('exact-preserving record draft adapters', () => {
     expect(readRecordDraft(raw, kind)).toEqual(row);
     expect(patchRecordDraft(raw, kind, field, row[field as keyof typeof row])).toBe(raw);
   });
-  it('patches only the authored field, retaining exact optional values, order, units and answer provenance', () => {
+  it('patches only the authored field, retaining exact optional values, order and units', () => {
     const raw = JSON.stringify(source);
     const next = JSON.parse(patchRecordDraft(raw, 'question', 'stem', 'Intentional new stem\n$x^2$'));
     expect(next).toEqual({ ...source, stem: 'Intentional new stem\n$x^2$' });
     expect(source.choices.map((c) => c.id)).toEqual(['custom-2', 'Z', 'AA']);
-    expect(() => patchRecordDraft(raw, 'question', 'answer', 'AA', true)).toThrow('read-only');
     for (const field of ['id', 'quizId', 'subjectId', 'deckId'])
       expect(() => patchRecordDraft(raw, 'question', field, 'changed')).toThrow('read-only');
-    expect(JSON.parse(patchRecordDraft(raw, 'question', 'verifiedAnswer', 'AA', true)).answer).toBe('custom-2');
+    expect(JSON.parse(patchRecordDraft(raw, 'question', 'answer', 'AA')).answer).toBe('AA');
   });
   it('preserves absent versus present empty optional fields and unknown extensions when editing another field', () => {
     const row = {
@@ -63,7 +59,6 @@ describe('exact-preserving record draft adapters', () => {
     };
     const raw = JSON.stringify(row);
     expect(JSON.parse(patchRecordDraft(raw, 'card', 'back', 'Changed'))).toEqual({ ...row, back: 'Changed' });
-    expect(patchRecordDraft(raw, 'card', 'reviewNote', undefined)).toBe(raw);
     expect(JSON.parse(patchRecordDraft(raw, 'card', 'sources', undefined))).not.toHaveProperty('sources');
   });
   it('patches sparse nested fields without creating unrelated defaults or losing nested values', () => {
@@ -85,9 +80,8 @@ describe('exact-preserving record draft adapters', () => {
     const moved = JSON.parse(moveDraftChoice(raw, 1, -1));
     expect(moved.choices).toEqual([source.choices[1], source.choices[0], source.choices[2]]);
     expect(moved.answer).toBe(source.answer);
-    expect(moved.verifiedAnswer).toBe(source.verifiedAnswer);
     expect(moveDraftChoice(raw, 0, -1)).toBe(raw);
-    expect(() => removeDraftChoice(raw, 0)).toThrow('referenced');
+    expect(() => removeDraftChoice(raw, 0)).toThrow('answer choice');
     expect(JSON.parse(removeDraftChoice(raw, 2)).choices).toEqual(source.choices.slice(0, 2));
     expect(() => addDraftChoice(raw, 'Z')).toThrow('unique');
     expect(JSON.parse(addDraftChoice(raw, 'custom-new')).choices.at(-1)).toEqual({ id: 'custom-new', text: '' });
@@ -129,11 +123,10 @@ describe('record save planning', () => {
     expect(JSON.parse(toRecordText(stored))).toEqual(storedQuestionBank.questions[0]);
   });
   it('patches only changed fields and removes optional fields the author deleted', () => {
-    const edited = { ...storedQuestionBank.questions[0], stem: 'Changed', answerNote: 'Added' } as Record<string, unknown>;
+    const edited = { ...storedQuestionBank.questions[0], stem: 'Changed', pearls: ['Added'] } as Record<string, unknown>;
     delete edited.rationale;
-    delete edited.pearls;
     const plan = planSave('question', JSON.stringify(edited), stored);
-    expect(plan).toEqual({ fields: { stem: 'Changed', answerNote: 'Added', rationale: null, ...('pearls' in stored ? { pearls: null } : {}) }, parentId: stored.quizId, moveTo: undefined });
+    expect(plan).toEqual({ fields: { stem: 'Changed', pearls: ['Added'], rationale: null }, parentId: stored.quizId, moveTo: undefined });
   });
   it('sends nothing for unchanged text and plans a move when only the parent changed', () => {
     expect(planSave('question', toRecordText(stored), stored)).toMatchObject({ fields: {}, moveTo: undefined });

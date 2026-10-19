@@ -9,7 +9,7 @@ it('shows the impact counts, confirms once and cannot be repeated while deleting
   const bank = fixture as StoredQuestionBank;
   const props = {
     bank,
-    flashcardBank: { schemaVersion: 3 as const, decks: [], cards: [] },
+    flashcardBank: { schemaVersion: 4 as const, decks: [], cards: [] },
     request: { selection: { kind: 'quiz' as const, id: 'q1' }, label: 'First quiz' },
     onClose: vi.fn(),
     onConfirm: vi.fn(),

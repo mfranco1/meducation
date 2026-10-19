@@ -13,7 +13,7 @@ from meducation_api.repositories.question_bank import FlashcardBank
 @pytest.fixture
 def quiz_bank() -> dict:
     return {
-        "schemaVersion": 5,
+        "schemaVersion": 6,
         "subjects": [
             {"id": "s1", "name": "Subject One", "accent": "#123456"},
             {"id": "s2", "name": "Subject Two", "accent": "#654321"},

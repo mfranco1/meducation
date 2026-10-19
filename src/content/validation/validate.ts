@@ -8,11 +8,11 @@ export interface ValidationIssue {
 }
 
 const metadataKeys = new Set(['topic', 'subtopic', 'system', 'difficulty', 'questionType', 'tags']);
-const rationaleMetaKeys = new Set(['sources', 'answerReviewNote', 'provenance', 'reviewedAt', 'reviewNote']);
+const rationaleMetaKeys = new Set(['sources']);
 const subjectKeys = new Set(['id', 'name', 'accent', 'description']);
 const topicKeys = new Set(['id', 'subjectId', 'name', 'description']);
 const quizKeys = new Set(['id', 'topicId', 'name', 'description']);
-const questionKeys = new Set(['id', 'quizId', 'stem', 'choices', 'answer', 'verifiedAnswer', 'answerNote', 'rationale', 'rationaleMeta', 'choiceExplanations', 'pearls', 'metadata']);
+const questionKeys = new Set(['id', 'quizId', 'stem', 'choices', 'answer', 'rationale', 'rationaleMeta', 'pearls', 'metadata']);
 const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export function validateQuestionBank(subjects: Subject[], topics: StoredTopic[], quizzes: StoredQuiz[], questions: Question[]): ValidationIssue[] {
@@ -63,14 +63,8 @@ export function validateQuestionBank(subjects: Subject[], topics: StoredTopic[],
     if (question.choices.length < 2 || question.choices.some(choice => !choice.id || !choice.text.trim())) error('Missing or empty choices');
     if (new Set(question.choices.map(choice => choice.id)).size !== question.choices.length) error('Duplicate choice IDs');
     if (question.choices.some(choice => !/^[A-Z]$/.test(choice.id))) error('Choice IDs must be A-Z labels');
-    const answer = question.verifiedAnswer ?? question.answer;
-    if (!answer || !question.choices.some(choice => choice.id === answer)) error('Correct answer does not reference a choice');
-    if (question.answer !== undefined && !question.choices.some(choice => choice.id === question.answer)) error('Provided answer does not reference a choice');
-    if (question.verifiedAnswer !== undefined && !question.choices.some(choice => choice.id === question.verifiedAnswer)) error('Verified answer does not reference a choice');
-    if (question.metadata.difficulty && !['easy', 'medium', 'hard', 'unknown'].includes(question.metadata.difficulty)) error('Invalid difficulty');
-    if (question.choiceExplanations && Object.keys(question.choiceExplanations).some(id => !question.choices.some(choice => choice.id === id))) error('Choice explanation references unknown choice');
-    const meta = question.rationaleMeta;
-    if (meta?.provenance === 'ai_draft_reviewed' && (!meta.reviewedAt?.trim() || !meta.reviewNote?.trim())) error('Reviewed draft requires review date and note');
+    if (!question.answer || !question.choices.some(choice => choice.id === question.answer)) error('Answer does not reference a choice');
+    if (question.metadata.difficulty && !['easy', 'medium', 'hard'].includes(question.metadata.difficulty)) error('Invalid difficulty');
   });
 
   quizzes.forEach(quiz => {
@@ -88,7 +82,7 @@ export function validateStoredQuestionBank(bank: StoredQuestionBank): Validation
   const descriptionIssue = (kind: string, record: { id: string; description?: string }) => {
     if (invalidDescription(record.description)) issues.push({ level: 'error', message: `${kind} ${record.id} has an invalid description` });
   };
-  if (bank.schemaVersion !== 5) issues.push({ level: 'error', message: `Unsupported question bank schema version: ${bank.schemaVersion}` });
+  if (bank.schemaVersion !== 6) issues.push({ level: 'error', message: `Unsupported question bank schema version: ${bank.schemaVersion}` });
   if (Object.keys(bank).some(key => !['schemaVersion', 'subjects', 'topics', 'quizzes', 'questions'].includes(key))) issues.push({ level: 'error', message: 'Bank stores an unknown field' });
   bank.subjects.forEach(subject => {
     if (Object.keys(subject).some(key => !subjectKeys.has(key))) issues.push({ level: 'error', message: `Subject ${subject.id} stores an unknown field` });
@@ -118,16 +112,12 @@ export function validateStoredQuestionBank(bank: StoredQuestionBank): Validation
     if ('answerSource' in question) error('Question stores a derived answer source');
     if ('sourceAnswer' in question) error('Question uses the legacy sourceAnswer field');
     if (Object.keys(question).some(key => !questionKeys.has(key))) error('Question stores an unknown field');
-    if (question.answerNote !== undefined && typeof question.answerNote !== 'string') error('Invalid answer note');
-    const explanations: unknown = question.choiceExplanations;
-    if (explanations !== undefined && (!object(explanations) || Object.values(explanations).some(value => typeof value !== 'string'))) error('Invalid choice explanations');
     const pearls: unknown = question.pearls;
     if (pearls !== undefined && (!Array.isArray(pearls) || pearls.some(value => typeof value !== 'string'))) error('Invalid pearls');
     const rationaleMeta: unknown = question.rationaleMeta;
     if (rationaleMeta !== undefined) {
       if (!object(rationaleMeta) || Object.keys(rationaleMeta).some(key => !rationaleMetaKeys.has(key))
-        || ['sources', 'answerReviewNote', 'reviewedAt', 'reviewNote'].some(key => rationaleMeta[key] !== undefined && typeof rationaleMeta[key] !== 'string')
-        || (rationaleMeta.provenance !== undefined && !['source_migrated', 'ai_draft_reviewed'].includes(rationaleMeta.provenance as string))) {
+        || (rationaleMeta.sources !== undefined && typeof rationaleMeta.sources !== 'string')) {
         error('Invalid rationale metadata');
       }
     }
@@ -150,7 +140,7 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, topics: r
   const issue = (message: string, id?: string) => issues.push({ level: 'error', message, ...(id ? { questionId: id } : {}) });
   const object = (value: unknown): value is Record<string, unknown> => typeof value === 'object' && value !== null && !Array.isArray(value);
   if (!object(bank)) return [{ level: 'error', message: 'Flashcard bank must be an object' }];
-  if (bank.schemaVersion !== 3) issue(`Unsupported flashcard bank schema version: ${bank.schemaVersion}`);
+  if (bank.schemaVersion !== 4) issue(`Unsupported flashcard bank schema version: ${bank.schemaVersion}`);
   if (Object.keys(bank).some(key => !['schemaVersion', 'decks', 'cards'].includes(key))) issue('Flashcard bank stores an unknown field');
   if (!Array.isArray(bank.decks) || !Array.isArray(bank.cards)) {
     issue('Flashcard bank must contain deck and card arrays');
@@ -161,7 +151,7 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, topics: r
   const deckIds = new Set<string>();
   const cardIds = new Set<string>();
   const deckKeys = new Set(['id', 'topicId', 'name', 'description']);
-  const cardKeys = new Set(['id', 'deckId', 'front', 'back', 'sources', 'reviewNote']);
+  const cardKeys = new Set(['id', 'deckId', 'front', 'back', 'sources']);
   const decksById = new Map<string, StoredFlashcardBank['decks'][number]>();
 
   bank.decks.forEach(deck => {
@@ -186,7 +176,6 @@ export function validateStoredFlashcardBank(bank: StoredFlashcardBank, topics: r
     if (typeof card.front !== 'string' || !card.front.trim()) issue('Card front must not be empty', card.id);
     if (typeof card.back !== 'string' || !card.back.trim()) issue('Card back must not be empty', card.id);
     if (card.sources !== undefined && typeof card.sources !== 'string') issue('Invalid card sources', card.id);
-    if (card.reviewNote !== undefined && typeof card.reviewNote !== 'string') issue('Invalid card review note', card.id);
   });
   return issues;
 }

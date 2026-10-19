@@ -1,7 +1,7 @@
 {
   "base": {
     "quizzes": {
-      "schemaVersion": 5,
+      "schemaVersion": 6,
       "subjects": [
         {
           "id": "s1",
@@ -38,14 +38,13 @@
               "text": "About 3.14"
             }
           ],
-          "answer": "A",
-          "verifiedAnswer": "B",
+          "answer": "B",
           "rationale": "π is approximately 3.14."
         }
       ]
     },
     "flashcards": {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "decks": [
         {
           "id": "d1",
@@ -320,23 +319,8 @@
       ]
     },
     {
-      "id": "invalid_verified",
+      "id": "removed_verified_answer",
       "valid": false,
-      "changes": [
-        {
-          "path": [
-            "quizzes",
-            "questions",
-            0,
-            "verifiedAnswer"
-          ],
-          "value": "Z"
-        }
-      ]
-    },
-    {
-      "id": "source_verified_distinct",
-      "valid": true,
       "changes": [
         {
           "path": [
@@ -346,25 +330,6 @@
             "verifiedAnswer"
           ],
           "value": "B"
-        }
-      ]
-    },
-    {
-      "id": "review_date",
-      "valid": false,
-      "changes": [
-        {
-          "path": [
-            "quizzes",
-            "questions",
-            0,
-            "rationaleMeta"
-          ],
-          "value": {
-            "provenance": "ai_draft_reviewed",
-            "reviewedAt": "yesterday",
-            "reviewNote": "checked"
-          }
         }
       ]
     },
@@ -393,23 +358,6 @@
       ]
     },
     {
-      "id": "restricted_explanation",
-      "valid": false,
-      "changes": [
-        {
-          "path": [
-            "quizzes",
-            "questions",
-            0,
-            "choiceExplanations"
-          ],
-          "value": {
-            "A": "![Bad](/content/a.png)"
-          }
-        }
-      ]
-    },
-    {
       "id": "restricted_pearl",
       "valid": false,
       "changes": [
@@ -423,25 +371,6 @@
           "value": [
             "<b>Pearl</b>"
           ]
-        }
-      ]
-    },
-    {
-      "id": "provenance_blank",
-      "valid": false,
-      "changes": [
-        {
-          "path": [
-            "quizzes",
-            "questions",
-            0,
-            "rationaleMeta"
-          ],
-          "value": {
-            "provenance": "ai_draft_reviewed",
-            "reviewedAt": "2026-10-14",
-            "reviewNote": " "
-          }
         }
       ]
     },

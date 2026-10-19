@@ -26,18 +26,15 @@ export interface StoredQuestion {
   quizId: string;
   stem: string;
   choices: Choice[];
-  answer?: string;
-  verifiedAnswer?: string;
-  answerNote?: string;
+  answer: string;
   rationale: string;
   rationaleMeta?: RationaleMetadata;
-  choiceExplanations?: Record<string, string>;
   pearls?: string[];
   metadata?: QuestionMetadata;
 }
 
 export interface StoredQuestionBank {
-  schemaVersion: 5;
+  schemaVersion: 6;
   subjects: StoredSubject[];
   topics: StoredTopic[];
   quizzes: StoredQuiz[];
@@ -54,7 +51,7 @@ export interface StoredFlashcardDeck {
 export type StoredFlashcard = FlashcardCard;
 
 export interface StoredFlashcardBank {
-  schemaVersion: 3;
+  schemaVersion: 4;
   decks: StoredFlashcardDeck[];
   cards: StoredFlashcard[];
 }

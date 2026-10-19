@@ -13,10 +13,7 @@ const ids = (value: unknown, pattern: RegExp): value is string[] => Array.isArra
 
 function validRationaleMeta(value: unknown): boolean {
   if (value === undefined) return true;
-  if (!record(value) || !onlyKeys(value, ['sources', 'answerReviewNote', 'provenance', 'reviewedAt', 'reviewNote'])) return false;
-  if (!optionalString(value.sources) || !optionalString(value.answerReviewNote) || !optionalString(value.reviewedAt) || !optionalString(value.reviewNote)) return false;
-  if (value.provenance !== undefined && value.provenance !== 'source_migrated' && value.provenance !== 'ai_draft_reviewed') return false;
-  return value.provenance !== 'ai_draft_reviewed' || (nonempty(value.reviewedAt) && nonempty(value.reviewNote));
+  return record(value) && onlyKeys(value, ['sources']) && optionalString(value.sources);
 }
 
 function validMetadata(value: unknown): boolean {
@@ -64,17 +61,12 @@ export function isQuizCatalog(value: unknown, subjectId: string, expectedQuizIds
 }
 
 function validQuestion(value: unknown, quizId: string): value is Question {
-  if (!record(value) || !onlyKeys(value, ['id', 'quizId', 'stem', 'choices', 'answer', 'verifiedAnswer', 'answerNote', 'rationale', 'rationaleMeta', 'choiceExplanations', 'pearls', 'metadata'])) return false;
+  if (!record(value) || !onlyKeys(value, ['id', 'quizId', 'stem', 'choices', 'answer', 'rationale', 'rationaleMeta', 'pearls', 'metadata'])) return false;
   if (!nonempty(value.id) || !/^i[1-9]\d*$/.test(value.id) || value.quizId !== quizId || !nonempty(value.stem) || !nonempty(value.rationale)) return false;
   if (!Array.isArray(value.choices) || value.choices.length < 2 || !value.choices.every((choice: unknown) => record(choice) && onlyKeys(choice, ['id', 'text']) && typeof choice.id === 'string' && /^[A-Z]$/.test(choice.id) && nonempty(choice.text))) return false;
   const choiceIds = value.choices.map((choice: { id: string }) => choice.id);
-  if (!unique(choiceIds) || !optionalString(value.answer) || !optionalString(value.verifiedAnswer) || !optionalString(value.answerNote)) return false;
-  const resolved = value.verifiedAnswer ?? value.answer;
-  if (typeof resolved !== 'string' || !choiceIds.includes(resolved)) return false;
-  if (value.answer !== undefined && !choiceIds.includes(value.answer)) return false;
-  if (value.verifiedAnswer !== undefined && !choiceIds.includes(value.verifiedAnswer)) return false;
+  if (!unique(choiceIds) || typeof value.answer !== 'string' || !choiceIds.includes(value.answer)) return false;
   if (!validRationaleMeta(value.rationaleMeta) || !validMetadata(value.metadata)) return false;
-  if (value.choiceExplanations !== undefined && (!record(value.choiceExplanations) || Object.entries(value.choiceExplanations).some(([id, explanation]) => !choiceIds.includes(id) || typeof explanation !== 'string'))) return false;
   return value.pearls === undefined || (Array.isArray(value.pearls) && value.pearls.every((pearl: unknown) => typeof pearl === 'string'));
 }
 

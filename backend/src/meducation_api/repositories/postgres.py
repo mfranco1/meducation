@@ -153,10 +153,7 @@ class PostgresQuestionBankRepository:
             "choices": "choices",
             "rationale": "rationale",
             "answer": "answer",
-            "verifiedAnswer": "verified_answer",
-            "answerNote": "answer_note",
             "rationaleMeta": "rationale_meta",
-            "choiceExplanations": "choice_explanations",
             "pearls": "pearls",
             "metadata": "metadata",
         }
@@ -229,7 +226,6 @@ class PostgresFlashcardCatalogRepository:
             "front": "front",
             "back": "back",
             "sources": "sources",
-            "reviewNote": "review_note",
         }
         rows = self.connection.execute(
             text(
@@ -270,7 +266,7 @@ class PostgresContentSource:
                         text(
                             "SELECT p.release_id,p.publication_sequence,r.quiz_revision,r.flashcard_revision "
                             "FROM content.active_publication p JOIN content.published_releases r USING(release_id) "
-                            "WHERE p.publication_sequence>0 AND r.quiz_schema_version=5"
+                            "WHERE p.publication_sequence>0 AND r.quiz_schema_version=6"
                         )
                     )
                     .mappings()

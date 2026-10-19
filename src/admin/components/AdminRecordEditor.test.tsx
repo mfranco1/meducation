@@ -10,8 +10,7 @@ const row = {
     { id: 'original-id', text: 'Choice $x^2$' },
     { id: 'Z', text: 'Second' },
   ],
-  answer: 'original-id',
-  verifiedAnswer: 'Z',
+  answer: 'Z',
   rationale: '<p>Exact rationale $x^2$</p>\n',
   metadata: { tags: [' exact '] },
 };
@@ -29,18 +28,16 @@ function Editor({ raw = JSON.stringify(row), change = () => {} }: { raw?: string
     />
   );
 }
-it('changes views without editing the draft and renders rich/restricted preview with original provenance', () => {
+it('changes views without editing the draft and renders rich/restricted preview with the answer', () => {
   const change = vi.fn();
   const raw = JSON.stringify(row, null, 4) + '\n';
   render(<Editor raw={raw} change={change} />);
   expect(screen.getByRole('textbox', { name: 'ID' })).toHaveAttribute('readonly');
-  expect(screen.getByRole('textbox', { name: 'Source answer' })).toHaveAttribute('readonly');
   fireEvent.click(screen.getByRole('tab', { name: 'Preview' }));
   const preview = screen.getByRole('region', { name: 'Rendered content preview' });
   expect(preview.querySelector('.katex')).not.toBeNull();
   expect(within(preview).getByText('Choice $x^2$')).toBeVisible();
-  expect(within(preview).getByText('Source answer: original-id')).toBeVisible();
-  expect(within(preview).getByText('Runtime answer: Z')).toBeVisible();
+  expect(within(preview).getByText('Answer: Z')).toBeVisible();
   fireEvent.click(screen.getByRole('tab', { name: 'JSON' }));
   expect(screen.getByRole('textbox', { name: 'JSON' })).toHaveValue(raw);
   expect(change).not.toHaveBeenCalled();

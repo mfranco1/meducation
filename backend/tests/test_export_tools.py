@@ -15,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 def export_fixture(folder, *, target="release", operator=False):
     q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    f = {"schemaVersion": 3, "decks": [], "cards": []}
+    f = {"schemaVersion": 4, "decks": [], "cards": []}
     raw = [json.dumps(value, ensure_ascii=False).encode() for value in (q, f)]
     hashes = [hashlib.sha256(value).hexdigest() for value in raw]
     qt, ft = paired_artifacts(*(value.decode() for value in raw))
@@ -37,7 +37,7 @@ def export_fixture(folder, *, target="release", operator=False):
             "manifestVersion": 1,
             "revisions": revisions,
             "releaseId": release,
-            "schemaVersions": {"quiz": 5, "flashcard": 3},
+            "schemaVersions": {"quiz": 6, "flashcard": 4},
             "artifactsSha256": dict(zip(("quiz", "flashcard"), hashes, strict=True)),
             "publication": {"observedActiveSequence": 2},
         }
@@ -52,7 +52,7 @@ def export_fixture(folder, *, target="release", operator=False):
             "baseReleaseId": release if target == "draft" else None,
             "basePublicationSequence": "2" if target == "draft" else None,
             "publication": {"releaseId": release, "sequence": "2"},
-            "schemas": {"quizzes": 5, "flashcards": 3},
+            "schemas": {"quizzes": 6, "flashcards": 4},
             "digests": {
                 "quizSha256": hashes[0],
                 "flashcardSha256": hashes[1],

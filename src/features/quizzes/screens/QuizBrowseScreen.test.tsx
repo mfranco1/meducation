@@ -7,8 +7,8 @@ import { QuizBrowseScreen } from './QuizBrowseScreen';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
-  { id: 'q1', quizId: quiz.id, stem: 'Question one $x^2$ <img src="/content/question.png" alt="Question diagram">', choices: [{ id: 'A', text: 'First choice' }, { id: 'B', text: 'Second choice' }], verifiedAnswer: 'B', rationale: 'Explanation one $E=mc^2$\n\n![Explanation diagram](/content/explanation.png)', metadata: {} },
-  { id: 'q2', quizId: quiz.id, stem: 'Question two', choices: [{ id: 'A', text: 'Third choice' }, { id: 'B', text: 'Fourth choice' }], answer: 'A', rationale: 'Explanation two', rationaleMeta: { answerReviewNote: 'Check this source key' }, choiceExplanations: { A: 'Choice detail' }, metadata: {} },
+  { id: 'q1', quizId: quiz.id, stem: 'Question one $x^2$ <img src="/content/question.png" alt="Question diagram">', choices: [{ id: 'A', text: 'First choice' }, { id: 'B', text: 'Second choice' }], answer: 'B', rationale: 'Explanation one $E=mc^2$\n\n![Explanation diagram](/content/explanation.png)', metadata: {} },
+  { id: 'q2', quizId: quiz.id, stem: 'Question two', choices: [{ id: 'A', text: 'Third choice' }, { id: 'B', text: 'Fourth choice' }], answer: 'A', rationale: 'Explanation two', metadata: {} },
 ];
 
 function renderBrowse(index = 0) {
@@ -60,17 +60,8 @@ describe('quiz answer browser', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('uses the source answer fallback and retains review and choice explanations', () => {
-    renderBrowse(1);
-
-    expect(screen.getByText('Third choice')).toBeVisible();
-    expect(screen.getByText('Answer key under review')).toBeVisible();
-    expect(screen.getByText(/Answer under review: Check this source key/)).toBeVisible();
-    expect(screen.getByText('Choice detail')).toBeVisible();
-  });
-
-  it('shows Answer unavailable without marking any choice when no answer is present', () => {
-    const unansweredQuestion = { ...questions[0], answer: undefined, verifiedAnswer: undefined };
+  it('shows Answer unavailable without marking any choice when the answer matches no choice', () => {
+    const unansweredQuestion = { ...questions[0], answer: 'Z' };
     render(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={0} questions={[unansweredQuestion]} onNavigate={() => {}} onDone={() => {}} /></ThemeProvider>);
 
     expect(screen.getByText('Answer unavailable')).toBeVisible();

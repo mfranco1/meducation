@@ -32,11 +32,11 @@ After implementing, review the diff and remove anything that does not materially
 
 PostgreSQL is the only authority and runtime source for the paired quiz/flashcard bank. Edit through the authenticated HTTP editor. Saving a draft does not publish it. Database exports are read-only artifacts, never application sources; never replace database work with an older snapshot.
 
-Never silently modify, rewrite, correct, reorder or simplify question stems, answer choices, choice ordering, numbers, units, medical terminology or meaningful formatting. Make intentional corrections in the canonical record and record the rationale in answer provenance or review notes.
+Never silently modify, rewrite, correct, reorder or simplify question stems, answer choices, choice ordering, numbers, units, medical terminology or meaningful formatting. Make intentional corrections in the canonical record; the draft change history keeps the previous version.
 
-### Answer provenance
+### Answer keys
 
-Provided answer keys may be wrong. Never overwrite the original answer key; keep source and verified answers distinguishable. The quiz uses the verified answer when one exists.
+Each question has one answer key. Provided keys may be wrong: correct a wrong key in the canonical record, explain the correct answer in the rationale, and never change a key silently.
 
 ### No runtime generative AI
 

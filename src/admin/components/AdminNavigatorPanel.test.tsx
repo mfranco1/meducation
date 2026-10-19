@@ -10,7 +10,7 @@ import { AdminNavigatorPanel } from './AdminNavigatorPanel';
 const source = fixture as StoredQuestionBank;
 const versioned = <T extends object>(rows: T[]) => rows.map((row) => ({ ...row, version: 1 }));
 const bank: DraftQuizBank = {
-  schemaVersion: 5,
+  schemaVersion: 6,
   subjects: versioned(source.subjects),
   topics: versioned(source.topics),
   quizzes: versioned(source.quizzes),

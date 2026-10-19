@@ -3,9 +3,9 @@ import { filterQuestionNavigationItems, questionNavigationItems } from './Questi
 import type { Attempt, Question } from '../../../../domain/types';
 
 const questions: Question[] = [
-  { id: 'i1', quizId: 'q1', stem: 'One', choices: [], rationale: 'R', metadata: {} },
-  { id: 'i2', quizId: 'q1', stem: 'Two', choices: [], rationale: 'R', metadata: {} },
-  { id: 'i3', quizId: 'q1', stem: 'Three', choices: [], rationale: 'R', metadata: {} },
+  { id: 'i1', quizId: 'q1', stem: 'One', choices: [], answer: 'A', rationale: 'R', metadata: {} },
+  { id: 'i2', quizId: 'q1', stem: 'Two', choices: [], answer: 'A', rationale: 'R', metadata: {} },
+  { id: 'i3', quizId: 'q1', stem: 'Three', choices: [], answer: 'A', rationale: 'R', metadata: {} },
 ];
 const examAttempt: Attempt = {
   id: 'a', quizId: 'q1', subjectId: 's1', feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: new Date().toISOString(), responses: {
@@ -41,18 +41,18 @@ describe('question navigator items', () => {
         i3: { questionId: 'i3', selectedChoiceId: 'C', flagged: false, locked: true, timeMs: 0 },
       },
     };
-    const keyedQuestions = questions.map(question => ({ ...question, answer: question.id === 'i1' ? 'B' : question.id === 'i3' ? 'C' : undefined }));
+    const keyedQuestions = questions.map(question => ({ ...question, answer: question.id === 'i1' ? 'B' : question.id === 'i3' ? 'C' : 'A' }));
 
     const items = questionNavigationItems(keyedQuestions, immediateAttempt);
     expect(items.map(item => item.wrong)).toEqual([true, false, false]);
     expect(items.map(item => item.correct)).toEqual([false, false, true]);
   });
 
-  it('reveals wrong Exam Mode answers only when explicitly requested and excludes unanswered or uncertain keys', () => {
+  it('reveals wrong Exam Mode answers only when explicitly requested and excludes unanswered questions', () => {
     const reviewQuestions = [
       { ...questions[0], answer: 'B' },
       { ...questions[1], answer: 'A' },
-      { ...questions[2], answer: 'B', rationaleMeta: { answerReviewNote: 'Check this key' } },
+      { ...questions[2], answer: 'B' },
     ];
     const submitted: Attempt = {
       ...examAttempt,
@@ -65,8 +65,8 @@ describe('question navigator items', () => {
 
     expect(questionNavigationItems(reviewQuestions, submitted).map(item => item.wrong)).toEqual([false, false, false]);
     const revealed = questionNavigationItems(reviewQuestions, submitted, true);
-    expect(revealed.map(item => item.wrong)).toEqual([true, false, false]);
-    expect(filterQuestionNavigationItems(revealed, 'wrong').map(item => item.index)).toEqual([0]);
+    expect(revealed.map(item => item.wrong)).toEqual([true, false, true]);
+    expect(filterQuestionNavigationItems(revealed, 'wrong').map(item => item.index)).toEqual([0, 2]);
     expect(filterQuestionNavigationItems(revealed, 'flagged').map(item => item.index)).toEqual([0, 2]);
   });
 });

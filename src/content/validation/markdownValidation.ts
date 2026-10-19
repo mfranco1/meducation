@@ -107,14 +107,7 @@ export function validateQuestionMarkdown(questions: Question[]): ValidationIssue
     issues.push(...markdownIssues(question.rationale, 'rationale', question.id));
     if (question.rationaleMeta?.sources) issues.push(...markdownIssues(question.rationaleMeta.sources, 'sources', question.id));
     for (const choice of question.choices) issues.push(...markdownIssues(choice.text, 'sources', question.id));
-    for (const text of Object.values(question.choiceExplanations ?? {})) issues.push(...markdownIssues(text, 'sources', question.id));
     for (const text of question.pearls ?? []) issues.push(...markdownIssues(text, 'sources', question.id));
-    const meta = question.rationaleMeta;
-    if (meta?.provenance === 'ai_draft_reviewed') {
-      if (!meta.reviewedAt || !/^\d{4}-\d{2}-\d{2}$/.test(meta.reviewedAt)) issues.push({ level: 'error', questionId: question.id, message: 'AI-reviewed rationale requires a review date' });
-      if (!meta.reviewNote?.trim()) issues.push({ level: 'error', questionId: question.id, message: 'AI-reviewed rationale requires a review note' });
-    }
-    if (meta?.answerReviewNote) issues.push({ level: 'warning', questionId: question.id, message: `Answer under review: ${meta.answerReviewNote}` });
   }
   return issues;
 }

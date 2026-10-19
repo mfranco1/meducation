@@ -3,7 +3,7 @@ import type { StoredQuestionBank } from '../../content/schema/schema';
 import { bulkAddTemplate, compileBulkAddDraft, parseBulkAddDraft } from './bulkAddDraft';
 
 const bank = (): StoredQuestionBank => ({
-  schemaVersion: 5,
+  schemaVersion: 6,
   subjects: [{ id: 's1', name: 'Subject', accent: '#111111' }],
   topics: [{ id: 't1', subjectId: 's1', name: 'Topic' }],
   quizzes: [{ id: 'q1', topicId: 't1', name: 'Quiz' }],
@@ -44,20 +44,30 @@ describe('content-only bulk add drafts', () => {
     expect(compileBulkAddDraft({ quizzes: [{ name: 'Q', description: 5, items: [item('One')] }] }, { kind: 'topic', topicId: 't1' }, bank()).errors).toEqual(['$.quizzes[0].description must be a string.']);
   });
 
+  it('leaves blank descriptions unset', () => {
+    const result = compileBulkAddDraft(
+      { topic: { name: 'Pearls', description: ' ' }, quizzes: [{ name: 'Q', description: '', items: [item('First')] }] },
+      { kind: 'newTopic', subjectId: 's1' },
+      bank(),
+    );
+    expect(result.plan).toMatchObject({ topic: { name: 'Pearls' }, groups: [{ create: { fields: { name: 'Q' } } }] });
+    expect(result.plan).not.toMatchObject({ topic: { description: expect.anything() } });
+  });
+
   it('adds quizzes to an existing topic', () => {
     const result = compileBulkAddDraft({ quizzes: [{ name: 'Added', items: [item('One')] }] }, { kind: 'topic', topicId: 't1' }, bank());
     expect(result.plan).toMatchObject({ topicId: 't1', groups: [{ create: { kind: 'quizzes', fields: { name: 'Added' } } }] });
     expect(result.plan).not.toHaveProperty('topic');
   });
 
-  it('adds items to an existing quiz, preserving provided versus verified answers', () => {
+  it('adds items to an existing quiz', () => {
     const result = compileBulkAddDraft(
-      { items: [item('Added', { answer: 'A', verifiedAnswer: 'B', answerNote: 'Source key reviewed separately' })] },
+      { items: [item('Added', { answer: 'A' })] },
       { kind: 'quiz', topicId: 't1', quizId: 'q1' },
       bank(),
     );
     expect(result.plan?.groups).toEqual([
-      { parentId: 'q1', childKind: 'questions', children: [{ ...item('Added'), choices, answer: 'A', verifiedAnswer: 'B', answerNote: 'Source key reviewed separately' }] },
+      { parentId: 'q1', childKind: 'questions', children: [{ ...item('Added'), choices, answer: 'A' }] },
     ]);
   });
 

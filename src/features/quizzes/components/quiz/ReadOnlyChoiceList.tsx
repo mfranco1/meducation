@@ -4,20 +4,19 @@ import { Box, Stack, Typography, useTheme } from '@mui/material';
 import type { Question } from '../../../../domain/types';
 import { MarkdownContent } from '../../../../shared/ui/content/MarkdownContent';
 
-export function ReadOnlyChoiceList({ question, selectedChoiceId, correctChoiceId, answerUnderReview = false, mode }: {
+export function ReadOnlyChoiceList({ question, selectedChoiceId, correctChoiceId, mode }: {
   question: Question;
   selectedChoiceId?: string;
   correctChoiceId?: string;
-  answerUnderReview?: boolean;
   mode: 'browse' | 'review';
 }) {
   const theme = useTheme();
   return <Stack spacing={1.25} role="list" aria-label="Answer choices" sx={{ mt: 3 }}>
     {question.choices.map(choice => {
       const selected = mode === 'review' && choice.id === selectedChoiceId;
-      const correct = !answerUnderReview && choice.id === correctChoiceId;
+      const correct = choice.id === correctChoiceId;
       const marked = mode === 'browse' ? correct : selected;
-      const incorrectSelection = selected && !correct && !answerUnderReview;
+      const incorrectSelection = selected && !correct;
       const labels = [selected && 'Your answer', correct && 'Correct answer'].filter(Boolean).join(' · ');
       return <Box key={choice.id} role="listitem" aria-label={labels || undefined} sx={{
         border: '1px solid',

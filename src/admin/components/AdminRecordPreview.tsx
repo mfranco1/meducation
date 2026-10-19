@@ -36,7 +36,6 @@ export function AdminRecordPreview({ kind, record }: { kind: RecordKind; record:
           {rich('Front', String(record.front))}
           {rich('Back', String(record.back))}
           {record.sources !== undefined && restricted('Sources', String(record.sources))}
-          {note('Review note', record.reviewNote)}
         </>
       )}
       {kind === 'question' && (
@@ -45,16 +44,9 @@ export function AdminRecordPreview({ kind, record }: { kind: RecordKind; record:
           {(record.choices as DraftChoice[]).map((choice, index) => (
             <Box key={index}>{restricted(`Choice ${choice.id}`, choice.text)}</Box>
           ))}
-          {note('Source answer', record.answer ?? 'Not provided')}
-          {note('Verified answer', record.verifiedAnswer ?? 'Not set')}
-          {note('Runtime answer', record.verifiedAnswer ?? record.answer ?? 'Unavailable')}
-          {note('Answer note', record.answerNote)}
-          {meta?.answerReviewNote !== undefined && note('Answer under review', meta.answerReviewNote)}
+          {note('Answer', record.answer)}
           {rich('Rationale', String(record.rationale))}
           {meta?.sources !== undefined && restricted('Sources', String(meta.sources))}
-          {Object.entries((record.choiceExplanations ?? {}) as Record<string, string>).map(([id, text]) => (
-            <Box key={id}>{restricted(`Explanation for choice ${id}`, text)}</Box>
-          ))}
           {(record.pearls as string[] | undefined)?.map((pearl, index) => (
             <Box key={index}>{note('Pearl', pearl)}</Box>
           ))}

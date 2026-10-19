@@ -19,17 +19,16 @@ type Shape = { required: Record<string, Rule>; optional?: Record<string, Rule> }
 type Rule = 'string' | 'number' | Shape | readonly [Rule] | { values: Rule };
 const choice: Shape = { required: { id: 'string', text: 'string' } };
 const question: Shape = {
-  required: { id: 'string', quizId: 'string', stem: 'string', choices: [choice], rationale: 'string' },
+  required: { id: 'string', quizId: 'string', stem: 'string', choices: [choice], answer: 'string', rationale: 'string' },
   optional: {
-    answer: 'string', verifiedAnswer: 'string', answerNote: 'string',
-    rationaleMeta: { required: {}, optional: { sources: 'string', answerReviewNote: 'string', provenance: 'string', reviewedAt: 'string', reviewNote: 'string' } },
-    choiceExplanations: { values: 'string' }, pearls: ['string'],
+    rationaleMeta: { required: {}, optional: { sources: 'string' } },
+    pearls: ['string'],
     metadata: { required: {}, optional: { topic: 'string', subtopic: 'string', system: 'string', difficulty: 'string', questionType: 'string', tags: ['string'] } },
   },
 };
 const pairShape: Shape = { required: {
   quizzes: { required: { schemaVersion: 'number', subjects: [{ required: { id: 'string', name: 'string', accent: 'string' }, optional: { description: 'string' } }], topics: [{ required: { id: 'string', subjectId: 'string', name: 'string' }, optional: { description: 'string' } }], quizzes: [{ required: { id: 'string', topicId: 'string', name: 'string' }, optional: { description: 'string' } }], questions: [question] } },
-  flashcards: { required: { schemaVersion: 'number', decks: [{ required: { id: 'string', topicId: 'string', name: 'string' }, optional: { description: 'string' } }], cards: [{ required: { id: 'string', deckId: 'string', front: 'string', back: 'string' }, optional: { sources: 'string', reviewNote: 'string' } }] } },
+  flashcards: { required: { schemaVersion: 'number', decks: [{ required: { id: 'string', topicId: 'string', name: 'string' }, optional: { description: 'string' } }], cards: [{ required: { id: 'string', deckId: 'string', front: 'string', back: 'string' }, optional: { sources: 'string' } }] } },
 } };
 const knownKeys = new Set<string>();
 function collectKeys(rule: Rule): void {
@@ -118,12 +117,9 @@ export function validateAuthoringPair(value: unknown): PolicyResult {
   };
   bank.questions.forEach((item, index) => {
     const path = `$.pair.quizzes.questions[${index}]`;
-    if (item.rationaleMeta?.answerReviewNote) warnings++;
     markdown(item.stem, true, `${path}.stem`); markdown(item.rationale, true, `${path}.rationale`);
     item.choices.forEach((entry, i) => markdown(entry.text, false, `${path}.choices[${i}].text`));
     if (item.rationaleMeta?.sources) markdown(item.rationaleMeta.sources, false, `${path}.rationaleMeta.sources`);
-    if (item.rationaleMeta?.provenance === 'ai_draft_reviewed' && (!/^\d{4}-\d{2}-\d{2}$/.test(item.rationaleMeta.reviewedAt ?? '') || !item.rationaleMeta.reviewNote?.trim())) issue(`${path}.rationaleMeta`, 'review_provenance', 'Reviewed content requires a date and review note.');
-    Object.values(item.choiceExplanations ?? {}).forEach(text => markdown(text, false, `${path}.choiceExplanations`));
     item.pearls?.forEach((text, i) => markdown(text, false, `${path}.pearls[${i}]`));
   });
   const siblingNames = new Set<string>();

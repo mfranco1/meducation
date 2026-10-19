@@ -11,14 +11,14 @@ const calls = (store: ReturnType<typeof open>) =>
 describe('draft store record calls', () => {
   it('sends one patch for an edit, replaces the local copy from the response and does not refetch', async () => {
     const store = open();
-    const record = await store.update('question', 'i1', 1, { stem: 'New stem', answerNote: null });
+    const record = await store.update('question', 'i1', 1, { stem: 'New stem', pearls: null });
     expect(record).toMatchObject({ id: 'i1', stem: 'New stem', version: 2 });
     expect(store.find('question', 'i1')).toBe(record);
     expect(store.snapshot.changed).toBe(true);
     expect(calls(store)).toEqual(['PUT /draft/questions/i1']);
     expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({
       expectedVersion: 1,
-      fields: { stem: 'New stem', answerNote: null },
+      fields: { stem: 'New stem', pearls: null },
     });
   });
 
