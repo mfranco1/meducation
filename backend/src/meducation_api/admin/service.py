@@ -7,7 +7,7 @@ Publication validates the whole pair and reuses the release store/activation pat
 
 import hashlib
 import json
-from collections.abc import Iterator, Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from decimal import Decimal, localcontext
 from typing import Any
@@ -675,66 +675,12 @@ class DraftService:
 
     def publish(self) -> dict[str, Any]:
         with self._transaction(fresh=True) as c:
-            quiz, flashcards = build_documents(c)
-            active = c.execute(
-                text(
-                    "SELECT p.release_id,p.publication_sequence,r.quiz_artifact,r.flashcard_artifact "
-                    "FROM content.active_publication p LEFT JOIN content.releases r USING(release_id)"
-                )
-            ).one()
-            unchanged = (
-                (quiz, flashcards) == (active[2], active[3])
-                if active[0] is not None
-                else not json.loads(quiz)["subjects"] and not json.loads(flashcards)["decks"]
+            return publish_draft(
+                c,
+                self.validator,
+                self.principal.actor,
+                recheck=lambda: self.store.recheck(self.principal, fresh=True),
             )
-            if unchanged:
-                return {
-                    "published": False,
-                    "releaseId": None if active[0] is None else str(active[0]),
-                    "publicationSequence": active[1],
-                }
-            pair = self.validator.documents(quiz, flashcards)
-            if (pair.quiz_artifact, pair.flashcard_artifact) != (quiz, flashcards):
-                raise DraftError(503, "publish_failed", "Publication serialization differs.")
-            self.store.recheck(self.principal, fresh=True)
-            try:
-                release = store_release(
-                    c,
-                    operation_id=uuid4(),
-                    quiz_text=quiz,
-                    flashcard_text=flashcards,
-                    source_hashes={
-                        "quiz": hashlib.sha256(quiz.encode()).hexdigest(),
-                        "flashcard": hashlib.sha256(flashcards.encode()).hexdigest(),
-                    },
-                    actor=self.principal.actor,
-                    reason=PUBLISH_REASON,
-                )
-                publication = activate_release(
-                    c,
-                    operation_id=uuid4(),
-                    release_id=release.release_id,
-                    expected_sequence=active[1],
-                    actor=self.principal.actor,
-                    reason=PUBLISH_REASON,
-                )
-            except ContentDatabaseError:
-                raise DraftError(
-                    503, "publish_failed", "The release could not be stored."
-                ) from None
-            latest = self._latest_change(c)
-            c.execute(
-                text("UPDATE content.draft_state SET base_release_id=:r,published_change_id=:c"),
-                {"r": release.release_id, "c": latest},
-            )
-            return {
-                "published": True,
-                "releaseId": str(release.release_id),
-                "publicationSequence": publication.publication_sequence,
-                "quizRevision": release.quiz_revision,
-                "flashcardRevision": release.flashcard_revision,
-                "publishedChangeId": latest,
-            }
 
     # Releases -----------------------------------------------------------------------
 
@@ -839,3 +785,70 @@ class DraftService:
         }
         context["revisions"] = revisions(quiz, flashcards)
         return quiz, flashcards, context
+
+
+def publish_draft(
+    c: Connection,
+    validator: PairedContentValidator,
+    actor: str,
+    recheck: Callable[[], None] = lambda: None,
+) -> dict[str, Any]:
+    """Store and activate the draft as a release; `c` must hold the draft_state lock."""
+    quiz, flashcards = build_documents(c)
+    active = c.execute(
+        text(
+            "SELECT p.release_id,p.publication_sequence,r.quiz_artifact,r.flashcard_artifact "
+            "FROM content.active_publication p LEFT JOIN content.releases r USING(release_id)"
+        )
+    ).one()
+    unchanged = (
+        (quiz, flashcards) == (active[2], active[3])
+        if active[0] is not None
+        else not json.loads(quiz)["subjects"] and not json.loads(flashcards)["decks"]
+    )
+    if unchanged:
+        return {
+            "published": False,
+            "releaseId": None if active[0] is None else str(active[0]),
+            "publicationSequence": active[1],
+        }
+    pair = validator.documents(quiz, flashcards)
+    if (pair.quiz_artifact, pair.flashcard_artifact) != (quiz, flashcards):
+        raise DraftError(503, "publish_failed", "Publication serialization differs.")
+    recheck()
+    try:
+        release = store_release(
+            c,
+            operation_id=uuid4(),
+            quiz_text=quiz,
+            flashcard_text=flashcards,
+            source_hashes={
+                "quiz": hashlib.sha256(quiz.encode()).hexdigest(),
+                "flashcard": hashlib.sha256(flashcards.encode()).hexdigest(),
+            },
+            actor=actor,
+            reason=PUBLISH_REASON,
+        )
+        publication = activate_release(
+            c,
+            operation_id=uuid4(),
+            release_id=release.release_id,
+            expected_sequence=active[1],
+            actor=actor,
+            reason=PUBLISH_REASON,
+        )
+    except ContentDatabaseError:
+        raise DraftError(503, "publish_failed", "The release could not be stored.") from None
+    latest = DraftService._latest_change(c)
+    c.execute(
+        text("UPDATE content.draft_state SET base_release_id=:r,published_change_id=:c"),
+        {"r": release.release_id, "c": latest},
+    )
+    return {
+        "published": True,
+        "releaseId": str(release.release_id),
+        "publicationSequence": publication.publication_sequence,
+        "quizRevision": release.quiz_revision,
+        "flashcardRevision": release.flashcard_revision,
+        "publishedChangeId": latest,
+    }

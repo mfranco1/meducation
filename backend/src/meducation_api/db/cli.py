@@ -6,6 +6,7 @@ from pathlib import Path
 from uuid import UUID
 
 from pydantic import ValidationError
+from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
@@ -38,6 +39,8 @@ def main() -> None:
     command.add_argument("--operation-id", type=UUID, required=True)
     command.add_argument("--actor", required=True)
     command.add_argument("--reason", required=True)
+    command = commands.add_parser("publish-draft")
+    command.add_argument("--actor", required=True)
     command = commands.add_parser("advance-id-sequences")
     command.add_argument("--by", type=int, required=True)
     command = commands.add_parser("export-release")
@@ -77,6 +80,10 @@ def main() -> None:
             "advance-id-sequences",
         ):
             secret, role = settings.migration_database_url, "meducation_migrator"
+            passwords = None
+        elif args.action == "publish-draft":
+            # The editor's role and privileges, for when the API cannot start to publish.
+            secret, role = settings.admin_editor_database_url, "meducation_editor"
             passwords = None
         else:
             secret, role = settings.operator_database_url, "meducation_operator"
@@ -140,6 +147,20 @@ def main() -> None:
                         }
                     )
                 )
+            elif args.action == "publish-draft":
+                from meducation_api.admin.service import DraftError, publish_draft
+                from meducation_api.content_policy import PairedContentValidator
+
+                try:
+                    with engine.begin() as connection:
+                        # The editor's draft lock and limits: no write or publish runs alongside.
+                        connection.exec_driver_sql("SET LOCAL lock_timeout = '5s'")
+                        connection.exec_driver_sql("SET LOCAL statement_timeout = '120s'")
+                        connection.execute(text("SELECT 1 FROM content.draft_state FOR UPDATE"))
+                        result = publish_draft(connection, PairedContentValidator(), args.actor)
+                except DraftError as error:
+                    raise ContentDatabaseError(str(error)) from None
+                print(json.dumps(result))
             else:
                 print(json.dumps(export_release(engine, args.release_id, args.output)))
         finally:

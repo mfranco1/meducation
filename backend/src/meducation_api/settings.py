@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     migration_database_url: SecretStr | None = None
     operator_database_url: SecretStr | None = None
     bootstrap_database_url: SecretStr | None = None
+    admin_editor_database_url: SecretStr | None = None
 
     @model_validator(mode="after")
     def validate_database_settings(self) -> Settings:
@@ -32,6 +33,7 @@ class Settings(BaseSettings):
             (self.migration_database_url, "meducation_migrator"),
             (self.operator_database_url, "meducation_operator"),
             (self.bootstrap_database_url, "meducation_bootstrap"),
+            (self.admin_editor_database_url, "meducation_editor"),
         ):
             if value is not None:
                 database_url(value, role=role, local=self.database_environment == "local")

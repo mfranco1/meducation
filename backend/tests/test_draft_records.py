@@ -827,6 +827,52 @@ def test_publish_activates_new_release_served_to_learners_and_unchanged_is_noop(
         assert stale.status_code == 409
 
 
+def test_cli_publish_draft_publishes_without_the_api(db):
+    import os
+    import subprocess
+    import sys
+
+    seed(db)
+    with db.editor.begin() as connection:
+        connection.execute(text("UPDATE content.draft_questions SET stem='CLI stem' WHERE id='i1'"))
+    env = {k: v for k, v in os.environ.items() if not k.startswith("MEDUCATION_")}
+    env.update(
+        {
+            "PYTHONPATH": str(ROOT / "backend/src"),
+            "MEDUCATION_DATABASE_ENVIRONMENT": "local",
+            "MEDUCATION_ADMIN_EDITOR_DATABASE_URL": db.editor.url.render_as_string(
+                hide_password=False
+            ),
+        }
+    )
+
+    def publish():
+        done = subprocess.run(
+            [sys.executable, "-m", "meducation_api.db.cli", "publish-draft", "--actor", "maintainer:test"],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=60,
+            check=False,
+        )
+        assert done.returncode == 0, done.stderr
+        return json.loads(done.stdout)
+
+    published = publish()
+    assert published["published"] is True and published["publicationSequence"] == 2
+    with db.reader.connect() as connection:
+        stem = connection.execute(
+            text(
+                "SELECT q.stem FROM content.published_questions q JOIN content.active_publication p "
+                "USING(release_id) WHERE q.id='i1'"
+            )
+        ).scalar_one()
+    assert stem == "CLI stem"
+    assert scalar(db.operator, "SELECT base_release_id::text FROM content.draft_state") == published["releaseId"]
+    assert publish()["published"] is False
+
+
 def test_publish_runs_full_validation(db, editor):
     client, _, _ = editor
     ok(
