@@ -121,6 +121,28 @@ describe('FlashcardStudyScreen', () => {
     expect(onFinish).not.toHaveBeenCalled();
   });
 
+  it('counts distinct revealed cards for the session momentum glow', () => {
+    function Deck() {
+      const [index, setIndex] = useState(0);
+      const [revealed, setRevealed] = useState(false);
+      return <FlashcardStudyScreen deck={deck} cards={cards} index={index} revealed={revealed} onReveal={() => setRevealed(value => !value)} onNext={() => { setIndex(1); setRevealed(false); }} onPrevious={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} />;
+    }
+    const momentum = () => document.querySelector('[data-momentum]')?.getAttribute('data-momentum');
+    const { unmount } = render(<ThemeProvider theme={theme}><Deck /></ThemeProvider>);
+    expect(momentum()).toBe('0');
+    fireEvent.keyDown(window, { code: 'Space' });
+    expect(momentum()).toBe('1');
+    fireEvent.click(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }));
+    fireEvent.keyDown(window, { code: 'Space' });
+    expect(momentum()).toBe('1');
+    fireEvent.keyDown(window, { code: 'Space' });
+    fireEvent.keyDown(window, { code: 'Space' });
+    expect(momentum()).toBe('2');
+    unmount();
+    render(<ThemeProvider theme={theme}><Deck /></ThemeProvider>);
+    expect(momentum()).toBe('0');
+  });
+
   it('uses Enter like Space to reveal and then advance', () => {
     function KeyboardDeck() {
       const [index, setIndex] = useState(0);

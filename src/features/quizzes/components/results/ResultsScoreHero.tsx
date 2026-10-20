@@ -1,8 +1,9 @@
 import { keyframes } from '@emotion/react';
 import { alpha, Box, Typography, useTheme } from '@mui/material';
 import { useEffect, useId, useRef, useState } from 'react';
-import { easing, useReducedMotion } from '../../../../shared/ui/motion';
-import { Crackle, GoldBurst, sizzle } from '../celebration/GoldBurst';
+import { easing, sizzle, useReducedMotion } from '../../../../shared/ui/motion';
+import { Crackle } from '../../../../shared/ui/transitions/Crackle';
+import { GoldBurst } from '../celebration/GoldBurst';
 
 // Just outside the ring's outer edge (49%), alternating distances so they don't read as a dotted line.
 const ringSparks = Array.from({ length: 24 }, (_, i) => {

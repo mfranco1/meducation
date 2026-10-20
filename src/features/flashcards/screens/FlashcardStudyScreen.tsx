@@ -1,5 +1,5 @@
 import { Alert, Box, Container } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
 import type { FlashcardDeckSummary } from '../../../content/api/flashcardApiDecoders';
 import type { FlashcardNavigatorFilter } from '../../../domain/flashcardStudy';
@@ -47,6 +47,7 @@ export function FlashcardStudyScreen({
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [suppressCardFocusRing, setSuppressCardFocusRing] = useState(false);
   const [filter, setFilter] = useState<FlashcardNavigatorFilter>('all');
+  const [studied, setStudied] = useState<ReadonlySet<string>>(new Set());
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
   const card = cards[index];
@@ -60,6 +61,11 @@ export function FlashcardStudyScreen({
     finishButtonRef: finishRef,
   });
 
+  const reveal = useCallback(() => {
+    if (card && !revealed) setStudied((current) => new Set(current).add(card.id));
+    onReveal();
+  }, [card, onReveal, revealed]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       const isActivate = event.code === 'Space' || event.key === 'Enter';
@@ -71,7 +77,7 @@ export function FlashcardStudyScreen({
       event.preventDefault();
       if (!revealed) {
         setSuppressCardFocusRing(true);
-        onReveal();
+        reveal();
       } else if (index < cards.length - 1) {
         setSuppressCardFocusRing(true);
         onNext();
@@ -79,7 +85,7 @@ export function FlashcardStudyScreen({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [card, cards.length, index, navigatorOpen, onNext, onReveal, revealed, saving]);
+  }, [card, cards.length, index, navigatorOpen, onNext, reveal, revealed, saving]);
 
   if (!card) return null;
   const navigate = (target: number) => {
@@ -143,10 +149,11 @@ export function FlashcardStudyScreen({
             card={card}
             revealed={revealed}
             flagged={flaggedCardIds.includes(card.id)}
+            momentum={studied.size}
             suppressFocusRing={suppressCardFocusRing}
             onSuppressFocusRing={() => setSuppressCardFocusRing(true)}
             onClearFocusRingSuppression={() => setSuppressCardFocusRing(false)}
-            onReveal={onReveal}
+            onReveal={reveal}
             onToggleFlag={() => onToggleFlag(card.id)}
           />
         </SwapTransition>

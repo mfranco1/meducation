@@ -5,6 +5,7 @@ import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { BrandMark } from '../../../shared/ui/brand/BrandMark';
 import { StudyFlagButton } from '../../../shared/ui/study/StudyFlagButton';
 import { FlashcardFaceDecoration } from './FlashcardFaceDecoration';
+import { FlashcardMomentum } from './FlashcardMomentum';
 import { reducedMotion } from '../../../shared/ui/motion';
 
 const cardThickness =
@@ -21,6 +22,7 @@ export function FlashcardStudyCard({
   card,
   revealed,
   flagged,
+  momentum,
   suppressFocusRing,
   onSuppressFocusRing,
   onClearFocusRingSuppression,
@@ -30,6 +32,7 @@ export function FlashcardStudyCard({
   card: FlashcardCard;
   revealed: boolean;
   flagged: boolean;
+  momentum: number;
   suppressFocusRing: boolean;
   onSuppressFocusRing: () => void;
   onClearFocusRingSuppression: () => void;
@@ -116,6 +119,7 @@ export function FlashcardStudyCard({
               aria-label={revealed ? 'Flashcard answer' : 'Hidden flashcard answer'}
               aria-live="polite"
               sx={{
+                position: 'relative',
                 display: 'grid',
                 transformStyle: 'preserve-3d',
                 transformOrigin: '50% 50%',
@@ -124,6 +128,7 @@ export function FlashcardStudyCard({
                 [reducedMotion]: { transition: 'none' },
               }}
             >
+              <FlashcardMomentum count={momentum} />
               <ButtonBase
                 ref={setFrontFaceRef}
                 disableRipple

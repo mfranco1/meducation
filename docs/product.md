@@ -30,6 +30,7 @@ Meducation is a local-first study app for quizzes and flashcards. Content comes 
 ## Flashcards
 
 - The front stays visible above an answer panel. Click, Space or Enter reveals a bold rich answer with its source; Space or Enter on a revealed card advances; clicking a revealed answer hides it. Left and Right navigate from anywhere on the screen (never wrapping), and the last card still requires **Finish**.
+- A gold glow builds around the card as you reveal more distinct cards in one sitting, with a faint sizzle past about 20. It resets when you leave the deck and ignores deck length.
 - A Cards navigator filters All, Hidden and Flagged in deck order. Opened and flagged cards persist across resume; resume shows the saved card's front. Finish clears the active position and increments the deck's completion count; save-and-exit and restart do not.
 - The dashboard shows **Completed**, **Average** and **Highest** (decks finished, decks per local day including idle days, and the best single day). Daily figures begin with the first finish after daily tracking started and keep the local date recorded at finish.
 

@@ -2,8 +2,9 @@ import { keyframes } from '@emotion/react';
 import { alpha, Box, Stack, Typography, useTheme } from '@mui/material';
 import { useEffect, useId } from 'react';
 import { brand } from '../../../../shared/brand';
-import { easing, useReducedMotion } from '../../../../shared/ui/motion';
-import { type CelebrationLevel, Crackle, GoldBurst, sizzle } from './GoldBurst';
+import { easing, sizzle, useReducedMotion } from '../../../../shared/ui/motion';
+import { Crackle } from '../../../../shared/ui/transitions/Crackle';
+import { type CelebrationLevel, GoldBurst } from './GoldBurst';
 
 export type CelebrationVariant = 'streak' | 'perfect';
 
