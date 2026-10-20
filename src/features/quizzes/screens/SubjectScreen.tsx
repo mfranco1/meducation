@@ -1,4 +1,4 @@
-import { Box, Button, Stack } from '@mui/material';
+import { Box, Button } from '@mui/material';
 import { useState } from 'react';
 import type { FeedbackMode, Quiz, Subject, Topic } from '../../../domain/types';
 import { ScoreTrendIndicator } from '../components/ScoreTrendIndicator';
@@ -6,9 +6,8 @@ import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
 import type { QuizProgress } from '../selectors/progress';
 import { ContentLoadFailure } from '../../../shared/ui/loading/ContentLoadFailure';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
-import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
 import { SubjectBrowseLayout } from '../../../shared/ui/catalog/SubjectBrowseLayout';
-import { TopicSetBrowser, type TopicSet } from '../../../shared/ui/catalog/TopicSetBrowser';
+import { TopicSetBrowser, TopicSetBrowserSkeleton, type TopicSet } from '../../../shared/ui/catalog/TopicSetBrowser';
 import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
 export type { QuizProgress } from '../selectors/progress';
 
@@ -35,9 +34,9 @@ export function SubjectScreen({ subject, topics, progress, loading = false, retr
 
   return <>
     {recovery?.failed && <ContentRecoveryBanner error={error} retrying={recovery.retrying} busy={recovery.busy} retryAt={recovery.retryAt} title={`We can’t load quizzes for ${subject.name} right now.`} description="Your saved quiz history is safe. Please try again." onRetry={onRetry} />}
-    <SubjectBrowseLayout subjectId={subject.id} subjectName={subject.name} subjectDescription={subject.description} progress={showSets ? { completed: progress.filter(item => item.completionCount > 0).length, total: progress.length, nouns: 'quizzes' } : undefined} onBack={onBack}>
+    <SubjectBrowseLayout subjectId={subject.id} subjectName={subject.name} subjectDescription={subject.description} progress={showSets ? { completed: progress.filter(item => item.completionCount > 0).length, total: progress.length, nouns: 'quizzes' } : loading || retrying ? null : undefined} onBack={onBack}>
     {questionError && <Box sx={{ mb: 3 }}><ContentLoadFailure title="Failed to load questions" error={questionError} onRetry={onRetryQuestions} /></Box>}
-    {error || loading || retrying ? <Stack role={error && !retrying && !loading ? undefined : 'status'} spacing={2} aria-busy={loading || retrying} aria-hidden={Boolean(error && !retrying && !loading)} aria-label={retrying ? 'Retrying quizzes' : 'Loading quizzes'}>{Array.from({ length: 4 }, (_, index) => <LoadingSkeleton key={index} variant="rounded" height={92} />)}</Stack> : progress.length === 0 ? <SubjectCatalogEmptyState title="No quizzes available yet" /> : <TopicSetBrowser topics={topics} sets={sets} noun="quiz" />}
+    {error || loading || retrying ? <Box role={error && !retrying && !loading ? undefined : 'status'} aria-busy={loading || retrying} aria-hidden={Boolean(error && !retrying && !loading)} aria-label={retrying ? 'Retrying quizzes' : 'Loading quizzes'}><TopicSetBrowserSkeleton noun="quiz" dashed={Boolean(error && !retrying && !loading)} /></Box> : progress.length === 0 ? <SubjectCatalogEmptyState title="No quizzes available yet" /> : <TopicSetBrowser topics={topics} sets={sets} noun="quiz" />}
     {setupQuiz && <QuizSetupDialog open quiz={setupQuiz} onClose={() => setSetupQuiz(null)} onStart={(quiz, mode) => { onStartQuiz(quiz, mode); setSetupQuiz(null); }} onBrowse={quiz => { onBrowseQuiz(quiz); setSetupQuiz(null); }} />}
     </SubjectBrowseLayout>
   </>;

@@ -1,5 +1,5 @@
 import { ThemeProvider } from '@mui/material';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FlashcardCatalogResponse } from '../../../content/api/flashcardApiDecoders';
 import { theme } from '../../../shared/theme';
@@ -59,12 +59,15 @@ describe('FlashcardSubjectScreen', () => {
 
   it('uses shared shimmer rows during catalog loading and retains them after catalog failure', () => {
     const { rerender } = render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} completionCounts={{}} loading onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
-    expect(screen.getByRole('status', { name: 'Loading flashcard decks' })).toHaveAttribute('aria-busy', 'true');
-    expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
+    const loadingRegion = screen.getByRole('status', { name: 'Loading flashcard decks' });
+    expect(loadingRegion).toHaveAttribute('aria-busy', 'true');
+    expect(within(loadingRegion).getByRole('heading', { name: 'Topics' })).toBeVisible();
+    expect(within(loadingRegion).getByRole('searchbox', { name: 'Search topics and decks' })).toBeDisabled();
+    expect(loadingRegion.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} completionCounts={{}} error={new Error('unavailable')} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('alert')).toHaveTextContent('We can’t load flashcard decks for Anatomy right now.');
     expect(screen.queryByRole('heading', { name: 'No flashcard decks available yet' })).toBeNull();
-    expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
+    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     expect(screen.getByRole('button', { name: 'Retry' })).toBeVisible();
   });
 

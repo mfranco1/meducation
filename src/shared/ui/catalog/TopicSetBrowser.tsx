@@ -6,9 +6,10 @@ import RadioButtonUncheckedRoundedIcon from '@mui/icons-material/RadioButtonUnch
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { alpha, Box, Button, ButtonBase, Card, Chip, IconButton, InputAdornment, LinearProgress, Stack, TextField, Typography, useMediaQuery, type SxProps, type Theme } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import type { Topic } from '../../../domain/types';
 import { reducedMotion } from '../motion';
+import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 import { SwapTransition } from '../transitions/SwapTransition';
 
 export interface TopicSet {
@@ -21,6 +22,28 @@ export interface TopicSet {
   chips: ReactNode[];
   activityAt?: string;
   action: ReactNode;
+}
+
+const panelSx = (desktop: boolean): SxProps<Theme> => desktop ? { display: 'flex', flexDirection: 'column', maxHeight: 'min(720px, calc(100dvh - 48px))' } : {};
+const scrollSx = (desktop: boolean): SxProps<Theme> => ({ minHeight: 0, p: .5, overflowY: desktop ? 'auto' : undefined });
+const topicsHeading = <Typography id="topics-heading" variant="h5" component="h2" sx={{ px: 1, pb: 1 }}>Topics</Typography>;
+const nounsOf = (noun: 'quiz' | 'deck') => noun === 'quiz' ? 'quizzes' : 'decks';
+
+function TopicSearch({ nouns, query = '', onQuery, inputRef }: { nouns: string; query?: string; onQuery?: (query: string) => void; inputRef?: RefObject<HTMLInputElement | null> }) {
+  return <TextField
+    type="search" size="small" placeholder="Search" value={query} inputRef={inputRef} disabled={!onQuery}
+    onChange={event => onQuery?.(event.target.value)}
+    onKeyDown={event => { if (event.key === 'Escape') onQuery?.(''); }}
+    slotProps={{
+      htmlInput: { 'aria-label': `Search topics and ${nouns}` },
+      input: {
+        startAdornment: <InputAdornment position="start"><SearchRoundedIcon aria-hidden fontSize="small" /></InputAdornment>,
+        endAdornment: query && <InputAdornment position="end"><IconButton aria-label="Clear search" edge="end" size="small" onClick={() => { onQuery?.(''); inputRef?.current?.focus(); }}><CloseRoundedIcon fontSize="small" /></IconButton></InputAdornment>,
+      },
+    }}
+    // Inset like the topic rows; the browser's own (blue) clear button is replaced by the one above.
+    sx={{ display: 'flex', mx: .5, mb: 1, '& input::-webkit-search-cancel-button': { display: 'none' } }}
+  />;
 }
 
 const trackSx = { height: 6, borderRadius: 3, bgcolor: 'divider', '& .MuiLinearProgress-bar': { borderRadius: 3, [reducedMotion]: { transition: 'none' } } };
@@ -68,9 +91,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
     setWasDesktop(desktop);
     if (!desktop) setSelectedId(shown.id);
   }
-  const panelSx: SxProps<Theme> = desktop ? { display: 'flex', flexDirection: 'column', maxHeight: 'min(720px, calc(100dvh - 48px))' } : {};
-  const scrollSx: SxProps<Theme> = { minHeight: 0, p: .5, overflowY: desktop ? 'auto' : undefined };
-  const nouns = noun === 'quiz' ? 'quizzes' : 'decks';
+  const nouns = nounsOf(noun);
 
   useEffect(() => {
     const onPopState = () => {
@@ -136,24 +157,11 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
       </Stack>
   </Box>;
 
-  const topicsCard = <Card component="section" aria-labelledby="topics-heading" sx={{ p: 2, ...panelSx }}>
-    <Typography id="topics-heading" variant="h5" component="h2" sx={{ px: 1, pb: 1 }}>Topics</Typography>
-    <TextField
-      type="search" size="small" placeholder="Search" value={query} inputRef={searchRef}
-      onChange={event => setQuery(event.target.value)}
-      onKeyDown={event => { if (event.key === 'Escape') setQuery(''); }}
-      slotProps={{
-        htmlInput: { 'aria-label': `Search topics and ${nouns}` },
-        input: {
-          startAdornment: <InputAdornment position="start"><SearchRoundedIcon aria-hidden fontSize="small" /></InputAdornment>,
-          endAdornment: query && <InputAdornment position="end"><IconButton aria-label="Clear search" edge="end" size="small" onClick={() => { setQuery(''); searchRef.current?.focus(); }}><CloseRoundedIcon fontSize="small" /></IconButton></InputAdornment>,
-        },
-      }}
-      // Inset like the topic rows; the browser's own (blue) clear button is replaced by the one above.
-      sx={{ display: 'flex', mx: .5, mb: 1, '& input::-webkit-search-cancel-button': { display: 'none' } }}
-    />
+  const topicsCard = <Card component="section" aria-labelledby="topics-heading" sx={{ p: 2, ...panelSx(desktop) }}>
+    {topicsHeading}
+    <TopicSearch nouns={nouns} query={query} onQuery={setQuery} inputRef={searchRef} />
     <Box role="status" aria-live="polite" sx={visuallyHidden}>{searching && `${count(listedTopics.length, 'topic', 'topics')}, ${count(matchingSets.length, noun, nouns)}`}</Box>
-    <Stack component="ul" spacing={.5} sx={{ listStyle: 'none', m: 0, ...scrollSx }}>
+    <Stack component="ul" spacing={.5} sx={{ listStyle: 'none', m: 0, ...scrollSx(desktop) }}>
       {listedTopics.map(topic => {
         const summary = summaries.get(topic.id)!;
         const isSelected = !searching && topic.id === selected?.id;
@@ -181,7 +189,7 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
   const content = selected && (() => {
     const { own, completed } = summaries.get(selected.id)!;
     const percent = Math.round((completed / own.length) * 100);
-    return <Card component="section" aria-labelledby="topic-summary-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx }}>
+    return <Card component="section" aria-labelledby="topic-summary-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx(desktop) }}>
       {!desktop && <Button startIcon={<ArrowBackRoundedIcon />} color="inherit" onClick={() => history.back()} sx={{ mb: 1.5 }}>Topics</Button>}
       <Typography ref={headingRef} tabIndex={-1} id="topic-summary-heading" variant="h5" component="h2" sx={{ overflowWrap: 'anywhere', outline: 'none' }}>{selected.name}</Typography>
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
@@ -191,18 +199,18 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
       <Typography variant="body2" color="text.secondary" sx={{ mt: .75 }}>{`${completed} of ${own.length} ${nouns} completed`}</Typography>
       <Box sx={{ height: '1px', bgcolor: '#eee5df', opacity: .8, my: 2.5 }} />
       <Typography variant="h6" component="h3" sx={{ mb: 1.5 }}>{noun === 'quiz' ? 'Quizzes' : 'Decks'}</Typography>
-      <Stack component="ul" spacing={1.5} sx={{ listStyle: 'none', m: 0, ...scrollSx }}>
+      <Stack component="ul" spacing={1.5} sx={{ listStyle: 'none', m: 0, ...scrollSx(desktop) }}>
         {own.map(setRow)}
       </Stack>
     </Card>;
   })();
 
-  const resultsCard = <Card component="section" aria-labelledby="results-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx }}>
+  const resultsCard = <Card component="section" aria-labelledby="results-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx(desktop) }}>
     <Typography id="results-heading" variant="h5" component="h2" sx={{ mb: 1.5 }}>Results</Typography>
     {listedTopics.length === 0 ? <Stack alignItems="flex-start" spacing={1}>
       <Typography color="text.secondary">{`No topics or ${nouns} match “${query.trim()}”`}</Typography>
       <Button variant="contained" onClick={() => setQuery('')}>Clear</Button>
-    </Stack> : matchingSets.length === 0 ? <Typography color="text.secondary">{`No matching ${nouns}`}</Typography> : <Stack spacing={2.5} sx={scrollSx}>
+    </Stack> : matchingSets.length === 0 ? <Typography color="text.secondary">{`No matching ${nouns}`}</Typography> : <Stack spacing={2.5} sx={scrollSx(desktop)}>
       {listedTopics.filter(topic => matchingSets.some(set => set.topicId === topic.id)).map(topic => <Box key={topic.id}>
         <Typography variant="h6" component="h3" sx={{ mb: 1.5, overflowWrap: 'anywhere' }}>{topic.name}</Typography>
         <Stack component="ul" spacing={1.5} sx={{ listStyle: 'none', m: 0, p: 0 }}>{matchingSets.filter(set => set.topicId === topic.id).map(setRow)}</Stack>
@@ -214,4 +222,57 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
     ? <Box sx={{ display: 'grid', gap: 3, alignItems: 'start', gridTemplateColumns: 'minmax(300px, 380px) minmax(0, 1fr)' }}>{topicsCard}<SwapTransition swapKey={showResults ? 'results' : selected?.id ?? 'topics'}>{showResults ? resultsCard : content}</SwapTransition></Box>
     // One stable wrapper keeps the search field mounted, and focused, as results appear.
     : <SwapTransition swapKey={selected?.id ?? 'topics'} direction={selected ? 1 : -1}>{content || <Stack spacing={3}>{topicsCard}{showResults && resultsCard}</Stack>}</SwapTransition>;
+}
+
+const rowWidths = ['62%', '78%', '54%', '70%', '46%', '66%'];
+
+export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz' | 'deck'; dashed?: boolean }) {
+  const desktop = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
+  const border = dashed ? '1px dashed' : '1px solid';
+  const topicsCard = <Card component="section" aria-labelledby="topics-heading" sx={{ p: 2, ...panelSx(desktop) }}>
+    {topicsHeading}
+    <TopicSearch nouns={nounsOf(noun)} />
+    <Stack component="ul" aria-hidden spacing={.5} sx={{ listStyle: 'none', m: 0, ...scrollSx(desktop) }}>
+      {rowWidths.map((width, index) => <Box component="li" key={index} sx={{ alignItems: 'center', display: 'flex', gap: 1.5, p: 1.5 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <LoadingSkeleton variant="text" width={width} height={22} />
+          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: .75 }}>
+            <Box sx={{ flex: 1 }}><LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} /></Box>
+            <LoadingSkeleton variant="text" width={24} height={16} />
+          </Stack>
+        </Box>
+        <ChevronRightRoundedIcon color="disabled" />
+      </Box>)}
+    </Stack>
+  </Card>;
+  if (!desktop) return topicsCard;
+  return <Box sx={{ display: 'grid', gap: 3, alignItems: 'start', gridTemplateColumns: 'minmax(300px, 380px) minmax(0, 1fr)' }}>
+    {topicsCard}
+    <Card component="section" sx={{ p: 2.5, minWidth: 0, ...panelSx(desktop) }}>
+      <Box aria-hidden>
+        <LoadingSkeleton variant="text" width="40%" height={32} />
+        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
+          <Box sx={{ flex: 1 }}><LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} /></Box>
+          <LoadingSkeleton variant="text" width={32} height={20} />
+        </Stack>
+        <Box sx={{ mt: .75 }}><LoadingSkeleton variant="text" width="30%" height={20} /></Box>
+      </Box>
+      <Box sx={{ height: '1px', bgcolor: '#eee5df', opacity: .8, my: 2.5 }} />
+      <Typography variant="h6" component="h3" sx={{ mb: 1.5 }}>{noun === 'quiz' ? 'Quizzes' : 'Decks'}</Typography>
+      <Stack component="ul" aria-hidden spacing={1.5} sx={{ listStyle: 'none', m: 0, ...scrollSx(desktop) }}>
+        {[0, 1, 2, 3].map(index => <Box component="li" key={index} sx={{ border, borderColor: 'divider', borderRadius: '10px', p: 2 }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} spacing={2}>
+            <Stack direction="row" alignItems="center" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+              <Box sx={{ flex: '0 0 auto', display: 'flex' }}><LoadingSkeleton variant="circular" width={24} height={24} /></Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <LoadingSkeleton variant="text" width="55%" height={28} />
+                <LoadingSkeleton variant="text" width="25%" height={20} />
+              </Box>
+            </Stack>
+            <Box sx={{ flex: '0 0 auto', display: 'flex' }}><LoadingSkeleton variant="rounded" width={88} height={36} /></Box>
+          </Stack>
+        </Box>)}
+      </Stack>
+    </Card>
+  </Box>;
 }

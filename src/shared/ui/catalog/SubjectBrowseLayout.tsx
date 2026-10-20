@@ -3,8 +3,9 @@ import { Box, Button, CircularProgress, Container, Stack, Typography } from '@mu
 import type { ReactNode } from 'react';
 import { SubjectIconBadge } from './icons/SubjectIconBadge';
 import { reducedMotion } from '../motion';
+import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 
-export function SubjectBrowseLayout({ subjectId, subjectName, subjectDescription, progress, onBack, children }: { subjectId: string; subjectName: string; subjectDescription?: string; progress?: { completed: number; total: number; nouns: string }; onBack: () => void; children: ReactNode }) {
+export function SubjectBrowseLayout({ subjectId, subjectName, subjectDescription, progress, onBack, children }: { subjectId: string; subjectName: string; subjectDescription?: string; progress?: { completed: number; total: number; nouns: string } | null; onBack: () => void; children: ReactNode }) {
   const percent = progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
   return <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 5 } }}>
     <Button startIcon={<ArrowBackRoundedIcon />} onClick={onBack} color="inherit">Dashboard</Button>
@@ -16,6 +17,10 @@ export function SubjectBrowseLayout({ subjectId, subjectName, subjectDescription
           {subjectDescription && <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>{subjectDescription}</Typography>}
         </Stack>
       </Stack>
+      {progress === null && <Stack aria-hidden alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto' }}>
+        <LoadingSkeleton variant="circular" width={66} height={66} />
+        <LoadingSkeleton variant="text" width={120} height={16} />
+      </Stack>}
       {progress && progress.total > 0 && <Stack alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto', textAlign: 'center' }}>
         <Box sx={{ position: 'relative', display: 'inline-flex' }}>
           <CircularProgress variant="determinate" value={100} size={66} thickness={4} sx={{ color: 'divider' }} aria-hidden />

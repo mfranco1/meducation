@@ -725,7 +725,7 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
   await expect(banner).toBeVisible();
   await expect(banner.getByRole('alert')).toContainText('We can’t load quizzes for Browser Test Subject right now.');
   await expect(banner).not.toContainText('private backend detail');
-  await expect(page.locator('.MuiSkeleton-wave')).toHaveCount(4);
+  await expect(page.locator('.MuiSkeleton-wave').first()).toBeVisible();
   await expect(page.getByTestId('screen-transition')).toHaveCSS('top', '0px');
   const bounds = await page.evaluate(() => {
     const main = document.querySelector('main')!.getBoundingClientRect();

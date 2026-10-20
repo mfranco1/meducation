@@ -55,8 +55,7 @@ describe('subject quiz action', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(`We can’t load quizzes for ${subject.name} right now.`);
     expect(screen.queryByRole('heading', { name: 'No quizzes available yet' })).toBeNull();
     expect(screen.queryByText('raw backend detail')).toBeNull();
-    expect(document.querySelectorAll('.MuiSkeleton-root')).toHaveLength(4);
-    expect(document.querySelectorAll('.MuiSkeleton-wave')).toHaveLength(4);
+    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Retry' })).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -67,7 +66,10 @@ describe('subject quiz action', () => {
       subject={subject} topics={topics} progress={[]} retrying recovery={{ failed: true, retryAt: Date.now() + 5_000, retrying: true, busy: false }} onBack={() => {}} onResumeQuiz={() => {}}
       onStartQuiz={() => {}} onBrowseQuiz={() => {}}
     /></ThemeProvider>);
-    expect(screen.getByRole('status', { name: 'Retrying quizzes' })).toBeVisible();
+    const region = screen.getByRole('status', { name: 'Retrying quizzes' });
+    expect(region).toBeVisible();
+    expect(within(region).getByRole('heading', { name: 'Topics' })).toBeVisible();
+    expect(within(region).getByRole('searchbox', { name: 'Search topics and quizzes' })).toBeDisabled();
     expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
     expect(screen.queryByText('Reconnecting…')).toBeNull();
     expect(screen.getAllByRole('status', { name: 'Retrying quizzes' })).toHaveLength(1);
