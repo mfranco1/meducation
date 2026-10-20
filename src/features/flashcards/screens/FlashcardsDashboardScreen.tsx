@@ -12,7 +12,7 @@ import { ContinueStudyCard } from '../../../shared/ui/catalog/ContinueStudyCard'
 import { StudyCardIllustration } from '../../../shared/ui/catalog/StudyCardIllustration';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
 import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
-import { StatCard } from '../../../shared/ui/catalog/StatCard';
+import { StatCard, formatStatCount } from '../../../shared/ui/catalog/StatCard';
 import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
 import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
 import { useFlashcardDashboardStats } from '../session/useFlashcardDashboardStats';
@@ -29,12 +29,6 @@ type CatalogPageChange = {
   resetKey: string;
   direction: 'next' | 'previous';
 };
-
-const averageFormatter = new Intl.NumberFormat('en-US', {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 1,
-  useGrouping: false,
-});
 
 function SubjectPlaceholders() {
   return (
@@ -66,7 +60,7 @@ export function FlashcardsDashboardScreen({
   onSelectSubject: (subject: Subject) => void;
 }) {
   const stats = useFlashcardDashboardStats(progress);
-  const metric = (value: string | number) => (progressError ? '—' : value);
+  const metric = (value: number) => (progressError ? '—' : formatStatCount(value));
   const catalog = useSubjectCatalog(subjects, (item) => item.activeDeckCount > 0);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const focusAllFilter = useRef(false);
@@ -119,7 +113,7 @@ export function FlashcardsDashboardScreen({
               label="Average"
               accessibleLabel="Average flashcard deck finishes per day"
               icon={<BarChartOutlinedIcon aria-hidden="true" focusable="false" />}
-              value={metric(averageFormatter.format(stats.averagePerDay))}
+              value={metric(stats.averagePerDay)}
               supportingText="decks / day"
             />
             <StatCard

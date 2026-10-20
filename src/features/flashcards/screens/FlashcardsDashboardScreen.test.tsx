@@ -114,7 +114,8 @@ describe('FlashcardsDashboardScreen', () => {
     [26, 25, '1'],
     [53, 50, '1.1'],
     [2, 1, '2'],
-  ])('formats average %i/%i without unnecessary decimal digits', (trackedCompletions, elapsedDays, expected) => {
+    [2001, 2, '1k'],
+  ])('formats average %i/%i with at most one decimal or in thousands',(trackedCompletions, elapsedDays, expected) => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - elapsedDays + 1);
     const dayKey = (date: Date) =>
@@ -141,6 +142,34 @@ describe('FlashcardsDashboardScreen', () => {
     );
     expect(
       within(screen.getByRole('group', { name: 'Average flashcard deck finishes per day' })).getByText(expected),
+    ).toBeVisible();
+  });
+
+  it('shows completed and highest counts of 1000 or more in thousands', () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardsDashboardScreen
+          subjects={[]}
+          activeSubjects={[]}
+          progress={{
+            ...emptyProgress,
+            completionCounts: { d1: 1000 },
+            dailyStats: {
+              firstDay: '2026-01-01',
+              currentDay: '2026-01-01',
+              currentDayCount: 1,
+              trackedCompletions: 1,
+              highestDailyCount: 999_999,
+            },
+          }}
+          onRetry={vi.fn()}
+          onSelectSubject={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    expect(within(screen.getByRole('group', { name: 'Completed' })).getByText('1k')).toBeVisible();
+    expect(
+      within(screen.getByRole('group', { name: 'Highest flashcard deck finishes in a day' })).getByText('999k'),
     ).toBeVisible();
   });
 

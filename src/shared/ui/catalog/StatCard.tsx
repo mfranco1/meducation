@@ -4,6 +4,13 @@ import { Box, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 
+const countFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, useGrouping: false });
+
+// Truncates counts of 1000 or more to whole thousands (999,999 -> "999k").
+export function formatStatCount(value: number) {
+  return value >= 1000 ? `${Math.floor(value / 1000)}k` : countFormatter.format(value);
+}
+
 interface StatCardProps {
   label: string;
   value: ReactNode;

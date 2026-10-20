@@ -9,7 +9,7 @@ import type { ReactNode } from 'react';
 import type { CompletedAttempt, Subject } from '../../../domain/types';
 import { activeSubjectStats, type SubjectStat } from '../selectors/progress';
 import { ActiveSubjectCarousel } from '../components/ActiveSubjectCarousel';
-import { StatCard } from '../../../shared/ui/catalog/StatCard';
+import { StatCard, formatStatCount } from '../../../shared/ui/catalog/StatCard';
 import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
 import { QuizSubjectCard } from '../components/QuizSubjectCard';
 import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
@@ -217,7 +217,7 @@ export function DashboardScreen({
               label="Completed"
               accessibleLabel="Completed quizzes"
               icon={<MenuBookOutlinedIcon fontSize="inherit" aria-hidden="true" focusable="false" />}
-              value={attempts.length}
+              value={formatStatCount(attempts.length)}
               supportingText="quizzes"
             />
             {sharedRecovery ? (
