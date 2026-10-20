@@ -24,9 +24,10 @@ RUN npm run build:admin -- --manifest --sourcemap hidden \
     && find dist -name '*.map' -delete \
     && rm -r dist/.vite
 
-FROM nginxinc/nginx-unprivileged:1.30.5-trixie@sha256:8f18dedfceea3d7feb98792810c8c9925c985890ade257f2ec1b2f492b4eaebb AS static-runtime
+FROM nginxinc/nginx-unprivileged:1.30.6-trixie@sha256:ec0f7ecb1fbd84959ac114e65fb36074ffc97d4d51db0f18ee925162d889dcef AS static-runtime
 COPY ops/containers/nginx.conf /etc/nginx/nginx.conf
 COPY ops/containers/proxy.conf /etc/nginx/meducation-proxy.conf
+COPY ops/containers/security-headers.conf /etc/nginx/meducation-security-headers.conf
 USER 101:101
 EXPOSE 8080
 STOPSIGNAL SIGQUIT

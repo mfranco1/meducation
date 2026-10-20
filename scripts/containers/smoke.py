@@ -83,6 +83,13 @@ def main():
             for path in ("/health/frontend", "/health/live", "/health/ready"):
                 require(get(origin, path)[0] == 200, "Health route failed: " + path)
             require(get(origin, "/admin.html")[0] == 404, "Learner image serves /admin.html")
+            for path in ("/", "/favicon.svg"):
+                with urllib.request.urlopen(origin + path, timeout=15) as response:
+                    require(
+                        "frame-ancestors 'none'" in response.headers.get("Content-Security-Policy", "")
+                        and response.headers.get("X-Content-Type-Options") == "nosniff",
+                        "Missing security headers: " + path,
+                    )
             print("Container smoke passed.")
         finally:
             try:

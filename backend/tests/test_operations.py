@@ -110,10 +110,17 @@ def test_preformatted_server_errors_and_public_private_cors_are_safe(caplog):
     application = app()
     logging.getLogger("uvicorn.error").error(CANARY)
     assert CANARY not in caplog.records[-1].getMessage()
-    # A pool-internal log must not propagate raw driver exception text.
-    before = len(caplog.records)
-    logging.getLogger("sqlalchemy.pool.impl.QueuePool").error(CANARY)
-    assert len(caplog.records) == before
+    # A pool-internal log must not propagate raw driver exception text to root handlers.
+    root = logging.getLogger()
+    received: list[logging.LogRecord] = []
+    handler = logging.Handler()
+    handler.emit = received.append  # type: ignore[method-assign]
+    root.addHandler(handler)
+    try:
+        logging.getLogger("sqlalchemy.pool.impl.QueuePool").error(CANARY)
+    finally:
+        root.removeHandler(handler)
+    assert received == []
     with TestClient(application) as client:
         origin = "http://localhost:5173"
         public = client.get("/api/v1/subjects", headers={"Origin": origin})

@@ -47,9 +47,9 @@ def test_content_api_and_revision_conflicts(bank_input: dict) -> None:
     with TestClient(app) as client:
         assert client.get("/health/live").json() == {"status": "live"}
         assert client.get("/health/ready").json() == {"status": "ready"}
-        assert (
-            "SubjectCatalogResponse" in client.get("/openapi.json").json()["components"]["schemas"]
-        )
+        assert "SubjectCatalogResponse" in app.openapi()["components"]["schemas"]
+        assert client.get("/openapi.json").status_code == 404
+        assert client.get("/docs").status_code == 404
         subjects = client.get("/api/v1/subjects")
         assert subjects.status_code == 200
         assert subjects.headers["etag"].startswith('"sha256-')

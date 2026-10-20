@@ -46,7 +46,7 @@ export function adminProxy(source) {
   if (source.split(denied).length !== 2) throw new Error('Expected exactly one default learner admin denial.');
   return source.replace(
     denied,
-    'location = /admin.html {\n            try_files $uri =404;\n            add_header Cache-Control "no-store" always;\n        }',
+    'location = /admin.html {\n            try_files $uri =404;\n            include /etc/nginx/meducation-security-headers.conf;\n            add_header Cache-Control "no-store" always;\n        }',
   );
 }
 

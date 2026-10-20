@@ -136,4 +136,18 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 - Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 22, Nginx unprivileged). Update tag and digest together and rebuild. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
 - Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB (the API itself limits draft bodies to 1 MiB, 16 MiB for bulk), and logs only fixed route families. Private responses are `no-store`.
 - Runtime pools: reader, session and editor each at most two connections; migrations and jobs use direct unpooled connections.
-- Container smoke: `npm run test:containers` (`scripts/containers/smoke.py`) builds the API and learner images, starts an isolated Compose project with a disposable Postgres seeded from the synthetic `e2e/fixtures` banks, checks the learner page, `/api/v1/subjects` through Nginx, the health routes and the 404 for `/admin.html`, then removes the project and volume. CI runs it on amd64. The learner build fails inside the Dockerfile if it ships admin or content-bank modules (`scripts/containers/check-learner-artifacts.mjs`).
+- Container smoke: `npm run test:containers` (`scripts/containers/smoke.py`) builds the API and learner images, starts an isolated Compose project with a disposable Postgres seeded from the synthetic `e2e/fixtures` banks, checks the learner page, `/api/v1/subjects` through Nginx, the health routes, the 404 for `/admin.html` and the static security headers, then removes the project and volume. CI runs it on amd64. The learner build fails inside the Dockerfile if it ships admin or content-bank modules (`scripts/containers/check-learner-artifacts.mjs`).
+
+## Production security
+
+The learner image sets these headers on every static response (`ops/containers/security-headers.conf`): a same-origin Content-Security-Policy (inline styles allowed for MUI, `data:` for images and fonts, no framing), `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer` and a Permissions-Policy that denies camera, microphone and location. If `VITE_CONTENT_IMAGE_ORIGINS` is set, add the same origins to `img-src`. The API serves `/openapi.json`, `/docs` and `/redoc` only in local mode.
+
+Before a hosted launch, confirm on the platform:
+
+- HTTPS only, with HTTP redirected and `Strict-Transport-Security` set at the TLS terminator.
+- One origin serves the site and `/api`. Only the frontend is public; the API is reachable only through it. `MEDUCATION_ALLOWED_ORIGINS` is that origin.
+- Per-IP rate limiting or the platform's edge protection is on for the public origin.
+- The API runtime has only the reader URL (`sslmode=verify-full`). Admin stays disabled (`MEDUCATION_ADMIN_ENABLED` unset). Migrator, operator and bootstrap credentials are used by jobs only.
+- Secrets live in the platform secret store, never in images or the repository.
+- Point-in-time recovery and budget alerts are on for the managed database.
+- Dependencies and base images are current: `npm audit --omit=dev`, `pip-audit -r backend/requirements.lock`, and the latest patch tags for the pinned images.

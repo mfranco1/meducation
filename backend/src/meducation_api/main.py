@@ -121,7 +121,13 @@ def create_app(
             if app.state.editor_engine is not None:
                 app.state.editor_engine.dispose()
 
-    app = FastAPI(title="Meducation Content API", version="1.0.0", lifespan=lifespan)
+    # The schema and interactive docs (/docs, /redoc) are served in local mode only.
+    app = FastAPI(
+        title="Meducation Content API",
+        version="1.0.0",
+        lifespan=lifespan,
+        openapi_url="/openapi.json" if config.database_environment == "local" else None,
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=config.cors_origins,
