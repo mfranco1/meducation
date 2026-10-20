@@ -39,12 +39,14 @@ function FlashcardSubjectCard({
   progressUnavailable: boolean;
   onSelect: (subject: Subject) => void;
 }) {
-  const percent = item.deckCount > 0 ? Math.round((item.completedDeckCount / item.deckCount) * 100) : 0;
+  const completed = progressUnavailable ? 0 : item.completedDeckCount;
+  // Any completed deck shows at least 1% so real progress never reads as zero.
+  const percent = completed > 0 ? Math.max(1, Math.round((completed / item.deckCount) * 100)) : 0;
   return (
     <SubjectCard subject={item.subject} onSelect={onSelect} appearance="dashboardGrid">
       <SubjectProgressSummary
-        label={!progressUnavailable && <SubjectProgressLabel>Completed {percent}%</SubjectProgressLabel>}
-        percent={progressUnavailable ? 0 : percent}
+        label={percent > 0 && <SubjectProgressLabel>Completed {percent}%</SubjectProgressLabel>}
+        percent={percent}
         activeCount={item.activeDeckCount}
       />
     </SubjectCard>

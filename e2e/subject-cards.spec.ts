@@ -111,7 +111,7 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   await testInfo.attach('quiz-subject-grid-mobile', { body: await page.screenshot(), contentType: 'image/png' });
 });
 
-test('flashcard subject grid shares the subject header and activity style without quiz scores', async ({
+test('flashcard subject grid shares the subject header and progress track without quiz scores', async ({
   page,
 }, testInfo) => {
   await page.setViewportSize({ width: 390, height: 844 });
@@ -122,8 +122,8 @@ test('flashcard subject grid shares the subject header and activity style withou
   const card = grid.getByRole('button', { name: 'Open Browser Test Subject' });
   await expect(card).toBeVisible();
   await expect(card.locator('[data-subject-icon="s1"]')).toBeVisible();
-  await expect(card.getByTestId('subject-score-track')).toHaveCount(0);
-  await expect(card.getByText(/Latest Score|in progress/)).toHaveCount(0);
+  await expect(card.getByTestId('subject-score-track')).toBeVisible();
+  await expect(card.getByText(/Latest Score|Completed|in progress/)).toHaveCount(0);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
   await testInfo.attach('flashcard-subject-grid-mobile', { body: await page.screenshot(), contentType: 'image/png' });
 

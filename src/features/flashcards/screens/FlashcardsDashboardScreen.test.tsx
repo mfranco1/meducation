@@ -196,4 +196,24 @@ describe('FlashcardsDashboardScreen', () => {
     expect(within(grid).getByRole('button', { name: 'Open Active' })).toBeVisible();
     expect(within(grid).queryByRole('button', { name: 'Open Inactive' })).not.toBeInTheDocument();
   });
+
+  it('shows deck completion only once a deck is completed', () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardsDashboardScreen
+          subjects={[
+            { subject: { id: 'a', name: 'Started', accent: '#b9511b' }, deckCount: 300, completedDeckCount: 1, activeDeckCount: 0 },
+            { subject: { id: 'b', name: 'Untouched', accent: '#b9511b' }, deckCount: 2, completedDeckCount: 0, activeDeckCount: 0 },
+          ]}
+          activeSubjects={[]}
+          progress={emptyProgress}
+          onRetry={vi.fn()}
+          onSelectSubject={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    const grid = screen.getByTestId('all-subjects-grid');
+    expect(within(grid).getByRole('button', { name: 'Open Started' })).toHaveTextContent('Completed 1%');
+    expect(within(grid).getByRole('button', { name: 'Open Untouched' })).not.toHaveTextContent('Completed');
+  });
 });
