@@ -134,9 +134,21 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 
 - Images: API (installed wheel, user 10001, one Uvicorn process, no content corpus), learner and admin (non-root Nginx 101 on port 8080, read-only filesystem). The default `learner` target returns 404 for `/admin.html`; `admin` serves it `no-store`. Admin assets still need an authenticated API.
 - Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 22, Nginx unprivileged). Update tag and digest together and rebuild. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
-- Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB (the API itself limits draft bodies to 1 MiB, 16 MiB for bulk), and logs only fixed route families. Private responses are `no-store`.
+- Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB (the API itself limits draft bodies to 1 MiB, 16 MiB for bulk), and logs only failed requests (fixed route families, no paths or queries). Private responses are `no-store`.
 - Runtime pools: reader, session and editor each at most two connections; migrations and jobs use direct unpooled connections.
 - Container smoke: `npm run test:containers` (`scripts/containers/smoke.py`) builds the API and learner images, starts an isolated Compose project with a disposable Postgres seeded from the synthetic `e2e/fixtures` banks, checks the learner page, `/api/v1/subjects` through Nginx, the health routes, the 404 for `/admin.html` and the static security headers, then removes the project and volume. CI runs it on amd64. The learner build fails inside the Dockerfile if it ships admin or content-bank modules (`scripts/containers/check-learner-artifacts.mjs`).
+
+## Logs and alerts
+
+Everything logs to stdout as one JSON object per line, and every event has a `level` (`info` or `error`).
+
+- `request_complete` (API): `request_id`, `route` template, `method`, `status`, `duration_ms`, `failure_category`, dependency states and, when present, `sqlstate` (database errors) and `error` (exception `type` plus the last five `file:line in function` frames of an unhandled exception). Successful `/health/*` probes are not logged.
+- `app_started` (`release`, `admin_enabled`) and `startup_failed` (`error`, `failure_category` for database errors).
+- `proxy_request` (Nginx): failed requests only, with `upstream_request_id`.
+
+Logs never contain request data, exception messages, SQL or local variables. To trace a learner report, search the logs for the reference ID shown on the error (the first 8 characters of `request_id`).
+
+On the host, set `MEDUCATION_RELEASE` to the commit SHA, add an uptime check on `/health/ready`, alert on `level=error` events and keep 7 to 14 days of logs.
 
 ## Production security
 

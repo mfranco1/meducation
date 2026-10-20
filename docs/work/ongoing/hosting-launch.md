@@ -16,7 +16,7 @@ Deferred on 2026-10-17 while learner content, data model and UI work come first.
    - Option A: keep the backend OIDC flow and point it at a managed IdP. ZITADEL was the provisional candidate; it needs real MFA.
    - Option B: put `/api/admin` and `/admin.html` behind the host's auth proxy, then simplify or remove the backend session, CSRF and fresh-factor code to whatever the proxy doesn't cover.
    - Prefer the option with less code we own, as long as it keeps MFA, CSRF/Origin protection and per-editor identity.
-3. Set up a stable HTTPS origin with same-origin `/api`. Restore the authority dump into the hosted database and deploy the containers.
+3. Set up a stable HTTPS origin with same-origin `/api`. Restore the authority dump into the hosted database and deploy the containers. Set `MEDUCATION_RELEASE`, then configure log retention, an uptime check on `/health/ready` and an alert on `level=error` ([logs](../../operations.md#logs-and-alerts)).
 4. Run a deployed smoke test, real-device browser checks, and manual acceptance of the redesigned admin.
 
 ## Open questions

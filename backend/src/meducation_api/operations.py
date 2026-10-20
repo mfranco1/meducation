@@ -2,7 +2,9 @@
 
 import json
 import logging
+import sys
 import time
+import traceback
 from contextvars import ContextVar
 from dataclasses import dataclass, field
 from threading import Lock
@@ -30,15 +32,21 @@ Category = Literal["ok", "pool_timeout", "connection_failure", "sql_timeout", "d
 @dataclass
 class RequestEvents:
     dependencies: dict[Dependency, Category] = field(default_factory=dict)
+    sqlstate: str | None = None
 
 
 current_events: ContextVar[RequestEvents | None] = ContextVar("operational_request", default=None)
 
 
+def sqlstate(error: Exception) -> str | None:
+    state = getattr(getattr(error, "orig", None), "sqlstate", None)
+    return state if isinstance(state, str) and len(state) == 5 else None
+
+
 def database_category(error: Exception) -> Category:
     if isinstance(error, TimeoutError):
         return "pool_timeout"
-    state = getattr(getattr(error, "orig", None), "sqlstate", None)
+    state = sqlstate(error)
     if isinstance(error, DBAPIError) and (
         error.connection_invalidated or state is None or str(state).startswith("08")
     ):
@@ -56,29 +64,35 @@ def dependency_result(role: Dependency, category: Category = "ok") -> None:
 
 
 def database_failure(role: Dependency, error: Exception) -> None:
+    events = current_events.get()
+    if events is not None and events.sqlstate is None:
+        events.sqlstate = sqlstate(error)
     dependency_result(role, database_category(error))
 
 
-class SafeAccessFilter(logging.Filter):
-    def filter(self, record: logging.LogRecord) -> bool:
-        if isinstance(record.args, tuple) and len(record.args) == 5:
-            _, method, _, protocol, status = record.args
-            record.msg = '%s - "%s %s HTTP/%s" %d'
-            record.args = (
-                "[client]",
-                method
-                if method in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
-                else "OTHER",
-                "/[redacted]",
-                protocol if protocol in {"1.0", "1.1", "2"} else "?",
-                status if isinstance(status, int) else 0,
-            )
-        else:
-            record.msg, record.args = "HTTP access", ()
-        record.exc_info = None
-        record.exc_text = None
-        record.stack_info = None
-        return True
+def _location(frame: traceback.FrameSummary) -> str:
+    path = frame.filename.replace("\\", "/")
+    if "site-packages/" in path:
+        path = path.rsplit("site-packages/", 1)[1]
+    elif "meducation_api/" in path:
+        path = "meducation_api/" + path.rsplit("meducation_api/", 1)[1]
+    else:
+        path = path.rsplit("/", 1)[-1]
+    return f"{path}:{frame.lineno} in {frame.name}"
+
+
+def error_summary(error: BaseException) -> dict[str, object]:
+    # Exception type and code locations only; the message can carry request data or SQL.
+    return {
+        "type": type(error).__name__,
+        "frames": [_location(f) for f in traceback.extract_tb(error.__traceback__)[-5:]],
+    }
+
+
+def log_event(event: str, *, level: str = "info", **fields: object) -> None:
+    logging.getLogger("meducation.operations").info(
+        json.dumps({"event": event, "level": level, **fields}, separators=(",", ":"))
+    )
 
 
 class SafeServerErrorFilter(logging.Filter):
@@ -98,13 +112,11 @@ class SafeServerErrorFilter(logging.Filter):
 
 
 def configure_operational_logging() -> None:
-    for name, cls in [
-        ("uvicorn.access", SafeAccessFilter),
-        ("uvicorn.error", SafeServerErrorFilter),
-    ]:
-        logger = logging.getLogger(name)
-        if not any(isinstance(f, cls) for f in logger.filters):
-            logger.addFilter(cls())
+    # Request events replace uvicorn's access log, which would repeat every request.
+    logging.getLogger("uvicorn.access").disabled = True
+    error_logger = logging.getLogger("uvicorn.error")
+    if not any(isinstance(f, SafeServerErrorFilter) for f in error_logger.filters):
+        error_logger.addFilter(SafeServerErrorFilter())
     # SQLAlchemy pool reset/disconnect logs can carry raw driver exception text.
     # Worker request events replace those diagnostics with safe categories.
     sql = logging.getLogger("sqlalchemy")
@@ -114,7 +126,7 @@ def configure_operational_logging() -> None:
     logger = logging.getLogger("meducation.operations")
     logger.setLevel(logging.INFO)
     if not logger.handlers:
-        handler = logging.StreamHandler()
+        handler = logging.StreamHandler(sys.stdout)
         handler.setFormatter(logging.Formatter("%(message)s"))
         logger.addHandler(handler)
 
@@ -141,7 +153,7 @@ class OperationalMiddleware:
             ),
             "<unmatched>",
         )
-        status, began, failed = 500, False, False
+        status, began, failed = 500, False, None
 
         async def response(message: Message) -> None:
             nonlocal status, began
@@ -154,8 +166,8 @@ class OperationalMiddleware:
 
         try:
             await self.app(scope, receive, response)
-        except Exception:  # noqa: BLE001 -- final HTTP boundary must not leak exceptions
-            failed = True
+        except Exception as exc:  # noqa: BLE001 -- final HTTP boundary must not leak exceptions
+            failed = error_summary(exc)
             if began:
                 raise RuntimeError("Response delivery failed.") from None
             await JSONResponse(
@@ -193,19 +205,19 @@ class OperationalMiddleware:
                 if scope["method"] in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"}
                 else "OTHER"
             )
-            logging.getLogger("meducation.operations").info(
-                json.dumps(
-                    {
-                        "event": "request_complete",
-                        "request_id": request_id,
-                        "route": route,
-                        "method": method,
-                        "status": status,
-                        "duration_ms": round((time.monotonic() - started) * 1000, 3),
-                        "failure_category": category_name,
-                        "dependencies": events.dependencies,
-                        "recovered_dependencies": sorted(recovered),
-                    },
-                    separators=(",", ":"),
+            quiet_probe = route.startswith("/health/") and status < 400 and not errors
+            if not quiet_probe:
+                log_event(
+                    "request_complete",
+                    level="error" if status >= 500 or errors else "info",
+                    request_id=request_id,
+                    route=route,
+                    method=method,
+                    status=status,
+                    duration_ms=round((time.monotonic() - started) * 1000, 3),
+                    failure_category=category_name,
+                    dependencies=events.dependencies,
+                    recovered_dependencies=sorted(recovered),
+                    **({"sqlstate": events.sqlstate} if events.sqlstate else {}),
+                    **({"error": failed} if failed else {}),
                 )
-            )

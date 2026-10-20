@@ -345,10 +345,10 @@ describe('runtime question bank', () => {
       await expect(request).resolves.toEqual({ ready: true });
       expect(retryingFetch).toHaveBeenCalledTimes(2);
 
-      const permanentFetch = vi.fn().mockResolvedValue({ ok: false, status: 404, headers: { get: () => null } });
+      const permanentFetch = vi.fn().mockResolvedValue({ ok: false, status: 404, headers: { get: (name: string) => name === 'X-Request-ID' ? 'req-1234' : null } });
       vi.stubGlobal('fetch', permanentFetch);
       await expect(getJsonWithRetry('/api/v1/missing', { policy: { maxRetries: 3, baseDelayMs: 500, maxDelayMs: 3000 } }))
-        .rejects.toMatchObject({ kind: 'http', status: 404 });
+        .rejects.toMatchObject({ kind: 'http', status: 404, requestId: 'req-1234' });
       expect(permanentFetch).toHaveBeenCalledTimes(1);
     } finally { vi.useRealTimers(); }
   });

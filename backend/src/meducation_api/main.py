@@ -7,13 +7,20 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
+from sqlalchemy.exc import DBAPIError, TimeoutError
 
 from meducation_api.admin.diagnostics import install_diagnostics
 from meducation_api.admin.http import install_editor
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.http import AuthRuntime, install_auth
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.operations import OperationalMiddleware, configure_operational_logging
+from meducation_api.operations import (
+    OperationalMiddleware,
+    configure_operational_logging,
+    database_category,
+    error_summary,
+    log_event,
+)
 from meducation_api.repositories.question_bank import (
     Flashcard,
     FlashcardCatalogRepository,
@@ -102,6 +109,7 @@ def create_app(
         app.state.source = None
         app.state.bank = None
         app.state.flashcards = None
+        started = False
         try:
             if source_factory is not None:
                 source = source_factory(config)
@@ -111,7 +119,24 @@ def create_app(
                 source = PostgresContentSource(config)
             with source as initialized:
                 app.state.source = initialized
+                started = True
+                log_event(
+                    "app_started", release=config.release, admin_enabled=identity_config.enabled
+                )
                 yield
+        except Exception as exc:
+            if not started:
+                log_event(
+                    "startup_failed",
+                    level="error",
+                    error=error_summary(exc),
+                    **(
+                        {"failure_category": database_category(exc)}
+                        if isinstance(exc, DBAPIError | TimeoutError)
+                        else {}
+                    ),
+                )
+            raise
         finally:
             app.state.source = None
             app.state.bank = None
@@ -133,6 +158,7 @@ def create_app(
         allow_origins=config.cors_origins,
         allow_methods=["GET", "HEAD"],
         allow_headers=["If-None-Match", "If-Match", "Content-Type"],
+        expose_headers=["X-Request-ID"],
     )
     # Question lists reach ~400 KB of JSON; gzip cuts them about 5x. Zip exports are excluded by default.
     app.add_middleware(GZipMiddleware, compresslevel=6)

@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     operator_database_url: SecretStr | None = None
     bootstrap_database_url: SecretStr | None = None
     admin_editor_database_url: SecretStr | None = None
+    release: str | None = None
 
     @model_validator(mode="after")
     def validate_database_settings(self) -> Settings:

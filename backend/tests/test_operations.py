@@ -4,11 +4,14 @@ import json
 import logging
 from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
 from fixture_content import fixture_app
 from sqlalchemy.exc import DBAPIError, TimeoutError
 
-from meducation_api.operations import SafeAccessFilter, SafeServerErrorFilter, database_category
+from meducation_api.main import create_app
+from meducation_api.operations import SafeServerErrorFilter, database_category
+from meducation_api.settings import Settings
 
 ROOT = Path(__file__).resolve().parents[2]
 CANARY = "L5-secret-code-token-password-authored-text"
@@ -50,6 +53,9 @@ def test_request_logs_never_include_input_and_errors_are_correlated(caplog):
         event = events(caplog)[-1]
         assert event["route"] == "/fixture/fail/{value}"
         assert event["failure_category"] == "internal_error"
+        assert event["level"] == "error"
+        assert event["error"]["type"] == "RuntimeError"
+        assert any("in fail" in frame for frame in event["error"]["frames"])
         assert (
             event["request_id"]
             == response.headers["x-request-id"]
@@ -67,18 +73,7 @@ def test_request_logs_never_include_input_and_errors_are_correlated(caplog):
         assert CANARY not in json.dumps(events(caplog))
 
 
-def test_access_and_exception_filters_strip_untrusted_fields_and_traces():
-    access = logging.LogRecord(
-        "uvicorn.access",
-        logging.INFO,
-        "",
-        0,
-        '%s - "%s %s HTTP/%s" %d',
-        (CANARY, CANARY, "/" + CANARY + "?code=" + CANARY, CANARY, 500),
-        None,
-    )
-    SafeAccessFilter().filter(access)
-    assert CANARY not in access.getMessage()
+def test_exception_filter_strips_untrusted_fields_and_traces():
     error = logging.LogRecord(
         "uvicorn.error",
         logging.ERROR,
@@ -91,6 +86,32 @@ def test_access_and_exception_filters_strip_untrusted_fields_and_traces():
     SafeServerErrorFilter().filter(error)
     assert CANARY not in error.getMessage()
     assert error.exc_info is error.exc_text is error.stack_info is None
+
+
+def test_health_probes_log_only_failures(caplog):
+    application = app()
+    with TestClient(application) as client:
+        assert client.get("/health/live").status_code == 200
+        assert not [e for e in events(caplog) if e.get("route") == "/health/live"]
+        application.state.source = None
+        assert client.get("/health/ready").status_code == 503
+        event = events(caplog)[-1]
+        assert event["route"] == "/health/ready"
+        assert event["level"] == "error"
+
+
+def test_startup_failure_is_logged_without_exception_text(caplog):
+    def broken(_: Settings):
+        raise RuntimeError(CANARY)
+
+    failing = create_app(Settings(_env_file=None), source_factory=broken)
+    with pytest.raises(RuntimeError), TestClient(failing):
+        pass
+    event = events(caplog)[-1]
+    assert event["event"] == "startup_failed"
+    assert event["level"] == "error"
+    assert event["error"]["type"] == "RuntimeError"
+    assert CANARY not in json.dumps(events(caplog))
 
 
 def test_database_failure_categories_do_not_use_exception_messages():

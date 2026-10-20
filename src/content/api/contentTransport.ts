@@ -4,14 +4,14 @@ import { logContentDiagnostic } from './contentLogger';
 export type ContentErrorKind = 'timeout' | 'network' | 'http' | 'invalid' | 'revision' | 'cancelled';
 
 export class ContentLoadError extends Error {
-  constructor(readonly kind: ContentErrorKind, message: string, readonly status?: number, readonly retryAfter?: string | null) { super(message); this.name = 'ContentLoadError'; }
+  constructor(readonly kind: ContentErrorKind, message: string, readonly status?: number, readonly retryAfter?: string | null, readonly requestId?: string | null) { super(message); this.name = 'ContentLoadError'; }
 }
 
 export const revisionError = () => new ContentLoadError('revision', 'Quiz content changed. Reload content to get the latest version.');
 const timeoutMs = 15_000;
 
-export const genericFailure = (kind: ContentErrorKind, status?: number, retryAfter?: string | null) =>
-  new ContentLoadError(kind, 'The content request could not be completed.', status, retryAfter);
+export const genericFailure = (kind: ContentErrorKind, status?: number, retryAfter?: string | null, requestId?: string | null) =>
+  new ContentLoadError(kind, 'The content request could not be completed.', status, retryAfter, requestId);
 
 function waitForRetry(delayMs: number, signal?: AbortSignal, retryNowSignal?: AbortSignal) {
   return new Promise<void>((resolve, reject) => {
@@ -73,7 +73,7 @@ export async function getJsonWithRetry<T>(
     try {
       const request = fetch(path, { headers: { Accept: 'application/json' }, signal: controller.signal }).then(async response => {
         if (response.status === 409) throw revisionError();
-        if (!response.ok) throw genericFailure('http', response.status, response.headers.get('Retry-After'));
+        if (!response.ok) throw genericFailure('http', response.status, response.headers.get('Retry-After'), response.headers.get('X-Request-ID'));
         try { return await response.json() as T; }
         catch { throw genericFailure('invalid'); }
       });

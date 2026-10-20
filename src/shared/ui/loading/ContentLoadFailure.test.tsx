@@ -21,6 +21,15 @@ describe('content load failure', () => {
     expect(onRetry).toHaveBeenCalledTimes(1);
   });
 
+  it('shows a short reference when the server sent a request ID', () => {
+    render(<ThemeProvider theme={theme}><ContentLoadFailure
+      title="Failed to load subjects"
+      error={new ContentLoadError('http', 'raw', 500, null, '0123456789abcdef')}
+      onRetry={vi.fn()}
+    /></ThemeProvider>);
+    expect(screen.getByText('Reference: 01234567')).toBeVisible();
+  });
+
   it('uses connection copy for network failures and reload action for revision conflicts', () => {
     const onRetry = vi.fn();
     const { rerender } = render(<ThemeProvider theme={theme}><ContentLoadFailure

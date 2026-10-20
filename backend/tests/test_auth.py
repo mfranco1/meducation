@@ -2,7 +2,6 @@
 
 import base64
 import json
-import logging
 import time
 
 import httpx2
@@ -14,7 +13,6 @@ from pydantic import ValidationError
 
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.oidc import AuthError, OIDCClient, StrictDecoder
-from meducation_api.operations import SafeAccessFilter
 
 NOW = time.time()
 KEY = RSAKey.generate_key(2048)
@@ -265,20 +263,6 @@ def test_key_and_network_faults(fault):
         h.client.transport.transport = httpx2.MockTransport(reply)
     with pytest.raises(AuthError):
         h.client.verify(h.token(), nonce=h.nonce)
-
-
-def test_access_log_redacts_auth_query():
-    record = logging.LogRecord(
-        "uvicorn.access",
-        20,
-        "",
-        0,
-        '%s - "%s %s HTTP/%s" %d',
-        ("peer", "GET", "/api/admin/auth/callback?code=secret&state=secret", "1.1", 303),
-        None,
-    )
-    assert SafeAccessFilter().filter(record)
-    assert "secret" not in record.getMessage()
 
 
 def test_authorization_url_is_fixed_pkce_code_flow():
