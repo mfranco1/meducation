@@ -2,8 +2,8 @@ import type { ReactNode } from 'react';
 import { SvgIcon, type SvgIconProps } from '@mui/material';
 
 // Duotone icons on a 24-unit grid: solid or stroked line art plus a soft tint.
-// Filled glyphs are adapted from Health Icons (https://healthicons.org), MIT License,
-// Copyright (c) 2021 Resolve to Save Lives.
+// Filled glyphs are adapted from Health Icons (https://healthicons.org); its MIT license ships
+// in public/icon-licenses.txt.
 type Icon = { name: string; art: ReactNode };
 
 const tone = { fill: 'currentColor', fillOpacity: 0.16 };

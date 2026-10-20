@@ -8,6 +8,7 @@ import { alpha, Box, Button, ButtonBase, Card, Chip, IconButton, InputAdornment,
 import { visuallyHidden } from '@mui/utils';
 import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'react';
 import type { Topic } from '../../../domain/types';
+import { TopicIcon } from './icons/TopicIcon';
 import { reducedMotion } from '../motion';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 import { SwapTransition } from '../transitions/SwapTransition';
@@ -176,7 +177,10 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: r
           sx={{ alignItems: 'center', borderRadius: '10px', display: 'flex', gap: 1.5, p: 1.5, textAlign: 'left', width: '100%', bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .1) : 'transparent', '&:hover': { bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .1) : 'action.hover' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' } }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle2" sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{topic.name}</Typography>
+            <Typography variant="subtitle2" sx={{ alignItems: 'flex-start', display: 'flex', fontWeight: 700, gap: 1, overflowWrap: 'anywhere' }}>
+              <TopicIcon topicId={topic.id} subjectId={topic.subjectId} color="primary" sx={{ fontSize: theme => `${theme.typography.subtitle2.lineHeight}em` }} />
+              <Box component="span" sx={{ minWidth: 0 }}>{topic.name}</Box>
+            </Typography>
             <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: .75 }}>
               <LinearProgress aria-hidden variant="determinate" value={(summary.completed / summary.own.length) * 100} sx={{ ...trackSx, flex: 1 }} />
               <Typography variant="caption" color="text.secondary">{summary.completed}/{summary.own.length}</Typography>
@@ -194,8 +198,16 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: r
     const percent = Math.round((completed / own.length) * 100);
     return <Card component="section" aria-labelledby="topic-summary-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx(desktop) }}>
       {!desktop && <Button startIcon={<ArrowBackRoundedIcon />} color="inherit" onClick={() => history.back()} sx={{ mb: 1.5 }}>Topics</Button>}
-      <Typography ref={headingRef} tabIndex={-1} id="topic-summary-heading" variant="h5" component="h2" sx={{ overflowWrap: 'anywhere', outline: 'none' }}>{selected.name}</Typography>
-      {selected.description && <Typography variant="body2" color="text.secondary" sx={{ mt: .5, overflowWrap: 'anywhere' }}>{selected.description}</Typography>}
+      <Box sx={{ display: 'flex', gap: 1.5 }}>
+        {/* The icon matches the height of the name and description, capped so long descriptions on phones keep their width. */}
+        <Box sx={{ alignSelf: 'stretch', aspectRatio: '1', flexShrink: 0, maxHeight: { xs: 56, sm: 80 } }}>
+          <TopicIcon topicId={selected.id} subjectId={selected.subjectId} color="primary" sx={{ display: 'block', height: '100%', width: '100%' }} />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography ref={headingRef} tabIndex={-1} id="topic-summary-heading" variant="h5" component="h2" sx={{ overflowWrap: 'anywhere', outline: 'none' }}>{selected.name}</Typography>
+          {selected.description && <Typography variant="body2" color="text.secondary" sx={{ mt: .5, overflowWrap: 'anywhere' }}>{selected.description}</Typography>}
+        </Box>
+      </Box>
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
         <LinearProgress aria-hidden variant="determinate" value={percent} sx={{ ...trackSx, flex: 1 }} />
         <Typography variant="body2" color="text.secondary">{percent}%</Typography>
@@ -239,7 +251,10 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
     <Stack component="ul" aria-hidden spacing={.5} sx={{ listStyle: 'none', m: 0, ...scrollSx(desktop) }}>
       {rowWidths.map((width, index) => <Box component="li" key={index} sx={{ alignItems: 'center', display: 'flex', gap: 1.5, p: 1.5 }}>
         <Box sx={{ flex: 1, minWidth: 0 }}>
-          <LoadingSkeleton variant="text" width={width} height={22} />
+          <Stack direction="row" spacing={1}>
+            <LoadingSkeleton variant="rounded" width={22} height={22} />
+            <LoadingSkeleton variant="text" width={width} height={22} />
+          </Stack>
           <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: .75 }}>
             <Box sx={{ flex: 1 }}><LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} /></Box>
             <LoadingSkeleton variant="text" width={24} height={16} />
@@ -254,7 +269,10 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
     {topicsCard}
     <Card component="section" sx={{ p: 2.5, minWidth: 0, ...panelSx(desktop) }}>
       <Box aria-hidden>
-        <LoadingSkeleton variant="text" width="40%" height={32} />
+        <Stack direction="row" spacing={1.5}>
+          <LoadingSkeleton variant="rounded" width={32} height={32} />
+          <LoadingSkeleton variant="text" width="40%" height={32} />
+        </Stack>
         <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
           <Box sx={{ flex: 1 }}><LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} /></Box>
           <LoadingSkeleton variant="text" width={32} height={20} />
