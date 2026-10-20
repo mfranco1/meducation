@@ -37,7 +37,12 @@ test('adds a topic, quiz and questions in bulk, then decks and cards; deletes th
                   answer: 'B',
                   rationale: 'Static reviewed rationale',
                 },
-                { stem: 'Grouped second stem', choices: ['Gamma', 'Delta'], answer: 'B', rationale: 'Second rationale' },
+                {
+                  stem: 'Grouped second stem',
+                  choices: ['Gamma', 'Delta'],
+                  answer: 'B',
+                  rationale: 'Second rationale',
+                },
               ],
             },
           ],
