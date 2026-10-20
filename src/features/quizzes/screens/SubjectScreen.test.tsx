@@ -6,7 +6,7 @@ import { theme } from '../../../shared/theme';
 import { SubjectScreen, type QuizProgress } from './SubjectScreen';
 
 const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };
-const topics = [{ id: 't1', subjectId: subject.id, name: 'Cell biology' }, { id: 't2', subjectId: subject.id, name: 'Metabolism' }];
+const topics = [{ id: 't1', subjectId: subject.id, name: 'Cell biology', description: 'Organelles and membranes' }, { id: 't2', subjectId: subject.id, name: 'Metabolism' }];
 const quiz = { id: 'quiz', subjectId: subject.id, topicId: 't1', name: 'Practice test 1', questionCount: 10 };
 const activeAttempt: Attempt = {
   id: 'attempt',
@@ -208,8 +208,10 @@ describe('subject topics', () => {
     expect(screen.getByRole('heading', { name: 'Second quiz' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Glycolysis quiz' })).toBeNull();
     expect(screen.getByText('1 of 2 quizzes completed')).toBeVisible();
+    expect(screen.getByText('Organelles and membranes')).toBeVisible();
 
     fireEvent.click(screen.getByRole('button', { name: /Metabolism/ }));
+    expect(screen.queryByText('Organelles and membranes')).toBeNull();
     expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('heading', { name: 'Glycolysis quiz' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Practice test 1' })).toBeNull();

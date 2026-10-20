@@ -173,7 +173,7 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: r
           ref={(node: HTMLElement | null) => { if (node) topicButtons.current.set(topic.id, node); else topicButtons.current.delete(topic.id); }}
           aria-current={isSelected ? 'true' : undefined}
           onClick={() => openTopic(topic.id)}
-          sx={{ alignItems: 'center', borderRadius: '10px', display: 'flex', gap: 1.5, p: 1.5, textAlign: 'left', width: '100%', bgcolor: isSelected ? 'primary.light' : 'transparent', '&:hover': { bgcolor: isSelected ? 'primary.light' : 'action.hover' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' } }}
+          sx={{ alignItems: 'center', borderRadius: '10px', display: 'flex', gap: 1.5, p: 1.5, textAlign: 'left', width: '100%', bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .1) : 'transparent', '&:hover': { bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .1) : 'action.hover' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' } }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="subtitle2" sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{topic.name}</Typography>
@@ -195,6 +195,7 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: r
     return <Card component="section" aria-labelledby="topic-summary-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx(desktop) }}>
       {!desktop && <Button startIcon={<ArrowBackRoundedIcon />} color="inherit" onClick={() => history.back()} sx={{ mb: 1.5 }}>Topics</Button>}
       <Typography ref={headingRef} tabIndex={-1} id="topic-summary-heading" variant="h5" component="h2" sx={{ overflowWrap: 'anywhere', outline: 'none' }}>{selected.name}</Typography>
+      {selected.description && <Typography variant="body2" color="text.secondary" sx={{ mt: .5, overflowWrap: 'anywhere' }}>{selected.description}</Typography>}
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
         <LinearProgress aria-hidden variant="determinate" value={percent} sx={{ ...trackSx, flex: 1 }} />
         <Typography variant="body2" color="text.secondary">{percent}%</Typography>
