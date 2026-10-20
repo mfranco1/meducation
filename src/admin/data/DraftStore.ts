@@ -83,15 +83,19 @@ export interface BulkGroup {
   childKind: 'questions' | 'cards';
   children: Fields[];
 }
-/** Optionally a new topic under `subjectId`, then groups of children under the topic (new parents) or existing parents. */
-export interface BulkPlan {
-  subjectId?: string;
-  topic?: Fields;
-  topicId?: string;
+/** A new topic (`fields`) or an existing one (`id`), and the groups to add under it. Groups with `parentId` need neither. */
+export interface BulkTopic {
+  id?: string;
+  fields?: Fields;
   groups: BulkGroup[];
 }
+/** New topics are created under `subjectId` in order, each followed by its groups. */
+export interface BulkPlan {
+  subjectId?: string;
+  topics: BulkTopic[];
+}
 export interface BulkResult {
-  topicId?: string;
+  topicIds: string[];
   parentIds: string[];
   created: number;
 }
@@ -217,15 +221,15 @@ export class DraftStore {
         });
     });
   }
-  /** Add children in bulk, creating a new topic and quiz/deck parents first when the plan asks for them. */
+  /** Add children in bulk, creating new topics and quiz/deck parents first when the plan asks for them. */
   async addTree(plan: BulkPlan): Promise<BulkResult> {
     return this.write(async () => {
-      const result: BulkResult = { parentIds: [], created: 0 };
+      const result: BulkResult = { topicIds: [], parentIds: [], created: 0 };
       let step = 'starting';
       const saved = () =>
-        result.created || result.topicId || result.parentIds.length
+        result.created || result.topicIds.length || result.parentIds.length
           ? `Already saved to the draft: ${[
-              plan.topic && result.topicId ? `topic ${result.topicId}` : '',
+              result.topicIds.length ? `topics ${result.topicIds.join(', ')}` : '',
               result.parentIds.length ? `parents ${result.parentIds.join(', ')}` : '',
               result.created ? `${result.created} record(s) in bulk` : '',
             ]
@@ -233,39 +237,40 @@ export class DraftStore {
               .join('; ')}.`
           : '';
       try {
-        let topicId = plan.topicId;
-        if (plan.topic) {
-          step = 'creating the topic';
-          topicId = (
-            await this.client.post<{ record: { id: string } }>('/draft/topics', {
-              parentId: plan.subjectId,
-              fields: plan.topic,
-            })
-          ).record.id;
-          result.topicId = topicId;
-        }
-        for (const group of plan.groups) {
-          let parentId = group.parentId;
-          if (group.create) {
-            step = `creating ${group.create.kind === 'quizzes' ? 'a quiz' : 'a deck'}`;
-            parentId = (
-              await this.client.post<{ record: { id: string } }>(`/draft/${group.create.kind}`, {
-                parentId: topicId,
-                fields: group.create.fields,
+        for (const topic of plan.topics) {
+          let topicId = topic.id;
+          if (topic.fields) {
+            step = 'creating a topic';
+            topicId = (
+              await this.client.post<{ record: { id: string } }>('/draft/topics', {
+                parentId: plan.subjectId,
+                fields: topic.fields,
               })
             ).record.id;
-            result.parentIds.push(parentId);
+            result.topicIds.push(topicId);
           }
-          if (parentId && group.children.length) {
-            step = `adding ${group.childKind} to ${parentId}`;
-            const parent = group.childKind === 'questions' ? 'quizzes' : 'decks';
-            await this.client.post(`/draft/${parent}/${encodeURIComponent(parentId)}/${group.childKind}/bulk`, {
-              records: group.children,
-            });
-            result.created += group.children.length;
+          for (const group of topic.groups) {
+            let parentId = group.parentId;
+            if (group.create) {
+              step = `creating ${group.create.kind === 'quizzes' ? 'a quiz' : 'a deck'}`;
+              parentId = (
+                await this.client.post<{ record: { id: string } }>(`/draft/${group.create.kind}`, {
+                  parentId: topicId,
+                  fields: group.create.fields,
+                })
+              ).record.id;
+              result.parentIds.push(parentId);
+            }
+            if (parentId && group.children.length) {
+              step = `adding ${group.childKind} to ${parentId}`;
+              const parent = group.childKind === 'questions' ? 'quizzes' : 'decks';
+              await this.client.post(`/draft/${parent}/${encodeURIComponent(parentId)}/${group.childKind}/bulk`, {
+                records: group.children,
+              });
+              result.created += group.children.length;
+            }
           }
         }
-        result.topicId ??= topicId;
         return result;
       } catch (error) {
         throw new BulkFailure(error, step, saved());

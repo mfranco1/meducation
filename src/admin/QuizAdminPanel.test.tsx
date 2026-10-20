@@ -90,8 +90,7 @@ describe('quiz editor over the record API', () => {
     fireEvent.change(json, {
       target: {
         value: JSON.stringify({
-          topic: { name: 'Second topic' },
-          quizzes: [{ name: 'Second quiz', items: [{ stem: 'New stem', choices: ['A', 'B'], answer: 'A', rationale: 'New rationale' }] }],
+          topics: [{ name: 'Second topic', quizzes: [{ name: 'Second quiz', items: [{ stem: 'New stem', choices: ['A', 'B'], answer: 'A', rationale: 'New rationale' }] }] }],
         }),
       },
     });
@@ -109,18 +108,17 @@ describe('quiz editor over the record API', () => {
     await chooseSubject();
     fireEvent.click(frame().getByRole('tab', { name: 'Add' }));
     const json = await frame().findByRole('textbox', { name: 'JSON' });
-    fireEvent.change(json, { target: { value: '{ "topic": { "name": "X" }, "quizzes": [] }' } });
+    fireEvent.change(json, { target: { value: '{ "topics": [{ "name": "X", "quizzes": [] }] }' } });
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
-    expect(await frame().findByText('$.quizzes must be a non-empty array.')).toBeVisible();
+    expect(await frame().findByText('$.topics[0].quizzes must be a non-empty array.')).toBeVisible();
     expect(store.fetcher).not.toHaveBeenCalled();
     const text = JSON.stringify({
-      topic: { name: 'X' },
-      quizzes: [{ name: 'Q', items: [{ stem: 'S', choices: ['A', 'B'], answer: 'A', rationale: 'R' }] }],
+      topics: [{ name: 'X', quizzes: [{ name: 'Q', items: [{ stem: 'S', choices: ['A', 'B'], answer: 'A', rationale: 'R' }] }] }],
     });
     fireEvent.change(json, { target: { value: text } });
     store.rejectNext([{ path: '$.records[0].stem', code: 'blank', message: 'Stem is required.' }], /\/bulk$/);
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
-    expect(await frame().findByText(/Already saved to the draft: topic t91; parents q91/)).toBeVisible();
+    expect(await frame().findByText(/Already saved to the draft: topics t91; parents q91/)).toBeVisible();
     expect(json).toHaveValue(text);
   });
 

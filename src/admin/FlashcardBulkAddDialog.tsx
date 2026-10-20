@@ -108,9 +108,9 @@ export function FlashcardBulkAddDialog({
     }
     const compiled = compileFlashcardBulkAddDraft(parsed.draft, context, bank, topics);
     setDiagnostics(compiled.diagnostics);
-    if (!compiled.compiled) return;
+    if (!compiled.plan) return;
     const version = generation.current;
-    const failure = await onSave(compiled.compiled.plan);
+    const failure = await onSave(compiled.plan);
     if (failure) setProblems(failure);
     else if (generation.current === version) {
       onDraftDirtyChange(false);
@@ -137,7 +137,7 @@ export function FlashcardBulkAddDialog({
       aria-labelledby="flashcard-bulk-title"
     >
       {confirmation.dialog}
-      <DialogTitle id="flashcard-bulk-title">Add {context.kind === 'deck' ? 'Cards' : 'Decks'}</DialogTitle>
+      <DialogTitle id="flashcard-bulk-title">Add {{ subject: 'Topics', topic: 'Decks', deck: 'Cards' }[context.kind]}</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2">

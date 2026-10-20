@@ -2,7 +2,7 @@ import type { StoredQuestionBank } from '../../content/schema/schema';
 import type { BulkPlan } from '../data/DraftStore';
 
 export type BulkAddContext =
-  | { kind: 'newTopic'; subjectId: string }
+  | { kind: 'subject'; subjectId: string }
   | { kind: 'topic'; topicId: string }
   | { kind: 'quiz'; topicId: string; quizId: string };
 
@@ -29,8 +29,14 @@ export interface BulkAddQuizDraft {
   items: BulkAddItemDraft[];
 }
 
+export interface BulkAddTopicDraft {
+  name: string;
+  description?: string;
+  quizzes: BulkAddQuizDraft[];
+}
+
 export type BulkAddDraft =
-  | { topic: { name: string; description?: string }; quizzes: BulkAddQuizDraft[] }
+  | { topics: BulkAddTopicDraft[] }
   | { quizzes: BulkAddQuizDraft[] }
   | { items: BulkAddItemDraft[] };
 
@@ -109,18 +115,21 @@ export function parseBulkAddDraft(value: unknown, context: BulkAddContext): { dr
     return errors.length ? { errors } : { draft: { items: parsedItems.map(result => result.item!) }, errors };
   }
 
-  if (context.kind === 'newTopic') {
-    for (const key of Object.keys(value)) if (!['topic', 'quizzes'].includes(key)) errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
-    if (!isObject(value.topic)) errors.push('$.topic must contain editable topic content.');
-    else {
-      for (const key of Object.keys(value.topic)) if (!['name', 'description'].includes(key)) errors.push(`$.topic.${key} is managed by the admin panel or is not editable.`);
-      if (!nonEmptyString(value.topic.name)) errors.push('$.topic.name must be a non-empty string.');
-      if (value.topic.description !== undefined && !isString(value.topic.description)) errors.push('$.topic.description must be a string.');
-    }
-    const parsed = parseQuizzes(value.quizzes, '$.quizzes');
-    errors.push(...parsed.errors);
-    const topic = value.topic as JsonObject;
-    return errors.length ? { errors } : { draft: { topic: { name: topic.name as string, ...optionalDescription(topic.description) }, quizzes: parsed.quizzes! }, errors };
+  if (context.kind === 'subject') {
+    for (const key of Object.keys(value)) if (key !== 'topics') errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
+    if (!Array.isArray(value.topics) || !value.topics.length) return { errors: [...errors, '$.topics must be a non-empty array.'] };
+    const topics: BulkAddTopicDraft[] = [];
+    value.topics.forEach((candidate, index) => {
+      const path = `$.topics[${index}]`;
+      if (!isObject(candidate)) { errors.push(`${path} must be an object.`); return; }
+      for (const key of Object.keys(candidate)) if (!['name', 'description', 'quizzes'].includes(key)) errors.push(`${path}.${key} is managed by the admin panel or is not editable.`);
+      if (!nonEmptyString(candidate.name)) errors.push(`${path}.name must be a non-empty string.`);
+      if (candidate.description !== undefined && !isString(candidate.description)) errors.push(`${path}.description must be a string.`);
+      const parsed = parseQuizzes(candidate.quizzes, `${path}.quizzes`);
+      errors.push(...parsed.errors);
+      if (parsed.quizzes) topics.push({ name: candidate.name as string, ...optionalDescription(candidate.description), quizzes: parsed.quizzes });
+    });
+    return errors.length ? { errors } : { draft: { topics }, errors };
   }
 
   for (const key of Object.keys(value)) if (key !== 'quizzes') errors.push(`$.${key} is managed by the admin panel or is not editable in this template.`);
@@ -133,6 +142,13 @@ const itemFields = (item: BulkAddItemDraft) => ({
   ...item,
   choices: item.choices.map((text, index) => ({ id: choiceLabel(index), text })),
 });
+
+const quizGroups = (quizzes: BulkAddQuizDraft[]) =>
+  quizzes.map((quiz) => ({
+    create: { kind: 'quizzes' as const, fields: { name: quiz.name, ...(quiz.description === undefined ? {} : { description: quiz.description }) } },
+    childKind: 'questions' as const,
+    children: quiz.items.map(itemFields),
+  }));
 
 /** Parses the editable JSON into the records to create. Parent IDs come from the chosen destination. */
 export function compileBulkAddDraft(
@@ -149,35 +165,31 @@ export function compileBulkAddDraft(
     if (!selectedQuiz || selectedQuiz.topicId !== context.topicId)
       return { errors: ['Selected quiz is not part of the selected topic.'] };
     return {
-      plan: { groups: [{ parentId: selectedQuiz.id, childKind: 'questions', children: draft.items.map(itemFields) }] },
+      plan: { topics: [{ groups: [{ parentId: selectedQuiz.id, childKind: 'questions', children: draft.items.map(itemFields) }] }] },
       errors: [],
     };
   }
-  if ('items' in draft) return { errors: ['Topic draft must contain a quizzes array.'] };
-  if (context.kind === 'newTopic' && !('topic' in draft))
-    return { errors: ['New topic draft is missing topic content.'] };
-  return {
-    plan: {
-      ...(context.kind === 'topic'
-        ? { topicId: context.topicId }
-        : { subjectId: context.subjectId, topic: (draft as { topic: { name: string; description?: string } }).topic }),
-      groups: draft.quizzes.map((quiz) => ({
-        create: { kind: 'quizzes' as const, fields: { name: quiz.name, ...(quiz.description === undefined ? {} : { description: quiz.description }) } },
-        childKind: 'questions' as const,
-        children: quiz.items.map(itemFields),
-      })),
-    },
-    errors: [],
-  };
+  if (context.kind === 'subject') {
+    const { topics } = draft as { topics: BulkAddTopicDraft[] };
+    return {
+      plan: {
+        subjectId: context.subjectId,
+        topics: topics.map((topic) => ({
+          fields: { name: topic.name, ...(topic.description === undefined ? {} : { description: topic.description }) },
+          groups: quizGroups(topic.quizzes),
+        })),
+      },
+      errors: [],
+    };
+  }
+  return { plan: { topics: [{ id: context.topicId, groups: quizGroups((draft as { quizzes: BulkAddQuizDraft[] }).quizzes) }] }, errors: [] };
 }
 
 /** Editable JSON contains content only; parent IDs and protocol fields live in panel state. */
 export function bulkAddTemplate(context: BulkAddContext): BulkAddDraft {
   const item = { stem: '', choices: ['', ''], answer: 'A', rationale: '' };
-  if (context.kind === 'newTopic') return {
-    topic: { name: '', description: '' },
-    quizzes: [{ name: '', description: '', items: [{ ...item }] }],
-  };
-  if (context.kind === 'topic') return { quizzes: [{ name: '', description: '', items: [{ ...item }] }] };
+  const quiz = { name: '', description: '', items: [{ ...item }] };
+  if (context.kind === 'subject') return { topics: [{ name: '', description: '', quizzes: [quiz] }] };
+  if (context.kind === 'topic') return { quizzes: [quiz] };
   return { items: [{ ...item }] };
 }

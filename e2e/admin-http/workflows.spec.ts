@@ -21,21 +21,25 @@ test('adds a topic, quiz and questions in bulk, then decks and cards; deletes th
   await nav.getByRole('button', { name: 'Add quizzes', exact: true }).click();
   const editor = quizEditor(page).getByRole('textbox', { name: 'JSON', exact: true });
   await page.getByLabel('Destination', { exact: true }).click();
-  await page.getByRole('option', { name: 'Create a topic and quizzes' }).click();
+  await page.getByRole('option', { name: 'Create topics and quizzes' }).click();
   await editor.fill(
     JSON.stringify({
-      topic: { name: 'HTTP grouped topic' },
-      quizzes: [
+      topics: [
         {
-          name: 'HTTP grouped quiz',
-          items: [
+          name: 'HTTP grouped topic',
+          quizzes: [
             {
-              stem: 'Grouped source stem',
-              choices: ['Alpha', 'Beta'],
-              answer: 'B',
-              rationale: 'Static reviewed rationale',
+              name: 'HTTP grouped quiz',
+              items: [
+                {
+                  stem: 'Grouped source stem',
+                  choices: ['Alpha', 'Beta'],
+                  answer: 'B',
+                  rationale: 'Static reviewed rationale',
+                },
+                { stem: 'Grouped second stem', choices: ['Gamma', 'Delta'], answer: 'B', rationale: 'Second rationale' },
+              ],
             },
-            { stem: 'Grouped second stem', choices: ['Gamma', 'Delta'], answer: 'B', rationale: 'Second rationale' },
           ],
         },
       ],

@@ -29,7 +29,7 @@ export function QuizAdminPanel({
 }) {
   const bank = store.quizBank;
   const [mode, setMode] = useState<'single' | 'bulk'>('single');
-  const [bulkTarget, setBulkTarget] = useState<BulkTarget>({ kind: 'newTopic' });
+  const [bulkTarget, setBulkTarget] = useState<BulkTarget>({ kind: 'subject' });
   const [bulkDirty, setBulkDirty] = useState(false);
   const [filter, setFilter] = useState('');
   const [working, setWorking] = useState(false);
@@ -161,7 +161,7 @@ export function QuizAdminPanel({
           value={mode}
           onChange={(_, value) => {
             if (value === 'bulk')
-              bulkFor(selectedQuiz ? 'quiz' : selectedTopic ? 'topic' : 'newTopic');
+              bulkFor(selectedQuiz ? 'quiz' : selectedTopic ? 'topic' : 'subject');
             else void showSingle();
           }}
         >

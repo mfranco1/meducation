@@ -191,7 +191,7 @@ export function FlashcardAdminPanel({
     setWorking(true);
     try {
       const result = await store.addTree(plan);
-      const deckId = result.parentIds[0] ?? plan.groups[0]?.parentId;
+      const deckId = result.parentIds[0] ?? plan.topics[0]?.groups[0]?.parentId;
       if (deckId) {
         const deck = store.flashcardBank.decks.find((row) => row.id === deckId);
         const topic = store.quizBank.topics.find((row) => row.id === deck?.topicId);
@@ -262,6 +262,9 @@ export function FlashcardAdminPanel({
             <Stack direction="row" spacing={0.5}>
               <Button size="small" onClick={() => createRecord('topic')}>
                 New topic
+              </Button>
+              <Button size="small" onClick={() => void openBulk({ kind: 'subject', subjectId: browseSubjectId }, subjectName)}>
+                Add topics
               </Button>
               <AdminParentActions
                 entity="Subject"

@@ -1,7 +1,10 @@
 import type { StoredFlashcardBank } from '../../content/schema/schema';
 import type { BulkPlan } from '../data/DraftStore';
 
-export type FlashcardBulkAddContext = { kind: 'topic'; topicId: string } | { kind: 'deck'; deckId: string };
+export type FlashcardBulkAddContext =
+  | { kind: 'subject'; subjectId: string }
+  | { kind: 'topic'; topicId: string }
+  | { kind: 'deck'; deckId: string };
 
 export interface FlashcardCardDraft {
   front: string;
@@ -15,8 +18,16 @@ export interface FlashcardDeckDraft {
   cards?: FlashcardCardDraft[];
 }
 
+export interface FlashcardTopicDraft {
+  name: string;
+  description?: string;
+  decks: FlashcardDeckDraft[];
+}
+
 export type FlashcardBulkAddDraft =
-  { kind: 'cards'; cards: FlashcardCardDraft[] } | { kind: 'decks'; decks: FlashcardDeckDraft[] };
+  | { kind: 'cards'; cards: FlashcardCardDraft[] }
+  | { kind: 'decks'; decks: FlashcardDeckDraft[] }
+  | { kind: 'topics'; topics: FlashcardTopicDraft[] };
 
 export interface FlashcardBulkDiagnostic {
   level: 'error' | 'warning';
@@ -29,7 +40,6 @@ const isObject = (value: unknown): value is JsonObject =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const isString = (value: unknown): value is string => typeof value === 'string';
 const nonBlank = (value: unknown): value is string => isString(value) && Boolean(value.trim());
-const onlyKeys = (value: JsonObject, keys: readonly string[]) => Object.keys(value).every((key) => keys.includes(key));
 const cardKeys = ['front', 'back', 'sources'] as const;
 
 function parseCard(
@@ -59,6 +69,45 @@ function parseCard(
   };
 }
 
+/** A blank description is left unset so an untouched template stores nothing. */
+const optionalDescription = (value: unknown) => (isString(value) && value.trim() ? { description: value } : {});
+
+function parseDecks(value: unknown, path: string, diagnostics: FlashcardBulkDiagnostic[]): FlashcardDeckDraft[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    diagnostics.push({ level: 'error', path, message: 'must be a non-empty array.' });
+    return [];
+  }
+  const decks: FlashcardDeckDraft[] = [];
+  value.forEach((rawDeck, index) => {
+    const deckPath = `${path}[${index}]`;
+    if (!isObject(rawDeck)) {
+      diagnostics.push({ level: 'error', path: deckPath, message: 'must be an object.' });
+      return;
+    }
+    for (const key of Object.keys(rawDeck))
+      if (!['name', 'description', 'cards'].includes(key))
+        diagnostics.push({ level: 'error', path: `${deckPath}.${key}`, message: 'is not an editable deck field.' });
+    if (!nonBlank(rawDeck.name))
+      diagnostics.push({ level: 'error', path: `${deckPath}.name`, message: 'must be a non-empty string.' });
+    if (rawDeck.description !== undefined && !isString(rawDeck.description))
+      diagnostics.push({ level: 'error', path: `${deckPath}.description`, message: 'must be a string when provided.' });
+    let cards: FlashcardCardDraft[] | undefined;
+    if (rawDeck.cards !== undefined) {
+      if (!Array.isArray(rawDeck.cards)) {
+        diagnostics.push({ level: 'error', path: `${deckPath}.cards`, message: 'must be an array when provided.' });
+      } else {
+        cards = rawDeck.cards
+          .map((item, cardIndex) => parseCard(item, `${deckPath}.cards[${cardIndex}]`, diagnostics))
+          .filter((item): item is FlashcardCardDraft => item !== undefined);
+      }
+    }
+    if (nonBlank(rawDeck.name) && (rawDeck.description === undefined || isString(rawDeck.description))) {
+      decks.push({ name: rawDeck.name, ...optionalDescription(rawDeck.description), ...(cards === undefined ? {} : { cards }) });
+    }
+  });
+  return decks;
+}
+
 export function parseFlashcardBulkAddDraft(
   value: unknown,
   context: FlashcardBulkAddContext,
@@ -67,11 +116,9 @@ export function parseFlashcardBulkAddDraft(
   if (!isObject(value)) return { diagnostics: [{ level: 'error', path: '$', message: 'must be a JSON object.' }] };
 
   if (context.kind === 'deck') {
-    if (!onlyKeys(value, ['cards'])) {
-      for (const key of Object.keys(value))
-        if (key !== 'cards')
-          diagnostics.push({ level: 'error', path: `$.${key}`, message: 'is not editable in this template.' });
-    }
+    for (const key of Object.keys(value))
+      if (key !== 'cards')
+        diagnostics.push({ level: 'error', path: `$.${key}`, message: 'is not editable in this template.' });
     if (!Array.isArray(value.cards) || value.cards.length === 0) {
       diagnostics.push({ level: 'error', path: '$.cards', message: 'must be a non-empty array.' });
     }
@@ -85,58 +132,55 @@ export function parseFlashcardBulkAddDraft(
       : { draft: { kind: 'cards', cards }, diagnostics };
   }
 
-  if (!onlyKeys(value, ['decks'])) {
+  if (context.kind === 'subject') {
     for (const key of Object.keys(value))
-      if (key !== 'decks')
+      if (key !== 'topics')
         diagnostics.push({ level: 'error', path: `$.${key}`, message: 'is not editable in this template.' });
-  }
-  if (!Array.isArray(value.decks) || value.decks.length === 0)
-    diagnostics.push({ level: 'error', path: '$.decks', message: 'must be a non-empty array.' });
-  const decks: FlashcardDeckDraft[] = [];
-  if (Array.isArray(value.decks)) {
-    value.decks.forEach((rawDeck, index) => {
-      const path = `$.decks[${index}]`;
-      if (!isObject(rawDeck)) {
-        diagnostics.push({ level: 'error', path, message: 'must be an object.' });
-        return;
-      }
-      if (!onlyKeys(rawDeck, ['name', 'description', 'cards'])) {
-        for (const key of Object.keys(rawDeck))
-          if (!['name', 'description', 'cards'].includes(key))
-            diagnostics.push({ level: 'error', path: `${path}.${key}`, message: 'is not an editable deck field.' });
-      }
-      if (!nonBlank(rawDeck.name))
-        diagnostics.push({ level: 'error', path: `${path}.name`, message: 'must be a non-empty string.' });
-      if (rawDeck.description !== undefined && !isString(rawDeck.description))
-        diagnostics.push({ level: 'error', path: `${path}.description`, message: 'must be a string when provided.' });
-      let cards: FlashcardCardDraft[] | undefined;
-      if (rawDeck.cards !== undefined) {
-        if (!Array.isArray(rawDeck.cards)) {
-          diagnostics.push({ level: 'error', path: `${path}.cards`, message: 'must be an array when provided.' });
-        } else {
-          cards = rawDeck.cards
-            .map((item, cardIndex) => parseCard(item, `${path}.cards[${cardIndex}]`, diagnostics))
-            .filter((item): item is FlashcardCardDraft => item !== undefined);
+    if (!Array.isArray(value.topics) || value.topics.length === 0)
+      diagnostics.push({ level: 'error', path: '$.topics', message: 'must be a non-empty array.' });
+    const topics: FlashcardTopicDraft[] = [];
+    if (Array.isArray(value.topics)) {
+      value.topics.forEach((rawTopic, index) => {
+        const path = `$.topics[${index}]`;
+        if (!isObject(rawTopic)) {
+          diagnostics.push({ level: 'error', path, message: 'must be an object.' });
+          return;
         }
-      }
-      if (nonBlank(rawDeck.name) && (rawDeck.description === undefined || isString(rawDeck.description))) {
-        decks.push({
-          name: rawDeck.name,
-          ...(isString(rawDeck.description) && rawDeck.description.trim() ? { description: rawDeck.description } : {}),
-          ...(cards === undefined ? {} : { cards }),
-        });
-      }
-    });
+        for (const key of Object.keys(rawTopic))
+          if (!['name', 'description', 'decks'].includes(key))
+            diagnostics.push({ level: 'error', path: `${path}.${key}`, message: 'is not an editable topic field.' });
+        if (!nonBlank(rawTopic.name))
+          diagnostics.push({ level: 'error', path: `${path}.name`, message: 'must be a non-empty string.' });
+        if (rawTopic.description !== undefined && !isString(rawTopic.description))
+          diagnostics.push({ level: 'error', path: `${path}.description`, message: 'must be a string when provided.' });
+        const decks = parseDecks(rawTopic.decks, `${path}.decks`, diagnostics);
+        if (nonBlank(rawTopic.name) && (rawTopic.description === undefined || isString(rawTopic.description)))
+          topics.push({ name: rawTopic.name, ...optionalDescription(rawTopic.description), decks });
+      });
+    }
+    return diagnostics.some((issue) => issue.level === 'error')
+      ? { diagnostics }
+      : { draft: { kind: 'topics', topics }, diagnostics };
   }
+
+  for (const key of Object.keys(value))
+    if (key !== 'decks')
+      diagnostics.push({ level: 'error', path: `$.${key}`, message: 'is not editable in this template.' });
+  const decks = parseDecks(value.decks, '$.decks', diagnostics);
   return diagnostics.some((issue) => issue.level === 'error')
     ? { diagnostics }
     : { draft: { kind: 'decks', decks }, diagnostics };
 }
 
-export interface CompiledFlashcardBulkAdd {
-  plan: BulkPlan;
-  deckSummaries: Array<{ name: string; cardCount: number }>;
-}
+const deckGroups = (decks: FlashcardDeckDraft[]) =>
+  decks.map((deck) => ({
+    create: {
+      kind: 'decks' as const,
+      fields: { name: deck.name, ...(deck.description === undefined ? {} : { description: deck.description }) },
+    },
+    childKind: 'cards' as const,
+    children: (deck.cards ?? []).map((card) => ({ ...card })),
+  }));
 
 /** Turns a parsed draft into the records to create; the server assigns every ID. */
 export function compileFlashcardBulkAddDraft(
@@ -144,53 +188,43 @@ export function compileFlashcardBulkAddDraft(
   context: FlashcardBulkAddContext,
   bank: StoredFlashcardBank,
   topics: readonly { id: string }[],
-): { compiled?: CompiledFlashcardBulkAdd; diagnostics: FlashcardBulkDiagnostic[] } {
+): { plan?: BulkPlan; diagnostics: FlashcardBulkDiagnostic[] } {
   const fail = (message: string) => ({ diagnostics: [{ level: 'error' as const, path: '$', message }] });
-  if (context.kind === 'topic' && !topics.some((topic) => topic.id === context.topicId))
-    return fail('selected topic no longer exists.');
-  const selectedDeck = context.kind === 'deck' ? bank.decks.find((deck) => deck.id === context.deckId) : undefined;
-  if (context.kind === 'deck' && !selectedDeck) return fail('selected deck no longer exists.');
-  if ((context.kind === 'deck') !== (draft.kind === 'cards')) return fail('draft type does not match the selected destination.');
-  if (draft.kind === 'cards')
+  if (context.kind === 'subject' && draft.kind === 'topics')
     return {
-      compiled: {
-        plan: { groups: [{ parentId: selectedDeck!.id, childKind: 'cards', children: draft.cards.map((card) => ({ ...card })) }] },
-        deckSummaries: [{ name: selectedDeck!.name, cardCount: draft.cards.length }],
+      plan: {
+        subjectId: context.subjectId,
+        topics: draft.topics.map((topic) => ({
+          fields: { name: topic.name, ...(topic.description === undefined ? {} : { description: topic.description }) },
+          groups: deckGroups(topic.decks),
+        })),
       },
       diagnostics: [],
     };
-  return {
-    compiled: {
-      plan: {
-        topicId: (context as Extract<FlashcardBulkAddContext, { kind: 'topic' }>).topicId,
-        groups: draft.decks.map((deck) => ({
-          create: {
-            kind: 'decks' as const,
-            fields: { name: deck.name, ...(deck.description === undefined ? {} : { description: deck.description }) },
-          },
-          childKind: 'cards' as const,
-          children: (deck.cards ?? []).map((card) => ({ ...card })),
-        })),
-      },
-      deckSummaries: draft.decks.map((deck) => ({ name: deck.name, cardCount: deck.cards?.length ?? 0 })),
-    },
-    diagnostics: [],
-  };
+  if (context.kind === 'topic' && draft.kind === 'decks') {
+    if (!topics.some((topic) => topic.id === context.topicId)) return fail('selected topic no longer exists.');
+    return { plan: { topics: [{ id: context.topicId, groups: deckGroups(draft.decks) }] }, diagnostics: [] };
+  }
+  if (context.kind === 'deck' && draft.kind === 'cards') {
+    const deck = bank.decks.find((row) => row.id === context.deckId);
+    if (!deck) return fail('selected deck no longer exists.');
+    return {
+      plan: { topics: [{ groups: [{ parentId: deck.id, childKind: 'cards', children: draft.cards.map((card) => ({ ...card })) }] }] },
+      diagnostics: [],
+    };
+  }
+  return fail('draft type does not match the selected destination.');
 }
 
 export function flashcardBulkAddTemplate(context: FlashcardBulkAddContext): string {
+  const card = { front: 'Question text', back: 'Answer text' };
+  const deck = { name: 'Deck name', description: '', cards: [card] };
   return JSON.stringify(
     context.kind === 'deck'
-      ? { cards: [{ front: 'Question text', back: 'Answer text' }] }
-      : {
-          decks: [
-            {
-              name: 'Deck name',
-              description: '',
-              cards: [{ front: 'Question text', back: 'Answer text' }],
-            },
-          ],
-        },
+      ? { cards: [card] }
+      : context.kind === 'topic'
+        ? { decks: [deck] }
+        : { topics: [{ name: 'Topic name', description: '', decks: [deck] }] },
     null,
     2,
   );

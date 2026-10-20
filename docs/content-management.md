@@ -15,16 +15,20 @@ PostgreSQL is the only writable authority for the paired content: schema-v6 quiz
 - Open `/admin.html`. Workspace status distinguishes unsaved text, unpublished draft changes and published content; the header groups Review & publish, More (export, published versions, Changes, Discard unpublished changes) and Account. Quizzes and Flashcards are tabs; select a subject, then a topic, then a quiz or deck, then a record. **New topic** under a subject creates a topic; topics are shared by both tabs. Item and card lists show 25 per page with search by text or ID.
 - Single records have Edit, Preview and JSON views over one JSON draft. Forms patch only intentional edits and preserve untouched strings, optional presence and order. Existing IDs and relationships are read-only in forms; corrections use JSON.
 - **Manage subjects** edits a shared subject from either tab without discarding other unsaved text.
-- Batch adds take content-only JSON and no IDs. A new topic (under the selected subject) uses `topic.name` (optional `topic.description`) and `quizzes` (each with `name`, optional `description` and `items`); adding to a topic uses `quizzes` (same shape); adding to a quiz uses `items`. An item has `stem`, `choices` (strings, labels assigned A to Z, at most 26), `answer` (`A`, `B`, ...), `rationale`, and optionally `rationaleMeta` (`sources`), `pearls`, `metadata`. The templates include empty `description` fields; a blank description is omitted. Flashcard batches use `{ "cards": [...] }` for a deck (`front`, `back`, optional `sources`) or `{ "decks": [...] }` for a topic (`name`, optional `description`, `cards`). A bulk request creates up to 1,000 children of one parent; the editor sends the topic, each quiz or deck and each bulk of questions or cards as separate requests, so a failure part-way keeps what was already saved and says so.
+- Batch adds take content-only JSON and no IDs. Creating topics under the selected subject uses `topics`, each with `name`, optional `description` and `quizzes` (each with `name`, optional `description` and `items`); adding to a topic uses `quizzes` (same shape); adding to a quiz uses `items`. An item has `stem`, `choices` (strings, labels assigned A to Z, at most 26), `answer` (`A`, `B`, ...), `rationale`, and optionally `rationaleMeta` (`sources`), `pearls`, `metadata`. The templates include empty `description` fields; a blank description is omitted. Flashcard batches use `{ "cards": [...] }` for a deck (`front`, `back`, optional `sources`), `{ "decks": [...] }` for a topic (`name`, optional `description`, `cards`) or, with **Add topics** under a subject, `{ "topics": [...] }` (each with `name`, optional `description` and `decks`). A bulk request creates up to 1,000 children of one parent; the editor sends each topic, each quiz or deck and each bulk of questions or cards as separate requests, so a failure part-way keeps what was already saved and says so.
 
 ```json
 {
-  "topic": { "name": "Pearls" },
-  "quizzes": [
+  "topics": [
     {
-      "name": "Pearls Practice Test 1",
-      "items": [
-        { "stem": "Question stem", "choices": ["First choice", "Second choice"], "answer": "A", "rationale": "Why A is correct" }
+      "name": "Pearls",
+      "quizzes": [
+        {
+          "name": "Pearls Practice Test 1",
+          "items": [
+            { "stem": "Question stem", "choices": ["First choice", "Second choice"], "answer": "A", "rationale": "Why A is correct" }
+          ]
+        }
       ]
     }
   ]

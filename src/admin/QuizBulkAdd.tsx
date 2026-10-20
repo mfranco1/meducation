@@ -6,14 +6,14 @@ import type { DraftStore } from './data/DraftStore';
 import { useAdminConfirmation } from './useAdminConfirmation';
 
 export interface BulkTarget {
-  kind: 'newTopic' | 'topic' | 'quiz';
+  kind: 'subject' | 'topic' | 'quiz';
   subjectId?: string;
   topicId?: string;
   quizId?: string;
 }
 
 const contextOf = ({ kind, subjectId, topicId, quizId }: BulkTarget): BulkAddContext | undefined =>
-  kind === 'newTopic'
+  kind === 'subject'
     ? subjectId
       ? { kind, subjectId }
       : undefined
@@ -69,7 +69,7 @@ export function QuizBulkAdd({
     onTargetChange(next);
   };
   const subject = bank.subjects.find((row) => row.id === target.subjectId);
-  const topic = bank.topics.find((row) => row.id === (target.kind === 'newTopic' ? undefined : target.topicId));
+  const topic = bank.topics.find((row) => row.id === (target.kind === 'subject' ? undefined : target.topicId));
   const quiz = bank.quizzes.find((row) => row.id === (target.kind === 'quiz' ? target.quizId : undefined));
   const save = async () => {
     if (!context) return;
@@ -95,7 +95,7 @@ export function QuizBulkAdd({
       if (sent === text) setText(template);
       onAdded({
         subjectId: target.subjectId,
-        topicId: result.topicId ?? target.topicId,
+        topicId: result.topicIds[0] ?? target.topicId,
         quizId: context.kind === 'quiz' ? context.quizId : result.parentIds[0],
       });
     } catch (error) {
@@ -117,7 +117,7 @@ export function QuizBulkAdd({
         }
         fullWidth
       >
-        <MenuItem value="newTopic">Create a topic and quizzes</MenuItem>
+        <MenuItem value="subject">Create topics and quizzes</MenuItem>
         <MenuItem value="topic">Add quizzes to a topic</MenuItem>
         <MenuItem value="quiz">Add items to a quiz</MenuItem>
       </TextField>
@@ -138,7 +138,7 @@ export function QuizBulkAdd({
           }}
           renderInput={(params) => <TextField {...params} label="Subject" />}
         />
-      {target.kind !== 'newTopic' && (
+      {target.kind !== 'subject' && (
         <Autocomplete
           inputValue={topicQuery ?? (topic ? `${topic.name} · ${topic.id}` : '')}
           onInputChange={(_, value, reason) => {
@@ -179,8 +179,8 @@ export function QuizBulkAdd({
         Destination ·{' '}
         {!subject
           ? 'Choose a subject'
-          : target.kind === 'newTopic'
-            ? `${subject.name} / new topic`
+          : target.kind === 'subject'
+            ? `${subject.name} / new topics`
             : !topic
               ? 'Choose a topic'
               : target.kind === 'topic'

@@ -61,28 +61,28 @@ describe('draft store record calls', () => {
     expect(store.snapshot.cards).toEqual([]);
   });
 
-  it('adds a topic, its quizzes and their questions with one request per step and no ID handling', async () => {
+  it('adds topics, their quizzes and questions with one request per step and no ID handling', async () => {
     const store = createAdminStore(structuredClone(storedQuestionBank), structuredClone(emptyFlashcardBank));
     const item = { stem: 'S', choices: [{ id: 'A', text: 'a' }, { id: 'B', text: 'b' }], answer: 'A', rationale: 'R' };
     const result = await store.addTree({
       subjectId: 's1',
-      topic: { name: 'New topic' },
-      groups: [
-        { create: { kind: 'quizzes', fields: { name: 'Quiz one' } }, childKind: 'questions', children: [item, item] },
-        { create: { kind: 'quizzes', fields: { name: 'Quiz two' } }, childKind: 'questions', children: [item] },
+      topics: [
+        { fields: { name: 'New topic' }, groups: [{ create: { kind: 'quizzes', fields: { name: 'Quiz one' } }, childKind: 'questions', children: [item, item] }] },
+        { fields: { name: 'Other topic' }, groups: [{ create: { kind: 'quizzes', fields: { name: 'Quiz two' } }, childKind: 'questions', children: [item] }] },
       ],
     });
-    expect(result).toEqual({ topicId: 't91', parentIds: ['q91', 'q92'], created: 3 });
+    expect(result).toEqual({ topicIds: ['t91', 't92'], parentIds: ['q91', 'q92'], created: 3 });
     expect(calls(store)).toEqual([
       'POST /draft/topics',
       'POST /draft/quizzes',
       'POST /draft/quizzes/q91/questions/bulk',
+      'POST /draft/topics',
       'POST /draft/quizzes',
       'POST /draft/quizzes/q92/questions/bulk',
       'GET /draft',
     ]);
     expect(store.snapshot.topics.find((row) => row.id === 't91')).toMatchObject({ id: 't91', subjectId: 's1', name: 'New topic' });
-    expect(store.snapshot.quizzes.find((row) => row.id === 'q92')).toMatchObject({ topicId: 't91', name: 'Quiz two' });
+    expect(store.snapshot.quizzes.find((row) => row.id === 'q92')).toMatchObject({ topicId: 't92', name: 'Quiz two' });
     expect(store.snapshot.questions.filter((row) => row.quizId === 'q91')).toHaveLength(2);
   });
 
@@ -92,8 +92,7 @@ describe('draft store record calls', () => {
     store.rejectNext([{ path: '$.records[0].stem', code: 'blank', message: 'Stem is required.' }], /\/bulk$/);
     const failure = await store
       .addTree({
-        topicId: 't1',
-        groups: [{ create: { kind: 'quizzes', fields: { name: 'Q' } }, childKind: 'questions', children: [item] }],
+        topics: [{ id: 't1', groups: [{ create: { kind: 'quizzes', fields: { name: 'Q' } }, childKind: 'questions', children: [item] }] }],
       })
       .catch((e) => e);
     expect(failure).toBeInstanceOf(BulkFailure);
