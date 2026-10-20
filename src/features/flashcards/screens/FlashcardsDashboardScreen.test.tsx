@@ -35,7 +35,7 @@ describe('FlashcardsDashboardScreen', () => {
     expect(screen.getByText('decks finished in a day')).toBeVisible();
   });
 
-  it('shows a continue carousel and all-subject grid without score metadata', () => {
+  it('shows a continue carousel and all-subject grid with deck completion', () => {
     const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b' };
     const onSelectSubject = vi.fn();
     const today = new Date();
@@ -45,8 +45,8 @@ describe('FlashcardsDashboardScreen', () => {
     render(
       <ThemeProvider theme={theme}>
         <FlashcardsDashboardScreen
-          subjects={[{ subject, deckCount: 4, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
-          activeSubjects={[{ subject, deckCount: 4, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
+          subjects={[{ subject, deckCount: 4, completedDeckCount: 2, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
+          activeSubjects={[{ subject, deckCount: 4, completedDeckCount: 2, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
           progress={{
             ...emptyProgress,
             completionCounts: { d1: 2, d2: 1 },
@@ -81,7 +81,8 @@ describe('FlashcardsDashboardScreen', () => {
       within(screen.getByRole('group', { name: 'Highest flashcard deck finishes in a day' })).getByText('2'),
     ).toBeVisible();
     expect(screen.queryByText(/score/i)).not.toBeInTheDocument();
-    expect(within(grid).queryByTestId('subject-score-track')).not.toBeInTheDocument();
+    expect(within(grid).getByText('Completed 50%')).toBeVisible();
+    expect(within(grid).getByTestId('subject-score-track').firstElementChild).toHaveStyle({ width: '50%' });
     fireEvent.click(within(continueRegion).getByRole('button', { name: 'Continue studying Anatomy' }));
     expect(onSelectSubject).toHaveBeenCalledExactlyOnceWith(subject);
     fireEvent.click(within(grid).getByRole('button', { name: 'Open Anatomy' }));
@@ -180,8 +181,8 @@ describe('FlashcardsDashboardScreen', () => {
       <ThemeProvider theme={theme}>
         <FlashcardsDashboardScreen
           subjects={[
-            { subject: active, deckCount: 2, activeDeckCount: 1 },
-            { subject: inactive, deckCount: 2, activeDeckCount: 0 },
+            { subject: active, deckCount: 2, completedDeckCount: 0, activeDeckCount: 1 },
+            { subject: inactive, deckCount: 2, completedDeckCount: 0, activeDeckCount: 0 },
           ]}
           activeSubjects={[]}
           progress={emptyProgress}

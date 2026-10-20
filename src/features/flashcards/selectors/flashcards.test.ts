@@ -9,7 +9,7 @@ const subjects: FlashcardSubjectSummary[] = [
   { id: 's3', name: 'Three', accent: '#333', deckCount: 0, deckIds: [] },
 ];
 const progress: FlashcardProgressState = {
-  schemaVersion: 2, revision: 'r', completionCounts: {}, checkpoints: {
+  schemaVersion: 2, revision: 'r', completionCounts: { d2: 1 }, checkpoints: {
     d1: { deckId: 'd1', currentCardId: 'f1', contentSignature: 'x', updatedAt: '2026-10-01', openedCardIds: [], flaggedCardIds: [] },
     d3: { deckId: 'd3', currentCardId: 'f3', contentSignature: 'x', updatedAt: '2026-10-03', openedCardIds: [], flaggedCardIds: [] },
   },
@@ -26,6 +26,7 @@ describe('flashcard dashboard and deck selectors', () => {
     expect(summaries.map(item => item.subject.id)).toEqual(['s1', 's2', 's3']);
     expect(activeFlashcardSubjects(summaries).map(item => item.subject.id)).toEqual(['s2', 's1']);
     expect(summaries[0].activeDeckCount).toBe(1);
+    expect(summaries[0].completedDeckCount).toBe(1);
     expect(summaries[0].subject.description).toBe('First subject');
   });
 

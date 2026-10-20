@@ -5,6 +5,7 @@ import type { FlashcardSubjectSummary } from '../../../content/api/flashcardApiD
 export interface FlashcardDashboardSubject {
   subject: Subject;
   deckCount: number;
+  completedDeckCount: number;
   activeDeckCount: number;
   latestActiveAt?: string;
 }
@@ -16,6 +17,7 @@ export function flashcardDashboardSubjects(subjects: readonly FlashcardSubjectSu
     return {
       subject: { id: subject.id, name: subject.name, accent: subject.accent, ...(subject.description !== undefined && { description: subject.description }) },
       deckCount: subject.deckCount,
+      completedDeckCount: subject.deckIds.filter(deckId => (progress.completionCounts[deckId] ?? 0) > 0).length,
       activeDeckCount: active.length,
       latestActiveAt: active.map(checkpoint => checkpoint.updatedAt).sort().at(-1),
     };

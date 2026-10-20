@@ -16,7 +16,7 @@ import { StatCard, formatStatCount } from '../../../shared/ui/catalog/StatCard';
 import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
 import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
 import { useFlashcardDashboardStats } from '../session/useFlashcardDashboardStats';
-import { SubjectActivityLabel } from '../../../shared/ui/catalog/SubjectActivityLabel';
+import { SubjectProgressLabel, SubjectProgressSummary } from '../../../shared/ui/catalog/SubjectProgressSummary';
 import { SubjectCardSkeleton } from '../../../shared/ui/catalog/SubjectCardSkeleton';
 import { SubjectFilterPill, SubjectPagination } from '../../../shared/ui/catalog/SubjectCatalogControls';
 import { useSubjectCatalog } from '../../../shared/ui/catalog/useSubjectCatalog';
@@ -29,6 +29,27 @@ type CatalogPageChange = {
   resetKey: string;
   direction: 'next' | 'previous';
 };
+
+function FlashcardSubjectCard({
+  item,
+  progressUnavailable,
+  onSelect,
+}: {
+  item: FlashcardDashboardSubject;
+  progressUnavailable: boolean;
+  onSelect: (subject: Subject) => void;
+}) {
+  const percent = item.deckCount > 0 ? Math.round((item.completedDeckCount / item.deckCount) * 100) : 0;
+  return (
+    <SubjectCard subject={item.subject} onSelect={onSelect} appearance="dashboardGrid">
+      <SubjectProgressSummary
+        label={!progressUnavailable && <SubjectProgressLabel>Completed {percent}%</SubjectProgressLabel>}
+        percent={progressUnavailable ? 0 : percent}
+        activeCount={item.activeDeckCount}
+      />
+    </SubjectCard>
+  );
+}
 
 function SubjectPlaceholders() {
   return (
@@ -178,16 +199,12 @@ export function FlashcardsDashboardScreen({
                 pageChange?.resetKey === resetKey ? (
                   <SubjectGrid>
                     {pageChange.from.map((item) => (
-                      <SubjectCard
+                      <FlashcardSubjectCard
                         key={item.subject.id}
-                        subject={item.subject}
+                        item={item}
+                        progressUnavailable={Boolean(progressError)}
                         onSelect={onSelectSubject}
-                        appearance="dashboardGrid"
-                      >
-                        <Box sx={{ minHeight: 32 }}>
-                          <SubjectActivityLabel count={item.activeDeckCount} />
-                        </Box>
-                      </SubjectCard>
+                      />
                     ))}
                   </SubjectGrid>
                 ) : undefined
@@ -195,16 +212,12 @@ export function FlashcardsDashboardScreen({
             >
               <SubjectGrid>
                 {catalog.pageItems.map((item) => (
-                  <SubjectCard
+                  <FlashcardSubjectCard
                     key={item.subject.id}
-                    subject={item.subject}
+                    item={item}
+                    progressUnavailable={Boolean(progressError)}
                     onSelect={onSelectSubject}
-                    appearance="dashboardGrid"
-                  >
-                    <Box sx={{ minHeight: 32 }}>
-                      <SubjectActivityLabel count={item.activeDeckCount} />
-                    </Box>
-                  </SubjectCard>
+                  />
                 ))}
               </SubjectGrid>
             </CatalogPageTransition>
