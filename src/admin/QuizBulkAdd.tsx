@@ -25,7 +25,7 @@ const contextOf = ({ kind, subjectId, topicId, quizId }: BulkTarget): BulkAddCon
         ? { kind, topicId, quizId }
         : undefined;
 
-/** Content-only JSON for new topics, quizzes and questions. Save creates parents first, then the questions. */
+/** Content-only JSON for topics, quizzes and questions. Save reuses same-named parents or creates them, then adds the questions. */
 export function QuizBulkAdd({
   store,
   target,
@@ -91,7 +91,10 @@ export function QuizBulkAdd({
     const sent = text;
     try {
       const result = await store.addTree(compiled.plan);
-      setNotice(`Added ${result.created} item(s) to the draft. Saving does not publish.`);
+      setNotice(
+        `Added ${result.created} item(s) to the draft. Saving does not publish.` +
+          (compiled.merged.length ? ` Added to existing: ${compiled.merged.join(', ')}.` : ''),
+      );
       if (sent === text) setText(template);
       onAdded({
         subjectId: target.subjectId,
@@ -102,6 +105,20 @@ export function QuizBulkAdd({
       setProblems(errorMessages(error));
     } finally {
       setBusy(false);
+    }
+  };
+  const existing =
+    target.kind === 'subject'
+      ? { label: 'topics', names: bank.topics.filter((row) => row.subjectId === target.subjectId).map((row) => row.name) }
+      : target.kind === 'topic'
+        ? { label: 'quizzes', names: bank.quizzes.filter((row) => row.topicId === target.topicId).map((row) => row.name) }
+        : undefined;
+  const copyNames = async () => {
+    try {
+      await navigator.clipboard.writeText(existing!.names.join('\n'));
+      setNotice('Names copied.');
+    } catch {
+      setProblems(['Clipboard access is unavailable. Select and copy the names above.']);
     }
   };
   const disabled = busy || blocked;
@@ -180,7 +197,7 @@ export function QuizBulkAdd({
         {!subject
           ? 'Choose a subject'
           : target.kind === 'subject'
-            ? `${subject.name} / new topics`
+            ? `${subject.name} / topics`
             : !topic
               ? 'Choose a topic'
               : target.kind === 'topic'
@@ -190,6 +207,16 @@ export function QuizBulkAdd({
                   : 'Choose a quiz'}
         . Up to 1,000 items per quiz. The server assigns every ID; saving does not publish.
       </Typography>
+      {existing && existing.names.length > 0 && (
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
+            Existing {existing.label}: {existing.names.join(', ')}
+          </Typography>
+          <Button size="small" onClick={() => void copyNames()} sx={{ flexShrink: 0 }}>
+            Copy names
+          </Button>
+        </Stack>
+      )}
       <TextField
         label="JSON"
         slotProps={{ inputLabel: { shrink: true } }}

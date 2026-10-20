@@ -34,7 +34,7 @@ interface Props {
   chooseBulkTarget?: (kind: 'topic' | 'quiz', context: { subjectId: string; topicId: string; quizId?: string }) => void;
   onNewTopic: (subjectId: string) => void;
   onManageSubjects: (id?: string) => void;
-  onDeleteItems?: (ids: string[]) => void;
+  onDeleteMany?: (kind: 'topic' | 'quiz' | 'question', parentId: string, ids: string[]) => void;
   onBrowseChange?: (subjectId: string, topicId?: string, quizId?: string) => boolean | Promise<boolean>;
   onDelete?: (selection: Selection, label: string) => void;
 }
@@ -52,7 +52,7 @@ export function AdminNavigatorPanel({
   chooseBulkTarget,
   onDelete,
   onBrowseChange,
-  onDeleteItems,
+  onDeleteMany,
   onNewTopic,
   onManageSubjects,
 }: Props) {
@@ -79,10 +79,6 @@ export function AdminNavigatorPanel({
     () => selectQuizNavigatorPage(bank, topicId || undefined, quizId || undefined, filter, page),
     [bank, topicId, quizId, filter, page],
   );
-  const recordSelection = useAdminRecordSelection(
-    JSON.stringify([subjectId, topicId, quizId, filter]),
-    bank.questions.filter((row) => row.quizId === quizId).map((row) => row.id),
-  );
   const changeSubject = async (id: string) => {
     if (onBrowseChange && !(await onBrowseChange(id))) return;
     setSubjectId(id);
@@ -104,6 +100,16 @@ export function AdminNavigatorPanel({
     setFilter('');
     setPage(0);
   };
+  const listKind = quiz ? 'question' : topic ? 'quiz' : subject ? 'topic' : undefined;
+  const listParentId = quiz ? quiz.id : topic ? topic.id : subjectId;
+  const questionCounts = (id: string) => bank.questions.filter((row) => row.quizId === id).length;
+  const listRows = quiz
+    ? []
+    : topic
+      ? quizzes.map((row) => ({ id: row.id, primary: row.name, secondary: `${questionCounts(row.id)} items`, open: changeQuiz }))
+      : topics.map((row) => ({ id: row.id, primary: row.name, secondary: row.id, open: changeTopic }));
+  const allIds = quiz ? bank.questions.filter((row) => row.quizId === quizId).map((row) => row.id) : listRows.map((row) => row.id);
+  const recordSelection = useAdminRecordSelection(JSON.stringify([subjectId, topicId, quizId, filter]), allIds);
   return (
     <Paper component="section" aria-label="Quiz navigator" variant="outlined" sx={{ ...adminNavigatorLayout, p: 2 }}>
       <Stack component="fieldset" disabled={disabled} spacing={1} sx={{ m: 0, p: 0, border: 0, minWidth: 0 }}>
@@ -225,16 +231,18 @@ export function AdminNavigatorPanel({
             {filter ? `${results.matches.length} matches` : `${results.matches.length} items`} · {quiz.name}
           </Typography>
         )}
-        {quiz && onDeleteItems && (
+        {listKind && onDeleteMany && (
           <AdminRecordSelection
             selection={recordSelection}
-            pageIds={results.visible.map(({ question }) => question.id)}
-            onDelete={onDeleteItems}
+            pageIds={quiz ? results.visible.map(({ question }) => question.id) : allIds}
+            onDelete={(ids) => onDeleteMany(listKind, listParentId, ids)}
           />
         )}
         <Box
           component="nav"
-          aria-label={quiz ? `Items in ${quiz.name}` : 'Quizzes in selected topic'}
+          aria-label={
+            quiz ? `Items in ${quiz.name}` : topic ? `Quizzes in ${topic.name}` : subject ? `Topics in ${subject.name}` : 'Navigator list'
+          }
           sx={{ overflowY: 'auto', maxHeight: { xs: '40dvh', lg: '50vh' } }}
         >
           {quiz ? (
@@ -266,6 +274,27 @@ export function AdminNavigatorPanel({
                         },
                       }}
                     />
+                  </ListItemButton>
+                </Stack>
+              ))}
+            </List>
+          ) : listRows.length ? (
+            <List dense disablePadding>
+              {listRows.map((row) => (
+                <Stack component="li" key={row.id} direction="row" alignItems="center">
+                  {recordSelection.enabled && (
+                    <Checkbox
+                      size="small"
+                      checked={recordSelection.ids.includes(row.id)}
+                      onChange={() => recordSelection.toggle(row.id)}
+                      slotProps={{ input: { 'aria-label': `Select ${listKind} ${row.id}` } }}
+                    />
+                  )}
+                  <ListItemButton
+                    onClick={() => void row.open(row.id)}
+                    sx={{ borderRadius: '10px', mx: 0.5, width: 'calc(100% - 8px)' }}
+                  >
+                    <ListItemText primary={row.primary} secondary={row.secondary} />
                   </ListItemButton>
                 </Stack>
               ))}

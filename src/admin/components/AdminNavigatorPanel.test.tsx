@@ -77,4 +77,31 @@ describe('admin quiz navigator presentation contracts', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Add questions' }));
     expect(chooseBulkTarget).toHaveBeenCalledExactlyOnceWith('quiz', { subjectId: 's1', topicId: 't1', quizId: 'q1' });
   });
+
+  it('lists the topics of a subject and deletes the ticked ones together', () => {
+    const onDeleteMany = vi.fn();
+    const twoTopics = { ...bank, topics: [...bank.topics, { ...bank.topics[0], id: 't3', name: 'Second topic' }] };
+    render(
+      <ThemeProvider theme={theme}>
+        <AdminNavigatorPanel
+          bank={twoTopics}
+          selection={{ kind: 'subject' }}
+          selectedSubjectId="s1"
+          filter=""
+          setFilter={vi.fn()}
+          loadEntity={vi.fn()}
+          onDeleteMany={onDeleteMany}
+          onNewTopic={vi.fn()}
+          onManageSubjects={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    const list = screen.getByRole('navigation', { name: /^Topics in / });
+    expect(list.querySelectorAll('li')).toHaveLength(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select topic t1' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select topic t3' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete selected…' }));
+    expect(onDeleteMany).toHaveBeenCalledExactlyOnceWith('topic', 's1', ['t1', 't3']);
+  });
 });

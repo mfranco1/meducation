@@ -32,6 +32,15 @@ export function deletionReview(bank: StoredQuestionBank, flashcards: StoredFlash
   return { records, summary: `${subjects.length} subjects · ${topics.length} topics · ${quizzes.length} quizzes · ${questions.length} items · ${decks.length} decks · ${cards.length} cards` };
 }
 
+const plurals: Record<RecordKind, string> = {
+  subject: 'subjects',
+  topic: 'topics',
+  quiz: 'quizzes',
+  question: 'items',
+  deck: 'decks',
+  card: 'cards',
+};
+
 export interface DeleteRequest {
   selection: DeletionTarget;
   label: string;
@@ -67,7 +76,7 @@ export function AdminDeleteDialog({
     ? deletionReview(bank, flashcardBank, selection, request.ids)
     : { records: [], summary: '' };
   const name = selection.kind === 'question' ? 'item' : selection.kind;
-  const action = request?.ids ? `selected ${name}s` : name;
+  const action = request?.ids ? `selected ${plurals[selection.kind]}` : name;
   return (
     <Dialog
       open={Boolean(request)}

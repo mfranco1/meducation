@@ -1,5 +1,6 @@
 import type { StoredFlashcardBank } from '../../content/schema/schema';
 import type { BulkPlan } from '../data/DraftStore';
+import { foldByName, nameKey } from './bulkAddDraft';
 
 export type FlashcardBulkAddContext =
   | { kind: 'subject'; subjectId: string }
@@ -172,38 +173,63 @@ export function parseFlashcardBulkAddDraft(
     : { draft: { kind: 'decks', decks }, diagnostics };
 }
 
-const deckGroups = (decks: FlashcardDeckDraft[]) =>
-  decks.map((deck) => ({
-    create: {
-      kind: 'decks' as const,
-      fields: { name: deck.name, ...(deck.description === undefined ? {} : { description: deck.description }) },
-    },
-    childKind: 'cards' as const,
-    children: (deck.cards ?? []).map((card) => ({ ...card })),
-  }));
+/** Decks matching an existing deck by name add to it; the rest are created. */
+const deckGroups = (decks: FlashcardDeckDraft[], existing: { id: string; name: string }[], merged: string[]) =>
+  foldByName(decks, (into, deck) => ({ ...into, cards: [...(into.cards ?? []), ...(deck.cards ?? [])] })).map((deck) => {
+    const match = existing.find((row) => nameKey(row.name) === nameKey(deck.name));
+    const children = (deck.cards ?? []).map((card) => ({ ...card }));
+    if (match) {
+      merged.push(`Deck · ${match.name} · ${match.id}`);
+      return { parentId: match.id, childKind: 'cards' as const, children };
+    }
+    return {
+      create: {
+        kind: 'decks' as const,
+        fields: { name: deck.name, ...(deck.description === undefined ? {} : { description: deck.description }) },
+      },
+      childKind: 'cards' as const,
+      children,
+    };
+  });
 
-/** Turns a parsed draft into the records to create; the server assigns every ID. */
+/** Turns a parsed draft into the records to create; the server assigns every ID. Names that already exist are reused. */
 export function compileFlashcardBulkAddDraft(
   draft: FlashcardBulkAddDraft,
   context: FlashcardBulkAddContext,
   bank: StoredFlashcardBank,
-  topics: readonly { id: string }[],
-): { plan?: BulkPlan; diagnostics: FlashcardBulkDiagnostic[] } {
-  const fail = (message: string) => ({ diagnostics: [{ level: 'error' as const, path: '$', message }] });
-  if (context.kind === 'subject' && draft.kind === 'topics')
+  topics: readonly { id: string; subjectId: string; name: string }[],
+): { plan?: BulkPlan; diagnostics: FlashcardBulkDiagnostic[]; merged: string[] } {
+  const merged: string[] = [];
+  const fail = (message: string) => ({ diagnostics: [{ level: 'error' as const, path: '$', message }], merged });
+  const decksOf = (topicId: string) => bank.decks.filter((deck) => deck.topicId === topicId);
+  if (context.kind === 'subject' && draft.kind === 'topics') {
+    const existing = topics.filter((topic) => topic.subjectId === context.subjectId);
     return {
       plan: {
         subjectId: context.subjectId,
-        topics: draft.topics.map((topic) => ({
-          fields: { name: topic.name, ...(topic.description === undefined ? {} : { description: topic.description }) },
-          groups: deckGroups(topic.decks),
-        })),
+        topics: foldByName(draft.topics, (into, topic) => ({ ...into, decks: [...into.decks, ...topic.decks] })).map((topic) => {
+          const match = existing.find((row) => nameKey(row.name) === nameKey(topic.name));
+          if (match) {
+            merged.push(`Topic · ${match.name} · ${match.id}`);
+            return { id: match.id, groups: deckGroups(topic.decks, decksOf(match.id), merged) };
+          }
+          return {
+            fields: { name: topic.name, ...(topic.description === undefined ? {} : { description: topic.description }) },
+            groups: deckGroups(topic.decks, [], merged),
+          };
+        }),
       },
       diagnostics: [],
+      merged,
     };
+  }
   if (context.kind === 'topic' && draft.kind === 'decks') {
     if (!topics.some((topic) => topic.id === context.topicId)) return fail('selected topic no longer exists.');
-    return { plan: { topics: [{ id: context.topicId, groups: deckGroups(draft.decks) }] }, diagnostics: [] };
+    return {
+      plan: { topics: [{ id: context.topicId, groups: deckGroups(draft.decks, decksOf(context.topicId), merged) }] },
+      diagnostics: [],
+      merged,
+    };
   }
   if (context.kind === 'deck' && draft.kind === 'cards') {
     const deck = bank.decks.find((row) => row.id === context.deckId);
@@ -211,6 +237,7 @@ export function compileFlashcardBulkAddDraft(
     return {
       plan: { topics: [{ groups: [{ parentId: deck.id, childKind: 'cards', children: draft.cards.map((card) => ({ ...card })) }] }] },
       diagnostics: [],
+      merged,
     };
   }
   return fail('draft type does not match the selected destination.');

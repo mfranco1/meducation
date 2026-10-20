@@ -152,8 +152,12 @@ export function QuizAdminPanel({
         }}
         chooseBulkTarget={(kind, context) => chooseBulk({ kind, ...context })}
         onDelete={(target, label) => onDelete({ selection: target, label })}
-        onDeleteItems={(ids) =>
-          onDelete({ selection: { kind: 'question', parentId: selectedQuiz?.id }, label: `${ids.length} selected items`, ids })
+        onDeleteMany={(kind, parentId, ids) =>
+          onDelete({
+            selection: { kind, parentId },
+            label: `${ids.length} selected ${kind === 'question' ? 'items' : kind === 'quiz' ? 'quizzes' : 'topics'}`,
+            ids,
+          })
         }
       />
       <AdminEditorFrame label="Quiz editor">

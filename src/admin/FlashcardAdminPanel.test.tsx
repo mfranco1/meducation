@@ -193,6 +193,20 @@ describe('flashcard editor over the record API', () => {
     expect(store.fetcher).not.toHaveBeenCalled();
   });
 
+  it('deletes ticked decks from the deck list together', async () => {
+    const { props } = mount();
+    await chooseTopic();
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select deck d-cranial' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Select deck d-empty' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete selected…' }));
+    expect(props.onDelete).toHaveBeenCalledWith({
+      selection: { kind: 'deck', parentId: 't1' },
+      ids: ['d-cranial', 'd-empty'],
+      label: '2 selected decks',
+    });
+  });
+
   it('keeps dirty record text until an explicit discard', async () => {
     const { store } = mount();
     await chooseDeck();

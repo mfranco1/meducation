@@ -105,4 +105,54 @@ describe('content-only bulk add drafts', () => {
     expect(parseBulkAddDraft({ quizzes: [{ name: 'Quiz', items: [item('Item')] }] }, contexts[1]).errors).toEqual([]);
     expect(parseBulkAddDraft({ items: [item('Item')] }, contexts[2]).errors).toEqual([]);
   });
+
+  it('reuses existing topics and quizzes by name, ignoring case and spaces, and reports them', () => {
+    const result = compileBulkAddDraft(
+      { topics: [{ name: ' TOPIC ', description: 'Ignored', quizzes: [{ name: 'quiz', items: [item('One')] }, { name: 'Other', items: [item('Two')] }] }] },
+      { kind: 'subject', subjectId: 's1' },
+      bank(),
+    );
+    expect(result.plan).toEqual({
+      subjectId: 's1',
+      topics: [
+        {
+          id: 't1',
+          groups: [
+            { parentId: 'q1', childKind: 'questions', children: [{ ...item('One'), choices }] },
+            { create: { kind: 'quizzes', fields: { name: 'Other' } }, childKind: 'questions', children: [{ ...item('Two'), choices }] },
+          ],
+        },
+      ],
+    });
+    expect(result.merged).toEqual(['Topic · Topic · t1', 'Quiz · Quiz · q1']);
+  });
+
+  it('reuses an existing quiz in the selected topic', () => {
+    const result = compileBulkAddDraft({ quizzes: [{ name: 'Quiz', items: [item('One')] }] }, { kind: 'topic', topicId: 't1' }, bank());
+    expect(result.plan).toEqual({ topics: [{ id: 't1', groups: [{ parentId: 'q1', childKind: 'questions', children: [{ ...item('One'), choices }] }] }] });
+    expect(result.merged).toEqual(['Quiz · Quiz · q1']);
+  });
+
+  it('folds duplicate topics and quizzes in the batch, keeping the first description', () => {
+    const result = compileBulkAddDraft(
+      {
+        topics: [
+          { name: 'New', quizzes: [{ name: 'A', items: [item('One')] }] },
+          { name: 'new ', description: 'Kept', quizzes: [{ name: 'a', description: 'Quiz kept', items: [item('Two')] }, { name: 'B', items: [item('Three')] }] },
+        ],
+      },
+      { kind: 'subject', subjectId: 's1' },
+      bank(),
+    );
+    expect(result.merged).toEqual([]);
+    expect(result.plan?.topics).toEqual([
+      {
+        fields: { name: 'New', description: 'Kept' },
+        groups: [
+          { create: { kind: 'quizzes', fields: { name: 'A', description: 'Quiz kept' } }, childKind: 'questions', children: [{ ...item('One'), choices }, { ...item('Two'), choices }] },
+          { create: { kind: 'quizzes', fields: { name: 'B' } }, childKind: 'questions', children: [{ ...item('Three'), choices }] },
+        ],
+      },
+    ]);
+  });
 });

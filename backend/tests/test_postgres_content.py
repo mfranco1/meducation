@@ -185,7 +185,7 @@ def owner_execute(db, statement, parameters=None):
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0011_simple_answers"
+    assert migration_head() == "0012_unique_names"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -206,12 +206,12 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         with pytest.raises(SQLAlchemyError), db.reader.connect() as connection:
             connection.exec_driver_sql(sql)
     assert scalar(db.backup, "SELECT count(*) FROM content.draft_state") == 1
-    with pytest.raises(RuntimeError, match="destructive"), db.migrator.begin() as connection:
+    with pytest.raises(RuntimeError, match="unsupported"), db.migrator.begin() as connection:
         connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0011_simple_answers"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0012_unique_names"
 
 
 def test_release_omission_order_and_digest(db):

@@ -90,9 +90,26 @@ export function FlashcardAdminPanel({
   const browseDeck = browseDecks.find((deck) => deck.id === browseDeckId);
   const deckCards = browseDeck ? (cardsByDeck[browseDeck.id] ?? []) : [];
   const cardResults = selectFlashcardPage(deckCards, cardQuery, cardPage);
+  const listRows = browseDeck
+    ? []
+    : browseTopic
+      ? browseDecks.map((deck) => ({
+          id: deck.id,
+          primary: deck.name,
+          secondary: `${cardsByDeck[deck.id]?.length ?? 0} cards`,
+          open: () => changeBrowse(browseSubjectId, browseTopicId, deck.id),
+        }))
+      : browseSubjectId
+        ? browseTopics.map((topic) => ({
+            id: topic.id,
+            primary: topic.name,
+            secondary: topic.id,
+            open: () => changeBrowse(browseSubjectId, topic.id, ''),
+          }))
+        : [];
   const recordSelection = useAdminRecordSelection(
     JSON.stringify([browseSubjectId, browseTopicId, browseDeckId, cardQuery]),
-    deckCards.map((row) => row.id),
+    browseDeck ? deckCards.map((row) => row.id) : listRows.map((row) => row.id),
   );
   useEffect(() => {
     onDirtyChange?.(editor.dirty || bulkDirty);
@@ -324,6 +341,45 @@ export function FlashcardAdminPanel({
             />
           )}
           {browseTopic && !browseDecks.length && <Typography variant="body2">No decks in this topic.</Typography>}
+          {listRows.length > 0 && (
+            <>
+              <AdminRecordSelection
+                selection={recordSelection}
+                pageIds={listRows.map((row) => row.id)}
+                onDelete={(ids) =>
+                  onDelete({
+                    selection: browseTopic ? { kind: 'deck', parentId: browseTopic.id } : { kind: 'topic', parentId: browseSubjectId },
+                    ids,
+                    label: `${ids.length} selected ${browseTopic ? 'decks' : 'topics'}`,
+                  })
+                }
+              />
+              <Box
+                component="nav"
+                aria-label={browseTopic ? `Decks in ${browseTopic.name}` : 'Topics in selected subject'}
+                sx={{ overflowY: 'auto', maxHeight: { xs: '40dvh', lg: '50vh' } }}
+              >
+                {listRows.map((row) => (
+                  <Stack key={row.id} direction="row" alignItems="center">
+                    {recordSelection.enabled && (
+                      <Checkbox
+                        size="small"
+                        checked={recordSelection.ids.includes(row.id)}
+                        onChange={() => recordSelection.toggle(row.id)}
+                        slotProps={{ input: { 'aria-label': `Select ${browseTopic ? 'deck' : 'topic'} ${row.id}` } }}
+                      />
+                    )}
+                    <ListItemButton
+                      onClick={() => void row.open()}
+                      sx={{ borderRadius: '10px', mx: 0.5, width: 'calc(100% - 8px)' }}
+                    >
+                      <ListItemText primary={row.primary} secondary={row.secondary} />
+                    </ListItemButton>
+                  </Stack>
+                ))}
+              </Box>
+            </>
+          )}
           {browseDeck && (
             <>
               <Stack direction="row" spacing={0.5} flexWrap="wrap">

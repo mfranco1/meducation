@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { StoredFlashcardBank } from '../../content/schema/schema';
 import { storedQuestionBank, storedFlashcardBank } from '../../test/contentFixtures';
 import {
   compileFlashcardBulkAddDraft,
@@ -140,5 +141,44 @@ describe('flashcard bulk add drafts', () => {
       storedQuestionBank.topics,
     );
     expect(compiled.diagnostics[0].message).toContain('selected deck no longer exists');
+  });
+
+  it('reuses existing topics and decks by name, folds duplicates in the batch and reports what was reused', () => {
+    const topics = [{ id: 't9', subjectId: 's1', name: 'Pearls' }];
+    const bank = { schemaVersion: 4, decks: [{ id: 'd9', topicId: 't9', name: 'Core' }], cards: [] } as StoredFlashcardBank;
+    const context = { kind: 'subject', subjectId: 's1' } as const;
+    const card = (front: string) => ({ front, back: 'Back' });
+    const parsed = parseFlashcardBulkAddDraft(
+      {
+        topics: [
+          { name: ' pearls', decks: [{ name: 'CORE ', cards: [card('One')] }, { name: 'New', cards: [card('Two')] }] },
+          { name: 'PEARLS', decks: [{ name: 'new', description: 'Kept', cards: [card('Three')] }] },
+        ],
+      },
+      context,
+    );
+    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, context, bank, topics);
+    expect(compiled.plan).toEqual({
+      subjectId: 's1',
+      topics: [
+        {
+          id: 't9',
+          groups: [
+            { parentId: 'd9', childKind: 'cards', children: [card('One')] },
+            { create: { kind: 'decks', fields: { name: 'New', description: 'Kept' } }, childKind: 'cards', children: [card('Two'), card('Three')] },
+          ],
+        },
+      ],
+    });
+    expect(compiled.merged).toEqual(['Topic · Pearls · t9', 'Deck · Core · d9']);
+  });
+
+  it('reuses an existing deck in the selected topic', () => {
+    const context = { kind: 'topic', topicId: 't9' } as const;
+    const bank = { schemaVersion: 4, decks: [{ id: 'd9', topicId: 't9', name: 'Core' }], cards: [] } as StoredFlashcardBank;
+    const parsed = parseFlashcardBulkAddDraft({ decks: [{ name: 'core', cards: [{ front: 'F', back: 'B' }] }] }, context);
+    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, context, bank, [{ id: 't9', subjectId: 's1', name: 'Pearls' }]);
+    expect(compiled.plan).toEqual({ topics: [{ id: 't9', groups: [{ parentId: 'd9', childKind: 'cards', children: [{ front: 'F', back: 'B' }] }] }] });
+    expect(compiled.merged).toEqual(['Deck · Core · d9']);
   });
 });

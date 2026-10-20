@@ -990,3 +990,42 @@ def test_reader_role_has_no_draft_access(db):
             connection.execute(text(f"SELECT * FROM content.{table}"))
     with pytest.raises(SQLAlchemyError), db.editor.begin() as connection:
         connection.execute(text("DELETE FROM content.draft_changes"))
+
+
+def test_names_are_unique_per_parent_ignoring_case_and_edge_spaces(db, editor):
+    client, _, _ = editor
+
+    def create(kind, parent, name):
+        return call(client, "POST", f"/draft/{kind}", {"parentId": parent, "fields": {"name": name}})
+
+    def duplicate(response):
+        assert response.status_code == 409, response.text
+        assert response.json()["error"]["code"] == "duplicate_name"
+
+    other = ok(
+        call(client, "POST", "/draft/subjects", {"fields": {"name": "Other", "accent": "#00ff00"}}),
+        201,
+    )["record"]["id"]
+    first = ok(create("topics", "s1", "Cardiology"), 201)["record"]
+    duplicate(create("topics", "s1", "  cardiology "))
+    ok(create("topics", other, "Cardiology"), 201)
+    second = ok(create("topics", "s1", "Renal"), 201)["record"]
+    duplicate(
+        call(
+            client,
+            "PUT",
+            f"/draft/topics/{second['id']}",
+            {"expectedVersion": 1, "fields": {"name": "CARDIOLOGY"}},
+        )
+    )
+    ok(create("quizzes", first["id"], "Shared"), 201)
+    moving = ok(create("quizzes", second["id"], " shared"), 201)["record"]
+    duplicate(
+        call(
+            client,
+            "POST",
+            f"/draft/quizzes/{moving['id']}/move",
+            {"expectedVersion": 1, "parentId": first["id"]},
+        )
+    )
+    ok(create("decks", first["id"], "Shared"), 201)

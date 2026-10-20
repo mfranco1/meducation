@@ -37,7 +37,7 @@ export function FlashcardBulkAddDialog({
   context: FlashcardBulkAddContext;
   destinationLabel: string;
   bank: StoredFlashcardBank;
-  topics: readonly { id: string }[];
+  topics: readonly { id: string; subjectId: string; name: string }[];
   busy: boolean;
   onClose: () => void;
   onDraftDirtyChange: (dirty: boolean) => void;
@@ -112,7 +112,10 @@ export function FlashcardBulkAddDialog({
     const version = generation.current;
     const failure = await onSave(compiled.plan);
     if (failure) setProblems(failure);
-    else if (generation.current === version) {
+    else if (generation.current === version && compiled.merged.length) {
+      setText(template);
+      setMessage(`Saved. Added to existing: ${compiled.merged.join(', ')}.`);
+    } else if (generation.current === version) {
       onDraftDirtyChange(false);
       onClose();
     } else setMessage('The captured batch was saved. Newer text is kept and was not sent.');
@@ -123,6 +126,20 @@ export function FlashcardBulkAddDialog({
       setMessage('Template copied.');
     } catch {
       setMessage('Clipboard access is unavailable. Select and copy the template from the editor.');
+    }
+  };
+  const existing =
+    context.kind === 'subject'
+      ? { label: 'topics', names: topics.filter((row) => row.subjectId === context.subjectId).map((row) => row.name) }
+      : context.kind === 'topic'
+        ? { label: 'decks', names: bank.decks.filter((row) => row.topicId === context.topicId).map((row) => row.name) }
+        : undefined;
+  const copyNames = async () => {
+    try {
+      await navigator.clipboard.writeText(existing!.names.join('\n'));
+      setMessage('Names copied.');
+    } catch {
+      setMessage('Clipboard access is unavailable.');
     }
   };
   const errors = diagnostics.filter((issue) => issue.level === 'error');
@@ -162,6 +179,16 @@ export function FlashcardBulkAddDialog({
               }}
             />
           </Stack>
+          {existing && existing.names.length > 0 && (
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
+                Existing {existing.label}: {existing.names.join(', ')}
+              </Typography>
+              <Button size="small" onClick={() => void copyNames()} sx={{ flexShrink: 0 }}>
+                Copy names
+              </Button>
+            </Stack>
+          )}
           <TextField
             label="JSON"
             slotProps={{ inputLabel: { shrink: true } }}
@@ -175,7 +202,7 @@ export function FlashcardBulkAddDialog({
             InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
             disabled={busy || loadingFile}
           />
-          {message && <Alert severity={message === 'Template copied.' ? 'success' : 'info'}>{message}</Alert>}
+          {message && <Alert severity={/^(Template|Names) copied\.$|^Saved\./.test(message) ? 'success' : 'info'}>{message}</Alert>}
           {errors.length > 0 && (
             <Alert severity="error">
               <Stack spacing={0.5}>

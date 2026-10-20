@@ -126,6 +126,13 @@ class DraftService:
             state = str(getattr(getattr(error, "orig", None), "sqlstate", ""))
             if state == "55P03":
                 raise DraftError(409, "draft_busy", "Another draft write is in progress.") from None
+            constraint = getattr(
+                getattr(getattr(error, "orig", None), "diag", None), "constraint_name", ""
+            )
+            if state == "23505" and str(constraint).endswith("_name_key"):
+                raise DraftError(
+                    409, "duplicate_name", "Another record in the same place already has this name."
+                ) from None
             if state.startswith("23"):
                 raise DraftError(
                     409, "draft_conflict", "The draft changed during this write."
