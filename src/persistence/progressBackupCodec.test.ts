@@ -152,6 +152,18 @@ describe('progress backup codec', () => {
     expect(output.flashcards.dailyStats).toBeUndefined();
   });
 
+  it('round-trips deck finish times and rejects malformed ones', () => {
+    const source = cloneFixture() as { quiz: Record<string, unknown>; flashcards: Record<string, unknown>; exportedAt: string };
+    const finishedAt = { d1: '2026-10-06T01:00:00.000Z' };
+    const quiz = { schemaVersion: 2, revision: 'revision', ...source.quiz } as unknown as ProgressState;
+    const flashcards = { schemaVersion: 2, revision: 'revision', ...source.flashcards, finishedAt } as unknown as FlashcardProgressState;
+    const encoded = encodeProgressBackup(quiz, flashcards, source.exportedAt);
+    expect(encoded).toBeDefined();
+    const parsed = parseProgressBackup(encoded!);
+    expect(parsed.ok && parsed.value.flashcards.finishedAt).toEqual(finishedAt);
+    expect(validateProgressBackup({ ...JSON.parse(encoded!), flashcards: { ...source.flashcards, finishedAt: { d1: 'yesterday' } } }).ok).toBe(false);
+  });
+
   it('exports an explicit allowlist, omits revisions and running timers, then validates its own output', () => {
     const source = cloneFixture() as { quiz: Record<string, unknown>; flashcards: Record<string, unknown>; exportedAt: string };
     const quiz = { schemaVersion: 2, revision: 'private-revision', ...source.quiz } as unknown as ProgressState;

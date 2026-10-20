@@ -44,8 +44,9 @@ describe('local flashcard progress repository', () => {
     repository.saveCheckpoint({ deckId: 'd2', currentCardId: 'f8', contentSignature: 'sig2', updatedAt: '2026-10-06T00:01:00.000Z', openedCardIds: [], flaggedCardIds: [] });
     expect(repository.getCheckpoint('d1')?.currentCardId).toBe('f2');
     expect(Object.keys(repository.getSnapshot().checkpoints)).toEqual(['d1', 'd2']);
-    repository.completeDeck('d1');
+    repository.completeDeck('d1', new Date('2026-10-06T01:00:00.000Z'));
     expect(repository.getCheckpoint('d1')).toBeUndefined();
+    expect(repository.getSnapshot().finishedAt).toEqual({ d1: '2026-10-06T01:00:00.000Z' });
     expect(repository.getCheckpoint('d2')?.currentCardId).toBe('f8');
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
     repository.completeDeck('d1');

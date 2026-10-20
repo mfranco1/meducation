@@ -216,6 +216,16 @@ describe('subject topics', () => {
     expect(screen.queryByText('Not started')).toBeNull();
   });
 
+  it('orders topics and quizzes by most recent activity, leaving untouched ones in catalog order', () => {
+    const older = new Date(Date.now() - 3 * 86_400_000).toISOString();
+    const newer = new Date(Date.now() - 86_400_000).toISOString();
+    renderTopics([{ quiz, completionCount: 0 }, { quiz: done, completionCount: 0, activityAt: older }, { quiz: other, completionCount: 0, activityAt: newer }]);
+
+    expect(screen.getAllByRole('button', { name: /Cell biology|Metabolism/ }).map(button => button.textContent)).toEqual([expect.stringContaining('Metabolism'), expect.stringContaining('Cell biology')]);
+    fireEvent.click(screen.getByRole('button', { name: /Cell biology/ }));
+    expect(screen.getAllByRole('heading', { level: 4 }).map(heading => heading.textContent)).toEqual(['Second quiz', 'Practice test 1']);
+  });
+
   it('opens on the topic with the most recent activity and shows relative activity and answered progress', () => {
     const recent = new Date(Date.now() - 2 * 86_400_000).toISOString();
     renderTopics([{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0, active: { ...activeAttempt, quizId: other.id }, answeredCount: 1, activityAt: recent }]);

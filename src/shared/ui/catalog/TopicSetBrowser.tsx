@@ -60,7 +60,7 @@ function relativeTime(iso: string): string {
   return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(Math.round(seconds / size) || 0, unit);
 }
 
-export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic[]; sets: readonly TopicSet[]; noun: 'quiz' | 'deck' }) {
+export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: readonly Topic[]; sets: readonly TopicSet[]; noun: 'quiz' | 'deck' }) {
   const desktop = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
   const [selectedId, setSelectedId] = useState<string>();
   const [query, setQuery] = useState('');
@@ -71,13 +71,16 @@ export function TopicSetBrowser({ topics, sets, noun }: { topics: readonly Topic
   const focusPending = useRef(false);
   // On small screens an open topic owns a history entry, so browser Back returns to the topic list.
   const ownsHistoryEntry = useRef(false);
-  const withSets = topics.filter(topic => sets.some(set => set.topicId === topic.id));
+  // Most recent activity first; untouched items keep catalog order (sort is stable).
+  const byRecent = (a?: string, b?: string) => (b ?? '').localeCompare(a ?? '');
+  const sets = [...catalogSets].sort((a, b) => byRecent(a.activityAt, b.activityAt));
+  const topicActivity = (topic: Topic) => sets.find(set => set.topicId === topic.id)?.activityAt;
+  const withSets = topics.filter(topic => sets.some(set => set.topicId === topic.id)).sort((a, b) => byRecent(topicActivity(a), topicActivity(b)));
   const summaries = new Map(withSets.map(topic => {
     const own = sets.filter(set => set.topicId === topic.id);
     return [topic.id, { own, completed: own.filter(set => set.completionCount > 0).length }];
   }));
-  const latest = sets.reduce<TopicSet | undefined>((best, set) => set.activityAt && set.activityAt > (best?.activityAt ?? '') ? set : best, undefined);
-  const shown = withSets.find(topic => topic.id === selectedId) ?? withSets.find(topic => topic.id === latest?.topicId) ?? withSets[0];
+  const shown = withSets.find(topic => topic.id === selectedId) ?? withSets[0];
   const selected = desktop || selectedId ? shown : undefined;
   const needle = fold(query.trim());
   const searching = needle !== '';

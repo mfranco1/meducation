@@ -34,6 +34,7 @@ export interface FlashcardsBackupV2 {
   schemaVersion: 2;
   checkpoints: Record<string, FlashcardCheckpoint>;
   completionCounts: Record<string, number>;
+  finishedAt?: Record<string, string>;
   dailyStats?: FlashcardDailyStats;
 }
 export interface ProgressBackupV1 {
@@ -166,11 +167,12 @@ function validQuiz(value: unknown): value is QuizBackupV2 {
     && Object.keys(value.latestScores as object).every(k => Number(ownValue(completionCounts, k) ?? 0) > 0);
 }
 function validFlashcards(value: unknown): value is FlashcardsBackupV2 {
-  if (!keys(value, ['schemaVersion', 'checkpoints', 'completionCounts'], ['dailyStats']) || value.schemaVersion !== 2) return false;
+  if (!keys(value, ['schemaVersion', 'checkpoints', 'completionCounts'], ['finishedAt', 'dailyStats']) || value.schemaVersion !== 2) return false;
   if (!validMap(value.checkpoints, 128, (key, v): v is FlashcardCheckpoint => keys(v, ['deckId', 'currentCardId', 'contentSignature', 'updatedAt', 'openedCardIds', 'flaggedCardIds'])
     && safeId(v.deckId) && v.deckId === key && safeId(v.currentCardId) && safeReference(v.contentSignature) && utf8Bytes(v.contentSignature) <= MAX_REFERENCE_BYTES
     && timestamp(v.updatedAt) && validIdList(v.openedCardIds) && validIdList(v.flaggedCardIds))
-    || !validMap(value.completionCounts, 2048, (_k, v): v is number => safeInt(v))) return false;
+    || !validMap(value.completionCounts, 2048, (_k, v): v is number => safeInt(v))
+    || (value.finishedAt !== undefined && !validMap(value.finishedAt, 2048, (_k, v): v is string => timestamp(v)))) return false;
   let total = 0;
   for (const count of Object.values(value.completionCounts as Record<string, number>)) { if (!addSafe(total, count)) return false; total += count; }
   if (value.dailyStats !== undefined && (!isFlashcardDailyStats(value.dailyStats) || total < value.dailyStats.trackedCompletions)) return false;
@@ -206,10 +208,10 @@ function stripAttemptRuntimeFields(value: unknown, active: boolean): Record<stri
   return result;
 }
 function validLiveFlashcards(state: unknown): state is FlashcardProgressState {
-  return keys(state, ['schemaVersion', 'revision', 'checkpoints'], ['completionCounts', 'dailyStats'])
+  return keys(state, ['schemaVersion', 'revision', 'checkpoints'], ['completionCounts', 'finishedAt', 'dailyStats'])
     && state.schemaVersion === 2 && safeReference(state.revision)
     && (state.completionCounts === undefined || isRecord(state.completionCounts))
-    && validFlashcards({ schemaVersion: 2, checkpoints: state.checkpoints, completionCounts: state.completionCounts === undefined ? {} : state.completionCounts, ...(state.dailyStats === undefined ? {} : { dailyStats: state.dailyStats }) });
+    && validFlashcards({ schemaVersion: 2, checkpoints: state.checkpoints, completionCounts: state.completionCounts === undefined ? {} : state.completionCounts, ...(state.finishedAt === undefined ? {} : { finishedAt: state.finishedAt }), ...(state.dailyStats === undefined ? {} : { dailyStats: state.dailyStats }) });
 }
 
 function projectAttempt(attempt: Attempt | CompletedAttempt, active: boolean): Attempt | CompletedAttempt {
@@ -267,6 +269,7 @@ function projectImportedBackup(value: ProgressBackupV1): ProgressBackupV1 {
       updatedAt: checkpoint.updatedAt, openedCardIds: [...checkpoint.openedCardIds], flaggedCardIds: [...checkpoint.flaggedCardIds],
     })),
     completionCounts: sortedRecord(value.flashcards.completionCounts),
+    ...(value.flashcards.finishedAt === undefined ? {} : { finishedAt: sortedRecord(value.flashcards.finishedAt) }),
     ...(value.flashcards.dailyStats === undefined ? {} : { dailyStats: {
       firstDay: value.flashcards.dailyStats.firstDay, currentDay: value.flashcards.dailyStats.currentDay,
       currentDayCount: value.flashcards.dailyStats.currentDayCount, trackedCompletions: value.flashcards.dailyStats.trackedCompletions,
@@ -314,6 +317,7 @@ export function encodeProgressBackup(quiz: ProgressState, flashcards: FlashcardP
       deckId: checkpoint.deckId, currentCardId: checkpoint.currentCardId, contentSignature: checkpoint.contentSignature,
       updatedAt: checkpoint.updatedAt, openedCardIds: [...checkpoint.openedCardIds], flaggedCardIds: [...checkpoint.flaggedCardIds],
     })), completionCounts: sortedRecord(flashcards.completionCounts ?? {}),
+    ...(flashcards.finishedAt === undefined ? {} : { finishedAt: sortedRecord(flashcards.finishedAt) }),
     ...(flashcards.dailyStats === undefined ? {} : { dailyStats: { ...flashcards.dailyStats } }),
   };
   const value: ProgressBackupV1 = { format: PROGRESS_BACKUP_FORMAT, version: 1, exportedAt, quiz: quizPayload, flashcards: flashcardPayload };

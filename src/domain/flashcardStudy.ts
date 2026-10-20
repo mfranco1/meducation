@@ -15,6 +15,7 @@ export interface FlashcardProgressState {
   revision: string;
   checkpoints: Record<string, FlashcardCheckpoint>;
   completionCounts: Record<string, number>;
+  finishedAt?: Record<string, string>;
   dailyStats?: FlashcardDailyStats;
 }
 

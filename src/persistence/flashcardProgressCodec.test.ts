@@ -25,6 +25,14 @@ describe('flashcard progress envelope', () => {
     }
   });
 
+  it('accepts optional deck finish times and rejects malformed ones', () => {
+    const finishedAt = { d1: '2026-10-06T01:00:00.000Z' };
+    expect(decodeFlashcardProgress({ ...state, finishedAt })).toMatchObject({ finishedAt });
+    for (const invalid of [{ d1: 'yesterday' }, { d1: 5 }, { ' ': '2026-10-06T01:00:00.000Z' }, []]) {
+      expect(decodeFlashcardProgress({ ...state, finishedAt: invalid })).toBeUndefined();
+    }
+  });
+
   it('accepts the compact daily aggregate and rejects malformed or unsupported history', () => {
     const dailyStats = { firstDay: '2026-10-01', currentDay: '2026-10-03', currentDayCount: 1, trackedCompletions: 2, highestDailyCount: 1 };
     expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 2 }, dailyStats })).toMatchObject({ dailyStats, completionCounts: { d1: 2 } });

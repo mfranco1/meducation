@@ -31,7 +31,7 @@ function validCheckpoint(value: unknown, deckId: string): value is FlashcardChec
 export function decodeFlashcardProgress(value: unknown): FlashcardProgressState | undefined {
   if (
     !record(value) ||
-    !onlyKeys(value, ['schemaVersion', 'revision', 'checkpoints', 'completionCounts', 'dailyStats']) ||
+    !onlyKeys(value, ['schemaVersion', 'revision', 'checkpoints', 'completionCounts', 'finishedAt', 'dailyStats']) ||
     value.schemaVersion !== 2 ||
     !nonempty(value.revision) ||
     !record(value.checkpoints)
@@ -40,6 +40,7 @@ export function decodeFlashcardProgress(value: unknown): FlashcardProgressState 
   if (Object.entries(value.checkpoints).some(([deckId, checkpoint]) => !validCheckpoint(checkpoint, deckId)))
     return undefined;
   if (value.completionCounts !== undefined && !validCompletionCounts(value.completionCounts)) return undefined;
+  if (value.finishedAt !== undefined && !(record(value.finishedAt) && Object.entries(value.finishedAt).every(([deckId, at]) => nonempty(deckId) && timestamp(at)))) return undefined;
   if (value.dailyStats !== undefined) {
     if (!isFlashcardDailyStats(value.dailyStats)) return undefined;
     const completedTotal = Object.values(value.completionCounts ?? {}).reduce<number>((total, count) => total + Number(count), 0);

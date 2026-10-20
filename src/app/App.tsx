@@ -210,6 +210,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       catalog={runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id)}
       checkpoints={flashcards.progress.checkpoints}
       completionCounts={flashcards.progress.completionCounts}
+      finishedAt={flashcards.progress.finishedAt ?? {}}
       loading={['idle', 'loading'].includes(runtimeFlashcardBank.getState(`catalog:${currentFlashcardSubject.id}`))}
       error={runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`)}
       loadingDeckId={flashcards.loadingDeckId}

@@ -14,6 +14,7 @@ function freezeProgress(state: FlashcardProgressState): FlashcardProgressState {
     Object.freeze(checkpoint);
   });
   Object.freeze(state.completionCounts);
+  if (state.finishedAt) Object.freeze(state.finishedAt);
   Object.freeze(state.checkpoints);
   return Object.freeze(state);
 }
@@ -163,6 +164,7 @@ export class LocalFlashcardProgressRepository {
         ...state,
         checkpoints,
         completionCounts: { ...state.completionCounts, [deckId]: count + 1 },
+        finishedAt: { ...state.finishedAt, [deckId]: completedAt.toISOString() },
         dailyStats,
       };
     });
