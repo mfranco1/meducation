@@ -106,6 +106,23 @@ describe('content-only bulk add drafts', () => {
     expect(parseBulkAddDraft({ items: [item('Item')] }, contexts[2]).errors).toEqual([]);
   });
 
+  it('omits optional fields left blank and keeps filled ones', () => {
+    const context = { kind: 'quiz' as const, topicId: 't1', quizId: 'q1' };
+    const { items: [blank] } = bulkAddTemplate(context) as { items: Record<string, unknown>[] };
+    const filled = { rationaleMeta: { sources: 'Guide p. 4' }, pearls: ['Pearl', ''], metadata: { topic: '', difficulty: 'hard', tags: ['tag', ''] } };
+    const compiled = compileBulkAddDraft(
+      { items: [{ ...blank, ...item('Blank'), metadata: { ...(blank.metadata as object), difficulty: '' } }, item('Filled', filled)] },
+      context,
+      bank(),
+    );
+    expect(compiled.errors).toEqual([]);
+    expect(compiled.plan?.topics[0].groups[0].children).toEqual([
+      { ...item('Blank'), choices },
+      { ...item('Filled'), choices, rationaleMeta: { sources: 'Guide p. 4' }, pearls: ['Pearl'], metadata: { difficulty: 'hard', tags: ['tag'] } },
+    ]);
+    expect(parseBulkAddDraft({ items: [{ ...blank, ...item('Hint') }] }, context).errors).toEqual(['$.items[0].metadata.difficulty must be easy, medium, or hard.']);
+  });
+
   it('reuses existing topics and quizzes by name, ignoring case and spaces, and reports them', () => {
     const result = compileBulkAddDraft(
       { topics: [{ name: ' TOPIC ', description: 'Ignored', quizzes: [{ name: 'quiz', items: [item('One')] }, { name: 'Other', items: [item('Two')] }] }] },

@@ -47,6 +47,18 @@ const nonEmptyString = (value: unknown) => isString(value) && Boolean(value.trim
 /** A blank description is left unset so an untouched template stores nothing. */
 const optionalDescription = (value: unknown) => (isString(value) && value.trim() ? { description: value } : {});
 const choiceLabel = (index: number) => String.fromCharCode(65 + index);
+/** Drops blank strings, empty arrays and empty objects so untouched optional template fields store nothing. */
+function withoutBlanks(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    const kept = value.filter(nonEmptyString);
+    return kept.length ? kept : undefined;
+  }
+  if (isObject(value)) {
+    const kept = Object.entries(value).map(([key, entry]) => [key, withoutBlanks(entry)]).filter(([, entry]) => entry !== undefined);
+    return kept.length ? Object.fromEntries(kept) : undefined;
+  }
+  return nonEmptyString(value) ? value : undefined;
+}
 
 const itemKeys = ['stem', 'choices', 'answer', 'rationale', 'rationaleMeta', 'pearls', 'metadata'];
 const metadataKeys = ['topic', 'subtopic', 'system', 'difficulty', 'questionType', 'tags'];
@@ -77,13 +89,14 @@ function parseItem(value: unknown, path: string): { item?: BulkAddItemDraft; err
     else {
       for (const key of Object.keys(value.metadata)) if (!metadataKeys.includes(key)) errors.push(`${path}.metadata.${key} is not an editable metadata field.`);
       for (const key of ['topic', 'subtopic', 'system', 'questionType'] as const) if (value.metadata[key] !== undefined && !isString(value.metadata[key])) errors.push(`${path}.metadata.${key} must be a string.`);
-      if (value.metadata.difficulty !== undefined && !['easy', 'medium', 'hard'].includes(String(value.metadata.difficulty))) errors.push(`${path}.metadata.difficulty must be easy, medium, or hard.`);
+      if (value.metadata.difficulty !== undefined && value.metadata.difficulty !== '' && !['easy', 'medium', 'hard'].includes(String(value.metadata.difficulty))) errors.push(`${path}.metadata.difficulty must be easy, medium, or hard.`);
       if (value.metadata.tags !== undefined && (!Array.isArray(value.metadata.tags) || !value.metadata.tags.every(isString))) errors.push(`${path}.metadata.tags must be an array of strings.`);
-      if (!Object.values(value.metadata).some(entry => Array.isArray(entry) ? entry.length > 0 : Boolean(entry))) errors.push(`${path}.metadata must not be empty.`);
     }
   }
 
-  return errors.length ? { errors } : { item: value as unknown as BulkAddItemDraft, errors };
+  if (errors.length) return { errors };
+  const { rationaleMeta, pearls, metadata, ...required } = value;
+  return { item: { ...required, ...(withoutBlanks({ rationaleMeta, pearls, metadata }) as object) } as unknown as BulkAddItemDraft, errors };
 }
 
 function parseQuizzes(value: unknown, path: string): { quizzes?: BulkAddQuizDraft[]; errors: string[] } {
@@ -224,9 +237,17 @@ export function compileBulkAddDraft(
   };
 }
 
-/** Editable JSON contains content only; parent IDs and protocol fields live in panel state. */
-export function bulkAddTemplate(context: BulkAddContext): BulkAddDraft {
-  const item = { stem: '', choices: ['', ''], answer: 'A', rationale: '' };
+/** Editable JSON contains content only; parent IDs and protocol fields live in panel state. The difficulty placeholder must be replaced before saving. */
+export function bulkAddTemplate(context: BulkAddContext): object {
+  const item = {
+    stem: '',
+    choices: ['', ''],
+    answer: 'A',
+    rationale: '',
+    rationaleMeta: { sources: '' },
+    pearls: [''],
+    metadata: { topic: '', subtopic: '', system: '', difficulty: 'easy | medium | hard', questionType: '', tags: [''] },
+  };
   const quiz = { name: '', description: '', items: [{ ...item }] };
   if (context.kind === 'subject') return { topics: [{ name: '', description: '', quizzes: [quiz] }] };
   if (context.kind === 'topic') return { quizzes: [quiz] };
