@@ -1,5 +1,6 @@
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import LightbulbOutlinedIcon from '@mui/icons-material/LightbulbOutlined';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 import { MarkdownContent } from '../../../../shared/ui/content/MarkdownContent';
@@ -25,6 +26,7 @@ export function FeedbackPanel({ question, selectedChoiceId, readOnlyStatus }: { 
   const correct = isCorrect(question, selectedChoiceId);
   const status = readOnlyStatus ?? (correct ? 'correct' : 'incorrect');
   const tone = status === 'unanswered' || status === 'unavailable' ? theme.palette.feedback.review : status === 'correct' ? theme.palette.feedback.correct : theme.palette.feedback.incorrect;
+  const iconColor = status === 'unanswered' || status === 'unavailable' ? 'warning.main' : status === 'correct' ? 'success.main' : 'error.main';
   const hasContent = readOnlyStatus !== undefined || Boolean(question.rationale || question.pearls?.length);
   const title = readOnlyStatus === undefined
     ? correct ? 'Correct' : 'Not quite'
@@ -40,9 +42,12 @@ export function FeedbackPanel({ question, selectedChoiceId, readOnlyStatus }: { 
       {readOnlyStatus !== undefined && !question.rationale && !question.rationaleMeta?.sources
         ? <Typography color="text.secondary">Explanation unavailable.</Typography>
         : <ExplanationContent question={question} />}
-      {question.pearls?.map(pearl => <Box key={pearl} sx={{ mt: 2.5, maxWidth: '72ch', p: 1.5, borderRadius: 2, bgcolor: 'primary.light' }}>
-        <Typography variant="subtitle2" color="primary.dark">High-yield pearl</Typography>
-        <Typography sx={{ mt: .5, lineHeight: 1.65 }}>{pearl}</Typography>
+      {question.pearls?.map(pearl => <Box key={pearl} sx={{ mt: 2.5, maxWidth: '72ch', py: .5, pl: 2, borderLeft: '3px solid', borderColor: tone.border }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <LightbulbOutlinedIcon fontSize="small" sx={{ color: iconColor }} />
+          <Typography variant="subtitle2" fontWeight={700}>High-yield pearl</Typography>
+        </Stack>
+        <Typography sx={{ mt: 1, lineHeight: 1.65 }}>{pearl}</Typography>
       </Box>)}
     </Box>}
   </Box>;

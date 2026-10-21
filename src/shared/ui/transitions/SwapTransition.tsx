@@ -9,7 +9,8 @@ const travelPx = 14;
 /**
  * Animates an in-screen swap when `swapKey` changes: a given `direction`, or a numeric step of
  * exactly one, slides a short way; anything else crossfades. The outgoing content is the
- * unmounted DOM node itself, kept as an inert, aria-hidden ghost until its exit finishes.
+ * unmounted DOM node itself, kept as an inert, aria-hidden ghost until its exit finishes. If the
+ * new item's top is above the viewport, the page scrolls to it.
  */
 export function SwapTransition({ swapKey, direction, children }: { swapKey: string | number; direction?: 1 | -1; children: ReactNode }) {
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
@@ -21,8 +22,12 @@ export function SwapTransition({ swapKey, direction, children }: { swapKey: stri
     const outgoing = previous.current;
     const incoming = item.current;
     previous.current = { key: swapKey, node: incoming };
+    if (outgoing.key === swapKey || !incoming) return;
+    // Bring the new item's top into view before paint. Otherwise a learner scrolled down a long
+    // item lands mid-content, and a shorter item makes the browser clamp the scroll abruptly.
+    if (incoming.getBoundingClientRect().top < 0) incoming.scrollIntoView({ block: 'start' });
     // jsdom has no Web Animations API.
-    if (outgoing.key === swapKey || !outgoing.node || !incoming?.animate || !ghostHost.current || reducedMotion) return;
+    if (!outgoing.node || !incoming.animate || !ghostHost.current || reducedMotion) return;
     const step = typeof swapKey === 'number' && typeof outgoing.key === 'number' ? swapKey - outgoing.key : 0;
     const slide = direction ?? (Math.abs(step) === 1 ? Math.sign(step) : 0);
     const shift = slide * travelPx;
@@ -37,6 +42,6 @@ export function SwapTransition({ swapKey, direction, children }: { swapKey: stri
 
   return <Box sx={{ position: 'relative' }}>
     <Box ref={ghostHost} sx={{ position: 'absolute', inset: '0 0 auto', pointerEvents: 'none' }} />
-    <Box key={swapKey} ref={item} sx={{ position: 'relative' }}>{children}</Box>
+    <Box key={swapKey} ref={item} sx={{ position: 'relative', scrollMarginTop: 16 }}>{children}</Box>
   </Box>;
 }

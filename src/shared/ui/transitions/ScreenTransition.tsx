@@ -10,12 +10,15 @@ const enter = keyframes`
   to { opacity: 1; top: 0; }
 `;
 
-/** Animates only when the top-level navigation destination changes. */
+/** Starts each new top-level destination at the top of the page and animates its entry. */
 export function ScreenTransition({ screenId, children }: { screenId: string; children: ReactNode }) {
   const previousScreenId = useRef(screenId);
   const [animatedScreenId, setAnimatedScreenId] = useState<string | null>(null);
   useLayoutEffect(() => {
-    if (previousScreenId.current !== screenId) setAnimatedScreenId(screenId);
+    if (previousScreenId.current !== screenId) {
+      setAnimatedScreenId(screenId);
+      window.scrollTo(0, 0);
+    }
     previousScreenId.current = screenId;
   }, [screenId]);
   const shouldAnimate = animatedScreenId === screenId;
