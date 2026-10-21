@@ -12,11 +12,11 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import type { DraftQuizBank, StoredRecord } from '../data/DraftStore';
-import { selectQuizNavigatorPage } from '../core/navigator';
+import type { DraftFlashcardBank, DraftQuizBank, StoredRecord } from '../data/DraftStore';
+import { filterTopics, selectQuizNavigatorPage, type TopicFilter } from '../core/navigator';
 import type { Selection } from '../useRecordEditor';
 import { AdminRecordSelection, useAdminRecordSelection } from './AdminRecordSelection';
-
+import { AdminTopicFilter, topicTotals } from './AdminTopicFilter';
 import { AdminParentActions } from './AdminParentActions';
 
 export const adminNavigatorLayout = { width: { xs: '100%', lg: 320 }, flexShrink: 0, minWidth: 0 };
@@ -24,6 +24,7 @@ export const adminNavigatorLayout = { width: { xs: '100%', lg: 320 }, flexShrink
 interface Props {
   disabled?: boolean;
   bank: DraftQuizBank;
+  flashcardBank: DraftFlashcardBank;
   selection: Selection;
   selectedSubjectId?: string;
   selectedTopicId?: string;
@@ -42,6 +43,7 @@ interface Props {
 export function AdminNavigatorPanel({
   disabled = false,
   bank,
+  flashcardBank,
   selection,
   selectedSubjectId,
   selectedTopicId,
@@ -63,6 +65,7 @@ export function AdminNavigatorPanel({
   const [topicQuery, setTopicQuery] = useState<string>();
   const [quizQuery, setQuizQuery] = useState<string>();
   const [page, setPage] = useState(0);
+  const [topicFilter, setTopicFilter] = useState<TopicFilter>('all');
   useEffect(() => {
     setSubjectId(selectedSubjectId ?? '');
     setTopicId(selectedTopicId ?? '');
@@ -107,7 +110,12 @@ export function AdminNavigatorPanel({
     ? []
     : topic
       ? quizzes.map((row) => ({ id: row.id, primary: row.name, secondary: `${questionCounts(row.id)} items`, open: changeQuiz }))
-      : topics.map((row) => ({ id: row.id, primary: row.name, secondary: row.id, open: changeTopic }));
+      : filterTopics(topics, { ...bank, ...flashcardBank }, topicFilter).map((row) => ({
+          id: row.topic.id,
+          primary: row.topic.name,
+          secondary: `${row.topic.id} · ${topicTotals(row)}`,
+          open: changeTopic,
+        }));
   const allIds = quiz ? bank.questions.filter((row) => row.quizId === quizId).map((row) => row.id) : listRows.map((row) => row.id);
   const recordSelection = useAdminRecordSelection(JSON.stringify([subjectId, topicId, quizId, filter]), allIds);
   return (
@@ -231,6 +239,7 @@ export function AdminNavigatorPanel({
             {filter ? `${results.matches.length} matches` : `${results.matches.length} items`} · {quiz.name}
           </Typography>
         )}
+        {subject && !topic && topics.length > 0 && <AdminTopicFilter value={topicFilter} onChange={setTopicFilter} />}
         {listKind && onDeleteMany && (
           <AdminRecordSelection
             selection={recordSelection}
@@ -302,6 +311,10 @@ export function AdminNavigatorPanel({
           ) : subject && !topics.length ? (
             <Typography variant="body2" sx={{ p: 1 }}>
               No topics in this subject.
+            </Typography>
+          ) : subject && !topic ? (
+            <Typography variant="body2" sx={{ p: 1 }}>
+              No topics match this filter.
             </Typography>
           ) : topic && !quizzes.length ? (
             <Typography variant="body2" sx={{ p: 1 }}>

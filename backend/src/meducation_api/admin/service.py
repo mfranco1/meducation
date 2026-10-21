@@ -10,6 +10,7 @@ import json
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from decimal import Decimal, localcontext
+from difflib import SequenceMatcher
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -401,6 +402,62 @@ class DraftService:
             "latestChangeId": latest,
             "hasMore": len(found) > limit,
         }
+
+    def diff(self, limit: int) -> dict[str, Any]:
+        """Records that differ between the active release and the draft, in draft order."""
+        with self._transaction(write=False) as c:
+            draft = [json.loads(document) for document in build_documents(c)]
+            active = c.execute(
+                text(
+                    "SELECT r.quiz_artifact,r.flashcard_artifact FROM content.active_publication p "
+                    "LEFT JOIN content.releases r USING(release_id)"
+                )
+            ).one()
+        published = [json.loads(document) if document else {} for document in active]
+        entries: list[dict[str, Any]] = []
+        totals: dict[str, dict[str, int]] = {}
+        for name, kind in KINDS.items():
+            bank = 0 if kind.bank == "quizzes" else 1
+            after = {row["id"]: row for row in draft[bank][kind.collection]}
+            before = {row["id"]: row for row in published[bank].get(kind.collection, [])}
+            # Records kept under the same parent but outside the longest common order moved.
+            key = kind.parent_key
+            stayed = {
+                i
+                for i, row in after.items()
+                if i in before and (not key or before[i][key] == row[key])
+            }
+            old_order: dict[str | None, list[str]] = {}
+            new_order: dict[str | None, list[str]] = {}
+            for rows, order in ((before, old_order), (after, new_order)):
+                for i in rows:
+                    if i in stayed:
+                        order.setdefault(rows[i][key] if key else None, []).append(i)
+            moved: set[str] = set()
+            for parent, same in new_order.items():
+                matcher = SequenceMatcher(None, old_order[parent], same, autojunk=False)
+                kept = {i for b in matcher.get_matching_blocks() for i in same[b.b : b.b + b.size]}
+                moved |= set(same) - kept
+            found = [
+                (i, "added" if i not in before else "changed" if row != before[i] else "moved")
+                for i, row in after.items()
+                if i not in before or row != before[i] or i in moved
+            ] + [(i, "removed") for i in before if i not in after]
+            for identifier, status in found:
+                totals.setdefault(name, {}).setdefault(status, 0)
+                totals[name][status] += 1
+                if len(entries) < limit:
+                    entries.append(
+                        {
+                            "kind": name,
+                            "id": identifier,
+                            "status": status,
+                            "before": before.get(identifier),
+                            "after": after.get(identifier),
+                        }
+                    )
+        shown = sum(n for statuses in totals.values() for n in statuses.values())
+        return {"entries": entries, "totals": totals, "truncated": shown > len(entries)}
 
     # Record writes ------------------------------------------------------------------
 

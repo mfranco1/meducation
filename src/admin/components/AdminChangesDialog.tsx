@@ -17,7 +17,7 @@ import {
 import type { DraftChange } from '../data/DraftStore';
 
 const PAGE = 25;
-const LABEL: Record<DraftChange['kind'], string> = {
+export const LABEL: Record<DraftChange['kind'], string> = {
   subjects: 'subject',
   topics: 'topic',
   quizzes: 'quiz',
@@ -25,7 +25,7 @@ const LABEL: Record<DraftChange['kind'], string> = {
   decks: 'deck',
   cards: 'card',
 };
-const name = (change: DraftChange) => {
+export const name = (change: Pick<DraftChange, 'before' | 'after'>) => {
   const record = (change.after ?? change.before) as { name?: string; stem?: string; front?: string } | null;
   const text = record?.name ?? record?.stem ?? record?.front ?? '';
   return text.length > 80 ? text.slice(0, 80) + '…' : text;

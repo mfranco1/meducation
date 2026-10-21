@@ -18,6 +18,7 @@ import { AdminChangesDialog } from './components/AdminChangesDialog';
 import { AdminRecoveryBanner } from './components/AdminRecoveryBanner';
 import { AdminHeader } from './components/AdminHeader';
 import { AdminExportDialog, type ExportTarget } from './components/AdminExportDialog';
+import { AdminPublishDiff } from './components/AdminPublishDiff';
 import { AdminVersionsDialog } from './components/AdminVersionsDialog';
 import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
 import { AdminWorkspace } from './AdminWorkspace';
@@ -334,6 +335,7 @@ export default function HttpAdminApp() {
             onClose={busy ? undefined : closeTask}
             aria-labelledby="confirm-title"
             fullWidth
+            maxWidth={task === 'publish' ? 'md' : 'sm'}
             fullScreen={narrow}
           >
             <DialogTitle id="confirm-title">
@@ -357,6 +359,7 @@ export default function HttpAdminApp() {
                         .join(' · ')}
                     </Typography>
                     {status?.unsaved && <Alert severity="warning">{status.publishBlocked}</Alert>}
+                    <AdminPublishDiff store={store} />
                   </>
                 )}
                 {task === 'activate' && (

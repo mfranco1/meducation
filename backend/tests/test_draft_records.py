@@ -556,6 +556,46 @@ def test_placement_and_move_keep_sibling_order(db, editor):
     ok(call(client, "POST", "/draft/subjects/s1/move", {"expectedVersion": 1, "afterId": None}))
 
 
+def test_diff_lists_records_that_differ_from_the_active_release(db, editor):
+    client, _, _ = editor
+    assert ok(client.get("/api/admin/draft/diff")) == {
+        "entries": [],
+        "totals": {},
+        "truncated": False,
+    }
+    quiz = ok(
+        call(client, "POST", "/draft/quizzes", {"parentId": "t1", "fields": {"name": "Second"}}),
+        201,
+    )["record"]["id"]
+    ok(call(client, "POST", "/draft/questions", {"parentId": quiz, "fields": QUESTION}), 201)
+    assert ok(call(client, "POST", "/draft/publish"))["published"] is True
+    ok(
+        call(
+            client,
+            "PUT",
+            "/draft/subjects/s1",
+            {"expectedVersion": 1, "fields": {"name": "Renamed"}},
+        )
+    )
+    ok(call(client, "POST", f"/draft/quizzes/{quiz}/move", {"expectedVersion": 1, "afterId": None}))
+    ok(call(client, "DELETE", "/draft/cards/flegacy-X", {"expectedVersion": 1}))
+    added = ok(
+        call(client, "POST", "/draft/subjects", {"fields": {"name": "Extra", "accent": "#111111"}}),
+        201,
+    )["record"]["id"]
+    diff = ok(client.get("/api/admin/draft/diff"))
+    assert [(e["kind"], e["id"], e["status"]) for e in diff["entries"]] == [
+        ("subjects", "s1", "changed"),
+        ("subjects", added, "added"),
+        ("quizzes", quiz, "moved"),
+        ("cards", "flegacy-X", "removed"),
+    ]
+    renamed = diff["entries"][0]
+    assert renamed["after"]["name"] == "Renamed" and renamed["before"]["name"] != "Renamed"
+    assert diff["entries"][1]["before"] is None and diff["entries"][3]["after"] is None
+    assert diff["totals"]["subjects"] == {"changed": 1, "added": 1} and not diff["truncated"]
+
+
 def test_stale_version_returns_409_with_current_record(db, editor):
     client, _, _ = editor
     ok(

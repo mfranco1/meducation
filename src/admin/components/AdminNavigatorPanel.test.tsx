@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import fixture from '../../../tests/fixtures/question-bank.json';
 import type { StoredQuestionBank } from '../../content/schema/schema';
 import { theme } from '../../shared/theme';
-import type { DraftQuizBank } from '../data/DraftStore';
+import type { DraftFlashcardBank, DraftQuizBank } from '../data/DraftStore';
 import { AdminNavigatorPanel } from './AdminNavigatorPanel';
 
 const source = fixture as StoredQuestionBank;
@@ -16,6 +16,7 @@ const bank: DraftQuizBank = {
   quizzes: versioned(source.quizzes),
   questions: versioned(source.questions),
 };
+const noCards: DraftFlashcardBank = { schemaVersion: 4, decks: [], cards: [] };
 
 describe('admin quiz navigator presentation contracts', () => {
   it('offers subject creation when no subject is selected', () => {
@@ -24,6 +25,7 @@ describe('admin quiz navigator presentation contracts', () => {
       <ThemeProvider theme={theme}>
         <AdminNavigatorPanel
           bank={bank}
+          flashcardBank={noCards}
           selection={{ kind: 'subject' }}
           filter=""
           setFilter={vi.fn()}
@@ -45,6 +47,7 @@ describe('admin quiz navigator presentation contracts', () => {
       <ThemeProvider theme={theme}>
         <AdminNavigatorPanel
           bank={bank}
+          flashcardBank={noCards}
           selection={{ kind: 'quiz', id: 'q1', parentId: 't1' }}
           selectedSubjectId="s1"
           selectedTopicId="t1"
@@ -85,6 +88,7 @@ describe('admin quiz navigator presentation contracts', () => {
       <ThemeProvider theme={theme}>
         <AdminNavigatorPanel
           bank={twoTopics}
+          flashcardBank={noCards}
           selection={{ kind: 'subject' }}
           selectedSubjectId="s1"
           filter=""
@@ -103,5 +107,35 @@ describe('admin quiz navigator presentation contracts', () => {
     fireEvent.click(screen.getByRole('checkbox', { name: 'Select topic t3' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete selected…' }));
     expect(onDeleteMany).toHaveBeenCalledExactlyOnceWith('topic', 's1', ['t1', 't3']);
+  });
+
+  it('filters topics by content so only the shown topics are deleted', () => {
+    const onDeleteMany = vi.fn();
+    const twoTopics = { ...bank, topics: [...bank.topics, { ...bank.topics[0], id: 't3', name: 'Empty topic' }] };
+    render(
+      <ThemeProvider theme={theme}>
+        <AdminNavigatorPanel
+          bank={twoTopics}
+          flashcardBank={noCards}
+          selection={{ kind: 'subject' }}
+          selectedSubjectId="s1"
+          filter=""
+          setFilter={vi.fn()}
+          loadEntity={vi.fn()}
+          onDeleteMany={onDeleteMany}
+          onNewTopic={vi.fn()}
+          onManageSubjects={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    fireEvent.mouseDown(screen.getByRole('combobox', { name: 'Show topics' }));
+    fireEvent.click(screen.getByRole('option', { name: 'Empty topics' }));
+    const list = screen.getByRole('navigation', { name: /^Topics in / });
+    expect(list.querySelectorAll('li')).toHaveLength(1);
+    expect(list.textContent).toContain('t3 · 0 items · 0 cards');
+    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Select this page' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Delete selected…' }));
+    expect(onDeleteMany).toHaveBeenCalledExactlyOnceWith('topic', 's1', ['t3']);
   });
 });

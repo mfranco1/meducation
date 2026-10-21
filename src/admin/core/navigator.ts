@@ -48,3 +48,39 @@ export function selectFlashcardPage<C extends StoredFlashcard>(cards: readonly C
     .filter(({ card }) => matchesQuery(`${card.id}\n${card.front}\n${card.back}`, normalized));
   return paginate(matches, page);
 }
+
+export type TopicFilter = 'all' | 'empty' | 'quizzes' | 'flashcards' | 'both';
+
+/** Topics with their item and card totals, narrowed by what content they hold. */
+export function filterTopics<T extends { id: string }>(
+  topics: readonly T[],
+  bank: {
+    quizzes: readonly { id: string; topicId: string }[];
+    questions: readonly { quizId: string }[];
+    decks: readonly { id: string; topicId: string }[];
+    cards: readonly { deckId: string }[];
+  },
+  filter: TopicFilter,
+) {
+  const count = (parents: readonly { id: string; topicId: string }[], childParentIds: readonly string[]) => {
+    const topicOf = new Map(parents.map((parent) => [parent.id, parent.topicId]));
+    const totals = new Map<string, number>();
+    for (const parentId of childParentIds) {
+      const topicId = topicOf.get(parentId);
+      if (topicId) totals.set(topicId, (totals.get(topicId) ?? 0) + 1);
+    }
+    return totals;
+  };
+  const items = count(bank.quizzes, bank.questions.map((question) => question.quizId));
+  const cards = count(bank.decks, bank.cards.map((card) => card.deckId));
+  return topics
+    .map((topic) => ({ topic, items: items.get(topic.id) ?? 0, cards: cards.get(topic.id) ?? 0 }))
+    .filter(
+      (row) =>
+        filter === 'all' ||
+        (filter === 'empty' && !row.items && !row.cards) ||
+        (filter === 'quizzes' && row.items > 0 && !row.cards) ||
+        (filter === 'flashcards' && row.cards > 0 && !row.items) ||
+        (filter === 'both' && row.items > 0 && row.cards > 0),
+    );
+}

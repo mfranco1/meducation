@@ -20,10 +20,11 @@ import { AdminRecordFeedback } from './components/AdminRecordFeedback';
 import { AdminRecordMenu } from './components/AdminRecordMenu';
 import { adminNavigatorLayout } from './components/AdminNavigatorPanel';
 import { AdminRecordSelection, useAdminRecordSelection } from './components/AdminRecordSelection';
+import { AdminTopicFilter, topicTotals } from './components/AdminTopicFilter';
 import type { DeleteRequest } from './components/AdminDeleteDialog';
 import { FlashcardBulkAddDialog } from './FlashcardBulkAddDialog';
 import type { FlashcardBulkAddContext } from './core/flashcardBulkAddDraft';
-import { ADMIN_PAGE_SIZE, selectFlashcardPage } from './core/navigator';
+import { ADMIN_PAGE_SIZE, filterTopics, selectFlashcardPage, type TopicFilter } from './core/navigator';
 import { reorderTarget } from './core/reorder';
 import { errorMessages } from './data/PairedHttpClient';
 import type { BulkPlan, DraftStore, StoredRecord } from './data/DraftStore';
@@ -55,6 +56,7 @@ export function FlashcardAdminPanel({
   const [browseSubjectId, setBrowseSubjectId] = useState('');
   const [browseTopicId, setBrowseTopicId] = useState('');
   const [browseDeckId, setBrowseDeckId] = useState('');
+  const [topicFilter, setTopicFilter] = useState<TopicFilter>('all');
   const [subjectQuery, setSubjectQuery] = useState<string>();
   const [topicQuery, setTopicQuery] = useState<string>();
   const [deckQuery, setDeckQuery] = useState<string>();
@@ -100,11 +102,11 @@ export function FlashcardAdminPanel({
           open: () => changeBrowse(browseSubjectId, browseTopicId, deck.id),
         }))
       : browseSubjectId
-        ? browseTopics.map((topic) => ({
-            id: topic.id,
-            primary: topic.name,
-            secondary: topic.id,
-            open: () => changeBrowse(browseSubjectId, topic.id, ''),
+        ? filterTopics(browseTopics, { ...store.quizBank, ...bank }, topicFilter).map((row) => ({
+            id: row.topic.id,
+            primary: row.topic.name,
+            secondary: `${row.topic.id} · ${topicTotals(row)}`,
+            open: () => changeBrowse(browseSubjectId, row.topic.id, ''),
           }))
         : [];
   const recordSelection = useAdminRecordSelection(
@@ -341,6 +343,12 @@ export function FlashcardAdminPanel({
             />
           )}
           {browseTopic && !browseDecks.length && <Typography variant="body2">No decks in this topic.</Typography>}
+          {browseSubjectId && !browseTopic && browseTopics.length > 0 && (
+            <AdminTopicFilter value={topicFilter} onChange={setTopicFilter} />
+          )}
+          {browseSubjectId && !browseTopic && browseTopics.length > 0 && !listRows.length && (
+            <Typography variant="body2">No topics match this filter.</Typography>
+          )}
           {listRows.length > 0 && (
             <>
               <AdminRecordSelection

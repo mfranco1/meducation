@@ -99,6 +99,18 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
       const since = Number(new URL(path, 'http://x').searchParams.get('since'));
       return json({ changes: changes.filter((c) => (c.changeId as number) > since), latestChangeId: changes.length, hasMore: false });
     }
+    if (method === 'GET' && path === '/draft/diff') {
+      const status = { create: 'added', update: 'changed', move: 'moved', delete: 'removed' } as Record<string, string>;
+      const content = (row: unknown) => (row ? { ...(row as Row), version: undefined } : null);
+      const entries = changes.slice(state.published).map((change) => ({
+        kind: change.kind,
+        id: change.entityId,
+        status: status[change.action as string],
+        before: content(change.before),
+        after: content(change.after),
+      }));
+      return json({ entries, totals: {}, truncated: false });
+    }
     if (method === 'GET' && path.startsWith('/releases'))
       return json({
         releases: [{ releaseId: 'release-1', quizRevision: 'q', flashcardRevision: 'f', createdAt: '2026-01-01T00:00:00Z', latestPublicationSequence: 1, active: true }],

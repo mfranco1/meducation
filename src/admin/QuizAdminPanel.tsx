@@ -138,6 +138,7 @@ export function QuizAdminPanel({
         onManageSubjects={onManageSubjects}
         onBrowseChange={browse}
         bank={bank}
+        flashcardBank={store.flashcardBank}
         selection={selection}
         selectedSubjectId={selectedSubject?.id}
         selectedTopicId={selectedTopic?.id}

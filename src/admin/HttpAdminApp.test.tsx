@@ -47,6 +47,10 @@ it('publishes the draft after one confirmation and reports it', async () => {
   fireEvent.click(screen.getByRole('button', { name: 'Review & publish' }));
   const dialog = screen.getByRole('dialog', { name: 'Review & publish' });
   expect(within(dialog).getByLabelText('Draft totals')).toHaveTextContent('2 subjects · 2 topics · 3 quizzes · 4 questions');
+  const changed = await within(dialog).findByText(/^Changed question i1/);
+  const details = changed.closest('details')!;
+  expect(details.querySelector('ins')).toHaveTextContent('Changed in the draft');
+  expect(details.querySelector('del')).toHaveTextContent(storedQuestionBank.questions[0].stem.split(/\s+/)[0]);
   fireEvent.click(within(dialog).getByRole('button', { name: 'Confirm publication' }));
   expect(await screen.findByText(/Published quizzes and flashcards/)).toBeVisible();
   expect(sent().filter((request) => request.includes('publish'))).toEqual(['POST /draft/publish']);

@@ -105,6 +105,10 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
     async def load(request: Request) -> Response:
         return no_store(await run_in_threadpool(service(request).snapshot))
 
+    @app.get("/api/admin/draft/diff", include_in_schema=False)
+    async def diff(request: Request) -> Response:
+        return no_store(await run_in_threadpool(service(request).diff, 200))
+
     @app.get("/api/admin/draft/changes", include_in_schema=False)
     async def changes(request: Request) -> dict[str, Any]:
         params = dict(request.query_params)

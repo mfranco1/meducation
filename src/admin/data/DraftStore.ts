@@ -64,6 +64,13 @@ export interface DraftChange {
   before: Fields | null;
   after: Fields | null;
 }
+export type DiffStatus = 'added' | 'changed' | 'moved' | 'removed';
+/** Records that differ between the published version and the draft; `entries` is capped, `totals` is not. */
+export interface DraftDiff {
+  entries: { kind: ApiKind; id: string; status: DiffStatus; before: Fields | null; after: Fields | null }[];
+  totals: Partial<Record<ApiKind, Partial<Record<DiffStatus, number>>>>;
+  truncated: boolean;
+}
 export interface ReleaseSummary {
   releaseId: string;
   quizRevision: string;
@@ -282,6 +289,9 @@ export class DraftStore {
     return this.client.get<{ changes: DraftChange[]; latestChangeId: number; hasMore: boolean }>(
       `/draft/changes?since=${since}&limit=${limit}`,
     );
+  }
+  diff() {
+    return this.client.get<DraftDiff>('/draft/diff');
   }
   /** Revert one change; `expectedVersion` is the record's current version when it still exists. */
   async revert(change: DraftChange): Promise<void> {
