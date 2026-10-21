@@ -198,16 +198,8 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: r
     const percent = Math.round((completed / own.length) * 100);
     return <Card component="section" aria-labelledby="topic-summary-heading" sx={{ p: 2.5, minWidth: 0, ...panelSx(desktop) }}>
       {!desktop && <Button startIcon={<ArrowBackRoundedIcon />} color="inherit" onClick={() => history.back()} sx={{ mb: 1.5 }}>Topics</Button>}
-      <Box sx={{ display: 'flex', gap: 1.5 }}>
-        {/* The icon matches the height of the name and description, capped so long descriptions on phones keep their width. */}
-        <Box sx={{ alignSelf: 'stretch', aspectRatio: '1', flexShrink: 0, maxHeight: { xs: 56, sm: 80 } }}>
-          <TopicIcon topicId={selected.id} subjectId={selected.subjectId} color="primary" sx={{ display: 'block', height: '100%', width: '100%' }} />
-        </Box>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography ref={headingRef} tabIndex={-1} id="topic-summary-heading" variant="h5" component="h2" sx={{ overflowWrap: 'anywhere', outline: 'none' }}>{selected.name}</Typography>
-          {selected.description && <Typography variant="body2" color="text.secondary" sx={{ mt: .5, overflowWrap: 'anywhere' }}>{selected.description}</Typography>}
-        </Box>
-      </Box>
+      <Typography ref={headingRef} tabIndex={-1} id="topic-summary-heading" variant="h5" component="h2" sx={{ overflowWrap: 'anywhere', outline: 'none' }}>{selected.name}</Typography>
+      {selected.description && <Typography variant="body2" color="text.secondary" sx={{ mt: .5, overflowWrap: 'anywhere' }}>{selected.description}</Typography>}
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
         <LinearProgress aria-hidden variant="determinate" value={percent} sx={{ ...trackSx, flex: 1 }} />
         <Typography variant="body2" color="text.secondary">{percent}%</Typography>
