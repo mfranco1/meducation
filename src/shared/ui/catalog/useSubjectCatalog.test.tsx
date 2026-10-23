@@ -11,7 +11,7 @@ describe('useSubjectCatalog', () => {
     [25, 12, 3],
   ])('shows %i subjects as at most %i items on the first of %i pages', (count, firstPageSize, pageCount) => {
     const items = Array.from({ length: count }, (_, index) => ({ id: index, active: index === count - 1 }));
-    const { result } = renderHook(() => useSubjectCatalog(items, (item) => item.active));
+    const { result } = renderHook(() => useSubjectCatalog(`sizes-${count}`, items, (item) => item.active));
     expect(result.current.pageItems).toHaveLength(firstPageSize);
     expect(result.current.pageCount).toBe(pageCount);
   });
@@ -19,7 +19,7 @@ describe('useSubjectCatalog', () => {
   it('resets when filtering and clamps the page when the catalog shrinks', () => {
     const items = Array.from({ length: 25 }, (_, index) => ({ id: index, active: index >= 12 }));
     const { result, rerender } = renderHook(
-      ({ catalogItems }) => useSubjectCatalog(catalogItems, (item) => item.active),
+      ({ catalogItems }) => useSubjectCatalog('shrinking', catalogItems, (item) => item.active),
       {
         initialProps: { catalogItems: items },
       },
@@ -36,5 +36,18 @@ describe('useSubjectCatalog', () => {
     rerender({ catalogItems: items.slice(0, 12) });
     expect(result.current.page).toBe(1);
     expect(result.current.pageItems).toHaveLength(12);
+  });
+
+  it('reopens on the page and filter the learner left', () => {
+    const items = Array.from({ length: 25 }, (_, index) => ({ id: index, active: true }));
+    const first = renderHook(() => useSubjectCatalog('reopened', items, (item) => item.active));
+    act(() => first.result.current.setFilter('inProgress'));
+    act(() => first.result.current.setPage(2));
+    first.unmount();
+
+    const { result } = renderHook(() => useSubjectCatalog('reopened', items, (item) => item.active));
+    expect(result.current.filter).toBe('inProgress');
+    expect(result.current.page).toBe(2);
+    expect(renderHook(() => useSubjectCatalog('other', items, (item) => item.active)).result.current.page).toBe(1);
   });
 });

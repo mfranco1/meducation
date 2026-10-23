@@ -16,3 +16,9 @@ export function screenIdentity(view: View): string {
     case 'results': return `results:${view.attempt.id}`;
   }
 }
+
+/** A dashboard keeps its scroll position when the learner returns to it from one of its subjects. */
+export function restoresScroll(fromScreenId: string, toScreenId: string): boolean {
+  return (toScreenId === 'dashboard' && fromScreenId.startsWith('subject:'))
+    || (toScreenId === 'flashcards' && fromScreenId.startsWith('flashcards-subject:'));
+}

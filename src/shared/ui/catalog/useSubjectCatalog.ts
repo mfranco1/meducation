@@ -1,9 +1,16 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { SubjectFilter } from './SubjectCatalogControls';
 
-export function useSubjectCatalog<T>(items: readonly T[], isInProgress: (item: T) => boolean) {
-  const [filter, setFilterState] = useState<SubjectFilter>('all');
-  const [page, setPage] = useState(1);
+// Kept for the session so a dashboard reopens on the page and filter the learner left.
+const savedViews = new Map<string, { filter: SubjectFilter; page: number }>();
+
+export function clearSavedSubjectCatalogViews() {
+  savedViews.clear();
+}
+
+export function useSubjectCatalog<T>(catalogId: string, items: readonly T[], isInProgress: (item: T) => boolean) {
+  const [filter, setFilterState] = useState<SubjectFilter>(() => savedViews.get(catalogId)?.filter ?? 'all');
+  const [page, setPage] = useState(() => savedViews.get(catalogId)?.page ?? 1);
   const filteredItems = useMemo(
     () => (filter === 'all' ? [...items] : items.filter(isInProgress)),
     [filter, isInProgress, items],
@@ -15,6 +22,10 @@ export function useSubjectCatalog<T>(items: readonly T[], isInProgress: (item: T
   useEffect(() => {
     if (page !== currentPage) setPage(currentPage);
   }, [currentPage, page]);
+
+  useEffect(() => {
+    savedViews.set(catalogId, { filter, page });
+  }, [catalogId, filter, page]);
 
   const setFilter = (next: SubjectFilter) => {
     setFilterState(next);

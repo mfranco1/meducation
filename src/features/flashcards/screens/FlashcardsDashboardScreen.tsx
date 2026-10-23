@@ -84,7 +84,7 @@ export function FlashcardsDashboardScreen({
 }) {
   const stats = useFlashcardDashboardStats(progress);
   const metric = (value: number) => (progressError ? '—' : formatStatCount(value));
-  const catalog = useSubjectCatalog(subjects, (item) => item.activeDeckCount > 0);
+  const catalog = useSubjectCatalog('flashcards', subjects, (item) => item.activeDeckCount > 0);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const focusAllFilter = useRef(false);
   const [pageChange, setPageChange] = useState<CatalogPageChange | null>(null);

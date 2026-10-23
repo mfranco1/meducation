@@ -1,6 +1,7 @@
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
+import { clearSavedSubjectCatalogViews } from '../shared/ui/catalog/useSubjectCatalog';
 
 // Tests render the desktop (lg+) layout unless they override matchMedia.
 const matchMedia = (matches = false) => vi.fn().mockImplementation((query: string) => ({
@@ -37,5 +38,6 @@ Object.defineProperty(globalThis, 'ResizeObserver', { writable: true, value: Tes
 
 afterEach(() => {
   cleanup();
+  clearSavedSubjectCatalogViews();
   window.matchMedia = matchMedia();
 });

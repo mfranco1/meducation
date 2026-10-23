@@ -167,7 +167,7 @@ export function DashboardScreen({
     return onRetry();
   };
   const sharedRecovery = Boolean(sharedError || retrying || manualRetryPending);
-  const catalog = useSubjectCatalog(subjectStats, (stat) => stat.activeQuizCount > 0);
+  const catalog = useSubjectCatalog('quizzes', subjectStats, (stat) => stat.activeQuizCount > 0);
   const filterButtonRef = useRef<HTMLButtonElement>(null);
   const focusAllFilter = useRef(false);
   const [pageChange, setPageChange] = useState<CatalogPageChange | null>(null);

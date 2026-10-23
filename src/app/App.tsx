@@ -21,7 +21,7 @@ import { ToastProvider, useToast } from '../shared/ui/notifications/ToastProvide
 import { contentLoadMessage } from '../shared/ui/loading/notificationMessages';
 import type { SubjectStat } from '../features/quizzes/selectors/progress';
 import { createProgressView, quizProgressForSubject, subjectStatsFor } from '../features/quizzes/selectors/progress';
-import { screenIdentity, type View } from './navigation';
+import { restoresScroll, screenIdentity, type View } from './navigation';
 import { DashboardScreen } from '../features/quizzes/screens/DashboardScreen';
 import { QuizScreen, QuizBrowseScreen, QuizReviewScreen, ResultsScreen, FlashcardStudyScreen, preloadBrowseScreen, preloadQuizScreen, preloadResultsScreen, preloadReviewScreen, preloadFlashcardStudyScreen } from './lazyScreens';
 import { SubjectScreen } from '../features/quizzes/screens/SubjectScreen';
@@ -184,7 +184,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     {activeSection === 'flashcards' && view.page !== 'flashcards-study' && flashcards.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error">{flashcards.persistenceError}</Alert></Container>}
     {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
     {currentFlashcardSubject && flashcards.loadingDeckId && <LinearProgress aria-label="Loading flashcard deck" />}
-    <ScreenTransition screenId={screenIdentity(view)}>
+    <ScreenTransition screenId={screenIdentity(view)} restoreScroll={restoresScroll}>
     <ScreenLoadBoundary key={screenIdentity(view)} loadingLabel={loadingLabel} onLoadingChange={setScreenLoading}>
     {session.view.page === 'dashboard' && <DashboardScreen attempts={progressSnapshot.completed} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} loading={catalogState === 'idle' || catalogState === 'loading'} retrying={catalogState === 'retrying'} statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'} activeAttempts={Object.keys(progressSnapshot.active).length > 0} error={catalogState === 'error' ? catalogError : undefined} retryAt={questionBank.getCatalogRetryAt()} onRetry={() => {
       if (catalogError instanceof ContentLoadError && catalogError.kind === 'revision') { window.location.reload(); return; }
