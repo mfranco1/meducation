@@ -44,40 +44,40 @@ export function ContinueStudyCard({
           position: 'relative',
           background: 'linear-gradient(110deg, #fcf7f3 0%, #fff8f2 58%, #ffe5d3 100%)',
           '& .continue-study-action': {
-            minHeight: 232,
+            minHeight: 152,
             pl: 'calc(22px + var(--study-carousel-control-gutter, 0px))',
             pr: 'calc(38px + var(--study-carousel-control-gutter, 0px))',
-            py: '22px',
+            py: '14px',
           },
           '@container continue-card (min-width: 298px) and (max-width: 477px)': {
             '& .continue-study-action': {
               pl: 'calc(22px + var(--study-carousel-control-gutter, 0px))',
               pr: 'calc(38px + var(--study-carousel-control-gutter, 0px))',
-              py: '22px',
+              py: '14px',
             },
           },
           '@container continue-card (max-width: 297px)': {
             '& .continue-study-action': {
               pl: 'calc(16px + var(--study-carousel-control-gutter, 0px))',
               pr: 'calc(34px + var(--study-carousel-control-gutter, 0px))',
-              py: '16px',
+              py: '12px',
             },
           },
           '@container continue-card (min-width: 478px)': {
             '& .continue-study-action': {
-              minHeight: 244,
+              minHeight: 156,
               px: 0,
               pl: 'calc(26px + var(--study-carousel-control-gutter, 0px))',
               pr: 'calc(26px + var(--study-carousel-control-gutter, 0px))',
-              py: '26px',
+              py: '16px',
             },
           },
           '@container continue-card (min-width: 638px)': {
             '& .continue-study-action': {
-              minHeight: 256,
-              pl: 'calc(38px + var(--study-carousel-control-gutter, 0px))',
-              pr: 'calc(38px + var(--study-carousel-control-gutter, 0px))',
-              py: '34px',
+              minHeight: 160,
+              pl: 'calc(32px + var(--study-carousel-control-gutter, 0px))',
+              pr: 'calc(32px + var(--study-carousel-control-gutter, 0px))',
+              py: '18px',
             },
           },
         },
@@ -160,7 +160,7 @@ export function ContinueStudyCard({
               fontWeight: 600,
               lineHeight: 1.4,
               '@container continue-card (min-width: 478px)': { fontSize: 16 },
-              '@container continue-card (min-width: 638px)': { fontSize: 18 },
+              '@container continue-card (min-width: 638px)': { fontSize: 17 },
             }}
           >
             {eyebrow}
@@ -173,7 +173,7 @@ export function ContinueStudyCard({
               fontSize: 21,
               fontWeight: 750,
               lineHeight: 1.3,
-              mt: '8px',
+              mt: '4px',
               overflowWrap: 'anywhere',
               '@container continue-card (min-width: 478px)': { fontSize: 22 },
               '@container continue-card (min-width: 638px)': { fontSize: 24 },
@@ -189,7 +189,7 @@ export function ContinueStudyCard({
               display: 'block',
               fontSize: 15,
               lineHeight: 1.5,
-              mt: '6px',
+              mt: '2px',
               '@container continue-card (min-width: 638px)': { fontSize: 16 },
             }}
           >
@@ -209,12 +209,12 @@ export function ContinueStudyCard({
               fontWeight: 700,
               gap: '10px',
               lineHeight: 1.25,
-              minHeight: 48,
-              mt: '20px',
+              minHeight: 42,
+              mt: '14px',
               px: '22px',
               transition: 'filter 120ms ease',
               [reducedMotion]: { transition: 'none' },
-              '@container continue-card (min-width: 638px)': { mt: '22px' },
+              '@container continue-card (min-width: 638px)': { mt: '16px' },
             }}
           >
             {actionLabel}

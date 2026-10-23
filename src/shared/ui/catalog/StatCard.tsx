@@ -46,7 +46,7 @@ export function StatCard({
           flex: 1,
           minWidth: 0,
           ...(dashboard && {
-            minHeight: { xs: 156, sm: 164 },
+            minHeight: { xs: 104, sm: 108 },
             borderRadius: 1,
             borderColor: '#f0e6df',
             backgroundColor: (theme) => lighten(theme.palette.primary.light, 0.38),
@@ -60,8 +60,8 @@ export function StatCard({
         sx={[
           {
             ...(dashboard && {
-              p: { xs: 2.5, sm: 3 },
-              '&:last-child': { pb: { xs: 2.5, sm: 3 } },
+              p: { xs: 2, sm: 2.25 },
+              '&:last-child': { pb: { xs: 2, sm: 2.25 } },
             }),
           },
         ]}
@@ -91,9 +91,9 @@ export function StatCard({
           sx={
             dashboard
               ? {
-                  mt: 2.5,
-                  minHeight: 44,
-                  fontSize: { xs: '2.25rem', sm: '2.5rem' },
+                  mt: 1.25,
+                  minHeight: 32,
+                  fontSize: { xs: '1.625rem', sm: '1.75rem' },
                   lineHeight: 1.1,
                   fontWeight: 750,
                   letterSpacing: '-.035em',
@@ -113,7 +113,7 @@ export function StatCard({
             variant="body2"
             sx={[
               {
-                mt: 0.75,
+                mt: 0.25,
                 minHeight: '1.25em',
                 fontWeight: 500,
                 lineHeight: 1.25,

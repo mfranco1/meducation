@@ -12,19 +12,20 @@ export function ContinueStudyCardSkeleton() {
         boxSizing: 'border-box',
         containerName: 'continue-card',
         containerType: 'inline-size',
-        minHeight: 232,
+        minHeight: 152,
         minWidth: 0,
         overflow: 'hidden',
-        p: 2.75,
-        '@container continue-card (min-width: 478px)': { minHeight: 244, p: 3.25 },
-        '@container continue-card (min-width: 638px)': { minHeight: 256, p: 4.25 },
-        '@container continue-card (max-width: 297px)': { p: 2 },
+        px: 2.75,
+        py: 1.75,
+        '@container continue-card (min-width: 478px)': { minHeight: 156, px: 3.25, py: 2 },
+        '@container continue-card (min-width: 638px)': { minHeight: 160, px: 4, py: 2.25 },
+        '@container continue-card (max-width: 297px)': { px: 2, py: 1.5 },
       }}
     >
       <LoadingSkeleton variant="text" width="34%" height={27} />
-      <LoadingSkeleton variant="text" width="48%" height={35} sx={{ mt: 0.5 }} />
-      <LoadingSkeleton variant="text" width="28%" height={24} sx={{ mt: 0.5 }} />
-      <LoadingSkeleton variant="rounded" width={164} height={48} sx={{ borderRadius: '14px', mt: 2.75 }} />
+      <LoadingSkeleton variant="text" width="48%" height={35} sx={{ mt: 0.25 }} />
+      <LoadingSkeleton variant="text" width="28%" height={24} sx={{ mt: 0.25 }} />
+      <LoadingSkeleton variant="rounded" width={164} height={42} sx={{ borderRadius: '14px', mt: 1.75 }} />
     </Box>
   );
 }
