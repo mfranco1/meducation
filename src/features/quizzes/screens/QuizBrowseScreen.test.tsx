@@ -69,4 +69,12 @@ describe('quiz answer browser', () => {
     expect(screen.getByText('Explanation one')).toBeVisible();
     expect(screen.queryByText(/Correct answer/)).toBeNull();
   });
+
+  it('shows one pearl when a question has several', () => {
+    const pearlQuestion = { ...questions[0], pearls: ['Pearl A', 'Pearl B'] };
+    render(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={0} questions={[pearlQuestion]} onNavigate={() => {}} onDone={() => {}} /></ThemeProvider>);
+
+    expect(screen.getAllByText('High-yield pearl')).toHaveLength(1);
+    expect(screen.getAllByText(/^Pearl [AB]$/)).toHaveLength(1);
+  });
 });
