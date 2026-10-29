@@ -1,11 +1,14 @@
-import { useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react';
-import { Box, Typography } from '@mui/material';
+import { useEffect, useRef, useState } from 'react';
+import { Box } from '@mui/material';
 import type { FlashcardCard } from '../../domain/types';
 import { FlashcardStudyCard } from '../../features/flashcards/components/FlashcardStudyCard';
 import { StudyNavigationFooter } from '../../shared/ui/study/StudyHeader';
+import { StudyNavigatorTile } from '../../shared/ui/study/StudyNavigatorTile';
 import { canHandleStudyShortcut } from '../../shared/ui/study/studyKeyboard';
+import { useStudyArrowNavigation } from '../../shared/ui/study/useStudyArrowNavigation';
 import { SwapTransition } from '../../shared/ui/transitions/SwapTransition';
-import { type } from './typography';
+import { SampleHeader } from './SampleHeader';
+import { useSampleActive } from './useSampleActive';
 import samples from './samples.json';
 
 const cards = samples.cards.map(({ subject, deck, ...card }) => ({ subject, deck, card: card as FlashcardCard }));
@@ -16,16 +19,11 @@ export function SampleFlashcards({ onStart }: { onStart: () => void }) {
   const [studied, setStudied] = useState<ReadonlySet<string>>(new Set());
   const [flagged, setFlagged] = useState<ReadonlySet<string>>(new Set());
   const [suppressFocusRing, setSuppressFocusRing] = useState(false);
-  const figure = useRef<HTMLElement>(null);
-  const refocus = useRef(false);
+  const region = useRef<HTMLElement>(null);
+  const nextRef = useRef<HTMLButtonElement>(null);
+  const finishRef = useRef<HTMLButtonElement>(null);
+  const active = useSampleActive(region);
   const { card, subject, deck } = cards[index]!;
-
-  // Moving on replaces the focused answer panel; keep focus in the figure so its keys keep working.
-  useLayoutEffect(() => {
-    if (!refocus.current) return;
-    refocus.current = false;
-    if (!figure.current?.contains(document.activeElement)) figure.current?.querySelector<HTMLElement>('[aria-label="Reveal answer"]')?.focus();
-  }, [index]);
 
   const toggleReveal = () => {
     if (!revealed) setStudied(current => new Set(current).add(card.id));
@@ -33,7 +31,6 @@ export function SampleFlashcards({ onStart }: { onStart: () => void }) {
   };
   const go = (target: number) => {
     if (target < 0 || target >= cards.length) return;
-    refocus.current = Boolean(figure.current?.contains(document.activeElement));
     setIndex(target);
     setRevealed(false);
   };
@@ -42,22 +39,35 @@ export function SampleFlashcards({ onStart }: { onStart: () => void }) {
     if (!next.delete(card.id)) next.add(card.id);
     return next;
   });
-  // The same keys as a deck in the app, kept to this figure so they never act on the rest of the page.
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.repeat) return;
-    const native = event.nativeEvent;
-    if ((event.code === 'Space' || event.key === 'Enter') && canHandleStudyShortcut(native, 'space')) {
-      event.preventDefault();
-      setSuppressFocusRing(true);
-      if (!revealed) toggleReveal();
-      else go(index + 1);
-    } else if ((event.key === 'ArrowLeft' || event.key === 'ArrowRight') && canHandleStudyShortcut(native, 'arrow')) {
-      event.preventDefault();
-      go(index + (event.key === 'ArrowLeft' ? -1 : 1));
-    }
-  };
+  useStudyArrowNavigation({ index, total: cards.length, disabled: !active, onPrevious: () => go(index - 1), onNext: () => go(index + 1), nextButtonRef: nextRef, finishButtonRef: finishRef });
 
-  return <Box component="figure" ref={figure} aria-labelledby="sample-card-caption" onKeyDown={onKeyDown} sx={{ m: 0 }}>
+  // The same Space and Enter behavior as a deck in the app, while this sample is active.
+  useEffect(() => {
+    if (!active) return;
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if ((event.code !== 'Space' && event.key !== 'Enter') || !canHandleStudyShortcut(event, 'space')) return;
+      event.preventDefault();
+      if (event.repeat) return;
+      if (!revealed) {
+        setSuppressFocusRing(true);
+        toggleReveal();
+      } else if (index < cards.length - 1) {
+        setSuppressFocusRing(true);
+        go(index + 1);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  });
+
+  return <Box component="section" ref={region} aria-labelledby="sample-card-label">
+    <SampleHeader id="sample-card-label" title={`Card ${index + 1} of ${cards.length}`} detail={`${subject} · ${deck}`} navLabel="Cards" stacked>
+      {cards.map((item, position) => {
+        const opened = studied.has(item.card.id);
+        const isFlagged = flagged.has(item.card.id);
+        return <StudyNavigatorTile key={item.card.id} number={position + 1} label="Card" current={position === index} highlighted={opened} flagged={isFlagged} status={[opened ? 'opened' : 'unopened', isFlagged ? 'flagged' : undefined].filter(Boolean).join(', ')} onClick={() => go(position)} />;
+      })}
+    </SampleHeader>
     <SwapTransition swapKey={index}>
       <FlashcardStudyCard
         card={card}
@@ -71,11 +81,6 @@ export function SampleFlashcards({ onStart }: { onStart: () => void }) {
         onToggleFlag={toggleFlag}
       />
     </SwapTransition>
-    <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, alignItems: { sm: 'center' }, justifyContent: 'space-between', gap: { xs: 0, sm: 3 } }}>
-      <Typography component="figcaption" id="sample-card-caption" sx={{ ...type.caption, mt: 3, order: { xs: 2, sm: 0 } }}>
-        <Box component="b" sx={{ color: 'text.primary' }}>Fig. 1</Box> Card {index + 1} of {cards.length}. {subject} · {deck}.
-      </Typography>
-      <StudyNavigationFooter index={index} total={cards.length} onPrevious={() => go(index - 1)} onNext={() => go(index + 1)} onFinish={onStart} finishLabel="Start studying" />
-    </Box>
+    <StudyNavigationFooter index={index} total={cards.length} onPrevious={() => go(index - 1)} onNext={() => go(index + 1)} onFinish={onStart} finishLabel="Start studying" nextButtonRef={nextRef} finishButtonRef={finishRef} />
   </Box>;
 }

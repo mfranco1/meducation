@@ -28,13 +28,12 @@ export function QuestionCard({ question, response, showFeedback, burstOnCorrect,
   response: QuestionResponse;
   showFeedback: boolean;
   burstOnCorrect: boolean;
-  keyboardShortcuts?: boolean | 'scoped';
+  keyboardShortcuts?: boolean;
   shortcutsDisabled?: boolean;
   onSelect: (choiceId: string) => void;
   onToggleFlag?: () => void;
 }) {
   const theme = useTheme();
-  const cardRef = useRef<HTMLDivElement>(null);
   const burstSequence = useRef(0);
   const [correctAnswerBurst, setCorrectAnswerBurst] = useState<CorrectAnswerBurst>();
   const [pressedChoice, setPressedChoice] = useState<string>();
@@ -52,7 +51,6 @@ export function QuestionCard({ question, response, showFeedback, burstOnCorrect,
       const choiceIndex = /^[1-9]$/.test(key) ? Number(key) - 1 : /^[a-i]$/.test(key) ? key.charCodeAt(0) - 97 : -1;
       const choice = question.choices[choiceIndex];
       if (!choice || event.repeat || !canHandleStudyShortcut(event, 'choice')) return;
-      if (keyboardShortcuts === 'scoped' && !cardRef.current?.contains(document.activeElement)) return;
       event.preventDefault();
       select(choice.id);
     };
@@ -66,7 +64,7 @@ export function QuestionCard({ question, response, showFeedback, burstOnCorrect,
     return () => window.clearTimeout(timer);
   }, [correctAnswerBurst]);
 
-  return <Card ref={cardRef}><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+  return <Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
     <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
       <Box sx={{ flex: 1, minWidth: 0 }}><MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" /></Box>
       {onToggleFlag && <StudyFlagButton size="small" flagged={response.flagged} label={response.flagged ? 'Remove question flag' : 'Flag question'} onToggle={onToggleFlag} sx={{ p: 0, mt: .5, flexShrink: 0 }} />}

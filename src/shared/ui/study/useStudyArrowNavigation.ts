@@ -32,10 +32,10 @@ export function useStudyArrowNavigation({ index, total, disabled = false, onPrev
   useLayoutEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-      if (!canHandleStudyShortcut(event, 'arrow')) return;
-      event.preventDefault();
       const state = latest.current;
-      if (state.disabled || state.total < 1 || state.index < 0 || state.index >= state.total) return;
+      if (state.disabled || !canHandleStudyShortcut(event, 'arrow')) return;
+      event.preventDefault();
+      if (state.total < 1 || state.index < 0 || state.index >= state.total) return;
       if (event.repeat) return;
       if (event.key === 'ArrowLeft') {
         if (state.index > 0) state.onPrevious();

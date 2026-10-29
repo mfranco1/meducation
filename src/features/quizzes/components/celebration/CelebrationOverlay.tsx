@@ -15,6 +15,8 @@ export interface CelebrationOverlayProps {
   variant: CelebrationVariant;
   level: CelebrationLevel;
   durationMs?: number;
+  /** Centers on the nearest positioned ancestor instead of the viewport. */
+  contained?: boolean;
   onComplete?: () => void;
 }
 
@@ -95,7 +97,7 @@ function StreakFlame({ size, animated }: { size: number; animated: boolean }) {
   </svg>;
 }
 
-export function CelebrationOverlay({ open, title, message, variant, level, durationMs = durations[level - 1], onComplete }: CelebrationOverlayProps) {
+export function CelebrationOverlay({ open, title, message, variant, level, durationMs = durations[level - 1], contained = false, onComplete }: CelebrationOverlayProps) {
   const reducedMotion = useReducedMotion();
   useEffect(() => {
     if (!open || !onComplete) return;
@@ -112,7 +114,7 @@ export function CelebrationOverlay({ open, title, message, variant, level, durat
     role="status"
     aria-live="polite"
     aria-atomic="true"
-    sx={{ position: 'fixed', zIndex: theme => theme.zIndex.snackbar, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'min(calc(100% - 32px), 390px)', pointerEvents: 'none' }}
+    sx={{ position: contained ? 'absolute' : 'fixed', zIndex: theme => theme.zIndex.snackbar, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'min(calc(100% - 32px), 390px)', pointerEvents: 'none' }}
   >
     <Box
       sx={{
