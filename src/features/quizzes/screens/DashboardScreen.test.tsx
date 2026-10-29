@@ -220,9 +220,8 @@ describe('dashboard subject filter and pagination', () => {
     expect(
       within(screen.getByTestId('all-subjects-grid')).getByRole('button', { name: 'Open Subject 13' }),
     ).toBeVisible();
-    expect(screen.getByText('Page 1 of 1')).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Previous' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Next' })).toBeDisabled();
+    expect(screen.queryByText(/^Page \d+ of/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Previous' })).not.toBeInTheDocument();
   });
 });
 

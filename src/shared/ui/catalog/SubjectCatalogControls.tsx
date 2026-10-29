@@ -87,6 +87,7 @@ export function SubjectPagination({
     boundaryFocusRef.current = nextPage === 1 || nextPage === pageCount;
     onChange(nextPage);
   };
+  if (pageCount <= 1) return null;
   return (
     <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mt: 2.5 }}>
       <Button
