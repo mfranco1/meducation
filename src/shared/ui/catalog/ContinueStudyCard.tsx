@@ -123,6 +123,7 @@ export function ContinueStudyCard({
           boxSizing: 'border-box',
           color: 'inherit',
           display: 'flex',
+          height: '100%',
           justifyContent: 'flex-start',
           minWidth: 0,
           position: 'relative',
@@ -141,16 +142,11 @@ export function ContinueStudyCard({
             '& .continue-study-copy': { width: '58%' },
           },
           '@container continue-card (max-width: 477px)': {
-            '& .continue-study-copy': {
-              borderRadius: '14px',
-              background:
-                'linear-gradient(90deg, rgba(252,247,243,.84) 0%, rgba(252,247,243,.72) 72%, rgba(252,247,243,.3) 100%)',
-              width: '100%',
-            },
+            '& .continue-study-copy': { width: '100%' },
           },
         }}
       >
-        <Box className="continue-study-copy" sx={{ minWidth: 0, position: 'relative', zIndex: 1 }}>
+        <Box className="continue-study-copy" sx={{ minWidth: 0 }}>
           <Typography
             component="span"
             sx={{
