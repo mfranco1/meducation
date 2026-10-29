@@ -44,9 +44,13 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
       quiz: localStorage.getItem('meducation.progress.v2'),
       cards: localStorage.getItem('meducation.flashcards.progress.v2'),
     }));
+  // Learner tabs skip the first-visit landing page.
+  const skipLanding = () => localStorage.setItem('meducation.started.v1', '1');
+  await context.addInitScript(skipLanding);
   const quiz = await context.newPage();
   const deck = await context.newPage();
   const reviewContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  await reviewContext.addInitScript(skipLanding);
   const review = await reviewContext.newPage();
   await quiz.goto('/');
   await openSubject(quiz);
