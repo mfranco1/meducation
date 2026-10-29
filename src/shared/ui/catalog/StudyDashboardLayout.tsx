@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Box, Container, Typography } from '@mui/material';
+import { LegalFooter } from './LegalFooter';
 
 export function StudyDashboardLayout({
   title,
@@ -17,7 +18,7 @@ export function StudyDashboardLayout({
   subjectsActions?: ReactNode;
 }) {
   return (
-    <Container maxWidth="lg" sx={{ py: { xs: 4, md: 7 } }}>
+    <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 7 }, pb: { xs: 2, md: 3 } }}>
       {title && (
         <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-.04em', mb: 3 }}>
           {title}
@@ -41,6 +42,7 @@ export function StudyDashboardLayout({
         {subjectsActions}
       </Box>
       {children}
+      <LegalFooter />
     </Container>
   );
 }

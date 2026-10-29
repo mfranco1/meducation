@@ -1,5 +1,5 @@
 import { ThemeProvider } from '@mui/material';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { FlashcardsDashboardScreen } from './FlashcardsDashboardScreen';
 import { theme } from '../../../shared/theme';
@@ -33,6 +33,19 @@ describe('FlashcardsDashboardScreen', () => {
     expect(screen.getByText('decks')).toBeVisible();
     expect(screen.getByText('decks / day')).toBeVisible();
     expect(screen.getByText('decks finished in a day')).toBeVisible();
+  });
+
+  it('opens the privacy notice from the footer', async () => {
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardsDashboardScreen subjects={[]} activeSubjects={[]} progress={emptyProgress} onRetry={vi.fn()} onSelectSubject={vi.fn()} />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Privacy' }));
+    const dialog = screen.getByRole('dialog', { name: /Privacy Notice/ });
+    expect(within(dialog).getByText(/saved only in this browser/)).toBeVisible();
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
   });
 
   it('shows a continue carousel and all-subject grid with deck completion', () => {
