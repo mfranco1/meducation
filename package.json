@@ -20,7 +20,8 @@
     "validate:content": "tsx scripts/content/validate-paired-files.ts",
     "verify:full": "node scripts/testing/verify-full.mjs",
     "test:containers": ".venv/bin/python scripts/containers/smoke.py",
-    "build:content-policy": "node scripts/content/build-authoring-policy.mjs"
+    "build:content-policy": "node scripts/content/build-authoring-policy.mjs",
+    "hero:image": "node scripts/branding/heroImage.mjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
@@ -56,6 +57,7 @@
     "eslint-plugin-react-hooks": "^7.1.1",
     "jsdom": "^30.1.0",
     "prettier": "^3.9.9",
+    "sharp": "^0.34.5",
     "tsx": "^4.20.5",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.71.0",
