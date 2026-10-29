@@ -3,6 +3,12 @@ import { SubjectIcon } from './icons/SubjectIcon';
 
 // Subjects with a photographic hero in public/assets/illustrations; the rest use the drawn stack.
 const heroBySubjectId: Record<string, string> = {
+  s1: 'anat-hero',
+  s2: 'biochem-hero',
+  s3: 'legmed-hero',
+  s4: 'im-hero',
+  s5: 'micro-hero',
+  s6: 'ob-hero',
   s7: 'patho-hero',
   s8: 'peds-hero',
   s9: 'pharm-hero',
@@ -10,6 +16,8 @@ const heroBySubjectId: Record<string, string> = {
   s11: 'prevmed-hero',
   s12: 'surg-hero',
 };
+// Vertical focus for heroes whose subject sits away from the default band on wide, short cards.
+const heroFocusBySubjectId: Record<string, string> = { s6: '20%' };
 
 export function StudyCardIllustration({ subjectId }: { subjectId: string }) {
   const id = useId().replace(/:/g, '');
@@ -28,7 +36,7 @@ export function StudyCardIllustration({ subjectId }: { subjectId: string }) {
         style={{
           maskImage: 'linear-gradient(to right, transparent, #000 45%)',
           objectFit: 'cover',
-          objectPosition: 'right 55%',
+          objectPosition: `right ${heroFocusBySubjectId[subjectId] ?? '55%'}`,
         }}
       />
     );
