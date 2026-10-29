@@ -45,6 +45,13 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 - Toasts use semantic severity, stack by viewport position above content and below modals, can be global or screen-scoped, and persistent errors have a keyboard-accessible close.
 - The Progress dialog has a scrollable body and reachable footer, polite status and alert errors; Escape and Cancel work before commit and are disabled during it. Reset is a quiet section that opens a confirmation view. Focus returns to the entry action.
 
+## Landing page
+
+- An editorial frame around unmodified product components (`QuestionCard`, `FlashcardStudyCard`, `StudyNavigatorTile`, `StudyNavigationFooter`, `CelebrationOverlay`, `SubjectIcon`). Its type scale lives in `src/app/landing/typography.ts`: KaTeX Main (already shipped for math, preloaded on this page only) for display, section titles, notes and numerals; the theme's sans for everything else.
+- 12-column grid at `md` and up, a single column below. Rules, not cards, group page content: a 2px dark rule under the masthead and above the closing call to action, 1px choice-border hairlines between sections.
+- Orange marks only the **Start studying** buttons, the brand and the current case tile. On phones a sticky Start studying bar appears once the hero button scrolls away.
+- Sample keys (1-4, Space, Enter, arrows) act only while focus is inside the sample, and answering scrolls the feedback header into view on short screens.
+
 ## Admin
 
 - Reuses the shared theme. Tabs for Quizzes and Flashcards with unsaved indicators; a 320px navigator beside a flexible editor on desktop, stacked on narrow screens. Each panel owns its width constants (`AdminNavigatorPanel`, `AdminEditorFrame`).

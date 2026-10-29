@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+});
+
 test('quiz subject cards keep title, icon, score track, and card geometry aligned responsively', async ({
   page,
 }, testInfo) => {

@@ -1,6 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { openTopicIfNeeded } from './support/topic';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+});
+
 async function attachScreenshot(
   page: import('@playwright/test').Page,
   testInfo: import('@playwright/test').TestInfo,

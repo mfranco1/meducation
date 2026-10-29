@@ -2,6 +2,10 @@ import { expect, test } from '@playwright/test';
 import { openTopicIfNeeded } from './support/topic';
 import { contentCases } from './support/contentCases';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+});
+
 for (const candidate of contentCases()) {
   test(`L6 learner content acceptance ${candidate.label}`, async ({ page }, testInfo) => {
     const { item, subject, topic } = candidate;

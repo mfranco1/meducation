@@ -4,6 +4,7 @@ Meducation is a local-first study app for quizzes and flashcards. Content comes 
 
 ## Navigation
 
+- A first visit opens a landing page with three sample questions and four sample flashcards, built from the real study components with fixed copies of bank items (`src/app/landing/samples.json`); answers there save nothing. **Start studying** records `meducation.started.v1` and opens the Quizzes dashboard. Later visits, and any browser that already has quiz or flashcard progress, open the dashboard directly. Reset and restore keep the flag; clearing site data shows the landing page again.
 - A collapsible left rail has **Quizzes** and **Flashcards**; both open a dashboard built from the shared subject catalog with a Continue Studying carousel. Desktop starts expanded; narrow screens show an icon rail and an overlay drawer. The brand returns to Quizzes.
 - Leaving an active quiz or results review asks for confirmation and commits the exit only after the save or clear succeeds. Leaving a flashcard deck saves its checkpoint first.
 - Dashboards show subject cards (12 per page, All or In progress filter) and stat cards. Quiz cards show latest score and trend; flashcard cards show the share of decks completed at least once. Empty catalogs use a short empty state; empty flashcard decks are listed but cannot be launched. Each dashboard keeps its page and filter for the session, and returning from a subject restores its scroll position; other screens open at the top.

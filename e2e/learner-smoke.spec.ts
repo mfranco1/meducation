@@ -1,6 +1,10 @@
 import { expect, test, type Locator } from '@playwright/test';
 import { openTopicIfNeeded, showQuestion } from './support/topic';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+});
+
 async function statCardBounds(firstCard: Locator) {
   const cards = firstCard.locator('..').getByRole('group');
   await expect(cards).toHaveCount(3);

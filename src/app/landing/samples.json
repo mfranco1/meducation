@@ -1,0 +1,197 @@
+{
+    "cards": [
+        {
+            "id": "f-1a50fe58-9da3-4adc-b091-eeb76ce467a9",
+            "back": "Continuous machinery-like murmur at the left infraclavicular/upper sternal area.",
+            "deck": "Fetal Circulation, Shunt Lesions, and Murmurs",
+            "front": "What is the classic murmur of patent ductus arteriosus?",
+            "deckId": "d-50b3fa51-3d80-4b78-a685-07bc43b88a48",
+            "subject": "Pediatrics"
+        },
+        {
+            "id": "f-de514810-a3c4-42e5-8c89-6e36b2c41d1a",
+            "back": "Peaked T waves, PR prolongation, QRS widening, and eventually a sine-wave pattern.",
+            "deck": "Body Fluids and Acid-Base Physiology",
+            "front": "What ECG changes suggest hyperkalemia?",
+            "deckId": "d-c05aae02-d94a-48d2-b547-26f1f4fdcee4",
+            "subject": "Surgery"
+        },
+        {
+            "id": "f-3097a63d-93d3-4134-a1c0-86ea1ca0898a",
+            "back": "Diffuse bilateral **ground-glass opacities**.",
+            "deck": "Molds, Pneumocystis, and Mycotoxins",
+            "front": "What chest imaging pattern is common in Pneumocystis pneumonia?",
+            "deckId": "d-6a881216-18d5-40d4-a746-93893e984188",
+            "subject": "Microbiology & Parasitology"
+        },
+        {
+            "id": "f-79a49107-f131-4521-8f87-a13ca55c7ab1",
+            "back": "A physician who has the last clear chance to avoid injury but negligently fails to do so is liable.",
+            "deck": "Liability and Malpractice",
+            "front": "Doctrine of last clear chance.",
+            "deckId": "d-a9faf495-9845-4bcf-83f3-1ec88ed10a15",
+            "subject": "Legal Medicine"
+        }
+    ],
+    "release": "e7915468-0eee-48c8-8949-1244ba8dfeb7",
+    "subjects": [
+        {
+            "id": "s1",
+            "name": "Anatomy & Histology"
+        },
+        {
+            "id": "s2",
+            "name": "Biochemistry"
+        },
+        {
+            "id": "s3",
+            "name": "Legal Medicine"
+        },
+        {
+            "id": "s4",
+            "name": "Internal Medicine"
+        },
+        {
+            "id": "s5",
+            "name": "Microbiology & Parasitology"
+        },
+        {
+            "id": "s6",
+            "name": "Obstetrics & Gynecology"
+        },
+        {
+            "id": "s7",
+            "name": "Pathology"
+        },
+        {
+            "id": "s8",
+            "name": "Pediatrics"
+        },
+        {
+            "id": "s9",
+            "name": "Pharmacology"
+        },
+        {
+            "id": "s10",
+            "name": "Physiology"
+        },
+        {
+            "id": "s11",
+            "name": "Preventive Medicine"
+        },
+        {
+            "id": "s12",
+            "name": "Surgery"
+        }
+    ],
+    "questions": [
+        {
+            "id": "i14589",
+            "stem": "A young man has recurrent sinopulmonary infections beginning at age 6 months, absent B cells, and very low immunoglobulins of all classes. Which defect is present?",
+            "topic": "Immunology",
+            "answer": "D",
+            "pearls": [
+                "XLA: BTK; no B cells; recurrent bacterial infections after 6 months."
+            ],
+            "quizId": "q169",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "CD40 ligand mutation"
+                },
+                {
+                    "id": "B",
+                    "text": "ADA deficiency"
+                },
+                {
+                    "id": "C",
+                    "text": "Adenylate kinase mutation"
+                },
+                {
+                    "id": "D",
+                    "text": "BTK mutation in X-linked agammaglobulinemia"
+                }
+            ],
+            "subject": "Biochemistry",
+            "metadata": {
+                "system": "Immunology",
+                "subtopic": "Immunodeficiency",
+                "difficulty": "medium",
+                "questionType": "Clinical vignette"
+            },
+            "rationale": "Bruton agammaglobulinemia is X-linked BTK deficiency, preventing pre-B cell maturation. Infections occur after maternal IgG wanes, at 6 months. CD19-positive cells are absent, and lymph nodes and tonsils are small.\n\nTreat with IVIG."
+        },
+        {
+            "id": "i17861",
+            "stem": "A man is brought in after ingesting antifreeze. He has an elevated anion gap metabolic acidosis, an osmolar gap, and acute kidney injury. Which finding is expected on urine microscopy?",
+            "topic": "Kidney",
+            "answer": "C",
+            "pearls": [
+                "Anion gap acidosis plus osmolar gap plus oxalate crystals: ethylene glycol."
+            ],
+            "quizId": "q234",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "Hexagonal cystine crystals"
+                },
+                {
+                    "id": "B",
+                    "text": "Rhomboid uric acid crystals"
+                },
+                {
+                    "id": "C",
+                    "text": "Birefringent calcium oxalate crystals"
+                },
+                {
+                    "id": "D",
+                    "text": "Coffin-lid magnesium ammonium phosphate crystals"
+                }
+            ],
+            "subject": "Pathology",
+            "metadata": {
+                "system": "Renal",
+                "subtopic": "Toxic Acute Kidney Injury",
+                "difficulty": "medium",
+                "questionType": "Clinical Correlation"
+            },
+            "rationale": "Ethylene glycol is metabolized by alcohol dehydrogenase to glycolic and oxalic acids. Oxalate precipitates with calcium in tubules as needle-shaped (monohydrate) or envelope-shaped (dihydrate) crystals, causing tubular obstruction and direct toxic ATN. Treatment: fomepizole (alcohol dehydrogenase inhibitor), hemodialysis, and correction of acidosis.\n\n**Why the others are wrong**\n- Cystine crystals: cystinuria.\n- Uric acid crystals: acidic urine, tumor lysis, or gout.\n- Struvite crystals: alkaline urine from urease-producing bacteria."
+        },
+        {
+            "id": "i15221",
+            "stem": "A term pregnancy has a nonreactive NST. The remaining four biophysical profile components, including amniotic fluid volume, are normal. What is the biophysical profile score?",
+            "topic": "Obstetrics",
+            "answer": "A",
+            "pearls": [
+                "Oligohydramnios is the component most tied to chronic uteroplacental insufficiency; it is an indication for further evaluation or delivery depending on GA."
+            ],
+            "quizId": "q181",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "8/10"
+                },
+                {
+                    "id": "B",
+                    "text": "10/10"
+                },
+                {
+                    "id": "C",
+                    "text": "6/10"
+                },
+                {
+                    "id": "D",
+                    "text": "4/10"
+                }
+            ],
+            "subject": "Obstetrics & Gynecology",
+            "metadata": {
+                "system": "Reproductive",
+                "subtopic": "Fetal surveillance",
+                "difficulty": "medium",
+                "questionType": "Calculation"
+            },
+            "rationale": "Each normal component earns 2 points. With four normal components (breathing, movement, tone, fluid) and only the NST abnormal (0 points), the total is **8/10**, which is considered reassuring when the amniotic fluid is normal.\n\nThe **modified BPP** combines the NST with an amniotic fluid assessment (AFI above 5 cm or deepest pocket ≥2 cm) and is commonly used for antenatal surveillance."
+        }
+    ]
+}

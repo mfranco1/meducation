@@ -47,7 +47,7 @@ Worker startup checks schema and publication once; workers never migrate, import
 
 ## Learner progress
 
-`LocalAttemptRepository` stores quiz progress under `meducation.progress.v2`; flashcard checkpoints use `meducation.flashcards.progress.v2`. Only current keys are read. Malformed current data is preserved and reported, never replaced. Quiz completions commit history, durable counts, scores, activity and completed IDs in one write; history is capped at 200 while completed IDs stay durable. Active attempts carry a content signature so changed content forces an explicit restart.
+`src/main.tsx` checks `hasStartedStudying` (`persistence/visitorStart.ts`) before the first render and either boots the app or lazy-loads the landing page (`src/app/landing`), so returning learners never see it. `LocalAttemptRepository` stores quiz progress under `meducation.progress.v2`; flashcard checkpoints use `meducation.flashcards.progress.v2`. Only current keys are read. Malformed current data is preserved and reported, never replaced. Quiz completions commit history, durable counts, scores, activity and completed IDs in one write; history is capped at 200 while completed IDs stay durable. Active attempts carry a content signature so changed content forces an explicit restart.
 
 Repositories cache frozen snapshots exposed through `useSyncExternalStore`; getters never write, and writes or `storage` events invalidate. Revisions are optimistic edit tokens: a stale tab must reload. Paired restore writes both keys and rolls both back if either write fails; there is no cross-tab lock ([product](product.md#progress-backup-restore-and-reset)).
 

@@ -1,6 +1,10 @@
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+});
+
 const quizKey = 'meducation.progress.v2';
 const flashcardsKey = 'meducation.flashcards.progress.v2';
 const populatedPath = 'tests/fixtures/progress-backups/populated-v1.json';
@@ -54,6 +58,7 @@ test('downloads a backup and restores it into a fresh browser context', async ({
   expect(exported.format).toBe('meducation-progress-backup');
 
   const fresh = await browser.newContext({ baseURL });
+  await fresh.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
   try {
     const target = await fresh.newPage();
     await target.goto('/');

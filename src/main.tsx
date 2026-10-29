@@ -7,6 +7,7 @@ import { AppShell } from './shared/ui/shell/AppShell';
 import { AppNavigationDrawer } from './app/components/AppNavigationDrawer';
 import { ScreenLoading } from './shared/ui/loading/ScreenLoading';
 import { brand } from './shared/brand';
+import { hasStartedStudying, markStartedStudying } from './persistence/visitorStart';
 
 function BootFailure() {
   return <Container maxWidth="sm" sx={{ py: 6 }}>
@@ -46,4 +47,15 @@ async function boot() {
   }
 }
 
-void boot();
+async function showLanding() {
+  try {
+    const { LandingPage } = await import('./app/landing/LandingPage');
+    render(<LandingPage onStart={() => { markStartedStudying(); window.scrollTo(0, 0); void boot(); }} />);
+  } catch (error) {
+    console.error('Landing page could not load.', error);
+    void boot();
+  }
+}
+
+if (hasStartedStudying()) void boot();
+else void showLanding();
