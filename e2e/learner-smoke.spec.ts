@@ -1,5 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test';
-import { openTopicIfNeeded } from './support/topic';
+import { openTopicIfNeeded, showQuestion } from './support/topic';
 
 async function statCardBounds(firstCard: Locator) {
   const cards = firstCard.locator('..').getByRole('group');
@@ -384,7 +384,7 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   const firstQuizStart = Date.now();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
-  await expect(page.getByText('What is')).toBeVisible();
+  await showQuestion(page, /What is/);
   await expect(page.locator('.katex')).toBeVisible();
   const questionFlag = page.getByRole('button', { name: 'Flag question' });
   const questionFlagBackground = await questionFlag.evaluate((element) => getComputedStyle(element).backgroundColor);
@@ -431,21 +431,26 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
     contentType: 'text/plain',
   });
   console.info(`First quiz screen after Begin Quiz: ${firstQuizMs} ms (local fixture and API)`);
-  await page.getByRole('radio', { name: /A\. Four/ }).check();
+  await page.getByRole('radio', { name: /Four/ }).check();
   await expect(page.getByText('Correct', { exact: true })).toBeVisible();
   await questionFlag.focus();
-  await page.keyboard.press('ArrowRight');
-  await expect(page.getByText('Question 2 of 2')).toBeVisible();
-  await page.keyboard.press('ArrowLeft');
-  await expect(page.getByText('Question 1 of 2')).toBeVisible();
+  const position = page.getByText(/^Question \d of 2$/);
+  const firstPosition = (await position.textContent()) === 'Question 1 of 2';
+  await page.keyboard.press(firstPosition ? 'ArrowRight' : 'ArrowLeft');
+  await expect(page.getByText('What is')).toBeHidden();
+  await page.keyboard.press(firstPosition ? 'ArrowLeft' : 'ArrowRight');
+  await expect(page.getByText('What is')).toBeVisible();
 
   await page.reload();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await page.getByRole('button', { name: /^Resume quiz/ }).click();
-  await expect(page.getByText('Question 1 of 2')).toBeVisible();
-  await expect(page.getByRole('radio', { name: /A\. Four/ })).toBeChecked();
-  await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('radio', { name: /B\. Heart/ }).check();
+  await expect(page.getByText('What is')).toBeVisible();
+  await expect(page.getByRole('radio', { name: /Four/ })).toBeChecked();
+  await showQuestion(page, /Which choice names the heart/);
+  await page.getByRole('radio', { name: /Heart/ }).check();
+  await expect(page.getByRole('button', { name: /^(Continue|Finish)$/ })).toBeVisible();
+  if (await page.getByRole('button', { name: 'Continue' }).isVisible())
+    await page.getByRole('button', { name: 'Continue' }).click();
   await page.getByRole('button', { name: 'Finish' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
   await expect(page.getByText('2 correct · 0 incorrect · 0 unanswered')).toBeVisible();
@@ -619,10 +624,14 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page },
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('button', { name: 'Exam Mode' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
-  await page.getByRole('radio', { name: /B\. Five/ }).check();
+  await showQuestion(page, /What is/);
+  await page.getByRole('radio', { name: /Five/ }).check();
   await page.getByRole('button', { name: 'Flag question' }).click();
-  await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('radio', { name: /B\. Heart/ }).check();
+  await showQuestion(page, /Which choice names the heart/);
+  await page.getByRole('radio', { name: /Heart/ }).check();
+  await expect(page.getByRole('button', { name: /^(Next|Submit)$/ })).toBeVisible();
+  if (await page.getByRole('button', { name: 'Next' }).isVisible())
+    await page.getByRole('button', { name: 'Next' }).click();
   await page.getByRole('button', { name: 'Submit' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
   await page.getByRole('button', { name: 'Review results' }).click();
@@ -640,19 +649,13 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page },
   await expect(page.getByRole('button', { name: 'Wrong questions, 1' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Flagged questions, 1' })).toBeVisible();
   await page.getByRole('button', { name: 'Wrong questions, 1' }).click();
-  await expect(
-    page.getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }),
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Question \d, answered incorrectly, flagged/ })).toBeVisible();
   await page.getByRole('button', { name: 'Flagged questions, 1' }).click();
-  await expect(
-    page.getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }),
-  ).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Question \d, answered incorrectly, flagged/ })).toBeVisible();
+  await showQuestion(page, 'Four is the sum of two and two.');
   await expect(page.getByRole('listitem', { name: 'Correct answer', exact: true })).toBeVisible();
-  await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
-  await page.keyboard.press('ArrowRight');
-  await expect(page.getByText('The heart pumps blood.')).toBeVisible();
-  await page.keyboard.press('ArrowLeft');
-  await expect(page.getByText('Four is the sum of two and two.')).toBeVisible();
+  await showQuestion(page, 'The heart pumps blood.');
+  await showQuestion(page, 'Four is the sum of two and two.');
   await page.getByRole('button', { name: 'Leave review' }).click();
   await expect(page.getByRole('dialog', { name: 'Leave review?' })).toBeVisible();
   await page.getByRole('dialog').getByRole('button', { name: 'Keep reviewing', exact: true }).last().click();
@@ -816,6 +819,7 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   await openTopicIfNeeded(page);
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
+  await showQuestion(page, /What is/);
   await expect(page.locator('.katex')).toBeVisible();
   expect(
     await page.evaluate(async () => {

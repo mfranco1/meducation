@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
+  attemptQuestions,
   isFullyAnsweredFastFeedback,
   pauseAttempt,
   questionIndexFor,
@@ -21,7 +22,7 @@ interface QuizSession {
   cancelPendingResume: () => void;
   restartPendingResume: () => void;
   resumeQuiz: (quiz: Quiz) => void;
-  startQuiz: (quiz: Quiz, mode: FeedbackMode) => void;
+  startQuiz: (quiz: Quiz, mode: FeedbackMode, shuffle?: boolean) => void;
   browseQuiz: (quiz: Quiz) => void;
   navigateBrowse: (index: number) => void;
   leaveBrowse: () => void;
@@ -56,7 +57,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     if (view.page !== 'quiz') return;
     const bank = questionBank.listQuestions(view.quiz.id);
     const index = nextIndex ?? view.index;
-    const withCheckpoint = { ...next, currentQuestionId: bank[index]?.id };
+    const withCheckpoint = { ...next, currentQuestionId: attemptQuestions(bank, next)[index]?.id };
     const checkpointed = isFullyAnsweredFastFeedback(withCheckpoint, bank)
       ? pauseAttempt(withCheckpoint)
       : withCheckpoint;
@@ -77,28 +78,30 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
       ? pauseAttempt(existing)
       : resumeAttempt(existing);
     if (!persist(() => attempts.saveActive(resumed))) return;
-    setView({ page: 'quiz', quiz, attempt: resumed, index: questionIndexFor(questions, resumed.currentQuestionId) });
+    setView({ page: 'quiz', quiz, attempt: resumed, index: questionIndexFor(attemptQuestions(questions, resumed), resumed.currentQuestionId) });
   };
 
-  const beginQuiz = (quiz: Quiz, mode: FeedbackMode): boolean => {
+  const beginQuiz = (quiz: Quiz, mode: FeedbackMode, shuffle: boolean): boolean => {
     const now = new Date().toISOString();
     const questions = questionBank.listQuestions(quiz.id);
+    const shuffleSeed = shuffle ? crypto.getRandomValues(new Uint32Array(1))[0] : undefined;
     const attempt: Attempt = {
       id: crypto.randomUUID(), quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: mode,
       startedAt: now, elapsedMs: 0, timerStartedAt: now,
-      currentQuestionId: questions[0]?.id, contentSignature: contentSignature(questions), contentRevision: questionBank.contentRevision?.(),
+      ...(shuffleSeed === undefined ? {} : { shuffleSeed }),
+      currentQuestionId: attemptQuestions(questions, { shuffleSeed })[0]?.id, contentSignature: contentSignature(questions), contentRevision: questionBank.contentRevision?.(),
       celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, responses: {},
     };
     if (!persist(() => attempts.saveActive(attempt))) return false;
     setView({ page: 'quiz', quiz, attempt, index: 0 });
     return true;
   };
-  const startQuiz = (quiz: Quiz, mode: FeedbackMode) => { void beginQuiz(quiz, mode); };
+  const startQuiz = (quiz: Quiz, mode: FeedbackMode, shuffle = true) => { void beginQuiz(quiz, mode, shuffle); };
   const restartPendingResume = () => {
     if (!pendingResume) return;
     const existing = attempts.getActive(pendingResume.quiz.id);
     if (!existing) { setPendingResume(undefined); return; }
-    if (beginQuiz(pendingResume.quiz, existing.feedbackMode)) setPendingResume(undefined);
+    if (beginQuiz(pendingResume.quiz, existing.feedbackMode, existing.shuffleSeed !== undefined)) setPendingResume(undefined);
   };
 
   const browseQuiz = (quiz: Quiz) => setView({ page: 'quiz-browse', quiz, index: 0 });
@@ -141,7 +144,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
 
   const leaveQuiz = (destination: QuizExitDestination = 'subject') => {
     if (view.page !== 'quiz') return;
-    const question = questionBank.listQuestions(view.quiz.id)[view.index];
+    const question = attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)[view.index];
     if (!persist(() => attempts.saveActive(pauseAttempt({ ...view.attempt, currentQuestionId: question.id })))) return;
     if (destination === 'dashboard') setView({ page: 'dashboard' });
     else if (destination === 'flashcards') setView({ page: 'flashcards' });

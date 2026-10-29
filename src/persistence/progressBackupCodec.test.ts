@@ -168,6 +168,7 @@ describe('progress backup codec', () => {
     const source = cloneFixture() as { quiz: Record<string, unknown>; flashcards: Record<string, unknown>; exportedAt: string };
     const quiz = { schemaVersion: 2, revision: 'private-revision', ...source.quiz } as unknown as ProgressState;
     (quiz.active['deleted-quiz'] as { timerStartedAt?: string }).timerStartedAt = '2026-10-12T23:59:50.000Z';
+    quiz.active['deleted-quiz']!.shuffleSeed = 4000000000;
     const flashcards = { schemaVersion: 2, revision: 'private-revision', ...source.flashcards } as unknown as FlashcardProgressState;
     const encoded = encodeProgressBackup(quiz, flashcards, source.exportedAt);
     expect(encoded).toBeDefined();
@@ -176,6 +177,8 @@ describe('progress backup codec', () => {
     expect(parseProgressBackup(encoded!).ok).toBe(true);
     const roundTrip = JSON.parse(encoded!) as { quiz: { active: Record<string, { elapsedMs: number }> } };
     expect(roundTrip.quiz.active['deleted-quiz'].elapsedMs).toBe(1200.5);
+    const restored = parseProgressBackup(encoded!);
+    expect(restored.ok && restored.value.quiz.active['deleted-quiz']?.shuffleSeed).toBe(4000000000);
     expect(roundTrip.quiz.active['deleted-quiz']).not.toHaveProperty('timerStartedAt');
   });
 });

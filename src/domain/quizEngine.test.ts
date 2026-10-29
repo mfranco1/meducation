@@ -1,7 +1,22 @@
-import { describe, expect, it } from 'vitest'; import { blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, scorePercentage, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
+import { describe, expect, it } from 'vitest'; import { attemptQuestions, blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, scorePercentage, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
 const question: Question={id:'i1',quizId:'q1',stem:'Stem',choices:[{id:'A',text:'A'},{id:'B',text:'B'}],answer:'B',rationale:'Rationale',metadata:{}};
 const attempt=(selectedChoiceId?:string):Attempt=>({id:'a',quizId:'q1',subjectId:'s1',feedbackMode:'exam',contentSignature: 'fixture-content', startedAt:new Date(1000).toISOString(),elapsedMs:0,timerStartedAt:new Date(1000).toISOString(),celebrationProgress:{correctStreak:0,awardedStreakMilestones:[]},responses:selectedChoiceId?{i1:{questionId:'i1',selectedChoiceId,flagged:true,locked:false,timeMs:0}}:{}});
 describe('quiz engine',()=>{it('scores correct, incorrect, and unanswered responses',()=>{expect(scoreAttempt(attempt('B'),[question],3000)).toMatchObject({correct:1,incorrect:0,unanswered:0,percentage:100,elapsedMs:2000});expect(scoreAttempt(attempt('A'),[question],3000).incorrect).toBe(1);expect(scoreAttempt(attempt(),[question],3000).unanswered).toBe(1)});it('finds a saved question checkpoint and falls back to the first question',()=>{const second={...question,id:'q2'};expect(questionIndexFor([question,second],'q2')).toBe(1);expect(questionIndexFor([question,second],'missing')).toBe(0);expect(questionIndexFor([question,second])).toBe(0)});});
+describe('attempt question order',()=>{
+  const questions: Question[]=Array.from({length:8},(_,i)=>({...question,id:`i${i}`,choices:['A','B','C','D'].map(id=>({id,text:id}))}));
+  const ids=(list:Question[])=>list.map(q=>q.id);
+  it('gives the same order for the same seed and a permutation of questions and choices',()=>{
+    const first=attemptQuestions(questions,{shuffleSeed:42});
+    expect(ids(attemptQuestions(questions,{shuffleSeed:42}))).toEqual(ids(first));
+    expect(first.map(q=>q.choices.map(c=>c.id))).toEqual(attemptQuestions(questions,{shuffleSeed:42}).map(q=>q.choices.map(c=>c.id)));
+    expect(ids(first).sort()).toEqual(ids(questions).sort());
+    first.forEach(q=>expect(q.choices.map(c=>c.id).sort()).toEqual(['A','B','C','D']));
+    expect(ids(first)).not.toEqual(ids(questions));
+  });
+  it('keeps canonical order without a seed',()=>{
+    expect(attemptQuestions(questions,{})).toBe(questions);
+  });
+});
 describe('attempt timing',()=>{
   it('accumulates only active quiz sessions',()=>{
     const running: Attempt={...attempt(),elapsedMs:500,timerStartedAt:new Date(1000).toISOString()};

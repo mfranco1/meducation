@@ -12,7 +12,7 @@ export function ReadOnlyChoiceList({ question, selectedChoiceId, correctChoiceId
 }) {
   const theme = useTheme();
   return <Stack spacing={1.25} role="list" aria-label="Answer choices" sx={{ mt: 3 }}>
-    {question.choices.map(choice => {
+    {question.choices.map((choice, position) => {
       const selected = mode === 'review' && choice.id === selectedChoiceId;
       const correct = choice.id === correctChoiceId;
       const marked = mode === 'browse' ? correct : selected;
@@ -30,7 +30,7 @@ export function ReadOnlyChoiceList({ question, selectedChoiceId, correctChoiceId
             {marked ? <RadioButtonCheckedIcon sx={{ fontSize: 21 }} /> : <RadioButtonUncheckedIcon sx={{ fontSize: 21 }} />}
           </Box>
           <Typography component="div" sx={{ py: .8, minWidth: 0, lineHeight: 1.5 }}>
-            <b>{choice.id}.</b> <MarkdownContent markdown={choice.text} variant="inline" />
+            <b>{String.fromCharCode(65 + position)}.</b> <MarkdownContent markdown={choice.text} variant="inline" />
           </Typography>
         </Stack>
       </Box>;

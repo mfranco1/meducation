@@ -108,10 +108,11 @@ function validResponseMap(value: unknown, mode: unknown): value is Attempt['resp
 }
 function validAttempt(value: unknown, active: boolean): value is Attempt | CompletedAttempt {
   const required = ['id', 'quizId', 'subjectId', 'feedbackMode', 'startedAt', 'elapsedMs', 'celebrationProgress', 'responses'];
-  const optional = active ? ['currentQuestionId', 'contentSignature', 'contentRevision'] : ['currentQuestionId', 'contentRevision', 'completedAt', 'score'];
+  const optional = active ? ['currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed'] : ['currentQuestionId', 'contentRevision', 'shuffleSeed', 'completedAt', 'score'];
   if (!keys(value, required, optional) || !safeId(value.id) || !safeId(value.quizId) || !safeId(value.subjectId)
     || !['immediate', 'exam'].includes(value.feedbackMode as string) || !timestamp(value.startedAt) || !safeNumber(value.elapsedMs)
     || (value.currentQuestionId !== undefined && !safeId(value.currentQuestionId))
+    || (value.shuffleSeed !== undefined && !safeInt(value.shuffleSeed))
     || (value.contentRevision !== undefined && !safeReference(value.contentRevision))) return false;
   if (active) {
     if (typeof value.contentSignature !== 'string' || value.contentSignature.length === 0 || utf8Bytes(value.contentSignature) > MAX_QUIZ_SIGNATURE_BYTES) return false;
@@ -186,11 +187,11 @@ function validLiveQuiz(state: unknown): state is ProgressState {
   if (!keys(state, ['schemaVersion', 'revision', 'active', 'completed', 'completionCounts', 'lowestScores', 'latestScores', 'activity', 'completedIds'])
     || state.schemaVersion !== 2 || !safeReference(state.revision)) return false;
   if (!validMap(state.active, 64, (key, value): value is Attempt => {
-    if (!keys(value, ['id', 'quizId', 'subjectId', 'feedbackMode', 'startedAt', 'elapsedMs', 'celebrationProgress', 'responses'], ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision'])) return false;
+    if (!keys(value, ['id', 'quizId', 'subjectId', 'feedbackMode', 'startedAt', 'elapsedMs', 'celebrationProgress', 'responses'], ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed'])) return false;
     return (value.timerStartedAt === undefined || timestamp(value.timerStartedAt)) && validAttempt(stripAttemptRuntimeFields(value, true), true) && value.quizId === key;
   })) return false;
   if (!Array.isArray(state.completed) || state.completed.length > 200 || !state.completed.every(value => {
-    if (!keys(value, ['id', 'quizId', 'subjectId', 'feedbackMode', 'startedAt', 'elapsedMs', 'celebrationProgress', 'responses', 'completedAt', 'score'], ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision'])) return false;
+    if (!keys(value, ['id', 'quizId', 'subjectId', 'feedbackMode', 'startedAt', 'elapsedMs', 'celebrationProgress', 'responses', 'completedAt', 'score'], ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed'])) return false;
     if (value.timerStartedAt !== undefined && !timestamp(value.timerStartedAt)) return false;
     if (value.contentSignature !== undefined && (typeof value.contentSignature !== 'string' || value.contentSignature.length === 0 || utf8Bytes(value.contentSignature) > MAX_QUIZ_SIGNATURE_BYTES)) return false;
     return validAttempt(stripAttemptRuntimeFields(value, false), false);
@@ -223,6 +224,7 @@ function projectAttempt(attempt: Attempt | CompletedAttempt, active: boolean): A
     }, responses: sortedRecord(attempt.responses, r => ({ questionId: r.questionId, ...(r.selectedChoiceId === undefined ? {} : { selectedChoiceId: r.selectedChoiceId }), flagged: r.flagged, locked: r.locked, timeMs: r.timeMs })),
   };
   if (attempt.currentQuestionId !== undefined) result.currentQuestionId = attempt.currentQuestionId;
+  if (attempt.shuffleSeed !== undefined) result.shuffleSeed = attempt.shuffleSeed;
   if (active) {
     result.contentSignature = attempt.contentSignature;
     if (attempt.contentRevision !== undefined) result.contentRevision = attempt.contentRevision;

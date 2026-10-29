@@ -19,7 +19,7 @@ const activeAttempt: Attempt = {
 
 function renderSubject(progress: Partial<QuizProgress>) {
   const onResumeQuiz = vi.fn();
-  const onStartQuiz = vi.fn<(quiz: Quiz, mode: FeedbackMode) => void>();
+  const onStartQuiz = vi.fn<(quiz: Quiz, mode: FeedbackMode, shuffle: boolean) => void>();
   const onBrowseQuiz = vi.fn<(quiz: Quiz) => void>();
   render(<ThemeProvider theme={theme}><SubjectScreen
     subject={subject}
@@ -119,7 +119,7 @@ describe('subject quiz action', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Exam Mode' }));
     expect(screen.getByText('Answers remain hidden until you finish and submit the entire test.')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
-    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'exam');
+    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'exam', true);
 
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     expect(screen.getByText('Selecting an answer locks it and shows the explanation right away.')).toBeVisible();
@@ -131,7 +131,17 @@ describe('subject quiz action', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
-    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate');
+    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate', true);
+  });
+
+  it('starts without shuffling when the shuffle switch is off', () => {
+    const { onStartQuiz } = renderSubject({});
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
+    fireEvent.click(screen.getByRole('switch', { name: 'Shuffle questions and choices' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+
+    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate', false);
   });
 
   it('opens the read-only answer browser through its separate callback', () => {

@@ -126,7 +126,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
             <StudyFlagButton size="small" flagged={response.flagged} label={response.flagged ? 'Remove question flag' : 'Flag question'} onToggle={toggleFlag} sx={{ p: 0, mt: .5, flexShrink: 0 }} />
           </Stack>
           <RadioGroup value={response.selectedChoiceId ?? ''} onChange={(_, choice) => select(choice)} sx={{ mt: 3, gap: 1.25 }}>
-            {question.choices.map(choice => {
+            {question.choices.map((choice, position) => {
               const selected = response.selectedChoiceId === choice.id;
               const correct = isCorrect(question, choice.id);
               const state = feedback ? correct ? theme.palette.feedback.correct.surface : selected ? theme.palette.feedback.incorrect.surface : undefined : undefined;
@@ -134,7 +134,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
               const pressed = selected && pressedChoice === `${question.id}:${choice.id}`;
               return <Box key={choice.id} sx={{ position: 'relative', zIndex: showCorrectAnswerBurst ? 1 : undefined, isolation: 'isolate', overflow: 'visible', border: '1px solid', borderColor: selected ? 'primary.main' : theme.palette.feedback.choiceBorder, bgcolor: state, borderRadius: 1, p: .5, transition: 'transform 120ms ease-out, border-color 160ms ease-out, background-color 160ms ease-out', animation: pressed ? `${choicePress} 220ms ease-out` : undefined, '&:active': response.locked ? undefined : { transform: 'scale(.985)' }, [reducedMotion]: { transition: 'none', animation: 'none', '&:active': { transform: 'none' } } }}>
                 {showCorrectAnswerBurst && <RadiatingCircles key={correctAnswerBurst.eventId} direction="both" particleCount={16} durationMs={900} horizontalSpread={16} verticalSpread={18} particleSize={7} />}
-                <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio sx={{ '& .MuiSvgIcon-root': { transition: 'color 160ms ease-out' }, '& .MuiSvgIcon-root + .MuiSvgIcon-root': { transition: 'transform 240ms cubic-bezier(.34, 1.56, .64, 1)' }, [reducedMotion]: { '& .MuiSvgIcon-root, & .MuiSvgIcon-root + .MuiSvgIcon-root': { transition: 'none' } }, ...(feedback && correct && { color: 'success.main', '&.Mui-checked, &.Mui-disabled': { color: 'success.main' } }) }} />} label={<Typography component="div" sx={{ py: .8 }}><b>{choice.id}.</b> <MarkdownContent markdown={choice.text} variant="inline" /></Typography>} sx={{ m: 0, width: '100%', position: 'relative', zIndex: 1 }} />
+                <FormControlLabel disabled={response.locked} value={choice.id} control={<Radio sx={{ '& .MuiSvgIcon-root': { transition: 'color 160ms ease-out' }, '& .MuiSvgIcon-root + .MuiSvgIcon-root': { transition: 'transform 240ms cubic-bezier(.34, 1.56, .64, 1)' }, [reducedMotion]: { '& .MuiSvgIcon-root, & .MuiSvgIcon-root + .MuiSvgIcon-root': { transition: 'none' } }, ...(feedback && correct && { color: 'success.main', '&.Mui-checked, &.Mui-disabled': { color: 'success.main' } }) }} />} label={<Typography component="div" sx={{ py: .8 }}><b>{String.fromCharCode(65 + position)}.</b> <MarkdownContent markdown={choice.text} variant="inline" /></Typography>} sx={{ m: 0, width: '100%', position: 'relative', zIndex: 1 }} />
               </Box>;
             })}
           </RadioGroup>

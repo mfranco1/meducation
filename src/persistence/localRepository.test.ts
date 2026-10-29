@@ -34,6 +34,12 @@ describe('LocalAttemptRepository quiz activity', () => {
 
   afterEach(() => vi.useRealTimers());
 
+  it('keeps the shuffle seed of an active attempt', () => {
+    const repository = new LocalAttemptRepository();
+    repository.saveActive({ ...activeAttempt('quiz-1'), shuffleSeed: 123456 });
+    expect(new LocalAttemptRepository().getActive('quiz-1')?.shuffleSeed).toBe(123456);
+  });
+
   it('records the latest active save time for a quiz', () => {
     vi.setSystemTime(new Date('2026-09-21T10:00:00.000Z'));
     const repository = new LocalAttemptRepository();

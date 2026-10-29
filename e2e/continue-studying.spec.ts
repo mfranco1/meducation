@@ -102,7 +102,7 @@ test('quiz Continue Studying card is responsive and opens the active subject', a
   await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
-  await page.getByRole('radio', { name: /A\. Four/ }).check();
+  await page.getByRole('radio').first().check();
   await page.reload();
 
   const region = page.getByRole('region', { name: 'Continue Studying' });

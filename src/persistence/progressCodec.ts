@@ -34,6 +34,7 @@ function validAttempt(value: unknown): value is Attempt {
     || !value.celebrationProgress.awardedStreakMilestones.every(milestone => [3, 5, 10, 25, 50].includes(milestone))) return false;
   if (value.timerStartedAt !== undefined && !text(value.timerStartedAt)) return false;
   if (value.currentQuestionId !== undefined && !text(value.currentQuestionId)) return false;
+  if (value.shuffleSeed !== undefined && !validCount(value.shuffleSeed)) return false;
   return Object.values(value.responses).every(response => record(response) && text(response.questionId)
     && (response.selectedChoiceId === undefined || text(response.selectedChoiceId))
     && typeof response.flagged === 'boolean'

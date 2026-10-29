@@ -31,6 +31,27 @@ export function commitAnswer(attempt: Attempt, question: Question, choiceId: str
     streakMilestone: milestone,
   };
 }
+function mulberry32(seed: number) {
+  return () => {
+    seed = (seed + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+const shuffled = <T>(items: readonly T[], random: () => number): T[] => {
+  const result = [...items];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [result[i], result[j]] = [result[j]!, result[i]!];
+  }
+  return result;
+};
+export function attemptQuestions(questions: Question[], attempt: Pick<Attempt, 'shuffleSeed'>): Question[] {
+  if (attempt.shuffleSeed === undefined) return questions;
+  const random = mulberry32(attempt.shuffleSeed);
+  return shuffled(questions, random).map(question => ({ ...question, choices: shuffled(question.choices, random) }));
+}
 export function isFullyAnsweredFastFeedback(attempt: Attempt, questions: Question[]): boolean {
   return attempt.feedbackMode === 'immediate'
     && questions.length > 0
