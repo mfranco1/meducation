@@ -98,13 +98,7 @@ export function ContinueStudyCard({
           zIndex: 0,
           '& svg, & img': { display: 'block', height: '100%', width: '100%' },
           '@container continue-card (min-width: 478px) and (max-width: 637px)': { width: '44%' },
-          '@container continue-card (max-width: 477px)': {
-            bottom: 0,
-            height: 150,
-            opacity: 0.22,
-            top: 'auto',
-            width: 145,
-          },
+          '@container continue-card (max-width: 477px)': { opacity: 0.22, width: 145 },
         }}
       >
         {illustration}
