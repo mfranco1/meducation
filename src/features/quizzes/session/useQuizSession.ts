@@ -112,7 +112,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   };
 
   const reviewResults = () => {
-    if (view.page !== 'results' || view.attempt.feedbackMode !== 'exam') return;
+    if (view.page !== 'results') return;
     setView({ page: 'quiz-review', quiz: view.quiz, attempt: view.attempt, index: 0 });
   };
   const navigateReview = (index: number) => {

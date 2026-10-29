@@ -45,17 +45,12 @@ describe('results score hero', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('offers review only for an Exam Mode result', () => {
+  it.each(['exam', 'immediate'] as const)('offers review of a %s result', feedbackMode => {
     const onReview = vi.fn();
-    render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attemptFor(2, 3, 67)} questions={[]} onBack={() => {}} onReview={onReview} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={{ ...attemptFor(2, 3, 67), feedbackMode }} questions={[]} onBack={() => {}} onReview={onReview} /></ThemeProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Review results' }));
     expect(onReview).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'Back to quizzes' })).toBeVisible();
-  });
-
-  it('does not offer review for Fast Feedback results', () => {
-    render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={{ ...attemptFor(2, 3, 67), feedbackMode: 'immediate' }} questions={[]} onBack={() => {}} onReview={() => {}} /></ThemeProvider>);
-    expect(screen.queryByRole('button', { name: 'Review results' })).toBeNull();
   });
 });
 

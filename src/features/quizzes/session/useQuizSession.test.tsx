@@ -67,8 +67,8 @@ describe('read-only quiz browse session', () => {
   });
 });
 
-describe('Exam Mode results review', () => {
-  it('opens only from newly completed Exam Mode results and never writes progress while reviewing', () => {
+describe('results review', () => {
+  it('opens only from newly completed results and never writes progress while reviewing', () => {
     const { result, writes } = setup();
     act(() => result.current.startQuiz(quiz, 'exam'));
     act(() => result.current.finishQuiz());
@@ -86,14 +86,6 @@ describe('Exam Mode results review', () => {
 
     act(() => result.current.reviewResults());
     expect(result.current.view.page).toBe('subject');
-  });
-
-  it('does not open review for Fast Feedback results', () => {
-    const { result } = setup();
-    act(() => result.current.startQuiz(quiz, 'immediate'));
-    act(() => result.current.finishQuiz());
-    act(() => result.current.reviewResults());
-    expect(result.current.view.page).toBe('results');
   });
 });
 
