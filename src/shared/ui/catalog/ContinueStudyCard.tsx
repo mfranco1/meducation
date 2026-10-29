@@ -96,7 +96,7 @@ export function ContinueStudyCard({
           top: 0,
           width: '48%',
           zIndex: 0,
-          '& svg': { display: 'block', height: '100%', width: '100%' },
+          '& svg, & img': { display: 'block', height: '100%', width: '100%' },
           '@container continue-card (min-width: 478px) and (max-width: 637px)': { width: '44%' },
           '@container continue-card (max-width: 477px)': {
             bottom: 0,

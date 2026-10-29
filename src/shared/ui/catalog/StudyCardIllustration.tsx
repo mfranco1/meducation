@@ -1,8 +1,32 @@
 import { useId } from 'react';
 import { SubjectIcon } from './icons/SubjectIcon';
 
+// Subjects with a photographic hero in public/assets/illustrations; the rest use the drawn stack.
+const heroBySubjectId: Record<string, string> = { s7: 'patho-hero' };
+
 export function StudyCardIllustration({ subjectId }: { subjectId: string }) {
   const id = useId().replace(/:/g, '');
+  const hero = heroBySubjectId[subjectId];
+
+  if (hero) {
+    const src = `/assets/illustrations/${hero}`;
+    return (
+      <img
+        src={`${src}-600.webp`}
+        srcSet={`${src}-600.webp 600w, ${src}-1192.webp 1192w`}
+        sizes="(min-width: 1200px) 560px, 45vw"
+        alt=""
+        decoding="async"
+        loading="lazy"
+        style={{
+          maskImage: 'linear-gradient(to right, transparent, #000 45%)',
+          objectFit: 'cover',
+          objectPosition: 'right 55%',
+        }}
+      />
+    );
+  }
+
   const paper = `${id}-paper`;
   const orange = `${id}-orange`;
   const edge = `${id}-edge`;
