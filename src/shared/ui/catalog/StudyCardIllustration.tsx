@@ -2,7 +2,14 @@ import { useId } from 'react';
 import { SubjectIcon } from './icons/SubjectIcon';
 
 // Subjects with a photographic hero in public/assets/illustrations; the rest use the drawn stack.
-const heroBySubjectId: Record<string, string> = { s7: 'patho-hero', s9: 'pharm-hero' };
+const heroBySubjectId: Record<string, string> = {
+  s7: 'patho-hero',
+  s8: 'peds-hero',
+  s9: 'pharm-hero',
+  s10: 'physio-hero',
+  s11: 'prevmed-hero',
+  s12: 'surg-hero',
+};
 
 export function StudyCardIllustration({ subjectId }: { subjectId: string }) {
   const id = useId().replace(/:/g, '');
