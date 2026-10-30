@@ -15,9 +15,7 @@ import { downloadProgressJson, readProgressBackupFile, revokeProgressDownload } 
 export interface ProgressBackupPreview {
   backup: ProgressBackupV1;
   summary: ProgressBackupSummary;
-  currentBackup?: string;
   currentSummary?: ProgressBackupSummary;
-  currentProgressIssue?: 'corrupt' | 'invalid';
 }
 
 export interface ProgressBackupController {
@@ -34,7 +32,6 @@ export interface ProgressBackupController {
   close(): void;
   chooseFile(file: Pick<File, 'size' | 'text'>): Promise<void>;
   download(): void;
-  downloadCurrent(): void;
   restore(): void;
   requestReset(): void;
   cancelReset(): void;
@@ -125,9 +122,7 @@ export function useProgressBackup(): ProgressBackupController {
     setPreview({
       backup: freezeBackup(parsed.value),
       summary,
-      currentBackup: current.ok ? current.json : undefined,
       currentSummary: current.ok ? current.summary : undefined,
-      currentProgressIssue: current.ok ? undefined : current.error === 'invalid-progress' ? 'invalid' : 'corrupt',
     });
   }, []);
 
@@ -204,9 +199,6 @@ export function useProgressBackup(): ProgressBackupController {
     close,
     chooseFile,
     download,
-    downloadCurrent: () => {
-      if (preview?.currentBackup) downloadJson(preview.currentBackup);
-    },
     restore,
     requestReset,
     cancelReset,

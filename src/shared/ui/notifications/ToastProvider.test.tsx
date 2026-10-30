@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, act, waitFor } from '@testing-library/react';
+import { StrictMode, useEffect, useRef } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { ToastProvider, useToast } from './ToastProvider';
 
@@ -15,6 +16,30 @@ function Demo() {
 }
 
 describe('ToastProvider', () => {
+  it('fades a startup success toast after five seconds in Strict Mode', () => {
+    function StartupToast() {
+      const toast = useToast();
+      const shown = useRef(false);
+      useEffect(() => {
+        if (shown.current) return;
+        shown.current = true;
+        toast.show({ message: 'Progress reset', severity: 'success' });
+      }, [toast]);
+      return null;
+    }
+    vi.useFakeTimers();
+    try {
+      render(<StrictMode><ToastProvider><StartupToast /></ToastProvider></StrictMode>);
+      act(() => vi.advanceTimersByTime(4999));
+      expect(screen.getByRole('status')).toHaveTextContent('Progress reset');
+      act(() => vi.advanceTimersByTime(1));
+      act(() => vi.advanceTimersByTime(200));
+      expect(screen.queryByText('Progress reset')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('keeps manual error toasts until their accessible close button is activated', async () => {
     render(<ToastProvider><Demo /></ToastProvider>);
     fireEvent.click(screen.getByRole('button', { name: 'Show persistent' }));

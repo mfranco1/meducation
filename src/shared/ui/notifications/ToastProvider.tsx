@@ -22,7 +22,7 @@ export interface ToastOptions {
 interface ToastRecord extends Required<Omit<ToastOptions, 'message' | 'ttlMs' | 'action' | 'scope'>> {
   id: string;
   message: ReactNode;
-  ttlMs: number | null;
+  expiresAt: number | null;
   action?: ToastOptions['action'];
   scope: NonNullable<ToastOptions['scope']>;
   open: boolean;
@@ -40,7 +40,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastRecord[]>([]);
   const toastsRef = useRef(toasts);
   toastsRef.current = toasts;
-  const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const serial = useRef(0);
   const sequence = useRef(0);
   const theme = useTheme();
@@ -51,9 +50,6 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     if (!toast || !toast.open) return;
     if (reason === 'navigation' && toast.scope.type !== 'screen') return;
     if (toast.dismissPolicy === 'manual' && reason !== 'close' && reason !== 'navigation') return;
-    const timer = timers.current.get(id);
-    if (timer) clearTimeout(timer);
-    timers.current.delete(id);
     setToasts(current => {
       const next = current.map(item => item.id === id ? { ...item, open: false, revision: ++sequence.current } : item);
       toastsRef.current = next;
@@ -67,25 +63,20 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   }, [dismiss]);
   const show = useCallback((options: ToastOptions) => {
     const id = options.id ?? `toast-${++serial.current}`;
+    const ttlMs = options.ttlMs === undefined ? 5000 : options.ttlMs;
     const record: ToastRecord = {
       id, title: options.title ?? '', message: options.message, severity: options.severity ?? 'info',
-      position: options.position ?? 'bottom-right', ttlMs: options.ttlMs === undefined ? 5000 : options.ttlMs,
+      position: options.position ?? 'bottom-right', expiresAt: ttlMs !== null && ttlMs > 0 ? Date.now() + ttlMs : null,
       closeButton: options.closeButton ?? true, dismissPolicy: options.dismissPolicy ?? 'automatic', action: options.action,
       scope: options.scope ?? { type: 'global' }, open: true, revision: ++sequence.current,
     };
-    const oldTimer = timers.current.get(id);
-    if (oldTimer) clearTimeout(oldTimer);
-    timers.current.delete(id);
     setToasts(current => {
       const next = current.some(item => item.id === id) ? current.map(item => item.id === id ? record : item) : [...current, record];
       toastsRef.current = next;
       return next;
     });
-    if (record.dismissPolicy !== 'manual' && record.ttlMs !== null && record.ttlMs > 0) {
-      timers.current.set(id, setTimeout(() => dismiss(id, 'timeout'), record.ttlMs));
-    }
     return id;
-  }, [dismiss]);
+  }, []);
   const removeExited = useCallback((id: string, revision: number) => {
     setToasts(current => {
       const next = current.filter(item => item.id !== id || item.open || item.revision !== revision);
@@ -93,7 +84,11 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       return next;
     });
   }, []);
-  useEffect(() => () => { for (const timer of timers.current.values()) clearTimeout(timer); timers.current.clear(); }, []);
+  useEffect(() => {
+    const timers = toasts.filter(toast => toast.open && toast.dismissPolicy !== 'manual' && toast.expiresAt !== null)
+      .map(toast => setTimeout(() => dismiss(toast.id, 'timeout'), Math.max(0, toast.expiresAt! - Date.now())));
+    return () => { for (const timer of timers) clearTimeout(timer); };
+  }, [toasts, dismiss]);
   const api = useMemo(() => ({ show, dismiss, notifyNavigation }), [show, dismiss, notifyNavigation]);
   const byPosition = new Map<ToastPosition, ToastRecord[]>();
   for (const toast of toasts) byPosition.set(toast.position, [...(byPosition.get(toast.position) ?? []), toast]);

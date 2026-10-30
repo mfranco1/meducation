@@ -6,22 +6,6 @@ import { alpha } from '@mui/material/styles';
 import type { ProgressBackupController } from '../useProgressBackup';
 import { progressFileCapabilities } from '../progressBackupFiles';
 
-function replaceWarning(controller: ProgressBackupController): string | undefined {
-  const preview = controller.preview;
-  if (!preview) return undefined;
-  const { savedQuizzes, savedFlashcardDecks } = preview.summary;
-  const message = savedQuizzes === 0 && savedFlashcardDecks === 0
-    ? 'This backup has no saved progress. Replacing clears all quiz and flashcard progress in this browser.'
-    : savedQuizzes === 0
-      ? 'This backup has no quiz progress. Replacing clears current quiz progress in this browser.'
-      : savedFlashcardDecks === 0
-        ? 'This backup has no flashcard progress. Replacing clears current flashcard progress in this browser.'
-        : 'Replacing swaps all quiz and flashcard progress in this browser for this file. Nothing is merged.';
-  return preview.currentProgressIssue ? `${message} Some progress in this browser could not be read and will be lost.` : message;
-}
-
-const cardSx = { flex: 1, minWidth: 0, p: 2, border: 1, borderColor: 'divider', borderRadius: '14px', display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 1.5 };
-
 export function ProgressBackupDialog({ controller }: { controller: ProgressBackupController }) {
   const input = useRef<HTMLInputElement>(null);
   const resetEntry = useRef<HTMLButtonElement>(null);
@@ -31,7 +15,6 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
     wasResetStep.current = controller.resetStep;
   }, [controller.resetStep]);
   const preview = controller.preview;
-  const warning = replaceWarning(controller);
   const locked = controller.committing;
   const files = progressFileCapabilities();
   const current = preview?.currentSummary;
@@ -74,7 +57,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           {nothingToReset ? <Typography id="progress-backup-description">There is no saved progress to reset.</Typography> : <>
-            <Alert severity="error" id="progress-backup-description">This deletes all quiz and flashcard progress in this browser, including quizzes in progress. You cannot undo this.</Alert>
+            <Alert severity="error" id="progress-backup-description">This deletes all quiz and flashcard progress in this browser. You cannot undo this.</Alert>
             {summary
               ? <Table size="small" aria-label="Progress to delete">
                 <TableBody>
@@ -95,32 +78,20 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
       </DialogContent>
       <DialogActions>
         <Button autoFocus onClick={controller.cancelReset} disabled={locked}>Back</Button>
-        {!nothingToReset && <Button variant="contained" color="error" onClick={controller.reset} disabled={controller.busy || locked}>Reset progress</Button>}
+        {!nothingToReset && <Button variant="contained" color="error" onClick={controller.reset} disabled={controller.busy || locked}>Reset</Button>}
       </DialogActions>
     </> : <>
     <DialogContent>
       <Stack spacing={2} sx={{ pt: 1 }}>
         <Typography id="progress-backup-description" color="text.secondary">Your progress is saved in this browser only. Back it up to keep it safe or move it to another device.</Typography>
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-          <Box component="section" aria-labelledby="progress-backup-save" sx={cardSx}>
-            <Box>
-              <Typography id="progress-backup-save" variant="subtitle1" fontWeight={500}>Save a copy</Typography>
-              <Typography variant="body2" color="text.secondary">Download a small file you can keep.</Typography>
-            </Box>
-            <Button variant="contained" onClick={controller.download} disabled={controller.busy || locked || !files.download} sx={{ mt: 'auto' }}>Download backup</Button>
-          </Box>
-          <Box component="section" aria-labelledby="progress-backup-restore" sx={cardSx}>
-            <Box>
-              <Typography id="progress-backup-restore" variant="subtitle1" fontWeight={500}>Restore from a file</Typography>
-              <Typography variant="body2" color="text.secondary">Replaces progress in this browser.</Typography>
-            </Box>
-            <Button variant="outlined" onClick={() => input.current?.click()} disabled={controller.busy || locked || !files.read} sx={{ mt: 'auto' }}>Choose file</Button>
-            <Box component="input" ref={input} type="file" accept=".json,application/json" aria-label="Choose progress backup file" sx={{ display: 'none' }} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
-              const file = event.currentTarget.files?.[0];
-              event.currentTarget.value = '';
-              if (file) void controller.chooseFile(file);
-            }} />
-          </Box>
+          <Button variant="contained" onClick={controller.download} disabled={controller.busy || locked || !files.download}>Download Backup</Button>
+          <Button variant="outlined" onClick={() => input.current?.click()} disabled={controller.busy || locked || !files.read}>Restore Backup</Button>
+          <Box component="input" ref={input} type="file" accept=".json,application/json" aria-label="Choose progress backup file" sx={{ display: 'none' }} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+            const file = event.currentTarget.files?.[0];
+            event.currentTarget.value = '';
+            if (file) void controller.chooseFile(file);
+          }} />
         </Stack>
         {(!files.read || !files.download) && <Alert severity="warning">This browser cannot {!files.read ? 'read selected' : 'download'} progress files. Use another supported browser for that action.</Alert>}
         {messages}
@@ -144,9 +115,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
             </Table>
             <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>Backup from {new Date(preview.backup.exportedAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}</Typography>
           </Box>
-          <Alert severity="warning" action={preview.currentBackup
-            ? <Button color="inherit" size="small" onClick={controller.downloadCurrent} disabled={controller.busy || locked || !files.download}>Download current progress first</Button>
-            : undefined}>{warning}</Alert>
+          <Alert severity="warning">This replaces all quiz and flashcard progress in this browser. You cannot undo this.</Alert>
         </>}
         {!preview && <>
           <Divider />
@@ -162,7 +131,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
     </DialogContent>
     <DialogActions>
       <Button onClick={() => controller.close()} disabled={locked}>Cancel</Button>
-      {preview && <Button variant="contained" color="primary" onClick={controller.restore} disabled={controller.busy || locked}>Replace my progress</Button>}
+      {preview && <Button variant="contained" color="primary" onClick={controller.restore} disabled={controller.busy || locked}>Restore</Button>}
     </DialogActions>
     </>}
   </Dialog>;

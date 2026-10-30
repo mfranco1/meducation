@@ -41,10 +41,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
   useEffect(() => {
     const change = consumeProgressChangeNotice();
     if (!change) return;
-    const heading = document.querySelector<HTMLElement>('main h2');
-    heading?.setAttribute('tabindex', '-1');
-    heading?.focus();
-    toast.show({ message: change === 'reset' ? 'Progress reset.' : 'Progress restored.', severity: 'success', scope: { type: 'global' } });
+    toast.show({ message: change === 'reset' ? 'Progress reset' : 'Progress restored', severity: 'success', scope: { type: 'global' } });
   }, [toast]);
   const questionBank = runtimeQuestionBank;
   const contentSnapshotVersion = useSyncExternalStore(questionBank.subscribe, questionBank.getSnapshot);

@@ -15,7 +15,6 @@ function controller(overrides: Partial<ProgressBackupController> = {}): Progress
     close: vi.fn(),
     chooseFile: vi.fn(async () => undefined),
     download: vi.fn(),
-    downloadCurrent: vi.fn(),
     restore: vi.fn(),
     requestReset: vi.fn(),
     cancelReset: vi.fn(),
@@ -33,26 +32,21 @@ describe('progress backup dialog', () => {
         backup: fixture as unknown as ProgressBackupV1,
         summary: { savedQuizzes: 0, savedFlashcardDecks: 0, completions: 0 },
         currentSummary: { savedQuizzes: 9, savedFlashcardDecks: 4, completions: 61 },
-        currentBackup: '{"valid":true}',
       },
     });
     render(<ProgressBackupDialog controller={actions} />);
     expect(screen.getByRole('dialog', { name: 'Progress' })).toBeVisible();
-    expect(screen.getByText('This backup has no saved progress. Replacing clears all quiz and flashcard progress in this browser.')).toBeVisible();
+    expect(screen.getByText('This replaces all quiz and flashcard progress in this browser. You cannot undo this.')).toBeVisible();
     expect(within(screen.getByRole('table', { name: 'Backup comparison' })).getByRole('row', { name: 'Completions 0 61' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Download current progress first' }));
-    expect(actions.downloadCurrent).toHaveBeenCalledOnce();
-    fireEvent.click(screen.getByRole('button', { name: 'Replace my progress' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
     expect(actions.restore).toHaveBeenCalledOnce();
   });
 
-  it('omits the browser column and the current-backup action when current progress cannot be read', () => {
+  it('omits the browser column when current progress cannot be read', () => {
     render(<ProgressBackupDialog controller={controller({
-      preview: { backup: fixture as unknown as ProgressBackupV1, summary: { savedQuizzes: 3, savedFlashcardDecks: 1, completions: 5 }, currentProgressIssue: 'corrupt' },
+      preview: { backup: fixture as unknown as ProgressBackupV1, summary: { savedQuizzes: 3, savedFlashcardDecks: 1, completions: 5 } },
     })} />);
     expect(screen.queryByRole('columnheader', { name: 'This browser' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'Download current progress first' })).toBeNull();
-    expect(screen.getByText(/could not be read and will be lost/)).toBeVisible();
   });
 
   it('confirms a finished download politely', () => {
@@ -64,7 +58,7 @@ describe('progress backup dialog', () => {
     const actions = controller({ resetStep: true, resetSummary: { savedQuizzes: 2, savedFlashcardDecks: 1, completions: 7 } });
     render(<ProgressBackupDialog controller={actions} />);
     expect(within(screen.getByRole('table', { name: 'Progress to delete' })).getByRole('row', { name: 'Completions 7' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Reset progress' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(actions.reset).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     expect(actions.cancelReset).toHaveBeenCalledOnce();
@@ -74,7 +68,7 @@ describe('progress backup dialog', () => {
     render(<ProgressBackupDialog controller={controller({ resetStep: true, resetSummary: { savedQuizzes: 0, savedFlashcardDecks: 0, completions: 0 } })} />);
     expect(screen.getByText('There is no saved progress to reset.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Back' })).toBeVisible();
-    expect(screen.queryByRole('button', { name: 'Reset progress' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull();
   });
 
   it('prevents dismissal while a restore is in progress', () => {

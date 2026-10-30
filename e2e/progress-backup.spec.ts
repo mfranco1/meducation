@@ -13,7 +13,8 @@ async function seedProgress(page: Page) {
   const populated = JSON.parse(await readFile(populatedPath, 'utf8')) as { quiz: object; flashcards: object };
   await page.addInitScript(
     ({ quiz, flashcards, quizKey, flashcardsKey }) => {
-      if (localStorage.getItem(quizKey) === null) {
+      if (!sessionStorage.getItem('progress-seeded') && localStorage.getItem(quizKey) === null) {
+        sessionStorage.setItem('progress-seeded', '1');
         localStorage.setItem(quizKey, JSON.stringify({ ...quiz, revision: '00000000-0000-4000-8000-000000000001' }));
         localStorage.setItem(
           flashcardsKey,
@@ -46,7 +47,7 @@ test('downloads a backup and restores it into a fresh browser context', async ({
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Progress', exact: true }).click();
   const downloadPromise = page.waitForEvent('download');
-  await page.getByRole('button', { name: 'Download backup' }).click();
+  await page.getByRole('button', { name: 'Download Backup' }).click();
   const download = await downloadPromise;
   expect(download.suggestedFilename()).toMatch(/^meducation-progress-\d{4}-\d{2}-\d{2}\.json$/);
   const downloadPath = await download.path();
@@ -68,14 +69,33 @@ test('downloads a backup and restores it into a fresh browser context', async ({
     await target.getByLabel('Choose progress backup file').setInputFiles(downloadPath!);
     await expect(target.getByRole('table', { name: 'Backup comparison' })).toBeVisible();
     const reload = target.waitForNavigation({ waitUntil: 'load' });
-    await target.getByRole('button', { name: 'Replace my progress' }).click();
+    await target.getByRole('button', { name: 'Restore', exact: true }).click();
     await reload;
-    await expect(target.getByRole('heading', { name: 'All Subjects' })).toBeFocused();
-    await expect(target.getByText('Progress restored.', { exact: true })).toBeVisible();
+    await expect(target.getByRole('heading', { name: 'All Subjects' })).not.toBeFocused();
+    await expect(target.getByText('Progress restored', { exact: true })).toBeVisible();
+    await expect(target.getByText('Progress restored', { exact: true })).not.toBeVisible({ timeout: 6500 });
     expect(await portableProgress(target)).toEqual({ quiz: exported.quiz, flashcards: exported.flashcards });
   } finally {
     await fresh.close();
   }
+});
+
+test('resets progress and dismisses its success toast after five seconds', async ({ page }) => {
+  await seedProgress(page);
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Progress', exact: true }).click();
+  await page.getByRole('button', { name: 'Reset progress', exact: true }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'This deletes all quiz and flashcard progress in this browser. You cannot undo this.',
+  );
+  const reload = page.waitForNavigation({ waitUntil: 'load' });
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
+  await reload;
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).not.toBeFocused();
+  await expect(page.getByText('Progress reset', { exact: true })).toBeVisible();
+  expect(await stored(page, quizKey)).toBeNull();
+  expect(await stored(page, flashcardsKey)).toBeNull();
+  await expect(page.getByText('Progress reset', { exact: true })).not.toBeVisible({ timeout: 6500 });
 });
 
 test('rejects an invalid backup file without changing progress', async ({ page }) => {
@@ -91,7 +111,7 @@ test('rejects an invalid backup file without changing progress', async ({ page }
   });
   await expect(page.getByRole('alert').filter({ hasText: 'not a Meducation progress backup' })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Backup comparison' })).toHaveCount(0);
-  await expect(page.getByRole('button', { name: 'Replace my progress' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Restore', exact: true })).toHaveCount(0);
   expect([await stored(page, quizKey), await stored(page, flashcardsKey)]).toEqual(before);
 });
 
