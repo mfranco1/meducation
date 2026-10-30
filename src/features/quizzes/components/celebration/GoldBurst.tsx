@@ -1,5 +1,6 @@
 import { keyframes } from '@emotion/react';
 import { alpha, Box } from '@mui/material';
+import type { CSSProperties } from 'react';
 import { easing, useReducedMotion } from '../../../../shared/ui/motion';
 
 export type CelebrationLevel = 1 | 2 | 3 | 4 | 5;
@@ -46,22 +47,42 @@ export function GoldBurst({ level, durationMs, scale = 1, sparksOnly }: { level:
   const glowSize = 72 * scale;
   const ringSize = 24 * scale;
   const sparkMs = Math.round(durationMs * .55);
-  const layer = { position: 'absolute', left: '50%', top: '50%', borderRadius: '50%', pointerEvents: 'none' } as const;
-
-  return <Box data-testid="gold-burst" aria-hidden sx={{ position: 'absolute', inset: 0, overflow: 'visible', pointerEvents: 'none', filter: t => `drop-shadow(0 0 2px ${alpha(t.palette.reward.main, .55)})` }}>
-    {hasGlow && <Box sx={{ ...layer, width: glowSize, height: glowSize, ml: `${-glowSize / 2}px`, mt: `${-glowSize / 2}px`, background: t => `radial-gradient(circle, ${alpha(t.palette.reward.light, .55)} 0%, transparent 70%)`, animation: `${glow} ${durationMs}ms ${easing.out} both` }} />}
-    {Array.from({ length: rings }, (_, i) => <Box key={i} sx={{ ...layer, width: ringSize, height: ringSize, ml: `${-ringSize / 2}px`, mt: `${-ringSize / 2}px`, background: t => `radial-gradient(circle, transparent 62%, ${t.palette.reward.main} 70%, ${t.palette.reward.light} 78%, transparent 86%)`, animation: `${ring} 1300ms ${easing.out} ${300 + i * 350}ms both` }} />)}
+  return <Box data-testid="gold-burst" aria-hidden
+    style={{ '--burst-duration': `${durationMs}ms`, '--spark-duration': `${sparkMs}ms`, '--glow-size': `${glowSize}px`, '--ring-size': `${ringSize}px` } as CSSProperties}
+    sx={{
+      position: 'absolute', inset: 0, overflow: 'visible', pointerEvents: 'none', filter: t => `drop-shadow(0 0 2px ${alpha(t.palette.reward.main, .55)})`,
+      '& > span': { position: 'absolute', left: '50%', top: '50%', borderRadius: '50%', pointerEvents: 'none' },
+      '& > .gold-glow': {
+        width: 'var(--glow-size)', height: 'var(--glow-size)', margin: 'calc(var(--glow-size) / -2)',
+        background: t => `radial-gradient(circle, ${alpha(t.palette.reward.light, .55)} 0%, transparent 70%)`, animation: `${glow} var(--burst-duration) ${easing.out} both`,
+      },
+      '& > .gold-ring': {
+        width: 'var(--ring-size)', height: 'var(--ring-size)', margin: 'calc(var(--ring-size) / -2)',
+        background: t => `radial-gradient(circle, transparent 62%, ${t.palette.reward.main} 70%, ${t.palette.reward.light} 78%, transparent 86%)`, animation: `${ring} 1300ms ${easing.out} var(--delay) both`,
+      },
+      '& > .gold-spark': {
+        width: 'var(--size)', height: 'var(--size)', margin: 'calc(var(--size) / -2)',
+        background: t => `radial-gradient(circle at 40% 40%, ${t.palette.reward.light} 0%, ${t.palette.reward.main} 100%)`, animation: `${spark} var(--spark-duration) ${easing.out} var(--delay) both`,
+      },
+      '& > .gold-star': { borderRadius: 0, clipPath: star },
+      '& > .gold-ember': {
+        width: 4, height: 4, ml: 'var(--offset)', mt: '-28px',
+        background: t => `radial-gradient(circle, ${t.palette.reward.light}, ${t.palette.reward.main})`, animation: `${ember} 1300ms ${easing.out} var(--delay) both`,
+      },
+    }}
+  >
+    {hasGlow && <span className="gold-glow" />}
+    {Array.from({ length: rings }, (_, i) => <span key={i} className="gold-ring" style={{ '--delay': `${300 + i * 350}ms` } as CSSProperties} />)}
     {Array.from({ length: sparks }, (_, i) => {
       const angle = ((i / sparks) * 360 + ((i * 37) % 11) - 5) * Math.PI / 180;
       const distance = reach * (.55 + ((i * 7) % 9) / 16);
       const isStar = i % 2 === 0;
       const size = isStar ? 5 + (i % 3) : 2 + (i % 2);
-      return <Box key={i} sx={{
-        ...layer, '--spark-x': `${Math.round(Math.cos(angle) * distance)}px`, '--spark-y': `${Math.round(Math.sin(angle) * distance)}px`,
-        width: size, height: size, ml: `${-size / 2}px`, mt: `${-size / 2}px`, borderRadius: isStar ? 0 : '50%', clipPath: isStar ? star : undefined,
-        background: t => `radial-gradient(circle at 40% 40%, ${t.palette.reward.light} 0%, ${t.palette.reward.main} 100%)`, animation: `${spark} ${sparkMs}ms ${easing.out} ${180 + (i % waves) * 450 + Math.round(i / sparks * 360)}ms both`,
-      }} />;
+      return <span key={i} className={isStar ? 'gold-spark gold-star' : 'gold-spark'} style={{
+        '--spark-x': `${Math.round(Math.cos(angle) * distance)}px`, '--spark-y': `${Math.round(Math.sin(angle) * distance)}px`,
+        '--size': `${size}px`, '--delay': `${180 + (i % waves) * 450 + Math.round(i / sparks * 360)}ms`,
+      } as CSSProperties} />;
     })}
-    {Array.from({ length: embers }, (_, i) => <Box key={i} sx={{ ...layer, width: 4, height: 4, ml: `${(i - 1) * 56}px`, mt: '-28px', background: t => `radial-gradient(circle, ${t.palette.reward.light}, ${t.palette.reward.main})`, animation: `${ember} 1300ms ${easing.out} ${500 + i * 160}ms both` }} />)}
+    {Array.from({ length: embers }, (_, i) => <span key={i} className="gold-ember" style={{ '--offset': `${(i - 1) * 56}px`, '--delay': `${500 + i * 160}ms` } as CSSProperties} />)}
   </Box>;
 }

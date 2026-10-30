@@ -1,6 +1,6 @@
 import { keyframes } from '@emotion/react';
 import { alpha, Box, Stack, Typography, useTheme } from '@mui/material';
-import { useEffect, useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { brand } from '../../../../shared/brand';
 import { easing, sizzle, useReducedMotion } from '../../../../shared/ui/motion';
 import { Crackle } from '../../../../shared/ui/transitions/Crackle';
@@ -97,26 +97,44 @@ function StreakFlame({ size, animated }: { size: number; animated: boolean }) {
   </svg>;
 }
 
-export function CelebrationOverlay({ open, title, message, variant, level, durationMs = durations[level - 1], contained = false, onComplete }: CelebrationOverlayProps) {
-  const reducedMotion = useReducedMotion();
-  useEffect(() => {
-    if (!open || !onComplete) return;
-    const timer = window.setTimeout(onComplete, durationMs);
-    return () => window.clearTimeout(timer);
-  }, [durationMs, onComplete, open]);
+export function CelebrationOverlay(props: CelebrationOverlayProps) {
+  return props.open ? <CelebrationPlayback {...props} /> : null;
+}
 
-  if (!open) return null;
+function CelebrationPlayback({ title, message, variant, level, durationMs = durations[level - 1], contained = false, onComplete }: CelebrationOverlayProps) {
+  const reducedMotion = useReducedMotion();
+  const root = useRef<HTMLDivElement>(null);
+  const completed = useRef(false);
+  useEffect(() => {
+    // Prepare styles and layout before advancing any of the animation clocks.
+    // The attribute starts playback without rerendering the particle tree.
+    let frame = requestAnimationFrame(() => {
+      frame = requestAnimationFrame(() => {
+        if (root.current) root.current.dataset.playing = 'true';
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, []);
+
   const size = flameSizes[level - 1];
   const perfect = variant === 'perfect';
   const sizzling = perfect && !reducedMotion;
   const titleSizzling = level === 5 && !reducedMotion;
   return <Box
+    ref={root}
+    data-playing="false"
     role="status"
     aria-live="polite"
     aria-atomic="true"
-    sx={{ position: contained ? 'absolute' : 'fixed', zIndex: theme => theme.zIndex.snackbar, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'min(calc(100% - 32px), 390px)', pointerEvents: 'none' }}
+    sx={{ position: contained ? 'absolute' : 'fixed', zIndex: theme => theme.zIndex.snackbar, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'min(calc(100% - 32px), 390px)', pointerEvents: 'none', '&[data-playing="false"]': { opacity: 0, '& *, & *::before, & *::after': { animationPlayState: 'paused !important' } } }}
   >
     <Box
+      data-testid="celebration-card"
+      onAnimationEnd={event => {
+        if (event.target !== event.currentTarget || root.current?.dataset.playing !== 'true' || completed.current) return;
+        completed.current = true;
+        onComplete?.();
+      }}
       sx={{
         position: 'relative', border: '1px solid', borderColor: level >= 4 ? 'reward.main' : '#eee5df', borderRadius: 1, bgcolor: 'background.paper', px: 2.5, py: 1.75,
         boxShadow: t => `0 2px 6px ${alpha(t.palette.primary.dark, .08)}, 0 16px 40px ${alpha(t.palette.primary.dark, .14)}${perfect ? `, 0 0 0 1px ${alpha(t.palette.reward.light, .8)}, 0 0 18px ${alpha(t.palette.reward.main, .45)}` : ''}`,

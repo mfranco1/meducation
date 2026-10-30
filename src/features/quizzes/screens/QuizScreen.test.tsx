@@ -29,6 +29,12 @@ function QuizHarness({ items = questions }: { items?: Question[] }) {
 const choose = (choice: 'A' | 'B', index: number) => fireEvent.click(screen.getByRole('radio', { name: new RegExp(`${choice}\\. ${choice === 'A' ? 'Incorrect' : 'Correct'} ${index}`) }));
 const continueQuiz = () => fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
+// React selects the prefixed event in jsdom, which has no AnimationEvent constructor.
+const finishCelebration = () => {
+  const card = screen.getByTestId('celebration-card');
+  fireEvent(card, new Event('AnimationEvent' in window ? 'animationend' : 'webkitAnimationEnd', { bubbles: true }));
+};
+
 function renderQuizForSubmission({ attempt = startingAttempt, onFinish = vi.fn() }: { attempt?: Attempt; onFinish?: () => void } = {}) {
   render(<ThemeProvider theme={theme}><QuizScreen quiz={quiz} attempt={attempt} index={questions.length - 1} questions={questions} onCheckpoint={() => {}} onFinish={onFinish} onRequestExit={() => {}} /></ThemeProvider>);
   return onFinish;
@@ -104,6 +110,7 @@ describe('quiz streak celebrations', () => {
     act(() => vi.advanceTimersByTime(1500));
     expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
     act(() => vi.advanceTimersByTime(1000));
+    finishCelebration();
     expect(screen.queryByRole('status')).toBeNull();
   }, 10_000);
 
@@ -119,10 +126,11 @@ describe('quiz streak celebrations', () => {
     act(() => vi.advanceTimersByTime(1500));
     expect(screen.getByRole('status')).toHaveTextContent('5-in-a-row!');
     act(() => vi.advanceTimersByTime(1000));
+    finishCelebration();
     expect(screen.queryByRole('status')).toBeNull();
   }, 10_000);
 
-  it('dismisses a reward on time while the learner navigates, answers and flags questions', () => {
+  it('dismisses a reward when playback ends while the learner navigates, answers and flags questions', () => {
     vi.useFakeTimers();
     render(<QuizHarness />);
     choose('B', 1); continueQuiz();
@@ -135,6 +143,7 @@ describe('quiz streak celebrations', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Flag question' }));
     expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
     act(() => vi.advanceTimersByTime(500));
+    finishCelebration();
     expect(screen.queryByRole('status')).toBeNull();
   }, 10_000);
 
@@ -145,6 +154,7 @@ describe('quiz streak celebrations', () => {
     choose('B', 5);
     expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
     act(() => vi.advanceTimersByTime(3200));
+    finishCelebration();
     expect(screen.queryByRole('status')).toBeNull();
     vi.useRealTimers();
   }, 10_000);

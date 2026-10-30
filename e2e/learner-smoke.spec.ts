@@ -452,6 +452,10 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   await expect(page.getByRole('radio', { name: /Four/ })).toBeChecked();
   await showQuestion(page, /Which choice names the heart/);
   await page.getByRole('radio', { name: /Heart/ }).check();
+  const celebration = page.getByRole('status').filter({ hasText: 'Perfect Test!' });
+  await expect(celebration).toBeVisible();
+  await expect(page.getByText('The heart pumps blood.')).toBeVisible();
+  await expect(celebration).toHaveCount(0);
   await expect(page.getByRole('button', { name: /^(Continue|Finish)$/ })).toBeVisible();
   if (await page.getByRole('button', { name: 'Continue' }).isVisible())
     await page.getByRole('button', { name: 'Continue' }).click();
