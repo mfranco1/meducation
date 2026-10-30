@@ -91,7 +91,7 @@ export function SampleCases({ onStart, onStep }: { onStart: () => void; onStep: 
       <SwapTransition swapKey={index}>
         <QuestionCard key={question.id} question={question} response={response} showFeedback={response.locked} onSelect={select} burstOnCorrect keyboardShortcuts shortcutsDisabled={!active || Boolean(celebration)} />
       </SwapTransition>
-      {celebration && <CelebrationOverlay key={celebration.id} open contained title={celebration.title} message={celebration.message} variant={celebration.variant} level={celebration.level} onComplete={() => setCelebration(undefined)} />}
+      {celebration && <CelebrationOverlay key={celebration.id} open horizontalAnchor={region.current} title={celebration.title} message={celebration.message} variant={celebration.variant} level={celebration.level} onComplete={() => setCelebration(undefined)} />}
     </Box>
     <StudyNavigationFooter index={index} total={cases.length} onPrevious={() => go(index - 1)} onNext={() => go(index + 1)} onFinish={onStart} finishLabel="Start studying" nextLabel={response.locked ? 'Continue' : 'Next'} nextButtonRef={nextRef} finishButtonRef={finishRef} />
     {answers.length === cases.length && <Stack direction="row" alignItems="baseline" spacing={1.5} sx={{ mt: 2, justifyContent: 'flex-end' }}>

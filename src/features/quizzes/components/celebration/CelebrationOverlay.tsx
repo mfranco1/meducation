@@ -1,6 +1,6 @@
 import { keyframes } from '@emotion/react';
 import { alpha, Box, Stack, Typography, useTheme } from '@mui/material';
-import { useEffect, useId, useRef } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { brand } from '../../../../shared/brand';
 import { easing, sizzle, useReducedMotion } from '../../../../shared/ui/motion';
 import { Crackle } from '../../../../shared/ui/transitions/Crackle';
@@ -15,8 +15,8 @@ export interface CelebrationOverlayProps {
   variant: CelebrationVariant;
   level: CelebrationLevel;
   durationMs?: number;
-  /** Centers on the nearest positioned ancestor instead of the viewport. */
-  contained?: boolean;
+  /** Centers horizontally within this element while staying at the viewport's vertical center. */
+  horizontalAnchor?: HTMLElement | null;
   onComplete?: () => void;
 }
 
@@ -101,10 +101,31 @@ export function CelebrationOverlay(props: CelebrationOverlayProps) {
   return props.open ? <CelebrationPlayback {...props} /> : null;
 }
 
-function CelebrationPlayback({ title, message, variant, level, durationMs = durations[level - 1], contained = false, onComplete }: CelebrationOverlayProps) {
+function CelebrationPlayback({ title, message, variant, level, durationMs = durations[level - 1], horizontalAnchor, onComplete }: CelebrationOverlayProps) {
   const reducedMotion = useReducedMotion();
   const root = useRef<HTMLDivElement>(null);
   const completed = useRef(false);
+  useLayoutEffect(() => {
+    const element = root.current;
+    if (!horizontalAnchor || !element) return;
+    const align = () => {
+      const { left, width } = horizontalAnchor.getBoundingClientRect();
+      element.style.left = `${left + width / 2}px`;
+      element.style.width = `${Math.min(width - 32, 390)}px`;
+    };
+    align();
+    const observer = new ResizeObserver(align);
+    observer.observe(horizontalAnchor);
+    window.addEventListener('resize', align);
+    window.addEventListener('scroll', align, true);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', align);
+      window.removeEventListener('scroll', align, true);
+      element.style.removeProperty('left');
+      element.style.removeProperty('width');
+    };
+  }, [horizontalAnchor]);
   useEffect(() => {
     // Prepare styles and layout before advancing any of the animation clocks.
     // The attribute starts playback without rerendering the particle tree.
@@ -126,7 +147,7 @@ function CelebrationPlayback({ title, message, variant, level, durationMs = dura
     role="status"
     aria-live="polite"
     aria-atomic="true"
-    sx={{ position: contained ? 'absolute' : 'fixed', zIndex: theme => theme.zIndex.snackbar, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'min(calc(100% - 32px), 390px)', pointerEvents: 'none', '&[data-playing="false"]': { opacity: 0, '& *, & *::before, & *::after': { animationPlayState: 'paused !important' } } }}
+    sx={{ position: 'fixed', zIndex: theme => theme.zIndex.snackbar, top: '50%', left: '50%', transform: 'translate(-50%, -50%)', width: 'min(calc(100% - 32px), 390px)', pointerEvents: 'none', '&[data-playing="false"]': { opacity: 0, '& *, & *::before, & *::after': { animationPlayState: 'paused !important' } } }}
   >
     <Box
       data-testid="celebration-card"

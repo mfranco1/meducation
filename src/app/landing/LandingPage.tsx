@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { keyframes } from '@emotion/react';
 import { alpha, Box, Button, Typography } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { SubjectIcon } from '../../shared/ui/catalog/icons/SubjectIcon';
 import { LegalFooter } from '../../shared/ui/catalog/LegalFooter';
@@ -17,7 +18,7 @@ const section = { ...grid, py: { xs: 6, md: 10 }, borderTop: hairline } as const
 
 const successMain = theme.palette.success.main;
 
-const notes = ['Choose an answer', 'Each question has an explanation', 'Celebrate your progress with streaks'];
+const notes = ['Choose an answer', 'Read the explanation', 'Celebrate your progress'];
 
 const stepPulse = keyframes`
   0% { transform: scale(1); box-shadow: 0 0 0 0 ${alpha(successMain, .4)}; }
@@ -25,7 +26,7 @@ const stepPulse = keyframes`
   100% { transform: scale(1); box-shadow: 0 0 0 10px ${alpha(successMain, 0)}; }
 `;
 
-/** Numbered circles joined by a line. The first `done` steps turn green with one pulse. */
+/** Numbered circles joined by a line. Completed steps show green checks with one pulse. */
 function Steps({ items, label, done = 0, sx }: { items: string[]; label?: string; done?: number; sx?: object }) {
   return <Box component="ol" aria-label={label} sx={{ listStyle: 'none', p: 0, m: 0, ...sx }}>
     {items.map((item, position) => {
@@ -40,7 +41,7 @@ function Steps({ items, label, done = 0, sx }: { items: string[]; label?: string
           borderColor: complete ? 'success.main' : 'text.primary', bgcolor: complete ? 'feedback.correct.surface' : 'background.paper', color: complete ? 'success.dark' : 'text.primary',
           transition: 'border-color 300ms ease-out, background-color 300ms ease-out, color 300ms ease-out',
           animation: complete ? `${stepPulse} 600ms ${easing.out}` : undefined, [reducedMotion]: { transition: 'none', animation: 'none' },
-        }}>{position + 1}</Box>
+        }}>{complete ? <CheckRoundedIcon sx={{ fontSize: 20 }} /> : position + 1}</Box>
         <Typography sx={{ ...type.body, pt: '4px' }}>{item}{complete && <Box component="span" sx={visuallyHidden}> (done)</Box>}</Typography>
       </Box>;
     })}

@@ -47,7 +47,7 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 
 ## Landing page
 
-- A frame around unmodified product components (`QuestionCard`, `FlashcardStudyCard`, `StudyNavigatorTile`, `StudyNavigationFooter`, `CelebrationOverlay`, `SubjectIcon`). Its type scale lives in `src/app/landing/typography.ts` and uses the theme's sans and heading weights. Both samples share the study header (position, subject, navigator tiles), and the streak celebration centers on the question card. Numbered lists use circled numbers joined by a line.
+- A frame around unmodified product components (`QuestionCard`, `FlashcardStudyCard`, `StudyNavigatorTile`, `StudyNavigationFooter`, `CelebrationOverlay`, `SubjectIcon`). Its type scale lives in `src/app/landing/typography.ts` and uses the theme's sans and heading weights. Both samples share the study header (position, subject, navigator tiles). The streak celebration centers vertically in the viewport and horizontally in the sample quiz section. Numbered lists use circled numbers joined by a line; completed hero steps show green checks.
 - 12-column grid at `md` and up, a single column below. Rules, not cards, group page content: a 2px dark rule under the masthead and above the closing call to action, 1px choice-border hairlines between sections.
 - Orange marks only the **Start studying** buttons, the brand and the current case tile. On phones a sticky Start studying bar appears once the hero button scrolls away.
 - Each sample takes the same keys as its study screen (1-4 or A-D, Space, Enter, arrows) once the visitor clicks or focuses inside it, until they click or focus elsewhere or scroll it away. Answering scrolls the feedback header into view on short screens.
