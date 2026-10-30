@@ -1,7 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { theme } from '../../../shared/theme';
 import { QuizScreen } from './QuizScreen';
 import type { Attempt, Question, Quiz } from '../../../domain/types';
@@ -35,6 +35,7 @@ function renderQuizForSubmission({ attempt = startingAttempt, onFinish = vi.fn()
 }
 
 describe('quiz streak celebrations', () => {
+  afterEach(() => vi.useRealTimers());
   it('uses Left and Right for checkpoint navigation without selecting answers or submitting', () => {
     const onCheckpoint = vi.fn();
     const onFinish = vi.fn();
@@ -96,12 +97,45 @@ describe('quiz streak celebrations', () => {
     expect(screen.getByTestId('gold-burst')).toBeInTheDocument();
     continueQuiz();
     choose('A', 4); continueQuiz();
-    act(() => vi.advanceTimersByTime(2500));
+    act(() => vi.advanceTimersByTime(1000));
     choose('B', 5); continueQuiz();
     choose('B', 6); continueQuiz();
     choose('B', 7);
+    act(() => vi.advanceTimersByTime(1500));
     expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
-    vi.useRealTimers();
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.queryByRole('status')).toBeNull();
+  }, 10_000);
+
+  it('replaces an active streak reward immediately and gives the new reward its full lifetime', () => {
+    vi.useFakeTimers();
+    render(<QuizHarness />);
+    for (let index = 1; index <= 3; index++) { choose('B', index); continueQuiz(); }
+    expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
+    act(() => vi.advanceTimersByTime(1000));
+    choose('B', 4); continueQuiz();
+    choose('B', 5);
+    expect(screen.getByRole('status')).toHaveTextContent('5-in-a-row!');
+    act(() => vi.advanceTimersByTime(1500));
+    expect(screen.getByRole('status')).toHaveTextContent('5-in-a-row!');
+    act(() => vi.advanceTimersByTime(1000));
+    expect(screen.queryByRole('status')).toBeNull();
+  }, 10_000);
+
+  it('dismisses a reward on time while the learner navigates, answers and flags questions', () => {
+    vi.useFakeTimers();
+    render(<QuizHarness />);
+    choose('B', 1); continueQuiz();
+    choose('B', 2); continueQuiz();
+    choose('B', 3);
+    act(() => vi.advanceTimersByTime(1000));
+    continueQuiz();
+    choose('B', 4);
+    act(() => vi.advanceTimersByTime(1000));
+    fireEvent.click(screen.getByRole('button', { name: 'Flag question' }));
+    expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
+    act(() => vi.advanceTimersByTime(500));
+    expect(screen.queryByRole('status')).toBeNull();
   }, 10_000);
 
   it('plays only Perfect Test when the last answer also reaches a streak milestone', () => {
@@ -109,8 +143,6 @@ describe('quiz streak celebrations', () => {
     render(<QuizHarness items={questions.slice(0, 5)} />);
     for (let index = 1; index <= 4; index++) { choose('B', index); continueQuiz(); }
     choose('B', 5);
-    expect(screen.getByRole('status')).toHaveTextContent('3-in-a-row!');
-    act(() => vi.advanceTimersByTime(2500));
     expect(screen.getByRole('status')).toHaveTextContent('Perfect Test!');
     act(() => vi.advanceTimersByTime(3200));
     expect(screen.queryByRole('status')).toBeNull();

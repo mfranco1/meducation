@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Container } from '@mui/material';
 import { blankResponse, commitAnswer, isFullyAnsweredFastFeedback, isPerfectScore, scoreAttempt, updateResponse } from '../../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../../domain/types';
@@ -26,7 +26,9 @@ interface QuizScreenProps {
 export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, onRequestExit }: QuizScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
-  const [celebrationQueue, setCelebrationQueue] = useState<CelebrationEvent[]>([]);
+  const [celebration, setCelebration] = useState<CelebrationEvent & { playbackId: number }>();
+  const celebrationSequence = useRef(0);
+  const clearCelebration = useCallback(() => setCelebration(undefined), []);
   const [submitOpen, setSubmitOpen] = useState(false);
   const submissionRequested = useRef(false);
   const nextRef = useRef<HTMLButtonElement>(null);
@@ -41,7 +43,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     onCheckpoint(result.attempt);
     const perfect = isFullyAnsweredFastFeedback(result.attempt, questions) && isPerfectScore(scoreAttempt(result.attempt, questions));
     const celebration = perfect ? perfectTestCelebration() : result.streakMilestone && celebrationForStreak(result.streakMilestone);
-    if (celebration) setCelebrationQueue(queue => [...queue, celebration]);
+    if (celebration) setCelebration({ ...celebration, playbackId: ++celebrationSequence.current });
   };
   const toggleFlag = () => onCheckpoint(updateResponse(attempt, { ...response, flagged: !response.flagged }));
   const navigateToQuestion = (targetIndex: number) => {
@@ -68,9 +70,8 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     onNavigate={navigateToQuestion}
   />;
 
-  const celebration = celebrationQueue[0];
   return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
-    {celebration && <CelebrationOverlay key={celebration.id} open title={celebration.title} message={celebration.message} variant={celebration.variant} level={celebration.level} onComplete={() => setCelebrationQueue(queue => queue.slice(1))} />}
+    {celebration && <CelebrationOverlay key={celebration.playbackId} open title={celebration.title} message={celebration.message} variant={celebration.variant} level={celebration.level} onComplete={clearCelebration} />}
     <StudyHeader itemLabel="Question" index={index} total={questions.length} exitLabel="Leave test" onExit={onRequestExit} completed={questions.filter(item => attempt.responses[item.id]?.selectedChoiceId).length} trailing={<Stopwatch attempt={attempt} />} />
     <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
         <SwapTransition swapKey={index}><QuestionCard key={question.id} question={question} response={response} showFeedback={feedback} burstOnCorrect={attempt.feedbackMode === 'immediate'} keyboardShortcuts shortcutsDisabled={navigatorOpen || submitOpen} onSelect={select} onToggleFlag={toggleFlag} /></SwapTransition>
