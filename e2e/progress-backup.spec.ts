@@ -1,3 +1,4 @@
+import { gzipSync, gunzipSync } from 'node:zlib';
 import { readFile } from 'node:fs/promises';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -49,9 +50,9 @@ test('downloads a backup and restores it into a fresh browser context', async ({
   const downloadPromise = page.waitForEvent('download');
   await page.getByRole('button', { name: 'Download Backup' }).click();
   const download = await downloadPromise;
-  expect(download.suggestedFilename()).toMatch(/^meducation-progress-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(download.suggestedFilename()).toMatch(/^meducation-progress-\d{4}-\d{2}-\d{2}\.json\.gz$/);
   const downloadPath = await download.path();
-  const exported = JSON.parse(await readFile(downloadPath!, 'utf8')) as {
+  const exported = JSON.parse(gunzipSync(await readFile(downloadPath!)).toString()) as {
     format: string;
     quiz: object;
     flashcards: object;
@@ -105,9 +106,9 @@ test('rejects an invalid backup file without changing progress', async ({ page }
   const before = [await stored(page, quizKey), await stored(page, flashcardsKey)];
   await page.getByRole('button', { name: 'Progress', exact: true }).click();
   await page.getByLabel('Choose progress backup file').setInputFiles({
-    name: 'bad.json',
-    mimeType: 'application/json',
-    buffer: Buffer.from('{"format":"something-else"}'),
+    name: 'bad.json.gz',
+    mimeType: 'application/gzip',
+    buffer: gzipSync('{"format":"something-else"}'),
   });
   await expect(page.getByRole('alert').filter({ hasText: 'not a Meducation progress backup' })).toBeVisible();
   await expect(page.getByRole('table', { name: 'Backup comparison' })).toHaveCount(0);
@@ -121,7 +122,11 @@ test('cancelling at the preview leaves progress intact', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   const before = [await stored(page, quizKey), await stored(page, flashcardsKey)];
   await page.getByRole('button', { name: 'Progress', exact: true }).click();
-  await page.getByLabel('Choose progress backup file').setInputFiles('tests/fixtures/progress-backups/empty-v1.json');
+  await page.getByLabel('Choose progress backup file').setInputFiles({
+    name: 'empty.json.gz',
+    mimeType: 'application/gzip',
+    buffer: gzipSync(await readFile('tests/fixtures/progress-backups/empty-v1.json')),
+  });
   await expect(page.getByRole('table', { name: 'Backup comparison' })).toBeVisible();
   await page.getByRole('button', { name: 'Cancel' }).click();
   await expect(page.getByRole('dialog', { name: 'Progress', exact: true })).toHaveCount(0);

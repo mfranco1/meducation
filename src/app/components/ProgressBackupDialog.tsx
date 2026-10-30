@@ -87,7 +87,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
           <Button variant="contained" onClick={controller.download} disabled={controller.busy || locked || !files.download}>Download Backup</Button>
           <Button variant="outlined" onClick={() => input.current?.click()} disabled={controller.busy || locked || !files.read}>Restore Backup</Button>
-          <Box component="input" ref={input} type="file" accept=".json,application/json" aria-label="Choose progress backup file" sx={{ display: 'none' }} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
+          <Box component="input" ref={input} type="file" accept=".gz,application/gzip" aria-label="Choose progress backup file" sx={{ display: 'none' }} onChange={(event: React.ChangeEvent<HTMLInputElement>) => {
             const file = event.currentTarget.files?.[0];
             event.currentTarget.value = '';
             if (file) void controller.chooseFile(file);

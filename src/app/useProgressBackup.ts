@@ -10,7 +10,7 @@ import {
   type ProgressBackupSummary,
   type ProgressBackupV1,
 } from '../persistence/progressBackupCodec';
-import { downloadProgressJson, readProgressBackupFile, revokeProgressDownload } from './progressBackupFiles';
+import { compressProgressBackup, downloadProgressBackup, readProgressBackupFile, revokeProgressDownload } from './progressBackupFiles';
 
 export interface ProgressBackupPreview {
   backup: ProgressBackupV1;
@@ -30,8 +30,8 @@ export interface ProgressBackupController {
   error?: string;
   show(): void;
   close(): void;
-  chooseFile(file: Pick<File, 'size' | 'text'>): Promise<void>;
-  download(): void;
+  chooseFile(file: Pick<File, 'size' | 'stream'>): Promise<void>;
+  download(): Promise<void>;
   restore(): void;
   requestReset(): void;
   cancelReset(): void;
@@ -47,7 +47,9 @@ function freezeBackup<T>(value: T): T {
 function parseErrorMessage(error: string): string {
   switch (error) {
     case 'too-large':
-      return 'This file is larger than the 4 MiB progress backup limit.';
+      return 'This backup exceeds the 4 MiB size limit.';
+    case 'invalid-compression':
+      return 'This file is not a valid compressed progress backup. Choose a .json.gz backup.';
     case 'malformed-json':
       return 'This file is not valid JSON.';
     case 'wrong-format':
@@ -103,7 +105,7 @@ export function useProgressBackup(): ProgressBackupController {
     setOpen(false);
   }, [committing]);
 
-  const chooseFile = useCallback(async (file: Pick<File, 'size' | 'text'>) => {
+  const chooseFile = useCallback(async (file: Pick<File, 'size' | 'stream'>) => {
     const generation = ++operationGeneration.current;
     setError(undefined);
     setNotice(undefined);
@@ -126,20 +128,34 @@ export function useProgressBackup(): ProgressBackupController {
     });
   }, []);
 
-  const downloadJson = useCallback((json: string) => {
-    const failure = downloadProgressJson(json, (JSON.parse(json) as { exportedAt: string }).exportedAt);
-    setError(failure);
-    setNotice(failure ? undefined : 'Backup downloaded.');
-  }, []);
-
-  const download = useCallback(() => {
-    const exported = exportBrowserProgress();
-    if (exported.ok) return downloadJson(exported.json);
+  const download = useCallback(async () => {
+    const generation = ++operationGeneration.current;
+    setError(undefined);
     setNotice(undefined);
-    setError(exported.error === 'unavailable'
-      ? 'Current progress could not be read.'
-      : 'Saved progress could not be backed up. It has not been changed.');
-  }, [downloadJson]);
+    const exported = exportBrowserProgress();
+    if (!exported.ok) {
+      setError(exported.error === 'unavailable'
+        ? 'Current progress could not be read.'
+        : 'Saved progress could not be backed up. It has not been changed.');
+      return;
+    }
+    setBusy(true);
+    setStatus('Preparing backup…');
+    try {
+      const blob = await compressProgressBackup(exported.json);
+      if (generation !== operationGeneration.current) return;
+      const failure = downloadProgressBackup(blob, (JSON.parse(exported.json) as { exportedAt: string }).exportedAt);
+      setError(failure);
+      setNotice(failure ? undefined : 'Backup downloaded.');
+    } catch {
+      if (generation === operationGeneration.current) setError('The progress file could not be downloaded. Try again.');
+    } finally {
+      if (generation === operationGeneration.current) {
+        setBusy(false);
+        setStatus(undefined);
+      }
+    }
+  }, []);
 
   const restore = useCallback(() => {
     if (!preview || committing) return;

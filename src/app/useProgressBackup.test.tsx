@@ -1,12 +1,15 @@
+import { Blob as NodeBlob } from 'node:buffer';
+import { gzipSync } from 'node:zlib';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import populated from '../../tests/fixtures/progress-backups/populated-v1.json';
 import { progressKey } from '../persistence/progressCodec';
 import { flashcardProgressKey } from '../persistence/flashcardProgressCodec';
 import { consumeProgressChangeNotice } from '../persistence/progressBackupStorage';
+import * as backupFiles from './progressBackupFiles';
 import { useProgressBackup } from './useProgressBackup';
 
-const fileOf = (body: string) => ({ size: new TextEncoder().encode(body).length, text: async () => body });
+const fileOf = (body: string) => new NodeBlob([gzipSync(body)]) as unknown as Blob;
 
 describe('progress backup dialog flow', () => {
   const values = new Map<string, string>();
@@ -14,6 +17,7 @@ describe('progress backup dialog flow', () => {
   const reload = vi.fn();
 
   beforeEach(() => {
+    vi.stubGlobal('Blob', NodeBlob);
     values.clear();
     failingKey = undefined;
     reload.mockClear();
@@ -27,7 +31,7 @@ describe('progress backup dialog flow', () => {
     });
     vi.stubGlobal('location', { ...window.location, reload });
   });
-  afterEach(() => vi.unstubAllGlobals());
+  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
 
   async function preview(body: string) {
     const hook = renderHook(() => useProgressBackup());
@@ -101,16 +105,44 @@ describe('progress backup dialog flow', () => {
     expect(values.get(progressKey)).toBe('existing-quiz');
   });
 
-  it('allows cancel while File.text is pending and ignores its late result', async () => {
+  it('does not download after closing while compression is pending', async () => {
+    let finish!: (blob: Blob) => void;
+    vi.spyOn(backupFiles, 'compressProgressBackup').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    vi.stubGlobal('URL', { createObjectURL: () => 'blob:backup', revokeObjectURL: vi.fn() });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     const { result } = renderHook(() => useProgressBackup());
-    let finish!: (text: string) => void;
-    const pending = new Promise<string>(resolve => { finish = resolve; });
-    let reading!: Promise<void>;
+    let pending!: Promise<void>;
     act(() => result.current.show());
-    act(() => { reading = result.current.chooseFile({ size: 10, text: () => pending }); });
+    act(() => { pending = result.current.download(); });
     expect(result.current.busy).toBe(true);
     act(() => result.current.close());
-    await act(async () => { finish(JSON.stringify(populated)); await reading; });
+    await act(async () => { finish(new Blob()); await pending; });
+    expect(click).not.toHaveBeenCalled();
+    expect(result.current.open).toBe(false);
+    expect(result.current.notice).toBeUndefined();
+  });
+
+  it('reports compression failure and clears the busy state without changing progress', async () => {
+    vi.spyOn(backupFiles, 'compressProgressBackup').mockRejectedValue(new Error('compression failed'));
+    const { result } = renderHook(() => useProgressBackup());
+    act(() => result.current.show());
+    await act(async () => result.current.download());
+    expect(result.current.busy).toBe(false);
+    expect(result.current.error).toContain('could not be downloaded');
+    expect(result.current.notice).toBeUndefined();
+    expect(values.size).toBe(0);
+  });
+
+  it('allows cancel while a file stream is pending and ignores its late result', async () => {
+    const { result } = renderHook(() => useProgressBackup());
+    let finish!: (data: Uint8Array<ArrayBuffer>) => void;
+    const pending = new Promise<Uint8Array<ArrayBuffer>>(resolve => { finish = resolve; });
+    let reading!: Promise<void>;
+    act(() => result.current.show());
+    act(() => { reading = result.current.chooseFile({ size: 10, stream: () => new ReadableStream({ async start(controller) { controller.enqueue(await pending); controller.close(); } }) }); });
+    expect(result.current.busy).toBe(true);
+    act(() => result.current.close());
+    await act(async () => { finish(Uint8Array.from(gzipSync(JSON.stringify(populated)))); await reading; });
     expect(result.current.open).toBe(false);
     expect(result.current.preview).toBeUndefined();
   });
