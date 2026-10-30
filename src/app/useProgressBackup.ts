@@ -65,6 +65,7 @@ function parseErrorMessage(error: string): string {
 
 export function useProgressBackup(): ProgressBackupController {
   const operationGeneration = useRef(0);
+  const backupRead = useRef<AbortController | undefined>(undefined);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [committing, setCommitting] = useState(false);
@@ -78,6 +79,7 @@ export function useProgressBackup(): ProgressBackupController {
   useEffect(
     () => () => {
       operationGeneration.current += 1;
+      backupRead.current?.abort();
       revokeProgressDownload();
     },
     [],
@@ -85,6 +87,7 @@ export function useProgressBackup(): ProgressBackupController {
 
   const show = useCallback(() => {
     operationGeneration.current += 1;
+    backupRead.current?.abort();
     setError(undefined);
     setNotice(undefined);
     setStatus(undefined);
@@ -95,6 +98,7 @@ export function useProgressBackup(): ProgressBackupController {
   const close = useCallback(() => {
     if (committing) return;
     operationGeneration.current += 1;
+    backupRead.current?.abort();
     setPreview(undefined);
     setError(undefined);
     setNotice(undefined);
@@ -107,11 +111,16 @@ export function useProgressBackup(): ProgressBackupController {
 
   const chooseFile = useCallback(async (file: Pick<File, 'size' | 'stream'>) => {
     const generation = ++operationGeneration.current;
+    backupRead.current?.abort();
     setError(undefined);
     setNotice(undefined);
+    setPreview(undefined);
     setStatus('Reading backup…');
     setBusy(true);
-    const parsed = await readProgressBackupFile(file);
+    const controller = new AbortController();
+    backupRead.current = controller;
+    const parsed = await readProgressBackupFile(file, controller.signal);
+    if (backupRead.current === controller) backupRead.current = undefined;
     if (generation !== operationGeneration.current) return;
     setStatus(undefined);
     setBusy(false);
@@ -130,6 +139,7 @@ export function useProgressBackup(): ProgressBackupController {
 
   const download = useCallback(async () => {
     const generation = ++operationGeneration.current;
+    backupRead.current?.abort();
     setError(undefined);
     setNotice(undefined);
     const exported = exportBrowserProgress();

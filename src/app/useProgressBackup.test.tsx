@@ -133,17 +133,47 @@ describe('progress backup dialog flow', () => {
     expect(values.size).toBe(0);
   });
 
-  it('allows cancel while a file stream is pending and ignores its late result', async () => {
-    const { result } = renderHook(() => useProgressBackup());
-    let finish!: (data: Uint8Array<ArrayBuffer>) => void;
-    const pending = new Promise<Uint8Array<ArrayBuffer>>(resolve => { finish = resolve; });
+  it('clears the previous preview as soon as another file is selected, including invalid files', async () => {
+    const { result } = await preview(JSON.stringify(populated));
+    expect(result.current.preview).toBeDefined();
+    let reading!: Promise<void>;
+    act(() => { reading = result.current.chooseFile(fileOf('{"format":"nope"}')); });
+    expect(result.current.preview).toBeUndefined();
+    await act(async () => reading);
+    expect(result.current.error).toContain('not a Meducation progress backup');
+    expect(result.current.preview).toBeUndefined();
+    act(() => result.current.restore());
+    expect(values.size).toBe(0);
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it.each(['close', 'unmount', 'replace'] as const)('stops reading the source file on %s', async (action) => {
+    const { result, unmount } = renderHook(() => useProgressBackup());
+    let cancelled!: () => void;
+    const stopped = new Promise<void>(resolve => { cancelled = resolve; });
+    const stream = new ReadableStream({
+      start(controller) { controller.enqueue(Uint8Array.from(gzipSync(JSON.stringify(populated)).subarray(0, 10))); },
+      cancel() { cancelled(); },
+    });
     let reading!: Promise<void>;
     act(() => result.current.show());
-    act(() => { reading = result.current.chooseFile({ size: 10, stream: () => new ReadableStream({ async start(controller) { controller.enqueue(await pending); controller.close(); } }) }); });
+    act(() => { reading = result.current.chooseFile({ size: 10, stream: () => stream }); });
     expect(result.current.busy).toBe(true);
-    act(() => result.current.close());
-    await act(async () => { finish(Uint8Array.from(gzipSync(JSON.stringify(populated)))); await reading; });
-    expect(result.current.open).toBe(false);
-    expect(result.current.preview).toBeUndefined();
+    await act(async () => {
+      if (action === 'close') result.current.close();
+      else if (action === 'unmount') unmount();
+      else await result.current.chooseFile(fileOf('{"format":"nope"}'));
+      await stopped;
+      await reading;
+    });
+    expect(values.size).toBe(0);
+    if (action !== 'unmount') {
+      expect(result.current.busy).toBe(false);
+      expect(result.current.preview).toBeUndefined();
+      if (action === 'close') {
+        expect(result.current.open).toBe(false);
+        expect(result.current.error).toBeUndefined();
+      } else expect(result.current.error).toContain('not a Meducation progress backup');
+    }
   });
 });
