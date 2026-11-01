@@ -11,6 +11,7 @@ import type { Subject } from '../domain/types';
 import { attemptQuestions } from '../domain/quizEngine';
 import { AppNavigationDrawer, type LearnerSection } from './components/AppNavigationDrawer';
 import { ProgressBackupDialog } from './components/ProgressBackupDialog';
+import { HelpDialog } from './components/HelpDialog';
 import { useProgressBackup } from './useProgressBackup';
 import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenTransition } from '../shared/ui/transitions/ScreenTransition';
@@ -69,6 +70,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
   useLayoutEffect(() => { toast.notifyNavigation(currentScreenKey); }, [toast, currentScreenKey]);
   useEffect(() => { if (view.page === 'quiz') preloadResultsScreen(); if (view.page === 'flashcards-study') preloadFlashcardStudyScreen(); }, [view.page]);
   const [exitOpen, setExitOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const [exitDestination, setExitDestination] = useState<QuizExitDestination>('subject');
   const [reviewExitOpen, setReviewExitOpen] = useState(false);
   const [screenLoading, setScreenLoading] = useState(false);
@@ -177,7 +179,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
   const activeStudy = session.view.page === 'quiz' || view.page === 'flashcards-study';
   const progressDisabledReason = activeStudy ? 'Save and leave your study session before opening progress.' : undefined;
   const currentPage = view.page === 'dashboard' ? 'quizzes' : view.page === 'flashcards' ? 'flashcards' : undefined;
-  return <AppShell sidebar={<AppNavigationDrawer active={activeSection} currentPage={currentPage} onNavigate={handleNavigation} onProgress={progressDisabledReason ? undefined : requestProgress} progressDisabledReason={progressDisabledReason} />} busy={screenLoading}>
+  return <AppShell sidebar={<AppNavigationDrawer active={activeSection} currentPage={currentPage} onNavigate={handleNavigation} onProgress={progressDisabledReason ? undefined : requestProgress} progressDisabledReason={progressDisabledReason} onHelp={() => setHelpOpen(true)} />} busy={screenLoading}>
     {session.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error" onClose={session.clearPersistenceError}>{session.persistenceError}</Alert></Container>}
     {activeSection === 'flashcards' && view.page !== 'flashcards-study' && flashcards.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error">{flashcards.persistenceError}</Alert></Container>}
     {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
@@ -234,6 +236,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     {view.page === 'flashcards-study' && <FlashcardStudyScreen {...view} cards={runtimeFlashcardBank.listCards(view.deck.id)} openedCardIds={flashcards.openedCardIds} flaggedCardIds={flashcards.flaggedCardIds} persistenceError={flashcards.persistenceError} onReveal={flashcards.toggleReveal} onToggleFlag={flashcards.toggleFlag} onNavigate={flashcards.navigateTo} onPrevious={flashcards.previous} onNext={flashcards.next} onSaveAndExit={flashcards.saveAndExit} onFinish={flashcards.finish} />}
     </ScreenLoadBoundary>
     </ScreenTransition>
+    <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
     <ExitQuizDialog open={exitOpen} onClose={closeExitDialog} onLeave={() => { session.leaveQuiz(exitDestination); closeExitDialog(); }} onAbort={() => { session.abortQuiz(exitDestination); closeExitDialog(); }} />
     <LeaveReviewDialog open={reviewExitOpen} onClose={() => { openProgressAfterReviewExit.current = false; closeReviewExitDialog(); }} onLeave={() => {
       session.leaveReview(reviewExitDestination);

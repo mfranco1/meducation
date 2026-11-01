@@ -34,7 +34,7 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 
 ## Learner shell and screens
 
-- Left rail: 240px expanded, 64px collapsed, brand first, then destinations, with Progress at the bottom below a partial separator; collapsed items keep accessible names and tooltips. An edge toggle shows an arrow on hover or focus (always on touch) and an orange hover line. Narrow screens reserve the rail and open a labelled overlay.
+- Left rail: 240px expanded, 64px collapsed, brand first, then destinations, with Progress and Help at the bottom below a partial separator; collapsed items keep accessible names and tooltips. An edge toggle shows an arrow on hover or focus (always on touch) and an orange hover line. Narrow screens reserve the rail and open a labelled overlay.
 - Quiz, Browse, Review and flashcard study share the progress header and a right-aligned Previous/Next footer. Review and Browse render radio indicators as decoration, mark the submitted choice, highlight the correct one in green, and show explicit text when a key or explanation is unavailable.
 - Flashcard answer panel: a centered front prompt above an orange panel that flips on a 420ms Y-axis rotation (reduced motion: immediate). Both faces share the intrinsic height of the answer, and the concealed side shows the icon-only logo.
 - Dashboards share the frame, a 1 to 3 column subject grid of icon-and-title cards (title never truncated, optional description in secondary text), stat cards and the Continue Studying card. The Continue Studying card shows a subject's photographic hero from `public/assets/illustrations` when one exists (WebP at 600w and 1192w, masked into the card from the left), otherwise the drawn study stack. To add one, keep the 1672x941 source art outside Git, run `npm run hero:image -- <source.png> <name>-hero` and map the subject ID to that name in `StudyCardIllustration.tsx` (add a vertical focus override there if the wide crop cuts off the subject). Subject cards have a decorative progress track (quiz latest score, flashcard decks completed) with the visible percentage as its accessible equivalent.
@@ -44,6 +44,7 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 - Dialog titles are weight 700 (theme default).
 - Toasts use semantic severity, stack by viewport position above content and below modals, can be global or screen-scoped, and persistent errors have a keyboard-accessible close.
 - The Progress dialog has a scrollable body and reachable footer, polite status and alert errors; Escape and Cancel work before commit and are disabled during it. Reset is a quiet section that opens a confirmation view. Focus returns to the entry action.
+- The Help dialog shows contact instructions above expandable FAQs, with a scrollable body and a Close action in the footer. It is full screen on small phones. Escape closes it and focus returns to Help.
 
 ## Landing page
 

@@ -5,6 +5,47 @@ test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
 });
 
+test('Help stays accessible from the desktop rail and mobile drawer', async ({ page }) => {
+  await page.goto('/');
+  for (const width of [1280, 320]) {
+    await page.setViewportSize({ width, height: 800 });
+    if (width === 320) await page.getByRole('button', { name: 'Expand navigation' }).click();
+    const help = page.getByRole('button', { name: 'Help', exact: true });
+    await help.click();
+    const dialog = page.getByRole('dialog', { name: 'Help', exact: true });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole('link', { name: 'Open Telegram' })).toHaveAttribute(
+      'href',
+      'https://t.me/MeducationSupport',
+    );
+    await expect(dialog.getByRole('link', { name: '@MeducationSupport' })).toBeVisible();
+    await dialog.getByRole('button', { name: 'Where is my progress saved?' }).click();
+    await expect(dialog.getByText(/Clearing browser data deletes your progress/)).toBeVisible();
+    await expect.poll(() => dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
+    await page.keyboard.press('Escape');
+    await expect(dialog).not.toBeVisible();
+    await expect(help).toBeFocused();
+  }
+});
+
+test('Help preserves flashcard study and blocks study shortcuts while open', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+  await page.getByRole('button', { name: 'Help', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Help', exact: true });
+  await expect(dialog).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Space');
+  await dialog.getByRole('button', { name: 'Close', exact: true }).click();
+  await expect(dialog).not.toBeVisible();
+  await expect(page.getByText('Card 1 of 2')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Help', exact: true })).toBeFocused();
+});
+
 async function statCardBounds(firstCard: Locator) {
   const cards = firstCard.locator('..').getByRole('group');
   await expect(cards).toHaveCount(3);
