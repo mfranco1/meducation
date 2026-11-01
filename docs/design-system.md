@@ -47,11 +47,14 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 
 ## Landing page
 
-- A frame around unmodified product components (`QuestionCard`, `FlashcardStudyCard`, `StudyNavigatorTile`, `StudyNavigationFooter`, `CelebrationOverlay`, `SubjectIcon`). Its type scale lives in `src/app/landing/typography.ts` and uses the theme's sans and heading weights. Both samples share the study header (position, subject, navigator tiles). The streak celebration centers vertically in the viewport and horizontally in the sample quiz section. Numbered lists use circled numbers joined by a line; completed hero steps show green checks.
+- A frame around unmodified product components (`QuestionCard`, `FlashcardStudyCard`, `StudyNavigatorTile`, `StudyNavigationFooter`, `CelebrationOverlay`, `SubjectIcon`). Its type scale lives in `src/app/landing/typography.ts` and uses the theme's sans and heading weights. Both samples share a header with a sample title, subject and navigator tiles. The streak celebration centers vertically in the viewport and horizontally in the sample quiz section. Numbered lists use circled numbers joined by a line; completed quiz steps show green checks.
 - 12-column grid at `md` and up, a single column below. Rules, not cards, group page content: a 2px dark rule under the masthead and above the closing call to action, 1px choice-border hairlines between sections.
-- Orange marks only the **Start studying** buttons, the brand and the current case tile. On phones a sticky Start studying bar appears once the hero button scrolls away.
-- Each sample takes the same keys as its study screen (1-4 or A-D, Space, Enter, arrows) once the visitor clicks or focuses inside it, until they click or focus elsewhere or scroll it away. Answering scrolls the feedback header into view on short screens.
-- The hero steps turn green with one pulse as the visitor answers a sample question, reads the rationale (4 seconds) or moves on, and reaches a 3-in-a-row streak.
+- Orange marks actions, the brand and the current case tile. Hint buttons use secondary text color. On phones a sticky Start studying bar appears once the hero button scrolls away.
+- The sample section covering the viewport's vertical midpoint takes the same keys as its study screen (1-4 or A-D, Space, Enter, arrows), without a click. Shortcuts stop when that section leaves the midpoint; only one sample is active at a time. Native editing and focused widget keys remain available. Answering scrolls the feedback header into view on short screens.
+- A centered hero precedes separate quiz and flashcard sections, each with copy on the left and its sample on the right. On narrow screens copy comes before the sample. The numbered steps beside the quiz turn green with one pulse as the visitor answers a sample question, reads the rationale (4 seconds) or moves on, and reaches a 3-in-a-row streak.
+- Flashcard steps complete independently when a full question is visible in the viewport, an answer is revealed and a different card is selected. Checks stay complete while visiting other sample cards.
+- A question-mark button beside “Reveal the answer” shows the reveal hint on hover, focus or click.
+- Sample headers reserve space for every item's subject and topic or deck. Navigator tiles share the text row when all details fit, otherwise they stay below it for every item.
 
 ## Admin
 

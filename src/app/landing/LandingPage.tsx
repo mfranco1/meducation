@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { keyframes } from '@emotion/react';
-import { alpha, Box, Button, Typography } from '@mui/material';
+import { alpha, Box, Button, ClickAwayListener, IconButton, Tooltip, Typography } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
 import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { SubjectIcon } from '../../shared/ui/catalog/icons/SubjectIcon';
 import { LegalFooter } from '../../shared/ui/catalog/LegalFooter';
@@ -10,6 +11,7 @@ import { easing, reducedMotion } from '../../shared/ui/motion';
 import { theme } from '../../shared/theme';
 import { SampleCases } from './SampleCases';
 import { SampleFlashcards } from './SampleFlashcards';
+import { useSampleActive } from './useSampleActive';
 import { hairline, type } from './typography';
 import samples from './samples.json';
 
@@ -26,11 +28,22 @@ const stepPulse = keyframes`
   100% { transform: scale(1); box-shadow: 0 0 0 10px ${alpha(successMain, 0)}; }
 `;
 
+function StepHint({ text, label }: { text: string; label: string }) {
+  const [open, setOpen] = useState(false);
+  return <ClickAwayListener onClickAway={() => setOpen(false)}>
+    <Tooltip title={text} describeChild open={open} onOpen={() => setOpen(true)} onClose={() => setOpen(false)}>
+      <IconButton aria-label={label} size="small" onClick={() => setOpen(true)} sx={{ ml: .5, p: .25, verticalAlign: 'middle', color: 'text.secondary' }}>
+        <HelpOutlineRoundedIcon sx={{ fontSize: 18 }} />
+      </IconButton>
+    </Tooltip>
+  </ClickAwayListener>;
+}
+
 /** Numbered circles joined by a line. Completed steps show green checks with one pulse. */
-function Steps({ items, label, done = 0, sx }: { items: string[]; label?: string; done?: number; sx?: object }) {
+function Steps({ items, label, done = 0, completed, hints, sx }: { items: string[]; label?: string; done?: number; completed?: ReadonlySet<number>; hints?: Partial<Record<number, string>>; sx?: object }) {
   return <Box component="ol" aria-label={label} sx={{ listStyle: 'none', p: 0, m: 0, ...sx }}>
     {items.map((item, position) => {
-      const complete = position < done;
+      const complete = completed ? completed.has(position + 1) : position < done;
       return <Box component="li" key={item} sx={{
         position: 'relative', display: 'grid', gridTemplateColumns: '32px 1fr', columnGap: 2, alignItems: 'start',
         '&:not(:last-of-type)': { pb: 3 },
@@ -42,7 +55,7 @@ function Steps({ items, label, done = 0, sx }: { items: string[]; label?: string
           transition: 'border-color 300ms ease-out, background-color 300ms ease-out, color 300ms ease-out',
           animation: complete ? `${stepPulse} 600ms ${easing.out}` : undefined, [reducedMotion]: { transition: 'none', animation: 'none' },
         }}>{complete ? <CheckRoundedIcon sx={{ fontSize: 20 }} /> : position + 1}</Box>
-        <Typography sx={{ ...type.body, pt: '4px' }}>{item}{complete && <Box component="span" sx={visuallyHidden}> (done)</Box>}</Typography>
+        <Typography sx={{ ...type.body, pt: '4px' }}>{item}{complete && <Box component="span" sx={visuallyHidden}> (done)</Box>}{hints?.[position + 1] && <StepHint text={hints[position + 1]!} label={`Hint for ${item}`} />}</Typography>
       </Box>;
     })}
   </Box>;
@@ -59,8 +72,14 @@ function SectionHead({ label, title, id, children }: { label: string; title: str
 export function LandingPage({ onStart }: { onStart: () => void }) {
   const heroCta = useRef<HTMLButtonElement>(null);
   const closingCta = useRef<HTMLButtonElement>(null);
+  const quizSection = useRef<HTMLElement>(null);
+  const flashcardSection = useRef<HTMLElement>(null);
+  const quizActive = useSampleActive(quizSection);
+  const flashcardsActive = useSampleActive(flashcardSection);
   const [stepsDone, setStepsDone] = useState(0);
   const completeStep = useCallback((step: number) => setStepsDone(current => Math.max(current, step)), []);
+  const [flashcardSteps, setFlashcardSteps] = useState<ReadonlySet<number>>(new Set());
+  const completeFlashcardStep = useCallback((step: number) => setFlashcardSteps(current => current.has(step) ? current : new Set(current).add(step)), []);
   const [ctaInView, setCtaInView] = useState({ hero: true, closing: false });
 
   // The phone layout keeps Start studying within thumb reach once the hero button scrolls away.
@@ -83,28 +102,35 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
       </Box>
 
       <Box component="main">
-        <Box sx={{ ...grid, rowGap: { xs: 5, md: 0 }, pt: { xs: 3, md: 8 }, pb: { xs: 6, md: 10 } }}>
-          <Box sx={{ gridColumn: { md: '1 / span 5' }, alignSelf: 'start', position: { md: 'sticky' }, top: { md: 32 }, textAlign: { xs: 'center', md: 'left' } }}>
-            <Typography component="h1" sx={type.display}>Study medicine one question at a time</Typography>
-            <Typography sx={{ ...type.lede, mt: { xs: 2, md: 3.5 }, mx: { xs: 'auto', md: 0 } }}>
-              Practice quizzes and flashcards across twelve subjects without an account for free
-            </Typography>
-            <Button ref={heroCta} variant="contained" size="large" onClick={onStart} sx={{ mt: { xs: 3, md: 4 }, px: 3, py: 1.5, fontSize: '1rem' }}>Start studying</Button>
-            <Steps items={notes} label="How it works" done={stepsDone} sx={{ display: { xs: 'none', md: 'block' }, mt: 6 }} />
-          </Box>
-          <Box sx={{ gridColumn: { md: '7 / span 6' }, minWidth: 0 }}>
-            <SampleCases onStart={onStart} onStep={completeStep} />
+        <Box component="section" aria-labelledby="hero-title" sx={{ textAlign: 'center', pt: { xs: 3, md: 8 }, pb: { xs: 6, md: 10 } }}>
+          <Typography component="h1" id="hero-title" sx={{ ...type.display, maxWidth: '24ch', mx: 'auto' }}>Study medicine one question at a time</Typography>
+          <Typography sx={{ ...type.lede, mt: { xs: 2, md: 3.5 }, mx: 'auto' }}>
+            Practice quizzes and flashcards across twelve subjects without an account for free
+          </Typography>
+          <Button ref={heroCta} variant="contained" size="large" onClick={onStart} sx={{ mt: { xs: 3, md: 4 }, px: 3, py: 1.5, fontSize: '1rem' }}>Start studying</Button>
+          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1.5 }}>
+            <Button href="#quizzes" variant="text" size="small">Quizzes</Button>
+            <Button href="#flashcards" variant="text" size="small">Flashcards</Button>
           </Box>
         </Box>
 
-        <Box component="section" aria-labelledby="flashcards-title" sx={{ ...section, rowGap: 4 }}>
-          <Box sx={{ gridColumn: { md: '9 / span 4' }, gridRow: { md: 1 }, alignSelf: 'start', position: { md: 'sticky' }, top: { md: 32 } }}>
-            <SectionHead label="Flashcards" title="Recall first, then check" id="flashcards-title">
-              <Typography sx={{ ...type.body, mt: 2.5 }}>Read the prompt and answer it in your head. Then reveal the card by clicking it, or pressing Space.</Typography>
-            </SectionHead>
+        <Box component="section" id="quizzes" ref={quizSection} aria-labelledby="quizzes-title" sx={{ ...section, rowGap: 4 }}>
+          <Box sx={{ gridColumn: { md: '1 / span 4' }, alignSelf: 'start', position: { md: 'sticky' }, top: { md: 32 } }}>
+            <Typography component="h2" id="quizzes-title" sx={type.label}>Quizzes</Typography>
+            <Steps items={notes} label="How it works" done={stepsDone} sx={{ mt: { xs: 1.5, md: 2 } }} />
           </Box>
-          <Box sx={{ gridColumn: { md: '1 / span 7' }, gridRow: { md: 1 }, minWidth: 0 }}>
-            <SampleFlashcards onStart={onStart} />
+          <Box sx={{ gridColumn: { md: '6 / span 7' }, minWidth: 0 }}>
+            <SampleCases active={quizActive} onStart={onStart} onStep={completeStep} />
+          </Box>
+        </Box>
+
+        <Box component="section" id="flashcards" ref={flashcardSection} aria-labelledby="flashcards-title" sx={{ ...section, rowGap: 4 }}>
+          <Box sx={{ gridColumn: { md: '1 / span 4' }, alignSelf: 'start', position: { md: 'sticky' }, top: { md: 32 } }}>
+            <Typography component="h2" id="flashcards-title" sx={type.label}>Flashcards</Typography>
+            <Steps items={['Read the question', 'Reveal the answer', 'See the next card']} label="How flashcards work" completed={flashcardSteps} hints={{ 2: 'Click the card or press Space to reveal the answer' }} sx={{ mt: { xs: 1.5, md: 2 } }} />
+          </Box>
+          <Box sx={{ gridColumn: { md: '6 / span 7' }, minWidth: 0 }}>
+            <SampleFlashcards active={flashcardsActive} onStart={onStart} onStep={completeFlashcardStep} />
           </Box>
         </Box>
 

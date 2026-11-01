@@ -1,28 +1,28 @@
 import { useEffect, useState, type RefObject } from 'react';
 
-/**
- * A landing sample takes the study shortcuts only after the visitor clicks or focuses inside it,
- * until they click or focus elsewhere or scroll it out of view. Focus lost to the page body
- * (a choice locking, a card face swapping) keeps it active.
- */
+/** The section covering the viewport's midpoint owns the sample shortcuts. */
 export function useSampleActive(region: RefObject<HTMLElement | null>) {
-  const [engaged, setEngaged] = useState(false);
-  const [visible, setVisible] = useState(false);
+  const [active, setActive] = useState(false);
 
   useEffect(() => {
     const element = region.current;
     if (!element) return;
-    const engage = (event: Event) => setEngaged(event.target instanceof Node && element.contains(event.target));
-    document.addEventListener('pointerdown', engage);
-    document.addEventListener('focusin', engage);
-    const observer = new IntersectionObserver(([entry]) => setVisible(Boolean(entry?.isIntersecting)));
+    const update = () => {
+      const bounds = element.getBoundingClientRect();
+      const midpoint = window.innerHeight / 2;
+      setActive(bounds.top <= midpoint && bounds.bottom > midpoint);
+    };
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
+    const observer = new ResizeObserver(update);
     observer.observe(element);
+    update();
     return () => {
-      document.removeEventListener('pointerdown', engage);
-      document.removeEventListener('focusin', engage);
+      window.removeEventListener('scroll', update);
+      window.removeEventListener('resize', update);
       observer.disconnect();
     };
   }, [region]);
 
-  return engaged && visible;
+  return active;
 }

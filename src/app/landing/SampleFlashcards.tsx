@@ -8,29 +8,45 @@ import { canHandleStudyShortcut } from '../../shared/ui/study/studyKeyboard';
 import { useStudyArrowNavigation } from '../../shared/ui/study/useStudyArrowNavigation';
 import { SwapTransition } from '../../shared/ui/transitions/SwapTransition';
 import { SampleHeader } from './SampleHeader';
-import { useSampleActive } from './useSampleActive';
 import samples from './samples.json';
 
 const cards = samples.cards.map(({ subject, deck, ...card }) => ({ subject, deck, card: card as FlashcardCard }));
+const details = cards.map(({ subject, deck }) => `${subject} · ${deck}`);
 
-export function SampleFlashcards({ onStart }: { onStart: () => void }) {
+export function SampleFlashcards({ active, onStart, onStep }: { active: boolean; onStart: () => void; onStep: (step: number) => void }) {
   const [index, setIndex] = useState(0);
   const [revealed, setRevealed] = useState(false);
   const [studied, setStudied] = useState<ReadonlySet<string>>(new Set());
   const [flagged, setFlagged] = useState<ReadonlySet<string>>(new Set());
   const [suppressFocusRing, setSuppressFocusRing] = useState(false);
-  const region = useRef<HTMLElement>(null);
+  const question = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
-  const active = useSampleActive(region);
   const { card, subject, deck } = cards[index]!;
 
+  useEffect(() => {
+    const element = question.current;
+    if (!element) return;
+    const observer = new IntersectionObserver(([entry]) => {
+      if (entry?.isIntersecting && entry.intersectionRatio === 1) {
+        onStep(1);
+        observer.disconnect();
+      }
+    }, { threshold: 1 });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [index, onStep]);
+
   const toggleReveal = () => {
-    if (!revealed) setStudied(current => new Set(current).add(card.id));
+    if (!revealed) {
+      setStudied(current => new Set(current).add(card.id));
+      onStep(2);
+    }
     setRevealed(!revealed);
   };
   const go = (target: number) => {
     if (target < 0 || target >= cards.length) return;
+    if (target !== index) onStep(3);
     setIndex(target);
     setRevealed(false);
   };
@@ -60,8 +76,8 @@ export function SampleFlashcards({ onStart }: { onStart: () => void }) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   });
 
-  return <Box component="section" ref={region} aria-labelledby="sample-card-label">
-    <SampleHeader id="sample-card-label" title={`Card ${index + 1} of ${cards.length}`} detail={`${subject} · ${deck}`} navLabel="Cards" stacked>
+  return <Box component="section" aria-labelledby="sample-card-label">
+    <SampleHeader id="sample-card-label" title="Sample Flashcards" detail={`${subject} · ${deck}`} detailOptions={details} navLabel="Cards">
       {cards.map((item, position) => {
         const opened = studied.has(item.card.id);
         const isFlagged = flagged.has(item.card.id);
@@ -70,6 +86,7 @@ export function SampleFlashcards({ onStart }: { onStart: () => void }) {
     </SampleHeader>
     <SwapTransition swapKey={index}>
       <FlashcardStudyCard
+        questionRef={question}
         card={card}
         revealed={revealed}
         flagged={flagged.has(card.id)}

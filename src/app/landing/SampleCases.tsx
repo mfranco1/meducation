@@ -12,10 +12,10 @@ import { SwapTransition } from '../../shared/ui/transitions/SwapTransition';
 import { useReducedMotion } from '../../shared/ui/motion';
 import { SampleHeader } from './SampleHeader';
 import { type } from './typography';
-import { useSampleActive } from './useSampleActive';
 import samples from './samples.json';
 
 const cases = samples.questions.map(({ subject, topic, ...question }) => ({ subject, topic, question: question as Question }));
+const details = cases.map(({ subject, topic }) => `${subject} · ${topic}`);
 
 const freshAttempt = (): Attempt => ({
   id: 'landing', quizId: 'landing', subjectId: 'landing', feedbackMode: 'immediate', startedAt: '', elapsedMs: 0,
@@ -27,7 +27,7 @@ const feedbackReveal = 220;
 const readDelay = 4000;
 
 /** Reports how far the visitor has come through the hero steps: 1 answered, 2 read or moved on, 3 a streak. */
-export function SampleCases({ onStart, onStep }: { onStart: () => void; onStep: (step: number) => void }) {
+export function SampleCases({ active, onStart, onStep }: { active: boolean; onStart: () => void; onStep: (step: number) => void }) {
   const [attempt, setAttempt] = useState(freshAttempt);
   const [index, setIndex] = useState(0);
   const [celebration, setCelebration] = useState<CelebrationEvent>();
@@ -36,7 +36,6 @@ export function SampleCases({ onStart, onStep }: { onStart: () => void; onStep: 
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
   const reducedMotion = useReducedMotion();
-  const active = useSampleActive(region);
   const { question, subject, topic } = cases[index]!;
   const response = attempt.responses[question.id] ?? blankResponse(question.id);
   const answers = cases.filter(item => attempt.responses[item.question.id]?.selectedChoiceId);
@@ -80,7 +79,7 @@ export function SampleCases({ onStart, onStep }: { onStart: () => void; onStep: 
   useStudyArrowNavigation({ index, total: cases.length, disabled: !active || Boolean(celebration), onPrevious: () => go(index - 1), onNext: () => go(index + 1), nextButtonRef: nextRef, finishButtonRef: finishRef });
 
   return <Box component="section" ref={region} aria-labelledby="sample-case-label">
-    <SampleHeader id="sample-case-label" title={`Case ${index + 1} of ${cases.length}`} detail={`${subject} · ${topic}`} navLabel="Cases">
+    <SampleHeader id="sample-case-label" title="Sample Quizzes" detail={`${subject} · ${topic}`} detailOptions={details} navLabel="Cases">
       {cases.map((item, position) => {
         const selected = attempt.responses[item.question.id]?.selectedChoiceId;
         const result = selected === undefined ? undefined : isCorrect(item.question, selected) ? 'correct' : 'incorrect';

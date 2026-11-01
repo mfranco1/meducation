@@ -1,5 +1,5 @@
 import { Box, ButtonBase, Card, CardContent } from '@mui/material';
-import { useCallback, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState, type Ref } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { BrandMark } from '../../../shared/ui/brand/BrandMark';
@@ -19,6 +19,7 @@ const frameRadiusStyles = {
 };
 
 export function FlashcardStudyCard({
+  questionRef,
   card,
   revealed,
   flagged,
@@ -29,6 +30,7 @@ export function FlashcardStudyCard({
   onReveal,
   onToggleFlag,
 }: {
+  questionRef?: Ref<HTMLDivElement>;
   card: FlashcardCard;
   revealed: boolean;
   flagged: boolean;
@@ -80,7 +82,7 @@ export function FlashcardStudyCard({
             onToggle={onToggleFlag}
             sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }}
           />
-          <Box aria-live="polite" sx={{ width: '100%', textAlign: 'center', '& .katex-display': { maxWidth: '100%' } }}>
+          <Box ref={questionRef} aria-live="polite" sx={{ width: '100%', textAlign: 'center', '& .katex-display': { maxWidth: '100%' } }}>
             <MarkdownContent markdown={card.front} variant="stem" contentKind="rich" align="center" />
           </Box>
         </Box>
