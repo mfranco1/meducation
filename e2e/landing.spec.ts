@@ -110,14 +110,49 @@ for (const [sampleName, navName] of [
   });
 }
 
-test('hero links jump to the quiz and flashcard sections', async ({ page }) => {
+test('hero links jump to the quiz, flashcard and subject sections', async ({ page }) => {
   await page.goto('/');
   const hero = page.getByRole('region', { name: 'Study medicine one question at a time' });
-  for (const name of ['Quizzes', 'Flashcards']) {
-    await hero.getByRole('link', { name, exact: true }).click();
-    await expect(page.getByRole('heading', { name, exact: true })).toBeInViewport();
-    await expect(page).toHaveURL(new RegExp(`#${name.toLowerCase()}$`));
+  for (const [label, heading, hash] of [
+    ['Quizzes', 'Quizzes', 'quizzes'],
+    ['Flashcards', 'Flashcards', 'flashcards'],
+    ['Subjects', 'Twelve subjects', 'subjects'],
+  ]) {
+    await hero.getByRole('link', { name: label, exact: true }).click();
+    await expect(page.getByRole('heading', { name: heading, exact: true })).toBeInViewport();
+    await expect(page).toHaveURL(new RegExp(`#${hash}$`));
+    await expect
+      .poll(async () => {
+        const bounds = await page.getByRole('region', { name: heading, exact: true }).boundingBox();
+        return Math.abs(bounds!.y);
+      })
+      .toBeLessThan(2);
   }
+});
+
+test('hero background loads behind the copy on desktop and below the actions on smaller screens', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => document.fonts.ready);
+  const hero = page.getByRole('region', { name: 'Study medicine one question at a time' });
+  const photo = hero.locator('img');
+  await expect
+    .poll(() => photo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0))
+    .toBe(true);
+  for (const width of [320, 390, 820, 1048, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    const heading = await hero.getByRole('heading').boundingBox();
+    const links = await hero.getByRole('navigation').boundingBox();
+    const image = await photo.boundingBox();
+    if (width >= 900) {
+      expect(image!.x).toBeLessThanOrEqual(heading!.x);
+      expect(image!.y).toBeLessThan(heading!.y);
+      expect(image!.x + image!.width).toBeGreaterThan(heading!.x + heading!.width);
+      expect(image!.y + image!.height).toBeGreaterThan(links!.y + links!.height);
+    } else expect(image!.y).toBeGreaterThanOrEqual(links!.y + links!.height);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
+  }
+  await hero.getByRole('button', { name: 'Start studying' }).click();
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
 });
 
 test('flashcard steps track the visible question, revealing and navigating independently', async ({ page }) => {

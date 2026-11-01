@@ -4,6 +4,10 @@ import { alpha, Box, Button, ClickAwayListener, IconButton, Tooltip, Typography 
 import { visuallyHidden } from '@mui/utils';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
+import StyleOutlinedIcon from '@mui/icons-material/StyleOutlined';
+import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { SubjectIcon } from '../../shared/ui/catalog/icons/SubjectIcon';
 import { LegalFooter } from '../../shared/ui/catalog/LegalFooter';
@@ -102,15 +106,28 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
       </Box>
 
       <Box component="main">
-        <Box component="section" aria-labelledby="hero-title" sx={{ textAlign: 'center', pt: { xs: 3, md: 8 }, pb: { xs: 6, md: 10 } }}>
-          <Typography component="h1" id="hero-title" sx={{ ...type.display, maxWidth: '24ch', mx: 'auto' }}>Study medicine one question at a time</Typography>
-          <Typography sx={{ ...type.lede, mt: { xs: 2, md: 3.5 }, mx: 'auto' }}>
-            Practice quizzes and flashcards across twelve subjects without an account for free
-          </Typography>
-          <Button ref={heroCta} variant="contained" size="large" onClick={onStart} sx={{ mt: { xs: 3, md: 4 }, px: 3, py: 1.5, fontSize: '1rem' }}>Start studying</Button>
-          <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mt: 1.5 }}>
-            <Button href="#quizzes" variant="text" size="small">Quizzes</Button>
-            <Button href="#flashcards" variant="text" size="small">Flashcards</Button>
+        <Box component="section" aria-labelledby="hero-title" sx={{ position: 'relative', isolation: 'isolate', display: 'flex', alignItems: 'center', minHeight: { md: 720, lg: 800 }, pt: { xs: 5, md: 10 }, pb: { xs: 46, sm: 58, md: 10 } }}>
+          <Box sx={{ position: 'relative', zIndex: 1, width: { xs: '100%', md: '52%' }, textAlign: { xs: 'center', md: 'left' } }}>
+            <Typography sx={{ ...type.label, color: 'primary.main', mb: { xs: 2, md: 3 } }}>Review · Practice · Improve</Typography>
+            <Typography component="h1" id="hero-title" sx={{ ...type.display, maxWidth: '18ch', mx: { xs: 'auto', md: 0 } }}>Study medicine one question at a time</Typography>
+            <Typography sx={{ ...type.lede, mt: { xs: 2, md: 3 }, mx: { xs: 'auto', md: 0 } }}>
+              Practice quizzes and flashcards across twelve subjects without an account for free
+            </Typography>
+            <Button ref={heroCta} variant="contained" size="large" endIcon={<ArrowForwardRoundedIcon />} onClick={onStart} sx={{ mt: { xs: 3, md: 4 }, px: 3.5, py: 1.75, fontSize: '1.0625rem', gap: 1 }}>Start studying</Button>
+            <Box component="nav" aria-label="Explore study tools" sx={{ display: 'flex', maxWidth: 360, mx: { xs: 'auto', md: 0 }, mt: { xs: 3, md: 4 }, '& > :not(:first-of-type)': { borderLeft: hairline } }}>
+              {[
+                { label: 'Quizzes', href: '#quizzes', Icon: QuizOutlinedIcon },
+                { label: 'Flashcards', href: '#flashcards', Icon: StyleOutlinedIcon },
+                { label: 'Subjects', href: '#subjects', Icon: LayersOutlinedIcon },
+              ].map(({ label, href, Icon }) => <Button key={href} href={href} sx={{ flex: 1, minWidth: 0, flexDirection: 'column', gap: .75, px: 1, py: .75, borderRadius: 0, color: 'text.primary', fontSize: '.8125rem', whiteSpace: 'nowrap' }}>
+                <Box component="span" sx={{ display: 'grid', placeItems: 'center', width: 36, height: 36, borderRadius: '10px', bgcolor: theme => alpha(theme.palette.primary.main, .08), color: 'primary.main' }}><Icon sx={{ fontSize: 20 }} /></Box>
+                {label}
+              </Button>)}
+            </Box>
+          </Box>
+          <Box aria-hidden sx={{ position: 'absolute', zIndex: -1, insetInline: { xs: -16, sm: -24, md: -32 }, bottom: 0, height: { xs: 360, sm: 440, md: '100%' }, pointerEvents: 'none' }}>
+            <Box component="img" src="/assets/illustrations/landing-hero-960.webp" srcSet="/assets/illustrations/landing-hero-640.webp 640w, /assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w" sizes="(min-width: 1200px) 1200px, 100vw" width={1448} height={1086} alt="" loading="eager" fetchPriority="high" decoding="async" sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'right center' }} />
+            <Box sx={{ position: 'absolute', inset: 0, background: theme => ({ xs: `linear-gradient(to bottom, ${theme.palette.background.default}, ${alpha(theme.palette.background.default, 0)} 28%, ${alpha(theme.palette.background.default, 0)} 80%, ${theme.palette.background.default})`, md: `linear-gradient(to right, ${theme.palette.background.default} 2%, ${alpha(theme.palette.background.default, .98)} 28%, ${alpha(theme.palette.background.default, .88)} 40%, ${alpha(theme.palette.background.default, .3)} 56%, ${alpha(theme.palette.background.default, 0)} 70%), linear-gradient(to bottom, ${theme.palette.background.default}, ${alpha(theme.palette.background.default, 0)} 12%, ${alpha(theme.palette.background.default, 0)} 85%, ${theme.palette.background.default})` }) }} />
           </Box>
         </Box>
 
@@ -134,7 +151,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
           </Box>
         </Box>
 
-        <Box component="section" aria-labelledby="contents-title" sx={{ ...section, rowGap: 4 }}>
+        <Box component="section" id="subjects" aria-labelledby="contents-title" sx={{ ...section, rowGap: 4 }}>
           <Box sx={{ gridColumn: { md: '1 / span 4' } }}>
             <SectionHead label="Contents" title="Twelve subjects" id="contents-title">
               <Typography sx={{ ...type.body, mt: 2.5, color: 'text.secondary', maxWidth: '34ch' }}>Within each subject, quizzes and flashcard decks are grouped by topic.</Typography>
