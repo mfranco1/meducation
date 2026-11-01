@@ -1,5 +1,4 @@
 import { expect, test } from '@playwright/test';
-import { openTopicIfNeeded } from './support/topic';
 
 test.beforeEach(async ({ page }) => {
   await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
@@ -100,7 +99,7 @@ async function expectSingleCardAtAllWidths(
   }, carouselId);
 }
 
-test('quiz Continue Studying card is responsive and opens the active subject', async ({ page }, testInfo) => {
+test('quiz Continue Studying card is responsive and reveals the active quiz', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 844 });
   await page.goto('/');
   await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
@@ -128,11 +127,22 @@ test('quiz Continue Studying card is responsive and opens the active subject', a
   await action.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
-  await openTopicIfNeeded(page);
-  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeInViewport();
+  await expect(page.getByRole('heading', { level: 4 })).toBeFocused();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await expect(page.getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await page.getByTestId('continue-study-card').click();
+  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeInViewport();
+  await expect(page.getByRole('heading', { level: 4 })).toBeFocused();
 });
 
-test('flashcard Continue Studying card shows deck activity and opens the saved subject', async ({ page }, testInfo) => {
+test('flashcard Continue Studying card shows deck activity and reveals the saved deck', async ({ page }, testInfo) => {
   await page.setViewportSize({ width: 1280, height: 844 });
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
@@ -161,6 +171,16 @@ test('flashcard Continue Studying card shows deck activity and opens the saved s
   await action.focus();
   await page.keyboard.press('Space');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
-  await openTopicIfNeeded(page);
-  await expect(page.getByRole('button', { name: /^Resume deck/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Resume deck/ })).toBeInViewport();
+  await expect(page.getByRole('heading', { level: 4 })).toBeFocused();
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
+  await expect(page.getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+  await page.setViewportSize({ width: 1280, height: 844 });
+  await page.getByTestId('continue-study-card').click();
+  await expect(page.getByRole('button', { name: /^Resume deck/ })).toBeInViewport();
+  await expect(page.getByRole('heading', { level: 4 })).toBeFocused();
 });

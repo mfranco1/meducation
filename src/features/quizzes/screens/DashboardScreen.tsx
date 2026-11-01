@@ -129,6 +129,7 @@ export function DashboardScreen({
   retryAt,
   onRetry = () => undefined,
   onSelectSubject,
+  onContinueSubject = onSelectSubject,
   statsError,
   subjectsError,
 }: {
@@ -145,6 +146,7 @@ export function DashboardScreen({
   retryAt?: number;
   onRetry?: () => void | Promise<void>;
   onSelectSubject: (subject: Subject) => void;
+  onContinueSubject?: (subject: Subject) => void;
   statsError?: Error;
   subjectsError?: Error;
 }) {
@@ -288,7 +290,7 @@ export function DashboardScreen({
               <ContinueStudyCardSkeleton />
             </Box>
           ) : !loading && !sharedError && !subjectsFailure && !retrying && !manualRetryPending ? (
-            <ActiveSubjectCarousel subjects={activeSubjectStats(subjectStats)} onSelectSubject={onSelectSubject} />
+            <ActiveSubjectCarousel subjects={activeSubjectStats(subjectStats)} onSelectSubject={onContinueSubject} />
           ) : null
         }
       >

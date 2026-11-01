@@ -7,9 +7,10 @@ import { TopicSetBrowser, TopicSetBrowserSkeleton, type TopicSet } from '../../.
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
 import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
 
-export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completionCounts, finishedAt, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck, onPrepareDeck = () => undefined }: {
+export function FlashcardSubjectScreen({ subject, catalog, continueStudying = false, checkpoints, completionCounts, finishedAt, loading = false, error, loadingDeckId, onRetry, onBack, onSelectDeck, onPrepareDeck = () => undefined }: {
   subject: Subject;
   catalog?: FlashcardCatalogResponse;
+  continueStudying?: boolean;
   checkpoints: Readonly<Record<string, FlashcardCheckpoint>>;
   completionCounts: Readonly<Record<string, number>>;
   finishedAt: Readonly<Record<string, string>>;
@@ -24,12 +25,14 @@ export function FlashcardSubjectScreen({ subject, catalog, checkpoints, completi
   const decks = catalog?.decks ?? [];
   const showSets = !(error || loading) && decks.length > 0;
   const sets = decks.map(deck => deckSet(deck, checkpoints[deck.id], completionCounts[deck.id] ?? 0, finishedAt[deck.id], loadingDeckId === deck.id, () => onSelectDeck(deck), () => onPrepareDeck(deck)));
+  const initialSetId = continueStudying ? decks.filter(deck => deck.cardCount > 0 && checkpoints[deck.id])
+    .sort((a, b) => checkpoints[b.id].updatedAt.localeCompare(checkpoints[a.id].updatedAt))[0]?.id : undefined;
   return <>
     {error && <ContentRecoveryBanner title={`We can’t load flashcard decks for ${subject.name} right now.`} description="Your saved deck positions are safe. Please try again." error={error} onRetry={onRetry} />}
     <SubjectBrowseLayout subjectId={subject.id} subjectName={subject.name} subjectDescription={subject.description} progress={showSets ? { completed: decks.filter(deck => (completionCounts[deck.id] ?? 0) > 0).length, total: decks.length, nouns: 'decks' } : loading ? null : undefined} onBack={onBack}>
       {error || loading ? <Box role={loading ? 'status' : undefined} aria-busy={loading} aria-hidden={!loading} aria-label={loading ? 'Loading flashcard decks' : undefined}><TopicSetBrowserSkeleton noun="deck" dashed={!loading} /></Box>
         : decks.length === 0 ? <SubjectCatalogEmptyState title="No flashcard decks available yet" />
-          : <TopicSetBrowser topics={catalog?.topics ?? []} sets={sets} noun="deck" />}
+          : <TopicSetBrowser topics={catalog?.topics ?? []} sets={sets} noun="deck" initialSetId={initialSetId} />}
     </SubjectBrowseLayout>
   </>;
 }

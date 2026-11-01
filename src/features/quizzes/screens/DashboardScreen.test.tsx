@@ -266,3 +266,15 @@ describe('dashboard active-subject ordering', () => {
     expect(activeSubjectStats([first, second]).map((stat) => stat.subject.name)).toEqual(['First', 'Second']);
   });
 });
+
+
+it('uses separate continuation and ordinary subject actions', () => {
+  const onSelectSubject = vi.fn();
+  const onContinueSubject = vi.fn();
+  render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[{ subject, quizCount: 2, activeQuizCount: 1 }]} onSelectSubject={onSelectSubject} onContinueSubject={onContinueSubject} /></ThemeProvider>);
+  fireEvent.click(screen.getByRole('button', { name: 'Continue studying Biochemistry' }));
+  expect(onContinueSubject).toHaveBeenCalledExactlyOnceWith(subject);
+  expect(onSelectSubject).not.toHaveBeenCalled();
+  fireEvent.click(within(screen.getByTestId('all-subjects-grid')).getByRole('button', { name: 'Open Biochemistry' }));
+  expect(onSelectSubject).toHaveBeenCalledExactlyOnceWith(subject);
+});

@@ -3,7 +3,7 @@ import type { Attempt, CompletedAttempt, Quiz, Subject } from '../../../domain/t
 export type QuizSessionView =
   | { page: 'dashboard' }
   | { page: 'flashcards' }
-  | { page: 'subject'; subject: Subject }
+  | { page: 'subject'; subject: Subject; continueStudying?: boolean }
   | { page: 'quiz'; quiz: Quiz; attempt: Attempt; index: number }
   | { page: 'quiz-browse'; quiz: Quiz; index: number }
   | { page: 'quiz-review'; quiz: Quiz; attempt: CompletedAttempt; index: number }

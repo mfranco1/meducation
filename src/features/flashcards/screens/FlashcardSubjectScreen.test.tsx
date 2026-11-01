@@ -98,3 +98,34 @@ describe('FlashcardSubjectScreen', () => {
     expect(screen.getByText('Completed 3 times')).toBeVisible();
   });
 });
+
+
+it.each([true, false])('continues at the latest nonempty unfinished deck after loading (desktop: %s)', async desktop => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: desktop, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  const checkpoint = { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-01T00:00:00Z', openedCardIds: [], flaggedCardIds: [] };
+  const props = {
+    subject, continueStudying: true, onBack: vi.fn(), onRetry: vi.fn(), onSelectDeck: vi.fn(), completionCounts: { d1: 1 }, finishedAt: { d1: '2026-10-04T00:00:00Z' },
+    checkpoints: {
+      d1: checkpoint,
+      d2: { ...checkpoint, deckId: 'd2', updatedAt: '2026-10-03T00:00:00Z' },
+      d3: { ...checkpoint, deckId: 'd3', currentCardId: 'f3', updatedAt: '2026-10-02T00:00:00Z' },
+    },
+  };
+  const { rerender } = render(<ThemeProvider theme={theme}><FlashcardSubjectScreen {...props} loading /></ThemeProvider>);
+  expect(screen.queryByRole('heading', { name: 'Heart' })).toBeNull();
+  rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen {...props} catalog={catalog} /></ThemeProvider>);
+  expect(screen.getByRole('heading', { name: 'Heart' })).toHaveFocus();
+  expect(screen.getByRole('button', { name: 'Resume deck: Heart' })).toBeVisible();
+  expect(props.onSelectDeck).not.toHaveBeenCalled();
+  if (!desktop) {
+    history.back();
+    expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
+  }
+});
+
+it('uses the normal mobile topic list when no unfinished deck remains', () => {
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} continueStudying checkpoints={{}} completionCounts={{}} finishedAt={{}} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+  expect(screen.getByRole('heading', { name: 'Topics' })).toBeVisible();
+  expect(screen.queryByRole('heading', { name: 'Brachial plexus' })).toBeNull();
+});

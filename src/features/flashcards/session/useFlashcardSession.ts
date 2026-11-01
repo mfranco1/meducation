@@ -87,10 +87,10 @@ export function useFlashcardSession(
   }, [cancelLaunch]);
 
   const showSubject = useCallback(
-    (subject: Subject) => {
+    (subject: Subject, continueStudying?: boolean) => {
       cancelLaunch();
       setPendingRestart(undefined);
-      setView({ page: 'flashcards-subject', subject });
+      setView({ page: 'flashcards-subject', subject, continueStudying });
     },
     [cancelLaunch],
   );

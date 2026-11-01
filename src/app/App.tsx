@@ -100,10 +100,16 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
   const currentQuizState = currentSubject ? questionBank.getQuizState(currentSubject.id) : 'idle';
   const currentQuizError = currentSubject ? questionBank.getQuizError(currentSubject.id) : undefined;
   const currentQuizRecovery = currentSubject ? questionBank.getQuizRecovery(currentSubject.id) : undefined;
-  const selectSubject = (subject: Subject) => {
+  const selectSubject = (subject: Subject, continueStudying = false) => {
     cancel();
-    session.showSubject(subject);
+    session.showSubject(subject, continueStudying);
     void questionBank.ensureQuizzes(subject.id).catch(() => undefined);
+  };
+
+  const selectFlashcardSubject = (subject: Subject, continueStudying = false) => {
+    if (currentFlashcardSubject) runtimeFlashcardBank.cancel(`catalog:${currentFlashcardSubject.id}`);
+    flashcards.showSubject(subject, continueStudying);
+    void runtimeFlashcardBank.ensureSubjectCatalog(subject.id).catch(() => undefined);
   };
 
   const progressForSubject = (subjectId: string) => quizProgressForSubject(
@@ -190,7 +196,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       if (catalogError instanceof ContentLoadError && catalogError.kind === 'revision') { window.location.reload(); return; }
       if (catalogState === 'retrying') questionBank.retryCatalogNow();
       return questionBank.ensureSubjects().then(() => undefined, () => undefined);
-    }} onSelectSubject={selectSubject} />}
+    }} onSelectSubject={selectSubject} onContinueSubject={subject => selectSubject(subject, true)} />}
     {view.page === 'flashcards' && <FlashcardsDashboardScreen
       subjects={flashcardDashboardData}
       activeSubjects={activeFlashcardSubjectCards}
@@ -199,14 +205,12 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       loading={runtimeFlashcardBank.getState('subjects') === 'idle' || runtimeFlashcardBank.getState('subjects') === 'loading'}
       error={runtimeFlashcardBank.getError('subjects')}
       onRetry={() => loadRuntimeFlashcardSubjects().then(() => undefined, () => undefined)}
-      onSelectSubject={subject => {
-        if (currentFlashcardSubject) runtimeFlashcardBank.cancel(`catalog:${currentFlashcardSubject.id}`);
-        flashcards.showSubject(subject);
-        void runtimeFlashcardBank.ensureSubjectCatalog(subject.id).catch(() => undefined);
-      }}
+      onSelectSubject={selectFlashcardSubject}
+      onContinueSubject={subject => selectFlashcardSubject(subject, true)}
     />}
     {currentFlashcardSubject && <FlashcardSubjectScreen
       subject={currentFlashcardSubject}
+      continueStudying={view.page === 'flashcards-subject' && view.continueStudying}
       catalog={runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id)}
       checkpoints={flashcards.progress.checkpoints}
       completionCounts={flashcards.progress.completionCounts}
@@ -223,7 +227,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       onSelectDeck={deck => { void flashcards.launchDeck(deck, currentFlashcardSubject); }}
       onPrepareDeck={deck => { void runtimeFlashcardBank.ensureCards(deck.id).catch(() => undefined); }}
     />}
-    {currentSubject && <SubjectScreen subject={currentSubject} topics={questionBank.listTopics(currentSubject.id)} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
+    {currentSubject && <SubjectScreen continueStudying={session.view.page === 'subject' && session.view.continueStudying} subject={currentSubject} topics={questionBank.listTopics(currentSubject.id)} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
       if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') { window.location.reload(); return; }
       if (currentQuizRecovery?.busy) return;
       if (currentQuizState === 'retrying') questionBank.retryQuizNow(currentSubject.id);

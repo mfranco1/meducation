@@ -1,3 +1,4 @@
+import { StrictMode } from 'react';
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -345,5 +346,49 @@ describe('subject quiz score summaries', () => {
 
     const latestScore = screen.getByText('Score 75%');
     expect(latestScore.closest('.MuiChip-root')).toContainElement(screen.getByRole('img', { name: label }));
+  });
+});
+
+
+describe('continue studying destination', () => {
+  it.each([true, false])('reveals the latest unfinished quiz after loading (desktop: %s)', async desktop => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: desktop, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    const recent = { ...quiz, id: 'recent', topicId: 't2', name: 'Recent unfinished quiz' };
+    const completed = { ...quiz, id: 'completed', name: 'Newer completed quiz' };
+    const props = {
+      subject, topics, continueStudying: true, onBack: vi.fn(), onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn(),
+      progress: [
+        { quiz, completionCount: 0, active: activeAttempt, activityAt: '2026-10-01T00:00:00Z' },
+        { quiz: recent, completionCount: 0, active: { ...activeAttempt, quizId: recent.id }, activityAt: '2026-10-02T00:00:00Z' },
+        { quiz: completed, completionCount: 1, activityAt: '2026-10-03T00:00:00Z' },
+      ],
+    };
+    const { rerender } = render(<StrictMode><ThemeProvider theme={theme}><SubjectScreen {...props} progress={[]} loading /></ThemeProvider></StrictMode>);
+    expect(screen.queryByRole('heading', { name: recent.name })).toBeNull();
+    rerender(<StrictMode><ThemeProvider theme={theme}><SubjectScreen {...props} /></ThemeProvider></StrictMode>);
+    expect(screen.getByRole('heading', { name: recent.name })).toHaveFocus();
+    expect(screen.getByRole('button', { name: `Resume quiz: ${recent.name}` })).toBeVisible();
+    expect(props.onResumeQuiz).not.toHaveBeenCalled();
+    if (!desktop) {
+      history.back();
+      expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
+      expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveFocus();
+    }
+  });
+
+  it.each([undefined, '2026-10-01T00:00:00Z'])('uses catalog order when unfinished activity is tied or missing (%s)', activityAt => {
+    const props = { subject, topics, continueStudying: true, onBack: vi.fn(), onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
+    render(<ThemeProvider theme={theme}><SubjectScreen {...props} progress={[
+      { quiz, completionCount: 0, active: activeAttempt, activityAt },
+      { quiz: { ...quiz, id: 'other', topicId: 't2', name: 'Other quiz' }, completionCount: 0, active: activeAttempt, activityAt },
+    ]} /></ThemeProvider>);
+    expect(screen.getByRole('heading', { name: quiz.name })).toHaveFocus();
+  });
+
+  it('keeps the normal mobile topic list when no unfinished quiz remains', () => {
+    window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} continueStudying progress={[{ quiz, completionCount: 1 }]} onBack={vi.fn()} onResumeQuiz={vi.fn()} onStartQuiz={vi.fn()} onBrowseQuiz={vi.fn()} /></ThemeProvider>);
+    expect(screen.getByRole('heading', { name: 'Topics' })).toBeVisible();
+    expect(screen.queryByRole('heading', { name: quiz.name })).toBeNull();
   });
 });

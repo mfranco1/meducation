@@ -72,6 +72,7 @@ export function FlashcardsDashboardScreen({
   error,
   onRetry,
   onSelectSubject,
+  onContinueSubject = onSelectSubject,
 }: {
   subjects: FlashcardDashboardSubject[];
   activeSubjects: FlashcardDashboardSubject[];
@@ -81,6 +82,7 @@ export function FlashcardsDashboardScreen({
   error?: Error;
   onRetry: () => void | Promise<void>;
   onSelectSubject: (subject: Subject) => void;
+  onContinueSubject?: (subject: Subject) => void;
 }) {
   const stats = useFlashcardDashboardStats(progress);
   const metric = (value: number) => (progressError ? '—' : formatStatCount(value));
@@ -163,7 +165,7 @@ export function FlashcardsDashboardScreen({
                   title={item.subject.name}
                   activityLabel={`${item.activeDeckCount} ${item.activeDeckCount === 1 ? 'deck' : 'decks'} in progress`}
                   accessibleLabel={`Continue studying ${item.subject.name}`}
-                  onContinue={() => onSelectSubject(item.subject)}
+                  onContinue={() => onContinueSubject(item.subject)}
                   illustration={<StudyCardIllustration subjectId={item.subject.id} />}
                 />
               )}

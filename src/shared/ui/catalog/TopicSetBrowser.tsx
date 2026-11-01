@@ -61,17 +61,22 @@ function relativeTime(iso: string): string {
   return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(Math.round(seconds / size) || 0, unit);
 }
 
-export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: readonly Topic[]; sets: readonly TopicSet[]; noun: 'quiz' | 'deck' }) {
+export function TopicSetBrowser({ topics, sets: catalogSets, noun, initialSetId }: { topics: readonly Topic[]; sets: readonly TopicSet[]; initialSetId?: string; noun: 'quiz' | 'deck' }) {
   const desktop = useMediaQuery((theme: Theme) => theme.breakpoints.up('lg'));
-  const [selectedId, setSelectedId] = useState<string>();
+  const [initialSet] = useState(() => catalogSets.find(set => set.id === initialSetId && topics.some(topic => topic.id === set.topicId)));
+  const [selectedId, setSelectedId] = useState(initialSet?.topicId);
+  const initialRowRef = useRef<HTMLLIElement>(null);
+  const initialHeadingRef = useRef<HTMLHeadingElement>(null);
+  const initialFocusPending = useRef(Boolean(initialSet));
   const [query, setQuery] = useState('');
   const headingRef = useRef<HTMLHeadingElement>(null);
   const searchRef = useRef<HTMLInputElement>(null);
   const topicButtons = useRef(new Map<string, HTMLElement>());
-  const returnTo = useRef<string>(undefined);
+  const returnTo = useRef(initialSet?.topicId);
   const focusPending = useRef(false);
   // On small screens an open topic owns a history entry, so browser Back returns to the topic list.
   const ownsHistoryEntry = useRef(false);
+  const mounted = useRef(false);
   // Most recent activity first; untouched items keep catalog order (sort is stable).
   const byRecent = (a?: string, b?: string) => (b ?? '').localeCompare(a ?? '');
   const sets = [...catalogSets].sort((a, b) => byRecent(a.activityAt, b.activityAt));
@@ -98,6 +103,7 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: r
   const nouns = nounsOf(noun);
 
   useEffect(() => {
+    mounted.current = true;
     const onPopState = () => {
       if (!ownsHistoryEntry.current) return;
       ownsHistoryEntry.current = false;
@@ -107,8 +113,9 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: r
     addEventListener('popstate', onPopState);
     return () => {
       removeEventListener('popstate', onPopState);
-      // Leaving the subject from an open topic drops its entry so Back isn't a no-op later.
-      if (ownsHistoryEntry.current) history.back();
+      mounted.current = false;
+      // Drop the topic entry on departure, but keep it through Strict Mode effect replay.
+      queueMicrotask(() => { if (!mounted.current && ownsHistoryEntry.current) history.back(); });
     };
   }, []);
 
@@ -133,12 +140,19 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun }: { topics: r
     else if (returnTo.current) topicButtons.current.get(returnTo.current)?.focus();
   }, [desktop, selectedId]);
 
-  const setRow = (set: TopicSet) => <Box component="li" key={set.id} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '10px', p: 2 }}>
+  useEffect(() => {
+    if (!initialFocusPending.current || !initialHeadingRef.current) return;
+    initialFocusPending.current = false;
+    initialHeadingRef.current.focus({ preventScroll: true });
+    initialRowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+  }, []);
+
+  const setRow = (set: TopicSet) => <Box component="li" key={set.id} ref={set.id === initialSet?.id ? initialRowRef : undefined} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '10px', p: 2 }}>
       <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} spacing={2}>
         <Stack direction="row" alignItems="center" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
           {set.completionCount > 0 ? <CheckCircleRoundedIcon aria-hidden color="success" /> : <RadioButtonUncheckedRoundedIcon aria-hidden color="disabled" />}
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="subtitle1" component="h4" sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{set.name}</Typography>
+            <Typography ref={set.id === initialSet?.id ? initialHeadingRef : undefined} tabIndex={set.id === initialSet?.id ? -1 : undefined} variant="subtitle1" component="h4" sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{set.name}</Typography>
             <Typography variant="body2" color="text.secondary">{set.detail}</Typography>
             {(set.completionCount > 0 || set.chips.length > 0 || (set.activityAt && !set.progress)) && <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center" sx={{ mt: 1 }}>
               {set.completionCount > 0 && <Chip label={`Completed ${set.completionCount} ${set.completionCount === 1 ? 'time' : 'times'}`} size="small" variant="outlined" color="success" sx={{ bgcolor: (theme: Theme) => alpha(theme.palette.success.main, .12) }} />}

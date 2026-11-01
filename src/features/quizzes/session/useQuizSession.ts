@@ -35,7 +35,7 @@ interface QuizSession {
   abortQuiz: (destination?: QuizExitDestination) => void;
   showDashboard: () => void;
   showFlashcards: () => void;
-  showSubject: (subject: Subject) => void;
+  showSubject: (subject: Subject, continueStudying?: boolean) => void;
   showQuizSubject: (quiz: Quiz) => void;
 }
 
@@ -190,7 +190,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     abortQuiz,
     showDashboard: () => setView({ page: 'dashboard' }),
     showFlashcards: () => setView({ page: 'flashcards' }),
-    showSubject: subject => setView({ page: 'subject', subject }),
+    showSubject: (subject, continueStudying) => setView({ page: 'subject', subject, continueStudying }),
     showQuizSubject,
   };
 }

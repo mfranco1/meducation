@@ -51,6 +51,7 @@ describe('FlashcardsDashboardScreen', () => {
   it('shows a continue carousel and all-subject grid with deck completion', () => {
     const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b' };
     const onSelectSubject = vi.fn();
+    const onContinueSubject = vi.fn();
     const today = new Date();
     const yesterday = new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1);
     const dayKey = (date: Date) =>
@@ -73,6 +74,7 @@ describe('FlashcardsDashboardScreen', () => {
           }}
           onRetry={vi.fn()}
           onSelectSubject={onSelectSubject}
+          onContinueSubject={onContinueSubject}
         />
       </ThemeProvider>,
     );
@@ -97,9 +99,10 @@ describe('FlashcardsDashboardScreen', () => {
     expect(within(grid).getByText('Completed 50%')).toBeVisible();
     expect(within(grid).getByTestId('subject-score-track').firstElementChild).toHaveStyle({ width: '50%' });
     fireEvent.click(within(continueRegion).getByRole('button', { name: 'Continue studying Anatomy' }));
-    expect(onSelectSubject).toHaveBeenCalledExactlyOnceWith(subject);
+    expect(onContinueSubject).toHaveBeenCalledExactlyOnceWith(subject);
+    expect(onSelectSubject).not.toHaveBeenCalled();
     fireEvent.click(within(grid).getByRole('button', { name: 'Open Anatomy' }));
-    expect(onSelectSubject).toHaveBeenCalledTimes(2);
+    expect(onSelectSubject).toHaveBeenCalledExactlyOnceWith(subject);
   });
 
   it('does not present unreadable progress as zero statistics', () => {
