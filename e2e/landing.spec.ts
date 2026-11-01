@@ -1,4 +1,12 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
+
+async function enterSection(page: Page, name: string) {
+  await page.getByRole('region', { name, exact: true }).evaluate(async (element) => {
+    element.scrollIntoView({ block: 'start' });
+    // Let the scroll event and React update which sample owns the shortcuts.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
+  });
+}
 
 test('the reveal hint opens on hover and click without flipping the card', async ({ page }) => {
   await page.goto('/');
@@ -25,21 +33,14 @@ for (const width of [390, 1440]) {
     await page.goto('/');
     const quiz = page.getByRole('region', { name: 'Sample Quizzes' });
     const flashcards = page.getByRole('region', { name: 'Sample Flashcards' });
-    const enterSection = async (name: string) => {
-      await page.getByRole('region', { name, exact: true }).evaluate(async (element) => {
-        element.scrollIntoView({ block: 'start' });
-        await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())));
-      });
-    };
-
-    await enterSection('Quizzes');
+    await enterSection(page, 'Quizzes');
     await page.keyboard.press('4');
     await expect(quiz.getByText('Correct', { exact: true })).toBeVisible();
     await page.keyboard.press('ArrowRight');
     await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
     await expect(flashcards.getByRole('button', { name: 'Card 1, unopened, current card' })).toBeVisible();
 
-    await enterSection('Flashcards');
+    await enterSection(page, 'Flashcards');
     await page.keyboard.press('4');
     await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
     await page.keyboard.press('Space');
@@ -47,7 +48,7 @@ for (const width of [390, 1440]) {
     await page.keyboard.press('Space');
     await expect(flashcards.getByRole('button', { name: 'Card 2, unopened, current card' })).toBeVisible();
 
-    await enterSection('Twelve subjects');
+    await enterSection(page, 'Twelve subjects');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('4');
     await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
@@ -154,6 +155,7 @@ test('flashcard steps track the visible question, revealing and navigating indep
 });
 
 test('a first visit shows the landing page until the visitor starts studying', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: /one question at a time/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Sample Quizzes' })).toBeVisible();
@@ -162,6 +164,7 @@ test('a first visit shows the landing page until the visitor starts studying', a
   await expect(steps).toContainText('Read the explanation');
   await expect(steps).toContainText('Celebrate your progress');
 
+  await enterSection(page, 'Quizzes');
   await page.getByRole('radio').first().focus();
   await page.keyboard.press('4');
   await expect(page.getByText('Correct', { exact: true })).toBeVisible();
@@ -172,6 +175,7 @@ test('a first visit shows the landing page until the visitor starts studying', a
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
 
+  await enterSection(page, 'Flashcards');
   const reveal = page.getByRole('button', { name: 'Reveal answer' });
   await reveal.focus();
   await page.keyboard.press('Space');
