@@ -43,7 +43,7 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 - Loading keeps the header visible and centers the logo, a 6px indeterminate bar and one status line; sections are `aria-busy` with accessible labels and placeholders outside the focus order. Catalog skeletons use the warm wave shimmer. Subject screens keep the Topics card, search field and section headings while loading and show placeholder rows shaped like the real rows. Failures use a full-width recovery banner below the header (with Retry), a small in-region note, or a persistent bottom-right toast. Error copy is learner-safe.
 - Dialog titles are weight 700 (theme default).
 - Toasts use semantic severity, stack by viewport position above content and below modals, can be global or screen-scoped, and persistent errors have a keyboard-accessible close.
-- The Progress dialog has a scrollable body and reachable footer, polite status and alert errors; Escape and Cancel work before commit and are disabled during it. Reset is a quiet section that opens a confirmation view. Focus returns to the entry action.
+- The Progress dialog uses a plain title with a close button, a divided scrollable body and a reachable footer with text secondary actions. It has polite status and alert errors; dismissal is disabled during commit. Reset is a quiet section that opens a confirmation view. Focus returns to the entry action.
 - The Help dialog shows contact instructions above expandable FAQs, with a scrollable body and a Close action in the footer. It is full screen on small phones. Escape closes it and focus returns to Help.
 
 ## Landing page

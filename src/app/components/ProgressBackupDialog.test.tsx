@@ -50,8 +50,15 @@ describe('progress backup dialog', () => {
   });
 
   it('confirms a finished download politely', () => {
-    render(<ProgressBackupDialog controller={controller({ notice: 'Backup downloaded.' })} />);
-    expect(screen.getByRole('status')).toHaveTextContent('Backup downloaded.');
+    render(<ProgressBackupDialog controller={controller({ notice: 'Backup downloaded' })} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Backup downloaded');
+  });
+
+  it('dismisses progress with the header close button', () => {
+    const actions = controller();
+    render(<ProgressBackupDialog controller={actions} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Close progress' }));
+    expect(actions.close).toHaveBeenCalledOnce();
   });
 
   it('confirms a reset with the counts to delete', () => {
@@ -75,6 +82,7 @@ describe('progress backup dialog', () => {
     const actions = controller({ busy: true, committing: true });
     render(<ProgressBackupDialog controller={actions} />);
     expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Close progress' })).toBeDisabled();
     fireEvent.keyDown(screen.getByRole('dialog', { name: 'Progress' }), { key: 'Escape' });
     expect(actions.close).not.toHaveBeenCalled();
   });

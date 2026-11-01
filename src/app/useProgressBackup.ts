@@ -156,7 +156,7 @@ export function useProgressBackup(): ProgressBackupController {
       if (generation !== operationGeneration.current) return;
       const failure = downloadProgressBackup(blob, (JSON.parse(exported.json) as { exportedAt: string }).exportedAt);
       setError(failure);
-      setNotice(failure ? undefined : 'Backup downloaded.');
+      setNotice(failure ? undefined : 'Backup downloaded');
     } catch {
       if (generation === operationGeneration.current) setError('The progress file could not be downloaded. Try again.');
     } finally {

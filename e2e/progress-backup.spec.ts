@@ -85,7 +85,7 @@ test('resets progress and dismisses its success toast after five seconds', async
   await seedProgress(page);
   await page.goto('/');
   await page.getByRole('button', { name: 'Progress', exact: true }).click();
-  await page.getByRole('button', { name: 'Reset progress', exact: true }).click();
+  await page.getByRole('button', { name: 'Reset', exact: true }).click();
   await expect(page.getByRole('alert')).toHaveText(
     'This deletes all quiz and flashcard progress in this browser. You cannot undo this.',
   );
