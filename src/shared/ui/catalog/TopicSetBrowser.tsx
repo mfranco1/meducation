@@ -188,7 +188,7 @@ export function TopicSetBrowser({ topics, sets: catalogSets, noun, initialSetId 
           ref={(node: HTMLElement | null) => { if (node) topicButtons.current.set(topic.id, node); else topicButtons.current.delete(topic.id); }}
           aria-current={isSelected ? 'true' : undefined}
           onClick={() => openTopic(topic.id)}
-          sx={{ alignItems: 'center', borderRadius: '10px', display: 'flex', gap: 1.5, p: 1.5, textAlign: 'left', width: '100%', bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .1) : 'transparent', '&:hover': { bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .1) : 'action.hover' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' } }}
+          sx={{ alignItems: 'center', border: '2px solid', borderColor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .3) : 'transparent', borderRadius: '10px', display: 'flex', gap: 1.5, p: 1.5, textAlign: 'left', width: '100%', bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .1) : 'transparent', '&:hover': { bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, .1) : 'action.hover' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' } }}
         >
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography variant="subtitle2" sx={{ alignItems: 'flex-start', display: 'flex', fontWeight: 700, gap: 1, overflowWrap: 'anywhere' }}>

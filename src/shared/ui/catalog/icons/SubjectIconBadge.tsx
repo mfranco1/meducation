@@ -1,7 +1,7 @@
 import { Box, alpha, useTheme } from '@mui/material';
 import { SubjectIcon } from './SubjectIcon';
 
-export function SubjectIconBadge({ subjectId, size = 48 }: { subjectId: string; size?: number }) {
+export function SubjectIconBadge({ subjectId, size = 48, iconSize = Math.round(size * 0.58) }: { subjectId: string; size?: number; iconSize?: number }) {
   const theme = useTheme();
   return (
     <Box
@@ -17,7 +17,7 @@ export function SubjectIconBadge({ subjectId, size = 48 }: { subjectId: string; 
         width: size,
       }}
     >
-      <SubjectIcon subjectId={subjectId} sx={{ fontSize: Math.round(size * 0.58) }} />
+      <SubjectIcon subjectId={subjectId} sx={{ fontSize: iconSize }} />
     </Box>
   );
 }

@@ -1,35 +1,67 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Box, Button, CircularProgress, Container, Stack, Typography } from '@mui/material';
-import type { ReactNode } from 'react';
+import { useId, type ReactNode } from 'react';
 import { SubjectIconBadge } from './icons/SubjectIconBadge';
 import { reducedMotion } from '../motion';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 
 export function SubjectBrowseLayout({ subjectId, subjectName, subjectDescription, progress, onBack, children }: { subjectId: string; subjectName: string; subjectDescription?: string; progress?: { completed: number; total: number; nouns: string } | null; onBack: () => void; children: ReactNode }) {
+  const waveId = useId();
   const percent = progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
-  return <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 5 } }}>
-    <Button startIcon={<ArrowBackRoundedIcon />} onClick={onBack} color="inherit">Dashboard</Button>
-    <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={2} sx={{ mt: 2, mb: 4 }}>
-      <Stack direction="row" alignItems="center" spacing={2} sx={{ minWidth: 0 }}>
-        <SubjectIconBadge subjectId={subjectId} size={88} />
-        <Stack justifyContent="center" sx={{ minHeight: 88, minWidth: 0 }}>
-          <Typography variant="h3" sx={{ fontSize: { xs: '1.5rem', sm: '3rem' }, overflowWrap: 'break-word', minWidth: 0 }}>{subjectName}</Typography>
-          {subjectDescription && <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>{subjectDescription}</Typography>}
+  return <Box sx={{ position: 'relative', isolation: 'isolate' }}>
+    <Box component="svg" viewBox="0 0 1440 440" preserveAspectRatio="xMaxYMin slice" aria-hidden="true" focusable="false" sx={{
+      position: 'absolute', zIndex: -1, pointerEvents: 'none', inset: '0 0 auto', width: '100%', height: { xs: 300, sm: 360 },
+      color: 'primary.light', opacity: { xs: .65, sm: 1 },
+      maskImage: 'linear-gradient(to bottom, black 15%, transparent 100%)',
+    }}>
+      <defs>
+        <radialGradient id={`${waveId}-wash`} cx="95%" cy="0%" r="90%">
+          <stop stopColor="currentColor" stopOpacity=".7" />
+          <stop offset="1" stopColor="currentColor" stopOpacity="0" />
+        </radialGradient>
+        <linearGradient id={`${waveId}-ribbon`} x1="0" y1="1" x2=".85" y2="0">
+          <stop stopColor="currentColor" stopOpacity="0" />
+          <stop offset=".55" stopColor="currentColor" stopOpacity=".2" />
+          <stop offset="1" stopColor="currentColor" stopOpacity=".85" />
+        </linearGradient>
+        <linearGradient id={`${waveId}-edge`} x1="0" y1="1" x2="1" y2="0">
+          <stop stopColor="#fffdfb" stopOpacity="0" />
+          <stop offset=".65" stopColor="#fffdfb" stopOpacity=".6" />
+          <stop offset="1" stopColor="#fffdfb" stopOpacity=".15" />
+        </linearGradient>
+      </defs>
+      <path d="M0 0H1440V440H0Z" fill={`url(#${waveId}-wash)`} />
+      <path d="M420 440 C640 400 770 240 940 115 C1100 -2 1250 -35 1440 -65 L1440 92 C1220 65 1090 113 925 237 C740 377 610 443 420 480Z" fill={`url(#${waveId}-ribbon)`} />
+      <path d="M420 440 C640 400 770 240 940 115 C1100 -2 1250 -35 1440 -65" fill="none" stroke={`url(#${waveId}-edge)`} strokeWidth="1.5" />
+      <path d="M665 460 C870 395 1020 238 1180 147 C1280 90 1375 70 1470 45 L1470 330 C1280 240 1180 260 1020 345 C875 425 770 465 665 490Z" fill={`url(#${waveId}-ribbon)`} />
+      <path d="M665 460 C870 395 1020 238 1180 147 C1280 90 1375 70 1470 45" fill="none" stroke={`url(#${waveId}-edge)`} strokeWidth="1.5" />
+    </Box>
+    <Container maxWidth="lg" sx={{ py: { xs: 3, sm: 5 } }}>
+      <Box sx={{ mb: 4 }}>
+        <Button startIcon={<ArrowBackRoundedIcon />} onClick={onBack} color="inherit">Dashboard</Button>
+        <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={2} sx={{ mt: 2 }}>
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ minWidth: 0 }}>
+            <SubjectIconBadge subjectId={subjectId} size={88} iconSize={64} />
+            <Stack justifyContent="center" sx={{ minHeight: 88, minWidth: 0, overflowWrap: 'anywhere' }}>
+              <Typography variant="h3" sx={{ fontSize: { xs: '1.5rem', sm: '3rem' }, overflowWrap: 'break-word', minWidth: 0 }}>{subjectName}</Typography>
+              {subjectDescription && <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>{subjectDescription}</Typography>}
+            </Stack>
+          </Stack>
+          {progress === null && <Stack aria-hidden alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto' }}>
+            <LoadingSkeleton variant="circular" width={66} height={66} />
+            <LoadingSkeleton variant="text" width={120} height={16} />
+          </Stack>}
+          {progress && progress.total > 0 && <Stack alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto', textAlign: 'center' }}>
+            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+              <CircularProgress variant="determinate" value={100} size={66} thickness={4} sx={{ color: 'divider' }} aria-hidden />
+              {percent > 0 && <CircularProgress variant="determinate" value={percent} size={66} thickness={4} aria-hidden sx={{ position: 'absolute', left: 0, '& .MuiCircularProgress-circle': { [reducedMotion]: { transition: 'none' } } }} />}
+              <Typography variant="subtitle2" sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{percent}%</Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>{`${progress.completed} / ${progress.total} ${progress.nouns} completed`}</Typography>
+          </Stack>}
         </Stack>
-      </Stack>
-      {progress === null && <Stack aria-hidden alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto' }}>
-        <LoadingSkeleton variant="circular" width={66} height={66} />
-        <LoadingSkeleton variant="text" width={120} height={16} />
-      </Stack>}
-      {progress && progress.total > 0 && <Stack alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto', textAlign: 'center' }}>
-        <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-          <CircularProgress variant="determinate" value={100} size={66} thickness={4} sx={{ color: 'divider' }} aria-hidden />
-          {percent > 0 && <CircularProgress variant="determinate" value={percent} size={66} thickness={4} aria-hidden sx={{ position: 'absolute', left: 0, '& .MuiCircularProgress-circle': { [reducedMotion]: { transition: 'none' } } }} />}
-          <Typography variant="subtitle2" sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{percent}%</Typography>
-        </Box>
-        <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>{`${progress.completed} / ${progress.total} ${progress.nouns} completed`}</Typography>
-      </Stack>}
-    </Stack>
-    {children}
-  </Container>;
+      </Box>
+      {children}
+    </Container>
+  </Box>;
 }
