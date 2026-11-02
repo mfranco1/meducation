@@ -125,7 +125,14 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
               </Button>)}
             </Box>
           </Box>
-          <Box aria-hidden sx={{ position: 'absolute', zIndex: -1, insetInline: { xs: -16, sm: -24, md: -32 }, bottom: 0, height: { xs: 360, sm: 440, md: '100%' }, pointerEvents: 'none' }}>
+          <Box aria-hidden sx={{
+            position: 'absolute', zIndex: -1, insetInline: { xs: -16, sm: -24, md: -32 }, bottom: 0, height: { xs: 360, sm: 440, md: '100%' }, pointerEvents: 'none',
+            '&::after': {
+              content: '""', position: 'absolute', top: 0, right: 0, bottom: 0,
+              width: 'clamp(0px, calc((100vw - 1200px) / 2), 120px)',
+              background: theme => `linear-gradient(to right, ${alpha(theme.palette.background.default, 0)}, ${theme.palette.background.default})`,
+            },
+          }}>
             <Box component="img" src="/assets/illustrations/landing-hero-960.webp" srcSet="/assets/illustrations/landing-hero-640.webp 640w, /assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w" sizes="(min-width: 1200px) 1200px, 100vw" width={1448} height={1086} alt="" loading="eager" fetchPriority="high" decoding="async" sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'right center' }} />
             <Box sx={{ position: 'absolute', inset: 0, background: theme => ({ xs: `linear-gradient(to bottom, ${theme.palette.background.default}, ${alpha(theme.palette.background.default, 0)} 28%, ${alpha(theme.palette.background.default, 0)} 80%, ${theme.palette.background.default})`, md: `linear-gradient(to right, ${theme.palette.background.default} 2%, ${alpha(theme.palette.background.default, .98)} 28%, ${alpha(theme.palette.background.default, .88)} 40%, ${alpha(theme.palette.background.default, .3)} 56%, ${alpha(theme.palette.background.default, 0)} 70%), linear-gradient(to bottom, ${theme.palette.background.default}, ${alpha(theme.palette.background.default, 0)} 12%, ${alpha(theme.palette.background.default, 0)} 85%, ${theme.palette.background.default})` }) }} />
           </Box>
