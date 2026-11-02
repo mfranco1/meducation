@@ -53,3 +53,27 @@ describe('ScreenTransition', () => {
     scrollTo.mockRestore();
   });
 });
+
+it('preserves scroll through subject tabs and restores only the matching dashboard', () => {
+  const scrollTo = vi.spyOn(window, 'scrollTo').mockImplementation((x, y) => { if (typeof x === 'number') window.scrollY = y ?? 0; });
+  const restoreScroll = (from: string, to: string) => to === 'flashcards' && from.startsWith('flashcards-subject:');
+  const { rerender } = render(<ScreenTransition screenId="flashcards" restoreScroll={restoreScroll}>Dashboard</ScreenTransition>);
+  window.scrollY = 300;
+  fireEvent.scroll(window);
+  rerender(<ScreenTransition screenId="subject-browse:s1" scrollId="flashcards-subject:s1" restoreScroll={restoreScroll}>Decks</ScreenTransition>);
+  expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+  scrollTo.mockClear();
+  window.scrollY = 80;
+  fireEvent.scroll(window);
+  rerender(<ScreenTransition screenId="subject-browse:s1" scrollId="subject:s1" restoreScroll={restoreScroll}>Quizzes</ScreenTransition>);
+  expect(scrollTo).not.toHaveBeenCalled();
+  rerender(<ScreenTransition screenId="flashcards" restoreScroll={restoreScroll}>Dashboard</ScreenTransition>);
+  expect(scrollTo).toHaveBeenLastCalledWith(0, 0);
+  window.scrollY = 220;
+  fireEvent.scroll(window);
+  rerender(<ScreenTransition screenId="subject-browse:s1" scrollId="subject:s1" restoreScroll={restoreScroll}>Quizzes</ScreenTransition>);
+  rerender(<ScreenTransition screenId="subject-browse:s1" scrollId="flashcards-subject:s1" restoreScroll={restoreScroll}>Decks</ScreenTransition>);
+  rerender(<ScreenTransition screenId="flashcards" restoreScroll={restoreScroll}>Dashboard</ScreenTransition>);
+  expect(scrollTo).toHaveBeenLastCalledWith(0, 220);
+  scrollTo.mockRestore();
+});

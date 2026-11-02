@@ -1,12 +1,14 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
-import { Box, Button, CircularProgress, Container, Stack, Typography } from '@mui/material';
-import { useId, type ReactNode } from 'react';
+import { Box, Button, CircularProgress, Container, Stack, Tab, Tabs, Typography, useMediaQuery, type Theme } from '@mui/material';
+import { useId, type ReactNode, type Ref } from 'react';
 import { SubjectIconBadge } from './icons/SubjectIconBadge';
 import { reducedMotion } from '../motion';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 
-export function SubjectBrowseLayout({ subjectId, subjectName, subjectDescription, progress, onBack, children }: { subjectId: string; subjectName: string; subjectDescription?: string; progress?: { completed: number; total: number; nouns: string } | null; onBack: () => void; children: ReactNode }) {
+export function SubjectBrowseLayout({ subjectId, subjectName, subjectDescription, progress, contentType, onContentTypeChange, selectedTabRef, onBack, children }: { subjectId: string; subjectName: string; subjectDescription?: string; progress?: { completed: number; total: number; nouns: string } | null; contentType: 'quizzes' | 'flashcards'; onContentTypeChange: (type: 'quizzes' | 'flashcards') => void; selectedTabRef?: Ref<HTMLButtonElement>; onBack: () => void; children: ReactNode }) {
   const waveId = useId();
+  const showProgress = useMediaQuery((theme: Theme) => theme.breakpoints.up('sm'));
+  const navigationId = useId();
   const percent = progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
   return <Box sx={{ position: 'relative', isolation: 'isolate' }}>
     <Box component="svg" viewBox="0 0 1440 440" preserveAspectRatio="xMaxYMin slice" aria-hidden="true" focusable="false" sx={{
@@ -47,21 +49,28 @@ export function SubjectBrowseLayout({ subjectId, subjectName, subjectDescription
               {subjectDescription && <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>{subjectDescription}</Typography>}
             </Stack>
           </Stack>
-          {progress === null && <Stack aria-hidden alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto' }}>
-            <LoadingSkeleton variant="circular" width={66} height={66} />
-            <LoadingSkeleton variant="text" width={120} height={16} />
-          </Stack>}
-          {progress && progress.total > 0 && <Stack alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto', textAlign: 'center' }}>
-            <Box sx={{ position: 'relative', display: 'inline-flex' }}>
-              <CircularProgress variant="determinate" value={100} size={66} thickness={4} sx={{ color: 'divider' }} aria-hidden />
-              {percent > 0 && <CircularProgress variant="determinate" value={percent} size={66} thickness={4} aria-hidden sx={{ position: 'absolute', left: 0, '& .MuiCircularProgress-circle': { [reducedMotion]: { transition: 'none' } } }} />}
-              <Typography variant="subtitle2" sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{percent}%</Typography>
-            </Box>
-            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>{`${progress.completed} / ${progress.total} ${progress.nouns} completed`}</Typography>
+          {showProgress && <Stack alignItems="center" spacing={0.75} sx={{ flex: '0 0 auto', width: 160, minHeight: 88, textAlign: 'center' }}>
+            {progress === null ? <>
+              <LoadingSkeleton aria-hidden variant="circular" width={66} height={66} />
+              <LoadingSkeleton aria-hidden variant="text" width={120} height={16} />
+            </> : progress && progress.total > 0 ? <>
+              <Box sx={{ position: 'relative', display: 'inline-flex' }}>
+                <CircularProgress variant="determinate" value={100} size={66} thickness={4} sx={{ color: 'divider' }} aria-hidden />
+                {percent > 0 && <CircularProgress variant="determinate" value={percent} size={66} thickness={4} aria-hidden sx={{ position: 'absolute', left: 0, '& .MuiCircularProgress-circle': { [reducedMotion]: { transition: 'none' } } }} />}
+                <Typography variant="subtitle2" sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{percent}%</Typography>
+              </Box>
+              <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.2 }}>{`${progress.completed} / ${progress.total} ${progress.nouns} completed`}</Typography>
+            </> : null}
           </Stack>}
         </Stack>
       </Box>
-      {children}
+      <Tabs value={contentType} onChange={(_, value: 'quizzes' | 'flashcards') => onContentTypeChange(value)} aria-label="Subject content" sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}>
+        <Tab component="button" ref={contentType === 'quizzes' ? selectedTabRef : undefined} id={`${navigationId}-quizzes`} aria-controls={`${navigationId}-panel`} value="quizzes" label="Quizzes" />
+        <Tab component="button" ref={contentType === 'flashcards' ? selectedTabRef : undefined} id={`${navigationId}-flashcards`} aria-controls={`${navigationId}-panel`} value="flashcards" label="Flashcards" />
+      </Tabs>
+      <Box role="tabpanel" id={`${navigationId}-panel`} aria-labelledby={`${navigationId}-${contentType}`}>
+        {children}
+      </Box>
     </Container>
   </Box>;
 }

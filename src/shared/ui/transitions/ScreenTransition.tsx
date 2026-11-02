@@ -12,14 +12,17 @@ const enter = keyframes`
 
 /**
  * Starts each new top-level destination at the top of the page and animates its entry.
+ * `scrollId` keeps logical destinations separate when they share a mounted screen.
  * `restoreScroll` decides when a destination returns to where the learner left it instead.
  */
-export function ScreenTransition({ screenId, restoreScroll, children }: {
+export function ScreenTransition({ screenId, scrollId = screenId, restoreScroll, children }: {
   screenId: string;
+  scrollId?: string;
   restoreScroll?: (fromScreenId: string, toScreenId: string) => boolean;
   children: ReactNode;
 }) {
   const previousScreenId = useRef(screenId);
+  const previousScrollId = useRef(scrollId);
   // Tracked from scroll events because the new screen may already have clamped window.scrollY by the time it commits.
   const lastScrollY = useRef(0);
   const scrollPositions = useRef(new Map<string, number>());
@@ -32,13 +35,14 @@ export function ScreenTransition({ screenId, restoreScroll, children }: {
   useLayoutEffect(() => {
     const fromScreenId = previousScreenId.current;
     if (fromScreenId !== screenId) {
-      scrollPositions.current.set(fromScreenId, lastScrollY.current);
+      scrollPositions.current.set(previousScrollId.current, lastScrollY.current);
       setAnimatedScreenId(screenId);
-      window.scrollTo(0, restoreScroll?.(fromScreenId, screenId) ? scrollPositions.current.get(screenId) ?? 0 : 0);
+      window.scrollTo(0, restoreScroll?.(previousScrollId.current, scrollId) ? scrollPositions.current.get(scrollId) ?? 0 : 0);
       lastScrollY.current = window.scrollY;
     }
     previousScreenId.current = screenId;
-  }, [screenId, restoreScroll]);
+    previousScrollId.current = scrollId;
+  }, [screenId, scrollId, restoreScroll]);
   const shouldAnimate = animatedScreenId === screenId;
 
   return <Box

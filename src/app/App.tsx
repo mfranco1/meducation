@@ -13,6 +13,7 @@ import { AppNavigationDrawer, type LearnerSection } from './components/AppNaviga
 import { ProgressBackupDialog } from './components/ProgressBackupDialog';
 import { HelpDialog } from './components/HelpDialog';
 import { useProgressBackup } from './useProgressBackup';
+import { SubjectBrowseLayout } from '../shared/ui/catalog/SubjectBrowseLayout';
 import { AppShell } from '../shared/ui/shell/AppShell';
 import { ScreenTransition } from '../shared/ui/transitions/ScreenTransition';
 import { ScreenLoadBoundary } from '../shared/ui/loading/ScreenLoadBoundary';
@@ -23,7 +24,7 @@ import { ToastProvider, useToast } from '../shared/ui/notifications/ToastProvide
 import { contentLoadMessage } from '../shared/ui/loading/notificationMessages';
 import type { SubjectStat } from '../features/quizzes/selectors/progress';
 import { createProgressView, quizProgressForSubject, subjectStatsFor } from '../features/quizzes/selectors/progress';
-import { restoresScroll, screenIdentity, type View } from './navigation';
+import { presentationIdentity, restoresScroll, screenIdentity, type View } from './navigation';
 import { DashboardScreen } from '../features/quizzes/screens/DashboardScreen';
 import { QuizScreen, QuizBrowseScreen, QuizReviewScreen, ResultsScreen, FlashcardStudyScreen, preloadBrowseScreen, preloadQuizScreen, preloadResultsScreen, preloadReviewScreen, preloadFlashcardStudyScreen } from './lazyScreens';
 import { SubjectScreen } from '../features/quizzes/screens/SubjectScreen';
@@ -67,6 +68,13 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
   });
   const view: View = session.view.page === 'flashcards' ? flashcards.view : session.view;
   const currentScreenKey = screenIdentity(view);
+  const subjectTabRef = useRef<HTMLButtonElement>(null);
+  const focusSubjectTab = useRef(false);
+  useLayoutEffect(() => {
+    if (!focusSubjectTab.current) return;
+    subjectTabRef.current?.focus({ preventScroll: true });
+    focusSubjectTab.current = false;
+  }, [currentScreenKey]);
   useLayoutEffect(() => { toast.notifyNavigation(currentScreenKey); }, [toast, currentScreenKey]);
   useEffect(() => { if (view.page === 'quiz') preloadResultsScreen(); if (view.page === 'flashcards-study') preloadFlashcardStudyScreen(); }, [view.page]);
   const [exitOpen, setExitOpen] = useState(false);
@@ -112,11 +120,29 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     void runtimeFlashcardBank.ensureSubjectCatalog(subject.id).catch(() => undefined);
   };
 
-  const progressForSubject = (subjectId: string) => quizProgressForSubject(
-    questionBank,
-    progressView,
-    subjectId,
-  );
+  const switchSubjectContent = (subject: Subject, type: 'quizzes' | 'flashcards') => {
+    runtimeFlashcardBank.cancelAll();
+    focusSubjectTab.current = true;
+    if (type === 'quizzes') {
+      flashcards.cancelLaunch();
+      selectSubject(subject);
+    } else {
+      cancel();
+      session.showFlashcards();
+      selectFlashcardSubject(subject);
+    }
+  };
+
+  const subject = currentSubject ?? currentFlashcardSubject;
+  const quizProgress = currentSubject ? quizProgressForSubject(questionBank, progressView, currentSubject.id) : [];
+  const flashcardCatalog = currentFlashcardSubject ? runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id) : undefined;
+  const flashcardLoading = Boolean(currentFlashcardSubject && ['idle', 'loading'].includes(runtimeFlashcardBank.getState(`catalog:${currentFlashcardSubject.id}`)));
+  const flashcardError = currentFlashcardSubject ? runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`) : undefined;
+  const subjectProgress = currentSubject
+    ? currentQuizState === 'idle' || currentQuizState === 'loading' || currentQuizState === 'retrying' ? null
+      : currentQuizError ? undefined : { completed: quizProgress.filter(item => item.completionCount > 0).length, total: quizProgress.length, nouns: 'quizzes' }
+    : flashcardLoading ? null : flashcardError ? undefined
+      : { completed: (flashcardCatalog?.decks ?? []).filter(deck => (flashcards.progress.completionCounts[deck.id] ?? 0) > 0).length, total: flashcardCatalog?.decks.length ?? 0, nouns: 'decks' };
 
   const requestQuizExit = (destination: QuizExitDestination) => {
     setExitDestination(destination);
@@ -190,8 +216,8 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     {activeSection === 'flashcards' && view.page !== 'flashcards-study' && flashcards.persistenceError && <Container maxWidth="md" sx={{ pt: 2 }}><Alert severity="error">{flashcards.persistenceError}</Alert></Container>}
     {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
     {currentFlashcardSubject && flashcards.loadingDeckId && <LinearProgress aria-label="Loading flashcard deck" />}
-    <ScreenTransition screenId={screenIdentity(view)} restoreScroll={restoresScroll}>
-    <ScreenLoadBoundary key={screenIdentity(view)} loadingLabel={loadingLabel} onLoadingChange={setScreenLoading}>
+    <ScreenTransition screenId={presentationIdentity(view)} scrollId={currentScreenKey} restoreScroll={restoresScroll}>
+    <ScreenLoadBoundary key={presentationIdentity(view)} loadingLabel={loadingLabel} onLoadingChange={setScreenLoading}>
     {session.view.page === 'dashboard' && <DashboardScreen attempts={progressSnapshot.completed} subjectStats={subjectStats} averageLatest={averageLatest} personalLowest={personalLowest} personalLowestSubject={personalLowestSubject} loading={catalogState === 'idle' || catalogState === 'loading'} retrying={catalogState === 'retrying'} statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'} activeAttempts={Object.keys(progressSnapshot.active).length > 0} error={catalogState === 'error' ? catalogError : undefined} retryAt={questionBank.getCatalogRetryAt()} onRetry={() => {
       if (catalogError instanceof ContentLoadError && catalogError.kind === 'revision') { window.location.reload(); return; }
       if (catalogState === 'retrying') questionBank.retryCatalogNow();
@@ -208,31 +234,37 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       onSelectSubject={selectFlashcardSubject}
       onContinueSubject={subject => selectFlashcardSubject(subject, true)}
     />}
+    {subject && <SubjectBrowseLayout subjectId={subject.id} subjectName={subject.name} subjectDescription={subject.description}
+      contentType={currentSubject ? 'quizzes' : 'flashcards'} onContentTypeChange={type => switchSubjectContent(subject, type)}
+      selectedTabRef={subjectTabRef} progress={subjectProgress} onBack={() => {
+        if (currentSubject) { cancel(); session.showDashboard(); }
+        else { runtimeFlashcardBank.cancel(`catalog:${subject.id}`); flashcards.showDashboard(); }
+      }}>
     {currentFlashcardSubject && <FlashcardSubjectScreen
       subject={currentFlashcardSubject}
       continueStudying={view.page === 'flashcards-subject' && view.continueStudying}
-      catalog={runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id)}
+      catalog={flashcardCatalog}
       checkpoints={flashcards.progress.checkpoints}
       completionCounts={flashcards.progress.completionCounts}
       finishedAt={flashcards.progress.finishedAt ?? {}}
-      loading={['idle', 'loading'].includes(runtimeFlashcardBank.getState(`catalog:${currentFlashcardSubject.id}`))}
-      error={runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`)}
+      loading={flashcardLoading}
+      error={flashcardError}
       loadingDeckId={flashcards.loadingDeckId}
       onRetry={() => {
         const error = runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`);
         if (error instanceof ContentLoadError && error.kind === 'revision') { window.location.reload(); return; }
         return runtimeFlashcardBank.ensureSubjectCatalog(currentFlashcardSubject.id).then(() => undefined, () => undefined);
       }}
-      onBack={() => { runtimeFlashcardBank.cancel(`catalog:${currentFlashcardSubject.id}`); flashcards.showDashboard(); }}
       onSelectDeck={deck => { void flashcards.launchDeck(deck, currentFlashcardSubject); }}
       onPrepareDeck={deck => { void runtimeFlashcardBank.ensureCards(deck.id).catch(() => undefined); }}
     />}
-    {currentSubject && <SubjectScreen continueStudying={session.view.page === 'subject' && session.view.continueStudying} subject={currentSubject} topics={questionBank.listTopics(currentSubject.id)} progress={progressForSubject(currentSubject.id)} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
+    {currentSubject && <SubjectScreen continueStudying={session.view.page === 'subject' && session.view.continueStudying} subject={currentSubject} topics={questionBank.listTopics(currentSubject.id)} progress={quizProgress} loadingQuizIds={loadingQuizIds} loading={currentQuizState === 'idle' || currentQuizState === 'loading'} retrying={currentQuizState === 'retrying'} recovery={currentQuizRecovery} error={currentQuizError} onRetry={() => {
       if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') { window.location.reload(); return; }
       if (currentQuizRecovery?.busy) return;
       if (currentQuizState === 'retrying') questionBank.retryQuizNow(currentSubject.id);
       return questionBank.ensureQuizzes(currentSubject.id).then(() => undefined, () => undefined);
-    }} onBack={() => { cancel(); session.showDashboard(); }} onResumeQuiz={quiz => { preloadQuizScreen(); launch(quiz, () => session.resumeQuiz(quiz)); }} onStartQuiz={(quiz, mode, shuffle) => { preloadQuizScreen(); launch(quiz, () => session.startQuiz(quiz, mode, shuffle)); }} onBrowseQuiz={quiz => { preloadBrowseScreen(); launch(quiz, () => session.browseQuiz(quiz)); }} onPrepareQuiz={quiz => { preloadQuizScreen(); void questionBank.ensureQuestions(quiz.id).catch(() => undefined); }} />}
+    }} onResumeQuiz={quiz => { preloadQuizScreen(); launch(quiz, () => session.resumeQuiz(quiz)); }} onStartQuiz={(quiz, mode, shuffle) => { preloadQuizScreen(); launch(quiz, () => session.startQuiz(quiz, mode, shuffle)); }} onBrowseQuiz={quiz => { preloadBrowseScreen(); launch(quiz, () => session.browseQuiz(quiz)); }} onPrepareQuiz={quiz => { preloadQuizScreen(); void questionBank.ensureQuestions(quiz.id).catch(() => undefined); }} />}
+    </SubjectBrowseLayout>}
     {view.page === 'quiz' && <QuizScreen {...view} questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)} onCheckpoint={session.checkpoint} onFinish={session.finishQuiz} onRequestExit={() => requestQuizExit('subject')} />}
     {import.meta.env.DEV && view.page === 'quiz-browse' && <QuizBrowseScreen {...view} questions={questionBank.listQuestions(view.quiz.id)} onNavigate={session.navigateBrowse} onDone={session.leaveBrowse} />}
     {view.page === 'quiz-review' && <QuizReviewScreen {...view} questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)} onNavigate={session.navigateReview} onRequestExit={() => requestReviewExit('subject')} />}

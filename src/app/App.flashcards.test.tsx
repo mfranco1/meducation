@@ -1,8 +1,8 @@
 import { ThemeProvider } from '@mui/material';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
-import { installFlashcardApiFixture } from '../test/runtimeContentFixtures';
+import { installFlashcardApiFixture, installQuizApiFixture } from '../test/runtimeContentFixtures';
 import App from './App';
 import { theme } from '../shared/theme';
 
@@ -142,4 +142,40 @@ it('keeps the current card open and reports an error when arrow navigation canno
   expect(await screen.findByRole('alert')).toHaveTextContent('Flashcard progress could not be saved');
   expect(screen.getByText('Card 1 of 2')).toBeInTheDocument();
   expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeInTheDocument();
+});
+
+it.each(['quizzes', 'flashcards'] as const)('switches subject tabs during a pending %s launch without opening a study session', async type => {
+  const subject = { id: 's6', name: 'Tab subject', accent: '#123456' };
+  const quiz = { id: 'q6', subjectId: subject.id, topicId: 't6', name: 'Tab quiz', questionCount: 1, questionIds: ['i6'] };
+  const deck = { id: 'd-tabs', subjectId: subject.id, topicId: 't6', name: 'Tab deck', cardCount: 1, cardIds: ['f-tabs'] };
+  const cards = [{ id: 'f-tabs', deckId: deck.id, front: 'Front', back: 'Back' }];
+  installQuizApiFixture([subject], [quiz], []);
+  const bank = await installFlashcardApiFixture([{ ...subject, deckCount: 1, deckIds: [deck.id] }], [deck], cards);
+  const values = new Map<string, string>();
+  vi.stubGlobal('localStorage', { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key, value), removeItem: (key: string) => values.delete(key) });
+  let finishLoad!: () => void;
+  if (type === 'quizzes') {
+    vi.spyOn(runtimeQuestionBank, 'ensureQuestions').mockImplementation(() => new Promise(resolve => { finishLoad = () => resolve([]); }));
+  } else {
+    vi.spyOn(bank, 'ensureCards').mockImplementation(() => new Promise(resolve => { finishLoad = () => resolve(cards); }));
+  }
+  render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+  if (type === 'flashcards') fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
+  fireEvent.click(await screen.findByRole('button', { name: 'Open Tab subject' }));
+  if (type === 'quizzes') {
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Tab quiz' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+  } else fireEvent.click(screen.getByRole('button', { name: 'Study deck: Tab deck' }));
+  await waitFor(() => expect(finishLoad).toBeTypeOf('function'));
+  const header = screen.getByRole('heading', { name: 'Tab subject' });
+  const tabs = screen.getByRole('tablist', { name: 'Subject content' });
+  const destination = type === 'quizzes' ? 'Flashcards' : 'Quizzes';
+  fireEvent.click(screen.getByRole('tab', { name: destination }));
+  expect(screen.getByRole('tab', { name: destination, selected: true })).toHaveFocus();
+  await act(async () => finishLoad());
+  expect(screen.getByRole('heading', { name: 'Tab subject' })).toBe(header);
+  expect(screen.getByRole('tablist', { name: 'Subject content' })).toBe(tabs);
+  expect(screen.getByRole('tabpanel', { name: destination })).toBeVisible();
+  expect(screen.getByRole('button', { name: type === 'quizzes' ? 'Study deck: Tab deck' : 'Start quiz: Tab quiz' })).toBeVisible();
+  expect(screen.queryByText(/Card 1 of|Question 1 of/)).toBeNull();
 });

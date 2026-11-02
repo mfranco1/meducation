@@ -135,3 +135,131 @@ test('flashcard subject grid shares the subject header and progress track withou
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
 });
+
+for (const width of [320, 390, 600, 1048, 1440]) {
+  test(`subject tabs switch content and reset browsing at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+    const quizzes = page.getByRole('tab', { name: 'Quizzes', exact: true });
+    const flashcards = page.getByRole('tab', { name: 'Flashcards', exact: true });
+    await expect(quizzes).toHaveAttribute('aria-selected', 'true');
+    await expect(page.getByText('0 / 1 quizzes completed', { exact: true })).toHaveCount(width < 600 ? 0 : 1);
+    const header = page.getByRole('heading', { name: 'Browser Test Subject', exact: true });
+    const tabs = page.getByRole('tablist', { name: 'Subject content' });
+    expect((await tabs.boundingBox())!.y).toBeGreaterThan((await header.boundingBox())!.y);
+    const headerNode = await header.elementHandle();
+    const tabsNode = await tabs.elementHandle();
+    const frame = page.getByTestId('screen-transition');
+    // Wait for the subject-entry animation before monitoring subsequent tab changes.
+    await frame.evaluate(async (element) => {
+      await Promise.all(element.getAnimations().map((animation) => animation.finished));
+      element.addEventListener('animationstart', (event) => {
+        if (event.target === element) element.setAttribute('data-entry-restarted', 'true');
+      });
+    });
+    const headerBounds = await header.boundingBox();
+    const tabBounds = await tabs.boundingBox();
+    const quizSearch = page.getByRole('searchbox', { name: 'Search topics and quizzes' });
+    await quizSearch.fill('Browser Test Quiz');
+    await expect(page.getByRole('heading', { name: 'Browser Test Quiz', exact: true })).toBeVisible();
+
+    await quizzes.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(flashcards).toBeFocused();
+    await expect(quizzes).toHaveAttribute('aria-selected', 'true');
+    await page.keyboard.press('Enter');
+    await expect(flashcards).toHaveAttribute('aria-selected', 'true');
+    await expect(flashcards).toBeFocused();
+    await expect(header).toBeVisible();
+    await expect(page.getByRole('tabpanel', { name: 'Flashcards' })).toBeVisible();
+    expect(await header.evaluate((element, original) => element === original, headerNode)).toBe(true);
+    expect(await tabs.evaluate((element, original) => element === original, tabsNode)).toBe(true);
+    expect(await header.boundingBox()).toEqual(headerBounds);
+    expect(await tabs.boundingBox()).toEqual(tabBounds);
+    await expect(frame).not.toHaveAttribute('data-entry-restarted');
+    await expect(page.getByText('0 / 1 decks completed', { exact: true })).toHaveCount(width < 600 ? 0 : 1);
+    const deckSearch = page.getByRole('searchbox', { name: 'Search topics and decks' });
+    await expect(deckSearch).toHaveValue('');
+    if (width < 1200) await page.getByRole('button', { name: /Browser Test Topic/ }).click();
+    await expect(page.getByRole('heading', { name: 'Browser Test Deck', exact: true })).toBeVisible();
+
+    await quizzes.click();
+    await expect(quizzes).toHaveAttribute('aria-selected', 'true');
+    await expect(quizzes).toBeFocused();
+    await expect(quizSearch).toHaveValue('');
+    expect(await tabs.evaluate((element, original) => element === original, tabsNode)).toBe(true);
+    await expect(frame).not.toHaveAttribute('data-entry-restarted');
+    if (width < 1200) {
+      await expect(page.getByRole('heading', { name: 'Browser Test Quiz', exact: true })).toHaveCount(0);
+      await page.getByRole('button', { name: /Browser Test Topic/ }).click();
+      await expect(page.getByRole('heading', { name: 'Browser Test Quiz', exact: true })).toBeVisible();
+      await page.goBack();
+      await expect(page.getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+    await flashcards.click();
+    await expect(deckSearch).toHaveValue('');
+    await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Flashcards', exact: true })).toHaveAttribute('aria-current', 'page');
+    await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+    await expect(flashcards).toHaveAttribute('aria-selected', 'true');
+    await quizzes.click();
+    await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toHaveAttribute('aria-current', 'page');
+  });
+}
+
+for (const destination of ['Quizzes', 'Flashcards']) {
+  test(`subject frame stays steady while ${destination} loads and recovers`, async ({ page }) => {
+    await page.setViewportSize({ width: 1048, height: 400 });
+    const path =
+      destination === 'Quizzes' ? '**/api/v1/subjects/s1/quizzes*' : '**/api/v1/flashcards/subjects/s1/catalog*';
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    let fail = true;
+    await page.route(path, async (route) => {
+      if (!fail) {
+        await route.continue();
+        return;
+      }
+      await pending;
+      await route.fulfill({ status: 503, contentType: 'application/json', body: '{}' });
+    });
+    await page.goto('/');
+    if (destination === 'Quizzes') await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+    await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
+    await expect(page.getByRole('searchbox')).toBeEnabled();
+    const header = page.getByRole('heading', { name: 'Browser Test Subject', exact: true });
+    const tabs = page.getByRole('tablist', { name: 'Subject content' });
+    const headerNode = await header.elementHandle();
+    await page.getByTestId('screen-transition').evaluate(async (element) => {
+      await Promise.all(element.getAnimations().map((animation) => animation.finished));
+    });
+    await expect(page.getByTestId('screen-transition')).toHaveCSS('top', '0px');
+    await page.evaluate(() => window.scrollTo(0, 80));
+    const scrollY = await page.evaluate(() => window.scrollY);
+    expect(scrollY).toBeGreaterThan(0);
+    const tabBounds = await tabs.boundingBox();
+    await page.getByRole('tab', { name: destination, exact: true }).click();
+    const panel = page.getByRole('tabpanel', { name: destination });
+    await expect(
+      panel.getByRole('status', { name: destination === 'Quizzes' ? 'Loading quizzes' : 'Loading flashcard decks' }),
+    ).toBeVisible();
+    expect(await header.evaluate((element, original) => element === original, headerNode)).toBe(true);
+    expect(await tabs.boundingBox()).toEqual(tabBounds);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+    release();
+    await expect(panel.getByRole('alert')).toBeVisible();
+    expect(await tabs.boundingBox()).toEqual(tabBounds);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+    fail = false;
+    await panel.getByRole('button', { name: 'Retry', exact: true }).click();
+    await expect(panel.getByRole('searchbox')).toBeEnabled();
+    expect(await header.evaluate((element, original) => element === original, headerNode)).toBe(true);
+    expect(await tabs.boundingBox()).toEqual(tabBounds);
+    expect(await page.evaluate(() => window.scrollY)).toBe(scrollY);
+  });
+}

@@ -26,7 +26,6 @@ function renderSubject(progress: Partial<QuizProgress>) {
     subject={subject}
     topics={topics}
     progress={[{ quiz, completionCount: 0, ...progress }]}
-    onBack={() => {}}
     onResumeQuiz={onResumeQuiz}
     onStartQuiz={onStartQuiz}
     onBrowseQuiz={onBrowseQuiz}
@@ -35,23 +34,19 @@ function renderSubject(progress: Partial<QuizProgress>) {
 }
 
 describe('subject quiz action', () => {
-  it('shows the shared empty display only after quiz loading finishes and keeps back navigation available', () => {
-    const onBack = vi.fn();
-    const props = { subject, topics, progress: [], onBack, onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
+  it('shows the shared empty display only after quiz loading finishes', () => {
+    const props = { subject, topics, progress: [], onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
     const { rerender } = render(<ThemeProvider theme={theme}><SubjectScreen {...props} loading /></ThemeProvider>);
 
     expect(screen.queryByRole('heading', { name: 'No quizzes available yet' })).toBeNull();
     rerender(<ThemeProvider theme={theme}><SubjectScreen {...props} /></ThemeProvider>);
 
     expect(screen.getByRole('heading', { name: 'No quizzes available yet' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Dashboard' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
-    expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it('keeps shimmer placeholders and exposes one full-width recovery banner after failure', () => {
+  it('keeps shimmer placeholders and exposes one recovery banner after failure', () => {
     const onRetry = vi.fn();
-    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[]} error={new Error('raw backend detail')} recovery={{ failed: true, retrying: false, busy: false }} onRetry={onRetry} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[]} error={new Error('raw backend detail')} recovery={{ failed: true, retrying: false, busy: false }} onRetry={onRetry} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
     expect(screen.getByRole('region', { name: 'Content recovery' })).toBeVisible();
     expect(screen.getByRole('alert')).toHaveTextContent(`We can’t load quizzes for ${subject.name} right now.`);
     expect(screen.queryByRole('heading', { name: 'No quizzes available yet' })).toBeNull();
@@ -64,7 +59,7 @@ describe('subject quiz action', () => {
 
   it('keeps shimmer quiz skeletons visible during automatic retries without reconnecting copy', () => {
     render(<ThemeProvider theme={theme}><SubjectScreen
-      subject={subject} topics={topics} progress={[]} retrying recovery={{ failed: true, retryAt: Date.now() + 5_000, retrying: true, busy: false }} onBack={() => {}} onResumeQuiz={() => {}}
+      subject={subject} topics={topics} progress={[]} retrying recovery={{ failed: true, retryAt: Date.now() + 5_000, retrying: true, busy: false }} onResumeQuiz={() => {}}
       onStartQuiz={() => {}} onBrowseQuiz={() => {}}
     /></ThemeProvider>);
     const region = screen.getByRole('status', { name: 'Retrying quizzes' });
@@ -203,7 +198,7 @@ describe('subject topics', () => {
   const done = { id: 'done', subjectId: subject.id, topicId: 't1', name: 'Second quiz', questionCount: 5 };
 
   function renderTopics(progress: QuizProgress[], onStartQuiz = vi.fn()) {
-    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={[...topics, { id: 't3', subjectId: subject.id, name: 'Empty topic' }]} progress={progress} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={onStartQuiz} onBrowseQuiz={() => {}} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={[...topics, { id: 't3', subjectId: subject.id, name: 'Empty topic' }]} progress={progress} onResumeQuiz={() => {}} onStartQuiz={onStartQuiz} onBrowseQuiz={() => {}} /></ThemeProvider>);
   }
 
   it('lists topics that have quizzes with progress and switches the quiz list on selection', () => {
@@ -212,8 +207,6 @@ describe('subject topics', () => {
     expect(screen.getByRole('heading', { name: 'Quizzes' })).toBeVisible();
     expect(screen.queryByText('2 topics')).toBeNull();
     expect(screen.queryByRole('button', { name: /Empty topic/ })).toBeNull();
-    expect(screen.getByText('1 / 3 quizzes completed')).toBeVisible();
-    expect(screen.getByText('33%')).toBeVisible();
     expect(screen.getByRole('button', { name: /Cell biology/ })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('heading', { name: 'Practice test 1' })).toBeVisible();
     expect(screen.getByRole('heading', { name: 'Second quiz' })).toBeVisible();
@@ -281,7 +274,7 @@ describe('subject topics on small screens', () => {
   it('drills from the topic list into a topic and back', async () => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
     const other = { id: 'other', subjectId: subject.id, topicId: 't2', name: 'Glycolysis quiz', questionCount: 1 };
-    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0 }]} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0 }]} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
 
     expect(screen.queryByRole('heading', { name: 'Quizzes' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: /Metabolism/ }));
@@ -297,7 +290,7 @@ describe('subject topics on small screens', () => {
 
   it('returns to the topic list on browser Back', async () => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
-    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }]} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }]} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
 
     fireEvent.click(screen.getByRole('button', { name: /Cell biology/ }));
     expect(screen.queryByRole('heading', { name: 'Topics' })).toBeNull();
@@ -310,7 +303,7 @@ describe('subject search on small screens', () => {
   it('shows results under the topic list and keeps the query when a topic is opened and closed', async () => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
     const other = { id: 'other', subjectId: subject.id, topicId: 't2', name: 'Glycolysis quiz', questionCount: 1 };
-    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0 }]} onBack={() => {}} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} progress={[{ quiz, completionCount: 0 }, { quiz: other, completionCount: 0 }]} onResumeQuiz={() => {}} onStartQuiz={() => {}} onBrowseQuiz={() => {}} /></ThemeProvider>);
 
     screen.getByRole('searchbox').focus();
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'glyco' } });
@@ -356,7 +349,7 @@ describe('continue studying destination', () => {
     const recent = { ...quiz, id: 'recent', topicId: 't2', name: 'Recent unfinished quiz' };
     const completed = { ...quiz, id: 'completed', name: 'Newer completed quiz' };
     const props = {
-      subject, topics, continueStudying: true, onBack: vi.fn(), onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn(),
+      subject, topics, continueStudying: true, onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn(),
       progress: [
         { quiz, completionCount: 0, active: activeAttempt, activityAt: '2026-10-01T00:00:00Z' },
         { quiz: recent, completionCount: 0, active: { ...activeAttempt, quizId: recent.id }, activityAt: '2026-10-02T00:00:00Z' },
@@ -377,7 +370,7 @@ describe('continue studying destination', () => {
   });
 
   it.each([undefined, '2026-10-01T00:00:00Z'])('uses catalog order when unfinished activity is tied or missing (%s)', activityAt => {
-    const props = { subject, topics, continueStudying: true, onBack: vi.fn(), onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
+    const props = { subject, topics, continueStudying: true, onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
     render(<ThemeProvider theme={theme}><SubjectScreen {...props} progress={[
       { quiz, completionCount: 0, active: activeAttempt, activityAt },
       { quiz: { ...quiz, id: 'other', topicId: 't2', name: 'Other quiz' }, completionCount: 0, active: activeAttempt, activityAt },
@@ -387,7 +380,7 @@ describe('continue studying destination', () => {
 
   it('keeps the normal mobile topic list when no unfinished quiz remains', () => {
     window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
-    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} continueStudying progress={[{ quiz, completionCount: 1 }]} onBack={vi.fn()} onResumeQuiz={vi.fn()} onStartQuiz={vi.fn()} onBrowseQuiz={vi.fn()} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><SubjectScreen subject={subject} topics={topics} continueStudying progress={[{ quiz, completionCount: 1 }]} onResumeQuiz={vi.fn()} onStartQuiz={vi.fn()} onBrowseQuiz={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('heading', { name: 'Topics' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: quiz.name })).toBeNull();
   });

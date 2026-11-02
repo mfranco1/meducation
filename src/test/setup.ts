@@ -5,7 +5,7 @@ import { clearSavedSubjectCatalogViews } from '../shared/ui/catalog/useSubjectCa
 
 // Tests render the desktop (lg+) layout unless they override matchMedia.
 const matchMedia = (matches = false) => vi.fn().mockImplementation((query: string) => ({
-  matches: matches || query === '(min-width:1200px)',
+  matches: matches || query === '(min-width:1200px)' || query === '(min-width:600px)',
   media: query,
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),

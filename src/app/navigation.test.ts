@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { screenIdentity, type View } from './navigation';
+import { presentationIdentity, restoresScroll, screenIdentity, type View } from './navigation';
 
 describe('screenIdentity', () => {
   it('uses the quiz and attempt identity while ignoring question progress and attempt updates', () => {
@@ -28,4 +28,19 @@ describe('screenIdentity', () => {
     expect(screenIdentity(review)).toBe('quiz-review:quiz:attempt');
     expect(screenIdentity({ ...review, index: 1 })).toBe(screenIdentity(review));
   });
+});
+
+it('shares subject presentation identity across tabs while keeping navigation scopes separate', () => {
+  const subject = { id: 's1', name: 'Subject', accent: '' };
+  const quizzes: View = { page: 'subject', subject };
+  const flashcards: View = { page: 'flashcards-subject', subject };
+  expect(presentationIdentity(quizzes)).toBe(presentationIdentity(flashcards));
+  expect(screenIdentity(quizzes)).not.toBe(screenIdentity(flashcards));
+  expect(presentationIdentity({ ...quizzes, subject: { ...subject, id: 's2' } })).not.toBe(presentationIdentity(quizzes));
+  expect(presentationIdentity({ page: 'dashboard' })).toBe('dashboard');
+  expect(restoresScroll(screenIdentity(quizzes), 'dashboard')).toBe(true);
+  expect(restoresScroll(screenIdentity(flashcards), 'flashcards')).toBe(true);
+  expect(restoresScroll(screenIdentity(quizzes), 'flashcards')).toBe(false);
+  expect(restoresScroll(screenIdentity(flashcards), 'dashboard')).toBe(false);
+  expect(restoresScroll('quiz:q1:a1', 'dashboard')).toBe(false);
 });

@@ -17,6 +17,12 @@ export function screenIdentity(view: View): string {
   }
 }
 
+/** Subject tabs share a mounted frame while retaining separate navigation and toast scopes. */
+export function presentationIdentity(view: View): string {
+  return view.page === 'subject' || view.page === 'flashcards-subject'
+    ? `subject-browse:${view.subject.id}` : screenIdentity(view);
+}
+
 /** A dashboard keeps its scroll position when the learner returns to it from one of its subjects. */
 export function restoresScroll(fromScreenId: string, toScreenId: string): boolean {
   return (toScreenId === 'dashboard' && fromScreenId.startsWith('subject:'))

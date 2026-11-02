@@ -148,11 +148,14 @@ export class RuntimeFlashcardBank {
     this.states.set(key, 'loading');
     this.errors.delete(key);
     this.notify();
-    const request = this.transport
-      .get<unknown>(
-        `/api/v1/flashcards/subjects/${encodeURIComponent(subjectId)}/catalog?revision=${encodeURIComponent(this.revision)}`,
-        { policy: this.retryPolicy, signal: controller.signal },
-      )
+    const request = this.ensureSubjects()
+      .then(() => {
+        if (controller.signal.aborted) throw genericFailure('cancelled');
+        return this.transport.get<unknown>(
+          `/api/v1/flashcards/subjects/${encodeURIComponent(subjectId)}/catalog?revision=${encodeURIComponent(this.revision)}`,
+          { policy: this.retryPolicy, signal: controller.signal },
+        );
+      })
       .then((payload) => {
         if (controller.signal.aborted) throw genericFailure('cancelled');
         const subject = this.subjects.find((item) => item.id === subjectId);

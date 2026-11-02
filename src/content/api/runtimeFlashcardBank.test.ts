@@ -77,6 +77,24 @@ describe('runtime flashcard bank', () => {
     expect(second.listCards('d-neuro')).toEqual([]);
   });
 
+  it('loads a subject catalog directly before visiting the flashcard dashboard', async () => {
+    const transport = { get: vi.fn().mockResolvedValueOnce({ revision: 'rev-1', subjects }).mockResolvedValueOnce(catalog) };
+    const bank = new RuntimeFlashcardBank(noRetries, transport);
+    expect(await bank.ensureSubjectCatalog('s1')).toEqual(catalog);
+    expect(bank.listSubjects()).toEqual(subjects);
+    expect(bank.listDecks('s1')).toEqual(catalog.decks);
+  });
+
+  it('exposes subject-list failures on the requested catalog and allows retry', async () => {
+    const transport = { get: vi.fn().mockRejectedValueOnce(new Error('offline')) };
+    const bank = new RuntimeFlashcardBank(noRetries, transport);
+    await expect(bank.ensureSubjectCatalog('s1')).rejects.toThrow('offline');
+    expect(bank.getState('catalog:s1')).toBe('error');
+    expect(bank.getError('catalog:s1')?.message).toBe('offline');
+    transport.get.mockResolvedValueOnce({ revision: 'rev-1', subjects }).mockResolvedValueOnce(catalog);
+    expect(await bank.ensureSubjectCatalog('s1')).toEqual(catalog);
+  });
+
   it('aborts selected-resource requests and does not cache a stale response', async () => {
     let resolveResponse!: (value: unknown) => void;
     const transport: JsonTransport = {

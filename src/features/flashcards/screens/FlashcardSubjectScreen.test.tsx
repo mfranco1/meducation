@@ -17,26 +17,20 @@ const catalog: FlashcardCatalogResponse = {
 };
 
 describe('FlashcardSubjectScreen', () => {
-  it('shows the shared empty display after loading an empty catalog and keeps back navigation available', () => {
-    const onBack = vi.fn();
-    const props = { subject, checkpoints: {}, completionCounts: {}, finishedAt: {}, onBack, onRetry: vi.fn(), onSelectDeck: vi.fn() };
+  it('shows the shared empty display after loading an empty catalog', () => {
+    const props = { subject, checkpoints: {}, completionCounts: {}, finishedAt: {}, onRetry: vi.fn(), onSelectDeck: vi.fn() };
     const { rerender } = render(<ThemeProvider theme={theme}><FlashcardSubjectScreen {...props} loading /></ThemeProvider>);
 
     expect(screen.queryByRole('heading', { name: 'No flashcard decks available yet' })).toBeNull();
     rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen {...props} catalog={{ ...catalog, decks: [] }} /></ThemeProvider>);
 
     expect(screen.getByRole('heading', { name: 'No flashcard decks available yet' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Dashboard' })).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
-    expect(onBack).toHaveBeenCalledOnce();
   });
 
   it('groups decks by topic, prepares a deck on hover or focus, launches it and switches topics', () => {
     const onSelectDeck = vi.fn();
     const onPrepareDeck = vi.fn();
-    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{ d3: 1 }} finishedAt={{}} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={onSelectDeck} onPrepareDeck={onPrepareDeck} /></ThemeProvider>);
-    expect(screen.getByRole('heading', { name: 'Anatomy' })).toBeVisible();
-    expect(screen.getByText('1 / 3 decks completed')).toBeVisible();
+    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{ d3: 1 }} finishedAt={{}} onRetry={vi.fn()} onSelectDeck={onSelectDeck} onPrepareDeck={onPrepareDeck} /></ThemeProvider>);
     expect(screen.getByRole('button', { name: /Upper limb/ })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByRole('heading', { name: 'Brachial plexus' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Heart' })).toBeNull();
@@ -54,25 +48,25 @@ describe('FlashcardSubjectScreen', () => {
 
   it('opens on the deck most recently finished and shows when', () => {
     const finishedAt = new Date(Date.now() - 2 * 3_600_000).toISOString();
-    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{ d3: 1 }} finishedAt={{ d3: finishedAt }} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{ d3: 1 }} finishedAt={{ d3: finishedAt }} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getAllByRole('button', { name: /Upper limb|Thorax/ })[0]).toHaveTextContent('Thorax');
     expect(screen.getByRole('button', { name: /Thorax/ })).toHaveAttribute('aria-current', 'true');
     expect(screen.getByText('2 hours ago')).toBeVisible();
   });
 
   it('shows an empty state and disables empty decks', () => {
-    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={{ ...catalog, decks: [catalog.decks[1]] }} checkpoints={{}} completionCounts={{}} finishedAt={{}} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={{ ...catalog, decks: [catalog.decks[1]] }} checkpoints={{}} completionCounts={{}} finishedAt={{}} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('button', { name: 'No cards yet' })).toBeDisabled();
   });
 
   it('uses shared shimmer rows during catalog loading and retains them after catalog failure', () => {
-    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} completionCounts={{}} finishedAt={{}} loading onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} completionCounts={{}} finishedAt={{}} loading onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     const loadingRegion = screen.getByRole('status', { name: 'Loading flashcard decks' });
     expect(loadingRegion).toHaveAttribute('aria-busy', 'true');
     expect(within(loadingRegion).getByRole('heading', { name: 'Topics' })).toBeVisible();
     expect(within(loadingRegion).getByRole('searchbox', { name: 'Search topics and decks' })).toBeDisabled();
     expect(loadingRegion.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
-    rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} completionCounts={{}} finishedAt={{}} error={new Error('unavailable')} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    rerender(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} checkpoints={{}} completionCounts={{}} finishedAt={{}} error={new Error('unavailable')} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('alert')).toHaveTextContent('We can’t load flashcard decks for Anatomy right now.');
     expect(screen.queryByRole('heading', { name: 'No flashcard decks available yet' })).toBeNull();
     expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
@@ -80,7 +74,7 @@ describe('FlashcardSubjectScreen', () => {
   });
 
   it('keeps the deck list available while a deck launch is loading', () => {
-    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{}} finishedAt={{}} loadingDeckId="d1" onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={{}} completionCounts={{}} finishedAt={{}} loadingDeckId="d1" onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByRole('heading', { name: 'Brachial plexus' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Loading deck…' })).toBeDisabled();
     expect(screen.queryByRole('button', { name: /^Study deck/ })).toBeNull();
@@ -90,7 +84,7 @@ describe('FlashcardSubjectScreen', () => {
     const checkpoints = {
       d1: { deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: ['f1'], flaggedCardIds: [] },
     };
-    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={checkpoints} completionCounts={{ d1: 1, d3: 3 }} finishedAt={{}} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+    render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} checkpoints={checkpoints} completionCounts={{ d1: 1, d3: 3 }} finishedAt={{}} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
     expect(screen.getByText('Completed 1 time')).toBeVisible();
     expect(screen.getByText('1/2 reviewed')).toBeVisible();
     expect(screen.queryByText('Completed 0 times')).toBeNull();
@@ -104,7 +98,7 @@ it.each([true, false])('continues at the latest nonempty unfinished deck after l
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: desktop, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
   const checkpoint = { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-01T00:00:00Z', openedCardIds: [], flaggedCardIds: [] };
   const props = {
-    subject, continueStudying: true, onBack: vi.fn(), onRetry: vi.fn(), onSelectDeck: vi.fn(), completionCounts: { d1: 1 }, finishedAt: { d1: '2026-10-04T00:00:00Z' },
+    subject, continueStudying: true, onRetry: vi.fn(), onSelectDeck: vi.fn(), completionCounts: { d1: 1 }, finishedAt: { d1: '2026-10-04T00:00:00Z' },
     checkpoints: {
       d1: checkpoint,
       d2: { ...checkpoint, deckId: 'd2', updatedAt: '2026-10-03T00:00:00Z' },
@@ -125,7 +119,7 @@ it.each([true, false])('continues at the latest nonempty unfinished deck after l
 
 it('uses the normal mobile topic list when no unfinished deck remains', () => {
   window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: false, media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
-  render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} continueStudying checkpoints={{}} completionCounts={{}} finishedAt={{}} onBack={vi.fn()} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
+  render(<ThemeProvider theme={theme}><FlashcardSubjectScreen subject={subject} catalog={catalog} continueStudying checkpoints={{}} completionCounts={{}} finishedAt={{}} onRetry={vi.fn()} onSelectDeck={vi.fn()} /></ThemeProvider>);
   expect(screen.getByRole('heading', { name: 'Topics' })).toBeVisible();
   expect(screen.queryByRole('heading', { name: 'Brachial plexus' })).toBeNull();
 });

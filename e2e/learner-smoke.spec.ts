@@ -749,9 +749,7 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 });
 
-test('subject quiz failure keeps the full-width banner and original shimmer placeholders through recovery', async ({
-  page,
-}) => {
+test('subject quiz failure stays below the tabs with shimmer placeholders through recovery', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   let failures = 0;
   let releaseRetry!: () => void;
@@ -780,20 +778,20 @@ test('subject quiz failure keeps the full-width banner and original shimmer plac
   await expect(page.locator('.MuiSkeleton-wave').first()).toBeVisible();
   await expect(page.getByTestId('screen-transition')).toHaveCSS('top', '0px');
   const bounds = await page.evaluate(() => {
-    const main = document.querySelector('main')!.getBoundingClientRect();
+    const panel = document.querySelector('[role="tabpanel"]')!.getBoundingClientRect();
     const recovery = document.querySelector('[data-testid="content-recovery-banner"]')!.getBoundingClientRect();
     return {
-      mainTop: main.top,
-      mainLeft: main.left,
-      mainRight: main.right,
+      panelTop: panel.top,
+      panelLeft: panel.left,
+      panelRight: panel.right,
       top: recovery.top,
       left: recovery.left,
       right: recovery.right,
     };
   });
-  expect(bounds.top).toBe(bounds.mainTop);
-  expect(bounds.left).toBe(bounds.mainLeft);
-  expect(bounds.right).toBe(bounds.mainRight);
+  expect(bounds.top).toBe(bounds.panelTop);
+  expect(bounds.left).toBe(bounds.panelLeft);
+  expect(bounds.right).toBe(bounds.panelRight);
 
   const retry = banner.getByRole('button', { name: 'Retry' });
   await retry.focus();
