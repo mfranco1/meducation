@@ -103,7 +103,7 @@ export function StudyItemCarousel<T>({
           position: 'relative',
           ...(continueStudy
             ? {
-                '--study-carousel-control-gutter': canRotate ? '28px' : '0px',
+                '--study-carousel-control-gutter': items.length > 1 ? '28px' : '0px',
               }
             : {}),
         }}
