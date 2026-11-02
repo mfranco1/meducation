@@ -18,6 +18,7 @@ function BootFailure() {
 }
 
 const root = createRoot(document.getElementById('root')!);
+const showingAbout = new URLSearchParams(window.location.search).get('about') === '1';
 const render = (content: ReactNode) =>
   root.render(
     <StrictMode>
@@ -50,12 +51,17 @@ async function boot() {
 async function showLanding() {
   try {
     const { LandingPage } = await import('./app/landing/LandingPage');
-    render(<LandingPage onStart={() => { markStartedStudying(); window.scrollTo(0, 0); void boot(); }} />);
+    render(<LandingPage onStart={() => {
+      markStartedStudying();
+      if (showingAbout) { window.location.replace('/'); return; }
+      window.scrollTo(0, 0);
+      void boot();
+    }} />);
   } catch (error) {
     console.error('Landing page could not load.', error);
     void boot();
   }
 }
 
-if (hasStartedStudying()) void boot();
+if (!showingAbout && hasStartedStudying()) void boot();
 else void showLanding();

@@ -60,7 +60,7 @@ const documents: Record<LegalDocument, { title: string; intro: ReactNode; sectio
 
 const linkSx = { minWidth: 0, p: 0, font: 'inherit', color: 'inherit', textDecoration: 'none', '&:hover': { color: 'text.primary', background: 'none' } };
 
-export function LegalFooter() {
+export function LegalFooter({ showAbout = false }: { showAbout?: boolean }) {
   const [open, setOpen] = useState<LegalDocument>();
   const fullScreen = useMediaQuery(useTheme().breakpoints.down('sm'));
   const document = open && documents[open];
@@ -74,6 +74,10 @@ export function LegalFooter() {
       >
         <span>© {new Date().getFullYear()} {brand.name}</span>
         <span aria-hidden="true">·</span>
+        {showAbout && <>
+          <Link href="/?about=1" sx={linkSx}>About</Link>
+          <span aria-hidden="true">·</span>
+        </>}
         <Button variant="text" disableRipple sx={linkSx} onClick={() => setOpen('Privacy')}>Privacy</Button>
         <span aria-hidden="true">·</span>
         <Button variant="text" disableRipple sx={linkSx} onClick={() => setOpen('Terms')}>Terms</Button>

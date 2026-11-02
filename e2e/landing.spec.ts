@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 
 async function enterSection(page: Page, name: string) {
   await page.getByRole('region', { name, exact: true }).evaluate(async (element) => {
@@ -228,6 +229,74 @@ test('a first visit shows the landing page until the visitor starts studying', a
   await page.reload();
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
   await expect(page.getByRole('heading', { level: 1, name: /one question at a time/ })).toHaveCount(0);
+});
+
+test('About opens from both dashboards and preserves saved progress through browser navigation', async ({ page }) => {
+  const progress = JSON.parse(await readFile('tests/fixtures/progress-backups/populated-v1.json', 'utf8'));
+  await page.goto('/');
+  await page.evaluate(({ quiz, flashcards }) => {
+    localStorage.setItem('meducation.started.v1', '1');
+    localStorage.setItem(
+      'meducation.progress.v2',
+      JSON.stringify({ ...quiz, revision: '00000000-0000-4000-8000-000000000001' }),
+    );
+    localStorage.setItem(
+      'meducation.flashcards.progress.v2',
+      JSON.stringify({ ...flashcards, revision: '00000000-0000-4000-8000-000000000002' }),
+    );
+  }, progress);
+  await page.reload();
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
+  const storedProgress = () =>
+    page.evaluate(() => ({
+      started: localStorage.getItem('meducation.started.v1'),
+      quiz: localStorage.getItem('meducation.progress.v2'),
+      flashcards: localStorage.getItem('meducation.flashcards.progress.v2'),
+    }));
+  const before = await storedProgress();
+  const about = page.locator('footer').getByRole('link', { name: 'About', exact: true });
+  const landing = page.getByRole('heading', { level: 1, name: /one question at a time/ });
+  await expect(about).toHaveAttribute('href', '/?about=1');
+  await about.click();
+  await expect(landing).toBeVisible();
+  await page.goBack();
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
+  await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+  await about.focus();
+  await page.keyboard.press('Enter');
+  await expect(page).toHaveURL('/?about=1');
+  await expect(landing).toBeVisible();
+  await expect(about).toHaveCount(0);
+  expect(await storedProgress()).toEqual(before);
+  await page.goBack();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
+  await page.goForward();
+  await expect(landing).toBeVisible();
+  await page.reload();
+  await expect(landing).toBeVisible();
+  await page.getByRole('banner').getByRole('button', { name: 'Start studying' }).click();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('button', { name: 'Quizzes', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
+  expect(await storedProgress()).toEqual(before);
+  // Start studying replaces About rather than leaving it as a redundant Back destination.
+  await page.goBack();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
+});
+
+test('a direct About visit saves nothing until Start studying', async ({ page }) => {
+  await page.goto('/?about=1');
+  await expect(page.getByRole('heading', { level: 1, name: /one question at a time/ })).toBeVisible();
+  await expect(page.locator('footer').getByRole('link', { name: 'About', exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole('banner').getByRole('button', { name: 'Start studying' })).toBeVisible();
+  expect(await page.evaluate(() => localStorage.length)).toBe(0);
+  await page.getByRole('banner').getByRole('button', { name: 'Start studying' }).click();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
+  expect(await page.evaluate(() => localStorage.getItem('meducation.started.v1'))).toBe('1');
 });
 
 test('the sample streak stays centered in the viewport vertically and the quiz horizontally', async ({ page }) => {

@@ -42,7 +42,7 @@ export function StudyDashboardLayout({
         {subjectsActions}
       </Box>
       {children}
-      <LegalFooter />
+      <LegalFooter showAbout />
     </Container>
   );
 }
