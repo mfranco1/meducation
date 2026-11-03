@@ -1,5 +1,5 @@
 import { Box } from '@mui/material';
-import type { ScoreTrend } from '../../../analytics/analytics';
+import type { ScoreTrend } from '../../../domain/scores';
 
 export function ScoreTrendIndicator({ trend }: { trend: ScoreTrend }) {
   const labels: Record<ScoreTrend, string> = {

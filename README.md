@@ -26,7 +26,7 @@ Open `/admin.html` on the development server with the authoring API running and 
 ## Layout
 
 - `src/app`, `src/features`, `src/shared`: learner composition, quiz and flashcard features, shared UI
-- `src/domain`, `src/analytics`, `src/persistence`, `src/content`: rules, aggregation, browser storage, schemas and validation
+- `src/domain`, `src/persistence`, `src/content`: rules, aggregation, browser storage, schemas and validation
 - `src/admin`: authenticated draft editor
 - `backend/`: FastAPI delivery, authoring services, PostgreSQL migrations and jobs
 - `scripts/`, `ops/`, `e2e/`, `tests/fixtures/`: tooling, container config, browser tests, shared fixtures

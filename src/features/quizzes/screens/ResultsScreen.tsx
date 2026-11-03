@@ -1,7 +1,7 @@
 import { Box, Button, Card, CardContent, Container, LinearProgress, Stack, Typography } from '@mui/material';
 import { keyframes } from '@emotion/react';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { performanceBy } from '../../../analytics/analytics';
+import { performanceBy } from '../../../domain/scores';
 import { isPerfectScore } from '../../../domain/quizEngine';
 import type { CompletedAttempt, Question, Quiz } from '../../../domain/types';
 import { formatDuration } from '../format';

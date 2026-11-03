@@ -9,7 +9,7 @@ One frontend package and one Python package. Root HTML entries and tool configur
 - `src/app`: learner composition, navigation identity, lazy screens, drawer, progress backup wiring.
 - `src/features/quizzes`, `src/features/flashcards`: screens, session coordination, selectors.
 - `src/shared`: theme, brand and reusable presentation under `ui/` (shell, loading, transitions, notifications, content, study, catalog).
-- `src/domain`: pure rules, types, repository interfaces. `src/analytics`: pure aggregation. `src/persistence`: storage repositories and codecs.
+- `src/domain`: pure rules, types, repository interfaces. `src/persistence`: storage repositories and codecs.
 - `src/content`: `schema` (stored contracts), `api` (transport, decoders, runtime repositories), `validation`, `richText`.
 - `src/admin`: authoring composition and presentation, with `core` (pure operations) and `data` (HTTP gateway) kept free of UI.
 - `backend/src/meducation_api`: `main.py` routes, `repositories` (PostgreSQL readers), `db` (engines, migrations, jobs, draft records, exports), `auth` (OIDC and sessions), `admin` (paired editor services), `content_policy` (packaged validator).
@@ -23,8 +23,8 @@ Extend existing modules before adding files. Avoid barrels, forwarding modules a
 
 `npm run lint` enforces these with `@typescript-eslint/no-restricted-imports` blocks in `eslint.config.mjs` (one per directory; tests keep only the UI-library rule). Cycles are not checked, and the learner bundle's exclusion of admin and bank modules is checked on the built output (`scripts/containers/check-learner-artifacts.mjs`).
 
-- `domain`, `analytics`, `persistence` and `content` import only `domain` (plus themselves) and no application layers.
-- `domain`, `analytics`, `persistence`, `content` and `admin/core`, `admin/data` cannot import React, MUI or Emotion. Production code never imports tests, fixtures, `e2e` or `scripts`.
+- `domain`, `persistence` and `content` import only `domain` (plus themselves) and no application layers.
+- `domain`, `persistence`, `content` and `admin/core`, `admin/data` cannot import React, MUI or Emotion. Production code never imports tests, fixtures, `e2e` or `scripts`.
 - `shared` never imports `app`, `features`, `admin` or `persistence`.
 - `features` never import `app`, `admin` or sibling features. Only `session/` modules use concrete persistence; elsewhere import types only.
 - `admin/core` and `admin/data` do not import admin presentation, `app`, `features` or `shared`. `app` is the composition root.

@@ -1,5 +1,11 @@
-import { contentRetryPolicy, isRetryableStatus, retryAfterMs, retryDelayMs, type RetryPolicy } from './retryPolicy';
-import { logContentDiagnostic } from './contentLogger';
+import {
+  contentRetryPolicy,
+  isRetryableStatus,
+  logContentDiagnostic,
+  retryAfterMs,
+  retryDelayMs,
+  type RetryPolicy,
+} from './retryPolicy';
 
 export type ContentErrorKind = 'timeout' | 'network' | 'http' | 'invalid' | 'revision' | 'cancelled';
 

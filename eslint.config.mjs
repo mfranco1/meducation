@@ -46,39 +46,17 @@ const layers = [
   {
     dir: 'domain',
     ui: true,
-    patterns: [
-      layer(
-        'Domain depends only on domain.',
-        'analytics',
-        'persistence',
-        'content',
-        'shared',
-        'features',
-        'app',
-        'admin',
-      ),
-    ],
-  },
-  {
-    dir: 'analytics',
-    ui: true,
-    patterns: [
-      layer('Analytics depends only on domain.', 'persistence', 'content', 'shared', 'features', 'app', 'admin'),
-    ],
+    patterns: [layer('Domain depends only on domain.', 'persistence', 'content', 'shared', 'features', 'app', 'admin')],
   },
   {
     dir: 'persistence',
     ui: true,
-    patterns: [
-      layer('Persistence depends only on domain.', 'analytics', 'content', 'shared', 'features', 'app', 'admin'),
-    ],
+    patterns: [layer('Persistence depends only on domain.', 'content', 'shared', 'features', 'app', 'admin')],
   },
   {
     dir: 'content',
     ui: true,
-    patterns: [
-      layer('Content depends only on domain.', 'analytics', 'persistence', 'shared', 'features', 'app', 'admin'),
-    ],
+    patterns: [layer('Content depends only on domain.', 'persistence', 'shared', 'features', 'app', 'admin')],
   },
   {
     dir: 'shared',

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Box, Container, Typography } from '@mui/material';
-import { LegalFooter } from './LegalFooter';
+import { LegalFooter } from '../shell/LegalFooter';
 
 export function StudyDashboardLayout({
   title,

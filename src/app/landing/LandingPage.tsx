@@ -10,7 +10,7 @@ import StyleOutlinedIcon from '@mui/icons-material/StyleOutlined';
 import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { SubjectIcon } from '../../shared/ui/catalog/icons/SubjectIcon';
-import { LegalFooter } from '../../shared/ui/catalog/LegalFooter';
+import { LegalFooter } from '../../shared/ui/shell/LegalFooter';
 import { easing, reducedMotion } from '../../shared/ui/motion';
 import { theme } from '../../shared/theme';
 import { SampleCases } from './SampleCases';

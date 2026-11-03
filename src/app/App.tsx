@@ -29,7 +29,7 @@ import { ExitQuizDialog } from '../features/quizzes/components/quiz/ExitQuizDial
 import { LeaveReviewDialog } from '../features/quizzes/components/quiz/LeaveReviewDialog';
 import { ResumeContentDialog } from '../features/quizzes/components/quiz/ResumeContentDialog';
 import { ToastProvider, useToast } from '../shared/ui/notifications/ToastProvider';
-import { contentLoadMessage } from '../shared/ui/loading/notificationMessages';
+import { contentLoadMessage } from '../shared/ui/loading/contentLoadMessage';
 import type { SubjectStat } from '../features/quizzes/selectors/progress';
 import {
   createProgressView,

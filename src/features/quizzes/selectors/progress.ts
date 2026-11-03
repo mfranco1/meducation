@@ -1,4 +1,4 @@
-import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from '../../../analytics/analytics';
+import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from '../../../domain/scores';
 import type { Attempt, Quiz, QuizRepository, RecentScore, Subject } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
 

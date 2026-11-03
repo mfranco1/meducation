@@ -1,8 +1,11 @@
 import { readFileSync } from 'node:fs';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../../src/content/schema/schema';
-import { validateFlashcardBank } from '../../src/content/validation/flashcardValidation';
 import { validateQuestionMarkdown } from '../../src/content/validation/markdownValidation';
-import { validateQuestionBank, validateStoredQuestionBank } from '../../src/content/validation/validate';
+import {
+  validateFlashcardBank,
+  validateQuestionBank,
+  validateStoredQuestionBank,
+} from '../../src/content/validation/validate';
 
 // The operator first runs strict Python parsing; this gate never imports bundled banks.
 try {

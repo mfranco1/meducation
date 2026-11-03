@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from './analytics';
+import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from './scores';
 
 describe('score summaries', () => {
   it('averages scores with equal subject weight and rounds to a whole percent', () => {

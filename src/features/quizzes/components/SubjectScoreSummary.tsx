@@ -1,4 +1,4 @@
-import type { ScoreTrend } from '../../../analytics/analytics';
+import type { ScoreTrend } from '../../../domain/scores';
 import { ScoreTrendIndicator } from './ScoreTrendIndicator';
 import { SubjectProgressLabel, SubjectProgressSummary } from '../../../shared/ui/catalog/SubjectProgressSummary';
 

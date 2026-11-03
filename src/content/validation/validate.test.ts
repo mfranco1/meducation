@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { StoredFlashcardBank, StoredQuestionBank } from '../schema/schema';
-import { validateQuestionBank, validateStoredFlashcardBank, validateStoredQuestionBank } from './validate';
+import fixture from '../../../tests/fixtures/flashcard-bank-contract.json';
+import {
+  validateFlashcardBank,
+  validateQuestionBank,
+  validateStoredFlashcardBank,
+  validateStoredQuestionBank,
+} from './validate';
 
 describe('question bank validation', () => {
   it('detects duplicate IDs and invalid answers', () => {
@@ -125,5 +131,36 @@ describe('flashcard bank validation', () => {
         expect.stringContaining('prefix'),
       ]),
     );
+  });
+});
+
+describe('shared flashcard authoring validation', () => {
+  it('rejects invalid card HTML, image URLs, math, and restricted sources', () => {
+    const bank = structuredClone(fixture.bank) as StoredFlashcardBank;
+    bank.cards[0].front = '<img src="javascript:alert(1)" alt="Unsafe">';
+    bank.cards[0].back = '$\\unknowncommand$';
+    bank.cards[0].sources = '![Not allowed](/image.png)';
+    const errors = validateFlashcardBank(bank, fixture.topics).filter((issue) => issue.level === 'error');
+    expect(errors.map((issue) => issue.message)).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining('unsupported image URL'),
+        expect.stringContaining('invalid LaTeX'),
+        expect.stringContaining('sources contains an image'),
+      ]),
+    );
+  });
+
+  it('warns on duplicate deck names within a topic without confusing identity across topics', () => {
+    const bank = structuredClone(fixture.bank) as StoredFlashcardBank;
+    bank.decks.push({ id: 'd-dupe', topicId: 't1', name: ' Cranial nerves ' });
+    bank.decks.push({ id: 'd-other', topicId: 't2', name: 'Cranial nerves' });
+    const warnings = validateFlashcardBank(bank, fixture.topics);
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]).toMatchObject({ level: 'warning', message: expect.stringContaining('Duplicate sibling name') });
+  });
+
+  it('reports structural failures without trying to parse malformed card records', () => {
+    const bank = { ...fixture.bank, cards: [null] } as unknown as StoredFlashcardBank;
+    expect(validateFlashcardBank(bank, fixture.topics)[0].message).toBe('Card record must be an object');
   });
 });
