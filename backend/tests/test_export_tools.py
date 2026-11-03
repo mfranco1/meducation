@@ -2,34 +2,23 @@
 
 import hashlib
 import json
-from pathlib import Path
 
 import pytest
+from support import ROOT, base_pair
 
+from meducation_api.content.draft import revisions as content_revisions
 from meducation_api.content.releases import paired_artifacts
 from meducation_api.content.transfer import inspect_export
 from meducation_api.db.engine import ContentDatabaseError
 
-ROOT = Path(__file__).resolve().parents[2]
-
 
 def export_fixture(folder, *, target="release", operator=False):
-    q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    f = {"schemaVersion": 4, "decks": [], "cards": []}
+    q, f = base_pair()
     raw = [json.dumps(value, ensure_ascii=False).encode() for value in (q, f)]
     hashes = [hashlib.sha256(value).hexdigest() for value in raw]
     qt, ft = paired_artifacts(*(value.decode() for value in raw))
-    subjects, topics = (
-        json.dumps(q[key], ensure_ascii=False, separators=(",", ":"))
-        for key in ("subjects", "topics")
-    )
-    revisions = {
-        "quiz": "sha256-" + hashlib.sha256(qt.encode()).hexdigest(),
-        "flashcard": "sha256-"
-        + hashlib.sha256(
-            ("flashcards-v3\n" + subjects + "\n" + topics + "\n" + ft).encode()
-        ).hexdigest(),
-    }
+    digest = content_revisions(qt, ft)
+    revisions = {"quiz": digest["quizRevision"], "flashcard": digest["flashcardRevision"]}
     release = "11111111-1111-4111-8111-111111111111"
     if operator:
         names = ("questionBank.json", "flashcardBank.json")

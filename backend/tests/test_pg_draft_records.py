@@ -4,10 +4,9 @@ import gzip
 import json
 
 import pytest
-import test_postgres_content
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from test_postgres_content import (
+from support import (
     ROOT,
     auth_app,
     auth_login,
@@ -21,9 +20,6 @@ from meducation_api.content.draft import build_documents, revisions
 from meducation_api.db.recovery import advance_ids
 
 pytestmark = pytest.mark.postgres
-
-
-db = test_postgres_content.db  # shared disposable-database fixture
 
 
 def fixture_pairs():

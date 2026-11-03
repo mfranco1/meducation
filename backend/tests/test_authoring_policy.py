@@ -3,12 +3,12 @@
 import copy
 import json
 import subprocess
-from pathlib import Path
 
 import pytest
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
+from support import ROOT
 
 from meducation_api.content_policy import (
     ContentPolicyError,
@@ -18,7 +18,6 @@ from meducation_api.content_policy import (
     read_json_body,
 )
 
-ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = json.loads((ROOT / "tests/fixtures/paired-authoring-cases.json").read_bytes())
 
 

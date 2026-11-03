@@ -1,24 +1,16 @@
 """Stored-pair parsing preserves raw shape and rejects ambiguous input before SQL."""
 
 import json
-from pathlib import Path
 
 import pytest
+from support import base_pair
 
 from meducation_api.content.releases import paired_artifacts
 from meducation_api.db.engine import ContentDatabaseError
 
-ROOT = Path(__file__).resolve().parents[2]
-
-
-def pair():
-    q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    f = {"schemaVersion": 4, "decks": [], "cards": []}
-    return q, f
-
 
 def test_artifacts_preserve_raw_field_order_and_omission():
-    q, f = pair()
+    q, f = base_pair()
     output = paired_artifacts(json.dumps(q, ensure_ascii=False), json.dumps(f))
     assert output == tuple(json.dumps(v, ensure_ascii=False, indent=2) + "\n" for v in (q, f))
     stored = json.loads(output[0])["questions"][0]
@@ -29,7 +21,7 @@ def test_artifacts_preserve_raw_field_order_and_omission():
     "mutate", ["duplicate", "null", "nonfinite", "missing-subject", "unknown-field"]
 )
 def test_bad_pairs_fail_before_sql_without_exposing_content(mutate):
-    q, f = pair()
+    q, f = base_pair()
     q["questions"][0]["stem"] = "Private fixture text"
     if mutate == "null":
         q["questions"][0]["metadata"] = None

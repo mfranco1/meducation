@@ -2,18 +2,17 @@
 
 import json
 import logging
-from pathlib import Path
 
 import pytest
 from fastapi.testclient import TestClient
 from fixture_content import fixture_app
 from sqlalchemy.exc import DBAPIError, TimeoutError
+from support import ROOT
 
 from meducation_api.main import create_app
 from meducation_api.observability import SafeServerErrorFilter, database_category
 from meducation_api.settings import Settings
 
-ROOT = Path(__file__).resolve().parents[2]
 CANARY = "L5-secret-code-token-password-authored-text"
 
 

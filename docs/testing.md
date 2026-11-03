@@ -14,7 +14,7 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | Typecheck / build | `npm run typecheck`, `npm run build` (learner `build:learner`, admin `build:admin`) |
 | Content validation | `npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json` |
 | Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python -m pytest backend/tests -q` |
-| Real PostgreSQL backend cases | `.venv/bin/python scripts/containers/test-postgres-content.py` (`--keyword` to focus; `--restartable` for outage drills) |
+| Real PostgreSQL backend cases | `.venv/bin/python scripts/containers/test-postgres-content.py` (runs `backend/tests/test_pg_*.py`; `--keyword` to focus; `--restartable --keyword resilience` for outage drills) |
 | Learner browser (Chromium; includes progress backup) | `npm run test:e2e` (builds with content retries off) |
 | Admin browser | `npm run test:e2e:admin` |
 | Everything | `npm run verify:full` (stops at the first failure) |

@@ -3,19 +3,16 @@
 import copy
 import hashlib
 import json
-from pathlib import Path
 
 import pytest
+from support import ROOT, base_pair
 
 from meducation_api.content.transfer import _ordered, capture_pair
 from meducation_api.db.engine import ContentDatabaseError
 
-ROOT = Path(__file__).resolve().parents[2]
-
 
 def files(tmp_path):
-    q = json.loads((ROOT / "tests/fixtures/bank-contract-cases.json").read_text())["base"]
-    f = {"schemaVersion": 4, "decks": [], "cards": []}
+    q, f = base_pair()
     paths = tmp_path / "quiz.json", tmp_path / "flashcards.json"
     for path, doc in zip(paths, (q, f), strict=True):
         path.write_text(json.dumps(doc, ensure_ascii=False))
