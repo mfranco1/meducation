@@ -21,7 +21,7 @@ const fallback: Icon = {
   ),
 };
 
-const iconsBySubjectId: Record<string, Icon> = {
+export const iconsBySubjectId: Readonly<Record<string, Icon>> = {
   s1: {
     name: 'knee-joint',
     art: (

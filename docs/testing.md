@@ -39,6 +39,14 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Boundary policy changes: `npm run lint` after adding a temporary violating import.
 - Documentation only: check links and commands and run `git diff --check`.
 
+## Icon studio
+
+Run `npm test -- scripts/branding/iconStudio.test.ts` for SVG safety, deterministic normalization, registry integrity, licensing metadata, approved hashes, discovery ordering and offline gallery output. Run `npm run icons -- validate` to check registered candidates and source snapshots, and `npm run icons -- preview` to generate `.cache/icons/gallery.html`. The gallery and downloaded catalogs are ignored development artifacts.
+
+Open the gallery in a browser and inspect both themes at 20/24/46/64px, including card and header badge contexts. Check anatomical recognition, stroke weight, alignment, clipping and optical proportions against the current glyphs and source references. Automated checks do not establish medical accuracy, verify external license claims or grant visual approval. Use the [icon skill](../.agents/skills/meducation-icons/SKILL.md) for source downloads, import metadata and approval.
+
+For studio code changes, also run lint, formatting checks and `npm run build`. The studio has no backend or production routing changes and does not need database/browser fixture suites.
+
 ## Fixtures
 
 - `tests/fixtures/` holds contracts shared by the TypeScript and Python validators and the browser suites; `src/test/` holds Vitest setup and admin and API fixtures (IDs must stay valid under the API decoders); `e2e/fixtures` banks are seeded into disposable PostgreSQL; backend fixtures are in `backend/tests/fixture_content.py`.

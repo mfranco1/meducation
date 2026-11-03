@@ -11,6 +11,20 @@ Visual and interaction conventions. Use the MUI theme in `src/shared/theme.ts`, 
 - Feedback tones for correct, incorrect and unanswered or unavailable answers come from theme tokens (`feedback.correct`, `incorrect`, `review`); one pearl, chosen at random when a question has several, sits below the explanation with a left rule in the same tone's border color and a lightbulb icon in the status color. Immediate feedback is a compact tinted header over a neutral reading surface with generous line height and constrained measure. Do not repeat answer summaries that the highlighted choices already show.
 - Layouts must not overflow horizontally at 320, 390, 1048 or 1440px; enlarged text must stay usable.
 
+## Meducation Icon Design Specification
+
+Subject and topic artwork is one curated duotone family. Use a 24-unit viewBox, normally with 2 units of clear space around the artwork. Adjust optical size for narrow organs and irregular silhouettes rather than stretching them to identical bounds. Use one focal subject, recognizable anatomical landmarks and meaningful negative space. A cardiac icon needs an anatomical heart; a specific structure such as a nephron needs its own representation.
+
+Use rounded caps and joins, nominal 1.75–2-unit strokes, and comparable weight for filled contours. Keep foreground paint `currentColor` and one optional tint layer at 0.16 opacity. Avoid gradients, shadows, tiny texture and extra objects. Badge backgrounds remain outside the SVG: primary orange at 7% opacity, a 12px rounded square, centered glyph. Keep existing Inter typography and text labels beside decorative icons.
+
+Review at 20 and 24px for topic rows, 46px in an 80px card badge, and 64px in an 88px header badge. Check contours, clipping, alignment, negative space and visual weight together. The studio uses the existing light palette and dark brand accent `#EF9B6B` on a dark review surface; the application currently has a light theme only.
+
+Run `npm run icons -- search "concept"`, `propose "concept"`, `create "concept" --from source.svg --metadata metadata.json --id semantic-id`, `validate`, or `preview`. Creation fits the source artboard without distortion, converts paint to `currentColor`, and optimizes it; deliberate anatomy, tint and optical changes happen in the source artwork. Search uses local catalogs and keyword matching, so medical and visual judgment remains part of review.
+
+`assets/icons/registry.json` holds typed candidate/approved metadata, individual provenance, adaptation notes and licenses. The registry is empty until custom icons are registered; their SVGs, source comparisons and license notices live alongside it. Existing production glyphs retain their current assignments and legacy notices. The standalone gallery is generated at `.cache/icons/gallery.html`, works offline and shows sources, current artwork, candidates and both review themes. An empty registry shows an empty gallery.
+
+Use [.agents/skills/meducation-icons/SKILL.md](../.agents/skills/meducation-icons/SKILL.md) for import, licensing and approval procedures. New or substantially changed icons require explicit visual approval. Record the reviewer and reviewed SVG hash before marking an icon approved. Revisions receive new candidate IDs; creation never overwrites assets. Production adoption is a separate authorized change and must ship required attribution in `public/icon-licenses.txt`.
+
 ## Motion
 
 Motion confirms an action, shows where something went, or marks an achievement; it never decorates idle UI or delays input. Shared tokens and the reduced-motion hook live in `src/shared/ui/motion.ts`.
