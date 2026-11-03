@@ -1,0 +1,103 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { cacheKey } from '../capture';
+import { validateAssets } from '../cli';
+import { audioRecipeSchema, duration, specSchema } from '../spec';
+import ToneMidi from '@tonejs/midi';
+import { scoreMidi, verifySoundfontArchive } from '../audio';
+import { ffmpeg } from '../media';
+
+const production = {
+  id: 'test',
+  brief: { audience: 'Test', message: 'Test', concept: 'Test', cta: 'Test' },
+  recipe: 'recipes/test.json',
+  scenes: [{ treatment: 'type', frames: 30, headline: 'Test' }],
+};
+
+test('production timings are summed and invalid input is rejected', () => {
+  assert.equal(duration(specSchema.parse(production)), 30);
+  for (const edit of [
+    { scenes: [{ treatment: 'product', frames: 30, headline: 'Study' }] },
+    { scenes: [{ treatment: 'type', frames: -1, headline: 'Study' }] },
+    { scenes: [{ treatment: 'product', frames: 30, headline: 'Study', footage: '../private.mp4' }] },
+    { audio: [{ src: 'music.wav', frames: 800 }] },
+  ])
+    assert.equal(specSchema.safeParse({ ...production, ...edit }).success, false);
+});
+
+test('music score preserves chord pitches, instrument and musical timing in MIDI output', () => {
+  const recipe = audioRecipeSchema.parse({
+    id: 'test',
+    direction: 'Small synthetic score',
+    frames: 60,
+    bpm: 120,
+    tracks: [{ name: 'Piano', program: 4, notes: [{ beat: 0.5, beats: 1, pitches: [60, 64, 67], velocity: 0.5 }] }],
+  });
+  const decoded = new ToneMidi.Midi(scoreMidi(recipe));
+  assert.equal(decoded.tracks[0].instrument.number, 4);
+  assert.deepEqual(
+    decoded.tracks[0].notes.map((note) => note.midi),
+    [60, 64, 67],
+  );
+  assert.equal(decoded.tracks[0].notes[0].time, 0.25);
+  assert.equal(decoded.tracks[0].notes[0].duration, 0.5);
+  assert.equal(
+    audioRecipeSchema.safeParse({ ...recipe, effects: [{ kind: 'tap', from: 55, frames: 10, gain: 0.1 }] }).success,
+    false,
+  );
+  assert.equal(audioRecipeSchema.safeParse({ ...recipe, frames: 30, bpm: 40 }).success, false);
+});
+
+test('unverified instrument archives are rejected before extraction', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'meducation-audio-download-'));
+  try {
+    const file = join(directory, 'download.tar.gz');
+    await writeFile(file, 'untrusted download');
+    await assert.rejects(verifySoundfontArchive(file), /checksum mismatch/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('capture cache changes when relevant production inputs change', () => {
+  const key = cacheKey({ hold: 2000 }, 'source-a', ['revision-a'], 'http://localhost:5175');
+  assert.equal(key, cacheKey({ hold: 2000 }, 'source-a', ['revision-a'], 'http://localhost:5175'));
+  for (const changed of [
+    cacheKey({ hold: 3000 }, 'source-a', ['revision-a'], 'http://localhost:5175'),
+    cacheKey({ hold: 2000 }, 'source-b', ['revision-a'], 'http://localhost:5175'),
+    cacheKey({ hold: 2000 }, 'source-a', ['revision-b'], 'http://localhost:5175'),
+    cacheKey({ hold: 2000 }, 'source-a', ['revision-a'], 'http://localhost:5176'),
+  ])
+    assert.notEqual(key, changed);
+});
+
+test('missing assets and source trims beyond media duration fail before rendering', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'meducation-marketing-'));
+  try {
+    const spec = specSchema.parse({
+      ...production,
+      scenes: [{ treatment: 'product', frames: 30, headline: 'Study', footage: 'clip.mp4' }],
+    });
+    await assert.rejects(validateAssets(spec, directory), /Missing asset/);
+    await ffmpeg(
+      [
+        '-f',
+        'lavfi',
+        '-i',
+        'color=c=white:s=64x64:r=30:d=0.5',
+        '-c:v',
+        'libx264',
+        '-pix_fmt',
+        'yuv420p',
+        join(directory, 'clip.mp4'),
+      ],
+      join(directory, 'encode.log'),
+    );
+    await assert.rejects(validateAssets(spec, directory), /too short/);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});

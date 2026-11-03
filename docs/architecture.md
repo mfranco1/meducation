@@ -15,6 +15,7 @@ One frontend package and one Python package. Root HTML entries and tool configur
 - `backend/src/meducation_api`: `main.py` routes, `repositories` (PostgreSQL readers), `db` (engines, migrations, jobs, draft records, exports), `auth` (OIDC and sessions), `admin` (paired editor services), `content_policy` (packaged validator).
 - `scripts/content`, `scripts/containers`, `scripts/local-authoring`, `scripts/testing`: maintenance tooling outside the application graph.
 - Tests sit beside their modules; `src/test` has setup and fixtures, `tests/fixtures` shared contracts, `e2e` browser workflows.
+- `marketing/`: isolated local video tooling. Playwright records the PostgreSQL-backed learner app; Remotion composes cached footage using JSON ad specifications. FluidSynth renders original MIDI scores and FFmpeg synthesizes effects and masters the soundtrack. It reuses shared brand presentation and adds no production runtime dependencies. Commands and production standards are in its README and AGENTS files.
 
 Extend existing modules before adding files. Avoid barrels, forwarding modules and speculative shared layers.
 

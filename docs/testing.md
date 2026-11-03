@@ -39,6 +39,10 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Boundary policy changes: `npm run lint` after adding a temporary violating import.
 - Documentation only: check links and commands and run `git diff --check`.
 
+## Marketing videos
+
+The isolated video workspace uses `npm --prefix marketing run typecheck`, `npm --prefix marketing test` and `npm --prefix marketing run format:check`. Verify a real capture and render, run media validation, and inspect representative frames and a complete preview. Audio changes also require a real `audio:generate` run, `audio:validate` for the master and encoded video, and listening review. See [marketing](../marketing/README.md) for setup and commands. Cached footage is a production artifact, never a content authority.
+
 ## Icon studio
 
 Run `npm test -- scripts/branding/iconStudio.test.ts` for SVG safety, deterministic normalization, registry integrity, licensing metadata, discovery ordering and offline gallery output. Run `npm run icons -- validate` to check registered candidates and source snapshots, and `npm run icons -- preview` to generate `.cache/icons/gallery.html`. Candidates, metadata, galleries and downloaded catalogs live under ignored `.cache/icons`. Integration removes completed review work; only app artwork and shipped notices remain.
