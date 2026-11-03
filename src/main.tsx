@@ -10,11 +10,20 @@ import { brand } from './shared/brand';
 import { hasStartedStudying, markStartedStudying } from './persistence/visitorStart';
 
 function BootFailure() {
-  return <Container maxWidth="sm" sx={{ py: 6 }}>
-    <Alert severity="error" action={<Button color="inherit" onClick={() => window.location.reload()}>Reload</Button>}>
-      The app could not start. Reload to try again.
-    </Alert>
-  </Container>;
+  return (
+    <Container maxWidth="sm" sx={{ py: 6 }}>
+      <Alert
+        severity="error"
+        action={
+          <Button color="inherit" onClick={() => window.location.reload()}>
+            Reload
+          </Button>
+        }
+      >
+        The app could not start. Reload to try again.
+      </Alert>
+    </Container>
+  );
 }
 
 const root = createRoot(document.getElementById('root')!);
@@ -51,12 +60,19 @@ async function boot() {
 async function showLanding() {
   try {
     const { LandingPage } = await import('./app/landing/LandingPage');
-    render(<LandingPage onStart={() => {
-      markStartedStudying();
-      if (showingAbout) { window.location.replace('/'); return; }
-      window.scrollTo(0, 0);
-      void boot();
-    }} />);
+    render(
+      <LandingPage
+        onStart={() => {
+          markStartedStudying();
+          if (showingAbout) {
+            window.location.replace('/');
+            return;
+          }
+          window.scrollTo(0, 0);
+          void boot();
+        }}
+      />,
+    );
   } catch (error) {
     console.error('Landing page could not load.', error);
     void boot();

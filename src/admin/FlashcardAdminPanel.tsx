@@ -201,7 +201,11 @@ export function FlashcardAdminPanel({
       if (!record || !target) return;
       await store.move(kind, id, record.version, target);
       if (kind === 'card') {
-        const visible = selectFlashcardPage(store.flashcardBank.cards.filter((row) => row.deckId === selection.parentId), cardQuery, 0);
+        const visible = selectFlashcardPage(
+          store.flashcardBank.cards.filter((row) => row.deckId === selection.parentId),
+          cardQuery,
+          0,
+        );
         const index = visible.matches.findIndex(({ card }) => card.id === id);
         if (index >= 0) setCardPage(Math.floor(index / ADMIN_PAGE_SIZE));
       }
@@ -282,7 +286,10 @@ export function FlashcardAdminPanel({
               <Button size="small" onClick={() => createRecord('topic')}>
                 New topic
               </Button>
-              <Button size="small" onClick={() => void openBulk({ kind: 'subject', subjectId: browseSubjectId }, subjectName)}>
+              <Button
+                size="small"
+                onClick={() => void openBulk({ kind: 'subject', subjectId: browseSubjectId }, subjectName)}
+              >
                 Add topics
               </Button>
               <AdminParentActions
@@ -310,10 +317,15 @@ export function FlashcardAdminPanel({
               renderInput={(params) => <TextField {...params} label="Topic" size="small" />}
             />
           )}
-          {browseSubjectId && !browseTopics.length && <Typography variant="body2">No topics in this subject.</Typography>}
+          {browseSubjectId && !browseTopics.length && (
+            <Typography variant="body2">No topics in this subject.</Typography>
+          )}
           {browseTopic && (
             <Stack direction="row" spacing={0.5}>
-              <Button size="small" onClick={() => void openBulk({ kind: 'topic', topicId: browseTopic.id }, topicLabel)}>
+              <Button
+                size="small"
+                onClick={() => void openBulk({ kind: 'topic', topicId: browseTopic.id }, topicLabel)}
+              >
                 Add decks
               </Button>
               <AdminParentActions
@@ -336,7 +348,8 @@ export function FlashcardAdminPanel({
               getOptionLabel={(deck) => `${deck.name} · ${cardsByDeck[deck.id]?.length ?? 0} cards`}
               isOptionEqualToValue={(option, value) => option.id === value.id}
               onChange={(_, deck) => {
-                if ((deck?.id ?? '') !== browseDeckId) void changeBrowse(browseSubjectId, browseTopicId, deck?.id ?? '');
+                if ((deck?.id ?? '') !== browseDeckId)
+                  void changeBrowse(browseSubjectId, browseTopicId, deck?.id ?? '');
                 setDeckQuery(undefined);
               }}
               renderInput={(params) => <TextField {...params} label="Deck" size="small" />}
@@ -356,7 +369,9 @@ export function FlashcardAdminPanel({
                 pageIds={listRows.map((row) => row.id)}
                 onDelete={(ids) =>
                   onDelete({
-                    selection: browseTopic ? { kind: 'deck', parentId: browseTopic.id } : { kind: 'topic', parentId: browseSubjectId },
+                    selection: browseTopic
+                      ? { kind: 'deck', parentId: browseTopic.id }
+                      : { kind: 'topic', parentId: browseSubjectId },
                     ids,
                     label: `${ids.length} selected ${browseTopic ? 'decks' : 'topics'}`,
                   })
@@ -393,7 +408,9 @@ export function FlashcardAdminPanel({
               <Stack direction="row" spacing={0.5} flexWrap="wrap">
                 <Button
                   size="small"
-                  onClick={() => void openBulk({ kind: 'deck', deckId: browseDeck.id }, `${topicLabel} / ${browseDeck.name}`)}
+                  onClick={() =>
+                    void openBulk({ kind: 'deck', deckId: browseDeck.id }, `${topicLabel} / ${browseDeck.name}`)
+                  }
                 >
                   Add cards
                 </Button>

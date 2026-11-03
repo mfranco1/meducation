@@ -28,7 +28,10 @@ describe('record editor', () => {
     expect(result.current.dirty).toBe(true);
     await act(async () => expect(await result.current.save()).toBe(true));
     expect(requests(store)).toEqual(['PUT /draft/questions/i1']);
-    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ expectedVersion: 1, fields: { stem: 'First edit' } });
+    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({
+      expectedVersion: 1,
+      fields: { stem: 'First edit' },
+    });
     expect(JSON.parse(result.current.text)).toEqual({ ...original, stem: 'First edit' });
     expect(result.current.dirty).toBe(false);
     act(() => result.current.edit(JSON.stringify({ ...original, stem: 'Second edit' })));

@@ -297,7 +297,10 @@ export class DraftStore {
   async revert(change: DraftChange): Promise<void> {
     const current = this.find(RECORD_KIND[change.kind], change.entityId);
     await this.write(async () => {
-      await this.client.post(`/draft/changes/${change.changeId}/revert`, current ? { expectedVersion: current.version } : {});
+      await this.client.post(
+        `/draft/changes/${change.changeId}/revert`,
+        current ? { expectedVersion: current.version } : {},
+      );
     });
   }
   async discard(): Promise<void> {

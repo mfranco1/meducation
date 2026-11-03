@@ -4,14 +4,23 @@ import { LocalAttemptRepository, PersistenceError } from './localRepository';
 import { emptyProgress, progressKey } from './progressCodec';
 
 const active: Attempt = {
-  id: 'attempt', quizId: 'quiz', subjectId: 'subject', feedbackMode: 'exam',
-  elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: '2026-10-02T00:00:00.000Z', responses: {},
+  id: 'attempt',
+  quizId: 'quiz',
+  subjectId: 'subject',
+  feedbackMode: 'exam',
+  elapsedMs: 0,
+  celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+  contentSignature: 'fixture-content',
+  startedAt: '2026-10-02T00:00:00.000Z',
+  responses: {},
 };
 
 function storageFixture() {
   const values = new Map<string, string>();
   const getItem = vi.fn((key: string) => values.get(key) ?? null);
-  const setItem = vi.fn((key: string, value: string) => { values.set(key, value); });
+  const setItem = vi.fn((key: string, value: string) => {
+    values.set(key, value);
+  });
   return { values, getItem, setItem };
 }
 

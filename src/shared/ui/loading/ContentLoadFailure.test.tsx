@@ -8,11 +8,15 @@ import { ContentLoadFailure } from './ContentLoadFailure';
 describe('content load failure', () => {
   it('shows clean learner copy and a text action without rendering diagnostics', () => {
     const onRetry = vi.fn();
-    render(<ThemeProvider theme={theme}><ContentLoadFailure
-      title="Failed to load subjects"
-      error={new ContentLoadError('http', 'HTTP 503. Restart the backend at localhost:8000', 503)}
-      onRetry={onRetry}
-    /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <ContentLoadFailure
+          title="Failed to load subjects"
+          error={new ContentLoadError('http', 'HTTP 503. Restart the backend at localhost:8000', 503)}
+          onRetry={onRetry}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.getByText('Unable to load subjects')).toBeVisible();
     expect(screen.getByText('Please try again or come back later.')).toBeVisible();
     expect(screen.queryByText(/503|localhost|backend/i)).toBeNull();
@@ -22,23 +26,39 @@ describe('content load failure', () => {
   });
 
   it('shows a short reference when the server sent a request ID', () => {
-    render(<ThemeProvider theme={theme}><ContentLoadFailure
-      title="Failed to load subjects"
-      error={new ContentLoadError('http', 'raw', 500, null, '0123456789abcdef')}
-      onRetry={vi.fn()}
-    /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <ContentLoadFailure
+          title="Failed to load subjects"
+          error={new ContentLoadError('http', 'raw', 500, null, '0123456789abcdef')}
+          onRetry={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.getByText('Reference: 01234567')).toBeVisible();
   });
 
   it('uses connection copy for network failures and reload action for revision conflicts', () => {
     const onRetry = vi.fn();
-    const { rerender } = render(<ThemeProvider theme={theme}><ContentLoadFailure
-      title="Failed to load questions" error={new ContentLoadError('network', 'raw') } onRetry={onRetry}
-    /></ThemeProvider>);
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <ContentLoadFailure
+          title="Failed to load questions"
+          error={new ContentLoadError('network', 'raw')}
+          onRetry={onRetry}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.getByText('Check your connection and try again.')).toBeVisible();
-    rerender(<ThemeProvider theme={theme}><ContentLoadFailure
-      title="Failed to load questions" error={new ContentLoadError('revision', '409 conflict') } onRetry={onRetry}
-    /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <ContentLoadFailure
+          title="Failed to load questions"
+          error={new ContentLoadError('revision', '409 conflict')}
+          onRetry={onRetry}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.getByRole('button', { name: 'Reload content' })).toBeVisible();
     expect(screen.queryByText('409 conflict')).toBeNull();
   });

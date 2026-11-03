@@ -26,33 +26,113 @@ export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequ
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
-  useStudyArrowNavigation({ index, total: questions.length, disabled: navigatorOpen, onPrevious: () => onNavigate(index - 1), onNext: () => onNavigate(index + 1), nextButtonRef: nextRef, finishButtonRef: finishRef });
+  useStudyArrowNavigation({
+    index,
+    total: questions.length,
+    disabled: navigatorOpen,
+    onPrevious: () => onNavigate(index - 1),
+    onNext: () => onNavigate(index + 1),
+    nextButtonRef: nextRef,
+    finishButtonRef: finishRef,
+  });
   const question = questions[index];
   useEffect(() => {
-    const warnBeforeUnload = (event: BeforeUnloadEvent) => { event.preventDefault(); event.returnValue = ''; };
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
     window.addEventListener('beforeunload', warnBeforeUnload);
     return () => window.removeEventListener('beforeunload', warnBeforeUnload);
   }, []);
-  if (!question) return <Container maxWidth="md" sx={{ py: 4 }}><Alert severity="warning">This quiz has no questions to review.</Alert><Button sx={{ mt: 2 }} onClick={onRequestExit}>Leave review</Button></Container>;
+  if (!question)
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Alert severity="warning">This quiz has no questions to review.</Alert>
+        <Button sx={{ mt: 2 }} onClick={onRequestExit}>
+          Leave review
+        </Button>
+      </Container>
+    );
 
   const selectedChoiceId = attempt.responses[question.id]?.selectedChoiceId;
   const correctAnswer = answerFor(question);
-  const hasCorrectChoice = correctAnswer !== undefined && question.choices.some(choice => choice.id === correctAnswer);
-  const status: ReadOnlyFeedbackStatus = !hasCorrectChoice ? 'unavailable' : !selectedChoiceId ? 'unanswered' : isCorrect(question, selectedChoiceId) ? 'correct' : 'incorrect';
-  const navigator = <QuestionNavigator questions={questions} attempt={attempt} currentIndex={index} filter={navigatorFilter} onFilterChange={setNavigatorFilter} onNavigate={target => { onNavigate(target); setNavigatorOpen(false); }} revealAnswers filterSet="review" />;
+  const hasCorrectChoice =
+    correctAnswer !== undefined && question.choices.some((choice) => choice.id === correctAnswer);
+  const status: ReadOnlyFeedbackStatus = !hasCorrectChoice
+    ? 'unavailable'
+    : !selectedChoiceId
+      ? 'unanswered'
+      : isCorrect(question, selectedChoiceId)
+        ? 'correct'
+        : 'incorrect';
+  const navigator = (
+    <QuestionNavigator
+      questions={questions}
+      attempt={attempt}
+      currentIndex={index}
+      filter={navigatorFilter}
+      onFilterChange={setNavigatorFilter}
+      onNavigate={(target) => {
+        onNavigate(target);
+        setNavigatorOpen(false);
+      }}
+      revealAnswers
+      filterSet="review"
+    />
+  );
 
-  return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
-    <ReadOnlyQuizHeader index={index} total={questions.length} mode="Review results" exitLabel="Leave review" onExit={onRequestExit} finalTimeMs={attempt.score.elapsedMs} />
-    <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
-      <SwapTransition swapKey={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
-          <Box sx={{ flex: 1, minWidth: 0 }}><MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" /></Box>
-          {attempt.responses[question.id]?.flagged && <Box role="img" aria-label="Flagged question" sx={{ flexShrink: 0, mt: .5, color: 'primary.main', lineHeight: 0 }}><FlagIcon /></Box>}
-        </Stack>
-        <ReadOnlyChoiceList question={question} selectedChoiceId={selectedChoiceId} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} mode="review" />
-        <FeedbackPanel question={question} selectedChoiceId={selectedChoiceId} readOnlyStatus={status} />
-      </CardContent></Card></SwapTransition>
-      <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onRequestExit} nextButtonRef={nextRef} finishButtonRef={finishRef} />
-    </QuestionNavigationLayout>
-  </Container>;
+  return (
+    <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
+      <ReadOnlyQuizHeader
+        index={index}
+        total={questions.length}
+        mode="Review results"
+        exitLabel="Leave review"
+        onExit={onRequestExit}
+        finalTimeMs={attempt.score.elapsedMs}
+      />
+      <QuestionNavigationLayout
+        navigator={navigator}
+        open={navigatorOpen}
+        onOpen={() => setNavigatorOpen(true)}
+        onClose={() => setNavigatorOpen(false)}
+      >
+        <SwapTransition swapKey={index}>
+          <Card>
+            <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
+                </Box>
+                {attempt.responses[question.id]?.flagged && (
+                  <Box
+                    role="img"
+                    aria-label="Flagged question"
+                    sx={{ flexShrink: 0, mt: 0.5, color: 'primary.main', lineHeight: 0 }}
+                  >
+                    <FlagIcon />
+                  </Box>
+                )}
+              </Stack>
+              <ReadOnlyChoiceList
+                question={question}
+                selectedChoiceId={selectedChoiceId}
+                correctChoiceId={hasCorrectChoice ? correctAnswer : undefined}
+                mode="review"
+              />
+              <FeedbackPanel question={question} selectedChoiceId={selectedChoiceId} readOnlyStatus={status} />
+            </CardContent>
+          </Card>
+        </SwapTransition>
+        <ReadOnlyQuizFooter
+          index={index}
+          total={questions.length}
+          onNavigate={onNavigate}
+          onDone={onRequestExit}
+          nextButtonRef={nextRef}
+          finishButtonRef={finishRef}
+        />
+      </QuestionNavigationLayout>
+    </Container>
+  );
 }

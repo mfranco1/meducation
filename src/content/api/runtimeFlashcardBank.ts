@@ -38,7 +38,9 @@ export class RuntimeFlashcardBank {
     private readonly retryPolicy: RetryPolicy = contentRetryPolicy,
     private readonly transport: JsonTransport = browserJsonTransport,
     now?: () => number,
-  ) { this.freshness = new LaunchFreshness(now); }
+  ) {
+    this.freshness = new LaunchFreshness(now);
+  }
   subscribe = (listener: () => void) => {
     this.listeners.add(listener);
     return () => this.listeners.delete(listener);
@@ -84,13 +86,15 @@ export class RuntimeFlashcardBank {
 
   validateLaunch(deck: Pick<FlashcardDeckSummary, 'id' | 'subjectId'>): Promise<() => void> {
     const revision = this.revision;
-    return this.freshness.check(`${deck.subjectId}:${deck.id}`, async signal => {
+    return this.freshness.check(`${deck.subjectId}:${deck.id}`, async (signal) => {
       const payload = await this.transport.get<unknown>('/api/v1/flashcards/subjects', {
-        signal, policy: this.retryPolicy,
+        signal,
+        policy: this.retryPolicy,
       });
-      if (!isFlashcardSubjectResponse(payload)) throw new ContentLoadError('invalid', 'The flashcard catalog is incomplete. Retry later.');
+      if (!isFlashcardSubjectResponse(payload))
+        throw new ContentLoadError('invalid', 'The flashcard catalog is incomplete. Retry later.');
       if (payload.revision !== revision) throw revisionError();
-      const subject = payload.subjects.find(subject => subject.id === deck.subjectId);
+      const subject = payload.subjects.find((subject) => subject.id === deck.subjectId);
       if (!subject?.deckIds.includes(deck.id)) throw revisionError();
     });
   }
@@ -117,10 +121,7 @@ export class RuntimeFlashcardBank {
         return this.subjects;
       })
       .catch((error) => {
-        if (
-          !controller.signal.aborted &&
-          !(error instanceof ContentLoadError && error.kind === 'cancelled')
-        ) {
+        if (!controller.signal.aborted && !(error instanceof ContentLoadError && error.kind === 'cancelled')) {
           this.states.set('subjects', 'error');
           this.errors.set('subjects', error instanceof Error ? error : new Error('Could not load flashcard subjects.'));
           this.notify();
@@ -176,10 +177,7 @@ export class RuntimeFlashcardBank {
         return payload;
       })
       .catch((error) => {
-        if (
-          !controller.signal.aborted &&
-          !(error instanceof ContentLoadError && error.kind === 'cancelled')
-        ) {
+        if (!controller.signal.aborted && !(error instanceof ContentLoadError && error.kind === 'cancelled')) {
           this.states.set(key, 'error');
           this.errors.set(key, error instanceof Error ? error : new Error('Could not load flashcard decks.'));
           this.notify();
@@ -229,10 +227,7 @@ export class RuntimeFlashcardBank {
         return payload.cards;
       })
       .catch((error) => {
-        if (
-          !controller.signal.aborted &&
-          !(error instanceof ContentLoadError && error.kind === 'cancelled')
-        ) {
+        if (!controller.signal.aborted && !(error instanceof ContentLoadError && error.kind === 'cancelled')) {
           this.states.set(key, 'error');
           this.errors.set(key, error instanceof Error ? error : new Error('Could not load this deck.'));
           this.notify();

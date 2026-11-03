@@ -4,7 +4,14 @@ import { formatDuration } from '../../format';
 import { StudyHeader, StudyNavigationFooter } from '../../../../shared/ui/study/StudyHeader';
 import type { MutableRefObject } from 'react';
 
-export function ReadOnlyQuizHeader({ index, total, mode, exitLabel, onExit, finalTimeMs }: {
+export function ReadOnlyQuizHeader({
+  index,
+  total,
+  mode,
+  exitLabel,
+  onExit,
+  finalTimeMs,
+}: {
   index: number;
   total: number;
   mode?: 'Browse answers' | 'Review results';
@@ -12,13 +19,39 @@ export function ReadOnlyQuizHeader({ index, total, mode, exitLabel, onExit, fina
   onExit: () => void;
   finalTimeMs?: number;
 }) {
-  return <StudyHeader itemLabel="Question" index={index} total={total} exitLabel={exitLabel} onExit={onExit} countLabel={`${mode ?? 'Review'}, question ${index + 1} of ${total}`} trailing={finalTimeMs !== undefined ? <Stack direction="row" spacing={.75} alignItems="center" aria-label={`Final time: ${formatDuration(finalTimeMs)}`}>
-        <TimerOutlinedIcon fontSize="small" aria-hidden="true" />
-        <Typography fontWeight={700}>{formatDuration(finalTimeMs)}</Typography>
-      </Stack> : undefined} />;
+  return (
+    <StudyHeader
+      itemLabel="Question"
+      index={index}
+      total={total}
+      exitLabel={exitLabel}
+      onExit={onExit}
+      countLabel={`${mode ?? 'Review'}, question ${index + 1} of ${total}`}
+      trailing={
+        finalTimeMs !== undefined ? (
+          <Stack
+            direction="row"
+            spacing={0.75}
+            alignItems="center"
+            aria-label={`Final time: ${formatDuration(finalTimeMs)}`}
+          >
+            <TimerOutlinedIcon fontSize="small" aria-hidden="true" />
+            <Typography fontWeight={700}>{formatDuration(finalTimeMs)}</Typography>
+          </Stack>
+        ) : undefined
+      }
+    />
+  );
 }
 
-export function ReadOnlyQuizFooter({ index, total, onNavigate, onDone, nextButtonRef, finishButtonRef }: {
+export function ReadOnlyQuizFooter({
+  index,
+  total,
+  onNavigate,
+  onDone,
+  nextButtonRef,
+  finishButtonRef,
+}: {
   index: number;
   total: number;
   onNavigate: (index: number) => void;
@@ -26,5 +59,16 @@ export function ReadOnlyQuizFooter({ index, total, onNavigate, onDone, nextButto
   nextButtonRef?: MutableRefObject<HTMLButtonElement | null>;
   finishButtonRef?: MutableRefObject<HTMLButtonElement | null>;
 }) {
-  return <StudyNavigationFooter index={index} total={total} onPrevious={() => onNavigate(index - 1)} onNext={() => onNavigate(index + 1)} onFinish={onDone} finishLabel="Done" nextButtonRef={nextButtonRef} finishButtonRef={finishButtonRef} />;
+  return (
+    <StudyNavigationFooter
+      index={index}
+      total={total}
+      onPrevious={() => onNavigate(index - 1)}
+      onNext={() => onNavigate(index + 1)}
+      onFinish={onDone}
+      finishLabel="Done"
+      nextButtonRef={nextButtonRef}
+      finishButtonRef={finishButtonRef}
+    />
+  );
 }

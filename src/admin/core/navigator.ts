@@ -71,8 +71,14 @@ export function filterTopics<T extends { id: string }>(
     }
     return totals;
   };
-  const items = count(bank.quizzes, bank.questions.map((question) => question.quizId));
-  const cards = count(bank.decks, bank.cards.map((card) => card.deckId));
+  const items = count(
+    bank.quizzes,
+    bank.questions.map((question) => question.quizId),
+  );
+  const cards = count(
+    bank.decks,
+    bank.cards.map((card) => card.deckId),
+  );
   return topics
     .map((topic) => ({ topic, items: items.get(topic.id) ?? 0, cards: cards.get(topic.id) ?? 0 }))
     .filter(

@@ -11,8 +11,12 @@ export function Stopwatch({ attempt }: { attempt: Attempt }) {
     const interval = window.setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
   }, []);
-  return <Stack direction="row" spacing={.75} alignItems="center">
-    <TimerOutlinedIcon fontSize="small" />
-    <Typography fontWeight={700} sx={{ fontVariantNumeric: 'tabular-nums' }}>{formatDuration(elapsedTimeFor(attempt, now))}</Typography>
-  </Stack>;
+  return (
+    <Stack direction="row" spacing={0.75} alignItems="center">
+      <TimerOutlinedIcon fontSize="small" />
+      <Typography fontWeight={700} sx={{ fontVariantNumeric: 'tabular-nums' }}>
+        {formatDuration(elapsedTimeFor(attempt, now))}
+      </Typography>
+    </Stack>
+  );
 }

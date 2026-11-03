@@ -4,11 +4,12 @@ import { describe, expect, it } from 'vitest';
 import { theme } from '../../../theme';
 import { TopicIcon } from './TopicIcon';
 
-const renderIcon = (topicId: string, subjectId: string) => render(
-  <ThemeProvider theme={theme}>
-    <TopicIcon topicId={topicId} subjectId={subjectId} />
-  </ThemeProvider>,
-).container.querySelector('svg');
+const renderIcon = (topicId: string, subjectId: string) =>
+  render(
+    <ThemeProvider theme={theme}>
+      <TopicIcon topicId={topicId} subjectId={subjectId} />
+    </ThemeProvider>,
+  ).container.querySelector('svg');
 
 describe('TopicIcon', () => {
   it('shows the topic icon as a decorative 24-unit icon', () => {

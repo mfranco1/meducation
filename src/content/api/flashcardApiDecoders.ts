@@ -39,7 +39,10 @@ export function isFlashcardSubjectResponse(value: unknown): value is FlashcardSu
   const allDeckIds: string[] = [];
   return (
     value.subjects.every((subject: unknown) => {
-      if (!record(subject) || !onlyKeys(subject, ['id', 'name', 'accent', 'description', 'deckCount', 'deckIds', 'emptyDeckIds']))
+      if (
+        !record(subject) ||
+        !onlyKeys(subject, ['id', 'name', 'accent', 'description', 'deckCount', 'deckIds', 'emptyDeckIds'])
+      )
         return false;
       if (
         !nonempty(subject.id) ||

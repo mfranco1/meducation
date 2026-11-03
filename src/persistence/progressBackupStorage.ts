@@ -9,7 +9,10 @@ import {
 } from './progressBackupCodec';
 
 /** Raw stored values of both progress keys; null means the key is absent. */
-export interface ProgressPair { quiz: string | null; flashcards: string | null }
+export interface ProgressPair {
+  quiz: string | null;
+  flashcards: string | null;
+}
 export interface ProgressStoragePort {
   getItem(key: string): string | null;
   setItem(key: string, value: string): void;
@@ -38,7 +41,10 @@ export function encodeBackupFromProgressPair(
   let flashcards: FlashcardProgressState | undefined;
   try {
     quiz = pair.quiz === null ? emptyProgress() : decodeProgress(JSON.parse(pair.quiz) as unknown);
-    flashcards = pair.flashcards === null ? emptyFlashcardProgress() : decodeFlashcardProgress(JSON.parse(pair.flashcards) as unknown);
+    flashcards =
+      pair.flashcards === null
+        ? emptyFlashcardProgress()
+        : decodeFlashcardProgress(JSON.parse(pair.flashcards) as unknown);
   } catch {
     return { ok: false, error: 'corrupt-progress' };
   }
@@ -68,7 +74,11 @@ export function restoreProgressBackup(
   randomUUID: () => string = () => crypto.randomUUID(),
 ): boolean {
   let previous: ProgressPair;
-  try { previous = readProgressPair(storage); } catch { return false; }
+  try {
+    previous = readProgressPair(storage);
+  } catch {
+    return false;
+  }
   try {
     storage.setItem(progressKey, JSON.stringify({ ...backup.quiz, revision: randomUUID() }));
     storage.setItem(flashcardProgressKey, JSON.stringify({ ...backup.flashcards, revision: randomUUID() }));
@@ -77,7 +87,9 @@ export function restoreProgressBackup(
     try {
       writeRaw(storage, progressKey, previous.quiz);
       writeRaw(storage, flashcardProgressKey, previous.flashcards);
-    } catch { /* Nothing more can be done; the caller still reports failure. */ }
+    } catch {
+      /* Nothing more can be done; the caller still reports failure. */
+    }
     return false;
   }
 }
@@ -85,7 +97,11 @@ export function restoreProgressBackup(
 /** Remove both progress values. If either removal throws, the previous raw values are put back. */
 export function resetProgress(storage: ProgressStoragePort): boolean {
   let previous: ProgressPair;
-  try { previous = readProgressPair(storage); } catch { return false; }
+  try {
+    previous = readProgressPair(storage);
+  } catch {
+    return false;
+  }
   try {
     storage.removeItem(progressKey);
     storage.removeItem(flashcardProgressKey);
@@ -94,35 +110,52 @@ export function resetProgress(storage: ProgressStoragePort): boolean {
     try {
       writeRaw(storage, progressKey, previous.quiz);
       writeRaw(storage, flashcardProgressKey, previous.flashcards);
-    } catch { /* Nothing more can be done; the caller still reports failure. */ }
+    } catch {
+      /* Nothing more can be done; the caller still reports failure. */
+    }
     return false;
   }
 }
 
 export function exportBrowserProgress(): ProgressBackupExportResult {
-  try { return encodeBackupFromProgressPair(readProgressPair(localStorage)); }
-  catch { return { ok: false, error: 'unavailable' }; }
+  try {
+    return encodeBackupFromProgressPair(readProgressPair(localStorage));
+  } catch {
+    return { ok: false, error: 'unavailable' };
+  }
 }
 
 export function restoreBrowserProgress(backup: ProgressBackupV1): boolean {
-  try { return restoreProgressBackup(localStorage, backup); }
-  catch { return false; }
+  try {
+    return restoreProgressBackup(localStorage, backup);
+  } catch {
+    return false;
+  }
 }
 
 export function resetBrowserProgress(): boolean {
-  try { return resetProgress(localStorage); }
-  catch { return false; }
+  try {
+    return resetProgress(localStorage);
+  } catch {
+    return false;
+  }
 }
 
 /** Ephemeral success notice across the reload; never part of a progress backup. */
 export type ProgressChange = 'restored' | 'reset';
 export function rememberProgressChange(kind: ProgressChange): void {
-  try { sessionStorage.setItem(changeNoticeKey, kind); } catch { /* The change itself succeeded. */ }
+  try {
+    sessionStorage.setItem(changeNoticeKey, kind);
+  } catch {
+    /* The change itself succeeded. */
+  }
 }
 export function consumeProgressChangeNotice(): ProgressChange | undefined {
   try {
     const kind = sessionStorage.getItem(changeNoticeKey);
     sessionStorage.removeItem(changeNoticeKey);
     return kind === 'restored' || kind === 'reset' ? kind : undefined;
-  } catch { return undefined; }
+  } catch {
+    return undefined;
+  }
 }

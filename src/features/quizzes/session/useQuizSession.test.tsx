@@ -8,10 +8,36 @@ import { useQuizSession } from './useQuizSession';
 const subject = { id: 'subject', name: 'Subject', accent: '#123456' };
 const quiz: Quiz = { id: 'quiz', subjectId: subject.id, topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
-  { id: 'q1', quizId: quiz.id, stem: 'One', choices: [{ id: 'A', text: 'A' }], answer: 'A', rationale: '', metadata: {} },
-  { id: 'q2', quizId: quiz.id, stem: 'Two', choices: [{ id: 'A', text: 'A' }], answer: 'A', rationale: '', metadata: {} },
+  {
+    id: 'q1',
+    quizId: quiz.id,
+    stem: 'One',
+    choices: [{ id: 'A', text: 'A' }],
+    answer: 'A',
+    rationale: '',
+    metadata: {},
+  },
+  {
+    id: 'q2',
+    quizId: quiz.id,
+    stem: 'Two',
+    choices: [{ id: 'A', text: 'A' }],
+    answer: 'A',
+    rationale: '',
+    metadata: {},
+  },
 ];
-const activeAttempt: Attempt = { id: 'saved', quizId: quiz.id, subjectId: subject.id, feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: '2026-09-20T00:00:00.000Z', contentSignature: contentSignature(questions), responses: {} };
+const activeAttempt: Attempt = {
+  id: 'saved',
+  quizId: quiz.id,
+  subjectId: subject.id,
+  feedbackMode: 'exam',
+  elapsedMs: 0,
+  celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+  startedAt: '2026-09-20T00:00:00.000Z',
+  contentSignature: contentSignature(questions),
+  responses: {},
+};
 
 afterEach(() => vi.useRealTimers());
 
@@ -22,12 +48,21 @@ function setup() {
     listQuestions: () => questions,
   };
   const attempts: AttemptRepository = {
-    list: () => [], completionCount: () => 3, lowestScore: () => 50,
+    list: () => [],
+    completionCount: () => 3,
+    lowestScore: () => 50,
     latestScore: () => ({ percentage: 80, completedAt: '2026-09-19T00:00:00.000Z' }),
-    latestActivityAt: () => '2026-09-20T00:00:00.000Z', getActive: vi.fn(() => activeAttempt),
-    saveActive: vi.fn(), clearActive: vi.fn(), saveCompleted: vi.fn(),
+    latestActivityAt: () => '2026-09-20T00:00:00.000Z',
+    getActive: vi.fn(() => activeAttempt),
+    saveActive: vi.fn(),
+    clearActive: vi.fn(),
+    saveCompleted: vi.fn(),
   };
-  const writes = attempts as unknown as { saveActive: ReturnType<typeof vi.fn>; clearActive: ReturnType<typeof vi.fn>; saveCompleted: ReturnType<typeof vi.fn> };
+  const writes = attempts as unknown as {
+    saveActive: ReturnType<typeof vi.fn>;
+    clearActive: ReturnType<typeof vi.fn>;
+    saveCompleted: ReturnType<typeof vi.fn>;
+  };
   const hook = renderHook(() => useQuizSession(questionBank, attempts));
   return { ...hook, attempts, writes };
 }
@@ -36,9 +71,12 @@ describe('read-only quiz browse session', () => {
   it('navigates and exits without writing attempts or changing attempt summaries', () => {
     const { result, writes, attempts } = setup();
     const before = {
-      active: attempts.getActive(quiz.id), completed: attempts.list(),
-      count: attempts.completionCount(quiz.id), latest: attempts.latestScore(quiz.id),
-      lowest: attempts.lowestScore(quiz.id), activity: attempts.latestActivityAt(quiz.id),
+      active: attempts.getActive(quiz.id),
+      completed: attempts.list(),
+      count: attempts.completionCount(quiz.id),
+      latest: attempts.latestScore(quiz.id),
+      lowest: attempts.lowestScore(quiz.id),
+      activity: attempts.latestActivityAt(quiz.id),
     };
 
     act(() => result.current.browseQuiz(quiz));
@@ -51,9 +89,12 @@ describe('read-only quiz browse session', () => {
     expect(writes.saveCompleted).not.toHaveBeenCalled();
     expect(writes.clearActive).not.toHaveBeenCalled();
     expect({
-      active: attempts.getActive(quiz.id), completed: attempts.list(),
-      count: attempts.completionCount(quiz.id), latest: attempts.latestScore(quiz.id),
-      lowest: attempts.lowestScore(quiz.id), activity: attempts.latestActivityAt(quiz.id),
+      active: attempts.getActive(quiz.id),
+      completed: attempts.list(),
+      count: attempts.completionCount(quiz.id),
+      latest: attempts.latestScore(quiz.id),
+      lowest: attempts.lowestScore(quiz.id),
+      activity: attempts.latestActivityAt(quiz.id),
     }).toEqual(before);
   });
 
@@ -155,9 +196,13 @@ describe('saved content and storage recovery', () => {
 
     act(() => result.current.resumeQuiz(quiz));
     act(() => result.current.restartPendingResume());
-    expect(writes.saveActive).toHaveBeenCalledWith(expect.objectContaining({
-      contentSignature: contentSignature(questions), feedbackMode: 'exam', responses: {},
-    }));
+    expect(writes.saveActive).toHaveBeenCalledWith(
+      expect.objectContaining({
+        contentSignature: contentSignature(questions),
+        feedbackMode: 'exam',
+        responses: {},
+      }),
+    );
     expect(result.current.view.page).toBe('quiz');
   });
 
@@ -172,7 +217,9 @@ describe('saved content and storage recovery', () => {
   it('keeps the quiz open and reports a failed completion write', () => {
     const { result, writes } = setup();
     act(() => result.current.startQuiz(quiz, 'exam'));
-    writes.saveCompleted.mockImplementation(() => { throw new Error('Quota exceeded'); });
+    writes.saveCompleted.mockImplementation(() => {
+      throw new Error('Quota exceeded');
+    });
     act(() => result.current.finishQuiz());
     expect(result.current.view.page).toBe('quiz');
     expect(result.current.persistenceError).toMatch(/could not be saved/i);
@@ -195,11 +242,17 @@ describe('Fast Feedback completion timing', () => {
     current = commitAnswer(current!, questions[0], 'A').attempt;
     act(() => result.current.checkpoint(current!, 0));
 
-    expect(result.current.view).toMatchObject({ page: 'quiz', attempt: { elapsedMs: 5_000, timerStartedAt: undefined } });
+    expect(result.current.view).toMatchObject({
+      page: 'quiz',
+      attempt: { elapsedMs: 5_000, timerStartedAt: undefined },
+    });
     vi.advanceTimersByTime(30_000);
     current = result.current.view.page === 'quiz' ? result.current.view.attempt : current;
     act(() => result.current.checkpoint(current!, 1));
-    expect(result.current.view).toMatchObject({ page: 'quiz', attempt: { elapsedMs: 5_000, timerStartedAt: undefined } });
+    expect(result.current.view).toMatchObject({
+      page: 'quiz',
+      attempt: { elapsedMs: 5_000, timerStartedAt: undefined },
+    });
 
     const pausedAttempt = (writes.saveActive as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0] as Attempt;
     vi.advanceTimersByTime(10_000);
@@ -207,28 +260,44 @@ describe('Fast Feedback completion timing', () => {
     act(() => result.current.leaveQuiz());
     vi.mocked(attempts.getActive).mockReturnValue(pausedAttempt);
     act(() => result.current.resumeQuiz(quiz));
-    expect(result.current.view).toMatchObject({ page: 'quiz', attempt: { elapsedMs: 5_000, timerStartedAt: undefined } });
+    expect(result.current.view).toMatchObject({
+      page: 'quiz',
+      attempt: { elapsedMs: 5_000, timerStartedAt: undefined },
+    });
 
     vi.advanceTimersByTime(20_000);
     act(() => result.current.finishQuiz());
     expect(writes.saveCompleted).toHaveBeenCalledOnce();
-    expect(writes.saveCompleted).toHaveBeenCalledWith(expect.objectContaining({ score: expect.objectContaining({ elapsedMs: 5_000 }) }));
+    expect(writes.saveCompleted).toHaveBeenCalledWith(
+      expect.objectContaining({ score: expect.objectContaining({ elapsedMs: 5_000 }) }),
+    );
   });
 
   it('keeps incomplete Fast Feedback and Exam Mode timers running when resumed', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-30T00:00:00.000Z'));
     const { result, attempts } = setup();
-    const incompleteFast: Attempt = { ...activeAttempt, feedbackMode: 'immediate', elapsedMs: 2_000, responses: { q1: { questionId: 'q1', selectedChoiceId: 'A', locked: true, flagged: false, timeMs: 0 } } };
+    const incompleteFast: Attempt = {
+      ...activeAttempt,
+      feedbackMode: 'immediate',
+      elapsedMs: 2_000,
+      responses: { q1: { questionId: 'q1', selectedChoiceId: 'A', locked: true, flagged: false, timeMs: 0 } },
+    };
     vi.mocked(attempts.getActive).mockReturnValue(incompleteFast);
 
     act(() => result.current.resumeQuiz(quiz));
-    expect(result.current.view).toMatchObject({ page: 'quiz', attempt: { elapsedMs: 2_000, timerStartedAt: '2026-09-30T00:00:00.000Z' } });
+    expect(result.current.view).toMatchObject({
+      page: 'quiz',
+      attempt: { elapsedMs: 2_000, timerStartedAt: '2026-09-30T00:00:00.000Z' },
+    });
 
     const exam: Attempt = { ...activeAttempt, elapsedMs: 2_000 };
     vi.mocked(attempts.getActive).mockReturnValue(exam);
     act(() => result.current.resumeQuiz(quiz));
-    expect(result.current.view).toMatchObject({ page: 'quiz', attempt: { timerStartedAt: '2026-09-30T00:00:00.000Z' } });
+    expect(result.current.view).toMatchObject({
+      page: 'quiz',
+      attempt: { timerStartedAt: '2026-09-30T00:00:00.000Z' },
+    });
   });
 
   it('keeps an already answered saved Fast Feedback attempt paused when resumed', () => {
@@ -240,11 +309,19 @@ describe('Fast Feedback completion timing', () => {
       feedbackMode: 'immediate',
       elapsedMs: 8_000,
       timerStartedAt: undefined,
-      responses: Object.fromEntries(questions.map(question => [question.id, { questionId: question.id, selectedChoiceId: 'A', locked: true, flagged: false, timeMs: 0 }])),
+      responses: Object.fromEntries(
+        questions.map((question) => [
+          question.id,
+          { questionId: question.id, selectedChoiceId: 'A', locked: true, flagged: false, timeMs: 0 },
+        ]),
+      ),
     };
     vi.mocked(attempts.getActive).mockReturnValue(complete);
 
     act(() => result.current.resumeQuiz(quiz));
-    expect(result.current.view).toMatchObject({ page: 'quiz', attempt: { elapsedMs: 8_000, timerStartedAt: undefined } });
+    expect(result.current.view).toMatchObject({
+      page: 'quiz',
+      attempt: { elapsedMs: 8_000, timerStartedAt: undefined },
+    });
   });
 });

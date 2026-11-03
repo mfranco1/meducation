@@ -39,14 +39,17 @@ const menu = (name: string) => {
   fireEvent.click(screen.getByRole('button', { name: 'More' }));
   fireEvent.click(screen.getByRole('menuitem', { name }));
 };
-const sent = () => server.fetcher.mock.calls.map(([url, init]) => `${init?.method ?? 'GET'} ${String(url).replace('/api/admin', '')}`);
+const sent = () =>
+  server.fetcher.mock.calls.map(([url, init]) => `${init?.method ?? 'GET'} ${String(url).replace('/api/admin', '')}`);
 
 it('publishes the draft after one confirmation and reports it', async () => {
   await mount();
   expect(screen.getByRole('button', { name: /Workspace status: Draft changes/ })).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: 'Review & publish' }));
   const dialog = screen.getByRole('dialog', { name: 'Review & publish' });
-  expect(within(dialog).getByLabelText('Draft totals')).toHaveTextContent('2 subjects · 2 topics · 3 quizzes · 4 questions');
+  expect(within(dialog).getByLabelText('Draft totals')).toHaveTextContent(
+    '2 subjects · 2 topics · 3 quizzes · 4 questions',
+  );
   const changed = await within(dialog).findByText(/^Changed question i1/);
   const details = changed.closest('details')!;
   expect(details.querySelector('ins')).toHaveTextContent('Changed in the draft');
@@ -61,11 +64,18 @@ it('publishes the draft after one confirmation and reports it', async () => {
 it('discards unpublished changes after confirmation and shows the published content again', async () => {
   await mount();
   menu('Discard unpublished changes…');
-  fireEvent.click(within(screen.getByRole('dialog', { name: 'Discard unpublished changes' })).getByRole('button', { name: 'Discard unpublished changes' }));
+  fireEvent.click(
+    within(screen.getByRole('dialog', { name: 'Discard unpublished changes' })).getByRole('button', {
+      name: 'Discard unpublished changes',
+    }),
+  );
   expect(await screen.findByText(/Unpublished changes discarded/)).toBeVisible();
   expect(sent()).toContain('POST /draft/discard');
   expect(server.serverSnapshot().changed).toBe(false);
-  expect(server.serverSnapshot().questions[0]).toMatchObject({ stem: storedQuestionBank.questions[0].stem, version: 1 });
+  expect(server.serverSnapshot().questions[0]).toMatchObject({
+    stem: storedQuestionBank.questions[0].stem,
+    version: 1,
+  });
 });
 
 it('lists recent changes with Revert, which restores the record and refreshes the list', async () => {
@@ -75,7 +85,10 @@ it('lists recent changes with Revert, which restores the record and refreshes th
   expect(await within(dialog).findByText(/update question i1/)).toBeVisible();
   fireEvent.click(within(dialog).getByRole('button', { name: 'Revert change 1' }));
   expect(await screen.findByText('Reverted change #1.')).toBeVisible();
-  expect(server.serverSnapshot().questions[0]).toMatchObject({ stem: storedQuestionBank.questions[0].stem, version: 3 });
+  expect(server.serverSnapshot().questions[0]).toMatchObject({
+    stem: storedQuestionBank.questions[0].stem,
+    version: 3,
+  });
   expect(await within(dialog).findByText(/#2 /)).toBeVisible();
 });
 
@@ -84,7 +97,9 @@ it('asks for a fresh sign-in instead of resending when publication needs a recen
   let attempts = 0;
   override = (path) =>
     path === '/draft/publish' && ++attempts
-      ? new Response(JSON.stringify({ error: { code: 'fresh_auth_required', message: 'x', requestId: 'r' } }), { status: 403 })
+      ? new Response(JSON.stringify({ error: { code: 'fresh_auth_required', message: 'x', requestId: 'r' } }), {
+          status: 403,
+        })
       : undefined;
   fireEvent.click(screen.getByRole('button', { name: 'Review & publish' }));
   fireEvent.click(screen.getByRole('button', { name: 'Confirm publication' }));

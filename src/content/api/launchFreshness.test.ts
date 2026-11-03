@@ -3,7 +3,9 @@ import { LaunchFreshness } from './launchFreshness';
 
 function deferred() {
   let resolve!: () => void;
-  const promise = new Promise<void>(done => { resolve = done; });
+  const promise = new Promise<void>((done) => {
+    resolve = done;
+  });
   return { promise, resolve };
 }
 
@@ -25,7 +27,7 @@ describe('launch validation admission', () => {
     expect(validate).toHaveBeenCalledTimes(2);
   });
 
-  it.each([29_999, 30_000, 30_001])('ages evidence from request start at %i ms', async age => {
+  it.each([29_999, 30_000, 30_001])('ages evidence from request start at %i ms', async (age) => {
     let now = 0;
     const gate = new LaunchFreshness(() => now);
     const admit = await gate.check('deck', async () => undefined);
@@ -37,14 +39,22 @@ describe('launch validation admission', () => {
   it('rejects slow responses/retries and permits a new explicit attempt', async () => {
     let now = 0;
     const gate = new LaunchFreshness(() => now);
-    await expect(gate.check('deck', async () => { now = 30_000; })).rejects.toMatchObject({ kind: 'timeout' });
+    await expect(
+      gate.check('deck', async () => {
+        now = 30_000;
+      }),
+    ).rejects.toMatchObject({ kind: 'timeout' });
     const admit = await gate.check('deck', async () => undefined);
     expect(admit).not.toThrow();
   });
 
   it('does not retain failed evidence or admit late replies after cancellation', async () => {
     const gate = new LaunchFreshness();
-    await expect(gate.check('quiz', async () => { throw new Error('offline'); })).rejects.toThrow('offline');
+    await expect(
+      gate.check('quiz', async () => {
+        throw new Error('offline');
+      }),
+    ).rejects.toThrow('offline');
     const old = deferred();
     const stale = gate.check('quiz', () => old.promise);
     gate.cancelAll();

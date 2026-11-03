@@ -4,7 +4,9 @@ import { isAllowedImageUrl, isAllowedLinkUrl } from './richContentPolicy';
 describe('rich content URL policy', () => {
   it('allows local images and explicitly approved HTTPS origins', () => {
     expect(isAllowedImageUrl('/content/figures/nerve.png')).toBe(true);
-    expect(isAllowedImageUrl('https://assets.example.test/figure.png', new Set(['https://assets.example.test']))).toBe(true);
+    expect(isAllowedImageUrl('https://assets.example.test/figure.png', new Set(['https://assets.example.test']))).toBe(
+      true,
+    );
   });
 
   it('rejects unsafe or unapproved image URLs', () => {

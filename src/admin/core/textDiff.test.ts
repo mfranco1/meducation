@@ -13,7 +13,17 @@ describe('diffWords', () => {
 
   it('rebuilds both texts from the parts', () => {
     const parts = diffWords('alpha beta\ngamma', 'beta gamma delta');
-    expect(parts.filter((p) => p.change !== 'added').map((p) => p.text).join('')).toBe('alpha beta\ngamma');
-    expect(parts.filter((p) => p.change !== 'removed').map((p) => p.text).join('')).toBe('beta gamma delta');
+    expect(
+      parts
+        .filter((p) => p.change !== 'added')
+        .map((p) => p.text)
+        .join(''),
+    ).toBe('alpha beta\ngamma');
+    expect(
+      parts
+        .filter((p) => p.change !== 'removed')
+        .map((p) => p.text)
+        .join(''),
+    ).toBe('beta gamma delta');
   });
 });

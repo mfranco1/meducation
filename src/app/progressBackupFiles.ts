@@ -1,6 +1,11 @@
-import { parseProgressBackup, PROGRESS_BACKUP_MAX_BYTES, type BackupParseResult } from '../persistence/progressBackupCodec';
+import {
+  parseProgressBackup,
+  PROGRESS_BACKUP_MAX_BYTES,
+  type BackupParseResult,
+} from '../persistence/progressBackupCodec';
 
-export type BackupFileReadResult = BackupParseResult | { ok: false; error: 'file-read-error' | 'invalid-compression' | 'aborted' };
+export type BackupFileReadResult =
+  BackupParseResult | { ok: false; error: 'file-read-error' | 'invalid-compression' | 'aborted' };
 
 // Gzip framing and deflate overhead can make an incompressible payload slightly larger.
 const MAX_COMPRESSED_BYTES = PROGRESS_BACKUP_MAX_BYTES + 64 * 1024;
@@ -15,9 +20,17 @@ export function revokeProgressDownload(): void {
 
 export function progressFileCapabilities() {
   return {
-    read: typeof File !== 'undefined' && typeof File.prototype.stream === 'function' && typeof DecompressionStream !== 'undefined',
-    download: typeof CompressionStream !== 'undefined' && typeof Blob !== 'undefined' && typeof Blob.prototype.stream === 'function' && typeof URL.createObjectURL === 'function'
-      && typeof URL.revokeObjectURL === 'function' && 'download' in document.createElement('a'),
+    read:
+      typeof File !== 'undefined' &&
+      typeof File.prototype.stream === 'function' &&
+      typeof DecompressionStream !== 'undefined',
+    download:
+      typeof CompressionStream !== 'undefined' &&
+      typeof Blob !== 'undefined' &&
+      typeof Blob.prototype.stream === 'function' &&
+      typeof URL.createObjectURL === 'function' &&
+      typeof URL.revokeObjectURL === 'function' &&
+      'download' in document.createElement('a'),
   };
 }
 
@@ -28,7 +41,8 @@ export async function compressProgressBackup(json: string): Promise<Blob> {
 
 /** One download resource at a time; retain its URL briefly so the browser can consume it. */
 export function downloadProgressBackup(blob: Blob, date = new Date().toISOString()): string | undefined {
-  if (!progressFileCapabilities().download) return 'This browser cannot download progress files. Use another supported browser.';
+  if (!progressFileCapabilities().download)
+    return 'This browser cannot download progress files. Use another supported browser.';
   revokeProgressDownload();
   let url: string | undefined;
   try {
@@ -46,12 +60,19 @@ export function downloadProgressBackup(blob: Blob, date = new Date().toISOString
 }
 
 /** Bound both the compressed file and streamed output before parsing untrusted JSON. */
-export async function readProgressBackupFile(file: Pick<File, 'size' | 'stream'>, signal?: AbortSignal): Promise<BackupFileReadResult> {
+export async function readProgressBackupFile(
+  file: Pick<File, 'size' | 'stream'>,
+  signal?: AbortSignal,
+): Promise<BackupFileReadResult> {
   if (signal?.aborted) return { ok: false, error: 'aborted' };
-  if (!Number.isFinite(file.size) || file.size < 0 || file.size > MAX_COMPRESSED_BYTES) return { ok: false, error: 'too-large' };
+  if (!Number.isFinite(file.size) || file.size < 0 || file.size > MAX_COMPRESSED_BYTES)
+    return { ok: false, error: 'too-large' };
   let stream: ReturnType<File['stream']>;
-  try { stream = file.stream(); }
-  catch { return { ok: false, error: 'file-read-error' }; }
+  try {
+    stream = file.stream();
+  } catch {
+    return { ok: false, error: 'file-read-error' };
+  }
   try {
     const reader = stream.pipeThrough(new DecompressionStream('gzip'), { signal }).getReader();
     const chunks: Uint8Array<ArrayBuffer>[] = [];

@@ -12,7 +12,15 @@ const travelPx = 14;
  * unmounted DOM node itself, kept as an inert, aria-hidden ghost until its exit finishes. If the
  * new item's top is above the viewport, the page scrolls to it.
  */
-export function SwapTransition({ swapKey, direction, children }: { swapKey: string | number; direction?: 1 | -1; children: ReactNode }) {
+export function SwapTransition({
+  swapKey,
+  direction,
+  children,
+}: {
+  swapKey: string | number;
+  direction?: 1 | -1;
+  children: ReactNode;
+}) {
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const ghostHost = useRef<HTMLDivElement>(null);
   const item = useRef<HTMLDivElement>(null);
@@ -36,12 +44,28 @@ export function SwapTransition({ swapKey, direction, children }: { swapKey: stri
     ghost.setAttribute('aria-hidden', 'true');
     ghost.inert = true;
     ghostHost.current.replaceChildren(ghost);
-    ghost.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: `translateX(${-shift}px)` }], { ...timing, fill: 'forwards' }).onfinish = () => ghost.remove();
-    incoming.animate([{ opacity: 0, transform: `translateX(${shift}px)` }, { opacity: 1, transform: 'none' }], timing);
+    ghost.animate(
+      [
+        { opacity: 1, transform: 'none' },
+        { opacity: 0, transform: `translateX(${-shift}px)` },
+      ],
+      { ...timing, fill: 'forwards' },
+    ).onfinish = () => ghost.remove();
+    incoming.animate(
+      [
+        { opacity: 0, transform: `translateX(${shift}px)` },
+        { opacity: 1, transform: 'none' },
+      ],
+      timing,
+    );
   }, [swapKey, direction, reducedMotion]);
 
-  return <Box sx={{ position: 'relative' }}>
-    <Box ref={ghostHost} sx={{ position: 'absolute', inset: '0 0 auto', pointerEvents: 'none' }} />
-    <Box key={swapKey} ref={item} sx={{ position: 'relative', scrollMarginTop: 16 }}>{children}</Box>
-  </Box>;
+  return (
+    <Box sx={{ position: 'relative' }}>
+      <Box ref={ghostHost} sx={{ position: 'absolute', inset: '0 0 auto', pointerEvents: 'none' }} />
+      <Box key={swapKey} ref={item} sx={{ position: 'relative', scrollMarginTop: 16 }}>
+        {children}
+      </Box>
+    </Box>
+  );
 }

@@ -17,7 +17,9 @@ it('edits a shared subject with one patch, leaves other records alone and closes
   fireEvent.change(editor, { target: { value: JSON.stringify({ ...original, name: 'Exact shared subject $x^2$' }) } });
   fireEvent.click(screen.getByRole('button', { name: 'Save' }));
   await waitFor(() => expect(close).toHaveBeenCalledOnce());
-  expect(store.fetcher.mock.calls.map(([url, init]) => `${init?.method} ${url}`)).toEqual(['PUT /api/admin/draft/subjects/s1']);
+  expect(store.fetcher.mock.calls.map(([url, init]) => `${init?.method} ${url}`)).toEqual([
+    'PUT /api/admin/draft/subjects/s1',
+  ]);
   expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({
     expectedVersion: 1,
     fields: { name: 'Exact shared subject $x^2$' },
@@ -75,7 +77,11 @@ it('waits for command admission before initializing a subject editor', async () 
   expect(editor).toHaveValue('');
   expect(screen.getByRole('button', { name: 'Save' })).toBeDisabled();
   view.rerender(<SubjectEditorDialog {...props} blocked={false} />);
-  await waitFor(() => expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue(storedQuestionBank.subjects[0].name));
+  await waitFor(() =>
+    expect(screen.getByRole('textbox', { name: 'Name' })).toHaveValue(storedQuestionBank.subjects[0].name),
+  );
   fireEvent.click(screen.getByRole('tab', { name: 'JSON' }));
-  expect(JSON.parse((screen.getByRole('textbox', { name: 'JSON' }) as HTMLInputElement).value)).toEqual(storedQuestionBank.subjects[0]);
+  expect(JSON.parse((screen.getByRole('textbox', { name: 'JSON' }) as HTMLInputElement).value)).toEqual(
+    storedQuestionBank.subjects[0],
+  );
 });

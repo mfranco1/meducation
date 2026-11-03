@@ -5,26 +5,38 @@ export type View = QuizSessionView | FlashcardsView;
 
 export function screenIdentity(view: View): string {
   switch (view.page) {
-    case 'dashboard': return 'dashboard';
-    case 'flashcards': return 'flashcards';
-    case 'flashcards-subject': return `flashcards-subject:${view.subject.id}`;
-    case 'flashcards-study': return `flashcards-study:${view.deck.id}`;
-    case 'subject': return `subject:${view.subject.id}`;
-    case 'quiz': return `quiz:${view.quiz.id}:${view.attempt.id}`;
-    case 'quiz-browse': return `quiz-browse:${view.quiz.id}`;
-    case 'quiz-review': return `quiz-review:${view.quiz.id}:${view.attempt.id}`;
-    case 'results': return `results:${view.attempt.id}`;
+    case 'dashboard':
+      return 'dashboard';
+    case 'flashcards':
+      return 'flashcards';
+    case 'flashcards-subject':
+      return `flashcards-subject:${view.subject.id}`;
+    case 'flashcards-study':
+      return `flashcards-study:${view.deck.id}`;
+    case 'subject':
+      return `subject:${view.subject.id}`;
+    case 'quiz':
+      return `quiz:${view.quiz.id}:${view.attempt.id}`;
+    case 'quiz-browse':
+      return `quiz-browse:${view.quiz.id}`;
+    case 'quiz-review':
+      return `quiz-review:${view.quiz.id}:${view.attempt.id}`;
+    case 'results':
+      return `results:${view.attempt.id}`;
   }
 }
 
 /** Subject tabs share a mounted frame while retaining separate navigation and toast scopes. */
 export function presentationIdentity(view: View): string {
   return view.page === 'subject' || view.page === 'flashcards-subject'
-    ? `subject-browse:${view.subject.id}` : screenIdentity(view);
+    ? `subject-browse:${view.subject.id}`
+    : screenIdentity(view);
 }
 
 /** A dashboard keeps its scroll position when the learner returns to it from one of its subjects. */
 export function restoresScroll(fromScreenId: string, toScreenId: string): boolean {
-  return (toScreenId === 'dashboard' && fromScreenId.startsWith('subject:'))
-    || (toScreenId === 'flashcards' && fromScreenId.startsWith('flashcards-subject:'));
+  return (
+    (toScreenId === 'dashboard' && fromScreenId.startsWith('subject:')) ||
+    (toScreenId === 'flashcards' && fromScreenId.startsWith('flashcards-subject:'))
+  );
 }

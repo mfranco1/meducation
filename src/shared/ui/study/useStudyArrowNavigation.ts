@@ -2,7 +2,15 @@ import { useCallback, useLayoutEffect, useRef } from 'react';
 import type { MutableRefObject } from 'react';
 import { canHandleStudyShortcut } from './studyKeyboard';
 
-export function useStudyArrowNavigation({ index, total, disabled = false, onPrevious, onNext, nextButtonRef, finishButtonRef }: {
+export function useStudyArrowNavigation({
+  index,
+  total,
+  disabled = false,
+  onPrevious,
+  onNext,
+  nextButtonRef,
+  finishButtonRef,
+}: {
   index: number;
   total: number;
   disabled?: boolean;
@@ -25,7 +33,9 @@ export function useStudyArrowNavigation({ index, total, disabled = false, onPrev
   const onArrowNext = useCallback(() => {
     const state = latest.current;
     if (state.index >= state.total - 1) return;
-    focusFinishAfterAdvance.current = Boolean(state.nextButtonRef?.current && document.activeElement === state.nextButtonRef.current);
+    focusFinishAfterAdvance.current = Boolean(
+      state.nextButtonRef?.current && document.activeElement === state.nextButtonRef.current,
+    );
     state.onNext();
   }, []);
 

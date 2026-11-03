@@ -14,28 +14,68 @@ const cards: FlashcardCard[] = [
 
 describe('FlashcardStudyScreen', () => {
   it('keeps the back hidden until reveal and requires explicit finish on the last card', () => {
-    const onReveal = vi.fn(); const onNext = vi.fn(); const onFinish = vi.fn();
-    const props = { deck, cards, index: 0, revealed: false, onReveal, onPrevious: vi.fn(), onNext, onSaveAndExit: vi.fn(), onFinish };
-    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} /></ThemeProvider>);
+    const onReveal = vi.fn();
+    const onNext = vi.fn();
+    const onFinish = vi.fn();
+    const props = {
+      deck,
+      cards,
+      index: 0,
+      revealed: false,
+      onReveal,
+      onPrevious: vi.fn(),
+      onNext,
+      onSaveAndExit: vi.fn(),
+      onFinish,
+    };
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} />
+      </ThemeProvider>,
+    );
     expect(screen.getByText(/What forms the/)).toHaveTextContent('What forms the cords?');
     expect(screen.getByText('The axillary artery.').closest('[aria-hidden="true"]')).not.toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Reveal answer' }));
     expect(onReveal).toHaveBeenCalledOnce();
     expect(screen.queryByRole('button', { name: 'Hide answer' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reveal answer' })).not.toHaveTextContent('Meducation');
-    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} index={1} revealed={false} /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} index={1} revealed={false} />
+      </ThemeProvider>,
+    );
     const finishButton = screen.getByRole('button', { name: 'Finish' });
     expect(finishButton).toBeEnabled();
     expect(finishButton).toHaveClass('MuiButton-containedPrimary');
-    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} index={1} revealed /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} index={1} revealed />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Finish' }));
     expect(onFinish).toHaveBeenCalledOnce();
   });
 
   it('renders multi-paragraph fronts and backs vertically and toggles the flag', () => {
-    const multiBlock: FlashcardCard[] = [{ id: 'f-blocks', deckId: 'd1', front: 'Front one.\n\nFront two.', back: 'Back one.\n\nBack two.' }];
-    const props = { deck: { ...deck, cardCount: 1, cardIds: ['f-blocks'] }, cards: multiBlock, index: 0, onReveal: vi.fn(), onToggleFlag: vi.fn(), onPrevious: vi.fn(), onNext: vi.fn(), onSaveAndExit: vi.fn(), onFinish: vi.fn() };
-    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed={false} /></ThemeProvider>);
+    const multiBlock: FlashcardCard[] = [
+      { id: 'f-blocks', deckId: 'd1', front: 'Front one.\n\nFront two.', back: 'Back one.\n\nBack two.' },
+    ];
+    const props = {
+      deck: { ...deck, cardCount: 1, cardIds: ['f-blocks'] },
+      cards: multiBlock,
+      index: 0,
+      onReveal: vi.fn(),
+      onToggleFlag: vi.fn(),
+      onPrevious: vi.fn(),
+      onNext: vi.fn(),
+      onSaveAndExit: vi.fn(),
+      onFinish: vi.fn(),
+    };
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} revealed={false} />
+      </ThemeProvider>,
+    );
     const frontOne = screen.getByText('Front one.');
     const frontTwo = screen.getByText('Front two.');
     expect(frontOne.parentElement?.parentElement).toBe(frontTwo.parentElement?.parentElement);
@@ -43,7 +83,11 @@ describe('FlashcardStudyScreen', () => {
     fireEvent.click(flag);
     expect(props.onToggleFlag).toHaveBeenCalledOnce();
 
-    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} revealed />
+      </ThemeProvider>,
+    );
     const backOne = screen.getByText('Back one.');
     const backTwo = screen.getByText('Back two.');
     expect(backOne.parentElement?.parentElement).toBe(backTwo.parentElement?.parentElement);
@@ -51,27 +95,71 @@ describe('FlashcardStudyScreen', () => {
 
   it('hides an opened card when its face is clicked, while preserving answer links', () => {
     const onReveal = vi.fn();
-    const linkedCards: FlashcardCard[] = [{ id: 'f-link', deckId: 'd1', front: 'Prompt', back: 'A bold answer with [a source](https://example.com).' }];
-    render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={{ ...deck, cardCount: 1, cardIds: ['f-link'] }} cards={linkedCards} index={0} revealed onReveal={onReveal} onPrevious={vi.fn()} onNext={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);
+    const linkedCards: FlashcardCard[] = [
+      { id: 'f-link', deckId: 'd1', front: 'Prompt', back: 'A bold answer with [a source](https://example.com).' },
+    ];
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen
+          deck={{ ...deck, cardCount: 1, cardIds: ['f-link'] }}
+          cards={linkedCards}
+          index={0}
+          revealed
+          onReveal={onReveal}
+          onPrevious={vi.fn()}
+          onNext={vi.fn()}
+          onSaveAndExit={vi.fn()}
+          onFinish={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.getByText(/A bold answer with/)).toHaveStyle({ fontWeight: '700' });
     fireEvent.click(screen.getByRole('link', { name: 'a source' }));
     expect(onReveal).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }));
+    fireEvent.click(
+      screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }),
+    );
     expect(onReveal).toHaveBeenCalledOnce();
   });
 
   it('renders long Markdown, a safe local diagram, and LaTeX without truncating the face', () => {
     const longText = 'Detailed anatomy content. '.repeat(120);
-    const richCards: FlashcardCard[] = [{
-      id: 'f-rich', deckId: 'd1', front: `${longText}\n\n![Nerve diagram](/content/nerve.png)\n\n$$x^2$$`, back: `${longText}\n\n**Answer** <em>with HTML</em>\n\n$$y^2$$\n\n<script>unsafe()</script>`,
-    }];
-    const props = { deck: { ...deck, cardCount: 1, cardIds: ['f-rich'] }, cards: richCards, index: 0, onReveal: vi.fn(), onPrevious: vi.fn(), onNext: vi.fn(), onSaveAndExit: vi.fn(), onFinish: vi.fn() };
-    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed={false} /></ThemeProvider>);
+    const richCards: FlashcardCard[] = [
+      {
+        id: 'f-rich',
+        deckId: 'd1',
+        front: `${longText}\n\n![Nerve diagram](/content/nerve.png)\n\n$$x^2$$`,
+        back: `${longText}\n\n**Answer** <em>with HTML</em>\n\n$$y^2$$\n\n<script>unsafe()</script>`,
+      },
+    ];
+    const props = {
+      deck: { ...deck, cardCount: 1, cardIds: ['f-rich'] },
+      cards: richCards,
+      index: 0,
+      onReveal: vi.fn(),
+      onPrevious: vi.fn(),
+      onNext: vi.fn(),
+      onSaveAndExit: vi.fn(),
+      onFinish: vi.fn(),
+    };
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} revealed={false} />
+      </ThemeProvider>,
+    );
     expect(document.body.textContent).toContain('Detailed anatomy content.');
-    const renderedFace = Array.from(document.querySelectorAll('h5, p')).map(element => element.textContent ?? '').find(text => text.includes('Detailed anatomy content.'));
+    const renderedFace = Array.from(document.querySelectorAll('h5, p'))
+      .map((element) => element.textContent ?? '')
+      .find((text) => text.includes('Detailed anatomy content.'));
     expect(renderedFace?.length).toBeGreaterThan(longText.length - 2);
-    expect(screen.getByRole('group', { name: 'Hidden flashcard answer' }).textContent?.length).toBeGreaterThan(longText.length);
-    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} revealed /></ThemeProvider>);
+    expect(screen.getByRole('group', { name: 'Hidden flashcard answer' }).textContent?.length).toBeGreaterThan(
+      longText.length,
+    );
+    rerender(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} revealed />
+      </ThemeProvider>,
+    );
     expect(screen.getByRole('img', { name: 'Nerve diagram' })).toHaveAttribute('src', '/content/nerve.png');
     expect(document.querySelector('.katex')).toBeInTheDocument();
     expect(screen.getByText('Answer')).toBeInTheDocument();
@@ -81,8 +169,26 @@ describe('FlashcardStudyScreen', () => {
   });
 
   it('keeps the deck title off-screen, opens by Space, flags independently, and jumps from the card navigator', () => {
-    const onReveal = vi.fn(); const onToggleFlag = vi.fn(); const onNavigate = vi.fn();
-    const { container } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={onReveal} onToggleFlag={onToggleFlag} onNavigate={onNavigate} onPrevious={vi.fn()} onNext={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);
+    const onReveal = vi.fn();
+    const onToggleFlag = vi.fn();
+    const onNavigate = vi.fn();
+    const { container } = render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={0}
+          revealed={false}
+          onReveal={onReveal}
+          onToggleFlag={onToggleFlag}
+          onNavigate={onNavigate}
+          onPrevious={vi.fn()}
+          onNext={vi.fn()}
+          onSaveAndExit={vi.fn()}
+          onFinish={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.queryByRole('heading', { name: 'Brachial plexus' })).toHaveStyle({ position: 'absolute' });
     expect(screen.getByRole('heading', { name: /What forms the cords/ })).toBeInTheDocument();
     fireEvent.keyDown(window, { code: 'Space' });
@@ -101,12 +207,33 @@ describe('FlashcardStudyScreen', () => {
     function KeyboardDeck() {
       const [index, setIndex] = useState(0);
       const [revealed, setRevealed] = useState(false);
-      return <FlashcardStudyScreen deck={deck} cards={cards} index={index} revealed={revealed} onReveal={() => setRevealed(value => !value)} onNext={() => { setIndex(value => value + 1); setRevealed(false); }} onPrevious={vi.fn()} onSaveAndExit={vi.fn()} onFinish={onFinish} />;
+      return (
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={index}
+          revealed={revealed}
+          onReveal={() => setRevealed((value) => !value)}
+          onNext={() => {
+            setIndex((value) => value + 1);
+            setRevealed(false);
+          }}
+          onPrevious={vi.fn()}
+          onSaveAndExit={vi.fn()}
+          onFinish={onFinish}
+        />
+      );
     }
-    render(<ThemeProvider theme={theme}><KeyboardDeck /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <KeyboardDeck />
+      </ThemeProvider>,
+    );
 
     fireEvent.keyDown(window, { code: 'Space' });
-    const revealedAnswer = screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' });
+    const revealedAnswer = screen.getByRole('group', {
+      name: 'Answer revealed. Click to hide or press Space or Enter to continue.',
+    });
     expect(revealedAnswer).toHaveFocus();
     expect(document.querySelector('[data-space-nav-focus-ring="suppressed"]')).toBeInTheDocument();
     fireEvent.keyDown(revealedAnswer, { key: 'Tab' });
@@ -115,7 +242,9 @@ describe('FlashcardStudyScreen', () => {
     expect(screen.getByText('Card 2 of 2')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeInTheDocument();
     fireEvent.keyDown(window, { code: 'Space' });
-    expect(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }),
+    ).toBeInTheDocument();
     fireEvent.keyDown(window, { code: 'Space' });
     expect(screen.getByText('Card 2 of 2')).toBeInTheDocument();
     expect(onFinish).not.toHaveBeenCalled();
@@ -125,21 +254,46 @@ describe('FlashcardStudyScreen', () => {
     function Deck() {
       const [index, setIndex] = useState(0);
       const [revealed, setRevealed] = useState(false);
-      return <FlashcardStudyScreen deck={deck} cards={cards} index={index} revealed={revealed} onReveal={() => setRevealed(value => !value)} onNext={() => { setIndex(1); setRevealed(false); }} onPrevious={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} />;
+      return (
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={index}
+          revealed={revealed}
+          onReveal={() => setRevealed((value) => !value)}
+          onNext={() => {
+            setIndex(1);
+            setRevealed(false);
+          }}
+          onPrevious={vi.fn()}
+          onSaveAndExit={vi.fn()}
+          onFinish={vi.fn()}
+        />
+      );
     }
     const momentum = () => document.querySelector('[data-momentum]')?.getAttribute('data-momentum');
-    const { unmount } = render(<ThemeProvider theme={theme}><Deck /></ThemeProvider>);
+    const { unmount } = render(
+      <ThemeProvider theme={theme}>
+        <Deck />
+      </ThemeProvider>,
+    );
     expect(momentum()).toBe('0');
     fireEvent.keyDown(window, { code: 'Space' });
     expect(momentum()).toBe('1');
-    fireEvent.click(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }));
+    fireEvent.click(
+      screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }),
+    );
     fireEvent.keyDown(window, { code: 'Space' });
     expect(momentum()).toBe('1');
     fireEvent.keyDown(window, { code: 'Space' });
     fireEvent.keyDown(window, { code: 'Space' });
     expect(momentum()).toBe('2');
     unmount();
-    render(<ThemeProvider theme={theme}><Deck /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <Deck />
+      </ThemeProvider>,
+    );
     expect(momentum()).toBe('0');
   });
 
@@ -147,18 +301,55 @@ describe('FlashcardStudyScreen', () => {
     function KeyboardDeck() {
       const [index, setIndex] = useState(0);
       const [revealed, setRevealed] = useState(false);
-      return <FlashcardStudyScreen deck={deck} cards={cards} index={index} revealed={revealed} onReveal={() => setRevealed(value => !value)} onNext={() => { setIndex(value => value + 1); setRevealed(false); }} onPrevious={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} />;
+      return (
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={index}
+          revealed={revealed}
+          onReveal={() => setRevealed((value) => !value)}
+          onNext={() => {
+            setIndex((value) => value + 1);
+            setRevealed(false);
+          }}
+          onPrevious={vi.fn()}
+          onSaveAndExit={vi.fn()}
+          onFinish={vi.fn()}
+        />
+      );
     }
-    render(<ThemeProvider theme={theme}><KeyboardDeck /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <KeyboardDeck />
+      </ThemeProvider>,
+    );
     fireEvent.keyDown(window, { key: 'Enter' });
-    expect(screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', { name: 'Answer revealed. Click to hide or press Space or Enter to continue.' }),
+    ).toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(screen.getByText('Card 2 of 2')).toBeInTheDocument();
   });
 
   it('uses unmodified arrow keys for bounded previous and next navigation', () => {
-    const onPrevious = vi.fn(); const onNext = vi.fn(); const onFinish = vi.fn();
-    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={vi.fn()} onPrevious={onPrevious} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={onFinish} /></ThemeProvider>);
+    const onPrevious = vi.fn();
+    const onNext = vi.fn();
+    const onFinish = vi.fn();
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={0}
+          revealed={false}
+          onReveal={vi.fn()}
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onSaveAndExit={vi.fn()}
+          onFinish={onFinish}
+        />
+      </ThemeProvider>,
+    );
 
     const leftAtStart = new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true, cancelable: true });
     fireEvent(window, leftAtStart);
@@ -167,7 +358,21 @@ describe('FlashcardStudyScreen', () => {
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onNext).toHaveBeenCalledOnce();
 
-    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={1} revealed onReveal={vi.fn()} onPrevious={onPrevious} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={onFinish} /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={1}
+          revealed
+          onReveal={vi.fn()}
+          onPrevious={onPrevious}
+          onNext={onNext}
+          onSaveAndExit={vi.fn()}
+          onFinish={onFinish}
+        />
+      </ThemeProvider>,
+    );
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onNext).toHaveBeenCalledOnce();
     expect(onFinish).not.toHaveBeenCalled();
@@ -177,12 +382,30 @@ describe('FlashcardStudyScreen', () => {
 
   it('ignores arrow shortcuts while saving or when an event was already handled', () => {
     const onNext = vi.fn();
-    const props = { deck, cards, index: 0, revealed: false, onReveal: vi.fn(), onPrevious: vi.fn(), onNext, onSaveAndExit: vi.fn(), onFinish: vi.fn() };
-    const { rerender } = render(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} saving /></ThemeProvider>);
+    const props = {
+      deck,
+      cards,
+      index: 0,
+      revealed: false,
+      onReveal: vi.fn(),
+      onPrevious: vi.fn(),
+      onNext,
+      onSaveAndExit: vi.fn(),
+      onFinish: vi.fn(),
+    };
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} saving />
+      </ThemeProvider>,
+    );
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onNext).not.toHaveBeenCalled();
 
-    rerender(<ThemeProvider theme={theme}><FlashcardStudyScreen {...props} /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen {...props} />
+      </ThemeProvider>,
+    );
     const alreadyHandled = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true });
     alreadyHandled.preventDefault();
     fireEvent(window, alreadyHandled);
@@ -193,9 +416,25 @@ describe('FlashcardStudyScreen', () => {
     const onFinish = vi.fn();
     function FocusedDeck() {
       const [index, setIndex] = useState(0);
-      return <FlashcardStudyScreen deck={deck} cards={cards} index={index} revealed={false} onReveal={vi.fn()} onPrevious={vi.fn()} onNext={() => setIndex(1)} onSaveAndExit={vi.fn()} onFinish={onFinish} />;
+      return (
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={index}
+          revealed={false}
+          onReveal={vi.fn()}
+          onPrevious={vi.fn()}
+          onNext={() => setIndex(1)}
+          onSaveAndExit={vi.fn()}
+          onFinish={onFinish}
+        />
+      );
     }
-    render(<ThemeProvider theme={theme}><FocusedDeck /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <FocusedDeck />
+      </ThemeProvider>,
+    );
     const next = screen.getByRole('button', { name: 'Next' });
     next.focus();
     fireEvent.keyDown(next, { key: 'ArrowRight' });
@@ -205,7 +444,21 @@ describe('FlashcardStudyScreen', () => {
 
   it('suspends arrow shortcuts while the Cards drawer is open and restores them when closed', async () => {
     const onNext = vi.fn();
-    render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={vi.fn()} onPrevious={vi.fn()} onNext={onNext} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={0}
+          revealed={false}
+          onReveal={vi.fn()}
+          onPrevious={vi.fn()}
+          onNext={onNext}
+          onSaveAndExit={vi.fn()}
+          onFinish={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onNext).not.toHaveBeenCalled();
@@ -217,7 +470,22 @@ describe('FlashcardStudyScreen', () => {
 
   it('opens the Cards drawer and closes it after an arbitrary jump', async () => {
     const onNavigate = vi.fn();
-    render(<ThemeProvider theme={theme}><FlashcardStudyScreen deck={deck} cards={cards} index={0} revealed={false} onReveal={vi.fn()} onNavigate={onNavigate} onPrevious={vi.fn()} onNext={vi.fn()} onSaveAndExit={vi.fn()} onFinish={vi.fn()} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardStudyScreen
+          deck={deck}
+          cards={cards}
+          index={0}
+          revealed={false}
+          onReveal={vi.fn()}
+          onNavigate={onNavigate}
+          onPrevious={vi.fn()}
+          onNext={vi.fn()}
+          onSaveAndExit={vi.fn()}
+          onFinish={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
     const cardTwo = screen.getAllByRole('button', { name: 'Card 2, unopened' });
     fireEvent.click(cardTwo.at(-1)!);

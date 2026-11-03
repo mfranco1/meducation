@@ -10,7 +10,7 @@ export type QuizSessionView =
   | { page: 'results'; quiz: Quiz; attempt: CompletedAttempt };
 
 export function subjectForQuiz(subjects: Subject[], quiz: Quiz): Subject {
-  const subject = subjects.find(candidate => candidate.id === quiz.subjectId);
+  const subject = subjects.find((candidate) => candidate.id === quiz.subjectId);
   if (!subject) throw new Error(`Quiz ${quiz.id} references an unknown subject`);
   return subject;
 }

@@ -28,7 +28,11 @@ export function calendarDayOrdinal(dayKey: string): number {
   if (!match) throw new Error(`Invalid local day key: ${dayKey}`);
   const [, year, month, day] = match;
   const date = new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
-  if (date.getUTCFullYear() !== Number(year) || date.getUTCMonth() !== Number(month) - 1 || date.getUTCDate() !== Number(day))
+  if (
+    date.getUTCFullYear() !== Number(year) ||
+    date.getUTCMonth() !== Number(month) - 1 ||
+    date.getUTCDate() !== Number(day)
+  )
     throw new Error(`Invalid local day key: ${dayKey}`);
   return Math.floor(date.getTime() / dayMilliseconds);
 }
@@ -36,7 +40,12 @@ export function calendarDayOrdinal(dayKey: string): number {
 export function isFlashcardDailyStats(value: unknown): value is FlashcardDailyStats {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
   const stats = value as Record<string, unknown>;
-  if (Object.keys(stats).some(key => !['firstDay', 'currentDay', 'currentDayCount', 'trackedCompletions', 'highestDailyCount'].includes(key))) return false;
+  if (
+    Object.keys(stats).some(
+      (key) => !['firstDay', 'currentDay', 'currentDayCount', 'trackedCompletions', 'highestDailyCount'].includes(key),
+    )
+  )
+    return false;
   if (typeof stats.firstDay !== 'string' || typeof stats.currentDay !== 'string') return false;
   let firstOrdinal: number;
   let currentOrdinal: number;
@@ -46,17 +55,23 @@ export function isFlashcardDailyStats(value: unknown): value is FlashcardDailySt
   } catch {
     return false;
   }
-  return firstOrdinal <= currentOrdinal
-    && safePositiveInteger(stats.currentDayCount)
-    && safePositiveInteger(stats.trackedCompletions)
-    && safePositiveInteger(stats.highestDailyCount)
-    && stats.currentDayCount <= stats.highestDailyCount
-    && stats.highestDailyCount <= stats.trackedCompletions;
+  return (
+    firstOrdinal <= currentOrdinal &&
+    safePositiveInteger(stats.currentDayCount) &&
+    safePositiveInteger(stats.trackedCompletions) &&
+    safePositiveInteger(stats.highestDailyCount) &&
+    stats.currentDayCount <= stats.highestDailyCount &&
+    stats.highestDailyCount <= stats.trackedCompletions
+  );
 }
 
-export function recordFlashcardDailyCompletion(stats: FlashcardDailyStats | undefined, day: string): FlashcardDailyStats {
+export function recordFlashcardDailyCompletion(
+  stats: FlashcardDailyStats | undefined,
+  day: string,
+): FlashcardDailyStats {
   calendarDayOrdinal(day);
-  if (!stats) return { firstDay: day, currentDay: day, currentDayCount: 1, trackedCompletions: 1, highestDailyCount: 1 };
+  if (!stats)
+    return { firstDay: day, currentDay: day, currentDayCount: 1, trackedCompletions: 1, highestDailyCount: 1 };
 
   const effectiveDay = calendarDayOrdinal(day) < calendarDayOrdinal(stats.currentDay) ? stats.currentDay : day;
   const sameDay = effectiveDay === stats.currentDay;
@@ -79,7 +94,8 @@ export function flashcardDashboardStats(
   now = new Date(),
 ): FlashcardDashboardStats {
   const completedDecks = Object.values(completionCounts).reduce((total, count) => total + count, 0);
-  if (!Number.isSafeInteger(completedDecks)) throw new RangeError('Flashcard completion total exceeds its safe display range.');
+  if (!Number.isSafeInteger(completedDecks))
+    throw new RangeError('Flashcard completion total exceeds its safe display range.');
   if (!dailyStats) return { completedDecks, averagePerDay: 0, highestInDay: 0 };
 
   const today = localDayKey(now);

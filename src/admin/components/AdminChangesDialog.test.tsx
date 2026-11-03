@@ -22,7 +22,15 @@ const load = vi.fn(async (since: number, limit: number) => ({
 it('lists the newest changes first, loads older ones on request and reverts the chosen change', async () => {
   const onRevert = vi.fn();
   render(
-    <AdminChangesDialog open busy={false} latestChangeId={60} publishedChangeId={50} load={load} onRevert={onRevert} onClose={() => {}} />,
+    <AdminChangesDialog
+      open
+      busy={false}
+      latestChangeId={60}
+      publishedChangeId={50}
+      load={load}
+      onRevert={onRevert}
+      onClose={() => {}}
+    />,
   );
   const rows = await screen.findAllByRole('listitem');
   expect(rows[0]).toHaveTextContent('update question i60 · Stem 60');

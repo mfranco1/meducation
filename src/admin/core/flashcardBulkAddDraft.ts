@@ -3,9 +3,7 @@ import type { BulkPlan } from '../data/DraftStore';
 import { foldByName, nameKey } from './bulkAddDraft';
 
 export type FlashcardBulkAddContext =
-  | { kind: 'subject'; subjectId: string }
-  | { kind: 'topic'; topicId: string }
-  | { kind: 'deck'; deckId: string };
+  { kind: 'subject'; subjectId: string } | { kind: 'topic'; topicId: string } | { kind: 'deck'; deckId: string };
 
 export interface FlashcardCardDraft {
   front: string;
@@ -103,7 +101,11 @@ function parseDecks(value: unknown, path: string, diagnostics: FlashcardBulkDiag
       }
     }
     if (nonBlank(rawDeck.name) && (rawDeck.description === undefined || isString(rawDeck.description))) {
-      decks.push({ name: rawDeck.name, ...optionalDescription(rawDeck.description), ...(cards === undefined ? {} : { cards }) });
+      decks.push({
+        name: rawDeck.name,
+        ...optionalDescription(rawDeck.description),
+        ...(cards === undefined ? {} : { cards }),
+      });
     }
   });
   return decks;
@@ -175,22 +177,24 @@ export function parseFlashcardBulkAddDraft(
 
 /** Decks matching an existing deck by name add to it; the rest are created. */
 const deckGroups = (decks: FlashcardDeckDraft[], existing: { id: string; name: string }[], merged: string[]) =>
-  foldByName(decks, (into, deck) => ({ ...into, cards: [...(into.cards ?? []), ...(deck.cards ?? [])] })).map((deck) => {
-    const match = existing.find((row) => nameKey(row.name) === nameKey(deck.name));
-    const children = (deck.cards ?? []).map((card) => ({ ...card }));
-    if (match) {
-      merged.push(`Deck · ${match.name} · ${match.id}`);
-      return { parentId: match.id, childKind: 'cards' as const, children };
-    }
-    return {
-      create: {
-        kind: 'decks' as const,
-        fields: { name: deck.name, ...(deck.description === undefined ? {} : { description: deck.description }) },
-      },
-      childKind: 'cards' as const,
-      children,
-    };
-  });
+  foldByName(decks, (into, deck) => ({ ...into, cards: [...(into.cards ?? []), ...(deck.cards ?? [])] })).map(
+    (deck) => {
+      const match = existing.find((row) => nameKey(row.name) === nameKey(deck.name));
+      const children = (deck.cards ?? []).map((card) => ({ ...card }));
+      if (match) {
+        merged.push(`Deck · ${match.name} · ${match.id}`);
+        return { parentId: match.id, childKind: 'cards' as const, children };
+      }
+      return {
+        create: {
+          kind: 'decks' as const,
+          fields: { name: deck.name, ...(deck.description === undefined ? {} : { description: deck.description }) },
+        },
+        childKind: 'cards' as const,
+        children,
+      };
+    },
+  );
 
 /** Turns a parsed draft into the records to create; the server assigns every ID. Names that already exist are reused. */
 export function compileFlashcardBulkAddDraft(
@@ -207,17 +211,22 @@ export function compileFlashcardBulkAddDraft(
     return {
       plan: {
         subjectId: context.subjectId,
-        topics: foldByName(draft.topics, (into, topic) => ({ ...into, decks: [...into.decks, ...topic.decks] })).map((topic) => {
-          const match = existing.find((row) => nameKey(row.name) === nameKey(topic.name));
-          if (match) {
-            merged.push(`Topic · ${match.name} · ${match.id}`);
-            return { id: match.id, groups: deckGroups(topic.decks, decksOf(match.id), merged) };
-          }
-          return {
-            fields: { name: topic.name, ...(topic.description === undefined ? {} : { description: topic.description }) },
-            groups: deckGroups(topic.decks, [], merged),
-          };
-        }),
+        topics: foldByName(draft.topics, (into, topic) => ({ ...into, decks: [...into.decks, ...topic.decks] })).map(
+          (topic) => {
+            const match = existing.find((row) => nameKey(row.name) === nameKey(topic.name));
+            if (match) {
+              merged.push(`Topic · ${match.name} · ${match.id}`);
+              return { id: match.id, groups: deckGroups(topic.decks, decksOf(match.id), merged) };
+            }
+            return {
+              fields: {
+                name: topic.name,
+                ...(topic.description === undefined ? {} : { description: topic.description }),
+              },
+              groups: deckGroups(topic.decks, [], merged),
+            };
+          },
+        ),
       },
       diagnostics: [],
       merged,
@@ -235,7 +244,11 @@ export function compileFlashcardBulkAddDraft(
     const deck = bank.decks.find((row) => row.id === context.deckId);
     if (!deck) return fail('selected deck no longer exists.');
     return {
-      plan: { topics: [{ groups: [{ parentId: deck.id, childKind: 'cards', children: draft.cards.map((card) => ({ ...card })) }] }] },
+      plan: {
+        topics: [
+          { groups: [{ parentId: deck.id, childKind: 'cards', children: draft.cards.map((card) => ({ ...card })) }] },
+        ],
+      },
       diagnostics: [],
       merged,
     };

@@ -4,10 +4,27 @@ import { presentationIdentity, restoresScroll, screenIdentity, type View } from 
 describe('screenIdentity', () => {
   it('uses the quiz and attempt identity while ignoring question progress and attempt updates', () => {
     const quiz = { id: 'quiz', subjectId: 'medicine', topicId: 't1', name: 'Quiz', questionCount: 2 };
-    const attempt = { id: 'attempt', quizId: 'quiz', subjectId: 'medicine', feedbackMode: 'immediate' as const, elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: 'now', responses: {} };
+    const attempt = {
+      id: 'attempt',
+      quizId: 'quiz',
+      subjectId: 'medicine',
+      feedbackMode: 'immediate' as const,
+      elapsedMs: 0,
+      celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+      contentSignature: 'fixture-content',
+      startedAt: 'now',
+      responses: {},
+    };
     const base: View = { page: 'quiz', quiz, attempt, index: 0 };
     const nextQuestion: View = { ...base, index: 1 };
-    const updatedAttempt: View = { ...base, attempt: { ...attempt, elapsedMs: 5000, responses: { q1: { questionId: 'q1', selectedChoiceId: 'a', flagged: false, locked: true, timeMs: 100 } } } };
+    const updatedAttempt: View = {
+      ...base,
+      attempt: {
+        ...attempt,
+        elapsedMs: 5000,
+        responses: { q1: { questionId: 'q1', selectedChoiceId: 'a', flagged: false, locked: true, timeMs: 100 } },
+      },
+    };
     expect(screenIdentity(base)).toBe('quiz:quiz:attempt');
     expect(screenIdentity(nextQuestion)).toBe(screenIdentity(base));
     expect(screenIdentity(updatedAttempt)).toBe(screenIdentity(base));
@@ -23,7 +40,18 @@ describe('screenIdentity', () => {
 
   it('keeps an Exam Mode review mounted while changing questions', () => {
     const quiz = { id: 'quiz', subjectId: 'medicine', topicId: 't1', name: 'Quiz', questionCount: 2 };
-    const attempt = { id: 'attempt', quizId: 'quiz', subjectId: 'medicine', feedbackMode: 'exam' as const, elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: 'now', completedAt: 'later', responses: {}, score: { correct: 0, incorrect: 0, unanswered: 2, total: 2, percentage: 0, elapsedMs: 0 } };
+    const attempt = {
+      id: 'attempt',
+      quizId: 'quiz',
+      subjectId: 'medicine',
+      feedbackMode: 'exam' as const,
+      elapsedMs: 0,
+      celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+      startedAt: 'now',
+      completedAt: 'later',
+      responses: {},
+      score: { correct: 0, incorrect: 0, unanswered: 2, total: 2, percentage: 0, elapsedMs: 0 },
+    };
     const review: View = { page: 'quiz-review', quiz, attempt, index: 0 };
     expect(screenIdentity(review)).toBe('quiz-review:quiz:attempt');
     expect(screenIdentity({ ...review, index: 1 })).toBe(screenIdentity(review));
@@ -36,7 +64,9 @@ it('shares subject presentation identity across tabs while keeping navigation sc
   const flashcards: View = { page: 'flashcards-subject', subject };
   expect(presentationIdentity(quizzes)).toBe(presentationIdentity(flashcards));
   expect(screenIdentity(quizzes)).not.toBe(screenIdentity(flashcards));
-  expect(presentationIdentity({ ...quizzes, subject: { ...subject, id: 's2' } })).not.toBe(presentationIdentity(quizzes));
+  expect(presentationIdentity({ ...quizzes, subject: { ...subject, id: 's2' } })).not.toBe(
+    presentationIdentity(quizzes),
+  );
   expect(presentationIdentity({ page: 'dashboard' })).toBe('dashboard');
   expect(restoresScroll(screenIdentity(quizzes), 'dashboard')).toBe(true);
   expect(restoresScroll(screenIdentity(flashcards), 'flashcards')).toBe(true);

@@ -12,7 +12,8 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 
-const fileOf = (data: Uint8Array, name = 'backup.json.gz', type = 'application/gzip') => new NodeFile([data], name, { type }) as unknown as File;
+const fileOf = (data: Uint8Array, name = 'backup.json.gz', type = 'application/gzip') =>
+  new NodeFile([data], name, { type }) as unknown as File;
 const compressedFile = (body: string) => fileOf(gzipSync(body));
 
 describe('progress backup file reader', () => {
@@ -37,13 +38,26 @@ describe('progress backup file reader', () => {
   });
 
   it('bounds decompressed bytes even for a small compressed file', async () => {
-    expect(await readProgressBackupFile(compressedFile(' '.repeat(PROGRESS_BACKUP_MAX_BYTES + 1)))).toEqual({ ok: false, error: 'too-large' });
+    expect(await readProgressBackupFile(compressedFile(' '.repeat(PROGRESS_BACKUP_MAX_BYTES + 1)))).toEqual({
+      ok: false,
+      error: 'too-large',
+    });
   });
 
   it('keeps JSON validation and reports file read errors', async () => {
     expect(await readProgressBackupFile(compressedFile('not JSON'))).toEqual({ ok: false, error: 'malformed-json' });
-    expect(await readProgressBackupFile(compressedFile('{"format":"nope"}'))).toEqual({ ok: false, error: 'wrong-format' });
-    expect(await readProgressBackupFile({ size: 10, stream: () => { throw new Error('private file'); } })).toEqual({ ok: false, error: 'file-read-error' });
+    expect(await readProgressBackupFile(compressedFile('{"format":"nope"}'))).toEqual({
+      ok: false,
+      error: 'wrong-format',
+    });
+    expect(
+      await readProgressBackupFile({
+        size: 10,
+        stream: () => {
+          throw new Error('private file');
+        },
+      }),
+    ).toEqual({ ok: false, error: 'file-read-error' });
   });
 
   it('exports a smaller gzip file that restores the same progress', async () => {
@@ -59,7 +73,11 @@ describe('progress backup file reader', () => {
 it('initiates downloads before revoking URLs and cleans replacement, failure and dismissal resources', async () => {
   const { downloadProgressBackup, revokeProgressDownload } = await import('./progressBackupFiles');
   vi.useFakeTimers();
-  const created = vi.fn().mockReturnValueOnce('blob:first').mockReturnValueOnce('blob:second').mockReturnValueOnce('blob:failed');
+  const created = vi
+    .fn()
+    .mockReturnValueOnce('blob:first')
+    .mockReturnValueOnce('blob:second')
+    .mockReturnValueOnce('blob:failed');
   const revoked = vi.fn();
   vi.stubGlobal('URL', { createObjectURL: created, revokeObjectURL: revoked });
   const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
@@ -73,10 +91,15 @@ it('initiates downloads before revoking URLs and cleans replacement, failure and
     expect(revoked).toHaveBeenCalledWith('blob:first');
     vi.advanceTimersByTime(1000);
     expect(revoked).toHaveBeenCalledWith('blob:second');
-    click.mockImplementationOnce(() => { throw new Error('download denied'); });
+    click.mockImplementationOnce(() => {
+      throw new Error('download denied');
+    });
     expect(downloadProgressBackup(new Blob(['{}']))).toContain('could not be downloaded');
     expect(revoked).toHaveBeenCalledWith('blob:failed');
   } finally {
-    revokeProgressDownload(); click.mockRestore(); vi.unstubAllGlobals(); vi.useRealTimers();
+    revokeProgressDownload();
+    click.mockRestore();
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
   }
 });

@@ -82,7 +82,11 @@ export function FlashcardStudyCard({
             onToggle={onToggleFlag}
             sx={{ position: 'absolute', top: 0, right: 0, zIndex: 1 }}
           />
-          <Box ref={questionRef} aria-live="polite" sx={{ width: '100%', textAlign: 'center', '& .katex-display': { maxWidth: '100%' } }}>
+          <Box
+            ref={questionRef}
+            aria-live="polite"
+            sx={{ width: '100%', textAlign: 'center', '& .katex-display': { maxWidth: '100%' } }}
+          >
             <MarkdownContent markdown={card.front} variant="stem" contentKind="rich" align="center" />
           </Box>
         </Box>

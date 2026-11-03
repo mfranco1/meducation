@@ -31,7 +31,10 @@ describe('progress backup dialog flow', () => {
     });
     vi.stubGlobal('location', { ...window.location, reload });
   });
-  afterEach(() => { vi.restoreAllMocks(); vi.unstubAllGlobals(); });
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
+  });
 
   async function preview(body: string) {
     const hook = renderHook(() => useProgressBackup());
@@ -86,8 +89,13 @@ describe('progress backup dialog flow', () => {
     act(() => result.current.requestReset());
     vi.stubGlobal('localStorage', {
       getItem: (key: string) => values.get(key) ?? null,
-      setItem: (key: string, value: string) => { values.set(key, value); },
-      removeItem: (key: string) => { if (key === flashcardProgressKey) throw new DOMException('Denied', 'SecurityError'); values.delete(key); },
+      setItem: (key: string, value: string) => {
+        values.set(key, value);
+      },
+      removeItem: (key: string) => {
+        if (key === flashcardProgressKey) throw new DOMException('Denied', 'SecurityError');
+        values.delete(key);
+      },
     });
     act(() => result.current.reset());
     expect(result.current.error).toContain('Nothing was changed');
@@ -107,16 +115,26 @@ describe('progress backup dialog flow', () => {
 
   it('does not download after closing while compression is pending', async () => {
     let finish!: (blob: Blob) => void;
-    vi.spyOn(backupFiles, 'compressProgressBackup').mockImplementation(() => new Promise(resolve => { finish = resolve; }));
+    vi.spyOn(backupFiles, 'compressProgressBackup').mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
     vi.stubGlobal('URL', { createObjectURL: () => 'blob:backup', revokeObjectURL: vi.fn() });
     const click = vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(() => undefined);
     const { result } = renderHook(() => useProgressBackup());
     let pending!: Promise<void>;
     act(() => result.current.show());
-    act(() => { pending = result.current.download(); });
+    act(() => {
+      pending = result.current.download();
+    });
     expect(result.current.busy).toBe(true);
     act(() => result.current.close());
-    await act(async () => { finish(new Blob()); await pending; });
+    await act(async () => {
+      finish(new Blob());
+      await pending;
+    });
     expect(click).not.toHaveBeenCalled();
     expect(result.current.open).toBe(false);
     expect(result.current.notice).toBeUndefined();
@@ -137,7 +155,9 @@ describe('progress backup dialog flow', () => {
     const { result } = await preview(JSON.stringify(populated));
     expect(result.current.preview).toBeDefined();
     let reading!: Promise<void>;
-    act(() => { reading = result.current.chooseFile(fileOf('{"format":"nope"}')); });
+    act(() => {
+      reading = result.current.chooseFile(fileOf('{"format":"nope"}'));
+    });
     expect(result.current.preview).toBeUndefined();
     await act(async () => reading);
     expect(result.current.error).toContain('not a Meducation progress backup');
@@ -150,14 +170,22 @@ describe('progress backup dialog flow', () => {
   it.each(['close', 'unmount', 'replace'] as const)('stops reading the source file on %s', async (action) => {
     const { result, unmount } = renderHook(() => useProgressBackup());
     let cancelled!: () => void;
-    const stopped = new Promise<void>(resolve => { cancelled = resolve; });
+    const stopped = new Promise<void>((resolve) => {
+      cancelled = resolve;
+    });
     const stream = new ReadableStream({
-      start(controller) { controller.enqueue(Uint8Array.from(gzipSync(JSON.stringify(populated)).subarray(0, 10))); },
-      cancel() { cancelled(); },
+      start(controller) {
+        controller.enqueue(Uint8Array.from(gzipSync(JSON.stringify(populated)).subarray(0, 10)));
+      },
+      cancel() {
+        cancelled();
+      },
     });
     let reading!: Promise<void>;
     act(() => result.current.show());
-    act(() => { reading = result.current.chooseFile({ size: 10, stream: () => stream }); });
+    act(() => {
+      reading = result.current.chooseFile({ size: 10, stream: () => stream });
+    });
     expect(result.current.busy).toBe(true);
     await act(async () => {
       if (action === 'close') result.current.close();

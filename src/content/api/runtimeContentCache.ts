@@ -23,18 +23,34 @@ export class RuntimeContentCache {
     }
   }
 
-  setSubjects(subjects: Subject[]) { this.subjects = subjects; }
-  listSubjects() { return this.subjects; }
-  listTopics(subjectId: string) { return this.topicsBySubject.get(subjectId) ?? []; }
-  listQuizzes(subjectId: string) { return this.quizzesBySubject.get(subjectId) ?? []; }
-  getQuiz(quizId: string) { return this.quizzesById.get(quizId); }
+  setSubjects(subjects: Subject[]) {
+    this.subjects = subjects;
+  }
+  listSubjects() {
+    return this.subjects;
+  }
+  listTopics(subjectId: string) {
+    return this.topicsBySubject.get(subjectId) ?? [];
+  }
+  listQuizzes(subjectId: string) {
+    return this.quizzesBySubject.get(subjectId) ?? [];
+  }
+  getQuiz(quizId: string) {
+    return this.quizzesById.get(quizId);
+  }
   setQuizzes(subjectId: string, topics: Topic[], quizzes: Quiz[]) {
     this.topicsBySubject.set(subjectId, topics);
     for (const old of this.listQuizzes(subjectId)) this.quizzesById.delete(old.id);
     this.quizzesBySubject.set(subjectId, quizzes);
     for (const quiz of quizzes) this.quizzesById.set(quiz.id, quiz);
   }
-  hasQuestions(quizId: string) { return this.questionsByQuiz.has(quizId); }
-  listQuestions(quizId: string) { return this.questionsByQuiz.get(quizId) ?? []; }
-  setQuestions(quizId: string, questions: Question[]) { this.questionsByQuiz.set(quizId, questions); }
+  hasQuestions(quizId: string) {
+    return this.questionsByQuiz.has(quizId);
+  }
+  listQuestions(quizId: string) {
+    return this.questionsByQuiz.get(quizId) ?? [];
+  }
+  setQuestions(quizId: string, questions: Question[]) {
+    this.questionsByQuiz.set(quizId, questions);
+  }
 }

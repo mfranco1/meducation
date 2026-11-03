@@ -5,8 +5,26 @@ import { flagFlutter } from './StudyFlagButton';
 import { reducedMotion } from '../motion';
 
 /** `result` colors a graded tile green or red in place of the answered highlight. */
-export function StudyNavigatorTile({ number, label, current, highlighted, flagged, status, result, onClick, tileRef }: {
-  number: number; label: string; current: boolean; highlighted: boolean; flagged: boolean; status?: string; result?: 'correct' | 'incorrect'; onClick: () => void; tileRef?: Ref<HTMLButtonElement>;
+export function StudyNavigatorTile({
+  number,
+  label,
+  current,
+  highlighted,
+  flagged,
+  status,
+  result,
+  onClick,
+  tileRef,
+}: {
+  number: number;
+  label: string;
+  current: boolean;
+  highlighted: boolean;
+  flagged: boolean;
+  status?: string;
+  result?: 'correct' | 'incorrect';
+  onClick: () => void;
+  tileRef?: Ref<HTMLButtonElement>;
 }) {
   const { palette } = useTheme();
   const [seenFlagged, setSeenFlagged] = useState(flagged);
@@ -16,13 +34,62 @@ export function StudyNavigatorTile({ number, label, current, highlighted, flagge
     setFluttering(flagged);
   }
   const tone = result ? palette.feedback[result] : undefined;
-  const textColor = result === 'correct' ? palette.success.dark : result === 'incorrect' ? palette.error.dark : highlighted ? '#853812' : '#4e5e73';
-  return <ButtonBase ref={tileRef} onClick={onClick} aria-label={`${label} ${number}${status ? `, ${status}` : ''}${current ? `, current ${label.toLowerCase()}` : ''}`} aria-current={current ? 'step' : undefined} sx={{
-    aspectRatio: '1 / 1', width: '100%', borderRadius: 1, position: 'relative', border: '1px solid', borderColor: current ? 'primary.main' : tone?.border ?? (highlighted ? '#e6b18d' : '#d9dfe7'), bgcolor: tone?.surface ?? (highlighted ? 'primary.light' : '#fffdfb'), color: textColor, fontWeight: 750, boxShadow: current ? '0 0 0 3px rgba(185, 81, 27, .18)' : 'none',
-    '&:hover': { bgcolor: tone?.border ?? (highlighted ? '#efc7ac' : '#f7dfcf') }, '&:focus-visible': { outline: '3px solid #b9511b', outlineOffset: 2 },
-  }}>{number}{flagged && <FlagRoundedIcon aria-hidden onAnimationEnd={() => setFluttering(false)} sx={{ position: 'absolute', top: 3, right: 3, fontSize: 13, color: 'error.main', transformOrigin: '20% 90%', animation: fluttering ? `${flagFlutter} 550ms ease-out` : undefined, [reducedMotion]: { animation: 'none' } }} />}</ButtonBase>;
+  const textColor =
+    result === 'correct'
+      ? palette.success.dark
+      : result === 'incorrect'
+        ? palette.error.dark
+        : highlighted
+          ? '#853812'
+          : '#4e5e73';
+  return (
+    <ButtonBase
+      ref={tileRef}
+      onClick={onClick}
+      aria-label={`${label} ${number}${status ? `, ${status}` : ''}${current ? `, current ${label.toLowerCase()}` : ''}`}
+      aria-current={current ? 'step' : undefined}
+      sx={{
+        aspectRatio: '1 / 1',
+        width: '100%',
+        borderRadius: 1,
+        position: 'relative',
+        border: '1px solid',
+        borderColor: current ? 'primary.main' : (tone?.border ?? (highlighted ? '#e6b18d' : '#d9dfe7')),
+        bgcolor: tone?.surface ?? (highlighted ? 'primary.light' : '#fffdfb'),
+        color: textColor,
+        fontWeight: 750,
+        boxShadow: current ? '0 0 0 3px rgba(185, 81, 27, .18)' : 'none',
+        '&:hover': { bgcolor: tone?.border ?? (highlighted ? '#efc7ac' : '#f7dfcf') },
+        '&:focus-visible': { outline: '3px solid #b9511b', outlineOffset: 2 },
+      }}
+    >
+      {number}
+      {flagged && (
+        <FlagRoundedIcon
+          aria-hidden
+          onAnimationEnd={() => setFluttering(false)}
+          sx={{
+            position: 'absolute',
+            top: 3,
+            right: 3,
+            fontSize: 13,
+            color: 'error.main',
+            transformOrigin: '20% 90%',
+            animation: fluttering ? `${flagFlutter} 550ms ease-out` : undefined,
+            [reducedMotion]: { animation: 'none' },
+          }}
+        />
+      )}
+    </ButtonBase>
+  );
 }
 
 export function StudyNavigatorEmpty({ children }: { children: string }) {
-  return <Box sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}><Typography variant="body2" color="text.secondary">{children}</Typography></Box>;
+  return (
+    <Box sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
+      <Typography variant="body2" color="text.secondary">
+        {children}
+      </Typography>
+    </Box>
+  );
 }

@@ -8,26 +8,65 @@ import type { CompletedAttempt, Quiz } from '../../../domain/types';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 3 };
 const attemptFor = (correct: number, total: number, percentage: number): CompletedAttempt => ({
-  id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: new Date(0).toISOString(), completedAt: new Date(1).toISOString(), responses: {},
+  id: 'attempt',
+  quizId: quiz.id,
+  subjectId: quiz.subjectId,
+  feedbackMode: 'exam',
+  elapsedMs: 0,
+  celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+  startedAt: new Date(0).toISOString(),
+  completedAt: new Date(1).toISOString(),
+  responses: {},
   score: { correct, incorrect: total - correct, unanswered: 0, total, percentage, elapsedMs: 0 },
 });
-const renderResults = (attempt: CompletedAttempt) => render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attempt} questions={[]} onBack={() => {}} /></ThemeProvider>);
+const renderResults = (attempt: CompletedAttempt) =>
+  render(
+    <ThemeProvider theme={theme}>
+      <ResultsScreen quiz={quiz} attempt={attempt} questions={[]} onBack={() => {}} />
+    </ThemeProvider>,
+  );
 
 const stubReducedMotion = (reduce: boolean) => {
-  window.matchMedia = vi.fn().mockImplementation((query: string) => ({ matches: reduce && query === '(prefers-reduced-motion: reduce)', media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
+    matches: reduce && query === '(prefers-reduced-motion: reduce)',
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  }));
 };
 
 beforeEach(() => stubReducedMotion(true));
-afterEach(() => { vi.useRealTimers(); vi.restoreAllMocks(); });
+afterEach(() => {
+  vi.useRealTimers();
+  vi.restoreAllMocks();
+});
 
 describe('perfect score ring', () => {
   it('turns gold only for an exact non-empty perfect score', () => {
     const arcStroke = () => screen.getByTestId('score-ring-arc').getAttribute('stroke');
     const { rerender } = renderResults(attemptFor(3, 3, 100));
     expect(arcStroke()).toBe(theme.palette.reward.main);
-    rerender(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={{ ...attemptFor(99, 100, 100), id: 'rounded' }} questions={[]} onBack={() => {}} /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <ResultsScreen
+          quiz={quiz}
+          attempt={{ ...attemptFor(99, 100, 100), id: 'rounded' }}
+          questions={[]}
+          onBack={() => {}}
+        />
+      </ThemeProvider>,
+    );
     expect(arcStroke()).not.toBe(theme.palette.reward.main);
-    rerender(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={{ ...attemptFor(0, 0, 100), id: 'empty' }} questions={[]} onBack={() => {}} /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <ResultsScreen
+          quiz={quiz}
+          attempt={{ ...attemptFor(0, 0, 100), id: 'empty' }}
+          questions={[]}
+          onBack={() => {}}
+        />
+      </ThemeProvider>,
+    );
     expect(arcStroke()).not.toBe(theme.palette.reward.main);
   });
 });
@@ -35,7 +74,11 @@ describe('perfect score ring', () => {
 describe('results score hero', () => {
   it('shows the score ring in place of the check and preserves the result summary and back action', () => {
     const onBack = vi.fn();
-    render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={attemptFor(2, 3, 67)} questions={[]} onBack={onBack} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <ResultsScreen quiz={quiz} attempt={attemptFor(2, 3, 67)} questions={[]} onBack={onBack} />
+      </ThemeProvider>,
+    );
     expect(screen.getByRole('heading', { name: 'Quiz results' })).toBeVisible();
     expect(screen.getByText('Final score: 67%.')).toBeInTheDocument();
     expect(screen.getByText('2 correct · 1 incorrect · 0 unanswered')).toBeVisible();
@@ -45,9 +88,19 @@ describe('results score hero', () => {
     expect(onBack).toHaveBeenCalledOnce();
   });
 
-  it.each(['exam', 'immediate'] as const)('offers review of a %s result', feedbackMode => {
+  it.each(['exam', 'immediate'] as const)('offers review of a %s result', (feedbackMode) => {
     const onReview = vi.fn();
-    render(<ThemeProvider theme={theme}><ResultsScreen quiz={quiz} attempt={{ ...attemptFor(2, 3, 67), feedbackMode }} questions={[]} onBack={() => {}} onReview={onReview} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <ResultsScreen
+          quiz={quiz}
+          attempt={{ ...attemptFor(2, 3, 67), feedbackMode }}
+          questions={[]}
+          onBack={() => {}}
+          onReview={onReview}
+        />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Review results' }));
     expect(onReview).toHaveBeenCalledOnce();
     expect(screen.getByRole('button', { name: 'Back to quizzes' })).toBeVisible();
@@ -59,7 +112,10 @@ describe('results reveal', () => {
   const setupMotion = () => {
     stubReducedMotion(false);
     vi.useFakeTimers();
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => { frame = callback; return 1; });
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      frame = callback;
+      return 1;
+    });
     vi.stubGlobal('cancelAnimationFrame', () => {});
     vi.spyOn(performance, 'now').mockReturnValue(0);
   };
@@ -72,7 +128,10 @@ describe('results reveal', () => {
     expect(screen.getByText('3 correct · 0 incorrect · 0 unanswered')).not.toBeVisible();
 
     act(() => frame?.(scoreAnimationDuration(100) + 1));
-    const dwell = (ms: number) => act(() => { vi.advanceTimersByTime(ms); });
+    const dwell = (ms: number) =>
+      act(() => {
+        vi.advanceTimersByTime(ms);
+      });
     dwell(450);
     dwell(450);
     expect(screen.getByText('3 correct · 0 incorrect · 0 unanswered')).toBeVisible();

@@ -40,9 +40,17 @@ export function QuizAdminPanel({
     initial: { kind: 'subject' },
     fallback: (lost) =>
       lost.kind === 'question'
-        ? { kind: 'quiz', id: lost.parentId, parentId: store.quizBank.quizzes.find((quiz) => quiz.id === lost.parentId)?.topicId }
+        ? {
+            kind: 'quiz',
+            id: lost.parentId,
+            parentId: store.quizBank.quizzes.find((quiz) => quiz.id === lost.parentId)?.topicId,
+          }
         : lost.kind === 'quiz'
-          ? { kind: 'topic', id: lost.parentId, parentId: store.quizBank.topics.find((topic) => topic.id === lost.parentId)?.subjectId }
+          ? {
+              kind: 'topic',
+              id: lost.parentId,
+              parentId: store.quizBank.topics.find((topic) => topic.id === lost.parentId)?.subjectId,
+            }
           : lost.kind === 'topic'
             ? { kind: 'subject', id: lost.parentId }
             : { kind: 'subject' },
@@ -126,11 +134,7 @@ export function QuizAdminPanel({
   const movable = Boolean(selection.id) && selection.kind !== 'subject';
 
   return (
-    <Stack
-      direction={{ xs: 'column', lg: 'row' }}
-      spacing={2}
-      alignItems="flex-start"
-    >
+    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
       {confirmation.dialog}
       {editor.discardDialog}
       <AdminNavigatorPanel
@@ -165,8 +169,7 @@ export function QuizAdminPanel({
         <Tabs
           value={mode}
           onChange={(_, value) => {
-            if (value === 'bulk')
-              bulkFor(selectedQuiz ? 'quiz' : selectedTopic ? 'topic' : 'subject');
+            if (value === 'bulk') bulkFor(selectedQuiz ? 'quiz' : selectedTopic ? 'topic' : 'subject');
             else void showSingle();
           }}
         >
@@ -211,7 +214,13 @@ export function QuizAdminPanel({
                     : bulkFor(selectedQuiz ? 'quiz' : 'topic')
               }
             >
-              {!selectedSubject ? 'Add subject' : !selectedTopic ? 'New topic' : selectedQuiz ? 'Add questions' : 'Add quizzes'}
+              {!selectedSubject
+                ? 'Add subject'
+                : !selectedTopic
+                  ? 'New topic'
+                  : selectedQuiz
+                    ? 'Add questions'
+                    : 'Add quizzes'}
             </Button>
           </AdminEditorEmpty>
         ) : (
@@ -220,7 +229,9 @@ export function QuizAdminPanel({
               {selection.id ? 'Edit' : 'New'} {selection.kind}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              {[selectedSubject?.name, selectedTopic?.name, selectedQuiz?.name, selection.id].filter(Boolean).join(' / ')}
+              {[selectedSubject?.name, selectedTopic?.name, selectedQuiz?.name, selection.id]
+                .filter(Boolean)
+                .join(' / ')}
             </Typography>
             <AdminRecordEditor
               kind={selection.kind}
@@ -265,7 +276,10 @@ export function QuizAdminPanel({
                     label: 'Delete…',
                     hidden: !selection.id,
                     onClick: () =>
-                      onDelete({ selection: { kind: selection.kind, id: selection.id, parentId: selection.parentId }, label: selection.id! }),
+                      onDelete({
+                        selection: { kind: selection.kind, id: selection.id, parentId: selection.parentId },
+                        label: selection.id!,
+                      }),
                   },
                   {
                     label: 'Move up',

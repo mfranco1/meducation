@@ -52,7 +52,9 @@ const editor = () => {
 const openFirstCard = () => fireEvent.click(screen.getByRole('button', { name: /^1\. CN/ }));
 const card = storedFlashcardBank.cards[0];
 const openBulk = (button: string) => {
-  fireEvent.click(within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: button }));
+  fireEvent.click(
+    within(screen.getByRole('region', { name: 'Flashcard navigator' })).getByRole('button', { name: button }),
+  );
   return screen.getByRole('dialog', { name: button === 'Add decks' ? 'Add Decks' : 'Add Cards' });
 };
 
@@ -66,7 +68,10 @@ describe('flashcard editor over the record API', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(screen.getByRole('textbox', { name: 'ID' })).toHaveValue('d-new91'));
     expect(requests(store)).toEqual(['POST /draft/decks', 'GET /draft']);
-    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ parentId: 't1', fields: { name: 'New saved deck' } });
+    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({
+      parentId: 't1',
+      fields: { name: 'New saved deck' },
+    });
     expect(screen.getByRole('combobox', { name: 'Deck' })).toHaveValue('New saved deck · 0 cards');
     expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
   });
@@ -77,7 +82,9 @@ describe('flashcard editor over the record API', () => {
     openFirstCard();
     fireEvent.change(editor(), { target: { value: JSON.stringify({ ...card, back: 'Exact newer text\n$x^2$' }) } });
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(store.find('card', 'f-1')).toMatchObject({ back: 'Exact newer text\n$x^2$', version: 2 }));
+    await waitFor(() =>
+      expect(store.find('card', 'f-1')).toMatchObject({ back: 'Exact newer text\n$x^2$', version: 2 }),
+    );
     expect(requests(store)).toEqual(['PUT /draft/cards/f-1']);
     expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({
       expectedVersion: 1,
@@ -114,7 +121,13 @@ describe('flashcard editor over the record API', () => {
     expect(screen.getByLabelText('Server version')).toHaveTextContent('Changed by someone else');
     fireEvent.click(screen.getByRole('button', { name: 'Keep my text' }));
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(store.find('card', 'f-1')).toMatchObject({ front: 'My front', back: 'Changed by someone else', version: 3 }));
+    await waitFor(() =>
+      expect(store.find('card', 'f-1')).toMatchObject({
+        front: 'My front',
+        back: 'Changed by someone else',
+        version: 3,
+      }),
+    );
   });
 
   it('rejects an ID change before making any request', async () => {
@@ -134,7 +147,10 @@ describe('flashcard editor over the record API', () => {
     fireEvent.change(within(dialog).getByRole('textbox', { name: 'JSON' }), {
       target: {
         value: JSON.stringify({
-          decks: [{ name: 'Nested deck', cards: [{ front: 'Exact $x^2$ front', back: 'Back\n' }] }, { name: 'Empty deck' }],
+          decks: [
+            { name: 'Nested deck', cards: [{ front: 'Exact $x^2$ front', back: 'Back\n' }] },
+            { name: 'Empty deck' },
+          ],
         }),
       },
     });
@@ -149,7 +165,12 @@ describe('flashcard editor over the record API', () => {
     expect(JSON.parse(store.fetcher.mock.calls[1][1]!.body as string)).toEqual({
       records: [{ front: 'Exact $x^2$ front', back: 'Back\n' }],
     });
-    expect(store.snapshot.decks.map((deck) => deck.name)).toEqual(['Cranial nerves', 'No cards yet', 'Nested deck', 'Empty deck']);
+    expect(store.snapshot.decks.map((deck) => deck.name)).toEqual([
+      'Cranial nerves',
+      'No cards yet',
+      'Nested deck',
+      'Empty deck',
+    ]);
     expect(screen.getByRole('combobox', { name: 'Deck' })).toHaveValue('Nested deck · 1 cards');
   });
 
@@ -158,7 +179,9 @@ describe('flashcard editor over the record API', () => {
     await chooseTopic();
     const dialog = openBulk('Add decks');
     const json = within(dialog).getByRole('textbox', { name: 'JSON' });
-    fireEvent.change(json, { target: { value: JSON.stringify({ decks: [{ name: 'Invalid', cards: [{ front: 'Front' }] }] }) } });
+    fireEvent.change(json, {
+      target: { value: JSON.stringify({ decks: [{ name: 'Invalid', cards: [{ front: 'Front' }] }] }) },
+    });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(within(dialog).getByRole('alert')).toHaveTextContent('$.decks[0].cards[0].back'));
     expect(store.fetcher).not.toHaveBeenCalled();
@@ -219,8 +242,14 @@ describe('flashcard editor over the record API', () => {
     await waitFor(() => expect(editor()).toHaveValue(text));
     expect(store.fetcher).not.toHaveBeenCalled();
     action('New deck');
-    fireEvent.click(within(screen.getByRole('dialog', { name: 'Discard unsaved edits?' })).getByRole('button', { name: 'Discard edits' }));
-    await waitFor(() => expect(JSON.parse((editor() as HTMLInputElement).value)).toMatchObject({ id: '', name: 'New deck' }));
+    fireEvent.click(
+      within(screen.getByRole('dialog', { name: 'Discard unsaved edits?' })).getByRole('button', {
+        name: 'Discard edits',
+      }),
+    );
+    await waitFor(() =>
+      expect(JSON.parse((editor() as HTMLInputElement).value)).toMatchObject({ id: '', name: 'New deck' }),
+    );
   });
 
   it('blocks saves during another command while allowing newer text to be kept', async () => {

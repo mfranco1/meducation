@@ -111,10 +111,15 @@ const boundaryRules = [
 
 export default tseslint.config(
   {
-    ignores: ['dist/**', 'node_modules/**', 'e2e/**'],
+    ignores: ['dist/**', 'node_modules/**', 'marketing/**'],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    rules: {
+      '@typescript-eslint/no-unused-vars': ['error', { varsIgnorePattern: '^_', argsIgnorePattern: '^_' }],
+    },
+  },
   ...boundaryRules,
   {
     files: ['src/**/*.{ts,tsx}'],
@@ -139,7 +144,7 @@ export default tseslint.config(
     },
   },
   {
-    files: ['scripts/**/*.{ts,mjs}', '*.config.{ts,mjs}'],
+    files: ['scripts/**/*.{ts,mjs}', 'e2e/**/*.ts', '*.config.{ts,mjs}'],
     languageOptions: { globals: { process: 'readonly', console: 'readonly', URL: 'readonly' } },
   },
   eslintConfigPrettier,

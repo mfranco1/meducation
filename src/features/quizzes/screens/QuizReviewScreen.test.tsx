@@ -7,11 +7,37 @@ import { QuizReviewScreen } from './QuizReviewScreen';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
-  { id: 'q1', quizId: quiz.id, stem: 'First question', choices: [{ id: 'A', text: 'Wrong' }, { id: 'B', text: 'Right' }], answer: 'B', rationale: 'Why B is right.', metadata: {} },
-  { id: 'q2', quizId: quiz.id, stem: 'Second question', choices: [{ id: 'A', text: 'Answer' }], answer: 'A', rationale: 'Why A is right.', metadata: {} },
+  {
+    id: 'q1',
+    quizId: quiz.id,
+    stem: 'First question',
+    choices: [
+      { id: 'A', text: 'Wrong' },
+      { id: 'B', text: 'Right' },
+    ],
+    answer: 'B',
+    rationale: 'Why B is right.',
+    metadata: {},
+  },
+  {
+    id: 'q2',
+    quizId: quiz.id,
+    stem: 'Second question',
+    choices: [{ id: 'A', text: 'Answer' }],
+    answer: 'A',
+    rationale: 'Why A is right.',
+    metadata: {},
+  },
 ];
 const attempt: CompletedAttempt = {
-  id: 'attempt', quizId: quiz.id, subjectId: quiz.subjectId, feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, startedAt: 'now', completedAt: 'later',
+  id: 'attempt',
+  quizId: quiz.id,
+  subjectId: quiz.subjectId,
+  feedbackMode: 'exam',
+  elapsedMs: 0,
+  celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+  startedAt: 'now',
+  completedAt: 'later',
   responses: { q1: { questionId: 'q1', selectedChoiceId: 'A', flagged: true, locked: false, timeMs: 0 } },
   score: { correct: 0, incorrect: 1, unanswered: 1, total: 2, percentage: 0, elapsedMs: 4_000 },
 };
@@ -20,11 +46,33 @@ describe('QuizReviewScreen', () => {
   it('navigates the canonical question order with arrows and does not exit at the right boundary', () => {
     const onNavigate = vi.fn();
     const onRequestExit = vi.fn();
-    const view = render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={questions} onNavigate={onNavigate} onRequestExit={onRequestExit} /></ThemeProvider>);
+    const view = render(
+      <ThemeProvider theme={theme}>
+        <QuizReviewScreen
+          quiz={quiz}
+          attempt={attempt}
+          index={0}
+          questions={questions}
+          onNavigate={onNavigate}
+          onRequestExit={onRequestExit}
+        />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Flagged questions, 1' }));
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onNavigate).toHaveBeenCalledWith(1);
-    view.rerender(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={1} questions={questions} onNavigate={onNavigate} onRequestExit={onRequestExit} /></ThemeProvider>);
+    view.rerender(
+      <ThemeProvider theme={theme}>
+        <QuizReviewScreen
+          quiz={quiz}
+          attempt={attempt}
+          index={1}
+          questions={questions}
+          onNavigate={onNavigate}
+          onRequestExit={onRequestExit}
+        />
+      </ThemeProvider>,
+    );
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onNavigate).toHaveBeenCalledTimes(1);
     expect(onRequestExit).not.toHaveBeenCalled();
@@ -33,19 +81,52 @@ describe('QuizReviewScreen', () => {
   it('keeps multi-paragraph stems in one column beside the optional flag', () => {
     const multiBlockQuestions = [{ ...questions[0], stem: 'First paragraph.\n\nSecond paragraph.' }];
     const unflaggedAttempt = { ...attempt, responses: { q1: { ...attempt.responses.q1, flagged: false } } };
-    const { rerender } = render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={unflaggedAttempt} index={0} questions={multiBlockQuestions} onNavigate={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <QuizReviewScreen
+          quiz={quiz}
+          attempt={unflaggedAttempt}
+          index={0}
+          questions={multiBlockQuestions}
+          onNavigate={() => {}}
+          onRequestExit={() => {}}
+        />
+      </ThemeProvider>,
+    );
     const first = screen.getByText('First paragraph.');
     const second = screen.getByText('Second paragraph.');
     expect(first.parentElement?.parentElement).toBe(second.parentElement?.parentElement);
     expect(screen.queryByRole('img', { name: 'Flagged question' })).toBeNull();
 
-    rerender(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={multiBlockQuestions} onNavigate={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <QuizReviewScreen
+          quiz={quiz}
+          attempt={attempt}
+          index={0}
+          questions={multiBlockQuestions}
+          onNavigate={() => {}}
+          onRequestExit={() => {}}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.getByRole('img', { name: 'Flagged question' })).toBeVisible();
   });
 
   it('reveals the submitted incorrect choice, correct answer, and explanation without answer controls', () => {
     const onExit = vi.fn();
-    render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={questions} onNavigate={() => {}} onRequestExit={onExit} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <QuizReviewScreen
+          quiz={quiz}
+          attempt={attempt}
+          index={0}
+          questions={questions}
+          onNavigate={() => {}}
+          onRequestExit={onExit}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.getByText('Incorrect')).toBeVisible();
     expect(screen.getByRole('listitem', { name: /Your answer/ })).toBeVisible();
     expect(screen.queryByText(/Your answer/)).toBeNull();
@@ -59,7 +140,18 @@ describe('QuizReviewScreen', () => {
   });
 
   it('labels unanswered responses and keeps the final duration static', () => {
-    render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={1} questions={questions} onNavigate={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <QuizReviewScreen
+          quiz={quiz}
+          attempt={attempt}
+          index={1}
+          questions={questions}
+          onNavigate={() => {}}
+          onRequestExit={() => {}}
+        />
+      </ThemeProvider>,
+    );
     expect(screen.getByText('Unanswered')).toBeVisible();
     expect(screen.getByLabelText('Final time: 00:04')).toBeVisible();
     expect(screen.getByRole('listitem', { name: /Correct answer/ })).toBeVisible();
@@ -69,7 +161,18 @@ describe('QuizReviewScreen', () => {
 
   it('shows All, Wrong, and Flagged filters and retains the chosen filter during navigation', () => {
     const onNavigate = vi.fn();
-    render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={attempt} index={0} questions={questions} onNavigate={onNavigate} onRequestExit={() => {}} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <QuizReviewScreen
+          quiz={quiz}
+          attempt={attempt}
+          index={0}
+          questions={questions}
+          onNavigate={onNavigate}
+          onRequestExit={() => {}}
+        />
+      </ThemeProvider>,
+    );
     const navigator = screen.getAllByLabelText('Question navigator')[0];
     expect(screen.getByRole('button', { name: 'All questions, 2' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Wrong questions, 1' })).toBeVisible();
@@ -77,9 +180,13 @@ describe('QuizReviewScreen', () => {
     expect(screen.queryByRole('button', { name: /Unanswered questions/ })).toBeNull();
 
     fireEvent.click(screen.getByRole('button', { name: 'Wrong questions, 1' }));
-    expect(within(navigator).getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' })).toBeVisible();
+    expect(
+      within(navigator).getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }),
+    ).toBeVisible();
     expect(within(navigator).queryByRole('button', { name: /Question 2/ })).toBeNull();
-    fireEvent.click(within(navigator).getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }));
+    fireEvent.click(
+      within(navigator).getByRole('button', { name: 'Question 1, answered incorrectly, flagged, current question' }),
+    );
     expect(onNavigate).toHaveBeenCalledWith(0);
     expect(screen.getByRole('button', { name: 'Wrong questions, 1' })).toHaveAttribute('aria-pressed', 'true');
 
@@ -89,7 +196,18 @@ describe('QuizReviewScreen', () => {
 
   it('shows a clear empty state for the Wrong filter', () => {
     const correctAttempt = { ...attempt, responses: { q1: { ...attempt.responses.q1, selectedChoiceId: 'B' } } };
-    render(<ThemeProvider theme={theme}><QuizReviewScreen quiz={quiz} attempt={correctAttempt} index={0} questions={questions} onNavigate={() => {}} onRequestExit={() => {}} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <QuizReviewScreen
+          quiz={quiz}
+          attempt={correctAttempt}
+          index={0}
+          questions={questions}
+          onNavigate={() => {}}
+          onRequestExit={() => {}}
+        />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Wrong questions, 0' }));
     expect(screen.getByText('No wrong answers.')).toBeVisible();
   });

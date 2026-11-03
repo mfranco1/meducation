@@ -3,10 +3,43 @@ import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { useStudyArrowNavigation } from './useStudyArrowNavigation';
 
-function Harness({ total = 2, disabled = false, onMove = vi.fn() }: { total?: number; disabled?: boolean; onMove?: (index: number) => void }) {
+function Harness({
+  total = 2,
+  disabled = false,
+  onMove = vi.fn(),
+}: {
+  total?: number;
+  disabled?: boolean;
+  onMove?: (index: number) => void;
+}) {
   const [index, setIndex] = useState(0);
-  useStudyArrowNavigation({ index, total, disabled, onPrevious: () => { onMove(index - 1); setIndex(value => value - 1); }, onNext: () => { onMove(index + 1); setIndex(value => value + 1); } });
-  return <div><span>Item {index + 1}</span><button>Ordinary button</button><input aria-label="Editable" /><a href="#source">Source</a><div role="tablist"><button role="tab">Tab</button></div><div role="radiogroup"><button role="radio">Choice</button></div></div>;
+  useStudyArrowNavigation({
+    index,
+    total,
+    disabled,
+    onPrevious: () => {
+      onMove(index - 1);
+      setIndex((value) => value - 1);
+    },
+    onNext: () => {
+      onMove(index + 1);
+      setIndex((value) => value + 1);
+    },
+  });
+  return (
+    <div>
+      <span>Item {index + 1}</span>
+      <button>Ordinary button</button>
+      <input aria-label="Editable" />
+      <a href="#source">Source</a>
+      <div role="tablist">
+        <button role="tab">Tab</button>
+      </div>
+      <div role="radiogroup">
+        <button role="radio">Choice</button>
+      </div>
+    </div>
+  );
 }
 
 describe('useStudyArrowNavigation', () => {
@@ -29,7 +62,15 @@ describe('useStudyArrowNavigation', () => {
   it('leaves modifiers, composition, handled events, links, editors, and arrow widgets alone', () => {
     const onMove = vi.fn();
     render(<Harness onMove={onMove} />);
-    for (const modifiers of [{ shiftKey: true }, { ctrlKey: true }, { altKey: true }, { metaKey: true }, { isComposing: true }, { repeat: true }]) fireEvent.keyDown(window, { key: 'ArrowRight', ...modifiers });
+    for (const modifiers of [
+      { shiftKey: true },
+      { ctrlKey: true },
+      { altKey: true },
+      { metaKey: true },
+      { isComposing: true },
+      { repeat: true },
+    ])
+      fireEvent.keyDown(window, { key: 'ArrowRight', ...modifiers });
     const handled = new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true, cancelable: true });
     handled.preventDefault();
     fireEvent(window, handled);
@@ -44,7 +85,14 @@ describe('useStudyArrowNavigation', () => {
 
   it('suspends for disabled state and visible modal dialogs, then resumes', () => {
     const onMove = vi.fn();
-    const { rerender } = render(<><Harness onMove={onMove} /><div role="dialog" aria-modal="true">Modal</div></>);
+    const { rerender } = render(
+      <>
+        <Harness onMove={onMove} />
+        <div role="dialog" aria-modal="true">
+          Modal
+        </div>
+      </>,
+    );
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onMove).not.toHaveBeenCalled();
     rerender(<Harness disabled onMove={onMove} />);

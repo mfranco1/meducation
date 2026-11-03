@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { checkpointForCard, filterFlashcardIndices, flashcardContentSignature, nextFlashcardIndex, previousFlashcardIndex, resolveFlashcardLaunch, toggleFlashcardId, validateFlashcardCheckpoint } from './flashcardStudy';
+import {
+  checkpointForCard,
+  filterFlashcardIndices,
+  flashcardContentSignature,
+  nextFlashcardIndex,
+  previousFlashcardIndex,
+  resolveFlashcardLaunch,
+  toggleFlashcardId,
+  validateFlashcardCheckpoint,
+} from './flashcardStudy';
 import type { FlashcardCard } from './types';
 
 const cards: FlashcardCard[] = [
@@ -12,10 +21,20 @@ describe('flashcard study rules', () => {
     const signature = await flashcardContentSignature(cards);
     expect(resolveFlashcardLaunch('d1', cards, signature)).toEqual({ kind: 'start', cardId: 'f1' });
     const checkpoint = checkpointForCard('d1', cards, 'f2', signature, '2026-10-06T00:00:00.000Z');
-    expect(resolveFlashcardLaunch('d1', cards, signature, checkpoint)).toEqual({ kind: 'resume', cardId: 'f2', index: 1 });
+    expect(resolveFlashcardLaunch('d1', cards, signature, checkpoint)).toEqual({
+      kind: 'resume',
+      cardId: 'f2',
+      index: 1,
+    });
     const changed = [{ ...cards[0], front: 'Changed' }, cards[1]];
-    expect(resolveFlashcardLaunch('d1', changed, await flashcardContentSignature(changed), checkpoint)).toEqual({ kind: 'restart-required', reason: 'changed-content' });
-    expect(resolveFlashcardLaunch('d1', [cards[0]], await flashcardContentSignature([cards[0]]), checkpoint)).toEqual({ kind: 'restart-required', reason: 'missing-card' });
+    expect(resolveFlashcardLaunch('d1', changed, await flashcardContentSignature(changed), checkpoint)).toEqual({
+      kind: 'restart-required',
+      reason: 'changed-content',
+    });
+    expect(resolveFlashcardLaunch('d1', [cards[0]], await flashcardContentSignature([cards[0]]), checkpoint)).toEqual({
+      kind: 'restart-required',
+      reason: 'missing-card',
+    });
     expect(resolveFlashcardLaunch('d1', cards, signature, checkpoint, true)).toEqual({ kind: 'start', cardId: 'f1' });
     expect(resolveFlashcardLaunch('d1', [], signature)).toEqual({ kind: 'empty' });
   });
@@ -35,11 +54,13 @@ describe('flashcard study rules', () => {
     const signature = await flashcardContentSignature(longCards);
     expect(signature).toMatch(/^sha256-[a-f0-9]{64}$/);
     expect(JSON.stringify(checkpointForCard('d1', longCards, 'f1', signature)).length).toBeLessThan(250);
-    const oldSignature = JSON.stringify(longCards.map(card => [card.id, card.front, card.back, null, null]));
+    const oldSignature = JSON.stringify(longCards.map((card) => [card.id, card.front, card.back, null, null]));
     const legacy = checkpointForCard('d1', longCards, 'f1', oldSignature);
     expect(validateFlashcardCheckpoint(legacy, 'd1', longCards, signature)).toBe('changed-content');
     const changed = [{ ...longCards[0], back: 'Changed' }];
-    expect(validateFlashcardCheckpoint(legacy, 'd1', changed, await flashcardContentSignature(changed))).toBe('changed-content');
+    expect(validateFlashcardCheckpoint(legacy, 'd1', changed, await flashcardContentSignature(changed))).toBe(
+      'changed-content',
+    );
   });
 
   it('clamps previous and next navigation at both ends', () => {

@@ -39,14 +39,23 @@ describe('flashcard bulk add drafts', () => {
       },
       topicContext,
     );
-    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, topicContext, storedFlashcardBank, storedQuestionBank.topics);
+    const compiled = compileFlashcardBulkAddDraft(
+      parsed.draft!,
+      topicContext,
+      storedFlashcardBank,
+      storedQuestionBank.topics,
+    );
     expect(compiled.diagnostics).toEqual([]);
     expect(compiled.plan).toEqual({
       topics: [
         {
           id: 't1',
           groups: [
-            { create: { kind: 'decks', fields: { name: 'Empty deck', description: 'Keep this description' } }, childKind: 'cards', children: [] },
+            {
+              create: { kind: 'decks', fields: { name: 'Empty deck', description: 'Keep this description' } },
+              childKind: 'cards',
+              children: [],
+            },
             {
               create: { kind: 'decks', fields: { name: 'Populated deck' } },
               childKind: 'cards',
@@ -64,16 +73,26 @@ describe('flashcard bulk add drafts', () => {
   it('plans cards for a selected existing deck', () => {
     const context = { kind: 'deck', deckId: 'd-cranial' } as const;
     const parsed = parseFlashcardBulkAddDraft({ cards: [{ front: 'Added', back: 'Answer' }] }, context);
-    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, context, storedFlashcardBank, storedQuestionBank.topics);
+    const compiled = compileFlashcardBulkAddDraft(
+      parsed.draft!,
+      context,
+      storedFlashcardBank,
+      storedQuestionBank.topics,
+    );
     expect(compiled.plan).toEqual({
-      topics: [{ groups: [{ parentId: 'd-cranial', childKind: 'cards', children: [{ front: 'Added', back: 'Answer' }] }] }],
+      topics: [
+        { groups: [{ parentId: 'd-cranial', childKind: 'cards', children: [{ front: 'Added', back: 'Answer' }] }] },
+      ],
     });
   });
 
   it('plans several new topics under a subject, each with its own decks', () => {
     const context = { kind: 'subject', subjectId: 's1' } as const;
     const parsed = parseFlashcardBulkAddDraft(JSON.parse(flashcardBulkAddTemplate(context)), context);
-    expect(parsed.draft).toMatchObject({ kind: 'topics', topics: [{ name: 'Topic name', decks: [{ name: 'Deck name' }] }] });
+    expect(parsed.draft).toMatchObject({
+      kind: 'topics',
+      topics: [{ name: 'Topic name', decks: [{ name: 'Deck name' }] }],
+    });
     const two = parseFlashcardBulkAddDraft(
       {
         topics: [
@@ -89,9 +108,18 @@ describe('flashcard bulk add drafts', () => {
       topics: [
         {
           fields: { name: 'One', description: 'First' },
-          groups: [{ create: { kind: 'decks', fields: { name: 'A' } }, childKind: 'cards', children: [{ front: 'F', back: 'B' }] }],
+          groups: [
+            {
+              create: { kind: 'decks', fields: { name: 'A' } },
+              childKind: 'cards',
+              children: [{ front: 'F', back: 'B' }],
+            },
+          ],
         },
-        { fields: { name: 'Two' }, groups: [{ create: { kind: 'decks', fields: { name: 'B' } }, childKind: 'cards', children: [] }] },
+        {
+          fields: { name: 'Two' },
+          groups: [{ create: { kind: 'decks', fields: { name: 'B' } }, childKind: 'cards', children: [] }],
+        },
       ],
     });
   });
@@ -99,12 +127,22 @@ describe('flashcard bulk add drafts', () => {
   it('reports nested paths for subject drafts and rejects a draft for another destination', () => {
     const context = { kind: 'subject', subjectId: 's1' } as const;
     const bad = parseFlashcardBulkAddDraft(
-      { topics: [{ name: 'Ok', decks: [{ name: 'D' }] }, { name: 'T', id: 'x', decks: [{ name: 'D', cards: [{ front: '', back: 'B' }] }] }] },
+      {
+        topics: [
+          { name: 'Ok', decks: [{ name: 'D' }] },
+          { name: 'T', id: 'x', decks: [{ name: 'D', cards: [{ front: '', back: 'B' }] }] },
+        ],
+      },
       context,
     );
-    expect(bad.diagnostics.map((issue) => issue.path)).toEqual(['$.topics[1].id', '$.topics[1].decks[0].cards[0].front']);
+    expect(bad.diagnostics.map((issue) => issue.path)).toEqual([
+      '$.topics[1].id',
+      '$.topics[1].decks[0].cards[0].front',
+    ]);
     const decks = parseFlashcardBulkAddDraft({ decks: [{ name: 'D' }] }, topicContext);
-    expect(compileFlashcardBulkAddDraft(decks.draft!, context, storedFlashcardBank, []).diagnostics[0].message).toContain('does not match');
+    expect(
+      compileFlashcardBulkAddDraft(decks.draft!, context, storedFlashcardBank, []).diagnostics[0].message,
+    ).toContain('does not match');
   });
 
   it('reports strict nested paths for technical fields, nulls, blank content, and malformed types', () => {
@@ -145,13 +183,23 @@ describe('flashcard bulk add drafts', () => {
 
   it('reuses existing topics and decks by name, folds duplicates in the batch and reports what was reused', () => {
     const topics = [{ id: 't9', subjectId: 's1', name: 'Pearls' }];
-    const bank = { schemaVersion: 4, decks: [{ id: 'd9', topicId: 't9', name: 'Core' }], cards: [] } as StoredFlashcardBank;
+    const bank = {
+      schemaVersion: 4,
+      decks: [{ id: 'd9', topicId: 't9', name: 'Core' }],
+      cards: [],
+    } as StoredFlashcardBank;
     const context = { kind: 'subject', subjectId: 's1' } as const;
     const card = (front: string) => ({ front, back: 'Back' });
     const parsed = parseFlashcardBulkAddDraft(
       {
         topics: [
-          { name: ' pearls', decks: [{ name: 'CORE ', cards: [card('One')] }, { name: 'New', cards: [card('Two')] }] },
+          {
+            name: ' pearls',
+            decks: [
+              { name: 'CORE ', cards: [card('One')] },
+              { name: 'New', cards: [card('Two')] },
+            ],
+          },
           { name: 'PEARLS', decks: [{ name: 'new', description: 'Kept', cards: [card('Three')] }] },
         ],
       },
@@ -165,7 +213,11 @@ describe('flashcard bulk add drafts', () => {
           id: 't9',
           groups: [
             { parentId: 'd9', childKind: 'cards', children: [card('One')] },
-            { create: { kind: 'decks', fields: { name: 'New', description: 'Kept' } }, childKind: 'cards', children: [card('Two'), card('Three')] },
+            {
+              create: { kind: 'decks', fields: { name: 'New', description: 'Kept' } },
+              childKind: 'cards',
+              children: [card('Two'), card('Three')],
+            },
           ],
         },
       ],
@@ -175,10 +227,21 @@ describe('flashcard bulk add drafts', () => {
 
   it('reuses an existing deck in the selected topic', () => {
     const context = { kind: 'topic', topicId: 't9' } as const;
-    const bank = { schemaVersion: 4, decks: [{ id: 'd9', topicId: 't9', name: 'Core' }], cards: [] } as StoredFlashcardBank;
-    const parsed = parseFlashcardBulkAddDraft({ decks: [{ name: 'core', cards: [{ front: 'F', back: 'B' }] }] }, context);
-    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, context, bank, [{ id: 't9', subjectId: 's1', name: 'Pearls' }]);
-    expect(compiled.plan).toEqual({ topics: [{ id: 't9', groups: [{ parentId: 'd9', childKind: 'cards', children: [{ front: 'F', back: 'B' }] }] }] });
+    const bank = {
+      schemaVersion: 4,
+      decks: [{ id: 'd9', topicId: 't9', name: 'Core' }],
+      cards: [],
+    } as StoredFlashcardBank;
+    const parsed = parseFlashcardBulkAddDraft(
+      { decks: [{ name: 'core', cards: [{ front: 'F', back: 'B' }] }] },
+      context,
+    );
+    const compiled = compileFlashcardBulkAddDraft(parsed.draft!, context, bank, [
+      { id: 't9', subjectId: 's1', name: 'Pearls' },
+    ]);
+    expect(compiled.plan).toEqual({
+      topics: [{ id: 't9', groups: [{ parentId: 'd9', childKind: 'cards', children: [{ front: 'F', back: 'B' }] }] }],
+    });
     expect(compiled.merged).toEqual(['Deck · Core · d9']);
   });
 });

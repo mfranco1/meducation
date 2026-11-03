@@ -33,11 +33,12 @@ it('includes the complete shared-subject cascade and isolates selected leaf reco
   expect(review.records).not.toContain('Subject · Subject Two · s2');
   expect(review.records).toContain('Topic · Topic 1 · t1');
   expect(review.records).not.toContain('Topic · Topic 2 · t2');
-  for (const deck of cards.decks.filter(row => row.topicId === 't1')) {
+  for (const deck of cards.decks.filter((row) => row.topicId === 't1')) {
     expect(review.records).toContain(`Deck · ${deck.name} · ${deck.id}`);
-    for (const card of cards.cards.filter(row => row.deckId === deck.id)) expect(review.records).toContain(`Card · ${card.id}`);
+    for (const card of cards.cards.filter((row) => row.deckId === deck.id))
+      expect(review.records).toContain(`Card · ${card.id}`);
   }
-  const ids = bank.questions.slice(0, 2).map(row => row.id);
-  expect(deletionReview(bank, cards, { kind: 'question' }, ids).records).toEqual(ids.map(id => `Item · ${id}`));
+  const ids = bank.questions.slice(0, 2).map((row) => row.id);
+  expect(deletionReview(bank, cards, { kind: 'question' }, ids).records).toEqual(ids.map((id) => `Item · ${id}`));
   expect(JSON.stringify([bank, cards])).toBe(original);
 });

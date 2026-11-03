@@ -9,7 +9,7 @@ test('L5 explicit diagnostics require the existing session, Origin and CSRF and 
   const session = await (await page.request.get('/api/admin/session')).json();
   const origin = new URL(page.url()).origin;
   for (const headers of [
-    { Origin: origin },
+    { Origin: origin } as Record<string, string>,
     { Origin: 'http://untrusted.invalid', 'X-CSRF-Token': session.csrfToken },
   ]) {
     const denied = await page.request.post('/api/admin/diagnostics', { data: {}, headers });

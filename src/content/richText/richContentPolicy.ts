@@ -13,19 +13,53 @@ declare global {
 export type RichContentField = 'stem' | 'rationale';
 
 const richHtmlTagNames = [
-  'a', 'b', 'blockquote', 'br', 'code', 'del', 'em', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'hr', 'i', 'img', 'input', 'li', 'ol', 'p', 'pre', 'section', 'strong', 'sub', 'sup', 'table', 'tbody', 'td', 'tfoot', 'th', 'thead', 'tr', 'ul',
+  'a',
+  'b',
+  'blockquote',
+  'br',
+  'code',
+  'del',
+  'em',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'h5',
+  'h6',
+  'hr',
+  'i',
+  'img',
+  'input',
+  'li',
+  'ol',
+  'p',
+  'pre',
+  'section',
+  'strong',
+  'sub',
+  'sup',
+  'table',
+  'tbody',
+  'td',
+  'tfoot',
+  'th',
+  'thead',
+  'tr',
+  'ul',
 ] as const;
 
 export const richHtmlTags = new Set<string>(richHtmlTagNames);
 
-const appEnvironment = (import.meta.env as { VITE_CONTENT_IMAGE_ORIGINS?: string } | undefined)?.VITE_CONTENT_IMAGE_ORIGINS;
-const scriptEnvironment = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env?.CONTENT_IMAGE_ORIGINS;
+const appEnvironment = (import.meta.env as { VITE_CONTENT_IMAGE_ORIGINS?: string } | undefined)
+  ?.VITE_CONTENT_IMAGE_ORIGINS;
+const scriptEnvironment = (globalThis as { process?: { env?: Record<string, string | undefined> } }).process?.env
+  ?.CONTENT_IMAGE_ORIGINS;
 
 const approvedImageOrigins = new Set(
   (appEnvironment ?? scriptEnvironment ?? '')
     .split(',')
-    .map(origin => origin.trim().replace(/\/$/, ''))
-    .filter(origin => /^https:\/\//i.test(origin)),
+    .map((origin) => origin.trim().replace(/\/$/, ''))
+    .filter((origin) => /^https:\/\//i.test(origin)),
 );
 
 export const richContentSanitizeSchema: Schema = {
@@ -34,7 +68,11 @@ export const richContentSanitizeSchema: Schema = {
     code: [['className', 'language-math', 'math-inline', 'math-display']],
     a: ['href', 'title'],
     img: ['src', 'alt', 'title', 'width', 'height'],
-    input: [['type', 'checkbox'], ['disabled', true], ['checked', true]],
+    input: [
+      ['type', 'checkbox'],
+      ['disabled', true],
+      ['checked', true],
+    ],
   },
   protocols: {
     href: ['http', 'https', 'mailto'],
@@ -49,8 +87,14 @@ export function isAllowedLinkUrl(url: string): boolean {
 }
 
 export function isAllowedImageUrl(url: string, allowedOrigins = approvedImageOrigins): boolean {
-  if (Array.from(url).some(character => character === '\\' || character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127)) return false;
-  if (url.startsWith('/') && !url.startsWith('//')) return new URL(url, 'https://meducation.invalid').origin === 'https://meducation.invalid';
+  if (
+    Array.from(url).some(
+      (character) => character === '\\' || character.charCodeAt(0) < 32 || character.charCodeAt(0) === 127,
+    )
+  )
+    return false;
+  if (url.startsWith('/') && !url.startsWith('//'))
+    return new URL(url, 'https://meducation.invalid').origin === 'https://meducation.invalid';
   try {
     const parsed = new URL(url);
     return parsed.protocol === 'https:' && allowedOrigins.has(parsed.origin);
@@ -66,9 +110,13 @@ export function transformRichContentUrl(url: string, key: string): string {
 
 export function allowedRawHtmlAttributes(tagName: string): ReadonlySet<string> {
   switch (tagName) {
-    case 'a': return new Set(['href', 'title']);
-    case 'img': return new Set(['src', 'alt', 'title', 'width', 'height']);
-    case 'input': return new Set(['type', 'disabled', 'checked']);
-    default: return new Set();
+    case 'a':
+      return new Set(['href', 'title']);
+    case 'img':
+      return new Set(['src', 'alt', 'title', 'width', 'height']);
+    case 'input':
+      return new Set(['type', 'disabled', 'checked']);
+    default:
+      return new Set();
   }
 }

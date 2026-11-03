@@ -68,7 +68,8 @@ export function AdminVersionsDialog({
             <option value="">Choose a version</option>
             {versions.map((v) => (
               <option key={v.releaseId} value={v.releaseId}>
-                Publication {v.latestPublicationSequence ?? '—'} · {v.releaseId}{v.active ? ' · current' : ''}
+                Publication {v.latestPublicationSequence ?? '—'} · {v.releaseId}
+                {v.active ? ' · current' : ''}
               </option>
             ))}
           </TextField>

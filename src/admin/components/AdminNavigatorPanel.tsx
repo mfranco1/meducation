@@ -109,14 +109,21 @@ export function AdminNavigatorPanel({
   const listRows = quiz
     ? []
     : topic
-      ? quizzes.map((row) => ({ id: row.id, primary: row.name, secondary: `${questionCounts(row.id)} items`, open: changeQuiz }))
+      ? quizzes.map((row) => ({
+          id: row.id,
+          primary: row.name,
+          secondary: `${questionCounts(row.id)} items`,
+          open: changeQuiz,
+        }))
       : filterTopics(topics, { ...bank, ...flashcardBank }, topicFilter).map((row) => ({
           id: row.topic.id,
           primary: row.topic.name,
           secondary: `${row.topic.id} · ${topicTotals(row)}`,
           open: changeTopic,
         }));
-  const allIds = quiz ? bank.questions.filter((row) => row.quizId === quizId).map((row) => row.id) : listRows.map((row) => row.id);
+  const allIds = quiz
+    ? bank.questions.filter((row) => row.quizId === quizId).map((row) => row.id)
+    : listRows.map((row) => row.id);
   const recordSelection = useAdminRecordSelection(JSON.stringify([subjectId, topicId, quizId, filter]), allIds);
   return (
     <Paper component="section" aria-label="Quiz navigator" variant="outlined" sx={{ ...adminNavigatorLayout, p: 2 }}>
@@ -205,7 +212,9 @@ export function AdminNavigatorPanel({
         )}
         {!subject && (
           <Stack direction="row">
-            <Button size="small" onClick={() => onManageSubjects()}>Add subject</Button>
+            <Button size="small" onClick={() => onManageSubjects()}>
+              Add subject
+            </Button>
           </Stack>
         )}
         {subject && topic && quiz && (
@@ -250,7 +259,13 @@ export function AdminNavigatorPanel({
         <Box
           component="nav"
           aria-label={
-            quiz ? `Items in ${quiz.name}` : topic ? `Quizzes in ${topic.name}` : subject ? `Topics in ${subject.name}` : 'Navigator list'
+            quiz
+              ? `Items in ${quiz.name}`
+              : topic
+                ? `Quizzes in ${topic.name}`
+                : subject
+                  ? `Topics in ${subject.name}`
+                  : 'Navigator list'
           }
           sx={{ overflowY: 'auto', maxHeight: { xs: '40dvh', lg: '50vh' } }}
         >

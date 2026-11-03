@@ -13,7 +13,9 @@ export const sizzle = keyframes`
 `;
 
 export function useReducedMotion() {
-  const [reducedMotion, setReducedMotion] = useState(() => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  const [reducedMotion, setReducedMotion] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+  );
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     const sync = () => setReducedMotion(media.matches);

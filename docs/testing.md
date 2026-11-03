@@ -10,7 +10,7 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | --- | --- |
 | Unit (Vitest) | `npm test` (`npm run test:ci` uses two workers; `npm run test:watch` while developing) |
 | Lint + import boundaries | `npm run lint` |
-| Formatting | `npm run format:check` |
+| Formatting | `npm run format:check` (`npm run format` fixes) |
 | Typecheck / build | `npm run typecheck`, `npm run build` (learner `build:learner`, admin `build:admin`) |
 | Content validation | `npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json` |
 | Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python -m pytest backend/tests -q` |

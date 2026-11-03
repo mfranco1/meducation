@@ -21,7 +21,14 @@ const CHILDREN: Record<ApiKind, ApiKind[]> = {
   decks: ['cards'],
   cards: [],
 };
-const PREFIX: Record<ApiKind, string> = { subjects: 's', topics: 't', quizzes: 'q', questions: 'i', decks: 'd-new', cards: 'f-new' };
+const PREFIX: Record<ApiKind, string> = {
+  subjects: 's',
+  topics: 't',
+  quizzes: 'q',
+  questions: 'i',
+  decks: 'd-new',
+  cards: 'f-new',
+};
 const json = (value: unknown, status = 200) =>
   new Response(JSON.stringify(value), { status, headers: { 'Content-Type': 'application/json' } });
 const failure = (status: number, code: string, extra: Record<string, unknown> = {}) =>
@@ -43,7 +50,12 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
   load();
   const changes: Array<Record<string, unknown>> = [];
   const counters: Record<string, number> = {};
-  const state = { changed: false, publications: 1, published: 0, rejection: undefined as undefined | { issues: unknown[]; match: RegExp } };
+  const state = {
+    changed: false,
+    publications: 1,
+    published: 0,
+    rejection: undefined as undefined | { issues: unknown[]; match: RegExp },
+  };
   let hold: { match: RegExp; gate: Promise<void> } | undefined;
   const log = (kind: ApiKind, entityId: string, action: string, before: Row | null, after: Row | null) => {
     changes.push({
@@ -74,14 +86,18 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
     const parent = PARENT[kind];
     const row: Row = { id: nextId(kind), ...(parent ? { [parent[0]]: parentId } : {}), ...fields, version: 1 };
     const siblings = rows[kind].filter((other) => !parent || other[parent[0]] === parentId);
-    const anchor = afterId === null ? -1 : rows[kind].indexOf(afterId ? find(kind, afterId)! : (siblings.at(-1) ?? rows[kind].at(-1)!));
+    const anchor =
+      afterId === null
+        ? -1
+        : rows[kind].indexOf(afterId ? find(kind, afterId)! : (siblings.at(-1) ?? rows[kind].at(-1)!));
     rows[kind].splice(anchor + 1, 0, row);
     return row;
   };
   const remove = (kind: ApiKind, row: Row): Array<{ kind: ApiKind; id: string }> => {
     const gone: Array<{ kind: ApiKind; id: string }> = [];
     for (const child of CHILDREN[kind])
-      for (const sub of rows[child].filter((other) => other[PARENT[child]![0]] === row.id)) gone.push(...remove(child, sub));
+      for (const sub of rows[child].filter((other) => other[PARENT[child]![0]] === row.id))
+        gone.push(...remove(child, sub));
     rows[kind] = rows[kind].filter((other) => other !== row);
     log(kind, row.id, 'delete', row, null);
     return [...gone, { kind, id: row.id }];
@@ -97,7 +113,11 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
     if (method === 'GET' && path === '/draft') return json(snapshot());
     if (method === 'GET' && path.startsWith('/draft/changes')) {
       const since = Number(new URL(path, 'http://x').searchParams.get('since'));
-      return json({ changes: changes.filter((c) => (c.changeId as number) > since), latestChangeId: changes.length, hasMore: false });
+      return json({
+        changes: changes.filter((c) => (c.changeId as number) > since),
+        latestChangeId: changes.length,
+        hasMore: false,
+      });
     }
     if (method === 'GET' && path === '/draft/diff') {
       const status = { create: 'added', update: 'changed', move: 'moved', delete: 'removed' } as Record<string, string>;
@@ -113,7 +133,16 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
     }
     if (method === 'GET' && path.startsWith('/releases'))
       return json({
-        releases: [{ releaseId: 'release-1', quizRevision: 'q', flashcardRevision: 'f', createdAt: '2026-01-01T00:00:00Z', latestPublicationSequence: 1, active: true }],
+        releases: [
+          {
+            releaseId: 'release-1',
+            quizRevision: 'q',
+            flashcardRevision: 'f',
+            createdAt: '2026-01-01T00:00:00Z',
+            latestPublicationSequence: 1,
+            active: true,
+          },
+        ],
         nextCursor: null,
       });
     if (method === 'POST' && path === '/draft/discard') {
@@ -122,14 +151,20 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
       return json(snapshot());
     }
     if (method === 'POST' && path === '/draft/publish') {
-      if (!state.changed) return json({ published: false, releaseId: 'release-1', publicationSequence: state.publications });
+      if (!state.changed)
+        return json({ published: false, releaseId: 'release-1', publicationSequence: state.publications });
       state.changed = false;
       state.published = changes.length;
       return json({ published: true, releaseId: 'release-2', publicationSequence: ++state.publications });
     }
     let match = path.match(/^\/draft\/changes\/(\d+)\/revert$/);
     if (method === 'POST' && match) {
-      const change = changes[Number(match[1]) - 1] as { kind: ApiKind; entityId: string; action: string; before: Row | null };
+      const change = changes[Number(match[1]) - 1] as {
+        kind: ApiKind;
+        entityId: string;
+        action: string;
+        before: Row | null;
+      };
       const kind = change.kind;
       const current = find(kind, change.entityId);
       if (change.action === 'create' && current) {
@@ -139,12 +174,22 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
       if (change.action === 'delete' && change.before) {
         const restored = { ...change.before, version: change.before.version + 1 };
         rows[kind].push(restored);
-        return json({ kind, id: change.entityId, record: restored, changeId: log(kind, restored.id, 'create', null, restored) });
+        return json({
+          kind,
+          id: change.entityId,
+          record: restored,
+          changeId: log(kind, restored.id, 'create', null, restored),
+        });
       }
       if (!current || !change.before) return failure(404, 'record_not_found');
       const reverted = { ...change.before, version: current.version + 1 };
       rows[kind][rows[kind].indexOf(current)] = reverted;
-      return json({ kind, id: change.entityId, record: reverted, changeId: log(kind, reverted.id, 'update', current, reverted) });
+      return json({
+        kind,
+        id: change.entityId,
+        record: reverted,
+        changeId: log(kind, reverted.id, 'update', current, reverted),
+      });
     }
     match = path.match(/^\/releases\/([^/]+)\/activate$/);
     if (method === 'POST' && match) {
@@ -172,7 +217,12 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
       if (parentKey && !find(parentKey[1], body.parentId as string)) return failure(422, 'parent_not_found');
       const refusal = rejected(path);
       if (refusal) return refusal;
-      const row = insert(kind, body.parentId as string | undefined, body.afterId as string | null | undefined, body.fields as object);
+      const row = insert(
+        kind,
+        body.parentId as string | undefined,
+        body.afterId as string | null | undefined,
+        body.fields as object,
+      );
       return json({ record: row, changeId: log(kind, row.id, 'create', null, row) }, 201);
     }
     const row = id ? find(kind, id) : undefined;
@@ -186,22 +236,34 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
         if (value === null) delete next[key];
         else next[key] = value;
       }
-      if (JSON.stringify({ ...next, version: 0 }) === JSON.stringify({ ...row, version: 0 })) return json({ record: row, changeId: null });
+      if (JSON.stringify({ ...next, version: 0 }) === JSON.stringify({ ...row, version: 0 }))
+        return json({ record: row, changeId: null });
       rows[kind][rows[kind].indexOf(row)] = next;
       return json({ record: next, changeId: log(kind, row.id, 'update', row, next) });
     }
     if (method === 'DELETE') {
-      const hasChildren = CHILDREN[kind].some((child) => rows[child].some((other) => other[PARENT[child]![0]] === row.id));
+      const hasChildren = CHILDREN[kind].some((child) =>
+        rows[child].some((other) => other[PARENT[child]![0]] === row.id),
+      );
       if (hasChildren && !body.cascade) return failure(409, 'has_children', { children: {} });
       const deleted = remove(kind, row);
       return json({ deleted, changeIds: [] });
     }
     // move
     const parent = PARENT[kind];
-    const moved: Row = { ...row, ...(parent && body.parentId ? { [parent[0]]: body.parentId } : {}), version: row.version + 1 };
+    const moved: Row = {
+      ...row,
+      ...(parent && body.parentId ? { [parent[0]]: body.parentId } : {}),
+      version: row.version + 1,
+    };
     rows[kind] = rows[kind].filter((other) => other !== row);
     const siblings = rows[kind].filter((other) => !parent || other[parent[0]] === moved[parent[0]]);
-    const anchor = body.afterId === null ? -1 : rows[kind].indexOf(body.afterId ? find(kind, body.afterId as string)! : (siblings.at(-1) ?? rows[kind].at(-1)!));
+    const anchor =
+      body.afterId === null
+        ? -1
+        : rows[kind].indexOf(
+            body.afterId ? find(kind, body.afterId as string)! : (siblings.at(-1) ?? rows[kind].at(-1)!),
+          );
     rows[kind].splice(anchor + 1, 0, moved);
     return json({ record: moved, changeId: log(kind, row.id, 'move', row, moved) });
   };

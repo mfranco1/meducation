@@ -1,7 +1,20 @@
 import type { Question, Quiz, QuizRepository, Subject } from '../../domain/types';
 import { contentRetryPolicy, type RetryPolicy } from './retryPolicy';
-import { isQuestionList, isQuizCatalog, isSubjectCatalog, responseRevision, type QuizCatalogResponse, type SubjectSummary } from './apiDecoders';
-import { browserJsonTransport, ContentLoadError, genericFailure, revisionError, type JsonTransport } from './contentTransport';
+import {
+  isQuestionList,
+  isQuizCatalog,
+  isSubjectCatalog,
+  responseRevision,
+  type QuizCatalogResponse,
+  type SubjectSummary,
+} from './apiDecoders';
+import {
+  browserJsonTransport,
+  ContentLoadError,
+  genericFailure,
+  revisionError,
+  type JsonTransport,
+} from './contentTransport';
 import { LaunchFreshness } from './launchFreshness';
 import { RuntimeContentCache } from './runtimeContentCache';
 
@@ -36,15 +49,29 @@ export class RuntimeQuestionBank implements QuizRepository {
     private readonly random = Math.random,
     private readonly transport: JsonTransport = browserJsonTransport,
     now?: () => number,
-  ) { this.freshness = new LaunchFreshness(now); }
+  ) {
+    this.freshness = new LaunchFreshness(now);
+  }
 
-  subscribe = (listener: () => void) => { this.listeners.add(listener); return () => this.listeners.delete(listener); };
+  subscribe = (listener: () => void) => {
+    this.listeners.add(listener);
+    return () => this.listeners.delete(listener);
+  };
   getSnapshot = () => this.snapshotVersion;
   contentRevision = () => this.revision || undefined;
-  private notify() { this.snapshotVersion++; this.listeners.forEach(listener => listener()); }
-  getCatalogState() { return this.catalogState; }
-  getCatalogError() { return this.catalogError; }
-  getCatalogRetryAt() { return this.catalogRetryAt; }
+  private notify() {
+    this.snapshotVersion++;
+    this.listeners.forEach((listener) => listener());
+  }
+  getCatalogState() {
+    return this.catalogState;
+  }
+  getCatalogError() {
+    return this.catalogError;
+  }
+  getCatalogRetryAt() {
+    return this.catalogRetryAt;
+  }
   retryCatalogNow() {
     if (this.catalogState !== 'retrying') return false;
     const pendingRetry = this.catalogRetryNow;
@@ -52,8 +79,12 @@ export class RuntimeQuestionBank implements QuizRepository {
     pendingRetry?.abort();
     return true;
   }
-  getQuizState(subjectId: string) { return this.quizStates.get(subjectId) ?? 'idle'; }
-  getQuizError(subjectId: string) { return this.quizErrors.get(subjectId); }
+  getQuizState(subjectId: string) {
+    return this.quizStates.get(subjectId) ?? 'idle';
+  }
+  getQuizError(subjectId: string) {
+    return this.quizErrors.get(subjectId);
+  }
   getQuizRecovery(subjectId: string) {
     return {
       failed: this.quizRecovery.has(subjectId),
@@ -64,29 +95,45 @@ export class RuntimeQuestionBank implements QuizRepository {
     };
   }
   retryQuizNow(subjectId: string) {
-    if (this.quizStates.get(subjectId) !== 'retrying' || Date.now() < (this.quizRetryAfterAt.get(subjectId) ?? 0)) return false;
+    if (this.quizStates.get(subjectId) !== 'retrying' || Date.now() < (this.quizRetryAfterAt.get(subjectId) ?? 0))
+      return false;
     const pendingRetry = this.quizRetryNow.get(subjectId);
     this.quizRetryNow.set(subjectId, new AbortController());
     pendingRetry?.abort();
     return true;
   }
-  listSubjectSummaries() { return this.summaries; }
+  listSubjectSummaries() {
+    return this.summaries;
+  }
 
-  configureApi(subjectResponse: { revision: string; subjects: SubjectCatalogRecord[] }, quizResponses: QuizCatalogResponse[] = []) {
+  configureApi(
+    subjectResponse: { revision: string; subjects: SubjectCatalogRecord[] },
+    quizResponses: QuizCatalogResponse[] = [],
+  ) {
     this.generation++;
     this.cancelQuestionLoads();
     this.revision = subjectResponse.revision;
-    const allQuizzes = quizResponses.flatMap(response => response.quizzes);
-    this.summaries = subjectResponse.subjects.map(subject => {
-      const quizzes = allQuizzes.filter(quiz => quiz.subjectId === subject.id);
-      const quizIds = subject.quizIds ?? quizzes.map(quiz => quiz.id);
+    const allQuizzes = quizResponses.flatMap((response) => response.quizzes);
+    this.summaries = subjectResponse.subjects.map((subject) => {
+      const quizzes = allQuizzes.filter((quiz) => quiz.subjectId === subject.id);
+      const quizIds = subject.quizIds ?? quizzes.map((quiz) => quiz.id);
       return { ...subject, quizCount: subject.quizCount ?? quizIds.length, quizIds };
     });
-    this.cache.replaceCatalog(subjectResponse.subjects, quizResponses.flatMap(response => response.topics), allQuizzes);
+    this.cache.replaceCatalog(
+      subjectResponse.subjects,
+      quizResponses.flatMap((response) => response.topics),
+      allQuizzes,
+    );
     this.catalogState = 'ready';
     this.catalogError = undefined;
     this.catalogRetryAt = undefined;
-    this.quizStates.clear(); this.quizErrors.clear(); this.quizRecovery.clear(); this.quizRetryAt.clear(); this.quizRetryAfterAt.clear(); this.quizRetryNow.clear(); this.pendingCatalogs.clear();
+    this.quizStates.clear();
+    this.quizErrors.clear();
+    this.quizRecovery.clear();
+    this.quizRetryAt.clear();
+    this.quizRetryAfterAt.clear();
+    this.quizRetryNow.clear();
+    this.pendingCatalogs.clear();
     for (const response of quizResponses) {
       const subjectId = response.topics[0]?.subjectId;
       if (subjectId) this.quizStates.set(subjectId, 'ready');
@@ -95,20 +142,31 @@ export class RuntimeQuestionBank implements QuizRepository {
     this.pending.clear();
   }
 
-  listSubjects() { return this.cache.listSubjects(); }
-  listTopics(subjectId: string) { return this.cache.listTopics(subjectId); }
-  listQuizzes(subjectId: string) { return this.cache.listQuizzes(subjectId); }
-  listQuestions(quizId: string) { return this.cache.listQuestions(quizId); }
+  listSubjects() {
+    return this.cache.listSubjects();
+  }
+  listTopics(subjectId: string) {
+    return this.cache.listTopics(subjectId);
+  }
+  listQuizzes(subjectId: string) {
+    return this.cache.listQuizzes(subjectId);
+  }
+  listQuestions(quizId: string) {
+    return this.cache.listQuestions(quizId);
+  }
 
   validateLaunch(quiz: Pick<Quiz, 'id' | 'subjectId'>): Promise<() => void> {
     const revision = this.revision;
-    return this.freshness.check(`${quiz.subjectId}:${quiz.id}`, async signal => {
+    return this.freshness.check(`${quiz.subjectId}:${quiz.id}`, async (signal) => {
       const payload = await this.transport.get<unknown>('/api/v1/subjects', {
-        signal, policy: this.retryPolicy, random: this.random,
+        signal,
+        policy: this.retryPolicy,
+        random: this.random,
       });
-      if (!isSubjectCatalog(payload)) throw new ContentLoadError('invalid', 'The subject catalog is incomplete. Retry later.');
+      if (!isSubjectCatalog(payload))
+        throw new ContentLoadError('invalid', 'The subject catalog is incomplete. Retry later.');
       if (payload.revision !== revision) throw revisionError();
-      const subject = payload.subjects.find(subject => subject.id === quiz.subjectId);
+      const subject = payload.subjects.find((subject) => subject.id === quiz.subjectId);
       if (!subject?.quizIds.includes(quiz.id)) throw revisionError();
     });
   }
@@ -117,29 +175,61 @@ export class RuntimeQuestionBank implements QuizRepository {
     if (this.catalogState === 'ready') return this.summaries;
     if (this.catalogState === 'loading' || this.catalogState === 'retrying') return this.catalogRequest!;
     const generation = this.generation;
-    this.catalogState = 'loading'; this.catalogError = undefined; this.catalogRetryAt = undefined;
-    this.catalogRetryNow = new AbortController(); this.notify();
-    const request = this.transport.get<unknown>('/api/v1/subjects', {
-      policy: this.retryPolicy, random: this.random,
-      getRetryNowSignal: () => this.catalogRetryNow?.signal,
-      onAttempt: () => { if (generation !== this.generation) return; if (this.catalogState === 'retrying') { this.catalogState = 'loading'; this.catalogRetryAt = undefined; this.notify(); } },
-      onRetry: (_retry, delayMs) => { if (generation !== this.generation) return; this.catalogState = 'retrying'; this.catalogRetryAt = Date.now() + delayMs; this.notify(); },
-    }).then(response => {
-      if (generation !== this.generation) throw genericFailure('cancelled');
-      if (!isSubjectCatalog(response)) throw new ContentLoadError('invalid', 'The subject catalog is missing quiz membership. Restart or update the backend, then retry.');
-      this.revision = response.revision;
-      this.cache.setSubjects(response.subjects);
-      this.summaries = response.subjects;
-      this.catalogState = 'ready'; this.catalogRetryAt = undefined; this.notify();
-      return this.summaries;
-    }).catch(error => {
-      if (generation !== this.generation) throw genericFailure('cancelled');
-      if (error instanceof ContentLoadError && error.kind === 'cancelled') throw error;
-      this.catalogState = 'error'; this.catalogRetryAt = undefined; this.catalogError = error instanceof Error ? error : new Error('Could not load subjects.');
-      this.notify(); throw error;
-    }).finally(() => {
-      if (this.catalogRequest === request) { this.catalogRequest = undefined; this.catalogRetryNow = undefined; }
-    });
+    this.catalogState = 'loading';
+    this.catalogError = undefined;
+    this.catalogRetryAt = undefined;
+    this.catalogRetryNow = new AbortController();
+    this.notify();
+    const request = this.transport
+      .get<unknown>('/api/v1/subjects', {
+        policy: this.retryPolicy,
+        random: this.random,
+        getRetryNowSignal: () => this.catalogRetryNow?.signal,
+        onAttempt: () => {
+          if (generation !== this.generation) return;
+          if (this.catalogState === 'retrying') {
+            this.catalogState = 'loading';
+            this.catalogRetryAt = undefined;
+            this.notify();
+          }
+        },
+        onRetry: (_retry, delayMs) => {
+          if (generation !== this.generation) return;
+          this.catalogState = 'retrying';
+          this.catalogRetryAt = Date.now() + delayMs;
+          this.notify();
+        },
+      })
+      .then((response) => {
+        if (generation !== this.generation) throw genericFailure('cancelled');
+        if (!isSubjectCatalog(response))
+          throw new ContentLoadError(
+            'invalid',
+            'The subject catalog is missing quiz membership. Restart or update the backend, then retry.',
+          );
+        this.revision = response.revision;
+        this.cache.setSubjects(response.subjects);
+        this.summaries = response.subjects;
+        this.catalogState = 'ready';
+        this.catalogRetryAt = undefined;
+        this.notify();
+        return this.summaries;
+      })
+      .catch((error) => {
+        if (generation !== this.generation) throw genericFailure('cancelled');
+        if (error instanceof ContentLoadError && error.kind === 'cancelled') throw error;
+        this.catalogState = 'error';
+        this.catalogRetryAt = undefined;
+        this.catalogError = error instanceof Error ? error : new Error('Could not load subjects.');
+        this.notify();
+        throw error;
+      })
+      .finally(() => {
+        if (this.catalogRequest === request) {
+          this.catalogRequest = undefined;
+          this.catalogRetryNow = undefined;
+        }
+      });
     this.catalogRequest = request;
     return request;
   }
@@ -155,29 +245,51 @@ export class RuntimeQuestionBank implements QuizRepository {
       try {
         await this.ensureSubjects();
         if (generation !== this.generation) throw genericFailure('cancelled');
-        this.quizStates.set(subjectId, 'loading'); this.quizErrors.delete(subjectId); this.quizRetryAt.delete(subjectId); this.quizRetryAfterAt.delete(subjectId);
-        this.quizRetryNow.set(subjectId, new AbortController()); this.notify();
-        const response = await this.transport.get<unknown>(`/api/v1/subjects/${encodeURIComponent(subjectId)}/quizzes?revision=${encodeURIComponent(this.revision)}`, {
-          policy: this.retryPolicy, random: this.random,
-          getRetryNowSignal: () => this.quizRetryNow.get(subjectId)?.signal,
-          onAttempt: () => { if (generation !== this.generation) return; if (this.quizRecovery.has(subjectId) && this.quizStates.get(subjectId) === 'retrying') { this.quizStates.set(subjectId, 'loading'); this.quizRetryAt.delete(subjectId); this.notify(); } },
-          onRetry: (_retry, delayMs, retryAfterMs) => {
-            if (generation !== this.generation) return;
-            this.quizRecovery.add(subjectId);
-            this.quizStates.set(subjectId, 'retrying');
-            this.quizRetryAt.set(subjectId, Date.now() + delayMs);
-            if (retryAfterMs === undefined) this.quizRetryAfterAt.delete(subjectId);
-            else this.quizRetryAfterAt.set(subjectId, Date.now() + retryAfterMs);
-            this.notify();
+        this.quizStates.set(subjectId, 'loading');
+        this.quizErrors.delete(subjectId);
+        this.quizRetryAt.delete(subjectId);
+        this.quizRetryAfterAt.delete(subjectId);
+        this.quizRetryNow.set(subjectId, new AbortController());
+        this.notify();
+        const response = await this.transport.get<unknown>(
+          `/api/v1/subjects/${encodeURIComponent(subjectId)}/quizzes?revision=${encodeURIComponent(this.revision)}`,
+          {
+            policy: this.retryPolicy,
+            random: this.random,
+            getRetryNowSignal: () => this.quizRetryNow.get(subjectId)?.signal,
+            onAttempt: () => {
+              if (generation !== this.generation) return;
+              if (this.quizRecovery.has(subjectId) && this.quizStates.get(subjectId) === 'retrying') {
+                this.quizStates.set(subjectId, 'loading');
+                this.quizRetryAt.delete(subjectId);
+                this.notify();
+              }
+            },
+            onRetry: (_retry, delayMs, retryAfterMs) => {
+              if (generation !== this.generation) return;
+              this.quizRecovery.add(subjectId);
+              this.quizStates.set(subjectId, 'retrying');
+              this.quizRetryAt.set(subjectId, Date.now() + delayMs);
+              if (retryAfterMs === undefined) this.quizRetryAfterAt.delete(subjectId);
+              else this.quizRetryAfterAt.set(subjectId, Date.now() + retryAfterMs);
+              this.notify();
+            },
           },
-        });
+        );
         if (generation !== this.generation) throw genericFailure('cancelled');
-        if (responseRevision(response) === undefined) throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
+        if (responseRevision(response) === undefined)
+          throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
         if (responseRevision(response) !== this.revision) throw revisionError();
-        const expectedQuizIds = this.summaries.find(subject => subject.id === subjectId)?.quizIds;
-        if (!expectedQuizIds || !isQuizCatalog(response, subjectId, expectedQuizIds)) throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
+        const expectedQuizIds = this.summaries.find((subject) => subject.id === subjectId)?.quizIds;
+        if (!expectedQuizIds || !isQuizCatalog(response, subjectId, expectedQuizIds))
+          throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
         this.cache.setQuizzes(subjectId, response.topics, response.quizzes);
-        this.quizStates.set(subjectId, 'ready'); this.quizRecovery.delete(subjectId); this.quizRetryAt.delete(subjectId); this.quizRetryAfterAt.delete(subjectId); this.quizRetryNow.delete(subjectId); this.notify();
+        this.quizStates.set(subjectId, 'ready');
+        this.quizRecovery.delete(subjectId);
+        this.quizRetryAt.delete(subjectId);
+        this.quizRetryAfterAt.delete(subjectId);
+        this.quizRetryNow.delete(subjectId);
+        this.notify();
         return response.quizzes;
       } catch (error) {
         if (generation !== this.generation) throw genericFailure('cancelled');
@@ -186,11 +298,14 @@ export class RuntimeQuestionBank implements QuizRepository {
         this.quizRecovery.add(subjectId);
         this.quizRetryAt.delete(subjectId);
         this.quizErrors.set(subjectId, error instanceof Error ? error : new Error('Could not load quizzes.'));
-        this.notify(); throw error;
+        this.notify();
+        throw error;
       }
     })();
     this.pendingCatalogs.set(subjectId, request);
-    const clearPending = () => { if (this.pendingCatalogs.get(subjectId) === request) this.pendingCatalogs.delete(subjectId); };
+    const clearPending = () => {
+      if (this.pendingCatalogs.get(subjectId) === request) this.pendingCatalogs.delete(subjectId);
+    };
     void request.then(clearPending, clearPending);
     return request;
   }
@@ -203,21 +318,29 @@ export class RuntimeQuestionBank implements QuizRepository {
     const generation = this.generation;
     const controller = new AbortController();
     this.questionControllers.set(quizId, controller);
-    const request = this.transport.get<unknown>(`/api/v1/quizzes/${encodeURIComponent(quizId)}/questions?revision=${encodeURIComponent(this.revision)}`, {
-      signal: controller.signal, policy: this.retryPolicy, random: this.random,
-      })
-      .then(payload => {
+    const request = this.transport
+      .get<unknown>(
+        `/api/v1/quizzes/${encodeURIComponent(quizId)}/questions?revision=${encodeURIComponent(this.revision)}`,
+        {
+          signal: controller.signal,
+          policy: this.retryPolicy,
+          random: this.random,
+        },
+      )
+      .then((payload) => {
         if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
-        if (responseRevision(payload) === undefined) throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
+        if (responseRevision(payload) === undefined)
+          throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
         if (responseRevision(payload) !== this.revision) throw revisionError();
         const expectedQuestionIds = this.cache.getQuiz(quizId)?.questionIds;
-        if (!expectedQuestionIds || !isQuestionList(payload, quizId, expectedQuestionIds)) throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
-        const questions = payload.questions.map(question => ({ ...question, metadata: question.metadata ?? {} }));
+        if (!expectedQuestionIds || !isQuestionList(payload, quizId, expectedQuestionIds))
+          throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
+        const questions = payload.questions.map((question) => ({ ...question, metadata: question.metadata ?? {} }));
         this.cache.setQuestions(quizId, questions);
         this.notify();
         return questions;
       })
-      .catch(error => {
+      .catch((error) => {
         if (generation !== this.generation) throw genericFailure('cancelled');
         throw error;
       })
@@ -238,7 +361,7 @@ export class RuntimeQuestionBank implements QuizRepository {
   }
   cancelQuestionLoads() {
     this.freshness.cancelAll();
-    [...this.questionControllers.keys()].forEach(quizId => this.cancelQuestionLoad(quizId));
+    [...this.questionControllers.keys()].forEach((quizId) => this.cancelQuestionLoad(quizId));
   }
 }
 

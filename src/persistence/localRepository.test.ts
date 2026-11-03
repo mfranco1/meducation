@@ -58,5 +58,4 @@ describe('LocalAttemptRepository quiz activity', () => {
 
     expect(repository.latestActivityAt('quiz')).toBe('2026-09-22T11:00:00.000Z');
   });
-
 });

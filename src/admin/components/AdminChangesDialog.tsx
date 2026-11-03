@@ -88,13 +88,19 @@ export function AdminChangesDialog({
     setChanges((previous) => [...previous, ...page.changes.filter((change) => change.changeId <= oldest).reverse()]);
   };
   return (
-    <Dialog open={open} onClose={busy ? undefined : onClose} fullWidth fullScreen={narrow} aria-labelledby="changes-title">
+    <Dialog
+      open={open}
+      onClose={busy ? undefined : onClose}
+      fullWidth
+      fullScreen={narrow}
+      aria-labelledby="changes-title"
+    >
       <DialogTitle id="changes-title">Changes</DialogTitle>
       <DialogContent>
         <Stack spacing={1.5} sx={{ pt: 1 }}>
           <Typography variant="body2">
-            Every saved edit is recorded. Revert restores one record to how it was before that change; it is recorded
-            as a new change. Reverting does not publish.
+            Every saved edit is recorded. Revert restores one record to how it was before that change; it is recorded as
+            a new change. Reverting does not publish.
           </Typography>
           {(error || problem) && <Alert severity="error">{error || problem}</Alert>}
           {!changes.length && !problem && <Alert severity="info">No changes recorded yet.</Alert>}

@@ -38,7 +38,13 @@ describe('FlashcardsDashboardScreen', () => {
   it('opens the privacy notice from the footer', async () => {
     render(
       <ThemeProvider theme={theme}>
-        <FlashcardsDashboardScreen subjects={[]} activeSubjects={[]} progress={emptyProgress} onRetry={vi.fn()} onSelectSubject={vi.fn()} />
+        <FlashcardsDashboardScreen
+          subjects={[]}
+          activeSubjects={[]}
+          progress={emptyProgress}
+          onRetry={vi.fn()}
+          onSelectSubject={vi.fn()}
+        />
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Privacy' }));
@@ -59,8 +65,12 @@ describe('FlashcardsDashboardScreen', () => {
     render(
       <ThemeProvider theme={theme}>
         <FlashcardsDashboardScreen
-          subjects={[{ subject, deckCount: 4, completedDeckCount: 2, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
-          activeSubjects={[{ subject, deckCount: 4, completedDeckCount: 2, activeDeckCount: 1, latestActiveAt: '2026-10-01' }]}
+          subjects={[
+            { subject, deckCount: 4, completedDeckCount: 2, activeDeckCount: 1, latestActiveAt: '2026-10-01' },
+          ]}
+          activeSubjects={[
+            { subject, deckCount: 4, completedDeckCount: 2, activeDeckCount: 1, latestActiveAt: '2026-10-01' },
+          ]}
           progress={{
             ...emptyProgress,
             completionCounts: { d1: 2, d2: 1 },
@@ -132,7 +142,7 @@ describe('FlashcardsDashboardScreen', () => {
     [53, 50, '1.1'],
     [2, 1, '2'],
     [2001, 2, '1k'],
-  ])('formats average %i/%i with at most one decimal or in thousands',(trackedCompletions, elapsedDays, expected) => {
+  ])('formats average %i/%i with at most one decimal or in thousands', (trackedCompletions, elapsedDays, expected) => {
     const today = new Date();
     const firstDay = new Date(today.getFullYear(), today.getMonth(), today.getDate() - elapsedDays + 1);
     const dayKey = (date: Date) =>
@@ -218,8 +228,18 @@ describe('FlashcardsDashboardScreen', () => {
       <ThemeProvider theme={theme}>
         <FlashcardsDashboardScreen
           subjects={[
-            { subject: { id: 'a', name: 'Started', accent: '#b9511b' }, deckCount: 300, completedDeckCount: 1, activeDeckCount: 0 },
-            { subject: { id: 'b', name: 'Untouched', accent: '#b9511b' }, deckCount: 2, completedDeckCount: 0, activeDeckCount: 0 },
+            {
+              subject: { id: 'a', name: 'Started', accent: '#b9511b' },
+              deckCount: 300,
+              completedDeckCount: 1,
+              activeDeckCount: 0,
+            },
+            {
+              subject: { id: 'b', name: 'Untouched', accent: '#b9511b' },
+              deckCount: 2,
+              completedDeckCount: 0,
+              activeDeckCount: 0,
+            },
           ]}
           activeSubjects={[]}
           progress={emptyProgress}

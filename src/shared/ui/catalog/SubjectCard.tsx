@@ -63,7 +63,16 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
           {isDashboardGrid ? (
             <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'nowrap', gap: 1.25, minWidth: 0 }}>
               <SubjectIconBadge subjectId={subject.id} size={80} />
-              <Box sx={{ display: 'flex', flex: '1 1 auto', flexDirection: 'column', justifyContent: 'center', minHeight: 80, minWidth: 0 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flex: '1 1 auto',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
+                  minHeight: 80,
+                  minWidth: 0,
+                }}
+              >
                 <Typography
                   component="h3"
                   sx={{
@@ -81,7 +90,13 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
                   <Typography
                     variant="body2"
                     color="text.secondary"
-                    sx={{ display: '-webkit-box', mt: 0.25, overflow: 'hidden', WebkitBoxOrient: 'vertical', WebkitLineClamp: 3 }}
+                    sx={{
+                      display: '-webkit-box',
+                      mt: 0.25,
+                      overflow: 'hidden',
+                      WebkitBoxOrient: 'vertical',
+                      WebkitLineClamp: 3,
+                    }}
                   >
                     {subject.description}
                   </Typography>

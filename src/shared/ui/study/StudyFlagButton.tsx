@@ -15,21 +15,51 @@ export const flagFlutter = keyframes`
 `;
 
 /** Flag toggle that flutters when the user flags the item (not when an already-flagged item is shown). */
-export function StudyFlagButton({ flagged, label, onToggle, size, sx }: { flagged: boolean; label: string; onToggle: () => void; size?: 'small'; sx?: SxProps<Theme> }) {
+export function StudyFlagButton({
+  flagged,
+  label,
+  onToggle,
+  size,
+  sx,
+}: {
+  flagged: boolean;
+  label: string;
+  onToggle: () => void;
+  size?: 'small';
+  sx?: SxProps<Theme>;
+}) {
   const [fluttering, setFluttering] = useState(false);
-  return <IconButton
-    size={size}
-    disableRipple
-    aria-label={label}
-    aria-pressed={flagged}
-    onClick={() => {
-      setFluttering(!flagged);
-      onToggle();
-    }}
-    sx={[{ bgcolor: 'transparent', '&:hover': { bgcolor: 'transparent' }, '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 } }, ...(Array.isArray(sx) ? sx : [sx])]}
-  >
-    <Box component="span" onAnimationEnd={() => setFluttering(false)} sx={{ display: 'inline-flex', transformOrigin: '20% 90%', animation: fluttering ? `${flagFlutter} 550ms ease-out` : undefined, [reducedMotion]: { animation: 'none' } }}>
-      {flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}
-    </Box>
-  </IconButton>;
+  return (
+    <IconButton
+      size={size}
+      disableRipple
+      aria-label={label}
+      aria-pressed={flagged}
+      onClick={() => {
+        setFluttering(!flagged);
+        onToggle();
+      }}
+      sx={[
+        {
+          bgcolor: 'transparent',
+          '&:hover': { bgcolor: 'transparent' },
+          '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+        },
+        ...(Array.isArray(sx) ? sx : [sx]),
+      ]}
+    >
+      <Box
+        component="span"
+        onAnimationEnd={() => setFluttering(false)}
+        sx={{
+          display: 'inline-flex',
+          transformOrigin: '20% 90%',
+          animation: fluttering ? `${flagFlutter} 550ms ease-out` : undefined,
+          [reducedMotion]: { animation: 'none' },
+        }}
+      >
+        {flagged ? <FlagIcon color="primary" /> : <FlagOutlinedIcon />}
+      </Box>
+    </IconButton>
+  );
 }

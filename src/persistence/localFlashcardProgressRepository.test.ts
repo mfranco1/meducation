@@ -5,13 +5,25 @@ import type { StoragePort } from './progressCodec';
 
 function storagePort(): StoragePort {
   const values = new Map<string, string>();
-  return { getItem: key => values.get(key) ?? null, setItem: (key, value) => { values.set(key, value); } };
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => {
+      values.set(key, value);
+    },
+  };
 }
 
 describe('local flashcard progress repository', () => {
   it('keeps snapshots stable and frozen without exposing caller-owned checkpoints', () => {
     const repository = new LocalFlashcardProgressRepository(storagePort());
-    const checkpoint = { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: ['f1'], flaggedCardIds: ['f2'] };
+    const checkpoint = {
+      deckId: 'd1',
+      currentCardId: 'f1',
+      contentSignature: 'sig',
+      updatedAt: '2026-10-06T00:00:00.000Z',
+      openedCardIds: ['f1'],
+      flaggedCardIds: ['f2'],
+    };
     repository.saveCheckpoint(checkpoint);
     const snapshot = repository.getSnapshot();
     checkpoint.currentCardId = 'f2';
@@ -25,11 +37,21 @@ describe('local flashcard progress repository', () => {
   });
   it('retries a temporarily unavailable storage read without losing saved checkpoints', () => {
     const storage = storagePort();
-    const stored = { deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] };
+    const stored = {
+      deckId: 'd1',
+      currentCardId: 'f1',
+      contentSignature: 'sig',
+      updatedAt: '2026-10-06T00:00:00.000Z',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    };
     new LocalFlashcardProgressRepository(storage).saveCheckpoint(stored);
     let unavailable = true;
     const repository = new LocalFlashcardProgressRepository({
-      getItem: key => { if (unavailable) throw new Error('Blocked'); return storage.getItem(key); },
+      getItem: (key) => {
+        if (unavailable) throw new Error('Blocked');
+        return storage.getItem(key);
+      },
       setItem: (key, value) => storage.setItem(key, value),
     });
     expect(repository.getSnapshot().checkpoints).toEqual({});
@@ -40,8 +62,22 @@ describe('local flashcard progress repository', () => {
   });
   it('counts finished decks once and clears only their checkpoints', () => {
     const repository = new LocalFlashcardProgressRepository(storagePort());
-    repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
-    repository.saveCheckpoint({ deckId: 'd2', currentCardId: 'f8', contentSignature: 'sig2', updatedAt: '2026-10-06T00:01:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    repository.saveCheckpoint({
+      deckId: 'd1',
+      currentCardId: 'f2',
+      contentSignature: 'sig',
+      updatedAt: '2026-10-06T00:00:00.000Z',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    });
+    repository.saveCheckpoint({
+      deckId: 'd2',
+      currentCardId: 'f8',
+      contentSignature: 'sig2',
+      updatedAt: '2026-10-06T00:01:00.000Z',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    });
     expect(repository.getCheckpoint('d1')?.currentCardId).toBe('f2');
     expect(Object.keys(repository.getSnapshot().checkpoints)).toEqual(['d1', 'd2']);
     repository.completeDeck('d1', new Date('2026-10-06T01:00:00.000Z'));
@@ -51,7 +87,14 @@ describe('local flashcard progress repository', () => {
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
     repository.completeDeck('d1');
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
-    repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:02:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    repository.saveCheckpoint({
+      deckId: 'd1',
+      currentCardId: 'f2',
+      contentSignature: 'sig',
+      updatedAt: '2026-10-06T00:02:00.000Z',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    });
     repository.completeDeck('d1');
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 2 });
     expect(repository.getSnapshot().checkpoints.d2).toBeDefined();
@@ -63,22 +106,50 @@ describe('local flashcard progress repository', () => {
     const storage = storagePort();
     const repository = new LocalFlashcardProgressRepository(storage);
     const finish = (deckId: string, cardId: string, at: string) => {
-      repository.saveCheckpoint({ deckId, currentCardId: cardId, contentSignature: 'sig', updatedAt: at, openedCardIds: [], flaggedCardIds: [] });
+      repository.saveCheckpoint({
+        deckId,
+        currentCardId: cardId,
+        contentSignature: 'sig',
+        updatedAt: at,
+        openedCardIds: [],
+        flaggedCardIds: [],
+      });
       repository.completeDeck(deckId, new Date(at));
     };
     finish('d1', 'f1', new Date(2026, 2, 8, 13).toISOString());
     finish('d2', 'f2', new Date(2026, 2, 8, 14).toISOString());
-    expect(repository.getSnapshot().dailyStats).toEqual({ firstDay: '2026-03-08', currentDay: '2026-03-08', currentDayCount: 2, trackedCompletions: 2, highestDailyCount: 2 });
+    expect(repository.getSnapshot().dailyStats).toEqual({
+      firstDay: '2026-03-08',
+      currentDay: '2026-03-08',
+      currentDayCount: 2,
+      trackedCompletions: 2,
+      highestDailyCount: 2,
+    });
     finish('d3', 'f3', new Date(2026, 2, 10, 14).toISOString());
-    expect(repository.getSnapshot().dailyStats).toEqual({ firstDay: '2026-03-08', currentDay: '2026-03-10', currentDayCount: 1, trackedCompletions: 3, highestDailyCount: 2 });
-    expect(JSON.parse(storage.getItem(flashcardProgressKey) ?? '{}').dailyStats).toEqual(repository.getSnapshot().dailyStats);
+    expect(repository.getSnapshot().dailyStats).toEqual({
+      firstDay: '2026-03-08',
+      currentDay: '2026-03-10',
+      currentDayCount: 1,
+      trackedCompletions: 3,
+      highestDailyCount: 2,
+    });
+    expect(JSON.parse(storage.getItem(flashcardProgressKey) ?? '{}').dailyStats).toEqual(
+      repository.getSnapshot().dailyStats,
+    );
     expect(Object.keys(repository.getSnapshot().dailyStats ?? {})).toHaveLength(5);
   });
 
   it('persists completion counts across repository instances and publishes only committed completions', () => {
     const storage = storagePort();
     const first = new LocalFlashcardProgressRepository(storage);
-    first.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    first.saveCheckpoint({
+      deckId: 'd1',
+      currentCardId: 'f1',
+      contentSignature: 'sig',
+      updatedAt: '2026-10-06T00:00:00.000Z',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    });
     let notifications = 0;
     first.subscribe(() => notifications++);
     first.completeDeck('d1');
@@ -88,10 +159,20 @@ describe('local flashcard progress repository', () => {
     const values = new Map<string, string>();
     let rejectWrites = false;
     const failing = new LocalFlashcardProgressRepository({
-      getItem: key => values.get(key) ?? null,
-      setItem: (key, value) => { if (rejectWrites) throw new Error('Quota'); values.set(key, value); },
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => {
+        if (rejectWrites) throw new Error('Quota');
+        values.set(key, value);
+      },
     });
-    failing.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
+    failing.saveCheckpoint({
+      deckId: 'd1',
+      currentCardId: 'f1',
+      contentSignature: 'sig',
+      updatedAt: '2026-10-06T00:00:00.000Z',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    });
     rejectWrites = true;
     expect(() => failing.completeDeck('d1')).toThrowError(FlashcardPersistenceError);
     expect(failing.getSnapshot().completionCounts).toEqual({});
@@ -103,10 +184,26 @@ describe('local flashcard progress repository', () => {
     const storage = storagePort();
     const first = new LocalFlashcardProgressRepository(storage);
     const second = new LocalFlashcardProgressRepository(storage);
-    first.getSnapshot(); second.getSnapshot();
-    first.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] });
-    expect(() => second.saveCheckpoint({ deckId: 'd2', currentCardId: 'f2', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] }))
-      .toThrowError(expect.objectContaining({ kind: 'conflict' }));
+    first.getSnapshot();
+    second.getSnapshot();
+    first.saveCheckpoint({
+      deckId: 'd1',
+      currentCardId: 'f1',
+      contentSignature: 'sig',
+      updatedAt: '2026-10-06T00:00:00.000Z',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    });
+    expect(() =>
+      second.saveCheckpoint({
+        deckId: 'd2',
+        currentCardId: 'f2',
+        contentSignature: 'sig',
+        updatedAt: '2026-10-06T00:00:00.000Z',
+        openedCardIds: [],
+        flaggedCardIds: [],
+      }),
+    ).toThrowError(expect.objectContaining({ kind: 'conflict' }));
 
     const corruptStorage = storagePort();
     corruptStorage.setItem(flashcardProgressKey, '{broken');
@@ -118,10 +215,23 @@ describe('local flashcard progress repository', () => {
   });
 
   it('reports browser storage write failures without caching a false save', () => {
-    const storage: StoragePort = { getItem: () => null, setItem: () => { throw new Error('quota'); } };
+    const storage: StoragePort = {
+      getItem: () => null,
+      setItem: () => {
+        throw new Error('quota');
+      },
+    };
     const repository = new LocalFlashcardProgressRepository(storage);
-    expect(() => repository.saveCheckpoint({ deckId: 'd1', currentCardId: 'f1', contentSignature: 'sig', updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [] }))
-      .toThrowError(FlashcardPersistenceError);
+    expect(() =>
+      repository.saveCheckpoint({
+        deckId: 'd1',
+        currentCardId: 'f1',
+        contentSignature: 'sig',
+        updatedAt: '2026-10-06T00:00:00.000Z',
+        openedCardIds: [],
+        flaggedCardIds: [],
+      }),
+    ).toThrowError(FlashcardPersistenceError);
     expect(repository.getCheckpoint('d1')).toBeUndefined();
   });
 });

@@ -14,7 +14,13 @@ describe('useFlashcardDashboardStats', () => {
       revision: 'r1',
       checkpoints: {},
       completionCounts: { d1: 1 },
-      dailyStats: { firstDay: '2026-10-06', currentDay: '2026-10-06', currentDayCount: 1, trackedCompletions: 1, highestDailyCount: 1 },
+      dailyStats: {
+        firstDay: '2026-10-06',
+        currentDay: '2026-10-06',
+        currentDayCount: 1,
+        trackedCompletions: 1,
+        highestDailyCount: 1,
+      },
     };
     const { result, unmount } = renderHook(() => useFlashcardDashboardStats(progress));
     expect(result.current.averagePerDay).toBe(1);
@@ -37,7 +43,13 @@ describe('useFlashcardDashboardStats', () => {
       revision: 'r1',
       checkpoints: {},
       completionCounts: { d1: 1 },
-      dailyStats: { firstDay: '2026-10-06', currentDay: '2026-10-06', currentDayCount: 1, trackedCompletions: 1, highestDailyCount: 1 },
+      dailyStats: {
+        firstDay: '2026-10-06',
+        currentDay: '2026-10-06',
+        currentDayCount: 1,
+        trackedCompletions: 1,
+        highestDailyCount: 1,
+      },
     };
     const { result, unmount } = renderHook(() => useFlashcardDashboardStats(progress));
     expect(result.current.averagePerDay).toBe(1);

@@ -8,7 +8,8 @@ import { RadiatingCircles } from './RadiatingCircles';
 const renderWithTheme = (ui: React.ReactNode) => render(<ThemeProvider theme={theme}>{ui}</ThemeProvider>);
 
 // React selects the prefixed event in jsdom, which has no AnimationEvent constructor.
-const finishAnimation = (element: HTMLElement) => fireEvent(element, new Event('AnimationEvent' in window ? 'animationend' : 'webkitAnimationEnd', { bubbles: true }));
+const finishAnimation = (element: HTMLElement) =>
+  fireEvent(element, new Event('AnimationEvent' in window ? 'animationend' : 'webkitAnimationEnd', { bubbles: true }));
 
 afterEach(() => vi.useRealTimers());
 
@@ -23,7 +24,12 @@ describe('radiating circles', () => {
   });
 
   it('omits particles when reduced motion is preferred', () => {
-    window.matchMedia = vi.fn().mockImplementation(query => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
     renderWithTheme(<RadiatingCircles />);
     expect(screen.queryByTestId('radiating-circles')).toBeNull();
   });
@@ -33,7 +39,17 @@ describe('celebration overlay', () => {
   it('prepares playback before starting and completes only when the card finishes', () => {
     vi.useFakeTimers();
     const onComplete = vi.fn();
-    renderWithTheme(<CelebrationOverlay open title="3 in a row!" message="Keep going." variant="streak" level={3} durationMs={100} onComplete={onComplete} />);
+    renderWithTheme(
+      <CelebrationOverlay
+        open
+        title="3 in a row!"
+        message="Keep going."
+        variant="streak"
+        level={3}
+        durationMs={100}
+        onComplete={onComplete}
+      />,
+    );
     const status = screen.getByRole('status');
     const card = screen.getByTestId('celebration-card');
     expect(status).toHaveTextContent('3 in a row!Keep going.');
@@ -54,7 +70,18 @@ describe('celebration overlay', () => {
   it('starts fresh after closing and reopening, including during preparation', () => {
     vi.useFakeTimers();
     const onComplete = vi.fn();
-    const overlay = (open: boolean) => <ThemeProvider theme={theme}><CelebrationOverlay open={open} title="Streak" message="Keep going." variant="streak" level={1} onComplete={onComplete} /></ThemeProvider>;
+    const overlay = (open: boolean) => (
+      <ThemeProvider theme={theme}>
+        <CelebrationOverlay
+          open={open}
+          title="Streak"
+          message="Keep going."
+          variant="streak"
+          level={1}
+          onComplete={onComplete}
+        />
+      </ThemeProvider>
+    );
     const { rerender, unmount } = render(overlay(true));
     act(() => vi.advanceTimersToNextFrame());
     rerender(overlay(false));
@@ -76,8 +103,22 @@ describe('celebration overlay', () => {
   it('shows its copy and completes without the gold burst when reduced motion is preferred', () => {
     vi.useFakeTimers();
     const onComplete = vi.fn();
-    window.matchMedia = vi.fn().mockImplementation(query => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
-    renderWithTheme(<CelebrationOverlay open title="50-in-a-row!" message="Exceptional mastery!" variant="streak" level={5} onComplete={onComplete} />);
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    }));
+    renderWithTheme(
+      <CelebrationOverlay
+        open
+        title="50-in-a-row!"
+        message="Exceptional mastery!"
+        variant="streak"
+        level={5}
+        onComplete={onComplete}
+      />,
+    );
     expect(screen.getByRole('status')).toHaveTextContent('50-in-a-row!Exceptional mastery!');
     expect(screen.queryByTestId('gold-burst')).toBeNull();
     act(() => vi.advanceTimersByTime(1000));

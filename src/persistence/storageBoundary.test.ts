@@ -43,22 +43,29 @@ describe('browser storage boundary fixtures', () => {
     expect(new LocalAttemptRepository().list()).toEqual([]);
   });
 
-  it.each(['elapsedMs', 'celebrationProgress', 'contentSignature'])('rejects active records without current %s data', (field) => {
-    const active: Record<string, unknown> = { ...fixtures.active };
-    delete active[field];
-    const raw = JSON.stringify({ ...emptyProgress(), active: { q1: active } });
-    values.set(progressKey, raw);
-    const repository = new LocalAttemptRepository();
-    expect(repository.getActive('q1')).toBeUndefined();
-    expect(repository.getStorageError()).toContain('kept');
-    expect(() => repository.saveActive(fixtures.active as Attempt)).toThrow(PersistenceError);
-    expect(values.get(progressKey)).toBe(raw);
-  });
+  it.each(['elapsedMs', 'celebrationProgress', 'contentSignature'])(
+    'rejects active records without current %s data',
+    (field) => {
+      const active: Record<string, unknown> = { ...fixtures.active };
+      delete active[field];
+      const raw = JSON.stringify({ ...emptyProgress(), active: { q1: active } });
+      values.set(progressKey, raw);
+      const repository = new LocalAttemptRepository();
+      expect(repository.getActive('q1')).toBeUndefined();
+      expect(repository.getStorageError()).toContain('kept');
+      expect(() => repository.saveActive(fixtures.active as Attempt)).toThrow(PersistenceError);
+      expect(values.get(progressKey)).toBe(raw);
+    },
+  );
 
   it('rejects unlocked selected Fast Feedback responses instead of normalizing them', () => {
-    const active = { ...fixtures.active, feedbackMode: 'immediate', responses: {
-      i1: { questionId: 'i1', selectedChoiceId: 'A', flagged: false, locked: false, timeMs: 0 },
-    } };
+    const active = {
+      ...fixtures.active,
+      feedbackMode: 'immediate',
+      responses: {
+        i1: { questionId: 'i1', selectedChoiceId: 'A', flagged: false, locked: false, timeMs: 0 },
+      },
+    };
     const raw = JSON.stringify({ ...emptyProgress(), active: { q1: active } });
     values.set(progressKey, raw);
     const repository = new LocalAttemptRepository();
@@ -89,7 +96,8 @@ describe('browser storage boundary fixtures', () => {
 
   it('remains idempotent after the completed history is pruned', () => {
     const repository = new LocalAttemptRepository();
-    for (let index = 0; index < 205; index++) repository.saveCompleted({ ...fixtures.completed, id: `finished-${index}` } as CompletedAttempt);
+    for (let index = 0; index < 205; index++)
+      repository.saveCompleted({ ...fixtures.completed, id: `finished-${index}` } as CompletedAttempt);
     repository.saveCompleted({ ...fixtures.completed, id: 'finished-0' } as CompletedAttempt);
     expect(repository.list()).toHaveLength(200);
     expect(repository.completionCount('q1')).toBe(205);
@@ -100,8 +108,7 @@ describe('browser storage boundary fixtures', () => {
     first.list();
     const second = new LocalAttemptRepository();
     second.saveActive({ ...fixtures.active, id: 'second-tab' } as Attempt);
-    expect(() => first.saveActive({ ...fixtures.active, id: 'first-tab' } as Attempt))
-      .toThrowError(PersistenceError);
+    expect(() => first.saveActive({ ...fixtures.active, id: 'first-tab' } as Attempt)).toThrowError(PersistenceError);
     expect(second.getActive('q1')?.id).toBe('second-tab');
   });
 

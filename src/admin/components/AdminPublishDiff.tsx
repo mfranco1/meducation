@@ -34,7 +34,11 @@ function FieldDiff({ before, after }: { before: Fields | null; after: Fields | n
                   {part.text}
                 </Box>
               ) : part.change === 'removed' ? (
-                <Box component="del" key={index} sx={(theme) => ({ bgcolor: theme.palette.feedback.incorrect.surface })}>
+                <Box
+                  component="del"
+                  key={index}
+                  sx={(theme) => ({ bgcolor: theme.palette.feedback.incorrect.surface })}
+                >
                   {part.text}
                 </Box>
               ) : (
@@ -64,8 +68,7 @@ export function AdminPublishDiff({ store }: { store: Pick<DraftStore, 'diff'> })
   }, [store]);
   if (problem) return <Alert severity="error">{problem}</Alert>;
   if (!diff) return <Typography variant="body2">Loading changes…</Typography>;
-  if (!diff.entries.length)
-    return <Alert severity="info">The draft matches the published version.</Alert>;
+  if (!diff.entries.length) return <Alert severity="info">The draft matches the published version.</Alert>;
   const totals = Object.entries(diff.totals).map(
     ([kind, statuses]) =>
       `${kind}: ${Object.entries(statuses)

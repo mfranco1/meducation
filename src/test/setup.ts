@@ -4,15 +4,16 @@ import { afterEach, vi } from 'vitest';
 import { clearSavedSubjectCatalogViews } from '../shared/ui/catalog/useSubjectCatalog';
 
 // Tests render the desktop (lg+) layout unless they override matchMedia.
-const matchMedia = (matches = false) => vi.fn().mockImplementation((query: string) => ({
-  matches: matches || query === '(min-width:1200px)' || query === '(min-width:600px)',
-  media: query,
-  addEventListener: vi.fn(),
-  removeEventListener: vi.fn(),
-  addListener: vi.fn(),
-  removeListener: vi.fn(),
-  dispatchEvent: vi.fn(),
-}));
+const matchMedia = (matches = false) =>
+  vi.fn().mockImplementation((query: string) => ({
+    matches: matches || query === '(min-width:1200px)' || query === '(min-width:600px)',
+    media: query,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
 
 Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() });
 
@@ -21,15 +22,27 @@ Object.defineProperty(window, 'matchMedia', { writable: true, value: matchMedia(
 class TestIntersectionObserver {
   constructor(private readonly callback: IntersectionObserverCallback) {}
   disconnect() {}
-  observe(target: Element) { this.callback([{ isIntersecting: true, target } as IntersectionObserverEntry], this as unknown as IntersectionObserver); }
-  takeRecords() { return []; }
+  observe(target: Element) {
+    this.callback(
+      [{ isIntersecting: true, target } as IntersectionObserverEntry],
+      this as unknown as IntersectionObserver,
+    );
+  }
+  takeRecords() {
+    return [];
+  }
   unobserve() {}
 }
 
 class TestResizeObserver {
   constructor(private readonly callback: ResizeObserverCallback) {}
   disconnect() {}
-  observe(target: Element) { this.callback([{ contentRect: target.getBoundingClientRect(), target } as ResizeObserverEntry], this as unknown as ResizeObserver); }
+  observe(target: Element) {
+    this.callback(
+      [{ contentRect: target.getBoundingClientRect(), target } as ResizeObserverEntry],
+      this as unknown as ResizeObserver,
+    );
+  }
   unobserve() {}
 }
 

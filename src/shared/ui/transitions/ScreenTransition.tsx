@@ -15,7 +15,12 @@ const enter = keyframes`
  * `scrollId` keeps logical destinations separate when they share a mounted screen.
  * `restoreScroll` decides when a destination returns to where the learner left it instead.
  */
-export function ScreenTransition({ screenId, scrollId = screenId, restoreScroll, children }: {
+export function ScreenTransition({
+  screenId,
+  scrollId = screenId,
+  restoreScroll,
+  children,
+}: {
   screenId: string;
   scrollId?: string;
   restoreScroll?: (fromScreenId: string, toScreenId: string) => boolean;
@@ -28,7 +33,9 @@ export function ScreenTransition({ screenId, scrollId = screenId, restoreScroll,
   const scrollPositions = useRef(new Map<string, number>());
   const [animatedScreenId, setAnimatedScreenId] = useState<string | null>(null);
   useEffect(() => {
-    const onScroll = () => { lastScrollY.current = window.scrollY; };
+    const onScroll = () => {
+      lastScrollY.current = window.scrollY;
+    };
     addEventListener('scroll', onScroll, { passive: true });
     return () => removeEventListener('scroll', onScroll);
   }, []);
@@ -37,7 +44,10 @@ export function ScreenTransition({ screenId, scrollId = screenId, restoreScroll,
     if (fromScreenId !== screenId) {
       scrollPositions.current.set(previousScrollId.current, lastScrollY.current);
       setAnimatedScreenId(screenId);
-      window.scrollTo(0, restoreScroll?.(previousScrollId.current, scrollId) ? scrollPositions.current.get(scrollId) ?? 0 : 0);
+      window.scrollTo(
+        0,
+        restoreScroll?.(previousScrollId.current, scrollId) ? (scrollPositions.current.get(scrollId) ?? 0) : 0,
+      );
       lastScrollY.current = window.scrollY;
     }
     previousScreenId.current = screenId;
@@ -45,18 +55,22 @@ export function ScreenTransition({ screenId, scrollId = screenId, restoreScroll,
   }, [screenId, scrollId, restoreScroll]);
   const shouldAnimate = animatedScreenId === screenId;
 
-  return <Box
-    data-testid="screen-transition"
-    data-screen-id={screenId}
-    key={screenId}
-    data-animated={shouldAnimate ? 'true' : 'false'}
-    sx={{
-      flex: 1,
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      animation: shouldAnimate ? `${enter} ${screenTransitionDurationMs}ms ${easing.standard} both` : 'none',
-      [reducedMotion]: { animation: 'none' },
-    }}
-  >{children}</Box>;
+  return (
+    <Box
+      data-testid="screen-transition"
+      data-screen-id={screenId}
+      key={screenId}
+      data-animated={shouldAnimate ? 'true' : 'false'}
+      sx={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative',
+        animation: shouldAnimate ? `${enter} ${screenTransitionDurationMs}ms ${easing.standard} both` : 'none',
+        [reducedMotion]: { animation: 'none' },
+      }}
+    >
+      {children}
+    </Box>
+  );
 }

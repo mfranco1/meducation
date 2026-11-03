@@ -33,7 +33,9 @@ beforeEach(() => {
     clear: () => values.clear(),
   });
 });
-afterEach(() => { vi.unstubAllGlobals(); });
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('progressive dashboard statistics', () => {
   it('calculates all subject scores after the summary request without opening a subject', async () => {
@@ -84,7 +86,14 @@ describe('progressive dashboard statistics', () => {
 
   it('recovers a failed subject quiz catalog without changing saved progress', async () => {
     const subject = { id: 's1', name: 'Recovery Subject', accent: '#b9511b' };
-    const quiz = { id: 'q1', subjectId: subject.id, topicId: 't1', name: 'Recovery Quiz', questionCount: 1, questionIds: ['i1'] };
+    const quiz = {
+      id: 'q1',
+      subjectId: subject.id,
+      topicId: 't1',
+      name: 'Recovery Quiz',
+      questionCount: 1,
+      questionIds: ['i1'],
+    };
     runtimeQuestionBank.configureApi({
       revision: 'rev-subject-recovery',
       subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }],
@@ -96,7 +105,14 @@ describe('progressive dashboard statistics', () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({ ok: false, status: 404, headers: { get: () => null } })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-subject-recovery', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          revision: 'rev-subject-recovery',
+          topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }],
+          quizzes: [quiz],
+        }),
+      });
     vi.stubGlobal('fetch', fetchMock);
 
     render(
@@ -109,7 +125,7 @@ describe('progressive dashboard statistics', () => {
     expect(screen.getAllByRole('button', { name: 'Retry' })).toHaveLength(1);
     expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
-    expect(await screen.findByRole('button', { name: /^Retake quiz/  })).toBeVisible();
+    expect(await screen.findByRole('button', { name: /^Retake quiz/ })).toBeVisible();
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(progressKeys.map((key) => localStorage.getItem(key))).toEqual(before);
     expect(fetchMock.mock.calls.every(([url]) => !String(url).includes('/questions'))).toBe(true);
@@ -119,7 +135,8 @@ describe('progressive dashboard statistics', () => {
     const subject = { id: 's-cancel', name: 'Test Subject', accent: '#b9511b' };
     const quiz = {
       id: 'q-cancel',
-      subjectId: subject.id, topicId: 't1',
+      subjectId: subject.id,
+      topicId: 't1',
       name: 'Test Quiz',
       questionCount: 1,
       questionIds: ['i-cancel'],
@@ -141,10 +158,13 @@ describe('progressive dashboard statistics', () => {
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Test Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/  }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
-    expect(fetchMock.mock.calls.map(([url]) => String(url).split('?')[0])).toEqual([`/api/v1/quizzes/${quiz.id}/questions`, '/api/v1/subjects']);
+    expect(fetchMock.mock.calls.map(([url]) => String(url).split('?')[0])).toEqual([
+      `/api/v1/quizzes/${quiz.id}/questions`,
+      '/api/v1/subjects',
+    ]);
 
     fireEvent.click(screen.getByRole('button', { name: 'Dashboard' }));
     expect(screen.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
@@ -156,7 +176,16 @@ describe('progressive dashboard statistics', () => {
         json: async () => ({
           revision: 'rev-cancel-app',
           questions: [
-            { id: 'i-cancel', quizId: quiz.id, stem: 'Question', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }], answer: 'A' },
+            {
+              id: 'i-cancel',
+              quizId: quiz.id,
+              stem: 'Question',
+              choices: [
+                { id: 'A', text: 'Choice' },
+                { id: 'B', text: 'Alternative' },
+              ],
+              answer: 'A',
+            },
           ],
         }),
       }),
@@ -170,7 +199,8 @@ describe('progressive dashboard statistics', () => {
     const subject = { id: 's-failure', name: 'Test Subject', accent: '#b9511b' };
     const quiz = {
       id: 'q-failure',
-      subjectId: subject.id, topicId: 't1',
+      subjectId: subject.id,
+      topicId: 't1',
       name: 'Test Quiz',
       questionCount: 1,
       questionIds: ['i-failure'],
@@ -192,7 +222,7 @@ describe('progressive dashboard statistics', () => {
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Test Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Retake quiz/  }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Retake quiz/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
     const questionFailure = await screen.findByRole('alert');
@@ -210,30 +240,44 @@ describe('progressive dashboard statistics', () => {
   });
   it('fetches questions when quiz setup opens, loads the quiz screen once they arrive and keeps the attempt in browser storage', async () => {
     const subject = { id: 's1', name: 'Lazy Subject', accent: '#b9511b' };
-    const quiz = { id: 'q1', subjectId: subject.id, topicId: 't1', name: 'Lazy Quiz', questionCount: 1, questionIds: ['i1'] };
+    const quiz = {
+      id: 'q1',
+      subjectId: subject.id,
+      topicId: 't1',
+      name: 'Lazy Quiz',
+      questionCount: 1,
+      questionIds: ['i1'],
+    };
     runtimeQuestionBank.configureApi(
       { revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] },
       [{ revision: 'rev-lazy', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
     );
-    const fetchMock = vi.fn().mockImplementation(async (url: string) => url === '/api/v1/subjects' ? { ok: true, json: async () => ({ revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }) } : {
-        ok: true,
-        json: async () => ({
-          revision: 'rev-lazy',
-          questions: [
-            {
-              id: 'i1',
-              quizId: quiz.id,
-              stem: 'Lazy question stem',
-              choices: [
-                { id: 'A', text: 'Choice' },
-                { id: 'B', text: 'Alternative' },
+    const fetchMock = vi.fn().mockImplementation(async (url: string) =>
+      url === '/api/v1/subjects'
+        ? {
+            ok: true,
+            json: async () => ({ revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }),
+          }
+        : {
+            ok: true,
+            json: async () => ({
+              revision: 'rev-lazy',
+              questions: [
+                {
+                  id: 'i1',
+                  quizId: quiz.id,
+                  stem: 'Lazy question stem',
+                  choices: [
+                    { id: 'A', text: 'Choice' },
+                    { id: 'B', text: 'Alternative' },
+                  ],
+                  answer: 'A',
+                  rationale: 'Explanation',
+                },
               ],
-              answer: 'A',
-              rationale: 'Explanation',
-            },
-          ],
-        }),
-      });
+            }),
+          },
+    );
     vi.stubGlobal('fetch', fetchMock);
     const questionRequests = () => fetchMock.mock.calls.filter(([url]) => String(url).includes('/questions')).length;
 
@@ -243,7 +287,7 @@ describe('progressive dashboard statistics', () => {
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Lazy Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/  }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/ }));
     await waitFor(() => expect(questionRequests()).toBe(1));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
@@ -272,19 +316,47 @@ describe('progressive dashboard statistics', () => {
   });
   it('disables progress backup during active quiz with save-and-leave guidance', async () => {
     const subject = { id: 's3', name: 'Backup subject', accent: '#b9511b' };
-    const quiz = { id: 'q3', subjectId: subject.id, topicId: 't1', name: 'Backup quiz', questionCount: 1, questionIds: ['i3'] };
+    const quiz = {
+      id: 'q3',
+      subjectId: subject.id,
+      topicId: 't1',
+      name: 'Backup quiz',
+      questionCount: 1,
+      questionIds: ['i3'],
+    };
     installQuizApiFixture(
-      [subject], [quiz], [{ id: 'i3', quizId: quiz.id, stem: 'Question', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }], answer: 'A', rationale: 'Fixture explanation', metadata: { topic: 'Fixture' } }],
+      [subject],
+      [quiz],
+      [
+        {
+          id: 'i3',
+          quizId: quiz.id,
+          stem: 'Question',
+          choices: [
+            { id: 'A', text: 'Choice' },
+            { id: 'B', text: 'Alternative' },
+          ],
+          answer: 'A',
+          rationale: 'Fixture explanation',
+          metadata: { topic: 'Fixture' },
+        },
+      ],
     );
-    render(<ThemeProvider theme={theme}><App /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Open Backup subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/  }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(await screen.findByText('Question 1 of 1')).toBeVisible();
 
     const backupButton = screen.getByRole('button', { name: 'Progress' });
     expect(backupButton).toBeDisabled();
-    expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent('Save and leave your study session');
+    expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent(
+      'Save and leave your study session',
+    );
     expect(screen.queryByRole('dialog', { name: 'Progress' })).toBeNull();
     expect(screen.getByText('Question 1 of 1')).toBeVisible();
   });

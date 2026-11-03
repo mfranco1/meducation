@@ -29,11 +29,19 @@ interface ToastRecord extends Required<Omit<ToastOptions, 'message' | 'ttlMs' | 
   revision: number;
 }
 type DismissReason = 'close' | 'timeout' | 'escape' | 'clickaway' | 'navigation';
-interface ToastApi { show: (options: ToastOptions) => string; dismiss: (id: string, reason?: DismissReason) => void; notifyNavigation: (screenKey: string) => void; }
+interface ToastApi {
+  show: (options: ToastOptions) => string;
+  dismiss: (id: string, reason?: DismissReason) => void;
+  notifyNavigation: (screenKey: string) => void;
+}
 const ToastContext = createContext<ToastApi | null>(null);
 const positionSx: Record<ToastPosition, Record<string, unknown>> = {
-  'top-left': { top: 16, left: 16 }, 'top-center': { top: 16, left: '50%', transform: 'translateX(-50%)' }, 'top-right': { top: 16, right: 16 },
-  'bottom-left': { bottom: 16, left: 16 }, 'bottom-center': { bottom: 16, left: '50%', transform: 'translateX(-50%)' }, 'bottom-right': { bottom: 16, right: 16 },
+  'top-left': { top: 16, left: 16 },
+  'top-center': { top: 16, left: '50%', transform: 'translateX(-50%)' },
+  'top-right': { top: 16, right: 16 },
+  'bottom-left': { bottom: 16, left: 16 },
+  'bottom-center': { bottom: 16, left: '50%', transform: 'translateX(-50%)' },
+  'bottom-right': { bottom: 16, right: 16 },
 };
 
 export function ToastProvider({ children }: { children: ReactNode }) {
@@ -46,64 +54,150 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const fadeEasing = easing.standard;
   const dismiss = useCallback((id: string, reason: DismissReason = 'close') => {
-    const toast = toastsRef.current.find(item => item.id === id);
+    const toast = toastsRef.current.find((item) => item.id === id);
     if (!toast || !toast.open) return;
     if (reason === 'navigation' && toast.scope.type !== 'screen') return;
     if (toast.dismissPolicy === 'manual' && reason !== 'close' && reason !== 'navigation') return;
-    setToasts(current => {
-      const next = current.map(item => item.id === id ? { ...item, open: false, revision: ++sequence.current } : item);
+    setToasts((current) => {
+      const next = current.map((item) =>
+        item.id === id ? { ...item, open: false, revision: ++sequence.current } : item,
+      );
       toastsRef.current = next;
       return next;
     });
   }, []);
-  const notifyNavigation = useCallback((screenKey: string) => {
-    for (const toast of toastsRef.current) {
-      if (toast.scope.type === 'screen' && toast.scope.key !== screenKey) dismiss(toast.id, 'navigation');
-    }
-  }, [dismiss]);
+  const notifyNavigation = useCallback(
+    (screenKey: string) => {
+      for (const toast of toastsRef.current) {
+        if (toast.scope.type === 'screen' && toast.scope.key !== screenKey) dismiss(toast.id, 'navigation');
+      }
+    },
+    [dismiss],
+  );
   const show = useCallback((options: ToastOptions) => {
     const id = options.id ?? `toast-${++serial.current}`;
     const ttlMs = options.ttlMs === undefined ? 5000 : options.ttlMs;
     const record: ToastRecord = {
-      id, title: options.title ?? '', message: options.message, severity: options.severity ?? 'info',
-      position: options.position ?? 'bottom-right', expiresAt: ttlMs !== null && ttlMs > 0 ? Date.now() + ttlMs : null,
-      closeButton: options.closeButton ?? true, dismissPolicy: options.dismissPolicy ?? 'automatic', action: options.action,
-      scope: options.scope ?? { type: 'global' }, open: true, revision: ++sequence.current,
+      id,
+      title: options.title ?? '',
+      message: options.message,
+      severity: options.severity ?? 'info',
+      position: options.position ?? 'bottom-right',
+      expiresAt: ttlMs !== null && ttlMs > 0 ? Date.now() + ttlMs : null,
+      closeButton: options.closeButton ?? true,
+      dismissPolicy: options.dismissPolicy ?? 'automatic',
+      action: options.action,
+      scope: options.scope ?? { type: 'global' },
+      open: true,
+      revision: ++sequence.current,
     };
-    setToasts(current => {
-      const next = current.some(item => item.id === id) ? current.map(item => item.id === id ? record : item) : [...current, record];
+    setToasts((current) => {
+      const next = current.some((item) => item.id === id)
+        ? current.map((item) => (item.id === id ? record : item))
+        : [...current, record];
       toastsRef.current = next;
       return next;
     });
     return id;
   }, []);
   const removeExited = useCallback((id: string, revision: number) => {
-    setToasts(current => {
-      const next = current.filter(item => item.id !== id || item.open || item.revision !== revision);
+    setToasts((current) => {
+      const next = current.filter((item) => item.id !== id || item.open || item.revision !== revision);
       toastsRef.current = next;
       return next;
     });
   }, []);
   useEffect(() => {
-    const timers = toasts.filter(toast => toast.open && toast.dismissPolicy !== 'manual' && toast.expiresAt !== null)
-      .map(toast => setTimeout(() => dismiss(toast.id, 'timeout'), Math.max(0, toast.expiresAt! - Date.now())));
-    return () => { for (const timer of timers) clearTimeout(timer); };
+    const timers = toasts
+      .filter((toast) => toast.open && toast.dismissPolicy !== 'manual' && toast.expiresAt !== null)
+      .map((toast) => setTimeout(() => dismiss(toast.id, 'timeout'), Math.max(0, toast.expiresAt! - Date.now())));
+    return () => {
+      for (const timer of timers) clearTimeout(timer);
+    };
   }, [toasts, dismiss]);
   const api = useMemo(() => ({ show, dismiss, notifyNavigation }), [show, dismiss, notifyNavigation]);
   const byPosition = new Map<ToastPosition, ToastRecord[]>();
   for (const toast of toasts) byPosition.set(toast.position, [...(byPosition.get(toast.position) ?? []), toast]);
-  return <ToastContext.Provider value={api}>{children}{typeof document !== 'undefined' && createPortal(<>
-    {[...byPosition].map(([position, items]) => <Stack key={position} data-testid={`toast-position-${position}`} spacing={1} sx={{ position: 'fixed', zIndex: 1200, width: 'max-content', maxWidth: 'min(420px, calc(100vw - 32px))', ...positionSx[position], '@supports (padding: max(0px))': { padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)' } }}>
-      {items.map(toast => <Fade key={toast.id} in={toast.open} appear timeout={reducedMotion ? 0 : { enter: 180, exit: 140 }} easing={{ enter: fadeEasing, exit: fadeEasing }} onExited={() => removeExited(toast.id, toast.revision)}>
-        <Alert aria-hidden={!toast.open || undefined} inert={!toast.open} severity={toast.severity} role={!toast.open ? undefined : toast.severity === 'error' ? 'alert' : 'status'} variant="standard" action={<Stack direction="row" alignItems="center" spacing={0.5}>
-          {toast.action && <Button color="inherit" size="small" onClick={toast.action.onClick}>{toast.action.label}</Button>}
-          {toast.closeButton && <IconButton aria-label="Close notification" color="inherit" size="small" onClick={() => dismiss(toast.id, 'close')}><CloseRoundedIcon fontSize="small" /></IconButton>}
-        </Stack>} sx={{ width: '100%', boxShadow: '0 2px 8px rgba(70, 38, 20, 0.06)', border: 1, borderColor: alpha(theme.palette.divider, 0.55), alignItems: 'flex-start', overflowWrap: 'anywhere', pointerEvents: toast.open ? 'auto' : 'none', '& .MuiAlert-message': { minWidth: 0, flex: 1 } }}>
-          {toast.title && <AlertTitle>{toast.title}</AlertTitle>}{toast.message}
-        </Alert>
-      </Fade>)}
-    </Stack>)}
-  </>, document.body)}</ToastContext.Provider>;
+  return (
+    <ToastContext.Provider value={api}>
+      {children}
+      {typeof document !== 'undefined' &&
+        createPortal(
+          <>
+            {[...byPosition].map(([position, items]) => (
+              <Stack
+                key={position}
+                data-testid={`toast-position-${position}`}
+                spacing={1}
+                sx={{
+                  position: 'fixed',
+                  zIndex: 1200,
+                  width: 'max-content',
+                  maxWidth: 'min(420px, calc(100vw - 32px))',
+                  ...positionSx[position],
+                  '@supports (padding: max(0px))': {
+                    padding:
+                      'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)',
+                  },
+                }}
+              >
+                {items.map((toast) => (
+                  <Fade
+                    key={toast.id}
+                    in={toast.open}
+                    appear
+                    timeout={reducedMotion ? 0 : { enter: 180, exit: 140 }}
+                    easing={{ enter: fadeEasing, exit: fadeEasing }}
+                    onExited={() => removeExited(toast.id, toast.revision)}
+                  >
+                    <Alert
+                      aria-hidden={!toast.open || undefined}
+                      inert={!toast.open}
+                      severity={toast.severity}
+                      role={!toast.open ? undefined : toast.severity === 'error' ? 'alert' : 'status'}
+                      variant="standard"
+                      action={
+                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                          {toast.action && (
+                            <Button color="inherit" size="small" onClick={toast.action.onClick}>
+                              {toast.action.label}
+                            </Button>
+                          )}
+                          {toast.closeButton && (
+                            <IconButton
+                              aria-label="Close notification"
+                              color="inherit"
+                              size="small"
+                              onClick={() => dismiss(toast.id, 'close')}
+                            >
+                              <CloseRoundedIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Stack>
+                      }
+                      sx={{
+                        width: '100%',
+                        boxShadow: '0 2px 8px rgba(70, 38, 20, 0.06)',
+                        border: 1,
+                        borderColor: alpha(theme.palette.divider, 0.55),
+                        alignItems: 'flex-start',
+                        overflowWrap: 'anywhere',
+                        pointerEvents: toast.open ? 'auto' : 'none',
+                        '& .MuiAlert-message': { minWidth: 0, flex: 1 },
+                      }}
+                    >
+                      {toast.title && <AlertTitle>{toast.title}</AlertTitle>}
+                      {toast.message}
+                    </Alert>
+                  </Fade>
+                ))}
+              </Stack>
+            ))}
+          </>,
+          document.body,
+        )}
+    </ToastContext.Provider>
+  );
 }
 
 export function useToast() {

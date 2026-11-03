@@ -83,17 +83,6 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
     .poll(() => page.locator('main').evaluate((element) => element.getBoundingClientRect().width))
     .toBeGreaterThan(200);
   await expect(card).toBeVisible();
-  const overflow = await page.evaluate(() =>
-    [...document.querySelectorAll('body *')]
-      .map((element) => ({
-        tag: element.tagName,
-        className: typeof element.className === 'string' ? element.className : '',
-        right: element.getBoundingClientRect().right,
-        width: element.getBoundingClientRect().width,
-      }))
-      .filter((element) => element.right > window.innerWidth + 1)
-      .slice(0, 8),
-  );
   const layout = await page.evaluate(() => {
     const card = document.querySelector('[data-testid="all-subjects-grid"] .MuiCardActionArea-root')!;
     const grid = document.querySelector('[data-testid="all-subjects-grid"]')!;

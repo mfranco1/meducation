@@ -123,19 +123,31 @@ describe('record save planning', () => {
     expect(JSON.parse(toRecordText(stored))).toEqual(storedQuestionBank.questions[0]);
   });
   it('patches only changed fields and removes optional fields the author deleted', () => {
-    const edited = { ...storedQuestionBank.questions[0], stem: 'Changed', pearls: ['Added'] } as Record<string, unknown>;
+    const edited = { ...storedQuestionBank.questions[0], stem: 'Changed', pearls: ['Added'] } as Record<
+      string,
+      unknown
+    >;
     delete edited.rationale;
     const plan = planSave('question', JSON.stringify(edited), stored);
-    expect(plan).toEqual({ fields: { stem: 'Changed', pearls: ['Added'], rationale: null }, parentId: stored.quizId, moveTo: undefined });
+    expect(plan).toEqual({
+      fields: { stem: 'Changed', pearls: ['Added'], rationale: null },
+      parentId: stored.quizId,
+      moveTo: undefined,
+    });
   });
   it('sends nothing for unchanged text and plans a move when only the parent changed', () => {
     expect(planSave('question', toRecordText(stored), stored)).toMatchObject({ fields: {}, moveTo: undefined });
-    expect(planSave('question', JSON.stringify({ ...stored, quizId: 'q9' }), stored)).toMatchObject({ fields: {}, moveTo: 'q9' });
+    expect(planSave('question', JSON.stringify({ ...stored, quizId: 'q9' }), stored)).toMatchObject({
+      fields: {},
+      moveTo: 'q9',
+    });
   });
   it('creates from every authored field, leaving the ID and parent to the server call', () => {
     const plan = planSave('quiz', JSON.stringify(newRecordTemplate('quiz', 's1')));
     expect(plan).toEqual({ fields: { name: '' }, parentId: 's1', moveTo: undefined });
-    expect(planSave('subject', JSON.stringify(newRecordTemplate('subject')))).toMatchObject({ fields: { name: '', accent: '#bc531e' } });
+    expect(planSave('subject', JSON.stringify(newRecordTemplate('subject')))).toMatchObject({
+      fields: { name: '', accent: '#bc531e' },
+    });
   });
   it('refuses unusable text and ID changes before any request, and passes unknown fields to the server', () => {
     expect(planSave('question', '{ nope', stored)).toEqual({ error: 'Record JSON is invalid.' });
@@ -146,7 +158,13 @@ describe('record save planning', () => {
     expect(planSave('card', JSON.stringify({ id: '', deckId: '', front: 'a', back: 'b' }))).toEqual({
       error: 'deckId must name the parent record.',
     });
-    expect(planSave('subject', JSON.stringify({ id: 's1', name: 'N', accent: '#fff', legacy: 1 }), { id: 's1', name: 'N', accent: '#fff' })).toMatchObject({
+    expect(
+      planSave('subject', JSON.stringify({ id: 's1', name: 'N', accent: '#fff', legacy: 1 }), {
+        id: 's1',
+        name: 'N',
+        accent: '#fff',
+      }),
+    ).toMatchObject({
       fields: { legacy: 1 },
     });
   });

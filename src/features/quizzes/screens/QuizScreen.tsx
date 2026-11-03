@@ -1,9 +1,20 @@
 import { useCallback, useRef, useState } from 'react';
 import { Container } from '@mui/material';
-import { blankResponse, commitAnswer, isFullyAnsweredFastFeedback, isPerfectScore, scoreAttempt, updateResponse } from '../../../domain/quizEngine';
+import {
+  blankResponse,
+  commitAnswer,
+  isFullyAnsweredFastFeedback,
+  isPerfectScore,
+  scoreAttempt,
+  updateResponse,
+} from '../../../domain/quizEngine';
 import type { Attempt, Question, Quiz } from '../../../domain/types';
 import { CelebrationOverlay } from '../components/celebration/CelebrationOverlay';
-import { celebrationForStreak, perfectTestCelebration, type CelebrationEvent } from '../components/celebration/celebrationCatalog';
+import {
+  celebrationForStreak,
+  perfectTestCelebration,
+  type CelebrationEvent,
+} from '../components/celebration/celebrationCatalog';
 import { QuestionCard } from '../components/quiz/QuestionCard';
 import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
@@ -34,15 +45,26 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
   const question = questions[index];
-  useStudyArrowNavigation({ index, total: questions.length, disabled: navigatorOpen || submitOpen, onPrevious: () => navigateToQuestion(index - 1), onNext: () => navigateToQuestion(index + 1), nextButtonRef: nextRef, finishButtonRef: finishRef });
+  useStudyArrowNavigation({
+    index,
+    total: questions.length,
+    disabled: navigatorOpen || submitOpen,
+    onPrevious: () => navigateToQuestion(index - 1),
+    onNext: () => navigateToQuestion(index + 1),
+    nextButtonRef: nextRef,
+    finishButtonRef: finishRef,
+  });
   const savedResponse = attempt.responses[question.id];
   const response = savedResponse ?? blankResponse(question.id);
   const feedback = response.locked && attempt.feedbackMode === 'immediate';
   const select = (choice: string) => {
     const result = commitAnswer(attempt, question, choice);
     onCheckpoint(result.attempt);
-    const perfect = isFullyAnsweredFastFeedback(result.attempt, questions) && isPerfectScore(scoreAttempt(result.attempt, questions));
-    const celebration = perfect ? perfectTestCelebration() : result.streakMilestone && celebrationForStreak(result.streakMilestone);
+    const perfect =
+      isFullyAnsweredFastFeedback(result.attempt, questions) && isPerfectScore(scoreAttempt(result.attempt, questions));
+    const celebration = perfect
+      ? perfectTestCelebration()
+      : result.streakMilestone && celebrationForStreak(result.streakMilestone);
     if (celebration) setCelebration({ ...celebration, playbackId: ++celebrationSequence.current });
   };
   const toggleFlag = () => onCheckpoint(updateResponse(attempt, { ...response, flagged: !response.flagged }));
@@ -61,22 +83,71 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     onFinish();
   };
 
-  const navigator = <QuestionNavigator
-    questions={questions}
-    attempt={attempt}
-    currentIndex={index}
-    filter={navigatorFilter}
-    onFilterChange={setNavigatorFilter}
-    onNavigate={navigateToQuestion}
-  />;
+  const navigator = (
+    <QuestionNavigator
+      questions={questions}
+      attempt={attempt}
+      currentIndex={index}
+      filter={navigatorFilter}
+      onFilterChange={setNavigatorFilter}
+      onNavigate={navigateToQuestion}
+    />
+  );
 
-  return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
-    {celebration && <CelebrationOverlay key={celebration.playbackId} open title={celebration.title} message={celebration.message} variant={celebration.variant} level={celebration.level} onComplete={clearCelebration} />}
-    <StudyHeader itemLabel="Question" index={index} total={questions.length} exitLabel="Leave test" onExit={onRequestExit} completed={questions.filter(item => attempt.responses[item.id]?.selectedChoiceId).length} trailing={<Stopwatch attempt={attempt} />} />
-    <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
-        <SwapTransition swapKey={index}><QuestionCard key={question.id} question={question} response={response} showFeedback={feedback} burstOnCorrect={attempt.feedbackMode === 'immediate'} keyboardShortcuts shortcutsDisabled={navigatorOpen || submitOpen} onSelect={select} onToggleFlag={toggleFlag} /></SwapTransition>
-        <StudyNavigationFooter index={index} total={questions.length} onPrevious={() => navigateToQuestion(index - 1)} onNext={() => navigateToQuestion(index + 1)} onFinish={requestSubmit} finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'} nextLabel={feedback ? 'Continue' : 'Next'} nextButtonRef={nextRef} finishButtonRef={finishRef} />
-    </QuestionNavigationLayout>
-    <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
-  </Container>;
+  return (
+    <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
+      {celebration && (
+        <CelebrationOverlay
+          key={celebration.playbackId}
+          open
+          title={celebration.title}
+          message={celebration.message}
+          variant={celebration.variant}
+          level={celebration.level}
+          onComplete={clearCelebration}
+        />
+      )}
+      <StudyHeader
+        itemLabel="Question"
+        index={index}
+        total={questions.length}
+        exitLabel="Leave test"
+        onExit={onRequestExit}
+        completed={questions.filter((item) => attempt.responses[item.id]?.selectedChoiceId).length}
+        trailing={<Stopwatch attempt={attempt} />}
+      />
+      <QuestionNavigationLayout
+        navigator={navigator}
+        open={navigatorOpen}
+        onOpen={() => setNavigatorOpen(true)}
+        onClose={() => setNavigatorOpen(false)}
+      >
+        <SwapTransition swapKey={index}>
+          <QuestionCard
+            key={question.id}
+            question={question}
+            response={response}
+            showFeedback={feedback}
+            burstOnCorrect={attempt.feedbackMode === 'immediate'}
+            keyboardShortcuts
+            shortcutsDisabled={navigatorOpen || submitOpen}
+            onSelect={select}
+            onToggleFlag={toggleFlag}
+          />
+        </SwapTransition>
+        <StudyNavigationFooter
+          index={index}
+          total={questions.length}
+          onPrevious={() => navigateToQuestion(index - 1)}
+          onNext={() => navigateToQuestion(index + 1)}
+          onFinish={requestSubmit}
+          finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'}
+          nextLabel={feedback ? 'Continue' : 'Next'}
+          nextButtonRef={nextRef}
+          finishButtonRef={finishRef}
+        />
+      </QuestionNavigationLayout>
+      <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
+    </Container>
+  );
 }

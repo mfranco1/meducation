@@ -37,7 +37,9 @@ it('deletes a subject with its topics, quizzes, items, decks and cards through o
   fireEvent.click(quizNav().getByRole('button', { name: 'Subject actions' }));
   fireEvent.click(screen.getByRole('menuitem', { name: 'Delete subject…' }));
   const dialog = screen.getByRole('dialog', { name: 'Delete subject?' });
-  expect(within(dialog).getByText('Affected: 1 subjects · 1 topics · 2 quizzes · 3 items · 2 decks · 2 cards.')).toBeVisible();
+  expect(
+    within(dialog).getByText('Affected: 1 subjects · 1 topics · 2 quizzes · 3 items · 2 decks · 2 cards.'),
+  ).toBeVisible();
   expect(store.fetcher).not.toHaveBeenCalled();
   fireEvent.click(within(dialog).getByRole('button', { name: 'Delete subject' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
@@ -77,7 +79,9 @@ it('keeps unsaved text in both tabs and reports it for the publish gate', async 
   fireEvent.click(screen.getByRole('option', { name: 'Topic 1' }));
   await flashNav.findByRole('combobox', { name: 'Deck' });
   fireEvent.click(flashNav.getByRole('button', { name: 'Add decks' }));
-  fireEvent.change(within(screen.getByRole('dialog')).getByRole('textbox', { name: 'JSON' }), { target: { value: '{ "decks": [] }' } });
+  fireEvent.change(within(screen.getByRole('dialog')).getByRole('textbox', { name: 'JSON' }), {
+    target: { value: '{ "decks": [] }' },
+  });
   await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith({ quizzes: false, flashcards: true }));
   expect(screen.getByRole('tab', { name: 'Flashcards', hidden: true })).toHaveAccessibleDescription(/Unsaved/);
 });

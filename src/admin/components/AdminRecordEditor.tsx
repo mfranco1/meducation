@@ -170,12 +170,7 @@ export function AdminRecordEditor({
       onChange={(value) => patch(field, value)}
     />
   );
-  const nestedString = (
-    field: 'metadata' | 'rationaleMeta',
-    key: string,
-    label: string,
-    options?: string[],
-  ) => (
+  const nestedString = (field: 'metadata' | 'rationaleMeta', key: string, label: string, options?: string[]) => (
     <OptionalString
       label={label}
       value={(record?.[field] as DraftRecord | undefined)?.[key] as string | undefined}
@@ -236,11 +231,7 @@ export function AdminRecordEditor({
             label="ID"
             value={record.id}
             slotProps={{ input: { readOnly: true } }}
-            helperText={
-              existing
-                ? 'Stable ID · read-only'
-                : 'The server assigns a stable ID when you save.'
-            }
+            helperText={existing ? 'Stable ID · read-only' : 'The server assigns a stable ID when you save.'}
           />
           {['subjectId', 'quizId', 'deckId']
             .filter((key) => record[key] !== undefined)
@@ -255,7 +246,8 @@ export function AdminRecordEditor({
             ))}
           {(kind === 'subject' || kind === 'topic' || kind === 'quiz' || kind === 'deck') && input('name', 'Name')}
           {kind === 'subject' && input('accent', 'Accent')}
-          {(kind === 'subject' || kind === 'topic' || kind === 'quiz' || kind === 'deck') && optional('description', 'Description', false, descriptionMaxLength)}
+          {(kind === 'subject' || kind === 'topic' || kind === 'quiz' || kind === 'deck') &&
+            optional('description', 'Description', false, descriptionMaxLength)}
           {kind === 'card' && (
             <>
               {input('front', 'Front', true)}
@@ -304,9 +296,7 @@ export function AdminRecordEditor({
                   </Stack>
                 </Stack>
               ))}
-              <Typography variant="caption">
-                The answer choice must be retained until the answer is changed.
-              </Typography>
+              <Typography variant="caption">The answer choice must be retained until the answer is changed.</Typography>
               <Stack spacing={1}>
                 <TextField
                   label="New choice ID"

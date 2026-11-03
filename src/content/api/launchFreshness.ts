@@ -17,9 +17,14 @@ export class LaunchFreshness {
       if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
       if (this.now() - started >= 30_000) throw genericFailure('timeout');
     };
-    const request = validate(controller.signal).then(() => { admit(); return admit; });
+    const request = validate(controller.signal).then(() => {
+      admit();
+      return admit;
+    });
     this.pending.set(key, { controller, request });
-    const clear = () => { if (this.pending.get(key)?.request === request) this.pending.delete(key); };
+    const clear = () => {
+      if (this.pending.get(key)?.request === request) this.pending.delete(key);
+    };
     void request.then(clear, clear);
     return request;
   }

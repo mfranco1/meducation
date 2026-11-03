@@ -15,7 +15,7 @@ export function useScrollCurrentQuestion(
       const areaBounds = scrollArea.getBoundingClientRect();
       const tileBounds = currentTile.getBoundingClientRect();
       const tileCenter = tileBounds.top - areaBounds.top + tileBounds.height / 2;
-      if (tileCenter >= scrollArea.clientHeight * .25 && tileCenter <= scrollArea.clientHeight * .75) return;
+      if (tileCenter >= scrollArea.clientHeight * 0.25 && tileCenter <= scrollArea.clientHeight * 0.75) return;
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
       scrollArea.scrollTo({
         top: scrollArea.scrollTop + tileCenter - scrollArea.clientHeight / 2,
@@ -23,7 +23,7 @@ export function useScrollCurrentQuestion(
       });
     });
     return () => cancelAnimationFrame(frame);
-  // The caller supplies the exact navigation state that should trigger re-centering.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // The caller supplies the exact navigation state that should trigger re-centering.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, dependencies);
 }

@@ -9,33 +9,61 @@ const subjects: FlashcardSubjectSummary[] = [
   { id: 's3', name: 'Three', accent: '#333', deckCount: 0, deckIds: [] },
 ];
 const progress: FlashcardProgressState = {
-  schemaVersion: 2, revision: 'r', completionCounts: { d2: 1 }, checkpoints: {
-    d1: { deckId: 'd1', currentCardId: 'f1', contentSignature: 'x', updatedAt: '2026-10-01', openedCardIds: [], flaggedCardIds: [] },
-    d3: { deckId: 'd3', currentCardId: 'f3', contentSignature: 'x', updatedAt: '2026-10-03', openedCardIds: [], flaggedCardIds: [] },
+  schemaVersion: 2,
+  revision: 'r',
+  completionCounts: { d2: 1 },
+  checkpoints: {
+    d1: {
+      deckId: 'd1',
+      currentCardId: 'f1',
+      contentSignature: 'x',
+      updatedAt: '2026-10-01',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    },
+    d3: {
+      deckId: 'd3',
+      currentCardId: 'f3',
+      contentSignature: 'x',
+      updatedAt: '2026-10-03',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    },
   },
 };
 describe('flashcard dashboard and deck selectors', () => {
   it('excludes removed or emptied decks from activity while retaining their checkpoints', () => {
-    const withEmptyDeck = subjects.map(subject => ({ ...subject, emptyDeckIds: subject.id === 's1' ? ['d1'] : [] }));
-    const state = { ...progress, checkpoints: { d1: progress.checkpoints.d1, 'd-removed': { ...progress.checkpoints.d3, deckId: 'd-removed' } } };
+    const withEmptyDeck = subjects.map((subject) => ({ ...subject, emptyDeckIds: subject.id === 's1' ? ['d1'] : [] }));
+    const state = {
+      ...progress,
+      checkpoints: { d1: progress.checkpoints.d1, 'd-removed': { ...progress.checkpoints.d3, deckId: 'd-removed' } },
+    };
     expect(activeFlashcardSubjects(flashcardDashboardSubjects(withEmptyDeck, state))).toEqual([]);
     expect(Object.keys(state.checkpoints)).toEqual(['d1', 'd-removed']);
   });
   it('keeps every canonical subject and orders only active subjects by saved activity', () => {
     const summaries = flashcardDashboardSubjects(subjects, progress);
-    expect(summaries.map(item => item.subject.id)).toEqual(['s1', 's2', 's3']);
-    expect(activeFlashcardSubjects(summaries).map(item => item.subject.id)).toEqual(['s2', 's1']);
+    expect(summaries.map((item) => item.subject.id)).toEqual(['s1', 's2', 's3']);
+    expect(activeFlashcardSubjects(summaries).map((item) => item.subject.id)).toEqual(['s2', 's1']);
     expect(summaries[0].activeDeckCount).toBe(1);
     expect(summaries[0].completedDeckCount).toBe(1);
     expect(summaries[0].subject.description).toBe('First subject');
   });
 
   it('returns no carousel cards with no checkpoints and one card for one active subject', () => {
-    const summaries = flashcardDashboardSubjects(subjects, { schemaVersion: 2, revision: 'empty', checkpoints: {}, completionCounts: {} });
+    const summaries = flashcardDashboardSubjects(subjects, {
+      schemaVersion: 2,
+      revision: 'empty',
+      checkpoints: {},
+      completionCounts: {},
+    });
     expect(activeFlashcardSubjects(summaries)).toEqual([]);
     const oneActive = flashcardDashboardSubjects(subjects, {
-      schemaVersion: 2, revision: 'one', checkpoints: { d1: progress.checkpoints.d1 }, completionCounts: {},
+      schemaVersion: 2,
+      revision: 'one',
+      checkpoints: { d1: progress.checkpoints.d1 },
+      completionCounts: {},
     });
-    expect(activeFlashcardSubjects(oneActive).map(item => item.subject.id)).toEqual(['s1']);
+    expect(activeFlashcardSubjects(oneActive).map((item) => item.subject.id)).toEqual(['s1']);
   });
 });

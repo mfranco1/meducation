@@ -5,5 +5,10 @@ import { theme } from '../shared/theme';
 import { AdminApp } from './AdminApp';
 
 createRoot(document.getElementById('root')!).render(
-  <StrictMode><ThemeProvider theme={theme}><CssBaseline /><AdminApp /></ThemeProvider></StrictMode>,
+  <StrictMode>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <AdminApp />
+    </ThemeProvider>
+  </StrictMode>,
 );

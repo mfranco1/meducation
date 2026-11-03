@@ -60,16 +60,31 @@ export class LocalFlashcardProgressRepository {
         return (this.cached = freezeProgress(state));
       }
       if (storage.getItem(flashcardProgressKey) !== null) {
-          this.storageError = corruptMessage;
-          if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
-          return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'corrupt', checkpoints: {}, completionCounts: {} }));
+        this.storageError = corruptMessage;
+        if (this.observedRevision === undefined) this.observedRevision = 'corrupt';
+        return (this.cached = freezeProgress({
+          schemaVersion: 2,
+          revision: 'corrupt',
+          checkpoints: {},
+          completionCounts: {},
+        }));
       }
       this.observedRevision ??= 'initial';
       this.storageError = undefined;
-      return (this.cached = freezeProgress({ schemaVersion: 2, revision: 'initial', checkpoints: {}, completionCounts: {} }));
+      return (this.cached = freezeProgress({
+        schemaVersion: 2,
+        revision: 'initial',
+        checkpoints: {},
+        completionCounts: {},
+      }));
     } catch {
       this.storageError = unavailableMessage;
-      return (this.cached ??= freezeProgress({ schemaVersion: 2, revision: 'unavailable', checkpoints: {}, completionCounts: {} }));
+      return (this.cached ??= freezeProgress({
+        schemaVersion: 2,
+        revision: 'unavailable',
+        checkpoints: {},
+        completionCounts: {},
+      }));
     }
   }
 
@@ -133,7 +148,14 @@ export class LocalFlashcardProgressRepository {
   saveCheckpoint(checkpoint: FlashcardCheckpoint) {
     this.commit((state) => ({
       ...state,
-      checkpoints: { ...state.checkpoints, [checkpoint.deckId]: { ...checkpoint, openedCardIds: [...checkpoint.openedCardIds], flaggedCardIds: [...checkpoint.flaggedCardIds] } },
+      checkpoints: {
+        ...state.checkpoints,
+        [checkpoint.deckId]: {
+          ...checkpoint,
+          openedCardIds: [...checkpoint.openedCardIds],
+          flaggedCardIds: [...checkpoint.flaggedCardIds],
+        },
+      },
     }));
   }
 

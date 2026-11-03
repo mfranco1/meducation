@@ -11,14 +11,18 @@ afterEach(() => vi.unstubAllGlobals());
 describe('API response boundary fixtures', () => {
   it('accepts matching membership, order, and answer references', async () => {
     const bank = new RuntimeQuestionBank(noRetries);
-    vi.stubGlobal('fetch', vi.fn()
-      .mockResolvedValueOnce(reply(fixtures.subjects))
-      .mockResolvedValueOnce(reply(fixtures.quizzes))
-      .mockResolvedValueOnce(reply(fixtures.questions)));
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(reply(fixtures.subjects))
+        .mockResolvedValueOnce(reply(fixtures.quizzes))
+        .mockResolvedValueOnce(reply(fixtures.questions)),
+    );
     await bank.ensureSubjects();
     await bank.ensureQuizzes('s1');
     await bank.ensureQuestions('q1');
-    expect(bank.listQuestions('q1').map(question => question.id)).toEqual(['i1']);
+    expect(bank.listQuestions('q1').map((question) => question.id)).toEqual(['i1']);
   });
 
   it('rejects duplicate quiz IDs in subject membership', async () => {

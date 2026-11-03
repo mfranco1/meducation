@@ -10,7 +10,12 @@ import {
   type ProgressBackupSummary,
   type ProgressBackupV1,
 } from '../persistence/progressBackupCodec';
-import { compressProgressBackup, downloadProgressBackup, readProgressBackupFile, revokeProgressDownload } from './progressBackupFiles';
+import {
+  compressProgressBackup,
+  downloadProgressBackup,
+  readProgressBackupFile,
+  revokeProgressDownload,
+} from './progressBackupFiles';
 
 export interface ProgressBackupPreview {
   backup: ProgressBackupV1;
@@ -144,9 +149,11 @@ export function useProgressBackup(): ProgressBackupController {
     setNotice(undefined);
     const exported = exportBrowserProgress();
     if (!exported.ok) {
-      setError(exported.error === 'unavailable'
-        ? 'Current progress could not be read.'
-        : 'Saved progress could not be backed up. It has not been changed.');
+      setError(
+        exported.error === 'unavailable'
+          ? 'Current progress could not be read.'
+          : 'Saved progress could not be backed up. It has not been changed.',
+      );
       return;
     }
     setBusy(true);

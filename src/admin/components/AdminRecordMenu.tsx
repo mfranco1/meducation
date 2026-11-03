@@ -12,12 +12,7 @@ export function AdminRecordMenu({ disabled, items }: { disabled?: boolean; items
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
   return (
     <>
-      <Button
-        aria-haspopup="menu"
-        size="small"
-        disabled={disabled}
-        onClick={(event) => setAnchor(event.currentTarget)}
-      >
+      <Button aria-haspopup="menu" size="small" disabled={disabled} onClick={(event) => setAnchor(event.currentTarget)}>
         Record actions
       </Button>
       <Menu anchorEl={anchor} open={Boolean(anchor)} onClose={() => setAnchor(null)}>

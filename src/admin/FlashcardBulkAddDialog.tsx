@@ -154,12 +154,14 @@ export function FlashcardBulkAddDialog({
       aria-labelledby="flashcard-bulk-title"
     >
       {confirmation.dialog}
-      <DialogTitle id="flashcard-bulk-title">Add {{ subject: 'Topics', topic: 'Decks', deck: 'Cards' }[context.kind]}</DialogTitle>
+      <DialogTitle id="flashcard-bulk-title">
+        Add {{ subject: 'Topics', topic: 'Decks', deck: 'Cards' }[context.kind]}
+      </DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ pt: 1 }}>
           <Typography variant="body2">
-            Destination · {destinationLabel}. Up to 1,000 cards per deck. Saving adds to the draft in order and does
-            not publish.
+            Destination · {destinationLabel}. Up to 1,000 cards per deck. Saving adds to the draft in order and does not
+            publish.
           </Typography>
           <Stack direction="row" spacing={1} flexWrap="wrap">
             <Button onClick={() => void copyTemplate()} disabled={busy || loadingFile}>
@@ -202,7 +204,11 @@ export function FlashcardBulkAddDialog({
             InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
             disabled={busy || loadingFile}
           />
-          {message && <Alert severity={/^(Template|Names) copied\.$|^Saved\./.test(message) ? 'success' : 'info'}>{message}</Alert>}
+          {message && (
+            <Alert severity={/^(Template|Names) copied\.$|^Saved\./.test(message) ? 'success' : 'info'}>
+              {message}
+            </Alert>
+          )}
           {errors.length > 0 && (
             <Alert severity="error">
               <Stack spacing={0.5}>

@@ -3,12 +3,16 @@ import type { Question } from './types';
 // Store only on active attempts. A short hash keeps question text out of browser storage and backups;
 // collisions are accidental-only (cyrb53, 53 bits) and would at worst resume an attempt on edited content.
 export function contentSignature(questions: Question[]): string {
-  return cyrb53(JSON.stringify(questions.map(question => [
-    question.id,
-    question.stem,
-    question.choices.map(choice => [choice.id, choice.text]),
-    question.answer,
-  ])));
+  return cyrb53(
+    JSON.stringify(
+      questions.map((question) => [
+        question.id,
+        question.stem,
+        question.choices.map((choice) => [choice.id, choice.text]),
+        question.answer,
+      ]),
+    ),
+  );
 }
 
 function cyrb53(text: string): string {

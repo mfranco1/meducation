@@ -10,16 +10,32 @@ import {
 describe('flashcard daily completion statistics', () => {
   it('starts tracking on the first finish and counts repeat finishes', () => {
     const first = recordFlashcardDailyCompletion(undefined, '2026-10-07');
-    expect(first).toEqual({ firstDay: '2026-10-07', currentDay: '2026-10-07', currentDayCount: 1, trackedCompletions: 1, highestDailyCount: 1 });
+    expect(first).toEqual({
+      firstDay: '2026-10-07',
+      currentDay: '2026-10-07',
+      currentDayCount: 1,
+      trackedCompletions: 1,
+      highestDailyCount: 1,
+    });
     const repeated = recordFlashcardDailyCompletion(first, '2026-10-07');
     expect(repeated).toEqual({ ...first, currentDayCount: 2, trackedCompletions: 2, highestDailyCount: 2 });
   });
 
   it('counts idle calendar days in the average without storing a record for each day', () => {
     const stats = recordFlashcardDailyCompletion(undefined, '2026-01-31');
-    expect(flashcardDashboardStats({ d1: 2 }, stats, new Date(2026, 1, 2, 10))).toEqual({ completedDecks: 2, averagePerDay: 1 / 3, highestInDay: 1 });
+    expect(flashcardDashboardStats({ d1: 2 }, stats, new Date(2026, 1, 2, 10))).toEqual({
+      completedDecks: 2,
+      averagePerDay: 1 / 3,
+      highestInDay: 1,
+    });
     const later = recordFlashcardDailyCompletion(stats, '2026-02-03');
-    expect(later).toEqual({ firstDay: '2026-01-31', currentDay: '2026-02-03', currentDayCount: 1, trackedCompletions: 2, highestDailyCount: 1 });
+    expect(later).toEqual({
+      firstDay: '2026-01-31',
+      currentDay: '2026-02-03',
+      currentDayCount: 1,
+      trackedCompletions: 2,
+      highestDailyCount: 1,
+    });
     expect(flashcardDashboardStats({ d1: 2 }, later, new Date(2026, 1, 3, 10)).averagePerDay).toBe(0.5);
     expect(Object.keys(later)).toHaveLength(5);
   });
@@ -30,7 +46,11 @@ describe('flashcard daily completion statistics', () => {
     expect(localDayKey(beforeMidnight)).toBe('2026-10-06');
     expect(localDayKey(atMidnight)).toBe('2026-10-07');
     const stats = recordFlashcardDailyCompletion(undefined, localDayKey(beforeMidnight));
-    expect(recordFlashcardDailyCompletion(stats, localDayKey(atMidnight))).toMatchObject({ currentDay: '2026-10-07', currentDayCount: 1, trackedCompletions: 2 });
+    expect(recordFlashcardDailyCompletion(stats, localDayKey(atMidnight))).toMatchObject({
+      currentDay: '2026-10-07',
+      currentDayCount: 1,
+      trackedCompletions: 2,
+    });
   });
 
   it('uses calendar ordinals across month, leap-year, DST, and year boundaries', () => {
@@ -52,6 +72,10 @@ describe('flashcard daily completion statistics', () => {
   });
 
   it('includes legacy per-deck totals but starts daily figures at zero until the first tracked finish', () => {
-    expect(flashcardDashboardStats({ d1: 4, d2: 2 }, undefined, new Date(2026, 9, 7))).toEqual({ completedDecks: 6, averagePerDay: 0, highestInDay: 0 });
+    expect(flashcardDashboardStats({ d1: 4, d2: 2 }, undefined, new Date(2026, 9, 7))).toEqual({
+      completedDecks: 6,
+      averagePerDay: 0,
+      highestInDay: 0,
+    });
   });
 });

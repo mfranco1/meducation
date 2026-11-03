@@ -6,14 +6,24 @@ const policy: RetryPolicy = { maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 2500
 describe('content retry policy', () => {
   it('uses bounded defaults and accepts valid build-time overrides', () => {
     expect(readRetryPolicy({})).toEqual({ maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 8000 });
-    expect(readRetryPolicy({ VITE_CONTENT_MAX_RETRIES: '0', VITE_CONTENT_RETRY_BASE_DELAY_MS: '200', VITE_CONTENT_RETRY_MAX_DELAY_MS: '900' }))
-      .toEqual({ maxRetries: 0, baseDelayMs: 200, maxDelayMs: 900 });
+    expect(
+      readRetryPolicy({
+        VITE_CONTENT_MAX_RETRIES: '0',
+        VITE_CONTENT_RETRY_BASE_DELAY_MS: '200',
+        VITE_CONTENT_RETRY_MAX_DELAY_MS: '900',
+      }),
+    ).toEqual({ maxRetries: 0, baseDelayMs: 200, maxDelayMs: 900 });
   });
 
   it('falls back for invalid values and inconsistent delay limits', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
-    expect(readRetryPolicy({ VITE_CONTENT_MAX_RETRIES: '9', VITE_CONTENT_RETRY_BASE_DELAY_MS: '5000', VITE_CONTENT_RETRY_MAX_DELAY_MS: '10' }))
-      .toEqual({ maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 8000 });
+    expect(
+      readRetryPolicy({
+        VITE_CONTENT_MAX_RETRIES: '9',
+        VITE_CONTENT_RETRY_BASE_DELAY_MS: '5000',
+        VITE_CONTENT_RETRY_MAX_DELAY_MS: '10',
+      }),
+    ).toEqual({ maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 8000 });
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
   });

@@ -52,7 +52,10 @@ describe('quiz editor over the record API', () => {
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(store.find('question', 'i1')).toMatchObject({ stem: 'Exact stem $x^2$\n', version: 2 }));
     expect(requests(store)).toEqual(['PUT /draft/questions/i1']);
-    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ expectedVersion: 1, fields: { stem: 'Exact stem $x^2$\n' } });
+    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({
+      expectedVersion: 1,
+      fields: { stem: 'Exact stem $x^2$\n' },
+    });
     expect(await frame().findByText(/Saved to the draft/)).toBeVisible();
     expect(frame().getByRole('textbox', { name: 'Question stem' })).toHaveValue('Exact stem $x^2$\n');
   });
@@ -78,7 +81,10 @@ describe('quiz editor over the record API', () => {
     fireEvent.change(frame().getByRole('textbox', { name: 'Question stem' }), { target: { value: 'A new stem' } });
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(frame().getByRole('textbox', { name: 'ID' })).toHaveValue('i91'));
-    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toMatchObject({ parentId: 'q1', fields: { stem: 'A new stem' } });
+    expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toMatchObject({
+      parentId: 'q1',
+      fields: { stem: 'A new stem' },
+    });
     expect(store.snapshot.questions.map((row) => row.id)).toEqual(['i1', 'i3', 'i91', 'i2', 'i4']);
   });
 
@@ -90,15 +96,40 @@ describe('quiz editor over the record API', () => {
     fireEvent.change(json, {
       target: {
         value: JSON.stringify({
-          topics: [{ name: 'Second topic', quizzes: [{ name: 'Second quiz', items: [{ stem: 'New stem', choices: ['A', 'B'], answer: 'A', rationale: 'New rationale' }] }] }],
+          topics: [
+            {
+              name: 'Second topic',
+              quizzes: [
+                {
+                  name: 'Second quiz',
+                  items: [{ stem: 'New stem', choices: ['A', 'B'], answer: 'A', rationale: 'New rationale' }],
+                },
+              ],
+            },
+          ],
         }),
       },
     });
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(store.snapshot.topics).toHaveLength(3));
-    expect(store.snapshot.topics.find((row) => row.id === 't91')).toMatchObject({ id: 't91', subjectId: 's1', name: 'Second topic' });
-    expect(requests(store)).toEqual(['POST /draft/topics', 'POST /draft/quizzes', 'POST /draft/quizzes/q91/questions/bulk', 'GET /draft']);
-    expect(store.snapshot.questions.at(-1)).toMatchObject({ quizId: 'q91', choices: [{ id: 'A', text: 'A' }, { id: 'B', text: 'B' }] });
+    expect(store.snapshot.topics.find((row) => row.id === 't91')).toMatchObject({
+      id: 't91',
+      subjectId: 's1',
+      name: 'Second topic',
+    });
+    expect(requests(store)).toEqual([
+      'POST /draft/topics',
+      'POST /draft/quizzes',
+      'POST /draft/quizzes/q91/questions/bulk',
+      'GET /draft',
+    ]);
+    expect(store.snapshot.questions.at(-1)).toMatchObject({
+      quizId: 'q91',
+      choices: [
+        { id: 'A', text: 'A' },
+        { id: 'B', text: 'B' },
+      ],
+    });
     // The new quiz is selected afterwards.
     await navigator().findByRole('button', { name: /1\. i91/ });
   });
@@ -113,7 +144,12 @@ describe('quiz editor over the record API', () => {
     expect(await frame().findByText('$.topics[0].quizzes must be a non-empty array.')).toBeVisible();
     expect(store.fetcher).not.toHaveBeenCalled();
     const text = JSON.stringify({
-      topics: [{ name: 'X', quizzes: [{ name: 'Q', items: [{ stem: 'S', choices: ['A', 'B'], answer: 'A', rationale: 'R' }] }] }],
+      topics: [
+        {
+          name: 'X',
+          quizzes: [{ name: 'Q', items: [{ stem: 'S', choices: ['A', 'B'], answer: 'A', rationale: 'R' }] }],
+        },
+      ],
     });
     fireEvent.change(json, { target: { value: text } });
     store.rejectNext([{ path: '$.records[0].stem', code: 'blank', message: 'Stem is required.' }], /\/bulk$/);
@@ -128,7 +164,11 @@ describe('quiz editor over the record API', () => {
     const json = await frame().findByRole('textbox', { name: 'JSON' });
     fireEvent.change(json, { target: { value: '{ "unsaved": true }' } });
     fireEvent.click(frame().getByRole('tab', { name: 'Record' }));
-    fireEvent.click(within(await screen.findByRole('dialog', { name: 'Discard unsaved edits?' })).getByRole('button', { name: 'Keep editing' }));
+    fireEvent.click(
+      within(await screen.findByRole('dialog', { name: 'Discard unsaved edits?' })).getByRole('button', {
+        name: 'Keep editing',
+      }),
+    );
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(frame().getByRole('textbox', { name: 'JSON' })).toHaveValue('{ "unsaved": true }');
   });
@@ -142,7 +182,10 @@ describe('quiz editor over the record API', () => {
     expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ expectedVersion: 1, afterId: 'i3' });
     fireEvent.click(frame().getByRole('button', { name: 'Record actions' }));
     fireEvent.click(screen.getByRole('menuitem', { name: 'Delete…' }));
-    expect(props.onDelete).toHaveBeenCalledWith({ selection: { kind: 'question', id: 'i1', parentId: 'q1' }, label: 'i1' });
+    expect(props.onDelete).toHaveBeenCalledWith({
+      selection: { kind: 'question', id: 'i1', parentId: 'q1' },
+      label: 'i1',
+    });
   });
 
   it('keeps a cleared record editor open and reports unsaved text', async () => {

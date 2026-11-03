@@ -1,64 +1,140 @@
-import { describe, expect, it } from 'vitest'; import { attemptQuestions, blankResponse, commitAnswer, elapsedTimeFor, isFullyAnsweredFastFeedback, isPerfectScore, pauseAttempt, questionIndexFor, resumeAttempt, scoreAttempt, scorePercentage, selectChoice } from './quizEngine'; import type { Attempt, Question } from './types';
-const question: Question={id:'i1',quizId:'q1',stem:'Stem',choices:[{id:'A',text:'A'},{id:'B',text:'B'}],answer:'B',rationale:'Rationale',metadata:{}};
-const attempt=(selectedChoiceId?:string):Attempt=>({id:'a',quizId:'q1',subjectId:'s1',feedbackMode:'exam',contentSignature: 'fixture-content', startedAt:new Date(1000).toISOString(),elapsedMs:0,timerStartedAt:new Date(1000).toISOString(),celebrationProgress:{correctStreak:0,awardedStreakMilestones:[]},responses:selectedChoiceId?{i1:{questionId:'i1',selectedChoiceId,flagged:true,locked:false,timeMs:0}}:{}});
-describe('quiz engine',()=>{it('scores correct, incorrect, and unanswered responses',()=>{expect(scoreAttempt(attempt('B'),[question],3000)).toMatchObject({correct:1,incorrect:0,unanswered:0,percentage:100,elapsedMs:2000});expect(scoreAttempt(attempt('A'),[question],3000).incorrect).toBe(1);expect(scoreAttempt(attempt(),[question],3000).unanswered).toBe(1)});it('finds a saved question checkpoint and falls back to the first question',()=>{const second={...question,id:'q2'};expect(questionIndexFor([question,second],'q2')).toBe(1);expect(questionIndexFor([question,second],'missing')).toBe(0);expect(questionIndexFor([question,second])).toBe(0)});});
-describe('attempt question order',()=>{
-  const questions: Question[]=Array.from({length:8},(_,i)=>({...question,id:`i${i}`,choices:['A','B','C','D'].map(id=>({id,text:id}))}));
-  const ids=(list:Question[])=>list.map(q=>q.id);
-  it('gives the same order for the same seed and a permutation of questions and choices',()=>{
-    const first=attemptQuestions(questions,{shuffleSeed:42});
-    expect(ids(attemptQuestions(questions,{shuffleSeed:42}))).toEqual(ids(first));
-    expect(first.map(q=>q.choices.map(c=>c.id))).toEqual(attemptQuestions(questions,{shuffleSeed:42}).map(q=>q.choices.map(c=>c.id)));
+import { describe, expect, it } from 'vitest';
+import {
+  attemptQuestions,
+  blankResponse,
+  commitAnswer,
+  elapsedTimeFor,
+  isFullyAnsweredFastFeedback,
+  isPerfectScore,
+  pauseAttempt,
+  questionIndexFor,
+  resumeAttempt,
+  scoreAttempt,
+  scorePercentage,
+  selectChoice,
+} from './quizEngine';
+import type { Attempt, Question } from './types';
+const question: Question = {
+  id: 'i1',
+  quizId: 'q1',
+  stem: 'Stem',
+  choices: [
+    { id: 'A', text: 'A' },
+    { id: 'B', text: 'B' },
+  ],
+  answer: 'B',
+  rationale: 'Rationale',
+  metadata: {},
+};
+const attempt = (selectedChoiceId?: string): Attempt => ({
+  id: 'a',
+  quizId: 'q1',
+  subjectId: 's1',
+  feedbackMode: 'exam',
+  contentSignature: 'fixture-content',
+  startedAt: new Date(1000).toISOString(),
+  elapsedMs: 0,
+  timerStartedAt: new Date(1000).toISOString(),
+  celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+  responses: selectedChoiceId
+    ? { i1: { questionId: 'i1', selectedChoiceId, flagged: true, locked: false, timeMs: 0 } }
+    : {},
+});
+describe('quiz engine', () => {
+  it('scores correct, incorrect, and unanswered responses', () => {
+    expect(scoreAttempt(attempt('B'), [question], 3000)).toMatchObject({
+      correct: 1,
+      incorrect: 0,
+      unanswered: 0,
+      percentage: 100,
+      elapsedMs: 2000,
+    });
+    expect(scoreAttempt(attempt('A'), [question], 3000).incorrect).toBe(1);
+    expect(scoreAttempt(attempt(), [question], 3000).unanswered).toBe(1);
+  });
+  it('finds a saved question checkpoint and falls back to the first question', () => {
+    const second = { ...question, id: 'q2' };
+    expect(questionIndexFor([question, second], 'q2')).toBe(1);
+    expect(questionIndexFor([question, second], 'missing')).toBe(0);
+    expect(questionIndexFor([question, second])).toBe(0);
+  });
+});
+describe('attempt question order', () => {
+  const questions: Question[] = Array.from({ length: 8 }, (_, i) => ({
+    ...question,
+    id: `i${i}`,
+    choices: ['A', 'B', 'C', 'D'].map((id) => ({ id, text: id })),
+  }));
+  const ids = (list: Question[]) => list.map((q) => q.id);
+  it('gives the same order for the same seed and a permutation of questions and choices', () => {
+    const first = attemptQuestions(questions, { shuffleSeed: 42 });
+    expect(ids(attemptQuestions(questions, { shuffleSeed: 42 }))).toEqual(ids(first));
+    expect(first.map((q) => q.choices.map((c) => c.id))).toEqual(
+      attemptQuestions(questions, { shuffleSeed: 42 }).map((q) => q.choices.map((c) => c.id)),
+    );
     expect(ids(first).sort()).toEqual(ids(questions).sort());
-    first.forEach(q=>expect(q.choices.map(c=>c.id).sort()).toEqual(['A','B','C','D']));
+    first.forEach((q) => expect(q.choices.map((c) => c.id).sort()).toEqual(['A', 'B', 'C', 'D']));
     expect(ids(first)).not.toEqual(ids(questions));
   });
-  it('keeps canonical order without a seed',()=>{
-    expect(attemptQuestions(questions,{})).toBe(questions);
+  it('keeps canonical order without a seed', () => {
+    expect(attemptQuestions(questions, {})).toBe(questions);
   });
 });
-describe('attempt timing',()=>{
-  it('accumulates only active quiz sessions',()=>{
-    const running: Attempt={...attempt(),elapsedMs:500,timerStartedAt:new Date(1000).toISOString()};
-    expect(elapsedTimeFor(running,3000)).toBe(2500);
-    const paused=pauseAttempt(running,3000);
-    expect(paused).toMatchObject({elapsedMs:2500});
+describe('attempt timing', () => {
+  it('accumulates only active quiz sessions', () => {
+    const running: Attempt = { ...attempt(), elapsedMs: 500, timerStartedAt: new Date(1000).toISOString() };
+    expect(elapsedTimeFor(running, 3000)).toBe(2500);
+    const paused = pauseAttempt(running, 3000);
+    expect(paused).toMatchObject({ elapsedMs: 2500 });
     expect(paused.timerStartedAt).toBeUndefined();
-    expect(elapsedTimeFor(paused,9000)).toBe(2500);
-    const resumed=resumeAttempt(paused,9000);
-    expect(elapsedTimeFor(resumed,12000)).toBe(5500);
-    expect(scoreAttempt(resumed,[question],12000).elapsedMs).toBe(5500);
+    expect(elapsedTimeFor(paused, 9000)).toBe(2500);
+    const resumed = resumeAttempt(paused, 9000);
+    expect(elapsedTimeFor(resumed, 12000)).toBe(5500);
+    expect(scoreAttempt(resumed, [question], 12000).elapsedMs).toBe(5500);
   });
-
 });
-describe('answer selection',()=>{
-  it('locks an immediate-mode response as part of selection',()=>{expect(selectChoice(blankResponse('q1'),'B','immediate')).toMatchObject({selectedChoiceId:'B',locked:true});});
-  it('keeps an exam-mode response editable',()=>{const selected=selectChoice(blankResponse('q1'),'A','exam');expect(selected).toMatchObject({selectedChoiceId:'A',locked:false});expect(selectChoice(selected,'B','exam').selectedChoiceId).toBe('B');});
-  it('does not change a locked response',()=>{const locked={...blankResponse('q1'),selectedChoiceId:'A',locked:true};expect(selectChoice(locked,'B','immediate')).toBe(locked);});
-
+describe('answer selection', () => {
+  it('locks an immediate-mode response as part of selection', () => {
+    expect(selectChoice(blankResponse('q1'), 'B', 'immediate')).toMatchObject({ selectedChoiceId: 'B', locked: true });
+  });
+  it('keeps an exam-mode response editable', () => {
+    const selected = selectChoice(blankResponse('q1'), 'A', 'exam');
+    expect(selected).toMatchObject({ selectedChoiceId: 'A', locked: false });
+    expect(selectChoice(selected, 'B', 'exam').selectedChoiceId).toBe('B');
+  });
+  it('does not change a locked response', () => {
+    const locked = { ...blankResponse('q1'), selectedChoiceId: 'A', locked: true };
+    expect(selectChoice(locked, 'B', 'immediate')).toBe(locked);
+  });
 });
-describe('Fast Feedback completion',()=>{
+describe('Fast Feedback completion', () => {
   const questions = [question, { ...question, id: 'q2' }];
   const locked = (id: string) => ({ questionId: id, selectedChoiceId: 'B', flagged: false, locked: true, timeMs: 0 });
-  it('requires every canonical question to have a selected locked response, regardless of answer order',()=>{
+  it('requires every canonical question to have a selected locked response, regardless of answer order', () => {
     const partial: Attempt = { ...attempt(), feedbackMode: 'immediate', responses: { q2: locked('q2') } };
     expect(isFullyAnsweredFastFeedback(partial, questions)).toBe(false);
-    expect(isFullyAnsweredFastFeedback({ ...partial, responses: { i1: locked('i1'), q2: locked('q2') } }, questions)).toBe(true);
+    expect(
+      isFullyAnsweredFastFeedback({ ...partial, responses: { i1: locked('i1'), q2: locked('q2') } }, questions),
+    ).toBe(true);
   });
-  it('does not treat Exam Mode or an empty question list as completed Fast Feedback',()=>{
+  it('does not treat Exam Mode or an empty question list as completed Fast Feedback', () => {
     const completeExam: Attempt = { ...attempt(), responses: { i1: locked('i1'), q2: locked('q2') } };
     expect(isFullyAnsweredFastFeedback(completeExam, questions)).toBe(false);
     expect(isFullyAnsweredFastFeedback({ ...completeExam, feedbackMode: 'immediate' }, [])).toBe(false);
   });
-  it('does not treat a locked response without a selected choice as answered',()=>{
-    const malformed: Attempt = { ...attempt(), feedbackMode: 'immediate', responses: { i1: { ...blankResponse('i1'), locked: true }, q2: locked('q2') } };
+  it('does not treat a locked response without a selected choice as answered', () => {
+    const malformed: Attempt = {
+      ...attempt(),
+      feedbackMode: 'immediate',
+      responses: { i1: { ...blankResponse('i1'), locked: true }, q2: locked('q2') },
+    };
     expect(isFullyAnsweredFastFeedback(malformed, questions)).toBe(false);
   });
 });
-describe('celebration streaks',()=>{
+describe('celebration streaks', () => {
   const immediateAttempt = (): Attempt => ({ ...attempt(), feedbackMode: 'immediate' });
   const correctQuestion = (id: string): Question => ({ ...question, id, answer: 'B' });
-  it('increments correct commits, resets on an incorrect commit, and fires exact milestones',()=>{
+  it('increments correct commits, resets on an incorrect commit, and fires exact milestones', () => {
     let current = immediateAttempt();
     for (let index = 1; index <= 3; index++) {
       const result = commitAnswer(current, correctQuestion(`q${index}`), 'B');
@@ -69,7 +145,7 @@ describe('celebration streaks',()=>{
     expect(wrong.attempt.celebrationProgress?.correctStreak).toBe(0);
     expect(wrong.streakMilestone).toBeUndefined();
   });
-  it('allows a milestone to be earned again after an incorrect answer resets the streak',()=>{
+  it('allows a milestone to be earned again after an incorrect answer resets the streak', () => {
     let current = immediateAttempt();
     const milestones: number[] = [];
     for (let index = 1; index <= 50; index++) {
@@ -88,7 +164,7 @@ describe('celebration streaks',()=>{
     }
     expect(rebuiltMilestone).toBe(3);
   });
-  it('counts answer commit order, not question order, and never double-counts a locked response',()=>{
+  it('counts answer commit order, not question order, and never double-counts a locked response', () => {
     let current = immediateAttempt();
     current = commitAnswer(current, correctQuestion('q30'), 'B').attempt;
     current = commitAnswer(current, correctQuestion('q2'), 'B').attempt;
@@ -98,17 +174,23 @@ describe('celebration streaks',()=>{
     expect(repeat.streakMilestone).toBeUndefined();
     expect(repeat.attempt.celebrationProgress?.correctStreak).toBe(3);
   });
-  it('does not advance the streak in exam mode',()=>{
+  it('does not advance the streak in exam mode', () => {
     const exam = commitAnswer(attempt(), question, 'B');
     expect(exam.streakMilestone).toBeUndefined();
     expect(exam.attempt.celebrationProgress).toEqual({ correctStreak: 0, awardedStreakMilestones: [] });
   });
 });
-describe('perfect scores',()=>{
-  it('uses exact counts and requires at least one question',()=>{
-    expect(isPerfectScore({ correct: 3, incorrect: 0, unanswered: 0, total: 3, percentage: 100, elapsedMs: 0 })).toBe(true);
-    expect(isPerfectScore({ correct: 99, incorrect: 1, unanswered: 0, total: 100, percentage: 100, elapsedMs: 0 })).toBe(false);
-    expect(isPerfectScore({ correct: 0, incorrect: 0, unanswered: 0, total: 0, percentage: 100, elapsedMs: 0 })).toBe(false);
+describe('perfect scores', () => {
+  it('uses exact counts and requires at least one question', () => {
+    expect(isPerfectScore({ correct: 3, incorrect: 0, unanswered: 0, total: 3, percentage: 100, elapsedMs: 0 })).toBe(
+      true,
+    );
+    expect(
+      isPerfectScore({ correct: 99, incorrect: 1, unanswered: 0, total: 100, percentage: 100, elapsedMs: 0 }),
+    ).toBe(false);
+    expect(isPerfectScore({ correct: 0, incorrect: 0, unanswered: 0, total: 0, percentage: 100, elapsedMs: 0 })).toBe(
+      false,
+    );
   });
   it('shows 100% only for a perfect score', () => {
     expect(scorePercentage(199, 200)).toBe(99);

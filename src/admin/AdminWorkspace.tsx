@@ -86,7 +86,9 @@ export function AdminWorkspace({
             aria-controls="flashcards-panel"
             aria-label="Flashcards"
             aria-describedby={flashcardsDirty || subjectDirty ? 'flashcards-unsaved' : undefined}
-            label={<>Flashcards{(flashcardsDirty || subjectDirty) && <span id="flashcards-unsaved"> • Unsaved</span>}</>}
+            label={
+              <>Flashcards{(flashcardsDirty || subjectDirty) && <span id="flashcards-unsaved"> • Unsaved</span>}</>
+            }
           />
         </Tabs>
         <Box role="tabpanel" id="quizzes-panel" aria-labelledby="quizzes-tab" hidden={section !== 'quizzes'}>

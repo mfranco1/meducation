@@ -17,9 +17,24 @@ describe('private editor transport', () => {
     const calls = fetcher.mock.calls.map(([url, init]) => [init!.method, url, init!.headers, init!.body]);
     expect(calls).toEqual([
       ['GET', '/api/admin/draft', {}, undefined],
-      ['POST', '/api/admin/draft/subjects', { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf' }, '{"fields":{"name":"A"}}'],
-      ['PUT', '/api/admin/draft/subjects/s1', { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf' }, '{"expectedVersion":1,"fields":{}}'],
-      ['DELETE', '/api/admin/draft/subjects/s1', { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf' }, '{"expectedVersion":2,"cascade":true}'],
+      [
+        'POST',
+        '/api/admin/draft/subjects',
+        { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf' },
+        '{"fields":{"name":"A"}}',
+      ],
+      [
+        'PUT',
+        '/api/admin/draft/subjects/s1',
+        { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf' },
+        '{"expectedVersion":1,"fields":{}}',
+      ],
+      [
+        'DELETE',
+        '/api/admin/draft/subjects/s1',
+        { 'Content-Type': 'application/json', 'X-CSRF-Token': 'csrf' },
+        '{"expectedVersion":2,"cascade":true}',
+      ],
     ]);
     for (const [, init] of fetcher.mock.calls) {
       expect(init!.credentials).toBe('same-origin');
@@ -30,9 +45,9 @@ describe('private editor transport', () => {
   it.each([401, 403, 409, 422, 503])('never resends a rejected write (%s)', async (status) => {
     const fetcher = vi.fn<typeof fetch>().mockResolvedValue(failed(status, { code: 'x' }));
     const client = new PairedHttpClient(fetcher);
-    await expect(client.put('/draft/questions/i1', { expectedVersion: 1, fields: { stem: 'UNSAVED' } })).rejects.toBeInstanceOf(
-      AdminHttpError,
-    );
+    await expect(
+      client.put('/draft/questions/i1', { expectedVersion: 1, fields: { stem: 'UNSAVED' } }),
+    ).rejects.toBeInstanceOf(AdminHttpError);
     expect(fetcher).toHaveBeenCalledTimes(1);
   });
 
@@ -54,7 +69,10 @@ describe('private editor transport', () => {
     const conflict = (await client.put('/x', {}).catch((e) => e)) as AdminHttpError;
     expect(conflict).toMatchObject({ status: 409, code: 'version_conflict', body: { current } });
     expect(conflict.message).toContain('changed on the server');
-    expect(await client.delete('/x', {}).catch((e) => e)).toMatchObject({ code: 'has_children', body: { children: { quizzes: 2 } } });
+    expect(await client.delete('/x', {}).catch((e) => e)).toMatchObject({
+      code: 'has_children',
+      body: { children: { quizzes: 2 } },
+    });
   });
 
   it('bounds a stalled request', async () => {

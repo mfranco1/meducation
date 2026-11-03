@@ -12,15 +12,7 @@ const fields: Record<RecordKind, readonly string[]> = {
   quiz: ['name', 'description'],
   deck: ['name', 'description'],
   card: ['front', 'back', 'sources'],
-  question: [
-    'stem',
-    'choices',
-    'answer',
-    'rationale',
-    'rationaleMeta',
-    'pearls',
-    'metadata',
-  ],
+  question: ['stem', 'choices', 'answer', 'rationale', 'rationaleMeta', 'pearls', 'metadata'],
 };
 export function isDraftObject(value: unknown): value is DraftRecord {
   return value !== null && typeof value === 'object' && !Array.isArray(value);
@@ -78,24 +70,14 @@ export function readRecordDraft(text: string, kind: RecordKind): DraftRecord | u
           return;
       }
       const rationaleMeta = row.rationaleMeta as DraftRecord | undefined;
-      if (
-        rationaleMeta &&
-        Object.hasOwn(rationaleMeta, 'sources') &&
-        typeof rationaleMeta.sources !== 'string'
-      )
-        return;
+      if (rationaleMeta && Object.hasOwn(rationaleMeta, 'sources') && typeof rationaleMeta.sources !== 'string') return;
     }
     return row;
   } catch {
     return;
   }
 }
-export function patchRecordDraft(
-  text: string,
-  kind: RecordKind,
-  field: string,
-  value: unknown,
-): string {
+export function patchRecordDraft(text: string, kind: RecordKind, field: string, value: unknown): string {
   const row = readRecordDraft(text, kind);
   if (!row) throw new Error('Keep editing the JSON draft before using the form.');
   if (!fields[kind].includes(field))
@@ -238,7 +220,8 @@ export function planSave(
     if (!baseline || JSON.stringify(baseline[key]) !== JSON.stringify(value)) patch[key] = value;
   }
   if (baseline)
-    for (const key of editableFields(kind)) if (Object.hasOwn(baseline, key) && !Object.hasOwn(row, key)) patch[key] = null;
+    for (const key of editableFields(kind))
+      if (Object.hasOwn(baseline, key) && !Object.hasOwn(row, key)) patch[key] = null;
   return {
     fields: patch,
     parentId: parentId as string | undefined,

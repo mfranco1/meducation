@@ -48,10 +48,17 @@ describe('progress backup codec', () => {
     expect(parseProgressBackup('{')).toEqual({ ok: false, error: 'malformed-json' });
     expect(parseProgressBackup(' '.repeat(4 * 1024 * 1024 + 1))).toEqual({ ok: false, error: 'too-large' });
     expect(validateProgressBackup({ format: 'other', version: 1 })).toEqual({ ok: false, error: 'wrong-format' });
-    expect(validateProgressBackup({ format: 'meducation-progress-backup', version: 2 })).toEqual({ ok: false, error: 'unsupported-version' });
-    const dangerous = JSON.parse('{"format":"meducation-progress-backup","version":1,"exportedAt":"2026-10-13T00:00:00.000Z","quiz":{"__proto__":{}},"flashcards":{}}') as unknown;
+    expect(validateProgressBackup({ format: 'meducation-progress-backup', version: 2 })).toEqual({
+      ok: false,
+      error: 'unsupported-version',
+    });
+    const dangerous = JSON.parse(
+      '{"format":"meducation-progress-backup","version":1,"exportedAt":"2026-10-13T00:00:00.000Z","quiz":{"__proto__":{}},"flashcards":{}}',
+    ) as unknown;
     expect(validateProgressBackup(dangerous)).toEqual({ ok: false, error: 'invalid-progress' });
-    const nestedDangerous = cloneFixture() as { quiz: { completed: Array<{ responses: Record<string, Record<string, unknown>> }> } };
+    const nestedDangerous = cloneFixture() as {
+      quiz: { completed: Array<{ responses: Record<string, Record<string, unknown>> }> };
+    };
     const response = Object.values(nestedDangerous.quiz.completed[0].responses)[0]!;
     Object.defineProperty(response, 'constructor', { value: {}, enumerable: true });
     expect(validateProgressBackup(nestedDangerous).ok).toBe(false);
@@ -82,9 +89,17 @@ describe('progress backup codec', () => {
   });
 
   it('rejects live export sources with unknown or malformed stored fields', () => {
-    const source = cloneFixture() as { quiz: Record<string, unknown>; flashcards: Record<string, unknown>; exportedAt: string };
+    const source = cloneFixture() as {
+      quiz: Record<string, unknown>;
+      flashcards: Record<string, unknown>;
+      exportedAt: string;
+    };
     const quiz = { schemaVersion: 2, revision: 'revision', ...source.quiz } as unknown as ProgressState;
-    const flashcards = { schemaVersion: 2, revision: 'revision', ...source.flashcards } as unknown as FlashcardProgressState;
+    const flashcards = {
+      schemaVersion: 2,
+      revision: 'revision',
+      ...source.flashcards,
+    } as unknown as FlashcardProgressState;
     (quiz.active['deleted-quiz'] as unknown as Record<string, unknown>).unexpected = true;
     expect(encodeProgressBackup(quiz, flashcards, source.exportedAt)).toBeUndefined();
     delete (quiz.active['deleted-quiz'] as unknown as Record<string, unknown>).unexpected;
@@ -133,13 +148,19 @@ describe('progress backup codec', () => {
     unsafe.quiz.completionCounts['deleted-quiz'] = Number.MAX_SAFE_INTEGER;
     expect(validateProgressBackup(unsafe).ok).toBe(false);
 
-    const mismatched = cloneFixture() as { quiz: { completed: Array<{ responses: Record<string, { questionId: string }> }> } };
+    const mismatched = cloneFixture() as {
+      quiz: { completed: Array<{ responses: Record<string, { questionId: string }> }> };
+    };
     mismatched.quiz.completed[0].responses['removed-item'].questionId = 'different-item';
     expect(validateProgressBackup(mismatched).ok).toBe(false);
   });
 
   it('normalizes the only selected legacy live default without inventing daily history', () => {
-    const source = cloneFixture() as { quiz: Record<string, unknown>; flashcards: Record<string, unknown>; exportedAt: string };
+    const source = cloneFixture() as {
+      quiz: Record<string, unknown>;
+      flashcards: Record<string, unknown>;
+      exportedAt: string;
+    };
     const quiz = { schemaVersion: 2, revision: 'revision', ...source.quiz } as unknown as ProgressState;
     const legacy = { ...source.flashcards } as Record<string, unknown>;
     delete legacy.completionCounts;
@@ -147,29 +168,53 @@ describe('progress backup codec', () => {
     const flashcards = { schemaVersion: 2, revision: 'revision', ...legacy } as unknown as FlashcardProgressState;
     const encoded = encodeProgressBackup(quiz, flashcards, source.exportedAt);
     expect(encoded).toBeDefined();
-    const output = JSON.parse(encoded!) as { flashcards: { completionCounts: Record<string, number>; dailyStats?: unknown } };
+    const output = JSON.parse(encoded!) as {
+      flashcards: { completionCounts: Record<string, number>; dailyStats?: unknown };
+    };
     expect(output.flashcards.completionCounts).toEqual({});
     expect(output.flashcards.dailyStats).toBeUndefined();
   });
 
   it('round-trips deck finish times and rejects malformed ones', () => {
-    const source = cloneFixture() as { quiz: Record<string, unknown>; flashcards: Record<string, unknown>; exportedAt: string };
+    const source = cloneFixture() as {
+      quiz: Record<string, unknown>;
+      flashcards: Record<string, unknown>;
+      exportedAt: string;
+    };
     const finishedAt = { d1: '2026-10-06T01:00:00.000Z' };
     const quiz = { schemaVersion: 2, revision: 'revision', ...source.quiz } as unknown as ProgressState;
-    const flashcards = { schemaVersion: 2, revision: 'revision', ...source.flashcards, finishedAt } as unknown as FlashcardProgressState;
+    const flashcards = {
+      schemaVersion: 2,
+      revision: 'revision',
+      ...source.flashcards,
+      finishedAt,
+    } as unknown as FlashcardProgressState;
     const encoded = encodeProgressBackup(quiz, flashcards, source.exportedAt);
     expect(encoded).toBeDefined();
     const parsed = parseProgressBackup(encoded!);
     expect(parsed.ok && parsed.value.flashcards.finishedAt).toEqual(finishedAt);
-    expect(validateProgressBackup({ ...JSON.parse(encoded!), flashcards: { ...source.flashcards, finishedAt: { d1: 'yesterday' } } }).ok).toBe(false);
+    expect(
+      validateProgressBackup({
+        ...JSON.parse(encoded!),
+        flashcards: { ...source.flashcards, finishedAt: { d1: 'yesterday' } },
+      }).ok,
+    ).toBe(false);
   });
 
   it('exports an explicit allowlist, omits revisions and running timers, then validates its own output', () => {
-    const source = cloneFixture() as { quiz: Record<string, unknown>; flashcards: Record<string, unknown>; exportedAt: string };
+    const source = cloneFixture() as {
+      quiz: Record<string, unknown>;
+      flashcards: Record<string, unknown>;
+      exportedAt: string;
+    };
     const quiz = { schemaVersion: 2, revision: 'private-revision', ...source.quiz } as unknown as ProgressState;
     (quiz.active['deleted-quiz'] as { timerStartedAt?: string }).timerStartedAt = '2026-10-12T23:59:50.000Z';
     quiz.active['deleted-quiz']!.shuffleSeed = 4000000000;
-    const flashcards = { schemaVersion: 2, revision: 'private-revision', ...source.flashcards } as unknown as FlashcardProgressState;
+    const flashcards = {
+      schemaVersion: 2,
+      revision: 'private-revision',
+      ...source.flashcards,
+    } as unknown as FlashcardProgressState;
     const encoded = encodeProgressBackup(quiz, flashcards, source.exportedAt);
     expect(encoded).toBeDefined();
     expect(encoded).not.toContain('private-revision');
@@ -185,8 +230,14 @@ describe('progress backup codec', () => {
 
 it('enforces the combined UTF-8 file ceiling for individually valid active signatures', () => {
   const value = structuredClone(fixture);
-  const active = value.quiz.active as Record<string, typeof value.quiz.active['deleted-quiz']>;
-  for (let i = 0; i < 7; i++) active[`saved-${i}`] = { ...structuredClone(active['deleted-quiz']), id: `attempt-${i}`, quizId: `saved-${i}`, contentSignature: '😀'.repeat(128 * 1024) };
+  const active = value.quiz.active as Record<string, (typeof value.quiz.active)['deleted-quiz']>;
+  for (let i = 0; i < 7; i++)
+    active[`saved-${i}`] = {
+      ...structuredClone(active['deleted-quiz']),
+      id: `attempt-${i}`,
+      quizId: `saved-${i}`,
+      contentSignature: '😀'.repeat(128 * 1024),
+    };
   expect(parseProgressBackup(JSON.stringify(value)).ok).toBe(true);
   active['saved-7'] = { ...active['saved-0'], id: 'attempt-7', quizId: 'saved-7' };
   expect(parseProgressBackup(JSON.stringify(value))).toEqual({ ok: false, error: 'too-large' });
@@ -194,12 +245,21 @@ it('enforces the combined UTF-8 file ceiling for individually valid active signa
 
 it('rejects selected-but-unlocked feedback, missing durable completion IDs and contradictory attempt maps', () => {
   for (const mutate of [
-    (value: typeof fixture) => { value.quiz.active['deleted-quiz'].responses['old-question'].locked = false; },
-    (value: typeof fixture) => { delete (value.quiz.completedIds as Record<string, boolean>)['retained-completion']; },
-    (value: typeof fixture) => { value.quiz.active['deleted-quiz'].id = value.quiz.completed[0].id; },
-    (value: typeof fixture) => { value.quiz.active['deleted-quiz'].quizId = 'different-quiz'; },
+    (value: typeof fixture) => {
+      value.quiz.active['deleted-quiz'].responses['old-question'].locked = false;
+    },
+    (value: typeof fixture) => {
+      delete (value.quiz.completedIds as Record<string, boolean>)['retained-completion'];
+    },
+    (value: typeof fixture) => {
+      value.quiz.active['deleted-quiz'].id = value.quiz.completed[0].id;
+    },
+    (value: typeof fixture) => {
+      value.quiz.active['deleted-quiz'].quizId = 'different-quiz';
+    },
   ]) {
-    const value = structuredClone(fixture); mutate(value);
+    const value = structuredClone(fixture);
+    mutate(value);
     expect(validateProgressBackup(value).ok).toBe(false);
   }
 });

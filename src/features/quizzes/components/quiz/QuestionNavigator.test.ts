@@ -8,7 +8,15 @@ const questions: Question[] = [
   { id: 'i3', quizId: 'q1', stem: 'Three', choices: [], answer: 'A', rationale: 'R', metadata: {} },
 ];
 const examAttempt: Attempt = {
-  id: 'a', quizId: 'q1', subjectId: 's1', feedbackMode: 'exam', elapsedMs: 0, celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] }, contentSignature: 'fixture-content', startedAt: new Date().toISOString(), responses: {
+  id: 'a',
+  quizId: 'q1',
+  subjectId: 's1',
+  feedbackMode: 'exam',
+  elapsedMs: 0,
+  celebrationProgress: { correctStreak: 0, awardedStreakMilestones: [] },
+  contentSignature: 'fixture-content',
+  startedAt: new Date().toISOString(),
+  responses: {
     i1: { questionId: 'i1', selectedChoiceId: 'A', flagged: true, locked: false, timeMs: 0 },
     i2: { questionId: 'i2', flagged: true, locked: false, timeMs: 0 },
   },
@@ -25,9 +33,9 @@ describe('question navigator items', () => {
 
   it('filters by unanswered, wrong, and flagged while preserving original indexes', () => {
     const items = questionNavigationItems(questions, examAttempt);
-    expect(filterQuestionNavigationItems(items, 'unanswered').map(item => item.index)).toEqual([1, 2]);
-    expect(filterQuestionNavigationItems(items, 'wrong').map(item => item.index)).toEqual([]);
-    expect(filterQuestionNavigationItems(items, 'flagged').map(item => item.index)).toEqual([0, 1]);
+    expect(filterQuestionNavigationItems(items, 'unanswered').map((item) => item.index)).toEqual([1, 2]);
+    expect(filterQuestionNavigationItems(items, 'wrong').map((item) => item.index)).toEqual([]);
+    expect(filterQuestionNavigationItems(items, 'flagged').map((item) => item.index)).toEqual([0, 1]);
     expect(filterQuestionNavigationItems(items, 'all')).toEqual(items);
   });
 
@@ -41,11 +49,14 @@ describe('question navigator items', () => {
         i3: { questionId: 'i3', selectedChoiceId: 'C', flagged: false, locked: true, timeMs: 0 },
       },
     };
-    const keyedQuestions = questions.map(question => ({ ...question, answer: question.id === 'i1' ? 'B' : question.id === 'i3' ? 'C' : 'A' }));
+    const keyedQuestions = questions.map((question) => ({
+      ...question,
+      answer: question.id === 'i1' ? 'B' : question.id === 'i3' ? 'C' : 'A',
+    }));
 
     const items = questionNavigationItems(keyedQuestions, immediateAttempt);
-    expect(items.map(item => item.wrong)).toEqual([true, false, false]);
-    expect(items.map(item => item.correct)).toEqual([false, false, true]);
+    expect(items.map((item) => item.wrong)).toEqual([true, false, false]);
+    expect(items.map((item) => item.correct)).toEqual([false, false, true]);
   });
 
   it('reveals wrong Exam Mode answers only when explicitly requested and excludes unanswered questions', () => {
@@ -63,10 +74,14 @@ describe('question navigator items', () => {
       },
     };
 
-    expect(questionNavigationItems(reviewQuestions, submitted).map(item => item.wrong)).toEqual([false, false, false]);
+    expect(questionNavigationItems(reviewQuestions, submitted).map((item) => item.wrong)).toEqual([
+      false,
+      false,
+      false,
+    ]);
     const revealed = questionNavigationItems(reviewQuestions, submitted, true);
-    expect(revealed.map(item => item.wrong)).toEqual([true, false, true]);
-    expect(filterQuestionNavigationItems(revealed, 'wrong').map(item => item.index)).toEqual([0, 2]);
-    expect(filterQuestionNavigationItems(revealed, 'flagged').map(item => item.index)).toEqual([0, 2]);
+    expect(revealed.map((item) => item.wrong)).toEqual([true, false, true]);
+    expect(filterQuestionNavigationItems(revealed, 'wrong').map((item) => item.index)).toEqual([0, 2]);
+    expect(filterQuestionNavigationItems(revealed, 'flagged').map((item) => item.index)).toEqual([0, 2]);
   });
 });

@@ -4,7 +4,11 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
-import { isAllowedImageUrl, richContentSanitizeSchema, transformRichContentUrl } from '../../../content/richText/richContentPolicy';
+import {
+  isAllowedImageUrl,
+  richContentSanitizeSchema,
+  transformRichContentUrl,
+} from '../../../content/richText/richContentPolicy';
 import { remarkMathPlugin } from '../../../content/richText/remarkMathPolicy';
 import 'katex/dist/katex.min.css';
 
@@ -13,36 +17,190 @@ export type MarkdownContentKind = 'restricted' | 'rich';
 
 function ContentImage({ src, alt }: { src?: string; alt?: string }) {
   if (!src || !isAllowedImageUrl(src)) return null;
-  return <Box component="img" src={src} alt={alt ?? ''} loading="lazy" sx={{ display: 'block', maxWidth: '100%', height: 'auto', maxHeight: 520, my: 2, borderRadius: 1 }} />;
+  return (
+    <Box
+      component="img"
+      src={src}
+      alt={alt ?? ''}
+      loading="lazy"
+      sx={{ display: 'block', maxWidth: '100%', height: 'auto', maxHeight: 520, my: 2, borderRadius: 1 }}
+    />
+  );
 }
 
-export function MarkdownContent({ markdown, variant = 'explanation', contentKind = 'restricted', align = 'left', fontWeight }: { markdown: string; variant?: MarkdownVariant; contentKind?: MarkdownContentKind; align?: 'left' | 'center'; fontWeight?: number }) {
+export function MarkdownContent({
+  markdown,
+  variant = 'explanation',
+  contentKind = 'restricted',
+  align = 'left',
+  fontWeight,
+}: {
+  markdown: string;
+  variant?: MarkdownVariant;
+  contentKind?: MarkdownContentKind;
+  align?: 'left' | 'center';
+  fontWeight?: number;
+}) {
   const inline = variant === 'inline';
   const rich = contentKind === 'rich';
-  return <ReactMarkdown
-    skipHtml={!rich}
-    remarkPlugins={rich ? [remarkGfm, remarkMathPlugin] : [remarkGfm]}
-    rehypePlugins={rich ? [[rehypeRaw, { tagfilter: true }], [rehypeSanitize, richContentSanitizeSchema], [rehypeKatex, { trust: false, maxSize: 10, maxExpand: 1000 }]] : []}
-    urlTransform={transformRichContentUrl}
-    components={{
-      p: ({ children }) => inline
-        ? <>{children}</>
-        : <Typography variant={variant === 'stem' ? 'h5' : 'body1'} sx={{ lineHeight: variant === 'stem' ? 1.45 : 1.75, fontSize: variant === 'explanation' ? { xs: '1rem', sm: '1.0625rem' } : undefined, textAlign: align, fontWeight, '& + &': { mt: 1.25 }, '& .katex-display': { maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden', textAlign: align } }}>{children}</Typography>,
-      h1: ({ children }) => <Typography variant={variant === 'stem' ? 'h5' : 'h6'} component="h2" sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}>{children}</Typography>,
-      h2: ({ children }) => <Typography variant="h6" component="h3" sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}>{children}</Typography>,
-      h3: ({ children }) => <Typography variant="subtitle1" component="h4" sx={{ mt: 1.75, mb: .75, fontWeight: 800, textAlign: align }}>{children}</Typography>,
-      ul: ({ children }) => <Box component="ul" sx={{ my: 1.25, pl: 3, '& li + li': { mt: .65 } }}>{children}</Box>,
-      ol: ({ children }) => <Box component="ol" sx={{ my: 1.25, pl: 3, '& li + li': { mt: .65 } }}>{children}</Box>,
-      li: ({ children }) => <Typography component="li" sx={{ lineHeight: 1.7, fontWeight }}>{children}</Typography>,
-      blockquote: ({ children }) => <Box component="blockquote" sx={{ m: 0, my: 1.5, pl: 2, borderLeft: '3px solid', borderColor: 'primary.light', color: 'text.secondary' }}>{children}</Box>,
-      table: ({ children }) => <Box sx={{ my: 2, overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}><Box component="table" sx={{ width: '100%', minWidth: 440, borderCollapse: 'collapse', '& th, & td': { p: 1.25, textAlign: 'left', verticalAlign: 'top', borderBottom: '1px solid', borderColor: 'divider' }, '& th': { bgcolor: 'action.hover', fontWeight: 800 }, '& tr:last-child td': { borderBottom: 0 } }}>{children}</Box></Box>,
-      a: ({ href, children }) => href ? <Link href={href} target="_blank" rel="noopener noreferrer" underline="hover">{children}</Link> : <>{children}</>,
-      img: ({ src, alt }) => rich ? <Box sx={{ display: align === 'center' ? 'flex' : undefined, justifyContent: 'center' }}><ContentImage src={src} alt={alt} /></Box> : null,
-      code: ({ children, className }) => className?.split(/\s+/).some(name => name.startsWith('math-') || name === 'language-math')
-        ? <code className={className}>{children}</code>
-        : <Box component="code" sx={{ px: .5, py: .15, borderRadius: .5, bgcolor: 'action.hover', fontFamily: 'monospace', fontSize: '.9em' }}>{children}</Box>,
-      pre: ({ children, className }) => <Box component="pre" className={className} sx={{ my: 1.5, p: 1.5, overflowX: 'auto', maxWidth: '100%', borderRadius: 1, bgcolor: 'action.hover', '& .katex-display': { my: 0, textAlign: 'left' } }}>{children}</Box>,
-      hr: () => <Box component="hr" sx={{ my: 2, border: 0, borderTop: '1px solid', borderColor: 'divider' }} />,
-    }}
-  >{markdown}</ReactMarkdown>;
+  return (
+    <ReactMarkdown
+      skipHtml={!rich}
+      remarkPlugins={rich ? [remarkGfm, remarkMathPlugin] : [remarkGfm]}
+      rehypePlugins={
+        rich
+          ? [
+              [rehypeRaw, { tagfilter: true }],
+              [rehypeSanitize, richContentSanitizeSchema],
+              [rehypeKatex, { trust: false, maxSize: 10, maxExpand: 1000 }],
+            ]
+          : []
+      }
+      urlTransform={transformRichContentUrl}
+      components={{
+        p: ({ children }) =>
+          inline ? (
+            <>{children}</>
+          ) : (
+            <Typography
+              variant={variant === 'stem' ? 'h5' : 'body1'}
+              sx={{
+                lineHeight: variant === 'stem' ? 1.45 : 1.75,
+                fontSize: variant === 'explanation' ? { xs: '1rem', sm: '1.0625rem' } : undefined,
+                textAlign: align,
+                fontWeight,
+                '& + &': { mt: 1.25 },
+                '& .katex-display': { maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden', textAlign: align },
+              }}
+            >
+              {children}
+            </Typography>
+          ),
+        h1: ({ children }) => (
+          <Typography
+            variant={variant === 'stem' ? 'h5' : 'h6'}
+            component="h2"
+            sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}
+          >
+            {children}
+          </Typography>
+        ),
+        h2: ({ children }) => (
+          <Typography variant="h6" component="h3" sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}>
+            {children}
+          </Typography>
+        ),
+        h3: ({ children }) => (
+          <Typography variant="subtitle1" component="h4" sx={{ mt: 1.75, mb: 0.75, fontWeight: 800, textAlign: align }}>
+            {children}
+          </Typography>
+        ),
+        ul: ({ children }) => (
+          <Box component="ul" sx={{ my: 1.25, pl: 3, '& li + li': { mt: 0.65 } }}>
+            {children}
+          </Box>
+        ),
+        ol: ({ children }) => (
+          <Box component="ol" sx={{ my: 1.25, pl: 3, '& li + li': { mt: 0.65 } }}>
+            {children}
+          </Box>
+        ),
+        li: ({ children }) => (
+          <Typography component="li" sx={{ lineHeight: 1.7, fontWeight }}>
+            {children}
+          </Typography>
+        ),
+        blockquote: ({ children }) => (
+          <Box
+            component="blockquote"
+            sx={{
+              m: 0,
+              my: 1.5,
+              pl: 2,
+              borderLeft: '3px solid',
+              borderColor: 'primary.light',
+              color: 'text.secondary',
+            }}
+          >
+            {children}
+          </Box>
+        ),
+        table: ({ children }) => (
+          <Box sx={{ my: 2, overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+            <Box
+              component="table"
+              sx={{
+                width: '100%',
+                minWidth: 440,
+                borderCollapse: 'collapse',
+                '& th, & td': {
+                  p: 1.25,
+                  textAlign: 'left',
+                  verticalAlign: 'top',
+                  borderBottom: '1px solid',
+                  borderColor: 'divider',
+                },
+                '& th': { bgcolor: 'action.hover', fontWeight: 800 },
+                '& tr:last-child td': { borderBottom: 0 },
+              }}
+            >
+              {children}
+            </Box>
+          </Box>
+        ),
+        a: ({ href, children }) =>
+          href ? (
+            <Link href={href} target="_blank" rel="noopener noreferrer" underline="hover">
+              {children}
+            </Link>
+          ) : (
+            <>{children}</>
+          ),
+        img: ({ src, alt }) =>
+          rich ? (
+            <Box sx={{ display: align === 'center' ? 'flex' : undefined, justifyContent: 'center' }}>
+              <ContentImage src={src} alt={alt} />
+            </Box>
+          ) : null,
+        code: ({ children, className }) =>
+          className?.split(/\s+/).some((name) => name.startsWith('math-') || name === 'language-math') ? (
+            <code className={className}>{children}</code>
+          ) : (
+            <Box
+              component="code"
+              sx={{
+                px: 0.5,
+                py: 0.15,
+                borderRadius: 0.5,
+                bgcolor: 'action.hover',
+                fontFamily: 'monospace',
+                fontSize: '.9em',
+              }}
+            >
+              {children}
+            </Box>
+          ),
+        pre: ({ children, className }) => (
+          <Box
+            component="pre"
+            className={className}
+            sx={{
+              my: 1.5,
+              p: 1.5,
+              overflowX: 'auto',
+              maxWidth: '100%',
+              borderRadius: 1,
+              bgcolor: 'action.hover',
+              '& .katex-display': { my: 0, textAlign: 'left' },
+            }}
+          >
+            {children}
+          </Box>
+        ),
+        hr: () => <Box component="hr" sx={{ my: 2, border: 0, borderTop: '1px solid', borderColor: 'divider' }} />,
+      }}
+    >
+      {markdown}
+    </ReactMarkdown>
+  );
 }

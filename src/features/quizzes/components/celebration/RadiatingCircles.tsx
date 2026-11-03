@@ -33,23 +33,41 @@ export function RadiatingCircles({
   const reducedMotion = useReducedMotion();
   if (reducedMotion || particleCount < 1) return null;
 
-  return <Box data-testid="radiating-circles" aria-hidden sx={{ position: 'absolute', zIndex: 0, inset: 0, overflow: 'visible', pointerEvents: 'none' }}>
-    {Array.from({ length: particleCount }, (_, index) => {
-      const mirrored = direction === 'both';
-      const slot = mirrored ? Math.floor(index / 2) : index;
-      const slots = mirrored ? Math.ceil(particleCount / 2) : particleCount;
-      const down = mirrored && index % 2 === 1;
-      const alternate = (slot + (down ? 1 : 0)) % 2 === 1;
-      const left = slots === 1 ? 50 : 17 + slot * (66 / (slots - 1));
-      const top = alternate ? 52 : 34;
-      const rise = verticalSpread + (slot % 3) * (verticalSpread * .6);
-      return <Box
-        key={index}
-        data-testid="radiating-circle"
-        sx={{
-          '--particle-x': `${(slot - (slots - 1) / 2) * horizontalSpread}px`, '--particle-y': `${down ? rise : -rise}px`, position: 'absolute', width: alternate ? particleSize * .75 : particleSize, height: alternate ? particleSize * .75 : particleSize, borderRadius: '50%', bgcolor: alternate ? colors[0] : colors[1], top: `${down ? 100 - top : top}%`, left: `${left}%`, animation: `${radiate} ${durationMs}ms ease-out both`, animationDelay: `${delayMs + slot * 28}ms`,
-        }}
-      />;
-    })}
-  </Box>;
+  return (
+    <Box
+      data-testid="radiating-circles"
+      aria-hidden
+      sx={{ position: 'absolute', zIndex: 0, inset: 0, overflow: 'visible', pointerEvents: 'none' }}
+    >
+      {Array.from({ length: particleCount }, (_, index) => {
+        const mirrored = direction === 'both';
+        const slot = mirrored ? Math.floor(index / 2) : index;
+        const slots = mirrored ? Math.ceil(particleCount / 2) : particleCount;
+        const down = mirrored && index % 2 === 1;
+        const alternate = (slot + (down ? 1 : 0)) % 2 === 1;
+        const left = slots === 1 ? 50 : 17 + slot * (66 / (slots - 1));
+        const top = alternate ? 52 : 34;
+        const rise = verticalSpread + (slot % 3) * (verticalSpread * 0.6);
+        return (
+          <Box
+            key={index}
+            data-testid="radiating-circle"
+            sx={{
+              '--particle-x': `${(slot - (slots - 1) / 2) * horizontalSpread}px`,
+              '--particle-y': `${down ? rise : -rise}px`,
+              position: 'absolute',
+              width: alternate ? particleSize * 0.75 : particleSize,
+              height: alternate ? particleSize * 0.75 : particleSize,
+              borderRadius: '50%',
+              bgcolor: alternate ? colors[0] : colors[1],
+              top: `${down ? 100 - top : top}%`,
+              left: `${left}%`,
+              animation: `${radiate} ${durationMs}ms ease-out both`,
+              animationDelay: `${delayMs + slot * 28}ms`,
+            }}
+          />
+        );
+      })}
+    </Box>
+  );
 }

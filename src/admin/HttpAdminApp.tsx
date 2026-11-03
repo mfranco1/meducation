@@ -225,8 +225,8 @@ export default function HttpAdminApp() {
       )}
       {status?.staleBase && (
         <Alert severity="warning">
-          The draft is based on an earlier publication than the one learners see. Publishing replaces what learners
-          see with this draft; Discard unpublished changes starts the draft over from the published version.
+          The draft is based on an earlier publication than the one learners see. Publishing replaces what learners see
+          with this draft; Discard unpublished changes starts the draft over from the published version.
         </Alert>
       )}
     </Stack>
@@ -236,7 +236,13 @@ export default function HttpAdminApp() {
   return (
     <>
       {store ? (
-        <AdminWorkspace store={store} header={header} feedback={feedback} externalBusy={blocked} onDirtyChange={setDirty} />
+        <AdminWorkspace
+          store={store}
+          header={header}
+          feedback={feedback}
+          externalBusy={blocked}
+          onDirtyChange={setDirty}
+        />
       ) : (
         <Container sx={{ py: 6 }}>
           <Stack spacing={3} alignItems="flex-start">
@@ -312,9 +318,7 @@ export default function HttpAdminApp() {
                   Flashcards: {dirty.flashcards ? 'Unsaved edits in this browser' : 'No unsaved edits'}
                 </Typography>
                 <Typography>
-                  {snapshot.changed
-                    ? 'The draft has unpublished changes.'
-                    : 'The draft matches what learners see.'}
+                  {snapshot.changed ? 'The draft has unpublished changes.' : 'The draft matches what learners see.'}
                 </Typography>
                 <Box component="details">
                   <summary>Technical details</summary>

@@ -36,16 +36,27 @@ describe('progress backup dialog', () => {
     });
     render(<ProgressBackupDialog controller={actions} />);
     expect(screen.getByRole('dialog', { name: 'Progress' })).toBeVisible();
-    expect(screen.getByText('This replaces all quiz and flashcard progress in this browser. You cannot undo this.')).toBeVisible();
-    expect(within(screen.getByRole('table', { name: 'Backup comparison' })).getByRole('row', { name: 'Completions 0 61' })).toBeVisible();
+    expect(
+      screen.getByText('This replaces all quiz and flashcard progress in this browser. You cannot undo this.'),
+    ).toBeVisible();
+    expect(
+      within(screen.getByRole('table', { name: 'Backup comparison' })).getByRole('row', { name: 'Completions 0 61' }),
+    ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Restore' }));
     expect(actions.restore).toHaveBeenCalledOnce();
   });
 
   it('omits the browser column when current progress cannot be read', () => {
-    render(<ProgressBackupDialog controller={controller({
-      preview: { backup: fixture as unknown as ProgressBackupV1, summary: { savedQuizzes: 3, savedFlashcardDecks: 1, completions: 5 } },
-    })} />);
+    render(
+      <ProgressBackupDialog
+        controller={controller({
+          preview: {
+            backup: fixture as unknown as ProgressBackupV1,
+            summary: { savedQuizzes: 3, savedFlashcardDecks: 1, completions: 5 },
+          },
+        })}
+      />,
+    );
     expect(screen.queryByRole('columnheader', { name: 'This browser' })).toBeNull();
   });
 
@@ -62,9 +73,14 @@ describe('progress backup dialog', () => {
   });
 
   it('confirms a reset with the counts to delete', () => {
-    const actions = controller({ resetStep: true, resetSummary: { savedQuizzes: 2, savedFlashcardDecks: 1, completions: 7 } });
+    const actions = controller({
+      resetStep: true,
+      resetSummary: { savedQuizzes: 2, savedFlashcardDecks: 1, completions: 7 },
+    });
     render(<ProgressBackupDialog controller={actions} />);
-    expect(within(screen.getByRole('table', { name: 'Progress to delete' })).getByRole('row', { name: 'Completions 7' })).toBeVisible();
+    expect(
+      within(screen.getByRole('table', { name: 'Progress to delete' })).getByRole('row', { name: 'Completions 7' }),
+    ).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
     expect(actions.reset).toHaveBeenCalledOnce();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
@@ -72,7 +88,14 @@ describe('progress backup dialog', () => {
   });
 
   it('offers only Back when there is no progress to reset', () => {
-    render(<ProgressBackupDialog controller={controller({ resetStep: true, resetSummary: { savedQuizzes: 0, savedFlashcardDecks: 0, completions: 0 } })} />);
+    render(
+      <ProgressBackupDialog
+        controller={controller({
+          resetStep: true,
+          resetSummary: { savedQuizzes: 0, savedFlashcardDecks: 0, completions: 0 },
+        })}
+      />,
+    );
     expect(screen.getByText('There is no saved progress to reset.')).toBeVisible();
     expect(screen.getByRole('button', { name: 'Back' })).toBeVisible();
     expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull();

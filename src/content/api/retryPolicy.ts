@@ -25,9 +25,23 @@ function boundedDelay(value: string | undefined, fallback: number, name: string)
 }
 
 export function readRetryPolicy(env: Record<string, string | undefined>): RetryPolicy {
-  const maxRetries = boundedInteger(env.VITE_CONTENT_MAX_RETRIES, defaults.maxRetries, 0, 5, 'VITE_CONTENT_MAX_RETRIES');
-  let baseDelayMs = boundedDelay(env.VITE_CONTENT_RETRY_BASE_DELAY_MS, defaults.baseDelayMs, 'VITE_CONTENT_RETRY_BASE_DELAY_MS');
-  let maxDelayMs = boundedDelay(env.VITE_CONTENT_RETRY_MAX_DELAY_MS, defaults.maxDelayMs, 'VITE_CONTENT_RETRY_MAX_DELAY_MS');
+  const maxRetries = boundedInteger(
+    env.VITE_CONTENT_MAX_RETRIES,
+    defaults.maxRetries,
+    0,
+    5,
+    'VITE_CONTENT_MAX_RETRIES',
+  );
+  let baseDelayMs = boundedDelay(
+    env.VITE_CONTENT_RETRY_BASE_DELAY_MS,
+    defaults.baseDelayMs,
+    'VITE_CONTENT_RETRY_BASE_DELAY_MS',
+  );
+  let maxDelayMs = boundedDelay(
+    env.VITE_CONTENT_RETRY_MAX_DELAY_MS,
+    defaults.maxDelayMs,
+    'VITE_CONTENT_RETRY_MAX_DELAY_MS',
+  );
   if (baseDelayMs > maxDelayMs) {
     logContentDiagnostic('Retry base delay exceeds maximum; using default delays.', {});
     baseDelayMs = defaults.baseDelayMs;
@@ -39,7 +53,7 @@ export function readRetryPolicy(env: Record<string, string | undefined>): RetryP
 export const contentRetryPolicy = readRetryPolicy(import.meta.env);
 
 export function retryDelayMs(retryNumber: number, policy: RetryPolicy, random: () => number = Math.random): number {
-  const ceiling = Math.min(policy.maxDelayMs, policy.baseDelayMs * (2 ** Math.max(0, retryNumber - 1)));
+  const ceiling = Math.min(policy.maxDelayMs, policy.baseDelayMs * 2 ** Math.max(0, retryNumber - 1));
   return Math.floor(ceiling / 2 + Math.min(1, Math.max(0, random())) * (ceiling / 2));
 }
 

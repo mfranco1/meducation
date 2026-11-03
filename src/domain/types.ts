@@ -2,23 +2,118 @@ export type Difficulty = 'easy' | 'medium' | 'hard';
 export type FeedbackMode = 'immediate' | 'exam';
 export type StreakMilestone = 3 | 5 | 10 | 25 | 50;
 
-export interface Choice { id: string; text: string }
-export interface QuestionMetadata { topic?: string; subtopic?: string; system?: string; difficulty?: Difficulty; questionType?: string; tags?: string[] }
-export interface RationaleMetadata { sources?: string }
-export interface Question {
-  id: string; quizId: string; stem: string; choices: Choice[];
-  answer: string;
-  rationale: string; rationaleMeta?: RationaleMetadata; pearls?: string[]; metadata: QuestionMetadata;
+export interface Choice {
+  id: string;
+  text: string;
 }
-export interface Subject { id: string; name: string; accent: string; description?: string }
-export interface Topic { id: string; subjectId: string; name: string; description?: string }
-export interface FlashcardCard { id: string; deckId: string; front: string; back: string; sources?: string }
-export interface Quiz { id: string; subjectId: string; topicId: string; name: string; description?: string; questionCount: number; questionIds?: string[] }
-export interface QuestionResponse { questionId: string; selectedChoiceId?: string; flagged: boolean; locked: boolean; timeMs: number }
-export interface CelebrationProgress { correctStreak: number; awardedStreakMilestones: StreakMilestone[] }
-export interface Attempt { id: string; quizId: string; subjectId: string; feedbackMode: FeedbackMode; startedAt: string; elapsedMs: number; timerStartedAt?: string; currentQuestionId?: string; contentSignature?: string; contentRevision?: string; shuffleSeed?: number; completedAt?: string; celebrationProgress: CelebrationProgress; responses: Record<string, QuestionResponse> }
-export interface CompletedAttempt extends Attempt { completedAt: string; score: AttemptScore }
-export interface AttemptScore { correct: number; incorrect: number; unanswered: number; total: number; percentage: number; elapsedMs: number }
-export interface RecentScore { percentage: number; completedAt: string }
-export interface QuizRepository { listSubjects(): Subject[]; listQuizzes(subjectId: string): Quiz[]; listQuestions(quizId: string): Question[]; contentRevision?(): string | undefined }
-export interface AttemptRepository { list(): CompletedAttempt[]; completionCount(quizId: string): number; lowestScore(quizId: string): number | undefined; latestScore(quizId: string): RecentScore | undefined; latestActivityAt(quizId: string): string | undefined; getActive(quizId: string): Attempt | undefined; getStorageError?(): string | undefined; saveActive(attempt: Attempt): void; clearActive(quizId: string): void; saveCompleted(attempt: CompletedAttempt): void }
+export interface QuestionMetadata {
+  topic?: string;
+  subtopic?: string;
+  system?: string;
+  difficulty?: Difficulty;
+  questionType?: string;
+  tags?: string[];
+}
+export interface RationaleMetadata {
+  sources?: string;
+}
+export interface Question {
+  id: string;
+  quizId: string;
+  stem: string;
+  choices: Choice[];
+  answer: string;
+  rationale: string;
+  rationaleMeta?: RationaleMetadata;
+  pearls?: string[];
+  metadata: QuestionMetadata;
+}
+export interface Subject {
+  id: string;
+  name: string;
+  accent: string;
+  description?: string;
+}
+export interface Topic {
+  id: string;
+  subjectId: string;
+  name: string;
+  description?: string;
+}
+export interface FlashcardCard {
+  id: string;
+  deckId: string;
+  front: string;
+  back: string;
+  sources?: string;
+}
+export interface Quiz {
+  id: string;
+  subjectId: string;
+  topicId: string;
+  name: string;
+  description?: string;
+  questionCount: number;
+  questionIds?: string[];
+}
+export interface QuestionResponse {
+  questionId: string;
+  selectedChoiceId?: string;
+  flagged: boolean;
+  locked: boolean;
+  timeMs: number;
+}
+export interface CelebrationProgress {
+  correctStreak: number;
+  awardedStreakMilestones: StreakMilestone[];
+}
+export interface Attempt {
+  id: string;
+  quizId: string;
+  subjectId: string;
+  feedbackMode: FeedbackMode;
+  startedAt: string;
+  elapsedMs: number;
+  timerStartedAt?: string;
+  currentQuestionId?: string;
+  contentSignature?: string;
+  contentRevision?: string;
+  shuffleSeed?: number;
+  completedAt?: string;
+  celebrationProgress: CelebrationProgress;
+  responses: Record<string, QuestionResponse>;
+}
+export interface CompletedAttempt extends Attempt {
+  completedAt: string;
+  score: AttemptScore;
+}
+export interface AttemptScore {
+  correct: number;
+  incorrect: number;
+  unanswered: number;
+  total: number;
+  percentage: number;
+  elapsedMs: number;
+}
+export interface RecentScore {
+  percentage: number;
+  completedAt: string;
+}
+export interface QuizRepository {
+  listSubjects(): Subject[];
+  listQuizzes(subjectId: string): Quiz[];
+  listQuestions(quizId: string): Question[];
+  contentRevision?(): string | undefined;
+}
+export interface AttemptRepository {
+  list(): CompletedAttempt[];
+  completionCount(quizId: string): number;
+  lowestScore(quizId: string): number | undefined;
+  latestScore(quizId: string): RecentScore | undefined;
+  latestActivityAt(quizId: string): string | undefined;
+  getActive(quizId: string): Attempt | undefined;
+  getStorageError?(): string | undefined;
+  saveActive(attempt: Attempt): void;
+  clearActive(quizId: string): void;
+  saveCompleted(attempt: CompletedAttempt): void;
+}

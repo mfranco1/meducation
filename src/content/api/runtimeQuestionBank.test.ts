@@ -6,8 +6,16 @@ const subject = { id: 's1', name: 'Subject', accent: '#123456' };
 const quiz = { id: 'q1', subjectId: 's1', topicId: 't1', name: 'Quiz', questionCount: 1, questionIds: ['i1'] };
 const topics = [{ id: 't1', subjectId: 's1', name: 'Topic' }];
 const question = {
-  id: 'i1', quizId: 'q1', stem: 'Question', choices: [{ id: 'A', text: 'Choice' }, { id: 'B', text: 'Alternative' }],
-  answer: 'A', rationale: 'Reason', metadata: {},
+  id: 'i1',
+  quizId: 'q1',
+  stem: 'Question',
+  choices: [
+    { id: 'A', text: 'Choice' },
+    { id: 'B', text: 'Alternative' },
+  ],
+  answer: 'A',
+  rationale: 'Reason',
+  metadata: {},
 };
 const noRetries = { maxRetries: 0, baseDelayMs: 100, maxDelayMs: 100 };
 
@@ -15,8 +23,12 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('runtime question bank', () => {
   it('loads only subject summaries before a selected subject catalog', async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-0', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }) })
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ revision: 'rev-0', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }),
+      })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-0', topics, quizzes: [quiz] }) });
     vi.stubGlobal('fetch', fetchMock);
 
@@ -52,10 +64,13 @@ describe('runtime question bank', () => {
   });
 
   it('rejects a question response from a different bank revision', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
-      ok: true,
-      json: async () => ({ revision: 'rev-2', questions: [question] }),
-    }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => ({ revision: 'rev-2', questions: [question] }),
+      }),
+    );
     runtimeQuestionBank.configureApi({ revision: 'rev-1', subjects: [subject] }, [
       { revision: 'rev-1', topics, quizzes: [quiz] },
     ]);
@@ -64,7 +79,9 @@ describe('runtime question bank', () => {
   });
 
   it('loads only the selected subject catalog and deduplicates requests', async () => {
-    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-3', topics, quizzes: [quiz] }) });
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-3', topics, quizzes: [quiz] }) });
     vi.stubGlobal('fetch', fetchMock);
     runtimeQuestionBank.configureApi({ revision: 'rev-3', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
 
@@ -81,7 +98,10 @@ describe('runtime question bank', () => {
 
   it('rejects a subject response without quiz membership instead of waiting for a subject click', async () => {
     const bank = new RuntimeQuestionBank(noRetries);
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-4', subjects: [subject] }) }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-4', subjects: [subject] }) }),
+    );
     await expect(bank.ensureSubjects()).rejects.toMatchObject({ kind: 'invalid' });
     expect(bank.getCatalogState()).toBe('error');
     expect(bank.listSubjects()).toEqual([]);
@@ -89,9 +109,13 @@ describe('runtime question bank', () => {
 
   it('times out subject loading, releases its loading state, and retries successfully', async () => {
     const bank = new RuntimeQuestionBank(noRetries);
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockImplementationOnce(() => new Promise(() => undefined))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-5', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ revision: 'rev-5', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }),
+      });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -103,7 +127,9 @@ describe('runtime question bank', () => {
       await bank.ensureSubjects();
       expect(bank.getCatalogState()).toBe('ready');
       expect(fetchMock).toHaveBeenCalledTimes(2);
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('times out while reading an unfinished response body', async () => {
@@ -115,13 +141,16 @@ describe('runtime question bank', () => {
       await vi.advanceTimersByTimeAsync(15_000);
       await pending;
       expect(bank.getCatalogState()).toBe('error');
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('times out quiz loading and retries only that subject', async () => {
     const bank = new RuntimeQuestionBank(noRetries);
     bank.configureApi({ revision: 'rev-6', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockImplementationOnce(() => new Promise(() => undefined))
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-6', topics, quizzes: [quiz] }) });
     vi.stubGlobal('fetch', fetchMock);
@@ -134,15 +163,23 @@ describe('runtime question bank', () => {
       await bank.ensureQuizzes('s1');
       expect(bank.getQuizState('s1')).toBe('ready');
       expect(fetchMock).toHaveBeenCalledTimes(2);
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('times out question loading without caching content, then retries', async () => {
     const bank = new RuntimeQuestionBank(noRetries);
-    bank.configureApi({ revision: 'rev-7', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'rev-7', topics, quizzes: [quiz] }]);
-    const fetchMock = vi.fn()
+    bank.configureApi({ revision: 'rev-7', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [
+      { revision: 'rev-7', topics, quizzes: [quiz] },
+    ]);
+    const fetchMock = vi
+      .fn()
       .mockImplementationOnce(() => new Promise(() => undefined))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-7', questions: [{ ...question, metadata: undefined }] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ revision: 'rev-7', questions: [{ ...question, metadata: undefined }] }),
+      });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -153,7 +190,9 @@ describe('runtime question bank', () => {
       await bank.ensureQuestions('q1');
       expect(bank.listQuestions('q1')).toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(2);
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('treats a malformed quiz response as recoverable content failure', async () => {
@@ -166,10 +205,14 @@ describe('runtime question bank', () => {
 
   it('automatically retries transient failures with exponential backoff and reports the retrying state', async () => {
     const bank = new RuntimeQuestionBank({ maxRetries: 2, baseDelayMs: 1000, maxDelayMs: 4000 }, () => 0);
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockRejectedValueOnce(new TypeError('network offline'))
       .mockRejectedValueOnce(new TypeError('network offline'))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-auto', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ revision: 'rev-auto', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }),
+      });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -182,14 +225,20 @@ describe('runtime question bank', () => {
       await expect(pending).resolves.toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(3);
       expect(bank.getCatalogState()).toBe('ready');
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('shares a single automatic retry chain when callers request subjects during backoff', async () => {
     const bank = new RuntimeQuestionBank({ maxRetries: 1, baseDelayMs: 100, maxDelayMs: 500 }, () => 0);
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockRejectedValueOnce(new TypeError('offline'))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-dedupe', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ revision: 'rev-dedupe', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }),
+      });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -200,14 +249,20 @@ describe('runtime question bank', () => {
       await expect(first).resolves.toHaveLength(1);
       await expect(second).resolves.toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(2);
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('can advance a catalog backoff without creating a second request chain', async () => {
     const bank = new RuntimeQuestionBank({ maxRetries: 1, baseDelayMs: 10_000, maxDelayMs: 10_000 }, () => 0);
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockRejectedValueOnce(new TypeError('offline'))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-now', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ revision: 'rev-now', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }),
+      });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -218,18 +273,40 @@ describe('runtime question bank', () => {
       await expect(pending).resolves.toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(2);
       expect(bank.getCatalogState()).toBe('ready');
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('tracks independent subject retries and can advance only one pending catalog', async () => {
     const secondSubject = { id: 's2', name: 'Second', accent: '#654321' };
     const bank = new RuntimeQuestionBank({ maxRetries: 1, baseDelayMs: 10_000, maxDelayMs: 10_000 }, () => 0);
-    bank.configureApi({ revision: 'rev-subjects', subjects: [
-      { ...subject, quizCount: 1, quizIds: ['q1'] },
-      { ...secondSubject, quizCount: 1, quizIds: ['q2'] },
-    ] });
-    const response = (id: string, subjectId: string, questionId: string) => ({ ok: true, json: async () => ({ revision: 'rev-subjects', topics: [{ id: `t${subjectId.slice(1)}`, subjectId, name: 'Topic' }], quizzes: [{ id, subjectId, topicId: `t${subjectId.slice(1)}`, name: 'Quiz', questionCount: 1, questionIds: [questionId] }] }) });
-    const fetchMock = vi.fn()
+    bank.configureApi({
+      revision: 'rev-subjects',
+      subjects: [
+        { ...subject, quizCount: 1, quizIds: ['q1'] },
+        { ...secondSubject, quizCount: 1, quizIds: ['q2'] },
+      ],
+    });
+    const response = (id: string, subjectId: string, questionId: string) => ({
+      ok: true,
+      json: async () => ({
+        revision: 'rev-subjects',
+        topics: [{ id: `t${subjectId.slice(1)}`, subjectId, name: 'Topic' }],
+        quizzes: [
+          {
+            id,
+            subjectId,
+            topicId: `t${subjectId.slice(1)}`,
+            name: 'Quiz',
+            questionCount: 1,
+            questionIds: [questionId],
+          },
+        ],
+      }),
+    });
+    const fetchMock = vi
+      .fn()
       .mockRejectedValueOnce(new TypeError('offline'))
       .mockRejectedValueOnce(new TypeError('offline'))
       .mockResolvedValueOnce(response('q1', 's1', 'i1'))
@@ -256,15 +333,21 @@ describe('runtime question bank', () => {
       await expect(second).resolves.toHaveLength(1);
       expect(bank.getQuizState('s2')).toBe('ready');
       expect(fetchMock).toHaveBeenCalledTimes(4);
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps Retry-After as the minimum manual retry deadline for subject catalogs', async () => {
     const bank = new RuntimeQuestionBank({ maxRetries: 1, baseDelayMs: 5_000, maxDelayMs: 5_000 }, () => 0);
     bank.configureApi({ revision: 'rev-retry-after', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({ ok: false, status: 503, headers: { get: () => '1' } })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-retry-after', topics, quizzes: [{ ...quiz, questionIds: ['i1'] }] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ revision: 'rev-retry-after', topics, quizzes: [{ ...quiz, questionIds: ['i1'] }] }),
+      });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -276,23 +359,31 @@ describe('runtime question bank', () => {
       expect(bank.retryQuizNow('s1')).toBe(true);
       await expect(pending).resolves.toHaveLength(1);
       expect(fetchMock).toHaveBeenCalledTimes(2);
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps raw network exception details out of developer log fields', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('socket ECONNREFUSED private detail')));
-    await expect(getJsonWithRetry('/api/v1/subjects', { policy: noRetries })).rejects.toMatchObject({ kind: 'network' });
+    await expect(getJsonWithRetry('/api/v1/subjects', { policy: noRetries })).rejects.toMatchObject({
+      kind: 'network',
+    });
     expect(JSON.stringify(warn.mock.calls)).not.toContain('private detail');
     warn.mockRestore();
   });
 
   it('stops after the configured retry budget and allows a fresh manual operation', async () => {
     const bank = new RuntimeQuestionBank({ maxRetries: 1, baseDelayMs: 100, maxDelayMs: 500 }, () => 0);
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockRejectedValueOnce(new TypeError('offline'))
       .mockRejectedValueOnce(new TypeError('offline'))
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-manual', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ revision: 'rev-manual', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }),
+      });
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
     try {
@@ -304,12 +395,16 @@ describe('runtime question bank', () => {
       await bank.ensureSubjects();
       expect(fetchMock).toHaveBeenCalledTimes(3);
       expect(bank.getCatalogState()).toBe('ready');
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('cancels a question retry during backoff without starting another attempt', async () => {
     const bank = new RuntimeQuestionBank({ maxRetries: 3, baseDelayMs: 1000, maxDelayMs: 4000 }, () => 0);
-    bank.configureApi({ revision: 'rev-cancel', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'rev-cancel', topics, quizzes: [quiz] }]);
+    bank.configureApi({ revision: 'rev-cancel', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [
+      { revision: 'rev-cancel', topics, quizzes: [quiz] },
+    ]);
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('offline'));
     vi.stubGlobal('fetch', fetchMock);
     vi.useFakeTimers();
@@ -323,11 +418,14 @@ describe('runtime question bank', () => {
       await vi.advanceTimersByTimeAsync(2000);
       expect(fetchMock).toHaveBeenCalledTimes(1);
       expect(bank.listQuestions('q1')).toEqual([]);
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('honors Retry-After on 503 and does not retry a permanent HTTP failure', async () => {
-    const retryingFetch = vi.fn()
+    const retryingFetch = vi
+      .fn()
       .mockResolvedValueOnce({ ok: false, status: 503, headers: { get: () => '2' } })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ ready: true }) });
     vi.stubGlobal('fetch', retryingFetch);
@@ -335,7 +433,9 @@ describe('runtime question bank', () => {
     try {
       const onRetry = vi.fn();
       const request = getJsonWithRetry('/api/v1/subjects', {
-        policy: { maxRetries: 1, baseDelayMs: 500, maxDelayMs: 3000 }, random: () => 0, onRetry,
+        policy: { maxRetries: 1, baseDelayMs: 500, maxDelayMs: 3000 },
+        random: () => 0,
+        onRetry,
       });
       await vi.advanceTimersByTimeAsync(0);
       expect(onRetry).toHaveBeenCalledWith(1, 2000, 2000);
@@ -345,29 +445,41 @@ describe('runtime question bank', () => {
       await expect(request).resolves.toEqual({ ready: true });
       expect(retryingFetch).toHaveBeenCalledTimes(2);
 
-      const permanentFetch = vi.fn().mockResolvedValue({ ok: false, status: 404, headers: { get: (name: string) => name === 'X-Request-ID' ? 'req-1234' : null } });
+      const permanentFetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 404,
+        headers: { get: (name: string) => (name === 'X-Request-ID' ? 'req-1234' : null) },
+      });
       vi.stubGlobal('fetch', permanentFetch);
-      await expect(getJsonWithRetry('/api/v1/missing', { policy: { maxRetries: 3, baseDelayMs: 500, maxDelayMs: 3000 } }))
-        .rejects.toMatchObject({ kind: 'http', status: 404, requestId: 'req-1234' });
+      await expect(
+        getJsonWithRetry('/api/v1/missing', { policy: { maxRetries: 3, baseDelayMs: 500, maxDelayMs: 3000 } }),
+      ).rejects.toMatchObject({ kind: 'http', status: 404, requestId: 'req-1234' });
       expect(permanentFetch).toHaveBeenCalledTimes(1);
-    } finally { vi.useRealTimers(); }
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('stops instead of exceeding the delay limit from Retry-After', async () => {
     const fetchMock = vi.fn().mockResolvedValue({ ok: false, status: 429, headers: { get: () => '31' } });
     vi.stubGlobal('fetch', fetchMock);
     const onRetry = vi.fn();
-    await expect(getJsonWithRetry('/api/v1/subjects', {
-      policy: { maxRetries: 3, baseDelayMs: 500, maxDelayMs: 30_000 }, onRetry,
-    })).rejects.toMatchObject({ kind: 'http', status: 429 });
+    await expect(
+      getJsonWithRetry('/api/v1/subjects', {
+        policy: { maxRetries: 3, baseDelayMs: 500, maxDelayMs: 30_000 },
+        onRetry,
+      }),
+    ).rejects.toMatchObject({ kind: 'http', status: 429 });
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(onRetry).not.toHaveBeenCalled();
   });
 
   it('ignores an old subject response after a new API revision is configured', async () => {
     let resolveOld!: (value: unknown) => void;
-    const pending = new Promise<unknown>(resolve => { resolveOld = resolve; });
-    const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
+    const pending = new Promise<unknown>((resolve) => {
+      resolveOld = resolve;
+    });
+    const transport: JsonTransport = { get: <T>() => pending as Promise<T> };
     const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
     const oldRequest = bank.ensureSubjects();
     bank.configureApi({ revision: 'new', subjects: [subject] }, [{ revision: 'new', topics, quizzes: [quiz] }]);
@@ -379,14 +491,18 @@ describe('runtime question bank', () => {
 
   it('ignores an old quiz catalog after a new revision is configured', async () => {
     let resolveOld!: (value: unknown) => void;
-    const pending = new Promise<unknown>(resolve => { resolveOld = resolve; });
-    const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
+    const pending = new Promise<unknown>((resolve) => {
+      resolveOld = resolve;
+    });
+    const transport: JsonTransport = { get: <T>() => pending as Promise<T> };
     const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
     bank.configureApi({ revision: 'old', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] });
     const oldRequest = bank.ensureQuizzes('s1');
     await vi.waitFor(() => expect(bank.getQuizState('s1')).toBe('loading'));
     const replacement = { ...quiz, id: 'q2', questionIds: ['i2'] };
-    bank.configureApi({ revision: 'new', subjects: [{ ...subject, quizCount: 1, quizIds: ['q2'] }] }, [{ revision: 'new', topics, quizzes: [replacement] }]);
+    bank.configureApi({ revision: 'new', subjects: [{ ...subject, quizCount: 1, quizIds: ['q2'] }] }, [
+      { revision: 'new', topics, quizzes: [replacement] },
+    ]);
     resolveOld({ revision: 'old', topics, quizzes: [quiz] });
     await expect(oldRequest).rejects.toMatchObject({ kind: 'cancelled' });
     expect(bank.listQuizzes('s1')).toEqual([replacement]);
@@ -395,10 +511,14 @@ describe('runtime question bank', () => {
 
   it('does not cache old questions after reconfiguration', async () => {
     let resolveOld!: (value: unknown) => void;
-    const pending = new Promise<unknown>(resolve => { resolveOld = resolve; });
-    const transport: JsonTransport = { get: <T,>() => pending as Promise<T> };
+    const pending = new Promise<unknown>((resolve) => {
+      resolveOld = resolve;
+    });
+    const transport: JsonTransport = { get: <T>() => pending as Promise<T> };
     const bank = new RuntimeQuestionBank(noRetries, () => 0, transport);
-    bank.configureApi({ revision: 'old', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [{ revision: 'old', topics, quizzes: [quiz] }]);
+    bank.configureApi({ revision: 'old', subjects: [{ ...subject, quizCount: 1, quizIds: ['q1'] }] }, [
+      { revision: 'old', topics, quizzes: [quiz] },
+    ]);
     const oldRequest = bank.ensureQuestions('q1');
     bank.configureApi({ revision: 'new', subjects: [subject] }, [{ revision: 'new', topics, quizzes: [quiz] }]);
     resolveOld({ revision: 'old', questions: [question] });
@@ -429,6 +549,4 @@ describe('quiz launch freshness', () => {
     expect(bank.listQuestions(quiz.id)).toBe(active);
     (await bank.validateLaunch(quiz))();
   });
-
-
 });

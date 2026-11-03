@@ -3,5 +3,11 @@ import type { SkeletonProps } from '@mui/material';
 
 export function LoadingSkeleton({ sx, ...props }: SkeletonProps) {
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
-  return <Skeleton {...props} animation={reducedMotion ? false : 'wave'} sx={[{ bgcolor: 'rgba(185, 81, 27, 0.09)' }, ...Array.isArray(sx) ? sx : [sx]]} />;
+  return (
+    <Skeleton
+      {...props}
+      animation={reducedMotion ? false : 'wave'}
+      sx={[{ bgcolor: 'rgba(185, 81, 27, 0.09)' }, ...(Array.isArray(sx) ? sx : [sx])]}
+    />
+  );
 }

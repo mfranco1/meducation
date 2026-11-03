@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import quizPayload from '../../tests/fixtures/progress-backups/populated-v1.json';
-import { encodeBackupFromProgressPair, restoreProgressBackup, resetProgress, type ProgressPair } from './progressBackupStorage';
+import {
+  encodeBackupFromProgressPair,
+  restoreProgressBackup,
+  resetProgress,
+  type ProgressPair,
+} from './progressBackupStorage';
 import { parseProgressBackup, type ProgressBackupV1 } from './progressBackupCodec';
 import { progressKey } from './progressCodec';
 import { flashcardProgressKey } from './flashcardProgressCodec';
@@ -78,14 +83,19 @@ describe('restoreProgressBackup', () => {
         if (key === failingKey) throw new DOMException('Quota exceeded', 'QuotaExceededError');
         values.set(key, value);
       },
-      removeItem: (key: string) => { values.delete(key); },
+      removeItem: (key: string) => {
+        values.delete(key);
+      },
     };
   }
 
   it('round-trips an export through a restore into both stores', () => {
     const storage = memoryStorage({});
     expect(restoreProgressBackup(storage, target)).toBe(true);
-    const exported = encodeBackupFromProgressPair({ quiz: storage.getItem(progressKey), flashcards: storage.getItem(flashcardProgressKey) });
+    const exported = encodeBackupFromProgressPair({
+      quiz: storage.getItem(progressKey),
+      flashcards: storage.getItem(flashcardProgressKey),
+    });
     expect(exported.ok).toBe(true);
     if (exported.ok) {
       const parsed = JSON.parse(exported.json) as ProgressBackupV1;
@@ -102,7 +112,10 @@ describe('restoreProgressBackup', () => {
   });
 
   it('leaves both stores at their original values when the second write fails', () => {
-    const storage = memoryStorage({ [progressKey]: 'old-quiz', [flashcardProgressKey]: 'old-cards' }, flashcardProgressKey);
+    const storage = memoryStorage(
+      { [progressKey]: 'old-quiz', [flashcardProgressKey]: 'old-cards' },
+      flashcardProgressKey,
+    );
     expect(restoreProgressBackup(storage, target)).toBe(false);
     expect(storage.getItem(progressKey)).toBe('old-quiz');
     expect(storage.getItem(flashcardProgressKey)).toBe('old-cards');

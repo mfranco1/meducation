@@ -27,7 +27,10 @@ describe('draft store record calls', () => {
     store.editElsewhere('questions', 'i1', { stem: 'Changed by someone else' });
     const error = await store.update('question', 'i1', 1, { stem: 'Mine' }).catch((e) => e);
     expect(error).toBeInstanceOf(AdminHttpError);
-    expect(error).toMatchObject({ code: 'version_conflict', body: { current: { stem: 'Changed by someone else', version: 2 } } });
+    expect(error).toMatchObject({
+      code: 'version_conflict',
+      body: { current: { stem: 'Changed by someone else', version: 2 } },
+    });
     expect(store.find('question', 'i1')).toMatchObject({ stem: 'Changed by someone else', version: 2 });
   });
 
@@ -35,7 +38,10 @@ describe('draft store record calls', () => {
     const store = open();
     const created = await store.create('question', 'q1', {
       stem: 'S',
-      choices: [{ id: 'A', text: 'a' }, { id: 'B', text: 'b' }],
+      choices: [
+        { id: 'A', text: 'a' },
+        { id: 'B', text: 'b' },
+      ],
       rationale: 'R',
     });
     expect(created.id).toBe('i91');
@@ -63,12 +69,34 @@ describe('draft store record calls', () => {
 
   it('adds topics, their quizzes and questions with one request per step and no ID handling', async () => {
     const store = createAdminStore(structuredClone(storedQuestionBank), structuredClone(emptyFlashcardBank));
-    const item = { stem: 'S', choices: [{ id: 'A', text: 'a' }, { id: 'B', text: 'b' }], answer: 'A', rationale: 'R' };
+    const item = {
+      stem: 'S',
+      choices: [
+        { id: 'A', text: 'a' },
+        { id: 'B', text: 'b' },
+      ],
+      answer: 'A',
+      rationale: 'R',
+    };
     const result = await store.addTree({
       subjectId: 's1',
       topics: [
-        { fields: { name: 'New topic' }, groups: [{ create: { kind: 'quizzes', fields: { name: 'Quiz one' } }, childKind: 'questions', children: [item, item] }] },
-        { fields: { name: 'Other topic' }, groups: [{ create: { kind: 'quizzes', fields: { name: 'Quiz two' } }, childKind: 'questions', children: [item] }] },
+        {
+          fields: { name: 'New topic' },
+          groups: [
+            {
+              create: { kind: 'quizzes', fields: { name: 'Quiz one' } },
+              childKind: 'questions',
+              children: [item, item],
+            },
+          ],
+        },
+        {
+          fields: { name: 'Other topic' },
+          groups: [
+            { create: { kind: 'quizzes', fields: { name: 'Quiz two' } }, childKind: 'questions', children: [item] },
+          ],
+        },
       ],
     });
     expect(result).toEqual({ topicIds: ['t91', 't92'], parentIds: ['q91', 'q92'], created: 3 });
@@ -81,7 +109,11 @@ describe('draft store record calls', () => {
       'POST /draft/quizzes/q92/questions/bulk',
       'GET /draft',
     ]);
-    expect(store.snapshot.topics.find((row) => row.id === 't91')).toMatchObject({ id: 't91', subjectId: 's1', name: 'New topic' });
+    expect(store.snapshot.topics.find((row) => row.id === 't91')).toMatchObject({
+      id: 't91',
+      subjectId: 's1',
+      name: 'New topic',
+    });
     expect(store.snapshot.quizzes.find((row) => row.id === 'q92')).toMatchObject({ topicId: 't92', name: 'Quiz two' });
     expect(store.snapshot.questions.filter((row) => row.quizId === 'q91')).toHaveLength(2);
   });
@@ -92,7 +124,12 @@ describe('draft store record calls', () => {
     store.rejectNext([{ path: '$.records[0].stem', code: 'blank', message: 'Stem is required.' }], /\/bulk$/);
     const failure = await store
       .addTree({
-        topics: [{ id: 't1', groups: [{ create: { kind: 'quizzes', fields: { name: 'Q' } }, childKind: 'questions', children: [item] }] }],
+        topics: [
+          {
+            id: 't1',
+            groups: [{ create: { kind: 'quizzes', fields: { name: 'Q' } }, childKind: 'questions', children: [item] }],
+          },
+        ],
       })
       .catch((e) => e);
     expect(failure).toBeInstanceOf(BulkFailure);

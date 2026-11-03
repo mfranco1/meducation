@@ -24,36 +24,129 @@ export function QuizBrowseScreen({ index, questions, onNavigate, onDone }: QuizB
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
-  useStudyArrowNavigation({ index, total: questions.length, disabled: navigatorOpen, onPrevious: () => onNavigate(index - 1), onNext: () => onNavigate(index + 1), nextButtonRef: nextRef, finishButtonRef: finishRef });
+  useStudyArrowNavigation({
+    index,
+    total: questions.length,
+    disabled: navigatorOpen,
+    onPrevious: () => onNavigate(index - 1),
+    onNext: () => onNavigate(index + 1),
+    nextButtonRef: nextRef,
+    finishButtonRef: finishRef,
+  });
   const question = questions[index];
-  if (!question) return <Container maxWidth="md" sx={{ py: 4 }}><Alert severity="warning">This quiz has no questions to browse.</Alert><Button sx={{ mt: 2 }} onClick={onDone}>Done</Button></Container>;
+  if (!question)
+    return (
+      <Container maxWidth="md" sx={{ py: 4 }}>
+        <Alert severity="warning">This quiz has no questions to browse.</Alert>
+        <Button sx={{ mt: 2 }} onClick={onDone}>
+          Done
+        </Button>
+      </Container>
+    );
 
   const correctAnswer = answerFor(question);
-  const hasCorrectChoice = correctAnswer !== undefined && question.choices.some(choice => choice.id === correctAnswer);
-  const navigator = <QuestionGrid questions={questions} currentIndex={index} onNavigate={target => { onNavigate(target); setNavigatorOpen(false); }} />;
+  const hasCorrectChoice =
+    correctAnswer !== undefined && question.choices.some((choice) => choice.id === correctAnswer);
+  const navigator = (
+    <QuestionGrid
+      questions={questions}
+      currentIndex={index}
+      onNavigate={(target) => {
+        onNavigate(target);
+        setNavigatorOpen(false);
+      }}
+    />
+  );
 
-  return <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
-    <ReadOnlyQuizHeader index={index} total={questions.length} mode="Browse answers" exitLabel="Leave answer browser" onExit={onDone} />
-    <QuestionNavigationLayout navigator={navigator} open={navigatorOpen} onOpen={() => setNavigatorOpen(true)} onClose={() => setNavigatorOpen(false)}>
-        <SwapTransition swapKey={index}><Card><CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-          <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
-          <ReadOnlyChoiceList question={question} correctChoiceId={hasCorrectChoice ? correctAnswer : undefined} mode="browse" />
-          {!hasCorrectChoice
-            ? <FeedbackPanel question={question} readOnlyStatus="unavailable" />
-            : <FeedbackPanel question={question} selectedChoiceId={correctAnswer} />}
-        </CardContent></Card></SwapTransition>
-        <ReadOnlyQuizFooter index={index} total={questions.length} onNavigate={onNavigate} onDone={onDone} nextButtonRef={nextRef} finishButtonRef={finishRef} />
-    </QuestionNavigationLayout>
-  </Container>;
+  return (
+    <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
+      <ReadOnlyQuizHeader
+        index={index}
+        total={questions.length}
+        mode="Browse answers"
+        exitLabel="Leave answer browser"
+        onExit={onDone}
+      />
+      <QuestionNavigationLayout
+        navigator={navigator}
+        open={navigatorOpen}
+        onOpen={() => setNavigatorOpen(true)}
+        onClose={() => setNavigatorOpen(false)}
+      >
+        <SwapTransition swapKey={index}>
+          <Card>
+            <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
+              <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
+              <ReadOnlyChoiceList
+                question={question}
+                correctChoiceId={hasCorrectChoice ? correctAnswer : undefined}
+                mode="browse"
+              />
+              {!hasCorrectChoice ? (
+                <FeedbackPanel question={question} readOnlyStatus="unavailable" />
+              ) : (
+                <FeedbackPanel question={question} selectedChoiceId={correctAnswer} />
+              )}
+            </CardContent>
+          </Card>
+        </SwapTransition>
+        <ReadOnlyQuizFooter
+          index={index}
+          total={questions.length}
+          onNavigate={onNavigate}
+          onDone={onDone}
+          nextButtonRef={nextRef}
+          finishButtonRef={finishRef}
+        />
+      </QuestionNavigationLayout>
+    </Container>
+  );
 }
 
-function QuestionGrid({ questions, currentIndex, onNavigate }: { questions: Question[]; currentIndex: number; onNavigate: (index: number) => void }) {
+function QuestionGrid({
+  questions,
+  currentIndex,
+  onNavigate,
+}: {
+  questions: Question[];
+  currentIndex: number;
+  onNavigate: (index: number) => void;
+}) {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const currentTileRef = useRef<HTMLButtonElement>(null);
 
   useScrollCurrentQuestion(scrollAreaRef, currentTileRef, [currentIndex]);
 
-  return <Box ref={scrollAreaRef} aria-label="Question navigator" sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1, maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, overflowY: 'auto', p: .75 }}>
-    {questions.map((question, itemIndex) => <QuestionTile key={question.id} item={{ index: itemIndex, number: itemIndex + 1, answered: false, flagged: false, correct: false, wrong: false }} current={itemIndex === currentIndex} tileRef={itemIndex === currentIndex ? currentTileRef : undefined} onClick={() => onNavigate(itemIndex)} showAnswerStatus={false} />)}
-  </Box>;
+  return (
+    <Box
+      ref={scrollAreaRef}
+      aria-label="Question navigator"
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(5, minmax(0, 1fr))',
+        gap: 1,
+        maxHeight: { xs: 'calc(100vh - 110px)', md: 470 },
+        overflowY: 'auto',
+        p: 0.75,
+      }}
+    >
+      {questions.map((question, itemIndex) => (
+        <QuestionTile
+          key={question.id}
+          item={{
+            index: itemIndex,
+            number: itemIndex + 1,
+            answered: false,
+            flagged: false,
+            correct: false,
+            wrong: false,
+          }}
+          current={itemIndex === currentIndex}
+          tileRef={itemIndex === currentIndex ? currentTileRef : undefined}
+          onClick={() => onNavigate(itemIndex)}
+          showAnswerStatus={false}
+        />
+      ))}
+    </Box>
+  );
 }

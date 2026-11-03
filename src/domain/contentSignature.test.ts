@@ -3,9 +3,16 @@ import type { Question } from './types';
 import { contentSignature } from './contentSignature';
 
 const question: Question = {
-  id: 'q1', quizId: 'quiz', stem: 'Original stem',
-  choices: [{ id: 'A', text: 'First' }, { id: 'B', text: 'Second' }],
-  answer: 'A', rationale: 'Original explanation', metadata: {},
+  id: 'q1',
+  quizId: 'quiz',
+  stem: 'Original stem',
+  choices: [
+    { id: 'A', text: 'First' },
+    { id: 'B', text: 'Second' },
+  ],
+  answer: 'A',
+  rationale: 'Original explanation',
+  metadata: {},
 };
 
 describe('active attempt content signature', () => {

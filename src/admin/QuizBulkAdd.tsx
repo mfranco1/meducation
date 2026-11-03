@@ -64,7 +64,8 @@ export function QuizBulkAdd({
   }, [template, targetKey]);
 
   const retarget = async (next: BulkTarget) => {
-    if (busy || blocked || (dirty && !(await confirmation.request('Discard the unsaved batch JSON to continue?')))) return;
+    if (busy || blocked || (dirty && !(await confirmation.request('Discard the unsaved batch JSON to continue?'))))
+      return;
     setNotice('');
     onTargetChange(next);
   };
@@ -109,9 +110,15 @@ export function QuizBulkAdd({
   };
   const existing =
     target.kind === 'subject'
-      ? { label: 'topics', names: bank.topics.filter((row) => row.subjectId === target.subjectId).map((row) => row.name) }
+      ? {
+          label: 'topics',
+          names: bank.topics.filter((row) => row.subjectId === target.subjectId).map((row) => row.name),
+        }
       : target.kind === 'topic'
-        ? { label: 'quizzes', names: bank.quizzes.filter((row) => row.topicId === target.topicId).map((row) => row.name) }
+        ? {
+            label: 'quizzes',
+            names: bank.quizzes.filter((row) => row.topicId === target.topicId).map((row) => row.name),
+          }
         : undefined;
   const copyNames = async () => {
     try {
@@ -139,22 +146,22 @@ export function QuizBulkAdd({
         <MenuItem value="quiz">Add items to a quiz</MenuItem>
       </TextField>
       <Autocomplete
-          inputValue={subjectQuery ?? (subject ? `${subject.name} · ${subject.id}` : '')}
-          onInputChange={(_, value, reason) => {
-            if (reason === 'input') setSubjectQuery(value);
-          }}
-          options={bank.subjects}
-          value={subject ?? null}
-          getOptionLabel={(row) => `${row.name} · ${row.id}`}
-          isOptionEqualToValue={(left, right) => left.id === right.id}
-          onChange={(_, row) => {
-            setSubjectQuery(undefined);
-            setTopicQuery(undefined);
-            setQuizQuery(undefined);
-            void retarget({ kind: target.kind, subjectId: row?.id });
-          }}
-          renderInput={(params) => <TextField {...params} label="Subject" />}
-        />
+        inputValue={subjectQuery ?? (subject ? `${subject.name} · ${subject.id}` : '')}
+        onInputChange={(_, value, reason) => {
+          if (reason === 'input') setSubjectQuery(value);
+        }}
+        options={bank.subjects}
+        value={subject ?? null}
+        getOptionLabel={(row) => `${row.name} · ${row.id}`}
+        isOptionEqualToValue={(left, right) => left.id === right.id}
+        onChange={(_, row) => {
+          setSubjectQuery(undefined);
+          setTopicQuery(undefined);
+          setQuizQuery(undefined);
+          void retarget({ kind: target.kind, subjectId: row?.id });
+        }}
+        renderInput={(params) => <TextField {...params} label="Subject" />}
+      />
       {target.kind !== 'subject' && (
         <Autocomplete
           inputValue={topicQuery ?? (topic ? `${topic.name} · ${topic.id}` : '')}

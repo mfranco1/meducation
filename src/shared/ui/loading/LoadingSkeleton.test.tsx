@@ -9,7 +9,7 @@ describe('loading skeleton motion', () => {
   });
 
   it('stays static for reduced motion', () => {
-    window.matchMedia = vi.fn().mockImplementation(query => ({
+    window.matchMedia = vi.fn().mockImplementation((query) => ({
       matches: query === '(prefers-reduced-motion: reduce)',
       media: query,
       addEventListener: vi.fn(),

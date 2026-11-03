@@ -7,15 +7,56 @@ import { QuizBrowseScreen } from './QuizBrowseScreen';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
-  { id: 'q1', quizId: quiz.id, stem: 'Question one $x^2$ <img src="/content/question.png" alt="Question diagram">', choices: [{ id: 'A', text: 'First choice' }, { id: 'B', text: 'Second choice' }], answer: 'B', rationale: 'Explanation one $E=mc^2$\n\n![Explanation diagram](/content/explanation.png)', metadata: {} },
-  { id: 'q2', quizId: quiz.id, stem: 'Question two', choices: [{ id: 'A', text: 'Third choice' }, { id: 'B', text: 'Fourth choice' }], answer: 'A', rationale: 'Explanation two', metadata: {} },
+  {
+    id: 'q1',
+    quizId: quiz.id,
+    stem: 'Question one $x^2$ <img src="/content/question.png" alt="Question diagram">',
+    choices: [
+      { id: 'A', text: 'First choice' },
+      { id: 'B', text: 'Second choice' },
+    ],
+    answer: 'B',
+    rationale: 'Explanation one $E=mc^2$\n\n![Explanation diagram](/content/explanation.png)',
+    metadata: {},
+  },
+  {
+    id: 'q2',
+    quizId: quiz.id,
+    stem: 'Question two',
+    choices: [
+      { id: 'A', text: 'Third choice' },
+      { id: 'B', text: 'Fourth choice' },
+    ],
+    answer: 'A',
+    rationale: 'Explanation two',
+    metadata: {},
+  },
 ];
 
 function renderBrowse(index = 0) {
   const onNavigate = vi.fn();
   const onDone = vi.fn();
-  const view = render(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={index} questions={questions} onNavigate={onNavigate} onDone={onDone} /></ThemeProvider>);
-  return { onNavigate, onDone, rerender: (nextIndex: number) => view.rerender(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={nextIndex} questions={questions} onNavigate={onNavigate} onDone={onDone} /></ThemeProvider>) };
+  const view = render(
+    <ThemeProvider theme={theme}>
+      <QuizBrowseScreen quiz={quiz} index={index} questions={questions} onNavigate={onNavigate} onDone={onDone} />
+    </ThemeProvider>,
+  );
+  return {
+    onNavigate,
+    onDone,
+    rerender: (nextIndex: number) =>
+      view.rerender(
+        <ThemeProvider theme={theme}>
+          <QuizBrowseScreen
+            quiz={quiz}
+            index={nextIndex}
+            questions={questions}
+            onNavigate={onNavigate}
+            onDone={onDone}
+          />
+        </ThemeProvider>,
+      ),
+  };
 }
 
 describe('quiz answer browser', () => {
@@ -62,7 +103,17 @@ describe('quiz answer browser', () => {
 
   it('shows Answer unavailable without marking any choice when the answer matches no choice', () => {
     const unansweredQuestion = { ...questions[0], answer: 'Z' };
-    render(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={0} questions={[unansweredQuestion]} onNavigate={() => {}} onDone={() => {}} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <QuizBrowseScreen
+          quiz={quiz}
+          index={0}
+          questions={[unansweredQuestion]}
+          onNavigate={() => {}}
+          onDone={() => {}}
+        />
+      </ThemeProvider>,
+    );
 
     expect(screen.getByText('Answer unavailable')).toBeVisible();
     expect(screen.queryByText('Second choice')).toBeVisible();
@@ -72,7 +123,11 @@ describe('quiz answer browser', () => {
 
   it('shows one pearl when a question has several', () => {
     const pearlQuestion = { ...questions[0], pearls: ['Pearl A', 'Pearl B'] };
-    render(<ThemeProvider theme={theme}><QuizBrowseScreen quiz={quiz} index={0} questions={[pearlQuestion]} onNavigate={() => {}} onDone={() => {}} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <QuizBrowseScreen quiz={quiz} index={0} questions={[pearlQuestion]} onNavigate={() => {}} onDone={() => {}} />
+      </ThemeProvider>,
+    );
 
     expect(screen.getAllByText('High-yield pearl')).toHaveLength(1);
     expect(screen.getAllByText(/^Pearl [AB]$/)).toHaveLength(1);

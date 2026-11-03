@@ -61,9 +61,10 @@ export function DrawerEdgeToggle({
           borderRadius: '50%',
         },
         '& .drawer-edge-toggle-arrow': { opacity: 0 },
-        '&:hover .drawer-edge-toggle-arrow, &:focus-visible .drawer-edge-toggle-arrow, .drawer-surface:hover & .drawer-edge-toggle-arrow': {
-          opacity: 1,
-        },
+        '&:hover .drawer-edge-toggle-arrow, &:focus-visible .drawer-edge-toggle-arrow, .drawer-surface:hover & .drawer-edge-toggle-arrow':
+          {
+            opacity: 1,
+          },
         '&:disabled': { pointerEvents: 'none' },
         [reducedMotion]: {
           '&::before': { transition: 'none' },

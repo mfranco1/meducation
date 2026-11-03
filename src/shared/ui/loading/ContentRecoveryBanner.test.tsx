@@ -9,7 +9,11 @@ afterEach(() => vi.useRealTimers());
 describe('ContentRecoveryBanner', () => {
   it('switches to a disabled pending state immediately after a manual retry click', () => {
     const onRetry = vi.fn();
-    render(<ThemeProvider theme={theme}><ContentRecoveryBanner error={new Error('offline')} onRetry={onRetry} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <ContentRecoveryBanner error={new Error('offline')} onRetry={onRetry} />
+      </ThemeProvider>,
+    );
     const retry = screen.getByRole('button', { name: 'Retry' });
 
     fireEvent.click(retry);
@@ -22,14 +26,27 @@ describe('ContentRecoveryBanner', () => {
 
   it('keeps automatic retries disabled and restores manual Retry when the request fails', async () => {
     let finishRetry!: () => void;
-    const onRetry = vi.fn(() => new Promise<void>(resolve => { finishRetry = resolve; }));
-    const { rerender } = render(<ThemeProvider theme={theme}><ContentRecoveryBanner retrying retryAt={Date.now() + 5_000} onRetry={onRetry} /></ThemeProvider>);
+    const onRetry = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finishRetry = resolve;
+        }),
+    );
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <ContentRecoveryBanner retrying retryAt={Date.now() + 5_000} onRetry={onRetry} />
+      </ThemeProvider>,
+    );
 
     expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
     fireEvent.click(screen.getByRole('button', { name: 'Retrying...' }));
     expect(onRetry).not.toHaveBeenCalled();
 
-    rerender(<ThemeProvider theme={theme}><ContentRecoveryBanner error={new Error('offline')} onRetry={onRetry} /></ThemeProvider>);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <ContentRecoveryBanner error={new Error('offline')} onRetry={onRetry} />
+      </ThemeProvider>,
+    );
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
     expect(onRetry).toHaveBeenCalledOnce();
@@ -41,7 +58,11 @@ describe('ContentRecoveryBanner', () => {
   it('derives its countdown from the retry deadline and cleans up its timer', () => {
     vi.useFakeTimers();
     const retryAt = Date.now() + 5_000;
-    const { unmount } = render(<ThemeProvider theme={theme}><ContentRecoveryBanner retrying retryAt={retryAt} onRetry={() => {}} /></ThemeProvider>);
+    const { unmount } = render(
+      <ThemeProvider theme={theme}>
+        <ContentRecoveryBanner retrying retryAt={retryAt} onRetry={() => {}} />
+      </ThemeProvider>,
+    );
 
     expect(screen.getByText('Trying again in 5s…')).toBeVisible();
     act(() => vi.advanceTimersByTime(1_000));
@@ -54,7 +75,11 @@ describe('ContentRecoveryBanner', () => {
     vi.useFakeTimers();
     const onRetry = vi.fn();
     const now = Date.now();
-    render(<ThemeProvider theme={theme}><ContentRecoveryBanner retrying retryAt={now + 5_000} onRetry={onRetry} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <ContentRecoveryBanner retrying retryAt={now + 5_000} onRetry={onRetry} />
+      </ThemeProvider>,
+    );
     const retry = screen.getByRole('button', { name: 'Retrying...' });
     expect(retry).toBeDisabled();
     act(() => vi.advanceTimersByTime(1_000));
@@ -64,7 +89,11 @@ describe('ContentRecoveryBanner', () => {
 
   it('uses safe revision copy and disables the action while a request is active', () => {
     const error = Object.assign(new Error('raw server details'), { kind: 'revision' });
-    render(<ThemeProvider theme={theme}><ContentRecoveryBanner error={error} busy onRetry={() => {}} /></ThemeProvider>);
+    render(
+      <ThemeProvider theme={theme}>
+        <ContentRecoveryBanner error={error} busy onRetry={() => {}} />
+      </ThemeProvider>,
+    );
     expect(screen.getByRole('alert')).toHaveTextContent('Content has changed.');
     expect(screen.queryByText('raw server details')).toBeNull();
     expect(screen.getByRole('button', { name: 'Reload' })).toBeDisabled();

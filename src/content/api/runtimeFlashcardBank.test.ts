@@ -15,7 +15,12 @@ afterEach(() => vi.unstubAllGlobals());
 
 describe('runtime flashcard bank', () => {
   it('rejects a same-count catalog with substituted deck identities', async () => {
-    const transport = { get: vi.fn().mockResolvedValueOnce({ revision: 'rev-1', subjects }).mockResolvedValueOnce({ ...catalog, decks: [{ ...catalog.decks[0], id: 'd-other' }] }) };
+    const transport = {
+      get: vi
+        .fn()
+        .mockResolvedValueOnce({ revision: 'rev-1', subjects })
+        .mockResolvedValueOnce({ ...catalog, decks: [{ ...catalog.decks[0], id: 'd-other' }] }),
+    };
     const bank = new RuntimeFlashcardBank(noRetries, transport);
     await bank.ensureSubjects();
     await expect(bank.ensureSubjectCatalog('s1')).rejects.toMatchObject({ kind: 'invalid' });
@@ -24,7 +29,17 @@ describe('runtime flashcard bank', () => {
 
   it('ignores an aborted transport failure after a replacement request succeeds', async () => {
     let rejectFirst!: (reason: Error) => void;
-    const transport = { get: vi.fn().mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectFirst = reject; })).mockResolvedValueOnce({ revision: 'rev-1', subjects }) };
+    const transport = {
+      get: vi
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise((_resolve, reject) => {
+              rejectFirst = reject;
+            }),
+        )
+        .mockResolvedValueOnce({ revision: 'rev-1', subjects }),
+    };
     const bank = new RuntimeFlashcardBank(noRetries, transport);
     const first = bank.ensureSubjects();
     const rejection = expect(first).rejects.toThrow('Aborted');
@@ -36,7 +51,8 @@ describe('runtime flashcard bank', () => {
     expect(bank.getError('subjects')).toBeUndefined();
   });
   it('loads shared subjects first, then the selected catalog and cards on demand', async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-1', subjects }) })
       .mockResolvedValueOnce({ ok: true, json: async () => catalog })
       .mockResolvedValueOnce({ ok: true, json: async () => cards });
@@ -57,7 +73,8 @@ describe('runtime flashcard bank', () => {
   });
 
   it('rejects catalog revision changes and mismatched card membership or order', async () => {
-    const fetchMock = vi.fn()
+    const fetchMock = vi
+      .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-1', subjects }) })
       .mockResolvedValueOnce({ ok: true, json: async () => ({ ...catalog, revision: 'rev-2' }) });
     vi.stubGlobal('fetch', fetchMock);
@@ -65,10 +82,14 @@ describe('runtime flashcard bank', () => {
     await bank.ensureSubjects();
     await expect(bank.ensureSubjectCatalog('s1')).rejects.toMatchObject({ kind: 'revision' });
 
-    const wrongCards = vi.fn()
+    const wrongCards = vi
+      .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-1', subjects }) })
       .mockResolvedValueOnce({ ok: true, json: async () => catalog })
-      .mockResolvedValueOnce({ ok: true, json: async () => ({ ...cards, cards: [{ ...cards.cards[0], id: 'f-other' }] }) });
+      .mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ ...cards, cards: [{ ...cards.cards[0], id: 'f-other' }] }),
+      });
     vi.stubGlobal('fetch', wrongCards);
     const second = new RuntimeFlashcardBank(noRetries);
     await second.ensureSubjects();
@@ -78,7 +99,9 @@ describe('runtime flashcard bank', () => {
   });
 
   it('loads a subject catalog directly before visiting the flashcard dashboard', async () => {
-    const transport = { get: vi.fn().mockResolvedValueOnce({ revision: 'rev-1', subjects }).mockResolvedValueOnce(catalog) };
+    const transport = {
+      get: vi.fn().mockResolvedValueOnce({ revision: 'rev-1', subjects }).mockResolvedValueOnce(catalog),
+    };
     const bank = new RuntimeFlashcardBank(noRetries, transport);
     expect(await bank.ensureSubjectCatalog('s1')).toEqual(catalog);
     expect(bank.listSubjects()).toEqual(subjects);
@@ -99,9 +122,9 @@ describe('runtime flashcard bank', () => {
     let resolveResponse!: (value: unknown) => void;
     const transport: JsonTransport = {
       get<T>(_path: string, options?: Parameters<JsonTransport['get']>[1]): Promise<T> {
-        return new Promise(resolve => {
-        resolveResponse = value => resolve(value as T);
-        options?.signal?.addEventListener('abort', () => resolve({ revision: 'rev-1', subjects } as T));
+        return new Promise((resolve) => {
+          resolveResponse = (value) => resolve(value as T);
+          options?.signal?.addEventListener('abort', () => resolve({ revision: 'rev-1', subjects } as T));
         });
       },
     };
@@ -138,6 +161,4 @@ describe('deck launch freshness', () => {
     expect(bank.listCards(deck.id)).toBe(active);
     (await bank.validateLaunch(deck))();
   });
-
-
 });

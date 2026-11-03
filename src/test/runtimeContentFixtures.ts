@@ -7,13 +7,21 @@ import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
 import * as flashcards from '../content/api/runtimeFlashcardBank';
 
 /** One topic per distinct `topicId`, named after its ID unless named in `names`. */
-export function topicsFor(rows: readonly { subjectId: string; topicId: string }[], names: Record<string, string> = {}): Topic[] {
+export function topicsFor(
+  rows: readonly { subjectId: string; topicId: string }[],
+  names: Record<string, string> = {},
+): Topic[] {
   const ids = [...new Map(rows.map((row) => [row.topicId, row.subjectId])).entries()];
   return ids.map(([id, subjectId]) => ({ id, subjectId, name: names[id] ?? `Topic ${id}` }));
 }
 
 /** Exercise the API path with synthetic DTOs instead of enabling a local content source. */
-export function installQuizApiFixture(subjects: Subject[], quizzes: Quiz[], questions: Question[], topics = topicsFor(quizzes)) {
+export function installQuizApiFixture(
+  subjects: Subject[],
+  quizzes: Quiz[],
+  questions: Question[],
+  topics = topicsFor(quizzes),
+) {
   const revision = 'quiz-fixture';
   runtimeQuestionBank.configureApi(
     { revision, subjects },

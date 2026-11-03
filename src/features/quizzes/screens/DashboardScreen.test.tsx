@@ -183,7 +183,9 @@ describe('dashboard in-progress indicator', () => {
     expect(label.compareDocumentPosition(track) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     const continueRegion = screen.getByRole('region', { name: 'Continue Studying' });
     expect(within(grid).getAllByText(`${activeQuizCount} in progress`)).toHaveLength(1);
-    expect(within(continueRegion).getByText(`${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress`)).toBeVisible();
+    expect(
+      within(continueRegion).getByText(`${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress`),
+    ).toBeVisible();
   });
 
   it('omits the indicator when the subject has no active quizzes', () => {
@@ -267,11 +269,19 @@ describe('dashboard active-subject ordering', () => {
   });
 });
 
-
 it('uses separate continuation and ordinary subject actions', () => {
   const onSelectSubject = vi.fn();
   const onContinueSubject = vi.fn();
-  render(<ThemeProvider theme={theme}><DashboardScreen attempts={[]} subjectStats={[{ subject, quizCount: 2, activeQuizCount: 1 }]} onSelectSubject={onSelectSubject} onContinueSubject={onContinueSubject} /></ThemeProvider>);
+  render(
+    <ThemeProvider theme={theme}>
+      <DashboardScreen
+        attempts={[]}
+        subjectStats={[{ subject, quizCount: 2, activeQuizCount: 1 }]}
+        onSelectSubject={onSelectSubject}
+        onContinueSubject={onContinueSubject}
+      />
+    </ThemeProvider>,
+  );
   fireEvent.click(screen.getByRole('button', { name: 'Continue studying Biochemistry' }));
   expect(onContinueSubject).toHaveBeenCalledExactlyOnceWith(subject);
   expect(onSelectSubject).not.toHaveBeenCalled();

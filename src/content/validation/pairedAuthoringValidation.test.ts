@@ -4,7 +4,7 @@ import { validateAuthoringPair } from './pairedAuthoringValidation';
 import { AuthoringJsonError, parseAuthoringJson } from './parseAuthoringJson';
 import limits from './authoringLimits.json';
 
-function candidate(changes: typeof fixtures.cases[number]['changes']) {
+function candidate(changes: (typeof fixtures.cases)[number]['changes']) {
   const pair = structuredClone(fixtures.base);
   for (const change of changes) {
     let parent: unknown = pair;
@@ -14,16 +14,23 @@ function candidate(changes: typeof fixtures.cases[number]['changes']) {
   return pair;
 }
 describe('shared HTTP authoring policy', () => {
-  for (const fixture of fixtures.cases) it(fixture.id, () => {
-    const pair = candidate(fixture.changes);
-    const before = JSON.stringify(pair);
-    expect(validateAuthoringPair(pair).totalIssues === 0).toBe(fixture.valid);
-    expect(JSON.stringify(pair)).toBe(before);
-  });
-  for (const fixture of fixtures.wireCases) it(fixture.id, () => {
-    try { parseAuthoringJson(fixture.text); throw new Error('Unexpected acceptance'); }
-    catch (error) { expect(error).toBeInstanceOf(AuthoringJsonError); expect((error as AuthoringJsonError).code).toBe(fixture.code); }
-  });
+  for (const fixture of fixtures.cases)
+    it(fixture.id, () => {
+      const pair = candidate(fixture.changes);
+      const before = JSON.stringify(pair);
+      expect(validateAuthoringPair(pair).totalIssues === 0).toBe(fixture.valid);
+      expect(JSON.stringify(pair)).toBe(before);
+    });
+  for (const fixture of fixtures.wireCases)
+    it(fixture.id, () => {
+      try {
+        parseAuthoringJson(fixture.text);
+        throw new Error('Unexpected acceptance');
+      } catch (error) {
+        expect(error).toBeInstanceOf(AuthoringJsonError);
+        expect((error as AuthoringJsonError).code).toBe(fixture.code);
+      }
+    });
   it('bounds diagnostics without hiding validation failure or echoing authored text', () => {
     const pair = structuredClone(fixtures.base);
     pair.quizzes.questions[0].stem = '<script>private sentinel</script>'.repeat(300);

@@ -5,7 +5,9 @@ const checkpoint = {
   deckId: 'd1',
   currentCardId: 'f1',
   contentSignature: 'sha256-example',
-  updatedAt: '2026-10-06T00:00:00.000Z', openedCardIds: [], flaggedCardIds: [],
+  updatedAt: '2026-10-06T00:00:00.000Z',
+  openedCardIds: [],
+  flaggedCardIds: [],
 };
 const state = { schemaVersion: 2, revision: 'revision', checkpoints: { d1: checkpoint } };
 
@@ -19,7 +21,10 @@ describe('flashcard progress envelope', () => {
   });
 
   it('normalizes old v2 saves and validates stable deck completion counts', () => {
-    expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 2, d2: 0 } })).toEqual({ ...state, completionCounts: { d1: 2, d2: 0 } });
+    expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 2, d2: 0 } })).toEqual({
+      ...state,
+      completionCounts: { d1: 2, d2: 0 },
+    });
     for (const completionCounts of [{ ' ': 1 }, { d1: -1 }, { d1: 1.5 }, { d1: Number.MAX_SAFE_INTEGER + 1 }, []]) {
       expect(decodeFlashcardProgress({ ...state, completionCounts })).toBeUndefined();
     }
@@ -34,8 +39,17 @@ describe('flashcard progress envelope', () => {
   });
 
   it('accepts the compact daily aggregate and rejects malformed or unsupported history', () => {
-    const dailyStats = { firstDay: '2026-10-01', currentDay: '2026-10-03', currentDayCount: 1, trackedCompletions: 2, highestDailyCount: 1 };
-    expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 2 }, dailyStats })).toMatchObject({ dailyStats, completionCounts: { d1: 2 } });
+    const dailyStats = {
+      firstDay: '2026-10-01',
+      currentDay: '2026-10-03',
+      currentDayCount: 1,
+      trackedCompletions: 2,
+      highestDailyCount: 1,
+    };
+    expect(decodeFlashcardProgress({ ...state, completionCounts: { d1: 2 }, dailyStats })).toMatchObject({
+      dailyStats,
+      completionCounts: { d1: 2 },
+    });
     for (const invalid of [
       { ...dailyStats, currentDay: '2026-02-30' },
       { ...dailyStats, currentDay: '2026-09-30' },
@@ -62,10 +76,20 @@ describe('flashcard progress envelope', () => {
   it('initializes only the current key without reading or rewriting old storage', () => {
     const reads: string[] = [];
     const storage = {
-      getItem: (key: string) => { reads.push(key); return null; },
-      setItem: () => { throw new Error('Reads must not write'); },
+      getItem: (key: string) => {
+        reads.push(key);
+        return null;
+      },
+      setItem: () => {
+        throw new Error('Reads must not write');
+      },
     };
-    expect(loadFlashcardProgress(storage)).toEqual({ schemaVersion: 2, revision: 'initial', checkpoints: {}, completionCounts: {} });
+    expect(loadFlashcardProgress(storage)).toEqual({
+      schemaVersion: 2,
+      revision: 'initial',
+      checkpoints: {},
+      completionCounts: {},
+    });
     expect(reads).toEqual([flashcardProgressKey]);
   });
 
@@ -73,7 +97,7 @@ describe('flashcard progress envelope', () => {
     const writes: string[] = [];
     const legacy = JSON.stringify(state);
     const loaded = loadFlashcardProgress({
-      getItem: key => key === flashcardProgressKey ? legacy : null,
+      getItem: (key) => (key === flashcardProgressKey ? legacy : null),
       setItem: (key, value) => writes.push(`${key}:${value}`),
     });
     expect(loaded).toEqual({ ...state, completionCounts: {} });

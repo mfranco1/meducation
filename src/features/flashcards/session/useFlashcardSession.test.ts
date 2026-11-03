@@ -10,7 +10,14 @@ const cards = [
   { id: 'f1', deckId: 'd1', front: 'Front', back: 'Back' },
   { id: 'f2', deckId: 'd1', front: 'Second', back: 'Answer' },
 ];
-const deck: FlashcardDeckSummary = { id: 'd1', subjectId: 's1', topicId: 't1', name: 'Deck', cardCount: 2, cardIds: ['f1', 'f2'] };
+const deck: FlashcardDeckSummary = {
+  id: 'd1',
+  subjectId: 's1',
+  topicId: 't1',
+  name: 'Deck',
+  cardCount: 2,
+  cardIds: ['f1', 'f2'],
+};
 function deferred<T>() {
   let resolve!: (value: T) => void;
   let reject!: (error: Error) => void;
@@ -201,20 +208,26 @@ describe('flashcard session controller', () => {
 
   it('counts only explicit final-card finishes and counts later sessions separately', async () => {
     const { result, repository } = setup();
-    await act(async () => { await result.current.launchDeck(deck, subject); });
+    await act(async () => {
+      await result.current.launchDeck(deck, subject);
+    });
     act(() => result.current.finish());
     expect(result.current.view.page).toBe('flashcards-study');
     expect(repository.getSnapshot().completionCounts).toEqual({});
     act(() => result.current.navigateTo(1));
     act(() => result.current.saveAndExit());
     expect(repository.getSnapshot().completionCounts).toEqual({});
-    await act(async () => { await result.current.launchDeck(deck, subject); });
+    await act(async () => {
+      await result.current.launchDeck(deck, subject);
+    });
     act(() => result.current.navigateTo(1));
     act(() => result.current.finish());
     const staleFinish = result.current.finish;
     act(() => staleFinish());
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
-    await act(async () => { await result.current.launchDeck(deck, subject); });
+    await act(async () => {
+      await result.current.launchDeck(deck, subject);
+    });
     act(() => result.current.navigateTo(1));
     act(() => result.current.finish());
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 2 });
@@ -222,19 +235,25 @@ describe('flashcard session controller', () => {
 
   it('retains prior completions when the learner restarts changed content and finishes it', async () => {
     const { result, repository, loader } = setup();
-    await act(async () => { await result.current.launchDeck(deck, subject); });
+    await act(async () => {
+      await result.current.launchDeck(deck, subject);
+    });
     act(() => result.current.navigateTo(1));
     act(() => result.current.finish());
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
 
     const changedCards = [{ ...cards[0], back: 'Updated answer' }, cards[1]];
-    const changedDeck = { ...deck, cardIds: changedCards.map(card => card.id) };
+    const changedDeck = { ...deck, cardIds: changedCards.map((card) => card.id) };
     const oldCheckpoint = checkpointForCard('d1', cards, 'f1', await flashcardContentSignature(cards));
     act(() => repository.saveCheckpoint(oldCheckpoint));
     loader.ensureCards.mockResolvedValueOnce(changedCards);
-    await act(async () => { await result.current.launchDeck(changedDeck, subject); });
+    await act(async () => {
+      await result.current.launchDeck(changedDeck, subject);
+    });
     expect(result.current.pendingRestart?.reason).toBe('changed-content');
-    await act(async () => { await result.current.confirmRestart(); });
+    await act(async () => {
+      await result.current.confirmRestart();
+    });
     act(() => result.current.navigateTo(1));
     act(() => result.current.finish());
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 2 });
@@ -242,7 +261,9 @@ describe('flashcard session controller', () => {
 
   it('persists opened and flagged cards across jumps and resume, while hiding answers after navigation', async () => {
     const { result, repository } = setup();
-    await act(async () => { await result.current.launchDeck(deck, subject); });
+    await act(async () => {
+      await result.current.launchDeck(deck, subject);
+    });
     act(() => result.current.toggleReveal());
     act(() => result.current.toggleFlag('f2'));
     act(() => result.current.navigateTo(1));
@@ -250,7 +271,9 @@ describe('flashcard session controller', () => {
     expect(result.current.openedCardIds).toEqual(['f1']);
     expect(result.current.flaggedCardIds).toEqual(['f2']);
     act(() => result.current.saveAndExit());
-    await act(async () => { await result.current.launchDeck(deck, subject); });
+    await act(async () => {
+      await result.current.launchDeck(deck, subject);
+    });
     expect(result.current.view).toMatchObject({ page: 'flashcards-study', index: 1, revealed: false });
     expect(repository.getCheckpoint('d1')).toMatchObject({ openedCardIds: ['f1'], flaggedCardIds: ['f2'] });
   });
@@ -269,12 +292,16 @@ describe('flashcard session controller', () => {
       await result.current.launchDeck(deck, subject);
     });
     setFailWrites(true);
-    await act(async () => { await result.current.confirmRestart(); });
+    await act(async () => {
+      await result.current.confirmRestart();
+    });
     expect(result.current.pendingRestart).toBeDefined();
     expect(result.current.persistenceError).toBeDefined();
     expect(repository.getCheckpoint('d1')).toEqual(old);
     setFailWrites(false);
-    await act(async () => { await result.current.confirmRestart(); });
+    await act(async () => {
+      await result.current.confirmRestart();
+    });
     expect(result.current.view).toMatchObject({ page: 'flashcards-study', index: 0 });
     expect(repository.getCheckpoint('d1')?.currentCardId).toBe('f1');
   });
@@ -299,22 +326,45 @@ describe('flashcard session controller', () => {
 
 it('revalidates delayed deck restart, blocks failures without writes, and cancels late confirmation', async () => {
   const values = new Map<string, string>();
-  const repository = new LocalFlashcardProgressRepository({ getItem: key => values.get(key) ?? null, setItem: (key, value) => { values.set(key, value); } });
+  const repository = new LocalFlashcardProgressRepository({
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => {
+      values.set(key, value);
+    },
+  });
   repository.saveCheckpoint(checkpointForCard('d1', cards, 'f2', 'sha256-old'));
   const old = repository.getCheckpoint('d1');
   const validate = deferred<() => void>();
-  const loader = { ensureCards: vi.fn(async () => cards), listCards: () => cards, cancel: vi.fn(), validateLaunch: vi.fn().mockResolvedValueOnce(() => undefined).mockRejectedValueOnce(new Error('publication changed')).mockReturnValue(validate.promise) };
+  const loader = {
+    ensureCards: vi.fn(async () => cards),
+    listCards: () => cards,
+    cancel: vi.fn(),
+    validateLaunch: vi
+      .fn()
+      .mockResolvedValueOnce(() => undefined)
+      .mockRejectedValueOnce(new Error('publication changed'))
+      .mockReturnValue(validate.promise),
+  };
   const onFailure = vi.fn();
   const { result } = renderHook(() => useFlashcardSession(loader, repository, onFailure));
-  await act(async () => { await result.current.launchDeck(deck, subject); });
+  await act(async () => {
+    await result.current.launchDeck(deck, subject);
+  });
   expect(result.current.pendingRestart).toBeDefined();
-  await act(async () => { await result.current.confirmRestart(); });
+  await act(async () => {
+    await result.current.confirmRestart();
+  });
   expect(onFailure).toHaveBeenCalledOnce();
   expect(repository.getCheckpoint('d1')).toEqual(old);
   let confirming!: Promise<void>;
-  act(() => { confirming = result.current.confirmRestart(); });
+  act(() => {
+    confirming = result.current.confirmRestart();
+  });
   act(() => result.current.cancelRestart());
-  await act(async () => { validate.resolve(() => undefined); await confirming; });
+  await act(async () => {
+    validate.resolve(() => undefined);
+    await confirming;
+  });
   expect(result.current.view.page).toBe('flashcards');
   expect(repository.getCheckpoint('d1')).toEqual(old);
   expect(loader.validateLaunch).toHaveBeenCalledTimes(3);
