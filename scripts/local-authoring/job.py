@@ -4,10 +4,10 @@ import os
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "backend/src"))
 from dotenv import dotenv_values
 from meducation_api.db.cli import main
+
+ROOT = Path(__file__).resolve().parents[2]
 
 if __name__ == "__main__":
     config = ROOT / "var/local-authority/operator.env"

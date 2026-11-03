@@ -2,12 +2,9 @@
 
 import hashlib
 import secrets
-import sys
 from pathlib import Path
 from uuid import uuid4
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "backend/src"))
 from meducation_api.content.releases import (
     activate_release,
     paired_artifacts,
@@ -17,6 +14,8 @@ from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.engine import create_database_engine
 from meducation_api.db.migrate import upgrade
 from sqlalchemy import URL
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def seed_database(port, password, folder, *, database="meducation_test_smoke"):
@@ -57,8 +56,8 @@ def seed_database(port, password, folder, *, database="meducation_test_smoke"):
         upgrade(engine("migrator"))
         operator = engine("operator")
         raw = [
-            (ROOT / "e2e/fixtures" / name).read_text()
-            for name in ("bank.json", "flashcard-bank.json")
+            (ROOT / "tests/fixtures" / name).read_text()
+            for name in ("e2e-bank.json", "e2e-flashcard-bank.json")
         ]
         quiz, flashcards = paired_artifacts(*raw)
         with operator.begin() as connection:

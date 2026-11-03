@@ -15,7 +15,7 @@ from meducation_api.db.migrate import upgrade
 def db():
     value = os.environ.get("MEDUCATION_TEST_DATABASE_URL")
     if not value:
-        pytest.skip("Run scripts/containers/test-postgres-content.py for isolated real-PG17 tests")
+        pytest.skip("Run scripts/testing/test-postgres-content.py for isolated real-PG17 tests")
     url = make_url(value)
     if (
         url.host != "127.0.0.1"

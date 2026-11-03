@@ -1,7 +1,8 @@
+import { expectNoHorizontalOverflow, startedLearner } from './support/learner';
 import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+  await startedLearner(page);
 });
 
 test('quiz subject cards keep title, icon, score track, and card geometry aligned responsively', async ({
@@ -117,7 +118,7 @@ test('flashcard subject grid shares the subject header and progress track withou
   await expect(card.locator('[data-subject-icon="s1"]')).toBeVisible();
   await expect(card.getByTestId('subject-score-track')).toBeVisible();
   await expect(card.getByText(/Latest Score|Completed|in progress/)).toHaveCount(0);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await expectNoHorizontalOverflow(page);
   await testInfo.attach('flashcard-subject-grid-mobile', { body: await page.screenshot(), contentType: 'image/png' });
 
   await card.focus();
@@ -186,7 +187,7 @@ for (const width of [320, 390, 600, 1048, 1440]) {
       await page.goBack();
       await expect(page.getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
     }
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+    await expectNoHorizontalOverflow(page);
     await flashcards.click();
     await expect(deckSearch).toHaveValue('');
     await page.getByRole('button', { name: 'Dashboard', exact: true }).click();

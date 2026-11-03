@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
 import { openTopicIfNeeded } from './support/topic';
+import { startedLearner } from './support/learner';
 import { contentCases } from './support/contentCases';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+  await startedLearner(page);
 });
 
 for (const candidate of contentCases()) {

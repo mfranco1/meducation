@@ -9,11 +9,18 @@ import pytest
 
 
 @pytest.fixture
-def runner():
-    path = Path(__file__).resolve().parents[2] / "scripts/testing/serve-postgres-fixture.py"
-    spec = importlib.util.spec_from_file_location("browser_fixture_runner", path)
+def runner(monkeypatch):
+    """The fixture runner with Docker replaced by a mock that fails if called."""
+    scripts = Path(__file__).resolve().parents[2] / "scripts/testing"
+    monkeypatch.syspath_prepend(str(scripts))
+    spec = importlib.util.spec_from_file_location(
+        "browser_fixture_runner", scripts / "serve-postgres-fixture.py"
+    )
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
+    docker = Mock(side_effect=AssertionError("Docker must not run"))
+    monkeypatch.setattr(module, "docker", docker)
+    monkeypatch.setattr(sys.modules["pg_container"], "docker", docker)
     return module
 
 
@@ -29,8 +36,6 @@ def runner():
 def test_browser_fixture_rejects_non_loopback_or_non_origin_urls_before_docker(
     runner, monkeypatch, origin
 ):
-    docker = Mock(side_effect=AssertionError("Docker must not run"))
-    monkeypatch.setattr(runner, "docker", docker)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -41,15 +46,15 @@ def test_browser_fixture_rejects_non_loopback_or_non_origin_urls_before_docker(
             "--api-port",
             "8765",
             "--quiz-file",
-            "e2e/fixtures/bank.json",
+            "tests/fixtures/e2e-bank.json",
             "--flashcard-file",
-            "e2e/fixtures/flashcard-bank.json",
+            "tests/fixtures/e2e-flashcard-bank.json",
         ],
     )
     with pytest.raises(SystemExit) as error:
         runner.main()
     assert error.value.code == 2
-    docker.assert_not_called()
+    runner.docker.assert_not_called()
 
 
 @pytest.mark.parametrize(
@@ -62,8 +67,6 @@ def test_browser_fixture_rejects_non_loopback_or_non_origin_urls_before_docker(
 def test_browser_fixture_rejects_authority_or_archive_inputs_before_docker(
     runner, monkeypatch, source
 ):
-    docker = Mock(side_effect=AssertionError("Docker must not run"))
-    monkeypatch.setattr(runner, "docker", docker)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -76,18 +79,16 @@ def test_browser_fixture_rejects_authority_or_archive_inputs_before_docker(
             "--quiz-file",
             source,
             "--flashcard-file",
-            "e2e/fixtures/flashcard-bank.json",
+            "tests/fixtures/e2e-flashcard-bank.json",
         ],
     )
     with pytest.raises(SystemExit) as error:
         runner.main()
     assert error.value.code == 2
-    docker.assert_not_called()
+    runner.docker.assert_not_called()
 
 
 def test_browser_fixture_rejects_private_pair_export_before_docker(runner, monkeypatch):
-    docker = Mock(side_effect=AssertionError("Docker must not run"))
-    monkeypatch.setattr(runner, "docker", docker)
     monkeypatch.setattr(
         sys,
         "argv",
@@ -104,4 +105,4 @@ def test_browser_fixture_rejects_private_pair_export_before_docker(runner, monke
     with pytest.raises(SystemExit) as error:
         runner.main()
     assert error.value.code == 2
-    docker.assert_not_called()
+    runner.docker.assert_not_called()

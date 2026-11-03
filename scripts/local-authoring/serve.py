@@ -4,14 +4,11 @@ import base64
 import hashlib
 import json
 import secrets
-import sys
 import time
 from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import parse_qs, urlencode
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "backend/src"))
 import httpx2
 import uvicorn
 from fastapi import HTTPException, Request
@@ -24,6 +21,8 @@ from meducation_api.auth.store import SessionStore
 from meducation_api.db.engine import create_database_engine, database_url
 from meducation_api.main import create_app
 from meducation_api.settings import Settings
+
+ROOT = Path(__file__).resolve().parents[2]
 
 
 def build_app():

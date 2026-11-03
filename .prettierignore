@@ -1,6 +1,5 @@
 # Byte-sensitive fixtures and dependency/package metadata
 tests/fixtures/**
-e2e/fixtures/**
 package-lock.json
 backend/requirements*.lock
 *.egg-info/**

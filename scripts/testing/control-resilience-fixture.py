@@ -3,10 +3,8 @@
 import argparse
 import json
 import re
-import subprocess
-import time
 
-from compose_support import docker
+from pg_container import docker, wait_ready
 
 
 def main():
@@ -36,27 +34,7 @@ def main():
         docker("stop", "--time", "3", args.container)
         return
     docker("start", args.container)
-    deadline = time.monotonic() + 45
-    while time.monotonic() < deadline:
-        ready = subprocess.run(
-            [
-                "docker",
-                "exec",
-                args.container,
-                "pg_isready",
-                "-U",
-                "meducation_bootstrap",
-                "-d",
-                "meducation_test_content",
-            ],
-            capture_output=True,
-            timeout=5,
-            check=False,
-        )
-        if ready.returncode == 0:
-            return
-        time.sleep(0.25)
-    raise RuntimeError("Restarted fixture readiness deadline")
+    wait_ready(args.container, "meducation_test_content")
 
 
 if __name__ == "__main__":

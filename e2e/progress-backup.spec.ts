@@ -1,9 +1,10 @@
 import { gzipSync, gunzipSync } from 'node:zlib';
 import { readFile } from 'node:fs/promises';
+import { startedLearner } from './support/learner';
 import { expect, test, type Page } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+  await startedLearner(page);
 });
 
 const quizKey = 'meducation.progress.v2';
@@ -60,7 +61,7 @@ test('downloads a backup and restores it into a fresh browser context', async ({
   expect(exported.format).toBe('meducation-progress-backup');
 
   const fresh = await browser.newContext({ baseURL });
-  await fresh.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+  await startedLearner(fresh);
   try {
     const target = await fresh.newPage();
     await target.goto('/');

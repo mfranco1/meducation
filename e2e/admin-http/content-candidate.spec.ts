@@ -1,4 +1,4 @@
-import { expect, test } from './fixtures';
+import { expect, quizEditor, saveButton, selectQuiz, test } from './fixtures';
 import { contentCases } from '../support/contentCases';
 
 for (const candidate of contentCases()) {
@@ -28,16 +28,10 @@ for (const candidate of contentCases()) {
     await page.getByRole('button', { name: 'Sign in', exact: true }).click();
     await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
     await page.addStyleTag({ content: 'html {font-size:20px}' });
-    const nav = page.getByRole('region', { name: 'Quiz navigator' });
-    for (const name of ['Subject', 'Topic', 'Quiz']) {
-      await nav.getByRole('combobox', { name, exact: true }).click();
-      await page.getByRole('listbox').getByRole('option').first().click();
-    }
+    const nav = await selectQuiz(page);
     await nav.getByRole('button', { name: new RegExp(`^1\\. ${item.id}\\b`) }).click();
-    await page.getByRole('region', { name: 'Quiz editor' }).getByRole('tab', { name: 'JSON', exact: true }).click();
-    const editor = page
-      .getByRole('region', { name: 'Quiz editor' })
-      .getByRole('textbox', { name: 'JSON', exact: true });
+    await quizEditor(page).getByRole('tab', { name: 'JSON', exact: true }).click();
+    const editor = quizEditor(page).getByRole('textbox', { name: 'JSON', exact: true });
     expect(JSON.parse(await editor.inputValue())).toEqual(item);
     expect(await page.evaluate(() => (window as Window & { __rcExecuted?: boolean }).__rcExecuted)).toBeUndefined();
     for (const width of [390, 1048, 1440]) {
@@ -45,7 +39,7 @@ for (const candidate of contentCases()) {
       expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
       await editor.focus();
       await expect(editor).toBeFocused();
-      const save = page.getByRole('region', { name: 'Quiz editor' }).getByRole('button', { name: 'Save', exact: true });
+      const save = saveButton(quizEditor(page));
       await save.scrollIntoViewIfNeeded();
       await expect(save).toBeInViewport();
       await page.screenshot({ path: testInfo.outputPath(`editor-content-${width}.png`), fullPage: true });

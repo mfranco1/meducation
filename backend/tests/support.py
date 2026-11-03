@@ -182,7 +182,7 @@ def auth_app(db, harness=None, *, postgres=False, **changes):
         database_url=db.reader.url.render_as_string(hide_password=False),
     )
     from fixture_content import FixtureContentSource
-    app = create_app(settings, auth_settings=cfg, auth_factory=lambda _: runtime, source_factory=None if postgres else lambda _: FixtureContentSource(json.loads((ROOT / "e2e/fixtures/bank.json").read_text()), json.loads((ROOT / "e2e/fixtures/flashcard-bank.json").read_text())))
+    app = create_app(settings, auth_settings=cfg, auth_factory=lambda _: runtime, source_factory=None if postgres else lambda _: FixtureContentSource(json.loads((ROOT / "tests/fixtures/e2e-bank.json").read_text()), json.loads((ROOT / "tests/fixtures/e2e-flashcard-bank.json").read_text())))
     return TestClient(app, base_url=cfg.origin, follow_redirects=False), runtime, h
 
 

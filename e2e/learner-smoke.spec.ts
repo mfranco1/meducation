@@ -1,8 +1,9 @@
 import { expect, test, type Locator } from '@playwright/test';
+import { expectNoHorizontalOverflow, startedLearner } from './support/learner';
 import { openTopicIfNeeded, showQuestion } from './support/topic';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+  await startedLearner(page);
 });
 
 test('Help stays accessible from the desktop rail and mobile drawer', async ({ page }) => {
@@ -300,13 +301,9 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
     /A 21\.375 21\.375/,
   );
   await expectEvenFlashcardOutline(page.locator('[data-testid="flashcard-frame-decoration"]').first(), 3.375);
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
-    .toBe(true);
+  await expectNoHorizontalOverflow(page);
   await page.setViewportSize({ width: 320, height: 780 });
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
-    .toBe(true);
+  await expectNoHorizontalOverflow(page);
   await page.setViewportSize({ width: 390, height: 844 });
   const studyScreenshot = testInfo.outputPath('flashcard-study-mobile.png');
   await page.screenshot({ path: studyScreenshot });
@@ -384,9 +381,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText('Completed 1 time')).toBeVisible();
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByText('Completed 1 time')).toBeVisible();
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
-    .toBe(true);
+  await expectNoHorizontalOverflow(page);
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.reload();
   await page.getByRole('button', { name: 'Flashcards' }).click();
@@ -463,9 +458,7 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   expect(mobileFirstParagraphY).toBeDefined();
   expect(mobileSecondParagraphY).toBeDefined();
   expect(mobileSecondParagraphY).toBeGreaterThan(mobileFirstParagraphY!);
-  await expect
-    .poll(() => page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
-    .toBe(true);
+  await expectNoHorizontalOverflow(page);
   await testInfo.attach('main-quiz-mobile.png', {
     body: await page.screenshot({ path: testInfo.outputPath('main-quiz-mobile.png') }),
     contentType: 'image/png',
@@ -648,7 +641,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await page.getByRole('button', { name: 'Flashcards' }).last().click();
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Flashcards' }).first()).toHaveAttribute('aria-current', 'page');
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await expectNoHorizontalOverflow(page);
 
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
@@ -750,7 +743,7 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
   releaseRetry();
   await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
   expect(failures).toBe(2);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await expectNoHorizontalOverflow(page);
 });
 
 test('subject quiz failure stays below the tabs with shimmer placeholders through recovery', async ({ page }) => {
@@ -805,7 +798,7 @@ test('subject quiz failure stays below the tabs with shimmer placeholders throug
   await openTopicIfNeeded(page);
   await expect(page.getByRole('button', { name: /^Start quiz/ })).toBeVisible();
   expect(failures).toBe(2);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await expectNoHorizontalOverflow(page);
 });
 
 test('failed question loading shows a persistent bottom-right toast that can be closed', async ({ page }) => {
@@ -833,7 +826,7 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   expect(box).not.toBeNull();
   expect(box!.x + box!.width).toBeGreaterThan(370);
   expect(box!.y + box!.height).toBeGreaterThan(800);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await expectNoHorizontalOverflow(page);
   await page.getByRole('button', { name: 'Dashboard' }).click();
   await expect(toast).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
@@ -878,5 +871,5 @@ test('pending catalog stays accessible and static with reduced motion', async ({
       return [...document.fonts].some((font) => font.family.includes('KaTeX_Main') && font.status === 'loaded');
     }),
   ).toBe(true);
-  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+  await expectNoHorizontalOverflow(page);
 });

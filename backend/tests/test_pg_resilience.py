@@ -83,7 +83,7 @@ def test_database_stop_start_keeps_health_query_free_and_recovers_reader(db):
     if not container:
         pytest.skip('Run the isolated launcher with --restartable --keyword resilience')
     def control(action):
-        result = subprocess.run([sys.executable, str(ROOT / 'scripts/containers/control-resilience-fixture.py'),
+        result = subprocess.run([sys.executable, str(ROOT / 'scripts/testing/control-resilience-fixture.py'),
                                  '--container', container, '--port', str(db.admin.url.port),
                                  '--action', action], capture_output=True, text=True, timeout=60, check=False)
         assert result.returncode == 0, 'Owned fixture control failed'
@@ -343,7 +343,7 @@ def test_diagnostics_actual_db_outage_keeps_auth_closed_health_sql_free_and_reco
     client, runtime, h = auth_app(db, postgres=True)
     session_engine = pooled_session_engine(runtime, db)
     def control(action):
-        result = subprocess.run([sys.executable, str(ROOT/'scripts/containers/control-resilience-fixture.py'), '--container', container, '--port', str(db.admin.url.port), '--action', action], capture_output=True, timeout=60, check=False)
+        result = subprocess.run([sys.executable, str(ROOT/'scripts/testing/control-resilience-fixture.py'), '--container', container, '--port', str(db.admin.url.port), '--action', action], capture_output=True, timeout=60, check=False)
         assert result.returncode == 0, 'Owned fixture control failed'
     try:
         with client:

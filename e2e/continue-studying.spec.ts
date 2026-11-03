@@ -1,7 +1,8 @@
+import { startedLearner } from './support/learner';
 import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('meducation.started.v1', '1'));
+  await startedLearner(page);
 });
 
 async function attachScreenshot(

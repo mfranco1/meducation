@@ -18,8 +18,8 @@ CANARY = "L5-secret-code-token-password-authored-text"
 
 def app():
     return fixture_app(
-        json.loads((ROOT / "e2e/fixtures/bank.json").read_text()),
-        json.loads((ROOT / "e2e/fixtures/flashcard-bank.json").read_text()),
+        json.loads((ROOT / "tests/fixtures/e2e-bank.json").read_text()),
+        json.loads((ROOT / "tests/fixtures/e2e-flashcard-bank.json").read_text()),
     )
 
 

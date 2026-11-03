@@ -16,7 +16,7 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: [
     {
-      command: `.venv/bin/python scripts/testing/serve-postgres-fixture.py --api-port ${e2eApiPort} --origin http://127.0.0.1:4173 --quiz-file e2e/fixtures/bank.json --flashcard-file e2e/fixtures/flashcard-bank.json`,
+      command: `.venv/bin/python scripts/testing/serve-postgres-fixture.py --api-port ${e2eApiPort} --origin http://127.0.0.1:4173 --quiz-file tests/fixtures/e2e-bank.json --flashcard-file tests/fixtures/e2e-flashcard-bank.json`,
       url: `http://127.0.0.1:${e2eApiPort}/health/ready`,
       reuseExistingServer: false,
       timeout: 120_000,

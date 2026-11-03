@@ -3,19 +3,16 @@
 import argparse
 import json
 import os
-import secrets
 import socket
 import subprocess
 import sys
 import tempfile
-import time
 import uuid
 from pathlib import Path
 
-from compose_support import docker
+from pg_container import PG_IMAGE, docker, role_password_env, start_postgres
 
 ROOT = Path(__file__).resolve().parents[2]
-PG_IMAGE = "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826"
 
 
 def main():
@@ -56,75 +53,17 @@ def main():
             storage = ["--tmpfs", "/var/lib/postgresql/data:rw,size=512m"]
             binding = "127.0.0.1::5432"
         with tempfile.TemporaryDirectory(prefix="meducation-pg-content-") as temp:
-            env_file = Path(temp) / "postgres.env"
-            password = secrets.token_urlsafe(24)
-            env_file.write_text(
-                "POSTGRES_USER=meducation_bootstrap\nPOSTGRES_DB=meducation_test_content\nPOSTGRES_PASSWORD="
-                + password
-                + "\nPOSTGRES_INITDB_ARGS=--auth-host=scram-sha-256\n"
+            password, port = start_postgres(
+                name, "meducation_test_content", temp, "--publish", binding, *storage
             )
-            os.chmod(env_file, 0o600)
-            docker(
-                "run",
-                "--detach",
-                "--name",
-                name,
-                "--env-file",
-                str(env_file),
-                "--publish",
-                binding,
-                *storage,
-                PG_IMAGE,
-                timeout=120,
-            )
-            deadline = time.monotonic() + 45
-            while True:
-                ready = subprocess.run(
-                    [
-                        "docker",
-                        "exec",
-                        name,
-                        "pg_isready",
-                        "-h",
-                        "127.0.0.1",
-                        "-U",
-                        "meducation_bootstrap",
-                        "-d",
-                        "meducation_test_content",
-                    ],
-                    capture_output=True,
-                    timeout=5,
-                    check=False,
-                )
-                if ready.returncode == 0:
-                    break
-                if time.monotonic() > deadline:
-                    raise RuntimeError("Disposable PG17 did not become ready")
-                time.sleep(0.25)
-            port = json.loads(docker("inspect", name))[0]["NetworkSettings"]["Ports"][
-                "5432/tcp"
-            ][0]["HostPort"]
             env = {
                 **os.environ,
-                "PYTHONPATH": str(ROOT / "backend/src"),
+                **role_password_env(),
                 "MEDUCATION_TEST_DATABASE_URL": "postgresql+psycopg://meducation_bootstrap:"
                 + password
-                + "@127.0.0.1:"
-                + port
-                + "/meducation_test_content?sslmode=disable",
+                + f"@127.0.0.1:{port}/meducation_test_content?sslmode=disable",
+                "MEDUCATION_TEST_RESTART_CONTAINER": name if args.restartable else "",
             }
-            env["MEDUCATION_TEST_RESTART_CONTAINER"] = name if args.restartable else ""
-            for role in (
-                "MIGRATOR",
-                "READER",
-                "BACKUP",
-                "OPERATOR",
-                "SESSION",
-                "EDITOR",
-            ):
-                env["MEDUCATION_POSTGRES_" + role + "_PASSWORD"] = (
-                    secrets.token_urlsafe(24)
-                )
             command = [
                 sys.executable,
                 "-m",

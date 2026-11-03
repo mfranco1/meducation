@@ -7,7 +7,6 @@ from files. Inputs seed a fresh database before the test-only API starts.
 import argparse
 import json
 import os
-import secrets
 import signal
 import subprocess
 import sys
@@ -16,12 +15,10 @@ import uuid
 from pathlib import Path
 from urllib.parse import urlsplit
 
-ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts/containers"))
-from compose_support import docker
+from pg_container import docker, role_password_env, start_postgres
 from sqlalchemy import URL
 
-PG_IMAGE = "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826"
+ROOT = Path(__file__).resolve().parents[2]
 LABEL = "meducation.browser-fixture"
 
 
@@ -68,7 +65,7 @@ def main():
     # Explicit small fixtures only; refuse the routine corpus and ignored exports.
     sources = [path.resolve() for path in inputs]
     fixture_roots = [
-        (ROOT / name).resolve() for name in ("tests/fixtures", "e2e/fixtures")
+        (ROOT / name).resolve() for name in ("tests/fixtures",)
     ]
     if any(
         not any(path.is_relative_to(root) for root in fixture_roots) for path in sources
@@ -93,64 +90,20 @@ def main():
     try:
         with tempfile.TemporaryDirectory(prefix=name) as directory:
             folder = Path(directory)
-            password = secrets.token_urlsafe(24)
-            env_file = folder / "postgres.env"
-            env_file.write_text(
-                "POSTGRES_USER=meducation_bootstrap\nPOSTGRES_DB=meducation_test_browser\n"
-                "POSTGRES_INITDB_ARGS=--auth-host=scram-sha-256\nPOSTGRES_PASSWORD="
-                + password
-                + "\n"
-            )
-            env_file.chmod(0o600)
             (folder / "origin.txt").write_text(args.origin)
             (folder / "pair.json").write_text(json.dumps(pair))
             attempted = True
-            docker(
-                "run",
-                "--detach",
-                "--name",
+            password, port = start_postgres(
                 name,
+                "meducation_test_browser",
+                folder,
                 "--label",
                 LABEL + "=" + name,
-                "--env-file",
-                str(env_file),
                 "--publish",
                 "127.0.0.1::5432",
                 "--tmpfs",
                 "/var/lib/postgresql/data:rw,size=512m",
-                PG_IMAGE,
-                timeout=120,
             )
-            import time
-
-            deadline = time.monotonic() + 45
-            while True:
-                ready = subprocess.run(
-                    [
-                        "docker",
-                        "exec",
-                        name,
-                        "pg_isready",
-                        "-h",
-                        "127.0.0.1",
-                        "-U",
-                        "meducation_bootstrap",
-                        "-d",
-                        "meducation_test_browser",
-                    ],
-                    capture_output=True,
-                    timeout=5,
-                    check=False,
-                )
-                if ready.returncode == 0:
-                    break
-                if time.monotonic() > deadline:
-                    raise RuntimeError(
-                        "Disposable PostgreSQL startup deadline exceeded."
-                    )
-                time.sleep(0.25)
-            metadata = json.loads(docker("inspect", name))[0]
-            port = int(metadata["NetworkSettings"]["Ports"]["5432/tcp"][0]["HostPort"])
             fixture_env = {
                 k: v for k, v in os.environ.items() if not k.startswith("MEDUCATION_")
             }
@@ -169,21 +122,11 @@ def main():
                     "MEDUCATION_FIXTURE_PORT": str(args.api_port),
                 }
             )
-            for role in (
-                "MIGRATOR",
-                "READER",
-                "OPERATOR",
-                "BACKUP",
-                "SESSION",
-                "EDITOR",
-            ):
-                fixture_env["MEDUCATION_POSTGRES_" + role + "_PASSWORD"] = (
-                    secrets.token_urlsafe(24)
-                )
+            fixture_env.update(role_password_env())
             child = subprocess.Popen(
                 [
                     sys.executable,
-                    str(ROOT / "scripts/containers/fixtures/editor_http.py"),
+                    str(ROOT / "scripts/testing/editor_http.py"),
                 ],
                 cwd=ROOT,
                 env=fixture_env,

@@ -23,14 +23,13 @@ pytestmark = pytest.mark.postgres
 
 
 def fixture_pairs():
-    e2e = ROOT / "e2e/fixtures"
     shared = ROOT / "tests/fixtures"
     full = json.loads((shared / "draft-roundtrip-pair.json").read_text())
     q, f = banks()
     return {
         "e2e": (
-            json.loads((e2e / "bank.json").read_text()),
-            json.loads((e2e / "flashcard-bank.json").read_text()),
+            json.loads((shared / "e2e-bank.json").read_text()),
+            json.loads((shared / "e2e-flashcard-bank.json").read_text()),
         ),
         "question-bank": (
             json.loads((shared / "question-bank.json").read_text()),
