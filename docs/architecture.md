@@ -31,7 +31,7 @@ Extend existing modules before adding files. Avoid barrels, forwarding modules a
 
 ## Content flow
 
-1. Authors edit draft records through the editor; publication builds both documents from the draft, creates an immutable release and moves the active pointer (see Releases).
+1. Editors change draft records in the editor app; publication builds both documents from the draft, creates an immutable release and moves the active pointer (see Releases).
 2. Each API content request reads the active pointer once and pins that finalized release for both quiz and flashcard readers. Immutable catalogs are cached per release (two latest per worker). Database failure returns a sanitized `content_unavailable` 503; nothing falls back to files or stale caches.
 3. The learner loads content in stages and revalidates at launch ([product](product.md#loading-and-freshness)). The API gzips responses (Starlette `GZipMiddleware`). `src/content/api` validates every DTO (membership, order, ownership, answer references) before it enters a revision-scoped cache; `contentTransport` owns timeouts, retries and cancellation; `launchFreshness.ts` owns the launch check.
 
