@@ -21,14 +21,14 @@ Aim for work a professional motion studio would ship. Creative choices are open:
 - Works with sound off: on-screen type or captions carry the message.
 - Keep text and key product UI inside the safe zones shaded on contact sheets. Check legibility at phone size.
 - Use the brand: the Meducation logo, Inter, warm neutrals and autumn orange (`src/kit/theme.ts`, `../src/shared/brand.ts`). Add colours only when a concept needs them.
-- Audio, when used: mixed, not decorative. Music supports pacing, effects land on cuts and taps, voiceover is clear over the music.
+- Audio, when used: mixed, not decorative. Music supports pacing, effects land on cuts and taps, voiceover is clear over the music. Listen to the stems in `.cache/audio/<id>/` and the final video before calling audio done.
 - Copy follows the root AGENTS.md copy rules.
 
 ## Hard rules
 
 - Use the actual learner app and published PostgreSQL content. Never mock product UI, change canonical content, use an old export, or record an authenticated or private profile. Preserve medical wording and answer order exactly as shown in the app.
-- External assets (music, sound effects, instruments, model weights, fonts, images) must be free for commercial use under an OSI licence, CC0, CC-BY (attribution recorded) or an explicit free-commercial licence from a reputable publisher. Record source URL, licence, SHA-256 and attribution for each in the README licence section before use.
-- Install npm packages pinned and with scripts disabled. Download only from official publisher or package channels over HTTPS and verify checksums. Never run downloaded setup scripts or unreviewed plugins.
+- External assets (music, sound effects, instruments, model weights, fonts, images) must be free for commercial use under an OSI licence, CC0, CC-BY (attribution recorded) or an explicit free-commercial licence from a reputable publisher. Add each to `assets.json` with source, licence, attribution and integrity data before use; the generator refuses unlisted assets.
+- Install npm packages pinned and with scripts disabled. Download only from official publisher or package channels over HTTPS and verify checksums. Never run downloaded setup scripts or unreviewed plugins; the only source build is the pinned sfizz release in `audio:setup`.
 - No network access at render time. Renders read local files only.
 - Keep captures, renders, logs and private content local and uncommitted. Remove a production's files and outputs when the user asks for cleanup, keeping reusable tooling, fonts and verified instruments.
 - Encoding success is not creative approval. Report what you actually produced and any defects you know of.

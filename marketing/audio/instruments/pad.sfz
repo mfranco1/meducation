@@ -1,0 +1,9 @@
+// Warm detuned saw pad. Original patch for sfizz built-in oscillators.
+<global>
+ampeg_attack=0.6 ampeg_decay=1.5 ampeg_sustain=80 ampeg_release=1.8
+fil_type=lpf_2p cutoff=1400 resonance=2 fil_veltrack=1800
+fileg_attack=0.8 fileg_decay=2 fileg_sustain=40 fileg_release=1.5 fileg_depth=1200
+amp_veltrack=60 volume=-12
+<region> sample=*saw oscillator_multi=5 oscillator_detune=14 pan=-30
+<region> sample=*saw oscillator_multi=5 oscillator_detune=11 pan=30 transpose=12 volume=-8
+<region> sample=*sine transpose=-12 volume=-6

@@ -1,0 +1,8 @@
+// Bright soft pluck for arpeggios and UI moments. Original patch for sfizz built-in oscillators.
+<global>
+ampeg_attack=0.001 ampeg_decay=0.55 ampeg_sustain=0 ampeg_release=0.35
+amp_veltrack=80 volume=-10
+fil_type=lpf_2p cutoff=900 resonance=3 fil_veltrack=2400
+fileg_attack=0 fileg_decay=0.25 fileg_sustain=0 fileg_depth=3600
+<region> sample=*square oscillator_multi=3 oscillator_detune=8 pan=-15
+<region> sample=*triangle transpose=12 volume=-9 pan=15

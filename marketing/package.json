@@ -9,6 +9,7 @@
     "render": "tsx cli.ts render",
     "validate": "tsx cli.ts validate",
     "produce": "tsx cli.ts produce",
+    "assets:fetch": "tsx cli.ts assets-fetch",
     "audio:setup": "tsx cli.ts audio-setup",
     "audio:generate": "tsx cli.ts audio-generate",
     "audio:validate": "tsx cli.ts audio-validate",

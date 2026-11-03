@@ -8,9 +8,9 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { capture } from './capture';
-import { generateAudio, setupAudio, validateAudio } from './audio';
+import { fetchAssets, generateAudio, setupAudio, validateAudio } from './audio';
 import { ffmpeg, probe } from './media';
-import { audioRecipeSchema, FPS, formatId, formats, specSchema, type AdSpec, type Format } from './spec';
+import { FPS, formatId, formats, specSchema, type AdSpec, type Format } from './spec';
 import { adWebpack } from './webpack';
 
 const root = dirname(fileURLToPath(import.meta.url));
@@ -23,6 +23,7 @@ const { values, positionals } = parseArgs({
     force: { type: 'boolean', default: false },
     frames: { type: 'string' },
     video: { type: 'string' },
+    id: { type: 'string' },
   },
 });
 const command = positionals[0];
@@ -40,9 +41,9 @@ async function files(directory: string): Promise<string[]> {
   return nested.flat();
 }
 
-/** Public assets an ad uses: literal `staticFile('…')` paths in its code plus its audio clips. */
+/** Public assets an ad uses: literal `staticFile('…')` paths in its code plus its mastered soundtrack. */
 export async function adAssets(spec: AdSpec, adDir: string) {
-  const paths = new Set(spec.audio.map((audio) => audio.src));
+  const paths = new Set(spec.soundtrack ? [`audio/${spec.id}/mix.wav`] : []);
   for (const file of await files(adDir))
     if (/\.tsx?$/.test(file))
       for (const match of (await readFile(file, 'utf8')).matchAll(/staticFile\(\s*['"`]([^'"`$]+)['"`]\s*\)/g))
@@ -59,14 +60,6 @@ export async function validateAssets(spec: AdSpec, adDir: string, publicDir: str
     }
     if (/\.(mp4|mov|webm|wav|mp3|m4a|aac|flac|ogg)$/i.test(path))
       await ffmpeg(['-v', 'error', '-xerror', '-i', join(publicDir, path), '-f', 'null', '-'], log('assets'));
-  }
-  for (const audio of spec.audio) {
-    const info = await probe(join(publicDir, audio.src), log('audio'));
-    if (
-      !info.streams.some((stream) => stream.codec_type === 'audio') ||
-      Number(info.format.duration) * FPS + 1 < audio.trim + audio.frames
-    )
-      throw new Error(`Audio is missing or too short: ${audio.src}`);
   }
 }
 
@@ -89,7 +82,7 @@ async function validateVideo(spec: AdSpec, format: Format, path: string) {
     Math.abs(Number(video.duration ?? info.format.duration) - spec.frames / FPS) > 1 / FPS + 0.001
   )
     throw new Error('Video frame rate or duration does not match the specification');
-  const expectsAudio = spec.audio.length > 0;
+  const expectsAudio = spec.soundtrack !== undefined;
   if (audio !== expectsAudio) throw new Error('Video audio does not match the specification');
   await ffmpeg(['-v', 'error', '-xerror', '-i', path, '-f', 'null', '-'], log('decode'));
   await ffmpeg(
@@ -173,6 +166,15 @@ async function main() {
     await setupAudio(root);
     return;
   }
+  if (command === 'assets-fetch') {
+    if (values.id) await fetchAssets(root, { id: values.id });
+    else if (values.spec)
+      await fetchAssets(root, {
+        spec: specSchema.parse(JSON.parse(await readFile(resolve(root, values.spec), 'utf8'))),
+      });
+    else throw new Error('Use --id <asset-id> or --spec ads/<id>/ad.json.');
+    return;
+  }
   if (
     ![
       'capture',
@@ -197,26 +199,20 @@ async function main() {
     throw new Error(`Format ${values.format} is not listed in this ad: ${spec.formats.join(', ')}`);
   const selected = values.format ? [values.format as Format] : spec.formats;
   const output = (format: Format) => join(root, 'output', spec.id, formatId(format));
+  if (['audio-generate', 'audio-validate'].includes(command) && !spec.soundtrack)
+    throw new Error('This ad has no soundtrack.');
   if (command === 'audio-validate') {
-    if (!spec.audioRecipe) throw new Error('This ad has no audioRecipe.');
-    const recipe = audioRecipeSchema.parse(JSON.parse(await readFile(resolve(root, spec.audioRecipe), 'utf8')));
-    if (recipe.frames !== spec.frames) throw new Error('Audio recipe and advertisement durations differ.');
     await validateAudio(
       root,
-      values.video ? resolve(root, values.video) : join(root, 'public/audio', recipe.id, 'mix.wav'),
-      recipe.frames,
-      recipe.lufs,
+      values.video ? resolve(root, values.video) : join(root, 'public/audio', spec.id, 'mix.wav'),
+      spec.frames,
+      spec.soundtrack!.lufs,
     );
     return;
   }
-  if (['audio-generate', 'preview', 'render', 'produce'].includes(command) && spec.audioRecipe) {
-    const recipe = await generateAudio(root, spec.audioRecipe, values.force!);
-    if (recipe.frames !== spec.frames) throw new Error('Audio recipe and advertisement durations differ.');
-  }
-  if (command === 'audio-generate') {
-    if (!spec.audioRecipe) throw new Error('This ad has no audioRecipe.');
-    return;
-  }
+  if (['audio-generate', 'preview', 'render', 'produce'].includes(command) && spec.soundtrack)
+    await generateAudio(root, spec, values.force!);
+  if (command === 'audio-generate') return;
   if (command === 'capture' || command === 'produce') {
     if (spec.recipe) await capture(root, spec.recipe, values['base-url']!, values.force!);
     else if (command === 'capture') throw new Error('This ad has no capture recipe.');

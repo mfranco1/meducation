@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import {
   AbsoluteFill,
   Composition,
-  Sequence,
   cancelRender,
   continueRender,
   delayRender,
@@ -32,18 +31,7 @@ function Production({ spec }: { spec: AdSpec }) {
   return (
     <AbsoluteFill style={{ fontFamily: 'Inter, sans-serif' }}>
       {ready && <Ad spec={spec} />}
-      {spec.audio.map((audio, index) => (
-        <Sequence key={index} from={audio.from} durationInFrames={audio.frames}>
-          <Audio
-            src={staticFile(audio.src)}
-            trimBefore={audio.trim}
-            volume={(frame) =>
-              audio.volume *
-              Math.min(1, audio.fade ? frame / audio.fade : 1, audio.fade ? (audio.frames - 1 - frame) / audio.fade : 1)
-            }
-          />
-        </Sequence>
-      ))}
+      {spec.soundtrack && <Audio src={staticFile(`audio/${spec.id}/mix.wav`)} />}
     </AbsoluteFill>
   );
 }

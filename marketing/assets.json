@@ -1,0 +1,32 @@
+[
+  {
+    "type": "github",
+    "id": "salamander-piano",
+    "repo": "sfzinstruments/SalamanderGrandPiano",
+    "commit": "3382bf9496bba2486f5ab0de55a264d1dfc38404",
+    "paths": [],
+    "license": "CC-BY-3.0",
+    "attribution": "Salamander Grand Piano V3 by Alexander Holm, SFZ by sfzinstruments",
+    "source": "https://github.com/sfzinstruments/SalamanderGrandPiano"
+  },
+  {
+    "type": "github",
+    "id": "bigcat-cello",
+    "repo": "sfzinstruments/karoryfer-bigcat.cello",
+    "commit": "6fd75fbfc1dbb3109bf26220ba1adea46188a18b",
+    "paths": [],
+    "license": "CC0-1.0",
+    "attribution": "Karoryfer Samples and Bigcat Instruments",
+    "source": "https://github.com/sfzinstruments/karoryfer-bigcat.cello"
+  },
+  {
+    "type": "github",
+    "id": "virtuosity-drums",
+    "repo": "sfzinstruments/virtuosity_drums",
+    "commit": "9f04cf9a734527edfbb0a4eee1f674e45bbf71bc",
+    "paths": [],
+    "license": "CC0-1.0",
+    "attribution": "Versilian Studios and Karoryfer Samples",
+    "source": "https://github.com/sfzinstruments/virtuosity_drums"
+  }
+]

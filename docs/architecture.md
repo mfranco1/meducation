@@ -15,7 +15,7 @@ One frontend package and one Python package. Root HTML entries and tool configur
 - `backend/src/meducation_api`: `main.py` learner routes, `content` (draft records, releases, export and import), `repositories` (release-pinned PostgreSQL readers and response models), `db` (engines, migrations, bootstrap, recovery, the `meducation-db` CLI), `auth` (OIDC and sessions), `admin` (paired editor API and service), `content_policy` (packaged validator), `observability.py` (logs and request middleware).
 - `scripts/content`, `scripts/containers`, `scripts/local-authoring`, `scripts/testing`: maintenance tooling outside the application graph.
 - Tests sit beside their modules; `src/test` has setup and fixtures, `tests/fixtures` shared contracts, `e2e` browser workflows.
-- `marketing/`: separate package for local ad videos (Playwright capture, Remotion, synthesized audio). It reuses brand presentation and adds nothing to the app build; see its README and AGENTS files.
+- `marketing/`: separate package for local ad videos (Playwright capture, Remotion, sfizz-rendered scores). It reuses brand presentation and adds nothing to the app build; see its README and AGENTS files.
 
 Extend existing modules before adding files. Avoid barrels, forwarding modules and speculative shared layers.
 

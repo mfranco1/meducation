@@ -1,87 +1,251 @@
 import ToneMidi from '@tonejs/midi';
 import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
-import { join, resolve } from 'node:path';
+import { access, copyFile, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
+import { availableParallelism } from 'node:os';
+import { dirname, join, resolve, sep } from 'node:path';
 import { Readable } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
-import { audioRecipeSchema, FPS, type AudioRecipe } from './spec';
+import { assetsSchema, FPS, type Asset, type AdSpec, type Soundtrack } from './spec';
 import { ffmpeg, probe, run } from './media';
 
 const { Midi } = ToneMidi;
 
-// Debian's published source checksum. Extract only instrument data and its license.
-const ARCHIVE_URL = 'https://deb.debian.org/debian/pool/main/f/fluid-soundfont/fluid-soundfont_3.1.orig.tar.gz';
-const ARCHIVE_SHA256 = '2621acaa1c78e4abdb24bdd163230cc577e61276936d6aa6e3180582142f0343';
-const FONT_SHA256 = '74594e8f4250680adf590507a306655a299935343583256f3b722c48a1bc1cb0';
-const fontPath = (root: string) => join(root, '.cache/audio-fonts/fluid-soundfont-3.1/FluidR3_GM.sf2');
+const SFIZZ_URL = 'https://github.com/sfztools/sfizz/releases/download/1.2.3/sfizz-1.2.3.tar.gz';
+const SFIZZ_SHA256 = 'a9339eac7620d7f0f6b44bdfe860680fab73e66efad4b5f15b21198dd9436822';
 const logPath = (root: string, name: string) => join(root, '.cache/logs', `audio-${name}.log`);
+const assetDir = (root: string, id: string) => join(root, '.cache/assets', id);
+const sfizzTool = (root: string) => process.env.SFIZZ_RENDER ?? join(root, '.cache/tools/sfizz_render');
 const wav = ['-ar', '48000', '-ac', '2', '-c:a', 'pcm_s24le'];
+const stem = ['-ar', '48000', '-ac', '2', '-c:a', 'pcm_f32le'];
 
 async function hashFile(path: string) {
   const hash = createHash('sha256');
   for await (const bytes of createReadStream(path)) hash.update(bytes);
   return hash.digest('hex');
 }
-export async function verifySoundfontArchive(path: string) {
-  if ((await hashFile(path)) !== ARCHIVE_SHA256)
-    throw new Error('SoundFont archive checksum mismatch. Nothing was extracted.');
+const sha256 = (data: string | Buffer) => createHash('sha256').update(data).digest('hex');
+
+async function download(url: string, headers: Record<string, string> = {}) {
+  const response = await fetch(url, { headers, signal: AbortSignal.timeout(300000) });
+  if (!response.ok) throw new Error(`Download failed (${response.status}): ${url}`);
+  return Buffer.from(await response.arrayBuffer());
+}
+
+// ---- sfizz renderer ----
+
+export async function verifyArchive(path: string) {
+  if ((await hashFile(path)) !== SFIZZ_SHA256)
+    throw new Error('sfizz archive checksum mismatch. Nothing was extracted.');
 }
 export async function setupAudio(root: string) {
-  await run(process.env.FLUIDSYNTH ?? 'fluidsynth', ['--version'], logPath(root, 'fluidsynth'));
-  try {
-    if ((await hashFile(fontPath(root))) === FONT_SHA256) {
-      console.log('Audio instruments already verified.');
-      return;
-    }
-  } catch {
-    /* First setup. */
+  if (process.env.SFIZZ_RENDER) {
+    await access(process.env.SFIZZ_RENDER);
+    console.log(`Using ${process.env.SFIZZ_RENDER}`);
+    return;
   }
-  const archive = join(root, '.cache/fluid-soundfont_3.1.orig.tar.gz');
+  const tool = sfizzTool(root);
+  if (
+    await access(tool).then(
+      () => true,
+      () => false,
+    )
+  ) {
+    console.log(`sfizz_render already built: ${tool}`);
+    return;
+  }
+  await run('cmake', ['--version'], logPath(root, 'cmake')).catch(() => {
+    throw new Error('cmake is required to build sfizz. Install it with: brew install cmake');
+  });
+  const archive = join(root, '.cache/sfizz-1.2.3.tar.gz');
   try {
-    await verifySoundfontArchive(archive);
+    await verifyArchive(archive);
   } catch {
-    console.log('Downloading FluidR3 instrument data from Debian (135 MB)…');
-    const response = await fetch(ARCHIVE_URL, { signal: AbortSignal.timeout(300000) });
-    if (!response.ok || !response.body) throw new Error(`SoundFont download failed (${response.status})`);
+    console.log('Downloading sfizz 1.2.3 source…');
     const partial = `${archive}.partial`;
+    const response = await fetch(SFIZZ_URL, { signal: AbortSignal.timeout(300000) });
+    if (!response.ok || !response.body) throw new Error(`sfizz download failed (${response.status})`);
+    await mkdir(dirname(archive), { recursive: true });
     await pipeline(
       Readable.fromWeb(response.body as import('node:stream/web').ReadableStream),
       createWriteStream(partial),
     );
-    await verifySoundfontArchive(partial);
+    await verifyArchive(partial);
     await rename(partial, archive);
   }
-  const directory = join(root, '.cache/audio-fonts');
-  await mkdir(directory, { recursive: true });
+  const extracted = join(root, '.cache/sfizz-src');
+  await rm(extracted, { recursive: true, force: true });
+  await mkdir(extracted, { recursive: true });
+  await run('tar', ['-xzf', archive, '-C', extracted, '--strip-components=1'], logPath(root, 'sfizz-extract'));
+  const flags = ['-Wno-missing-template-arg-list-after-template-kw'];
+  const configure = [
+    '-S',
+    extracted,
+    '-B',
+    join(extracted, 'build'),
+    '-DCMAKE_BUILD_TYPE=Release',
+    '-DSFIZZ_SHARED=OFF',
+    '-DSFIZZ_JACK=OFF',
+    '-DCMAKE_POLICY_VERSION_MINIMUM=3.5',
+  ];
+  if (process.platform === 'darwin') {
+    const sdk = (await run('xcrun', ['--show-sdk-path'], logPath(root, 'xcrun'))).trim();
+    flags.push('-isystem', `${sdk}/usr/include/c++/v1`);
+    if (process.arch === 'arm64') configure.push('-DPROJECT_SYSTEM_PROCESSOR=aarch64');
+  }
+  console.log('Building sfizz_render (about a minute)…');
+  await run('env', [`CXXFLAGS=${flags.join(' ')}`, 'cmake', ...configure], logPath(root, 'sfizz-configure'));
   await run(
-    'tar',
-    ['-xzf', archive, '-C', directory, 'fluid-soundfont-3.1/FluidR3_GM.sf2', 'fluid-soundfont-3.1/COPYING'],
-    logPath(root, 'extract'),
+    'cmake',
+    ['--build', join(extracted, 'build'), '--target', 'sfizz_render', '-j', String(availableParallelism())],
+    logPath(root, 'sfizz-build'),
   );
-  if ((await hashFile(fontPath(root))) !== FONT_SHA256) throw new Error('Extracted SoundFont checksum mismatch.');
-  console.log(`Audio instruments verified: ${fontPath(root)}`);
+  await mkdir(dirname(tool), { recursive: true });
+  await copyFile(join(extracted, 'build/library/bin/sfizz_render'), tool);
+  await rm(extracted, { recursive: true, force: true });
+  console.log(`sfizz_render built: ${tool}`);
 }
 
-export function scoreMidi(recipe: AudioRecipe) {
+// ---- asset manifest ----
+
+export async function loadAssets(root: string) {
+  return assetsSchema.parse(JSON.parse(await readFile(join(root, 'assets.json'), 'utf8')));
+}
+const marker = (entry: Asset) => sha256(JSON.stringify(entry));
+const assetIds = (soundtrack: Soundtrack) => [
+  ...new Set(
+    [...(soundtrack.score?.tracks.map((t) => t.instrument) ?? []), ...soundtrack.clips.map((c) => c.src)]
+      .map((ref) => ref.split('/')[0])
+      .filter((id) => id !== 'local'),
+  ),
+];
+const soundtrackRefs = (soundtrack: Soundtrack) => [
+  ...(soundtrack.score?.tracks.map((t) => t.instrument) ?? []),
+  ...soundtrack.clips.map((c) => c.src),
+];
+
+/** Git object id of a file: sha1 of "blob <size>\0" followed by the content. */
+export const gitBlobSha = (content: Buffer) =>
+  createHash('sha1').update(`blob ${content.length}\0`).update(content).digest('hex');
+
+async function fetchGithub(entry: Extract<Asset, { type: 'github' }>, directory: string) {
+  const headers: Record<string, string> = { 'User-Agent': 'meducation-marketing' };
+  const apiHeaders = process.env.GITHUB_TOKEN
+    ? { ...headers, Authorization: `Bearer ${process.env.GITHUB_TOKEN}` }
+    : headers;
+  const tree = JSON.parse(
+    (
+      await download(`https://api.github.com/repos/${entry.repo}/git/trees/${entry.commit}?recursive=1`, apiHeaders)
+    ).toString(),
+  ) as { truncated: boolean; tree: { path: string; type: string; sha: string }[] };
+  if (tree.truncated) throw new Error(`${entry.id}: repository listing is truncated`);
+  const blobs = tree.tree.filter(
+    (item) => item.type === 'blob' && (entry.paths.length === 0 || entry.paths.some((p) => item.path.startsWith(p))),
+  );
+  for (const { path } of blobs)
+    if (path.startsWith('/') || path.split('/').includes('..')) throw new Error(`${entry.id}: unsafe path ${path}`);
+  let next = 0;
+  const worker = async () => {
+    for (let item = blobs[next++]; item; item = blobs[next++]) {
+      const encoded = item.path.split('/').map(encodeURIComponent).join('/');
+      const content = await download(
+        `https://raw.githubusercontent.com/${entry.repo}/${entry.commit}/${encoded}`,
+        headers,
+      );
+      if (gitBlobSha(content) !== item.sha) throw new Error(`${entry.id}: checksum mismatch for ${item.path}`);
+      const target = join(directory, item.path);
+      await mkdir(dirname(target), { recursive: true });
+      await writeFile(target, content);
+    }
+  };
+  console.log(`Fetching ${entry.id}: ${blobs.length} files…`);
+  await Promise.all(Array.from({ length: 8 }, worker));
+}
+
+async function verifyLocal(root: string, entry: Extract<Asset, { type: 'local' }>) {
+  for (const file of entry.files)
+    if ((await hashFile(join(assetDir(root, entry.id), file.name)).catch(() => '')) !== file.sha256)
+      throw new Error(
+        `${entry.id}: put ${file.name} (sha256 ${file.sha256}) in .cache/assets/${entry.id}/. Missing or changed.`,
+      );
+}
+
+async function fetchAsset(root: string, entry: Asset) {
+  const directory = assetDir(root, entry.id);
+  if (entry.type === 'local') {
+    await verifyLocal(root, entry);
+    console.log(`Asset ${entry.id} verified.`);
+    return;
+  }
+  if ((await readFile(join(directory, '.verified'), 'utf8').catch(() => '')) === marker(entry)) {
+    console.log(`Asset ${entry.id} already verified.`);
+    return;
+  }
+  const partial = `${directory}.partial`;
+  await rm(partial, { recursive: true, force: true });
+  await mkdir(partial, { recursive: true });
+  if (entry.type === 'github') await fetchGithub(entry, partial);
+  else {
+    const content = await download(entry.url);
+    if (sha256(content) !== entry.sha256) throw new Error(`${entry.id}: checksum mismatch`);
+    await writeFile(join(partial, entry.name), content);
+  }
+  await writeFile(join(partial, '.verified'), marker(entry));
+  await rm(directory, { recursive: true, force: true });
+  await rename(partial, directory);
+  console.log(`Asset ${entry.id} verified: ${entry.license}`);
+}
+
+export async function fetchAssets(root: string, options: { id?: string; spec?: AdSpec }) {
+  const manifest = await loadAssets(root);
+  const ids = options.id ? [options.id] : options.spec?.soundtrack ? assetIds(options.spec.soundtrack) : [];
+  for (const id of ids) {
+    const entry = manifest.find((asset) => asset.id === id);
+    if (!entry) throw new Error(`Unknown asset "${id}". Add it to assets.json.`);
+    await fetchAsset(root, entry);
+  }
+  if (ids.length === 0) console.log('No external assets to fetch.');
+}
+
+/** Every referenced asset must be in the manifest and verified. Returns the referenced entries. */
+async function requireAssets(root: string, soundtrack: Soundtrack) {
+  const manifest = await loadAssets(root);
+  const entries: Asset[] = [];
+  for (const id of assetIds(soundtrack)) {
+    const entry = manifest.find((asset) => asset.id === id);
+    if (!entry) throw new Error(`Unknown asset "${id}". Add it to assets.json.`);
+    if (entry.type === 'local') await verifyLocal(root, entry);
+    else if ((await readFile(join(assetDir(root, id), '.verified'), 'utf8').catch(() => '')) !== marker(entry))
+      throw new Error(
+        `Asset ${id} is missing or unverified. Run: npm --prefix marketing run assets:fetch -- --id ${id}`,
+      );
+    entries.push(entry);
+  }
+  return entries;
+}
+function resolveRef(root: string, ref: string) {
+  const [id, ...rest] = ref.split('/');
+  const base = id === 'local' ? join(root, 'audio') : assetDir(root, id);
+  const path = resolve(base, rest.join('/'));
+  if (!path.startsWith(base + sep)) throw new Error(`Invalid audio reference: ${ref}`);
+  return path;
+}
+
+// ---- score ----
+
+export function scoreMidi(bpm: number, track: NonNullable<Soundtrack['score']>['tracks'][number]) {
+  const seconds = (beats: number) => (beats * 60) / bpm;
   const midi = new Midi();
-  midi.name = recipe.id;
-  midi.header.setTempo(recipe.bpm);
-  for (const [index, part] of recipe.tracks.entries()) {
-    const track = midi.addTrack();
-    track.name = part.name;
-    track.channel = index;
-    track.instrument.number = part.program;
-    track.addCC({ number: 10, time: 0, value: (part.pan + 1) / 2 });
-    for (const note of part.notes)
-      for (const pitch of note.pitches) {
-        track.addNote({
-          midi: pitch,
-          time: (note.beat * 60) / recipe.bpm,
-          duration: (note.beats * 60) / recipe.bpm,
-          velocity: note.velocity,
-        });
-      }
+  midi.header.setTempo(bpm);
+  const part = midi.addTrack();
+  part.name = track.name;
+  part.channel = 0;
+  for (const note of track.notes)
+    for (const pitch of note.pitches)
+      part.addNote({ midi: pitch, time: seconds(note.beat), duration: seconds(note.beats), velocity: note.velocity });
+  for (const pedal of track.sustain) {
+    part.addCC({ number: 64, time: seconds(pedal.beat), value: 1 });
+    part.addCC({ number: 64, time: seconds(pedal.beat + pedal.beats), value: 0 });
   }
   return Buffer.from(midi.toArray());
 }
@@ -113,127 +277,222 @@ export async function validateAudio(root: string, file: string, frames: number, 
   console.log(`Audio validated: ${(frames / FPS).toFixed(2)}s, 48 kHz stereo, ${integrated} LUFS, ${peak} dBTP`);
 }
 
-async function effect(root: string, cue: AudioRecipe['effects'][number], file: string) {
-  const seconds = cue.frames / FPS;
-  const noise = `anoisesrc=color=pink:sample_rate=48000:duration=${seconds}:seed=${cue.seed}`;
-  const source =
-    cue.kind === 'chime'
-      ? `aevalsrc=0.45*sin(2*PI*${cue.frequency}*t)*exp(-5*t)+0.18*sin(2*PI*${cue.frequency * 1.5}*t)*exp(-6*t):s=48000:d=${seconds}`
-      : noise;
-  const filters =
-    cue.kind === 'tap'
-      ? `highpass=f=700,lowpass=f=3500,afade=t=in:d=0.005,afade=t=out:st=0.01:d=${Math.max(0.01, seconds - 0.01)}`
-      : `highpass=f=400,lowpass=f=6000,afade=t=in:d=${Math.min(0.12, seconds / 3)},afade=t=out:st=${seconds / 3}:d=${(seconds * 2) / 3}`;
-  await ffmpeg(['-f', 'lavfi', '-i', source, '-af', filters, ...wav, file], logPath(root, 'effect'));
+// ---- generation ----
+
+const balance = (pan: number) => `pan=stereo|c0=${Math.min(1, 1 - pan)}*c0|c1=${Math.min(1, 1 + pan)}*c1`;
+
+/** Spoken intervals in a voice bus, in seconds. */
+async function speech(root: string, file: string, seconds: number) {
+  await ffmpeg(['-i', file, '-af', 'silencedetect=n=-45dB:d=0.25', '-f', 'null', '-'], logPath(root, 'speech'));
+  const log = await readFile(logPath(root, 'speech'), 'utf8');
+  const starts = [...log.matchAll(/silence_start: (-?[\d.]+)/g)].map((m) => Math.max(0, Number(m[1])));
+  const ends = [...log.matchAll(/silence_end: ([\d.]+)/g)].map((m) => Number(m[1]));
+  // Speech runs from each silence end (or 0) to the next silence start (or the end).
+  const edges = [0, ...starts.flatMap((start, i) => [start, ends[i] ?? seconds]), seconds];
+  const spans: [number, number][] = [];
+  for (let i = 0; i < edges.length; i += 2) if (edges[i + 1] - edges[i] > 0.05) spans.push([edges[i], edges[i + 1]]);
+  return spans;
+}
+/** FFmpeg volume expression: `duck` dB during speech, ramping down 0.15 s before and back up over 0.4 s after. */
+export function duckGain(spans: [number, number][], duck: number) {
+  if (!spans.length) return '1';
+  const cover = spans
+    .map(
+      ([start, end]) =>
+        `min(max((t-${(start - 0.15).toFixed(3)})/0.15,0),1)*min(max((${(end + 0.4).toFixed(3)}-t)/0.4,0),1)`,
+    )
+    .reduce((all, next) => `max(${all},${next})`);
+  return `pow(10,${duck / 20}*${cover})`;
 }
 
-export async function generateAudio(root: string, recipePath: string, force: boolean) {
-  const recipe = audioRecipeSchema.parse(JSON.parse(await readFile(resolve(root, recipePath), 'utf8')));
-  if ((await hashFile(fontPath(root)).catch(() => '')) !== FONT_SHA256)
-    throw new Error('Audio instruments missing or changed. Run npm --prefix marketing run audio:setup.');
-  const version = await run(process.env.FLUIDSYNTH ?? 'fluidsynth', ['--version'], logPath(root, 'fluidsynth'));
-  const ffmpegVersion = await ffmpeg(['-version'], logPath(root, 'version'));
+export async function generateAudio(root: string, spec: AdSpec, force: boolean) {
+  const { soundtrack } = spec;
+  if (!soundtrack) throw new Error('This ad has no soundtrack.');
+  const entries = await requireAssets(root, soundtrack);
+  const sfizz = sfizzTool(root);
+  if (
+    soundtrack.score &&
+    !(await access(sfizz).then(
+      () => true,
+      () => false,
+    ))
+  )
+    throw new Error('sfizz_render is missing. Run: npm --prefix marketing run audio:setup');
+  const seconds = spec.frames / FPS;
+  const refs = [...new Set(soundtrackRefs(soundtrack))];
   const key = createHash('sha256')
-    .update(JSON.stringify(recipe))
+    .update(JSON.stringify({ soundtrack, frames: spec.frames, entries }))
     .update(await readFile(join(root, 'audio.ts')))
     .update(await readFile(join(root, 'package-lock.json')))
-    .update(version)
-    .update(ffmpegVersion)
-    .digest('hex');
-  const destination = join(root, 'public/audio', recipe.id);
+    .update(soundtrack.score ? await hashFile(sfizz) : '')
+    .update(await ffmpeg(['-version'], logPath(root, 'version')));
+  for (const ref of refs)
+    if (ref.startsWith('local/') || ref.endsWith('.sfz')) key.update(ref).update(await hashFile(resolveRef(root, ref)));
+  const cacheKey = key.digest('hex');
+  const destination = join(root, 'public/audio', spec.id);
+  const master = join(destination, 'mix.wav');
   try {
     const saved = (await readFile(join(destination, 'cache-key'), 'utf8')).split('\n');
-    if (!force && saved[0] === key && saved[1] === (await hashFile(join(destination, 'mix.wav')))) {
-      await validateAudio(root, join(destination, 'mix.wav'), recipe.frames, recipe.lufs);
-      console.log(`Audio reused: ${destination}/mix.wav`);
-      return recipe;
+    if (!force && saved[0] === cacheKey && saved[1] === (await hashFile(master))) {
+      await validateAudio(root, master, spec.frames, soundtrack.lufs);
+      console.log(`Audio reused: ${master}`);
+      return;
     }
   } catch {
     /* Missing or damaged output is generated again. */
   }
-  const working = join(root, '.cache/audio-render', recipe.id);
+
+  const working = join(root, '.cache/audio', spec.id);
   await rm(working, { recursive: true, force: true });
   await mkdir(working, { recursive: true });
-  await writeFile(join(working, 'music.mid'), scoreMidi(recipe));
-  await run(
-    process.env.FLUIDSYNTH ?? 'fluidsynth',
-    [
-      '-ni',
-      '-q',
-      '-r',
-      '48000',
-      '-g',
-      '0.65',
-      '-R',
-      '1',
-      '-C',
-      '0',
-      '-o',
-      'synth.reverb.room-size=0.55',
-      '-o',
-      'synth.reverb.damp=0.6',
-      '-o',
-      'synth.reverb.level=0.25',
-      '-F',
-      join(working, 'music-raw.wav'),
-      fontPath(root),
-      join(working, 'music.mid'),
-    ],
-    logPath(root, 'music'),
-  );
-  const seconds = recipe.frames / FPS;
-  await ffmpeg(
-    [
-      '-i',
-      join(working, 'music-raw.wav'),
-      '-af',
-      `highpass=f=60,lowpass=f=6500,apad,atrim=duration=${seconds},afade=t=in:d=0.25,afade=t=out:st=${seconds - Math.min(1.2, seconds / 2)}:d=${Math.min(1.2, seconds / 2)}`,
-      ...wav,
-      join(working, 'music.wav'),
-    ],
-    logPath(root, 'music-trim'),
-  );
-  const inputs = ['-i', join(working, 'music.wav')];
-  const filters = [`[0:a]volume=${recipe.musicGain}[music]`];
-  for (const [index, cue] of recipe.effects.entries()) {
-    const file = join(working, `effect-${index}-${cue.kind}.wav`);
-    await effect(root, cue, file);
+  const inputs: string[] = [];
+  const filters: string[] = [];
+  const input = (file: string) => {
     inputs.push('-i', file);
-    filters.push(`[${index + 1}:a]volume=${cue.gain},adelay=${Math.round((cue.from * 1000) / FPS)}:all=1[fx${index}]`);
+    return inputs.length / 2 - 1;
+  };
+  const buses: Record<'music' | 'sfx' | 'voice', string[]> = { music: [], sfx: [], voice: [] };
+  const sum = (labels: string[], out: string) =>
+    filters.push(`${labels.map((l) => `[${l}]`).join('')}amix=inputs=${labels.length}:normalize=0[${out}]`);
+
+  const score = soundtrack.score;
+  if (score) {
+    const impulse = join(working, 'reverb-impulse.wav');
+    const s = score.reverb.seconds;
+    const decay = `exp(-6.9*t/${s})`;
+    await ffmpeg(
+      [
+        '-f',
+        'lavfi',
+        '-i',
+        `aevalsrc=(random(0)*2-1)*${decay}|(random(1)*2-1)*${decay}:s=48000:d=${s}`,
+        '-af',
+        'highpass=f=200,lowpass=f=7000',
+        ...stem,
+        impulse,
+      ],
+      logPath(root, 'impulse'),
+    );
+    const dry: string[] = [];
+    const sends: string[] = [];
+    for (const [index, track] of score.tracks.entries()) {
+      const base = join(working, `track-${index}-${track.name.replace(/[^\w-]+/g, '-')}`);
+      await writeFile(`${base}.mid`, scoreMidi(score.bpm, track));
+      await run(
+        sfizz,
+        [
+          '--sfz',
+          resolveRef(root, track.instrument),
+          '--midi',
+          `${base}.mid`,
+          '--wav',
+          `${base}-raw.wav`,
+          '-s',
+          '48000',
+        ],
+        logPath(root, `sfizz-${index}`),
+      );
+      await ffmpeg(
+        ['-i', `${base}-raw.wav`, '-af', `apad,atrim=duration=${seconds}`, ...stem, `${base}.wav`],
+        logPath(root, 'track'),
+      );
+      await rm(`${base}-raw.wav`);
+      const level = await ffmpeg(
+        ['-i', `${base}.wav`, '-af', 'volumedetect', '-f', 'null', '-'],
+        logPath(root, 'level'),
+      )
+        .then(() => readFile(logPath(root, 'level'), 'utf8'))
+        .then((text) => ({
+          peak: Number(text.match(/max_volume: (-?[\d.]+) dB/)?.[1] ?? -Infinity),
+          mean: Number(text.match(/mean_volume: (-?[\d.]+) dB/)?.[1] ?? -Infinity),
+        }));
+      if (!(level.peak > -80))
+        throw new Error(
+          `Track "${track.name}" rendered silence. Choose a playable .sfz program in ${track.instrument}.`,
+        );
+      console.log(`Track ${track.name}: mean ${level.mean} dB, peak ${level.peak} dB before gain`);
+      const n = input(`${base}.wav`);
+      filters.push(
+        `[${n}:a]volume=${track.gain}dB,${balance(track.pan)},asplit=2[dry${index}][send${index}]`,
+        `[send${index}]volume=${track.reverb}[wet${index}]`,
+      );
+      dry.push(`dry${index}`);
+      sends.push(`wet${index}`);
+    }
+    const ir = input(impulse);
+    sum(dry, 'drybus');
+    sum(sends, 'sendbus');
+    filters.push(`[sendbus][${ir}:a]afir=dry=0:wet=1,volume=${score.reverb.mix}[wetbus]`);
+    sum(['drybus', 'wetbus'], 'score');
+    filters.push('[score]asplit=2[scoremix][scorestem]');
+    buses.music.push('scoremix');
   }
-  filters.push(
-    `[music]${recipe.effects.map((_, index) => `[fx${index}]`).join('')}amix=inputs=${recipe.effects.length + 1}:normalize=0,atrim=duration=${seconds}[mix]`,
+  for (const [index, clip] of soundtrack.clips.entries()) {
+    const file = resolveRef(root, clip.src);
+    const info = await probe(file, logPath(root, 'clip'));
+    const available = Math.floor(Number(info.format.duration) * FPS) - clip.trim;
+    const frames = Math.min(clip.frames ?? available, available, spec.frames - clip.from);
+    if (frames <= 0) throw new Error(`Clip does not fit the ad: ${clip.src}`);
+    const length = frames / FPS;
+    const n = input(file);
+    filters.push(
+      [
+        `[${n}:a]aformat=sample_rates=48000:channel_layouts=stereo`,
+        `atrim=start=${clip.trim / FPS}:duration=${length}`,
+        'asetpts=PTS-STARTPTS',
+        `afade=t=in:st=0:d=${clip.fadeIn / FPS}`,
+        `afade=t=out:st=${Math.max(0, length - clip.fadeOut / FPS)}:d=${clip.fadeOut / FPS}`,
+        `volume=${clip.gain}dB`,
+        balance(clip.pan),
+        `adelay=${clip.from * 1600}S:all=1`,
+      ].join(',') + `[clip${index}]`,
+    );
+    buses[clip.role].push(`clip${index}`);
+  }
+  const outputs: string[] = [];
+  const names: string[] = [];
+  for (const role of ['music', 'sfx', 'voice'] as const) {
+    if (buses[role].length === 0) continue;
+    sum(buses[role], `${role}bus`);
+    filters.push(`[${role}bus]apad,atrim=duration=${seconds}[${role}out]`);
+    outputs.push('-map', `[${role}out]`, ...stem, join(working, `${role}.wav`));
+    names.push(role);
+  }
+  if (score) outputs.push('-map', '[scorestem]', ...stem, join(working, 'score.wav'));
+  await ffmpeg([...inputs, '-filter_complex', filters.join(';'), ...outputs], logPath(root, 'buses'));
+
+  const stems: string[] = [];
+  const masterFilters: string[] = [];
+  for (const role of names) stems.push('-i', join(working, `${role}.wav`));
+  const label = (role: string) => `${names.indexOf(role)}:a`;
+  const mixed: string[] = [];
+  if (names.includes('music')) {
+    if (names.includes('voice')) {
+      const gain = duckGain(await speech(root, join(working, 'voice.wav'), seconds), soundtrack.duck);
+      masterFilters.push(`[${label('music')}]volume='${gain}':eval=frame[music]`);
+      mixed.push('[music]', `[${label('voice')}]`);
+    } else mixed.push(`[${label('music')}]`);
+  } else if (names.includes('voice')) mixed.push(`[${label('voice')}]`);
+  if (names.includes('sfx')) mixed.push(`[${label('sfx')}]`);
+  masterFilters.push(
+    `${mixed.join('')}amix=inputs=${mixed.length}:normalize=0,alimiter=limit=0.84:level=disabled,atrim=duration=${seconds}[mix]`,
   );
   const raw = join(working, 'mix-raw.wav');
-  await ffmpeg([...inputs, '-filter_complex', filters.join(';'), '-map', '[mix]', ...wav, raw], logPath(root, 'mix'));
-  const measured = await loudness(root, raw, recipe.lufs);
-  if (!Number.isFinite(Number(measured.input_i))) throw new Error('The score produced silence.');
-  const normalization = `loudnorm=I=${recipe.lufs}:TP=-1.5:LRA=8:measured_I=${measured.input_i}:measured_TP=${measured.input_tp}:measured_LRA=${measured.input_lra}:measured_thresh=${measured.input_thresh}:offset=${measured.target_offset}:linear=true`;
   await ffmpeg(
-    ['-i', raw, '-af', normalization, '-t', String(seconds), ...wav, join(working, 'mix.wav')],
-    logPath(root, 'master'),
+    [...stems, '-filter_complex', masterFilters.join(';'), '-map', '[mix]', ...stem, raw],
+    logPath(root, 'mix'),
   );
-  await validateAudio(root, join(working, 'mix.wav'), recipe.frames, recipe.lufs);
-  await writeFile(join(working, 'cache-key'), `${key}\n${await hashFile(join(working, 'mix.wav'))}`);
-  await rm(join(working, 'music-raw.wav'));
+  const measured = await loudness(root, raw, soundtrack.lufs);
+  if (!Number.isFinite(Number(measured.input_i))) throw new Error('The soundtrack is silent.');
+  const normalization = `loudnorm=I=${soundtrack.lufs}:TP=-1.5:LRA=8:measured_I=${measured.input_i}:measured_TP=${measured.input_tp}:measured_LRA=${measured.input_lra}:measured_thresh=${measured.input_thresh}:offset=${measured.target_offset}:linear=true`;
+  const partial = join(working, 'mix.wav');
+  await ffmpeg(['-i', raw, '-af', normalization, '-t', String(seconds), ...wav, partial], logPath(root, 'master'));
+  await validateAudio(root, partial, spec.frames, soundtrack.lufs);
   await rm(raw);
-  await mkdir(join(destination, '..'), { recursive: true });
-  const previous = `${destination}.previous`;
-  await rm(previous, { recursive: true, force: true });
-  let moved = false;
-  try {
-    await rename(destination, previous);
-    moved = true;
-  } catch (error) {
-    if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
-  }
-  try {
-    await rename(working, destination);
-  } catch (error) {
-    if (moved) await rename(previous, destination);
-    throw error;
-  }
-  await rm(previous, { recursive: true, force: true });
-  console.log(`Audio generated: ${destination}/mix.wav (MIDI, music and effects retained)`);
-  return recipe;
+  await mkdir(destination, { recursive: true });
+  await rm(join(destination, 'cache-key'), { force: true });
+  await copyFile(partial, `${master}.partial`);
+  await rename(`${master}.partial`, master);
+  await writeFile(join(destination, 'cache-key'), `${cacheKey}\n${await hashFile(master)}`);
+  console.log(`Audio generated: ${master} (stems in ${working})`);
 }

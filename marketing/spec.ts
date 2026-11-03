@@ -45,6 +45,77 @@ export const formats = {
 } as const;
 export type Format = keyof typeof formats;
 export const formatId = (format: Format) => format.replace(':', 'x');
+// "<asset-id>/<path inside the asset>" or "local/<path under marketing/audio/>"
+const ref = z
+  .string()
+  .regex(/^[a-z0-9-]+\/[^\0\\]+$/)
+  .refine((p) => !p.split('/').includes('..') && !p.includes('//'), 'Use an asset-relative path');
+const db = z.number().min(-60).max(12).default(0);
+const pan = z.number().min(-1).max(1).default(0);
+const frameCount = z.number().int().nonnegative();
+const soundtrackSchema = z.object({
+  lufs: z.number().min(-23).max(-9).default(-14),
+  /** Music gain in dB while a voice clip is speaking. */
+  duck: z.number().min(-30).max(0).default(-8),
+  score: z
+    .object({
+      bpm: z.number().min(40).max(240),
+      reverb: z
+        .object({ seconds: z.number().min(0.3).max(8).default(2.2), mix: z.number().min(0).max(1).default(0.25) })
+        .default({ seconds: 2.2, mix: 0.25 }),
+      tracks: z
+        .array(
+          z.object({
+            name: z.string().min(1),
+            instrument: ref,
+            gain: db,
+            pan,
+            reverb: z.number().min(0).max(1).default(0.5),
+            notes: z
+              .array(
+                z.object({
+                  beat: z.number().nonnegative(),
+                  beats: z.number().positive(),
+                  pitches: z.array(z.number().int().min(0).max(127)).min(1).max(12),
+                  velocity: z.number().min(0.01).max(1),
+                }),
+              )
+              .min(1),
+            sustain: z.array(z.object({ beat: z.number().nonnegative(), beats: z.number().positive() })).default([]),
+          }),
+        )
+        .min(1)
+        .max(16),
+    })
+    .optional(),
+  clips: z
+    .array(
+      z.object({
+        src: ref,
+        role: z.enum(['music', 'sfx', 'voice']),
+        from: frameCount.default(0),
+        trim: frameCount.default(0),
+        frames: z.number().int().positive().optional(),
+        gain: db,
+        pan,
+        fadeIn: frameCount.default(0),
+        fadeOut: frameCount.default(0),
+      }),
+    )
+    .default([]),
+});
+export type Soundtrack = z.infer<typeof soundtrackSchema>;
+function checkSoundtrack(soundtrack: Soundtrack, frames: number, ctx: z.RefinementCtx) {
+  const issue = (message: string) => ctx.addIssue({ code: 'custom', path: ['soundtrack'], message });
+  if (!soundtrack.score && soundtrack.clips.length === 0) issue('A soundtrack needs a score or at least one clip');
+  const { score } = soundtrack;
+  if (score)
+    for (const track of score.tracks)
+      for (const event of [...track.notes, ...track.sustain])
+        if (((event.beat + event.beats) * 60) / score.bpm > frames / FPS) issue('Score events must fit the ad');
+  for (const clip of soundtrack.clips) if (clip.from + (clip.frames ?? 0) > frames) issue('Clips must fit the ad');
+}
+
 export const specSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/),
@@ -61,82 +132,49 @@ export const specSchema = z
       .min(1)
       .default(['9:16']),
     recipe: z.string().min(1).optional(),
-    audioRecipe: z.string().min(1).optional(),
-    audio: z
-      .array(
-        z.object({
-          src: asset,
-          from: z.number().int().nonnegative().default(0),
-          frames: z.number().int().positive(),
-          trim: z.number().int().nonnegative().default(0),
-          volume: z.number().min(0).max(1).default(1),
-          fade: z.number().int().nonnegative().default(0),
-        }),
-      )
-      .default([]),
+    soundtrack: soundtrackSchema.optional(),
   })
   .superRefine((spec, ctx) => {
-    for (const [index, audio] of spec.audio.entries()) {
-      if (audio.from + audio.frames > spec.frames || audio.fade * 2 > audio.frames)
-        ctx.addIssue({
-          code: 'custom',
-          path: ['audio', index],
-          message: 'Audio must fit the timeline and fades must fit the clip',
-        });
-    }
+    if (spec.soundtrack) checkSoundtrack(spec.soundtrack, spec.frames, ctx);
   });
 export type AdSpec = z.infer<typeof specSchema>;
 export type Recipe = z.infer<typeof recipeSchema>;
-export const audioRecipeSchema = z
-  .object({
-    id: z.string().regex(/^[a-z0-9-]+$/),
-    direction: z.string().min(1),
-    frames: z.number().int().min(30).max(3600),
-    bpm: z.number().min(40).max(200),
-    lufs: z.number().min(-24).max(-14).default(-18),
-    musicGain: z.number().min(0).max(1).default(0.8),
-    tracks: z
-      .array(
-        z.object({
-          name: z.string().min(1),
-          program: z.number().int().min(0).max(127),
-          pan: z.number().min(-1).max(1).default(0),
-          notes: z
-            .array(
-              z.object({
-                beat: z.number().nonnegative(),
-                beats: z.number().positive(),
-                pitches: z.array(z.number().int().min(0).max(127)).min(1).max(8),
-                velocity: z.number().min(0.01).max(1),
-              }),
-            )
-            .min(1),
-        }),
-      )
-      .min(1)
-      .max(8),
-    effects: z
-      .array(
-        z.object({
-          kind: z.enum(['tap', 'sweep', 'chime']),
-          from: z.number().int().nonnegative(),
-          frames: z.number().int().min(2).max(90),
-          gain: z.number().min(0).max(1),
-          frequency: z.number().min(100).max(4000).default(660),
-          seed: z.number().int().min(0).max(2147483647).default(42),
-        }),
-      )
-      .max(30)
-      .default([]),
-  })
-  .superRefine((recipe, ctx) => {
-    for (const track of recipe.tracks)
-      for (const note of track.notes) {
-        if (((note.beat + note.beats) * 60) / recipe.bpm > recipe.frames / 30)
-          ctx.addIssue({ code: 'custom', message: 'Music notes must fit the soundtrack' });
-      }
-    for (const effect of recipe.effects)
-      if (effect.from + effect.frames > recipe.frames)
-        ctx.addIssue({ code: 'custom', message: 'Sound effects must fit the soundtrack' });
+
+const assetBase = { id: z.string().regex(/^[a-z0-9-]+$/), license: z.string().min(1), attribution: z.string().min(1) };
+const sha256 = z.string().regex(/^[0-9a-f]{64}$/);
+const https = z.url().startsWith('https://');
+export const assetsSchema = z
+  .array(
+    z.discriminatedUnion('type', [
+      z.object({
+        ...assetBase,
+        type: z.literal('github'),
+        repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/),
+        commit: z.string().regex(/^[0-9a-f]{40}$/),
+        paths: z.array(z.string()),
+        source: https,
+      }),
+      z.object({
+        ...assetBase,
+        type: z.literal('file'),
+        url: https,
+        name: z.string().regex(/^[^/\\\0]+$/),
+        sha256,
+        source: https,
+      }),
+      z.object({
+        ...assetBase,
+        type: z.literal('local'),
+        files: z.array(z.object({ name: z.string().regex(/^[^/\\\0]+$/), sha256 })).min(1),
+      }),
+    ]),
+  )
+  .superRefine((assets, ctx) => {
+    const seen = new Set<string>();
+    for (const { id } of assets) {
+      if (id === 'local' || seen.has(id))
+        ctx.addIssue({ code: 'custom', message: `Asset id "${id}" is reserved or duplicated` });
+      seen.add(id);
+    }
   });
-export type AudioRecipe = z.infer<typeof audioRecipeSchema>;
+export type Asset = z.infer<typeof assetsSchema>[number];

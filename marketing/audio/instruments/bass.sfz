@@ -1,0 +1,7 @@
+// Round sub bass with a short filtered saw attack. Original patch for sfizz built-in oscillators.
+<global>
+ampeg_attack=0.003 ampeg_decay=0.4 ampeg_sustain=85 ampeg_release=0.12
+amp_veltrack=70 volume=-6
+<region> sample=*sine
+<region> sample=*saw volume=-10 fil_type=lpf_2p cutoff=280 resonance=4
+  fileg_attack=0 fileg_decay=0.18 fileg_sustain=0 fileg_depth=2400
