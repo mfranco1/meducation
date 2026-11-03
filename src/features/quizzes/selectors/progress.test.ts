@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { CompletedAttempt, QuizRepository } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
-import { createProgressView, quizProgressForSubject, subjectStatsFor } from './progress';
+import { createProgressView, dashboardScoreSummary, quizProgressForSubject, subjectStatsFor } from './progress';
 
 const bank: QuizRepository = {
   listSubjects: () => [
@@ -109,5 +109,23 @@ describe('learner progress selectors', () => {
     expect(quizzes[0].answeredCount).toBeUndefined();
     expect(quizzes[1].activityAt).toBeDefined();
     expect(quizzes[0]).toMatchObject({ completionCount: 2, latestScore: 80, trend: 'increase' });
+  });
+
+  it('summarizes the average and lowest latest subject scores', () => {
+    const subject = (id: string, name: string, latest?: number) => ({
+      subject: { id, name },
+      quizCount: 1,
+      activeQuizCount: 0,
+      latest,
+      latestCompletedAt: latest === undefined ? undefined : '2026-09-02T00:00:00.000Z',
+    });
+    expect(
+      dashboardScoreSummary([subject('a', 'Alpha', 80), subject('b', 'Beta', 60), subject('c', 'Gamma')] as never),
+    ).toEqual({ averageLatest: 70, personalLowest: 60, personalLowestSubject: 'Beta' });
+    expect(dashboardScoreSummary([])).toEqual({
+      averageLatest: undefined,
+      personalLowest: undefined,
+      personalLowestSubject: undefined,
+    });
   });
 });

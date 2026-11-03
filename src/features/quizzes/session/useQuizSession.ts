@@ -17,7 +17,7 @@ import type {
   QuizRepository,
   Subject,
 } from '../../../domain/types';
-import { PersistenceError } from '../../../persistence/localRepository';
+import { PersistenceError } from '../../../persistence/localJsonStore';
 import { subjectForQuiz, type QuizSessionView } from './navigation';
 
 export type QuizExitDestination = 'subject' | 'dashboard' | 'flashcards';

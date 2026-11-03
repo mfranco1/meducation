@@ -5,6 +5,7 @@ import { isFlashcardDailyStats } from '../domain/flashcardDailyStats';
 import type { FlashcardCheckpoint } from '../domain/flashcardStudy';
 import type { ProgressState } from './progressCodec';
 import type { FlashcardProgressState } from '../domain/flashcardStudy';
+import { isObject, onlyKeys } from '../domain/json';
 
 export const PROGRESS_BACKUP_FORMAT = 'meducation-progress-backup';
 export const PROGRESS_BACKUP_VERSION = 1;
@@ -51,10 +52,7 @@ export interface ProgressBackupSummary {
   completions: number;
 }
 
-const isRecord = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const utf8Bytes = (s: string) => new TextEncoder().encode(s).byteLength;
-const hasOnlyKeys = (v: Record<string, unknown>, allowed: readonly string[]) =>
-  Object.keys(v).every((k) => allowed.includes(k));
 const safeId = (v: unknown): v is string =>
   typeof v === 'string' &&
   v.length > 0 &&
@@ -97,7 +95,7 @@ function safeTree(value: unknown): boolean {
     if (Array.isArray(item.value)) {
       if (item.value.length > 10_000 || visited + pending.length + item.value.length > MAX_NODES) return false;
       for (let i = item.value.length - 1; i >= 0; i--) pending.push({ value: item.value[i], depth: item.depth + 1 });
-    } else if (isRecord(item.value)) {
+    } else if (isObject(item.value)) {
       let members = 0;
       for (const key in item.value) {
         if (!own(item.value, key)) continue;
@@ -111,14 +109,14 @@ function safeTree(value: unknown): boolean {
 }
 
 function keys(v: unknown, required: readonly string[], optional: readonly string[] = []): v is Record<string, unknown> {
-  return isRecord(v) && required.every((k) => own(v, k)) && hasOnlyKeys(v, [...required, ...optional]);
+  return isObject(v) && required.every((k) => own(v, k)) && onlyKeys(v, [...required, ...optional]);
 }
 function validMap<T>(
   value: unknown,
   cap: number,
   validator: (key: string, v: unknown) => v is T,
 ): value is Record<string, T> {
-  if (!isRecord(value)) return false;
+  if (!isObject(value)) return false;
   const entries = Object.entries(value);
   return entries.length <= cap && entries.every(([k, v]) => safeId(k) && validator(k, v));
 }
@@ -411,7 +409,7 @@ function validLiveQuiz(state: unknown): state is ProgressState {
   }
 }
 function stripAttemptRuntimeFields(value: unknown, active: boolean): Record<string, unknown> {
-  if (!isRecord(value)) return {};
+  if (!isObject(value)) return {};
   const result = { ...value };
   delete result.timerStartedAt;
   if (active) {
@@ -425,7 +423,7 @@ function validLiveFlashcards(state: unknown): state is FlashcardProgressState {
     keys(state, ['schemaVersion', 'revision', 'checkpoints'], ['completionCounts', 'finishedAt', 'dailyStats']) &&
     state.schemaVersion === 2 &&
     safeReference(state.revision) &&
-    (state.completionCounts === undefined || isRecord(state.completionCounts)) &&
+    (state.completionCounts === undefined || isObject(state.completionCounts)) &&
     validFlashcards({
       schemaVersion: 2,
       checkpoints: state.checkpoints,
@@ -535,7 +533,7 @@ function projectImportedBackup(value: ProgressBackupV1): ProgressBackupV1 {
 }
 
 export function validateProgressBackup(value: unknown): BackupParseResult {
-  if (!isRecord(value)) return { ok: false, error: 'wrong-format' };
+  if (!isObject(value)) return { ok: false, error: 'wrong-format' };
   if (value.format !== PROGRESS_BACKUP_FORMAT) return { ok: false, error: 'wrong-format' };
   if (value.version !== 1) return { ok: false, error: 'unsupported-version' };
   if (!safeTree(value)) return { ok: false, error: 'invalid-progress' };

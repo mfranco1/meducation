@@ -2,7 +2,6 @@ import { Box } from '@mui/material';
 import StyleOutlinedIcon from '@mui/icons-material/StyleOutlined';
 import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import { useEffect, useRef, useState } from 'react';
 import type { Subject } from '../../../domain/types';
 import type { FlashcardDashboardSubject } from '../selectors/flashcards';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
@@ -11,7 +10,7 @@ import { StudyItemCarousel } from '../../../shared/ui/catalog/StudyItemCarousel'
 import { ContinueStudyCard } from '../../../shared/ui/catalog/ContinueStudyCard';
 import { StudyCardIllustration } from '../../../shared/ui/catalog/StudyCardIllustration';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
-import { SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
+import { SubjectCatalogPage, SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StatCard, formatStatCount } from '../../../shared/ui/catalog/StatCard';
 import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
 import type { FlashcardProgressState } from '../../../domain/flashcardStudy';
@@ -21,14 +20,6 @@ import { SubjectCardSkeleton } from '../../../shared/ui/catalog/SubjectCardSkele
 import { SubjectFilterPill, SubjectPagination } from '../../../shared/ui/catalog/SubjectCatalogControls';
 import { useSubjectCatalog } from '../../../shared/ui/catalog/useSubjectCatalog';
 import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
-import { CatalogPageTransition } from '../../../shared/ui/catalog/CatalogPageTransition';
-
-type CatalogPageChange = {
-  id: number;
-  from: FlashcardDashboardSubject[];
-  resetKey: string;
-  direction: 'next' | 'previous';
-};
 
 function FlashcardSubjectCard({
   item,
@@ -86,27 +77,12 @@ export function FlashcardsDashboardScreen({
 }) {
   const stats = useFlashcardDashboardStats(progress);
   const metric = (value: number) => (progressError ? '—' : formatStatCount(value));
-  const catalog = useSubjectCatalog('flashcards', subjects, (item) => item.activeDeckCount > 0);
-  const filterButtonRef = useRef<HTMLButtonElement>(null);
-  const focusAllFilter = useRef(false);
-  const [pageChange, setPageChange] = useState<CatalogPageChange | null>(null);
-  const resetKey = `${catalog.filter}:${subjects.map(({ subject }) => subject.id).join(',')}`;
-  const changePage = (page: number) => {
-    if (page === catalog.page) return;
-    setPageChange({
-      id: (pageChange?.id ?? 0) + 1,
-      from: [...catalog.pageItems],
-      resetKey,
-      direction: page > catalog.page ? 'next' : 'previous',
-    });
-    catalog.setPage(page);
-  };
-  useEffect(() => {
-    if (focusAllFilter.current && catalog.filter === 'all') {
-      filterButtonRef.current?.focus();
-      focusAllFilter.current = false;
-    }
-  }, [catalog.filter]);
+  const catalog = useSubjectCatalog(
+    'flashcards',
+    subjects,
+    (item) => item.activeDeckCount > 0,
+    (item) => item.subject.id,
+  );
   return (
     <>
       {error && (
@@ -123,7 +99,7 @@ export function FlashcardsDashboardScreen({
             value={catalog.filter}
             onChange={catalog.setFilter}
             disabled={loading || Boolean(error || progressError)}
-            allButtonRef={filterButtonRef}
+            allButtonRef={catalog.filterButtonRef}
           />
         }
         summary={
@@ -182,50 +158,21 @@ export function FlashcardsDashboardScreen({
             In-progress subjects are unavailable right now.
           </Box>
         ) : catalog.total === 0 ? (
-          <SubjectCatalogEmptyState
-            title="No subjects in progress"
-            onShowAll={
-              subjects.length > 0
-                ? () => {
-                    focusAllFilter.current = true;
-                    catalog.setFilter('all');
-                  }
-                : undefined
-            }
-          />
+          <SubjectCatalogEmptyState title="No subjects in progress" onShowAll={catalog.showAll} />
         ) : (
           <>
-            <CatalogPageTransition
-              requestId={pageChange?.id ?? 0}
-              resetKey={resetKey}
-              direction={pageChange?.direction ?? 'next'}
-              previousPage={
-                pageChange?.resetKey === resetKey ? (
-                  <SubjectGrid>
-                    {pageChange.from.map((item) => (
-                      <FlashcardSubjectCard
-                        key={item.subject.id}
-                        item={item}
-                        progressUnavailable={Boolean(progressError)}
-                        onSelect={onSelectSubject}
-                      />
-                    ))}
-                  </SubjectGrid>
-                ) : undefined
-              }
-            >
-              <SubjectGrid>
-                {catalog.pageItems.map((item) => (
-                  <FlashcardSubjectCard
-                    key={item.subject.id}
-                    item={item}
-                    progressUnavailable={Boolean(progressError)}
-                    onSelect={onSelectSubject}
-                  />
-                ))}
-              </SubjectGrid>
-            </CatalogPageTransition>
-            <SubjectPagination page={catalog.page} pageCount={catalog.pageCount} onChange={changePage} />
+            <SubjectCatalogPage
+              catalog={catalog}
+              itemKey={(item) => item.subject.id}
+              renderItem={(item) => (
+                <FlashcardSubjectCard
+                  item={item}
+                  progressUnavailable={Boolean(progressError)}
+                  onSelect={onSelectSubject}
+                />
+              )}
+            />
+            <SubjectPagination page={catalog.page} pageCount={catalog.pageCount} onChange={catalog.changePage} />
           </>
         )}
       </StudyDashboardLayout>

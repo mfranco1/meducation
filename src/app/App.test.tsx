@@ -6,7 +6,7 @@ import { LocalAttemptRepository } from '../persistence/localRepository';
 import App from './App';
 import { theme } from '../shared/theme';
 import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
-import { installQuizApiFixture } from '../test/runtimeContentFixtures';
+import { installFlashcardApiFixture, installQuizApiFixture } from '../test/runtimeContentFixtures';
 
 function completed(quizId: string, subjectId: string, percentage: number): CompletedAttempt {
   const at = '2026-10-02T00:00:00.000Z';
@@ -34,6 +34,7 @@ beforeEach(() => {
   });
 });
 afterEach(() => {
+  vi.restoreAllMocks();
   vi.unstubAllGlobals();
 });
 
@@ -314,50 +315,245 @@ describe('progressive dashboard statistics', () => {
     expect(await screen.findByRole('heading', { name: 'All Subjects' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Quizzes' })).toHaveAttribute('aria-current', 'page');
   });
-  it('disables progress backup during active quiz with save-and-leave guidance', async () => {
-    const subject = { id: 's3', name: 'Backup subject', accent: '#b9511b' };
-    const quiz = {
-      id: 'q3',
-      subjectId: subject.id,
-      topicId: 't1',
-      name: 'Backup quiz',
-      questionCount: 1,
-      questionIds: ['i3'],
-    };
-    installQuizApiFixture(
-      [subject],
-      [quiz],
+
+  it.each(['quiz', 'flashcard'] as const)(
+    'disables progress backup during %s study with save-and-leave guidance',
+    async (type) => {
+      // This checks backup availability after admission; browser tests cover cold lazy loading.
+      await import('../features/flashcards/screens/FlashcardStudyScreen');
+      const subject = { id: 's3', name: 'Backup subject', accent: '#b9511b' };
+      if (type === 'quiz') {
+        const quiz = {
+          id: 'q3',
+          subjectId: subject.id,
+          topicId: 't1',
+          name: 'Backup quiz',
+          questionCount: 1,
+          questionIds: ['i3'],
+        };
+        installQuizApiFixture(
+          [subject],
+          [quiz],
+          [
+            {
+              id: 'i3',
+              quizId: quiz.id,
+              stem: 'Question',
+              choices: [
+                { id: 'A', text: 'Choice' },
+                { id: 'B', text: 'Alternative' },
+              ],
+              answer: 'A',
+              rationale: 'Fixture explanation',
+              metadata: { topic: 'Fixture' },
+            },
+          ],
+        );
+      } else {
+        runtimeQuestionBank.configureApi({ revision: 'empty', subjects: [] });
+        await installFlashcardApiFixture(
+          [{ ...subject, deckCount: 1, deckIds: ['d-backup'] }],
+          [
+            {
+              id: 'd-backup',
+              subjectId: subject.id,
+              topicId: 't3',
+              name: 'Backup deck',
+              cardCount: 1,
+              cardIds: ['f-backup'],
+            },
+          ],
+          [{ id: 'f-backup', deckId: 'd-backup', front: 'Front', back: 'Back' }],
+        );
+      }
+      render(
+        <ThemeProvider theme={theme}>
+          <App />
+        </ThemeProvider>,
+      );
+      if (type === 'flashcard') fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Open Backup subject' }));
+      fireEvent.click(await screen.findByRole('button', { name: type === 'quiz' ? /^Start quiz/ : /^Study deck/ }));
+      if (type === 'quiz') fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+      const position = type === 'quiz' ? 'Question 1 of 1' : 'Card 1 of 1';
+      expect(await screen.findByText(position)).toBeVisible();
+
+      const backupButton = screen.getByRole('button', { name: 'Progress' });
+      expect(backupButton).toBeDisabled();
+      expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent(
+        'Save and leave your study session',
+      );
+      expect(screen.queryByRole('dialog', { name: 'Progress' })).toBeNull();
+      expect(screen.getByText(position)).toBeVisible();
+    },
+  );
+
+  it('saves arrow-key navigation on the destination card when exiting', async () => {
+    runtimeQuestionBank.configureApi({ revision: 'rev-arrow', subjects: [] });
+    await installFlashcardApiFixture(
+      [{ id: 's4', name: 'Arrow subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow'] }],
       [
         {
-          id: 'i3',
-          quizId: quiz.id,
-          stem: 'Question',
-          choices: [
-            { id: 'A', text: 'Choice' },
-            { id: 'B', text: 'Alternative' },
-          ],
-          answer: 'A',
-          rationale: 'Fixture explanation',
-          metadata: { topic: 'Fixture' },
+          id: 'd-arrow',
+          subjectId: 's4',
+          topicId: 't4',
+          name: 'Arrow deck',
+          cardCount: 2,
+          cardIds: ['f-arrow-1', 'f-arrow-2'],
         },
       ],
+      [
+        { id: 'f-arrow-1', deckId: 'd-arrow', front: 'First front', back: 'First back' },
+        { id: 'f-arrow-2', deckId: 'd-arrow', front: 'Second front', back: 'Second back' },
+      ],
     );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-arrow', subjects: [] }) }),
+    );
+    window.localStorage.clear();
     render(
       <ThemeProvider theme={theme}>
         <App />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Open Backup subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/ }));
-    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
-    expect(await screen.findByText('Question 1 of 1')).toBeVisible();
 
-    const backupButton = screen.getByRole('button', { name: 'Progress' });
-    expect(backupButton).toBeDisabled();
-    expect(document.getElementById(backupButton.getAttribute('aria-describedby') ?? '')).toHaveTextContent(
-      'Save and leave your study session',
-    );
-    expect(screen.queryByRole('dialog', { name: 'Progress' })).toBeNull();
-    expect(screen.getByText('Question 1 of 1')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Arrow subject' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Study deck/ }));
+    // The study screen loads lazily; allow its module to settle under full-suite contention.
+    expect(await screen.findByText('Card 1 of 2', {}, { timeout: 10_000 })).toBeInTheDocument();
+    expect(document.querySelector('[aria-modal="true"]')).toHaveStyle({ visibility: 'hidden' });
+    expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeEnabled();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(await screen.findByText('Card 2 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Save and exit deck' }));
+    // The subject checkpoint reflects the destination selected with Arrow Right.
+    expect(await screen.findByText(/\d\/2 reviewed/)).toBeInTheDocument();
   });
+
+  it('keeps the current card open and reports an error when arrow navigation cannot save', async () => {
+    runtimeQuestionBank.configureApi({ revision: 'rev-arrow-quota', subjects: [] });
+    await installFlashcardApiFixture(
+      [{ id: 's5', name: 'Arrow quota subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow-quota'] }],
+      [
+        {
+          id: 'd-arrow-quota',
+          subjectId: 's5',
+          topicId: 't5',
+          name: 'Arrow quota deck',
+          cardCount: 2,
+          cardIds: ['f-arrow-q1', 'f-arrow-q2'],
+        },
+      ],
+      [
+        { id: 'f-arrow-q1', deckId: 'd-arrow-quota', front: 'Saved first front', back: 'Saved first back' },
+        { id: 'f-arrow-q2', deckId: 'd-arrow-quota', front: 'Saved second front', back: 'Saved second back' },
+      ],
+    );
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-arrow-quota', subjects: [] }) }),
+    );
+    let progress: string | null = null;
+    let progressWrites = 0;
+    vi.stubGlobal('localStorage', {
+      getItem: (key: string) => (key === 'meducation.flashcards.progress.v2' ? progress : null),
+      setItem: (key: string, value: string) => {
+        if (key !== 'meducation.flashcards.progress.v2') return;
+        progressWrites += 1;
+        if (progressWrites > 1) throw new Error('Quota');
+        progress = value;
+      },
+    });
+    render(
+      <ThemeProvider theme={theme}>
+        <App />
+      </ThemeProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open Arrow quota subject' }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Study deck/ }));
+    // The study screen loads lazily; allow its module to settle under full-suite contention.
+    expect(await screen.findByText('Card 1 of 2', {}, { timeout: 10_000 })).toBeInTheDocument();
+    fireEvent.keyDown(window, { key: 'ArrowRight' });
+    expect(await screen.findByRole('alert')).toHaveTextContent('Flashcard progress could not be saved');
+    expect(screen.getByText('Card 1 of 2')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Reveal answer' })).toBeInTheDocument();
+  });
+
+  it.each(['quizzes', 'flashcards'] as const)(
+    'switches subject tabs during a pending %s launch without opening a study session',
+    async (type) => {
+      const subject = { id: 's6', name: 'Tab subject', accent: '#123456' };
+      const quiz = {
+        id: 'q6',
+        subjectId: subject.id,
+        topicId: 't6',
+        name: 'Tab quiz',
+        questionCount: 1,
+        questionIds: ['i6'],
+      };
+      const deck = {
+        id: 'd-tabs',
+        subjectId: subject.id,
+        topicId: 't6',
+        name: 'Tab deck',
+        cardCount: 1,
+        cardIds: ['f-tabs'],
+      };
+      const cards = [{ id: 'f-tabs', deckId: deck.id, front: 'Front', back: 'Back' }];
+      installQuizApiFixture([subject], [quiz], []);
+      const bank = await installFlashcardApiFixture([{ ...subject, deckCount: 1, deckIds: [deck.id] }], [deck], cards);
+      const values = new Map<string, string>();
+      vi.stubGlobal('localStorage', {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+        removeItem: (key: string) => values.delete(key),
+      });
+      let finishLoad!: () => void;
+      if (type === 'quizzes') {
+        vi.spyOn(runtimeQuestionBank, 'ensureQuestions').mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              finishLoad = () => resolve([]);
+            }),
+        );
+      } else {
+        vi.spyOn(bank, 'ensureCards').mockImplementation(
+          () =>
+            new Promise((resolve) => {
+              finishLoad = () => resolve(cards);
+            }),
+        );
+      }
+      render(
+        <ThemeProvider theme={theme}>
+          <App />
+        </ThemeProvider>,
+      );
+      if (type === 'flashcards') fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Open Tab subject' }));
+      if (type === 'quizzes') {
+        fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Tab quiz' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+      } else fireEvent.click(screen.getByRole('button', { name: 'Study deck: Tab deck' }));
+      await waitFor(() => expect(finishLoad).toBeTypeOf('function'));
+      const header = screen.getByRole('heading', { name: 'Tab subject' });
+      const tabs = screen.getByRole('tablist', { name: 'Subject content' });
+      const destination = type === 'quizzes' ? 'Flashcards' : 'Quizzes';
+      fireEvent.click(screen.getByRole('tab', { name: destination }));
+      expect(screen.getByRole('tab', { name: destination, selected: true })).toHaveFocus();
+      await act(async () => finishLoad());
+      expect(screen.getByRole('heading', { name: 'Tab subject' })).toBe(header);
+      expect(screen.getByRole('tablist', { name: 'Subject content' })).toBe(tabs);
+      expect(screen.getByRole('tabpanel', { name: destination })).toBeVisible();
+      expect(
+        screen.getByRole('button', { name: type === 'quizzes' ? 'Study deck: Tab deck' : 'Start quiz: Tab quiz' }),
+      ).toBeVisible();
+      expect(screen.queryByText(/Card 1 of|Question 1 of/)).toBeNull();
+    },
+  );
 });

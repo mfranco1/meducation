@@ -1,3 +1,5 @@
+import { isObject } from '../../domain/json';
+
 /** Form adapters patch one JSON draft. They never normalize untouched source or infer defaults. */
 export type RecordKind = 'subject' | 'topic' | 'quiz' | 'question' | 'deck' | 'card';
 export type DraftRecord = Record<string, unknown>;
@@ -14,13 +16,10 @@ const fields: Record<RecordKind, readonly string[]> = {
   card: ['front', 'back', 'sources'],
   question: ['stem', 'choices', 'answer', 'rationale', 'rationaleMeta', 'pearls', 'metadata'],
 };
-export function isDraftObject(value: unknown): value is DraftRecord {
-  return value !== null && typeof value === 'object' && !Array.isArray(value);
-}
 export function readRecordDraft(text: string, kind: RecordKind): DraftRecord | undefined {
   try {
     const row: unknown = JSON.parse(text);
-    if (!isDraftObject(row) || typeof row.id !== 'string') return;
+    if (!isObject(row) || typeof row.id !== 'string') return;
     const required =
       kind === 'subject'
         ? ['name', 'accent']
@@ -45,13 +44,13 @@ export function readRecordDraft(text: string, kind: RecordKind): DraftRecord | u
       if (
         !Array.isArray(row.choices) ||
         row.choices.some(
-          (choice) => !isDraftObject(choice) || typeof choice.id !== 'string' || typeof choice.text !== 'string',
+          (choice) => !isObject(choice) || typeof choice.id !== 'string' || typeof choice.text !== 'string',
         )
       )
         return;
       if (new Set(row.choices.map((choice) => choice.id)).size !== row.choices.length) return;
       for (const field of ['metadata', 'rationaleMeta']) {
-        if (Object.hasOwn(row, field) && !isDraftObject(row[field])) return;
+        if (Object.hasOwn(row, field) && !isObject(row[field])) return;
       }
       if (row.pearls !== undefined && (!Array.isArray(row.pearls) || row.pearls.some((v) => typeof v !== 'string')))
         return;
@@ -149,7 +148,7 @@ export function removeDraftChoice(text: string, index: number): string {
 export function adoptServerId(text: string, id: string): string {
   try {
     const row: unknown = JSON.parse(text);
-    if (!isDraftObject(row) || row.id !== '') return text;
+    if (!isObject(row) || row.id !== '') return text;
     return JSON.stringify({ ...row, id }, null, 2);
   } catch {
     return text;
@@ -208,7 +207,7 @@ export function planSave(
   } catch {
     return { error: 'Record JSON is invalid.' };
   }
-  if (!isDraftObject(row)) return { error: 'Record must be a JSON object.' };
+  if (!isObject(row)) return { error: 'Record must be a JSON object.' };
   if (baseline && row.id !== baseline.id) return { error: 'IDs are stable and cannot be changed.' };
   const parentKey = PARENT_KEY[kind];
   const parentId = parentKey ? row[parentKey] : undefined;

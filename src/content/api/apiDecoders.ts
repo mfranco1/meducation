@@ -1,5 +1,5 @@
 import type { Question, Quiz, Subject, Topic } from '../../domain/types';
-import { nonempty, onlyKeys, record, unique } from './jsonGuards';
+import { isObject, nonBlank, onlyKeys, unique } from '../../domain/json';
 
 export interface SubjectSummary extends Subject {
   quizCount: number;
@@ -19,20 +19,20 @@ export interface QuestionListResponse {
   questions: Question[];
 }
 
-const optionalString = (value: unknown) => value === undefined || typeof value === 'string';
+export const optionalString = (value: unknown) => value === undefined || typeof value === 'string';
 const sameOrder = (actual: string[], expected: string[]) =>
   actual.length === expected.length && actual.every((id, index) => id === expected[index]);
-const ids = (value: unknown, pattern: RegExp): value is string[] =>
+export const ids = (value: unknown, pattern: RegExp): value is string[] =>
   Array.isArray(value) && value.every((id: unknown) => typeof id === 'string' && pattern.test(id)) && unique(value);
 
 function validRationaleMeta(value: unknown): boolean {
   if (value === undefined) return true;
-  return record(value) && onlyKeys(value, ['sources']) && optionalString(value.sources);
+  return isObject(value) && onlyKeys(value, ['sources']) && optionalString(value.sources);
 }
 
 function validMetadata(value: unknown): boolean {
   if (value === undefined) return true;
-  if (!record(value) || !onlyKeys(value, ['topic', 'subtopic', 'system', 'difficulty', 'questionType', 'tags']))
+  if (!isObject(value) || !onlyKeys(value, ['topic', 'subtopic', 'system', 'difficulty', 'questionType', 'tags']))
     return false;
   if (!['topic', 'subtopic', 'system', 'questionType'].every((key) => optionalString(value[key]))) return false;
   if (value.difficulty !== undefined && !['easy', 'medium', 'hard'].includes(value.difficulty as string)) return false;
@@ -45,17 +45,17 @@ function validMetadata(value: unknown): boolean {
 }
 
 export function isSubjectCatalog(value: unknown): value is SubjectCatalogResponse {
-  if (!record(value) || !nonempty(value.revision) || !Array.isArray(value.subjects)) return false;
+  if (!isObject(value) || !nonBlank(value.revision) || !Array.isArray(value.subjects)) return false;
   const allQuizIds: string[] = [];
   const subjects = value.subjects;
   if (
     !subjects.every((entry: unknown) => {
-      if (!record(entry) || !onlyKeys(entry, ['id', 'name', 'accent', 'description', 'quizCount', 'quizIds']))
+      if (!isObject(entry) || !onlyKeys(entry, ['id', 'name', 'accent', 'description', 'quizCount', 'quizIds']))
         return false;
       if (
-        !nonempty(entry.id) ||
+        !nonBlank(entry.id) ||
         !/^s[1-9]\d*$/.test(entry.id) ||
-        !nonempty(entry.name) ||
+        !nonBlank(entry.name) ||
         typeof entry.accent !== 'string' ||
         !optionalString(entry.description)
       )
@@ -80,13 +80,13 @@ export function isTopicList(value: unknown, subjectId: string): value is Topic[]
     Array.isArray(value) &&
     value.every(
       (topic: unknown) =>
-        record(topic) &&
+        isObject(topic) &&
         onlyKeys(topic, ['id', 'subjectId', 'name', 'description']) &&
         optionalString(topic.description) &&
-        nonempty(topic.id) &&
+        nonBlank(topic.id) &&
         /^t[1-9]\d*$/.test(topic.id) &&
         topic.subjectId === subjectId &&
-        nonempty(topic.name),
+        nonBlank(topic.name),
     ) &&
     unique(value.map((topic: Topic) => topic.id))
   );
@@ -98,8 +98,8 @@ export function isQuizCatalog(
   expectedQuizIds: string[],
 ): value is QuizCatalogResponse {
   if (
-    !record(value) ||
-    !nonempty(value.revision) ||
+    !isObject(value) ||
+    !nonBlank(value.revision) ||
     !isTopicList(value.topics, subjectId) ||
     !Array.isArray(value.quizzes)
   )
@@ -109,17 +109,17 @@ export function isQuizCatalog(
   if (
     !value.quizzes.every((entry: unknown) => {
       if (
-        !record(entry) ||
+        !isObject(entry) ||
         !onlyKeys(entry, ['id', 'subjectId', 'topicId', 'name', 'description', 'questionCount', 'questionIds'])
       )
         return false;
       if (
         !optionalString(entry.description) ||
-        !nonempty(entry.id) ||
+        !nonBlank(entry.id) ||
         !/^q[1-9]\d*$/.test(entry.id) ||
         entry.subjectId !== subjectId ||
         !topicIds.includes(entry.topicId as string) ||
-        !nonempty(entry.name)
+        !nonBlank(entry.name)
       )
         return false;
       if (
@@ -144,16 +144,16 @@ export function isQuizCatalog(
 
 function validQuestion(value: unknown, quizId: string): value is Question {
   if (
-    !record(value) ||
+    !isObject(value) ||
     !onlyKeys(value, ['id', 'quizId', 'stem', 'choices', 'answer', 'rationale', 'rationaleMeta', 'pearls', 'metadata'])
   )
     return false;
   if (
-    !nonempty(value.id) ||
+    !nonBlank(value.id) ||
     !/^i[1-9]\d*$/.test(value.id) ||
     value.quizId !== quizId ||
-    !nonempty(value.stem) ||
-    !nonempty(value.rationale)
+    !nonBlank(value.stem) ||
+    !nonBlank(value.rationale)
   )
     return false;
   if (
@@ -161,11 +161,11 @@ function validQuestion(value: unknown, quizId: string): value is Question {
     value.choices.length < 2 ||
     !value.choices.every(
       (choice: unknown) =>
-        record(choice) &&
+        isObject(choice) &&
         onlyKeys(choice, ['id', 'text']) &&
         typeof choice.id === 'string' &&
         /^[A-Z]$/.test(choice.id) &&
-        nonempty(choice.text),
+        nonBlank(choice.text),
     )
   )
     return false;
@@ -183,7 +183,7 @@ export function isQuestionList(
   quizId: string,
   expectedQuestionIds: string[],
 ): value is QuestionListResponse {
-  if (!record(value) || !nonempty(value.revision) || !Array.isArray(value.questions)) return false;
+  if (!isObject(value) || !nonBlank(value.revision) || !Array.isArray(value.questions)) return false;
   if (!value.questions.every((question: unknown) => validQuestion(question, quizId))) return false;
   return sameOrder(
     value.questions.map((question: Question) => question.id),
@@ -192,5 +192,5 @@ export function isQuestionList(
 }
 
 export function responseRevision(value: unknown): string | undefined {
-  return record(value) && typeof value.revision === 'string' ? value.revision : undefined;
+  return isObject(value) && typeof value.revision === 'string' ? value.revision : undefined;
 }

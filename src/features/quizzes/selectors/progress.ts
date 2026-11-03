@@ -1,4 +1,4 @@
-import { mostRecentScore, scoreTrend } from '../../../analytics/analytics';
+import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from '../../../analytics/analytics';
 import type { Attempt, Quiz, QuizRepository, RecentScore, Subject } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
 
@@ -115,4 +115,18 @@ export function activeSubjectStats(subjectStats: SubjectStat[]): SubjectStat[] {
         (right.stat.latestActiveAt ?? '').localeCompare(left.stat.latestActiveAt ?? '') || left.index - right.index,
     )
     .map(({ stat }) => stat);
+}
+
+export function dashboardScoreSummary(subjectStats: SubjectStat[]) {
+  const averageLatest = averageScore(
+    subjectStats.map((stat) => stat.latest).filter((score): score is number => score !== undefined),
+  );
+  const lowest = lowestRecentScore(
+    subjectStats.flatMap((stat) =>
+      stat.latest === undefined || stat.latestCompletedAt === undefined
+        ? []
+        : [{ percentage: stat.latest, completedAt: stat.latestCompletedAt, subjectName: stat.subject.name }],
+    ),
+  );
+  return { averageLatest, personalLowest: lowest?.percentage, personalLowestSubject: lowest?.subjectName };
 }

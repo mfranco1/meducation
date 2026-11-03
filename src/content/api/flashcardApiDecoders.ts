@@ -1,7 +1,7 @@
 import type { Subject, Topic } from '../../domain/types';
 import type { StoredFlashcard, StoredFlashcardDeck } from '../schema/schema';
-import { isTopicList } from './apiDecoders';
-import { nonempty, onlyKeys, record, unique } from './jsonGuards';
+import { ids, isTopicList, optionalString } from './apiDecoders';
+import { isObject, nonBlank, onlyKeys, unique } from '../../domain/json';
 
 export interface FlashcardSubjectSummary extends Subject {
   deckCount: number;
@@ -29,9 +29,9 @@ export interface FlashcardListResponse {
 
 export function isFlashcardSubjectResponse(value: unknown): value is FlashcardSubjectResponse {
   if (
-    !record(value) ||
+    !isObject(value) ||
     !onlyKeys(value, ['revision', 'subjects']) ||
-    !nonempty(value.revision) ||
+    !nonBlank(value.revision) ||
     !Array.isArray(value.subjects)
   )
     return false;
@@ -40,25 +40,23 @@ export function isFlashcardSubjectResponse(value: unknown): value is FlashcardSu
   return (
     value.subjects.every((subject: unknown) => {
       if (
-        !record(subject) ||
+        !isObject(subject) ||
         !onlyKeys(subject, ['id', 'name', 'accent', 'description', 'deckCount', 'deckIds', 'emptyDeckIds'])
       )
         return false;
       if (
-        !nonempty(subject.id) ||
+        !nonBlank(subject.id) ||
         !/^s[1-9]\d*$/.test(subject.id) ||
-        !nonempty(subject.name) ||
+        !nonBlank(subject.name) ||
         typeof subject.accent !== 'string' ||
-        (subject.description !== undefined && typeof subject.description !== 'string')
+        !optionalString(subject.description)
       )
         return false;
       if (
         !Number.isInteger(subject.deckCount) ||
         (subject.deckCount as number) < 0 ||
-        !Array.isArray(subject.deckIds) ||
-        !subject.deckIds.every((id: unknown) => typeof id === 'string' && /^d[a-zA-Z0-9-]+$/.test(id)) ||
-        subject.deckIds.length !== subject.deckCount ||
-        !unique(subject.deckIds as string[])
+        !ids(subject.deckIds, /^d[a-zA-Z0-9-]+$/) ||
+        subject.deckIds.length !== subject.deckCount
       )
         return false;
       subjectIds.push(subject.id);
@@ -71,7 +69,7 @@ export function isFlashcardSubjectResponse(value: unknown): value is FlashcardSu
           !unique(subject.emptyDeckIds as string[]))
       )
         return false;
-      allDeckIds.push(...(subject.deckIds as string[]));
+      allDeckIds.push(...subject.deckIds);
       return true;
     }) &&
     unique(subjectIds) &&
@@ -85,9 +83,9 @@ export function isFlashcardCatalog(
   expectedDeckCount?: number,
 ): value is FlashcardCatalogResponse {
   if (
-    !record(value) ||
+    !isObject(value) ||
     !onlyKeys(value, ['revision', 'topics', 'decks']) ||
-    !nonempty(value.revision) ||
+    !nonBlank(value.revision) ||
     !isTopicList(value.topics, subjectId) ||
     !Array.isArray(value.decks)
   )
@@ -96,24 +94,25 @@ export function isFlashcardCatalog(
   if (expectedDeckCount !== undefined && value.decks.length !== expectedDeckCount) return false;
   const deckIds: string[] = [];
   const decksValid = value.decks.every((deck: unknown) => {
-    if (!record(deck) || !onlyKeys(deck, ['id', 'subjectId', 'topicId', 'name', 'description', 'cardCount', 'cardIds']))
+    if (
+      !isObject(deck) ||
+      !onlyKeys(deck, ['id', 'subjectId', 'topicId', 'name', 'description', 'cardCount', 'cardIds'])
+    )
       return false;
     if (
-      !nonempty(deck.id) ||
+      !nonBlank(deck.id) ||
       !/^d[a-zA-Z0-9-]+$/.test(deck.id) ||
       deck.subjectId !== subjectId ||
       !topicIds.includes(deck.topicId as string) ||
-      !nonempty(deck.name)
+      !nonBlank(deck.name)
     )
       return false;
-    if (deck.description !== undefined && typeof deck.description !== 'string') return false;
+    if (!optionalString(deck.description)) return false;
     if (
       !Number.isInteger(deck.cardCount) ||
       (deck.cardCount as number) < 0 ||
-      !Array.isArray(deck.cardIds) ||
-      !deck.cardIds.every((id: unknown) => typeof id === 'string' && /^f[a-zA-Z0-9-]+$/.test(id)) ||
-      deck.cardIds.length !== deck.cardCount ||
-      !unique(deck.cardIds as string[])
+      !ids(deck.cardIds, /^f[a-zA-Z0-9-]+$/) ||
+      deck.cardIds.length !== deck.cardCount
     )
       return false;
     deckIds.push(deck.id);
@@ -128,24 +127,24 @@ export function isFlashcardList(
   expectedCardIds?: string[],
 ): value is FlashcardListResponse {
   if (
-    !record(value) ||
+    !isObject(value) ||
     !onlyKeys(value, ['revision', 'cards']) ||
-    !nonempty(value.revision) ||
+    !nonBlank(value.revision) ||
     !Array.isArray(value.cards)
   )
     return false;
   const cardIds: string[] = [];
   const cardsValid = value.cards.every((card: unknown) => {
-    if (!record(card) || !onlyKeys(card, ['id', 'deckId', 'front', 'back', 'sources'])) return false;
+    if (!isObject(card) || !onlyKeys(card, ['id', 'deckId', 'front', 'back', 'sources'])) return false;
     if (
-      !nonempty(card.id) ||
+      !nonBlank(card.id) ||
       !/^f[a-zA-Z0-9-]+$/.test(card.id) ||
       card.deckId !== deckId ||
-      !nonempty(card.front) ||
-      !nonempty(card.back)
+      !nonBlank(card.front) ||
+      !nonBlank(card.back)
     )
       return false;
-    if (card.sources !== undefined && typeof card.sources !== 'string') return false;
+    if (!optionalString(card.sources)) return false;
     cardIds.push(card.id);
     return true;
   });

@@ -15,7 +15,6 @@ import { ContentLoadError } from '../content/api/contentTransport';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { LocalFlashcardProgressRepository } from '../persistence/localFlashcardProgressRepository';
 import { consumeProgressChangeNotice } from '../persistence/progressBackupStorage';
-import { averageScore, lowestRecentScore } from '../analytics/analytics';
 import type { Subject } from '../domain/types';
 import { attemptQuestions } from '../domain/quizEngine';
 import { AppNavigationDrawer, type LearnerSection } from './components/AppNavigationDrawer';
@@ -32,7 +31,12 @@ import { ResumeContentDialog } from '../features/quizzes/components/quiz/ResumeC
 import { ToastProvider, useToast } from '../shared/ui/notifications/ToastProvider';
 import { contentLoadMessage } from '../shared/ui/loading/notificationMessages';
 import type { SubjectStat } from '../features/quizzes/selectors/progress';
-import { createProgressView, quizProgressForSubject, subjectStatsFor } from '../features/quizzes/selectors/progress';
+import {
+  createProgressView,
+  dashboardScoreSummary,
+  quizProgressForSubject,
+  subjectStatsFor,
+} from '../features/quizzes/selectors/progress';
 import { presentationIdentity, restoresScroll, screenIdentity, type View } from './navigation';
 import { DashboardScreen } from '../features/quizzes/screens/DashboardScreen';
 import {
@@ -158,19 +162,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     () => subjectStatsFor(questionBank, progressView, summaries),
     [questionBank, progressView, summaries],
   );
-  const subjectLatestScores = subjectStats
-    .map((stat) => stat.latest)
-    .filter((score): score is number => score !== undefined);
-  const averageLatest = averageScore(subjectLatestScores);
-  const personalLowestScore = lowestRecentScore(
-    subjectStats.flatMap((stat) =>
-      stat.latest === undefined || stat.latestCompletedAt === undefined
-        ? []
-        : [{ percentage: stat.latest, completedAt: stat.latestCompletedAt, subjectName: stat.subject.name }],
-    ),
-  );
-  const personalLowest = personalLowestScore?.percentage;
-  const personalLowestSubject = personalLowestScore?.subjectName;
+  const { averageLatest, personalLowest, personalLowestSubject } = dashboardScoreSummary(subjectStats);
   const currentSubject = session.view.page === 'subject' ? session.view.subject : undefined;
   const currentFlashcardSubject = view.page === 'flashcards-subject' ? view.subject : undefined;
   const currentQuizState = currentSubject ? questionBank.getQuizState(currentSubject.id) : 'idle';

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { SubjectFilter } from './SubjectCatalogControls';
 
 // Kept for the session so a dashboard reopens on the page and filter the learner left.
@@ -8,7 +8,14 @@ export function clearSavedSubjectCatalogViews() {
   savedViews.clear();
 }
 
-export function useSubjectCatalog<T>(catalogId: string, items: readonly T[], isInProgress: (item: T) => boolean) {
+export type CatalogPageChange<T> = { id: number; from: T[]; resetKey: string; direction: 'next' | 'previous' };
+
+export function useSubjectCatalog<T>(
+  catalogId: string,
+  items: readonly T[],
+  isInProgress: (item: T) => boolean,
+  itemId: (item: T) => string,
+) {
   const [filter, setFilterState] = useState<SubjectFilter>(() => savedViews.get(catalogId)?.filter ?? 'all');
   const [page, setPage] = useState(() => savedViews.get(catalogId)?.page ?? 1);
   const filteredItems = useMemo(
@@ -32,5 +39,42 @@ export function useSubjectCatalog<T>(catalogId: string, items: readonly T[], isI
     setPage(1);
   };
 
-  return { filter, setFilter, page: currentPage, setPage, pageCount, pageItems, total: filteredItems.length };
+  const filterButtonRef = useRef<HTMLButtonElement>(null);
+  const focusAllFilter = useRef(false);
+  const [pageChange, setPageChange] = useState<CatalogPageChange<T> | null>(null);
+  const resetKey = `${filter}:${items.map(itemId).join(',')}`;
+  const changePage = (next: number) => {
+    if (next === currentPage) return;
+    setPageChange({
+      id: (pageChange?.id ?? 0) + 1,
+      from: [...pageItems],
+      resetKey,
+      direction: next > currentPage ? 'next' : 'previous',
+    });
+    setPage(next);
+  };
+  useEffect(() => {
+    if (focusAllFilter.current && filter === 'all') {
+      filterButtonRef.current?.focus();
+      focusAllFilter.current = false;
+    }
+  }, [filter]);
+  const showAll = () => {
+    focusAllFilter.current = true;
+    setFilter('all');
+  };
+
+  return {
+    filter,
+    setFilter,
+    showAll,
+    filterButtonRef,
+    page: currentPage,
+    changePage,
+    pageChange,
+    resetKey,
+    pageCount,
+    pageItems,
+    total: filteredItems.length,
+  };
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { FlashcardPersistenceError, LocalFlashcardProgressRepository } from './localFlashcardProgressRepository';
+import { LocalFlashcardProgressRepository } from './localFlashcardProgressRepository';
+import { PersistenceError } from './localJsonStore';
 import { flashcardProgressKey } from './flashcardProgressCodec';
 import type { StoragePort } from './progressCodec';
 
@@ -174,7 +175,7 @@ describe('local flashcard progress repository', () => {
       flaggedCardIds: [],
     });
     rejectWrites = true;
-    expect(() => failing.completeDeck('d1')).toThrowError(FlashcardPersistenceError);
+    expect(() => failing.completeDeck('d1')).toThrowError(PersistenceError);
     expect(failing.getSnapshot().completionCounts).toEqual({});
     expect(failing.getSnapshot().dailyStats).toBeUndefined();
     expect(failing.getCheckpoint('d1')).toBeDefined();
@@ -210,7 +211,7 @@ describe('local flashcard progress repository', () => {
     const corrupt = new LocalFlashcardProgressRepository(corruptStorage);
     expect(corrupt.getSnapshot().checkpoints).toEqual({});
     expect(corrupt.getStorageError()).toContain('kept');
-    expect(() => corrupt.clearCheckpoint('d1')).toThrowError(FlashcardPersistenceError);
+    expect(() => corrupt.clearCheckpoint('d1')).toThrowError(PersistenceError);
     expect(corruptStorage.getItem(flashcardProgressKey)).toBe('{broken');
   });
 
@@ -231,7 +232,7 @@ describe('local flashcard progress repository', () => {
         openedCardIds: [],
         flaggedCardIds: [],
       }),
-    ).toThrowError(FlashcardPersistenceError);
+    ).toThrowError(PersistenceError);
     expect(repository.getCheckpoint('d1')).toBeUndefined();
   });
 });

@@ -2,6 +2,7 @@ import type { StoredFlashcardBank, StoredQuestionBank } from '../schema/schema';
 import limits from './authoringLimits.json';
 import { markdownIssues } from './markdownValidation';
 import { validateQuestionBank, validateStoredQuestionBank, validateStoredFlashcardBank } from './validate';
+import { isObject } from '../../domain/json';
 
 export interface PolicyIssue {
   path: string;
@@ -89,8 +90,6 @@ function collectKeys(rule: Rule): void {
   }
 }
 collectKeys(pairShape);
-const object = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 const forbiddenKeys = new Set(['__proto__', 'prototype', 'constructor']);
 
 /** Unknown input is checked before typed validators; accepted values are never rewritten. */
@@ -122,7 +121,7 @@ export function validateAuthoringPair(value: unknown): PolicyResult {
         return;
       }
       item.forEach((child, index) => resources(child, `${path}[${index}]`, depth + 1));
-    } else if (object(item)) {
+    } else if (isObject(item)) {
       if (Object.keys(item).length > limits.maxObjectKeys) {
         issue(path, 'object_limit', 'Object exceeds the field limit.');
         return;
@@ -141,7 +140,7 @@ export function validateAuthoringPair(value: unknown): PolicyResult {
     } else if (Array.isArray(rule)) {
       if (!Array.isArray(item)) issue(path, 'invalid_type', 'Expected an array.');
       else item.forEach((child, i) => shape(child, rule[0], `${path}[${i}]`));
-    } else if (!object(item)) issue(path, 'invalid_type', 'Expected an object.');
+    } else if (!isObject(item)) issue(path, 'invalid_type', 'Expected an object.');
     else if ('values' in rule)
       Object.values(item).forEach((child) => shape(child, (rule as { values: Rule }).values, path));
     else {

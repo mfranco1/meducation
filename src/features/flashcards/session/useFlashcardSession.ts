@@ -10,10 +10,8 @@ import {
   resolveFlashcardLaunch,
   toggleFlashcardId,
 } from '../../../domain/flashcardStudy';
-import {
-  FlashcardPersistenceError,
-  LocalFlashcardProgressRepository,
-} from '../../../persistence/localFlashcardProgressRepository';
+import { PersistenceError } from '../../../persistence/localJsonStore';
+import { LocalFlashcardProgressRepository } from '../../../persistence/localFlashcardProgressRepository';
 import type { FlashcardsView } from './navigation';
 
 export interface PendingDeckRestart {
@@ -72,9 +70,7 @@ export function useFlashcardSession(
       return true;
     } catch (error) {
       setPersistenceError(
-        error instanceof FlashcardPersistenceError
-          ? error.message
-          : 'Flashcard progress could not be saved. Try again.',
+        error instanceof PersistenceError ? error.message : 'Flashcard progress could not be saved. Try again.',
       );
       return false;
     }

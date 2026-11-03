@@ -1,47 +1,43 @@
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../domain/flashcardStudy';
 import { isFlashcardDailyStats } from '../domain/flashcardDailyStats';
 import type { StoragePort } from './progressCodec';
+import { isObject, nonBlank, onlyKeys } from '../domain/json';
 
 export const flashcardProgressKey = 'meducation.flashcards.progress.v2';
-const record = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-const nonempty = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0;
-const onlyKeys = (value: Record<string, unknown>, allowed: string[]) =>
-  Object.keys(value).every((key) => allowed.includes(key));
 const timestamp = (value: unknown): value is string =>
   typeof value === 'string' && Number.isFinite(Date.parse(value)) && new Date(value).toISOString() === value;
 const validCompletionCounts = (value: unknown): value is Record<string, number> =>
-  record(value) &&
+  isObject(value) &&
   Object.entries(value).every(
-    ([deckId, count]) => nonempty(deckId) && typeof count === 'number' && Number.isSafeInteger(count) && count >= 0,
+    ([deckId, count]) => nonBlank(deckId) && typeof count === 'number' && Number.isSafeInteger(count) && count >= 0,
   ) &&
   Object.values(value).reduce<number>((total, count) => total + Number(count), 0) <= Number.MAX_SAFE_INTEGER;
 
 function validCheckpoint(value: unknown, deckId: string): value is FlashcardCheckpoint {
   return (
-    record(value) &&
+    isObject(value) &&
     onlyKeys(value, ['deckId', 'currentCardId', 'contentSignature', 'updatedAt', 'openedCardIds', 'flaggedCardIds']) &&
-    nonempty(deckId) &&
+    nonBlank(deckId) &&
     value.deckId === deckId &&
-    nonempty(value.currentCardId) &&
-    nonempty(value.contentSignature) &&
+    nonBlank(value.currentCardId) &&
+    nonBlank(value.contentSignature) &&
     timestamp(value.updatedAt) &&
     Array.isArray(value.openedCardIds) &&
-    value.openedCardIds.every(nonempty) &&
+    value.openedCardIds.every(nonBlank) &&
     new Set(value.openedCardIds).size === value.openedCardIds.length &&
     Array.isArray(value.flaggedCardIds) &&
-    value.flaggedCardIds.every(nonempty) &&
+    value.flaggedCardIds.every(nonBlank) &&
     new Set(value.flaggedCardIds).size === value.flaggedCardIds.length
   );
 }
 
 export function decodeFlashcardProgress(value: unknown): FlashcardProgressState | undefined {
   if (
-    !record(value) ||
+    !isObject(value) ||
     !onlyKeys(value, ['schemaVersion', 'revision', 'checkpoints', 'completionCounts', 'finishedAt', 'dailyStats']) ||
     value.schemaVersion !== 2 ||
-    !nonempty(value.revision) ||
-    !record(value.checkpoints)
+    !nonBlank(value.revision) ||
+    !isObject(value.checkpoints)
   )
     return undefined;
   if (Object.entries(value.checkpoints).some(([deckId, checkpoint]) => !validCheckpoint(checkpoint, deckId)))
@@ -50,8 +46,8 @@ export function decodeFlashcardProgress(value: unknown): FlashcardProgressState 
   if (
     value.finishedAt !== undefined &&
     !(
-      record(value.finishedAt) &&
-      Object.entries(value.finishedAt).every(([deckId, at]) => nonempty(deckId) && timestamp(at))
+      isObject(value.finishedAt) &&
+      Object.entries(value.finishedAt).every(([deckId, at]) => nonBlank(deckId) && timestamp(at))
     )
   )
     return undefined;

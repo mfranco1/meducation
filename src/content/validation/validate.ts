@@ -1,5 +1,6 @@
 import type { Question, Subject } from '../../domain/types';
 import type { StoredFlashcardBank, StoredQuestionBank, StoredQuiz, StoredTopic } from '../schema/schema';
+import { isObject } from '../../domain/json';
 
 export interface ValidationIssue {
   level: 'error' | 'warning';
@@ -23,8 +24,6 @@ const questionKeys = new Set([
   'pearls',
   'metadata',
 ]);
-const object = (value: unknown): value is Record<string, unknown> =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
 
 export function validateQuestionBank(
   subjects: Subject[],
@@ -154,7 +153,7 @@ export function validateStoredQuestionBank(bank: StoredQuestionBank): Validation
     const rationaleMeta: unknown = question.rationaleMeta;
     if (rationaleMeta !== undefined) {
       if (
-        !object(rationaleMeta) ||
+        !isObject(rationaleMeta) ||
         Object.keys(rationaleMeta).some((key) => !rationaleMetaKeys.has(key)) ||
         (rationaleMeta.sources !== undefined && typeof rationaleMeta.sources !== 'string')
       ) {
@@ -164,7 +163,7 @@ export function validateStoredQuestionBank(bank: StoredQuestionBank): Validation
     const metadata: unknown = question.metadata;
     if (metadata === undefined) return;
     if (
-      !object(metadata) ||
+      !isObject(metadata) ||
       Object.keys(metadata).some((key) => !metadataKeys.has(key)) ||
       ['topic', 'subtopic', 'system', 'questionType'].some(
         (key) => metadata[key] !== undefined && typeof metadata[key] !== 'string',
@@ -189,9 +188,7 @@ export function validateStoredFlashcardBank(
   const issues: ValidationIssue[] = [];
   const issue = (message: string, id?: string) =>
     issues.push({ level: 'error', message, ...(id ? { questionId: id } : {}) });
-  const object = (value: unknown): value is Record<string, unknown> =>
-    typeof value === 'object' && value !== null && !Array.isArray(value);
-  if (!object(bank)) return [{ level: 'error', message: 'Flashcard bank must be an object' }];
+  if (!isObject(bank)) return [{ level: 'error', message: 'Flashcard bank must be an object' }];
   if (bank.schemaVersion !== 4) issue(`Unsupported flashcard bank schema version: ${bank.schemaVersion}`);
   if (Object.keys(bank).some((key) => !['schemaVersion', 'decks', 'cards'].includes(key)))
     issue('Flashcard bank stores an unknown field');
@@ -208,7 +205,7 @@ export function validateStoredFlashcardBank(
   const decksById = new Map<string, StoredFlashcardBank['decks'][number]>();
 
   bank.decks.forEach((deck) => {
-    if (!object(deck)) {
+    if (!isObject(deck)) {
       issue('Deck record must be an object');
       return;
     }
@@ -228,7 +225,7 @@ export function validateStoredFlashcardBank(
   });
 
   bank.cards.forEach((card) => {
-    if (!object(card)) {
+    if (!isObject(card)) {
       issue('Card record must be an object');
       return;
     }

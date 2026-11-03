@@ -1,5 +1,6 @@
 import type { StoredQuestionBank } from '../../content/schema/schema';
-import type { BulkPlan } from '../data/DraftStore';
+import type { BulkGroup, BulkPlan, BulkTopic } from '../data/DraftStore';
+import { isObject, isString, nonBlank } from '../../domain/json';
 
 export type BulkAddContext =
   | { kind: 'subject'; subjectId: string }
@@ -38,18 +39,13 @@ export interface BulkAddTopicDraft {
 export type BulkAddDraft =
   { topics: BulkAddTopicDraft[] } | { quizzes: BulkAddQuizDraft[] } | { items: BulkAddItemDraft[] };
 
-type JsonObject = Record<string, unknown>;
-const isObject = (value: unknown): value is JsonObject =>
-  typeof value === 'object' && value !== null && !Array.isArray(value);
-const isString = (value: unknown): value is string => typeof value === 'string';
-const nonEmptyString = (value: unknown) => isString(value) && Boolean(value.trim());
 /** A blank description is left unset so an untouched template stores nothing. */
 const optionalDescription = (value: unknown) => (isString(value) && value.trim() ? { description: value } : {});
 const choiceLabel = (index: number) => String.fromCharCode(65 + index);
 /** Drops blank strings, empty arrays and empty objects so untouched optional template fields store nothing. */
 function withoutBlanks(value: unknown): unknown {
   if (Array.isArray(value)) {
-    const kept = value.filter(nonEmptyString);
+    const kept = value.filter(nonBlank);
     return kept.length ? kept : undefined;
   }
   if (isObject(value)) {
@@ -58,7 +54,7 @@ function withoutBlanks(value: unknown): unknown {
       .filter(([, entry]) => entry !== undefined);
     return kept.length ? Object.fromEntries(kept) : undefined;
   }
-  return nonEmptyString(value) ? value : undefined;
+  return nonBlank(value) ? value : undefined;
 }
 
 const itemKeys = ['stem', 'choices', 'answer', 'rationale', 'rationaleMeta', 'pearls', 'metadata'];
@@ -70,12 +66,12 @@ function parseItem(value: unknown, path: string): { item?: BulkAddItemDraft; err
   for (const key of Object.keys(value))
     if (!itemKeys.includes(key)) errors.push(`${path}.${key} is not an editable item field.`);
   for (const field of ['stem', 'rationale'] as const)
-    if (!nonEmptyString(value[field])) errors.push(`${path}.${field} must be a non-empty string.`);
+    if (!nonBlank(value[field])) errors.push(`${path}.${field} must be a non-empty string.`);
   if (
     !Array.isArray(value.choices) ||
     value.choices.length < 2 ||
     value.choices.length > 26 ||
-    !value.choices.every(nonEmptyString)
+    !value.choices.every(nonBlank)
   ) {
     errors.push(`${path}.choices must contain 2 to 26 non-empty choice strings.`);
   }
@@ -142,7 +138,7 @@ function parseQuizzes(value: unknown, path: string): { quizzes?: BulkAddQuizDraf
     for (const key of Object.keys(candidate))
       if (!['name', 'description', 'items'].includes(key))
         errors.push(`${quizPath}.${key} is not an editable quiz field.`);
-    if (!nonEmptyString(candidate.name)) errors.push(`${quizPath}.name must be a non-empty string.`);
+    if (!nonBlank(candidate.name)) errors.push(`${quizPath}.name must be a non-empty string.`);
     if (candidate.description !== undefined && !isString(candidate.description))
       errors.push(`${quizPath}.description must be a string.`);
     if (!Array.isArray(candidate.items) || !candidate.items.length) {
@@ -190,7 +186,7 @@ export function parseBulkAddDraft(value: unknown, context: BulkAddContext): { dr
       for (const key of Object.keys(candidate))
         if (!['name', 'description', 'quizzes'].includes(key))
           errors.push(`${path}.${key} is managed by the admin panel or is not editable.`);
-      if (!nonEmptyString(candidate.name)) errors.push(`${path}.name must be a non-empty string.`);
+      if (!nonBlank(candidate.name)) errors.push(`${path}.name must be a non-empty string.`);
       if (candidate.description !== undefined && !isString(candidate.description))
         errors.push(`${path}.description must be a string.`);
       const parsed = parseQuizzes(candidate.quizzes, `${path}.quizzes`);
@@ -237,27 +233,58 @@ export function foldByName<T extends { name: string; description?: string }>(
   );
 }
 
-const foldQuizzes = (quizzes: BulkAddQuizDraft[]) =>
-  foldByName(quizzes, (into, quiz) => ({ ...into, items: [...into.items, ...quiz.items] }));
+type Named = { name: string; description?: string };
+type Existing = { id: string; name: string }[];
+const withDescription = (row: Named) => ({
+  name: row.name,
+  ...(row.description === undefined ? {} : { description: row.description }),
+});
 
-/** Quizzes matching an existing quiz by name add to it; the rest are created. */
-const quizGroups = (quizzes: BulkAddQuizDraft[], existing: { id: string; name: string }[], merged: string[]) =>
-  foldQuizzes(quizzes).map((quiz) => {
-    const match = existing.find((row) => nameKey(row.name) === nameKey(quiz.name));
-    const children = quiz.items.map(itemFields);
+/** Drafts matching an existing quiz or deck by name add to it; the rest are created. */
+export function groupsByName<T extends Named>(
+  drafts: T[],
+  existing: Existing,
+  target: { label: string; kind: 'quizzes' | 'decks'; childKind: 'questions' | 'cards' },
+  childrenOf: (draft: T) => Record<string, unknown>[],
+  merged: string[],
+): BulkGroup[] {
+  return drafts.map((draft) => {
+    const match = existing.find((row) => nameKey(row.name) === nameKey(draft.name));
+    const children = childrenOf(draft);
     if (match) {
-      merged.push(`Quiz · ${match.name} · ${match.id}`);
-      return { parentId: match.id, childKind: 'questions' as const, children };
+      merged.push(`${target.label} · ${match.name} · ${match.id}`);
+      return { parentId: match.id, childKind: target.childKind, children };
     }
-    return {
-      create: {
-        kind: 'quizzes' as const,
-        fields: { name: quiz.name, ...(quiz.description === undefined ? {} : { description: quiz.description }) },
-      },
-      childKind: 'questions' as const,
-      children,
-    };
+    return { create: { kind: target.kind, fields: withDescription(draft) }, childKind: target.childKind, children };
   });
+}
+
+/** Topics matching an existing topic by name add to it; the rest are created. `groupsOf` receives the matched topic ID, if any. */
+export function topicsByName<T extends Named>(
+  topics: T[],
+  existing: Existing,
+  join: (into: T, topic: T) => T,
+  groupsOf: (topic: T, matchId?: string) => BulkGroup[],
+  merged: string[],
+): BulkTopic[] {
+  return foldByName(topics, join).map((topic) => {
+    const match = existing.find((row) => nameKey(row.name) === nameKey(topic.name));
+    if (match) {
+      merged.push(`Topic · ${match.name} · ${match.id}`);
+      return { id: match.id, groups: groupsOf(topic, match.id) };
+    }
+    return { fields: withDescription(topic), groups: groupsOf(topic) };
+  });
+}
+
+const quizGroups = (quizzes: BulkAddQuizDraft[], existing: Existing, merged: string[]) =>
+  groupsByName(
+    foldByName(quizzes, (into, quiz) => ({ ...into, items: [...into.items, ...quiz.items] })),
+    existing,
+    { label: 'Quiz', kind: 'quizzes', childKind: 'questions' },
+    (quiz) => quiz.items.map(itemFields),
+    merged,
+  );
 
 /** Parses the editable JSON into the records to create. Parent IDs come from the chosen destination. Names that already exist are reused. */
 export function compileBulkAddDraft(
@@ -291,21 +318,12 @@ export function compileBulkAddDraft(
     return {
       plan: {
         subjectId: context.subjectId,
-        topics: foldByName(topics, (into, topic) => ({ ...into, quizzes: [...into.quizzes, ...topic.quizzes] })).map(
-          (topic) => {
-            const match = existing.find((row) => nameKey(row.name) === nameKey(topic.name));
-            if (match) {
-              merged.push(`Topic · ${match.name} · ${match.id}`);
-              return { id: match.id, groups: quizGroups(topic.quizzes, quizzesOf(match.id), merged) };
-            }
-            return {
-              fields: {
-                name: topic.name,
-                ...(topic.description === undefined ? {} : { description: topic.description }),
-              },
-              groups: quizGroups(topic.quizzes, [], merged),
-            };
-          },
+        topics: topicsByName(
+          topics,
+          existing,
+          (into, topic) => ({ ...into, quizzes: [...into.quizzes, ...topic.quizzes] }),
+          (topic, matchId) => quizGroups(topic.quizzes, matchId ? quizzesOf(matchId) : [], merged),
+          merged,
         ),
       },
       errors: [],
