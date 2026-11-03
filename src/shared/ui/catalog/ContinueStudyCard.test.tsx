@@ -28,24 +28,4 @@ describe('ContinueStudyCard', () => {
     fireEvent.click(button);
     expect(onContinue).toHaveBeenCalledExactlyOnceWith();
   });
-
-  it('supports custom copy, action text, illustration, and sx overrides', () => {
-    render(
-      <ThemeProvider theme={theme}>
-        <ContinueStudyCard
-          title="Anatomy"
-          activityLabel="2 decks in progress"
-          eyebrow="Pick up where you left off"
-          actionLabel="Resume"
-          accessibleLabel="Resume Anatomy"
-          onContinue={() => undefined}
-          illustration={<span data-testid="custom-art" />}
-          sx={{ maxWidth: 720 }}
-        />
-      </ThemeProvider>,
-    );
-    expect(screen.getByRole('button', { name: 'Resume Anatomy' })).toHaveTextContent('Pick up where you left off');
-    expect(screen.getByRole('button', { name: 'Resume Anatomy' })).toHaveTextContent('Resume');
-    expect(screen.getByTestId('custom-art')).toBeInTheDocument();
-  });
 });

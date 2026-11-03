@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import type { CompletedAttempt, QuizRepository } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
-import { createProgressView, dashboardScoreSummary, quizProgressForSubject, subjectStatsFor } from './progress';
+import {
+  activeSubjectStats,
+  createProgressView,
+  dashboardScoreSummary,
+  quizProgressForSubject,
+  subjectStatsFor,
+} from './progress';
 
 const bank: QuizRepository = {
   listSubjects: () => [
@@ -127,5 +133,49 @@ describe('learner progress selectors', () => {
       personalLowest: undefined,
       personalLowestSubject: undefined,
     });
+  });
+});
+
+const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };
+
+describe('active subject stats', () => {
+  it('includes only active subjects and orders them by active-quiz activity', () => {
+    const newer = {
+      subject: { ...subject, id: 'newer', name: 'Newer' },
+      quizCount: 2,
+      activeQuizCount: 1,
+      latestActiveAt: '2026-09-22T10:00:00.000Z',
+    };
+    const inactive = {
+      subject: { ...subject, id: 'inactive', name: 'Inactive' },
+      quizCount: 2,
+      activeQuizCount: 0,
+      latestActiveAt: '2026-09-23T10:00:00.000Z',
+    };
+    const older = {
+      subject: { ...subject, id: 'older', name: 'Older' },
+      quizCount: 2,
+      activeQuizCount: 1,
+      latestActiveAt: '2026-09-21T10:00:00.000Z',
+    };
+
+    expect(activeSubjectStats([older, inactive, newer]).map((stat) => stat.subject.name)).toEqual(['Newer', 'Older']);
+  });
+
+  it('preserves catalog order when active-subject activity is tied', () => {
+    const first = {
+      subject: { ...subject, id: 'first', name: 'First' },
+      quizCount: 2,
+      activeQuizCount: 1,
+      latestActiveAt: '2026-09-22T10:00:00.000Z',
+    };
+    const second = {
+      subject: { ...subject, id: 'second', name: 'Second' },
+      quizCount: 2,
+      activeQuizCount: 1,
+      latestActiveAt: '2026-09-22T10:00:00.000Z',
+    };
+
+    expect(activeSubjectStats([first, second]).map((stat) => stat.subject.name)).toEqual(['First', 'Second']);
   });
 });

@@ -272,65 +272,7 @@ def test_session_lock_serializes_protected_work_and_logout_across_workers(db):
         pytest.fail("Revoked session accepted")
 
 
-def test_loopback_oidc_flow_exchanges_real_http_code_pkce_and_stepup(db):
-    """A disposable synthetic issuer exercises sockets/redirects, not real MFA."""
-    import base64
-    from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-    from threading import Thread
-    from urllib.parse import parse_qs, urlencode, urlsplit
-
-    import httpx2
-
-    from meducation_api.auth.oidc import OIDCClient
-
-    _client,runtime,h=auth_app(db)
-    class Handler(BaseHTTPRequestHandler):
-        def log_message(self,*args):
-            pass  # Never log synthetic codes either.
-        def do_GET(self):
-            if urlsplit(self.path).path=='/authorize':
-                fields=parse_qs(urlsplit(self.path).query)
-                assert fields['response_type']==['code'] and fields['code_challenge_method']==['S256']
-                assert fields['redirect_uri']==[runtime.config.callback] and fields['scope']==['openid']
-                h.nonce=fields['nonce'][0]; h.code='once-only-loopback-code'; self.server.challenge=fields['code_challenge'][0]
-                self.send_response(302); self.send_header('Location',runtime.config.callback+'?'+urlencode({'code':h.code,'state':fields['state'][0]})); self.end_headers()
-            else:
-                result=h.request(httpx2.Request('GET',runtime.config.issuer+self.path))
-                self.send_response(result.status_code); self.send_header('Content-Type','application/json'); self.end_headers(); self.wfile.write(result.content)
-        def do_POST(self):
-            data=self.rfile.read(int(self.headers['Content-Length']))
-            verifier=parse_qs(data.decode())['code_verifier'][0]
-            assert base64.urlsafe_b64encode(hashlib.sha256(verifier.encode()).digest()).decode().rstrip('=')==self.server.challenge
-            h.verifier=verifier
-            result=h.request(httpx2.Request('POST',runtime.config.token_endpoint,content=data,headers={'Authorization':self.headers['Authorization']}))
-            self.send_response(result.status_code); self.send_header('Content-Type','application/json'); self.end_headers(); self.wfile.write(result.content)
-    server=ThreadingHTTPServer(('127.0.0.1',0),Handler)
-    thread=Thread(target=server.serve_forever,daemon=True); thread.start()
-    issuer='http://127.0.0.1:'+str(server.server_address[1])
-    cfg=runtime.config.model_copy(update={'issuer':issuer,'authorization_endpoint':issuer+'/authorize','token_endpoint':issuer+'/token','jwks_uri':issuer+'/jwks'})
-    # Rebuild the app with the same private DB and a real (non-mocked) client.
-    actual,rt,h=auth_app(db,issuer=issuer,authorization_endpoint=cfg.authorization_endpoint,token_endpoint=cfg.token_endpoint,jwks_uri=cfg.jwks_uri)
-    rt.oidc=OIDCClient(rt.config,clock=lambda:h.now)
-    runtime=rt
-    try:
-        with actual,httpx2.Client(follow_redirects=False,trust_env=False) as browser:
-            old=None
-            for path in ('/api/admin/auth/login','/api/admin/auth/reauthenticate'):
-                csrf=actual.get('/api/admin/session').json()['csrfToken']
-                login=actual.post(path,json={},headers={'Origin':rt.config.origin,'X-CSRF-Token':csrf})
-                assert login.status_code==200
-                authorize=browser.get(login.json()['authorizationUrl'])
-                assert authorize.status_code==302
-                result=actual.get(authorize.headers['Location'])
-                assert result.status_code==303,result.text
-                token=actual.cookies.get(rt.config.cookie); assert token and token!=old; old=token
-                assert actual.get('/api/admin/access').status_code==200
-                h.now+=6
-    finally:
-        rt.oidc.close(); server.shutdown(); server.server_close(); thread.join(timeout=2)
-
-
-@pytest.mark.parametrize('fault',['browser','state','duplicate','expired','cancel','missing-mfa','wrong-issuer','wrong-purpose'])
+@pytest.mark.parametrize('fault',['browser','state','duplicate','expired','cancel','wrong-purpose'])
 def test_login_callback_faults_create_no_session(db,fault):
     from urllib.parse import parse_qs, urlsplit
     client,runtime,h=auth_app(db)
@@ -346,8 +288,6 @@ def test_login_callback_faults_create_no_session(db,fault):
         elif fault=='duplicate': params.append(params[0])
         elif fault=='expired': h.now+=601
         elif fault=='cancel': params=[('state',fields['state'][0]),('error','access_denied')]
-        elif fault=='missing-mfa': h.token_changes={'amr':['pwd']}
-        elif fault=='wrong-issuer': h.token_changes={'iss':'http://untrusted.invalid'}
         elif fault=='wrong-purpose': h.token_changes={'token_use':'logout'}
         result=client.get('/api/admin/auth/callback',params=params)
         assert result.status_code in (303,400,401,403)

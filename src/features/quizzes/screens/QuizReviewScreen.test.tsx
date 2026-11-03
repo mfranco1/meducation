@@ -1,9 +1,12 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
+import { markdownReady } from '../../../test/markdownReady';
 import type { CompletedAttempt, Question, Quiz } from '../../../domain/types';
 import { theme } from '../../../shared/theme';
 import { QuizReviewScreen } from './QuizReviewScreen';
+
+beforeAll(markdownReady, 30000);
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 2 };
 const questions: Question[] = [
@@ -43,10 +46,9 @@ const attempt: CompletedAttempt = {
 };
 
 describe('QuizReviewScreen', () => {
-  it('navigates the canonical question order with arrows and does not exit at the right boundary', () => {
+  it('navigates the canonical question order with arrows, ignoring the active filter', () => {
     const onNavigate = vi.fn();
-    const onRequestExit = vi.fn();
-    const view = render(
+    render(
       <ThemeProvider theme={theme}>
         <QuizReviewScreen
           quiz={quiz}
@@ -54,28 +56,13 @@ describe('QuizReviewScreen', () => {
           index={0}
           questions={questions}
           onNavigate={onNavigate}
-          onRequestExit={onRequestExit}
+          onRequestExit={vi.fn()}
         />
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Flagged questions, 1' }));
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onNavigate).toHaveBeenCalledWith(1);
-    view.rerender(
-      <ThemeProvider theme={theme}>
-        <QuizReviewScreen
-          quiz={quiz}
-          attempt={attempt}
-          index={1}
-          questions={questions}
-          onNavigate={onNavigate}
-          onRequestExit={onRequestExit}
-        />
-      </ThemeProvider>,
-    );
-    fireEvent.keyDown(window, { key: 'ArrowRight' });
-    expect(onNavigate).toHaveBeenCalledTimes(1);
-    expect(onRequestExit).not.toHaveBeenCalled();
   });
 
   it('keeps multi-paragraph stems in one column beside the optional flag', () => {

@@ -2,7 +2,7 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { theme } from '../../../shared/theme';
-import { activeSubjectStats, type SubjectStat } from '../selectors/progress';
+import type { SubjectStat } from '../selectors/progress';
 import { DashboardScreen } from './DashboardScreen';
 
 const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };
@@ -195,78 +195,25 @@ describe('dashboard in-progress indicator', () => {
   });
 });
 
-describe('dashboard subject filter and pagination', () => {
-  it('shows at most 12 subjects per page and filters active subjects', () => {
-    const stats = Array.from({ length: 13 }, (_, index) => ({
-      subject: { ...subject, id: `s${index}`, name: `Subject ${index + 1}` },
-      quizCount: 1,
-      activeQuizCount: index === 12 ? 1 : 0,
-    }));
-    render(
-      <ThemeProvider theme={theme}>
-        <DashboardScreen attempts={[]} subjectStats={stats} onSelectSubject={() => {}} />
-      </ThemeProvider>,
-    );
+it('pages the All Subjects grid and filters it to active subjects', () => {
+  const stats = Array.from({ length: 13 }, (_, index) => ({
+    subject: { ...subject, id: `s${index}`, name: `Subject ${index + 1}` },
+    quizCount: 1,
+    activeQuizCount: index === 12 ? 1 : 0,
+  }));
+  render(
+    <ThemeProvider theme={theme}>
+      <DashboardScreen attempts={[]} subjectStats={stats} onSelectSubject={() => {}} />
+    </ThemeProvider>,
+  );
 
-    expect(
-      within(screen.getByTestId('all-subjects-grid')).getAllByRole('button', { name: /^Open Subject/ }),
-    ).toHaveLength(12);
-    expect(screen.getByText('Page 1 of 2')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    expect(
-      within(screen.getAllByTestId('all-subjects-grid').at(-1)!).getByRole('button', { name: 'Open Subject 13' }),
-    ).toBeVisible();
-    expect(screen.getByText('Page 2 of 2')).toBeVisible();
-    expect(screen.getByText('Page 2 of 2')).toHaveFocus();
-    fireEvent.click(screen.getByRole('button', { name: 'In progress' }));
-    expect(
-      within(screen.getByTestId('all-subjects-grid')).getByRole('button', { name: 'Open Subject 13' }),
-    ).toBeVisible();
-    expect(screen.queryByText(/^Page \d+ of/)).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Previous' })).not.toBeInTheDocument();
-  });
-});
-
-describe('dashboard active-subject ordering', () => {
-  it('includes only active subjects and orders them by active-quiz activity', () => {
-    const newer = {
-      subject: { ...subject, id: 'newer', name: 'Newer' },
-      quizCount: 2,
-      activeQuizCount: 1,
-      latestActiveAt: '2026-09-22T10:00:00.000Z',
-    };
-    const inactive = {
-      subject: { ...subject, id: 'inactive', name: 'Inactive' },
-      quizCount: 2,
-      activeQuizCount: 0,
-      latestActiveAt: '2026-09-23T10:00:00.000Z',
-    };
-    const older = {
-      subject: { ...subject, id: 'older', name: 'Older' },
-      quizCount: 2,
-      activeQuizCount: 1,
-      latestActiveAt: '2026-09-21T10:00:00.000Z',
-    };
-
-    expect(activeSubjectStats([older, inactive, newer]).map((stat) => stat.subject.name)).toEqual(['Newer', 'Older']);
-  });
-
-  it('preserves catalog order when active-subject activity is tied', () => {
-    const first = {
-      subject: { ...subject, id: 'first', name: 'First' },
-      quizCount: 2,
-      activeQuizCount: 1,
-      latestActiveAt: '2026-09-22T10:00:00.000Z',
-    };
-    const second = {
-      subject: { ...subject, id: 'second', name: 'Second' },
-      quizCount: 2,
-      activeQuizCount: 1,
-      latestActiveAt: '2026-09-22T10:00:00.000Z',
-    };
-
-    expect(activeSubjectStats([first, second]).map((stat) => stat.subject.name)).toEqual(['First', 'Second']);
-  });
+  expect(
+    within(screen.getByTestId('all-subjects-grid')).getAllByRole('button', { name: /^Open Subject/ }),
+  ).toHaveLength(12);
+  fireEvent.click(screen.getByRole('button', { name: 'In progress' }));
+  expect(
+    within(screen.getByTestId('all-subjects-grid')).getByRole('button', { name: 'Open Subject 13' }),
+  ).toBeVisible();
 });
 
 it('uses separate continuation and ordinary subject actions', () => {

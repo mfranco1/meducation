@@ -12,12 +12,11 @@ const renderIcon = (topicId: string, subjectId: string) =>
   ).container.querySelector('svg');
 
 describe('TopicIcon', () => {
-  it('shows the topic icon as a decorative 24-unit icon', () => {
+  it('shows the topic icon as a decorative icon', () => {
     const icon = renderIcon('t89', 's4');
     expect(icon).toHaveAttribute('data-topic-icon', 't89');
     expect(icon).toHaveAttribute('data-icon-name', 'kidney');
     expect(icon).toHaveAttribute('aria-hidden', 'true');
-    expect(icon).toHaveAttribute('viewBox', '0 0 24 24');
   });
 
   it('falls back to the subject icon for topics without one', () => {

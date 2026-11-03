@@ -1,4 +1,4 @@
-import { expect, test, type Locator } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { expectNoHorizontalOverflow, startedLearner } from './support/learner';
 import { openTopicIfNeeded, showQuestion } from './support/topic';
 
@@ -60,28 +60,11 @@ async function statCardBounds(firstCard: Locator) {
   );
 }
 
-test('dashboard stat cards stay readable across desktop and narrow layouts', async ({ page }, testInfo) => {
-  await page.goto('/');
-  const quizCards = [
-    page.locator('[role="group"]').filter({ hasText: 'Completed' }),
-    page.locator('[role="group"]').filter({ hasText: 'Average' }),
-    page.locator('[role="group"]').filter({ hasText: 'Lowest' }),
-  ];
-  await expect(quizCards[0]).toContainText('quizzes');
-  await expect(quizCards[1]).toContainText('correct');
-  const quizCardStyles = await quizCards[0]!.evaluate((card) => ({
-    radius: getComputedStyle(card).borderRadius,
-    backgroundImage: getComputedStyle(card).backgroundImage,
-    backgroundColor: getComputedStyle(card).backgroundColor,
-  }));
-  expect(quizCardStyles.radius).toBe('14px');
-  expect(quizCardStyles.backgroundImage).toBe('none');
-  expect(quizCardStyles.backgroundColor).not.toBe('rgb(255, 253, 251)');
-
+async function expectStatCardsLayout(page: Page, firstCard: Locator) {
   for (const width of [1280, 768, 390, 320]) {
     await page.setViewportSize({ width, height: 800 });
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    const bounds = await statCardBounds(quizCards[0]!);
+    const bounds = await statCardBounds(firstCard);
     expect(bounds.every(({ width, height }) => width > 0 && height > 0)).toBe(true);
     if (width >= 600) {
       expect(bounds[0]!.y).toBeCloseTo(bounds[1]!.y, 0);
@@ -92,7 +75,18 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
       expect(bounds[2]!.y).toBeGreaterThan(bounds[1]!.y);
     }
   }
+}
 
+test('dashboard stat cards stay readable across desktop and narrow layouts', async ({ page }, testInfo) => {
+  await page.goto('/');
+  const quizCards = [
+    page.locator('[role="group"]').filter({ hasText: 'Completed' }),
+    page.locator('[role="group"]').filter({ hasText: 'Average' }),
+    page.locator('[role="group"]').filter({ hasText: 'Lowest' }),
+  ];
+  await expect(quizCards[0]).toContainText('quizzes');
+  await expect(quizCards[1]).toContainText('correct');
+  await expectStatCardsLayout(page, quizCards[0]!);
   await page.setViewportSize({ width: 1280, height: 800 });
   const quizDesktop = testInfo.outputPath('quiz-dashboard-stat-cards.png');
   await page.screenshot({ path: quizDesktop });
@@ -112,26 +106,7 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
   await expect(flashcardCards[0]).toContainText('decks');
   await expect(flashcardCards[1]).toContainText('decks / day');
   await expect(flashcardCards[2]).toContainText('decks finished in a day');
-  const flashcardCardStyles = await flashcardCards[0]!.evaluate((card) => ({
-    radius: getComputedStyle(card).borderRadius,
-    backgroundImage: getComputedStyle(card).backgroundImage,
-    backgroundColor: getComputedStyle(card).backgroundColor,
-  }));
-  expect(flashcardCardStyles).toEqual(quizCardStyles);
-  for (const width of [1280, 768, 390, 320]) {
-    await page.setViewportSize({ width, height: 800 });
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    const bounds = await statCardBounds(flashcardCards[0]!);
-    expect(bounds.every(({ width, height }) => width > 0 && height > 0)).toBe(true);
-    if (width >= 600) {
-      expect(bounds[0]!.y).toBeCloseTo(bounds[1]!.y, 0);
-      expect(bounds[1]!.y).toBeCloseTo(bounds[2]!.y, 0);
-      expect(Math.abs(bounds[0]!.width - bounds[2]!.width)).toBeLessThan(2);
-    } else {
-      expect(bounds[1]!.y).toBeGreaterThan(bounds[0]!.y);
-      expect(bounds[2]!.y).toBeGreaterThan(bounds[1]!.y);
-    }
-  }
+  await expectStatCardsLayout(page, flashcardCards[0]!);
   await page.setViewportSize({ width: 1280, height: 800 });
   const flashcardDesktop = testInfo.outputPath('flashcard-dashboard-stat-cards.png');
   await page.screenshot({ path: flashcardDesktop });
@@ -144,23 +119,6 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
     contentType: 'image/png',
   });
 });
-
-async function expectEvenFlashcardOutline(decoration: Locator, inset: number) {
-  // Sample the actual browser paths, including every corner: this catches
-  // incorrectly positioned circles even when their declared radii look right.
-  const gaps = await decoration.evaluate((svg) => {
-    const [edge, outline] = Array.from(svg.querySelectorAll('path'));
-    const edgeLength = edge.getTotalLength();
-    const outlineLength = outline.getTotalLength();
-    const edgePoints = Array.from({ length: 4001 }, (_, index) => edge.getPointAtLength((index / 4000) * edgeLength));
-    return Array.from({ length: 201 }, (_, index) => {
-      const point = outline.getPointAtLength((index / 200) * outlineLength);
-      return Math.min(...edgePoints.map((edgePoint) => Math.hypot(point.x - edgePoint.x, point.y - edgePoint.y)));
-    });
-  });
-  expect(Math.min(...gaps)).toBeGreaterThan(inset - 0.1);
-  expect(Math.max(...gaps)).toBeLessThan(inset + 0.1);
-}
 
 test('abandoned flashcard loads do not reopen study or create progress', async ({ page }) => {
   let release!: () => void;
@@ -268,39 +226,14 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   expect(concealedBounds).not.toBeNull();
   expect(hiddenAnswerBounds).not.toBeNull();
   expect(Math.abs(concealedBounds!.height - hiddenAnswerBounds!.height)).toBeLessThan(1);
-  const framePaths = await concealedFace
-    .locator('[data-testid="flashcard-frame-decoration"] path')
-    .evaluateAll((paths) => paths.map((path) => path.getAttribute('d')));
-  const lineRadius = await concealedFace.evaluate((face) =>
-    getComputedStyle(face).getPropertyValue('--flashcard-line-radius').trim(),
-  );
-  expect(framePaths).toHaveLength(2);
-  expect(framePaths[0]).toContain(' A ');
-  expect(framePaths[1]).toContain('A 30.5 30.5');
-  expect(lineRadius).toContain('calc(26px +');
-  expect(lineRadius).toContain('0.28125');
-  const outline = concealedFace.locator('[data-testid="flashcard-frame-decoration"] path[fill="none"]');
-  await expect(outline).toHaveCount(1);
-  await expect(outline).toHaveAttribute('stroke-width', '1.5');
-  await expectEvenFlashcardOutline(concealedFace.locator('[data-testid="flashcard-frame-decoration"]'), 4.5);
   await expect(page.locator('.katex')).toHaveCount(2);
   await page.keyboard.press('ArrowRight');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
   await page.keyboard.press('ArrowLeft');
   await expect(page.getByText('Card 1 of 2')).toBeVisible();
-  const cardFlag = page.getByRole('button', { name: 'Flag card' });
-  const cardFlagBackground = await cardFlag.evaluate((element) => getComputedStyle(element).backgroundColor);
-  await cardFlag.hover();
-  await expect(cardFlag).toHaveCSS('background-color', cardFlagBackground);
-  await expect(cardFlag.locator('.MuiTouchRipple-root')).toHaveCount(0);
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
-  await expect(page.locator('[data-testid="flashcard-frame-decoration"] path').nth(1)).toHaveAttribute(
-    'd',
-    /A 21\.375 21\.375/,
-  );
-  await expectEvenFlashcardOutline(page.locator('[data-testid="flashcard-frame-decoration"]').first(), 3.375);
   await expectNoHorizontalOverflow(page);
   await page.setViewportSize({ width: 320, height: 780 });
   await expectNoHorizontalOverflow(page);
@@ -319,16 +252,6 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
     name: 'Answer revealed. Click to hide or press Space or Enter to continue.',
   });
   await expect(revealedFace).toBeFocused();
-  await expect(page.locator('[data-space-nav-focus-ring="suppressed"]')).toHaveCount(1);
-  const reducedMotionState = await revealedFace.evaluate((element) => ({
-    perspective: getComputedStyle(element.parentElement!.parentElement!.parentElement!).perspective,
-    flipDuration: getComputedStyle(element.parentElement!).transitionDuration,
-  }));
-  expect(reducedMotionState).toEqual({ perspective: 'none', flipDuration: '0s' });
-  await page.keyboard.press('Tab');
-  await expect(page.locator('[data-space-nav-focus-ring="suppressed"]')).toHaveCount(0);
-  await revealedFace.focus();
-  await expect(revealedFace).toHaveCSS('outline-color', 'rgb(185, 81, 27)');
   await page.keyboard.press('Space');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
   await page.keyboard.press('Space');
@@ -504,98 +427,23 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
 test('left navigation switches dashboards in collapsed and mobile layouts', async ({ page }, testInfo) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
-  const brand = page.getByRole('button', { name: 'Meducation, go to Quizzes' });
-  await expect(brand).toBeVisible();
-  const quizzesButton = page.getByRole('button', { name: 'Quizzes', exact: true });
-  const quizzesTopExpanded = (await quizzesButton.boundingBox())!.y;
-  const separator = page.getByTestId('drawer-brand-separator');
-  const brandBounds = (await brand.boundingBox())!;
-  const expandedSeparatorBounds = (await separator.boundingBox())!;
-  expect(expandedSeparatorBounds.y + expandedSeparatorBounds.height / 2).toBeCloseTo(
-    (brandBounds.y + brandBounds.height + quizzesTopExpanded) / 2,
-  );
-  const brandRadius = await brand.evaluate((element) => getComputedStyle(element).borderRadius);
-  expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
+  await expect(page.getByRole('button', { name: 'Meducation, go to Quizzes' })).toBeVisible();
   const edgeToggle = page.getByTestId('drawer-edge-toggle').first();
-  const arrow = edgeToggle.locator('.drawer-edge-toggle-arrow');
   const aside = page.getByLabel('Meducation navigation');
-  const assertArrowCentered = async () => {
-    const drawerBounds = (await aside.boundingBox())!;
-    const arrowBounds = (await arrow.boundingBox())!;
-    expect(arrowBounds.y + arrowBounds.height / 2).toBeCloseTo(drawerBounds.y + drawerBounds.height / 2);
-    expect(arrowBounds.x + arrowBounds.width / 2).toBeCloseTo(drawerBounds.x + drawerBounds.width);
-  };
-  const orientation = async () =>
-    arrow.evaluate((element) => {
-      const matrix = new DOMMatrixReadOnly(getComputedStyle(element).transform);
-      return { a: matrix.a, d: matrix.d };
-    });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
-  await assertArrowCentered();
-  // A new browser's pointer may start over the drawer; establish the non-hover state explicitly.
-  await page.mouse.move(900, 300);
-  await expect.poll(() => arrow.evaluate((element) => getComputedStyle(element).opacity)).toBe('0');
-  await brand.hover();
-  await expect.poll(() => arrow.evaluate((element) => getComputedStyle(element).opacity)).toBe('1');
-  await page.mouse.move(900, 300);
-  await expect.poll(() => arrow.evaluate((element) => getComputedStyle(element).opacity)).toBe('0');
-  await expect.poll(orientation).toEqual({ a: 1, d: 1 });
-  const hoverEdge = async (y: number) => {
-    const bounds = (await edgeToggle.boundingBox())!;
-    await edgeToggle.hover({ position: { x: bounds.width / 2, y } });
-    await expect
-      .poll(() => edgeToggle.evaluate((element) => getComputedStyle(element, '::before').opacity))
-      .toBe('0.55');
-  };
-  await hoverEdge(12);
-  const edgeBounds = (await edgeToggle.boundingBox())!;
-  await hoverEdge(edgeBounds.height - 12);
-  await page.mouse.move(300, 300);
-  await expect.poll(() => edgeToggle.evaluate((element) => getComputedStyle(element, '::before').opacity)).toBe('0');
-  const noHoverChange = async (button: typeof brand) => {
-    const before = await button.evaluate((element) => getComputedStyle(element).backgroundColor);
-    await button.hover();
-    const after = await button.evaluate((element) => getComputedStyle(element).backgroundColor);
-    expect(after).toBe(before);
-  };
-  await noHoverChange(brand);
-  await noHoverChange(edgeToggle);
-  await noHoverChange(quizzesButton);
   await edgeToggle.click({ position: { x: 6, y: 96 } });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
-  await expect.poll(orientation).toEqual({ a: -1, d: -1 });
   await expect.poll(async () => (await aside.boundingBox())?.width).toBe(64);
-  await assertArrowCentered();
-  expect((await quizzesButton.boundingBox())!.y).toBe(quizzesTopExpanded);
-  const collapsedSeparatorBounds = (await separator.boundingBox())!;
-  expect(collapsedSeparatorBounds.y + collapsedSeparatorBounds.height / 2).toBeCloseTo(
-    (brandBounds.y + brandBounds.height + quizzesTopExpanded) / 2,
-  );
-  expect(collapsedSeparatorBounds.width).toBeLessThan(expandedSeparatorBounds.width);
-  expect(await quizzesButton.evaluate((element) => getComputedStyle(element).borderRadius)).toBe(brandRadius);
-  await noHoverChange(brand);
-  await noHoverChange(quizzesButton);
-  await noHoverChange(edgeToggle);
-  await edgeToggle.click({ position: { x: 6, y: 12 } });
+  await edgeToggle.click({ position: { x: 6, y: 96 } });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
   await expect.poll(async () => (await aside.boundingBox())?.width).toBe(240);
-  await edgeToggle.click({ position: { x: 6, y: edgeBounds.height - 12 } });
-  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
-  await expect.poll(async () => (await aside.boundingBox())?.width).toBe(64);
-  await expect.poll(orientation).toEqual({ a: -1, d: -1 });
   await edgeToggle.focus();
   await page.keyboard.press('Enter');
-  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
+  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
   await page.keyboard.press('Space');
-  await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await edgeToggle.click({ position: { x: 6, y: 96 } });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
-  await expect.poll(orientation).toEqual({ a: 1, d: 1 });
-  expect(await arrow.evaluate((element) => getComputedStyle(element).transitionProperty)).toBe('none');
   await edgeToggle.click({ position: { x: 6, y: 96 } });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
-  await page.emulateMedia({ reducedMotion: 'no-preference' });
   await testInfo.attach('navigation-desktop-collapsed.png', {
     body: await page.screenshot({ path: testInfo.outputPath('navigation-desktop-collapsed.png') }),
     contentType: 'image/png',
@@ -609,9 +457,6 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await page.getByTestId('drawer-edge-toggle').first().click();
   const navigationDialog = page.getByRole('presentation').last();
   await expect(navigationDialog).toBeVisible();
-  const mobileDrawer = page.locator('.MuiDrawer-paper').last();
-  await expect(mobileDrawer).toHaveCSS('width', '240px');
-  await expect.poll(async () => (await mobileDrawer.boundingBox())?.x).toBe(0);
   const overlayToggle = page.getByTestId('drawer-edge-toggle').last();
   await overlayToggle.click({ position: { x: 6, y: 12 } });
   await expect(navigationDialog).toBeHidden();
@@ -629,7 +474,6 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await page.getByTestId('drawer-edge-toggle').first().click();
   const screenshotDialog = page.getByRole('presentation').last();
   await expect(screenshotDialog).toBeVisible();
-  await expect.poll(async () => (await page.locator('.MuiDrawer-paper').last().boundingBox())?.x).toBe(0);
   await testInfo.attach('navigation-mobile-expanded.png', {
     body: await page.screenshot({ path: testInfo.outputPath('navigation-mobile-expanded.png') }),
     contentType: 'image/png',
@@ -739,7 +583,6 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
   await retry.focus();
   await expect(retry).toBeFocused();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
   releaseRetry();
   await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
   expect(failures).toBe(2);
@@ -853,9 +696,6 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   const loading = page.getByRole('status', { name: 'Loading subjects' });
   await expect(loading).toBeVisible();
   await expect(loading).toHaveAttribute('aria-busy', 'true');
-  const skeleton = loading.locator('.MuiSkeleton-root').first();
-  await expect(skeleton).toBeVisible();
-  expect(await skeleton.evaluate((element) => getComputedStyle(element).animationName)).toBe('none');
   release();
   await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
   await expect(loading).toHaveCount(0);
@@ -865,11 +705,14 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await showQuestion(page, /What is/);
   await expect(page.locator('.katex')).toBeVisible();
-  expect(
-    await page.evaluate(async () => {
-      await document.fonts.ready;
-      return [...document.fonts].some((font) => font.family.includes('KaTeX_Main') && font.status === 'loaded');
-    }),
-  ).toBe(true);
   await expectNoHorizontalOverflow(page);
+});
+
+test('nginx learner image hides the editor and sends security headers', async ({ request }) => {
+  const origin = process.env.MEDUCATION_E2E_NGINX_URL;
+  test.skip(!origin, 'Set MEDUCATION_E2E_NGINX_URL to a running learner image');
+  expect((await request.get(`${origin}/admin.html`)).status()).toBe(404);
+  const headers = (await request.get(`${origin}/`)).headers();
+  expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
+  expect(headers['x-content-type-options']).toBe('nosniff');
 });

@@ -13,3 +13,21 @@ dist/**
 coverage/**
 test-results/**
 playwright-report/**
+
+# Not formatted by the root Prettier run
+marketing/**
+backend/**
+docs/**
+.agents/**
+.claude/**
+.cache/**
+var/**
+test-results-admin/**
+ops/**
+public/**
+*.md
+*.html
+*.yaml
+*.yml
+src/shared/ui/content/katex.css
+src/**/*.json

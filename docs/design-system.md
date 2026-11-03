@@ -19,11 +19,7 @@ Use rounded caps and joins, nominal 1.75–2-unit strokes, and comparable weight
 
 Review at 20 and 24px for topic rows, 46px in an 80px card badge, and 64px in an 88px header badge. Check contours, clipping, alignment, negative space and visual weight together. The studio uses the existing light palette and dark brand accent `#EF9B6B` on a dark review surface; the application currently has a light theme only.
 
-Run `npm run icons -- search "concept"`, `propose "concept"`, `create "concept" --from source.svg --metadata metadata.json --id semantic-id`, `validate`, or `preview`. Creation fits the source artboard without distortion, converts paint to `currentColor`, and optimizes it; deliberate anatomy, tint and optical changes happen in the source artwork. Search uses local catalogs and keyword matching, so medical and visual judgment remains part of review.
-
-The icon studio is a temporary review workspace under ignored `.cache/icons/workspace`. It holds candidate SVGs, metadata and optional source comparisons. The standalone gallery at `.cache/icons/gallery.html` compares candidates with production artwork in both review themes.
-
-Use [.agents/skills/meducation-icons/SKILL.md](../.agents/skills/meducation-icons/SKILL.md) for sourcing, review and integration. Accepting a displayed replacement authorizes integration in the same change, unless the user explicitly asks to defer it. Apply the artwork to the existing subject or topic glyph definition and put required source credits and license notices in `public/icon-licenses.txt`. Remove integrated or discarded candidates, their metadata and review files. Keep only undecided proposals. The app code and shipped notices are the maintained copies; there is no approved-artwork archive or hash approval record.
+Sourcing, the icon studio (`npm run icons`), review and integration follow the [icon skill](../.agents/skills/meducation-icons/SKILL.md). The app glyph definitions and `public/icon-licenses.txt` are the maintained copies.
 
 ## Motion
 

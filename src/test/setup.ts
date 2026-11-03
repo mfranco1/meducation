@@ -3,10 +3,10 @@ import '@testing-library/jest-dom/vitest';
 import { afterEach, vi } from 'vitest';
 import { clearSavedSubjectCatalogViews } from '../shared/ui/catalog/useSubjectCatalog';
 
-// Tests render the desktop (lg+) layout unless they override matchMedia.
-const matchMedia = (matches = false) =>
+// Builds a matchMedia stub where `matches` decides each query.
+export const matchMediaFor = (matches: (query: string) => boolean) =>
   vi.fn().mockImplementation((query: string) => ({
-    matches: matches || query === '(min-width:1200px)' || query === '(min-width:600px)',
+    matches: matches(query),
     media: query,
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -15,9 +15,12 @@ const matchMedia = (matches = false) =>
     dispatchEvent: vi.fn(),
   }));
 
+// Tests render the desktop (lg+) layout unless they override matchMedia.
+const desktopMedia = () => matchMediaFor((query) => query === '(min-width:1200px)' || query === '(min-width:600px)');
+
 Object.defineProperty(HTMLElement.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() });
 
-Object.defineProperty(window, 'matchMedia', { writable: true, value: matchMedia() });
+Object.defineProperty(window, 'matchMedia', { writable: true, value: desktopMedia() });
 
 class TestIntersectionObserver {
   constructor(private readonly callback: IntersectionObserverCallback) {}
@@ -54,5 +57,5 @@ Object.defineProperty(globalThis, 'ResizeObserver', { writable: true, value: Tes
 afterEach(() => {
   cleanup();
   clearSavedSubjectCatalogViews();
-  window.matchMedia = matchMedia();
+  window.matchMedia = desktopMedia();
 });

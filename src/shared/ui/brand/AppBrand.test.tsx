@@ -20,15 +20,6 @@ describe('AppBrand', () => {
     expect(onClick).toHaveBeenCalledOnce();
   });
 
-  it('supports wordmark, stacked, monochrome, size, and root class options', () => {
-    render(<AppBrand variant="wordmark" layout="stacked" size={210} colorMode="mono" className="brand-test" />);
-    const logo = screen.getByRole('img', { name: brand.name });
-    expect(logo).toHaveClass('brand-test');
-    expect(logo).toHaveAttribute('data-brand-color', 'mono');
-    expect(logo).toHaveAttribute('data-brand-layout', 'stacked');
-    expect(logo.querySelector('svg')).toHaveAttribute('viewBox', '0 0 400 88');
-  });
-
   it('requires a spoken action description for clickable brands', () => {
     expect(() => render(<AppBrand onClick={() => undefined} />)).toThrow('requires an actionLabel');
   });

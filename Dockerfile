@@ -6,12 +6,11 @@ RUN npm ci
 COPY index.html vite.config.ts tsconfig.json tsconfig.app.json tsconfig.node.json ./
 COPY src ./src
 COPY public ./public
-COPY scripts ./scripts
-COPY tests/fixtures ./tests/fixtures
+COPY scripts/branding ./scripts/branding
+COPY scripts/containers ./scripts/containers
 ENV VITE_BUILD_ADMIN=false
-RUN npm run typecheck \
-    && npm run build:learner -- --manifest --sourcemap hidden \
-    && node scripts/containers/check-learner-artifacts.mjs dist > /learner-artifacts.json \
+RUN npm run build:learner -- --manifest --sourcemap hidden \
+    && node scripts/containers/check-learner-artifacts.mjs dist \
     && find dist -name '*.map' -delete \
     && rm -r dist/.vite
 
@@ -20,7 +19,7 @@ COPY admin.html ./
 COPY ops/containers/nginx.conf ./nginx.source.conf
 ENV VITE_BUILD_ADMIN=true
 RUN npm run build:admin -- --manifest --sourcemap hidden \
-    && node scripts/containers/check-admin-artifacts.mjs dist nginx.source.conf /admin-nginx.conf > /admin-artifacts.json \
+    && node scripts/containers/check-admin-artifacts.mjs dist nginx.source.conf /admin-nginx.conf \
     && find dist -name '*.map' -delete \
     && rm -r dist/.vite
 
@@ -38,10 +37,8 @@ CMD ["-g", "daemon off;"]
 
 FROM static-runtime AS admin
 COPY --from=admin-builder /build/dist /opt/meducation/html
-COPY --from=admin-builder /admin-artifacts.json /opt/admin-artifacts.json
 COPY --from=admin-builder /admin-nginx.conf /etc/nginx/nginx.conf
 
 # Bare docker build and existing Compose users must still get learner-only assets.
 FROM static-runtime AS learner
 COPY --from=builder /build/dist /opt/meducation/html
-COPY --from=builder /learner-artifacts.json /opt/learner-artifacts.json

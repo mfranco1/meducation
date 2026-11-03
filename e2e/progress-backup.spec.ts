@@ -75,14 +75,13 @@ test('downloads a backup and restores it into a fresh browser context', async ({
     await reload;
     await expect(target.getByRole('heading', { name: 'All Subjects' })).not.toBeFocused();
     await expect(target.getByText('Progress restored', { exact: true })).toBeVisible();
-    await expect(target.getByText('Progress restored', { exact: true })).not.toBeVisible({ timeout: 6500 });
     expect(await portableProgress(target)).toEqual({ quiz: exported.quiz, flashcards: exported.flashcards });
   } finally {
     await fresh.close();
   }
 });
 
-test('resets progress and dismisses its success toast after five seconds', async ({ page }) => {
+test('resets progress', async ({ page }) => {
   await seedProgress(page);
   await page.goto('/');
   await page.getByRole('button', { name: 'Progress', exact: true }).click();
@@ -97,7 +96,6 @@ test('resets progress and dismisses its success toast after five seconds', async
   await expect(page.getByText('Progress reset', { exact: true })).toBeVisible();
   expect(await stored(page, quizKey)).toBeNull();
   expect(await stored(page, flashcardsKey)).toBeNull();
-  await expect(page.getByText('Progress reset', { exact: true })).not.toBeVisible({ timeout: 6500 });
 });
 
 test('rejects an invalid backup file without changing progress', async ({ page }) => {

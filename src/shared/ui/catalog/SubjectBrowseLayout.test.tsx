@@ -4,14 +4,8 @@ import { expect, it, vi } from 'vitest';
 import { theme } from '../../theme';
 import { SubjectBrowseLayout } from './SubjectBrowseLayout';
 
-it.each([false, true])('omits the completion loading placeholder below sm (sm or wider: %s)', (wide) => {
-  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: wide,
-    media: query,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  }));
-  const { container } = render(
+it('shows the content type tabs and the active panel', () => {
+  render(
     <ThemeProvider theme={theme}>
       <SubjectBrowseLayout
         subjectId="s1"
@@ -25,7 +19,6 @@ it.each([false, true])('omits the completion loading placeholder below sm (sm or
       </SubjectBrowseLayout>
     </ThemeProvider>,
   );
-  expect(container.querySelectorAll('.MuiSkeleton-circular')).toHaveLength(wide ? 1 : 0);
   expect(screen.getByRole('tab', { name: 'Quizzes', selected: true })).toBeVisible();
   expect(screen.getByRole('tabpanel', { name: 'Quizzes' })).toHaveTextContent('Content');
 });

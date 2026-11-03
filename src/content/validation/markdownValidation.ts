@@ -25,7 +25,8 @@ type MarkdownNode = {
   children?: MarkdownNode[];
 };
 
-const markdownParser = unified().use(remarkParse).use(remarkGfm).use(remarkMathPlugin);
+const createMarkdownParser = () => unified().use(remarkParse).use(remarkGfm).use(remarkMathPlugin);
+let markdownParser: ReturnType<typeof createMarkdownParser> | undefined;
 // parse5 decodes references and reports malformed/duplicate attributes before policy.
 // Token callbacks preserve table/inline fragments that a repaired DOM may discard.
 function rawHtmlIssues(html: string, field: RichContentField, questionId: string): ValidationIssue[] {
@@ -135,6 +136,7 @@ export function markdownIssues(markdown: string, field: ContentField, questionId
     node.children?.forEach(visit);
   };
   try {
+    markdownParser ??= createMarkdownParser();
     const tree = markdownParser.runSync(markdownParser.parse(markdown)) as MarkdownNode;
     const collect = (node: MarkdownNode) => {
       if (node.type === 'definition' && node.identifier && node.url && !definitions.has(node.identifier))

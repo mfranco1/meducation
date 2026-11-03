@@ -3,12 +3,18 @@
 import json
 import secrets
 import subprocess
-import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "containers"))
-from compose_support import docker
+
+def docker(*args, input_text=None, timeout=30):
+    result = subprocess.run(
+        ["docker", *args], input=input_text, capture_output=True, text=True,
+        timeout=timeout, check=False,
+    )
+    if result.returncode:
+        raise RuntimeError(f"Docker command failed ({result.returncode}): {result.stderr[-1500:]}")
+    return result.stdout.strip()
 
 PG_IMAGE = "postgres:17.11-bookworm@sha256:3645570cccdfa447589da9f57dd740faa29b30938e861289a5574b6ca6b03826"
 ROLES = ("MIGRATOR", "READER", "BACKUP", "OPERATOR", "SESSION", "EDITOR")

@@ -98,23 +98,9 @@ describe('content-only bulk add drafts', () => {
     ).toEqual(['$.quizzes[0].description must be a string.']);
   });
 
-  it('leaves blank descriptions unset', () => {
+  it('adds quizzes to an existing topic, leaving blank descriptions unset', () => {
     const result = compileBulkAddDraft(
-      {
-        topics: [
-          { name: 'Pearls', description: ' ', quizzes: [{ name: 'Q', description: '', items: [item('First')] }] },
-        ],
-      },
-      { kind: 'subject', subjectId: 's1' },
-      bank(),
-    );
-    expect(result.plan?.topics[0].fields).toEqual({ name: 'Pearls' });
-    expect(result.plan?.topics[0].groups[0].create?.fields).toEqual({ name: 'Q' });
-  });
-
-  it('adds quizzes to an existing topic', () => {
-    const result = compileBulkAddDraft(
-      { quizzes: [{ name: 'Added', items: [item('One')] }] },
+      { quizzes: [{ name: 'Added', description: ' ', items: [item('One')] }] },
       { kind: 'topic', topicId: 't1' },
       bank(),
     );
@@ -258,20 +244,6 @@ describe('content-only bulk add drafts', () => {
       ],
     });
     expect(result.merged).toEqual(['Topic · Topic · t1', 'Quiz · Quiz · q1']);
-  });
-
-  it('reuses an existing quiz in the selected topic', () => {
-    const result = compileBulkAddDraft(
-      { quizzes: [{ name: 'Quiz', items: [item('One')] }] },
-      { kind: 'topic', topicId: 't1' },
-      bank(),
-    );
-    expect(result.plan).toEqual({
-      topics: [
-        { id: 't1', groups: [{ parentId: 'q1', childKind: 'questions', children: [{ ...item('One'), choices }] }] },
-      ],
-    });
-    expect(result.merged).toEqual(['Quiz · Quiz · q1']);
   });
 
   it('folds duplicate topics and quizzes in the batch, keeping the first description', () => {

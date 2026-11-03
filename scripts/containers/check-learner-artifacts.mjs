@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, resolve } from 'node:path';
 
@@ -23,25 +22,3 @@ const manifest = JSON.parse(readFileSync(join(root, '.vite/manifest.json'), 'utf
 if ('admin.html' in manifest || files.some((file) => relative(root, file) === 'admin.html'))
   throw new Error('Learner build contains the admin entry.');
 if (!sources.some((source) => source.endsWith('/src/main.tsx'))) throw new Error('Missing learner bootstrap module.');
-
-const shipped = files.filter((file) => !file.endsWith('.map') && !relative(root, file).startsWith('.vite/'));
-process.stdout.write(
-  `${JSON.stringify(
-    {
-      moduleCount: sources.length,
-      adminAndQaModules: [],
-      canonicalBankModules: [],
-      entries: Object.keys(manifest).sort(),
-      files: shipped.map((file) => {
-        const bytes = readFileSync(file);
-        return {
-          path: relative(root, file),
-          bytes: bytes.length,
-          sha256: createHash('sha256').update(bytes).digest('hex'),
-        };
-      }),
-    },
-    null,
-    2,
-  )}\n`,
-);

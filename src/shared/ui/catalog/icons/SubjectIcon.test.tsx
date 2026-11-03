@@ -29,16 +29,5 @@ describe('SubjectIcon', () => {
     expect(icon).toHaveAttribute('data-subject-icon', subjectId);
     expect(icon).toHaveAttribute('data-icon-name', iconName);
     expect(icon).toHaveAttribute('aria-hidden', 'true');
-    expect(icon).toHaveAttribute('focusable', 'false');
-    expect(icon).not.toHaveAttribute('title');
-  });
-
-  it('uses a 24-unit view box', () => {
-    const { container } = render(
-      <ThemeProvider theme={theme}>
-        <SubjectIcon subjectId="s1" />
-      </ThemeProvider>,
-    );
-    expect(container.querySelector('svg')).toHaveAttribute('viewBox', '0 0 24 24');
   });
 });

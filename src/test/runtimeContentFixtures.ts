@@ -7,7 +7,7 @@ import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
 import * as flashcards from '../content/api/runtimeFlashcardBank';
 
 /** One topic per distinct `topicId`, named after its ID unless named in `names`. */
-export function topicsFor(
+function topicsFor(
   rows: readonly { subjectId: string; topicId: string }[],
   names: Record<string, string> = {},
 ): Topic[] {

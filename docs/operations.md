@@ -92,7 +92,6 @@ Open `http://127.0.0.1:5173/admin.html`. `.venv/bin/python scripts/local-authori
 - Authentication is an OIDC authorization-code flow with S256 PKCE, handled by the backend (Authlib, joserfc). Sessions are opaque, stored hashed in the `admin_auth` schema, expire after 30 idle minutes or 8 absolute hours, and require a factor within 15 minutes for publish, discard, activate and export. Writes need exact Origin and a session CSRF header and are never replayed after reauthentication.
 - Only a synthetic loopback issuer exists. `serve.py` provides it: sign in, then confirm "Continue as local editor (development only)". It simulates identity and fresh-factor assurance, provides no real MFA, and binds only `127.0.0.1`. Never expose it through a tunnel. Production configuration with admin enabled refuses to start.
 - Settings (`MEDUCATION_ADMIN_*`): `ENABLED` (default false), `ENVIRONMENT`, `ADAPTER`, `ORIGIN`, `ISSUER`, `AUTHORIZATION_ENDPOINT`, `TOKEN_ENDPOINT`, `JWKS_URI`, `CLIENT_ID`, `CLIENT_SECRET`, `EDITOR_SUBJECT` (exact issuer subject), `EPOCH` (external revocation generation), `ENCRYPTION_KEY` (Fernet), `SESSION_DATABASE_URL`, `EDITOR_DATABASE_URL`. Changing the allowlist or epoch invalidates all sessions; `meducation-db invalidate-restored-sessions` (revokes every session) and disabling admin are the emergency controls.
-- Explicit diagnostics: signed-in `POST /api/admin/diagnostics` with `{}` and the CSRF token returns bounded reader/schema/publication/session/editor status without URLs, SQL or content.
 
 ## Authoring and publication
 
@@ -103,13 +102,10 @@ Open `http://127.0.0.1:5173/admin.html`. `.venv/bin/python scripts/local-authori
 ## Backup and restore
 
 ```sh
-.venv/bin/python scripts/local-authoring/backup.py         # new 0600 full dump + checksum sidecar in var/backups/postgres/
-.venv/bin/python scripts/local-authoring/verify-backup.py  # offline restore rehearsal into a disposable database
+.venv/bin/python scripts/local-authoring/backup.py   # new 0600 full dump + checksum sidecar in var/backups/postgres/
 ```
 
 `backup.py` dumps `content` and `admin_auth` as PG17 custom format, validates the table of contents and never replaces earlier archives. Run it after meaningful authoring sessions and at least daily while editing. Copies live outside the Docker volume but on this machine only; they do not survive loss of the host. `runtime.env` and `operator.env` are not in the dump.
-
-`verify-backup.py` requires writer access to be retired first, restores into a `meducation_verify_*` database, checks tables, sequences, grants and exports, quarantines sessions, advances the ID sequences, and removes only its own database. It never touches the authority.
 
 Real recovery:
 
@@ -136,7 +132,7 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 - Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 22, Nginx unprivileged). Update tag and digest together and rebuild. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
 - Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB (the API itself limits draft bodies to 1 MiB, 16 MiB for bulk), and logs only failed requests (fixed route families, no paths or queries). Private responses are `no-store`.
 - Runtime pools: reader, session and editor each at most two connections; migrations and jobs use direct unpooled connections.
-- Container smoke: `npm run test:containers` (`scripts/containers/smoke.py`) builds the API and learner images, starts an isolated Compose project with a disposable Postgres seeded from the synthetic `e2e/fixtures` banks, checks the learner page, `/api/v1/subjects` through Nginx, the health routes, the 404 for `/admin.html` and the static security headers, then removes the project and volume. CI runs it on amd64. The learner build fails inside the Dockerfile if it ships admin or content-bank modules (`scripts/containers/check-learner-artifacts.mjs`).
+- The learner build fails inside the Dockerfile if it ships admin or content-bank modules (`scripts/containers/check-learner-artifacts.mjs`). CI builds the learner image and checks the `/admin.html` 404 and security headers ([testing](testing.md)).
 
 ## Logs and alerts
 

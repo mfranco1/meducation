@@ -6,8 +6,8 @@ import { brandingPlugin } from './scripts/branding/brandingPlugin';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  const input: Record<string, string> = { learner: resolve(__dirname, 'index.html') };
-  if (env.VITE_BUILD_ADMIN === 'true') input.admin = resolve(__dirname, 'admin.html');
+  const input: Record<string, string> = { learner: resolve(import.meta.dirname, 'index.html') };
+  if (env.VITE_BUILD_ADMIN === 'true') input.admin = resolve(import.meta.dirname, 'admin.html');
 
   return {
     plugins: [brandingPlugin(), react()],

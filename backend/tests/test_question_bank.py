@@ -28,11 +28,6 @@ def bank_data() -> dict:
     }
 
 
-@pytest.fixture
-def bank_input(bank_data):
-    return bank_data
-
-
 def test_bank_rejects_invalid_version_and_answer(bank_data: dict) -> None:
     wrong_version = {**bank_data, "schemaVersion": 5}
     with pytest.raises(ValueError, match="Unsupported question bank schema"):
@@ -40,10 +35,12 @@ def test_bank_rejects_invalid_version_and_answer(bank_data: dict) -> None:
     wrong_answer = {**bank_data, "questions": [{**bank_data["questions"][0], "answer": "Z"}]}
     with pytest.raises(ValueError, match="unknown answer"):
         Bank.model_validate(wrong_answer)
+    with pytest.raises(ValueError, match="at least one question"):
+        Bank.model_validate({**bank_data, "questions": []})
 
 
-def test_content_api_and_revision_conflicts(bank_input: dict) -> None:
-    app = fixture_app(bank_input)
+def test_content_api_and_revision_conflicts(bank_data: dict) -> None:
+    app = fixture_app(bank_data)
     with TestClient(app) as client:
         assert client.get("/health/live").json() == {"status": "live"}
         assert client.get("/health/ready").json() == {"status": "ready"}
@@ -87,7 +84,7 @@ def test_large_content_responses_are_gzipped(bank_data: dict) -> None:
 
 
 def test_injected_repository_skips_payload_build_for_conditional_response(
-    bank_input: dict,
+    bank_data: dict,
 ) -> None:
     class CountingRepository(FixtureQuestionRepository):
         subject_reads = 0
@@ -96,8 +93,8 @@ def test_injected_repository_skips_payload_build_for_conditional_response(
             self.subject_reads += 1
             return super().list_subjects()
 
-    repository = CountingRepository(bank_input)
-    app = fixture_app(bank_input, questions=repository)
+    repository = CountingRepository(bank_data)
+    app = fixture_app(bank_data, questions=repository)
     with TestClient(app) as client:
         first = client.get("/api/v1/subjects")
         assert first.status_code == 200
@@ -114,11 +111,11 @@ def test_injected_repository_skips_payload_build_for_conditional_response(
 
 
 def test_sparse_nested_metadata_is_preserved_in_api_response(
-    bank_input: dict, bank_data: dict
+    bank_data: dict
 ) -> None:
     bank_data["questions"][0]["rationaleMeta"] = {"sources": "Reference"}
     bank_data["questions"][0]["metadata"] = {"topic": "Anatomy"}
-    app = fixture_app(bank_input)
+    app = fixture_app(bank_data)
     with TestClient(app) as client:
         question = client.get("/api/v1/quizzes/q1/questions").json()["questions"][0]
         assert question["rationaleMeta"] == {"sources": "Reference"}
@@ -134,9 +131,9 @@ def test_sparse_nested_metadata_is_preserved_in_api_response(
     ],
 )
 def test_missing_catalog_resources_return_specific_404(
-    bank_input: dict, path: str, code: str
+    bank_data: dict, path: str, code: str
 ) -> None:
-    with TestClient(fixture_app(bank_input)) as client:
+    with TestClient(fixture_app(bank_data)) as client:
         response = client.get(path)
         assert response.status_code == 404
         assert response.json() == {"detail": {"code": code}}
@@ -151,8 +148,8 @@ def test_missing_catalog_resources_return_specific_404(
         "/api/v1/quizzes/q1/questions",
     ],
 )
-def test_all_content_routes_reject_stale_revision_and_if_match(bank_input: dict, path: str) -> None:
-    with TestClient(fixture_app(bank_input)) as client:
+def test_all_content_routes_reject_stale_revision_and_if_match(bank_data: dict, path: str) -> None:
+    with TestClient(fixture_app(bank_data)) as client:
         for response in (
             client.get(f"{path}?revision=stale"),
             client.get(path, headers={"If-Match": '"stale"'}),
@@ -164,16 +161,3 @@ def test_all_content_routes_reject_stale_revision_and_if_match(bank_input: dict,
         assert (
             client.get(path, headers={"If-None-Match": current.headers["etag"]}).status_code == 304
         )
-
-
-def test_invalid_bank_fails_startup_and_unstarted_app_reports_unready(
-    bank_input: dict, bank_data: dict
-) -> None:
-    bank_input["questions"] = []
-    app = fixture_app(bank_input)
-    with pytest.raises(ValueError, match="at least one question"), TestClient(app):
-        pass
-
-    # Without a successful lifespan, the route must not claim the bank is ready.
-    client = TestClient(fixture_app(bank_input))
-    assert client.get("/health/ready").status_code == 503

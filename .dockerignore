@@ -11,8 +11,6 @@
 # Repository/agent state and local tooling.
 **/.git
 .agents/
-.codex/
-.aws/
 **/.DS_Store
 **/node_modules
 **/.venv
@@ -31,18 +29,12 @@
 **/*.tsbuildinfo
 **/coverage
 **/test-results
-**/test-results-containers
-**/test-results-progress-backup
 **/test-results-admin
-**/test-results-progress-backup-report.json
 **/playwright-report
 /var/
 /docs/
+/marketing
+/e2e
+/celebrations.html
 
-# Historical corpus archives are never runtime/container build inputs.
-/src/content/*.generated.json
-
-# Retain package sources/manifests/locks, public assets, scripts (including
-# brandingPlugin), Vite/TypeScript configuration.
-# Keep source-test fixtures: the existing TypeScript project checks src tests
-# that import them. Runtime Dockerfiles must copy only their shipped artifacts.
+# Builds need package manifests, public assets, src, scripts and the Vite/TypeScript config.

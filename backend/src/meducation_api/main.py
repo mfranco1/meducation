@@ -9,7 +9,6 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from sqlalchemy.exc import DBAPIError, TimeoutError
 
-from meducation_api.admin.diagnostics import install_diagnostics
 from meducation_api.admin.http import install_editor
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.http import AuthRuntime, install_auth
@@ -166,7 +165,6 @@ def create_app(
 
     install_auth(app, identity_config, auth_factory)
     install_editor(app, identity_config)
-    install_diagnostics(app, config)
     configure_operational_logging()
     app.add_middleware(OperationalMiddleware, routes=app.router.routes)
 

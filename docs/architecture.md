@@ -15,7 +15,7 @@ One frontend package and one Python package. Root HTML entries and tool configur
 - `backend/src/meducation_api`: `main.py` learner routes, `content` (draft records, releases, export and import), `repositories` (release-pinned PostgreSQL readers and response models), `db` (engines, migrations, bootstrap, recovery, the `meducation-db` CLI), `auth` (OIDC and sessions), `admin` (paired editor API and service), `content_policy` (packaged validator), `observability.py` (logs and request middleware).
 - `scripts/content`, `scripts/containers`, `scripts/local-authoring`, `scripts/testing`: maintenance tooling outside the application graph.
 - Tests sit beside their modules; `src/test` has setup and fixtures, `tests/fixtures` shared contracts, `e2e` browser workflows.
-- `marketing/`: isolated local video tooling. Playwright records the PostgreSQL-backed learner app; Remotion composes cached footage using JSON ad specifications. FluidSynth renders original MIDI scores and FFmpeg synthesizes effects and masters the soundtrack. It reuses shared brand presentation and adds no production runtime dependencies. Commands and production standards are in its README and AGENTS files.
+- `marketing/`: separate package for local ad videos (Playwright capture, Remotion, synthesized audio). It reuses brand presentation and adds nothing to the app build; see its README and AGENTS files.
 
 Extend existing modules before adding files. Avoid barrels, forwarding modules and speculative shared layers.
 
@@ -54,7 +54,7 @@ Repositories cache frozen snapshots exposed through `useSyncExternalStore`; gett
 
 ## Rich content
 
-The policy is defined in [question schema](question-schema.md#markdown-and-rationale-metadata). `src/content/richText` implements it; `MarkdownContent` is the only renderer and sanitizes with `rehype-sanitize`. Content is validated at authoring time (`src/content/validation`, packaged as a Node worker for the API) and sanitized again at render time; the browser never rewrites authored text.
+The policy is defined in [question schema](question-schema.md#markdown-and-rationale-metadata). `src/content/richText` implements it; `MarkdownContent` is the only renderer; it lazy-loads `MarkdownRenderer` (Markdown, KaTeX with woff2 fonts, `rehype-sanitize`) so the landing page and shell load without it. The learner and admin bundles never import `src/content/validation` beyond its small limit constants. Content is validated at authoring time (`src/content/validation`, packaged as a Node worker for the API) and sanitized again at render time; the browser never rewrites authored text.
 
 ## Admin and editor
 

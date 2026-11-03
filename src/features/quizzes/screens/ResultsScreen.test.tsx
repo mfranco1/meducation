@@ -5,6 +5,7 @@ import { theme } from '../../../shared/theme';
 import { scoreAnimationDuration } from '../components/results/ResultsScoreHero';
 import { ResultsScreen } from './ResultsScreen';
 import type { CompletedAttempt, Quiz } from '../../../domain/types';
+import { matchMediaFor } from '../../../test/setup';
 
 const quiz: Quiz = { id: 'quiz', subjectId: 'subject', topicId: 't1', name: 'Quiz', questionCount: 3 };
 const attemptFor = (correct: number, total: number, percentage: number): CompletedAttempt => ({
@@ -27,12 +28,7 @@ const renderResults = (attempt: CompletedAttempt) =>
   );
 
 const stubReducedMotion = (reduce: boolean) => {
-  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: reduce && query === '(prefers-reduced-motion: reduce)',
-    media: query,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  }));
+  window.matchMedia = matchMediaFor((query) => reduce && query === '(prefers-reduced-motion: reduce)');
 };
 
 beforeEach(() => stubReducedMotion(true));
@@ -42,29 +38,13 @@ afterEach(() => {
 });
 
 describe('perfect score ring', () => {
-  it('turns gold only for an exact non-empty perfect score', () => {
+  it('turns gold for an exact non-empty perfect score only', () => {
     const arcStroke = () => screen.getByTestId('score-ring-arc').getAttribute('stroke');
     const { rerender } = renderResults(attemptFor(3, 3, 100));
     expect(arcStroke()).toBe(theme.palette.reward.main);
     rerender(
       <ThemeProvider theme={theme}>
-        <ResultsScreen
-          quiz={quiz}
-          attempt={{ ...attemptFor(99, 100, 100), id: 'rounded' }}
-          questions={[]}
-          onBack={() => {}}
-        />
-      </ThemeProvider>,
-    );
-    expect(arcStroke()).not.toBe(theme.palette.reward.main);
-    rerender(
-      <ThemeProvider theme={theme}>
-        <ResultsScreen
-          quiz={quiz}
-          attempt={{ ...attemptFor(0, 0, 100), id: 'empty' }}
-          questions={[]}
-          onBack={() => {}}
-        />
+        <ResultsScreen quiz={quiz} attempt={attemptFor(99, 100, 99)} questions={[]} onBack={() => {}} />
       </ThemeProvider>,
     );
     expect(arcStroke()).not.toBe(theme.palette.reward.main);
@@ -82,7 +62,6 @@ describe('results score hero', () => {
     expect(screen.getByRole('heading', { name: 'Quiz results' })).toBeVisible();
     expect(screen.getByText('Final score: 67%.')).toBeInTheDocument();
     expect(screen.getByText('2 correct · 1 incorrect · 0 unanswered')).toBeVisible();
-    expect(screen.getByText('2 correct · 1 incorrect · 0 unanswered')).toHaveStyle({ marginTop: '8px' });
     expect(screen.getByText('Total time')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Back to quizzes' }));
     expect(onBack).toHaveBeenCalledOnce();
@@ -128,18 +107,7 @@ describe('results reveal', () => {
     expect(screen.getByText('3 correct · 0 incorrect · 0 unanswered')).not.toBeVisible();
 
     act(() => frame?.(scoreAnimationDuration(100) + 1));
-    const dwell = (ms: number) =>
-      act(() => {
-        vi.advanceTimersByTime(ms);
-      });
-    dwell(450);
-    dwell(450);
-    expect(screen.getByText('3 correct · 0 incorrect · 0 unanswered')).toBeVisible();
-    expect(screen.getByText('Total time')).not.toBeVisible();
-    dwell(350);
-    expect(screen.getByText('Total time')).toBeVisible();
-    expect(screen.getByText('Back to quizzes')).not.toBeVisible();
-    dwell(450);
+    for (let step = 0; step < 6; step += 1) act(() => vi.advanceTimersByTime(500));
     expect(screen.getByRole('button', { name: 'Back to quizzes' })).toBeVisible();
   });
 

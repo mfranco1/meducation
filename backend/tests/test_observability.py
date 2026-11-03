@@ -6,11 +6,9 @@ import logging
 import pytest
 from fastapi.testclient import TestClient
 from fixture_content import fixture_app
-from sqlalchemy.exc import DBAPIError, TimeoutError
 from support import ROOT
 
 from meducation_api.main import create_app
-from meducation_api.observability import SafeServerErrorFilter, database_category
 from meducation_api.settings import Settings
 
 CANARY = "L5-secret-code-token-password-authored-text"
@@ -62,29 +60,10 @@ def test_request_logs_never_include_input_and_errors_are_correlated(caplog):
         )
         assert event["duration_ms"] >= 0
         assert CANARY not in json.dumps(events(caplog))
-        denied = client.post("/api/admin/diagnostics", json={"secret": CANARY})
-        assert denied.status_code == 503
-        assert denied.json()["error"]["code"] == "admin_disabled"
-        assert denied.json()["error"]["requestId"] == denied.headers["x-request-id"]
         missing = client.get("/" + CANARY)
         assert missing.status_code == 404
         assert events(caplog)[-1]["route"] == "<unmatched>"
         assert CANARY not in json.dumps(events(caplog))
-
-
-def test_exception_filter_strips_untrusted_fields_and_traces():
-    error = logging.LogRecord(
-        "uvicorn.error",
-        logging.ERROR,
-        "",
-        0,
-        CANARY,
-        (),
-        (RuntimeError, RuntimeError(CANARY), None),
-    )
-    SafeServerErrorFilter().filter(error)
-    assert CANARY not in error.getMessage()
-    assert error.exc_info is error.exc_text is error.stack_info is None
 
 
 def test_health_probes_log_only_failures(caplog):
@@ -111,19 +90,6 @@ def test_startup_failure_is_logged_without_exception_text(caplog):
     assert event["level"] == "error"
     assert event["error"]["type"] == "RuntimeError"
     assert CANARY not in json.dumps(events(caplog))
-
-
-def test_database_failure_categories_do_not_use_exception_messages():
-    assert database_category(TimeoutError(CANARY)) == "pool_timeout"
-    assert (
-        database_category(
-            DBAPIError(
-                "secret SQL", {"secret": CANARY}, RuntimeError(CANARY), connection_invalidated=True
-            )
-        )
-        == "connection_failure"
-    )
-    assert database_category(RuntimeError(CANARY)) == "database_failure"
 
 
 def test_preformatted_server_errors_and_public_private_cors_are_safe(caplog):

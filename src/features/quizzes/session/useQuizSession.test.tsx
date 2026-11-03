@@ -2,7 +2,14 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { commitAnswer } from '../../../domain/quizEngine';
 import { contentSignature } from '../../../domain/contentSignature';
-import type { Attempt, AttemptRepository, Question, Quiz, QuizRepository } from '../../../domain/types';
+import type {
+  Attempt,
+  AttemptRepository,
+  CompletedAttempt,
+  Question,
+  Quiz,
+  QuizRepository,
+} from '../../../domain/types';
 import { useQuizSession } from './useQuizSession';
 
 const subject = { id: 'subject', name: 'Subject', accent: '#123456' };
@@ -47,16 +54,24 @@ function setup() {
     listQuizzes: () => [quiz],
     listQuestions: () => questions,
   };
+  let active: Attempt | undefined = activeAttempt;
+  const completed: CompletedAttempt[] = [];
   const attempts: AttemptRepository = {
-    list: () => [],
+    list: () => completed,
     completionCount: () => 3,
     lowestScore: () => 50,
     latestScore: () => ({ percentage: 80, completedAt: '2026-09-19T00:00:00.000Z' }),
     latestActivityAt: () => '2026-09-20T00:00:00.000Z',
-    getActive: vi.fn(() => activeAttempt),
-    saveActive: vi.fn(),
-    clearActive: vi.fn(),
-    saveCompleted: vi.fn(),
+    getActive: vi.fn(() => active),
+    saveActive: vi.fn((attempt: Attempt) => {
+      active = attempt;
+    }),
+    clearActive: vi.fn(() => {
+      active = undefined;
+    }),
+    saveCompleted: vi.fn((attempt: CompletedAttempt) => {
+      completed.push(attempt);
+    }),
   };
   const writes = attempts as unknown as {
     saveActive: ReturnType<typeof vi.fn>;
@@ -69,7 +84,7 @@ function setup() {
 
 describe('read-only quiz browse session', () => {
   it('navigates and exits without writing attempts or changing attempt summaries', () => {
-    const { result, writes, attempts } = setup();
+    const { result, attempts } = setup();
     const before = {
       active: attempts.getActive(quiz.id),
       completed: attempts.list(),
@@ -85,9 +100,6 @@ describe('read-only quiz browse session', () => {
     expect(result.current.view).toEqual({ page: 'quiz-browse', quiz, index: 1 });
     act(() => result.current.leaveBrowse());
     expect(result.current.view).toEqual({ page: 'subject', subject });
-    expect(writes.saveActive).not.toHaveBeenCalled();
-    expect(writes.saveCompleted).not.toHaveBeenCalled();
-    expect(writes.clearActive).not.toHaveBeenCalled();
     expect({
       active: attempts.getActive(quiz.id),
       completed: attempts.list(),
@@ -110,11 +122,11 @@ describe('read-only quiz browse session', () => {
 
 describe('results review', () => {
   it('opens only from newly completed results and never writes progress while reviewing', () => {
-    const { result, writes } = setup();
+    const { result, attempts } = setup();
     act(() => result.current.startQuiz(quiz, 'exam'));
     act(() => result.current.finishQuiz());
     expect(result.current.view.page).toBe('results');
-    const completedWrites = writes.saveCompleted.mock.calls.length;
+    const completedBefore = [...attempts.list()];
 
     act(() => result.current.reviewResults());
     expect(result.current.view).toMatchObject({ page: 'quiz-review', index: 0 });
@@ -122,8 +134,7 @@ describe('results review', () => {
     expect(result.current.view).toMatchObject({ page: 'quiz-review', index: 1 });
     act(() => result.current.leaveReview());
     expect(result.current.view).toEqual({ page: 'subject', subject });
-    expect(writes.saveCompleted).toHaveBeenCalledTimes(completedWrites);
-    expect(writes.saveActive).toHaveBeenCalledTimes(1);
+    expect(attempts.list()).toEqual(completedBefore);
 
     act(() => result.current.reviewResults());
     expect(result.current.view.page).toBe('subject');
@@ -132,86 +143,70 @@ describe('results review', () => {
 
 describe('quiz exit destinations', () => {
   it('leaves an active quiz for Dashboard after saving its current question', () => {
-    const { result, writes } = setup();
+    const { result, attempts } = setup();
 
     act(() => result.current.resumeQuiz(quiz));
-    writes.saveActive.mockClear();
     act(() => result.current.leaveQuiz('dashboard'));
 
     expect(result.current.view).toEqual({ page: 'dashboard' });
-    expect(writes.saveActive).toHaveBeenCalledOnce();
-    expect(writes.clearActive).not.toHaveBeenCalled();
+    expect(attempts.getActive(quiz.id)).toMatchObject({ id: activeAttempt.id });
   });
 
   it('aborts an active quiz and opens Dashboard', () => {
-    const { result, writes } = setup();
+    const { result, attempts } = setup();
 
     act(() => result.current.resumeQuiz(quiz));
-    writes.saveActive.mockClear();
     act(() => result.current.abortQuiz('dashboard'));
 
     expect(result.current.view).toEqual({ page: 'dashboard' });
-    expect(writes.clearActive).toHaveBeenCalledWith(quiz.id);
-    expect(writes.saveActive).not.toHaveBeenCalled();
+    expect(attempts.getActive(quiz.id)).toBeUndefined();
   });
 
   it('saves an active quiz before leaving for Flashcards and clears it on abort', () => {
-    const { result, writes } = setup();
+    const { result, attempts } = setup();
     act(() => result.current.resumeQuiz(quiz));
-    writes.saveActive.mockClear();
     act(() => result.current.leaveQuiz('flashcards'));
     expect(result.current.view).toEqual({ page: 'flashcards' });
-    expect(writes.saveActive).toHaveBeenCalledOnce();
+    expect(attempts.getActive(quiz.id)).toMatchObject({ id: activeAttempt.id });
 
     act(() => result.current.resumeQuiz(quiz));
     act(() => result.current.abortQuiz('flashcards'));
     expect(result.current.view).toEqual({ page: 'flashcards' });
-    expect(writes.clearActive).toHaveBeenCalledWith(quiz.id);
+    expect(attempts.getActive(quiz.id)).toBeUndefined();
   });
 
   it('can leave read-only results review for Flashcards without changing the completed record', () => {
-    const { result, writes } = setup();
+    const { result, attempts } = setup();
     act(() => result.current.startQuiz(quiz, 'exam'));
     act(() => result.current.finishQuiz());
-    const completedWrites = writes.saveCompleted.mock.calls.length;
+    const completedBefore = [...attempts.list()];
     act(() => result.current.reviewResults());
     act(() => result.current.leaveReview('flashcards'));
     expect(result.current.view).toEqual({ page: 'flashcards' });
-    expect(writes.saveCompleted).toHaveBeenCalledTimes(completedWrites);
+    expect(attempts.list()).toEqual(completedBefore);
   });
 });
 
 describe('saved content and storage recovery', () => {
   it('requires an explicit restart for changed content and keeps the attempt when cancelled', () => {
-    const { result, attempts, writes } = setup();
-    vi.mocked(attempts.getActive).mockReturnValue({ ...activeAttempt, contentSignature: 'changed-content' });
+    const { result, attempts } = setup();
+    const stale = { ...activeAttempt, contentSignature: 'changed-content' };
+    vi.mocked(attempts.getActive).mockReturnValue(stale);
 
     act(() => result.current.resumeQuiz(quiz));
     expect(result.current.pendingResume?.quiz).toEqual(quiz);
     expect(result.current.view.page).toBe('dashboard');
-    expect(writes.saveActive).not.toHaveBeenCalled();
     act(() => result.current.cancelPendingResume());
     expect(result.current.pendingResume).toBeUndefined();
-    expect(writes.saveActive).not.toHaveBeenCalled();
+    expect(attempts.getActive(quiz.id)).toBe(stale);
 
     act(() => result.current.resumeQuiz(quiz));
     act(() => result.current.restartPendingResume());
-    expect(writes.saveActive).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contentSignature: contentSignature(questions),
-        feedbackMode: 'exam',
-        responses: {},
-      }),
-    );
-    expect(result.current.view.page).toBe('quiz');
-  });
-
-  it('blocks resume when scoring-relevant content changed', () => {
-    const { result, attempts, writes } = setup();
-    vi.mocked(attempts.getActive).mockReturnValue({ ...activeAttempt, contentSignature: 'old-content' });
-    act(() => result.current.resumeQuiz(quiz));
-    expect(result.current.pendingResume?.quiz).toEqual(quiz);
-    expect(writes.saveActive).not.toHaveBeenCalled();
+    expect(attempts.list()).toEqual([]);
+    expect(result.current.view).toMatchObject({
+      page: 'quiz',
+      attempt: { contentSignature: contentSignature(questions), feedbackMode: 'exam', responses: {} },
+    });
   });
 
   it('keeps the quiz open and reports a failed completion write', () => {
@@ -230,7 +225,7 @@ describe('Fast Feedback completion timing', () => {
   it('freezes at the final locked answer and keeps time fixed through review, leave/resume, and submission', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-30T00:00:00.000Z'));
-    const { result, writes, attempts } = setup();
+    const { result, attempts } = setup();
 
     act(() => result.current.startQuiz(quiz, 'immediate'));
     let current = result.current.view.page === 'quiz' ? result.current.view.attempt : undefined;
@@ -254,11 +249,8 @@ describe('Fast Feedback completion timing', () => {
       attempt: { elapsedMs: 5_000, timerStartedAt: undefined },
     });
 
-    const pausedAttempt = (writes.saveActive as ReturnType<typeof vi.fn>).mock.calls.at(-1)?.[0] as Attempt;
     vi.advanceTimersByTime(10_000);
-    vi.mocked(attempts.getActive).mockReturnValue(pausedAttempt);
     act(() => result.current.leaveQuiz());
-    vi.mocked(attempts.getActive).mockReturnValue(pausedAttempt);
     act(() => result.current.resumeQuiz(quiz));
     expect(result.current.view).toMatchObject({
       page: 'quiz',
@@ -267,10 +259,8 @@ describe('Fast Feedback completion timing', () => {
 
     vi.advanceTimersByTime(20_000);
     act(() => result.current.finishQuiz());
-    expect(writes.saveCompleted).toHaveBeenCalledOnce();
-    expect(writes.saveCompleted).toHaveBeenCalledWith(
-      expect.objectContaining({ score: expect.objectContaining({ elapsedMs: 5_000 }) }),
-    );
+    expect(attempts.list()).toHaveLength(1);
+    expect(attempts.list()[0].score.elapsedMs).toBe(5_000);
   });
 
   it('keeps incomplete Fast Feedback and Exam Mode timers running when resumed', () => {

@@ -63,9 +63,9 @@ export function QuizSetupDialog({ open, quiz, onClose, onStart, onBrowse }: Quiz
             <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
               {mode === 'immediate'
                 ? 'Selecting an answer locks it and shows the explanation right away.'
-                : mode === 'exam'
-                  ? 'Answers remain hidden until you finish and submit the entire test.'
-                  : 'Browse every question with the correct answer and explanation shown. Nothing is recorded.'}
+                : mode === 'browse' && import.meta.env.DEV
+                  ? 'Browse every question with the correct answer and explanation shown. Nothing is recorded.'
+                  : 'Answers remain hidden until you finish and submit the entire test.'}
             </Typography>
             {import.meta.env.DEV && mode !== 'browse' && (
               <FormControlLabel

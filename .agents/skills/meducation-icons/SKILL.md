@@ -7,8 +7,6 @@ description: Discover, adapt, validate and preview Meducation subject and topic 
 
 Read [the icon design specification](../../../docs/design-system.md#meducation-icon-design-specification) before selecting or adapting artwork. Follow repository AGENTS.md. Accepting a displayed replacement authorizes its production assignment as part of the same change, unless the user explicitly asks for artwork approval only.
 
-Codex can discover this repository skill. Claude Code and other agents can read this same SKILL.md by path; no duplicate installation or agent-specific wrappers are required.
-
 ## Discover and propose
 
 Run from the repository root:

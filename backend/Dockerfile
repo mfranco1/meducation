@@ -31,15 +31,13 @@ FROM python:3.14.8-slim-bookworm@sha256:48b13b003dda20b16f9442b8475aa05fe21bf657
 
 ENV PATH="/opt/venv/bin:$PATH" \
     PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    MEDUCATION_ALLOWED_ORIGINS=http://127.0.0.1:4173,http://localhost:4173
+    PYTHONUNBUFFERED=1
 
 RUN groupadd --gid 10001 meducation \
     && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin meducation
 WORKDIR /app
 COPY --from=builder /opt/venv /opt/venv
 COPY --from=policy /usr/local/bin/node /usr/local/bin/node
-COPY backend/requirements.lock /app/requirements.lock
 
 USER 10001:10001
 EXPOSE 8000

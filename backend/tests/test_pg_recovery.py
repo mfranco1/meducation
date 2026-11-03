@@ -1,16 +1,12 @@
-"""Real PG17: restore recovery, ACL reapplication and export checks."""
-
-import json
+"""Real PG17: restore recovery and ACL reapplication."""
 
 import pytest
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from support import (
-    ROOT,
     auth_app,
     auth_login,
     content_state,
-    editor_post,
     owner_execute,
     scalar,
     seed,
@@ -68,33 +64,3 @@ def test_recovery_reapplied_acl_preserves_editor_and_session_role_boundaries(db)
         with pytest.raises(SQLAlchemyError), engine.begin() as connection:
             connection.execute(text("UPDATE content.draft_changes SET actor='bypass'"))
     assert scalar(db.backup, 'SELECT count(*) FROM admin_auth.sessions') == 1
-
-
-@pytest.mark.parametrize('target', ['draft', 'release'])
-def test_recovery_tools_check_real_deterministic_http_exports(db, tmp_path, target):
-    import io
-    import zipfile
-
-    from meducation_api.content.transfer import inspect_export
-
-    original = seed(db)
-    client, runtime, h = auth_app(db)
-    with client:
-        login, _ = auth_login(client, runtime, h)
-        assert login.status_code == 303
-        snapshot = client.get('/api/admin/draft').json()
-        value = {'target': target}
-        if target == 'release':
-            value['releaseId'] = str(original.release_id)
-        response = editor_post(client, '/exports', value)
-        assert response.status_code == 200
-        assert response.content == editor_post(client, '/exports', value).content
-        with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
-            archive.extractall(tmp_path)
-        report = inspect_export(tmp_path, repository=ROOT, audit=True)
-        assert report['context']['target'] == target
-        assert report['context']['unpublished'] is (target == 'draft')
-        assert report['explanations']['questions'] == len(snapshot['questions'])
-        serialized = json.dumps(report)
-        assert runtime.config.epoch not in serialized
-        assert runtime.config.client_secret.get_secret_value() not in serialized

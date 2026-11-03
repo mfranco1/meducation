@@ -207,8 +207,3 @@ def auth_login(client, runtime, h, *, stepup=False):
         "/api/admin/auth/callback", params={"state": fields["state"][0], "code": h.code}
     ), fields
 
-
-def editor_post(client,path,value):
-    csrf=client.get('/api/admin/session').json()['csrfToken']
-    return client.post('/api/admin'+path,json=value,headers={'Origin':str(client.base_url).rstrip('/'),'X-CSRF-Token':csrf})
-

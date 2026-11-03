@@ -3,12 +3,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AppNavigationDrawer } from './AppNavigationDrawer';
 import { theme } from '../../shared/theme';
+import { matchMediaFor } from '../../test/setup';
 
 describe('AppNavigationDrawer', () => {
   it('shows the logo and the two labelled destinations in the expanded drawer', () => {
-    window.matchMedia = vi
-      .fn()
-      .mockImplementation(() => ({ matches: true, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    window.matchMedia = matchMediaFor(() => true);
     render(
       <ThemeProvider theme={theme}>
         <AppNavigationDrawer active="quizzes" currentPage="quizzes" onNavigate={vi.fn()} />
@@ -22,9 +21,7 @@ describe('AppNavigationDrawer', () => {
   });
 
   it('uses an icon rail and opens the labelled mobile drawer', () => {
-    window.matchMedia = vi
-      .fn()
-      .mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    window.matchMedia = matchMediaFor(() => false);
     const navigate = vi.fn();
     render(
       <ThemeProvider theme={theme}>
@@ -41,9 +38,7 @@ describe('AppNavigationDrawer', () => {
   });
 
   it('does not open the drawer or change routes when the edge control is disabled', () => {
-    window.matchMedia = vi
-      .fn()
-      .mockImplementation(() => ({ matches: false, addEventListener: vi.fn(), removeEventListener: vi.fn() }));
+    window.matchMedia = matchMediaFor(() => false);
     const navigate = vi.fn();
     render(
       <ThemeProvider theme={theme}>

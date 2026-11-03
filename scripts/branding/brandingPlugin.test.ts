@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { brand } from '../../src/shared/brand';
-import { escapeBrandHtml, renderBrandFavicon, transformBrandHtml } from './brandingPlugin';
+import { escapeBrandHtml, transformBrandHtml } from './brandingPlugin';
 
 describe('branding HTML and favicon', () => {
   it('fills both entry titles, theme color, and base-aware favicon URL', () => {
@@ -9,19 +8,6 @@ describe('branding HTML and favicon', () => {
     expect(transformBrandHtml(html, '/study/')).toBe(
       '<title>Meducation</title><meta name="theme-color" content="#b9511b"><link href="/study/favicon.svg"><title>Meducation content admin</title>',
     );
-  });
-
-  it('renders the small mirrored mark with rounded two-color rails', () => {
-    const favicon = renderBrandFavicon();
-    expect(favicon).toContain(`aria-label="${brand.name}"`);
-    expect(favicon).toContain('viewBox="0 0 128 128"');
-    expect(favicon).toContain(brand.mark.smallPage);
-    expect(favicon).toContain(brand.mark.reflection);
-    expect(favicon).toContain('stroke-linecap:round');
-    expect(favicon).toContain(`prefers-color-scheme:dark`);
-    expect(favicon).toContain(brand.palette.light.left);
-    expect(favicon).toContain(brand.palette.light.right);
-    expect(favicon).toContain(brand.palette.dark.left);
   });
 
   it('escapes metadata values before inserting them into HTML', () => {

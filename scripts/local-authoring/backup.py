@@ -10,9 +10,9 @@ from pathlib import Path
 from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "scripts/containers"))
-from compose_support import docker
+sys.path.insert(0, str(ROOT / "scripts/testing"))
 from dotenv import dotenv_values
+from pg_container import docker
 
 
 def main():

@@ -2,11 +2,15 @@
 import { Button, CssBaseline, Stack, ThemeProvider } from '@mui/material';
 import { useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import type { CompletedAttempt, StreakMilestone } from '../../../../domain/types';
-import { theme } from '../../../../shared/theme';
-import { ResultsScreen } from '../../screens/ResultsScreen';
-import { CelebrationOverlay } from './CelebrationOverlay';
-import { celebrationForStreak, perfectTestCelebration, type CelebrationEvent } from './celebrationCatalog';
+import type { CompletedAttempt, StreakMilestone } from '../domain/types';
+import { theme } from '../shared/theme';
+import { ResultsScreen } from '../features/quizzes/screens/ResultsScreen';
+import { CelebrationOverlay } from '../features/quizzes/components/celebration/CelebrationOverlay';
+import {
+  celebrationForStreak,
+  perfectTestCelebration,
+  type CelebrationEvent,
+} from '../features/quizzes/components/celebration/celebrationCatalog';
 
 const milestones: StreakMilestone[] = [3, 5, 10, 25, 50];
 const quiz = { id: 'preview', subjectId: 'preview', topicId: 'preview', name: 'Preview', questionCount: 10 };

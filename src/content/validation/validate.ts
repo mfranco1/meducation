@@ -2,6 +2,7 @@ import type { Question, Subject } from '../../domain/types';
 import type { StoredFlashcardBank, StoredQuestionBank, StoredQuiz, StoredTopic } from '../schema/schema';
 import { isObject } from '../../domain/json';
 import { validateFlashcardMarkdown } from './markdownValidation';
+import { descriptionMaxLength } from './descriptionLimit';
 
 export interface ValidationIssue {
   level: 'error' | 'warning';
@@ -99,7 +100,6 @@ export function validateQuestionBank(
 }
 
 /** Descriptions are optional plain text: at most 500 characters and no line breaks. */
-export const descriptionMaxLength = 500;
 const invalidDescription = (value: unknown) =>
   value !== undefined && (typeof value !== 'string' || value.length > descriptionMaxLength || /[\r\n]/.test(value));
 

@@ -1,8 +1,11 @@
 import { ThemeProvider } from '@mui/material';
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { markdownReady } from '../../../test/markdownReady';
 import { theme } from '../../theme';
 import { MarkdownContent } from './MarkdownContent';
+
+beforeAll(markdownReady, 30000);
 
 describe('MarkdownContent', () => {
   it('renders GFM tables, nested lists, and emphasis', () => {

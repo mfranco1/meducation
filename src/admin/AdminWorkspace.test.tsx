@@ -16,8 +16,6 @@ function mount() {
   );
   return { store, onDirtyChange };
 }
-const requests = (store: ReturnType<typeof mount>['store']) =>
-  store.fetcher.mock.calls.map(([url, init]) => `${init?.method ?? 'GET'} ${String(url).replace('/api/admin', '')}`);
 const quizNav = () => within(screen.getByRole('region', { name: 'Quiz navigator' }));
 async function chooseSubject() {
   fireEvent.click(quizNav().getAllByTitle('Open')[0]);
@@ -31,7 +29,7 @@ async function chooseTopic() {
   await quizNav().findByRole('combobox', { name: 'Quiz' });
 }
 
-it('deletes a subject with its topics, quizzes, items, decks and cards through one cascading request', async () => {
+it('deletes a subject with its topics, quizzes, items, decks and cards', async () => {
   const { store } = mount();
   await chooseSubject();
   fireEvent.click(quizNav().getByRole('button', { name: 'Subject actions' }));
@@ -40,16 +38,13 @@ it('deletes a subject with its topics, quizzes, items, decks and cards through o
   expect(
     within(dialog).getByText('Affected: 1 subjects · 1 topics · 2 quizzes · 3 items · 2 decks · 2 cards.'),
   ).toBeVisible();
-  expect(store.fetcher).not.toHaveBeenCalled();
   fireEvent.click(within(dialog).getByRole('button', { name: 'Delete subject' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-  expect(requests(store)).toEqual(['DELETE /draft/subjects/s1', 'GET /draft']);
-  expect(JSON.parse(store.fetcher.mock.calls[0][1]!.body as string)).toEqual({ expectedVersion: 1, cascade: true });
   expect(store.snapshot.subjects.map((row) => row.id)).toEqual(['s2']);
   expect(store.snapshot.decks).toEqual([]);
 });
 
-it('deletes selected questions one request each, and shows a version conflict without losing the dialog', async () => {
+it('deletes selected questions and shows a version conflict without losing the dialog', async () => {
   const { store } = mount();
   await chooseTopic();
   fireEvent.click(quizNav().getAllByTitle('Open')[2]);

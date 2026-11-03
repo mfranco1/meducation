@@ -1,6 +1,6 @@
 # Testing
 
-Pick checks by the contract you changed. Do not add tests that mirror implementation or incidental styling. Assert observable outcomes and safety invariants. CI (`.github/workflows/checks.yml`) runs the host gates, browser suites and the container smoke.
+Pick checks by the contract you changed. Do not add tests that mirror implementation or incidental styling. Assert observable outcomes and safety invariants. CI (`.github/workflows/checks.yml`) runs the host gates, the real-PostgreSQL backend cases and both browser suites, plus an Nginx check against the built learner image.
 
 ## Suites and commands
 
@@ -14,11 +14,10 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | Typecheck / build | `npm run typecheck`, `npm run build` (learner `build:learner`, admin `build:admin`) |
 | Content validation | `npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json` |
 | Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python -m pytest backend/tests -q` |
-| Real PostgreSQL backend cases | `.venv/bin/python scripts/testing/test-postgres-content.py` (runs `backend/tests/test_pg_*.py`; `--keyword` to focus; `--restartable --keyword resilience` for outage drills) |
+| Real PostgreSQL backend cases | `.venv/bin/python scripts/testing/test-postgres-content.py` (runs `backend/tests/test_pg_*.py`; `--keyword` to focus) |
 | Learner browser (Chromium; includes progress backup) | `npm run test:e2e` (builds with content retries off) |
 | Admin browser | `npm run test:e2e:admin` |
-| Everything | `npm run verify:full` (stops at the first failure) |
-| Container smoke | `npm run test:containers` |
+| Learner image (Nginx) | `docker build --target learner -t meducation-learner:ci .`, `docker run -d -p 127.0.0.1:8088:8080 meducation-learner:ci`, then `MEDUCATION_E2E_NGINX_URL=http://127.0.0.1:8088 npx playwright test -g nginx` |
 
 To replay the streak and Perfect Test cards and the perfect-score results animation without taking a quiz, run `npm run dev` and open `/celebrations.html`. The page is dev only and is not part of any build.
 
@@ -35,7 +34,8 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Persistence and backup: codec validation, restore rollback and dialog-flow unit tests plus the learner browser suite.
 - Backend, stored contracts, policy, shared fixtures: Ruff, mypy, pytest and the real-PostgreSQL gate. Run `npm run build:content-policy` first.
 - Schema, serialization or content changes: validate and compare a fresh selected export (`validate-export`, `audit-export`); fixtures never certify live content.
-- Container, database, recovery or release changes: `npm run test:containers`.
+- Container or Nginx changes: build the learner (and if relevant admin) image and run the Nginx check.
+- Database, recovery or release changes: the real-PostgreSQL gate.
 - Boundary policy changes: `npm run lint` after adding a temporary violating import.
 - Documentation only: check links and commands and run `git diff --check`.
 
@@ -45,15 +45,11 @@ The isolated video workspace uses `npm --prefix marketing run typecheck`, `npm -
 
 ## Icon studio
 
-Run `npm test -- scripts/branding/iconStudio.test.ts` for SVG safety, deterministic normalization, registry integrity, licensing metadata, discovery ordering and offline gallery output. Run `npm run icons -- validate` to check registered candidates and source snapshots, and `npm run icons -- preview` to generate `.cache/icons/gallery.html`. Candidates, metadata, galleries and downloaded catalogs live under ignored `.cache/icons`. Integration removes completed review work; only app artwork and shipped notices remain.
-
-Open the gallery in a browser and inspect both themes at 20/24/46/64px, including card and header badge contexts. Check anatomical recognition, stroke weight, alignment, clipping and optical proportions against the current glyphs and source references. Automated checks do not establish medical accuracy, verify external license claims or grant visual approval. Use the [icon skill](../.agents/skills/meducation-icons/SKILL.md) for source downloads, import metadata and approval.
-
-For studio code changes, also run lint, formatting checks and `npm run build`. The studio has no backend or production routing changes and does not need database/browser fixture suites.
+Run `npm test -- scripts/branding/iconStudio.test.ts`, `npm run icons -- validate` and `npm run icons -- preview`, then review the gallery as described in the [icon skill](../.agents/skills/meducation-icons/SKILL.md). Automated checks do not establish medical accuracy, license truth or visual approval. Studio code changes also need lint, format check and `npm run build`.
 
 ## Fixtures
 
-- `tests/fixtures/` holds contracts shared by the TypeScript and Python validators and the browser suites; `src/test/` holds Vitest setup and admin and API fixtures (IDs must stay valid under the API decoders); `e2e/fixtures` banks are seeded into disposable PostgreSQL; backend fixtures are in `backend/tests/fixture_content.py`.
+- `tests/fixtures/` holds contracts shared by the TypeScript and Python validators and the browser suites; `src/test/` holds Vitest setup and admin and API fixtures (IDs must stay valid under the API decoders); the `tests/fixtures/e2e-*` banks are seeded into disposable PostgreSQL for the browser suites; backend fixtures are in `backend/tests/fixture_content.py`.
 - Do not assert production record counts or individual authored records; use small versioned fixtures.
 
 ## Behavioral invariants to keep covered
@@ -67,6 +63,6 @@ For studio code changes, also run lint, formatting checks and `npm run build`. T
 - Learner content loading retries and times out within bounds, ignores stale responses, and shows recoverable states without altering saved progress.
 - Keyboard shortcuts pause for dialogs and drawers and keep native behavior in form controls; reduced motion is honored.
 - Layouts have no horizontal overflow at the [design-system](design-system.md#foundations) widths.
-- Recovery restores exact tables, sequences and grants, quarantines restored sessions, and advances ID sequences.
+- Recovery re-applies grants and revokes restored sessions.
 
 Automated role, focus and layout checks do not replace manual VoiceOver or NVDA review.

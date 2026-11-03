@@ -24,7 +24,7 @@ import {
   type DraftRecord,
   type RecordKind,
 } from '../core/recordDraft';
-import { descriptionMaxLength } from '../../content/validation/validate';
+import { descriptionMaxLength } from '../../content/validation/descriptionLimit';
 import { AdminRecordPreview } from './AdminRecordPreview';
 
 function OptionalString({

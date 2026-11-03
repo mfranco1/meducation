@@ -145,7 +145,7 @@ def install_auth(
                     csrf=request.headers.get("x-csrf-token"),
                     write=request.method not in ("GET", "HEAD"),
                     fresh=fresh,
-                    interactive=path not in {"/api/admin/access", "/api/admin/diagnostics"},
+                    interactive=path != "/api/admin/access",
                 )
                 principal = await run_in_threadpool(guard.__enter__)
                 request.state.principal = principal

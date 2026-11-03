@@ -22,6 +22,7 @@ const carousel = vi.hoisted(() => ({
 vi.mock('embla-carousel-react', () => ({ default: () => [() => undefined, carousel] }));
 
 import { StudyItemCarousel } from './StudyItemCarousel';
+import { matchMediaFor } from '../../../test/setup';
 
 describe('StudyItemCarousel', () => {
   beforeEach(() => {
@@ -122,18 +123,7 @@ describe('StudyItemCarousel', () => {
   });
 
   it('jumps to the next item when reduced motion is requested', () => {
-    window.matchMedia = vi.fn(
-      (query: string) =>
-        ({
-          matches: query.includes('prefers-reduced-motion'),
-          media: query,
-          addEventListener: vi.fn(),
-          removeEventListener: vi.fn(),
-          addListener: vi.fn(),
-          removeListener: vi.fn(),
-          dispatchEvent: vi.fn(),
-        }) as unknown as MediaQueryList,
-    );
+    window.matchMedia = matchMediaFor((query) => query.includes('prefers-reduced-motion'));
     render(
       <StudyItemCarousel
         items={['one', 'two']}

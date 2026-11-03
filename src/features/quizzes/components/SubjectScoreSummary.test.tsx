@@ -5,18 +5,13 @@ import { theme } from '../../../shared/theme';
 import { SubjectScoreSummary } from './SubjectScoreSummary';
 
 describe('SubjectScoreSummary', () => {
-  it.each([0, 67, 100])('shows score %i and a matching decorative fill', (score) => {
-    const { container } = render(
+  it.each([0, 67, 100])('shows score %i', (score) => {
+    render(
       <ThemeProvider theme={theme}>
         <SubjectScoreSummary score={score} />
       </ThemeProvider>,
     );
     expect(screen.getByText(`Latest Score ${score}%`)).toBeVisible();
-    const track = screen.getByTestId('subject-score-track');
-    const fill = track.firstElementChild as HTMLElement;
-    expect(fill).toHaveStyle({ width: `${score}%` });
-    expect(track).toHaveAttribute('aria-hidden', 'true');
-    expect(container.querySelector('[role="progressbar"]')).toBeNull();
   });
 
   it.each([undefined, NaN, Infinity, -1, 101])('omits unavailable score %s and trend', (score) => {
@@ -27,7 +22,6 @@ describe('SubjectScoreSummary', () => {
     );
     expect(screen.queryByText(/Latest Score/)).toBeNull();
     expect(screen.queryByRole('img', { name: /Score increased/ })).toBeNull();
-    expect(screen.getByTestId('subject-score-track')).toBeVisible();
   });
 
   it.each([

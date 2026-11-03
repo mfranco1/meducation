@@ -1,7 +1,10 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { useState } from 'react';
-import { expect, it, vi } from 'vitest';
+import { beforeAll, expect, it, vi } from 'vitest';
+import { markdownReady } from '../../test/markdownReady';
 import { AdminRecordEditor } from './AdminRecordEditor';
+
+beforeAll(markdownReady, 30000);
 const row = {
   id: 'i1',
   quizId: 'q1',

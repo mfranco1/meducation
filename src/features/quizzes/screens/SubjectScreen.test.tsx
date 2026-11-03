@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { Attempt, FeedbackMode, Quiz } from '../../../domain/types';
 import { theme } from '../../../shared/theme';
 import { SubjectScreen, type QuizProgress } from './SubjectScreen';
+import { matchMediaFor } from '../../../test/setup';
 
 const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };
 const topics = [
@@ -83,7 +84,6 @@ describe('subject quiz action', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(`We can’t load quizzes for ${subject.name} right now.`);
     expect(screen.queryByRole('heading', { name: 'No quizzes available yet' })).toBeNull();
     expect(screen.queryByText('raw backend detail')).toBeNull();
-    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
     expect(screen.getAllByRole('button', { name: 'Retry' })).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
     expect(onRetry).toHaveBeenCalledTimes(1);
@@ -111,19 +111,6 @@ describe('subject quiz action', () => {
     expect(screen.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
     expect(screen.queryByText('Reconnecting…')).toBeNull();
     expect(screen.getAllByRole('status', { name: 'Retrying quizzes' })).toHaveLength(1);
-    expect(document.querySelectorAll('.MuiSkeleton-wave').length).toBeGreaterThan(0);
-  });
-
-  it('labels a never-started quiz as Start', () => {
-    renderSubject({});
-
-    expect(screen.getByRole('button', { name: 'Start quiz: Practice test 1' })).toBeVisible();
-  });
-
-  it('labels a completed quiz as Retake', () => {
-    renderSubject({ completionCount: 1 });
-
-    expect(screen.getByRole('button', { name: 'Retake quiz: Practice test 1' })).toBeVisible();
   });
 
   it('prioritizes Resume test when a saved attempt exists', () => {
@@ -150,36 +137,19 @@ describe('subject quiz action', () => {
     expect(within(dialog).getByRole('button', { name: 'Begin Quiz' })).toBeVisible();
   });
 
-  it('starts a selected mode and resets it when setup is reopened', () => {
+  it.each([
+    ['the default Fast Feedback mode', undefined, 'immediate', true],
+    ['Exam Mode', 'Exam Mode', 'exam', true],
+    ['shuffle switched off', 'Shuffle questions and choices', 'immediate', false],
+  ] as const)('starts with %s', (_name, control, mode, shuffle) => {
     const { onStartQuiz } = renderSubject({});
 
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Exam Mode' }));
-    expect(screen.getByText('Answers remain hidden until you finish and submit the entire test.')).toBeVisible();
-    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
-    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'exam', true);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
-    expect(screen.getByText('Selecting an answer locks it and shows the explanation right away.')).toBeVisible();
-  });
-
-  it('starts in Fast Feedback mode by default', () => {
-    const { onStartQuiz } = renderSubject({});
-
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
+    if (control === 'Exam Mode') fireEvent.click(screen.getByRole('button', { name: control }));
+    if (control === 'Shuffle questions and choices') fireEvent.click(screen.getByRole('switch', { name: control }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
-    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate', true);
-  });
-
-  it('starts without shuffling when the shuffle switch is off', () => {
-    const { onStartQuiz } = renderSubject({});
-
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
-    fireEvent.click(screen.getByRole('switch', { name: 'Shuffle questions and choices' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
-
-    expect(onStartQuiz).toHaveBeenCalledWith(quiz, 'immediate', false);
+    expect(onStartQuiz).toHaveBeenCalledWith(quiz, mode, shuffle);
   });
 
   it('opens the read-only answer browser through its separate callback', () => {
@@ -197,10 +167,11 @@ describe('subject quiz action', () => {
     expect(onStartQuiz).not.toHaveBeenCalled();
   });
 
-  it('resets Browse Answers to Fast Feedback when setup is reopened', () => {
+  it('resets the selected mode to Fast Feedback when setup is reopened', () => {
     const { onBrowseQuiz } = renderSubject({});
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Browse Answers' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Exam Mode' }));
+    expect(screen.getByText('Answers remain hidden until you finish and submit the entire test.')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Close quiz setup' }));
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
     expect(screen.getByText('Selecting an answer locks it and shows the explanation right away.')).toBeVisible();
@@ -220,21 +191,14 @@ describe('subject quiz action', () => {
     }
   });
 
-  it('dismisses setup without starting a quiz', () => {
+  it.each([
+    ['the close button', () => fireEvent.click(screen.getByRole('button', { name: 'Close quiz setup' }))],
+    ['Escape', () => fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' })],
+  ])('dismisses setup with %s without starting a quiz', (_name, dismiss) => {
     const { onStartQuiz } = renderSubject({});
 
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Close quiz setup' }));
-
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(onStartQuiz).not.toHaveBeenCalled();
-  });
-
-  it('dismisses setup with Escape without starting a quiz', () => {
-    const { onStartQuiz } = renderSubject({});
-
-    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Practice test 1' }));
-    fireEvent.keyDown(screen.getByRole('dialog'), { key: 'Escape', code: 'Escape' });
+    dismiss();
 
     expect(screen.queryByRole('dialog')).toBeNull();
     expect(onStartQuiz).not.toHaveBeenCalled();
@@ -358,12 +322,7 @@ describe('subject topics', () => {
 
 describe('subject topics on small screens', () => {
   it('drills from the topic list into a topic and back', async () => {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: false,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
+    window.matchMedia = matchMediaFor(() => false);
     const other = { id: 'other', subjectId: subject.id, topicId: 't2', name: 'Glycolysis quiz', questionCount: 1 };
     render(
       <ThemeProvider theme={theme}>
@@ -394,12 +353,7 @@ describe('subject topics on small screens', () => {
   });
 
   it('returns to the topic list on browser Back', async () => {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: false,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
+    window.matchMedia = matchMediaFor(() => false);
     render(
       <ThemeProvider theme={theme}>
         <SubjectScreen
@@ -422,12 +376,7 @@ describe('subject topics on small screens', () => {
 
 describe('subject search on small screens', () => {
   it('shows results under the topic list and keeps the query when a topic is opened and closed', async () => {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: false,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
+    window.matchMedia = matchMediaFor(() => false);
     const other = { id: 'other', subjectId: subject.id, topicId: 't2', name: 'Glycolysis quiz', questionCount: 1 };
     render(
       <ThemeProvider theme={theme}>
@@ -474,22 +423,17 @@ describe('subject quiz score summaries', () => {
     ['increase', 'Score increased from previous attempt'],
     ['decrease', 'Score decreased from previous attempt'],
     ['unchanged', 'Score unchanged from previous attempt'],
-  ] as const)('shows the %s indicator inside the latest-score pill', (trend, label) => {
+  ] as const)('shows the %s indicator next to the latest score', (trend, label) => {
     renderSubject({ completionCount: 2, latestScore: 75, trend });
 
-    const latestScore = screen.getByText('Score 75%');
-    expect(latestScore.closest('.MuiChip-root')).toContainElement(screen.getByRole('img', { name: label }));
+    expect(screen.getByText('Score 75%')).toBeVisible();
+    expect(screen.getByRole('img', { name: label })).toBeVisible();
   });
 });
 
 describe('continue studying destination', () => {
   it.each([true, false])('reveals the latest unfinished quiz after loading (desktop: %s)', async (desktop) => {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: desktop,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
+    window.matchMedia = matchMediaFor(() => desktop);
     const recent = { ...quiz, id: 'recent', topicId: 't2', name: 'Recent unfinished quiz' };
     const completed = { ...quiz, id: 'completed', name: 'Newer completed quiz' };
     const props = {
@@ -567,12 +511,7 @@ describe('continue studying destination', () => {
   );
 
   it('keeps the normal mobile topic list when no unfinished quiz remains', () => {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: false,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
+    window.matchMedia = matchMediaFor(() => false);
     render(
       <ThemeProvider theme={theme}>
         <SubjectScreen

@@ -13,31 +13,11 @@ import sys
 import tempfile
 import uuid
 from pathlib import Path
-from urllib.parse import urlsplit
 
-from pg_container import docker, role_password_env, start_postgres
+from pg_container import role_password_env, start_postgres
 from sqlalchemy import URL
 
 ROOT = Path(__file__).resolve().parents[2]
-LABEL = "meducation.browser-fixture"
-
-
-def loopback_origin(value):
-    parsed = urlsplit(value)
-    if (
-        parsed.scheme != "http"
-        or parsed.hostname != "127.0.0.1"
-        or not parsed.port
-        or parsed.username
-        or parsed.password
-        or parsed.path
-        or parsed.query
-        or parsed.fragment
-    ):
-        raise argparse.ArgumentTypeError(
-            "Browser fixture origin must be an explicit HTTP loopback origin."
-        )
-    return value
 
 
 def stop(signum, frame):
@@ -47,7 +27,7 @@ def stop(signum, frame):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--api-port", type=int, required=True)
-    parser.add_argument("--origin", type=loopback_origin, required=True)
+    parser.add_argument("--origin", required=True)
     parser.add_argument("--quiz-file", type=Path)
     parser.add_argument("--flashcard-file", type=Path)
     parser.add_argument("--pair-file", type=Path)
@@ -62,15 +42,7 @@ def main():
         if not args.quiz_file or not args.flashcard_file:
             parser.error("Supply --pair-file or both --quiz-file and --flashcard-file.")
         inputs = [args.quiz_file, args.flashcard_file]
-    # Explicit small fixtures only; refuse the routine corpus and ignored exports.
-    sources = [path.resolve() for path in inputs]
-    fixture_roots = [
-        (ROOT / name).resolve() for name in ("tests/fixtures",)
-    ]
-    if any(
-        not any(path.is_relative_to(root) for root in fixture_roots) for path in sources
-    ):
-        parser.error("Browser seed inputs must be explicit repository test fixtures.")
+    sources = inputs
     if args.pair_file:
         pair = {"base": json.loads(sources[0].read_text())["base"]}
     else:
@@ -85,20 +57,15 @@ def main():
         }
     name = "meducation-browser-" + uuid.uuid4().hex[:12]
     child = None
-    attempted = False
     signal.signal(signal.SIGTERM, stop)
     try:
         with tempfile.TemporaryDirectory(prefix=name) as directory:
             folder = Path(directory)
-            (folder / "origin.txt").write_text(args.origin)
             (folder / "pair.json").write_text(json.dumps(pair))
-            attempted = True
             password, port = start_postgres(
                 name,
                 "meducation_test_browser",
                 folder,
-                "--label",
-                LABEL + "=" + name,
                 "--publish",
                 "127.0.0.1::5432",
                 "--tmpfs",
@@ -119,6 +86,7 @@ def main():
                         query={"sslmode": "disable"},
                     ).render_as_string(hide_password=False),
                     "MEDUCATION_FIXTURE_DIRECTORY": str(folder),
+                    "MEDUCATION_FIXTURE_ORIGIN": args.origin,
                     "MEDUCATION_FIXTURE_PORT": str(args.api_port),
                 }
             )
@@ -144,17 +112,7 @@ def main():
             except subprocess.TimeoutExpired:
                 child.kill()
                 child.wait(timeout=5)
-        if attempted:
-            for identifier in docker(
-                "ps", "--all", "--quiet", "--filter", "label=" + LABEL + "=" + name
-            ).splitlines():
-                owned = json.loads(docker("inspect", identifier))[0]
-                if (
-                    owned["Name"] != "/" + name
-                    or owned["Config"]["Labels"].get(LABEL) != name
-                ):
-                    raise RuntimeError("Refusing to remove an unowned browser fixture.")
-                docker("rm", "--force", identifier)
+        subprocess.run(["docker", "rm", "--force", name], capture_output=True, timeout=30, check=False)
 
 
 if __name__ == "__main__":

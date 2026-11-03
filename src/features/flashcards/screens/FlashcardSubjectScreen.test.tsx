@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { FlashcardCatalogResponse } from '../../../content/api/flashcardApiDecoders';
 import { theme } from '../../../shared/theme';
 import { FlashcardSubjectScreen } from './FlashcardSubjectScreen';
+import { matchMediaFor } from '../../../test/setup';
 
 const subject = { id: 's1', name: 'Anatomy', accent: '#b9511b' };
 const catalog: FlashcardCatalogResponse = {
@@ -67,7 +68,7 @@ describe('FlashcardSubjectScreen', () => {
     expect(screen.queryByRole('heading', { name: 'Heart' })).toBeNull();
     fireEvent.pointerEnter(screen.getByRole('button', { name: 'Study deck: Brachial plexus' }));
     fireEvent.focus(screen.getByRole('button', { name: 'Study deck: Brachial plexus' }));
-    expect(onPrepareDeck.mock.calls).toEqual([[catalog.decks[0]], [catalog.decks[0]]]);
+    expect(onPrepareDeck).toHaveBeenCalledWith(catalog.decks[0]);
     fireEvent.click(screen.getByRole('button', { name: 'Study deck: Brachial plexus' }));
     expect(onSelectDeck).toHaveBeenCalledWith(catalog.decks[0]);
 
@@ -207,12 +208,7 @@ describe('FlashcardSubjectScreen', () => {
 it.each([true, false])(
   'continues at the latest nonempty unfinished deck after loading (desktop: %s)',
   async (desktop) => {
-    window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-      matches: desktop,
-      media: query,
-      addEventListener: vi.fn(),
-      removeEventListener: vi.fn(),
-    }));
+    window.matchMedia = matchMediaFor(() => desktop);
     const checkpoint = {
       deckId: 'd1',
       currentCardId: 'f1',
@@ -256,12 +252,7 @@ it.each([true, false])(
 );
 
 it('uses the normal mobile topic list when no unfinished deck remains', () => {
-  window.matchMedia = vi.fn().mockImplementation((query: string) => ({
-    matches: false,
-    media: query,
-    addEventListener: vi.fn(),
-    removeEventListener: vi.fn(),
-  }));
+  window.matchMedia = matchMediaFor(() => false);
   render(
     <ThemeProvider theme={theme}>
       <FlashcardSubjectScreen
