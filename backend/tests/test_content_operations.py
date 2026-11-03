@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pytest
 
+from meducation_api.content.releases import paired_artifacts
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.db.operations import paired_artifacts
 
 ROOT = Path(__file__).resolve().parents[2]
 

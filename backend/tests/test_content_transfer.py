@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from meducation_api.content.transfer import _ordered, capture_pair
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.db.transfer import _ordered, capture_pair
 
 ROOT = Path(__file__).resolve().parents[2]
 

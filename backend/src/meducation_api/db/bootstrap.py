@@ -7,7 +7,7 @@ from sqlalchemy import Engine
 from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.settings import REPOSITORY_ROOT
+from meducation_api.settings import ENV_FILE
 
 ROLES = ("meducation_migrator", "meducation_reader", "meducation_backup", "meducation_operator")
 
@@ -15,7 +15,7 @@ ROLES = ("meducation_migrator", "meducation_reader", "meducation_backup", "meduc
 class RolePasswords(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="MEDUCATION_POSTGRES_",
-        env_file=REPOSITORY_ROOT / "backend/.env",
+        env_file=ENV_FILE,
         extra="ignore",
         hide_input_in_errors=True,
     )
@@ -158,7 +158,7 @@ def bootstrap(engine: Engine, passwords: RolePasswords) -> None:
                 cursor.execute(
                     "GRANT USAGE ON SCHEMA content TO meducation_reader, meducation_backup, meducation_operator"
                 )
-                # Reader grants are selective views in Step 3, not all tables by default.
+                # Reader grants are selective views, not all tables by default.
                 cursor.execute(
                     "ALTER DEFAULT PRIVILEGES FOR ROLE meducation_owner REVOKE EXECUTE ON FUNCTIONS FROM PUBLIC"
                 )

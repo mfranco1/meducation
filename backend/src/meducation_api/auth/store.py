@@ -15,7 +15,7 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.oidc import AuthError, VerifiedEditorIdentity
-from meducation_api.operations import database_failure, dependency_result
+from meducation_api.observability import database_failure, dependency_result
 
 
 def opaque() -> str:

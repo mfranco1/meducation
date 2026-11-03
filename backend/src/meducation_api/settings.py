@@ -5,12 +5,13 @@ from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
+ENV_FILE = REPOSITORY_ROOT / "backend/.env"
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="MEDUCATION_",
-        env_file=REPOSITORY_ROOT / "backend/.env",
+        env_file=ENV_FILE,
         extra="ignore",
         hide_input_in_errors=True,
     )

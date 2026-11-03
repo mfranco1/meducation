@@ -22,8 +22,8 @@ from test_postgres_content import (
     seed,
 )
 
+from meducation_api.content.draft import build_documents, revisions
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
-from meducation_api.db.draft import build_documents, revisions
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.db.migrate import migration_config, upgrade
 from meducation_api.db.recovery import advance_ids
@@ -115,8 +115,8 @@ LEGACY_FLASHCARDS = {
 def test_migration_0009_groups_existing_content_into_topics(db):
     """A 0008 draft gains default topics; the next publish serves topics to learners."""
     to_revision(db, "0008_retire_legacy")
+    from meducation_api.content.releases import activate_release
     from meducation_api.content_policy import artifact_text
-    from meducation_api.db.operations import activate_release
 
     # The current Python store validates only the current schema; call the 0008 function.
     with db.operator.begin() as connection:
@@ -242,8 +242,8 @@ PRE_0011_QUIZ = {
 
 def test_migration_0011_simplifies_draft_answers_and_retires_old_releases(db):
     to_revision(db, "0010_descriptions")
+    from meducation_api.content.releases import activate_release
     from meducation_api.content_policy import artifact_text
-    from meducation_api.db.operations import activate_release
 
     with db.operator.begin() as connection:
         release_id = connection.execute(

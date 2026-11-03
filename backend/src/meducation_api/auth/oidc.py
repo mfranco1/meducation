@@ -16,28 +16,13 @@ from joserfc import jwt
 from joserfc.jwk import RSAKey
 
 from meducation_api.auth.config import AuthSettings
+from meducation_api.strict_json import StrictDecoder
 
 
 class AuthError(Exception):
     def __init__(self, status: int, code: str):
         super().__init__(code)
         self.status, self.code = status, code
-
-
-def unique_object(items: list[tuple[str, Any]]) -> dict[str, Any]:
-    value: dict[str, Any] = {}
-    for k, v in items:
-        if k in value:
-            raise ValueError("Duplicate JSON key")
-        value[k] = v
-    return value
-
-
-class StrictDecoder(json.JSONDecoder):
-    def __init__(self, *args: Any, **kwargs: Any):
-        kwargs["object_pairs_hook"] = unique_object
-        kwargs["parse_constant"] = lambda value: (_ for _ in ()).throw(ValueError("Invalid number"))
-        super().__init__(*args, **kwargs)
 
 
 class LimitedStream(httpx2.SyncByteStream):

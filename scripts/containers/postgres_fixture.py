@@ -8,14 +8,14 @@ from uuid import uuid4
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "backend/src"))
-from meducation_api.db.bootstrap import RolePasswords, bootstrap
-from meducation_api.db.engine import create_database_engine
-from meducation_api.db.migrate import upgrade
-from meducation_api.db.operations import (
+from meducation_api.content.releases import (
     activate_release,
     paired_artifacts,
     store_release,
 )
+from meducation_api.db.bootstrap import RolePasswords, bootstrap
+from meducation_api.db.engine import create_database_engine
+from meducation_api.db.migrate import upgrade
 from sqlalchemy import URL
 
 

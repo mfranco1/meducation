@@ -11,8 +11,8 @@ from sqlalchemy.exc import OperationalError
 from meducation_api.db.bootstrap import RolePasswords
 from meducation_api.db.engine import ContentDatabaseError, create_database_engine, database_url
 from meducation_api.db.migrate import upgrade
-from meducation_api.db.runtime import PostgresRuntime
 from meducation_api.main import create_app
+from meducation_api.repositories.postgres import PostgresRuntime
 from meducation_api.settings import Settings
 
 READER = "postgresql+psycopg://meducation_reader:test%40password@127.0.0.1:5433/meducation?sslmode=disable"
@@ -100,7 +100,7 @@ def test_failed_database_initialization_disposes_engine_without_secret_leak() ->
     engine = MagicMock()
     engine.connect.side_effect = OperationalError("secret SQL", {}, Exception(READER))
     with (
-        patch("meducation_api.db.runtime.create_database_engine", return_value=engine),
+        patch("meducation_api.repositories.postgres.create_database_engine", return_value=engine),
         pytest.raises(ContentDatabaseError) as error,
         PostgresRuntime(settings),
     ):
@@ -120,8 +120,8 @@ def test_initialized_runtime_disposes_engine_on_body_failure() -> None:
     connection.exec_driver_sql.return_value.scalars.return_value = ["fixture-head"]
     connection.execute.return_value.scalar_one_or_none.return_value = "fixture-release"
     with (
-        patch("meducation_api.db.runtime.create_database_engine", return_value=engine),
-        patch("meducation_api.db.runtime.migration_head", return_value="fixture-head"),
+        patch("meducation_api.repositories.postgres.create_database_engine", return_value=engine),
+        patch("meducation_api.repositories.postgres.migration_head", return_value="fixture-head"),
         pytest.raises(RuntimeError, match="body failed"),
         PostgresRuntime(settings),
     ):
@@ -142,8 +142,8 @@ def test_runtime_refuses_unsupported_schema_and_missing_release(schema, publicat
     connection.exec_driver_sql.return_value.scalars.return_value = schema
     connection.execute.return_value.scalar_one_or_none.return_value = publication
     with (
-        patch("meducation_api.db.runtime.create_database_engine", return_value=engine),
-        patch("meducation_api.db.runtime.migration_head", return_value="fixture-head"),
+        patch("meducation_api.repositories.postgres.create_database_engine", return_value=engine),
+        patch("meducation_api.repositories.postgres.migration_head", return_value="fixture-head"),
         pytest.raises(ContentDatabaseError),
         PostgresRuntime(settings),
     ):

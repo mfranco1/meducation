@@ -15,11 +15,11 @@ from alembic import command
 from sqlalchemy import Engine, make_url, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from meducation_api.content.draft import reset_draft
+from meducation_api.content.releases import activate_release, paired_artifacts, store_release
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
-from meducation_api.db.draft import reset_draft
 from meducation_api.db.engine import ContentDatabaseError, create_database_engine
 from meducation_api.db.migrate import migration_config, migration_head, upgrade
-from meducation_api.db.operations import activate_release, paired_artifacts, store_release
 from meducation_api.db.recovery import advance_ids
 
 pytestmark = pytest.mark.postgres
@@ -525,7 +525,7 @@ def test_sql_boundary_rejects_duplicate_keys_and_noncanonical_artifacts(db):
 
 
 def test_runtime_schema_ready_requires_explicit_activation_and_disposes(db):
-    from meducation_api.db.runtime import PostgresRuntime
+    from meducation_api.repositories.postgres import PostgresRuntime
     from meducation_api.settings import Settings
 
     settings = Settings(
@@ -671,7 +671,7 @@ def test_other_transaction_cannot_extend_uncommitted_or_finalized_release(db):
 
 
 def test_export_roundtrips_stored_artifacts_and_refuses_overwrite(db, tmp_path):
-    from meducation_api.db.transfer import export_release
+    from meducation_api.content.transfer import export_release
 
     q, f = banks()
     q["subjects"][0] = dict(reversed(list(q["subjects"][0].items())))
@@ -704,7 +704,7 @@ def test_export_roundtrips_stored_artifacts_and_refuses_overwrite(db, tmp_path):
 
 
 def test_export_rejects_owner_corruption_without_repair_or_files(db, tmp_path):
-    from meducation_api.db.transfer import export_release, reconstruct_release
+    from meducation_api.content.transfer import export_release, reconstruct_release
 
     release = store(db)
     with db.admin.begin() as connection:
@@ -783,7 +783,7 @@ def test_cli_activate_export_and_stale_replay(db, tmp_path):
 
 
 def test_export_write_failure_cleans_only_new_output(db, tmp_path, monkeypatch):
-    from meducation_api.db.transfer import export_release
+    from meducation_api.content.transfer import export_release
 
     release = store(db)
     output = tmp_path / "failed-export"
@@ -1590,7 +1590,7 @@ def test_recovery_tools_check_real_deterministic_http_exports(db, tmp_path, targ
     import io
     import zipfile
 
-    from meducation_api.db.export_tools import inspect_export
+    from meducation_api.content.transfer import inspect_export
 
     original = seed(db)
     client, runtime, h = auth_app(db)

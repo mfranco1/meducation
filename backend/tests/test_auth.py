@@ -12,7 +12,8 @@ from joserfc.jwk import RSAKey
 from pydantic import ValidationError
 
 from meducation_api.auth.config import AuthSettings
-from meducation_api.auth.oidc import AuthError, OIDCClient, StrictDecoder
+from meducation_api.auth.oidc import AuthError, OIDCClient
+from meducation_api.strict_json import StrictDecoder
 
 NOW = time.time()
 KEY = RSAKey.generate_key(2048)

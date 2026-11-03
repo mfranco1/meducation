@@ -14,7 +14,7 @@ from meducation_api.admin.http import install_editor
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.http import AuthRuntime, install_auth
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.operations import (
+from meducation_api.observability import (
     OperationalMiddleware,
     configure_operational_logging,
     database_category,
@@ -22,6 +22,8 @@ from meducation_api.operations import (
     log_event,
 )
 from meducation_api.repositories.question_bank import (
+    ContentSource,
+    ContentView,
     Flashcard,
     FlashcardCatalogRepository,
     FlashcardDeck,
@@ -32,7 +34,6 @@ from meducation_api.repositories.question_bank import (
     Subject,
     Topic,
 )
-from meducation_api.repositories.source import ContentSource, ContentView
 from meducation_api.settings import Settings
 
 

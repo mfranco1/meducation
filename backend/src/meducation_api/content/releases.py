@@ -11,6 +11,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from meducation_api.content_policy import artifact_text
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.repositories.question_bank import Bank, FlashcardBank
+from meducation_api.strict_json import StrictDecoder
 
 
 @dataclass(frozen=True)
@@ -26,28 +27,11 @@ class Publication:
     publication_sequence: int
 
 
-def _unique_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
-    result: dict[str, Any] = {}
-    for key, value in pairs:
-        if key in result:
-            raise ValueError("Duplicate stored object keys are forbidden.")
-        result[key] = value
-    return result
-
-
-def _invalid_constant(value: str) -> None:
-    raise ValueError("Non-finite stored numbers are forbidden.")
-
-
 def paired_artifacts(quiz_text: str, flashcard_text: str) -> tuple[str, str]:
     """Validate stored contracts without hydrating defaults or rewriting authored strings."""
     try:
-        q = json.loads(
-            quiz_text, object_pairs_hook=_unique_object, parse_constant=_invalid_constant
-        )
-        f = json.loads(
-            flashcard_text, object_pairs_hook=_unique_object, parse_constant=_invalid_constant
-        )
+        q = json.loads(quiz_text, cls=StrictDecoder)
+        f = json.loads(flashcard_text, cls=StrictDecoder)
         bank = Bank.model_validate(q, strict=True)
         flashcards = FlashcardBank.model_validate(f, strict=True)
         topics = {topic.id for topic in bank.topics}

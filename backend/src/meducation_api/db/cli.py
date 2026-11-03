@@ -9,11 +9,11 @@ from pydantic import ValidationError
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
+from meducation_api.content.releases import activate_release
+from meducation_api.content.transfer import export_release
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.engine import ContentDatabaseError, create_database_engine, database_url
 from meducation_api.db.migrate import migration_head, upgrade
-from meducation_api.db.operations import activate_release
-from meducation_api.db.transfer import export_release
 from meducation_api.settings import Settings
 
 
@@ -52,7 +52,7 @@ def main() -> None:
             print(migration_head() or "No content migration head packaged.")
             return
         if args.action in ("validate-export", "audit-export"):
-            from meducation_api.db.export_tools import inspect_export
+            from meducation_api.content.transfer import inspect_export
 
             report = inspect_export(
                 args.directory, repository=args.repository, audit=args.action == "audit-export"

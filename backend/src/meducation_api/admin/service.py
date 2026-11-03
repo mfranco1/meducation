@@ -18,8 +18,7 @@ from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.auth.store import Principal, SessionStore
-from meducation_api.content_policy import ContentPolicyError, PairedContentValidator, PolicyIssue
-from meducation_api.db.draft import (
+from meducation_api.content.draft import (
     CHILDREN,
     FLASHCARD_KINDS,
     FLASHCARD_SCHEMA,
@@ -37,9 +36,10 @@ from meducation_api.db.draft import (
     row_from_record,
     update_statement,
 )
+from meducation_api.content.releases import activate_release, store_release
+from meducation_api.content_policy import ContentPolicyError, PairedContentValidator, PolicyIssue
 from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.db.operations import activate_release, store_release
-from meducation_api.operations import database_failure, dependency_result
+from meducation_api.observability import database_failure, dependency_result
 
 MISSING: Any = object()
 PUBLISH_REASON = "Publish the draft"

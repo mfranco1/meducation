@@ -9,10 +9,14 @@ import hashlib
 import json
 from contextlib import contextmanager
 
-from meducation_api.db.draft import revisions
+from meducation_api.content.draft import revisions
 from meducation_api.main import create_app
-from meducation_api.repositories.question_bank import Bank, FlashcardBank, FlashcardSubjectSummary
-from meducation_api.repositories.source import ContentView
+from meducation_api.repositories.question_bank import (
+    Bank,
+    ContentView,
+    FlashcardBank,
+    FlashcardSubjectSummary,
+)
 from meducation_api.settings import Settings
 
 

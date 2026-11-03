@@ -14,10 +14,11 @@ from fastapi.responses import JSONResponse, RedirectResponse
 from starlette.concurrency import run_in_threadpool
 
 from meducation_api.auth.config import AuthSettings
-from meducation_api.auth.oidc import AuthError, OIDCClient, StrictDecoder
+from meducation_api.auth.oidc import AuthError, OIDCClient
 from meducation_api.auth.store import SessionStore, opaque
 from meducation_api.db.engine import create_database_engine, database_url
-from meducation_api.operations import PRIVATE_RESPONSE_HEADERS as PRIVATE_HEADERS
+from meducation_api.observability import PRIVATE_RESPONSE_HEADERS as PRIVATE_HEADERS
+from meducation_api.strict_json import StrictDecoder
 
 
 class AuthRuntime:

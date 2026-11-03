@@ -2,19 +2,21 @@
 
 from sqlalchemy import Connection
 
-from meducation_api.db.draft import advance_id_sequences
+from meducation_api.content.draft import advance_id_sequences
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.db.migrate import migration_head
 
 
+def _owner_at_head(connection: Connection, refusal: str) -> None:
+    connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
+    version = connection.exec_driver_sql("SELECT version_num FROM content.alembic_version")
+    if version.scalar_one() != migration_head():
+        raise ContentDatabaseError(refusal)
+
+
 def advance_ids(connection: Connection, by: int) -> dict[str, int]:
     """After restoring an older backup, skip IDs that may have been issued since."""
-    connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
-    if (
-        connection.exec_driver_sql("SELECT version_num FROM content.alembic_version").scalar_one()
-        != migration_head()
-    ):
-        raise ContentDatabaseError("Schema head is unsupported; sequences not changed.")
+    _owner_at_head(connection, "Schema head is unsupported; sequences not changed.")
     return advance_id_sequences(connection, by)
 
 
@@ -25,12 +27,7 @@ def invalidate_restored_sessions(connection: Connection) -> dict[str, int]:
     Clearing outstanding login ciphertext prevents pre-restore callbacks from creating
     new sessions even if an old configuration is accidentally reused.
     """
-    connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
-    if (
-        connection.exec_driver_sql("SELECT version_num FROM content.alembic_version").scalar_one()
-        != migration_head()
-    ):
-        raise ContentDatabaseError("Restored schema head is unsupported; sessions not changed.")
+    _owner_at_head(connection, "Restored schema head is unsupported; sessions not changed.")
     connection.exec_driver_sql(
         "LOCK TABLE admin_auth.sessions,admin_auth.logins IN ACCESS EXCLUSIVE MODE"
     )
@@ -42,12 +39,7 @@ def invalidate_restored_sessions(connection: Connection) -> dict[str, int]:
 
 
 def restore_content_permissions(connection: Connection) -> None:
-    connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
-    if (
-        connection.exec_driver_sql("SELECT version_num FROM content.alembic_version").scalar_one()
-        != migration_head()
-    ):
-        raise ContentDatabaseError("Restored schema head is unsupported; permissions not applied.")
+    _owner_at_head(connection, "Restored schema head is unsupported; permissions not applied.")
     connection.exec_driver_sql("""
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA content FROM PUBLIC;
 GRANT USAGE ON SCHEMA content TO meducation_reader,meducation_backup,meducation_operator;

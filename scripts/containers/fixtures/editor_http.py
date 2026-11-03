@@ -22,10 +22,10 @@ from joserfc.jwk import RSAKey
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.oidc import OIDCClient
 from meducation_api.auth.store import SessionStore
+from meducation_api.content.draft import reset_draft
+from meducation_api.content.releases import activate_release, store_release
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
-from meducation_api.db.draft import reset_draft
 from meducation_api.db.migrate import upgrade
-from meducation_api.db.operations import activate_release, store_release
 from meducation_api.db.recovery import advance_ids
 from meducation_api.main import create_app
 from meducation_api.settings import Settings

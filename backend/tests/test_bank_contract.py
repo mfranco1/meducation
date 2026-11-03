@@ -68,7 +68,7 @@ def test_shared_stored_bank_contract(case: dict) -> None:
 def test_shared_unicode_revision() -> None:
     import hashlib
 
-    from meducation_api.db.operations import paired_artifacts
+    from meducation_api.content.releases import paired_artifacts
 
     text, _ = paired_artifacts(
         json.dumps(bank_for("none"), ensure_ascii=False),

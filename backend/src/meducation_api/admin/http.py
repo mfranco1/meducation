@@ -34,8 +34,8 @@ from meducation_api.admin.contracts import (
 from meducation_api.admin.service import MISSING, DraftError, DraftService
 from meducation_api.auth.config import AuthSettings
 from meducation_api.auth.oidc import AuthError
+from meducation_api.content.draft import KINDS, Kind
 from meducation_api.content_policy import ContentPolicyError, read_json_body
-from meducation_api.db.draft import KINDS, Kind
 from meducation_api.db.engine import create_database_engine, database_url
 
 BULK_PARENTS = {("quizzes", "questions"), ("decks", "cards")}

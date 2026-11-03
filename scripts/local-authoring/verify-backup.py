@@ -14,15 +14,15 @@ sys.path.insert(0, str(ROOT / "backend/src"))
 sys.path.insert(0, str(ROOT / "scripts/containers"))
 from backup import main as retain_backup
 from dotenv import dotenv_values
+from meducation_api.content.releases import activate_release
+from meducation_api.content.transfer import reconstruct_release
 from meducation_api.db.bootstrap import RolePasswords, bootstrap
 from meducation_api.db.engine import create_database_engine, database_url
-from meducation_api.db.operations import activate_release
 from meducation_api.db.recovery import (
     advance_ids,
     invalidate_restored_sessions,
     restore_content_permissions,
 )
-from meducation_api.db.transfer import reconstruct_release
 from pydantic import SecretStr
 from sqlalchemy import text
 

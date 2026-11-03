@@ -8,13 +8,13 @@ from cryptography.fernet import Fernet
 from pydantic import SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from meducation_api.settings import REPOSITORY_ROOT
+from meducation_api.settings import ENV_FILE
 
 
 class AuthSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="MEDUCATION_ADMIN_",
-        env_file=REPOSITORY_ROOT / "backend/.env",
+        env_file=ENV_FILE,
         extra="ignore",
         hide_input_in_errors=True,
     )

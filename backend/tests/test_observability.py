@@ -10,7 +10,7 @@ from fixture_content import fixture_app
 from sqlalchemy.exc import DBAPIError, TimeoutError
 
 from meducation_api.main import create_app
-from meducation_api.operations import SafeServerErrorFilter, database_category
+from meducation_api.observability import SafeServerErrorFilter, database_category
 from meducation_api.settings import Settings
 
 ROOT = Path(__file__).resolve().parents[2]

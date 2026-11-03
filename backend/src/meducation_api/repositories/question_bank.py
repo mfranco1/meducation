@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Literal, Protocol
+from contextlib import AbstractContextManager
+from dataclasses import dataclass
+from typing import Any, Literal, Protocol, Self
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -232,3 +235,17 @@ class FlashcardCatalogRepository(Protocol):
     def has_deck(self, deck_id: str) -> bool: ...
 
     def list_cards(self, deck_id: str) -> list[Flashcard]: ...
+
+
+@dataclass(frozen=True)
+class ContentView:
+    questions: QuestionBankRepository
+    flashcards: FlashcardCatalogRepository
+    release_id: UUID | None = None
+    publication_sequence: int = 0
+
+
+class ContentSource(Protocol):
+    def __enter__(self) -> Self: ...
+    def __exit__(self, *args: object) -> None: ...
+    def view(self) -> AbstractContextManager[ContentView]: ...
