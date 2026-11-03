@@ -67,14 +67,34 @@ describe('SVG boundary', () => {
   it('normalizes deterministically without stretching geometry or deleting descriptive text', () => {
     const source =
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 24"><desc>Example source credit</desc><circle cx="24" cy="12" r="8" fill="#000" fill-opacity=".16"/></svg>';
-    const output = normalizeSvg(source);
-    expect(output).toBe(normalizeSvg(source));
+    const { svg: output } = normalizeSvg(source);
+    expect(output).toBe(normalizeSvg(source).svg);
     expect(validateSvg(output, true)).toEqual([0, 0, 24, 24]);
     expect(output).toContain('Example source credit');
     expect(output).toContain('currentColor');
     expect(output).toMatch(/(?:\.16|0.16)/);
-    // The 48x24 artboard fits uniformly: the original circle remains circular with radius 4.
-    expect(output).toMatch(/scale\(\.5\)|scale\(0.5\)|r="4"/);
+  });
+  it('fits art into the live area and keeps the 24-grid stroke width', () => {
+    const source =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" fill="none" stroke="#000"><path d="M8 24h32" stroke-width="3"/></svg>';
+    const { svg: output, warnings } = normalizeSvg(source);
+    expect(validateSvg(output, true)).toEqual([0, 0, 24, 24]);
+    const [tx, ty, scale] = output
+      .match(/transform="translate\(([\d.]+) ([\d.]+)\) scale\(([\d.]+)\)/)!
+      .slice(1)
+      .map(Number);
+    // The 48-unit box lands in 2..22, and a stroke of 3 on that grid renders as 1.5 on the 24 grid.
+    expect([tx, ty, 48 * scale + tx]).toEqual([2, 2, 22]);
+    expect(Number(output.match(/stroke-width="([\d.]+)"/)![1]) * scale).toBeCloseTo(1.5, 2);
+    expect(warnings).toEqual([]);
+    expect(normalizeSvg(svg).svg).toContain('scale(0.8333');
+    expect(normalizeSvg(svg, { fill: true }).svg).not.toContain('transform');
+  });
+  it('warns about stroke widths outside the family range and rejects fixed paints', () => {
+    const source =
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 12h16" stroke-width="1"/></svg>';
+    expect(normalizeSvg(source).warnings).toHaveLength(1);
+    expect(() => normalizeSvg(svg.replace('currentColor', 'white'))).toThrow(/Unsupported paint white/);
   });
 });
 
@@ -95,6 +115,26 @@ describe('registry integrity', () => {
     ])
       await expect(validateRegistry([{ ...record, source }], root)).rejects.toThrow();
   });
+  it('accepts original artwork without URLs and requires attribution for CC-BY-SA', async () => {
+    const { root, record } = await fixture();
+    const original = {
+      collection: 'Meducation original',
+      asset: 'cell',
+      author: 'Meducation',
+      license: 'CC0-1.0',
+      attribution: '',
+    };
+    await expect(validateRegistry([{ ...record, source: original }], root)).resolves.toHaveLength(1);
+    await expect(
+      validateRegistry([{ ...record, source: { ...record.source, license: 'CC-BY-SA-4.0', attribution: '' } }], root),
+    ).rejects.toThrow(/attribution/);
+    await expect(
+      validateRegistry(
+        [{ ...record, source: { ...record.source, license: 'CC-BY-SA-4.0', attribution: 'A. Artist' } }],
+        root,
+      ),
+    ).resolves.toHaveLength(1);
+  });
   it('rejects traversal and symlink escapes', async () => {
     const { root, record } = await fixture();
     await expect(validateRegistry([{ ...record, file: '../outside.svg' }], root)).rejects.toThrow(/Unsafe/);
@@ -110,7 +150,7 @@ describe('registry integrity', () => {
     expect(await readFile(resolve(root, record.file), 'utf8')).toBe(svg);
     await expect(registerCandidate(root, [record], record, svg)).rejects.toThrow(/already exists/);
     const next = { ...record, id: 'next-cell', file: 'candidates/next-cell.svg' };
-    await registerCandidate(root, [record], next, normalizeSvg(svg));
+    await registerCandidate(root, [record], next, normalizeSvg(svg).svg);
     const saved = JSON.parse(await readFile(resolve(root, 'registry.json'), 'utf8'));
     await expect(validateRegistry(saved, root)).resolves.toHaveLength(2);
     const invalid = {
@@ -124,10 +164,15 @@ describe('registry integrity', () => {
   });
 });
 
-it('ranks reuse before medical and general sources, with stable semantic matches', () => {
-  const candidates = [2, 0, 1].map((tier) => ({ id: String(tier), name: 'heart', keywords: [], tier, svg, note: '' }));
-  expect(rankCandidates('cardiology', candidates).map((candidate) => candidate.id)).toEqual(['0', '1', '2']);
-  expect(rankCandidates('unrelated', candidates)).toEqual([]);
+it('ranks by match score first, then by source tier', () => {
+  const candidate = (id: string, name: string, tier: number) => ({ id, name, keywords: [], tier, svg, note: '' });
+  const ranked = rankCandidates('red cell', [
+    candidate('a', 'red', 1),
+    candidate('b', 'red cell', 2),
+    candidate('c', 'red', 0),
+  ]);
+  expect(ranked.map((item) => item.id)).toEqual(['b', 'c', 'a']);
+  expect(rankCandidates('unrelated', [candidate('a', 'red', 1)])).toEqual([]);
 });
 
 it('produces an offline gallery that escapes registry text and shows provenance', async () => {

@@ -13,9 +13,26 @@ Visual and interaction conventions. Use the MUI theme in `src/shared/theme.ts`, 
 
 ## Meducation Icon Design Specification
 
-Subject and topic artwork is one curated duotone family. Use a 24-unit viewBox, normally with 2 units of clear space around the artwork. Adjust optical size for narrow organs and irregular silhouettes rather than stretching them to identical bounds. Use one focal subject, recognizable anatomical landmarks and meaningful negative space. A cardiac icon needs an anatomical heart; a specific structure such as a nephron needs its own representation.
+Subject and topic artwork is one curated duotone family. Any allowed source, or an original drawing, is equally valid: pick whatever gives the best result.
 
-Use rounded caps and joins, nominal 1.75–2-unit strokes, and comparable weight for filled contours. Keep foreground paint `currentColor` and one optional tint layer at 0.16 opacity. Avoid gradients, shadows, tiny texture and extra objects. Badge backgrounds remain outside the SVG: primary orange at 7% opacity, a 12px rounded square, centered glyph. Keep existing Inter typography and text labels beside decorative icons.
+### Brand rules
+
+Every icon must hold these.
+
+- 24-unit viewBox, normally with 2 units of clear space around the artwork.
+- Foreground `currentColor` plus at most one tint layer at about 0.16 opacity.
+- Rounded caps and joins. 1.5-unit strokes (the shared wrapper default; don't override it per icon) and comparable weight for filled contours.
+- No gradients, shadows or extra colors.
+- The badge background stays outside the SVG: primary orange at 7% opacity, 12px rounded square, centered glyph. Keep text labels beside decorative icons.
+
+### Craft guidance
+
+Judgment calls, not gates.
+
+- One focal subject with meaningful negative space.
+- Recognizable anatomical landmarks. A cardiac icon needs an anatomical heart. A specific structure such as a nephron needs its own drawing.
+- Adjust optical size for narrow or irregular shapes instead of stretching them to identical bounds.
+- Stay legible at 20 to 24px.
 
 Review at 20 and 24px for topic rows, 46px in an 80px card badge, and 64px in an 88px header badge. Check contours, clipping, alignment, negative space and visual weight together. The studio uses the existing light palette and dark brand accent `#EF9B6B` on a dark review surface; the application currently has a light theme only.
 

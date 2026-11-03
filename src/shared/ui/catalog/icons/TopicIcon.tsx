@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { SvgIcon, type SvgIconProps } from '@mui/material';
-import { SubjectIcon } from './SubjectIcon';
+import { strokeWrapper, SubjectIcon } from './SubjectIcon';
 
 // Same style as SubjectIcon: duotone art on a 24-unit grid inside one stroked wrapper.
 // Optimized with SVGO; redraw an icon rather than hand-editing its paths.
@@ -26,7 +26,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M6.5 3C6.7 6 5 8.5 5 12c0 4 1.5 7 3.5 9h7c2-2 3.5-5 3.5-9 0-3.5-1.7-6-1.5-9" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M6.5 3C6.7 6 5 8.5 5 12c0 4 1.5 7 3.5 9h7c2-2 3.5-5 3.5-9 0-3.5-1.7-6-1.5-9" />
           </g>
           <path d="m7.4 15.2 3.6 4m5.6-4-3.6 4M8.6 6.5c2 1 4.8 1 6.8 0" />
@@ -44,7 +44,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M7.2 7.5C9.5 6 10.5 9 12 7.5s2.5-1.5 4.8 0q-.4 5.3-4.8 6-4.4-.7-4.8-6" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M7 3.5h10c.5 5.5-1 9.5-5 10C8 13 6.5 9 7 3.5m5 10v7m-4 0h8" />
           </g>
         </g>
@@ -58,7 +58,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <rect width="11" height="13.5" x="6.5" y="8" rx="4" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <rect width="11" height="13.5" x="6.5" y="8" rx="4" />
             <path d="M10 8V5.5M14 8V5.5" />
           </g>
@@ -79,7 +79,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="m2.5 12 12-6v12Z" />
         </g>
         <g>
-          <g strokeWidth="2.5">
+          <g>
             <path d="M2.5 12H9l5.5-5.5M9 12l5.5 5.5" />
           </g>
         </g>
@@ -108,7 +108,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <circle cx="12" cy="13" r="4.3" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <circle cx="12" cy="13" r="4.3" />
             <g>
               <path d="M12 1.5V5m0 0L8.8 6.7M12 5l3.2 1.7" />
@@ -134,7 +134,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <rect width="8" height="12" x="8" y="10" rx="2.5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <rect width="10" height="2.5" x="7" y="7.5" rx="1.2" />
             <path d="M8 10.5v9a2 2 0 0 0 2 2h4a2 2 0 0 0 2-2v-9" />
           </g>
@@ -158,7 +158,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <rect width="14" height="6.5" x="7" y="13" rx="3.3" transform="rotate(-20 14 16.3)" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <rect width="14" height="6.5" x="2.5" y="3.5" rx="3.3" transform="rotate(20 9.5 6.8)" />
             <rect width="14" height="6.5" x="7" y="13" rx="3.3" transform="rotate(-20 14 16.3)" />
           </g>
@@ -173,7 +173,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M16.4 2.5 19.2 6l-2.1 4.5-4.5.1L10 7.1l2-4.5z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <g transform="rotate(25 12 12)">
               <path d="m12 1.5 4 2v5l-4 2-4-2v-5zm0 9V17m0 0-4.5 4m4.5-4 4.5 4" />
             </g>
@@ -197,7 +197,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           </g>
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <g transform="rotate(-45 12 12)">
               <rect width="21" height="10" x="1.5" y="7" rx="5" />
               <path d="M8 7v10m8-10v10" />
@@ -219,12 +219,12 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M3 19.5C7 19.5 8 4 12 4s5 15.5 9 15.5z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M2.5 20.5h19" />
           </g>
         </g>
         <g fill="currentColor" stroke="none">
-          <path fill="none" stroke="currentColor" strokeWidth="2" d="M2.5 19.5C7.5 19.5 8 4 12 4s4.5 15.5 9.5 15.5" />
+          <path fill="none" stroke="currentColor" d="M2.5 19.5C7.5 19.5 8 4 12 4s4.5 15.5 9.5 15.5" />
         </g>
         <g fill="currentColor" fillOpacity=".8" stroke="none">
           <path d="M11.2 9h1.6v11h-1.6z" />
@@ -331,7 +331,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M4.5 2.5v19h6c-.5-2 1-3.5 3-4 3.5-.8 6-2.5 6-5.5 0-2.5-1.8-3.8-4.5-4.3q-3.6-1.4-5-5.2Z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M10 2.5q1.4 3.7 5 5.7c2.7.5 4.5 1.8 4.5 4.3 0 3-2.5 4.7-6 5.5-2 .5-3.5 2-3 4m-6-19.5v19" />
           </g>
         </g>
@@ -348,7 +348,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M12 8.5c-1.5-5-8.5-4-8.5 3.5s7 8.5 8.5 3.5c1.5 5 8.5 4 8.5-3.5s-7-8.5-8.5-3.5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M12 8.5c-1.5-5-8.5-4-8.5 3.5s7 8.5 8.5 3.5c1.5 5 8.5 4 8.5-3.5s-7-8.5-8.5-3.5" />
           </g>
         </g>
@@ -366,7 +366,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <circle cx="11" cy="12.5" r="8" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M17.2 6.3a8 8 0 1 0 1.8 6.2" />
           </g>
         </g>
@@ -405,7 +405,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           </g>
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <g transform="translate(12 12)">
               <rect width="5.6" height="10.5" x="-2.8" y="1" rx="2.8" transform="rotate(35)" />
               <rect width="5.6" height="10.5" x="-2.8" y="1" rx="2.8" transform="rotate(-35)" />
@@ -467,7 +467,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <circle cx="10" cy="14.5" r="3.2" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <circle cx="7" cy="8" r="3.2" />
             <circle cx="14.5" cy="6.5" r="3.2" />
             <circle cx="17.5" cy="13.5" r="3.2" />
@@ -581,7 +581,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M3.5 16c0-3.5 2.5-5 5-5h1l2.5 4 2.5-4h1c2.5 0 5 1.5 5 5S18 21 12 21s-8.5-1.5-8.5-5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M3.5 16c0-3.5 2.5-5 5-5h1l2.5 4 2.5-4h1c2.5 0 5 1.5 5 5S18 21 12 21s-8.5-1.5-8.5-5" />
           </g>
         </g>
@@ -598,7 +598,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M8 2.5h5c0 4 2.5 5 2.5 9.5S13 17.5 13 21.5H8c0-4 2.5-5 2.5-9.5S8 6.5 8 2.5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M8 2.5h5c0 4 2.5 5 2.5 9.5S13 17.5 13 21.5H8c0-4 2.5-5 2.5-9.5S8 6.5 8 2.5" />
           </g>
         </g>
@@ -728,7 +728,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M12 21.5a6.4 6.4 0 0 1-6.5-6.4c0-2.7 1.6-4.4 3-6q.9 1.9 2 2.3-.3-4.5 3-8.4c.3 2.8 3.2 4.8 4.5 8.1.6 1.5.5 2.5.5 4 0 3.6-2.9 6.4-6.5 6.4" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M12 21.5a6.4 6.4 0 0 1-6.5-6.4c0-2.7 1.6-4.4 3-6q.9 1.9 2 2.3-.3-4.5 3-8.4c.3 2.8 3.2 4.8 4.5 8.1.6 1.5.5 2.5.5 4 0 3.6-2.9 6.4-6.5 6.4" />
           </g>
         </g>
@@ -745,7 +745,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M7.2 14.5h9.6L20 18c.8 1.5 0 2.5-1.5 2.5h-13c-1.5 0-2.3-1-1.5-2.5Z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M9.5 3.5v6L4 18c-.8 1.5 0 2.5 1.5 2.5h13c1.5 0 2.3-1 1.5-2.5l-5.5-8.5v-6M8 3.5h8" />
           </g>
         </g>
@@ -795,7 +795,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <circle cx="18" cy="6" r="3.5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <circle cx="10" cy="13.5" r="7" />
             <circle cx="18" cy="6" r="3.5" />
           </g>
@@ -844,11 +844,11 @@ export const icons: Readonly<Record<string, ReactNode>> = {
         </g>
         <g>
           <g transform="translate(12 12)">
-            <g strokeWidth="2">
+            <g>
               <path d="m0-5.2 4.5 2.6v5.2L0 5.2l-4.5-2.6v-5.2z" />
             </g>
           </g>
-          <g strokeWidth="2">
+          <g>
             <path d="M2.7 9.5a9.6 9.6 0 0 1 16.7-3.7m1.9 8.7a9.6 9.6 0 0 1-16.6 3.7" />
           </g>
         </g>
@@ -865,7 +865,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M4 20c4 0 6-3 8-8s5-6 8-6v14z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M4 3v17h17" />
             <path d="M4 20c4 0 6-3 8-8s5-6 8-6" />
           </g>
@@ -965,7 +965,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M2.5 12.5h5l2-4 3 8 2-4h7" />
           </g>
         </g>
@@ -982,10 +982,10 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           </g>
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="m3 16 18-6" />
           </g>
-          <g strokeWidth="1.8">
+          <g>
             <path d="M8.5 21h7L12 13.5Z" />
             <g transform="translate(5.2 10.6)">
               <path d="M0-4.8S-3.4-1.4-3.4.9a3.4 3.4 0 0 0 6.8 0C3.4-1.4 0-4.8 0-4.8" />
@@ -1007,7 +1007,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <rect width="18" height="12" x="3" y="4" rx="2" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <rect width="18" height="12" x="3" y="4" rx="2" />
             <path d="M12 16v4m-4 0h8" />
           </g>
@@ -1053,7 +1053,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <rect width="19" height="12" x="2.5" y="3.5" rx="2.5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <rect width="19" height="12" x="2.5" y="3.5" rx="2.5" />
             <path d="m6 15.5-1 6m13-6 1 6m-15.5 0h17" />
           </g>
@@ -1139,11 +1139,11 @@ export const icons: Readonly<Record<string, ReactNode>> = {
         </g>
         <g>
           <g transform="translate(12 12)">
-            <g strokeWidth="2">
+            <g>
               <path d="M0-5.8s-4.8 5-4.8 8a4.8 4.8 0 0 0 9.6 0c0-3-4.8-8-4.8-8" />
             </g>
           </g>
-          <g strokeWidth="2">
+          <g>
             <path d="M2.7 9.5a9.6 9.6 0 0 1 16.7-3.7m1.9 8.7a9.6 9.6 0 0 1-16.6 3.7" />
           </g>
         </g>
@@ -1188,7 +1188,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
     <>
       <g transform="translate(2.6 2.3)scale(.854)">
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="m1.5 21 21-18" />
           </g>
         </g>
@@ -1282,7 +1282,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M7 4h10l4.5 5.5L12 21 2.5 9.5Z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M7 4h10l4.5 5.5L12 21 2.5 9.5Z" />
           </g>
           <g>
@@ -1325,7 +1325,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M2.5 21v-2.5a6.5 6.5 0 0 1 13 0V21z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <circle cx="9" cy="5.5" r="2.8" />
             <path d="M2.5 21v-2.5a6.5 6.5 0 0 1 13 0V21z" />
             <circle cx="19.5" cy="10.5" r="2.2" />
@@ -1367,7 +1367,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <circle cx="12" cy="14.5" r="3.8" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <circle cx="12" cy="14.5" r="3.8" />
             <path d="M12 10.7V6m0 0L8.5 2.5M12 6l3.5-3.5M9 16.5 4.5 19M15 16.5l4.5 2.5m-7.5-.7V22" />
           </g>
@@ -1385,7 +1385,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <rect width="14" height="9" x="8" y="8.5" rx="4.5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <rect width="14" height="9" x="8" y="8.5" rx="4.5" />
             <circle cx="6" cy="13" r="3.5" />
           </g>
@@ -1405,7 +1405,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="m10 6.8 4.2 3-1.6 5H7.4l-1.6-5zm11.2 10.4-2 3.5h-4l-2-3.5 2-3.5h4z" />
         </g>
         <g>
-          <g strokeWidth="1.8">
+          <g>
             <path d="m10 6.8 4.2 3-1.6 5H7.4l-1.6-5zm11.2 10.4-2 3.5h-4l-2-3.5 2-3.5h4z" />
           </g>
           <g>
@@ -1428,11 +1428,11 @@ export const icons: Readonly<Record<string, ReactNode>> = {
         </g>
         <g>
           <g transform="translate(12 12)">
-            <g strokeWidth="1.8">
+            <g>
               <path d="M-2.9-1.6 0 .5l-1.1 3.3h-3.6l-1-3.3zm9.3.4L4.8 1.6H1.6L0-1.2 1.6-4h3.2z" />
             </g>
           </g>
-          <g strokeWidth="2">
+          <g>
             <path d="M2.7 9.5a9.6 9.6 0 0 1 16.7-3.7m1.9 8.7a9.6 9.6 0 0 1-16.6 3.7" />
           </g>
         </g>
@@ -1449,7 +1449,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M12 7.5c-2-2-8-1.5-8 5 0 5 3.5 9 6 8.5l2-.5 2 .5c2.5.5 6-3.5 6-8.5 0-6.5-6-7-8-5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M12 7.5c-2-2-8-1.5-8 5 0 5 3.5 9 6 8.5l2-.5 2 .5c2.5.5 6-3.5 6-8.5 0-6.5-6-7-8-5" />
             <path d="M12 7.5q-.1-3 2-4.5" />
           </g>
@@ -1485,7 +1485,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <circle cx="17.5" cy="17" r="3" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <rect width="5.5" height="5.5" x="3.5" y="3.5" rx=".8" />
             <circle cx="18" cy="6.2" r="3" />
             <circle cx="17.5" cy="17" r="3" />
@@ -1510,7 +1510,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M12 6.5C10 4 5.5 3.5 3.5 6c-1.5 2-.7 5.5 2 7.5l1.3 4c.6 1.9 2.2 2.8 3.8 2.1l1.4-1 1.4 1c1.6.7 3.2-.2 3.8-2.1l1.3-4c2.7-2 3.5-5.5 2-7.5-2-2.5-6.5-2-8.5.5" />
             <path d="M8.4 12.4a3.6 2.6 0 1 0 7.2 0 3.6 2.6 0 1 0-7.2 0" />
           </g>
@@ -1531,7 +1531,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <ellipse cx="12" cy="10" rx="9" ry="4" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M3 10v5a9 4 0 0 0 18 0v-5" />
             <ellipse cx="12" cy="10" rx="9" ry="4" />
           </g>
@@ -1643,7 +1643,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
     <>
       <g transform="translate(.3 1)scale(1.044)">
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M5.5 16.5 8 8l6.5-2 4 5.5-5 5-3-4" />
           </g>
         </g>
@@ -1662,11 +1662,11 @@ export const icons: Readonly<Record<string, ReactNode>> = {
       <g transform="translate(1 1)scale(.975)">
         <g>
           <g transform="translate(12 12)">
-            <g strokeWidth="1.8">
+            <g>
               <path d="m-3.6 3.4 2-6 3.4 4.8 1.8-5.4" />
             </g>
           </g>
-          <g strokeWidth="2">
+          <g>
             <path d="M2.7 9.5a9.6 9.6 0 0 1 16.7-3.7m1.9 8.7a9.6 9.6 0 0 1-16.6 3.7" />
           </g>
         </g>
@@ -1811,7 +1811,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="m12 2.5 8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10v-6z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="m12 2.5 8 3v6c0 5-3.5 8.5-8 10-4.5-1.5-8-5-8-10v-6z" />
             <path d="m8.5 12 2.5 2.5 4.5-5" />
           </g>
@@ -1848,7 +1848,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
     <>
       <g transform="translate(.9 2.2)scale(.921)">
         <g>
-          <g strokeWidth="2.2">
+          <g>
             <path d="m8 19.1-.3.2h-.8l-.4-.2L6 19l-.4-.4-.4-.4-.3-.5-.3-.5-.3-.7-.2-.6v-2.1l.1-.6.3-.7.3-.5.4-.6.4-.4.6-.4.5-.2.6-.2.7-.1h.6l.7.1.7.2.6.3.6.4.5.4.5.5.4.5.3.6.3.5.1.6.1.5v.9l-.2.4-.2.3-.3.3-.4.1h-.8l-.4-.2-.4-.2-.5-.3-.3-.5-.4-.5-.3-.5-.2-.6-.2-.7-.1-.7v-1.3l.2-.7.2-.6.3-.6.4-.5.5-.5.5-.3.6-.3.6-.2h1.9l.7.3.6.2.6.4.5.4.5.5.4.6.4.5.2.6.2.5V13l-.2.4-.2.3-.3.2-.4.1h-.8l-.4-.1-.4-.3-.4-.3-.4-.4-.4-.5-.3-.6-.2-.6-.2-.7-.1-.6V8.4l.2-.7.2-.6.3-.6.4-.5.5-.5.5-.3.6-.3.6-.2h2l.6.3.6.3.6.3.5.5.5.5.4.5.4.5.2.6.2.5v1.5l-.2.4-.2.3-.3.2" />
           </g>
         </g>
@@ -1897,7 +1897,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <circle cx="12" cy="12" r="9" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <circle cx="12" cy="12" r="9" />
           </g>
         </g>
@@ -1919,10 +1919,10 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="m8 8.4 4 2.3v4.6l-4 2.3-4-2.3v-4.6z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="m8 8.4 4 2.3v4.6l-4 2.3-4-2.3v-4.6z" />
           </g>
-          <g strokeWidth="2">
+          <g>
             <path d="m12 10.7 2.5 2.3 2.5-2.5 2.5 2.5" />
           </g>
         </g>
@@ -1989,7 +1989,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M3 21v-9a9 9 0 0 1 9-9h9v6h-9a3 3 0 0 0-3 3v9Z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M3 21v-9a9 9 0 0 1 9-9h9M9 21v-9a3 3 0 0 1 3-3h9" />
           </g>
         </g>
@@ -2041,7 +2041,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
             <rect width="4.2" height="11" x="12.2" y="5" rx="1.6" />
             <rect width="4.2" height="11" x="16.8" y="5" rx="1.6" />
           </g>
-          <path strokeWidth="2" d="M2.5 19.2h19" />
+          <path d="M2.5 19.2h19" />
         </g>
         <g fill="currentColor" stroke="none">
           <ellipse cx="5.1" cy="12" rx="1" ry="1.4" />
@@ -2140,7 +2140,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <rect width="12" height="12" x="6" y="9.5" rx="2.5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M9 4.5h6m-5 0v3m4-3v3m-5.5 0h7A2.5 2.5 0 0 1 18 10v9.5a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2V10a2.5 2.5 0 0 1 2.5-2.5" />
           </g>
         </g>
@@ -2173,7 +2173,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="m12 5.5 5.6 3.3v6.5L12 18.5l-5.6-3.2V8.8z" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="m12 5.5 5.6 3.3v6.5L12 18.5l-5.6-3.2V8.8zm0 0V3m5.6 5.8 2.3-1.4m-2.3 7.9 2.3 1.2m-7.9 2V21m-5.6-5.7-2.3 1.2m2.3-7.7L4.1 7.4" />
           </g>
         </g>
@@ -2196,7 +2196,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M8 7.5h8q2.5 1.5 2.5 4V19q0 2-2 2h-9q-2 0-2-2v-7.5q0-2.5 2.5-4" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M8 7.5h8q2.5 1.5 2.5 4V19q0 2-2 2h-9q-2 0-2-2v-7.5q0-2.5 2.5-4" />
             <rect width="11" height="4.5" x="6.5" y="3" rx="1" />
           </g>
@@ -2214,7 +2214,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <path d="M12 2.5S4.5 10 4.5 15a7.5 7.5 0 0 0 15 0c0-5-7.5-12.5-7.5-12.5" />
         </g>
         <g>
-          <g strokeWidth="2">
+          <g>
             <path d="M12 2.5S4.5 10 4.5 15a7.5 7.5 0 0 0 15 0c0-5-7.5-12.5-7.5-12.5" />
           </g>
         </g>
@@ -2243,7 +2243,7 @@ export const icons: Readonly<Record<string, ReactNode>> = {
           <circle cx="12" cy="12" r="9.5" />
         </g>
         <g>
-          <g strokeWidth="2.4">
+          <g>
             <path d="M14.2 12v1l-.2.6-.3.5-.4.4-.6.3-.6.2h-1.4l-.7-.3-.6-.4-.6-.6-.4-.7-.2-.8-.1-.8.1-.9.3-.8.6-.8.7-.7.8-.5 1-.3 1-.1 1 .1 1 .4 1 .6.8.8.6 1 .4 1.1.2 1.2-.2 1.3L17 15l-.7 1-.9 1-1.1.7-1.3.5-1.4.2-1.4-.1-1.4-.5-1.3-.7-1-1-1-1.3-.5-1.5-.2-1.5.1-1.6.5-1.6.8-1.4 1-1.3 1.5-1 1.6-.6L12 4h1.8l1.7.5 1.6.9 1.4 1.2L19.8 8l.8 1.7.4 2v1.9l-.6 2-.9 1.7" />
           </g>
         </g>
@@ -2453,9 +2453,7 @@ export function TopicIcon({ topicId, subjectId, ...props }: SvgIconProps & { top
       focusable="false"
       titleAccess={undefined}
     >
-      <g fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-        {icons[name]}
-      </g>
+      <g {...strokeWrapper}>{icons[name]}</g>
     </SvgIcon>
   );
 }

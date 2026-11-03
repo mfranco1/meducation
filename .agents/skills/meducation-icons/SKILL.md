@@ -1,85 +1,67 @@
 ---
 name: meducation-icons
-description: Discover, adapt, validate and preview Meducation subject and topic SVG icons. Use for medical catalog artwork and its provenance, not general UI icons or raster illustrations.
+description: Find, draw, iterate on and integrate Meducation subject and topic SVG icons. Use for medical catalog artwork and its provenance, not general UI icons or raster illustrations.
 ---
 
 # Meducation icons
 
-Read [the icon design specification](../../../docs/design-system.md#meducation-icon-design-specification) before selecting or adapting artwork. Follow repository AGENTS.md. Accepting a displayed replacement authorizes its production assignment as part of the same change, unless the user explicitly asks for artwork approval only.
+## Rules
 
-## Discover and propose
+Two rules are fixed:
 
-Run from the repository root:
+1. **License.** Use only free and open-source artwork with recorded provenance (below).
+2. **Brand.** Meet the [brand rules](../../../docs/design-system.md#meducation-icon-design-specification).
+
+Everything else is judgment. Aim for premium craft: a clear silhouette, deliberate negative space, and stroke weight that matches the existing family. Reuse, adapt, combine or draw original art, whichever looks best. Search ranking does not certify medical accuracy or quality.
+
+## Find
+
+Search several terms; there is no synonym table. Iconify aliases and categories are searchable.
 
 ```sh
-npm run icons -- search "cardiology"
-npm run icons -- propose "renal physiology" --json
-npm run icons -- preview
+npm run icons -- search "kidney" [--json] [--catalogs dir] [--bioicons checkout]
 ```
 
-Search includes existing production glyphs, registered candidates and their source shortlists. Download Iconify collection JSON files into ignored `.cache/icons/catalogs` for broader offline search. Use a pinned commit, not a floating branch, when recording provenance:
+Download Iconify collections (`healthicons`, `medical-icon`, `medical`, `lucide`, `tabler`, `ph`, `material-symbols`) into ignored `.cache/icons/catalogs`. Pin a commit, not a branch:
 
 ```sh
 mkdir -p .cache/icons/catalogs
 curl -fLsS https://raw.githubusercontent.com/iconify/icon-sets/bffe38b2e6b13b47191823d350fd84d18c581bc7/json/healthicons.json -o .cache/icons/catalogs/healthicons.json
-```
-
-The same path supports `medical-icon`, `medical`, `lucide`, `tabler`, `ph`, and `material-symbols` collections when available at the selected revision. Use `--catalogs directory` for another catalog directory. For Bioicons, use a local checkout:
-
-```sh
 git clone --depth 1 https://github.com/duerrsimon/bioicons.git .cache/icons/bioicons
-npm run icons -- search "bacteriophage" --bioicons .cache/icons/bioicons
 ```
 
-Reuse Meducation first, then Health Icons, Bioicons and medical collections, then general libraries. Adapt licensed assets before drawing original vectors. Search ranking uses source priority and lexical synonyms; it does **not** certify medical accuracy or aesthetic quality. `--json` returns structured output after npm's own command banner; invoke the package script with `npm run --silent icons -- ... --json` when piping JSON.
+Allowed licenses: CC0-1.0, MIT, ISC, Apache-2.0, CC-BY-3.0, CC-BY-4.0, CC-BY-SA-3.0, CC-BY-SA-4.0. Anything but CC0 needs attribution. Iconify is a distributor, not a license. Health Icons is CC0 now, but older notices may say MIT. Bioicons licenses each asset separately. An unknown license blocks import. The validator checks completeness, not whether a claim is true.
 
-Assess each shortlist for anatomical accuracy, semantic relevance, readability at 20–24px, optical weight, family consistency and licensing. Record reasons in `notes` and alternative `assessment` fields. Do not choose a decorative heart for cardiac anatomy. Do not substitute an organ silhouette when the intended concept requires a specific structure, such as a nephron.
+## Draft and iterate
 
-## Create and register a candidate
+Write or adapt an SVG in the static subset: no CSS, scripts, external references, images, animation, clip, mask or filters. Inspect rejected files and reduce them by hand; do not auto-sanitize.
 
-Prepare a reduced SVG in the allowed static subset. Preserve landmarks and meaningful negative space. Use existing vector contours where possible; create geometry intentionally rather than asking the CLI to invent anatomy. Import normalizes the viewBox without stretching, converts paint to `currentColor`, preserves deliberate opacity, and optimizes with SVGO. It does not choose tint regions, simplify anatomy or make optical corrections automatically.
-
-```sh
-npm run icons -- create "Renal physiology" --from /tmp/kidney.svg --metadata /tmp/kidney-metadata.json --id renal-physiology-v2
-```
-
-`--from` also accepts an ID returned by search. A `bioicons:` ID additionally requires `--bioicons checkout`. Metadata is JSON with `keywords`, `notes`, `source`, and optional `alternatives`, following the `IconRecord` type in `scripts/branding/iconStudio.ts`. Candidates and their metadata live only in ignored `.cache/icons/workspace`; the workspace is created on demand. Paths in metadata are relative to that workspace. A metadata template (replace all illustrative provenance before importing):
+Write metadata JSON (`keywords`, `notes`, `source`; see `IconRecord` in `scripts/branding/iconStudio.ts`). Third-party source, pinned and with license evidence:
 
 ```json
-{
-  "keywords": ["kidney", "renal"],
-  "notes": "Describe the selected artwork and intentional changes.",
-  "source": {
-    "collection": "Source collection",
-    "asset": "Exact source asset name",
-    "url": "https://example.com/source",
-    "revision": "Exact source revision",
-    "author": "Original author",
-    "license": "CC0-1.0",
-    "licenseUrl": "https://example.com/license",
-    "attribution": ""
-  },
-  "alternatives": []
-}
+{ "keywords": ["kidney"], "notes": "What changed.",
+  "source": { "collection": "Health Icons", "asset": "kidneys", "url": "https://github.com/...", "revision": "<commit>",
+    "author": "...", "license": "CC0-1.0", "licenseUrl": "https://...", "attribution": "" } }
 ```
 
-The source needs collection, exact asset, pinned source URL/revision, author, SPDX license, license evidence URL and attribution (an empty attribution is allowed only for CC0). Original artwork needs an explicit author and license declaration. Keep downloaded license evidence and optional source comparisons in the temporary workspace only while needed for review. Source snapshots omit editor metadata and artboard clips but retain original artwork colors.
-
-Verify each source against its actual revision. Iconify is a distributor, not a blanket license. Health Icons' current artwork license is CC0; older notices and distributor metadata may say MIT. Keep existing notices. Bioicons licenses vary per asset; its website license does not license its artwork. Unknown or unsupported licenses block import. The validator checks metadata completeness and supported licenses, not the truth of an author's license claim.
-
-The static subset excludes CSS, scripts, event handlers, external resources, embedded images, animation, clipping, masks and filters. Do not automatically sanitize arbitrary input and assume it is safe. Inspect rejected source files and deliberately reduce them to static vector geometry before retrying. Keep source credits in candidate metadata during review and include required attribution and license notices in the shipped app when integrating.
-
-## Review and approve
+Original art uses `"collection": "Meducation original"` and omits url, revision and licenseUrl.
 
 ```sh
-npm run icons -- validate
-npm run icons -- preview
+npm run icons -- create "Renal physiology" --from <search-id-or-file.svg> --metadata meta.json --id renal-physiology-v2 [--fill]
+npm run icons -- sheet
 ```
 
-Open the printed standalone HTML path in a browser. Compare light and dark panels, 20/24/46/64px samples, badge contexts, source comparisons and current Meducation artwork. Check focal clarity, anatomy, stroke weight, alignment, clipping and proportions. The gallery is ignored and is never shipped with the application.
+`create` fits art into the 20-unit live area of the 24 grid (`--fill` uses all 24 for deliberately oversized art), converts black and currentColor paint to currentColor, rejects white or colored paint (cut knockouts with evenodd or `fill="none"`), and corrects stroke widths, warning when a stroke renders outside 1.25 to 1.75. `--from` accepts a search ID; `bioicons:` IDs need `--bioicons`. Candidates live in ignored `.cache/icons/workspace`.
 
-Present candidates and obtain visual approval before integrating them. Accepting a displayed replacement authorizes integration immediately; do not ask for a second approval or stop after recording acceptance. Apply the reviewed artwork to its existing production glyph definition, preserve glyph keys and topic or subject IDs, reuse MUI `SvgIcon`, and keep icons decorative beside their labels. Add the selected source, pinned revision, attribution and required license notice to `public/icon-licenses.txt`, reusing an existing notice for the same source/license where applicable.
+Read `.cache/icons/sheet.png`. It shows each candidate beside production icons at 24px and in the 64px badge. Critique it, revise, and re-create under a new id until it holds up at 24px beside the family.
 
-Integration includes cleanup. Delete integrated candidate SVGs and their registry entries, source comparisons, downloaded license copies, task-specific scripts and galleries. Remove the workspace directory when no undecided candidates remain, and stop task preview servers. Shared catalog caches may remain. Do not create an approved-artwork archive, approval hash record, duplicate production SVG or duplicate permanent license file. The app glyph definition and shipped notices are the maintained copies. If the user explicitly defers integration, leave the accepted proposal in the temporary workspace until it can be integrated. Do not overwrite another proposal under review; use a new candidate ID for a revision.
+## Present
 
-Run the focused tests and checks listed in [testing](../../../docs/testing.md#icon-studio). Report visual limitations honestly.
+Run `npm run icons -- preview` and open the standalone HTML (light and dark, 20/24/46/64px, badges, family strip, sources). Show the user 2 to 3 strong options. Accepting one authorizes integration in the same change.
+
+## Integrate
+
+1. `npm run icons -- jsx <id>` prints a JSX fragment for the `TopicIcon` `icons` map (also `SubjectIcon` art). Paste it into the existing glyph definition. Keep glyph keys and subject and topic IDs.
+2. If the set or license is new, add the source and notice to `public/icon-licenses.txt`. Reuse existing notices.
+3. Delete the integrated candidate from `.cache/icons/workspace`.
+4. Run the checks in [testing](../../../docs/testing.md#icon-studio). Report visual limitations honestly.

@@ -45,7 +45,7 @@ The isolated video workspace uses `npm --prefix marketing run typecheck`, `npm -
 
 ## Icon studio
 
-Run `npm test -- scripts/branding/iconStudio.test.ts`, `npm run icons -- validate` and `npm run icons -- preview`, then review the gallery as described in the [icon skill](../.agents/skills/meducation-icons/SKILL.md). Automated checks do not establish medical accuracy, license truth or visual approval. Studio code changes also need lint, format check and `npm run build`.
+Run `npm test -- scripts/branding/iconStudio.test.ts`, `npm run icons -- validate`, `npm run icons -- sheet` and `npm run icons -- preview`, then review the sheet image and gallery as described in the [icon skill](../.agents/skills/meducation-icons/SKILL.md). Automated checks do not establish medical accuracy, license truth or visual approval. Studio code changes also need lint, format check and `npm run build`.
 
 ## Fixtures
 

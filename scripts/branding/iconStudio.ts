@@ -6,11 +6,11 @@ import { optimize } from 'svgo';
 export interface IconSource {
   collection: string;
   asset: string;
-  url: string;
-  revision: string;
+  url?: string;
+  revision?: string;
   author: string;
   license: string;
-  licenseUrl: string;
+  licenseUrl?: string;
   attribution: string;
 }
 
@@ -124,14 +124,35 @@ export function validateSvg(svg: string, normalized = false): number[] {
   return viewBox;
 }
 
-export function normalizeSvg(svg: string): string {
+const round = (value: number) => Number(value.toFixed(3));
+const blacks = ['currentcolor', 'black', '#000', '#000000'];
+
+/** Fits the art into a 20-unit live area (2 units clear space) of a 24 grid, or the full grid with `fill`. */
+export function normalizeSvg(svg: string, { fill = false } = {}): { svg: string; warnings: string[] } {
   const [x, y, width, height] = validateSvg(svg);
   // Deterministic fit, preserving aspect ratio. Artistic optical changes belong in the source.
-  const scale = 24 / Math.max(width, height);
+  const size = fill ? 24 : 20;
+  const scale = size / Math.max(width, height);
+  const tx = round((24 - width * scale) / 2);
+  const ty = round((24 - height * scale) / 2);
+  // A stroke drawn on the source grid keeps its 24-grid equivalent after scaling.
+  const gridStroke = 24 / Math.max(width, height);
+  const warnings: string[] = [];
   const output = optimize(svg, {
     multipass: false,
     plugins: [
-      { name: 'preset-default', params: { overrides: { removeDesc: false, convertColors: false } } },
+      {
+        name: 'preset-default',
+        params: {
+          overrides: {
+            removeDesc: false,
+            convertColors: false,
+            convertTransform: { floatPrecision: 6 },
+            // A default stroke-width of 1 still needs scaling and a range check.
+            removeUnknownsAndDefaults: { defaultAttrs: false },
+          },
+        },
+      },
       {
         name: 'meducation',
         fn: () => ({
@@ -141,14 +162,14 @@ export function normalizeSvg(svg: string): string {
                 node.attributes.viewBox = '0 0 24 24';
                 delete node.attributes.width;
                 delete node.attributes.height;
-                if (parent.type === 'root' && (x || y || width !== 24 || height !== 24)) {
+                if (parent.type === 'root' && (scale !== 1 || x || y || tx || ty)) {
                   const children = node.children;
                   node.children = [
                     {
                       type: 'element',
                       name: 'g',
                       attributes: {
-                        transform: `translate(${(24 - width * scale) / 2} ${(24 - height * scale) / 2}) scale(${scale}) translate(${-x} ${-y})`,
+                        transform: `translate(${tx} ${ty}) scale(${scale}) translate(${-x} ${-y})`,
                       },
                       children,
                     },
@@ -157,8 +178,21 @@ export function normalizeSvg(svg: string): string {
                 node.attributes.fill ??= 'currentColor';
               }
               for (const paint of ['fill', 'stroke']) {
-                if (node.attributes[paint] && node.attributes[paint] !== 'none')
-                  node.attributes[paint] = 'currentColor';
+                const value = node.attributes[paint];
+                if (!value || value === 'none') continue;
+                if (!blacks.includes(value.toLowerCase()))
+                  throw new Error(
+                    `Unsupported paint ${value}: use currentColor, or cut knockouts out with fill-rule evenodd or fill none.`,
+                  );
+                node.attributes[paint] = 'currentColor';
+              }
+              const stroke = Number(node.attributes['stroke-width']);
+              if (node.attributes['stroke-width'] && Number.isFinite(stroke)) {
+                const attribute = round((stroke * gridStroke) / scale);
+                node.attributes['stroke-width'] = String(attribute);
+                const rendered = round(attribute * scale);
+                if (rendered < 1.25 || rendered > 1.75)
+                  warnings.push(`Stroke width ${rendered} on <${node.name}> is outside 1.25–1.75; adjust the source.`);
               }
             },
           },
@@ -167,9 +201,10 @@ export function normalizeSvg(svg: string): string {
     ],
   }).data;
   validateSvg(output, true);
-  return output + '\n';
+  return { svg: output + '\n', warnings };
 }
 
+const licenses = ['CC0-1.0', 'MIT', 'ISC', 'Apache-2.0', 'CC-BY-3.0', 'CC-BY-4.0', 'CC-BY-SA-3.0', 'CC-BY-SA-4.0'];
 const textFields = (value: unknown, fields: string[]): value is Record<string, string> =>
   !!value &&
   typeof value === 'object' &&
@@ -180,16 +215,26 @@ const textFields = (value: unknown, fields: string[]): value is Record<string, s
   );
 
 export function assertSource(value: unknown): asserts value is IconSource {
+  const original = (value as Partial<IconSource> | null)?.collection === 'Meducation original';
   if (
-    !textFields(value, ['collection', 'asset', 'url', 'revision', 'author', 'license', 'licenseUrl']) ||
+    !textFields(
+      value,
+      original
+        ? ['collection', 'asset', 'author', 'license']
+        : ['collection', 'asset', 'url', 'revision', 'author', 'license', 'licenseUrl'],
+    ) ||
     typeof value.attribution !== 'string'
   )
-    throw new Error('Source needs collection, asset, URL, revision, author, license, license URL, and attribution.');
+    throw new Error(
+      original
+        ? 'Original artwork needs asset, author, license, and attribution.'
+        : 'Source needs collection, asset, URL, revision, author, license, license URL, and attribution.',
+    );
   for (const key of ['url', 'licenseUrl']) {
-    if (new URL(value[key]).protocol !== 'https:') throw new Error('Source and license evidence must use HTTPS.');
+    if (value[key]?.trim() && new URL(value[key]).protocol !== 'https:')
+      throw new Error('Source and license evidence must use HTTPS.');
   }
-  if (!['CC0-1.0', 'MIT', 'ISC', 'Apache-2.0', 'CC-BY-3.0', 'CC-BY-4.0'].includes(value.license))
-    throw new Error(`Unverified or unsupported license: ${value.license}`);
+  if (!licenses.includes(value.license)) throw new Error(`Unverified or unsupported license: ${value.license}`);
   if (value.license !== 'CC0-1.0' && !value.attribution.trim())
     throw new Error('This license needs an attribution notice.');
 }
@@ -279,27 +324,17 @@ export interface SearchCandidate {
   url?: string;
 }
 
-const synonyms = [
-  ['cardiology', 'cardiac', 'heart'],
-  ['renal', 'kidney', 'kidneys', 'nephrology'],
-  ['hematology', 'erythrocyte', 'blood', 'red-cell'],
-  ['pharmacology', 'capsule', 'pill', 'drug'],
-  ['microbiology', 'bacteriophage', 'phage', 'bacteria', 'virus'],
-];
 export function rankCandidates(query: string, candidates: SearchCandidate[]) {
   const terms = query
     .toLowerCase()
     .split(/[^a-z0-9]+/)
     .filter(Boolean);
-  const expanded = new Set(terms);
-  for (const group of synonyms)
-    if (group.some((word) => terms.includes(word))) group.forEach((word) => expanded.add(word));
   return candidates
     .map((candidate) => {
       const words = `${candidate.name} ${candidate.keywords.join(' ')}`.toLowerCase();
-      const matches = [...expanded].filter((word) => words.includes(word));
+      const matches = terms.filter((word) => words.includes(word));
       return { ...candidate, matches, score: matches.length };
     })
     .filter((candidate) => candidate.score > 0)
-    .sort((a, b) => a.tier - b.tier || b.score - a.score || a.id.localeCompare(b.id));
+    .sort((a, b) => b.score - a.score || a.tier - b.tier || a.id.localeCompare(b.id));
 }

@@ -10,11 +10,20 @@ const tone = { fill: 'currentColor', fillOpacity: 0.16 };
 const solid = { fill: 'currentColor', stroke: 'none' };
 const tint = { fillOpacity: 0.16 };
 
+// Shared by subject and topic icons: 1.5-unit rounded strokes.
+export const strokeWrapper = {
+  fill: 'none',
+  stroke: 'currentColor',
+  strokeWidth: 1.5,
+  strokeLinecap: 'round',
+  strokeLinejoin: 'round',
+} as const;
+
 // Shown for subjects that have no icon yet.
 const fallback: Icon = {
   name: 'book',
   art: (
-    <g strokeWidth={2}>
+    <g>
       <path {...tone} d="M12 6.6C9.8 5 7 4.6 3 5v13.4c4-.4 6.8 0 9 1.6 2.2-1.6 5-2 9-1.6V5c-4-.4-6.8 0-9 1.6" />
       <path d="M12 6.6C9.8 5 7 4.6 3 5v13.4c4-.4 6.8 0 9 1.6 2.2-1.6 5-2 9-1.6V5c-4-.4-6.8 0-9 1.6m0 0V20" />
     </g>
@@ -212,9 +221,7 @@ export function SubjectIcon({ subjectId, ...props }: SvgIconProps & { subjectId:
       focusable="false"
       titleAccess={undefined}
     >
-      <g fill="none" stroke="currentColor" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round">
-        {art}
-      </g>
+      <g {...strokeWrapper}>{art}</g>
     </SvgIcon>
   );
 }
