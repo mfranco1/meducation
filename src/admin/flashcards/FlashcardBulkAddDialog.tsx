@@ -1,4 +1,4 @@
-import { useAdminConfirmation } from './useAdminConfirmation';
+import { useAdminConfirmation } from '../useAdminConfirmation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
@@ -13,15 +13,15 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import type { StoredFlashcardBank } from '../content/schema/schema';
+import type { StoredFlashcardBank } from '../../content/schema/schema';
 import {
   compileFlashcardBulkAddDraft,
   flashcardBulkAddTemplate,
   parseFlashcardBulkAddDraft,
   type FlashcardBulkAddContext,
   type FlashcardBulkDiagnostic,
-} from './core/flashcardBulkAddDraft';
-import type { BulkPlan } from './data/DraftStore';
+} from '../core/flashcardBulkAddDraft';
+import type { BulkPlan } from '../data/DraftStore';
 
 /** Pasted JSON for new decks or cards. Save sends it to the server in bulk; the server assigns the IDs. */
 export function FlashcardBulkAddDialog({

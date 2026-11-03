@@ -1,17 +1,17 @@
 import { useEffect, useState } from 'react';
 import { Alert, Button, Stack, Tab, Tabs, Typography } from '@mui/material';
-import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from './components/AdminEditorFrame';
-import { AdminNavigatorPanel } from './components/AdminNavigatorPanel';
-import { AdminRecordEditor } from './components/AdminRecordEditor';
-import { AdminRecordFeedback } from './components/AdminRecordFeedback';
-import { AdminRecordMenu } from './components/AdminRecordMenu';
-import type { DeleteRequest } from './components/AdminDeleteDialog';
-import { reorderTarget } from './core/reorder';
-import { errorMessages } from './data/PairedHttpClient';
-import type { DraftStore } from './data/DraftStore';
+import { AdminEditorFrame, AdminEditorEmpty, AdminEditorActions } from '../components/AdminEditorFrame';
+import { AdminNavigatorPanel } from '../components/AdminNavigatorPanel';
+import { AdminRecordEditor } from '../components/AdminRecordEditor';
+import { AdminRecordFeedback } from '../components/AdminRecordFeedback';
+import { AdminRecordMenu } from '../components/AdminRecordMenu';
+import type { DeleteRequest } from '../components/AdminDeleteDialog';
+import { reorderTarget } from '../core/navigator';
+import { errorMessages } from '../data/PairedHttpClient';
+import type { DraftStore } from '../data/DraftStore';
 import { QuizBulkAdd, type BulkTarget } from './QuizBulkAdd';
-import { useAdminConfirmation } from './useAdminConfirmation';
-import { useRecordEditor, type Selection } from './useRecordEditor';
+import { useAdminConfirmation } from '../useAdminConfirmation';
+import { useRecordEditor, type Selection } from '../useRecordEditor';
 
 /** Subjects, topics, quizzes and questions: browse, edit one record, add in bulk, reorder, delete. */
 export function QuizAdminPanel({

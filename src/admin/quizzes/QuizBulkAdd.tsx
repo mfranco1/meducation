@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Autocomplete, Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
-import { bulkAddTemplate, compileBulkAddDraft, type BulkAddContext } from './core/bulkAddDraft';
-import { errorMessages } from './data/PairedHttpClient';
-import type { DraftStore } from './data/DraftStore';
-import { useAdminConfirmation } from './useAdminConfirmation';
+import { bulkAddTemplate, compileBulkAddDraft, type BulkAddContext } from '../core/bulkAddDraft';
+import { errorMessages } from '../data/PairedHttpClient';
+import type { DraftStore } from '../data/DraftStore';
+import { useAdminConfirmation } from '../useAdminConfirmation';
 
 export interface BulkTarget {
   kind: 'subject' | 'topic' | 'quiz';

@@ -2,9 +2,9 @@ import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { QuizAdminPanel } from './QuizAdminPanel';
-import { theme } from '../shared/theme';
-import { createAdminStore } from '../test/adminGateway';
-import { emptyFlashcardBank, storedQuestionBank } from '../test/contentFixtures';
+import { theme } from '../../shared/theme';
+import { createAdminStore } from '../../test/adminGateway';
+import { emptyFlashcardBank, storedQuestionBank } from '../../test/contentFixtures';
 
 function mount() {
   const store = createAdminStore(structuredClone(storedQuestionBank), structuredClone(emptyFlashcardBank));

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fixture from '../../../tests/fixtures/question-bank.json';
 import type { StoredFlashcard, StoredQuestionBank } from '../../content/schema/schema';
-import { ADMIN_PAGE_SIZE, selectFlashcardPage, selectQuizNavigatorPage } from './navigator';
+import { ADMIN_PAGE_SIZE, reorderTarget, selectFlashcardPage, selectQuizNavigatorPage } from './navigator';
 
 describe('quiz navigation', () => {
   it('reaches items beyond 200, searches full stems and clamps pages without changing canonical order', () => {
@@ -65,5 +65,20 @@ describe('selectFlashcardPage', () => {
     expect(result.visible).toEqual([]);
     expect(result.rangeStart).toBe(0);
     expect(result.rangeEnd).toBe(0);
+  });
+});
+
+describe('reorderTarget', () => {
+  const rows = ['a', 'b', 'c', 'd'].map((id) => ({ id }));
+  it('places a record after the sibling two above, or first, when moving up', () => {
+    expect(reorderTarget(rows, 'c', -1)).toEqual({ afterId: 'a' });
+    expect(reorderTarget(rows, 'b', -1)).toEqual({ afterId: null });
+    expect(reorderTarget(rows, 'a', -1)).toBeUndefined();
+  });
+  it('places a record after the next sibling when moving down', () => {
+    expect(reorderTarget(rows, 'a', 1)).toEqual({ afterId: 'b' });
+    expect(reorderTarget(rows, 'c', 1)).toEqual({ afterId: 'd' });
+    expect(reorderTarget(rows, 'd', 1)).toBeUndefined();
+    expect(reorderTarget(rows, 'zzz', 1)).toBeUndefined();
   });
 });
