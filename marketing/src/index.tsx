@@ -1,40 +1,68 @@
-import { AbsoluteFill, Composition, getInputProps, registerRoot, Still } from 'remotion';
-import { duration, FPS, HEIGHT, specSchema, WIDTH } from '../spec';
-import { Ad } from './Ad';
+import { useEffect, useState } from 'react';
+import {
+  AbsoluteFill,
+  Composition,
+  Sequence,
+  cancelRender,
+  continueRender,
+  delayRender,
+  registerRoot,
+  staticFile,
+} from 'remotion';
+import { Audio } from '@remotion/media';
+import Ad from '@ad/Ad';
+import raw from '@ad/ad.json';
+import { FPS, formatId, formats, specSchema, type AdSpec } from '../spec';
 
-function Instructions() {
+const spec = specSchema.parse(raw);
+
+function Production({ spec }: { spec: AdSpec }) {
+  const [handle] = useState(() => delayRender('Load local Inter'));
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    new FontFace('Inter', `url(${staticFile('fonts/InterVariable.woff2')})`, { weight: '100 900' })
+      .load()
+      .then((font) => {
+        document.fonts.add(font);
+        setReady(true);
+        continueRender(handle);
+      })
+      .catch(cancelRender);
+  }, [handle]);
   return (
-    <AbsoluteFill
-      style={{
-        justifyContent: 'center',
-        padding: 100,
-        fontFamily: 'sans-serif',
-        fontSize: 48,
-        background: '#f7f2eb',
-        color: '#27211e',
-      }}
-    >
-      Load an ad specification with --props.
+    <AbsoluteFill style={{ fontFamily: 'Inter, sans-serif' }}>
+      {ready && <Ad spec={spec} />}
+      {spec.audio.map((audio, index) => (
+        <Sequence key={index} from={audio.from} durationInFrames={audio.frames}>
+          <Audio
+            src={staticFile(audio.src)}
+            trimBefore={audio.trim}
+            volume={(frame) =>
+              audio.volume *
+              Math.min(1, audio.fade ? frame / audio.fade : 1, audio.fade ? (audio.frames - 1 - frame) / audio.fade : 1)
+            }
+          />
+        </Sequence>
+      ))}
     </AbsoluteFill>
   );
 }
 
 function Root() {
-  const input = getInputProps<Record<string, unknown>>();
-  if (!Object.keys(input).length)
-    return <Still id="Instructions" component={Instructions} width={WIDTH} height={HEIGHT} />;
-  const spec = specSchema.parse(input.spec ?? input);
   return (
-    <Composition
-      id="Meducation"
-      component={Ad}
-      width={WIDTH}
-      height={HEIGHT}
-      fps={FPS}
-      durationInFrames={duration(spec)}
-      defaultProps={{ spec }}
-      calculateMetadata={({ props }) => ({ durationInFrames: duration(props.spec) })}
-    />
+    <>
+      {spec.formats.map((format) => (
+        <Composition
+          key={format}
+          id={formatId(format)}
+          component={Production}
+          {...formats[format]}
+          fps={FPS}
+          durationInFrames={spec.frames}
+          defaultProps={{ spec }}
+        />
+      ))}
+    </>
   );
 }
 registerRoot(Root);

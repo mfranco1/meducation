@@ -29,20 +29,51 @@ export async function sourceFingerprint(root: string): Promise<string> {
 export const cacheKey = (recipe: unknown, source: string, revisions: string[], baseURL: string) =>
   createHash('sha256').update(JSON.stringify({ recipe, source, revisions, baseURL })).digest('hex');
 
-async function actions(page: Page, steps: Recipe['shots'][number]['setup']) {
+type Step = Recipe['shots'][number]['setup'][number];
+type Tap = { t: number; x: number; y: number; type: 'click' | 'hover' | 'fill' };
+
+/** Runs recipe steps. `onTap` receives each pointer or typing target just before the interaction. */
+async function actions(page: Page, steps: Step[], scale = 1, onTap?: (tap: Omit<Tap, 't'>) => void) {
   for (const step of steps) {
     if (step.type === 'wait') await page.waitForTimeout(step.ms);
+    else if (step.type === 'press') await page.keyboard.press(step.key);
     else if (step.type === 'scroll') await page.getByText(step.text, { exact: true }).scrollIntoViewIfNeeded();
-    else await page.getByRole(step.role, { name: step.name, exact: step.exact }).click();
+    else if (step.type === 'scrollBy') {
+      const size = page.viewportSize()!;
+      await page.mouse.move(size.width / 2, size.height / 2);
+      const count = Math.max(1, Math.round(step.ms / 16));
+      for (let index = 0; index < count; index++) {
+        await page.mouse.wheel(0, step.y / count);
+        await page.waitForTimeout(16);
+      }
+    } else {
+      const target =
+        step.type === 'fill'
+          ? page.getByLabel(step.label, { exact: true })
+          : page.getByRole(step.role as Parameters<Page['getByRole']>[0], { name: step.name, exact: step.exact });
+      if (onTap) {
+        await target.scrollIntoViewIfNeeded();
+        const box = await target.boundingBox();
+        if (box) onTap({ type: step.type, x: (box.x + box.width / 2) * scale, y: (box.y + box.height / 2) * scale });
+      }
+      if (step.type === 'click') await target.click();
+      else if (step.type === 'hover') await target.hover();
+      else {
+        await target.click();
+        await target.clear();
+        await target.pressSequentially(step.text, { delay: step.delay });
+      }
+    }
   }
 }
 
 /** Device-resolution screenshots avoid Chromium screencast's CSS-pixel resolution cap. */
-async function record(page: Page, steps: Recipe['shots'][number]['record'], directory: string) {
+async function record(page: Page, steps: Step[], directory: string, scale: number) {
   await mkdir(directory, { recursive: true });
   const frames: { data: Buffer; time: number }[] = [];
   let recording = true;
   const start = performance.now();
+  const events: Tap[] = [];
   const grab = async () => {
     const time = performance.now() / 1000;
     const data = await page.screenshot({ type: 'jpeg', quality: 95, scale: 'device' });
@@ -58,9 +89,11 @@ async function record(page: Page, steps: Recipe['shots'][number]['record'], dire
   })();
   await Promise.all([
     loop,
-    actions(page, steps).finally(() => {
-      recording = false;
-    }),
+    actions(page, steps, scale, (tap) => events.push({ t: performance.now() / 1000 - frames[0].time, ...tap })).finally(
+      () => {
+        recording = false;
+      },
+    ),
   ]);
   const seconds = (performance.now() - start) / 1000;
   const list: string[] = [];
@@ -73,7 +106,7 @@ async function record(page: Page, steps: Recipe['shots'][number]['record'], dire
   }
   list.push(`file '${frames.length - 1}.jpg'`);
   await writeFile(join(directory, 'frames.ffconcat'), list.join('\n'));
-  return seconds;
+  return { seconds, events };
 }
 
 export async function capture(root: string, recipePath: string, baseURL: string, force: boolean) {
@@ -100,6 +133,7 @@ export async function capture(root: string, recipePath: string, baseURL: string,
         const info = await probe(join(destination, `${shot.id}.mp4`), join(root, '.cache/logs/cache.log'));
         if (!(Number(info.format.duration) > 0)) throw new Error('Empty cached footage');
         await readFile(join(destination, `${shot.id}.png`));
+        await readFile(join(destination, `${shot.id}.events.json`));
       }
       console.log(`Capture reused: ${destination}`);
       return;
@@ -138,7 +172,8 @@ export async function capture(root: string, recipePath: string, baseURL: string,
         await page.waitForTimeout(700);
         await page.screenshot({ path: join(temporary, `${shot.id}.png`) });
         const framesDir = join(temporary, shot.id);
-        const seconds = await record(page, shot.record, framesDir);
+        const { seconds, events } = await record(page, shot.record, framesDir, recipe.deviceScaleFactor);
+        await writeFile(join(temporary, `${shot.id}.events.json`), JSON.stringify(events));
         await ffmpeg(
           [
             '-f',

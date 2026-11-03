@@ -4,19 +4,28 @@ const asset = z
   .string()
   .regex(/^[a-zA-Z0-9_./-]+$/)
   .refine((p) => !p.startsWith('/') && !p.split('/').includes('..'), 'Use a relative public asset path');
+const role = z.string().regex(/^[a-z]+$/);
 const action = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('click'), role, name: z.string().min(1), exact: z.boolean().default(true) }),
+  z.object({ type: z.literal('hover'), role, name: z.string().min(1), exact: z.boolean().default(true) }),
   z.object({
-    type: z.literal('click'),
-    role: z.enum(['button', 'radio', 'switch', 'tab']),
-    name: z.string().min(1),
-    exact: z.boolean().default(true),
+    type: z.literal('fill'),
+    label: z.string().min(1),
+    text: z.string(),
+    delay: z.number().int().min(0).max(500).default(70),
   }),
+  z.object({ type: z.literal('press'), key: z.string().min(1) }),
   z.object({ type: z.literal('wait'), ms: z.number().int().min(0).max(30000) }),
   z.object({ type: z.literal('scroll'), text: z.string().min(1) }),
+  z.object({
+    type: z.literal('scrollBy'),
+    y: z.number().int().min(-5000).max(5000),
+    ms: z.number().int().min(0).max(10000).default(600),
+  }),
 ]);
 export const recipeSchema = z.object({
   viewport: z.object({ width: z.number().int().min(320), height: z.number().int().min(320) }),
-  deviceScaleFactor: z.number().min(1).max(2),
+  deviceScaleFactor: z.number().min(1).max(3),
   sources: z.array(z.string().startsWith('/api/v1/')).min(1),
   shots: z
     .array(
@@ -28,37 +37,31 @@ export const recipeSchema = z.object({
     )
     .min(1),
 });
+export const FPS = 30;
+export const formats = {
+  '9:16': { width: 1080, height: 1920 },
+  '4:5': { width: 1080, height: 1350 },
+  '16:9': { width: 1920, height: 1080 },
+} as const;
+export type Format = keyof typeof formats;
+export const formatId = (format: Format) => format.replace(':', 'x');
 export const specSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/),
-    brief: z.object({ audience: z.string(), message: z.string(), concept: z.string(), cta: z.string() }),
-    recipe: z.string().min(1),
+    brief: z.object({
+      audience: z.string().min(1),
+      message: z.string().min(1),
+      hook: z.string().min(1),
+      concept: z.string().min(1),
+      cta: z.string().min(1),
+    }),
+    frames: z.number().int().min(30).max(3600),
+    formats: z
+      .array(z.enum(Object.keys(formats) as [Format, ...Format[]]))
+      .min(1)
+      .default(['9:16']),
+    recipe: z.string().min(1).optional(),
     audioRecipe: z.string().min(1).optional(),
-    scenes: z
-      .array(
-        z.object({
-          treatment: z.enum(['type', 'product', 'closing']),
-          frames: z.number().int().positive(),
-          headline: z.string().min(1),
-          label: z.string().default(''),
-          detail: z.string().default(''),
-          theme: z.enum(['cream', 'orange', 'ink']).default('cream'),
-          footage: asset.optional(),
-          poster: asset.optional(),
-          trim: z.number().int().nonnegative().default(0),
-          zoom: z.number().min(1).max(1.3).default(1),
-          position: z.number().min(0).max(100).default(50),
-          crop: z
-            .object({
-              x: z.number().nonnegative(),
-              y: z.number().nonnegative(),
-              width: z.number().positive(),
-              height: z.number().positive(),
-            })
-            .optional(),
-        }),
-      )
-      .min(1),
     audio: z
       .array(
         z.object({
@@ -66,20 +69,15 @@ export const specSchema = z
           from: z.number().int().nonnegative().default(0),
           frames: z.number().int().positive(),
           trim: z.number().int().nonnegative().default(0),
-          volume: z.number().min(0).max(1).default(0.3),
-          fade: z.number().int().nonnegative().default(15),
+          volume: z.number().min(0).max(1).default(1),
+          fade: z.number().int().nonnegative().default(0),
         }),
       )
       .default([]),
   })
   .superRefine((spec, ctx) => {
-    for (const [index, scene] of spec.scenes.entries()) {
-      if (scene.treatment === 'product' && !scene.footage)
-        ctx.addIssue({ code: 'custom', path: ['scenes', index, 'footage'], message: 'Product scenes require footage' });
-    }
-    const total = duration(spec);
     for (const [index, audio] of spec.audio.entries()) {
-      if (audio.from + audio.frames > total || audio.fade * 2 > audio.frames)
+      if (audio.from + audio.frames > spec.frames || audio.fade * 2 > audio.frames)
         ctx.addIssue({
           code: 'custom',
           path: ['audio', index],
@@ -89,7 +87,6 @@ export const specSchema = z
   });
 export type AdSpec = z.infer<typeof specSchema>;
 export type Recipe = z.infer<typeof recipeSchema>;
-export type Scene = AdSpec['scenes'][number];
 export const audioRecipeSchema = z
   .object({
     id: z.string().regex(/^[a-z0-9-]+$/),
@@ -143,9 +140,3 @@ export const audioRecipeSchema = z
         ctx.addIssue({ code: 'custom', message: 'Sound effects must fit the soundtrack' });
   });
 export type AudioRecipe = z.infer<typeof audioRecipeSchema>;
-export const FPS = 30;
-export const WIDTH = 1080;
-export const HEIGHT = 1920;
-export function duration(spec: { scenes: { frames: number }[] }) {
-  return spec.scenes.reduce((sum, scene) => sum + scene.frames, 0);
-}

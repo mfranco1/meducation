@@ -1,29 +1,29 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cacheKey } from '../capture';
 import { validateAssets } from '../cli';
-import { audioRecipeSchema, duration, specSchema } from '../spec';
+import { audioRecipeSchema, specSchema } from '../spec';
 import ToneMidi from '@tonejs/midi';
 import { scoreMidi, verifySoundfontArchive } from '../audio';
 import { ffmpeg } from '../media';
 
 const production = {
   id: 'test',
-  brief: { audience: 'Test', message: 'Test', concept: 'Test', cta: 'Test' },
-  recipe: 'recipes/test.json',
-  scenes: [{ treatment: 'type', frames: 30, headline: 'Test' }],
+  brief: { audience: 'Test', message: 'Test', hook: 'Test', concept: 'Test', cta: 'Test' },
+  frames: 60,
 };
 
-test('production timings are summed and invalid input is rejected', () => {
-  assert.equal(duration(specSchema.parse(production)), 30);
+test('ad specifications default to vertical video and reject invalid input', () => {
+  assert.deepEqual(specSchema.parse(production).formats, ['9:16']);
   for (const edit of [
-    { scenes: [{ treatment: 'product', frames: 30, headline: 'Study' }] },
-    { scenes: [{ treatment: 'type', frames: -1, headline: 'Study' }] },
-    { scenes: [{ treatment: 'product', frames: 30, headline: 'Study', footage: '../private.mp4' }] },
-    { audio: [{ src: 'music.wav', frames: 800 }] },
+    { frames: 10 },
+    { formats: ['1:1'] },
+    { formats: [] },
+    { audio: [{ src: '../private.wav', frames: 30 }] },
+    { audio: [{ src: 'music.wav', frames: 90 }] },
   ])
     assert.equal(specSchema.safeParse({ ...production, ...edit }).success, false);
 });
@@ -74,14 +74,16 @@ test('capture cache changes when relevant production inputs change', () => {
     assert.notEqual(key, changed);
 });
 
-test('missing assets and source trims beyond media duration fail before rendering', async () => {
+test('assets referenced by ad code must exist and decode before rendering', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'meducation-marketing-'));
   try {
-    const spec = specSchema.parse({
-      ...production,
-      scenes: [{ treatment: 'product', frames: 30, headline: 'Study', footage: 'clip.mp4' }],
-    });
-    await assert.rejects(validateAssets(spec, directory), /Missing asset/);
+    const ad = join(directory, 'ad');
+    await mkdir(ad);
+    await writeFile(join(ad, 'Ad.tsx'), "const clip = staticFile('clip.mp4');");
+    const spec = specSchema.parse(production);
+    await assert.rejects(validateAssets(spec, ad, directory), /Missing asset: clip.mp4/);
+    await writeFile(join(directory, 'clip.mp4'), 'not a video');
+    await assert.rejects(validateAssets(spec, ad, directory), /ffmpeg failed/);
     await ffmpeg(
       [
         '-f',
@@ -96,7 +98,7 @@ test('missing assets and source trims beyond media duration fail before renderin
       ],
       join(directory, 'encode.log'),
     );
-    await assert.rejects(validateAssets(spec, directory), /too short/);
+    await validateAssets(spec, ad, directory);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }
