@@ -1,31 +1,23 @@
-"""Real PG17: draft rebuilds, migration 0009 and the per-record draft HTTP API."""
+"""Real PG17: draft rebuilds and the per-record draft HTTP API."""
 
 import gzip
 import json
-from uuid import uuid4
 
 import pytest
 import test_postgres_content
-from alembic import command
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from test_postgres_content import (
-    ACTOR,
-    REASON,
     ROOT,
     auth_app,
     auth_login,
     banks,
     content_state,
-    reader_settings,
     scalar,
     seed,
 )
 
 from meducation_api.content.draft import build_documents, revisions
-from meducation_api.db.bootstrap import RolePasswords, bootstrap
-from meducation_api.db.engine import ContentDatabaseError
-from meducation_api.db.migrate import migration_config, upgrade
 from meducation_api.db.recovery import advance_ids
 
 pytestmark = pytest.mark.postgres
@@ -53,18 +45,6 @@ def fixture_pairs():
     }
 
 
-def to_revision(db, revision):
-    with db.admin.begin() as connection:
-        connection.exec_driver_sql("DROP SCHEMA admin_auth CASCADE")
-        connection.exec_driver_sql("DROP SCHEMA content CASCADE")
-    bootstrap(db.admin, RolePasswords(_env_file=None))
-    with db.migrator.begin() as connection:
-        connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
-        config = migration_config()
-        config.attributes["connection"] = connection
-        command.upgrade(config, revision)
-
-
 @pytest.mark.parametrize("name", list(fixture_pairs()))
 def test_draft_rebuilds_byte_identical_artifacts_and_revisions(db, name):
     q, f = fixture_pairs()[name]
@@ -81,228 +61,6 @@ def test_draft_rebuilds_byte_identical_artifacts_and_revisions(db, name):
         built = build_documents(connection)
     assert built == (expected[0], expected[1])
     assert revisions(*built) == {"quizRevision": expected[2], "flashcardRevision": expected[3]}
-
-
-LEGACY_QUIZ = {
-    "schemaVersion": 4,
-    "subjects": [
-        {"id": "s1", "name": "Anatomy", "accent": "#123456"},
-        {"id": "s2", "name": "Empty", "accent": "#654321"},
-    ],
-    "quizzes": [
-        {"id": "q1", "subjectId": "s1", "name": "Practice Test 1"},
-        {"name": "Practice Test 2", "id": "q2", "subjectId": "s1"},
-    ],
-    "questions": [
-        {
-            "id": f"i{n}",
-            "quizId": f"q{n}",
-            "stem": "Stem",
-            "choices": [{"id": "A", "text": "One"}, {"id": "B", "text": "Two"}],
-            "answer": "A",
-            "rationale": "Because.",
-        }
-        for n in (1, 2)
-    ],
-}
-LEGACY_FLASHCARDS = {
-    "schemaVersion": 2,
-    "decks": [{"id": "d-1", "subjectId": "s1", "name": "Cranial nerves"}],
-    "cards": [{"id": "f-1", "deckId": "d-1", "front": "CN I", "back": "Olfactory"}],
-}
-
-
-def test_migration_0009_groups_existing_content_into_topics(db):
-    """A 0008 draft gains default topics; the next publish serves topics to learners."""
-    to_revision(db, "0008_retire_legacy")
-    from meducation_api.content.releases import activate_release
-    from meducation_api.content_policy import artifact_text
-
-    # The current Python store validates only the current schema; call the 0008 function.
-    with db.operator.begin() as connection:
-        stored = connection.execute(
-            text("SELECT content.store_release(:op,:q,:f,CAST(:h AS jsonb),:a,:r)"),
-            {
-                "op": uuid4(),
-                "q": artifact_text(LEGACY_QUIZ),
-                "f": artifact_text(LEGACY_FLASHCARDS),
-                "h": json.dumps({"quiz": "0" * 64, "flashcard": "0" * 64}),
-                "a": ACTOR,
-                "r": REASON,
-            },
-        ).scalar_one()
-        legacy_id = stored["release_id"]
-        connection.execute(
-            text("SELECT content.activate_release(:op,CAST(:id AS uuid),0,:a,:r)"),
-            {"op": uuid4(), "id": legacy_id, "a": ACTOR, "r": REASON},
-        )
-    with db.migrator.begin() as connection:
-        connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
-        for n, subject in enumerate(LEGACY_QUIZ["subjects"]):
-            connection.execute(
-                text("INSERT INTO content.draft_subjects(id,position,name,accent) VALUES(:id,:n,:name,:accent)"),
-                {**subject, "n": n},
-            )
-        connection.execute(
-            text(
-                "INSERT INTO content.draft_quizzes(id,position,field_order,subject_id,name) VALUES"
-                "('q1',0,NULL,'s1','Practice Test 1'),"
-                "('q2',1,ARRAY['name','id','subjectId'],'s1','Practice Test 2')"
-            )
-        )
-        for n, question in enumerate(LEGACY_QUIZ["questions"]):
-            connection.execute(
-                text(
-                    "INSERT INTO content.draft_questions(id,position,quiz_id,stem,choices,answer,rationale) "
-                    "VALUES(:id,:n,:quizId,:stem,CAST(:choices AS json),:answer,:rationale)"
-                ),
-                {**question, "n": n, "choices": json.dumps(question["choices"])},
-            )
-        connection.exec_driver_sql(
-            "INSERT INTO content.draft_decks(id,position,subject_id,name) VALUES('d-1',0,'s1','Cranial nerves');"
-            "INSERT INTO content.draft_flashcards(id,position,deck_id,front,back) VALUES('f-1',0,'d-1','CN I','Olfactory');"
-            "INSERT INTO content.draft_changes(actor,kind,entity_id,action,before,after) VALUES('editor','quizzes','q1','update',"
-            "'{\"id\":\"q1\",\"subjectId\":\"s1\",\"name\":\"Old\",\"version\":1,\"position\":\"0\"}',"
-            "'{\"id\":\"q1\",\"subjectId\":\"s1\",\"name\":\"Practice Test 1\",\"version\":1,\"position\":\"0\"}')"
-        )
-        connection.execute(
-            text("UPDATE content.draft_state SET base_release_id=:r,published_change_id=1"),
-            {"r": legacy_id},
-        )
-
-    upgrade(db.migrator)
-
-    with db.backup.connect() as connection:
-        topics = connection.execute(
-            text("SELECT id,subject_id,name FROM content.draft_topics ORDER BY position")
-        ).all()
-        quizzes = connection.execute(
-            text("SELECT id,topic_id,version,field_order FROM content.draft_quizzes ORDER BY position")
-        ).all()
-        decks = connection.execute(text("SELECT topic_id,version FROM content.draft_decks")).all()
-    assert [tuple(t) for t in topics] == [("t1", "s1", "Practice Tests"), ("t2", "s1", "Flashcards")]
-    assert [tuple(q) for q in quizzes] == [
-        ("q1", "t1", 2, None),
-        ("q2", "t1", 2, ["name", "id", "topicId"]),
-    ]
-    assert [tuple(d) for d in decks] == [("t2", 2)]
-    with db.editor.begin() as connection:
-        assert connection.exec_driver_sql("SELECT nextval('content.draft_topic_ids')").scalar_one() == 3
-    with pytest.raises(ContentDatabaseError), db.operator.begin() as connection:
-        activate_release(
-            connection,
-            operation_id=uuid4(),
-            release_id=legacy_id,
-            expected_sequence=1,
-            actor=ACTOR,
-            reason=REASON,
-        )
-
-    # The learner API cannot start on a pre-topic release, so edit with the fixture reader.
-    client, runtime, h = auth_app(db)
-    with client:
-        auth_login(client, runtime, h)
-        snapshot = draft(client)
-        assert snapshot["changed"] is True
-        assert [r["name"] for r in snapshot["topics"]] == ["Practice Tests", "Flashcards"]
-        obsolete = call(client, "POST", "/draft/changes/1/revert", {"expectedVersion": 2})
-        assert obsolete.status_code == 409
-        assert obsolete.json()["error"]["code"] == "change_obsolete"
-        assert ok(client.get("/api/admin/releases"))["releases"] == []
-        assert ok(call(client, "POST", "/draft/publish"))["published"] is True
-    from fastapi.testclient import TestClient
-
-    from meducation_api.main import create_app
-
-    with TestClient(create_app(reader_settings(db))) as learner:
-        catalog = learner.get("/api/v1/subjects/s1/quizzes").json()
-        assert [t["name"] for t in catalog["topics"]] == ["Practice Tests", "Flashcards"]
-        assert {q["topicId"] for q in catalog["quizzes"]} == {"t1"}
-        decks = learner.get("/api/v1/flashcards/subjects/s1/catalog").json()["decks"]
-        assert [d["topicId"] for d in decks] == ["t2"]
-
-
-PRE_0011_QUIZ = {
-    "schemaVersion": 5,
-    "subjects": [{"id": "s1", "name": "Anatomy", "accent": "#123456"}],
-    "topics": [{"id": "t1", "subjectId": "s1", "name": "Nerves"}],
-    "quizzes": [{"id": "q1", "topicId": "t1", "name": "Quiz"}],
-    "questions": [
-        {
-            "id": "i1",
-            "quizId": "q1",
-            "stem": "Stem",
-            "choices": [{"id": "A", "text": "One"}, {"id": "B", "text": "Two"}],
-            "answer": "A",
-            "rationale": "Because.",
-        }
-    ],
-}
-
-
-def test_migration_0011_simplifies_draft_answers_and_retires_old_releases(db):
-    to_revision(db, "0010_descriptions")
-    from meducation_api.content.releases import activate_release
-    from meducation_api.content_policy import artifact_text
-
-    with db.operator.begin() as connection:
-        release_id = connection.execute(
-            text("SELECT content.store_release(:op,:q,:f,CAST(:h AS jsonb),:a,:r)"),
-            {
-                "op": uuid4(),
-                "q": artifact_text(PRE_0011_QUIZ),
-                "f": artifact_text({"schemaVersion": 3, "decks": [], "cards": []}),
-                "h": json.dumps({"quiz": "0" * 64, "flashcard": "0" * 64}),
-                "a": ACTOR,
-                "r": REASON,
-            },
-        ).scalar_one()["release_id"]
-    choices = json.dumps(PRE_0011_QUIZ["questions"][0]["choices"])
-    rows = (
-        # id, answer, verified_answer, rationale_meta, field_order
-        ("i1", None, "B", {"sources": "S", "provenance": "source_migrated"}, ["id", "verifiedAnswer"]),
-        ("i2", "A", None, {"answerReviewNote": "Disputed"}, None),
-        ("i3", "A", None, {"provenance": "source_migrated"}, None),
-    )
-    with db.migrator.begin() as connection:
-        connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
-        connection.exec_driver_sql(
-            "INSERT INTO content.draft_subjects(id,position,name,accent) VALUES('s1',0,'Anatomy','#123456');"
-            "INSERT INTO content.draft_topics(id,position,subject_id,name) VALUES('t1',0,'s1','Nerves');"
-            "INSERT INTO content.draft_quizzes(id,position,topic_id,name) VALUES('q1',0,'t1','Quiz')"
-        )
-        for n, (rid, answer, verified, meta, order) in enumerate(rows):
-            connection.execute(
-                text(
-                    "INSERT INTO content.draft_questions(id,position,field_order,quiz_id,stem,choices,"
-                    "answer,verified_answer,rationale,rationale_meta) VALUES(:id,:n,:order,'q1','Stem',"
-                    "CAST(:choices AS json),:answer,:verified,'Because.',CAST(:meta AS json))"
-                ),
-                {
-                    "id": rid, "n": n, "order": order, "choices": choices, "answer": answer,
-                    "verified": verified, "meta": json.dumps(meta),
-                },
-            )
-
-    upgrade(db.migrator)
-
-    with db.backup.connect() as connection:
-        found = connection.execute(
-            text("SELECT id,answer,rationale_meta,field_order,version FROM content.draft_questions ORDER BY position")
-        ).all()
-    assert [tuple(row) for row in found] == [
-        ("i1", "B", {"sources": "S"}, ["id"], 2),
-        ("i3", "A", None, None, 2),
-    ]
-    with pytest.raises(ContentDatabaseError), db.operator.begin() as connection:
-        activate_release(
-            connection,
-            operation_id=uuid4(),
-            release_id=release_id,
-            expected_sequence=0,
-            actor=ACTOR,
-            reason=REASON,
-        )
 
 
 # HTTP helpers -------------------------------------------------------------------------

@@ -44,7 +44,7 @@ Worker startup checks schema and publication once; workers never migrate, import
 - A global operation ledger with fingerprints makes store and activation replayable; audit, import and publication histories are append-only.
 - Release writes go through fixed-search-path, narrowly granted SQL functions. The reader sees only published views; the editor writes only draft tables and calls the release functions; owner and migrator are trusted maintenance roles.
 - Subject, topic, quiz and question IDs come from sequences that never move backward; decks and cards use UUID-based IDs. A restored database can rewind sequences, so recovery advances them ([operations](operations.md#backup-and-restore)).
-- Alembic migrations live in `backend/src/meducation_api/migrations`; destructive downgrade is refused.
+- Alembic migrations live in `backend/src/meducation_api/migrations`: one baseline revision (`baseline.sql`, pg_dump format) plus any later revisions. Destructive downgrade is refused.
 
 ## Learner progress
 

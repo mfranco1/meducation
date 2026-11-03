@@ -1,1 +1,1 @@
-"""Content schema revisions arrive in L3 Step 3."""
+"""Alembic revisions for the content and admin_auth schemas."""
