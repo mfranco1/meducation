@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { readFile, realpath, mkdir, writeFile, unlink, rename } from 'node:fs/promises';
 import { resolve, sep } from 'node:path';
 import { SaxesParser } from 'saxes';
@@ -13,7 +12,6 @@ export interface IconSource {
   license: string;
   licenseUrl: string;
   attribution: string;
-  licenseFile: string;
 }
 
 export interface IconRecord {
@@ -21,11 +19,9 @@ export interface IconRecord {
   concept: string;
   keywords: string[];
   file: string;
-  status: 'candidate' | 'approved';
   source: IconSource;
   notes: string;
   alternatives: { file: string; source: IconSource; assessment: string }[];
-  approval?: { reviewer: string; sha256: string };
 }
 
 const elements = new Set([
@@ -174,7 +170,6 @@ export function normalizeSvg(svg: string): string {
   return output + '\n';
 }
 
-export const hashSvg = (svg: string) => createHash('sha256').update(svg).digest('hex');
 const textFields = (value: unknown, fields: string[]): value is Record<string, string> =>
   !!value &&
   typeof value === 'object' &&
@@ -186,12 +181,10 @@ const textFields = (value: unknown, fields: string[]): value is Record<string, s
 
 export function assertSource(value: unknown): asserts value is IconSource {
   if (
-    !textFields(value, ['collection', 'asset', 'url', 'revision', 'author', 'license', 'licenseUrl', 'licenseFile']) ||
+    !textFields(value, ['collection', 'asset', 'url', 'revision', 'author', 'license', 'licenseUrl']) ||
     typeof value.attribution !== 'string'
   )
-    throw new Error(
-      'Source needs collection, asset, URL, revision, author, license, license URL/file, and attribution.',
-    );
+    throw new Error('Source needs collection, asset, URL, revision, author, license, license URL, and attribution.');
   for (const key of ['url', 'licenseUrl']) {
     if (new URL(value[key]).protocol !== 'https:') throw new Error('Source and license evidence must use HTTPS.');
   }
@@ -226,7 +219,6 @@ export async function validateRegistry(value: unknown, root: string): Promise<Ic
     ids.add(item.id);
     const record = item as unknown as IconRecord;
     if (
-      !['candidate', 'approved'].includes(record.status) ||
       !Array.isArray(record.keywords) ||
       !record.keywords.length ||
       !record.keywords.every((word) => typeof word === 'string' && word.trim()) ||
@@ -239,16 +231,8 @@ export async function validateRegistry(value: unknown, root: string): Promise<Ic
       if (!textFields(art, ['file']) || (art !== record && !textFields(art, ['assessment'])))
         throw new Error('Invalid alternative metadata.');
       assertSource(art.source);
-      const license = await readFile(await assetPath(root, art.source.licenseFile), 'utf8');
-      if (!license.trim()) throw new Error('License notice is empty.');
       const svg = await readFile(await assetPath(root, art.file), 'utf8');
       validateSvg(svg, art === record);
-      if (
-        art === record &&
-        record.status === 'approved' &&
-        (!textFields(record.approval, ['reviewer', 'sha256']) || record.approval.sha256 !== hashSvg(svg))
-      )
-        throw new Error(`Approved icon ${record.id} differs from its reviewed hash.`);
     }
   }
   return value as IconRecord[];
@@ -260,18 +244,14 @@ export async function registerCandidate(
   record: IconRecord,
   svg: string,
 ): Promise<void> {
-  if (
-    !/^[a-z][a-z0-9-]*$/.test(record.id) ||
-    record.file !== `candidates/${record.id}.svg` ||
-    record.status !== 'candidate'
-  )
+  if (!/^[a-z][a-z0-9-]*$/.test(record.id) || record.file !== `candidates/${record.id}.svg`)
     throw new Error('New icons must have a safe candidate ID and path.');
   if (records.some((existing) => existing.id === record.id))
     throw new Error('That icon ID already exists. Create a new candidate ID.');
   await mkdir(resolve(root, 'candidates'), { recursive: true });
   const directory = await assetPath(root, 'candidates');
   const file = resolve(directory, `${record.id}.svg`);
-  // Exclusive creation protects every existing asset, regardless of approval status.
+  // Exclusive creation preserves candidates already being reviewed.
   await writeFile(file, svg, { flag: 'wx' });
   const temporaryRegistry = resolve(root, `.registry-${process.pid}.tmp`);
   try {

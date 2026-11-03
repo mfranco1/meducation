@@ -41,7 +41,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 
 ## Icon studio
 
-Run `npm test -- scripts/branding/iconStudio.test.ts` for SVG safety, deterministic normalization, registry integrity, licensing metadata, approved hashes, discovery ordering and offline gallery output. Run `npm run icons -- validate` to check registered candidates and source snapshots, and `npm run icons -- preview` to generate `.cache/icons/gallery.html`. The gallery and downloaded catalogs are ignored development artifacts.
+Run `npm test -- scripts/branding/iconStudio.test.ts` for SVG safety, deterministic normalization, registry integrity, licensing metadata, discovery ordering and offline gallery output. Run `npm run icons -- validate` to check registered candidates and source snapshots, and `npm run icons -- preview` to generate `.cache/icons/gallery.html`. Candidates, metadata, galleries and downloaded catalogs live under ignored `.cache/icons`. Integration removes completed review work; only app artwork and shipped notices remain.
 
 Open the gallery in a browser and inspect both themes at 20/24/46/64px, including card and header badge contexts. Check anatomical recognition, stroke weight, alignment, clipping and optical proportions against the current glyphs and source references. Automated checks do not establish medical accuracy, verify external license claims or grant visual approval. Use the [icon skill](../.agents/skills/meducation-icons/SKILL.md) for source downloads, import metadata and approval.
 

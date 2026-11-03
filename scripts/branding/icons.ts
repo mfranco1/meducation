@@ -24,9 +24,9 @@ import {
 } from './iconStudio';
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const root = resolve(project, 'assets/icons');
-const registryFile = resolve(root, 'registry.json');
 const cache = resolve(project, '.cache/icons');
+const root = resolve(cache, 'workspace');
+const registryFile = resolve(root, 'registry.json');
 const escape = (text: string) =>
   text.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 const legacySvg = (markup: string) => {
@@ -137,10 +137,10 @@ async function registeredCandidates(records: IconRecord[]): Promise<SearchCandid
       id: record.id,
       name: record.concept,
       keywords: record.keywords,
-      tier: record.status === 'approved' ? 0 : 1,
+      tier: 1,
       svg: await readFile(await assetPath(root, record.file), 'utf8'),
       source: record.source,
-      note: `${record.status}: ${record.notes}`,
+      note: record.notes,
     });
     for (const [index, alternative] of record.alternatives.entries())
       candidates.push({
@@ -211,7 +211,7 @@ export async function gallery(records: IconRecord[], legacy: SearchCandidate[], 
         ...comparisons.map((art) => ({ label: 'Current Meducation', svg: art.svg, note: art.note, source: undefined })),
         ...alternatives,
         {
-          label: `Meducation ${record.status}: ${record.id}`,
+          label: `Meducation candidate: ${record.id}`,
           svg: candidate,
           note: record.notes,
           source: record.source,
@@ -225,7 +225,7 @@ export async function gallery(records: IconRecord[], legacy: SearchCandidate[], 
       <p>${escape(art.note)}</p>${art.source ? `<p><a href="${escape(art.source.url)}">Source</a> · <a href="${escape(art.source.licenseUrl)}">${escape(art.source.license)}</a></p><small>${escape(art.source.attribution || `${art.source.author}, CC0`)}<br>Revision: ${escape(art.source.revision)}</small>` : ''}</article>`,
         )
         .join('');
-      return `<section><h2>${escape(record.concept)} <small>${escape(record.status)}</small></h2><div class="comparison">${cards}</div></section>`;
+      return `<section><h2>${escape(record.concept)} <small>candidate</small></h2><div class="comparison">${cards}</div></section>`;
     }),
   );
   return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -239,7 +239,7 @@ export async function gallery(records: IconRecord[], legacy: SearchCandidate[], 
     article{border:1px solid #8885;border-radius:14px;padding:20px;min-width:0}.sizes{display:flex;align-items:end;justify-content:space-between;gap:8px;color:var(--accent)}.sizes>div{display:flex;align-items:center;flex-direction:column;gap:12px}
     .sizes svg{flex:none}.contexts{display:flex;align-items:center;gap:20px;margin-top:24px}.badge{display:flex;align-items:center;justify-content:center;border-radius:12px;background:var(--badge);color:var(--accent)}.card-badge{width:80px;height:80px}.header-badge{width:88px;height:88px}
     @media print{article{break-inside:avoid}}@media(max-width:600px){header,.theme{padding:16px}}
-    </style></head><body><header><h1>Meducation Icon Studio</h1><p>Compare anatomy, visual weight and spacing at actual sizes. Candidates require visual approval before adoption. Production assignments are unchanged.</p><a href="#dark">Dark preview</a> · <a href="#light">Light preview</a></header>
+    </style></head><body><header><h1>Meducation Icon Studio</h1><p>Compare anatomy, visual weight and spacing at actual sizes. Accepting a replacement approves its artwork and authorizes production adoption.</p><a href="#dark">Dark preview</a> · <a href="#light">Light preview</a></header>
     <main>${['light', 'dark'].map((mode) => `<div id="${mode}" class="theme ${mode}"><h2>${mode === 'light' ? 'Light' : 'Dark'} preview</h2>${panels.length ? panels.join('') : '<p>No icons registered. Create a candidate to review it here.</p>'}</div>`).join('')}</main></body></html>`;
 }
 
@@ -263,14 +263,18 @@ async function main() {
         '       npm run icons -- create "concept" --from candidate-id-or.svg --metadata metadata.json --id semantic-id\n' +
         '       npm run icons -- validate|preview [--output gallery.html]',
     );
-  const records = await validateRegistry(JSON.parse(await readFile(registryFile, 'utf8')), root);
+  const registry = await readFile(registryFile, 'utf8').catch((error: NodeJS.ErrnoException) => {
+    if (error.code !== 'ENOENT') throw error;
+    return '[]';
+  });
+  const records = await validateRegistry(JSON.parse(registry), root);
   if (command === 'validate') {
     console.log(`Validated ${records.length} icons and their source assets.`);
     return;
   }
   if (command === 'preview') {
     if (!values.output!.endsWith('.html') || resolve(values.output!).startsWith(root + '/'))
-      throw new Error('Preview output must be an HTML file outside assets/icons.');
+      throw new Error('Preview output must be an HTML file outside the candidate workspace.');
     const html = await gallery(records, existingCandidates());
     await mkdir(dirname(resolve(values.output!)), { recursive: true });
     await writeFile(values.output!, html);
@@ -345,7 +349,6 @@ async function main() {
     source: metadata.source,
     alternatives: metadata.alternatives ?? [],
     file: `candidates/${values.id}.svg`,
-    status: 'candidate',
   };
   await registerCandidate(root, records, record, normalized);
   console.log(`Created ${record.file}. Run preview; visual approval is required before adoption.`);

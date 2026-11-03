@@ -5,7 +5,7 @@ description: Discover, adapt, validate and preview Meducation subject and topic 
 
 # Meducation icons
 
-Read [the icon design specification](../../../docs/design-system.md#meducation-icon-design-specification) before selecting or adapting artwork. Follow repository AGENTS.md. Production assignments require explicit user approval.
+Read [the icon design specification](../../../docs/design-system.md#meducation-icon-design-specification) before selecting or adapting artwork. Follow repository AGENTS.md. Accepting a displayed replacement authorizes its production assignment as part of the same change, unless the user explicitly asks for artwork approval only.
 
 Codex can discover this repository skill. Claude Code and other agents can read this same SKILL.md by path; no duplicate installation or agent-specific wrappers are required.
 
@@ -45,7 +45,7 @@ Prepare a reduced SVG in the allowed static subset. Preserve landmarks and meani
 npm run icons -- create "Renal physiology" --from /tmp/kidney.svg --metadata /tmp/kidney-metadata.json --id renal-physiology-v2
 ```
 
-`--from` also accepts an ID returned by search. A `bioicons:` ID additionally requires `--bioicons checkout`. Metadata is JSON with `keywords`, `notes`, `source`, and optional `alternatives`, following the `IconRecord` type in `scripts/branding/iconStudio.ts`. The registry may be empty. Paths in metadata are relative to `assets/icons`. A metadata template (replace all illustrative provenance before importing):
+`--from` also accepts an ID returned by search. A `bioicons:` ID additionally requires `--bioicons checkout`. Metadata is JSON with `keywords`, `notes`, `source`, and optional `alternatives`, following the `IconRecord` type in `scripts/branding/iconStudio.ts`. Candidates and their metadata live only in ignored `.cache/icons/workspace`; the workspace is created on demand. Paths in metadata are relative to that workspace. A metadata template (replace all illustrative provenance before importing):
 
 ```json
 {
@@ -59,18 +59,17 @@ npm run icons -- create "Renal physiology" --from /tmp/kidney.svg --metadata /tm
     "author": "Original author",
     "license": "CC0-1.0",
     "licenseUrl": "https://example.com/license",
-    "attribution": "",
-    "licenseFile": "licenses/source.txt"
+    "attribution": ""
   },
   "alternatives": []
 }
 ```
 
-Before importing, store the license notice under `assets/icons/licenses`. The source needs collection, exact asset, source URL/revision, author, SPDX license, license evidence URL, local license file, and attribution (an empty attribution is allowed only for CC0). Original artwork also needs an explicit author and license declaration. Preserve source comparisons under `assets/icons/sources` when useful; keep their individual license metadata with them. Source snapshots omit editor metadata and artboard clips but retain original artwork colors.
+The source needs collection, exact asset, pinned source URL/revision, author, SPDX license, license evidence URL and attribution (an empty attribution is allowed only for CC0). Original artwork needs an explicit author and license declaration. Keep downloaded license evidence and optional source comparisons in the temporary workspace only while needed for review. Source snapshots omit editor metadata and artboard clips but retain original artwork colors.
 
 Verify each source against its actual revision. Iconify is a distributor, not a blanket license. Health Icons' current artwork license is CC0; older notices and distributor metadata may say MIT. Keep existing notices. Bioicons licenses vary per asset; its website license does not license its artwork. Unknown or unsupported licenses block import. The validator checks metadata completeness and supported licenses, not the truth of an author's license claim.
 
-The static subset excludes CSS, scripts, event handlers, external resources, embedded images, animation, clipping, masks and filters. Do not automatically sanitize arbitrary input and assume it is safe. Inspect rejected source files and deliberately reduce them to static vector geometry before retrying. Keep attribution in registry metadata and license notices even when editor metadata is removed.
+The static subset excludes CSS, scripts, event handlers, external resources, embedded images, animation, clipping, masks and filters. Do not automatically sanitize arbitrary input and assume it is safe. Inspect rejected source files and deliberately reduce them to static vector geometry before retrying. Keep source credits in candidate metadata during review and include required attribution and license notices in the shipped app when integrating.
 
 ## Review and approve
 
@@ -81,8 +80,8 @@ npm run icons -- preview
 
 Open the printed standalone HTML path in a browser. Compare light and dark panels, 20/24/46/64px samples, badge contexts, source comparisons and current Meducation artwork. Check focal clarity, anatomy, stroke weight, alignment, clipping and proportions. The gallery is ignored and is never shipped with the application.
 
-Present candidates to the user and require visual approval before marking them approved or assigning them in production. After explicit approval, set that registry record's `status` to `approved` and add `approval: { "reviewer": "<actual reviewer>", "sha256": "<reviewed file hash>" }`. Obtain the exact hash with `shasum -a 256 assets/icons/candidates/<id>.svg`, then validate again. Do not fabricate approval or infer it from successful checks.
+Present candidates and obtain visual approval before integrating them. Accepting a displayed replacement authorizes integration immediately; do not ask for a second approval or stop after recording acceptance. Apply the reviewed artwork to its existing production glyph definition, preserve glyph keys and topic or subject IDs, reuse MUI `SvgIcon`, and keep icons decorative beside their labels. Add the selected source, pinned revision, attribution and required license notice to `public/icon-licenses.txt`, reusing an existing notice for the same source/license where applicable.
 
-Creation never overwrites an existing asset. Revisions get a new candidate ID and a fresh approval. A later, separately authorized production assignment should reuse MUI `SvgIcon`, keep icons decorative beside their text labels, and ship all required attribution and notices in `public/icon-licenses.txt`. Approval of artwork alone does not change production mappings.
+Integration includes cleanup. Delete integrated candidate SVGs and their registry entries, source comparisons, downloaded license copies, task-specific scripts and galleries. Remove the workspace directory when no undecided candidates remain, and stop task preview servers. Shared catalog caches may remain. Do not create an approved-artwork archive, approval hash record, duplicate production SVG or duplicate permanent license file. The app glyph definition and shipped notices are the maintained copies. If the user explicitly defers integration, leave the accepted proposal in the temporary workspace until it can be integrated. Do not overwrite another proposal under review; use a new candidate ID for a revision.
 
 Run the focused tests and checks listed in [testing](../../../docs/testing.md#icon-studio). Report visual limitations honestly.

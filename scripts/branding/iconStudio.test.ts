@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os';
 import { resolve } from 'node:path';
 import { gallery } from './icons';
 import {
-  hashSvg,
   normalizeSvg,
   rankCandidates,
   registerCandidate,
@@ -25,13 +24,11 @@ async function fixture() {
   directories.push(root);
   await mkdir(resolve(root, 'candidates'));
   await writeFile(resolve(root, 'candidates/cell.svg'), svg);
-  await writeFile(resolve(root, 'license.txt'), 'Creative Commons CC0 1.0');
   const record: IconRecord = {
     id: 'cell',
     concept: 'Cell',
     keywords: ['biology'],
     file: 'candidates/cell.svg',
-    status: 'candidate',
     notes: 'Synthetic fixture.',
     alternatives: [],
     source: {
@@ -43,7 +40,6 @@ async function fixture() {
       url: 'https://example.com/cell',
       licenseUrl: 'https://example.com/license',
       attribution: '',
-      licenseFile: 'license.txt',
     },
   };
   return { root, record };
@@ -95,7 +91,6 @@ describe('registry integrity', () => {
       { ...record.source, revision: '' },
       { ...record.source, license: 'unknown' },
       { ...record.source, license: 'CC-BY-3.0', attribution: '' },
-      { ...record.source, licenseFile: 'missing.txt' },
     ])
       await expect(validateRegistry([{ ...record, source }], root)).rejects.toThrow();
   });
@@ -108,24 +103,11 @@ describe('registry integrity', () => {
       /escapes/,
     );
   });
-  it('detects changes after human approval', async () => {
-    const { root, record } = await fixture();
-    record.status = 'approved';
-    record.approval = { reviewer: 'Visual reviewer', sha256: hashSvg(svg) };
-    await expect(validateRegistry([record], root)).resolves.toHaveLength(1);
-    await writeFile(resolve(root, record.file), svg.replace('r="8"', 'r="7"'));
-    await expect(validateRegistry([record], root)).rejects.toThrow(/reviewed hash/);
-  });
-  it('registers new candidates and refuses to overwrite an existing file or approved ID', async () => {
+  it('registers new candidates and refuses to overwrite an existing file or candidate ID', async () => {
     const { root, record } = await fixture();
     await expect(registerCandidate(root, [], record, svg.replace('r="8"', 'r="7"'))).rejects.toThrow(/EEXIST/);
     expect(await readFile(resolve(root, record.file), 'utf8')).toBe(svg);
-    const approved = {
-      ...record,
-      status: 'approved' as const,
-      approval: { reviewer: 'Reviewer', sha256: hashSvg(svg) },
-    };
-    await expect(registerCandidate(root, [approved], record, svg)).rejects.toThrow(/already exists/);
+    await expect(registerCandidate(root, [record], record, svg)).rejects.toThrow(/already exists/);
     const next = { ...record, id: 'next-cell', file: 'candidates/next-cell.svg' };
     await registerCandidate(root, [record], next, normalizeSvg(svg));
     const saved = JSON.parse(await readFile(resolve(root, 'registry.json'), 'utf8'));
