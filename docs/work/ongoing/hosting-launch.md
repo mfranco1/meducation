@@ -1,6 +1,6 @@
 # Hosting launch (deferred)
 
-Deferred on 2026-10-17 while learner content, data model and UI work come first. Scope rules are in [AGENTS.md](../../../AGENTS.md): managed services, a few hundred anonymous learners, a single editor initially.
+Deferred while learner content, data model and UI work come first. Scope rules are in [AGENTS.md](../../../AGENTS.md): managed services, a few hundred anonymous learners, a single editor initially.
 
 ## Current state
 

@@ -6,14 +6,6 @@ import { brandingPlugin } from './scripts/branding/brandingPlugin';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
-  if (env.VITE_CONTENT_SOURCE)
-    throw new Error(
-      'Offline content mode has been retired. Remove VITE_CONTENT_SOURCE and run the PostgreSQL-backed API.',
-    );
-  if (env.VITE_ADMIN_SOURCE || env.VITE_JSON_FIXTURE_AUTHORING)
-    throw new Error(
-      'JSON authoring has been retired. Remove VITE_ADMIN_SOURCE and VITE_JSON_FIXTURE_AUTHORING; the editor uses PostgreSQL.',
-    );
   const input: Record<string, string> = { learner: resolve(__dirname, 'index.html') };
   if (env.VITE_BUILD_ADMIN === 'true') input.admin = resolve(__dirname, 'admin.html');
 

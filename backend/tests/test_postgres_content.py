@@ -1364,13 +1364,6 @@ def test_auth_rotation_cancelled_stepup_and_logout_prevents_reissue(db):
         with pytest.raises(AuthError):
             runtime.store.issue(identity, previous=hashlib.sha256(new.encode()).hexdigest())
         assert scalar(db.session, "SELECT count(*) FROM admin_auth.sessions WHERE NOT revoked") == 0
-        live, _ = runtime.store.issue(identity)
-        runtime.store.begin_login("b"*43)
-        h.fail=True  # Emergency revoke must not contact the provider.
-        runtime.store.revoke_all()
-        assert scalar(db.session,"SELECT count(*) FROM admin_auth.logins")==0
-        with pytest.raises(AuthError), runtime.store.guard(live):
-            pytest.fail("Emergency revocation did not persist")
 
 
 def test_session_lock_serializes_protected_work_and_logout_across_workers(db):

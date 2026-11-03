@@ -167,16 +167,6 @@ def test_postgres_api_fails_closed_without_a_file_source_parameter() -> None:
     assert app.state.bank is None and app.state.flashcards is None
 
 
-def test_upgrade_without_content_revision_does_not_open_a_connection() -> None:
-    engine = MagicMock()
-    with (
-        patch("meducation_api.db.migrate.migration_head", return_value=None),
-        pytest.raises(ContentDatabaseError, match="Step 3"),
-    ):
-        upgrade(engine)
-    engine.begin.assert_not_called()
-
-
 def test_explicit_upgrade_uses_owner_transaction_and_sanitizes_failure() -> None:
     engine = MagicMock()
     connection = engine.begin.return_value.__enter__.return_value

@@ -24,10 +24,6 @@ def migration_head() -> str | None:
 
 
 def upgrade(engine: Engine) -> None:
-    if migration_head() is None:
-        raise ContentDatabaseError(
-            "No content schema revision is packaged yet; L3 Step 3 is pending."
-        )
     try:
         with engine.begin() as connection:
             connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")

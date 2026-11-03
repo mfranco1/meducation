@@ -2,11 +2,6 @@ import { isCorrect, scorePercentage } from '../domain/quizEngine';
 import type { CompletedAttempt, Question, RecentScore } from '../domain/types';
 export interface PerformanceRow { label: string; correct: number; total: number; percentage: number }
 export type ScoreTrend = 'increase' | 'decrease' | 'unchanged';
-export function lowestScore(scores: Iterable<number>): number | undefined {
-  let lowest: number | undefined;
-  for (const score of scores) lowest = lowest === undefined ? score : Math.min(lowest, score);
-  return lowest;
-}
 export function averageScore(scores: Iterable<number>): number | undefined {
   let total = 0; let count = 0;
   for (const score of scores) { total += score; count++; }

@@ -1,6 +1,6 @@
 node_modules/
 dist/
-.cache/icons/
+.cache/
 *.tsbuildinfo
 
 # Private source material
@@ -24,15 +24,12 @@ venv/
 !.env.example
 coverage/
 test-results/
+/test-results-admin/
 playwright-report/
 
-# Local off-volume database backups (not automatically off-device).
-/var/backups/postgres/
-/var/local-authority/
+# Local database backups and authority data (not automatically off-device).
+/var/
 
 # Packaged content-policy resources are built from checked frontend policy.
 /backend/src/meducation_api/content_policy/worker.mjs
 /backend/src/meducation_api/content_policy/limits.json
-
-# HTTP admin browser evidence
-/test-results-admin/

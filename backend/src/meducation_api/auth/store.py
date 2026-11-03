@@ -298,13 +298,3 @@ class SessionStore:
         except SQLAlchemyError as error:
             database_failure("session", error)
             raise AuthError(503, "session_unavailable") from None
-
-    def revoke_all(self) -> None:
-        """Explicit emergency operator action, independent of the identity provider."""
-        try:
-            with self.engine.begin() as c:
-                c.execute(text("UPDATE admin_auth.sessions SET revoked=true"))
-                c.execute(text("DELETE FROM admin_auth.logins"))
-        except SQLAlchemyError as error:
-            database_failure("session", error)
-            raise AuthError(503, "session_unavailable") from None
