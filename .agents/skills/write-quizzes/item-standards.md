@@ -9,8 +9,10 @@ Write as a senior attending physician and medical educator. The output is parsed
   1. Search for the newest version first, so you don't verify against a superseded edition.
   2. Fetch the page itself: the publisher's full text (journal, PubMed Central, society, CDC, WHO or government site).
   3. Confirm the exact numbers and wording there.
-  4. If the primary text can't be reached, don't write numbers you couldn't confirm. Test the concept without them, or list the item as unverified in your summary.
+  4. If the primary text can't be reached, don't write numbers you couldn't confirm. Test the concept without them, or list the fact in your `unverified-<n>.json`.
 - Put the reference in `rationaleMeta.sources` as plain text with the document's real title and year, e.g. `AAP Clinical Practice Guideline: Management of Hyperbilirubinemia in the Newborn Infant 35 or More Weeks of Gestation (2022)`. Don't name individual authors unless needed to identify a trial. Leave `sources` empty for stable textbook facts.
+- Read the source ledger (`sources.json` in the work dir) before searching. It records which documents were verified, read only as a summary, or blocked, and the facts already confirmed, so use the same facts and don't retry known-blocked pages. Record every guideline check you make in your `sources-<n>.json`: `[{ "title": "", "year": "", "url": "", "status": "verified | summary-only | blocked | unconfirmed", "facts": ["one short confirmed fact"] }]`.
+- List each guideline-dependent fact you couldn't confirm in a primary text in your `unverified-<n>.json`: `[{ "item": 12, "fact": "IPNA 2022 steroid-resistance definition, abstract only" }]`, with `item` the item's number in your quiz. Don't list stable textbook facts.
 - Where practice varies by region or guideline body, test what is consistent across them or name the guideline in the stem.
 - Every item has exactly one best answer that a panel of experts would agree on.
 
@@ -35,7 +37,7 @@ Write every stem, choice, rationale and pearl in your own words. Never copy sent
 - **Cognitive level**: favor application (vignettes on diagnosis, mechanism, next step, management, complication, prevention, lab interpretation) over pure recall. Aim for at most about 30% Recall. Include comparisons of look-alike entities and multi-step items that chain two or more concepts (e.g. vignette, then diagnosis, then underlying mutation).
 - **Difficulty** (author estimate): about 20% easy, 60% medium, 20% hard. Hard items demand synthesis or discrimination between close distractors, not obscure facts.
 - **Answer letters**: spread roughly evenly across A to D.
-- Revisiting a core concept from a different angle is welcome. Near-duplicates are not.
+- Revisiting a core concept from a different angle is welcome. Near-duplicates are not, within the quiz or across the subject. Before writing, skim the staged stems (`stems.txt`) and the other planned quizzes in your brief. Leave out the points in your quiz's `excludes`: they belong to another quiz.
 
 ## Rationale
 
@@ -77,4 +79,5 @@ Pearls: 1 to 3 short, standalone exam or clinical facts that extend the item, no
 
 - English, active voice, standard medical terminology, generic drug names, SI units with conventional units in parentheses where both are common.
 - The file must be valid JSON. Escape backslashes in LaTeX (`\\frac`, `\\alpha`), write line breaks as `\n`, and use `\$` for a literal dollar sign that could be read as math.
+- Only `stem` and `rationale` take Markdown and the `<sub>`/`<sup>` subset. `choices`, `pearls` and `rationaleMeta.sources` are plain text: write 10⁹/L, m² and CO₂ with Unicode characters there.
 - Images are not supported yet. Describe findings in words.

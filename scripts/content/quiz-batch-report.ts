@@ -102,7 +102,7 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
 
   const rationale = item.rationale;
   const words = rationale.split(/\s+/).filter(Boolean).length;
-  if (words < 80) add('warning', `Rationale is short (${words} words).`);
+  if (words < 100) add('warning', `Rationale is short (${words} words).`);
   if (!/\*\*[^*\n]+\*\*/.test(rationale)) add('warning', 'Rationale has no bold text.');
   if (!/^\s*[-*] /m.test(rationale)) add('warning', 'Rationale has no bulleted list of the other choices.');
   const hasTable = /^\s*\|.*\|\s*$/m.test(rationale);
@@ -229,7 +229,7 @@ export function buildReport(
     const existing = (outlineTopic(topic.name)?.quizzes ?? []).filter(
       (q) => !topic.quizzes.some((b) => key(b.name) === key(q.name)),
     );
-    if (topic.quizzes.length + existing.length < 2)
+    if (blueprint && topic.quizzes.length + existing.length < 2)
       findings.push({ level: 'warning', where: topic.name, message: 'Topic has fewer than 2 quizzes.' });
     const subtopics = new Map<string, Set<string>>();
     for (const quiz of topic.quizzes) {
@@ -239,6 +239,14 @@ export function buildReport(
       lines.push(`  ${quiz.name}: ${dist.text}`);
       if (quiz.items.length < 50 || quiz.items.length > 100)
         findings.push({ level: 'warning', where, message: `Quiz has ${quiz.items.length} items; expected 50 to 100.` });
+      const types = count(quizEntries.map((e) => e.item.metadata?.questionType ?? ''));
+      for (const [type, n] of types)
+        if (type && pct(n, quizEntries.length) > (type === 'Recall' ? 30 : 40))
+          findings.push({
+            level: 'warning',
+            where,
+            message: `${type} is ${pct(n, quizEntries.length)}% of the quiz; keep Recall at 30% or less and other types at 40% or less.`,
+          });
       for (const [name] of dist.deviations)
         findings.push({
           level: 'warning',

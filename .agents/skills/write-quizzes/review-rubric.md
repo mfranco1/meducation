@@ -8,16 +8,16 @@ You get items without answers or rationales. For each item:
 
 - Choose the single best answer as a well-prepared examinee would.
 - Note any other choice you consider defensible, and why.
-- Note anything you had to assume because the stem was missing it.
+- Note an assumption only when the answer would change without it. Leave `note` empty otherwise.
 
-Return JSON: `[{ "ref": "<topic> › <quiz> › <n>", "answer": "B", "defensible": ["D"], "note": "" }]`.
+Answer one input file at a time and store each answer under its item's `ref` (for example in a dict keyed by ref), never by list position. `check-blind` refuses files whose answers are shifted against the items. Return JSON: `[{ "ref": "<topic> › <quiz> › <n>", "answer": "B", "defensible": ["D"], "note": "" }]`.
 
 ## Pass 2: checklist
 
 You run one of two passes on separate sets of items:
 
-- **Standards pass:** you get the items that passed triage. Run every check. Fix problems under checks 4 to 8 yourself. If you suspect a problem under checks 1 to 3, don't edit the item: list its ref with a one-line reason under "Escalate" at the end of your reply.
-- **Judgment pass:** you get the escalated items with their blind answers and any unverified facts. Run every check and fix everything you find.
+- **Standards pass:** you get the items that passed triage. Run every check on every item. Fix problems under checks 4 to 8 yourself, using only severities `flaw` and `metadata`. Never drop an item, and never edit for checks 1 to 3: escalate instead. Write escalations to `standards-escalate.json` as `[{ "ref": "", "reason": "" }]`, starting the reason with "near-duplicate of <ref or staged stem>" for duplicates so they are routed to a writer for replacement. For check 5, also compare against the staged stems (`stems.txt`).
+- **Judgment pass:** you get the escalated items with their blind answers and the reasons they were escalated. Run every check and fix everything you find. Read the source ledger first, and record what you check in the sources file you are given.
 
 For each item, check:
 
@@ -30,7 +30,7 @@ For each item, check:
 7. **Rationale format**: it follows the structure and formatting rules in [item-standards.md](item-standards.md#rationale): bold answer and discriminating findings, a table wherever entities are compared, a bulleted distractor list, and LaTeX for calculations. If not, send a full rewritten `rationale` (severity `flaw`).
 8. **Language**: plain, precise and original. No source names. No patient details that stereotype by sex, ethnicity or background without clinical relevance.
 
-Return a JSON array with one entry per item that needs work. Items not listed are accepted. [apply_review.py](apply_review.py) applies the entries as written, with no interpretation, so give complete final values:
+Return a JSON array with one entry per item that needs work. Items not listed are accepted. `quiz_work.py apply` applies the entries as written, with no interpretation, so give complete final values:
 
 ```json
 { "ref": "<topic> › <quiz> › <n>", "severity": "wrong-key | ambiguous | outdated | inaccurate | flaw | metadata",
@@ -40,6 +40,7 @@ Return a JSON array with one entry per item that needs work. Items not listed ar
 
 - `edits` keys: `stem`, `choices` (the full array of 4), `answer`, `rationale`, `pearls` (the full array), `rationaleMeta.sources`, `metadata.subtopic`, `metadata.system`, `metadata.difficulty`, `metadata.questionType`. Each value replaces the whole field.
 - When a fact changes, edit every field of the item that states it. When choices move or the key changes, send `choices`, `answer` and a `rationale` that refers to choices by content.
-- For an item that can't be fixed, send `"drop": true` instead of `edits`.
+- Fix rather than drop: make one answer clearly best by changing the stem or a distractor. Send `"drop": true` only for an item that can't be fixed, and say so in your summary; a writer replaces it so the quiz keeps its size.
+- `choices`, `pearls` and `rationaleMeta.sources` are plain text with no HTML (see [item-standards.md](item-standards.md#language-and-json)).
 
 End with a one-line summary of counts by severity, and list the facts you could not verify against a primary source.

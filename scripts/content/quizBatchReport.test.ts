@@ -27,6 +27,21 @@ describe('quiz batch report', () => {
     expect(report.errors).toBe(0);
   });
 
+  it('warns when one question type dominates a quiz', () => {
+    const recall = {
+      metadata: { subtopic: 'Rhythm', system: 'Cardiovascular', difficulty: 'medium', questionType: 'Recall' },
+    };
+    const report = run([item('First stem here?', recall), item('Second stem differs?', recall), item('Third one?')]);
+    expect(report.text).toContain('Recall is 67% of the quiz');
+  });
+
+  it('flags a topic with a single quiz only when checking against a blueprint', () => {
+    const items = [item('Only stem here?')];
+    expect(run(items).text).not.toContain('Topic has fewer than 2 quizzes');
+    const blueprint = { topics: [{ name: 'T', quizzes: [{ name: 'Q', target: 1 }] }] };
+    expect(buildReport(batch(items), { vocabulary, blueprint }).text).toContain('Topic has fewer than 2 quizzes');
+  });
+
   it('catches a duplicate stem ignoring case and punctuation', () => {
     const report = run([item('Which rhythm is shown?'), item('which RHYTHM is shown')]);
     expect(report.errors).toBe(1);
