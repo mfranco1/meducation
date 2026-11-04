@@ -11,7 +11,6 @@ import type { Question } from '../../../../domain/types';
 export type ReadOnlyFeedbackStatus = 'correct' | 'incorrect' | 'unanswered' | 'unavailable';
 
 function ExplanationContent({ question }: { question: Question }) {
-  const metadata = question.rationaleMeta;
   return (
     <Box sx={{ maxWidth: '72ch' }}>
       <Typography
@@ -21,23 +20,6 @@ function ExplanationContent({ question }: { question: Question }) {
         Explanation
       </Typography>
       <MarkdownContent markdown={question.rationale} contentKind="rich" />
-      {metadata?.sources && (
-        <Box
-          component="details"
-          sx={{
-            mt: 2.5,
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            pt: 1.5,
-            '& summary': { cursor: 'pointer', fontWeight: 700, color: 'text.secondary' },
-          }}
-        >
-          <Box component="summary">Sources</Box>
-          <Box sx={{ mt: 1, '& p': { fontSize: '.875rem' } }}>
-            <MarkdownContent markdown={metadata.sources} />
-          </Box>
-        </Box>
-      )}
     </Box>
   );
 }
@@ -71,6 +53,7 @@ export function FeedbackPanel({
     () => (pearls?.length ? pearls[Math.floor(Math.random() * pearls.length)] : undefined),
     [pearls],
   );
+  const sources = question.rationaleMeta?.sources;
   const hasContent = readOnlyStatus !== undefined || Boolean(question.rationale || pearl);
   const title =
     readOnlyStatus === undefined
@@ -114,7 +97,7 @@ export function FeedbackPanel({
       </Box>
       {hasContent && (
         <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2.25, sm: 2.75 } }}>
-          {readOnlyStatus !== undefined && !question.rationale && !question.rationaleMeta?.sources ? (
+          {readOnlyStatus !== undefined && !question.rationale && !sources ? (
             <Typography color="text.secondary">Explanation unavailable.</Typography>
           ) : (
             <ExplanationContent question={question} />
@@ -128,6 +111,24 @@ export function FeedbackPanel({
                 </Typography>
               </Stack>
               <Typography sx={{ mt: 1, lineHeight: 1.65 }}>{pearl}</Typography>
+            </Box>
+          )}
+          {sources && (
+            <Box
+              component="details"
+              sx={{
+                mt: 2.5,
+                maxWidth: '72ch',
+                borderTop: '1px solid',
+                borderColor: 'divider',
+                pt: 1.5,
+                '& summary': { cursor: 'pointer', fontWeight: 700, color: 'text.secondary' },
+              }}
+            >
+              <Box component="summary">Sources</Box>
+              <Box sx={{ mt: 1, '& p': { fontSize: '.875rem' } }}>
+                <MarkdownContent markdown={sources} />
+              </Box>
             </Box>
           )}
         </Box>
