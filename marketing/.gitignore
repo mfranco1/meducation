@@ -4,3 +4,5 @@ public/audio/
 output/
 .cache/
 *.tsbuildinfo
+ads/
+recipes/

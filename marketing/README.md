@@ -13,7 +13,7 @@ cd marketing && npx playwright install chromium && cd ..
 brew install ffmpeg                 # macOS; use your trusted package manager elsewhere
 ```
 
-Node 22+ and FFmpeg with libx264 are required. `FFMPEG`, `FFPROBE` and `REMOTION_BROWSER_EXECUTABLE` can select existing executables. Rendering reuses Playwright's Chromium. Once dependencies, browser, fonts and footage are local, rendering needs no database or network.
+Node 22+ and FFmpeg with libx264 are required. `FFMPEG`, `FFPROBE` and `REMOTION_BROWSER_EXECUTABLE` can select existing executables. Rendering reuses Playwright's Chromium headless shell (installed with `playwright install chromium`); full Chromium intermittently corrupts captured frames. Once dependencies, browser, fonts and footage are local, rendering needs no database or network.
 
 Capture needs the real PostgreSQL-backed learner app. Use the existing authority setup in [operations](../docs/operations.md#local-authority-maintainer-machine). Reuse a running API; never initialize, import, publish or change content for marketing. A dedicated capture server can use:
 
@@ -95,7 +95,7 @@ An ad's optional `soundtrack` in `ad.json` describes one mix: an original score 
 
 The master is limited, normalized in two passes to `lufs` with a -1.5 dBTP ceiling, and played by every format.
 
-References are `<asset-id>/<path>` for entries in `assets.json`, or `local/<path>` for files in `marketing/audio/`. Local instruments are original patches using sfizz's built-in oscillators: `local/instruments/pad.sfz`, `bass.sfz` and `pluck.sfz`. Write new patches there when a sound is missing; see the [SFZ opcode reference](https://sfzformat.com/opcodes/).
+References are `<asset-id>/<path>` for entries in `assets.json`, or `local/<path>` for files in `marketing/audio/`. Local instruments are original patches using sfizz's built-in oscillators: `local/instruments/pad.sfz`, `bass.sfz`, `pluck.sfz`, `riser.sfz` (two-second noise rise) and `boom.sfz` (sub impact). Write new patches there when a sound is missing; see the [SFZ opcode reference](https://sfzformat.com/opcodes/).
 
 `assets.json` records every external asset with its licence, attribution and integrity data:
 

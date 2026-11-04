@@ -105,13 +105,25 @@ async function bundleAd(adDir: string) {
     webpackOverride: adWebpack(root, adDir),
   });
 }
+/**
+ * Playwright's headless shell. Full Chromium intermittently captures frames with only the top band
+ * painted and repeated. Playwright exposes the shell's path only through a launched server.
+ */
+async function headlessShell() {
+  const server = await chromium.launchServer();
+  try {
+    return server.process().spawnfile;
+  } finally {
+    await server.close();
+  }
+}
 async function renderer(serveUrl: string, format: Format) {
   const options = {
     serveUrl,
     inputProps: {},
     logLevel: 'error' as const,
     onBrowserLog: (entry: BrowserLog) => appendFileSync(log('browser'), `${entry.type}: ${entry.text}\n`),
-    browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE ?? chromium.executablePath(),
+    browserExecutable: process.env.REMOTION_BROWSER_EXECUTABLE ?? (await headlessShell()),
   };
   const composition = await selectComposition({ ...options, id: formatId(format) });
   return { ...options, composition };

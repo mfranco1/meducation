@@ -1,0 +1,7 @@
+// Filtered noise and detuned saw that rise over two seconds. Original patch for sfizz built-in oscillators.
+<global>
+ampeg_attack=1.9 ampeg_sustain=100 ampeg_release=0.06 amp_veltrack=50 volume=-10
+fil_type=lpf_2p cutoff=250 resonance=5 fileg_attack=1.9 fileg_sustain=100 fileg_depth=6500
+<region> sample=*noise
+<region> sample=*saw oscillator_multi=5 oscillator_detune=30 volume=-12
+  pitcheg_attack=1.9 pitcheg_sustain=100 pitcheg_depth=1200

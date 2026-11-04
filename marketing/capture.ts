@@ -148,7 +148,14 @@ async function record(page: Page, steps: Step[], directory: string, scale: numbe
     }
     for (const [start, group] of groups) {
       if (virtual - start > group.end || group.ids.size === 0) groups.delete(start);
-      else await cdp.send('Animation.seekAnimations', { animations: [...group.ids], currentTime: virtual - start });
+      else {
+        const seek = (animations: string[]) =>
+          cdp.send('Animation.seekAnimations', { animations, currentTime: virtual - start });
+        // Removed elements can drop animations without a cancel event; forget the ones that are gone.
+        await seek([...group.ids]).catch(async () => {
+          for (const id of [...group.ids]) await seek([id]).catch(() => group.ids.delete(id));
+        });
+      }
     }
     // Clip coordinates are document-relative, so place the clip at the current viewport; `scale` keeps device resolution.
     const { cssVisualViewport: view } = await cdp.send('Page.getLayoutMetrics');

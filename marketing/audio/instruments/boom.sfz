@@ -1,0 +1,5 @@
+// Sub impact: sine with a fast downward pitch sweep and a short noise transient. Original patch for sfizz built-in oscillators.
+<global>
+ampeg_attack=0.001 ampeg_decay=2.4 ampeg_sustain=0 ampeg_release=0.5 amp_veltrack=60
+<region> sample=*sine pitcheg_decay=0.3 pitcheg_sustain=0 pitcheg_depth=2400
+<region> sample=*noise volume=-16 fil_type=lpf_2p cutoff=1200 ampeg_decay=0.2 ampeg_sustain=0

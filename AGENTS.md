@@ -54,6 +54,7 @@ Applies to user-facing copy: UI text, messages and static explanatory content. N
 - Professional but plain: short sentences, common words, active voice. Address the learner as "you" where needed.
 - Be brief. Say it once. Cut filler, hedges and qualifiers that don't change meaning.
 - No em dashes; use a period, comma, colon or parentheses.
+- One-liners (headlines, titles, labels, buttons, taglines, on-screen video lines) take no closing period. Body text and multi-sentence copy keep normal punctuation.
 - Avoid stock AI phrasing: "delve", "seamless", "robust", "leverage", "elevate", "unlock", "dive into", "it's important to note", "whether you're X or Y", "not just X but Y", triplets used for rhythm, rhetorical questions, exclamation marks and emoji.
 - Use the terms in the [glossary](docs/glossary.md); don't introduce synonyms for established terms.
 - Error and status messages: say what happened and what the user can do, without blame or technical detail.
