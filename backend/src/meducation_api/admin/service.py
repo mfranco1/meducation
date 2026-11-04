@@ -17,7 +17,6 @@ from uuid import UUID, uuid4
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from meducation_api.auth.store import Principal, SessionStore
 from meducation_api.content.draft import (
     CHILDREN,
     FLASHCARD_KINDS,
@@ -92,20 +91,20 @@ class DraftService:
     def __init__(
         self,
         engine: Engine,
-        store: SessionStore,
-        principal: Principal,
+        actor: str,
+        recheck: Callable[[bool], None],
         validator: PairedContentValidator | None = None,
     ):
         self.engine = engine
-        self.store = store
-        self.principal = principal
+        self.actor = actor
+        self.recheck = recheck
         self.validator = validator or PairedContentValidator()
 
     # Transactions -----------------------------------------------------------------
 
     @contextmanager
     def _transaction(self, *, fresh: bool = False, write: bool = True) -> Iterator[Connection]:
-        self.store.recheck(self.principal, fresh=fresh)
+        self.recheck(fresh)
         try:
             if write:
                 with self.engine.begin() as c:
@@ -197,7 +196,7 @@ class DraftService:
                     "ORDER BY n RETURNING change_id"
                 ),
                 {
-                    "actor": self.principal.actor,
+                    "actor": self.actor,
                     "kind": kind.name,
                     "items": json.dumps(items, ensure_ascii=False, allow_nan=False),
                 },
@@ -742,8 +741,8 @@ class DraftService:
             return publish_draft(
                 c,
                 self.validator,
-                self.principal.actor,
-                recheck=lambda: self.store.recheck(self.principal, fresh=True),
+                self.actor,
+                recheck=lambda: self.recheck(True),
             )
 
     # Releases -----------------------------------------------------------------------
@@ -805,7 +804,7 @@ class DraftService:
                     operation_id=uuid4(),
                     release_id=release_id,
                     expected_sequence=current,
-                    actor=self.principal.actor,
+                    actor=self.actor,
                     reason=ACTIVATE_REASON,
                 )
             except ContentDatabaseError:

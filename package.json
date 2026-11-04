@@ -19,6 +19,7 @@
     "test:e2e": "playwright test",
     "test:e2e:admin": "playwright test --config=playwright.admin.config.ts",
     "validate:content": "tsx scripts/content/validate-paired-files.ts",
+    "report:quiz-batch": "tsx scripts/content/quiz-batch-report.ts",
     "build:content-policy": "node scripts/content/build-authoring-policy.mjs",
     "hero:image": "node scripts/branding/heroImage.mjs",
     "icons": "tsx --tsconfig tsconfig.app.json scripts/branding/icons.ts"

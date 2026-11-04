@@ -78,6 +78,12 @@ Docs describe the current system only, briefly. No dated status layers, history 
 
 Update the relevant doc in the same change when behavior or commands change. Do not create new docs without a clear need.
 
+## Agent workflows
+
+Reusable workflows live in `.agents/skills/<name>/SKILL.md`. When a task matches one, read its `SKILL.md` and follow it.
+
+- `write-quizzes`: write new quizzes for a subject and stage them in the draft for review.
+
 ## Work tracking
 
 Routine work needs no tracker. For multi-session work, keep one short Markdown tracker (under about 100 lines) in `docs/work/ongoing` with scope, remaining steps and decisions. Delete it when the work is done. Do not create evidence JSON files, logs of check runs, or "done" archives.

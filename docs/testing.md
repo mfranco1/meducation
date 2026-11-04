@@ -13,6 +13,7 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | Formatting | `npm run format:check` (`npm run format` fixes) |
 | Typecheck / build | `npm run typecheck`, `npm run build` (learner `build:learner`, admin `build:admin`) |
 | Content validation | `npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json` |
+| New quiz batch (before staging) | `npm run report:quiz-batch -- <batch.json> [--outline <outline.json>] [--blueprint <blueprint.json>]` |
 | Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python -m pytest backend/tests -q` |
 | Real PostgreSQL backend cases | `.venv/bin/python scripts/testing/test-postgres-content.py` (runs `backend/tests/test_pg_*.py`; `--keyword` to focus) |
 | Learner browser (Chromium; includes progress backup) | `npm run test:e2e` (builds with content retries off) |

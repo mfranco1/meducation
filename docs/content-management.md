@@ -42,6 +42,10 @@ PostgreSQL is the only writable authority for the paired content: schema-v6 quiz
 - **Review & publish** lists each record that differs from the published version (added, changed, moved or removed, first 200) with changed words highlighted. **Publish** creates a new immutable release from the draft and activates it; retained releases can be activated again (activation keeps the draft). Browser attempts that reference deleted content may become inaccessible.
 - **Export paired ZIP** exports the draft (marked unpublished) or a retained release.
 
+## Agent authoring
+
+The agent-neutral `write-quizzes` skill (`.agents/skills/write-quizzes/`, with a Claude Code entry point in `.claude/skills/`) writes new quizzes for a subject: a blueprint, writers, `npm run report:quiz-batch` as a deterministic gate, and an independent review that solves each item blind before checking it. `meducation-db draft-outline` gives the agent the subject's current topics, quizzes and stems; `meducation-db stage-quizzes` adds a batch (bulk-add JSON with `topics`) to the draft through the same validation, versions and change history as the editor, recorded under the given actor. Staging never publishes; review and publish in the editor.
+
 ## Record API and publication
 
 The draft lives in per-record tables (`content.draft_subjects`, `draft_topics`, `draft_quizzes`, `draft_questions`, `draft_decks`, `draft_flashcards`) ordered by a global `position`. All routes are under `/api/admin/draft` and need a session, exact Origin and the CSRF header; publish, discard, activate and export also need a factor from the last 15 minutes.

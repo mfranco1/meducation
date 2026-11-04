@@ -57,7 +57,10 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
     def service(request: Request) -> DraftService:
         if engine is None:
             raise AuthError(503, "admin_disabled")
-        return DraftService(engine, request.app.state.auth.store, request.state.principal)
+        principal, store = request.state.principal, request.app.state.auth.store
+        return DraftService(
+            engine, principal.actor, lambda fresh: store.recheck(principal, fresh=fresh)
+        )
 
     async def command(
         request: Request, cls: type[Contract], limit: int = RECORD_BYTES
@@ -293,7 +296,7 @@ def install_editor(app: FastAPI, config: AuthSettings) -> None:
                     zipped.writestr(info, files[name])
             if stream.tell() > 128 * 1024 * 1024:
                 raise AuthError(413, "export_limit")
-            svc.store.recheck(svc.principal, fresh=True)
+            svc.recheck(True)
             stream.seek(0)
             return stream, "meducation-" + value["target"] + ".zip"
         except BaseException:

@@ -1,0 +1,39 @@
+{
+  "system": [
+    "General Principles",
+    "Cardiovascular",
+    "Respiratory",
+    "Gastrointestinal",
+    "Hepatobiliary and Pancreatic",
+    "Renal and Urinary",
+    "Male Reproductive",
+    "Female Reproductive",
+    "Pregnancy and Childbirth",
+    "Breast",
+    "Endocrine",
+    "Hematologic and Lymphoreticular",
+    "Immune",
+    "Musculoskeletal",
+    "Integumentary",
+    "Nervous",
+    "Behavioral Health",
+    "Eye",
+    "Head and Neck",
+    "Multisystem"
+  ],
+  "questionType": [
+    "Recall",
+    "Clinical Vignette: Diagnosis",
+    "Clinical Vignette: Mechanism",
+    "Clinical Vignette: Next Step",
+    "Clinical Vignette: Management",
+    "Clinical Vignette: Complication",
+    "Clinical Vignette: Prevention",
+    "Clinical Vignette: Drug Selection",
+    "Clinical Vignette: Adverse Effect",
+    "Lab Interpretation",
+    "Comparison",
+    "Multi-step Reasoning"
+  ],
+  "difficulty": ["easy", "medium", "hard"]
+}

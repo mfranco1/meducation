@@ -41,6 +41,13 @@ def main() -> None:
     command.add_argument("--reason", required=True)
     command = commands.add_parser("publish-draft")
     command.add_argument("--actor", required=True)
+    command = commands.add_parser("draft-outline")
+    command.add_argument("--subject", required=True)
+    command.add_argument("--output", type=Path, required=True)
+    command = commands.add_parser("stage-quizzes")
+    command.add_argument("--subject", required=True)
+    command.add_argument("--file", type=Path, required=True)
+    command.add_argument("--actor", required=True)
     command = commands.add_parser("advance-id-sequences")
     command.add_argument("--by", type=int, required=True)
     command = commands.add_parser("export-release")
@@ -81,7 +88,7 @@ def main() -> None:
         ):
             secret, role = settings.migration_database_url, "meducation_migrator"
             passwords = None
-        elif args.action == "publish-draft":
+        elif args.action in ("publish-draft", "draft-outline", "stage-quizzes"):
             # The editor's role and privileges, for when the API cannot start to publish.
             secret, role = settings.admin_editor_database_url, "meducation_editor"
             passwords = None
@@ -161,6 +168,38 @@ def main() -> None:
                 except DraftError as error:
                     raise ContentDatabaseError(str(error)) from None
                 print(json.dumps(result))
+            elif args.action in ("draft-outline", "stage-quizzes"):
+                from meducation_api.admin.service import DraftError, DraftService
+                from meducation_api.admin.staging import outline, stage_quizzes
+                from meducation_api.content_policy import ContentPolicyError
+
+                service = DraftService(engine, getattr(args, "actor", "agent"), lambda fresh: None)
+                saved: dict = {}
+                try:
+                    if args.action == "draft-outline":
+                        if args.output.exists():
+                            raise ContentDatabaseError(f"{args.output} already exists.")
+                        result = outline(service, args.subject)
+                        # Refuse overwrite.
+                        with args.output.open("x", encoding="utf-8") as output:
+                            output.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
+                        print(f"Outline written to {args.output}.")
+                    else:
+                        try:
+                            batch = json.loads(args.file.read_text("utf-8"))
+                        except (OSError, ValueError):
+                            raise ContentDatabaseError(
+                                f"{args.file} could not be read as JSON."
+                            ) from None
+                        stage_quizzes(service, args.subject, batch, saved)
+                        print(json.dumps(saved, ensure_ascii=False, indent=2))
+                except (DraftError, ContentPolicyError) as error:
+                    if saved:
+                        print(json.dumps(saved, ensure_ascii=False, indent=2))
+                    issues = getattr(error, "issues", ())
+                    raise ContentDatabaseError(
+                        "\n".join([str(error), *(f"{i.path}: {i.message}" for i in issues)])
+                    ) from None
             else:
                 print(json.dumps(export_release(engine, args.release_id, args.output)))
         finally:
