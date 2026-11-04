@@ -11,6 +11,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import sys
 from pathlib import Path
 
@@ -470,6 +471,21 @@ def cmd_ledger(work: Work, args) -> None:
     print(f"{len(index)} sources ({added} new) in {path}")
 
 
+KEEP = {"blueprint.json", "sources.json"}
+
+
+def cmd_clean(work: Work, args) -> None:
+    """Merge the ledger, then delete everything but blueprint.json and sources.json."""
+    cmd_ledger(work, args)
+    removed = []
+    for path in sorted(work.root.iterdir()):
+        if path.name in KEEP:
+            continue
+        shutil.rmtree(path) if path.is_dir() else path.unlink()
+        removed.append(path.name)
+    print(f"Removed {len(removed)} entries; kept {', '.join(sorted(KEEP))}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--work", type=Path, required=True)
@@ -485,9 +501,12 @@ def main() -> None:
         ("apply", cmd_apply, ["batch", "output", "min"]),
         ("ready", cmd_ready, ["batch"]),
         ("ledger", cmd_ledger, []),
+        ("clean", cmd_clean, []),
     ]:
         p = sub.add_parser(name, help=fn.__doc__)
-        p.add_argument("topic", nargs=None if name != "ledger" else "?", default="")
+        p.add_argument(
+            "topic", nargs="?" if name in ("ledger", "clean") else None, default=""
+        )
         for opt in opts:
             if opt == "min":
                 p.add_argument("--min", type=int, default=50)

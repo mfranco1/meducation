@@ -204,3 +204,28 @@ def test_ready_flags_an_item_edited_after_its_blind_solve(tmp_path):
     result = run(tmp_path, "ready", TOPIC, "--batch", "final.json")
     assert result.returncode != 0
     assert ref(4) in result.stderr and ref(5) not in result.stderr
+
+
+def test_clean_keeps_the_blueprint_and_a_merged_ledger(tmp_path):
+    topic_dir = setup(tmp_path)
+    (topic_dir / "sources-1.json").write_text(
+        json.dumps(
+            [
+                {
+                    "title": "KDIGO AKI",
+                    "year": "2012",
+                    "status": "verified",
+                    "facts": ["Stages"],
+                }
+            ]
+        )
+    )
+    (tmp_path / "stems.txt").write_text("stems")
+    assert run(tmp_path, "clean").returncode == 0
+    assert sorted(p.name for p in tmp_path.iterdir()) == [
+        "blueprint.json",
+        "sources.json",
+    ]
+    assert (
+        json.loads((tmp_path / "sources.json").read_text())[0]["title"] == "KDIGO AKI"
+    )

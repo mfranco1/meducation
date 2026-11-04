@@ -42,6 +42,7 @@ $Q judge-input "<Topic>" --batch batch.json --round initial
 $Q apply "<Topic>" --batch batch.json --output reviewed.json review-standards.json review-judgment.json review-replace.json
 $Q ready "<Topic>" --batch reviewed.json
 $Q ledger
+$Q clean                                 # after the whole scope is staged
 .venv/bin/python scripts/local-authoring/job.py stage-quizzes --subject "<Subject>" --file <work>/<topic>/reviewed.json --actor agent:write-quizzes
 ```
 
@@ -117,3 +118,7 @@ Review is tiered so the most capable model only judges the items that need it. E
 2. If staging fails partway, it reports what was saved. Fix the batch, remove what was already saved from it, and rerun.
 3. Report to the user: topics and quizzes created or extended, question counts, the final distribution summary, the items you dropped or left with warnings, facts no one could verify in a primary source, and 3 sample items rendered as Markdown.
 4. Remind the user to review in **Review & publish** and publish when satisfied. Every staged record is listed in **More > Changes** under the actor `agent:write-quizzes` and can be reverted there.
+
+### 7. Clean up
+
+When every topic in scope is staged and reported, run `clean`. It merges any remaining source records into the ledger, then deletes the work dir except `blueprint.json` (the coverage map for later expansion or revision) and `sources.json` (the source ledger, which saves later runs from re-checking the same guidelines). That removes briefs, batches, blind rounds, review files, the outline, the staged stems and any copied source text. Delete the tracker in `docs/work/ongoing/` in the same step, and update the relevant doc if anything about the workflow itself changed.
