@@ -99,6 +99,18 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
     add('warning', 'A choice uses an absolute word.');
   if (/\b(EXCEPT|NOT|LEAST)\b/.test(item.stem)) add('warning', 'Stem uses a negative lead-in.');
   if (!item.stem.trim().endsWith('?')) add('warning', 'Stem does not end with a question mark.');
+
+  const rationale = item.rationale;
+  const words = rationale.split(/\s+/).filter(Boolean).length;
+  if (words < 80) add('warning', `Rationale is short (${words} words).`);
+  if (!/\*\*[^*\n]+\*\*/.test(rationale)) add('warning', 'Rationale has no bold text.');
+  if (!/^\s*[-*] /m.test(rationale)) add('warning', 'Rationale has no bulleted list of the other choices.');
+  const hasTable = /^\s*\|.*\|\s*$/m.test(rationale);
+  if (questionType === 'Comparison' && !hasTable) add('warning', 'Comparison rationale has no table.');
+  const widest = Math.max(0, ...[...rationale.matchAll(/^\s*\|(.*)\|\s*$/gm)].map((row) => row[1].split('|').length));
+  if (widest > 4) add('warning', `Rationale table has ${widest} columns; keep it to 4 for phones.`);
+  if (/\b(choice|option|answer) [A-D]\b|\([A-D]\)/i.test(rationale))
+    add('warning', 'Rationale refers to a choice by letter.');
   return out;
 }
 

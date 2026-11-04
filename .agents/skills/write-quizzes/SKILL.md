@@ -22,6 +22,7 @@ Ask only for what isn't given or inferable:
 
 - [item-standards.md](item-standards.md): how to write an item. Every writer and the reviewer read it.
 - [review-rubric.md](review-rubric.md): the reviewer's procedure and output.
+- [apply_review.py](apply_review.py): applies the reviewer's edits to a batch.
 - [metadata.md](metadata.md) and [vocabulary.json](vocabulary.json): metadata fields and allowed values.
 
 Commands (run from the repository root; local authority needs `docker start meducation-authority-postgres`):
@@ -29,6 +30,7 @@ Commands (run from the repository root; local authority needs `docker start medu
 ```sh
 .venv/bin/python scripts/local-authoring/job.py draft-outline --subject "<Subject>" --output <work>/outline.json
 npm run report:quiz-batch -- <work>/batch.json --outline <work>/outline.json --blueprint <work>/blueprint.json
+python3 -I .agents/skills/write-quizzes/apply_review.py <work>/batch.json <work>/review-*.json --output <work>/batch-reviewed.json
 .venv/bin/python scripts/local-authoring/job.py stage-quizzes --subject "<Subject>" --file <work>/batch.json --actor agent:write-quizzes
 ```
 
@@ -64,7 +66,7 @@ Writers can use a capable mid-tier model, e.g. Claude Sonnet or a GPT mini model
 - The existing stems of those topics from the outline, to avoid near-duplicates.
 - An output path (`<work>/batch-<n>.json`, bulk-add shape below) and an instruction to return only a short summary, not the items.
 
-Writers check guideline-dependent facts (diagnostic criteria, classifications, staging, screening and treatment thresholds, vaccine schedules) against current authoritative sources with web search, and record each one in `rationaleMeta.sources`. Without web access, list those items for the user to verify instead of guessing.
+Writers check guideline-dependent facts (diagnostic criteria, classifications, staging, screening and treatment thresholds, doses, vaccine schedules) in the primary document, fetching its page rather than relying on search snippets, as [item-standards.md](item-standards.md#accuracy-and-currency) describes. They record each one in `rationaleMeta.sources`. Ask each writer to list in its summary the facts it couldn't confirm in a primary text. Pass that list to the reviewer. Without web access, writers list those items for the user to verify instead of guessing.
 
 Batch shape (the editor's bulk-add JSON):
 
@@ -84,11 +86,15 @@ Merge the batches into `<work>/batch.json` with a short script (topics and quizz
 
 ### 5. Review
 
-The reviewer is the most capable model available, e.g. Claude Opus or a frontier GPT model. Independence matters more than the exact model: a model family other than the writers' is best. It must at least run in a fresh context that didn't write the items, as a subagent or a separate session. Review batches of about 100 to 150 questions, following [review-rubric.md](review-rubric.md). For the blind solve, give it a copy of the items with `answer`, `rationale`, `rationaleMeta` and `pearls` removed. Then give it the full items for the checklist pass. Apply its fixes, rerun the gate, and send rewritten flagged items through one more blind solve. Drop any item that still fails.
+The reviewer is the most capable model available, e.g. Claude Opus or a frontier GPT model. Independence matters more than the exact model: a model family other than the writers' is best. It must at least run in a fresh context that didn't write the items, as a subagent or a separate session. Review batches of about 100 to 150 questions, following [review-rubric.md](review-rubric.md). 1. **Blind solve:** give the reviewer a copy of the items, each with its `ref` (`<topic> › <quiz> › <n>`, numbered as in the report), with `answer`, `rationale`, `rationaleMeta` and `pearls` removed. It writes its answers before it sees anything else.
+2. **Checklist pass:** give it the full items and the writers' unverified-facts lists. It verifies those facts in primary documents and writes `<work>/review-<n>.json` in the rubric's `edits` format.
+3. **Apply:** run `apply_review.py` on the batch with every review file. It refuses unknown refs and fields and prints the rewritten refs. Read the edits to items flagged `wrong-key` or `ambiguous` before accepting them.
+4. **Recheck:** rerun the gate on `batch-reviewed.json`. Send the rewritten refs through one more blind solve in a fresh context, and drop any item whose blind answer still differs from the key or that has a defensible second answer.
+5. Stage the reviewed batch.
 
 ### 6. Stage
 
-1. Run `stage-quizzes`, then a fresh `draft-outline` to confirm the counts.
+1. Run `stage-quizzes` on the reviewed batch, then a fresh `draft-outline` to confirm the counts.
 2. If staging fails partway, it reports what was saved. Fix the batch, remove what was already saved from it, and rerun.
 3. Report to the user: topics and quizzes created or extended, question counts, the final distribution summary, the items you dropped or left with warnings, and 3 sample items rendered as Markdown.
 4. Remind the user to review in **Review & publish** and publish when satisfied. Every staged record is listed in **More > Changes** under the actor `agent:write-quizzes` and can be reverted there.

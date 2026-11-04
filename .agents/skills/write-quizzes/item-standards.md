@@ -5,7 +5,12 @@ Write as a senior attending physician and medical educator. The output is parsed
 ## Accuracy and currency
 
 - Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC, AAP, NCCN, AJCC and similar. Sources are a minimum coverage map. When a source is outdated or wrong, write the current fact.
-- Verify with web search any fact that depends on a guideline, classification, set of criteria, staging system, threshold, dose or schedule revised in the last 10 years. Put the reference in `rationaleMeta.sources` as plain text, e.g. `AAP Clinical Practice Guideline: Management of Hyperbilirubinemia in the Newborn Infant 35 or More Weeks of Gestation (2022)`. Leave `sources` empty for stable textbook facts.
+- Verify against the primary document any fact that depends on a guideline, classification, set of criteria, staging system, threshold, dose or schedule revised in the last 10 years. Search results and secondary summaries only locate the document:
+  1. Search for the newest version first, so you don't verify against a superseded edition.
+  2. Fetch the page itself: the publisher's full text (journal, PubMed Central, society, CDC, WHO or government site).
+  3. Confirm the exact numbers and wording there.
+  4. If the primary text can't be reached, don't write numbers you couldn't confirm. Test the concept without them, or list the item as unverified in your summary.
+- Put the reference in `rationaleMeta.sources` as plain text with the document's real title and year, e.g. `AAP Clinical Practice Guideline: Management of Hyperbilirubinemia in the Newborn Infant 35 or More Weeks of Gestation (2022)`. Don't name individual authors unless needed to identify a trial. Leave `sources` empty for stable textbook facts.
 - Where practice varies by region or guideline body, test what is consistent across them or name the guideline in the stem.
 - Every item has exactly one best answer that a panel of experts would agree on.
 
@@ -34,11 +39,37 @@ Write every stem, choice, rationale and pearl in your own words. Never copy sent
 
 ## Rationale
 
-The rationale does most of the teaching. Make it dense and high-yield:
+The rationale does most of the teaching, and learners skim it on a phone. Make it dense, high-yield and easy to scan. The app renders GitHub Flavored Markdown, a small HTML subset (`<sub>`, `<sup>`) and KaTeX math. Tables and display math scroll on narrow screens.
 
-1. Why the correct answer is right (the key reasoning step and the discriminating findings).
-2. Why each distractor is wrong, or which presentation it would fit instead. Refer to choices by content, not by letter.
-3. Use Markdown where it helps: comparison tables, short lists, `$...$` LaTeX for formulas.
+**Structure** (about 100 to 250 words; more only when a table carries it):
+
+1. **Answer and key reasoning**: open with the correct answer in bold and the reasoning step that gets there, in 1 to 3 sentences. Bold the findings that discriminate it from the distractors.
+2. **Core teaching**: what a learner should take away. Use a table whenever 2 or more entities are compared on 2 or more features: look-alike diagnoses, drug choices, thresholds by age or gestation, staging or classification levels, or lab patterns. Use a numbered list for sequences, e.g. a resuscitation algorithm, a stepwise work-up or a calculation.
+3. **Other choices**: a bulleted list with one bullet per distractor, each starting with the choice's content in bold, then why it's wrong or which presentation it fits instead. Never refer to choices by letter.
+
+**Formatting rules:**
+
+- **Bold** the correct answer, the discriminating findings, and the one or two facts a learner must remember. Don't bold whole sentences or more than about a fifth of the text.
+- *Italics* for organism names (*Streptococcus agalactiae*, *Listeria monocytogenes*), Latin terms and gene names (*UGT1A1*), and for a term at the point it's defined.
+- Tables: at most 4 columns, short cells (a few words), a header row, and the entity being discussed in the first column. Every Comparison question has one.
+- Math: use LaTeX for formulas, calculations, ratios and anything with fractions or exponents, inline as `$...$`, e.g. `$\text{dose} = 10\ \text{mL/kg} \times 3.2\ \text{kg} = 32\ \text{mL}$`, or as a display block (`$$` on its own lines) for a multi-step calculation. Write plain numbers and units as text. Use `<sub>`/`<sup>` for chemical formulas and simple subscripts (CO<sub>2</sub>, SpO<sub>2</sub>, Ca<sup>2+</sup>).
+- No headings, blockquotes or horizontal rules inside a rationale. Use bold lead-ins instead.
+
+Example rationale (as rendered Markdown):
+
+```markdown
+**Transient tachypnea of the newborn** fits best: a **term infant born by cesarean without labor** with **mild tachypnea and a low oxygen need** that **improves within 24 to 48 hours**. Delayed clearance of fetal lung fluid is the cause.
+
+| Condition | Typical infant | Chest X-ray | Course |
+| --- | --- | --- | --- |
+| TTN | Term, cesarean without labor | Perihilar streaks, fluid in fissures | Resolves in 24 to 72 h |
+| RDS | Preterm, no antenatal steroids | Ground glass, air bronchograms | Worsens before surfactant |
+| Meconium aspiration | Post-term, meconium-stained | Patchy infiltrates, hyperinflation | Risk of PPHN |
+
+- **Rising oxygen need above 0.40** suggests RDS, pneumonia or PPHN rather than TTN.
+- **Temperature instability with poor perfusion** points to sepsis.
+- **Progressive hypercapnia needing intubation** is not expected in TTN.
+```
 
 Pearls: 1 to 3 short, standalone exam or clinical facts that extend the item, not a restatement of the answer.
 
