@@ -14,9 +14,14 @@ Return JSON: `[{ "ref": "<topic> › <quiz> › <n>", "answer": "B", "defensible
 
 ## Pass 2: checklist
 
-You get the full items and your blind answers. For each item, check:
+You run one of two passes on separate sets of items:
 
-1. **Key**: the key is correct. If your blind answer differed, decide who is right using current authoritative sources (web search). If another choice is defensible, the item needs a fix.
+- **Standards pass:** you get the items that passed triage. Run every check. Fix problems under checks 4 to 8 yourself. If you suspect a problem under checks 1 to 3, don't edit the item: list its ref with a one-line reason under "Escalate" at the end of your reply.
+- **Judgment pass:** you get the escalated items with their blind answers and any unverified facts. Run every check and fix everything you find.
+
+For each item, check:
+
+1. **Key**: the key is correct. If the blind answer differed, decide who is right using current authoritative sources (web search). If another choice is defensible, the item needs a fix.
 2. **Currency**: guideline-dependent facts, criteria, classifications, staging, thresholds, doses and schedules match the current version, checked in the primary document (see [item-standards.md](item-standards.md#accuracy-and-currency)). Each such item has an accurate `rationaleMeta.sources` entry with the document's real title and year.
 3. **Accuracy**: the rationale, pearls and distractor explanations contain no errors and no unsupported claims.
 4. **Standards**: the stem is self-contained, the lead-in can be answered with the choices covered, the choices are homogeneous, and none of the technical flaws apply.

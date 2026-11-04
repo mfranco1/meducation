@@ -62,7 +62,7 @@ Show the user the coverage summary (topics, quizzes, targets) and wait for appro
 Writers can use a capable mid-tier model, e.g. Claude Sonnet or a GPT mini model. If your agent can delegate to subagents or separate sessions, run at most 2 writers at a time with no nested delegation. Otherwise write the slices yourself, one at a time. Give each writer:
 
 - Its slice: the blueprint entries for a few quizzes, plus the matching source files and page ranges.
-- The paths to `item-standards.md`, `metadata.md` and `vocabulary.json`, with an instruction to read them first.
+- The paths to `item-standards.md`, `metadata.md` and `vocabulary.json`, with an instruction to read them first and to meet every standard in `item-standards.md`, including the rationale format, from the first draft. Before returning, the writer checks each item against checks 2 to 8 of the [review rubric](review-rubric.md#pass-2-checklist) and fixes what fails.
 - The existing stems of those topics from the outline, to avoid near-duplicates.
 - An output path (`<work>/batch-<n>.json`, bulk-add shape below) and an instruction to return only a short summary, not the items.
 
@@ -86,11 +86,15 @@ Merge the batches into `<work>/batch.json` with a short script (topics and quizz
 
 ### 5. Review
 
-The reviewer is the most capable model available, e.g. Claude Opus or a frontier GPT model. Independence matters more than the exact model: a model family other than the writers' is best. It must at least run in a fresh context that didn't write the items, as a subagent or a separate session. Review batches of about 100 to 150 questions, following [review-rubric.md](review-rubric.md). 1. **Blind solve:** give the reviewer a copy of the items, each with its `ref` (`<topic> › <quiz> › <n>`, numbered as in the report), with `answer`, `rationale`, `rationaleMeta` and `pearls` removed. It writes its answers before it sees anything else.
-2. **Checklist pass:** give it the full items and the writers' unverified-facts lists. It verifies those facts in primary documents and writes `<work>/review-<n>.json` in the rubric's `edits` format.
-3. **Apply:** run `apply_review.py` on the batch with every review file. It refuses unknown refs and fields and prints the rewritten refs. Read the edits to items flagged `wrong-key` or `ambiguous` before accepting them.
-4. **Recheck:** rerun the gate on `batch-reviewed.json`. Send the rewritten refs through one more blind solve in a fresh context, and drop any item whose blind answer still differs from the key or that has a defensible second answer.
-5. Stage the reviewed batch.
+Review is tiered so the most capable model only judges the items that need it. Every reviewer runs in a fresh context that didn't write the items, as a subagent or a separate session, and follows [review-rubric.md](review-rubric.md). A model family other than the writers' is best where one is available. Review batches of about 100 to 150 questions.
+
+1. **Blind solve** (mid-tier model, e.g. Claude Sonnet or a GPT mini model): give it a copy of the items, each with its `ref` (`<topic> › <quiz> › <n>`, numbered as in the report), with `answer`, `rationale`, `rationaleMeta` and `pearls` removed. It writes its answers before it sees anything else.
+2. **Triage:** escalate every item whose blind answer differs from the key, that has a defensible alternative or an assumption note, or that is on a writer's unverified-facts list.
+3. **Standards pass** (mid-tier model): give it the full items that weren't escalated. It writes `<work>/review-standards-<n>.json` and returns the refs it escalates. Add those to the escalated items.
+4. **Judgment pass** (the most capable model available, e.g. Claude Opus or a frontier GPT model): give it the full escalated items, their blind answers and the matching unverified facts. It verifies those facts in primary documents and writes `<work>/review-judgment-<n>.json`.
+5. **Apply:** run `apply_review.py` on the batch with every review file. It refuses unknown refs and fields and prints the rewritten refs. Read the edits to items flagged `wrong-key` or `ambiguous` before accepting them.
+6. **Recheck:** rerun the gate on `batch-reviewed.json`. Send the rewritten refs through one more blind solve (mid-tier model) in a fresh context, and drop any item whose blind answer still differs from the key or that has a defensible second answer.
+7. Stage the reviewed batch.
 
 ### 6. Stage
 
