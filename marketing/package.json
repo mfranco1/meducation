@@ -19,6 +19,7 @@
     "format:check": "prettier --check '**/*.{ts,tsx,json,md}' --ignore-path .gitignore"
   },
   "dependencies": {
+    "@huggingface/transformers": "3.8.1",
     "@remotion/bundler": "4.0.540",
     "@remotion/captions": "4.0.540",
     "@remotion/cli": "4.0.540",
@@ -28,6 +29,7 @@
     "@remotion/renderer": "4.0.540",
     "@remotion/transitions": "4.0.540",
     "@tonejs/midi": "2.0.28",
+    "kokoro-js": "1.2.1",
     "react": "19.1.1",
     "react-dom": "19.1.1",
     "remotion": "4.0.540",

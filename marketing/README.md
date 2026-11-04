@@ -48,17 +48,19 @@ Reference public files with literal `staticFile('footage/<recipe>/<shot>.mp4')` 
 
 ## Capture
 
-A capture recipe defines `viewport`, `deviceScaleFactor` (1 to 3), public API `sources` for revision checks (for example `/api/v1/subjects` or `/api/v1/flashcards/subjects`) and `shots`. Each shot has an `id`, `setup` actions and `record` actions. Every shot starts in a fresh, unauthenticated browser context. Inspect the current app to choose actual stable records and controls.
+A capture recipe defines `viewport`, `deviceScaleFactor` (1 to 3), optional `fps` (30 or 60, default 30), public API `sources` for revision checks (for example `/api/v1/subjects` or `/api/v1/flashcards/subjects`) and `shots`. Each shot has an `id`, `setup` actions and `record` actions. Every shot starts in a fresh, unauthenticated browser context. Inspect the current app to choose actual stable records and controls.
 
 Actions:
 
 - `click`, `hover`: `role` (any ARIA role), `name`, optional `exact`
 - `fill`: types `text` into the field labelled `label`, `delay` ms per character (default 70)
 - `press`: keyboard `key`
-- `scroll`: brings exact `text` into view; `scrollBy`: scrolls `y` CSS pixels over `ms` (default 600)
+- `scroll`: brings exact `text` into view; `scrollBy`: scrolls the container under the viewport centre by `y` CSS pixels, evenly over `ms` (default 600)
 - `wait`: `ms`
 
-Each shot produces `public/footage/<recipe>/<shot>.mp4`, a `<shot>.png` poster from the end of setup, and `<shot>.events.json`: the record-phase `click`, `hover` and `fill` targets as `{ t, type, x, y }`, where `t` is seconds into the clip and `x`, `y` are the target centre in footage pixels. Pass these to `Footage` `taps` or use them to aim camera keyframes. Footage size is viewport × device scale (for example 480×900 at scale 2 gives 960×1800).
+Setup runs in real time. Recording runs in page time: the browser's clock and animations advance exactly one frame between screenshots, so footage has a constant frame rate and smooth motion however long each screenshot takes. `wait`, `scrollBy` and `fill` delays are page time. Network requests pause page time until they finish, so API latency never shows. Controls must be unique, visible and enabled; capture fails otherwise. End setup on a settled screen, because animations already running when recording starts freeze. Script-driven animations that read raw frame timestamps (for example carousels) are not stepped; check them in the frames.
+
+Each shot produces `public/footage/<recipe>/<shot>.mp4`, a `<shot>.png` poster from the end of setup, and `<shot>.events.json`: the record-phase `click`, `hover` and `fill` targets as `{ t, type, x, y }`, where `t` is page-time seconds into the clip and `x`, `y` are the target centre in footage pixels. Copy the file into the production directory and import it (`import taps from './taps.json'`) for `Footage` `taps` or camera keyframes, so the render cache tracks it. Footage size is viewport × device scale (for example 480×900 at scale 2 gives 960×1800).
 
 ## Commands
 
@@ -83,11 +85,12 @@ Outputs go to ignored `output/<ad-id>/<format>/` (`9x16`, `4x5`, `16x9`): `final
 
 ## Music and sound
 
-An ad's optional `soundtrack` in `ad.json` describes one mix: an original score rendered with sampled and synthesized SFZ instruments, plus sourced clips. Generation is local and deterministic: no paid APIs, accounts or text-to-audio AI.
+An ad's optional `soundtrack` in `ad.json` describes one mix: an original score rendered with sampled and synthesized SFZ instruments, plus sourced clips. Generation is local: no paid APIs, accounts or network calls. Music is score-based, not text-to-music AI; optional voiceover uses a local text-to-speech model.
 
 - `lufs`: master loudness, default -14 (social platforms normalize near this).
 - `duck`: music gain in dB while a voice clip speaks, default -8. Speech is detected in the voice bus and the music ramps down 0.15 s before and back up over 0.4 s after.
 - `score`: `bpm`, `reverb` (`seconds`, `mix`) and up to 16 `tracks`. A track has `name`, `instrument` (an `.sfz` reference), `gain` in dB, `pan` (-1 to 1), `reverb` send (0 to 1), `notes` (`beat`, `beats`, MIDI `pitches`, `velocity` 0 to 1) and optional `sustain` pedal spans (`beat`, `beats`).
+- `voiceover`: lines with `from`, `text`, `voice` (default `af_heart`), `speed` (0.5 to 2), `gain` in dB and `pan`. Lines are synthesized locally with Kokoro-82M, cached by text and voice in `.cache/voice/`, and mixed as voice. Generation prints each line's frame range for timing captions. Voices are the American (`af_*`, `am_*`) and British (`bf_*`, `bm_*`) English voices bundled with `kokoro-js`; listen and pick per ad.
 - `clips`: `src`, `role` (`music`, `sfx` or `voice`), `from`, `trim`, optional `frames`, `gain` in dB, `pan`, `fadeIn`, `fadeOut`. Times are frames at 30 fps.
 
 The master is limited, normalized in two passes to `lufs` with a -1.5 dBTP ceiling, and played by every format.
@@ -98,6 +101,7 @@ References are `<asset-id>/<path>` for entries in `assets.json`, or `local/<path
 
 - `github`: a repository pinned to a commit, optionally limited to path prefixes. Every file is checked against its git blob hash. The [sfzinstruments](https://github.com/sfzinstruments) collection has many CC0 and CC-BY SFZ libraries.
 - `file`: one HTTPS download with a SHA-256, for music tracks or sound effects from a reputable source (for example CC0 sounds on [Freesound](https://freesound.org/)).
+- `huggingface`: a model repository pinned to a revision; LFS files are checked by SHA-256 and others by git blob hash. `kokoro-82m` (Apache-2.0) provides the voiceover model.
 - `local`: files you supply, such as your own voice recordings, placed in `.cache/assets/<id>/` and checked against their SHA-256.
 
 ```sh
@@ -112,7 +116,7 @@ Generation prints each track's level before gain (libraries differ by 20 dB or m
 
 ## Reuse and cleanup
 
-Footage is cached in `public/footage/<recipe-name>/`. Cache inputs include the recipe, capture code, learner source/assets, dependency locks, font, base URL and published revisions. Publication changes during capture abort the run. Failed captures preserve the prior complete set. Recording samples device-resolution screenshots toward 30 fps and preserves their elapsed timestamps; cadence depends on local compute. A local font route supplies the theme's intended Inter font to the recording browser only.
+Footage is cached in `public/footage/<recipe-name>/`. Cache inputs include the recipe, capture code, learner source/assets, dependency locks, font, base URL and published revisions. Publication changes during capture abort the run. Failed captures preserve the prior complete set. A local font route supplies the theme's intended Inter font to the recording browser only.
 
 Audio caching includes the soundtrack, generator, dependency lock, sfizz and FFmpeg versions, referenced instruments and asset entries, and checks the saved master hash. The final-video cache includes the specification, format, kit and ad code, branding, dependency locks and referenced assets. Run production jobs sequentially.
 
@@ -126,6 +130,6 @@ Meducation's owner confirmed an organization headcount of at most three people. 
 
 `@remotion/transitions` is under the Remotion licence; `@remotion/layout-utils`, `@remotion/captions` and `@remotion/motion-blur` are MIT. [Playwright](https://github.com/microsoft/playwright/blob/main/LICENSE) is Apache-2.0. [FFmpeg](https://ffmpeg.org/legal.html) is LGPL or GPL depending on enabled components; the local libx264 build includes GPL components. Local binaries are invoked, not redistributed. Inter's SIL Open Font License is in `public/fonts/OFL.txt`. Branding comes from this repository.
 
-[sfizz](https://github.com/sfztools/sfizz) is BSD-2-Clause and is built locally from its pinned source release. [Tone.js MIDI](https://github.com/Tonejs/Midi) is MIT. Instrument and audio licences are recorded per entry in `assets.json`; CC-BY entries need their `attribution` credited wherever the ad's credits or description allow. Patches in `audio/instruments/` are original to this repository.
+[sfizz](https://github.com/sfztools/sfizz) is BSD-2-Clause and is built locally from its pinned source release. [Tone.js MIDI](https://github.com/Tonejs/Midi) is MIT. [kokoro-js](https://github.com/hexgrad/kokoro) and its voices, `@huggingface/transformers` and the Kokoro-82M model are Apache-2.0; ONNX Runtime is MIT. Instrument and audio licences are recorded per entry in `assets.json`; CC-BY entries need their `attribution` credited wherever the ad's credits or description allow. Patches in `audio/instruments/` are original to this repository.
 
 Use trusted OS package channels, pinned npm dependencies and published asset checksums. The workspace's `.npmrc` disables npm install lifecycle scripts; retain `--ignore-scripts` during setup. Do not substitute random mirrors, installer scripts or plugins. The sfizz source checksum is in `audio.ts`; asset integrity data is in `assets.json`.

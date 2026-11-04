@@ -13,6 +13,7 @@ const { Midi } = ToneMidi;
 
 const SFIZZ_URL = 'https://github.com/sfztools/sfizz/releases/download/1.2.3/sfizz-1.2.3.tar.gz';
 const SFIZZ_SHA256 = 'a9339eac7620d7f0f6b44bdfe860680fab73e66efad4b5f15b21198dd9436822';
+const KOKORO = 'kokoro-82m';
 const logPath = (root: string, name: string) => join(root, '.cache/logs', `audio-${name}.log`);
 const assetDir = (root: string, id: string) => join(root, '.cache/assets', id);
 const sfizzTool = (root: string) => process.env.SFIZZ_RENDER ?? join(root, '.cache/tools/sfizz_render');
@@ -116,7 +117,8 @@ const assetIds = (soundtrack: Soundtrack) => [
   ...new Set(
     [...(soundtrack.score?.tracks.map((t) => t.instrument) ?? []), ...soundtrack.clips.map((c) => c.src)]
       .map((ref) => ref.split('/')[0])
-      .filter((id) => id !== 'local'),
+      .filter((id) => id !== 'local')
+      .concat(soundtrack.voiceover.length ? [KOKORO] : []),
   ),
 ];
 const soundtrackRefs = (soundtrack: Soundtrack) => [
@@ -162,6 +164,34 @@ async function fetchGithub(entry: Extract<Asset, { type: 'github' }>, directory:
   await Promise.all(Array.from({ length: 8 }, worker));
 }
 
+type HuggingfaceFile = { type: string; path: string; oid: string; lfs?: { oid: string } };
+/** Large files are checked by SHA-256 (`lfs.oid`), small ones by git blob hash (`oid`). */
+export const matchesHuggingfaceFile = (item: HuggingfaceFile, content: Buffer) =>
+  item.lfs ? sha256(content) === item.lfs.oid : gitBlobSha(content) === item.oid;
+
+async function fetchHuggingface(entry: Extract<Asset, { type: 'huggingface' }>, directory: string) {
+  const base = `https://huggingface.co/${entry.repo}`;
+  const tree = JSON.parse(
+    (
+      await download(`https://huggingface.co/api/models/${entry.repo}/tree/${entry.revision}?recursive=true`)
+    ).toString(),
+  ) as HuggingfaceFile[];
+  const files = tree.filter(
+    (item) => item.type === 'file' && (entry.paths.length === 0 || entry.paths.some((p) => item.path.startsWith(p))),
+  );
+  for (const { path } of files)
+    if (path.startsWith('/') || path.split('/').includes('..')) throw new Error(`${entry.id}: unsafe path ${path}`);
+  console.log(`Fetching ${entry.id}: ${files.length} files…`);
+  for (const item of files) {
+    const encoded = item.path.split('/').map(encodeURIComponent).join('/');
+    const content = await download(`${base}/resolve/${entry.revision}/${encoded}`);
+    if (!matchesHuggingfaceFile(item, content)) throw new Error(`${entry.id}: checksum mismatch for ${item.path}`);
+    const target = join(directory, item.path);
+    await mkdir(dirname(target), { recursive: true });
+    await writeFile(target, content);
+  }
+}
+
 async function verifyLocal(root: string, entry: Extract<Asset, { type: 'local' }>) {
   for (const file of entry.files)
     if ((await hashFile(join(assetDir(root, entry.id), file.name)).catch(() => '')) !== file.sha256)
@@ -185,6 +215,7 @@ async function fetchAsset(root: string, entry: Asset) {
   await rm(partial, { recursive: true, force: true });
   await mkdir(partial, { recursive: true });
   if (entry.type === 'github') await fetchGithub(entry, partial);
+  else if (entry.type === 'huggingface') await fetchHuggingface(entry, partial);
   else {
     const content = await download(entry.url);
     if (sha256(content) !== entry.sha256) throw new Error(`${entry.id}: checksum mismatch`);
@@ -303,6 +334,72 @@ export function duckGain(spans: [number, number][], duck: number) {
     )
     .reduce((all, next) => `max(${all},${next})`);
   return `pow(10,${duck / 20}*${cover})`;
+}
+
+/**
+ * Synthesizes voiceover lines with Kokoro, offline from the verified model asset. Voices ship inside the
+ * pinned kokoro-js package. Lines are cached by content in .cache/voice/ and resampled to 48 kHz stereo.
+ */
+async function voiceLines(root: string, spec: AdSpec, entries: Asset[], working: string) {
+  const lines = spec.soundtrack?.voiceover ?? [];
+  const model = entries.find((entry) => entry.id === KOKORO)!;
+  const version = JSON.parse(await readFile(join(root, 'node_modules/kokoro-js/package.json'), 'utf8')).version;
+  type Kokoro = typeof import('kokoro-js');
+  let loaded:
+    | {
+        tts: InstanceType<Kokoro['KokoroTTS']>;
+        RawAudio: typeof import('@huggingface/transformers').RawAudio;
+        TextSplitterStream: Kokoro['TextSplitterStream'];
+      }
+    | undefined;
+  const clips = [];
+  for (const [index, line] of lines.entries()) {
+    const { text, voice, speed } = line;
+    const cached = join(
+      root,
+      '.cache/voice',
+      `${sha256(JSON.stringify({ text, voice, speed, model: marker(model), version }))}.wav`,
+    );
+    if (
+      !(await access(cached).then(
+        () => true,
+        () => false,
+      ))
+    ) {
+      if (!loaded) {
+        const { env, RawAudio } = await import('@huggingface/transformers');
+        env.allowRemoteModels = false;
+        env.localModelPath = join(root, '.cache/assets') + sep;
+        const { KokoroTTS, TextSplitterStream } = await import('kokoro-js');
+        const tts = await KokoroTTS.from_pretrained(KOKORO, { dtype: 'fp32', device: 'cpu' });
+        loaded = { tts, RawAudio, TextSplitterStream };
+      }
+      // The model reads at most about 510 tokens, so synthesize sentence by sentence with a short pause between.
+      const pause = new Float32Array(3600);
+      const parts: Float32Array[] = [];
+      const sentences = new loaded.TextSplitterStream();
+      sentences.push(text);
+      sentences.close();
+      for await (const { audio } of loaded.tts.stream(sentences, { voice: voice as 'af_heart', speed }))
+        parts.push(...(parts.length ? [pause] : []), audio.audio);
+      const samples = new Float32Array(parts.reduce((total, part) => total + part.length, 0));
+      let offset = 0;
+      for (const part of parts) samples.set(part, (offset += part.length) - part.length);
+      await mkdir(dirname(cached), { recursive: true });
+      await writeFile(`${cached}.partial`, Buffer.from(new loaded.RawAudio(samples, 24000).toWav()));
+      await rename(`${cached}.partial`, cached);
+    }
+    const file = join(working, `voice-${index + 1}.wav`);
+    await ffmpeg(['-i', cached, ...stem, file], logPath(root, 'voice'));
+    const frames = Math.ceil(Number((await probe(file, logPath(root, 'voice'))).format.duration) * FPS);
+    if (line.from + frames > spec.frames)
+      throw new Error(`Voice ${index + 1} runs past the end of the ad (frames ${line.from}-${line.from + frames}).`);
+    console.log(
+      `Voice ${index + 1}: frames ${line.from}-${line.from + frames} (${(frames / FPS).toFixed(2)} s) "${text.length > 50 ? `${text.slice(0, 50)}…` : text}"`,
+    );
+    clips.push({ ...line, file, role: 'voice' as const, trim: 0, frames: undefined, fadeIn: 0, fadeOut: 0 });
+  }
+  return clips;
 }
 
 export async function generateAudio(root: string, spec: AdSpec, force: boolean) {
@@ -427,12 +524,14 @@ export async function generateAudio(root: string, spec: AdSpec, force: boolean) 
     filters.push('[score]asplit=2[scoremix][scorestem]');
     buses.music.push('scoremix');
   }
-  for (const [index, clip] of soundtrack.clips.entries()) {
-    const file = resolveRef(root, clip.src);
+  const voice = await voiceLines(root, spec, entries, working);
+  const clips = [...soundtrack.clips.map((clip) => ({ ...clip, file: resolveRef(root, clip.src) })), ...voice];
+  for (const [index, clip] of clips.entries()) {
+    const { file } = clip;
     const info = await probe(file, logPath(root, 'clip'));
     const available = Math.floor(Number(info.format.duration) * FPS) - clip.trim;
     const frames = Math.min(clip.frames ?? available, available, spec.frames - clip.from);
-    if (frames <= 0) throw new Error(`Clip does not fit the ad: ${clip.src}`);
+    if (frames <= 0) throw new Error(`Clip does not fit the ad: ${file}`);
     const length = frames / FPS;
     const n = input(file);
     filters.push(

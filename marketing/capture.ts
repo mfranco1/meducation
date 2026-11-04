@@ -2,7 +2,6 @@ import { chromium, type Page } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
-import { performance } from 'node:perf_hooks';
 import { recipeSchema, type Recipe } from './spec';
 import { ffmpeg, probe } from './media';
 
@@ -32,81 +31,143 @@ export const cacheKey = (recipe: unknown, source: string, revisions: string[], b
 type Step = Recipe['shots'][number]['setup'][number];
 type Tap = { t: number; x: number; y: number; type: 'click' | 'hover' | 'fill' };
 
-/** Runs recipe steps. `onTap` receives each pointer or typing target just before the interaction. */
-async function actions(page: Page, steps: Step[], scale = 1, onTap?: (tap: Omit<Tap, 't'>) => void) {
+type Clock = { frame: number; now: () => number; wait: (ms: number) => Promise<void> };
+
+/**
+ * Runs recipe steps. Time passes only through `clock.wait`, so recipe durations are page time.
+ * Clicks use raw pointer events: Playwright's actionability checks wait on animation frames.
+ * `onTap` receives each pointer or typing target just before the interaction.
+ */
+async function actions(page: Page, steps: Step[], clock: Clock, scale = 1, onTap?: (tap: Omit<Tap, 't'>) => void) {
   for (const step of steps) {
-    if (step.type === 'wait') await page.waitForTimeout(step.ms);
+    if (step.type === 'wait') await clock.wait(step.ms);
     else if (step.type === 'press') await page.keyboard.press(step.key);
-    else if (step.type === 'scroll') await page.getByText(step.text, { exact: true }).scrollIntoViewIfNeeded();
+    else if (step.type === 'scroll')
+      await page.getByText(step.text, { exact: true }).evaluate((element) => {
+        element.scrollIntoView({ block: 'nearest' });
+        return true; // An undefined result stalls evaluate while time is paused.
+      });
     else if (step.type === 'scrollBy') {
+      // Wheel scrolling animates outside page time, so scroll the container under the viewport centre directly, one step per frame.
       const size = page.viewportSize()!;
-      await page.mouse.move(size.width / 2, size.height / 2);
-      const count = Math.max(1, Math.round(step.ms / 16));
+      const count = Math.max(1, Math.round(step.ms / clock.frame));
       for (let index = 0; index < count; index++) {
-        await page.mouse.wheel(0, step.y / count);
-        await page.waitForTimeout(16);
+        await page.evaluate(
+          ({ x, y, top }) => {
+            let element = document.elementFromPoint(x, y);
+            while (
+              element &&
+              !(element.scrollHeight > element.clientHeight && /auto|scroll/.test(getComputedStyle(element).overflowY))
+            )
+              element = element.parentElement;
+            (element ?? document.scrollingElement!).scrollBy({ top, behavior: 'instant' });
+            return true; // An undefined result stalls evaluate while time is paused.
+          },
+          { x: size.width / 2, y: size.height / 2, top: step.y / count },
+        );
+        await clock.wait(clock.frame);
       }
     } else {
       const target =
         step.type === 'fill'
           ? page.getByLabel(step.label, { exact: true })
           : page.getByRole(step.role as Parameters<Page['getByRole']>[0], { name: step.name, exact: step.exact });
-      if (onTap) {
-        await target.scrollIntoViewIfNeeded();
-        const box = await target.boundingBox();
-        if (box) onTap({ type: step.type, x: (box.x + box.width / 2) * scale, y: (box.y + box.height / 2) * scale });
+      // Playwright's actionability waits stall while page time is paused, so poll with non-waiting checks.
+      const name = step.type === 'fill' ? step.label : step.name;
+      for (let tries = 0; ; tries++) {
+        const count = await target.count();
+        if (count > 1) throw new Error(`More than one control matches: ${name}`);
+        if (count === 1 && (await target.isVisible()) && (await target.isEnabled())) break;
+        if (tries > 600) throw new Error(`Control not found, visible and enabled: ${name}`);
+        await clock.wait(clock.frame);
       }
-      if (step.type === 'click') await target.click();
-      else if (step.type === 'hover') await target.hover();
+      await target.evaluate((element) => {
+        element.scrollIntoView({ block: 'nearest' });
+        return true; // An undefined result stalls evaluate while time is paused.
+      });
+      const box = (await target.boundingBox())!;
+      const x = box.x + box.width / 2;
+      const y = box.y + box.height / 2;
+      onTap?.({ type: step.type, x: x * scale, y: y * scale });
+      if (step.type === 'hover') await page.mouse.move(x, y);
       else {
-        await target.click();
-        await target.clear();
-        await target.pressSequentially(step.text, { delay: step.delay });
+        await page.mouse.click(x, y);
+        if (step.type === 'fill') {
+          await page.keyboard.press('ControlOrMeta+A');
+          await page.keyboard.press('Backspace');
+          for (const character of step.text) {
+            await page.keyboard.type(character);
+            await clock.wait(step.delay);
+          }
+        }
       }
     }
   }
 }
 
-/** Device-resolution screenshots avoid Chromium screencast's CSS-pixel resolution cap. */
-async function record(page: Page, steps: Step[], directory: string, scale: number) {
+/**
+ * Records evenly spaced frames, so frame N shows the page exactly N / fps seconds in however long
+ * screenshots take. `--deterministic-mode` puts Chromium on virtual time: timers, Date and
+ * performance.now advance only by the budget given per frame. The compositor still runs CSS and Web
+ * Animations on real time, so the DevTools Animation domain pauses them and seeks every animation to
+ * its virtual age before each screenshot.
+ */
+async function record(page: Page, steps: Step[], directory: string, scale: number, fps: number) {
   await mkdir(directory, { recursive: true });
-  const frames: { data: Buffer; time: number }[] = [];
-  let recording = true;
-  const start = performance.now();
+  const cdp = await page.context().newCDPSession(page);
+  const frameMs = 1000 / fps;
   const events: Tap[] = [];
-  const grab = async () => {
-    const time = performance.now() / 1000;
-    const data = await page.screenshot({ type: 'jpeg', quality: 95, scale: 'device' });
-    frames.push({ data, time });
-  };
-  await grab();
-  const loop = (async () => {
-    while (recording) {
-      const tick = performance.now();
-      await grab();
-      await new Promise((resolve) => setTimeout(resolve, Math.max(0, 1000 / 30 - (performance.now() - tick))));
+  let now = 0;
+  let count = 0;
+  const writes: Promise<void>[] = [];
+  // Animation ids grouped by the virtual time they started, with the time the group ends.
+  const groups = new Map<number, { ids: Set<string>; end: number }>();
+  let fresh: { id: string; end: number }[] = [];
+  cdp.on('Animation.animationStarted', ({ animation: { id, source } }) => {
+    const total = (source?.delay ?? 0) + (source?.duration ?? 0) * (source?.iterations ?? 1) + (source?.endDelay ?? 0);
+    fresh.push({ id, end: Number.isFinite(total) ? total : Infinity });
+  });
+  cdp.on('Animation.animationCanceled', ({ id }) => groups.forEach((group) => group.ids.delete(id)));
+  await cdp.send('Animation.enable');
+  await cdp.send('Animation.setPlaybackRate', { playbackRate: 0 });
+  await cdp.send('Emulation.setVirtualTimePolicy', { policy: 'pause' });
+  let virtual = 0;
+  const frame = async () => {
+    if (count > 0) {
+      const expired = new Promise((resolve) => cdp.once('Emulation.virtualTimeBudgetExpired', resolve));
+      await cdp.send('Emulation.setVirtualTimePolicy', { policy: 'pauseIfNetworkFetchesPending', budget: frameMs });
+      await expired;
+      virtual += frameMs;
     }
-  })();
-  await Promise.all([
-    loop,
-    actions(page, steps, scale, (tap) => events.push({ t: performance.now() / 1000 - frames[0].time, ...tap })).finally(
-      () => {
-        recording = false;
-      },
-    ),
-  ]);
-  const seconds = (performance.now() - start) / 1000;
-  const list: string[] = [];
-  for (const [index, frame] of frames.entries()) {
-    const name = `${index}.jpg`;
-    await writeFile(join(directory, name), frame.data);
-    const next = frames[index + 1];
-    const length = next ? next.time - frame.time : seconds - (frame.time - frames[0].time);
-    list.push(`file '${name}'`, `duration ${Math.max(1 / 120, length).toFixed(6)}`);
-  }
-  list.push(`file '${frames.length - 1}.jpg'`);
-  await writeFile(join(directory, 'frames.ffconcat'), list.join('\n'));
-  return { seconds, events };
+    await cdp.send('Animation.getPlaybackRate'); // Flushes animationStarted events queued before this point.
+    for (const { id, end } of fresh.splice(0)) {
+      const group = groups.get(virtual) ?? { ids: new Set<string>(), end: 0 };
+      group.ids.add(id);
+      group.end = Math.max(group.end, end);
+      groups.set(virtual, group);
+    }
+    for (const [start, group] of groups) {
+      if (virtual - start > group.end || group.ids.size === 0) groups.delete(start);
+      else await cdp.send('Animation.seekAnimations', { animations: [...group.ids], currentTime: virtual - start });
+    }
+    // Clip coordinates are document-relative, so place the clip at the current viewport; `scale` keeps device resolution.
+    const { cssVisualViewport: view } = await cdp.send('Page.getLayoutMetrics');
+    const clip = { x: view.pageX, y: view.pageY, width: view.clientWidth, height: view.clientHeight, scale };
+    const { data } = await cdp.send('Page.captureScreenshot', { format: 'jpeg', quality: 95, clip });
+    writes.push(writeFile(join(directory, `${count++}.jpg`), Buffer.from(data, 'base64')));
+  };
+  const clock: Clock = {
+    frame: frameMs,
+    now: () => now,
+    wait: async (ms) => {
+      now += ms;
+      while (count * frameMs <= now + 1e-6) await frame();
+    },
+  };
+  await frame();
+  await actions(page, steps, clock, scale, (tap) => events.push({ t: Math.round(now) / 1000, ...tap }));
+  await Promise.all(writes);
+  return { frames: count, events };
 }
 
 export async function capture(root: string, recipePath: string, baseURL: string, force: boolean) {
@@ -144,7 +205,15 @@ export async function capture(root: string, recipePath: string, baseURL: string,
   const temporary = join(root, '.cache', `capture-${name}`);
   await rm(temporary, { recursive: true, force: true });
   await mkdir(temporary, { recursive: true });
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    args: [
+      '--deterministic-mode',
+      '--disable-threaded-animation',
+      '--disable-threaded-scrolling',
+      '--disable-checker-imaging',
+    ],
+  });
   try {
     for (const shot of recipe.shots) {
       const context = await browser.newContext({
@@ -167,25 +236,25 @@ export async function capture(root: string, recipePath: string, baseURL: string,
           content: `@font-face {font-family:Inter;src:url('/__marketing-font.woff2');font-weight:100 900;font-display:block}`,
         });
         await page.evaluate(() => document.fonts.load('600 16px Inter'));
-        await actions(page, shot.setup);
+        await actions(page, shot.setup, {
+          frame: 16,
+          now: () => 0,
+          wait: (ms) => page.waitForTimeout(ms),
+        });
         await page.evaluate(() => document.fonts.ready);
         await page.waitForTimeout(700);
         await page.screenshot({ path: join(temporary, `${shot.id}.png`) });
         const framesDir = join(temporary, shot.id);
-        const { seconds, events } = await record(page, shot.record, framesDir, recipe.deviceScaleFactor);
+        const { frames, events } = await record(page, shot.record, framesDir, recipe.deviceScaleFactor, recipe.fps);
         await writeFile(join(temporary, `${shot.id}.events.json`), JSON.stringify(events));
         await ffmpeg(
           [
-            '-f',
-            'concat',
-            '-safe',
-            '0',
+            '-framerate',
+            String(recipe.fps),
             '-i',
-            join(framesDir, 'frames.ffconcat'),
+            join(framesDir, '%d.jpg'),
             '-vf',
-            'fps=30,pad=ceil(iw/2)*2:ceil(ih/2)*2,tpad=stop_mode=clone:stop_duration=1',
-            '-t',
-            String(seconds),
+            'pad=ceil(iw/2)*2:ceil(ih/2)*2',
             '-c:v',
             'libx264',
             '-crf',
@@ -202,7 +271,7 @@ export async function capture(root: string, recipePath: string, baseURL: string,
         );
         const info = await probe(join(temporary, `${shot.id}.mp4`), join(root, '.cache/logs/probe.log'));
         console.log(
-          `Captured ${shot.id}: ${info.streams[0].width}×${info.streams[0].height}, ${Number(info.format.duration).toFixed(1)}s`,
+          `Captured ${shot.id}: ${info.streams[0].width}×${info.streams[0].height}, ${frames} frames at ${recipe.fps} fps, ${Number(info.format.duration).toFixed(1)}s`,
         );
         await rm(framesDir, { recursive: true });
       } finally {

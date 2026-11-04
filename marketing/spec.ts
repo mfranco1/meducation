@@ -26,6 +26,7 @@ const action = z.discriminatedUnion('type', [
 export const recipeSchema = z.object({
   viewport: z.object({ width: z.number().int().min(320), height: z.number().int().min(320) }),
   deviceScaleFactor: z.number().min(1).max(3),
+  fps: z.union([z.literal(30), z.literal(60)]).default(30),
   sources: z.array(z.string().startsWith('/api/v1/')).min(1),
   shots: z
     .array(
@@ -103,17 +104,35 @@ const soundtrackSchema = z.object({
       }),
     )
     .default([]),
+  /** Voice lines synthesized locally with Kokoro. `from` is the start frame. */
+  voiceover: z
+    .array(
+      z.object({
+        from: frameCount,
+        text: z.string().min(1).max(600),
+        voice: z
+          .string()
+          .regex(/^[a-z]{2}_[a-z]+$/)
+          .default('af_heart'),
+        speed: z.number().min(0.5).max(2).default(1),
+        gain: db,
+        pan,
+      }),
+    )
+    .default([]),
 });
 export type Soundtrack = z.infer<typeof soundtrackSchema>;
 function checkSoundtrack(soundtrack: Soundtrack, frames: number, ctx: z.RefinementCtx) {
   const issue = (message: string) => ctx.addIssue({ code: 'custom', path: ['soundtrack'], message });
-  if (!soundtrack.score && soundtrack.clips.length === 0) issue('A soundtrack needs a score or at least one clip');
+  if (!soundtrack.score && soundtrack.clips.length === 0 && soundtrack.voiceover.length === 0)
+    issue('A soundtrack needs a score, a clip or a voiceover line');
   const { score } = soundtrack;
   if (score)
     for (const track of score.tracks)
       for (const event of [...track.notes, ...track.sustain])
         if (((event.beat + event.beats) * 60) / score.bpm > frames / FPS) issue('Score events must fit the ad');
   for (const clip of soundtrack.clips) if (clip.from + (clip.frames ?? 0) > frames) issue('Clips must fit the ad');
+  for (const line of soundtrack.voiceover) if (line.from >= frames) issue('Voiceover lines must start inside the ad');
 }
 
 export const specSchema = z
@@ -151,6 +170,14 @@ export const assetsSchema = z
         type: z.literal('github'),
         repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/),
         commit: z.string().regex(/^[0-9a-f]{40}$/),
+        paths: z.array(z.string()),
+        source: https,
+      }),
+      z.object({
+        ...assetBase,
+        type: z.literal('huggingface'),
+        repo: z.string().regex(/^[\w.-]+\/[\w.-]+$/),
+        revision: z.string().regex(/^[0-9a-f]{40}$/),
         paths: z.array(z.string()),
         source: https,
       }),

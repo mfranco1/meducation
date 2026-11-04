@@ -1,4 +1,5 @@
 import { test } from 'node:test';
+import { createHash } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -7,7 +8,7 @@ import { cacheKey } from '../capture';
 import { validateAssets } from '../cli';
 import { assetsSchema, specSchema } from '../spec';
 import ToneMidi from '@tonejs/midi';
-import { gitBlobSha, scoreMidi } from '../audio';
+import { gitBlobSha, matchesHuggingfaceFile, scoreMidi } from '../audio';
 import { ffmpeg } from '../media';
 
 const production = {
@@ -66,6 +67,28 @@ test('asset manifest requires https sources and unique ids', () => {
 test('git blob checksums match git and reject changed content', () => {
   assert.equal(gitBlobSha(Buffer.from('hello\n')), 'ce013625030ba8dba906f756967f9e9ca394464a');
   assert.notEqual(gitBlobSha(Buffer.from('hello!\n')), 'ce013625030ba8dba906f756967f9e9ca394464a');
+});
+
+test('hugging face files are checked by sha256 when large and by git hash when small', () => {
+  const small = Buffer.from('hello\n');
+  const hash = (content: string) => createHash('sha256').update(content).digest('hex');
+  const item = { type: 'file', path: 'a', oid: 'ce013625030ba8dba906f756967f9e9ca394464a' };
+  assert.equal(matchesHuggingfaceFile(item, small), true);
+  assert.equal(matchesHuggingfaceFile(item, Buffer.from('hello!\n')), false);
+  assert.equal(matchesHuggingfaceFile({ ...item, lfs: { oid: hash('hello\n') } }, small), true);
+  assert.equal(matchesHuggingfaceFile({ ...item, lfs: { oid: hash('other') } }, small), false);
+});
+
+test('voiceover lines default to a voice and must start inside the ad', () => {
+  const parse = (voiceover: unknown) => specSchema.safeParse({ ...production, soundtrack: { voiceover } });
+  const line = { from: 0, text: 'Study smarter.' };
+  const parsed = parse([line]);
+  assert.equal(parsed.success && parsed.data.soundtrack!.voiceover[0].voice, 'af_heart');
+  assert.equal(parse([]).success, false);
+  assert.equal(parse([{ ...line, from: 60 }]).success, false);
+  assert.equal(parse([{ ...line, voice: '../x' }]).success, false);
+  assert.equal(parse([{ ...line, speed: 3 }]).success, false);
+  assert.equal(parse([{ ...line, text: '' }]).success, false);
 });
 
 test('score MIDI keeps chord pitches, note timing and the sustain pedal', () => {
