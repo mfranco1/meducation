@@ -7,5 +7,4 @@ Read and follow `.agents/skills/write-quizzes/SKILL.md` (the agent-neutral workf
 
 - Models: Sonnet subagents (`model: sonnet`) for writers, blind solves, the standards pass and replacements; an Opus subagent (`model: opus`) for the judgment pass.
 - At most 3 subagents run at once: 2 writers and 1 reviewer.
-- WebSearch and WebFetch are deferred tools. Tell every writer and the judgment reviewer to load them first with ToolSearch (`select:WebSearch,WebFetch`).
 - Point each subagent at its files by path (brief, round directory, review inputs) and ask for a short summary back, not the items.

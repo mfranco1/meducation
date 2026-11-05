@@ -23,8 +23,8 @@ def ref(n: int) -> str:
 
 
 def setup(tmp: Path, count: int = 12) -> Path:
-    topic_dir = tmp / "nephrology"
-    topic_dir.mkdir()
+    topic_dir = tmp / "subject" / "nephrology"
+    topic_dir.mkdir(parents=True)
     keys = "ABCD" * (count // 4 + 1)
     batch = {
         "topics": [
@@ -40,7 +40,7 @@ def setup(tmp: Path, count: int = 12) -> Path:
         ]
     }
     (topic_dir / "batch.json").write_text(json.dumps(batch))
-    (tmp / "blueprint.json").write_text(
+    (tmp / "subject" / "blueprint.json").write_text(
         json.dumps(
             {"topics": [{"name": TOPIC, "quizzes": [{"name": QUIZ, "target": count}]}]}
         )
@@ -50,7 +50,7 @@ def setup(tmp: Path, count: int = 12) -> Path:
 
 def run(tmp: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [sys.executable, "-I", str(TOOL), "--work", str(tmp), *args],
+        [sys.executable, "-I", str(TOOL), "--work", str(tmp / "subject"), *args],
         capture_output=True,
         text=True,
         check=False,
@@ -183,6 +183,56 @@ def test_apply_refuses_a_drop_that_leaves_the_quiz_undersized(tmp_path):
     assert "replace instead" in result.stderr
 
 
+def test_apply_defaults_the_minimum_to_the_quiz_target(tmp_path):
+    topic_dir = setup(tmp_path)
+    (topic_dir / "review.json").write_text(json.dumps([{"ref": ref(1), "drop": True}]))
+    args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json"]
+    result = run(tmp_path, *args, "review.json")
+    assert "leaves fewer than 12" in result.stderr
+
+
+def test_accept_marks_a_recheck_disagreement_ready(tmp_path):
+    topic_dir = setup(tmp_path)
+    run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")
+    k = keys(topic_dir)
+    k[1] = "D" if k[1] != "D" else "A"
+    answer(topic_dir, "r1", k)
+    run(tmp_path, "check-blind", TOPIC, "--round", "r1")
+    assert run(tmp_path, "ready", TOPIC, "--batch", "batch.json").returncode != 0
+    assert run(tmp_path, "accept", TOPIC, "--batch", "batch.json", ref(2)).returncode == 0
+    assert run(tmp_path, "ready", TOPIC, "--batch", "batch.json").returncode == 0
+
+
+def test_slices_adds_unstaged_stems_and_source_pages(tmp_path):
+    setup(tmp_path)
+    work = tmp_path / "subject"
+    (work / "blueprint.json").write_text(
+        json.dumps(
+            {
+                "topics": [
+                    {"name": TOPIC, "quizzes": [{"name": QUIZ, "target": 12}]},
+                    {"name": "Renal", "quizzes": [{"name": "AKI", "pages": "2-3"}]},
+                ]
+            }
+        )
+    )
+    (work / "outline.json").write_text(
+        json.dumps(
+            {"topics": [{"name": TOPIC, "quizzes": [{"name": QUIZ, "stems": ["Stem number 1?"]}]}]}
+        )
+    )
+    (work / "src").mkdir()
+    (work / "src" / "main.txt").write_text("one\ftwo\fthree\ffour")
+    assert run(tmp_path, "slices", "Renal").returncode == 0
+    stems = (work / "stems.txt").read_text()
+    assert "## (unstaged) Nephrology › Glomerular Disease" in stems
+    assert stems.count("Stem number 1?") == 1 and "Stem number 2?" in stems
+    source = (work / "renal" / "source-1.txt").read_text()
+    assert "two" in source and "three" in source and "four" not in source
+    brief = json.loads((work / "renal" / "brief-1.json").read_text())
+    assert brief["sourcePages"].endswith("source-1.txt")
+
+
 def test_ready_flags_an_item_edited_after_its_blind_solve(tmp_path):
     topic_dir = setup(tmp_path)
     run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")
@@ -212,7 +262,7 @@ def test_ready_flags_an_item_edited_after_its_blind_solve(tmp_path):
     assert ref(4) in result.stderr and ref(5) not in result.stderr
 
 
-def test_clean_keeps_the_blueprint_and_a_merged_ledger(tmp_path):
+def test_clean_keeps_the_blueprint_and_merges_the_shared_ledger(tmp_path):
     topic_dir = setup(tmp_path)
     (topic_dir / "sources-1.json").write_text(
         json.dumps(
@@ -226,12 +276,30 @@ def test_clean_keeps_the_blueprint_and_a_merged_ledger(tmp_path):
             ]
         )
     )
-    (tmp_path / "stems.txt").write_text("stems")
+    (tmp_path / "subject" / "stems.txt").write_text("stems")
     assert run(tmp_path, "clean").returncode == 0
-    assert sorted(p.name for p in tmp_path.iterdir()) == [
-        "blueprint.json",
-        "sources.json",
-    ]
+    assert [p.name for p in (tmp_path / "subject").iterdir()] == ["blueprint.json"]
     assert (
         json.loads((tmp_path / "sources.json").read_text())[0]["title"] == "KDIGO AKI"
     )
+
+
+def test_concurrent_ledger_runs_for_two_subjects_keep_both_entries(tmp_path):
+    for subject in ("alpha", "beta"):
+        topic = tmp_path / subject / "topic"
+        topic.mkdir(parents=True)
+        (topic / "sources-1.json").write_text(
+            json.dumps([{"title": f"{subject} guideline", "year": "2024", "status": "verified"}])
+        )
+    procs = [
+        subprocess.Popen(
+            [sys.executable, "-I", str(TOOL), "--work", str(tmp_path / s), "ledger"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+        )
+        for _ in range(5)
+        for s in ("alpha", "beta")
+    ]
+    assert all(p.wait() == 0 for p in procs)
+    titles = {e["title"] for e in json.loads((tmp_path / "sources.json").read_text())}
+    assert titles == {"alpha guideline", "beta guideline"}

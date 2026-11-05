@@ -2,14 +2,18 @@
 
 Usage: python3 -I quiz_work.py --work WORK <command> TOPIC [options]
 
-WORK holds blueprint.json, outline.json, stems.txt and sources.json; each topic
-has its own folder (WORK/<topic-slug>/) with briefs, batches, blind rounds and
-review files under fixed names. Run `--help` on a command for its options.
+WORK (var/quiz-work/<subject-slug>) holds blueprint.json, outline.json,
+stems.txt and optionally src/main.txt; each topic has its own folder
+(WORK/<topic-slug>/) with briefs, batches, blind rounds and review files under
+fixed names. The source ledger is shared by all subjects: WORK/../sources.json.
+Run `--help` on a command for its options.
 """
 
 import argparse
+import fcntl
 import hashlib
 import json
+import os
 import re
 import shutil
 import sys
@@ -33,8 +37,11 @@ def load(path: Path):
 
 
 def dump(path: Path, data) -> None:
+    """Write via a temp file so a concurrent reader never sees a partial file."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", "utf-8")
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", "utf-8")
+    os.replace(tmp, path)
 
 
 def slug(name: str) -> str:
@@ -71,6 +78,17 @@ class Work:
                 return topic
         sys.exit(f"{self.topic} is not in the blueprint.")
 
+    @property
+    def ledger(self) -> Path:
+        return self.root.parent / "sources.json"
+
+    def target(self, topic: str, quiz: str) -> int | None:
+        for t in load(self.root / "blueprint.json")["topics"]:
+            for q in t["quizzes"] if t["name"] == topic else []:
+                if q["name"] == quiz:
+                    return q.get("target")
+        return None
+
     def batch(self, name: str):
         return load(self.dir / name)
 
@@ -79,15 +97,52 @@ class Work:
         return load(path) if path.exists() else {"solved": {}, "judged": []}
 
 
+def unstaged_batches(work: Work):
+    """Each other topic folder's latest batch: reviewed.json, else batch.json, else batch-<n>.json."""
+    for folder in sorted(p for p in work.root.iterdir() if p.is_dir()):
+        if folder == work.dir:
+            continue
+        for name in ("reviewed.json", "batch.json"):
+            if (folder / name).exists():
+                yield load(folder / name)
+                break
+        else:
+            yield from (load(p) for p in sorted(folder.glob("batch-*.json")))
+
+
+def page_text(work: Work, pages: str) -> str | None:
+    """Pages "10-12, 15" of WORK/src/main.txt, where page N is the Nth form-feed chunk."""
+    source = work.root / "src" / "main.txt"
+    if not pages or not source.exists():
+        return None
+    chunks = source.read_text("utf-8").split("\f")
+    out = []
+    for part in str(pages).split(","):
+        first, _, last = part.strip().partition("-")
+        for n in range(int(first), int(last or first) + 1):
+            if 1 <= n <= len(chunks):
+                out.append(f"=== page {n} ===\n{chunks[n - 1].strip()}")
+    return "\n\n".join(out) + "\n"
+
+
 def cmd_slices(work: Work, args) -> None:
-    """One brief per blueprint quiz, plus WORK/stems.txt from the current outline."""
+    """One brief per blueprint quiz (with source-<n>.txt from src/main.txt), and WORK/stems.txt
+    from the outline plus the unstaged batches in other topic folders."""
     topic = work.blueprint_topic()
     outline = load(work.root / "outline.json")
-    lines = []
+    lines, staged = [], set()
     for t in outline["topics"]:
         for q in t.get("quizzes", []):
             lines.append(f"## {t['name']}{SEP}{q['name']}")
             lines += [f"- {stem}" for stem in q.get("stems", [])]
+            staged.update(q.get("stems", []))
+    for batch in unstaged_batches(work):
+        for t in batch["topics"]:
+            for q in t["quizzes"]:
+                stems = [i["stem"] for i in q["items"] if i["stem"] not in staged]
+                if stems:
+                    lines.append(f"## (unstaged) {t['name']}{SEP}{q['name']}")
+                    lines += [f"- {stem}" for stem in stems]
     (work.root / "stems.txt").write_text("\n".join(lines) + "\n", "utf-8")
     plan = [
         {
@@ -101,6 +156,10 @@ def cmd_slices(work: Work, args) -> None:
         for q in t["quizzes"]
     ]
     for n, quiz in enumerate(topic["quizzes"], 1):
+        pages = page_text(work, quiz.get("pages", ""))
+        if pages:
+            work.dir.mkdir(exist_ok=True)
+            (work.dir / f"source-{n}.txt").write_text(pages, "utf-8")
         dump(
             work.dir / f"brief-{n}.json",
             {
@@ -111,7 +170,8 @@ def cmd_slices(work: Work, args) -> None:
                 "quiz": quiz,
                 "otherPlannedQuizzes": [p for p in plan if p["quiz"] != quiz["name"]],
                 "stagedStems": str(work.root / "stems.txt"),
-                "sourceLedger": str(work.root / "sources.json"),
+                "sourceLedger": str(work.ledger),
+                "sourcePages": str(work.dir / f"source-{n}.txt") if pages else "",
                 "outputs": {
                     "batch": str(work.dir / f"batch-{n}.json"),
                     "unverified": str(work.dir / f"unverified-{n}.json"),
@@ -384,9 +444,10 @@ def cmd_apply(work: Work, args) -> None:
                 SEP.join((topic["name"], quiz["name"], str(n))) in drop
                 for n in range(1, len(quiz["items"]) + 1)
             )
-            if gone and len(quiz["items"]) - gone < args.min:
+            least = args.min or min(50, work.target(topic["name"], quiz["name"]) or 50)
+            if gone and len(quiz["items"]) - gone < least:
                 errors.append(
-                    f"{quiz['name']}: dropping {gone} leaves fewer than {args.min}; replace instead."
+                    f"{quiz['name']}: dropping {gone} leaves fewer than {least}; replace instead."
                 )
     if errors:
         sys.exit("\n".join(errors))
@@ -412,6 +473,18 @@ def cmd_apply(work: Work, args) -> None:
     )
 
 
+def cmd_accept(work: Work, args) -> None:
+    """Record items as judged unchanged, e.g. a recheck disagreement where the key is clearly right."""
+    batch = {ref: item for ref, _, item in items_of(work.batch(args.batch))}
+    unknown = [r for r in args.refs if r not in batch]
+    if unknown:
+        sys.exit("No such item: " + ", ".join(unknown))
+    log = work.log()
+    log["judged"] += [content_hash(batch[r]) for r in args.refs]
+    dump(work.dir / "blind-log.json", log)
+    print(f"{len(args.refs)} items accepted as judged")
+
+
 def cmd_ready(work: Work, args) -> None:
     """Every item must have a clean blind solve of its current content, or have been judged as is."""
     log = work.log()
@@ -434,36 +507,40 @@ def cmd_ready(work: Work, args) -> None:
 
 
 def cmd_ledger(work: Work, args) -> None:
-    """Merge every topic's sources-<n>.json into WORK/sources.json."""
-    path = work.root / "sources.json"
-    ledger = load(path) if path.exists() else []
-    index = {(e["title"].strip().lower(), str(e.get("year", ""))): e for e in ledger}
-    added = 0
-    for source in sorted(work.root.glob("*/sources-*.json")):
-        for row in load(source):
-            k = (row["title"].strip().lower(), str(row.get("year", "")))
-            if row.get("status") not in STATUS_RANK:
-                sys.exit(f"{source}: {row['title']} has status {row.get('status')!r}.")
-            if k not in index:
-                index[k] = {**row, "facts": list(row.get("facts", []))}
-                added += 1
-                continue
-            entry = index[k]
-            if STATUS_RANK[row["status"]] > STATUS_RANK[entry["status"]]:
-                entry["status"] = row["status"]
-                entry["url"] = row.get("url", entry.get("url", ""))
-            entry["facts"] += [
-                f for f in row.get("facts", []) if f not in entry["facts"]
-            ]
-    dump(path, sorted(index.values(), key=lambda e: e["title"].lower()))
+    """Merge every topic's sources-<n>.json into the shared ledger, WORK/../sources.json."""
+    path = work.ledger
+    path.parent.mkdir(parents=True, exist_ok=True)
+    # Sessions for other subjects share this ledger; hold the lock across read, merge and write.
+    with open(path.with_name(path.name + ".lock"), "w") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        ledger = load(path) if path.exists() else []
+        index = {(e["title"].strip().lower(), str(e.get("year", ""))): e for e in ledger}
+        added = 0
+        for source in sorted(work.root.glob("*/sources-*.json")):
+            for row in load(source):
+                k = (row["title"].strip().lower(), str(row.get("year", "")))
+                if row.get("status") not in STATUS_RANK:
+                    sys.exit(f"{source}: {row['title']} has status {row.get('status')!r}.")
+                if k not in index:
+                    index[k] = {**row, "facts": list(row.get("facts", []))}
+                    added += 1
+                    continue
+                entry = index[k]
+                if STATUS_RANK[row["status"]] > STATUS_RANK[entry["status"]]:
+                    entry["status"] = row["status"]
+                    entry["url"] = row.get("url", entry.get("url", ""))
+                entry["facts"] += [
+                    f for f in row.get("facts", []) if f not in entry["facts"]
+                ]
+        dump(path, sorted(index.values(), key=lambda e: e["title"].lower()))
     print(f"{len(index)} sources ({added} new) in {path}")
 
 
-KEEP = {"blueprint.json", "sources.json"}
+KEEP = {"blueprint.json"}
 
 
 def cmd_clean(work: Work, args) -> None:
-    """Merge the ledger, then delete everything but blueprint.json and sources.json."""
+    """Merge the ledger, then delete everything but blueprint.json."""
     cmd_ledger(work, args)
     removed = []
     for path in sorted(work.root.iterdir()):
@@ -487,6 +564,7 @@ def main() -> None:
         ("route-standards", cmd_route_standards, ["batch"]),
         ("judge-input", cmd_judge_input, ["batch", "round"]),
         ("apply", cmd_apply, ["batch", "output", "min"]),
+        ("accept", cmd_accept, ["batch"]),
         ("ready", cmd_ready, ["batch"]),
         ("ledger", cmd_ledger, []),
         ("clean", cmd_clean, []),
@@ -497,13 +575,17 @@ def main() -> None:
         )
         for opt in opts:
             if opt == "min":
-                p.add_argument("--min", type=int, default=50)
+                p.add_argument(
+                    "--min", type=int, help="default: the quiz's target, at most 50"
+                )
             elif opt.endswith("?"):
                 p.add_argument(f"--{opt[:-1]}")
             else:
                 p.add_argument(f"--{opt}", required=True)
         if name == "apply":
             p.add_argument("reviews", nargs="+")
+        if name == "accept":
+            p.add_argument("refs", nargs="+")
         p.set_defaults(fn=fn)
     args = parser.parse_args()
     args.fn(Work(args.work, args.topic), args)

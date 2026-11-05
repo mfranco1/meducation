@@ -42,6 +42,13 @@ describe('quiz batch report', () => {
     expect(buildReport(batch(items), { vocabulary, blueprint }).text).toContain('Topic has fewer than 2 quizzes');
   });
 
+  it('checks quiz size against the blueprint target instead of 50 to 100', () => {
+    const items = [item('Only stem here?')];
+    expect(run(items).text).toContain('expected 50 to 100');
+    const blueprint = { topics: [{ name: 'T', quizzes: [{ name: 'Q', target: 1 }] }] };
+    expect(buildReport(batch(items), { vocabulary, blueprint }).text).not.toContain('expected 50 to 100');
+  });
+
   it('counts rationale length outside tables', () => {
     const words = (n: number) => Array(n).fill('word').join(' ');
     const table = `\n\n| A | B |\n| --- | --- |\n| ${words(100)} | x |`;

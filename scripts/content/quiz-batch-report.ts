@@ -239,7 +239,10 @@ export function buildReport(
       const quizEntries = entries.filter((e) => e.topic === topic.name && e.quiz === quiz.name);
       const dist = distribution(quizEntries);
       lines.push(`  ${quiz.name}: ${dist.text}`);
-      if (quiz.items.length < 50 || quiz.items.length > 100)
+      const planned = blueprint?.topics
+        .find((t) => key(t.name) === key(topic.name))
+        ?.quizzes.some((q) => key(q.name) === key(quiz.name));
+      if (!planned && (quiz.items.length < 50 || quiz.items.length > 100))
         findings.push({ level: 'warning', where, message: `Quiz has ${quiz.items.length} items; expected 50 to 100.` });
       const types = count(quizEntries.map((e) => e.item.metadata?.questionType ?? ''));
       for (const [type, n] of types)
