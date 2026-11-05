@@ -6,6 +6,8 @@ Pick checks by the contract you changed. Do not add tests that mirror implementa
 
 Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operations](operations.md#prerequisites), `npx playwright install chromium`. Browser suites need Docker.
 
+`npm ci` and `npm install` install the Git pre-commit hook through Husky. The hook checks staged files with Prettier using the root `.prettierignore`; unsupported file types are skipped. lint-staged hides unstaged changes in partially staged files during the check. Formatting failures block the commit. Run `npm exec -- prettier --write <file>`, review and stage the fix, then commit again. CI still runs the full `npm run format:check`.
+
 | Suite | Command |
 | --- | --- |
 | Unit (Vitest) | `npm test` (`npm run test:ci` uses two workers; `npm run test:watch` while developing) |

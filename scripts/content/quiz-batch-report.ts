@@ -101,7 +101,10 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
   if (!item.stem.trim().endsWith('?')) add('warning', 'Stem does not end with a question mark.');
 
   const rationale = item.rationale;
-  const prose = rationale.split('\n').filter((line) => !line.trim().startsWith('|')).join(' ');
+  const prose = rationale
+    .split('\n')
+    .filter((line) => !line.trim().startsWith('|'))
+    .join(' ');
   const words = prose.split(/\s+/).filter(Boolean).length;
   if (words < 70) add('warning', `Rationale is short (${words} words outside tables; aim for 70 to 140).`);
   if (words > 140) add('warning', `Rationale is long (${words} words outside tables; aim for 70 to 140).`);
