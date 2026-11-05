@@ -179,10 +179,12 @@ test('a failed flashcard deck request shows a toast and recovers through the dec
     await page.setViewportSize({ width, height: 800 });
     await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
+  await expect(page.getByRole('region', { name: 'Topics', exact: true })).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v2'))).toBeNull();
   await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
   const retry = page.getByRole('button', { name: /^Study deck/ });
   await retry.focus();
+  await expect(retry).toBeFocused();
   await page.keyboard.press('Enter');
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
 });
