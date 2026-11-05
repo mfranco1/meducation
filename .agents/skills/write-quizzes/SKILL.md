@@ -73,7 +73,7 @@ Show the user the coverage summary (topics, quizzes, targets) and wait for appro
 
 ### 3. Write
 
-Run `slices` for the topic. Each brief names the quiz, its subtopics and `excludes`, the other planned quizzes, the staged stems, the ledger and the output paths. Writers can use a capable mid-tier model, e.g. Claude Sonnet or a GPT mini model. Give each writer:
+Run `slices` for the topic. Each brief names the quiz, its subtopics and `excludes`, the other planned quizzes, the staged stems, the ledger and the output paths. Writers can use a capable mid-tier model, e.g. Claude Sonnet or a GPT mini model, at low reasoning effort (set it explicitly when spawning, e.g. `effort: "low"`; otherwise writers inherit the session's level). Give each writer:
 
 - Its brief path, plus the matching source files and page ranges.
 - The paths to `item-standards.md`, `metadata.md`, `vocabulary.json` and `review-rubric.md`. Tell it to read them first, meet every standard in `item-standards.md` from the first draft, and check each item against checks 2 to 8 of the rubric's Pass 2 before returning.
@@ -104,8 +104,8 @@ Run `ledger` to merge the writers' source records.
 Review is tiered so the most capable model only judges the items that need it. Every reviewer runs in a fresh context that didn't write the items, as a subagent or a separate session, and follows [review-rubric.md](review-rubric.md). A model family other than the writers' is best where one is available. Review one topic (about 100 to 200 questions) at a time.
 
 1. **Blind solve** (mid-tier model): run `blind --round initial`. Give the solver the round's `items-<k>.json` files, to answer one file at a time into the matching `answers-<k>.json`. Then run `check-blind`. It refuses incomplete or misaligned files; rerun those files in a fresh context.
-2. **Triage:** run `triage`. It escalates every item whose blind answer differs from the key, that has a defensible alternative or a note, or that is on a writer's unverified list. The rest go to `standards-input.json`.
-3. **Standards pass** (mid-tier model): give it `standards-input.json`. It writes `review-standards.json` and `standards-escalate.json`. Run `route-standards`. It keeps only flaw and metadata edits, adds suspected key, currency and accuracy problems to `escalated.json`, and moves drops and near-duplicates to `replace.json`.
+2. **Triage:** run `triage`. It escalates every item whose blind answer differs from the key, or that has a defensible alternative or a note. Writers' unverified facts don't escalate (the judgment pass would hit the same blocked sources); they go in the report. The rest go to `standards-input.json`.
+3. **Standards pass** (mid-tier model): give it `standards-input.json`. It writes `review-standards.json` and `standards-escalate.json`. Run `route-standards`. It keeps only flaw, metadata and self-evident correction edits, adds suspected key, currency and accuracy problems to `escalated.json`, and moves drops and near-duplicates to `replace.json`.
 4. **Replacements** (mid-tier writer): give it `replace.json`, the batch, `stems.txt` and the topic's briefs. It writes one new item per entry, on the same subtopic and answer letter and testing a different point, as full-item edits in `review-replace.json` (rubric format, all fields).
 5. **Judgment pass** (the most capable model available, e.g. Claude Opus or a frontier GPT model): run `judge-input` and give it `judgment-input.json` and the ledger. It verifies the facts in primary documents, writes `review-judgment.json`, and adds what it checked to the ledger file it is given (`<work>/<topic>/sources-judgment.json`).
 6. **Apply:** run `apply` with every review file. It refuses unknown refs and fields and drops that leave a quiz under 50 (send those to the replacement writer instead), and writes the rewritten refs to `rewritten-<output>.json`. Read the edits to items flagged `wrong-key` or `ambiguous` before accepting them.
@@ -116,7 +116,7 @@ Review is tiered so the most capable model only judges the items that need it. E
 
 1. Run `stage-quizzes` on the reviewed batch, then refresh the outline to confirm the counts and to update the staged stems for the next topic.
 2. If staging fails partway, it reports what was saved. Fix the batch, remove what was already saved from it, and rerun.
-3. Report to the user: topics and quizzes created or extended, question counts, the final distribution summary, the items you dropped or left with warnings, facts no one could verify in a primary source, and 3 sample items rendered as Markdown.
+3. Report to the user: topics and quizzes created or extended, question counts, the final distribution summary, the items you dropped or left with warnings, facts no one could verify in a primary source (each writer's `unverified-<n>.json` with item refs, plus the judgment pass's list), and 3 sample items rendered as Markdown.
 4. Remind the user to review in **Review & publish** and publish when satisfied. Every staged record is listed in **More > Changes** under the actor `agent:write-quizzes` and can be reverted there.
 
 ### 7. Clean up

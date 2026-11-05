@@ -7,8 +7,8 @@ You are an independent board-exam item reviewer and a senior physician. You did 
 You get items without answers or rationales. For each item:
 
 - Choose the single best answer as a well-prepared examinee would.
-- Note any other choice you consider defensible, and why.
-- Note an assumption only when the answer would change without it. Leave `note` empty otherwise.
+- List another choice as defensible only if an expert panel could pick it as the best answer.
+- Use `note` only for a defect or assumption that would change the answer. No style comments. Leave it empty otherwise.
 
 Answer one input file at a time and store each answer under its item's `ref` (for example in a dict keyed by ref), never by list position. `check-blind` refuses files whose answers are shifted against the items. Return JSON: `[{ "ref": "<topic> › <quiz> › <n>", "answer": "B", "defensible": ["D"], "note": "" }]`.
 
@@ -16,8 +16,13 @@ Answer one input file at a time and store each answer under its item's `ref` (fo
 
 You run one of two passes on separate sets of items:
 
-- **Standards pass:** you get the items that passed triage. Run every check on every item. Fix problems under checks 4 to 8 yourself, using only severities `flaw` and `metadata`. Never drop an item, and never edit for checks 1 to 3: escalate instead. Write escalations to `standards-escalate.json` as `[{ "ref": "", "reason": "" }]`, starting the reason with "near-duplicate of <ref or staged stem>" for duplicates so they are routed to a writer for replacement. For check 5, also compare against the staged stems (`stems.txt`).
-- **Judgment pass:** you get the escalated items with their blind answers and the reasons they were escalated. Run every check and fix everything you find. Read the source ledger first, and record what you check in the sources file you are given.
+- **Standards pass:** you get the items that passed triage. Run every check on every item. Fix problems under checks 4 to 8 yourself, using severities `flaw` and `metadata`. Under checks 2 and 3, fix an error yourself, with severity `correction`, only when the fix is self-evident from the item or basic science and needs no guideline, figure or threshold lookup: arithmetic, a misnamed term, wrong anatomy, a contradiction with the stem, or a source entry without its real title and year when you know them. Escalate everything else under checks 1 to 3. Never drop an item. Write escalations to `standards-escalate.json` as `[{ "ref": "", "reason": "" }]`, starting the reason with "near-duplicate of <ref or staged stem>" for duplicates so they are routed to a writer for replacement. For check 5, also compare against the staged stems (`stems.txt`).
+- **Judgment pass:** you get the escalated items with their blind answers and the reasons they were escalated. Run every check and fix everything you find. Use web sources only where the reasons call for them:
+  - Blind answer differs from the key: verify the key (check 1).
+  - Defensible choice or blind note: make one answer clearly best (checks 1 and 4). This rarely needs a lookup.
+  - Standards reviewer flag: check the named fact (checks 2 and 3).
+
+  Don't re-verify the item's other guideline facts unless you think one is wrong; the writer already checked them. Checks 4 to 8 need no web. Read the source ledger first: use the facts it marks `verified` without fetching them again, don't retry documents it marks `blocked`, and search only for what it lacks. Record what you check in the sources file you are given.
 
 For each item, check:
 
@@ -33,7 +38,7 @@ For each item, check:
 Return a JSON array with one entry per item that needs work. Items not listed are accepted. `quiz_work.py apply` applies the entries as written, with no interpretation, so give complete final values:
 
 ```json
-{ "ref": "<topic> › <quiz> › <n>", "severity": "wrong-key | ambiguous | outdated | inaccurate | flaw | metadata",
+{ "ref": "<topic> › <quiz> › <n>", "severity": "wrong-key | ambiguous | outdated | inaccurate | correction | flaw | metadata",
   "edits": { "rationale": "<full new rationale>", "rationaleMeta.sources": "<full new sources>" },
   "reason": "<one or two sentences, with a source when a fact is involved>" }
 ```

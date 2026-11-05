@@ -43,7 +43,7 @@ Write every stem, choice, rationale and pearl in your own words. Never copy sent
 
 The rationale does most of the teaching, and learners skim it on a phone. Make it dense, high-yield and easy to scan. The app renders GitHub Flavored Markdown, a small HTML subset (`<sub>`, `<sup>`) and KaTeX math. Tables and display math scroll on narrow screens.
 
-**Structure** (about 100 to 250 words; more only when a table carries it):
+**Structure** (about 70 to 140 words outside tables; more only when a table carries it):
 
 1. **Answer and key reasoning**: open with the correct answer in bold and the reasoning step that gets there, in 1 to 3 sentences. Bold the findings that discriminate it from the distractors.
 2. **Core teaching**: what a learner should take away. Use a table whenever 2 or more entities are compared on 2 or more features: look-alike diagnoses, drug choices, thresholds by age or gestation, staging or classification levels, or lab patterns. Use a numbered list for sequences, e.g. a resuscitation algorithm, a stepwise work-up or a calculation.

@@ -42,6 +42,19 @@ describe('quiz batch report', () => {
     expect(buildReport(batch(items), { vocabulary, blueprint }).text).toContain('Topic has fewer than 2 quizzes');
   });
 
+  it('counts rationale length outside tables', () => {
+    const words = (n: number) => Array(n).fill('word').join(' ');
+    const table = `\n\n| A | B |\n| --- | --- |\n| ${words(100)} | x |`;
+    const text = run([
+      item('Short one?', { rationale: words(50) }),
+      item('Right size with a table?', { rationale: words(100) + table }),
+      item('Long one?', { rationale: words(150) }),
+    ]).text;
+    expect(text).toContain('Rationale is short (50 words outside tables');
+    expect(text).not.toContain('(100 words outside tables');
+    expect(text).toContain('Rationale is long (150 words outside tables');
+  });
+
   it('catches a duplicate stem ignoring case and punctuation', () => {
     const report = run([item('Which rhythm is shown?'), item('which RHYTHM is shown')]);
     expect(report.errors).toBe(1);

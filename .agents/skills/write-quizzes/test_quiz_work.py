@@ -93,7 +93,7 @@ def test_check_blind_refuses_answers_shifted_by_one_item(tmp_path):
     assert "misaligned, rerun this file" in result.stderr
 
 
-def test_triage_escalates_disagreements_and_writer_unverified_facts(tmp_path):
+def test_triage_escalates_blind_disagreements_not_writer_unverified_facts(tmp_path):
     topic_dir = setup(tmp_path)
     run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")
     k = keys(topic_dir)
@@ -113,10 +113,10 @@ def test_triage_escalates_disagreements_and_writer_unverified_facts(tmp_path):
     escalated = {
         e["ref"] for e in json.loads((topic_dir / "escalated.json").read_text())
     }
-    assert escalated == {ref(3), ref(5)}
+    assert escalated == {ref(3)}
 
 
-def test_route_standards_sends_drops_and_accuracy_edits_away_from_the_standards_pass(
+def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_accuracy_edits(
     tmp_path,
 ):
     topic_dir = setup(tmp_path)
@@ -137,6 +137,12 @@ def test_route_standards_sends_drops_and_accuracy_edits_away_from_the_standards_
                     "reason": "dose",
                 },
                 {"ref": ref(3), "drop": True, "reason": "repeats item 4"},
+                {
+                    "ref": ref(4),
+                    "severity": "correction",
+                    "edits": {"rationale": "Fixed arithmetic."},
+                    "reason": "math",
+                },
             ]
         )
     )
@@ -148,7 +154,7 @@ def test_route_standards_sends_drops_and_accuracy_edits_away_from_the_standards_
     )
     assert [
         e["ref"] for e in json.loads((topic_dir / "review-standards.json").read_text())
-    ] == [ref(1)]
+    ] == [ref(1), ref(4)]
     assert [
         e["ref"] for e in json.loads((topic_dir / "escalated.json").read_text())
     ] == [ref(2)]

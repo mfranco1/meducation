@@ -24,7 +24,7 @@ NESTED = {
     "metadata.difficulty",
     "metadata.questionType",
 }
-STANDARDS_SEVERITIES = {"flaw", "metadata"}
+STANDARDS_SEVERITIES = {"flaw", "metadata", "correction"}
 STATUS_RANK = {"verified": 3, "summary-only": 2, "unconfirmed": 1, "blocked": 0}
 
 
@@ -249,18 +249,6 @@ def cmd_triage(work: Work, args) -> None:
     """Split items into the standards pass and the escalated set after the first blind round."""
     batch = work.batch(args.batch)
     log = work.log()
-    quiz_refs = {}
-    for ref, quiz, _ in items_of(batch):
-        quiz_refs.setdefault(quiz, []).append(ref)
-    reasons: dict[str, list] = {}
-    for path in sorted(work.dir.glob("unverified-*.json")):
-        n = int(path.stem.split("-")[1])
-        quiz = work.blueprint_topic()["quizzes"][n - 1]["name"]
-        for row in load(path):
-            ref = SEP.join((work.topic, quiz, str(row["item"])))
-            if ref not in set(quiz_refs.get(quiz, [])):
-                sys.exit(f"{path.name}: item {row['item']} is not in {quiz}.")
-            reasons.setdefault(ref, []).append(f"Unverified: {row['fact']}")
     standards, escalated = [], []
     for ref, _, item in items_of(batch):
         solve = latest(log, ref, args.round)
@@ -268,7 +256,7 @@ def cmd_triage(work: Work, args) -> None:
             sys.exit(
                 f"{ref} has no answer in round {args.round}; run check-blind first."
             )
-        why = list(reasons.get(ref, []))
+        why = []
         if solve["answer"] != item["answer"]:
             why.append(
                 f"Blind answer {solve['answer']} differs from key {item['answer']}."
@@ -289,7 +277,7 @@ def cmd_triage(work: Work, args) -> None:
 
 
 def cmd_route_standards(work: Work, args) -> None:
-    """Keep only flaw and metadata edits; send the rest to judgment or replacement."""
+    """Keep only flaw, metadata and correction edits; send the rest to judgment or replacement."""
     batch = {ref: item for ref, _, item in items_of(work.batch(args.batch))}
     review = load(work.dir / "review-standards.json")
     flagged = load(work.dir / "standards-escalate.json")
