@@ -126,7 +126,7 @@ describe('quiz answer browser', () => {
       </ThemeProvider>,
     );
 
-    expect(screen.getAllByText('High-yield pearl')).toHaveLength(1);
+    expect(screen.getAllByText('Pearl')).toHaveLength(1);
     expect(screen.getAllByText(/^Pearl [AB]$/)).toHaveLength(1);
   });
 });

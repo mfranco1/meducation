@@ -107,7 +107,7 @@ export function FeedbackPanel({
               <Stack direction="row" spacing={1} alignItems="center">
                 <LightbulbOutlinedIcon fontSize="small" sx={{ color: iconColor }} />
                 <Typography variant="subtitle2" fontWeight={700}>
-                  High-yield pearl
+                  Pearl
                 </Typography>
               </Stack>
               <Typography sx={{ mt: 1, lineHeight: 1.65 }}>{pearl}</Typography>
