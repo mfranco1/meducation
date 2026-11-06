@@ -36,7 +36,6 @@ def main() -> None:
     command = commands.add_parser("activate")
     command.add_argument("--release-id", type=UUID, required=True)
     command.add_argument("--expected-sequence", type=int, required=True)
-    command.add_argument("--operation-id", type=UUID, required=True)
     command.add_argument("--actor", required=True)
     command.add_argument("--reason", required=True)
     command = commands.add_parser("publish-draft")
@@ -140,7 +139,6 @@ def main() -> None:
                 with engine.begin() as connection:
                     publication = activate_release(
                         connection,
-                        operation_id=args.operation_id,
                         release_id=args.release_id,
                         expected_sequence=args.expected_sequence,
                         actor=args.actor,

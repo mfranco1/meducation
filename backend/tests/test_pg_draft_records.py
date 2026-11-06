@@ -2,6 +2,7 @@
 
 import gzip
 import json
+from uuid import UUID
 
 import pytest
 from sqlalchemy import text
@@ -16,7 +17,7 @@ from support import (
     seed,
 )
 
-from meducation_api.content.draft import build_documents, revisions
+from meducation_api.content.draft import KINDS, build_documents, revisions
 from meducation_api.db.recovery import advance_ids
 
 pytestmark = pytest.mark.postgres
@@ -41,21 +42,38 @@ def fixture_pairs():
 
 
 @pytest.mark.parametrize("name", list(fixture_pairs()))
-def test_draft_rebuilds_byte_identical_artifacts_and_revisions(db, name):
+def test_draft_rebuilds_byte_identical_documents_and_revisions(db, name):
     q, f = fixture_pairs()[name]
     release = seed(db, q=q, f=f)
-    with db.operator.connect() as connection:
-        expected = connection.execute(
-            text(
-                "SELECT quiz_artifact,flashcard_artifact,quiz_revision,flashcard_revision "
-                "FROM content.releases WHERE release_id=:r"
-            ),
-            {"r": release.release_id},
-        ).one()
     with db.editor.connect() as connection:
         built = build_documents(connection)
-    assert built == (expected[0], expected[1])
-    assert revisions(*built) == {"quizRevision": expected[2], "flashcardRevision": expected[3]}
+        assert built == build_documents(connection, release.release_id)
+    assert revisions(*built) == {
+        "quizRevision": release.quiz_revision,
+        "flashcardRevision": release.flashcard_revision,
+    }
+
+
+def test_documents_use_canonical_key_order(db):
+    def reversed_keys(value):
+        return dict(reversed(list(value.items())))
+
+    q, f = banks()
+    question = q["questions"][0]
+    question["choices"] = [reversed_keys(choice) for choice in question["choices"]]
+    question["metadata"] = reversed_keys(question["metadata"])
+    q["questions"][0] = reversed_keys(question)
+    q["subjects"][0] = reversed_keys(q["subjects"][0])
+    release = seed(db, q=q, f=f)
+    with db.editor.connect() as connection:
+        built = build_documents(connection)
+        assert build_documents(connection, release.release_id) == built
+    quiz = json.loads(built[0])
+    assert list(quiz["subjects"][0]) == [k for k in KINDS["subjects"].keys if k in q["subjects"][0]]
+    assert list(quiz["questions"][0]) == [k for k in KINDS["questions"].keys if k in question]
+    assert list(quiz["questions"][0]["choices"][0]) == sorted(question["choices"][0])
+    assert list(quiz["questions"][0]["metadata"]) == sorted(question["metadata"])
+    assert quiz["questions"][0] == question  # same values, only key order differs
 
 
 # HTTP helpers -------------------------------------------------------------------------
@@ -593,15 +611,8 @@ def test_publish_activates_new_release_served_to_learners_and_unchanged_is_noop(
             snapshot["changed"] is False
             and snapshot["activeReleaseId"] == published["releaseId"] == snapshot["baseReleaseId"]
         )
-        with db.backup.connect() as c:
-            artifacts = c.execute(
-                text(
-                    "SELECT quiz_artifact,flashcard_artifact FROM content.releases WHERE release_id=:r"
-                ),
-                {"r": published["releaseId"]},
-            ).one()
         with db.editor.connect() as c:
-            assert build_documents(c) == tuple(artifacts)
+            assert build_documents(c) == build_documents(c, UUID(published["releaseId"]))
         assert ok(call(client, "POST", "/draft/publish"))["published"] is False
         releases = ok(client.get("/api/admin/releases"))["releases"]
         assert releases[0]["releaseId"] == published["releaseId"] and releases[0]["active"]
@@ -627,7 +638,7 @@ def test_publish_keeps_the_active_release_and_one_before_it(db):
         auth_login(client, runtime, h)
         seeded = ok(client.get("/api/admin/releases"))["releases"][0]["releaseId"]
         original = next(q["stem"] for q in draft(client)["questions"] if q["id"] == "i1")
-        # The last publish matches the seeded release, which is pruned by then.
+        # Republishing the original text creates a new release.
         for version, stem in enumerate(("First", "Second", original), start=1):
             ok(
                 call(

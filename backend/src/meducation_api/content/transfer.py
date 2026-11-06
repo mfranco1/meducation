@@ -13,7 +13,7 @@ from uuid import UUID
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
 
-from meducation_api.content.draft import FLASHCARD_SCHEMA, QUIZ_KINDS, QUIZ_SCHEMA, revisions
+from meducation_api.content.draft import FLASHCARD_SCHEMA, QUIZ_SCHEMA, build_documents
 from meducation_api.content.draft import revisions as content_revisions
 from meducation_api.content.releases import paired_artifacts
 from meducation_api.content_policy import ContentPolicyError, parse_json
@@ -26,13 +26,7 @@ MAX_FILE_BYTES = 64 * 1024 * 1024
 class CapturedPair:
     quiz_artifact: str
     flashcard_artifact: str
-    quiz_source_sha256: str
-    flashcard_source_sha256: str
     warnings: int
-
-    @property
-    def source_hashes(self) -> dict[str, str]:
-        return {"quiz": self.quiz_source_sha256, "flashcard": self.flashcard_source_sha256}
 
 
 def _read(path: Path) -> bytes:
@@ -84,90 +78,11 @@ def capture_pair(quiz: Path, flashcard: Path, *, repository: Path) -> CapturedPa
         summary = json.loads(checked.stdout)
         if summary.get("errors") != 0 or type(summary.get("warnings")) is not int:
             raise ContentDatabaseError("Invalid repository validation result.")
-        return CapturedPair(
-            qtext,
-            ftext,
-            hashlib.sha256(qb).hexdigest(),
-            hashlib.sha256(fb).hexdigest(),
-            summary["warnings"],
-        )
+        return CapturedPair(qtext, ftext, summary["warnings"])
     except OSError, UnicodeError, ValueError, subprocess.SubprocessError:
         raise ContentDatabaseError(
             "Content capture/validation failed; no input or paths logged."
         ) from None
-
-
-# Only these fixed tables/columns are used; identifiers never come from user input.
-_COLLECTIONS = (
-    (
-        "subjects",
-        "subjects",
-        {"id": "id", "name": "name", "accent": "accent", "description": "description"},
-    ),
-    (
-        "topics",
-        "topics",
-        {"id": "id", "subjectId": "subject_id", "name": "name", "description": "description"},
-    ),
-    (
-        "quizzes",
-        "quizzes",
-        {"id": "id", "topicId": "topic_id", "name": "name", "description": "description"},
-    ),
-    (
-        "questions",
-        "questions",
-        {
-            "id": "id",
-            "quizId": "quiz_id",
-            "stem": "stem",
-            "choices": "choices",
-            "answer": "answer",
-            "rationale": "rationale",
-            "rationaleMeta": "rationale_meta",
-            "pearls": "pearls",
-            "metadata": "metadata",
-        },
-    ),
-    (
-        "decks",
-        "decks",
-        {
-            "id": "id",
-            "topicId": "topic_id",
-            "name": "name",
-            "description": "description",
-        },
-    ),
-    (
-        "cards",
-        "flashcards",
-        {
-            "id": "id",
-            "deckId": "deck_id",
-            "front": "front",
-            "back": "back",
-            "sources": "sources",
-        },
-    ),
-)
-
-
-def _ordered(actual: Any, template: Any, path: str = "$") -> Any:
-    """Use only artifact key order; all exported leaves come from normalized rows."""
-    if type(actual) is not type(template):
-        raise ContentDatabaseError(f"Release reconstruction type differs at {path}.")
-    if isinstance(actual, dict):
-        if actual.keys() != template.keys():
-            raise ContentDatabaseError(f"Release reconstruction fields differ at {path}.")
-        return {key: _ordered(actual[key], template[key], path + "." + key) for key in template}
-    if isinstance(actual, list):
-        if len(actual) != len(template):
-            raise ContentDatabaseError(f"Release reconstruction length differs at {path}.")
-        return [_ordered(value, template[i], f"{path}[{i}]") for i, value in enumerate(actual)]
-    if actual != template:
-        raise ContentDatabaseError(f"Release reconstruction value differs at {path}.")
-    return actual
 
 
 def reconstruct_release(
@@ -185,35 +100,7 @@ def reconstruct_release(
         raise ContentDatabaseError("Selected finalized release does not exist.")
     if release["quiz_schema_version"] != QUIZ_SCHEMA:
         raise ContentDatabaseError("Selected release predates the current content schema.")
-    q: dict[str, Any] = {"schemaVersion": QUIZ_SCHEMA}
-    f: dict[str, Any] = {"schemaVersion": FLASHCARD_SCHEMA}
-    for name, table, fields in _COLLECTIONS:
-        rows = (
-            connection.execute(
-                text(f"SELECT * FROM content.{table} WHERE release_id=:id ORDER BY position"),
-                {"id": release_id},
-            )
-            .mappings()
-            .all()
-        )
-        if [row["position"] for row in rows] != list(range(len(rows))):
-            raise ContentDatabaseError("Release collection ordinals differ.")
-        (q if name in QUIZ_KINDS else f)[name] = [
-            {key: row[column] for key, column in fields.items() if row[column] is not None}
-            for row in rows
-        ]
-    qt, ft = paired_artifacts(
-        json.dumps(_ordered(q, json.loads(release["quiz_artifact"])), ensure_ascii=False),
-        json.dumps(_ordered(f, json.loads(release["flashcard_artifact"])), ensure_ascii=False),
-    )
-    computed = revisions(qt, ft)
-    if (
-        qt != release["quiz_artifact"]
-        or ft != release["flashcard_artifact"]
-        or computed["quizRevision"] != release["quiz_revision"]
-        or computed["flashcardRevision"] != release["flashcard_revision"]
-    ):
-        raise ContentDatabaseError("Release artifacts/revisions differ from normalized content.")
+    qt, ft = build_documents(connection, release_id)
     active = (
         connection.execute(
             text("SELECT release_id,publication_sequence FROM content.active_publication")

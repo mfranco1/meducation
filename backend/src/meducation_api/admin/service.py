@@ -5,14 +5,13 @@ affected record with the shared content policy on a minimal pair (record + ances
 Publication validates the whole pair and reuses the release store/activation path.
 """
 
-import hashlib
 import json
 from collections.abc import Callable, Iterator, Mapping, Sequence
 from contextlib import contextmanager
 from decimal import Decimal, localcontext
 from difflib import SequenceMatcher
 from typing import Any
-from uuid import UUID, uuid4
+from uuid import UUID
 
 from sqlalchemy import Connection, Engine, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -350,15 +349,18 @@ class DraftService:
         )
         active = c.execute(
             text(
-                "SELECT p.release_id,p.publication_sequence,r.quiz_artifact,r.flashcard_artifact "
+                "SELECT p.release_id,p.publication_sequence,r.quiz_revision,r.flashcard_revision "
                 "FROM content.active_publication p LEFT JOIN content.releases r USING(release_id)"
             )
         ).one()
         state = c.execute(
             text("SELECT base_release_id,published_change_id FROM content.draft_state")
         ).one()
+        found = revisions(*documents)
         changed = (
-            documents != (active[2], active[3]) if active[0] is not None else any(rows.values())
+            (found["quizRevision"], found["flashcardRevision"]) != (active[2], active[3])
+            if active[0] is not None
+            else any(rows.values())
         )
         return {
             **{name: [self._wire(KINDS[name], row) for row in rows[name]] for name in rows},
@@ -406,13 +408,14 @@ class DraftService:
         """Records that differ between the active release and the draft, in draft order."""
         with self._transaction(write=False) as c:
             draft = [json.loads(document) for document in build_documents(c)]
-            active = c.execute(
-                text(
-                    "SELECT r.quiz_artifact,r.flashcard_artifact FROM content.active_publication p "
-                    "LEFT JOIN content.releases r USING(release_id)"
-                )
-            ).one()
-        published = [json.loads(document) if document else {} for document in active]
+            active: Any = c.execute(
+                text("SELECT release_id FROM content.active_publication")
+            ).scalar_one()
+            published = (
+                [{}, {}]
+                if active is None
+                else [json.loads(document) for document in build_documents(c, active)]
+            )
         entries: list[dict[str, Any]] = []
         totals: dict[str, dict[str, int]] = {}
         for name, kind in KINDS.items():
@@ -541,9 +544,7 @@ class DraftService:
                     changed.pop(key, None)
                 else:
                     changed[key] = value
-            if row["field_order"] is None:
-                changed = {key: changed[key] for key in kind.keys if key in changed}
-            if changed == current and list(changed) == list(current):
+            if changed == current:
                 return {"record": self._wire(kind, row), "changeId": None}
             return self._replace(c, kind, row, changed, "update")
 
@@ -801,7 +802,6 @@ class DraftService:
             try:
                 publication = activate_release(
                     c,
-                    operation_id=uuid4(),
                     release_id=release_id,
                     expected_sequence=current,
                     actor=self.actor,
@@ -830,16 +830,16 @@ class DraftService:
                     "baseReleaseId": None if state[0] is None else str(state[0]),
                 }
             else:
-                found = c.execute(
+                if not c.execute(
                     text(
-                        "SELECT quiz_artifact,flashcard_artifact FROM content.releases "
-                        "WHERE release_id=CAST(:r AS uuid) AND state='finalized'"
+                        "SELECT EXISTS(SELECT 1 FROM content.releases "
+                        "WHERE release_id=CAST(:r AS uuid) AND state='finalized' "
+                        "AND quiz_schema_version=:schema)"
                     ),
-                    {"r": release_id},
-                ).one_or_none()
-                if found is None:
+                    {"r": release_id, "schema": QUIZ_SCHEMA},
+                ).scalar_one():
                     raise DraftError(404, "release_not_found", "The release does not exist.")
-                quiz, flashcards = found[0], found[1]
+                quiz, flashcards = build_documents(c, UUID(release_id))
                 context = {}
         context["publication"] = {
             "releaseId": None if active[0] is None else str(active[0]),
@@ -860,12 +860,13 @@ def publish_draft(
     quiz, flashcards = build_documents(c)
     active = c.execute(
         text(
-            "SELECT p.release_id,p.publication_sequence,r.quiz_artifact,r.flashcard_artifact "
+            "SELECT p.release_id,p.publication_sequence,r.quiz_revision,r.flashcard_revision "
             "FROM content.active_publication p LEFT JOIN content.releases r USING(release_id)"
         )
     ).one()
+    found = revisions(quiz, flashcards)
     unchanged = (
-        (quiz, flashcards) == (active[2], active[3])
+        (found["quizRevision"], found["flashcardRevision"]) == (active[2], active[3])
         if active[0] is not None
         else not json.loads(quiz)["subjects"] and not json.loads(flashcards)["decks"]
     )
@@ -880,21 +881,9 @@ def publish_draft(
         raise DraftError(503, "publish_failed", "Publication serialization differs.")
     recheck()
     try:
-        release = store_release(
-            c,
-            operation_id=uuid4(),
-            quiz_text=quiz,
-            flashcard_text=flashcards,
-            source_hashes={
-                "quiz": hashlib.sha256(quiz.encode()).hexdigest(),
-                "flashcard": hashlib.sha256(flashcards.encode()).hexdigest(),
-            },
-            actor=actor,
-            reason=PUBLISH_REASON,
-        )
+        release = store_release(c, quiz_text=quiz, flashcard_text=flashcards)
         publication = activate_release(
             c,
-            operation_id=uuid4(),
             release_id=release.release_id,
             expected_sequence=active[1],
             actor=actor,

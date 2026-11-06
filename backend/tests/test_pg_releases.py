@@ -33,7 +33,7 @@ pytestmark = pytest.mark.postgres
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0013_prune_releases"
+    assert migration_head() == "0014_single_release_copy"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -48,8 +48,8 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
     for sql in (
         "SELECT * FROM content.draft_state",
         "SELECT * FROM content.releases",
-        "SELECT * FROM content.audit_events",
-        "SELECT content.claim_operation(NULL,NULL,NULL,NULL,NULL)",
+        "SELECT * FROM content.publication_events",
+        "SELECT content.store_release(NULL,NULL,NULL,NULL)",
     ):
         with pytest.raises(SQLAlchemyError), db.reader.connect() as connection:
             connection.exec_driver_sql(sql)
@@ -59,7 +59,7 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0013_prune_releases"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0014_single_release_copy"
 
 
 def test_release_omission_order_and_digest(db):
@@ -101,21 +101,6 @@ def test_release_omission_order_and_digest(db):
     )
 
 
-def test_import_replay_duplicate_pair_and_conflicting_operation(db):
-    operation = uuid4()
-    first = store(db, operation)
-    assert store(db, operation) == first
-    assert store(db) == first
-    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
-    assert scalar(db.operator, "SELECT count(*) FROM content.import_events") == 2
-    assert scalar(db.operator, "SELECT count(*) FROM content.publication_events") == 0
-    q, f = banks()
-    q["questions"][0]["stem"] += "Changed"
-    with pytest.raises(ContentDatabaseError):
-        store(db, operation, q, f)
-    assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
-
-
 def test_transaction_failure_preserves_active_and_rolls_back_new_release(db):
     first = store(db)
     active = publish(db, first)
@@ -123,15 +108,7 @@ def test_transaction_failure_preserves_active_and_rolls_back_new_release(db):
     q["subjects"].append({"id": "s500", "name": "Disposable", "accent": "#123456"})
     qt, ft = artifacts(q, f)
     with pytest.raises(RuntimeError, match="injected"), db.operator.begin() as connection:
-        store_release(
-            connection,
-            operation_id=uuid4(),
-            quiz_text=qt,
-            flashcard_text=ft,
-            source_hashes={"quiz": "a" * 64, "flashcard": "b" * 64},
-            actor=ACTOR,
-            reason=REASON,
-        )
+        store_release(connection, quiz_text=qt, flashcard_text=ft)
         raise RuntimeError("injected failure before commit")
     assert (
         scalar(db.reader, "SELECT publication_sequence FROM content.active_publication")
@@ -152,17 +129,13 @@ def test_immutable_release_rows_and_append_only_history(db):
         "questions",
         "decks",
         "flashcards",
-        "audit_events",
-        "import_events",
         "publication_events",
-        "operations",
     ):
         with pytest.raises(SQLAlchemyError):
             owner_execute(db, "DELETE FROM content." + table)
     for statement in (
         "UPDATE content.questions SET stem='Changed'",
         "UPDATE content.releases SET quiz_revision=quiz_revision",
-        "UPDATE content.audit_events SET reason='Changed'",
         "UPDATE content.publication_events SET prior_sequence=1",
     ):
         with pytest.raises(SQLAlchemyError):
@@ -194,40 +167,25 @@ def test_cross_release_foreign_key_and_global_ordinal_constraints(db):
         )
 
 
-def test_building_release_and_incomplete_operation_cannot_commit(db):
-    op = uuid4()
+def test_building_release_cannot_commit(db):
     with pytest.raises(SQLAlchemyError), db.migrator.begin() as connection:
         connection.exec_driver_sql("SET LOCAL ROLE meducation_owner")
         connection.execute(
             text(
-                "INSERT INTO content.operations VALUES(:op,'fixture',:fingerprint,'operator','fixture','{}',clock_timestamp())"
+                "INSERT INTO content.releases(state,quiz_revision,flashcard_revision) VALUES('building',:q,:f)"
             ),
-            {"op": op, "fingerprint": "a" * 64},
-        )
-        connection.execute(
-            text(
-                "INSERT INTO content.releases(state,quiz_revision,flashcard_revision,quiz_artifact,flashcard_artifact,originating_operation_id) VALUES('building',:q,:f,'{}','{}',:op)"
-            ),
-            {"q": "sha256-" + "a" * 64, "f": "sha256-" + "b" * 64, "op": op},
+            {"q": "sha256-" + "a" * 64, "f": "sha256-" + "b" * 64},
         )
     assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 0
-    with pytest.raises(SQLAlchemyError):
-        owner_execute(
-            db,
-            "INSERT INTO content.operations(operation_id,action,fingerprint,actor,reason) VALUES(:op,'fixture',:signature,'operator','fixture')",
-            {"op": uuid4(), "signature": "a" * 64},
-        )
 
 
-def test_activation_rollback_replay_and_stale_preconditions(db):
+def test_activation_rollback_and_stale_preconditions(db):
     first = store(db)
-    op = uuid4()
-    one = publish(db, first, op=op)
+    one = publish(db, first)
     q, f = banks()
     q["questions"][0]["stem"] += " changed"
     second = store(db, q=q, f=f)
     two = publish(db, second, one.publication_sequence)
-    assert publish(db, first, 0, op) == one
     assert (
         scalar(db.reader, "SELECT publication_sequence FROM content.active_publication")
         == two.publication_sequence
@@ -244,24 +202,11 @@ def test_activation_rollback_replay_and_stale_preconditions(db):
     with pytest.raises(ContentDatabaseError), db.operator.begin() as connection:
         activate_release(
             connection,
-            operation_id=uuid4(),
             release_id=uuid4(),
             expected_sequence=back.publication_sequence,
             actor=ACTOR,
             reason=REASON,
         )
-
-
-def test_concurrent_duplicate_stores_share_one_release(db):
-    gate = Barrier(4)
-
-    def concurrent_import():
-        gate.wait()
-        return store(db)
-
-    with ThreadPoolExecutor(max_workers=4) as executor:
-        releases = list(executor.map(lambda _: concurrent_import(), range(4)))
-    assert len({r.release_id for r in releases}) == 1
 
 
 def test_competing_publications_only_one_precondition_wins(db):
@@ -281,34 +226,10 @@ def test_competing_publications_only_one_precondition_wins(db):
     assert scalar(db.operator, "SELECT count(*) FROM content.publication_events") == 1
 
 
-def test_database_function_accepts_validated_pair(db):
-    qt, ft = artifacts()
-    with db.operator.begin() as connection:
-        try:
-            result = connection.execute(
-                text(
-                    "SELECT content.store_release(:op,:q,:f,CAST(:hashes AS jsonb),:actor,:reason)"
-                ),
-                {
-                    "op": uuid4(),
-                    "q": qt,
-                    "f": ft,
-                    "hashes": json.dumps({"quiz": "a" * 64, "flashcard": "b" * 64}),
-                    "actor": ACTOR,
-                    "reason": REASON,
-                },
-            ).scalar_one()
-        except SQLAlchemyError as error:
-            # This suite uses synthetic data; retain the fixed function diagnostic, never SQL/parameters.
-            raise AssertionError(error.orig.diag.message_primary) from None
-        assert result["quiz_revision"].startswith("sha256-")
-
-
 @pytest.mark.parametrize(
     "mutate",
     [
         "null",
-        "wrong-version",
         "duplicate-id",
         "broken-deck",
         "blank-tabs",
@@ -316,12 +237,10 @@ def test_database_function_accepts_validated_pair(db):
         "blank-control",
     ],
 )
-def test_release_constraints_reject_invalid_pairs_without_events(db, mutate):
+def test_release_constraints_reject_invalid_pairs(db, mutate):
     q, f = banks()
     if mutate == "null":
         q["questions"][0]["metadata"] = None
-    elif mutate == "wrong-version":
-        q["schemaVersion"] = 5.0
     elif mutate == "duplicate-id":
         q["subjects"].append(copy.deepcopy(q["subjects"][0]))
     elif mutate.startswith("blank-"):
@@ -335,40 +254,9 @@ def test_release_constraints_reject_invalid_pairs_without_events(db, mutate):
     qt, ft = [json.dumps(value, ensure_ascii=False, indent=2) + "\n" for value in (q, f)]
     with pytest.raises(SQLAlchemyError), db.operator.begin() as connection:
         connection.execute(
-            text("SELECT content.store_release(:op,:q,:f,CAST(:hashes AS jsonb),:actor,:reason)"),
-            {
-                "op": uuid4(),
-                "q": qt,
-                "f": ft,
-                "hashes": json.dumps({"quiz": "a" * 64, "flashcard": "b" * 64}),
-                "actor": ACTOR,
-                "reason": REASON,
-            },
+            text("SELECT content.store_release(:q,:f,:qr,:fr)"),
+            {"q": qt, "f": ft, "qr": "sha256-" + "a" * 64, "fr": "sha256-" + "b" * 64},
         )
-    assert scalar(db.operator, "SELECT count(*) FROM content.operations") == 0
-    assert scalar(db.operator, "SELECT count(*) FROM content.audit_events") == 0
-
-
-def test_sql_boundary_rejects_duplicate_keys_and_noncanonical_artifacts(db):
-    qt, ft = artifacts()
-    for raw in [
-        qt.replace('"schemaVersion": 6', '"schemaVersion": 6, "schemaVersion": 6', 1),
-        json.dumps(json.loads(qt)),
-    ]:
-        with pytest.raises(SQLAlchemyError), db.operator.begin() as connection:
-            connection.execute(
-                text(
-                    "SELECT content.store_release(:op,:q,:f,CAST(:hashes AS jsonb),:actor,:reason)"
-                ),
-                {
-                    "op": uuid4(),
-                    "q": raw,
-                    "f": ft,
-                    "hashes": json.dumps({"quiz": "a" * 64, "flashcard": "b" * 64}),
-                    "actor": ACTOR,
-                    "reason": REASON,
-                },
-            )
     assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 0
 
 
@@ -448,25 +336,16 @@ def test_store_and_activation_failure_roll_back_as_one_transaction(db):
     qt, ft = artifacts(q, f)
     with pytest.raises(ContentDatabaseError), db.operator.begin() as connection:
         second = store_release(
-            connection,
-            operation_id=uuid4(),
-            quiz_text=qt,
-            flashcard_text=ft,
-            source_hashes={"quiz": "a" * 64, "flashcard": "b" * 64},
-            actor=ACTOR,
-            reason=REASON,
+            connection, quiz_text=qt, flashcard_text=ft
         )
         activate_release(
             connection,
-            operation_id=uuid4(),
             release_id=second.release_id,
             expected_sequence=0,
             actor=ACTOR,
             reason=REASON,
         )
     assert scalar(db.operator, "SELECT count(*) FROM content.releases") == 1
-    assert scalar(db.operator, "SELECT count(*) FROM content.operations") == 2
-    assert scalar(db.operator, "SELECT count(*) FROM content.audit_events") == 2
     assert (
         scalar(db.reader, "SELECT release_id FROM content.active_publication") == first.release_id
     )
@@ -482,15 +361,7 @@ def test_other_transaction_cannot_extend_uncommitted_or_finalized_release(db):
 
     def constructing():
         with db.operator.begin() as connection:
-            release = store_release(
-                connection,
-                operation_id=uuid4(),
-                quiz_text=qt,
-                flashcard_text=ft,
-                source_hashes={"quiz": "a" * 64, "flashcard": "b" * 64},
-                actor=ACTOR,
-                reason=REASON,
-            )
+            release = store_release(connection, quiz_text=qt, flashcard_text=ft)
             target["id"] = release.release_id
             ready.set()
             assert finish.wait(10), "Concurrent write probe did not finish"
@@ -518,7 +389,7 @@ def test_other_transaction_cannot_extend_uncommitted_or_finalized_release(db):
     assert scalar(db.reader, "SELECT count(*) FROM content.published_subjects") == 1
 
 
-def test_export_roundtrips_stored_artifacts_and_refuses_overwrite(db, tmp_path):
+def test_export_is_canonical_and_refuses_overwrite(db, tmp_path):
     from meducation_api.content.transfer import export_release
 
     q, f = banks()
@@ -551,32 +422,15 @@ def test_export_roundtrips_stored_artifacts_and_refuses_overwrite(db, tmp_path):
     assert (output / "questionBank.json").read_text() == qt
 
 
-def test_export_rejects_owner_corruption_without_repair_or_files(db, tmp_path):
-    from meducation_api.content.transfer import export_release, reconstruct_release
+def test_export_of_unknown_release_creates_no_files(db, tmp_path):
+    from meducation_api.content.transfer import export_release
 
-    release = store(db)
-    with db.admin.begin() as connection:
-        connection.exec_driver_sql("ALTER TABLE content.questions DISABLE TRIGGER question_guard")
-        connection.execute(
-            text("UPDATE content.questions SET stem='corrupt fixture' WHERE release_id=:id"),
-            {"id": release.release_id},
-        )
-        with pytest.raises(ContentDatabaseError, match="value differs"):
-            reconstruct_release(connection, release.release_id)
-        assert (
-            connection.execute(
-                text("SELECT stem FROM content.questions WHERE release_id=:id"),
-                {"id": release.release_id},
-            ).scalar_one()
-            == "corrupt fixture"
-        )
-        connection.rollback()
     with pytest.raises(ContentDatabaseError):
         export_release(db.operator, uuid4(), tmp_path / "unknown")
     assert not (tmp_path / "unknown").exists()
 
 
-def test_cli_activate_export_and_stale_replay(db, tmp_path):
+def test_cli_activate_export_and_stale_precondition(db, tmp_path):
     import subprocess
     import sys
 
@@ -603,26 +457,22 @@ def test_cli_activate_export_and_stale_replay(db, tmp_path):
             check=False,
         )
 
-    def activation(op, sequence=0):
+    def activation(sequence=0):
         return (
             "activate",
             "--release-id",
             release,
             "--expected-sequence",
             sequence,
-            "--operation-id",
-            op,
             "--actor",
             ACTOR,
             "--reason",
             REASON,
         )
 
-    op = uuid4()
-    activated = invoke(*activation(op))
+    activated = invoke(*activation())
     assert activated.returncode == 0, activated.stderr
-    assert invoke(*activation(op)).stdout == activated.stdout
-    stale = invoke(*activation(uuid4()))
+    stale = invoke(*activation())
     assert stale.returncode == 1 and "SQL" not in stale.stdout
     assert db.operator.url.password not in stale.stderr + stale.stdout
     output = tmp_path / "cli-export"

@@ -62,7 +62,7 @@ Run `npm test -- scripts/branding/iconStudio.test.ts`, `npm run icons -- validat
 - Changed content never silently resumes an old attempt or checkpoint.
 - Backup restore replaces both progress stores and restores both original values if a write fails.
 - Saving a draft record never publishes; protected writes need session, Origin, CSRF and freshness; stale versions return 409 and rejected writes leave no change row; unsaved editor text survives expiry, conflict and cancel.
-- Draft IDs are never reused after delete or restore; an unchanged draft rebuilds byte-identical release artifacts.
+- Draft IDs are never reused after delete or restore; an unchanged draft rebuilds byte-identical release documents.
 - Learner content loading retries and times out within bounds, ignores stale responses, and shows recoverable states without altering saved progress.
 - Keyboard shortcuts pause for dialogs and drawers and keep native behavior in form controls; reduced motion is honored.
 - Layouts have no horizontal overflow at the [design-system](design-system.md#foundations) widths.

@@ -8,6 +8,7 @@ from uuid import UUID
 from sqlalchemy import Connection, text
 from sqlalchemy.exc import SQLAlchemyError
 
+from meducation_api.content.draft import canonical_documents, revisions
 from meducation_api.content_policy import artifact_text
 from meducation_api.db.engine import ContentDatabaseError
 from meducation_api.repositories.question_bank import Bank, FlashcardBank
@@ -44,64 +45,44 @@ def paired_artifacts(quiz_text: str, flashcard_text: str) -> tuple[str, str]:
         ) from None
 
 
-def _call(connection: Connection, statement: str, params: dict[str, Any]) -> dict[str, Any]:
+def _call(connection: Connection, statement: str, params: dict[str, Any]) -> Any:
     try:
-        result: Any = connection.execute(text(statement), params).scalar_one()
+        return connection.execute(text(statement), params).scalar_one()
     except SQLAlchemyError:
         raise ContentDatabaseError(
             "Content transaction was rejected; no content, SQL or credentials logged."
         ) from None
-    if not isinstance(result, dict):
-        raise ContentDatabaseError("Invalid content-operation result.")
-    return result
 
 
 def store_release(
-    connection: Connection,
-    *,
-    operation_id: UUID,
-    quiz_text: str,
-    flashcard_text: str,
-    source_hashes: dict[str, str],
-    actor: str,
-    reason: str,
+    connection: Connection, *, quiz_text: str, flashcard_text: str
 ) -> ReleaseIdentity:
-    qtext, ftext = paired_artifacts(quiz_text, flashcard_text)
-    result = _call(
+    qtext, ftext = canonical_documents(*paired_artifacts(quiz_text, flashcard_text))
+    revision = revisions(qtext, ftext)
+    release_id = _call(
         connection,
-        "SELECT content.store_release(:op, :q, :f, CAST(:hashes AS jsonb), :actor, :reason)",
+        "SELECT content.store_release(:q, :f, :quiz_revision, :flashcard_revision)",
         {
-            "op": operation_id,
             "q": qtext,
             "f": ftext,
-            "hashes": json.dumps(source_hashes),
-            "actor": actor,
-            "reason": reason,
+            "quiz_revision": revision["quizRevision"],
+            "flashcard_revision": revision["flashcardRevision"],
         },
     )
-    return ReleaseIdentity(
-        UUID(result["release_id"]), result["quiz_revision"], result["flashcard_revision"]
-    )
+    return ReleaseIdentity(release_id, revision["quizRevision"], revision["flashcardRevision"])
 
 
 def activate_release(
     connection: Connection,
     *,
-    operation_id: UUID,
     release_id: UUID,
     expected_sequence: int,
     actor: str,
     reason: str,
 ) -> Publication:
-    result = _call(
+    sequence = _call(
         connection,
-        "SELECT content.activate_release(:op, :release, :expected, :actor, :reason)",
-        {
-            "op": operation_id,
-            "release": release_id,
-            "expected": expected_sequence,
-            "actor": actor,
-            "reason": reason,
-        },
+        "SELECT content.activate_release(:release, :expected, :actor, :reason)",
+        {"release": release_id, "expected": expected_sequence, "actor": actor, "reason": reason},
     )
-    return Publication(UUID(result["release_id"]), result["publication_sequence"])
+    return Publication(release_id, sequence)

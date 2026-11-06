@@ -1,14 +1,12 @@
 """Shared test helpers: repository paths, fixture banks and real-PG17 helpers (the `db` fixture is in conftest.py)."""
 
-import hashlib
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from uuid import uuid4
 
 from sqlalchemy import Engine, text
 
-from meducation_api.content.draft import reset_draft
+from meducation_api.content.draft import canonical_documents, reset_draft
 from meducation_api.content.releases import activate_release, paired_artifacts, store_release
 from meducation_api.db.recovery import advance_ids
 
@@ -58,8 +56,8 @@ def banks():
     }
     q["questions"][0].update(
         {
-            "metadata": {"topic": "β", "tags": []},
             "pearls": [],
+            "metadata": {"tags": [], "topic": "β"},
         }
     )
     return q, f
@@ -67,34 +65,24 @@ def banks():
 
 def artifacts(q=None, f=None):
     base_q, base_f = banks()
-    return paired_artifacts(
-        json.dumps(base_q if q is None else q, ensure_ascii=False),
-        json.dumps(base_f if f is None else f, ensure_ascii=False),
+    return canonical_documents(
+        *paired_artifacts(
+            json.dumps(base_q if q is None else q, ensure_ascii=False),
+            json.dumps(base_f if f is None else f, ensure_ascii=False),
+        )
     )
 
 
-def store(db, op=None, q=None, f=None):
+def store(db, q=None, f=None):
     qt, ft = artifacts(q, f)
     with db.operator.begin() as connection:
-        return store_release(
-            connection,
-            operation_id=op or uuid4(),
-            quiz_text=qt,
-            flashcard_text=ft,
-            source_hashes={
-                "quiz": hashlib.sha256(qt.encode()).hexdigest(),
-                "flashcard": hashlib.sha256(ft.encode()).hexdigest(),
-            },
-            actor=ACTOR,
-            reason=REASON,
-        )
+        return store_release(connection, quiz_text=qt, flashcard_text=ft)
 
 
-def publish(db, release, expected=0, op=None):
+def publish(db, release, expected=0):
     with db.operator.begin() as connection:
         return activate_release(
             connection,
-            operation_id=op or uuid4(),
             release_id=release.release_id,
             expected_sequence=expected,
             actor=ACTOR,
@@ -115,7 +103,7 @@ def seed(db, q=None, f=None):
 
 
 STATE_TABLES = (
-    "active_publication", "releases", "operations", "audit_events", "publication_events",
+    "active_publication", "releases", "publication_events",
     "draft_subjects", "draft_topics", "draft_quizzes", "draft_questions",
     "draft_decks", "draft_flashcards", "draft_changes", "draft_state",
 )

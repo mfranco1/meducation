@@ -9,7 +9,6 @@ import time
 from pathlib import Path
 from types import SimpleNamespace
 from urllib.parse import parse_qs
-from uuid import uuid4
 
 import httpx2
 import uvicorn
@@ -59,21 +58,9 @@ q, f = [
     for k in ("quizzes", "flashcards")
 ]
 with engines["operator"].begin() as c:
-    release = store_release(
-        c,
-        operation_id=uuid4(),
-        quiz_text=q,
-        flashcard_text=f,
-        source_hashes={
-            "quiz": hashlib.sha256(q.encode()).hexdigest(),
-            "flashcard": hashlib.sha256(f.encode()).hexdigest(),
-        },
-        actor="fixture",
-        reason="Disposable browser initialization",
-    )
+    release = store_release(c, quiz_text=q, flashcard_text=f)
     activate_release(
         c,
-        operation_id=uuid4(),
         release_id=release.release_id,
         expected_sequence=0,
         actor="fixture",

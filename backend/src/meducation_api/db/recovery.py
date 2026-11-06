@@ -48,8 +48,8 @@ GRANT SELECT ON ALL SEQUENCES IN SCHEMA content TO meducation_backup;
 GRANT SELECT ON content.schema_version,content.active_publication,content.published_releases,
 content.published_subjects,content.published_topics,content.published_quizzes,
 content.published_questions,content.published_decks,content.published_flashcards TO meducation_reader;
-GRANT EXECUTE ON FUNCTION content.store_release(uuid,text,text,jsonb,text,text),
-content.activate_release(uuid,uuid,bigint,text,text),content.prune_releases(integer)
+GRANT EXECUTE ON FUNCTION content.store_release(text,text,text,text),
+content.activate_release(uuid,bigint,text,text),content.prune_releases(integer)
 TO meducation_operator;
 REVOKE ALL ON SCHEMA admin_auth FROM PUBLIC;
 GRANT USAGE ON SCHEMA admin_auth TO meducation_session,meducation_backup;
@@ -66,8 +66,10 @@ GRANT USAGE,SELECT ON SEQUENCE content.draft_subject_ids,content.draft_topic_ids
 content.draft_quiz_ids,content.draft_question_ids,content.draft_changes_change_id_seq
 TO meducation_editor;
 GRANT SELECT ON content.releases,content.publication_events TO meducation_editor;
+GRANT SELECT ON content.subjects,content.topics,content.quizzes,content.questions,
+content.decks,content.flashcards TO meducation_editor;
 GRANT EXECUTE ON FUNCTION content.nonblank(text),
-content.store_release(uuid,text,text,jsonb,text,text),
-content.activate_release(uuid,uuid,bigint,text,text),content.prune_releases(integer)
+content.store_release(text,text,text,text),
+content.activate_release(uuid,bigint,text,text),content.prune_releases(integer)
 TO meducation_editor;
 """)

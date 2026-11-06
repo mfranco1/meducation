@@ -1,6 +1,6 @@
 # Flashcard schema
 
-Defines the schema-v4 flashcard document stored in paired drafts and releases and written to deterministic `flashcardBank.json` exports, with flat `decks` and `cards` arrays. Subjects and topics live in the paired [quiz document](question-schema.md); flashcards refer to stable topic IDs and never copy subject or topic rows. Preserve exact strings, array order, omitted fields and IDs.
+Defines the schema-v4 flashcard document stored in paired drafts and releases and written to deterministic `flashcardBank.json` exports, with flat `decks` and `cards` arrays. Subjects and topics live in the paired [quiz document](question-schema.md); flashcards refer to stable topic IDs and never copy subject or topic rows. Preserve exact strings, array order, omitted fields and IDs. Keys are written in canonical order: record fields as documented.
 
 The relationship chain is `card.deckId → deck.topicId → topic.subjectId → subject.id`. A deck belongs to one topic, and a card belongs to one deck. Do not store repeated subject names, child ID arrays, or derived card counts in canonical records. Runtime summaries may derive parent details and counts.
 

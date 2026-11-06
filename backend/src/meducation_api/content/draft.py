@@ -1,9 +1,8 @@
 """Per-record draft storage: row/record mapping, document build, release load and IDs.
 
-Records use the stored document shape (camelCase keys). Top-level key order is kept in
-`field_order` only when it differs from the canonical order; nested values are `json`
-columns, which keep their own key order. Documents are built from rows ordered by
-`position` and serialized exactly like release artifacts.
+Records use the stored document shape (camelCase keys). Documents always use canonical key
+order: `Kind.keys` at the top level of a record and sorted keys inside nested values. They are
+built from rows ordered by `position`, for the draft and for releases alike.
 """
 
 import hashlib
@@ -155,25 +154,27 @@ QUIZ_KINDS = ("subjects", "topics", "quizzes", "questions")
 FLASHCARD_KINDS = ("decks", "cards")
 
 
+def _sorted(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {key: _sorted(value[key]) for key in sorted(value)}
+    if isinstance(value, list):
+        return [_sorted(item) for item in value]
+    return value
+
+
 def record_from_row(kind: Kind, row: Mapping[str, Any]) -> dict[str, Any]:
     values: dict[str, Any] = {"id": row["id"]}
     if kind.parent_key and kind.parent_column:
         values[kind.parent_key] = row[kind.parent_column]
     for key, column, _ in kind.fields:
         if row[column] is not None:
-            values[key] = row[column]
-    order = list(row["field_order"] or kind.keys)
-    order += [key for key in kind.keys if key not in order]
-    return {key: values[key] for key in order if key in values}
+            values[key] = _sorted(row[column])
+    return {key: values[key] for key in kind.keys if key in values}
 
 
 def row_from_record(kind: Kind, record: Mapping[str, Any]) -> dict[str, Any]:
     """Column values for a validated record; absent optional fields become NULL."""
-    canonical = [key for key in kind.keys if key in record]
-    row: dict[str, Any] = {
-        "id": record["id"],
-        "field_order": None if list(record) == canonical else list(record),
-    }
+    row: dict[str, Any] = {"id": record["id"]}
     if kind.parent_key and kind.parent_column:
         row[kind.parent_column] = record[kind.parent_key]
     for key, column, is_json in kind.fields:
@@ -187,7 +188,7 @@ def row_from_record(kind: Kind, record: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def insert_statement(kind: Kind) -> str:
-    columns = ["id", "version", "position", "field_order"]
+    columns = ["id", "version", "position"]
     if kind.parent_column:
         columns.append(kind.parent_column)
     columns += [column for _, column, _ in kind.fields]
@@ -200,9 +201,7 @@ def insert_statement(kind: Kind) -> str:
 
 def update_statement(kind: Kind) -> str:
     """Replace the content of one row (identity and position stay)."""
-    columns = ["field_order"]
-    if kind.parent_column:
-        columns.append(kind.parent_column)
+    columns = [kind.parent_column] if kind.parent_column else []
     columns += [column for _, column, _ in kind.fields]
     json_columns = {column for _, column, is_json in kind.fields if is_json}
     assignments = [
@@ -212,13 +211,16 @@ def update_statement(kind: Kind) -> str:
     return f"UPDATE content.{kind.table} SET {','.join(assignments)},version=:version WHERE id=:id"
 
 
-def rows(connection: Connection, kind: Kind) -> list[dict[str, Any]]:
-    return [
-        dict(row)
-        for row in connection.execute(
-            text(f"SELECT * FROM content.{kind.table} ORDER BY position")
-        ).mappings()
-    ]
+def rows(
+    connection: Connection, kind: Kind, release_id: UUID | None = None
+) -> list[dict[str, Any]]:
+    if release_id is None:
+        statement, params = f"SELECT * FROM content.{kind.table} ORDER BY position", {}
+    else:
+        table = kind.table.removeprefix("draft_")
+        statement = f"SELECT * FROM content.{table} WHERE release_id=:r ORDER BY position"
+        params = {"r": release_id}
+    return [dict(row) for row in connection.execute(text(statement), params).mappings()]
 
 
 def documents_from_records(records: Mapping[str, list[dict[str, Any]]]) -> tuple[str, str]:
@@ -230,18 +232,32 @@ def documents_from_records(records: Mapping[str, list[dict[str, Any]]]) -> tuple
     return artifact_text(quizzes), artifact_text(flashcards)
 
 
-def build_documents(connection: Connection) -> tuple[str, str]:
-    """Quiz and flashcard artifacts from draft rows."""
+def canonical_documents(quiz_text: str, flashcard_text: str) -> tuple[str, str]:
+    """The same documents with every key in canonical order."""
+    documents = {"quizzes": json.loads(quiz_text), "flashcards": json.loads(flashcard_text)}
     return documents_from_records(
         {
-            name: [record_from_row(kind, row) for row in rows(connection, kind)]
+            name: [
+                {key: _sorted(record[key]) for key in kind.keys if key in record}
+                for record in documents[kind.bank][kind.collection]
+            ]
+            for name, kind in KINDS.items()
+        }
+    )
+
+
+def build_documents(connection: Connection, release_id: UUID | None = None) -> tuple[str, str]:
+    """Quiz and flashcard documents from the draft rows, or from a release's rows."""
+    return documents_from_records(
+        {
+            name: [record_from_row(kind, row) for row in rows(connection, kind, release_id)]
             for name, kind in KINDS.items()
         }
     )
 
 
 def revisions(quiz_text: str, flashcard_text: str) -> dict[str, str]:
-    """Content revisions as `content.checked_artifacts` computes them."""
+    """Content revisions (the public ETags) of a quiz and flashcard document."""
     bank = json.loads(quiz_text)
     registry = [
         json.dumps(
@@ -267,25 +283,24 @@ def revisions(quiz_text: str, flashcard_text: str) -> dict[str, str]:
 def load_release(
     connection: Connection, release_id: UUID, versions: Mapping[tuple[str, str], int] | None = None
 ) -> None:
-    """Fill empty draft tables from a finalized release's artifacts, keeping positions.
+    """Fill empty draft tables from a finalized release's rows, keeping positions.
 
     `versions` maps (kind, id) to the version a record had before it was replaced, so a
     reloaded record never repeats a version an editor may still hold.
     """
-    artifacts = connection.execute(
+    release = connection.execute(
         text(
-            "SELECT quiz_artifact,flashcard_artifact FROM content.releases "
+            "SELECT quiz_schema_version FROM content.releases "
             "WHERE release_id=:id AND state='finalized'"
         ),
         {"id": release_id},
     ).one_or_none()
-    if artifacts is None:
+    if release is None:
         raise ContentDatabaseError("Selected finalized release does not exist.")
-    documents = {"quizzes": json.loads(artifacts[0]), "flashcards": json.loads(artifacts[1])}
-    if documents["quizzes"]["schemaVersion"] != QUIZ_SCHEMA:
+    if release[0] != QUIZ_SCHEMA:
         raise ContentDatabaseError("Selected release predates the current content schema.")
     for name, kind in KINDS.items():
-        records = documents[kind.bank][kind.collection]
+        records = [record_from_row(kind, row) for row in rows(connection, kind, release_id)]
         if records:
             connection.execute(
                 text(insert_statement(kind)),

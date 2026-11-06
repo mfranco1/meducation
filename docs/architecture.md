@@ -39,9 +39,9 @@ Worker startup checks schema and publication once; workers never migrate, import
 
 ## Releases
 
-- A release is an immutable, finalized pair of banks identified by a UUID. It stores both validated documents as TEXT artifacts plus normalized `content` rows keyed `(release_id, id)` with composite foreign keys and a zero-based global `position`. SQL NULL means an omitted optional field. Nothing is trimmed, normalized or regenerated. Quiz and flashcard revisions are `sha256-` digests of the deterministic serialization, separate from the publication sequence; storing a pair that matches an existing release reuses it.
+- A release is an immutable, finalized pair of banks identified by a UUID. It is stored once, as normalized `content` rows keyed `(release_id, id)` with composite foreign keys and a zero-based global `position`. SQL NULL means an omitted optional field. Documents (draft, release and export) are rebuilt from rows in canonical key order (`Kind.keys` per record, sorted keys inside nested values), so the same content always serializes identically. Quiz and flashcard revisions are `sha256-` digests of those documents, separate from the publication sequence.
 - A singleton pointer holds `(release_id, publication_sequence)`. Activation locks it, checks the expected sequence and appends an event; every activation, including rollback, gets a new sequence. Rollback never deletes newer releases or resets counters.
-- A global operation ledger with fingerprints makes store and activation replayable; audit, import and publication histories are append-only.
+- Publication history (`publication_events`: who activated which release, when, why) and draft change history are append-only.
 - Release writes go through fixed-search-path, narrowly granted SQL functions. The reader sees only published views; the editor writes only draft tables and calls the release functions; owner and migrator are trusted maintenance roles.
 - Subject, topic, quiz and question IDs come from sequences that never move backward; decks and cards use UUID-based IDs. A restored database can rewind sequences, so recovery advances them ([operations](operations.md#backup-and-restore)).
 - Alembic migrations live in `backend/src/meducation_api/migrations`: one baseline revision (`baseline.sql`, pg_dump format) plus any later revisions. Destructive downgrade is refused.

@@ -74,7 +74,7 @@ def test_auth_role_isolation_and_cookie_login_logout(db):
         for statement in (
             "SET ROLE meducation_owner",
             "INSERT INTO content.subjects(release_id,id,position,name,accent) VALUES(gen_random_uuid(),'s9',0,'x','#fff')",
-            "SELECT content.store_release(NULL,NULL,NULL,NULL,NULL,NULL)",
+            "SELECT content.store_release(NULL,NULL,NULL,NULL)",
             "UPDATE content.draft_changes SET actor='bypass'",
         ):
             with pytest.raises(SQLAlchemyError), engine.begin() as c:

@@ -1,13 +1,11 @@
-"""Captured-input and reconstruction boundaries use existing fixture content."""
+"""Captured-input boundaries use existing fixture content."""
 
-import copy
-import hashlib
 import json
 
 import pytest
 from support import ROOT, base_pair
 
-from meducation_api.content.transfer import _ordered, capture_pair
+from meducation_api.content.transfer import capture_pair
 from meducation_api.db.engine import ContentDatabaseError
 
 
@@ -23,14 +21,10 @@ def files(tmp_path):
     not (ROOT / "node_modules/tsx/dist/loader.mjs").is_file(),
     reason="Cross-runtime capture requires npm ci; native PG jobs exercise the gate",
 )
-def test_capture_hashes_original_bytes_and_preserves_files(tmp_path):
+def test_capture_preserves_files_and_holds_captured_content(tmp_path):
     paths = files(tmp_path)
     before = [p.read_bytes() for p in paths]
     captured = capture_pair(*paths, repository=ROOT)
-    assert captured.source_hashes == {
-        "quiz": hashlib.sha256(before[0]).hexdigest(),
-        "flashcard": hashlib.sha256(before[1]).hexdigest(),
-    }
     assert [p.read_bytes() for p in paths] == before
     paths[0].write_text("changed after capture")
     assert json.loads(captured.quiz_artifact)["questions"][0]["answer"] == "B"
@@ -67,28 +61,3 @@ def test_capture_rejects_both_structure_and_rich_policy_without_rewriting(tmp_pa
         capture_pair(*paths, repository=repository)
     assert "private" not in str(error.value)
     assert [p.read_bytes() for p in paths] == before
-
-
-@pytest.mark.parametrize("change", ["type", "leaf", "extra", "missing", "order"])
-def test_reconstruction_never_substitutes_template_content(change):
-    template = {
-        "second": [{"id": "i1", "text": "original"}, {"id": "i2", "text": "next"}],
-        "first": 4,
-    }
-    actual = copy.deepcopy(template)
-    if change == "type":
-        actual["first"] = 4.0
-    elif change == "leaf":
-        actual["second"][0]["text"] = "different"
-    elif change == "extra":
-        actual["extra"] = "bad"
-    elif change == "missing":
-        actual.pop("first")
-    else:
-        actual["second"].reverse()
-    with pytest.raises(ContentDatabaseError):
-        _ordered(actual, template)
-    assert list(_ordered({"first": 4, "second": template["second"]}, template)) == [
-        "second",
-        "first",
-    ]
