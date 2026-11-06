@@ -20,7 +20,7 @@ You run one of two passes on separate sets of items:
 - **Judgment pass:** you get the escalated items with their blind answers and the reasons they were escalated. Run every check and fix everything you find. Use web sources only where the reasons call for them:
   - Blind answer differs from the key: verify the key (check 1).
   - Defensible choice or blind note: make one answer clearly best (checks 1 and 4). This rarely needs a lookup.
-  - Standards reviewer flag: check the named fact (checks 2 and 3).
+  - Standards reviewer flag: check the named fact (checks 2 and 3). The item's `proposed` field holds the reviewer's suggested edits, if any. Send them as your edits when the fact checks out, revise them, or leave the item unchanged.
 
   Don't re-verify the item's other guideline facts unless you think one is wrong; the writer already checked them. Checks 4 to 8 need no web. Read the source ledger first: use the facts it marks `verified` without fetching them again, don't retry documents it marks `blocked`, and search only for what it lacks. Record what you check in the sources file you are given.
 
@@ -44,7 +44,7 @@ Return a JSON array with one entry per item that needs work. Items not listed ar
 ```
 
 - `edits` keys: `stem`, `choices` (the full array of 4), `answer`, `rationale`, `pearls` (the full array), `rationaleMeta.sources`, `metadata.subtopic`, `metadata.system`, `metadata.difficulty`, `metadata.questionType`. Each value replaces the whole field.
-- When a fact changes, edit every field of the item that states it. When choices move or the key changes, send `choices`, `answer` and a `rationale` that refers to choices by content.
+- When a fact changes, edit every field of the item that states it. Every `choices` edit also sends `answer`, even when the key stays put, so reordering choices can't silently move the key (`apply` refuses a `choices` edit without it). When choices move or the key changes, also send a `rationale` that refers to choices by content.
 - Fix rather than drop: make one answer clearly best by changing the stem or a distractor. Send `"drop": true` only for an item that can't be fixed, and say so in your summary; a writer replaces it so the quiz keeps its size.
 - `choices`, `pearls` and `rationaleMeta.sources` are plain text with no HTML (see [item-standards.md](item-standards.md#language-and-json)).
 

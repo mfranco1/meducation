@@ -209,7 +209,7 @@ def cmd_merge(work: Work, args) -> None:
 def cmd_blind(work: Work, args) -> None:
     """Per-quiz blind files for a round; the round remembers which batch it solves."""
     batch = work.batch(args.batch)
-    refs = set(load(Path(args.refs))) if args.refs else None
+    refs = set(load(work.dir / args.refs)) if args.refs else None
     round_dir = work.dir / "blind" / args.round
     if round_dir.exists():
         sys.exit(f"{round_dir} already exists; pick a new round name.")
@@ -345,12 +345,14 @@ def cmd_route_standards(work: Work, args) -> None:
     replace = []
     known = {e["ref"] for e in escalated}
 
-    def escalate(ref, reason):
-        if ref in known:
-            next(e for e in escalated if e["ref"] == ref)["reasons"].append(reason)
-        else:
-            escalated.append({"ref": ref, "reasons": [reason]})
+    def escalate(ref, reason, edits=None):
+        if ref not in known:
+            escalated.append({"ref": ref, "reasons": []})
             known.add(ref)
+        entry = next(e for e in escalated if e["ref"] == ref)
+        entry["reasons"].append(reason)
+        if edits:
+            entry["proposed"] = edits
 
     kept = []
     for entry in review:
@@ -362,6 +364,7 @@ def cmd_route_standards(work: Work, args) -> None:
             escalate(
                 entry["ref"],
                 f"Standards reviewer suspected {entry.get('severity')}: {entry.get('reason', '')}",
+                entry.get("edits"),
             )
     for row in flagged:
         if "near-duplicate" in row["reason"].lower():
@@ -400,6 +403,7 @@ def cmd_judge_input(work: Work, args) -> None:
                 **item,
                 "blind": latest(log, entry["ref"], args.round),
                 "escalation": entry["reasons"],
+                **({"proposed": entry["proposed"]} if "proposed" in entry else {}),
             }
         )
         log["judged"].append(content_hash(item))
@@ -434,6 +438,8 @@ def cmd_apply(work: Work, args) -> None:
                 item.setdefault(parent, {})[key] = value
             else:
                 errors.append(f"{ref}: {field} is not an editable field.")
+        if "choices" in edits and "answer" not in edits:
+            errors.append(f"{ref}: a choices edit must also send answer.")
         if len(item["choices"]) != 4 or item["answer"] not in ("A", "B", "C", "D"):
             errors.append(f"{ref}: choices and answer don't match.")
         if {"stem", "choices", "answer"} & edits.keys() and ref not in rewritten:

@@ -49,6 +49,24 @@ describe('quiz batch report', () => {
     expect(buildReport(batch(items), { vocabulary, blueprint }).text).not.toContain('expected 50 to 100');
   });
 
+  it('flags letter-prefixed choices but not genus abbreviations', () => {
+    const report = run([
+      item('Prefixed one?', { choices: ['A. Alpha', 'Beta', 'Gamma', 'Delta'] }),
+      item('Genus one?', { choices: ['E. coli', 'S. aureus', 'Gamma', 'Delta'] }),
+    ]);
+    expect(report.errors).toBe(1);
+    expect(report.text).toContain('item 1 ("Prefixed one?"): Choice has a letter prefix');
+  });
+
+  it('flags letter references in rationales but not poly(A) or V(D)J', () => {
+    const text = run([
+      item('Letter one?', { rationale: 'Choice (C) is wrong.' }),
+      item('Terms one?', { rationale: 'The poly(A) tail and V(D)J recombination.' }),
+    ]).text;
+    expect(text).toContain('item 1 ("Letter one?"): Rationale refers to a choice by letter.');
+    expect(text).not.toContain('item 2 ("Terms one?"): Rationale refers');
+  });
+
   it('counts rationale length outside tables', () => {
     const words = (n: number) => Array(n).fill('word').join(' ');
     const table = `\n\n| A | B |\n| --- | --- |\n| ${words(100)} | x |`;

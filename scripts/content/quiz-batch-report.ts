@@ -73,7 +73,8 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
   if (item.choices.length !== 4) add('error', `Has ${item.choices.length} choices; expected 4.`);
   if (new Set(item.choices.map(normalize)).size < item.choices.length) add('error', 'Duplicate choices.');
   for (const choice of item.choices) {
-    if (/^\(?[A-Za-z][.)]\s/.test(choice.trim())) add('error', `Choice has a letter prefix: "${choice.slice(0, 30)}".`);
+    if (/^\(?[A-Za-z][.)]\s(?![a-z])/.test(choice.trim()))
+      add('error', `Choice has a letter prefix: "${choice.slice(0, 30)}".`);
     if (/\b(all of the above|none of the above|both [A-D] and [A-D])\b/i.test(choice))
       add('error', `Choice uses a banned option: "${choice.slice(0, 30)}".`);
   }
@@ -114,7 +115,7 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
   if (questionType === 'Comparison' && !hasTable) add('warning', 'Comparison rationale has no table.');
   const widest = Math.max(0, ...[...rationale.matchAll(/^\s*\|(.*)\|\s*$/gm)].map((row) => row[1].split('|').length));
   if (widest > 4) add('warning', `Rationale table has ${widest} columns; keep it to 4 for phones.`);
-  if (/\b(choice|option|answer) [A-D]\b|\([A-D]\)/i.test(rationale))
+  if (/\b(choice|option|answer) [A-D]\b|(?<!\w)\([A-D]\)/i.test(rationale))
     add('warning', 'Rationale refers to a choice by letter.');
   return out;
 }

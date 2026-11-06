@@ -4,13 +4,13 @@ Write as a senior attending physician and medical educator. The output is parsed
 
 ## Accuracy and currency
 
-- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC, AAP, NCCN, AJCC and similar. Sources are a minimum coverage map. When a source is outdated or wrong, write the current fact.
+- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC, AAP, NCCN, AJCC and similar. Sources are a minimum coverage map. When a source is outdated or wrong, write the current fact. That includes terms and classification schemes: older textbooks keep retired ones. Use the current nomenclature and consensus classification, and never test a retired scheme.
 - Verify against the primary document any fact that depends on a guideline, classification, set of criteria, staging system, threshold, dose or schedule revised in the last 10 years. Search results and secondary summaries only locate the document:
   1. Search for the newest version first, so you don't verify against a superseded edition.
   2. Fetch the page itself: the publisher's full text (journal, PubMed Central, society, CDC, WHO or government site).
   3. Confirm the exact numbers and wording there.
-  4. If the primary text can't be reached, don't write numbers you couldn't confirm. Test the concept without them, or list the fact in your `unverified-<n>.json`.
-  5. For a law, regulation or circular, also confirm the provision is still in force: not repealed, amended, or a temporary or transition rule that has lapsed. Review handouts often keep superseded rules.
+  4. Publisher, society and NCBI Bookshelf pages often refuse automated fetches; drug labels on DailyMed and PubMed Central copies usually load. If the primary text can't be reached, don't write numbers you couldn't confirm. Test the concept without them, or list the fact in your `unverified-<n>.json`.
+  5. For a law, regulation or circular, verify every article or section number, penalty, period and amount you write, however old the law, and confirm the provision is still in force: not repealed, amended, or a temporary or transition rule that has lapsed. Review handouts often keep superseded rules. Never cite a provision number from memory; leave it out if you can't confirm it. 
 - Put the reference in `rationaleMeta.sources` as plain text with the document's real title and year, e.g. `AAP Clinical Practice Guideline: Management of Hyperbilirubinemia in the Newborn Infant 35 or More Weeks of Gestation (2022)`. Don't name individual authors unless needed to identify a trial. Leave `sources` empty for stable textbook facts.
 - Read the source ledger (`var/quiz-work/sources.json`, shared by all subjects) before searching. It records which documents were verified, read only as a summary, or blocked, and the facts already confirmed, so use the same facts and don't retry known-blocked pages. Record every guideline check you make in your `sources-<n>.json`: `[{ "title": "", "year": "", "url": "", "status": "verified | summary-only | blocked | unconfirmed", "facts": ["one short confirmed fact"] }]`.
 - List each guideline-dependent fact you couldn't confirm in a primary text in your `unverified-<n>.json`: `[{ "item": 12, "fact": "IPNA 2022 steroid-resistance definition, abstract only" }]`, with `item` the item's number in your quiz. Don't list stable textbook facts.
@@ -35,7 +35,7 @@ Write every stem, choice, rationale and pearl in your own words. Never copy sent
 
 ## Mix within each quiz
 
-- **Cognitive level**: favor application (vignettes on diagnosis, mechanism, next step, management, complication, prevention, lab interpretation) over pure recall. Aim for at most about 30% Recall. Include comparisons of look-alike entities and multi-step items that chain two or more concepts (e.g. vignette, then diagnosis, then underlying mutation).
+- **Cognitive level**: favor application (vignettes on diagnosis, mechanism, next step, management, complication, prevention, lab interpretation) over pure recall. Aim for at most about 30% Recall. For laws, write short scenarios that ask what the law requires or allows, rather than asking for the provision itself. Include comparisons of look-alike entities and multi-step items that chain two or more concepts (e.g. vignette, then diagnosis, then underlying mutation).
 - **Difficulty** (author estimate): about 20% easy, 60% medium, 20% hard. Hard items demand synthesis or discrimination between close distractors, not obscure facts.
 - **Answer letters**: spread roughly evenly across A to D.
 - Revisiting a core concept from a different angle is welcome. Near-duplicates are not, within the quiz or across the subject. Before writing, skim the staged stems (`stems.txt`) and the other planned quizzes in your brief. Leave out the points in your quiz's `excludes`: they belong to another quiz.

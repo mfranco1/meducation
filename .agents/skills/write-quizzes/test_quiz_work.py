@@ -156,8 +156,9 @@ def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_acc
         e["ref"] for e in json.loads((topic_dir / "review-standards.json").read_text())
     ] == [ref(1), ref(4)]
     assert [
-        e["ref"] for e in json.loads((topic_dir / "escalated.json").read_text())
-    ] == [ref(2)]
+        (e["ref"], e["proposed"])
+        for e in json.loads((topic_dir / "escalated.json").read_text())
+    ] == [(ref(2), {"rationale": "Changed fact."})]
     assert {r["ref"] for r in json.loads((topic_dir / "replace.json").read_text())} == {
         ref(3),
         ref(6),
@@ -189,6 +190,17 @@ def test_apply_defaults_the_minimum_to_the_quiz_target(tmp_path):
     args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json"]
     result = run(tmp_path, *args, "review.json")
     assert "leaves fewer than 12" in result.stderr
+
+
+def test_apply_refuses_a_choices_edit_without_answer(tmp_path):
+    topic_dir = setup(tmp_path)
+    (topic_dir / "review.json").write_text(
+        json.dumps([{"ref": ref(1), "edits": {"choices": ["w", "x", "y", "z"]}}])
+    )
+    args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json", "--min", "1"]
+    result = run(tmp_path, *args, "review.json")
+    assert result.returncode != 0
+    assert "must also send answer" in result.stderr
 
 
 def test_accept_marks_a_recheck_disagreement_ready(tmp_path):
