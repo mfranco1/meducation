@@ -2,7 +2,7 @@
 
 ## Project and scope
 
-A browser-based study app (quizzes and flashcards) built on a canonical question bank of about 12k questions and 1.7k cards.
+A browser-based study app (quizzes and flashcards) built on a canonical question bank of about 17k questions and 20k cards.
 
 It is being prepared for hosted production: anonymous learners read published content and keep their progress in browser localStorage; a small number of authenticated editors author and publish content. Initial audience is a few hundred users.
 
