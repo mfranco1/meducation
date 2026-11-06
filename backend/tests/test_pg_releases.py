@@ -33,7 +33,7 @@ pytestmark = pytest.mark.postgres
 
 
 def test_migration_upgrade_repeat_and_role_boundary(db):
-    assert migration_head() == "0012_unique_names"
+    assert migration_head() == "0013_prune_releases"
     upgrade(db.migrator)
     assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == migration_head()
     assert scalar(db.reader, "SELECT count(*) FROM content.published_releases") == 0
@@ -59,7 +59,7 @@ def test_migration_upgrade_repeat_and_role_boundary(db):
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "base")
-    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0012_unique_names"
+    assert scalar(db.reader, "SELECT version_num FROM content.schema_version") == "0013_prune_releases"
 
 
 def test_release_omission_order_and_digest(db):

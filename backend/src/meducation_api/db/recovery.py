@@ -49,7 +49,8 @@ GRANT SELECT ON content.schema_version,content.active_publication,content.publis
 content.published_subjects,content.published_topics,content.published_quizzes,
 content.published_questions,content.published_decks,content.published_flashcards TO meducation_reader;
 GRANT EXECUTE ON FUNCTION content.store_release(uuid,text,text,jsonb,text,text),
-content.activate_release(uuid,uuid,bigint,text,text) TO meducation_operator;
+content.activate_release(uuid,uuid,bigint,text,text),content.prune_releases(integer)
+TO meducation_operator;
 REVOKE ALL ON SCHEMA admin_auth FROM PUBLIC;
 GRANT USAGE ON SCHEMA admin_auth TO meducation_session,meducation_backup;
 GRANT SELECT,INSERT,UPDATE,DELETE ON ALL TABLES IN SCHEMA admin_auth TO meducation_session;
@@ -67,5 +68,6 @@ TO meducation_editor;
 GRANT SELECT ON content.releases,content.publication_events TO meducation_editor;
 GRANT EXECUTE ON FUNCTION content.nonblank(text),
 content.store_release(uuid,text,text,jsonb,text,text),
-content.activate_release(uuid,uuid,bigint,text,text) TO meducation_editor;
+content.activate_release(uuid,uuid,bigint,text,text),content.prune_releases(integer)
+TO meducation_editor;
 """)

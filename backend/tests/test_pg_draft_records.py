@@ -620,6 +620,38 @@ def test_publish_activates_new_release_served_to_learners_and_unchanged_is_noop(
         assert stale.status_code == 409
 
 
+def test_publish_keeps_the_active_release_and_one_before_it(db):
+    seed(db)
+    client, runtime, h = auth_app(db, postgres=True)
+    with client:
+        auth_login(client, runtime, h)
+        seeded = ok(client.get("/api/admin/releases"))["releases"][0]["releaseId"]
+        original = next(q["stem"] for q in draft(client)["questions"] if q["id"] == "i1")
+        # The last publish matches the seeded release, which is pruned by then.
+        for version, stem in enumerate(("First", "Second", original), start=1):
+            ok(
+                call(
+                    client,
+                    "PUT",
+                    "/draft/questions/i1",
+                    {"expectedVersion": version, "fields": {"stem": stem}},
+                )
+            )
+            published = ok(call(client, "POST", "/draft/publish"))
+        releases = ok(client.get("/api/admin/releases"))["releases"]
+        assert [r["active"] for r in releases] == [True, False]
+        assert published["releaseId"] == releases[0]["releaseId"] != seeded
+        assert client.get("/api/v1/quizzes/q1/questions").json()["questions"][0]["stem"] == original
+        sequence = published["publicationSequence"]
+        gone = call(
+            client,
+            "POST",
+            f"/releases/{seeded}/activate",
+            {"expectedPublicationSequence": sequence},
+        )
+        assert gone.status_code == 404
+
+
 def test_cli_publish_draft_publishes_without_the_api(db):
     import os
     import subprocess

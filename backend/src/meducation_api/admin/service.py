@@ -907,6 +907,7 @@ def publish_draft(
         text("UPDATE content.draft_state SET base_release_id=:r,published_change_id=:c"),
         {"r": release.release_id, "c": latest},
     )
+    c.execute(text("SELECT content.prune_releases(1)"))  # keep the active release and one before it
     return {
         "published": True,
         "releaseId": str(release.release_id),
