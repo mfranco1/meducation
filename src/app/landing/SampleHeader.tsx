@@ -21,15 +21,17 @@ export function SampleHeader({
   return (
     <Stack
       direction="row"
-      alignItems="flex-end"
-      justifyContent="space-between"
-      flexWrap="wrap"
-      columnGap={2}
-      rowGap={1.5}
-      sx={{ mb: 1.5 }}
+      sx={{
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        columnGap: 2,
+        rowGap: 1.5,
+        mb: 1.5,
+      }}
     >
       <Box sx={{ minWidth: 0, maxWidth: '100%', width: detailOptions ? 'max-content' : undefined }}>
-        <Typography id={id} component="h2" variant="subtitle2" color="text.primary">
+        <Typography id={id} component="h2" variant="subtitle2" sx={{ color: 'text.primary' }}>
           {title}
         </Typography>
         <Typography component="div" sx={{ ...type.caption, mt: 0.5, display: 'grid' }}>

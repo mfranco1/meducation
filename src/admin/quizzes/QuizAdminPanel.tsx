@@ -134,7 +134,7 @@ export function QuizAdminPanel({
   const movable = Boolean(selection.id) && selection.kind !== 'subject';
 
   return (
-    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} alignItems="flex-start">
+    <Stack direction={{ xs: 'column', lg: 'row' }} spacing={2} sx={{ alignItems: 'flex-start' }}>
       {confirmation.dialog}
       {editor.discardDialog}
       <AdminNavigatorPanel
@@ -228,7 +228,7 @@ export function QuizAdminPanel({
             <Typography variant="h6">
               {selection.id ? 'Edit' : 'New'} {selection.kind}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {[selectedSubject?.name, selectedTopic?.name, selectedQuiz?.name, selection.id]
                 .filter(Boolean)
                 .join(' / ')}

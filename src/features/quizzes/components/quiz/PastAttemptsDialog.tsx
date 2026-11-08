@@ -37,12 +37,12 @@ export function PastAttemptsDialog({
           <CloseRoundedIcon />
         </IconButton>
       </DialogTitle>
-      <Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={2} sx={{ px: 3, pb: 2 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 0 }}>
+      <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'baseline', px: 3, pb: 2 }}>
+        <Typography variant="body2" sx={{ color: 'text.secondary', minWidth: 0 }}>
           {quizName}
         </Typography>
         {attempts.length > 0 && (
-          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+          <Typography variant="body2" sx={{ color: 'text.secondary', flexShrink: 0 }}>
             {attempts.length} {attempts.length === 1 ? 'attempt' : 'attempts'}
           </Typography>
         )}
@@ -58,12 +58,12 @@ export function PastAttemptsDialog({
               const date = formatDateTime(attempt.completedAt);
               return (
                 <Card key={attempt.id} variant="outlined" sx={{ p: 2 }}>
-                  <Stack direction="row" spacing={2} alignItems="flex-start" justifyContent="space-between">
+                  <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <Box>
-                      <Typography variant="subtitle1" fontWeight={600}>
+                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
                         {date}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                         {attempt.feedbackMode === 'immediate' ? 'Fast Feedback' : 'Exam Mode'} · Elapsed Time:{' '}
                         {formatDuration(attempt.score.elapsedMs)}
                       </Typography>
@@ -77,7 +77,7 @@ export function PastAttemptsDialog({
                       Review
                     </Button>
                   </Stack>
-                  <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mt: 1.5 }}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1.5 }}>
                     <LinearProgress
                       variant="determinate"
                       value={percentage}
@@ -90,7 +90,7 @@ export function PastAttemptsDialog({
                         '& .MuiLinearProgress-bar': { borderRadius: 5, bgcolor: color },
                       }}
                     />
-                    <Typography fontWeight={700}>{percentage}%</Typography>
+                    <Typography sx={{ fontWeight: 700 }}>{percentage}%</Typography>
                   </Stack>
                 </Card>
               );

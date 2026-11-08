@@ -44,10 +44,10 @@ function StatFailure({
       icon={icon}
       value="—"
       footer={
-        <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-          <Stack direction="row" spacing={0.5} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
+          <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
             <ErrorOutlineRoundedIcon color="error" sx={{ fontSize: 16 }} aria-hidden="true" />
-            <Typography color="text.secondary" variant="caption">
+            <Typography variant="caption" sx={{ color: 'text.secondary' }}>
               Couldn’t load
             </Typography>
           </Stack>
@@ -91,9 +91,8 @@ function SubjectFailure({ onRetry }: { onRetry: () => void }) {
     <Box sx={{ position: 'relative' }}>
       <SubjectPlaceholders dashed />
       <Stack
-        alignItems="center"
         spacing={1}
-        sx={{ position: 'absolute', inset: 0, justifyContent: 'center', pointerEvents: 'none' }}
+        sx={{ alignItems: 'center', position: 'absolute', inset: 0, justifyContent: 'center', pointerEvents: 'none' }}
       >
         <Typography variant="body2" sx={{ fontWeight: 700, bgcolor: 'background.default', px: 1 }}>
           Couldn’t load subjects

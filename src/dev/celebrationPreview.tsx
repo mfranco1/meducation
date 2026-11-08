@@ -37,7 +37,7 @@ function CelebrationPreview() {
   };
   return (
     <>
-      <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" sx={{ p: 2, position: 'relative', zIndex: 1 }}>
+      <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', p: 2, position: 'relative', zIndex: 1 }}>
         {milestones.map((milestone) => (
           <Button
             key={milestone}

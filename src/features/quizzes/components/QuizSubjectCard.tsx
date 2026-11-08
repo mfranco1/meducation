@@ -33,7 +33,7 @@ export function QuizSubjectCard({
         </Stack>
       )}
       {latest !== undefined && (
-        <Stack alignItems="center" direction="row" spacing={0.75} sx={{ mt: 2 }}>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mt: 2 }}>
           <Typography variant="body2" sx={{ color: 'primary.dark', fontWeight: 700 }}>
             Latest Score {latest}%
           </Typography>

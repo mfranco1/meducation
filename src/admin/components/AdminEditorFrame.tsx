@@ -13,7 +13,7 @@ export function AdminEditorFrame({ label, children }: { label: string; children:
 }
 export function AdminEditorEmpty({ title, children }: { title: string; children?: ReactNode }) {
   return (
-    <Stack spacing={2} alignItems="center" sx={{ py: 6, px: 2, textAlign: 'center' }}>
+    <Stack spacing={2} sx={{ alignItems: 'center', py: 6, px: 2, textAlign: 'center' }}>
       <Typography variant="h6">{title}</Typography>
       {children}
     </Stack>
@@ -32,9 +32,9 @@ export function AdminEditorActions({
 }) {
   return (
     <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 2 }}>
-      <Stack direction="row" alignItems="center" spacing={1} useFlexGap flexWrap="wrap">
+      <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
         {statusVisible && (
-          <Typography variant="body2" color="text.secondary" sx={{ mr: 'auto' }} aria-live="polite">
+          <Typography variant="body2" aria-live="polite" sx={{ color: 'text.secondary', mr: 'auto' }}>
             {busy ? 'Working…' : dirty ? 'Unsaved edits' : 'Saved to draft'}
           </Typography>
         )}

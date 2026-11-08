@@ -89,8 +89,8 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
                 {subject.description && (
                   <Typography
                     variant="body2"
-                    color="text.secondary"
                     sx={{
+                      color: 'text.secondary',
                       display: '-webkit-box',
                       mt: 0.25,
                       overflow: 'hidden',

@@ -46,11 +46,11 @@ export function StudyHeader({
       <IconButton aria-label={exitLabel} onClick={onExit} disabled={disabled} sx={{ p: 0.5, mb: 0.5 }}>
         <ArrowBackRoundedIcon />
       </IconButton>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
+      <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography
           variant="body2"
-          color="text.secondary"
           aria-label={countLabel ?? `${itemLabel} ${index + 1} of ${total}`}
+          sx={{ color: 'text.secondary' }}
         >
           {itemLabel} {index + 1} of {total}
         </Typography>
@@ -190,7 +190,7 @@ export function StudyNavigationFooter({
   finishButtonRef?: MutableRefObject<HTMLButtonElement | null>;
 }) {
   return (
-    <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ mt: 3 }}>
+    <Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'center', mt: 3 }}>
       <Stack direction="row" spacing={1}>
         <Button startIcon={<ArrowBackRoundedIcon />} disabled={!hasPrevious || disabled} onClick={onPrevious}>
           Previous

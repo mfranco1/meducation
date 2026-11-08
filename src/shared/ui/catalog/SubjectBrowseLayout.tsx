@@ -106,14 +106,12 @@ export function SubjectBrowseLayout({
           </Button>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
-            alignItems={{ xs: 'flex-start', sm: 'center' }}
-            justifyContent="space-between"
             spacing={2}
-            sx={{ mt: 2 }}
+            sx={{ alignItems: { xs: 'flex-start', sm: 'center' }, justifyContent: 'space-between', mt: 2 }}
           >
-            <Stack direction="row" alignItems="center" spacing={2} sx={{ minWidth: 0 }}>
+            <Stack direction="row" spacing={2} sx={{ alignItems: 'center', minWidth: 0 }}>
               <SubjectIconBadge subjectId={subjectId} size={88} iconSize={64} />
-              <Stack justifyContent="center" sx={{ minHeight: 88, minWidth: 0, overflowWrap: 'anywhere' }}>
+              <Stack sx={{ justifyContent: 'center', minHeight: 88, minWidth: 0, overflowWrap: 'anywhere' }}>
                 <Typography
                   variant="h3"
                   sx={{ fontSize: { xs: '1.5rem', sm: '3rem' }, overflowWrap: 'break-word', minWidth: 0 }}
@@ -121,7 +119,10 @@ export function SubjectBrowseLayout({
                   {subjectName}
                 </Typography>
                 {subjectDescription && (
-                  <Typography variant="body1" color="text.secondary" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' } }}>
+                  <Typography
+                    variant="body1"
+                    sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', sm: '1rem' } }}
+                  >
                     {subjectDescription}
                   </Typography>
                 )}
@@ -129,9 +130,8 @@ export function SubjectBrowseLayout({
             </Stack>
             {showProgress && (
               <Stack
-                alignItems="center"
                 spacing={0.75}
-                sx={{ flex: '0 0 auto', width: 160, minHeight: 88, textAlign: 'center' }}
+                sx={{ alignItems: 'center', flex: '0 0 auto', width: 160, minHeight: 88, textAlign: 'center' }}
               >
                 {progress === null ? (
                   <>
@@ -179,8 +179,7 @@ export function SubjectBrowseLayout({
                     </Box>
                     <Typography
                       variant="caption"
-                      color="text.secondary"
-                      sx={{ lineHeight: 1.2 }}
+                      sx={{ color: 'text.secondary', lineHeight: 1.2 }}
                     >{`${progress.completed} / ${progress.total} ${progress.nouns} completed`}</Typography>
                   </>
                 ) : null}

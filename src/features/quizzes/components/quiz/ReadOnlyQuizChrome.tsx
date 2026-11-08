@@ -32,11 +32,11 @@ export function ReadOnlyQuizHeader({
           <Stack
             direction="row"
             spacing={0.75}
-            alignItems="center"
             aria-label={`Final time: ${formatDuration(finalTimeMs)}`}
+            sx={{ alignItems: 'center' }}
           >
             <TimerOutlinedIcon fontSize="small" aria-hidden="true" />
-            <Typography fontWeight={700}>{formatDuration(finalTimeMs)}</Typography>
+            <Typography sx={{ fontWeight: 700 }}>{formatDuration(finalTimeMs)}</Typography>
           </Stack>
         ) : undefined
       }

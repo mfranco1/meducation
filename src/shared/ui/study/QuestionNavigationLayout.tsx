@@ -39,7 +39,12 @@ export function QuestionNavigationLayout({
       >
         <CardContent sx={{ p: 2 }}>{navigator}</CardContent>
       </Card>
-      <Drawer anchor="right" open={open} onClose={onClose} PaperProps={{ sx: { width: 'min(100%, 380px)', p: 2.5 } }}>
+      <Drawer
+        anchor="right"
+        open={open}
+        onClose={onClose}
+        slotProps={{ paper: { sx: { width: 'min(100%, 380px)', p: 2.5 } } }}
+      >
         {navigator}
       </Drawer>
     </Box>

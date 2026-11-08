@@ -41,7 +41,7 @@ export function ReadOnlyChoiceList({
               p: 0.5,
             }}
           >
-            <Stack direction="row" alignItems="center" sx={{ minWidth: 0 }}>
+            <Stack direction="row" sx={{ alignItems: 'center', minWidth: 0 }}>
               <Box
                 aria-hidden="true"
                 sx={{

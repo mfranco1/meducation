@@ -253,8 +253,8 @@ export function TopicSetBrowser({
       ref={set.id === initialSet?.id ? initialRowRef : undefined}
       sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '10px', p: 2 }}
     >
-      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} spacing={2}>
-        <Stack direction="row" alignItems="center" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flex: 1, minWidth: 0 }}>
           {set.completionCount > 0 ? (
             <CheckCircleRoundedIcon aria-hidden color="success" />
           ) : (
@@ -270,11 +270,11 @@ export function TopicSetBrowser({
             >
               {set.name}
             </Typography>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {set.detail}
             </Typography>
             {(set.completionCount > 0 || set.chips.length > 0 || (set.activityAt && !set.progress)) && (
-              <Stack direction="row" spacing={1} useFlexGap flexWrap="wrap" alignItems="center" sx={{ mt: 1 }}>
+              <Stack direction="row" spacing={1} useFlexGap sx={{ flexWrap: 'wrap', alignItems: 'center', mt: 1 }}>
                 {set.completionCount > 0 && (
                   <Chip
                     label={`Completed ${set.completionCount} ${set.completionCount === 1 ? 'time' : 'times'}`}
@@ -288,7 +288,7 @@ export function TopicSetBrowser({
                   <Chip key={index} label={chip} size="small" variant="outlined" />
                 ))}
                 {set.activityAt && !set.progress && (
-                  <Typography variant="caption" color="text.secondary">
+                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                     {relativeTime(set.activityAt)}
                   </Typography>
                 )}
@@ -296,24 +296,24 @@ export function TopicSetBrowser({
             )}
             {set.progress && (
               <Box sx={{ mt: 1.25 }}>
-                <Stack direction="row" alignItems="center" spacing={1.5}>
+                <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                   <LinearProgress
                     aria-hidden
                     variant="determinate"
                     value={set.progress.total ? (set.progress.done / set.progress.total) * 100 : 0}
                     sx={{ ...trackSx, flex: 1 }}
                   />
-                  <Typography variant="body2" color="text.secondary">
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                     {set.progress.total ? Math.round((set.progress.done / set.progress.total) * 100) : 0}%
                   </Typography>
                 </Stack>
-                <Stack direction="row" spacing={1.5} useFlexGap flexWrap="wrap">
+                <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap' }}>
                   <Typography
                     variant="caption"
-                    color="text.secondary"
+                    sx={{ color: 'text.secondary' }}
                   >{`${set.progress.done}/${set.progress.total} ${set.progress.label}`}</Typography>
                   {set.activityAt && (
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                       {relativeTime(set.activityAt)}
                     </Typography>
                   )}
@@ -386,21 +386,21 @@ export function TopicSetBrowser({
                       {topic.name}
                     </Box>
                   </Typography>
-                  <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 0.75 }}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 0.75 }}>
                     <LinearProgress
                       aria-hidden
                       variant="determinate"
                       value={(summary.completed / summary.own.length) * 100}
                       sx={{ ...trackSx, flex: 1 }}
                     />
-                    <Typography variant="caption" color="text.secondary">
+                    <Typography variant="caption" sx={{ color: 'text.secondary' }}>
                       {summary.completed}/{summary.own.length}
                     </Typography>
                   </Stack>
                   {matches > 0 && (
                     <Typography
                       variant="caption"
-                      color="text.secondary"
+                      sx={{ color: 'text.secondary' }}
                     >{`${matches} matching ${matches === 1 ? noun : nouns}`}</Typography>
                   )}
                 </Box>
@@ -445,20 +445,19 @@ export function TopicSetBrowser({
             {selected.name}
           </Typography>
           {selected.description && (
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, overflowWrap: 'anywhere' }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 0.5, overflowWrap: 'anywhere' }}>
               {selected.description}
             </Typography>
           )}
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1.5 }}>
             <LinearProgress aria-hidden variant="determinate" value={percent} sx={{ ...trackSx, flex: 1 }} />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {percent}%
             </Typography>
           </Stack>
           <Typography
             variant="body2"
-            color="text.secondary"
-            sx={{ mt: 0.75 }}
+            sx={{ color: 'text.secondary', mt: 0.75 }}
           >{`${completed} of ${own.length} ${nouns} completed`}</Typography>
           <Box sx={{ height: '1px', bgcolor: '#eee5df', opacity: 0.8, my: 2.5 }} />
           <Typography variant="h6" component="h3" sx={{ mb: 1.5 }}>
@@ -477,14 +476,14 @@ export function TopicSetBrowser({
         Results
       </Typography>
       {listedTopics.length === 0 ? (
-        <Stack alignItems="flex-start" spacing={1}>
-          <Typography color="text.secondary">{`No topics or ${nouns} match “${query.trim()}”`}</Typography>
+        <Stack spacing={1} sx={{ alignItems: 'flex-start' }}>
+          <Typography sx={{ color: 'text.secondary' }}>{`No topics or ${nouns} match “${query.trim()}”`}</Typography>
           <Button variant="contained" onClick={() => setQuery('')}>
             Clear
           </Button>
         </Stack>
       ) : matchingSets.length === 0 ? (
-        <Typography color="text.secondary">{`No matching ${nouns}`}</Typography>
+        <Typography sx={{ color: 'text.secondary' }}>{`No matching ${nouns}`}</Typography>
       ) : (
         <Stack spacing={2.5} sx={scrollSx(desktop)}>
           {listedTopics
@@ -543,7 +542,7 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
                 <LoadingSkeleton variant="rounded" width={22} height={22} />
                 <LoadingSkeleton variant="text" width={width} height={22} />
               </Stack>
-              <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 0.75 }}>
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 0.75 }}>
                 <Box sx={{ flex: 1 }}>
                   <LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} />
                 </Box>
@@ -568,7 +567,7 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
             <LoadingSkeleton variant="rounded" width={32} height={32} />
             <LoadingSkeleton variant="text" width="40%" height={32} />
           </Stack>
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mt: 1.5 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1.5 }}>
             <Box sx={{ flex: 1 }}>
               <LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} />
             </Box>
@@ -585,8 +584,12 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
         <Stack component="ul" aria-hidden spacing={1.5} sx={{ listStyle: 'none', m: 0, ...scrollSx(desktop) }}>
           {[0, 1, 2, 3].map((index) => (
             <Box component="li" key={index} sx={{ border, borderColor: 'divider', borderRadius: '10px', p: 2 }}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} spacing={2}>
-                <Stack direction="row" alignItems="center" spacing={2} sx={{ flex: 1, minWidth: 0 }}>
+              <Stack
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={2}
+                sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}
+              >
+                <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flex: 1, minWidth: 0 }}>
                   <Box sx={{ flex: '0 0 auto', display: 'flex' }}>
                     <LoadingSkeleton variant="circular" width={24} height={24} />
                   </Box>

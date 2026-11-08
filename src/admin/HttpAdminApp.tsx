@@ -245,7 +245,7 @@ export default function HttpAdminApp() {
         />
       ) : (
         <Container sx={{ py: 6 }}>
-          <Stack spacing={3} alignItems="flex-start">
+          <Stack spacing={3} sx={{ alignItems: 'flex-start' }}>
             <AppBrand />
             <Typography variant="h5">Content admin</Typography>
             {(!session || session.authenticated) && !error ? (

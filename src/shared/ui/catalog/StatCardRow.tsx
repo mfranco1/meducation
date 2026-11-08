@@ -7,8 +7,7 @@ export function StatCardRow({ children, sx }: { children: ReactNode; sx?: SxProp
     <Stack
       direction={{ xs: 'column', sm: 'row' }}
       spacing={2}
-      alignItems="stretch"
-      sx={[{ mb: 3, '& > *': { minWidth: 0 } }, ...(Array.isArray(sx) ? sx : [sx])]}
+      sx={[{ alignItems: 'stretch', mb: 3, '& > *': { minWidth: 0 } }, ...(Array.isArray(sx) ? sx : [sx])]}
     >
       {children}
     </Stack>

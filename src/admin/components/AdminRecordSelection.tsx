@@ -52,7 +52,7 @@ export function AdminRecordSelection({
       <Typography variant="caption" aria-live="polite">
         {selection.ids.length} selected
       </Typography>
-      <Stack direction="row" useFlexGap flexWrap="wrap" spacing={0.5}>
+      <Stack direction="row" useFlexGap spacing={0.5} sx={{ flexWrap: 'wrap' }}>
         <Button size="small" onClick={() => selection.selectPage(pageIds)}>
           Select this page
         </Button>

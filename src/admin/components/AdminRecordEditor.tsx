@@ -205,7 +205,7 @@ export function AdminRecordEditor({
       {error && <Alert severity="error">{error}</Alert>}
       {active === 'json' && (
         <>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             Advanced source editing. Preserve stable IDs.
           </Typography>
           <TextField
@@ -270,7 +270,7 @@ export function AdminRecordEditor({
                     required
                     onChange={(event) => apply(() => patchChoiceText(text, index, event.target.value))}
                   />
-                  <Stack direction="row" useFlexGap flexWrap="wrap" spacing={1}>
+                  <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
                     <Button
                       size="small"
                       disabled={index === 0}

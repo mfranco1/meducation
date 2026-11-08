@@ -15,13 +15,11 @@ export function SubjectProgressSummary({
   return (
     <Stack spacing={0.75}>
       <Stack
-        alignItems="center"
         direction="row"
-        justifyContent="space-between"
         spacing={0.75}
-        sx={{ minHeight: { xs: 40, sm: 20 }, flexWrap: 'wrap' }}
+        sx={{ alignItems: 'center', justifyContent: 'space-between', minHeight: { xs: 40, sm: 20 }, flexWrap: 'wrap' }}
       >
-        <Stack alignItems="center" direction="row" spacing={0.75} sx={{ minHeight: 20 }}>
+        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minHeight: 20 }}>
           {label}
         </Stack>
         <Typography

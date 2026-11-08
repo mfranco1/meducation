@@ -67,10 +67,9 @@ export function StatCard({
         ]}
       >
         <Stack
-          alignItems="center"
           direction="row"
           spacing={dashboard ? 1.5 : 0.75}
-          sx={{ flexWrap: 'wrap', rowGap: 0.5 }}
+          sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}
         >
           {icon && dashboard && (
             <Box aria-hidden="true" sx={{ display: 'inline-flex', color: 'primary.main', fontSize: 24 }}>
@@ -78,9 +77,8 @@ export function StatCard({
             </Box>
           )}
           <Typography
-            color={dashboard ? 'text.primary' : 'text.secondary'}
             variant="body2"
-            sx={dashboard ? { fontWeight: 650 } : undefined}
+            sx={dashboard ? { color: 'text.primary', fontWeight: 650 } : { color: 'text.secondary' }}
           >
             {label}
           </Typography>
@@ -126,11 +124,7 @@ export function StatCard({
             {supportingText ?? ''}
           </Typography>
         )}
-        {footer && (
-          <Stack sx={{ minHeight: 36, mt: 0.25 }} justifyContent="flex-end">
-            {footer}
-          </Stack>
-        )}
+        {footer && <Stack sx={{ justifyContent: 'flex-end', minHeight: 36, mt: 0.25 }}>{footer}</Stack>}
       </CardContent>
     </Card>
   );

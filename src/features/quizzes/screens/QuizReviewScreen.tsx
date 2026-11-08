@@ -122,7 +122,7 @@ export function QuizReviewScreen({
         <SwapTransition swapKey={index}>
           <Card>
             <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
+              <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                   <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />
                 </Box>

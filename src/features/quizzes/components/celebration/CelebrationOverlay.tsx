@@ -361,7 +361,7 @@ function CelebrationPlayback({
             <Crackle points={borderSparks} size={4} />
           </>
         )}
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ position: 'relative', zIndex: 1 }}>
+        <Stack direction="row" spacing={2} sx={{ alignItems: 'center', position: 'relative', zIndex: 1 }}>
           <Box
             aria-hidden
             sx={{ position: 'relative', display: 'grid', placeItems: 'center', width: 56, height: 56, flexShrink: 0 }}
@@ -373,21 +373,24 @@ function CelebrationPlayback({
             <Box sx={{ position: 'relative', width: 'fit-content' }}>
               <Typography
                 variant="h6"
-                fontWeight={800}
-                lineHeight={1.2}
-                letterSpacing="-.01em"
-                color="primary.dark"
-                sx={
-                  titleSizzling
-                    ? { '--sizzle': (t) => t.palette.reward.light, animation: `${titleSizzle} 900ms linear infinite` }
-                    : undefined
-                }
+                sx={[
+                  {
+                    fontWeight: 800,
+                    lineHeight: 1.2,
+                    letterSpacing: '-.01em',
+                    color: 'primary.dark',
+                  },
+                  titleSizzling && {
+                    '--sizzle': (t) => t.palette.reward.light,
+                    animation: `${titleSizzle} 900ms linear infinite`,
+                  },
+                ]}
               >
                 {title}
               </Typography>
               {titleSizzling && <Crackle points={titleSparks} size={3} />}
             </Box>
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {message}
             </Typography>
           </Box>

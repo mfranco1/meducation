@@ -102,8 +102,8 @@ export function SubjectPagination({
         tabIndex={-1}
         aria-live="polite"
         variant="body2"
-        color="text.secondary"
         sx={{
+          color: 'text.secondary',
           minWidth: 84,
           textAlign: 'center',
         }}

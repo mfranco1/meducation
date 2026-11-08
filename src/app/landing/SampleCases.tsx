@@ -178,7 +178,7 @@ export function SampleCases({
         finishButtonRef={finishRef}
       />
       {answers.length === cases.length && (
-        <Stack direction="row" alignItems="baseline" spacing={1.5} sx={{ mt: 2, justifyContent: 'flex-end' }}>
+        <Stack direction="row" spacing={1.5} sx={{ alignItems: 'baseline', mt: 2, justifyContent: 'flex-end' }}>
           <Typography sx={type.caption}>
             You answered {correct.length} of {cases.length} correctly.
           </Typography>

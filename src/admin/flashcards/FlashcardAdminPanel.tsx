@@ -240,10 +240,9 @@ export function FlashcardAdminPanel({
   return (
     <Stack
       component="div"
-      sx={{ border: 0, p: 0, m: 0, minWidth: 0, width: '100%' }}
       direction={{ xs: 'column', lg: 'row' }}
       spacing={2}
-      alignItems="flex-start"
+      sx={{ alignItems: 'flex-start', border: 0, p: 0, m: 0, minWidth: 0, width: '100%' }}
     >
       <AdminNavigatorShell label="Flashcard navigator" disabled={locked}>
         <AdminLevelPicker
@@ -344,7 +343,7 @@ export function FlashcardAdminPanel({
         )}
         {browseDeck && (
           <>
-            <Stack direction="row" spacing={0.5} flexWrap="wrap">
+            <Stack direction="row" spacing={0.5} sx={{ flexWrap: 'wrap' }}>
               <Button
                 size="small"
                 onClick={() =>
@@ -411,7 +410,7 @@ export function FlashcardAdminPanel({
               )}
             </AdminNavList>
             {cardResults.matches.length > 0 && (
-              <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
                 <Typography variant="caption">
                   {cardResults.rangeStart}–{cardResults.rangeEnd} of {cardResults.matches.length}
                   {cardQuery ? ` matches · ${deckCards.length} total` : ' cards'}

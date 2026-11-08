@@ -14,6 +14,14 @@ python3.14 -m venv .venv
 npm run build:content-policy   # packages the shared authoring policy into the wheel resources
 ```
 
+### Dependency notes
+
+- `parse5` is pinned exactly because `markdownValidation.ts` uses it directly. Raise the pin when `hast-util-raw` or `rehype-raw` needs a newer one.
+- `src/shared/ui/content/katex.css` is KaTeX's minified CSS reduced to woff2 font sources. Regenerate it on every KaTeX upgrade.
+- Both tsconfigs set `"types": ["node"]`. Add a package there only when code needs its globals.
+- Vite config imports use explicit `.ts` extensions.
+- MUI no longer has system props. Put style props in `sx`. `Typography` still accepts a `color` prop, but only palette names such as `textSecondary`; a dotted value like `text.secondary` typechecks and is ignored.
+
 ## Configuration
 
 Frontend build-time settings are in `.env.example` (`VITE_CONTENT_MAX_RETRIES`, `VITE_CONTENT_RETRY_BASE_DELAY_MS`, `VITE_CONTENT_RETRY_MAX_DELAY_MS`, `VITE_BUILD_ADMIN`, `VITE_CONTENT_IMAGE_ORIGINS`). `VITE_*` values are public; never put secrets in them.

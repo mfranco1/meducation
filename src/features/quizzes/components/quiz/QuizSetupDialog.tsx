@@ -60,7 +60,7 @@ export function QuizSetupDialog({ open, quiz, onClose, onStart, onBrowse }: Quiz
               <ToggleButton value="exam">Exam Mode</ToggleButton>
               {import.meta.env.DEV && <ToggleButton value="browse">Browse Answers</ToggleButton>}
             </ToggleButtonGroup>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
               {mode === 'immediate'
                 ? 'Selecting an answer locks it and shows the explanation right away.'
                 : mode === 'browse' && import.meta.env.DEV

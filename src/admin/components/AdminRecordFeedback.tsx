@@ -24,7 +24,7 @@ export function AdminRecordFeedback({
         <Alert
           severity="warning"
           action={
-            <Stack direction="row" useFlexGap flexWrap="wrap" spacing={1}>
+            <Stack direction="row" useFlexGap spacing={1} sx={{ flexWrap: 'wrap' }}>
               <Button color="inherit" disabled={busy} onClick={onKeepMine}>
                 Keep my text
               </Button>

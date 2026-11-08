@@ -161,8 +161,14 @@ export function LegalFooter({ showAbout = false }: { showAbout?: boolean }) {
     <Box component="footer" sx={{ mt: 4, pt: 1.5, borderTop: 1, borderColor: 'divider' }}>
       <Typography
         variant="caption"
-        color="text.secondary"
-        sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center', columnGap: 1 }}
+        sx={{
+          color: 'text.secondary',
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'center',
+          alignItems: 'center',
+          columnGap: 1,
+        }}
       >
         <span>
           © {new Date().getFullYear()} {brand.name}
@@ -195,7 +201,7 @@ export function LegalFooter({ showAbout = false }: { showAbout?: boolean }) {
               <Box component="span" sx={{ display: 'block', fontWeight: 800 }}>
                 {document.title}
               </Box>
-              <Typography component="span" variant="body2" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+              <Typography component="span" variant="body2" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
                 Last updated {lastUpdated}
               </Typography>
               <IconButton aria-label="Close" onClick={close} sx={{ position: 'absolute', top: 12, right: 12 }}>

@@ -17,7 +17,7 @@ function FieldDiff({ before, after }: { before: Fields | null; after: Fields | n
     <Stack spacing={1}>
       {keys.map((key) => (
         <Box key={key}>
-          <Typography variant="caption" color="text.secondary">
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {key}
           </Typography>
           <Box

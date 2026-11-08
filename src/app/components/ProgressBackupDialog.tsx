@@ -85,8 +85,9 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
   return (
     <Dialog
       open={controller.open}
-      onClose={() => controller.close()}
-      disableEscapeKeyDown={locked}
+      onClose={() => {
+        if (!locked) controller.close();
+      }}
       fullWidth
       maxWidth="sm"
       aria-labelledby="progress-backup-title"
@@ -132,7 +133,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
                     <Typography>Some saved progress could not be read. Resetting clears it.</Typography>
                   )}
                   <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                       Download a backup first if you might want this progress later
                     </Typography>
                     <Button
@@ -163,7 +164,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
         <>
           <DialogContent dividers>
             <Stack spacing={2}>
-              <Typography id="progress-backup-description" color="text.secondary">
+              <Typography id="progress-backup-description" sx={{ color: 'text.secondary' }}>
                 Your progress is saved in this browser only. Back it up to keep it safe or move it to another device.
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
@@ -225,7 +226,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
                         ))}
                       </TableBody>
                     </Table>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                    <Typography variant="body2" sx={{ color: 'text.secondary', mt: 1 }}>
                       Backup from{' '}
                       {new Date(preview.backup.exportedAt).toLocaleString(undefined, {
                         dateStyle: 'medium',
@@ -253,10 +254,10 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
                     }}
                   >
                     <Box>
-                      <Typography id="progress-reset" variant="subtitle1" fontWeight={500}>
+                      <Typography id="progress-reset" variant="subtitle1" sx={{ fontWeight: 500 }}>
                         Reset progress
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                         Delete all quiz and flashcard progress in this browser
                       </Typography>
                     </Box>

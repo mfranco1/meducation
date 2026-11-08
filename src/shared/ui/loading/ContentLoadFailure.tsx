@@ -6,15 +6,15 @@ export function ContentLoadFailure({ title, error, onRetry }: { title: string; e
   const revisionConflict = error instanceof ContentLoadError && error.kind === 'revision';
   const requestId = error instanceof ContentLoadError ? error.requestId : undefined;
   return (
-    <Stack role="alert" spacing={0.5} alignItems="flex-start" sx={{ py: 1 }}>
+    <Stack role="alert" spacing={0.5} sx={{ alignItems: 'flex-start', py: 1 }}>
       <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>
         {title.replace(/^Failed to load/, 'Unable to load')}
       </Typography>
-      <Typography color="text.secondary" variant="body2">
+      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         {contentLoadMessage(error)}
       </Typography>
       {requestId && (
-        <Typography color="text.secondary" variant="caption">
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
           Reference: {requestId.slice(0, 8)}
         </Typography>
       )}

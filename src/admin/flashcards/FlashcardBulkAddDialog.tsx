@@ -163,7 +163,7 @@ export function FlashcardBulkAddDialog({
             Destination · {destinationLabel}. Up to 1,000 cards per deck. Saving adds to the draft in order and does not
             publish.
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap">
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap' }}>
             <Button onClick={() => void copyTemplate()} disabled={busy || loadingFile}>
               Copy template
             </Button>
@@ -182,8 +182,8 @@ export function FlashcardBulkAddDialog({
             />
           </Stack>
           {existing && existing.names.length > 0 && (
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+              <Typography variant="caption" sx={{ color: 'text.secondary', overflowWrap: 'anywhere' }}>
                 Existing {existing.label}: {existing.names.join(', ')}
               </Typography>
               <Button size="small" onClick={() => void copyNames()} sx={{ flexShrink: 0 }}>
@@ -193,7 +193,7 @@ export function FlashcardBulkAddDialog({
           )}
           <TextField
             label="JSON"
-            slotProps={{ inputLabel: { shrink: true } }}
+            slotProps={{ inputLabel: { shrink: true }, input: { sx: { fontFamily: 'monospace', fontSize: 13 } } }}
             sx={{ mt: 1 }}
             value={text}
             onChange={(event) => changed(event.target.value)}
@@ -201,7 +201,6 @@ export function FlashcardBulkAddDialog({
             minRows={14}
             maxRows={28}
             fullWidth
-            InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
             disabled={busy || loadingFile}
           />
           {message && (

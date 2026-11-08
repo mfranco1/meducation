@@ -157,7 +157,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                       role={!toast.open ? undefined : toast.severity === 'error' ? 'alert' : 'status'}
                       variant="standard"
                       action={
-                        <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                           {toast.action && (
                             <Button color="inherit" size="small" onClick={toast.action.onClick}>
                               {toast.action.label}

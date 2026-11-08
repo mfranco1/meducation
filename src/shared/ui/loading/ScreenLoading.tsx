@@ -43,8 +43,14 @@ export function ScreenLoading({ label = 'Loading…' }: { label?: string }) {
       />
       <Typography
         variant="body1"
-        color="text.secondary"
-        sx={{ px: 2, maxWidth: '100%', textAlign: 'center', fontSize: { xs: '1rem', sm: '1.125rem' }, lineHeight: 1.5 }}
+        sx={{
+          color: 'text.secondary',
+          px: 2,
+          maxWidth: '100%',
+          textAlign: 'center',
+          fontSize: { xs: '1rem', sm: '1.125rem' },
+          lineHeight: 1.5,
+        }}
       >
         {label}
       </Typography>

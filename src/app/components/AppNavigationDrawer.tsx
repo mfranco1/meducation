@@ -262,7 +262,9 @@ export function AppNavigationDrawer({
           open={expanded}
           onClose={() => setExpanded(false)}
           ModalProps={{ keepMounted: true }}
-          PaperProps={{ sx: { width: learnerDrawerExpandedWidth, bgcolor: 'background.paper', overflow: 'visible' } }}
+          slotProps={{
+            paper: { sx: { width: learnerDrawerExpandedWidth, bgcolor: 'background.paper', overflow: 'visible' } },
+          }}
         >
           {contents(true)}
         </Drawer>

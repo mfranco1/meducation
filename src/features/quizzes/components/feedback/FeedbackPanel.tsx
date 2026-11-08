@@ -84,7 +84,7 @@ export function FeedbackPanel({
           borderColor: tone.separator,
         }}
       >
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           {status === 'unanswered' || status === 'unavailable' ? (
             <WarningAmberRoundedIcon color="warning" />
           ) : status === 'correct' ? (
@@ -92,21 +92,21 @@ export function FeedbackPanel({
           ) : (
             <CancelRoundedIcon color="error" />
           )}
-          <Typography fontWeight={800}>{title}</Typography>
+          <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
         </Stack>
       </Box>
       {hasContent && (
         <Box sx={{ px: { xs: 2, sm: 3 }, py: { xs: 2.25, sm: 2.75 } }}>
           {readOnlyStatus !== undefined && !question.rationale && !sources ? (
-            <Typography color="text.secondary">Explanation unavailable.</Typography>
+            <Typography sx={{ color: 'text.secondary' }}>Explanation unavailable.</Typography>
           ) : (
             <ExplanationContent question={question} />
           )}
           {pearl && (
             <Box sx={{ mt: 2.5, maxWidth: '72ch', py: 0.5, pl: 2, borderLeft: '3px solid', borderColor: tone.border }}>
-              <Stack direction="row" spacing={1} alignItems="center">
+              <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <LightbulbOutlinedIcon fontSize="small" sx={{ color: iconColor }} />
-                <Typography variant="subtitle2" fontWeight={700}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
                   Pearl
                 </Typography>
               </Stack>

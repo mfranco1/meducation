@@ -71,7 +71,7 @@ export function ResultsScreen({
     <>
       <Box onClick={advance} sx={{ flex: 1, minHeight: '100%' }}>
         <Container maxWidth="md" sx={{ py: 7 }}>
-          <Stack alignItems="center" textAlign="center">
+          <Stack sx={{ alignItems: 'center', textAlign: 'center' }}>
             <Box
               ref={heroRef}
               sx={{
@@ -89,7 +89,7 @@ export function ResultsScreen({
                 onSettled={() => setStage((current) => (current === 0 ? 1 : current))}
               />
             </Box>
-            <Typography color="text.secondary" sx={{ mt: 1, ...shown(3) }}>
+            <Typography sx={{ color: 'text.secondary', mt: 1, ...shown(3) }}>
               {score.correct} correct · {score.incorrect} incorrect · {score.unanswered} unanswered
             </Typography>
           </Stack>
@@ -109,9 +109,9 @@ export function ResultsScreen({
                 <Typography variant="h6">Performance by topic</Typography>
                 {rows.map((row) => (
                   <Box key={row.label} sx={{ mt: 2 }}>
-                    <Stack direction="row" justifyContent="space-between">
+                    <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
                       <Typography>{row.label}</Typography>
-                      <Typography fontWeight={700}>
+                      <Typography sx={{ fontWeight: 700 }}>
                         {row.correct}/{row.total} · {row.percentage}%
                       </Typography>
                     </Stack>
@@ -137,8 +137,15 @@ export function ResultsScreen({
         <Typography
           aria-hidden="true"
           variant="caption"
-          color="text.secondary"
-          sx={{ position: 'fixed', bottom: 16, left: 0, right: 0, textAlign: 'center', pointerEvents: 'none' }}
+          sx={{
+            color: 'text.secondary',
+            position: 'fixed',
+            bottom: 16,
+            left: 0,
+            right: 0,
+            textAlign: 'center',
+            pointerEvents: 'none',
+          }}
         >
           Tap to skip
         </Typography>

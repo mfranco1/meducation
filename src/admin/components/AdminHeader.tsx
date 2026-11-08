@@ -45,16 +45,16 @@ export function AdminHeader(props: Props) {
             gap: 1,
           }}
         >
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ minWidth: 0 }}>
+          <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', minWidth: 0 }}>
             <AppBrand />
-            <Typography variant="body2" color="text.secondary">
+            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               Content admin
             </Typography>
           </Stack>
           <Stack
             direction="row"
-            alignItems="center"
             sx={{
+              alignItems: 'center',
               gridRow: { xs: 2, md: 1 },
               gridColumn: { xs: '1 / -1', md: 2 },
               display: 'grid',
@@ -100,8 +100,7 @@ export function AdminHeader(props: Props) {
           <Typography
             id="publish-blocked"
             variant="caption"
-            color="text.secondary"
-            sx={{ display: 'block', textAlign: { md: 'right' } }}
+            sx={{ color: 'text.secondary', display: 'block', textAlign: { md: 'right' } }}
           >
             {props.publishBlocked}
           </Typography>

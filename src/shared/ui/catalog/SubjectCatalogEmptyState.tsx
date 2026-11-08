@@ -7,10 +7,10 @@ export function SubjectCatalogEmptyState({ title, onShowAll }: { title: string; 
     <Stack
       aria-live="polite"
       aria-atomic="true"
-      alignItems="center"
-      justifyContent="center"
       spacing={1.5}
       sx={{
+        alignItems: 'center',
+        justifyContent: 'center',
         boxSizing: 'border-box',
         width: '100%',
         minHeight: 240,

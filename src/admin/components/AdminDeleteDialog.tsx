@@ -111,7 +111,7 @@ export function AdminDeleteDialog({
             {request?.label}
             {selection.id ? ` · ${selection.id}` : ''}
           </Typography>
-          <Typography variant="body2" color="text.secondary">
+          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
             Deleting removes these records from the draft immediately and does not publish. Restore them from Changes
             while those changes are still listed. Saved learner progress remains stored, but references to removed
             content may no longer be accessible.
@@ -132,7 +132,7 @@ export function AdminDeleteDialog({
                       </Typography>
                     ))}
                   </Stack>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
                     <Typography variant="caption">
                       {page * 25 + 1}–{Math.min(records.length, (page + 1) * 25)} of {records.length}
                     </Typography>

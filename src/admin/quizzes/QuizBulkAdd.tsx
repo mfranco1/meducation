@@ -215,8 +215,8 @@ export function QuizBulkAdd({
         . Up to 1,000 items per quiz. The server assigns every ID; saving does not publish.
       </Typography>
       {existing && existing.names.length > 0 && (
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography variant="caption" color="text.secondary" sx={{ overflowWrap: 'anywhere' }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+          <Typography variant="caption" sx={{ color: 'text.secondary', overflowWrap: 'anywhere' }}>
             Existing {existing.label}: {existing.names.join(', ')}
           </Typography>
           <Button size="small" onClick={() => void copyNames()} sx={{ flexShrink: 0 }}>
@@ -226,7 +226,7 @@ export function QuizBulkAdd({
       )}
       <TextField
         label="JSON"
-        slotProps={{ inputLabel: { shrink: true } }}
+        slotProps={{ inputLabel: { shrink: true }, input: { sx: { fontFamily: 'monospace', fontSize: 13 } } }}
         value={text}
         onChange={(event) => {
           setText(event.target.value);
@@ -238,7 +238,6 @@ export function QuizBulkAdd({
         minRows={16}
         maxRows={24}
         fullWidth
-        InputProps={{ sx: { fontFamily: 'monospace', fontSize: 13 } }}
         placeholder={context ? 'Edit topic, quiz, and item content.' : 'Choose a destination first.'}
       />
       {problems.length > 0 && (
@@ -257,8 +256,8 @@ export function QuizBulkAdd({
           {notice}
         </Alert>
       )}
-      <Stack direction="row" alignItems="center" spacing={1}>
-        <Typography variant="body2" color="text.secondary" sx={{ mr: 'auto' }} aria-live="polite">
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+        <Typography variant="body2" aria-live="polite" sx={{ color: 'text.secondary', mr: 'auto' }}>
           {busy ? 'Working…' : dirty ? 'Unsaved edits' : ''}
         </Typography>
         <Button variant="contained" disabled={disabled || !context || !text.trim()} onClick={() => void save()}>

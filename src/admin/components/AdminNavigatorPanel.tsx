@@ -108,7 +108,7 @@ export function AdminNavList({
       {rows.length > 0 && (
         <List dense disablePadding>
           {rows.map((row) => (
-            <Stack component="li" key={row.id} direction="row" alignItems="center">
+            <Stack component="li" key={row.id} direction="row" sx={{ alignItems: 'center' }}>
               {recordSelection.enabled && (
                 <Checkbox
                   size="small"
@@ -266,7 +266,7 @@ export function AdminNavigatorPanel({
         Manage subjects…
       </Button>
       {subject && (
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <Button size="small" onClick={() => onNewTopic(subject.id)}>
             New topic
           </Button>
@@ -287,7 +287,7 @@ export function AdminNavigatorPanel({
         />
       )}
       {subject && topic && (
-        <Stack direction="row" spacing={1} alignItems="center">
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
           <Button
             size="small"
             onClick={() => chooseBulkTarget?.('topic', { subjectId: subject.id, topicId: topic.id })}
@@ -390,7 +390,7 @@ export function AdminNavigatorPanel({
         )}
       </AdminNavList>
       {quiz && results.matches.length > 0 && (
-        <Stack direction="row" alignItems="center" justifyContent="space-between">
+        <Stack direction="row" sx={{ alignItems: 'center', justifyContent: 'space-between' }}>
           <Typography variant="caption">
             {results.rangeStart}–{results.rangeEnd} of {results.matches.length}
           </Typography>
