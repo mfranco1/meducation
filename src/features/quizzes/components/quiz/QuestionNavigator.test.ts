@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterQuestionNavigationItems, questionNavigationItems } from './QuestionNavigator';
+import { adjacentQuestionIndexes, filterQuestionNavigationItems, questionNavigationItems } from './QuestionNavigator';
 import type { Attempt, Question } from '../../../../domain/types';
 
 const questions: Question[] = [
@@ -83,5 +83,28 @@ describe('question navigator items', () => {
     expect(revealed.map((item) => item.wrong)).toEqual([true, false, true]);
     expect(filterQuestionNavigationItems(revealed, 'wrong').map((item) => item.index)).toEqual([0, 2]);
     expect(filterQuestionNavigationItems(revealed, 'flagged').map((item) => item.index)).toEqual([0, 2]);
+  });
+});
+
+describe('adjacent question indexes', () => {
+  const items = questionNavigationItems(questions, examAttempt);
+
+  it('skips questions hidden by the filter', () => {
+    expect(adjacentQuestionIndexes(items, 'unanswered', 1)).toEqual({ previous: undefined, next: 2 });
+    expect(adjacentQuestionIndexes(items, 'flagged', 0)).toEqual({ previous: undefined, next: 1 });
+  });
+
+  it('works when the current question is not in the filter', () => {
+    expect(adjacentQuestionIndexes(items, 'flagged', 2)).toEqual({ previous: 1, next: undefined });
+    expect(adjacentQuestionIndexes(items, 'unanswered', 0)).toEqual({ previous: undefined, next: 1 });
+  });
+
+  it('falls back to all questions when the filter matches nothing', () => {
+    expect(adjacentQuestionIndexes(items, 'wrong', 1)).toEqual({ previous: 0, next: 2 });
+  });
+
+  it('has no neighbors past the boundaries', () => {
+    expect(adjacentQuestionIndexes(items, 'all', 0).previous).toBeUndefined();
+    expect(adjacentQuestionIndexes(items, 'all', 2).next).toBeUndefined();
   });
 });

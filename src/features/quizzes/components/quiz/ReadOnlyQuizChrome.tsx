@@ -47,6 +47,8 @@ export function ReadOnlyQuizHeader({
 export function ReadOnlyQuizFooter({
   index,
   total,
+  previousIndex = index > 0 ? index - 1 : undefined,
+  nextIndex = index < total - 1 ? index + 1 : undefined,
   onNavigate,
   onDone,
   nextButtonRef,
@@ -54,6 +56,8 @@ export function ReadOnlyQuizFooter({
 }: {
   index: number;
   total: number;
+  previousIndex?: number;
+  nextIndex?: number;
   onNavigate: (index: number) => void;
   onDone: () => void;
   nextButtonRef?: MutableRefObject<HTMLButtonElement | null>;
@@ -63,8 +67,10 @@ export function ReadOnlyQuizFooter({
     <StudyNavigationFooter
       index={index}
       total={total}
-      onPrevious={() => onNavigate(index - 1)}
-      onNext={() => onNavigate(index + 1)}
+      hasPrevious={previousIndex !== undefined}
+      hasNext={nextIndex !== undefined}
+      onPrevious={() => previousIndex !== undefined && onNavigate(previousIndex)}
+      onNext={() => nextIndex !== undefined && onNavigate(nextIndex)}
       onFinish={onDone}
       finishLabel="Done"
       nextButtonRef={nextButtonRef}

@@ -58,9 +58,10 @@ describe('subject quiz review', () => {
   it('lists saved attempts and opens the chosen one', () => {
     const { onReviewAttempt } = renderSubject({ completionCount: 1 }, [completedAttempt]);
     fireEvent.click(screen.getByRole('button', { name: `Review attempts: ${quiz.name}` }));
-    const dialog = screen.getByRole('dialog', { name: 'Review attempts' });
-    expect(within(dialog).getByText(/80% · Exam Mode/)).toBeVisible();
-    fireEvent.click(within(dialog).getByRole('button', { name: /80%/ }));
+    const dialog = screen.getByRole('dialog', { name: 'Review Attempts' });
+    expect(within(dialog).getByText(/Exam Mode · 00:00/)).toBeVisible();
+    expect(within(dialog).getByText('80%')).toBeVisible();
+    fireEvent.click(within(dialog).getByRole('button', { name: /^Review attempt from Sep 22, 2026 at / }));
     expect(onReviewAttempt).toHaveBeenCalledWith(expect.objectContaining({ id: quiz.id }), completedAttempt);
   });
 

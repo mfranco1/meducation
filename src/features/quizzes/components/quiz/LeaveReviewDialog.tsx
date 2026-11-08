@@ -28,7 +28,7 @@ export function LeaveReviewDialog({
       </DialogTitle>
       <DialogContent>
         <DialogContentText>
-          Once you leave, you won't be able to return to this attempt's review. Your score will remain saved.
+          Your score is saved. You can review this attempt again from the subject page.
         </DialogContentText>
       </DialogContent>
       <DialogActions>

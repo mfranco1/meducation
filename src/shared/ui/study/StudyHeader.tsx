@@ -171,11 +171,15 @@ export function StudyNavigationFooter({
   finishLabel,
   nextLabel = 'Next',
   disabled = false,
+  hasPrevious = index > 0,
+  hasNext = index < total - 1,
   nextButtonRef,
   finishButtonRef,
 }: {
   index: number;
   total: number;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
   onPrevious: () => void;
   onNext: () => void;
   onFinish: () => void;
@@ -188,10 +192,10 @@ export function StudyNavigationFooter({
   return (
     <Stack direction="row" justifyContent="flex-end" alignItems="center" sx={{ mt: 3 }}>
       <Stack direction="row" spacing={1}>
-        <Button startIcon={<ArrowBackRoundedIcon />} disabled={index === 0 || disabled} onClick={onPrevious}>
+        <Button startIcon={<ArrowBackRoundedIcon />} disabled={!hasPrevious || disabled} onClick={onPrevious}>
           Previous
         </Button>
-        {index === total - 1 ? (
+        {!hasNext ? (
           <Button ref={finishButtonRef} variant="contained" disabled={disabled} onClick={onFinish}>
             {finishLabel}
           </Button>

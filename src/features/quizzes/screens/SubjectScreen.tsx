@@ -146,6 +146,7 @@ export function SubjectScreen({
       )}
       {reviewQuiz && (
         <PastAttemptsDialog
+          quizName={reviewQuiz.name}
           attempts={attemptsFor(reviewQuiz.id)}
           onClose={() => setReviewQuiz(null)}
           onSelect={(attempt) => {

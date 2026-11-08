@@ -16,7 +16,12 @@ import {
   type CelebrationEvent,
 } from '../components/celebration/celebrationCatalog';
 import { QuestionCard } from '../components/quiz/QuestionCard';
-import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
+import {
+  QuestionNavigator,
+  adjacentQuestionIndexes,
+  questionNavigationItems,
+  type QuestionNavigatorFilter,
+} from '../components/quiz/QuestionNavigator';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
 import { SwapTransition } from '../../../shared/ui/transitions/SwapTransition';
 import { Stopwatch } from '../components/quiz/Stopwatch';
@@ -45,12 +50,23 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
   const question = questions[index];
+  const { previous, next } = adjacentQuestionIndexes(
+    questionNavigationItems(questions, attempt),
+    navigatorFilter,
+    index,
+  );
+  const hasPrevious = previous !== undefined;
+  const hasNext = next !== undefined;
+  const goPrevious = () => hasPrevious && navigateToQuestion(previous);
+  const goNext = () => hasNext && navigateToQuestion(next);
   useStudyArrowNavigation({
     index,
     total: questions.length,
     disabled: navigatorOpen || submitOpen,
-    onPrevious: () => navigateToQuestion(index - 1),
-    onNext: () => navigateToQuestion(index + 1),
+    hasPrevious,
+    hasNext,
+    onPrevious: goPrevious,
+    onNext: goNext,
     nextButtonRef: nextRef,
     finishButtonRef: finishRef,
   });
@@ -138,8 +154,10 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
         <StudyNavigationFooter
           index={index}
           total={questions.length}
-          onPrevious={() => navigateToQuestion(index - 1)}
-          onNext={() => navigateToQuestion(index + 1)}
+          hasPrevious={hasPrevious}
+          hasNext={hasNext}
+          onPrevious={goPrevious}
+          onNext={goNext}
           onFinish={requestSubmit}
           finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'}
           nextLabel={feedback ? 'Continue' : 'Next'}

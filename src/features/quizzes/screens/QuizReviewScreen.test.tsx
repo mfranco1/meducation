@@ -46,23 +46,41 @@ const attempt: CompletedAttempt = {
 };
 
 describe('QuizReviewScreen', () => {
-  it('navigates the canonical question order with arrows, ignoring the active filter', () => {
+  it('moves between wrong questions with Next and arrows when Wrong is selected', () => {
+    const threeQuestions: Question[] = [
+      questions[0],
+      { ...questions[1], id: 'q2' },
+      { ...questions[1], id: 'q3', stem: 'Third question' },
+    ];
+    const wrongAttempt: CompletedAttempt = {
+      ...attempt,
+      responses: {
+        q1: { questionId: 'q1', selectedChoiceId: 'A', flagged: false, locked: false, timeMs: 0 },
+        q2: { questionId: 'q2', selectedChoiceId: 'A', flagged: false, locked: false, timeMs: 0 },
+        q3: { questionId: 'q3', selectedChoiceId: 'B', flagged: false, locked: false, timeMs: 0 },
+      },
+    };
     const onNavigate = vi.fn();
-    render(
+    const renderAt = (index: number) => (
       <ThemeProvider theme={theme}>
         <QuizReviewScreen
           quiz={quiz}
-          attempt={attempt}
-          index={0}
-          questions={questions}
+          attempt={wrongAttempt}
+          index={index}
+          questions={threeQuestions}
           onNavigate={onNavigate}
           onRequestExit={vi.fn()}
         />
-      </ThemeProvider>,
+      </ThemeProvider>
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Flagged questions, 1' }));
+    const { rerender } = render(renderAt(0));
+    fireEvent.click(screen.getByRole('button', { name: 'Wrong questions, 2' }));
     fireEvent.keyDown(window, { key: 'ArrowRight' });
-    expect(onNavigate).toHaveBeenCalledWith(1);
+    expect(onNavigate).toHaveBeenLastCalledWith(2);
+    fireEvent.click(screen.getByRole('button', { name: 'Next' }));
+    expect(onNavigate).toHaveBeenLastCalledWith(2);
+    rerender(renderAt(2));
+    expect(screen.getByRole('button', { name: 'Done' })).toBeVisible();
   });
 
   it('keeps multi-paragraph stems in one column beside the optional flag', () => {

@@ -1,13 +1,18 @@
 import FlagIcon from '@mui/icons-material/Flag';
 import { Alert, Box, Button, Card, CardContent, Container, Stack } from '@mui/material';
-import { useEffect, useRef, useState } from 'react';
+import { useRef, useState } from 'react';
 import { answerFor, isCorrect } from '../../../domain/quizEngine';
 import type { CompletedAttempt, Question, Quiz } from '../../../domain/types';
 import { MarkdownContent } from '../../../shared/ui/content/MarkdownContent';
 import { FeedbackPanel, type ReadOnlyFeedbackStatus } from '../components/feedback/FeedbackPanel';
 import { QuestionNavigationLayout } from '../../../shared/ui/study/QuestionNavigationLayout';
 import { SwapTransition } from '../../../shared/ui/transitions/SwapTransition';
-import { QuestionNavigator, type QuestionNavigatorFilter } from '../components/quiz/QuestionNavigator';
+import {
+  QuestionNavigator,
+  adjacentQuestionIndexes,
+  questionNavigationItems,
+  type QuestionNavigatorFilter,
+} from '../components/quiz/QuestionNavigator';
 import { ReadOnlyChoiceList } from '../components/quiz/ReadOnlyChoiceList';
 import { ReadOnlyQuizFooter, ReadOnlyQuizHeader } from '../components/quiz/ReadOnlyQuizChrome';
 import { useStudyArrowNavigation } from '../../../shared/ui/study/useStudyArrowNavigation';
@@ -34,24 +39,23 @@ export function QuizReviewScreen({
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
+  const { previous, next } = adjacentQuestionIndexes(
+    questionNavigationItems(questions, attempt, true),
+    navigatorFilter,
+    index,
+  );
   useStudyArrowNavigation({
     index,
     total: questions.length,
     disabled: navigatorOpen,
-    onPrevious: () => onNavigate(index - 1),
-    onNext: () => onNavigate(index + 1),
+    hasPrevious: previous !== undefined,
+    hasNext: next !== undefined,
+    onPrevious: () => previous !== undefined && onNavigate(previous),
+    onNext: () => next !== undefined && onNavigate(next),
     nextButtonRef: nextRef,
     finishButtonRef: finishRef,
   });
   const question = questions[index];
-  useEffect(() => {
-    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
-      event.preventDefault();
-      event.returnValue = '';
-    };
-    window.addEventListener('beforeunload', warnBeforeUnload);
-    return () => window.removeEventListener('beforeunload', warnBeforeUnload);
-  }, []);
   if (!question)
     return (
       <Container maxWidth="md" sx={{ py: 4 }}>
@@ -140,6 +144,8 @@ export function QuizReviewScreen({
         <ReadOnlyQuizFooter
           index={index}
           total={questions.length}
+          previousIndex={previous}
+          nextIndex={next}
           onNavigate={onNavigate}
           onDone={onRequestExit}
           nextButtonRef={nextRef}

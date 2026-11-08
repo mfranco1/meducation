@@ -6,6 +6,8 @@ export function useStudyArrowNavigation({
   index,
   total,
   disabled = false,
+  hasPrevious = index > 0,
+  hasNext = index < total - 1,
   onPrevious,
   onNext,
   nextButtonRef,
@@ -14,25 +16,37 @@ export function useStudyArrowNavigation({
   index: number;
   total: number;
   disabled?: boolean;
+  hasPrevious?: boolean;
+  hasNext?: boolean;
   onPrevious: () => void;
   onNext: () => void;
   nextButtonRef?: MutableRefObject<HTMLButtonElement | null>;
   finishButtonRef?: MutableRefObject<HTMLButtonElement | null>;
 }) {
-  const latest = useRef({ index, total, disabled, onPrevious, onNext, nextButtonRef, finishButtonRef });
+  const latest = useRef({
+    index,
+    total,
+    disabled,
+    hasPrevious,
+    hasNext,
+    onPrevious,
+    onNext,
+    nextButtonRef,
+    finishButtonRef,
+  });
   const focusFinishAfterAdvance = useRef(false);
-  latest.current = { index, total, disabled, onPrevious, onNext, nextButtonRef, finishButtonRef };
+  latest.current = { index, total, disabled, hasPrevious, hasNext, onPrevious, onNext, nextButtonRef, finishButtonRef };
 
   useLayoutEffect(() => {
-    if (index === total - 1 && focusFinishAfterAdvance.current) {
+    if (!hasNext && focusFinishAfterAdvance.current) {
       finishButtonRef?.current?.focus();
       focusFinishAfterAdvance.current = false;
     }
-  }, [index, total, finishButtonRef]);
+  }, [index, hasNext, finishButtonRef]);
 
   const onArrowNext = useCallback(() => {
     const state = latest.current;
-    if (state.index >= state.total - 1) return;
+    if (!state.hasNext) return;
     focusFinishAfterAdvance.current = Boolean(
       state.nextButtonRef?.current && document.activeElement === state.nextButtonRef.current,
     );
@@ -48,7 +62,7 @@ export function useStudyArrowNavigation({
       if (state.total < 1 || state.index < 0 || state.index >= state.total) return;
       if (event.repeat) return;
       if (event.key === 'ArrowLeft') {
-        if (state.index > 0) state.onPrevious();
+        if (state.hasPrevious) state.onPrevious();
       } else onArrowNext();
     };
     window.addEventListener('keydown', handleKeyDown);

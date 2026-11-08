@@ -47,6 +47,19 @@ export function filterQuestionNavigationItems(items: QuestionNavigationItem[], f
   return items;
 }
 
+export function adjacentQuestionIndexes(
+  items: QuestionNavigationItem[],
+  filter: QuestionNavigatorFilter,
+  currentIndex: number,
+): { previous?: number; next?: number } {
+  const filtered = filterQuestionNavigationItems(items, filter);
+  const visible = filtered.length > 0 ? filtered : items;
+  return {
+    previous: visible.filter((item) => item.index < currentIndex).at(-1)?.index,
+    next: visible.find((item) => item.index > currentIndex)?.index,
+  };
+}
+
 interface QuestionNavigatorProps {
   questions: Question[];
   attempt: Attempt;

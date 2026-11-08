@@ -33,6 +33,10 @@ const faqs = [
     'Use Continue Studying on the Quizzes or Flashcards dashboard to return to an unfinished quiz or deck. Save and leave your study session to keep your place.',
   ],
   [
+    'How do I review a past quiz?',
+    'Open the subject and choose Review on the quiz, then pick an attempt. This browser keeps your 250 most recent attempts.',
+  ],
+  [
     'Why can’t I resume after a content update?',
     'If questions, answers or cards have changed, the app may ask you to restart the quiz or deck. Your saved session stays unchanged unless you confirm the restart.',
   ],
