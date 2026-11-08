@@ -1,5 +1,5 @@
 import { useRef, type Ref } from 'react';
-import { Box, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Button, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import { isCorrect } from '../../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../../domain/types';
 import { useScrollCurrentQuestion } from '../../../../shared/ui/study/useScrollCurrentQuestion';
@@ -69,6 +69,8 @@ interface QuestionNavigatorProps {
   onNavigate: (index: number) => void;
   revealAnswers?: boolean;
   filterSet?: QuestionNavigatorFilterSet;
+  finishLabel: string;
+  onFinish: () => void;
 }
 
 export function QuestionNavigator({
@@ -80,6 +82,8 @@ export function QuestionNavigator({
   onNavigate,
   revealAnswers = false,
   filterSet = 'quiz',
+  finishLabel,
+  onFinish,
 }: QuestionNavigatorProps) {
   const items = questionNavigationItems(questions, attempt, revealAnswers);
   const visibleItems = filterQuestionNavigationItems(items, filter);
@@ -116,7 +120,7 @@ export function QuestionNavigator({
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
-      <Box ref={scrollAreaRef} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: 0.75 }}>
+      <Box ref={scrollAreaRef} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 170px)', md: 470 }, p: 0.75 }}>
         {visibleItems.length ? (
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1 }}>
             {visibleItems.map((item) => (
@@ -143,6 +147,9 @@ export function QuestionNavigator({
           </Box>
         )}
       </Box>
+      <Button variant="contained" fullWidth onClick={onFinish}>
+        {finishLabel}
+      </Button>
     </Stack>
   );
 }

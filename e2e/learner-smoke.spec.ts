@@ -415,10 +415,10 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   await expect(celebration).toBeVisible();
   await expect(page.getByText('The heart pumps blood.')).toBeVisible();
   await expect(celebration).toHaveCount(0);
-  await expect(page.getByRole('button', { name: /^(Continue|Finish)$/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^(Continue|Finish)$/ }).first()).toBeVisible();
   if (await page.getByRole('button', { name: 'Continue' }).isVisible())
     await page.getByRole('button', { name: 'Continue' }).click();
-  await page.getByRole('button', { name: 'Finish' }).click();
+  await page.getByRole('button', { name: 'Finish' }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
   await expect(page.getByText('2 correct · 0 incorrect · 0 unanswered')).toBeVisible();
   await page.getByRole('button', { name: 'Back to quizzes' }).click();
@@ -517,10 +517,10 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page },
   await page.getByRole('button', { name: 'Flag question' }).click();
   await showQuestion(page, /Which choice names the heart/);
   await page.getByRole('radio', { name: /Heart/ }).check();
-  await expect(page.getByRole('button', { name: /^(Next|Submit)$/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^(Next|Submit)$/ }).first()).toBeVisible();
   if (await page.getByRole('button', { name: 'Next' }).isVisible())
     await page.getByRole('button', { name: 'Next' }).click();
-  await page.getByRole('button', { name: 'Submit' }).click();
+  await page.getByRole('button', { name: 'Submit' }).first().click();
   await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
   await page.getByRole('button', { name: 'Review results' }).click();
   await expect(page.getByLabel(/Final time:/)).toBeVisible();

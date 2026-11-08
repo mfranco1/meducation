@@ -78,7 +78,7 @@ function renderQuizForSubmission({
       <QuizScreen
         quiz={quiz}
         attempt={attempt}
-        index={questions.length - 1}
+        index={0}
         questions={questions}
         onCheckpoint={() => {}}
         onFinish={onFinish}

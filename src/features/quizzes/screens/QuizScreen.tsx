@@ -99,6 +99,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
     onFinish();
   };
 
+  const finishLabel = attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish';
   const navigator = (
     <QuestionNavigator
       questions={questions}
@@ -107,6 +108,11 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
       filter={navigatorFilter}
       onFilterChange={setNavigatorFilter}
       onNavigate={navigateToQuestion}
+      finishLabel={finishLabel}
+      onFinish={() => {
+        setNavigatorOpen(false);
+        requestSubmit();
+      }}
     />
   );
 
@@ -159,7 +165,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
           onPrevious={goPrevious}
           onNext={goNext}
           onFinish={requestSubmit}
-          finishLabel={attempt.feedbackMode === 'exam' ? 'Submit' : 'Finish'}
+          finishLabel={finishLabel}
           nextLabel={feedback ? 'Continue' : 'Next'}
           nextButtonRef={nextRef}
           finishButtonRef={finishRef}

@@ -80,7 +80,7 @@ describe('QuizReviewScreen', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
     expect(onNavigate).toHaveBeenLastCalledWith(2);
     rerender(renderAt(2));
-    expect(screen.getByRole('button', { name: 'Done' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Next' })).toBeNull();
   });
 
   it('keeps multi-paragraph stems in one column beside the optional flag', () => {
@@ -142,6 +142,8 @@ describe('QuizReviewScreen', () => {
     expect(screen.getByRole('img', { name: 'Flagged question' })).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Leave review' }));
     expect(onExit).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'Done' }));
+    expect(onExit).toHaveBeenCalledTimes(2);
   });
 
   it('labels unanswered responses and keeps the final duration static', () => {

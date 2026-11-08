@@ -148,7 +148,7 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   await review.getByRole('button', { name: 'Exam Mode', exact: true }).click();
   await review.getByRole('button', { name: 'Begin Quiz' }).click();
   await review.getByRole('radio').first().check();
-  await review.getByRole('button', { name: 'Submit', exact: true }).click();
+  await review.getByRole('button', { name: 'Submit', exact: true }).first().click();
   await review.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
   await expect(review.getByRole('button', { name: 'Review results' })).toBeVisible();
   const score = await progress(review);

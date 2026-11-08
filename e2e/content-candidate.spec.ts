@@ -64,7 +64,7 @@ for (const candidate of contentCases()) {
       await expect(actions).toBeVisible();
       await actions.focus();
       await expect(actions).toBeFocused();
-      const finish = page.getByRole('button', { name: 'Finish', exact: true });
+      const finish = page.getByRole('button', { name: 'Finish', exact: true }).first();
       await finish.scrollIntoViewIfNeeded();
       await expect(finish).toBeInViewport();
       await page.screenshot({ path: testInfo.outputPath(`content-${width}.png`), fullPage: true });

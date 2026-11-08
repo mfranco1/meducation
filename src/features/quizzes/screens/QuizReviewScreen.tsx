@@ -90,6 +90,11 @@ export function QuizReviewScreen({
       }}
       revealAnswers
       filterSet="review"
+      finishLabel="Done"
+      onFinish={() => {
+        setNavigatorOpen(false);
+        onRequestExit();
+      }}
     />
   );
 

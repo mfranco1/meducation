@@ -37,10 +37,17 @@ export function PastAttemptsDialog({
           <CloseRoundedIcon />
         </IconButton>
       </DialogTitle>
-      <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="baseline" spacing={2} sx={{ px: 3, pb: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ minWidth: 0 }}>
           {quizName}
         </Typography>
+        {attempts.length > 0 && (
+          <Typography variant="body2" color="text.secondary" sx={{ flexShrink: 0 }}>
+            {attempts.length} {attempts.length === 1 ? 'attempt' : 'attempts'}
+          </Typography>
+        )}
+      </Stack>
+      <DialogContent sx={{ pt: 0 }}>
         {attempts.length === 0 ? (
           <DialogContentText>Older attempts are no longer saved on this device.</DialogContentText>
         ) : (
@@ -57,7 +64,7 @@ export function PastAttemptsDialog({
                         {date}
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
-                        {attempt.feedbackMode === 'immediate' ? 'Fast Feedback' : 'Exam Mode'} ·{' '}
+                        {attempt.feedbackMode === 'immediate' ? 'Fast Feedback' : 'Exam Mode'} · Elapsed Time:{' '}
                         {formatDuration(attempt.score.elapsedMs)}
                       </Typography>
                     </Box>
