@@ -8,27 +8,18 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const input: Record<string, string> = { learner: resolve(import.meta.dirname, 'index.html') };
   if (env.VITE_BUILD_ADMIN === 'true') input.admin = resolve(import.meta.dirname, 'admin.html');
+  const apiTarget = `http://127.0.0.1:${process.env.MEDUCATION_API_PORT ?? '8000'}`;
+  const proxy = {
+    '/api': { target: apiTarget, changeOrigin: false },
+    ...(process.env.MEDUCATION_TEST_FIXTURE_PROXY === 'true'
+      ? { '/fixture': { target: apiTarget, changeOrigin: false } }
+      : {}),
+  };
 
   return {
     plugins: [brandingPlugin(), react()],
-    server: {
-      proxy: {
-        '/api': { target: `http://127.0.0.1:${process.env.MEDUCATION_API_PORT ?? '8000'}`, changeOrigin: false },
-        ...(process.env.MEDUCATION_TEST_FIXTURE_PROXY === 'true'
-          ? {
-              '/fixture': {
-                target: `http://127.0.0.1:${process.env.MEDUCATION_API_PORT ?? '8000'}`,
-                changeOrigin: false,
-              },
-            }
-          : {}),
-      },
-    },
-    preview: {
-      proxy: {
-        '/api': { target: `http://127.0.0.1:${process.env.MEDUCATION_E2E_API_PORT ?? '8000'}`, changeOrigin: false },
-      },
-    },
+    server: { proxy },
+    preview: { proxy },
     build: { rollupOptions: { input } },
     test: {
       maxWorkers: 2,

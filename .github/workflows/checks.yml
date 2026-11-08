@@ -3,12 +3,19 @@ name: Checks
 on:
   push:
     branches: [master]
+    paths-ignore: ['docs/**', '.agents/**', '**/*.md']
   pull_request:
+    paths-ignore: ['docs/**', '.agents/**', '**/*.md']
   workflow_dispatch:
+
+concurrency:
+  group: checks-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   backend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -38,6 +45,7 @@ jobs:
 
   frontend:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v7
@@ -56,6 +64,7 @@ jobs:
 
   browser-smoke:
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -74,7 +83,7 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build:content-policy
-      - run: npx playwright install --with-deps chromium
+      - run: npx playwright install --with-deps --only-shell chromium
       - name: Build and start the learner image
         run: |
           docker build --target learner -t meducation-learner:ci .
@@ -91,5 +100,5 @@ jobs:
           path: |
             test-results/
             test-results-admin/
-          retention-days: 7
+          retention-days: 3
           if-no-files-found: ignore

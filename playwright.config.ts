@@ -23,7 +23,7 @@ export default defineConfig({
       gracefulShutdown: { signal: 'SIGTERM', timeout: 30_000 },
     },
     {
-      command: `MEDUCATION_E2E_API_PORT=${e2eApiPort} npx vite preview --host 127.0.0.1 --port 4173 --strictPort`,
+      command: `MEDUCATION_API_PORT=${e2eApiPort} npx vite preview --host 127.0.0.1 --port 4173 --strictPort`,
       url: 'http://127.0.0.1:4173',
       reuseExistingServer: false,
       timeout: 60_000,

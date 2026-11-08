@@ -159,4 +159,5 @@ Before a hosted launch, confirm on the platform:
 - The API runtime has only the reader URL (`sslmode=verify-full`). Admin stays disabled (`MEDUCATION_ADMIN_ENABLED` unset). Migrator, operator and bootstrap credentials are used by jobs only.
 - Secrets live in the platform secret store, never in images or the repository.
 - Point-in-time recovery and budget alerts are on for the managed database.
+- If the repository is private, GitHub Actions has a budget (Settings, Billing). The Free plan includes 2,000 Linux minutes a month; a typical CI run uses about 15.
 - Dependencies and base images are current: `npm audit --omit=dev`, `pip-audit -r backend/requirements.lock`, and the latest patch tags for the pinned images.

@@ -1,6 +1,6 @@
 # Testing
 
-Pick checks by the contract you changed. Do not add tests that mirror implementation or incidental styling. Assert observable outcomes and safety invariants. CI (`.github/workflows/checks.yml`) runs the host gates, the real-PostgreSQL backend cases and both browser suites, plus an Nginx check against the built learner image.
+Pick checks by the contract you changed. Do not add tests that mirror implementation or incidental styling. Assert observable outcomes and safety invariants. CI (`.github/workflows/checks.yml`) runs the host gates, the real-PostgreSQL backend cases and both browser suites, plus an Nginx check against the built learner image. It skips pushes that only change `docs/`, `.agents/` or Markdown files, and cancels a run when a newer push to the same branch arrives. The admin suite runs against a development-mode admin build served by `vite preview`.
 
 ## Suites and commands
 
