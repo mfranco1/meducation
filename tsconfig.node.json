@@ -12,7 +12,8 @@
     "moduleDetection": "force",
     "noEmit": true,
     "strict": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "types": ["node"]
   },
   "include": ["vite.config.ts", "playwright.config.ts", "playwright.admin.config.ts", "scripts", "e2e"]
 }

@@ -67,7 +67,7 @@
     "sharp": "^0.35.5",
     "svgo": "^4.1.0",
     "tsx": "^4.20.5",
-    "typescript": "^5.9.2",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.71.0",
     "unified": "^11.0.5",
     "vite": "^7.1.3",
