@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 
-const faqs = [
+export const faqs = [
   [
     'Where is my progress saved?',
     'Your quiz and flashcard progress stays in this browser. There is no learner account or automatic sync between devices. Clearing browser data deletes your progress. Download a backup before clearing it or switching browsers.',
