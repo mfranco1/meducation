@@ -1,6 +1,5 @@
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../domain/flashcardStudy';
 import { isFlashcardDailyStats } from '../domain/flashcardDailyStats';
-import type { StoragePort } from './progressCodec';
 import { isObject, nonBlank, onlyKeys } from '../domain/json';
 
 export const flashcardProgressKey = 'meducation.flashcards.progress.v2';
@@ -62,8 +61,7 @@ export function decodeFlashcardProgress(value: unknown): FlashcardProgressState 
   return { ...value, completionCounts: value.completionCounts ?? {} } as unknown as FlashcardProgressState;
 }
 
-export function loadFlashcardProgress(storage: StoragePort): FlashcardProgressState | undefined {
-  const raw = storage.getItem(flashcardProgressKey);
+export function loadFlashcardProgress(raw: string | null): FlashcardProgressState | undefined {
   if (raw === null) return { schemaVersion: 2, revision: 'initial', checkpoints: {}, completionCounts: {} };
   try {
     return decodeFlashcardProgress(JSON.parse(raw) as unknown);

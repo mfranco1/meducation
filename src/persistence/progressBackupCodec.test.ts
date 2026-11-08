@@ -18,6 +18,24 @@ describe('progress backup codec', () => {
     }
   });
 
+  it.each([
+    [250, true],
+    [251, false],
+  ])('checks the completed history limit with %i attempts', (count, ok) => {
+    const value = cloneFixture() as {
+      quiz: {
+        completed: Array<{ id: string; quizId: string }>;
+        completedIds: Record<string, boolean>;
+        completionCounts: Record<string, number>;
+      };
+    };
+    const template = value.quiz.completed[0];
+    value.quiz.completed = Array.from({ length: count }, (_, index) => ({ ...template, id: `many-${index}` }));
+    value.quiz.completedIds = Object.fromEntries(value.quiz.completed.map((attempt) => [attempt.id, true]));
+    value.quiz.completionCounts = { [template.quizId]: count };
+    expect(validateProgressBackup(value).ok).toBe(ok);
+  });
+
   it('accepts explicit empty progress and an absent optional daily aggregate', () => {
     expect(validateProgressBackup(structuredClone(emptyFixture)).ok).toBe(true);
     const legacyLocalPayload = structuredClone(fixture) as { flashcards: Record<string, unknown> };

@@ -1,6 +1,6 @@
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../domain/flashcardStudy';
 import { localDayKey, recordFlashcardDailyCompletion } from '../domain/flashcardDailyStats';
-import { decodeFlashcardProgress, flashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
+import { flashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
 import { LocalJsonStore, PersistenceError } from './localJsonStore';
 import type { StoragePort } from './progressCodec';
 
@@ -29,8 +29,8 @@ const emptyProgress = (revision = 'initial'): FlashcardProgressState => ({
   completionCounts: {},
 });
 
-function readProgress(storage: StoragePort) {
-  const state = loadFlashcardProgress(storage);
+function readProgress(raw: string | null) {
+  const state = loadFlashcardProgress(raw);
   return state
     ? { state, revision: state.revision }
     : { state: emptyProgress('corrupt'), revision: 'corrupt', corrupt: true };
@@ -54,12 +54,7 @@ export class LocalFlashcardProgressRepository {
   }
 
   private commit(change: (state: FlashcardProgressState) => FlashcardProgressState | undefined) {
-    this.store.commit((state) => {
-      const next = change(state);
-      if (next && !decodeFlashcardProgress(next))
-        throw new PersistenceError('corrupt', 'Invalid flashcard progress was not saved.');
-      return next;
-    });
+    this.store.commit(change);
   }
 
   saveCheckpoint(checkpoint: FlashcardCheckpoint) {

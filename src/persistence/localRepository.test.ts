@@ -207,6 +207,43 @@ describe('browser storage boundary fixtures', () => {
     expect(values).toEqual(before);
   });
 
+  it('drops the oldest attempts when browser storage is full and keeps counts', () => {
+    const limit = 6000;
+    const stored = new Map<string, string>();
+    const repository = new LocalAttemptRepository({
+      getItem: (key) => stored.get(key) ?? null,
+      setItem: (key, value) => {
+        if (value.length > limit) throw new DOMException('full', 'QuotaExceededError');
+        stored.set(key, value);
+      },
+    });
+    for (let index = 0; index < 40; index++)
+      repository.saveCompleted({ ...fixtures.completed, id: `finished-${index}` } as CompletedAttempt);
+    const kept = repository.list();
+    expect(kept.length).toBeGreaterThan(0);
+    expect(kept.length).toBeLessThan(40);
+    expect(kept[0].id).toBe('finished-39');
+    expect(repository.completionCount('q1')).toBe(40);
+    expect(repository.getSnapshot().completedIds['finished-0']).toBe(true);
+    expect(stored.get(progressKey)!.length).toBeLessThanOrEqual(limit);
+  });
+
+  it('trims completed history that exceeds the size budget', () => {
+    const repository = new LocalAttemptRepository();
+    const responses = Object.fromEntries(
+      Array.from({ length: 3000 }, (_, index) => [
+        `i${index}`,
+        { questionId: `i${index}`, selectedChoiceId: 'A', flagged: false, locked: false, timeMs: 0 },
+      ]),
+    );
+    for (let index = 0; index < 30; index++)
+      repository.saveCompleted({ ...fixtures.completed, id: `big-${index}`, responses } as unknown as CompletedAttempt);
+    const kept = repository.list();
+    expect(kept.length).toBeLessThan(30);
+    expect(kept[0].id).toBe('big-29');
+    expect(repository.completionCount('q1')).toBe(30);
+  });
+
   it('does not count the same completed attempt twice', () => {
     const repository = new LocalAttemptRepository();
     const completed = fixtures.completed as CompletedAttempt;
@@ -218,11 +255,11 @@ describe('browser storage boundary fixtures', () => {
 
   it('remains idempotent after the completed history is pruned', () => {
     const repository = new LocalAttemptRepository();
-    for (let index = 0; index < 205; index++)
+    for (let index = 0; index < 255; index++)
       repository.saveCompleted({ ...fixtures.completed, id: `finished-${index}` } as CompletedAttempt);
     repository.saveCompleted({ ...fixtures.completed, id: 'finished-0' } as CompletedAttempt);
-    expect(repository.list()).toHaveLength(200);
-    expect(repository.completionCount('q1')).toBe(205);
+    expect(repository.list()).toHaveLength(250);
+    expect(repository.completionCount('q1')).toBe(255);
   });
 
   it('rejects a stale tab before replacing another tab’s progress', () => {
@@ -232,6 +269,16 @@ describe('browser storage boundary fixtures', () => {
     second.saveActive({ ...fixtures.active, id: 'second-tab' } as Attempt);
     expect(() => first.saveActive({ ...fixtures.active, id: 'first-tab' } as Attempt)).toThrowError(PersistenceError);
     expect(second.getActive('q1')?.id).toBe('second-tab');
+  });
+
+  it('reports a conflict when another tab changed the stored value', () => {
+    const repository = new LocalAttemptRepository();
+    repository.saveActive(fixtures.active as Attempt);
+    values.set(progressKey, JSON.stringify({ ...emptyProgress(), revision: 'other-tab' }));
+    expect(() => repository.saveActive(fixtures.active as Attempt)).toThrowError(
+      expect.objectContaining({ kind: 'conflict' }),
+    );
+    expect(JSON.parse(values.get(progressKey)!).revision).toBe('other-tab');
   });
 
   it('does not overwrite an unreadable versioned record', () => {

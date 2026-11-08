@@ -7,6 +7,8 @@ import type { ProgressState } from './progressCodec';
 import type { FlashcardProgressState } from '../domain/flashcardStudy';
 import { isObject, onlyKeys } from '../domain/json';
 
+export const MAX_COMPLETED_ATTEMPTS = 250;
+
 export const PROGRESS_BACKUP_FORMAT = 'meducation-progress-backup';
 export const PROGRESS_BACKUP_VERSION = 1;
 export const PROGRESS_BACKUP_MAX_BYTES = 4 * 1024 * 1024;
@@ -234,7 +236,7 @@ function validQuiz(value: unknown): value is QuizBackupV2 {
   if (
     !validMap(value.active, 64, (key, v): v is Attempt => validAttempt(v, true) && v.quizId === key) ||
     !Array.isArray(value.completed) ||
-    value.completed.length > 200 ||
+    value.completed.length > MAX_COMPLETED_ATTEMPTS ||
     !value.completed.every((v) => validAttempt(v, false)) ||
     !validMap(value.completionCounts, 2048, (_k, v): v is number => safeInt(v)) ||
     !validMap(value.lowestScores, 2048, (_k, v): v is number => safeInt(v) && v <= 100) ||
@@ -369,7 +371,7 @@ function validLiveQuiz(state: unknown): state is ProgressState {
     return false;
   if (
     !Array.isArray(state.completed) ||
-    state.completed.length > 200 ||
+    state.completed.length > MAX_COMPLETED_ATTEMPTS ||
     !state.completed.every((value) => {
       if (
         !keys(

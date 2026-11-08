@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { decodeFlashcardProgress, flashcardProgressKey, loadFlashcardProgress } from './flashcardProgressCodec';
+import { decodeFlashcardProgress, loadFlashcardProgress } from './flashcardProgressCodec';
 
 const checkpoint = {
   deckId: 'd1',
@@ -73,36 +73,19 @@ describe('flashcard progress envelope', () => {
     }
   });
 
-  it('initializes only the current key without reading or rewriting old storage', () => {
-    const reads: string[] = [];
-    const storage = {
-      getItem: (key: string) => {
-        reads.push(key);
-        return null;
-      },
-      setItem: () => {
-        throw new Error('Reads must not write');
-      },
-    };
-    expect(loadFlashcardProgress(storage)).toEqual({
+  it('initializes empty progress when nothing is stored', () => {
+    expect(loadFlashcardProgress(null)).toEqual({
       schemaVersion: 2,
       revision: 'initial',
       checkpoints: {},
       completionCounts: {},
     });
-    expect(reads).toEqual([flashcardProgressKey]);
   });
 
   it('normalizes legacy v2 storage without writing or changing its checkpoint data', () => {
-    const writes: string[] = [];
-    const legacy = JSON.stringify(state);
-    const loaded = loadFlashcardProgress({
-      getItem: (key) => (key === flashcardProgressKey ? legacy : null),
-      setItem: (key, value) => writes.push(`${key}:${value}`),
-    });
+    const loaded = loadFlashcardProgress(JSON.stringify(state));
     expect(loaded).toEqual({ ...state, completionCounts: {} });
     expect(loaded?.checkpoints.d1).toEqual(checkpoint);
     expect(loaded?.dailyStats).toBeUndefined();
-    expect(writes).toEqual([]);
   });
 });

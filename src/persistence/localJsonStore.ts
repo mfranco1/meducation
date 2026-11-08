@@ -2,7 +2,7 @@ import type { StoragePort } from './progressCodec';
 
 export class PersistenceError extends Error {
   constructor(
-    readonly kind: 'unavailable' | 'conflict' | 'corrupt',
+    readonly kind: 'unavailable' | 'conflict' | 'corrupt' | 'quota',
     message: string,
   ) {
     super(message);
@@ -10,12 +10,22 @@ export class PersistenceError extends Error {
   }
 }
 
+function isQuotaError(error: unknown): boolean {
+  return (
+    error instanceof DOMException &&
+    (error.name === 'QuotaExceededError' ||
+      error.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+      error.code === 22 ||
+      error.code === 1014)
+  );
+}
+
 export interface LocalJsonStoreConfig<T extends { revision: string }> {
   key: string;
   messages: { unavailable: string; conflict: string; corrupt: string };
   empty(): T;
   /** Missing data yields the empty state. Undecodable data yields an empty state flagged corrupt. */
-  read(storage: StoragePort): { state: T; revision: string; corrupt?: boolean };
+  read(raw: string | null): { state: T; revision: string; corrupt?: boolean };
   freeze(state: T): T;
 }
 
@@ -25,7 +35,8 @@ export interface LocalJsonStoreConfig<T extends { revision: string }> {
  */
 export class LocalJsonStore<T extends { revision: string }> {
   private observedStorage?: StoragePort;
-  private observedRevision: string | undefined;
+  /** Raw value this store last read or wrote. `undefined` means not yet observed. */
+  private observedRaw: string | null | undefined;
   private cached?: T;
   private storageError?: string;
   private readonly listeners = new Set<() => void>();
@@ -40,7 +51,7 @@ export class LocalJsonStore<T extends { revision: string }> {
     const storage = this.suppliedStorage ?? localStorage;
     if (storage !== this.observedStorage) {
       this.observedStorage = storage;
-      this.observedRevision = undefined;
+      this.observedRaw = undefined;
       this.cached = undefined;
       this.storageError = undefined;
     }
@@ -52,8 +63,9 @@ export class LocalJsonStore<T extends { revision: string }> {
     try {
       const storage = this.storage();
       if (this.cached && this.storageError !== config.messages.unavailable) return this.cached;
-      const { state, revision, corrupt } = config.read(storage);
-      this.observedRevision ??= revision;
+      const raw = storage.getItem(config.key);
+      const { state, corrupt } = config.read(raw);
+      if (this.observedRaw === undefined) this.observedRaw = raw;
       this.storageError = corrupt ? config.messages.corrupt : undefined;
       return (this.cached = config.freeze(state));
     } catch {
@@ -96,16 +108,20 @@ export class LocalJsonStore<T extends { revision: string }> {
       );
     try {
       const storage = this.storage();
-      const current = config.read(storage).revision;
-      if (current !== this.observedRevision) throw new PersistenceError('conflict', config.messages.conflict);
+      if (storage.getItem(config.key) !== this.observedRaw)
+        throw new PersistenceError('conflict', config.messages.conflict);
       const next = change(state);
       if (!next) return;
       next.revision = crypto.randomUUID();
       const serialized = JSON.stringify(next);
-      storage.setItem(config.key, serialized);
-      if (storage.getItem(config.key) !== serialized)
-        throw new PersistenceError('unavailable', config.messages.unavailable);
-      this.observedRevision = next.revision;
+      try {
+        storage.setItem(config.key, serialized);
+      } catch (error) {
+        throw isQuotaError(error)
+          ? new PersistenceError('quota', config.messages.unavailable)
+          : new PersistenceError('unavailable', config.messages.unavailable);
+      }
+      this.observedRaw = serialized;
       this.cached = config.freeze(next);
       for (const listener of this.listeners) listener();
     } catch (error) {

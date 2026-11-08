@@ -1,8 +1,10 @@
 import type { Attempt, AttemptRepository, CompletedAttempt, RecentScore } from '../domain/types';
 import { LocalJsonStore, PersistenceError } from './localJsonStore';
+import { MAX_COMPLETED_ATTEMPTS } from './progressBackupCodec';
 import { decodeProgress, emptyProgress, progressKey, type ProgressState, type StoragePort } from './progressCodec';
 
-const completedAttemptLimit = 200;
+/** Serialized progress above this many characters drops the oldest completed attempts (localStorage allows about 5M). */
+const historyBudgetChars = 2_500_000;
 const messages = {
   unavailable: 'Progress could not be saved. Check browser storage and try again.',
   conflict: 'Progress changed in another tab. Reload this page before continuing.',
@@ -17,8 +19,7 @@ function freezeProgress<T>(value: T): T {
   return value;
 }
 
-function readProgress(storage: StoragePort) {
-  const raw = storage.getItem(progressKey);
+function readProgress(raw: string | null) {
   if (raw === null) return { state: emptyProgress(), revision: 'initial' };
   let parsed: unknown;
   try {
@@ -47,7 +48,25 @@ export class LocalAttemptRepository implements AttemptRepository {
   }
 
   private state = () => this.store.state();
-  private commit = (change: (state: ProgressState) => ProgressState | undefined) => this.store.commit(change);
+  /** When browser storage is full, drops the oldest half of the completed history and retries the same change. */
+  private commit(change: (state: ProgressState) => ProgressState | undefined) {
+    let keep: number | undefined;
+    for (;;) {
+      let length = 0;
+      try {
+        this.store.commit((state) => {
+          const next = change(state);
+          if (next && keep !== undefined) next.completed = next.completed.slice(0, keep);
+          length = next?.completed.length ?? 0;
+          return next;
+        });
+        return;
+      } catch (error) {
+        if (!(error instanceof PersistenceError && error.kind === 'quota') || length === 0) throw error;
+        keep = Math.floor(length / 2);
+      }
+    }
+  }
 
   list(): CompletedAttempt[] {
     return this.state().completed;
@@ -103,10 +122,10 @@ export class LocalAttemptRepository implements AttemptRepository {
         !previousLatest || attempt.completedAt >= previousLatest.completedAt
           ? { percentage: attempt.score.percentage, completedAt: attempt.completedAt }
           : previousLatest;
-      return {
+      const next: ProgressState = {
         ...state,
         active,
-        completed: [historical, ...state.completed].slice(0, completedAttemptLimit),
+        completed: [historical, ...state.completed].slice(0, MAX_COMPLETED_ATTEMPTS),
         completedIds: { ...state.completedIds, [attempt.id]: true },
         completionCounts: {
           ...state.completionCounts,
@@ -119,6 +138,10 @@ export class LocalAttemptRepository implements AttemptRepository {
         latestScores: { ...state.latestScores, [attempt.quizId]: latest },
         activity: { ...state.activity, [attempt.quizId]: attempt.completedAt },
       };
+      let size = JSON.stringify(next).length;
+      while (size > historyBudgetChars && next.completed.length > 1)
+        size -= JSON.stringify(next.completed.pop()).length + 1;
+      return next;
     });
   }
 }
