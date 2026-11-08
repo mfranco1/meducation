@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { Container } from '@mui/material';
+import { Box, Container } from '@mui/material';
 import {
   blankResponse,
   commitAnswer,
@@ -44,6 +44,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
   const [celebration, setCelebration] = useState<CelebrationEvent & { playbackId: number }>();
   const celebrationSequence = useRef(0);
+  const questionColumn = useRef<HTMLDivElement>(null);
   const clearCelebration = useCallback(() => setCelebration(undefined), []);
   const [submitOpen, setSubmitOpen] = useState(false);
   const submissionRequested = useRef(false);
@@ -122,6 +123,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
         <CelebrationOverlay
           key={celebration.playbackId}
           open
+          horizontalAnchor={questionColumn.current}
           title={celebration.title}
           message={celebration.message}
           variant={celebration.variant}
@@ -144,32 +146,34 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
         onOpen={() => setNavigatorOpen(true)}
         onClose={() => setNavigatorOpen(false)}
       >
-        <SwapTransition swapKey={index}>
-          <QuestionCard
-            key={question.id}
-            question={question}
-            response={response}
-            showFeedback={feedback}
-            burstOnCorrect={attempt.feedbackMode === 'immediate'}
-            keyboardShortcuts
-            shortcutsDisabled={navigatorOpen || submitOpen}
-            onSelect={select}
-            onToggleFlag={toggleFlag}
+        <Box ref={questionColumn}>
+          <SwapTransition swapKey={index}>
+            <QuestionCard
+              key={question.id}
+              question={question}
+              response={response}
+              showFeedback={feedback}
+              burstOnCorrect={attempt.feedbackMode === 'immediate'}
+              keyboardShortcuts
+              shortcutsDisabled={navigatorOpen || submitOpen}
+              onSelect={select}
+              onToggleFlag={toggleFlag}
+            />
+          </SwapTransition>
+          <StudyNavigationFooter
+            index={index}
+            total={questions.length}
+            hasPrevious={hasPrevious}
+            hasNext={hasNext}
+            onPrevious={goPrevious}
+            onNext={goNext}
+            onFinish={requestSubmit}
+            finishLabel={finishLabel}
+            nextLabel={feedback ? 'Continue' : 'Next'}
+            nextButtonRef={nextRef}
+            finishButtonRef={finishRef}
           />
-        </SwapTransition>
-        <StudyNavigationFooter
-          index={index}
-          total={questions.length}
-          hasPrevious={hasPrevious}
-          hasNext={hasNext}
-          onPrevious={goPrevious}
-          onNext={goNext}
-          onFinish={requestSubmit}
-          finishLabel={finishLabel}
-          nextLabel={feedback ? 'Continue' : 'Next'}
-          nextButtonRef={nextRef}
-          finishButtonRef={finishRef}
-        />
+        </Box>
       </QuestionNavigationLayout>
       <SubmitQuizDialog open={submitOpen} onClose={() => setSubmitOpen(false)} onConfirm={confirmSubmit} />
     </Container>
