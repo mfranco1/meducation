@@ -160,7 +160,7 @@ describe('QuizReviewScreen', () => {
       </ThemeProvider>,
     );
     expect(screen.getByText('Unanswered')).toBeVisible();
-    expect(screen.getByLabelText('Final time: 00:04')).toBeVisible();
+    expect(screen.getByLabelText('Final time: 00:00:04')).toBeVisible();
     expect(screen.getByRole('listitem', { name: /Correct answer/ })).toBeVisible();
     expect(screen.queryByText(/Correct answer/)).toBeNull();
     expect(screen.queryByText(/Your answer/)).toBeNull();

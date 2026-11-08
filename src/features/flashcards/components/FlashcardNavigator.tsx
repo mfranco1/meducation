@@ -47,13 +47,13 @@ export function FlashcardNavigator({
           if (value) onFilterChange(value);
         }}
       >
-        <ToggleButton value="all" aria-label={`All cards, ${counts.all}`}>
+        <ToggleButton value="all" sx={{ borderRadius: '10px' }} aria-label={`All cards, ${counts.all}`}>
           All
         </ToggleButton>
-        <ToggleButton value="unopened" aria-label={`Hidden cards, ${counts.unopened}`}>
+        <ToggleButton value="unopened" sx={{ borderRadius: '10px' }} aria-label={`Hidden cards, ${counts.unopened}`}>
           Hidden
         </ToggleButton>
-        <ToggleButton value="flagged" aria-label={`Flagged cards, ${counts.flagged}`}>
+        <ToggleButton value="flagged" sx={{ borderRadius: '10px' }} aria-label={`Flagged cards, ${counts.flagged}`}>
           Flagged
         </ToggleButton>
       </ToggleButtonGroup>

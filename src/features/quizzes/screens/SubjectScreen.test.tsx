@@ -59,7 +59,7 @@ describe('subject quiz review', () => {
     const { onReviewAttempt } = renderSubject({ completionCount: 1 }, [completedAttempt]);
     fireEvent.click(screen.getByRole('button', { name: `Review attempts: ${quiz.name}` }));
     const dialog = screen.getByRole('dialog', { name: 'Review Attempts' });
-    expect(within(dialog).getByText(/Exam Mode · Elapsed Time: 00:00/)).toBeVisible();
+    expect(within(dialog).getByText(/Exam Mode · Elapsed Time: 00:00:00/)).toBeVisible();
     expect(within(dialog).getByText('1 attempt')).toBeVisible();
     expect(within(dialog).getByText('80%')).toBeVisible();
     fireEvent.click(within(dialog).getByRole('button', { name: /^Review attempt from Sep 22, 2026 at / }));

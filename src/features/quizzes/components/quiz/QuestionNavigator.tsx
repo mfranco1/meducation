@@ -1,9 +1,9 @@
 import { useRef, type Ref } from 'react';
-import { Box, Button, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Box, Button, Stack, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { isCorrect } from '../../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../../domain/types';
 import { useScrollCurrentQuestion } from '../../../../shared/ui/study/useScrollCurrentQuestion';
-import { StudyNavigatorTile } from '../../../../shared/ui/study/StudyNavigatorTile';
+import { StudyNavigatorEmpty, StudyNavigatorTile } from '../../../../shared/ui/study/StudyNavigatorTile';
 
 export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'wrong' | 'flagged';
 export type QuestionNavigatorFilterSet = 'quiz' | 'review';
@@ -115,7 +115,12 @@ export function QuestionNavigator({
         }}
       >
         {filters.map((item) => (
-          <ToggleButton key={item.value} value={item.value} aria-label={item.accessibleLabel}>
+          <ToggleButton
+            key={item.value}
+            value={item.value}
+            aria-label={item.accessibleLabel}
+            sx={{ borderRadius: '10px' }}
+          >
             {item.label}
           </ToggleButton>
         ))}
@@ -134,17 +139,13 @@ export function QuestionNavigator({
             ))}
           </Box>
         ) : (
-          <Box
-            sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}
-          >
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {filter === 'flagged'
-                ? 'No flagged questions.'
-                : filter === 'wrong'
-                  ? 'No wrong answers.'
-                  : 'No unanswered questions.'}
-            </Typography>
-          </Box>
+          <StudyNavigatorEmpty>
+            {filter === 'flagged'
+              ? 'No flagged questions.'
+              : filter === 'wrong'
+                ? 'No wrong answers.'
+                : 'No unanswered questions.'}
+          </StudyNavigatorEmpty>
         )}
       </Box>
       <Button variant="contained" fullWidth onClick={onFinish}>

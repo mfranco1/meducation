@@ -86,7 +86,7 @@ export function StudyNavigatorTile({
 
 export function StudyNavigatorEmpty({ children }: { children: string }) {
   return (
-    <Box sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: 2 }}>
+    <Box sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: '10px' }}>
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         {children}
       </Typography>
