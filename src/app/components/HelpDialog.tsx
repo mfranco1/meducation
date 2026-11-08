@@ -14,8 +14,11 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useState, type ReactNode } from 'react';
 
-export const faqs = [
+const telegramUrl = 'https://t.me/MeducationSupport';
+
+export const faqs: (readonly [string, ReactNode])[] = [
   [
     'Where is my progress saved?',
     'Your quiz and flashcard progress stays in this browser. There is no learner account or automatic sync between devices. Clearing browser data deletes your progress. Download a backup before clearing it or switching browsers.',
@@ -42,12 +45,29 @@ export const faqs = [
   ],
   [
     'How do I report a content mistake?',
-    'Message us on Telegram. Include the quiz or deck name, the question or card text, and what seems incorrect. A screenshot helps. Question numbers and answer letters alone may not identify the item because quizzes shuffle questions and choices.',
+    <>
+      Message us on{' '}
+      <Link href={telegramUrl} target="_blank" rel="noopener noreferrer">
+        Telegram
+      </Link>
+      . Include the quiz or deck name, the question or card text, and what seems incorrect. A screenshot helps. Question
+      numbers and answer letters alone may not identify the item because quizzes shuffle questions and choices.
+    </>,
   ],
-] as const;
+];
+
+/** Accordion props that keep at most one FAQ open. */
+export function useSingleOpen() {
+  const [open, setOpen] = useState<string | false>(false);
+  return (key: string) => ({
+    expanded: open === key,
+    onChange: (_event: unknown, expanded: boolean) => setOpen(expanded ? key : false),
+  });
+}
 
 export function HelpDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const fullScreen = useMediaQuery(useTheme().breakpoints.down('sm'));
+  const expansion = useSingleOpen();
   return (
     <Dialog
       open={open}
@@ -72,17 +92,11 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose: () => vo
           </Typography>
           <Typography variant="body2" sx={{ mb: 1.5 }}>
             Telegram:{' '}
-            <Link href="https://t.me/MeducationSupport" target="_blank" rel="noopener noreferrer">
+            <Link href={telegramUrl} target="_blank" rel="noopener noreferrer">
               @MeducationSupport
             </Link>
           </Typography>
-          <Button
-            component="a"
-            href="https://t.me/MeducationSupport"
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="contained"
-          >
+          <Button component="a" href={telegramUrl} target="_blank" rel="noopener noreferrer" variant="contained">
             Open Telegram
           </Button>
         </Box>
@@ -90,7 +104,7 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose: () => vo
           Frequently asked questions
         </Typography>
         {faqs.map(([question, answer], index) => (
-          <Accordion key={question} disableGutters elevation={0}>
+          <Accordion key={question} disableGutters elevation={0} {...expansion(question)}>
             <AccordionSummary
               expandIcon={<ExpandMoreRoundedIcon />}
               id={`help-faq-${index}`}

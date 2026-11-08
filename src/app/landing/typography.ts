@@ -26,15 +26,6 @@ export const type = {
     m: 0,
   },
   body: { fontSize: '1rem', lineHeight: 1.65, maxWidth: '62ch', m: 0 },
-  label: {
-    fontSize: '.75rem',
-    fontWeight: 700,
-    lineHeight: 1.3,
-    letterSpacing: '.12em',
-    textTransform: 'uppercase',
-    color: 'text.secondary',
-    m: 0,
-  },
   caption: { fontSize: '.8125rem', lineHeight: 1.5, color: 'text.secondary', m: 0 },
 } satisfies Record<string, SxProps<Theme>>;
 

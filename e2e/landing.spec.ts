@@ -50,7 +50,7 @@ for (const width of [390, 1440]) {
     await page.keyboard.press('Space');
     await expect(flashcards.getByRole('button', { name: 'Card 2, unopened, current card' })).toBeVisible();
 
-    await enterSection(page, 'Twelve subjects');
+    await enterSection(page, 'Twelve Subjects');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('4');
     await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
@@ -123,7 +123,7 @@ test('header and hero links jump to the quiz, flashcard and subject sections', a
   for (const [label, heading, hash] of [
     ['Quizzes', 'Board-style Questions', 'quizzes'],
     ['Flashcards', 'High-yield Flashcards', 'flashcards'],
-    ['Subjects', 'Twelve subjects', 'subjects'],
+    ['Subjects', 'Twelve Subjects', 'subjects'],
   ]) {
     await links.getByRole('link', { name: label, exact: true }).click();
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeInViewport();
@@ -140,7 +140,7 @@ test('header and hero links jump to the quiz, flashcard and subject sections', a
   await expect(page).toHaveURL(/#quizzes$/);
 });
 
-test('hero photo sits beside the copy on desktop and below the actions on smaller screens', async ({ page }) => {
+test('hero photo fades behind the copy on desktop and sits below the actions on smaller screens', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
   const hero = page.getByRole('region', { name: 'Study medicine one question at a time' });
@@ -153,7 +153,8 @@ test('hero photo sits beside the copy on desktop and below the actions on smalle
     const heading = await hero.getByRole('heading').boundingBox();
     const actions = await hero.getByRole('link', { name: 'Try a question' }).boundingBox();
     const image = await photo.boundingBox();
-    if (width >= 900) expect(image!.x).toBeGreaterThanOrEqual(heading!.x + heading!.width);
+    // The left 56% of the photo fades into the background on desktop.
+    if (width >= 900) expect(heading!.x + heading!.width).toBeLessThanOrEqual(image!.x + image!.width * 0.56);
     else expect(image!.y).toBeGreaterThanOrEqual(actions!.y + actions!.height);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }

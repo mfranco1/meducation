@@ -51,6 +51,7 @@ export function SampleFlashcards({
   const toggleReveal = () => {
     if (!revealed) {
       setStudied((current) => new Set(current).add(card.id));
+      onStep(1);
       onStep(2);
     }
     setRevealed(!revealed);

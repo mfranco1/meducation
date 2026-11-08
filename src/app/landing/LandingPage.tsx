@@ -21,7 +21,7 @@ import DevicesOutlinedIcon from '@mui/icons-material/DevicesOutlined';
 import FileDownloadOutlinedIcon from '@mui/icons-material/FileDownloadOutlined';
 import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { SubjectIcon } from '../../shared/ui/catalog/icons/SubjectIcon';
-import { faqs } from '../components/HelpDialog';
+import { faqs, useSingleOpen } from '../components/HelpDialog';
 import { LegalFooter } from '../../shared/ui/shell/LegalFooter';
 import { easing, reducedMotion } from '../../shared/ui/motion';
 import { theme } from '../../shared/theme';
@@ -50,15 +50,19 @@ const stats = [
   ['12', 'subjects'],
 ];
 
-const landingFaqs = new Set([
-  'Where is my progress saved?',
-  'How do I back up or move my progress?',
-  'What is the difference between quiz modes?',
-  'How do I report a content mistake?',
-]);
+const helpFaq = (question: string) => faqs.find(([item]) => item === question)!;
+const landingFaqs = [
+  ['Is it free?', 'Yes. Every quiz and flashcard deck is free to use.'],
+  helpFaq('Where is my progress saved?'),
+  [
+    'Can I use it on my phone?',
+    'Yes. It works in any modern browser on phones, tablets and computers. Progress stays in the browser where you study.',
+  ],
+  helpFaq('How do I report a content mistake?'),
+];
 
 const privacy = [
-  { Icon: NoAccountsOutlinedIcon, title: 'No account', text: 'Start studying right away. Nothing to sign up for.' },
+  { Icon: NoAccountsOutlinedIcon, title: 'No account needed', text: 'Start studying right away. No need to sign up.' },
   {
     Icon: DevicesOutlinedIcon,
     title: 'Stays on this device',
@@ -186,14 +190,11 @@ function Steps({
     </Box>
   );
 }
-function SectionHead({ label, title, id }: { label: string; title: string; id: string }) {
+function SectionHead({ title, id }: { title: string; id: string }) {
   return (
-    <>
-      <Typography sx={{ ...type.label, mb: { xs: 1.5, md: 2 } }}>{label}</Typography>
-      <Typography component="h2" id={id} sx={type.section}>
-        {title}
-      </Typography>
-    </>
+    <Typography component="h2" id={id} sx={type.section}>
+      {title}
+    </Typography>
   );
 }
 
@@ -266,6 +267,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
   );
   const [ctaInView, setCtaInView] = useState({ hero: true, closing: false });
   const [scrolled, setScrolled] = useState(false);
+  const faqExpansion = useSingleOpen();
 
   // The phone layout keeps Start studying within thumb reach once the hero button scrolls away.
   useEffect(() => {
@@ -324,7 +326,18 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
             [reducedMotion]: { transition: 'none' },
           })}
         >
-          <AppBrand size={{ xs: 132, md: 156 }} />
+          <Box sx={{ justifySelf: 'start', m: -1 }}>
+            <AppBrand
+              size={{ xs: 132, md: 156 }}
+              actionLabel="back to top"
+              onClick={() =>
+                window.scrollTo({
+                  top: 0,
+                  behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+                })
+              }
+            />
+          </Box>
           <Box component="nav" aria-label="Sections" sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5 }}>
             {sectionLinks.map(([label, href]) => (
               <Button key={href} href={href} sx={{ color: 'text.primary', fontWeight: 600 }}>
@@ -347,17 +360,23 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
             component="section"
             aria-labelledby="hero-title"
             sx={{
-              ...grid,
+              position: 'relative',
+              isolation: 'isolate',
+              display: 'flex',
               alignItems: 'center',
-              rowGap: 6,
+              minHeight: { md: 640, lg: 720 },
               pt: { xs: 4, md: 8 },
-              pb: { xs: 8, md: 12 },
+              pb: { xs: 46, sm: 58, md: 8 },
             }}
           >
-            <Box sx={{ gridColumn: { md: '1 / span 6' }, textAlign: { xs: 'center', md: 'left' } }}>
-              <Typography sx={{ ...type.label, color: 'primary.main', mb: { xs: 2, md: 3 } }}>
-                Review · Practice · Improve
-              </Typography>
+            <Box
+              sx={{
+                position: 'relative',
+                zIndex: 1,
+                width: { xs: '100%', md: '52%' },
+                textAlign: { xs: 'center', md: 'left' },
+              }}
+            >
               <Typography
                 component="h1"
                 id="hero-title"
@@ -366,7 +385,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
                 Study medicine one question at a time
               </Typography>
               <Typography sx={{ ...type.lede, mt: { xs: 2, md: 3 }, mx: { xs: 'auto', md: 0 } }}>
-                Study quizzes and flashcards across twelve subjects for free
+                Practice quizzes and flashcards across twelve subjects for free
               </Typography>
               <Box
                 sx={{
@@ -411,25 +430,52 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
               </Typography>
             </Box>
             <Box
+              aria-hidden
               sx={{
-                gridColumn: { md: '7 / span 6' },
-                aspectRatio: '1448 / 1086',
-                borderRadius: '14px',
+                position: 'absolute',
+                zIndex: -1,
+                left: { xs: 0, md: -32 },
+                right: 0,
+                bottom: { xs: 32, md: 64 },
+                top: { md: 24 },
+                height: { xs: 340, sm: 420, md: 'auto' },
+                borderRadius: { xs: '14px', md: '0 14px 14px 0' },
                 overflow: 'hidden',
+                pointerEvents: 'none',
               }}
             >
               <Box
                 component="img"
                 src="/assets/illustrations/landing-hero-960.webp"
                 srcSet="/assets/illustrations/landing-hero-640.webp 640w, /assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w"
-                sizes="(min-width: 1200px) 560px, (min-width: 900px) 50vw, 100vw"
+                sizes="(min-width: 1200px) 1200px, 100vw"
                 width={1448}
                 height={1086}
                 alt=""
                 loading="eager"
                 fetchPriority="high"
                 decoding="async"
-                sx={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
+                sx={{
+                  display: 'block',
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: 'right center',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  background: (theme) => {
+                    const solid = theme.palette.background.default;
+                    const clear = alpha(solid, 0);
+                    return {
+                      xs: `linear-gradient(to bottom, ${solid}, ${clear} 28%)`,
+                      md: `linear-gradient(to right, ${solid} 2%, ${alpha(solid, 0.98)} 28%, ${alpha(solid, 0.88)} 40%, ${alpha(solid, 0.3)} 56%, ${clear} 70%)`,
+                    };
+                  },
+                }}
               />
             </Box>
           </Box>
@@ -449,7 +495,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
                 top: { md: 120 },
               }}
             >
-              <SectionHead label="Quizzes" title="Board-style Questions" id="quizzes-title" />
+              <SectionHead title="Board-style Questions" id="quizzes-title" />
               <Typography sx={{ ...type.body, mt: 2.5, color: 'text.secondary' }}>
                 Answer clinical vignettes, then read why each choice is right or wrong.
               </Typography>
@@ -475,7 +521,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
                 top: { md: 120 },
               }}
             >
-              <SectionHead label="Flashcards" title="High-yield Flashcards" id="flashcards-title" />
+              <SectionHead title="High-yield Flashcards" id="flashcards-title" />
               <Typography sx={{ ...type.body, mt: 2.5, color: 'text.secondary' }}>
                 Recall the answer, then reveal it and move to the next card.
               </Typography>
@@ -494,9 +540,9 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
 
           <Box component="section" id="subjects" aria-labelledby="contents-title" sx={section}>
             <Reveal sx={centered}>
-              <SectionHead label="Contents" title="Twelve subjects" id="contents-title" />
+              <SectionHead title="Twelve Subjects" id="contents-title" />
               <Typography sx={{ ...type.body, mt: 2.5, mx: 'auto', color: 'text.secondary' }}>
-                Within each subject, quizzes and flashcard decks are grouped by topic.
+                Quizzes and flashcard decks are grouped by topic within each subject
               </Typography>
             </Reveal>
             <Reveal delay={100} sx={{ mt: { xs: 5, md: 8 } }}>
@@ -543,7 +589,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
 
           <Box component="section" aria-labelledby="progress-title" sx={section}>
             <Reveal sx={centered}>
-              <SectionHead label="Progress" title="Your progress stays with you" id="progress-title" />
+              <SectionHead title="Your progress stays with you" id="progress-title" />
             </Reveal>
             <Reveal delay={100} sx={{ mt: { xs: 5, md: 8 } }}>
               <Box
@@ -598,35 +644,34 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
               </Typography>
             </Reveal>
             <Reveal delay={100} sx={{ maxWidth: 800, mx: 'auto', mt: { xs: 5, md: 8 } }}>
-              {faqs
-                .filter(([question]) => landingFaqs.has(question))
-                .map(([question, answer], index) => (
-                  <Accordion
-                    key={question}
-                    disableGutters
-                    elevation={0}
-                    square
-                    sx={{
-                      bgcolor: 'transparent',
-                      color: 'inherit',
-                      borderBottom: hairline,
-                      '&:first-of-type': { borderTop: hairline },
-                      '&::before': { display: 'none' },
-                    }}
+              {landingFaqs.map(([question, answer], index) => (
+                <Accordion
+                  key={question}
+                  {...faqExpansion(question)}
+                  disableGutters
+                  elevation={0}
+                  square
+                  sx={{
+                    bgcolor: 'transparent',
+                    color: 'inherit',
+                    borderBottom: hairline,
+                    '&:first-of-type': { borderTop: hairline },
+                    '&::before': { display: 'none' },
+                  }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreRoundedIcon />}
+                    id={`landing-faq-${index}`}
+                    aria-controls={`landing-answer-${index}`}
+                    sx={{ px: 0, py: 1 }}
                   >
-                    <AccordionSummary
-                      expandIcon={<ExpandMoreRoundedIcon />}
-                      id={`landing-faq-${index}`}
-                      aria-controls={`landing-answer-${index}`}
-                      sx={{ px: 0, py: 1 }}
-                    >
-                      <Typography sx={{ fontSize: '1.0625rem', fontWeight: 600 }}>{question}</Typography>
-                    </AccordionSummary>
-                    <AccordionDetails id={`landing-answer-${index}`} sx={{ px: 0, pt: 0, pb: 3 }}>
-                      <Typography sx={{ ...type.body, color: 'text.secondary' }}>{answer}</Typography>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
+                    <Typography sx={{ fontSize: '1.0625rem', fontWeight: 600 }}>{question}</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails id={`landing-answer-${index}`} sx={{ px: 0, pt: 0, pb: 3 }}>
+                    <Typography sx={{ ...type.body, color: 'text.secondary' }}>{answer}</Typography>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
             </Reveal>
           </Box>
 
