@@ -307,7 +307,8 @@ describe('FlashcardStudyScreen', () => {
         />
       </ThemeProvider>,
     );
-    fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
+    // The Cards button shows only below md; jsdom's viewport is fixed at 1024px, so CSS hides it here.
+    fireEvent.click(screen.getByText('Cards', { selector: 'button' }));
     const cardTwo = screen.getAllByRole('button', { name: 'Card 2, unopened' });
     fireEvent.click(cardTwo.at(-1)!);
     expect(onNavigate).toHaveBeenCalledWith(1);
