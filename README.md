@@ -4,7 +4,7 @@ A browser-based study platform (React, TypeScript, Vite, Material UI) with subje
 
 ## Run locally
 
-Requirements: Node 22, npm, Python 3.14, Docker (for PostgreSQL 17).
+Requirements: Node 24, npm, Python 3.14, Docker (for PostgreSQL 17).
 
 1. Install, set up PostgreSQL and start the content API on `127.0.0.1:8000`: [operations](docs/operations.md).
 2. Start the frontend and open the printed URL (usually `http://localhost:5173/`); Vite proxies `/api` to the API:

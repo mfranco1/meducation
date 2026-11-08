@@ -11,7 +11,7 @@ Deferred while learner content, data model and UI work come first. Scope rules a
 
 ## Remaining steps
 
-1. Choose the host and managed Postgres. Neon is provisional; confirm PITR retention, a region near the Philippines and budget alerts.
+1. Choose the host and managed Postgres. Neon is provisional; confirm PITR retention, a region near the Philippines and budget alerts. Match the provider's Postgres major (local is 17): if newer, bump the version guards in `repositories/postgres.py` and `db/bootstrap.py`, the image pins (note the PG18 image's volume path change) and PG17 mentions in docs, then move the authority by dump and restore.
 2. Choose admin identity (4d):
    - Option A: keep the backend OIDC flow and point it at a managed IdP. ZITADEL was the provisional candidate; it needs real MFA.
    - Option B: put `/api/admin` and `/admin.html` behind the host's auth proxy, then simplify or remove the backend session, CSRF and fresh-factor code to whatever the proxy doesn't cover.

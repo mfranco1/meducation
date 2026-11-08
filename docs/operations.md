@@ -4,7 +4,7 @@ How to run, back up, restore and package the local system. PostgreSQL is the onl
 
 ## Prerequisites
 
-- Node 22 and npm; Python 3.14; Docker (PostgreSQL 17 runs in a container).
+- Node 24 and npm; Python 3.14; Docker (PostgreSQL 17 runs in a container).
 - Frontend: `npm ci`. Backend (repository root):
 
 ```sh
@@ -130,7 +130,7 @@ docker compose --env-file ops/containers/.env -f compose.yaml -f ops/containers/
 ```
 
 - Images: API (installed wheel, user 10001, one Uvicorn process, no content corpus), learner and admin (non-root Nginx 101 on port 8080, read-only filesystem). The default `learner` target returns 404 for `/admin.html`; `admin` serves it `no-store`. Admin assets still need an authenticated API.
-- Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 22, Nginx unprivileged). Update tag and digest together and rebuild. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
+- Base images are pinned by tag and index digest in `backend/Dockerfile` and `Dockerfile` (Python 3.14, Postgres 17, Node 24, Nginx unprivileged). Update tag and digest together and rebuild. Never change the Postgres major over an existing volume. Python build tooling is hash-pinned in `backend/requirements-build.lock`.
 - Nginx (`ops/containers/nginx.conf`, `proxy.conf`) proxies `/api` to `api:8000`, keeps API paths out of the SPA fallback, caps public bodies at 1 MiB and private authoring at 64 MiB (the API itself limits draft bodies to 1 MiB, 16 MiB for bulk), and logs only failed requests (fixed route families, no paths or queries). Private responses are `no-store`.
 - Runtime pools: reader, session and editor each at most two connections; migrations and jobs use direct unpooled connections.
 - The learner build fails inside the Dockerfile if it ships admin or content-bank modules (`scripts/containers/check-learner-artifacts.mjs`). CI builds the learner image and checks the `/admin.html` 404 and security headers ([testing](testing.md)).

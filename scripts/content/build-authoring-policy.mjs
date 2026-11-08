@@ -9,7 +9,7 @@ await build({
   bundle: true,
   platform: 'node',
   format: 'esm',
-  target: 'node22',
+  target: 'node24',
   define: { 'import.meta.env': 'undefined' },
 });
 await copyFile('src/content/validation/authoringLimits.json', `${output}/limits.json`);

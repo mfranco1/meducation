@@ -1,0 +1,17 @@
+# Dependency upgrades
+
+Major-version upgrades that need code or config work. Do one stage per session, in order, and run the checks listed for each stage plus `npm run build`, `npm run lint`, `npm run format:check` and `npm run test:ci`. Delete this file when the last stage is done or dropped.
+
+Already current: Node 24 (trixie), Python 3.14 (trixie), Nginx 1.30, in-range npm and Python packages. Postgres is tracked in [hosting launch](hosting-launch.md).
+
+## Stages
+
+1. **sharp 0.34 to 0.35** (`npm audit`: high, libvips/libheif/librsvg CVEs). Used only by `scripts/branding/heroImage.mjs` and `scripts/branding/icons.ts`, on our own images. Check: the icon studio steps in [testing](../../testing.md#icon-studio) and a hero image regeneration, then compare outputs.
+2. **Vite 7 to 8 with `@vitejs/plugin-react` 5 to 6.** Upgrade together (plugin 6 requires Vite 8; Vitest 5.1 already accepts Vite 8). Vite 8 bundles with Rolldown: review `vite.config.ts` for Rollup-only options, `--manifest` output used by `scripts/containers/check-*-artifacts.mjs`, and chunk names. Check: both builds (`build:learner`, `build:admin`), both images, the Nginx check and both browser suites. Compare `dist` size and build time.
+3. **KaTeX 0.18 to 0.19 and jsdom 30 to 31.** KaTeX renders content math and feeds `markdownValidation.ts`, so read its changelog for output or option changes, then check that published content still validates (`validate-export` on a fresh export) and look over a few math-heavy cards in the browser. jsdom is test-only. Check: unit tests and the real-PostgreSQL gate (content policy).
+4. **TypeScript 5.9 to 7.** Blocked: `typescript-eslint` 8.72 supports TypeScript below 6.1. Start once it supports 7, or stop at 6.0.x if that alone is worth it. Check: `npm run typecheck`, lint, and `build:content-policy`. This stage also clears the moderate `minimatch` advisory if typescript-eslint has moved by then.
+5. **MUI 7 to 9 (optional).** Two majors of breaking changes for no learner-facing gain. Do it only if a needed component or fix is in 9 or MUI 7 stops getting security fixes. Use MUI's codemods one major at a time (7 to 8, then 8 to 9). Check: both browser suites and a manual visual pass against [design system](../../design-system.md) in light and dark.
+
+## Decisions
+
+- `parse5` stays pinned exactly, because `markdownValidation.ts` uses it directly. Raise the pin when `hast-util-raw` or `rehype-raw` needs a newer one (9.2 needed 8.1).
