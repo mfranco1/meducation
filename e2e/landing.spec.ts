@@ -153,8 +153,8 @@ test('hero photo fades behind the copy on desktop and sits below the actions on 
     const heading = await hero.getByRole('heading').boundingBox();
     const actions = await hero.getByRole('link', { name: 'Try a question' }).boundingBox();
     const image = await photo.boundingBox();
-    // The left 56% of the photo fades into the background on desktop.
-    if (width >= 900) expect(heading!.x + heading!.width).toBeLessThanOrEqual(image!.x + image!.width * 0.56);
+    // The left 40% of the photo fades into the background on desktop.
+    if (width >= 900) expect(heading!.x + heading!.width).toBeLessThanOrEqual(image!.x + image!.width * 0.4);
     else expect(image!.y).toBeGreaterThanOrEqual(actions!.y + actions!.height);
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
@@ -162,25 +162,16 @@ test('hero photo fades behind the copy on desktop and sits below the actions on 
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
 });
 
-test('flashcard steps track the visible question, revealing and navigating independently', async ({ page }) => {
+test('flashcard steps track revealing and navigating independently', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   const steps = page.getByRole('list', { name: 'How flashcards work' }).getByRole('listitem');
-  await expect(steps.filter({ hasText: '(done)' })).toHaveCount(0);
   const sample = page.getByRole('region', { name: 'Sample Flashcards' });
   const question = sample.getByText('What is the classic murmur of patent ductus arteriosus?');
-  await page.evaluate(() => document.fonts.ready);
-  await question.evaluate((element) => {
-    const bounds = element.getBoundingClientRect();
-    window.scrollTo(0, window.scrollY + bounds.top - window.innerHeight + bounds.height / 2);
-  });
-  await expect(question).toBeInViewport({ ratio: 0.4 });
-  await expect(steps.nth(0)).not.toContainText('(done)');
   await question.evaluate((element) => element.scrollIntoView({ block: 'center' }));
-  await expect(steps.nth(0)).toContainText('Read the question (done)');
-  await expect(steps.nth(1)).not.toContainText('(done)');
-  await expect(steps.nth(2)).not.toContainText('(done)');
+  await expect(question).toBeInViewport();
+  await expect(steps.filter({ hasText: '(done)' })).toHaveCount(0);
 
   const cards = sample.getByRole('navigation', { name: 'Cards' }).getByRole('button');
   await expect(cards).toHaveCount(3);
@@ -190,10 +181,27 @@ test('flashcard steps track the visible question, revealing and navigating indep
   await expect(sample.getByText('Doctrine of last clear chance.')).toBeVisible();
   await expect(steps.nth(2)).toContainText('See the next card (done)');
   await expect(steps.nth(1)).not.toContainText('(done)');
+  await expect(steps.nth(0)).not.toContainText('(done)');
   await sample.getByRole('button', { name: 'Reveal answer' }).click();
+  await expect(steps.nth(0)).toContainText('Read the question (done)');
   await expect(steps.nth(1)).toContainText('Reveal the answer (done)');
   await cards.nth(1).click();
   await expect(steps.filter({ hasText: '(done)' })).toHaveCount(3);
+});
+
+test('on phones the header offers Start studying only while the page buttons are out of view', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto('/');
+  const headerCta = page.getByRole('banner').getByRole('button', { name: 'Start studying' });
+  await expect(headerCta).toBeHidden();
+  await page.getByRole('heading', { name: 'High-yield Flashcards' }).scrollIntoViewIfNeeded();
+  await expect(headerCta).toBeVisible();
+  await page.getByRole('button', { name: 'Start studying' }).last().scrollIntoViewIfNeeded();
+  await expect(headerCta).toBeHidden();
+  await page.getByRole('heading', { name: 'Twelve Subjects' }).scrollIntoViewIfNeeded();
+  await headerCta.click();
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
 });
 
 test('a first visit shows the landing page until the visitor starts studying', async ({ page }) => {

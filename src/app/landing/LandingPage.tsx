@@ -269,7 +269,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
   const [scrolled, setScrolled] = useState(false);
   const faqExpansion = useSingleOpen();
 
-  // The phone layout keeps Start studying within thumb reach once the hero button scrolls away.
+  // On phones the header shows Start studying only while neither page button is in view.
   useEffect(() => {
     const observer = new IntersectionObserver((entries) =>
       setCtaInView((current) => {
@@ -283,7 +283,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
     [heroCta.current, closingCta.current].forEach((element) => element && observer.observe(element));
     return () => observer.disconnect();
   }, []);
-  const showBar = !ctaInView.hero && !ctaInView.closing;
+  const showHeaderCta = !ctaInView.hero && !ctaInView.closing;
 
   // The header floats as a bar once the page leaves the top.
   useEffect(() => {
@@ -299,7 +299,6 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
         bgcolor: 'background.default',
         color: 'text.primary',
         minHeight: '100dvh',
-        pb: { xs: 11, md: 0 },
       }}
     >
       <Box ref={topSentinel} aria-hidden sx={{ position: 'absolute', top: 0, height: '1px', width: '1px' }} />
@@ -311,7 +310,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
             top: { xs: 8, md: 12 },
             zIndex: 'appBar',
             display: 'grid',
-            gridTemplateColumns: { xs: 'minmax(0, 1fr)', md: '1fr auto 1fr' },
+            gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: '1fr auto 1fr' },
             alignItems: 'center',
             gap: 2,
             py: { xs: 1.5, md: 2 },
@@ -349,7 +348,14 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
             variant="contained"
             disableElevation
             onClick={onStart}
-            sx={{ display: { xs: 'none', md: 'inline-flex' }, justifySelf: 'end' }}
+            sx={{
+              justifySelf: 'end',
+              visibility: { xs: showHeaderCta ? 'visible' : 'hidden', md: 'visible' },
+              opacity: { xs: showHeaderCta ? 1 : 0, md: 1 },
+              transform: { xs: showHeaderCta ? 'none' : 'translateY(-6px)', md: 'none' },
+              transition: `opacity 220ms ${easing.standard}, transform 220ms ${easing.standard}, visibility 220ms`,
+              [reducedMotion]: { transition: 'none' },
+            }}
           >
             Start studying
           </Button>
@@ -430,54 +436,41 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
               </Typography>
             </Box>
             <Box
+              component="img"
               aria-hidden
+              src="/assets/illustrations/landing-hero-960.webp"
+              srcSet="/assets/illustrations/landing-hero-640.webp 640w, /assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w"
+              sizes="(min-width: 900px) 760px, 100vw"
+              width={1448}
+              height={1086}
+              alt=""
+              loading="eager"
+              fetchPriority="high"
+              decoding="async"
               sx={{
                 position: 'absolute',
                 zIndex: -1,
-                left: { xs: 0, md: -32 },
-                right: 0,
-                bottom: { xs: 32, md: 64 },
-                top: { md: 24 },
-                height: { xs: 340, sm: 420, md: 'auto' },
-                borderRadius: { xs: '14px', md: '0 14px 14px 0' },
-                overflow: 'hidden',
+                display: 'block',
                 pointerEvents: 'none',
+                objectFit: 'cover',
+                // Phones: a full-width band below the actions, faded at the top.
+                // Desktop: the whole photo at its own ratio, centered right of the copy, fading out on every edge.
+                left: { xs: 0, md: 'auto' },
+                right: { xs: 0, md: -32 },
+                top: { md: '50%' },
+                bottom: { xs: 32, md: 'auto' },
+                transform: { md: 'translateY(-50%)' },
+                width: { xs: '100%', md: '64%' },
+                height: { xs: 340, sm: 420, md: 'auto' },
+                aspectRatio: { md: '1448 / 1086' },
+                borderRadius: { xs: '14px', md: 0 },
+                maskImage: {
+                  xs: 'linear-gradient(to bottom, transparent, #000 28%)',
+                  md: 'linear-gradient(to right, transparent, #000 40%, #000 90%, transparent), linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent)',
+                },
+                maskComposite: { md: 'intersect' },
               }}
-            >
-              <Box
-                component="img"
-                src="/assets/illustrations/landing-hero-960.webp"
-                srcSet="/assets/illustrations/landing-hero-640.webp 640w, /assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w"
-                sizes="(min-width: 1200px) 1200px, 100vw"
-                width={1448}
-                height={1086}
-                alt=""
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-                sx={{
-                  display: 'block',
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  objectPosition: 'right center',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  inset: 0,
-                  background: (theme) => {
-                    const solid = theme.palette.background.default;
-                    const clear = alpha(solid, 0);
-                    return {
-                      xs: `linear-gradient(to bottom, ${solid}, ${clear} 28%)`,
-                      md: `linear-gradient(to right, ${solid} 2%, ${alpha(solid, 0.98)} 28%, ${alpha(solid, 0.88)} 40%, ${alpha(solid, 0.3)} 56%, ${clear} 70%)`,
-                    };
-                  },
-                }}
-              />
-            </Box>
+            />
           </Box>
 
           <Box
@@ -704,29 +697,6 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
         <Box sx={{ pb: 3 }}>
           <LegalFooter />
         </Box>
-      </Box>
-
-      <Box
-        sx={{
-          display: { md: 'none' },
-          position: 'fixed',
-          insetInline: 0,
-          bottom: 0,
-          zIndex: 'appBar',
-          px: 2,
-          pt: 1.5,
-          pb: 'calc(12px + env(safe-area-inset-bottom))',
-          bgcolor: 'background.default',
-          borderTop: hairline,
-          visibility: showBar ? 'visible' : 'hidden',
-          transform: showBar ? 'none' : 'translateY(100%)',
-          transition: `transform 220ms ${easing.standard}, visibility 220ms`,
-          [reducedMotion]: { transition: 'none' },
-        }}
-      >
-        <Button variant="contained" size="large" fullWidth disableElevation onClick={onStart}>
-          Start studying
-        </Button>
       </Box>
     </Box>
   );

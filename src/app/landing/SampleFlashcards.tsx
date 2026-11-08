@@ -27,26 +27,9 @@ export function SampleFlashcards({
   const [studied, setStudied] = useState<ReadonlySet<string>>(new Set());
   const [flagged, setFlagged] = useState<ReadonlySet<string>>(new Set());
   const [suppressFocusRing, setSuppressFocusRing] = useState(false);
-  const question = useRef<HTMLDivElement>(null);
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
   const { card, subject, deck } = cards[index]!;
-
-  useEffect(() => {
-    const element = question.current;
-    if (!element) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry?.isIntersecting && entry.intersectionRatio === 1) {
-          onStep(1);
-          observer.disconnect();
-        }
-      },
-      { threshold: 1 },
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [index, onStep]);
 
   const toggleReveal = () => {
     if (!revealed) {
@@ -125,7 +108,6 @@ export function SampleFlashcards({
       </SampleHeader>
       <SwapTransition swapKey={index}>
         <FlashcardStudyCard
-          questionRef={question}
           card={card}
           revealed={revealed}
           flagged={flagged.has(card.id)}
