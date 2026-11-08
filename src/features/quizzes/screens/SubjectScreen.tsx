@@ -1,7 +1,8 @@
-import { Box, Button } from '@mui/material';
+import { Box, Button, Stack } from '@mui/material';
 import { useState } from 'react';
-import type { FeedbackMode, Quiz, Subject, Topic } from '../../../domain/types';
+import type { CompletedAttempt, FeedbackMode, Quiz, Subject, Topic } from '../../../domain/types';
 import { ScoreTrendIndicator } from '../components/ScoreTrendIndicator';
+import { PastAttemptsDialog } from '../components/quiz/PastAttemptsDialog';
 import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
 import type { QuizProgress } from '../selectors/progress';
 import { ContentLoadFailure } from '../../../shared/ui/loading/ContentLoadFailure';
@@ -23,6 +24,8 @@ export function SubjectScreen({
   questionError,
   onRetry = () => undefined,
   onRetryQuestions = () => undefined,
+  attemptsFor = () => [],
+  onReviewAttempt = () => undefined,
   onResumeQuiz,
   onStartQuiz,
   onBrowseQuiz,
@@ -40,12 +43,15 @@ export function SubjectScreen({
   questionError?: Error;
   onRetry?: () => void;
   onRetryQuestions?: () => void;
+  attemptsFor?: (quizId: string) => readonly CompletedAttempt[];
+  onReviewAttempt?: (quiz: Quiz, attempt: CompletedAttempt) => void;
   onResumeQuiz: (quiz: Quiz) => void;
   onStartQuiz: (quiz: Quiz, mode: FeedbackMode, shuffle: boolean) => void;
   onBrowseQuiz: (quiz: Quiz) => void;
   onPrepareQuiz?: (quiz: Quiz) => void;
 }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
+  const [reviewQuiz, setReviewQuiz] = useState<Quiz | null>(null);
   const sets: TopicSet[] = progress.map(
     ({ quiz, active, completionCount, latestScore, trend, answeredCount, activityAt }) => {
       const label = active ? 'Resume' : completionCount > 0 ? 'Retake' : 'Start';
@@ -70,21 +76,32 @@ export function SubjectScreen({
             : []),
         ],
         action: (
-          <Button
-            variant="contained"
-            aria-label={busy ? undefined : `${label} quiz: ${quiz.name}`}
-            disabled={busy}
-            onClick={() => {
-              if (active) {
-                onResumeQuiz(quiz);
-                return;
-              }
-              onPrepareQuiz(quiz);
-              setSetupQuiz(quiz);
-            }}
-          >
-            {busy ? 'Loading questions…' : label}
-          </Button>
+          <Stack direction="row" spacing={1}>
+            {completionCount > 0 && (
+              <Button
+                variant="outlined"
+                aria-label={`Review attempts: ${quiz.name}`}
+                onClick={() => setReviewQuiz(quiz)}
+              >
+                Review
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              aria-label={busy ? undefined : `${label} quiz: ${quiz.name}`}
+              disabled={busy}
+              onClick={() => {
+                if (active) {
+                  onResumeQuiz(quiz);
+                  return;
+                }
+                onPrepareQuiz(quiz);
+                setSetupQuiz(quiz);
+              }}
+            >
+              {busy ? 'Loading questions…' : label}
+            </Button>
+          </Stack>
         ),
       };
     },
@@ -126,6 +143,16 @@ export function SubjectScreen({
         <SubjectCatalogEmptyState title="No quizzes available yet" />
       ) : (
         <TopicSetBrowser topics={topics} sets={sets} noun="quiz" initialSetId={initialSetId} />
+      )}
+      {reviewQuiz && (
+        <PastAttemptsDialog
+          attempts={attemptsFor(reviewQuiz.id)}
+          onClose={() => setReviewQuiz(null)}
+          onSelect={(attempt) => {
+            onReviewAttempt(reviewQuiz, attempt);
+            setReviewQuiz(null);
+          }}
+        />
       )}
       {setupQuiz && (
         <QuizSetupDialog

@@ -35,6 +35,7 @@ interface QuizSession {
   navigateBrowse: (index: number) => void;
   leaveBrowse: () => void;
   reviewResults: () => void;
+  reviewAttempt: (quiz: Quiz, attempt: CompletedAttempt) => void;
   navigateReview: (index: number) => void;
   leaveReview: (destination?: QuizExitDestination) => void;
   checkpoint: (attempt: Attempt, index?: number) => void;
@@ -151,6 +152,8 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     if (view.page !== 'results') return;
     setView({ page: 'quiz-review', quiz: view.quiz, attempt: view.attempt, index: 0 });
   };
+  const reviewAttempt = (quiz: Quiz, attempt: CompletedAttempt) =>
+    setView({ page: 'quiz-review', quiz, attempt, index: 0 });
   const navigateReview = (index: number) => {
     if (view.page !== 'quiz-review') return;
     const lastIndex = questionBank.listQuestions(view.quiz.id).length - 1;
@@ -218,6 +221,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     navigateBrowse,
     leaveBrowse,
     reviewResults,
+    reviewAttempt,
     navigateReview,
     leaveReview,
     checkpoint,

@@ -17,11 +17,19 @@ interface QuizReviewScreenProps {
   attempt: CompletedAttempt;
   index: number;
   questions: Question[];
+  contentChanged?: boolean;
   onNavigate: (index: number) => void;
   onRequestExit: () => void;
 }
 
-export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequestExit }: QuizReviewScreenProps) {
+export function QuizReviewScreen({
+  attempt,
+  index,
+  questions,
+  contentChanged = false,
+  onNavigate,
+  onRequestExit,
+}: QuizReviewScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
   const nextRef = useRef<HTMLButtonElement>(null);
@@ -83,6 +91,11 @@ export function QuizReviewScreen({ attempt, index, questions, onNavigate, onRequ
 
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
+      {contentChanged && (
+        <Alert severity="info" sx={{ mb: 2 }}>
+          This quiz changed after you took it. Some questions may differ.
+        </Alert>
+      )}
       <ReadOnlyQuizHeader
         index={index}
         total={questions.length}

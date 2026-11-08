@@ -61,6 +61,14 @@ describe('LocalAttemptRepository quiz activity', () => {
 
     expect(repository.latestActivityAt('quiz')).toBe('2026-09-22T11:00:00.000Z');
   });
+
+  it('keeps the content signature of completed attempts in history', () => {
+    const repository = new LocalAttemptRepository();
+
+    repository.saveCompleted(completedAttempt('quiz', '2026-09-22T11:00:00.000Z'));
+
+    expect(repository.list()[0].contentSignature).toBe('fixture-content');
+  });
 });
 
 const snapshotActive: Attempt = {

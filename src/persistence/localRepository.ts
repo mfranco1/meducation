@@ -115,8 +115,6 @@ export class LocalAttemptRepository implements AttemptRepository {
       const removedActive = active[attempt.quizId]?.id === attempt.id;
       if (removedActive) delete active[attempt.quizId];
       if (state.completedIds[attempt.id]) return removedActive ? { ...state, active } : undefined;
-      const historical = { ...attempt };
-      delete historical.contentSignature;
       const previousLatest = state.latestScores[attempt.quizId];
       const latest =
         !previousLatest || attempt.completedAt >= previousLatest.completedAt
@@ -125,7 +123,7 @@ export class LocalAttemptRepository implements AttemptRepository {
       const next: ProgressState = {
         ...state,
         active,
-        completed: [historical, ...state.completed].slice(0, MAX_COMPLETED_ATTEMPTS),
+        completed: [attempt, ...state.completed].slice(0, MAX_COMPLETED_ATTEMPTS),
         completedIds: { ...state.completedIds, [attempt.id]: true },
         completionCounts: {
           ...state.completionCounts,

@@ -17,6 +17,7 @@ import { LocalFlashcardProgressRepository } from '../persistence/localFlashcardP
 import { consumeProgressChangeNotice } from '../persistence/progressBackupStorage';
 import type { Subject } from '../domain/types';
 import { attemptQuestions } from '../domain/quizEngine';
+import { contentSignature } from '../domain/contentSignature';
 import { AppNavigationDrawer, type LearnerSection } from './components/AppNavigationDrawer';
 import { ProgressBackupDialog } from './components/ProgressBackupDialog';
 import { HelpDialog } from './components/HelpDialog';
@@ -467,6 +468,11 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
                       () => undefined,
                     );
                   }}
+                  attemptsFor={(quizId) => progressSnapshot.completed.filter((attempt) => attempt.quizId === quizId)}
+                  onReviewAttempt={(quiz, attempt) => {
+                    preloadReviewScreen();
+                    launch(quiz, () => session.reviewAttempt(quiz, attempt));
+                  }}
                   onResumeQuiz={(quiz) => {
                     preloadQuizScreen();
                     launch(quiz, () => session.resumeQuiz(quiz));
@@ -508,6 +514,10 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
             <QuizReviewScreen
               {...view}
               questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
+              contentChanged={
+                view.attempt.contentSignature !== undefined &&
+                view.attempt.contentSignature !== contentSignature(questionBank.listQuestions(view.quiz.id))
+              }
               onNavigate={session.navigateReview}
               onRequestExit={() => requestReviewExit('subject')}
             />

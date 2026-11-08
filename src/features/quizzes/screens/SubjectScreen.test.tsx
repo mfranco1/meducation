@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import type { Attempt, FeedbackMode, Quiz } from '../../../domain/types';
+import type { Attempt, CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
 import { theme } from '../../../shared/theme';
 import { SubjectScreen, type QuizProgress } from './SubjectScreen';
 import { matchMediaFor } from '../../../test/setup';
@@ -25,7 +25,8 @@ const activeAttempt: Attempt = {
   responses: {},
 };
 
-function renderSubject(progress: Partial<QuizProgress>) {
+function renderSubject(progress: Partial<QuizProgress>, attempts: CompletedAttempt[] = []) {
+  const onReviewAttempt = vi.fn<(quiz: Quiz, attempt: CompletedAttempt) => void>();
   const onResumeQuiz = vi.fn();
   const onStartQuiz = vi.fn<(quiz: Quiz, mode: FeedbackMode, shuffle: boolean) => void>();
   const onBrowseQuiz = vi.fn<(quiz: Quiz) => void>();
@@ -35,18 +36,58 @@ function renderSubject(progress: Partial<QuizProgress>) {
         subject={subject}
         topics={topics}
         progress={[{ quiz, completionCount: 0, ...progress }]}
+        attemptsFor={() => attempts}
+        onReviewAttempt={onReviewAttempt}
         onResumeQuiz={onResumeQuiz}
         onStartQuiz={onStartQuiz}
         onBrowseQuiz={onBrowseQuiz}
       />
     </ThemeProvider>,
   );
-  return { onResumeQuiz, onStartQuiz, onBrowseQuiz };
+  return { onResumeQuiz, onStartQuiz, onBrowseQuiz, onReviewAttempt };
 }
+
+const completedAttempt: CompletedAttempt = {
+  ...activeAttempt,
+  id: 'done',
+  completedAt: '2026-09-22T11:00:00.000Z',
+  score: { correct: 8, incorrect: 2, unanswered: 0, total: 10, percentage: 80, elapsedMs: 0 },
+};
+
+describe('subject quiz review', () => {
+  it('lists saved attempts and opens the chosen one', () => {
+    const { onReviewAttempt } = renderSubject({ completionCount: 1 }, [completedAttempt]);
+    fireEvent.click(screen.getByRole('button', { name: `Review attempts: ${quiz.name}` }));
+    const dialog = screen.getByRole('dialog', { name: 'Review attempts' });
+    expect(within(dialog).getByText(/80% · Exam Mode/)).toBeVisible();
+    fireEvent.click(within(dialog).getByRole('button', { name: /80%/ }));
+    expect(onReviewAttempt).toHaveBeenCalledWith(expect.objectContaining({ id: quiz.id }), completedAttempt);
+  });
+
+  it('explains when older attempts were pruned', () => {
+    renderSubject({ completionCount: 3 });
+    fireEvent.click(screen.getByRole('button', { name: `Review attempts: ${quiz.name}` }));
+    expect(screen.getByText('Older attempts are no longer saved on this device.')).toBeVisible();
+  });
+
+  it('hides Review for a quiz without completions', () => {
+    renderSubject({});
+    expect(screen.queryByRole('button', { name: /Review attempts/ })).toBeNull();
+  });
+});
 
 describe('subject quiz action', () => {
   it('shows the shared empty display only after quiz loading finishes', () => {
-    const props = { subject, topics, progress: [], onResumeQuiz: vi.fn(), onStartQuiz: vi.fn(), onBrowseQuiz: vi.fn() };
+    const props = {
+      subject,
+      topics,
+      progress: [],
+      attemptsFor: () => [],
+      onReviewAttempt: vi.fn(),
+      onResumeQuiz: vi.fn(),
+      onStartQuiz: vi.fn(),
+      onBrowseQuiz: vi.fn(),
+    };
     const { rerender } = render(
       <ThemeProvider theme={theme}>
         <SubjectScreen {...props} loading />
