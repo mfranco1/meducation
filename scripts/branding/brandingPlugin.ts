@@ -1,5 +1,5 @@
 import type { Plugin, ResolvedConfig } from 'vite';
-import { brand } from '../../src/shared/brand';
+import { brand } from '../../src/shared/brand.ts';
 
 const learnerTitle = brand.name;
 const adminTitle = `${brand.name} content admin`;

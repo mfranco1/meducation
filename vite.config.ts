@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import { loadEnv } from 'vite';
 import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
-import { brandingPlugin } from './scripts/branding/brandingPlugin';
+import { brandingPlugin } from './scripts/branding/brandingPlugin.ts';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
@@ -20,7 +20,7 @@ export default defineConfig(({ mode }) => {
     plugins: [brandingPlugin(), react()],
     server: { proxy },
     preview: { proxy },
-    build: { rollupOptions: { input } },
+    build: { rolldownOptions: { input } },
     test: {
       maxWorkers: 2,
       environment: 'jsdom',
