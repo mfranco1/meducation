@@ -28,6 +28,7 @@ import { theme } from '../../shared/theme';
 import { SampleCases } from './SampleCases';
 import { SampleFlashcards } from './SampleFlashcards';
 import { useSampleActive } from './useSampleActive';
+import { photoScreenQuad, type Quad } from './screenZoom';
 import { hairline, type } from './typography';
 import samples from './samples.json';
 
@@ -250,7 +251,15 @@ function Reveal({ children, delay = 0, sx }: { children: ReactNode; delay?: numb
 
 const startButton = { px: 3.5, py: 1.75, fontSize: '1.0625rem' } as const;
 
-export function LandingPage({ onStart }: { onStart: () => void }) {
+/** Calls onStart with the hero photo's laptop screen when the page should zoom into it on the way to the app. */
+export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => void }) {
+  const photo = useRef<HTMLImageElement>(null);
+  const onStart = () =>
+    start(
+      photo.current && matchMedia('(min-width: 900px) and (prefers-reduced-motion: no-preference)').matches
+        ? photoScreenQuad(photo.current)
+        : undefined,
+    );
   const heroCta = useRef<HTMLButtonElement>(null);
   const closingCta = useRef<HTMLButtonElement>(null);
   const topSentinel = useRef<HTMLDivElement>(null);
@@ -437,6 +446,7 @@ export function LandingPage({ onStart }: { onStart: () => void }) {
             </Box>
             <Box
               component="img"
+              ref={photo}
               aria-hidden
               src="/assets/illustrations/landing-hero-960.webp"
               srcSet="/assets/illustrations/landing-hero-640.webp 640w, /assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w"
