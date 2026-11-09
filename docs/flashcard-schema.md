@@ -33,6 +33,6 @@ IDs are assigned by the server on create, are immutable and never encode orderin
 
 Array order is canonical within each parent: deck order within a topic and card order within a deck. Moves update parent membership and order while preserving entity IDs and card content. Duplicate sibling deck names warn; distinct IDs remain authoritative.
 
-Card `front` and `back` use the same restricted rich Markdown, HTML, image, URL, and math policy as quiz stems and rationales. `sources` uses the restricted source Markdown policy. The learner renders both faces using the shared sanitized Markdown renderer. Quiz `metadata.topic` remains free text and is not a foreign key to the flashcard hierarchy.
+Card `front` and `back` use the same restricted rich Markdown, HTML, image, URL, and math policy as quiz stems and rationales. `sources` uses the restricted Markdown policy for quiz choices and pearls (emphasis and math, no HTML or images). The learner renders both faces using the shared sanitized Markdown renderer. Quiz `metadata.topic` remains free text and is not a foreign key to the flashcard hierarchy.
 
 Bulk-add JSON is described in [content management](content-management.md#editor-workflow). Learner checkpoints are not content; they live in browser progress and are never written into this bank.

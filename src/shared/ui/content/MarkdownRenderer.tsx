@@ -4,6 +4,7 @@ import rehypeRaw from 'rehype-raw';
 import rehypeSanitize from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 import rehypeKatex from 'rehype-katex';
+import type { Pluggable } from 'unified';
 import {
   isAllowedImageUrl,
   richContentSanitizeSchema,
@@ -13,6 +14,8 @@ import { remarkMathPlugin } from '../../../content/richText/remarkMathPolicy';
 import './katex.css';
 import type { MarkdownContentKind, MarkdownVariant } from './MarkdownContent';
 import { fontWeight as weight, monoFontFamily, radius } from '../../theme';
+
+const katexPlugin: Pluggable = [rehypeKatex, { trust: false, maxSize: 10, maxExpand: 1000 }];
 
 function ContentImage({ src, alt }: { src?: string; alt?: string }) {
   if (!src || !isAllowedImageUrl(src)) return null;
@@ -45,15 +48,11 @@ export default function MarkdownRenderer({
   return (
     <ReactMarkdown
       skipHtml={!rich}
-      remarkPlugins={rich ? [remarkGfm, remarkMathPlugin] : [remarkGfm]}
+      remarkPlugins={[remarkGfm, remarkMathPlugin]}
       rehypePlugins={
         rich
-          ? [
-              [rehypeRaw, { tagfilter: true }],
-              [rehypeSanitize, richContentSanitizeSchema],
-              [rehypeKatex, { trust: false, maxSize: 10, maxExpand: 1000 }],
-            ]
-          : []
+          ? [[rehypeRaw, { tagfilter: true }], [rehypeSanitize, richContentSanitizeSchema], katexPlugin]
+          : [katexPlugin]
       }
       urlTransform={transformRichContentUrl}
       components={{

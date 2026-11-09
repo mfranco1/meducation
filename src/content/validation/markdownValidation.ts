@@ -95,10 +95,7 @@ export function markdownIssues(markdown: string, field: ContentField, questionId
       const url = definitions.get(node.identifier ?? '');
       visit({ ...node, type: node.type === 'linkReference' ? 'link' : 'image', url, children: undefined });
     }
-    if (
-      (node.type === 'inlineMath' || node.type === 'math' || (node.type === 'code' && node.lang === 'math')) &&
-      rich
-    ) {
+    if (node.type === 'inlineMath' || node.type === 'math' || (node.type === 'code' && node.lang === 'math')) {
       try {
         katex.renderToString(node.value ?? '', {
           throwOnError: true,

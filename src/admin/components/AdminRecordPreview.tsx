@@ -49,7 +49,7 @@ export function AdminRecordPreview({ kind, record }: { kind: RecordKind; record:
           {rich('Rationale', String(record.rationale))}
           {meta?.sources !== undefined && restricted('Sources', String(meta.sources))}
           {(record.pearls as string[] | undefined)?.map((pearl, index) => (
-            <Box key={index}>{note('Pearl', pearl)}</Box>
+            <Box key={index}>{restricted('Pearl', pearl)}</Box>
           ))}
         </>
       )}

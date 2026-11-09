@@ -108,7 +108,7 @@ Notable one-offs: the progress bar's completion glint and quarter-mark pulses; F
 
 ## Rich content
 
-One shared renderer (`MarkdownContent`) presents stems, rationales, card faces and sources as sanitized Markdown, HTML, images and KaTeX. Inline math aligns with text; display math and tables scroll within their own area on narrow screens. Math fonts are local. Images need alt text, lazy loading, natural aspect ratio and bounded width. Never rewrite authored source for presentation.
+One shared renderer (`MarkdownContent`) presents stems, rationales and card faces as sanitized Markdown, HTML, images and KaTeX, and choices, pearls and sources as Markdown and KaTeX without HTML or images. Inline math aligns with text; display math and tables scroll within their own area on narrow screens. Math fonts are local. Images need alt text, lazy loading, natural aspect ratio and bounded width. Never rewrite authored source for presentation.
 
 ## Learner shell and screens
 

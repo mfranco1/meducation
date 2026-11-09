@@ -106,7 +106,9 @@ export function FeedbackPanel({
                 <LightbulbOutlinedIcon fontSize="small" sx={{ color: iconColor }} />
                 <Typography variant="subtitle2">Pearl</Typography>
               </Stack>
-              <Typography sx={{ mt: 1 }}>{pearl}</Typography>
+              <Box sx={{ mt: 1 }}>
+                <MarkdownContent markdown={pearl} />
+              </Box>
             </Box>
           )}
           {sources && (

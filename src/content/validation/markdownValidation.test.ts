@@ -52,11 +52,11 @@ describe('Markdown validation', () => {
 
   it('reports malformed and unsupported math against the question field', () => {
     const issues = validateQuestionMarkdown([
-      { ...question, stem: 'Find $\\notARealCommand{x}$.', rationale: 'Answer.' },
+      { ...question, stem: 'Find $\\notARealCommand{x}$.', rationale: 'Answer.', pearls: ['$\\frac{1}$'] },
     ]);
-    expect(
-      issues.some((issue) => issue.questionId === 'i1' && issue.message.startsWith('stem contains invalid LaTeX:')),
-    ).toBe(true);
+    const messages = issues.filter((issue) => issue.questionId === 'i1').map((issue) => issue.message);
+    expect(messages.some((message) => message.startsWith('stem contains invalid LaTeX:'))).toBe(true);
+    expect(messages.some((message) => message.startsWith('sources contains invalid LaTeX:'))).toBe(true);
   });
 
   it('rejects unsafe HTML, image URLs, and restricted source markup', () => {

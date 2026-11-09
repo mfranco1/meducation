@@ -39,7 +39,6 @@ it('changes views without editing the draft and renders rich/restricted preview 
   fireEvent.click(screen.getByRole('tab', { name: 'Preview' }));
   const preview = screen.getByRole('region', { name: 'Rendered content preview' });
   expect(preview.querySelector('.katex')).not.toBeNull();
-  expect(within(preview).getByText('Choice $x^2$')).toBeVisible();
   expect(within(preview).getByText('Answer: Z')).toBeVisible();
   fireEvent.click(screen.getByRole('tab', { name: 'JSON' }));
   expect(screen.getByRole('textbox', { name: 'JSON' })).toHaveValue(raw);

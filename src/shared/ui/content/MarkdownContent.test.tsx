@@ -38,14 +38,15 @@ describe('MarkdownContent', () => {
     expect(screen.getByRole('img', { name: 'Artery diagram' })).toHaveAttribute('src', '/content/artery.png');
   });
 
-  it('keeps raw HTML disabled outside rich content and strips unsafe rich markup', () => {
+  it('renders math but keeps raw HTML disabled outside rich content, and strips unsafe rich markup', () => {
     render(
       <ThemeProvider theme={theme}>
-        <MarkdownContent markdown={'<sub>2</sub>\n\n![diagram](/content/nerve.png)'} />
+        <MarkdownContent markdown={'<sub>2</sub> PGE$_2$\n\n![diagram](/content/nerve.png)'} />
       </ThemeProvider>,
     );
     expect(screen.queryByText('2', { selector: 'sub' })).toBeNull();
     expect(screen.queryByRole('img')).toBeNull();
+    expect(document.querySelectorAll('.katex')).toHaveLength(1);
 
     render(
       <ThemeProvider theme={theme}>
