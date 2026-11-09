@@ -16,8 +16,10 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   const filterHeight = await filterGroup.evaluate((element) => element.getBoundingClientRect().height);
   expect(filterHeight).toBeLessThan(40);
   const selectedFilter = filterGroup.getByRole('button', { name: 'All' });
-  await expect(selectedFilter).toHaveCSS('background-color', 'rgb(185, 81, 27)');
-  await expect(selectedFilter).toHaveCSS('color', 'rgb(255, 255, 255)');
+  await expect(selectedFilter).toHaveCSS('color', 'rgb(133, 56, 18)');
+  expect(await filterGroup.evaluate((element) => getComputedStyle(element, '::before').backgroundColor)).toBe(
+    'rgb(247, 223, 207)',
+  );
   const inactiveFilter = filterGroup.getByRole('button', { name: 'In progress' });
   const inactiveBackground = await inactiveFilter.evaluate((element) => getComputedStyle(element).backgroundColor);
   await inactiveFilter.hover();
