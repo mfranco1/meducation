@@ -14,7 +14,7 @@ export function Stopwatch({ attempt }: { attempt: Attempt }) {
   return (
     <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
       <TimerOutlinedIcon fontSize="small" />
-      <Typography sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
+      <Typography variant="subtitle1" sx={{ fontVariantNumeric: 'tabular-nums' }}>
         {formatDuration(elapsedTimeFor(attempt, now))}
       </Typography>
     </Stack>

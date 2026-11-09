@@ -94,7 +94,7 @@ function SubjectFailure({ onRetry }: { onRetry: () => void }) {
         spacing={1}
         sx={{ alignItems: 'center', position: 'absolute', inset: 0, justifyContent: 'center', pointerEvents: 'none' }}
       >
-        <Typography variant="body2" sx={{ fontWeight: 700, bgcolor: 'background.default', px: 1 }}>
+        <Typography variant="subtitle2" sx={{ bgcolor: 'background.default', px: 1 }}>
           Couldn’t load subjects
         </Typography>
         <Button

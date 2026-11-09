@@ -20,10 +20,7 @@ function FieldDiff({ before, after }: { before: Fields | null; after: Fields | n
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
             {key}
           </Typography>
-          <Box
-            component="pre"
-            sx={{ m: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontFamily: 'inherit', typography: 'body2' }}
-          >
+          <Box component="pre" sx={{ m: 0, whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', typography: 'body2' }}>
             {diffWords(text(before?.[key]), text(after?.[key])).map((part, index) =>
               part.change === 'added' ? (
                 <Box

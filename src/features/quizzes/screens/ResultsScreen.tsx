@@ -110,7 +110,7 @@ export function ResultsScreen({
                 <Box key={row.label} sx={{ mt: 2 }}>
                   <Stack direction="row" sx={{ justifyContent: 'space-between' }}>
                     <Typography>{row.label}</Typography>
-                    <Typography sx={{ fontWeight: 700 }}>
+                    <Typography variant="subtitle1">
                       {row.correct}/{row.total} · {row.percentage}%
                     </Typography>
                   </Stack>

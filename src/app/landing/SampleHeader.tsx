@@ -1,6 +1,5 @@
 import type { ReactNode } from 'react';
 import { Box, Stack, Typography } from '@mui/material';
-import { type } from './typography';
 
 /** Reserve room for every detail option so navigating samples never changes the header layout. */
 export function SampleHeader({
@@ -34,7 +33,7 @@ export function SampleHeader({
         <Typography id={id} component="h2" variant="subtitle2" sx={{ color: 'text.primary' }}>
           {title}
         </Typography>
-        <Typography component="div" sx={{ ...type.caption, mt: 0.5, display: 'grid' }}>
+        <Typography component="div" variant="caption" sx={{ color: 'text.secondary', mt: 0.5, display: 'grid' }}>
           {(detailOptions ?? [detail]).map((option) => (
             <Box
               component="span"

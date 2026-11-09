@@ -36,7 +36,7 @@ export function ReadOnlyQuizHeader({
             sx={{ alignItems: 'center' }}
           >
             <TimerOutlinedIcon fontSize="small" aria-hidden="true" />
-            <Typography sx={{ fontWeight: 700 }}>{formatDuration(finalTimeMs)}</Typography>
+            <Typography variant="subtitle1">{formatDuration(finalTimeMs)}</Typography>
           </Stack>
         ) : undefined
       }

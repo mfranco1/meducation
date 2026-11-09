@@ -1,3 +1,4 @@
+import { fontWeight } from '../../theme';
 import { useState, type ReactNode } from 'react';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import {
@@ -198,7 +199,7 @@ export function LegalFooter({ showAbout = false }: { showAbout?: boolean }) {
         {document && (
           <>
             <DialogTitle sx={{ pr: 7 }}>
-              <Box component="span" sx={{ display: 'block', fontWeight: 800 }}>
+              <Box component="span" sx={{ display: 'block', fontWeight: fontWeight.heading }}>
                 {document.title}
               </Box>
               <Typography component="span" variant="body2" sx={{ color: 'text.secondary', display: 'block', mt: 0.5 }}>
@@ -214,7 +215,7 @@ export function LegalFooter({ showAbout = false }: { showAbout?: boolean }) {
               </Typography>
               {document.sections.map(([heading, body], index) => (
                 <Box component="section" key={heading} sx={{ '& + &': { mt: 3 } }}>
-                  <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700, mb: 1 }}>
+                  <Typography variant="subtitle1" component="h3" sx={{ mb: 1 }}>
                     {index + 1}. {heading}
                   </Typography>
                   {body}

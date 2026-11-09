@@ -14,7 +14,6 @@ import { useStudyArrowNavigation } from '../../shared/ui/study/useStudyArrowNavi
 import { SwapTransition } from '../../shared/ui/transitions/SwapTransition';
 import { useReducedMotion } from '../../shared/ui/motion';
 import { SampleHeader } from './SampleHeader';
-import { type } from './typography';
 import samples from './samples.json';
 
 const cases = samples.questions.map(({ subject, topic, ...question }) => ({
@@ -179,7 +178,7 @@ export function SampleCases({
       />
       {answers.length === cases.length && (
         <Stack direction="row" spacing={1.5} sx={{ alignItems: 'baseline', mt: 2, justifyContent: 'flex-end' }}>
-          <Typography sx={type.caption}>
+          <Typography variant="caption" component="p" sx={{ color: 'text.secondary' }}>
             You answered {correct.length} of {cases.length} correctly.
           </Typography>
           <Button size="small" onClick={restart} sx={{ p: 0, minWidth: 0, '&:hover': { bgcolor: 'transparent' } }}>

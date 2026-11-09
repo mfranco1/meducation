@@ -1,3 +1,4 @@
+import { fontWeight } from '../../theme';
 import { useEffect, useState } from 'react';
 import { Box, Button, Container, Stack, Typography } from '@mui/material';
 import CloudOffRoundedIcon from '@mui/icons-material/CloudOffRounded';
@@ -65,13 +66,18 @@ export function ContentRecoveryBanner({
       role="region"
       aria-label="Content recovery"
       data-testid={testId}
-      sx={{ width: '100%', borderBottom: '1px solid', borderColor: 'warning.light', bgcolor: '#fff7ed' }}
+      sx={{
+        width: '100%',
+        borderBottom: '1px solid',
+        borderColor: 'warning.light',
+        bgcolor: 'feedback.review.surface',
+      }}
     >
       <Container maxWidth="lg">
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' }, py: 1.5 }}>
           <CloudOffRoundedIcon color="primary" aria-hidden="true" />
           <Typography variant="body2" sx={{ flex: 1 }}>
-            <Box component="span" role="alert" sx={{ fontWeight: 800 }}>
+            <Box component="span" role="alert" sx={{ fontWeight: fontWeight.semibold }}>
               {reload ? 'Content has changed.' : title}
             </Box>{' '}
             <Box component="span" aria-live="off">

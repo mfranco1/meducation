@@ -1,3 +1,4 @@
+import '@fontsource-variable/inter/opsz.css';
 // Dev-only page (npm run dev, then /celebrations.html) for replaying celebrations without taking a quiz.
 import { Button, CssBaseline, Stack, ThemeProvider } from '@mui/material';
 import { useState } from 'react';

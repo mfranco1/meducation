@@ -5,6 +5,9 @@ import { useId, type ReactNode } from 'react';
 import { reducedMotion } from '../motion';
 import { focusRingInset, radius } from '../../theme';
 
+export const continueCardBackground = ({ palette }: Theme) =>
+  `linear-gradient(110deg, ${palette.background.default} 0%, ${palette.background.paper} 58%, ${palette.primary.light} 100%)`;
+
 export type ContinueStudyCardProps = {
   title: string;
   activityLabel: string;
@@ -44,7 +47,7 @@ export function ContinueStudyCard({
           minWidth: 0,
           overflow: 'hidden',
           position: 'relative',
-          background: 'linear-gradient(110deg, #fcf7f3 0%, #fff8f2 58%, #ffe5d3 100%)',
+          background: continueCardBackground,
           '& .continue-study-action': {
             minHeight: 152,
             pl: 'calc(24px + var(--study-carousel-control-gutter, 0px))',
@@ -134,47 +137,21 @@ export function ContinueStudyCard({
         }}
       >
         <Box className="continue-study-copy" sx={{ minWidth: 0 }}>
-          <Typography
-            component="span"
-            sx={{
-              color: 'text.primary',
-              display: 'block',
-              fontSize: 15,
-              fontWeight: 600,
-              lineHeight: 1.4,
-              '@container continue-card (min-width: 478px)': { fontSize: 16 },
-              '@container continue-card (min-width: 638px)': { fontSize: 17 },
-            }}
-          >
+          <Typography variant="subtitle2" component="span" sx={{ color: 'text.primary', display: 'block' }}>
             {eyebrow}
           </Typography>
           <Typography
+            variant="h5"
             component="span"
-            sx={{
-              color: 'text.primary',
-              display: 'block',
-              fontSize: 21,
-              fontWeight: 750,
-              lineHeight: 1.3,
-              mt: '4px',
-              overflowWrap: 'anywhere',
-              '@container continue-card (min-width: 478px)': { fontSize: 22 },
-              '@container continue-card (min-width: 638px)': { fontSize: 24 },
-            }}
+            sx={{ color: 'text.primary', display: 'block', mt: '4px', overflowWrap: 'anywhere' }}
           >
             {title}
           </Typography>
           <Typography
             id={activityId}
+            variant="body2"
             component="span"
-            sx={{
-              color: '#62564f',
-              display: 'block',
-              fontSize: 15,
-              lineHeight: 1.5,
-              mt: '2px',
-              '@container continue-card (min-width: 638px)': { fontSize: 16 },
-            }}
+            sx={{ color: 'text.secondary', display: 'block', mt: '2px' }}
           >
             {activityLabel}
           </Typography>
@@ -183,15 +160,12 @@ export function ContinueStudyCard({
             className="continue-study-cta"
             sx={{
               alignItems: 'center',
-              bgcolor: '#b9511b',
-              background: 'linear-gradient(180deg, #c45117 0%, #b9511b 100%)',
+              bgcolor: 'primary.main',
               borderRadius: radius.control,
-              color: '#fff',
+              color: 'primary.contrastText',
               display: 'inline-flex',
-              fontSize: 16,
-              fontWeight: 700,
+              typography: 'subtitle1',
               gap: '8px',
-              lineHeight: 1.25,
               minHeight: 42,
               mt: '16px',
               px: '22px',

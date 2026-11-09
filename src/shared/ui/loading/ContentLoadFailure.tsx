@@ -8,7 +8,7 @@ export function ContentLoadFailure({ title, error, onRetry }: { title: string; e
   const requestId = error instanceof ContentLoadError ? error.requestId : undefined;
   return (
     <Stack role="alert" spacing={0.5} sx={{ alignItems: 'flex-start', py: 1 }}>
-      <Typography component="h3" variant="subtitle1" sx={{ fontWeight: 700 }}>
+      <Typography component="h3" variant="subtitle1">
         {title.replace(/^Failed to load/, 'Unable to load')}
       </Typography>
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>

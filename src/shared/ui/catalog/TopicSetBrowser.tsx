@@ -267,7 +267,7 @@ export function TopicSetBrowser({
               tabIndex={set.id === initialSet?.id ? -1 : undefined}
               variant="subtitle1"
               component="h4"
-              sx={{ fontWeight: 700, overflowWrap: 'anywhere' }}
+              sx={{ overflowWrap: 'anywhere' }}
             >
               {set.name}
             </Typography>
@@ -372,7 +372,6 @@ export function TopicSetBrowser({
                     sx={{
                       alignItems: 'flex-start',
                       display: 'flex',
-                      fontWeight: 700,
                       gap: 1,
                       overflowWrap: 'anywhere',
                     }}

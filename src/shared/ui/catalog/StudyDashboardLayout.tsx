@@ -20,7 +20,7 @@ export function StudyDashboardLayout({
   return (
     <Container maxWidth="lg" sx={{ pt: { xs: 4, md: 7 }, pb: { xs: 2, md: 3 } }}>
       {title && (
-        <Typography variant="h4" component="h1" sx={{ fontWeight: 800, letterSpacing: '-.04em', mb: 3 }}>
+        <Typography variant="h1" sx={{ mb: 3 }}>
           {title}
         </Typography>
       )}
@@ -36,7 +36,7 @@ export function StudyDashboardLayout({
           mb: 1.5,
         }}
       >
-        <Typography variant="h6" component="h2" sx={{ fontWeight: 800 }}>
+        <Typography variant="h6" component="h2">
           {subjectsHeading}
         </Typography>
         {subjectsActions}

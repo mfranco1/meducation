@@ -147,7 +147,7 @@ export function BrandGraphic({
         '& .rail-right': { stroke: brand.palette[resolvedTheme].right },
         '& .rail-small': { strokeWidth: `${brand.mark.smallRailWidth}px` },
         '& .wordmark-text': {
-          fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+          fontFamily: muiTheme.typography.fontFamily,
           fontWeight: 800,
           letterSpacing: '-.04em',
         },

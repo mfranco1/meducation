@@ -24,12 +24,12 @@ import { SubjectIcon } from '../../shared/ui/catalog/icons/SubjectIcon';
 import { faqs, useSingleOpen } from '../components/HelpDialog';
 import { LegalFooter } from '../../shared/ui/shell/LegalFooter';
 import { easing, reducedMotion } from '../../shared/ui/motion';
-import { radius, shadow, theme } from '../../shared/theme';
+import { fontWeight, radius, shadow, theme } from '../../shared/theme';
 import { SampleCases } from './SampleCases';
 import { SampleFlashcards } from './SampleFlashcards';
 import { useSampleActive } from './useSampleActive';
 import { photoScreenQuad, type Quad } from './screenZoom';
-import { hairline, type } from './typography';
+import { hairline } from './typography';
 import samples from './samples.json';
 
 const grid = {
@@ -162,8 +162,7 @@ function Steps({
                 height: 32,
                 borderRadius: '50%',
                 border: '1.5px solid',
-                fontSize: '.875rem',
-                fontWeight: 750,
+                typography: 'subtitle2',
                 fontVariantNumeric: 'tabular-nums',
                 borderColor: complete ? 'success.main' : 'text.primary',
                 bgcolor: complete ? 'feedback.correct.surface' : 'background.paper',
@@ -175,7 +174,7 @@ function Steps({
             >
               {complete ? <CheckRoundedIcon sx={{ fontSize: 20 }} /> : position + 1}
             </Box>
-            <Typography sx={{ ...type.body, pt: '4px' }}>
+            <Typography sx={{ pt: '4px', maxWidth: '62ch' }}>
               {item}
               {complete && (
                 <Box component="span" sx={visuallyHidden}>
@@ -193,7 +192,7 @@ function Steps({
 }
 function SectionHead({ title, id }: { title: string; id: string }) {
   return (
-    <Typography component="h2" id={id} sx={type.section}>
+    <Typography variant="h2" component="h2" id={id}>
       {title}
     </Typography>
   );
@@ -249,7 +248,7 @@ function Reveal({ children, delay = 0, sx }: { children: ReactNode; delay?: numb
   );
 }
 
-const startButton = { px: 3.5, py: 1.75, fontSize: '1.0625rem' } as const;
+const startButton = { px: 3.5, py: 1.75 } as const;
 
 /** Calls onStart with the hero photo's laptop screen when the page should zoom into it on the way to the app. */
 export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => void }) {
@@ -348,7 +347,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
           </Box>
           <Box component="nav" aria-label="Sections" sx={{ display: { xs: 'none', md: 'flex' }, gap: 0.5 }}>
             {sectionLinks.map(([label, href]) => (
-              <Button key={href} href={href} sx={{ color: 'text.primary', fontWeight: 600 }}>
+              <Button key={href} href={href} sx={{ color: 'text.primary' }}>
                 {label}
               </Button>
             ))}
@@ -392,14 +391,13 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                 textAlign: { xs: 'center', md: 'left' },
               }}
             >
-              <Typography
-                component="h1"
-                id="hero-title"
-                sx={{ ...type.display, maxWidth: '18ch', mx: { xs: 'auto', md: 0 } }}
-              >
+              <Typography variant="display" id="hero-title" sx={{ maxWidth: '18ch', mx: { xs: 'auto', md: 0 } }}>
                 Study medicine one question at a time
               </Typography>
-              <Typography sx={{ ...type.lede, mt: { xs: 2, md: 3 }, mx: { xs: 'auto', md: 0 } }}>
+              <Typography
+                variant="lede"
+                sx={{ maxWidth: '44ch', color: 'text.secondary', mt: { xs: 2, md: 3 }, mx: { xs: 'auto', md: 0 } }}
+              >
                 Practice quizzes and flashcards across twelve subjects for free
               </Typography>
               <Box
@@ -427,11 +425,11 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                 </Button>
               </Box>
               <Typography
+                variant="body2"
                 sx={{
-                  ...type.caption,
-                  fontSize: '.9375rem',
+                  color: 'text.secondary',
                   mt: { xs: 3, md: 4 },
-                  '& b': { fontWeight: 700, color: 'text.primary' },
+                  '& b': { fontWeight: fontWeight.semibold, color: 'text.primary' },
                 }}
               >
                 {stats.map(([number, words], position) => (
@@ -499,7 +497,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               }}
             >
               <SectionHead title="Board-style Questions" id="quizzes-title" />
-              <Typography sx={{ ...type.body, mt: 2.5, color: 'text.secondary' }}>
+              <Typography sx={{ mt: 2.5, maxWidth: '62ch', color: 'text.secondary' }}>
                 Answer clinical vignettes, then read why each choice is right or wrong.
               </Typography>
               <Steps items={notes} label="How it works" done={stepsDone} sx={{ mt: 4 }} />
@@ -525,7 +523,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               }}
             >
               <SectionHead title="High-yield Flashcards" id="flashcards-title" />
-              <Typography sx={{ ...type.body, mt: 2.5, color: 'text.secondary' }}>
+              <Typography sx={{ mt: 2.5, maxWidth: '62ch', color: 'text.secondary' }}>
                 Recall the answer, then reveal it and move to the next card.
               </Typography>
               <Steps
@@ -544,7 +542,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
           <Box component="section" id="subjects" aria-labelledby="contents-title" sx={section}>
             <Reveal sx={centered}>
               <SectionHead title="Twelve Subjects" id="contents-title" />
-              <Typography sx={{ ...type.body, mt: 2.5, mx: 'auto', color: 'text.secondary' }}>
+              <Typography sx={{ mt: 2.5, mx: 'auto', maxWidth: '62ch', color: 'text.secondary' }}>
                 Quizzes and flashcard decks are grouped by topic within each subject
               </Typography>
             </Reveal>
@@ -583,7 +581,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                     <IconTile>
                       <SubjectIcon subjectId={subject.id} sx={{ fontSize: 28 }} />
                     </IconTile>
-                    <Typography sx={{ fontWeight: 600 }}>{subject.name}</Typography>
+                    <Typography variant="subtitle1">{subject.name}</Typography>
                   </Box>
                 ))}
               </Box>
@@ -627,14 +625,14 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                     <IconTile>
                       <Icon sx={{ fontSize: 24 }} />
                     </IconTile>
-                    <Typography component="h3" sx={{ fontSize: '1.125rem', fontWeight: 600, m: 0 }}>
+                    <Typography variant="subtitle1" component="h3">
                       {title}
                     </Typography>
-                    <Typography sx={{ ...type.body, color: 'text.secondary' }}>{text}</Typography>
+                    <Typography sx={{ maxWidth: '62ch', color: 'text.secondary' }}>{text}</Typography>
                   </Box>
                 ))}
               </Box>
-              <Typography sx={{ ...type.caption, mt: 4, textAlign: 'center' }}>
+              <Typography variant="caption" component="p" sx={{ color: 'text.secondary', mt: 4, textAlign: 'center' }}>
                 Clearing your browser data deletes your progress.
               </Typography>
             </Reveal>
@@ -642,7 +640,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
 
           <Box component="section" aria-labelledby="faq-title" sx={section}>
             <Reveal>
-              <Typography component="h2" id="faq-title" sx={{ ...type.section, textAlign: 'center' }}>
+              <Typography variant="h2" component="h2" id="faq-title" sx={{ textAlign: 'center' }}>
                 Frequently asked questions
               </Typography>
             </Reveal>
@@ -668,10 +666,10 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                     aria-controls={`landing-answer-${index}`}
                     sx={{ px: 0, py: 1 }}
                   >
-                    <Typography sx={{ fontSize: '1.0625rem', fontWeight: 600 }}>{question}</Typography>
+                    <Typography variant="subtitle1">{question}</Typography>
                   </AccordionSummary>
                   <AccordionDetails id={`landing-answer-${index}`} sx={{ px: 0, pt: 0, pb: 3 }}>
-                    <Typography sx={{ ...type.body, color: 'text.secondary' }}>{answer}</Typography>
+                    <Typography sx={{ maxWidth: '62ch', color: 'text.secondary' }}>{answer}</Typography>
                   </AccordionDetails>
                 </Accordion>
               ))}
@@ -689,7 +687,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               borderTop: hairline,
             }}
           >
-            <Typography component="p" sx={{ ...type.display, fontSize: { xs: '2rem', md: '3rem' } }}>
+            <Typography variant="h2" component="p">
               Pick a subject and begin
             </Typography>
             <Button
@@ -698,7 +696,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               size="large"
               disableElevation
               onClick={onStart}
-              sx={{ px: 3, py: 1.5, fontSize: '1rem' }}
+              sx={{ px: 3, py: 1.5 }}
             >
               Start studying
             </Button>

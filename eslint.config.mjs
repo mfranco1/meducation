@@ -87,6 +87,54 @@ const boundaryRules = [
   }),
 ];
 
+// Shape, depth, type and color come from tokens in src/shared/theme.ts (see docs/design-system.md).
+// Artwork (logo, subject and topic glyphs, drawn illustrations) keeps its own colors and lettering.
+const artworkFiles = [
+  'src/shared/ui/brand/**',
+  'src/shared/ui/catalog/icons/**',
+  'src/shared/ui/catalog/StudyCardIllustration.tsx',
+];
+const shapeRules = [
+  {
+    selector: 'Property[key.name=/Radius$/] Literal:not([value=0]):not([value="inherit"]):not([value="50%"])',
+    message: 'Use a `radius` token from src/shared/theme.ts.',
+  },
+  {
+    selector:
+      'Property[key.name="boxShadow"] :matches(Literal[value=/#|rgba?\\(/], TemplateElement[value.raw=/#|rgba?\\(/])',
+    message: 'Use a `shadow` token from src/shared/theme.ts, or build effect shadows from palette colors.',
+  },
+  {
+    selector: 'Property[key.name=/^(border|outline)/] Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(/]',
+    message: 'Use a palette token (divider, feedback.choiceBorder, primary.*) for borders and outlines.',
+  },
+  {
+    selector: 'Property[key.name="outlineOffset"] Literal',
+    message: 'Spread `focusRing` or `focusRingInset` from src/shared/theme.ts.',
+  },
+];
+const typeRules = [
+  {
+    selector: 'Property[key.name="fontWeight"] Literal',
+    message: 'Use a Typography variant, or `fontWeight` from src/shared/theme.ts.',
+  },
+  {
+    selector: 'Property[key.name="fontSize"] Literal[value=/(rem|px)$/]',
+    message: 'Use a Typography variant. Numeric font sizes are for icons only.',
+  },
+  {
+    selector: 'Property[key.name=/^(letterSpacing|fontFamily)$/] Literal',
+    message: 'Use a Typography variant.',
+  },
+];
+const colorRules = [
+  {
+    selector:
+      'Property[key.name=/^(color|bgcolor|backgroundColor|background|backgroundImage|fill|stroke)$/] :matches(Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(/], TemplateElement[value.raw=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(/])',
+    message: 'Use a palette token, or `alpha()` of one, from src/shared/theme.ts.',
+  },
+];
+
 export default tseslint.config(
   {
     ignores: ['dist/**', 'node_modules/**', 'marketing/**'],
@@ -114,31 +162,14 @@ export default tseslint.config(
     },
   },
   {
-    // Shape and depth come from tokens in src/shared/theme.ts (see docs/design-system.md).
     files: ['src/**/*.{ts,tsx}'],
-    ignores: ['src/shared/theme.ts', ...testFiles],
-    rules: {
-      'no-restricted-syntax': [
-        'error',
-        {
-          selector: 'Property[key.name=/Radius$/] Literal:not([value=0]):not([value="inherit"]):not([value="50%"])',
-          message: 'Use a `radius` token from src/shared/theme.ts.',
-        },
-        {
-          selector:
-            'Property[key.name="boxShadow"] :matches(Literal[value=/#|rgba?\\(/], TemplateElement[value.raw=/#|rgba?\\(/])',
-          message: 'Use a `shadow` token from src/shared/theme.ts, or build effect shadows from palette colors.',
-        },
-        {
-          selector: 'Property[key.name=/^(border|outline)/] Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(/]',
-          message: 'Use a palette token (divider, feedback.choiceBorder, primary.*) for borders and outlines.',
-        },
-        {
-          selector: 'Property[key.name="outlineOffset"] Literal',
-          message: 'Spread `focusRing` or `focusRingInset` from src/shared/theme.ts.',
-        },
-      ],
-    },
+    ignores: ['src/shared/theme.ts', ...testFiles, ...artworkFiles],
+    rules: { 'no-restricted-syntax': ['error', ...shapeRules, ...typeRules, ...colorRules] },
+  },
+  {
+    files: artworkFiles,
+    ignores: testFiles,
+    rules: { 'no-restricted-syntax': ['error', ...shapeRules] },
   },
   {
     files: ['src/**/*.{ts,tsx}'],

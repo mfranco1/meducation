@@ -91,7 +91,6 @@ export function StudyItemCarousel<T>({
         component="h2"
         variant="h6"
         sx={{
-          fontWeight: 800,
           mb: headingVisibility === 'visible' ? 1.5 : 0,
           ...(headingVisibility === 'srOnly' ? visuallyHidden : {}),
         }}

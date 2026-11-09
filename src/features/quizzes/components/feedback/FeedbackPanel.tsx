@@ -7,17 +7,14 @@ import { useMemo } from 'react';
 import { MarkdownContent } from '../../../../shared/ui/content/MarkdownContent';
 import { isCorrect } from '../../../../domain/quizEngine';
 import type { Question } from '../../../../domain/types';
-import { radius } from '../../../../shared/theme';
+import { fontWeight, radius } from '../../../../shared/theme';
 
 export type ReadOnlyFeedbackStatus = 'correct' | 'incorrect' | 'unanswered' | 'unavailable';
 
 function ExplanationContent({ question }: { question: Question }) {
   return (
     <Box sx={{ maxWidth: '72ch' }}>
-      <Typography
-        variant="subtitle2"
-        sx={{ mb: 1, color: 'text.secondary', letterSpacing: '.02em', textTransform: 'uppercase' }}
-      >
+      <Typography variant="overline" sx={{ display: 'block', mb: 1, color: 'text.secondary' }}>
         Explanation
       </Typography>
       <MarkdownContent markdown={question.rationale} contentKind="rich" />
@@ -93,7 +90,7 @@ export function FeedbackPanel({
           ) : (
             <CancelRoundedIcon color="error" />
           )}
-          <Typography sx={{ fontWeight: 800 }}>{title}</Typography>
+          <Typography variant="subtitle1">{title}</Typography>
         </Stack>
       </Box>
       {hasContent && (
@@ -107,11 +104,9 @@ export function FeedbackPanel({
             <Box sx={{ mt: 2.5, maxWidth: '72ch', py: 0.5, pl: 2, borderLeft: '3px solid', borderColor: tone.border }}>
               <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
                 <LightbulbOutlinedIcon fontSize="small" sx={{ color: iconColor }} />
-                <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
-                  Pearl
-                </Typography>
+                <Typography variant="subtitle2">Pearl</Typography>
               </Stack>
-              <Typography sx={{ mt: 1, lineHeight: 1.65 }}>{pearl}</Typography>
+              <Typography sx={{ mt: 1 }}>{pearl}</Typography>
             </Box>
           )}
           {sources && (
@@ -123,11 +118,11 @@ export function FeedbackPanel({
                 borderTop: '1px solid',
                 borderColor: 'divider',
                 pt: 1.5,
-                '& summary': { cursor: 'pointer', fontWeight: 700, color: 'text.secondary' },
+                '& summary': { cursor: 'pointer', fontWeight: fontWeight.semibold, color: 'text.secondary' },
               }}
             >
               <Box component="summary">Sources</Box>
-              <Box sx={{ mt: 1, '& p': { fontSize: '.875rem' } }}>
+              <Box sx={{ mt: 1, '& p': { typography: 'body2' } }}>
                 <MarkdownContent markdown={sources} />
               </Box>
             </Box>

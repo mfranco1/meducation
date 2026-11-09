@@ -7,7 +7,7 @@ import { StudyFlagButton } from '../../../shared/ui/study/StudyFlagButton';
 import { FlashcardFaceDecoration } from './FlashcardFaceDecoration';
 import { FlashcardMomentum } from './FlashcardMomentum';
 import { reducedMotion } from '../../../shared/ui/motion';
-import { focusRing, radius } from '../../../shared/theme';
+import { focusRing, fontWeight, radius } from '../../../shared/theme';
 
 const cardThickness =
   'inset 0 1px 0 rgba(255,255,255,.9), 0 1px 0 rgba(118,106,99,.06), 0 3px 8px rgba(57,38,22,.045), 0 8px 16px rgba(57,38,22,.04)';
@@ -153,7 +153,7 @@ export function FlashcardStudyCard({
                   borderRadius: radius.flashcard,
                   ...frameRadiusStyles,
                   bgcolor: 'background.paper',
-                  color: '#fff',
+                  color: 'common.white',
                   boxShadow: cardThickness,
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
@@ -212,7 +212,7 @@ export function FlashcardStudyCard({
                   ...frameRadiusStyles,
                   bgcolor: 'background.paper',
                   boxShadow: cardThickness,
-                  color: '#fff',
+                  color: 'common.white',
                   textAlign: 'center',
                   cursor: revealed ? 'pointer' : 'default',
                   '&:focus-visible': suppressFocusRing ? { outline: 'none' } : focusRing,
@@ -238,7 +238,7 @@ export function FlashcardStudyCard({
                     variant="explanation"
                     contentKind="rich"
                     align="center"
-                    fontWeight={700}
+                    fontWeight={fontWeight.semibold}
                   />
                 </Box>
                 {card.sources && (

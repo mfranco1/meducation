@@ -73,11 +73,9 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
                 }}
               >
                 <Typography
+                  variant="h6"
                   component="h3"
                   sx={{
-                    fontSize: '1.25rem',
-                    fontWeight: 700,
-                    lineHeight: 1.35,
                     minWidth: 0,
                     overflowWrap: 'anywhere',
                     pt: 0,

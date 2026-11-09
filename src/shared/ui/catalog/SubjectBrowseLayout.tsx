@@ -1,3 +1,4 @@
+import { fontWeight } from '../../theme';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import {
   Box,
@@ -112,17 +113,11 @@ export function SubjectBrowseLayout({
             <Stack direction="row" spacing={2} sx={{ alignItems: 'center', minWidth: 0 }}>
               <SubjectIconBadge subjectId={subjectId} size={88} iconSize={64} />
               <Stack sx={{ justifyContent: 'center', minHeight: 88, minWidth: 0, overflowWrap: 'anywhere' }}>
-                <Typography
-                  variant="h3"
-                  sx={{ fontSize: { xs: '1.5rem', sm: '3rem' }, overflowWrap: 'break-word', minWidth: 0 }}
-                >
+                <Typography variant="h3" sx={{ overflowWrap: 'break-word', minWidth: 0 }}>
                   {subjectName}
                 </Typography>
                 {subjectDescription && (
-                  <Typography
-                    variant="body1"
-                    sx={{ color: 'text.secondary', fontSize: { xs: '0.875rem', sm: '1rem' } }}
-                  >
+                  <Typography variant="body1" sx={{ color: 'text.secondary' }}>
                     {subjectDescription}
                   </Typography>
                 )}
@@ -171,7 +166,7 @@ export function SubjectBrowseLayout({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          fontWeight: 700,
+                          fontWeight: fontWeight.semibold,
                         }}
                       >
                         {percent}%

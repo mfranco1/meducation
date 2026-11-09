@@ -2,6 +2,7 @@ import { Box, Button, ToggleButton, ToggleButtonGroup, Typography } from '@mui/m
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useEffect, useRef, type Ref } from 'react';
+import { alpha } from '@mui/material/styles';
 import { radius } from '../../theme';
 
 export type SubjectFilter = 'all' | 'inProgress';
@@ -25,7 +26,7 @@ export function SubjectFilterPill({
       onChange={(_, nextValue: SubjectFilter | null) => nextValue && onChange(nextValue)}
       sx={{
         borderRadius: radius.pill,
-        bgcolor: 'rgba(185, 81, 27, .08)',
+        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
         p: 0,
         '& .MuiToggleButtonGroup-grouped': {
           border: 0,
@@ -35,9 +36,6 @@ export function SubjectFilterPill({
           height: 32,
           padding: '0 16px',
           lineHeight: 1.2,
-          textTransform: 'none',
-          fontWeight: 700,
-          fontSize: '0.875rem',
           color: 'text.secondary',
           '&:not(:first-of-type)': { borderLeft: 0, ml: 0 },
           '&.Mui-selected': {

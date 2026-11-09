@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escapeBrandHtml, transformBrandHtml } from './brandingPlugin';
+import { escapeBrandHtml, fontPreloadTag, transformBrandHtml } from './brandingPlugin';
 
 describe('branding HTML and favicon', () => {
   it('fills both entry titles, theme color, and base-aware favicon URL', () => {
@@ -13,5 +13,21 @@ describe('branding HTML and favicon', () => {
   it('escapes metadata values before inserting them into HTML', () => {
     expect(transformBrandHtml('%BRAND_TITLE% %BRAND_FAVICON_URL%', '/a&b/')).toBe('Meducation /a&amp;b/favicon.svg');
     expect(escapeBrandHtml(`<${'script'} attr="x">'&`)).toBe('&lt;script attr=&quot;x&quot;&gt;&#39;&amp;');
+  });
+
+  it('preloads only the Latin brand font and fails the build when it is missing', () => {
+    const files = [
+      'assets/inter-latin-opsz-italic-a1.woff2',
+      'assets/inter-latin-opsz-normal-B2_c.woff2',
+      'assets/index.js',
+    ];
+    expect(fontPreloadTag(files, '/study/').attrs).toEqual({
+      rel: 'preload',
+      href: '/study/assets/inter-latin-opsz-normal-B2_c.woff2',
+      as: 'font',
+      type: 'font/woff2',
+      crossorigin: true,
+    });
+    expect(() => fontPreloadTag(['assets/index.js'])).toThrow();
   });
 });

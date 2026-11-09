@@ -1,13 +1,14 @@
 import { Box } from '@mui/material';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 import { radius } from '../../theme';
+import { continueCardBackground } from './ContinueStudyCard';
 
 export function ContinueStudyCardSkeleton() {
   return (
     <Box
       aria-hidden="true"
       sx={{
-        background: 'linear-gradient(110deg, #fcf7f3 0%, #fff8f2 58%, #ffe5d3 100%)',
+        background: continueCardBackground,
         border: '1px solid',
         borderColor: 'divider',
         borderRadius: radius.feature,

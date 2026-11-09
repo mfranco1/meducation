@@ -61,7 +61,7 @@ export function AdminHeader(props: Props) {
               gridTemplateColumns: 'minmax(0, 1fr) auto auto',
               justifySelf: { md: 'end' },
               gap: 0.5,
-              '& .MuiButton-root': { px: { xs: 1, md: 2 }, minWidth: 0, fontSize: { xs: '0.8125rem', md: '0.875rem' } },
+              '& .MuiButton-root': { px: { xs: 1, md: 2 }, minWidth: 0 },
             }}
           >
             <Button color="inherit" onClick={props.onStatus} aria-label={`Workspace status: ${props.status}`}>

@@ -1,4 +1,4 @@
-import type { Plugin, ResolvedConfig } from 'vite';
+import type { HtmlTagDescriptor, Plugin, ResolvedConfig } from 'vite';
 import { brand } from '../../src/shared/brand.ts';
 
 const learnerTitle = brand.name;
@@ -51,6 +51,35 @@ export function brandingPlugin(): Plugin {
     },
     generateBundle() {
       this.emitFile({ type: 'asset', fileName: faviconPath, source: favicon });
+    },
+  };
+}
+
+const preloadedFont = /(^|\/)inter-latin-opsz-normal-[\w-]+\.woff2$/;
+
+/** Preload tag for the Latin brand font among the built files. Throws so a renamed font fails the build. */
+export function fontPreloadTag(fileNames: string[], base = '/'): HtmlTagDescriptor {
+  const fileName = fileNames.find((name) => preloadedFont.test(name));
+  if (!fileName) throw new Error('Brand font file not found in the build; update the preload pattern.');
+  return {
+    tag: 'link',
+    attrs: { rel: 'preload', href: `${base}${fileName}`, as: 'font', type: 'font/woff2', crossorigin: true },
+    injectTo: 'head',
+  };
+}
+
+/** Starts the brand font download alongside the scripts so the first render uses it. */
+export function fontPreloadPlugin(): Plugin {
+  let base = '/';
+  return {
+    name: 'meducation-font-preload',
+    apply: 'build',
+    configResolved(resolved) {
+      base = resolved.base;
+    },
+    transformIndexHtml: {
+      order: 'post',
+      handler: (html, { bundle }) => (bundle ? [fontPreloadTag(Object.keys(bundle), base)] : html),
     },
   };
 }

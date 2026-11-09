@@ -26,7 +26,7 @@ import {
 } from '../core/recordDraft';
 import { descriptionMaxLength } from '../../content/validation/descriptionLimit';
 import { AdminRecordPreview } from './AdminRecordPreview';
-import { radius } from '../../shared/theme';
+import { monoFontFamily, radius } from '../../shared/theme';
 
 function OptionalString({
   label,
@@ -221,7 +221,10 @@ export function AdminRecordEditor({
             multiline
             minRows={10}
             maxRows={24}
-            slotProps={{ inputLabel: { shrink: true }, input: { sx: { fontFamily: 'monospace', fontSize: 13 } } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              input: { sx: { fontFamily: monoFontFamily, typography: 'body2' } },
+            }}
           />
         </>
       )}

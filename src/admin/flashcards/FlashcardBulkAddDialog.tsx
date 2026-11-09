@@ -14,6 +14,7 @@ import {
   useTheme,
 } from '@mui/material';
 import type { StoredFlashcardBank } from '../../content/schema/schema';
+import { monoFontFamily } from '../../shared/theme';
 import {
   compileFlashcardBulkAddDraft,
   flashcardBulkAddTemplate,
@@ -193,7 +194,10 @@ export function FlashcardBulkAddDialog({
           )}
           <TextField
             label="JSON"
-            slotProps={{ inputLabel: { shrink: true }, input: { sx: { fontFamily: 'monospace', fontSize: 13 } } }}
+            slotProps={{
+              inputLabel: { shrink: true },
+              input: { sx: { fontFamily: monoFontFamily, typography: 'body2' } },
+            }}
             sx={{ mt: 1 }}
             value={text}
             onChange={(event) => changed(event.target.value)}

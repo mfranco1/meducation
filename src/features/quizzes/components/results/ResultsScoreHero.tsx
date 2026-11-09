@@ -168,11 +168,7 @@ export function ResultsScoreHero({
 
   return (
     <Box sx={{ display: 'grid', justifyItems: 'center', textAlign: 'center' }}>
-      <Typography
-        component="h2"
-        variant="overline"
-        sx={{ color: 'text.secondary', fontWeight: 700, letterSpacing: '.12em' }}
-      >
+      <Typography component="h2" variant="overline" sx={{ color: 'text.secondary' }}>
         Quiz results
       </Typography>
       <Box
@@ -307,7 +303,6 @@ export function ResultsScoreHero({
               width: '100%',
               textAlign: 'center',
               fontVariantNumeric: 'tabular-nums',
-              lineHeight: 1.15,
               whiteSpace: 'nowrap',
             }}
           >
@@ -316,7 +311,7 @@ export function ResultsScoreHero({
           <Typography
             aria-hidden="true"
             variant="overline"
-            sx={{ color: 'text.secondary', lineHeight: 1.2, textTransform: 'uppercase' }}
+            sx={{ color: 'text.secondary', textTransform: 'uppercase' }}
           >
             Overall score
           </Typography>

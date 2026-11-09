@@ -1,6 +1,6 @@
 import { Box, Stack, Typography, alpha, useTheme } from '@mui/material';
 import type { ReactNode } from 'react';
-import { radius } from '../../theme';
+import { fontWeight, radius } from '../../theme';
 
 export function SubjectProgressSummary({
   label,
@@ -26,7 +26,7 @@ export function SubjectProgressSummary({
         <Typography
           component="span"
           variant="caption"
-          sx={{ color: 'primary.dark', fontWeight: 700, minHeight: 20, whiteSpace: 'nowrap' }}
+          sx={{ color: 'primary.dark', fontWeight: fontWeight.semibold, minHeight: 20, whiteSpace: 'nowrap' }}
         >
           {activeCount > 0 ? `${activeCount} in progress` : ' '}
         </Typography>
@@ -58,7 +58,7 @@ export function SubjectProgressSummary({
 
 export function SubjectProgressLabel({ children }: { children: ReactNode }) {
   return (
-    <Typography variant="body2" sx={{ color: 'primary.dark', fontSize: '0.875rem', fontWeight: 700 }}>
+    <Typography variant="body2" sx={{ color: 'primary.dark', fontWeight: fontWeight.semibold }}>
       {children}
     </Typography>
   );

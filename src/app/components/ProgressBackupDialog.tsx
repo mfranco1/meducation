@@ -254,7 +254,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
                     }}
                   >
                     <Box>
-                      <Typography id="progress-reset" variant="subtitle1" sx={{ fontWeight: 500 }}>
+                      <Typography id="progress-reset" variant="subtitle1">
                         Reset progress
                       </Typography>
                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>

@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Autocomplete, Button, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { monoFontFamily } from '../../shared/theme';
 import { bulkAddTemplate, compileBulkAddDraft, type BulkAddContext } from '../core/bulkAddDraft';
 import { errorMessages } from '../data/PairedHttpClient';
 import type { DraftStore } from '../data/DraftStore';
@@ -226,7 +227,7 @@ export function QuizBulkAdd({
       )}
       <TextField
         label="JSON"
-        slotProps={{ inputLabel: { shrink: true }, input: { sx: { fontFamily: 'monospace', fontSize: 13 } } }}
+        slotProps={{ inputLabel: { shrink: true }, input: { sx: { fontFamily: monoFontFamily, typography: 'body2' } } }}
         value={text}
         onChange={(event) => {
           setText(event.target.value);

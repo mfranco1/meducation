@@ -4,7 +4,7 @@ Visual and interaction conventions. Use the MUI theme in `src/shared/theme.ts`, 
 
 ## Foundations
 
-- Warm, light palette (light theme only): primary accent `#b9511b`, off-white surfaces, soft borders (see [Shape and depth](#shape-and-depth)), strong type hierarchy: panel titles h5, section headings h6, row names bold.
+- Warm, light palette (light theme only): primary accent `#b9511b` (the logo's own oranges stay inside the logo), off-white surfaces, soft borders (see [Shape and depth](#shape-and-depth)). Type follows [Typography](#typography). `info` (slate) and `warning` (amber) are set in the theme so alerts never show MUI's stock colors.
 - Spacing uses multiples of 4px (theme spacing in steps of 0.5). Closer means more related:
   - 4px: a value and its caption
   - 8px: an icon and its label, items within a group
@@ -46,6 +46,27 @@ Judgment calls, not gates.
 Review at 20 and 24px for topic rows, 46px in an 80px card badge, and 64px in an 88px header badge. Check contours, clipping, alignment, negative space and visual weight together.
 
 Sourcing, the icon studio (`npm run icons`), review and integration follow the [icon skill](../.agents/skills/meducation-icons/SKILL.md). The app glyph definitions and `public/icon-licenses.txt` (the license of every adapted icon set) are the maintained copies.
+
+## Typography
+
+One family, Inter Variable with optical sizing, self-hosted from `@fontsource-variable/inter` and imported by each entry point. The build preloads only the Latin upright file (`fontPreloadPlugin`) and fails if it cannot find it. Sizes, weights, line heights and tracking live in the theme's typography variants; pick a variant instead of setting them in `sx`. Lint rejects literal font weights, rem or px font sizes, letter spacing and font families outside the theme (numeric font sizes are for icons). For emphasis inside text, use the `fontWeight` token: `semibold` (600) for labels, row names and buttons, `heading` (650) for titles. Code and JSON fields use `monoFontFamily`.
+
+| Variant | Use |
+| --- | --- |
+| `display` | landing hero headline |
+| `h1` | screen titles |
+| `h2` | landing section headings, closing call to action, results score |
+| `h3` | subject header name |
+| `h4` | dialog hero titles |
+| `h5` | panel titles |
+| `h6` | section headings, dialog titles (MUI default) |
+| `subtitle1`, `subtitle2` | row names, labels |
+| `body1`, `body2`, `caption`, `overline` | reading text, secondary text, captions, eyebrows |
+| `lede` | landing lede |
+| `stem` | question stems and flashcard fronts |
+| `stat` | large numbers (tabular figures) |
+
+Colors follow the same rule: lint rejects hex and rgba literals in text, background, fill and stroke outside the theme. Use palette tokens or `alpha()` of one. Artwork (logo, subject and topic glyphs, drawn illustrations) is exempt.
 
 ## Shape and depth
 
@@ -98,17 +119,16 @@ One shared renderer (`MarkdownContent`) presents stems, rationales, card faces a
 - Subject screens (`SubjectBrowseLayout`, `TopicSetBrowser`): a header that blends into the page with a fading peach wash and translucent curved ribbons with softly highlighted edges, an 88px subject badge with a 64px glyph, name, optional description and progress ring (including its caption and loading placeholder, omitted below `sm`). Quizzes and Flashcards tabs sit between the header and Topics/content panels; tab changes swap only the panels, without animation. The progress area reserves its space while loading, empty or unavailable. On `lg` and up, a Topics card sits beside one content card and only their lists scroll; below `lg` they drill down. Topic rows are buttons with `aria-current`; the selected row has a pale orange fill and a 2px orange border; item rows have a status icon, chips, an in-progress bar and one primary action. Search sits under the Topics heading; results group matching items by topic, and no match offers a primary Clear button.
 - Empty states are transparent and borderless: one concise heading and the regular logo on a pale rounded square, with a single action only when it resolves the state.
 - Loading keeps the header visible and centers the logo, a 6px indeterminate bar and one status line; sections are `aria-busy` with accessible labels and placeholders outside the focus order. Catalog skeletons use the warm wave shimmer. Subject screens keep the Topics card, search field and section headings while loading and show placeholder rows shaped like the real rows. Failures use a recovery banner with Retry (below the tabs on subject screens), a small in-region note, or a persistent bottom-right toast. Error copy is learner-safe.
-- Dialog titles are weight 700 (theme default).
 - Toasts use semantic severity, stack by viewport position above content and below modals, can be global or screen-scoped, and persistent errors have a keyboard-accessible close.
 - The Progress dialog uses a plain title with a close button, a divided scrollable body and a reachable footer with text secondary actions. It has polite status and alert errors; dismissal is disabled during commit. Reset is a quiet section that opens a confirmation view. Focus returns to the entry action.
 - The Help dialog shows contact instructions above expandable FAQs (one open at a time, the content-mistake answer links to Telegram), with a scrollable body and a Close action in the footer. It is full screen on small phones. Escape closes it and focus returns to Help.
 
 ## Landing page
 
-- A frame around unmodified product components (`QuestionCard`, `FlashcardStudyCard`, `StudyNavigatorTile`, `StudyNavigationFooter`, `CelebrationOverlay`, `SubjectIcon`). Its type scale lives in `src/app/landing/typography.ts` and uses the theme's sans and heading weights. Both samples share a header with a sample title, subject and navigator tiles. The streak celebration centers vertically in the viewport and horizontally in the sample quiz section. Numbered lists use circled numbers joined by a line; completed quiz steps show green checks.
+- A frame around unmodified product components (`QuestionCard`, `FlashcardStudyCard`, `StudyNavigatorTile`, `StudyNavigationFooter`, `CelebrationOverlay`, `SubjectIcon`). Both samples share a header with a sample title, subject and navigator tiles. The streak celebration centers vertically in the viewport and horizontally in the sample quiz section. Numbered lists use circled numbers joined by a line; completed quiz steps show green checks.
 - 12-column grid at `md` and up, a single column below. Rules, not cards, group page content: 1px choice-border hairlines between sections, internal rules in the subjects grid and between the privacy columns. Sections use 64px vertical padding below `md` and 128px above. Landing buttons are flat (`disableElevation`).
 - The header is sticky. At the top of the page it is transparent; once the page scrolls it becomes an inset bar with a translucent, blurred paper background, a hairline border, 14px corners and a soft shadow. The logo scrolls back to the top without a hover or press effect. Centered Quizzes, Flashcards and Subjects links jump to their sections (`md` and up), with Start studying on the right. Anchored sections keep a scroll margin so the header does not cover them. On phones the header shows Start studying only while the hero and closing buttons are both out of view.
-- Orange marks actions, the brand and the current case tile. Hint buttons use secondary text color. Headings use weight 600.
+- Orange marks actions, the brand and the current case tile. Hint buttons use secondary text color.
 - The sample section covering the viewport's vertical midpoint takes the same keys as its study screen (1-4 or A-D, Space, Enter, arrows), without a click. Shortcuts stop when that section leaves the midpoint; only one sample is active at a time. Native editing and focused widget keys remain available. Answering scrolls the feedback header into view on short screens.
 - The hero shows the title, a one-line lede, Start studying with a quiet Try a question link, and a numbers strip. From `md` the whole study photo sits right of the copy at its own aspect ratio, fading into the background on every edge (most on the left, under the copy). Below `md` the copy is centered and the photo follows at full width with 14px corners, fading at its top. The photo is responsive WebP (640w, 960w, 1440w) from `public/assets/illustrations`, loads eagerly with high fetch priority and reserves its aspect ratio.
 - Separate quiz and flashcard sections follow the hero. Beside each sample: a heading, one sentence and numbered steps. On narrow screens this copy comes before the sample. The steps beside the quiz turn green with one pulse as the visitor answers a sample question, reads the rationale (4 seconds) or moves on, and reaches a 3-in-a-row streak.

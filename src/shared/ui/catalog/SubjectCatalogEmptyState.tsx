@@ -1,6 +1,7 @@
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { AppBrand } from '../brand/AppBrand';
+import { alpha } from '@mui/material/styles';
 import { radius } from '../../theme';
 
 export function SubjectCatalogEmptyState({ title, onShowAll }: { title: string; onShowAll?: () => void }) {
@@ -30,13 +31,13 @@ export function SubjectCatalogEmptyState({ title, onShowAll }: { title: string; 
           placeItems: 'center',
           position: 'relative',
           borderRadius: radius.feature,
-          bgcolor: 'rgba(185, 81, 27, .08)',
+          bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
         }}
       >
         <AppBrand variant="icon" size={48} decorative />
       </Box>
       <Box>
-        <Typography component="h3" variant="h6" sx={{ fontWeight: 800, letterSpacing: '-.02em' }}>
+        <Typography component="h3" variant="h6">
           {title}
         </Typography>
       </Box>

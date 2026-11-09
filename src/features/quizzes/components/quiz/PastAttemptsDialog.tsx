@@ -61,9 +61,7 @@ export function PastAttemptsDialog({
                 <Card key={attempt.id} variant="outlined" sx={{ p: 2 }}>
                   <Stack direction="row" spacing={2} sx={{ alignItems: 'flex-start', justifyContent: 'space-between' }}>
                     <Box>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-                        {date}
-                      </Typography>
+                      <Typography variant="subtitle1">{date}</Typography>
                       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                         {attempt.feedbackMode === 'immediate' ? 'Fast Feedback' : 'Exam Mode'} · Elapsed Time:{' '}
                         {formatDuration(attempt.score.elapsedMs)}
@@ -91,7 +89,7 @@ export function PastAttemptsDialog({
                         '& .MuiLinearProgress-bar': { borderRadius: radius.pill, bgcolor: color },
                       }}
                     />
-                    <Typography sx={{ fontWeight: 700 }}>{percentage}%</Typography>
+                    <Typography variant="subtitle1">{percentage}%</Typography>
                   </Stack>
                 </Card>
               );

@@ -49,8 +49,6 @@ export function ScreenLoading({ label = 'Loading…' }: { label?: string }) {
           px: 2,
           maxWidth: '100%',
           textAlign: 'center',
-          fontSize: { xs: '1rem', sm: '1.125rem' },
-          lineHeight: 1.5,
         }}
       >
         {label}

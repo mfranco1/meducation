@@ -3,7 +3,7 @@ import { alpha, Box, ButtonBase, Typography, useTheme } from '@mui/material';
 import { useState, type Ref } from 'react';
 import { flagFlutter } from './StudyFlagButton';
 import { reducedMotion } from '../motion';
-import { focusRing, radius, shadow } from '../../theme';
+import { focusRing, fontWeight, radius, shadow } from '../../theme';
 
 /** `result` colors a graded tile green or red in place of the answered highlight. */
 export function StudyNavigatorTile({
@@ -41,8 +41,8 @@ export function StudyNavigatorTile({
       : result === 'incorrect'
         ? palette.error.dark
         : highlighted
-          ? '#853812'
-          : '#4e5e73';
+          ? palette.primary.dark
+          : palette.text.secondary;
   return (
     <ButtonBase
       ref={tileRef}
@@ -60,7 +60,8 @@ export function StudyNavigatorTile({
           : (tone?.border ?? (highlighted ? alpha(palette.primary.main, 0.4) : 'feedback.choiceBorder')),
         bgcolor: tone?.surface ?? (highlighted ? 'primary.light' : 'background.paper'),
         color: textColor,
-        fontWeight: 750,
+        typography: 'caption',
+        fontWeight: fontWeight.heading,
         boxShadow: current ? shadow.currentRing : 'none',
         '&:hover': { bgcolor: tone?.border ?? (highlighted ? alpha(palette.primary.main, 0.3) : 'primary.light') },
         '&:focus-visible': focusRing,

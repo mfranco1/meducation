@@ -2,6 +2,7 @@ import { lighten } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Box, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
+import { fontWeight } from '../../theme';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 
 const countFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 1, useGrouping: false });
@@ -75,24 +76,20 @@ export function StatCard({
           )}
           <Typography
             variant="body2"
-            sx={dashboard ? { color: 'text.primary', fontWeight: 650 } : { color: 'text.secondary' }}
+            sx={dashboard ? { color: 'text.primary', fontWeight: fontWeight.semibold } : { color: 'text.secondary' }}
           >
             {label}
           </Typography>
           {badge && <Chip label={badge} size="small" sx={{ height: 20, '& .MuiChip-label': { px: 0.75 } }} />}
         </Stack>
         <Typography
-          variant={dashboard ? 'h4' : 'h5'}
+          variant={dashboard ? 'stat' : 'h5'}
+          component={dashboard ? 'h4' : 'h5'}
           sx={
             dashboard
               ? {
                   mt: 1.5,
                   minHeight: 32,
-                  fontSize: { xs: '1.625rem', sm: '1.75rem' },
-                  lineHeight: 1.1,
-                  fontWeight: 750,
-                  letterSpacing: '-.035em',
-                  fontVariantNumeric: 'tabular-nums',
                   display: 'flex',
                   alignItems: 'baseline',
                   '& .stat-suffix': { fontSize: '0.7em', lineHeight: 1, ml: '1px' },
@@ -110,7 +107,7 @@ export function StatCard({
               {
                 mt: 0.5,
                 minHeight: '1.25em',
-                fontWeight: 500,
+                fontWeight: fontWeight.medium,
                 lineHeight: 1.25,
                 overflowWrap: 'anywhere',
                 color: 'text.secondary',

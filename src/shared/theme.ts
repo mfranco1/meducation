@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { alpha, createTheme } from '@mui/material/styles';
 import { brand } from './brand';
 
@@ -36,6 +37,27 @@ declare module '@mui/material/styles' {
     feedback?: FeedbackPalette;
     scoreRing?: ScoreRingPalette;
     reward?: RewardPalette;
+  }
+  interface TypographyVariants {
+    display: CSSProperties;
+    lede: CSSProperties;
+    stem: CSSProperties;
+    stat: CSSProperties;
+  }
+  interface TypographyVariantsOptions {
+    display?: CSSProperties;
+    lede?: CSSProperties;
+    stem?: CSSProperties;
+    stat?: CSSProperties;
+  }
+}
+
+declare module '@mui/material/Typography' {
+  interface TypographyPropsVariantOverrides {
+    display: true;
+    lede: true;
+    stem: true;
+    stat: true;
   }
 }
 
@@ -80,6 +102,15 @@ export const focusRingInset = { ...focusRing, outlineOffset: '-2px' } as const;
 
 const hairline = '#eee5df';
 
+/** The three type weights plus the heading weight. Set weight through a variant, not `sx`. */
+export const fontWeight = { regular: 400, medium: 500, semibold: 600, heading: 650 } as const;
+
+/** Code and JSON editing fields. */
+export const monoFontFamily = 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace';
+
+const { up } = createTheme().breakpoints;
+const heading = { fontWeight: fontWeight.heading, textWrap: 'balance' } as const;
+
 export const theme = createTheme({
   palette: {
     mode: 'light',
@@ -88,6 +119,8 @@ export const theme = createTheme({
     background: { default: '#fbf8f5', paper: '#fffdfb' },
     text: { primary: '#27211e', secondary: '#766a63' },
     success: { main: '#2f7a55' },
+    info: { main: '#4e5e73' },
+    warning: { main: '#8a6410' },
     error: { main: '#b73b32' },
     scoreRing: { low: '#b73b32', fair: '#c69a16', good: '#8ab85a', high: '#2f7a55' },
     reward: { main: '#e0a516', light: '#ffd95a' },
@@ -104,11 +137,70 @@ export const theme = createTheme({
   },
   shape: { borderRadius: 14 },
   typography: {
-    fontFamily: 'Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
-    h3: { fontWeight: 750, letterSpacing: '-.045em' },
-    h4: { fontWeight: 720, letterSpacing: '-.035em' },
-    h5: { fontWeight: 700 },
-    button: { textTransform: 'none', fontWeight: 700 },
+    fontFamily: '"Inter Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    fontWeightRegular: fontWeight.regular,
+    fontWeightMedium: fontWeight.medium,
+    fontWeightBold: fontWeight.heading,
+    /** Landing hero headline. */
+    display: {
+      ...heading,
+      fontSize: 'clamp(2.25rem, 10vw, 2.625rem)',
+      lineHeight: 1.04,
+      letterSpacing: '-.02em',
+      [up('sm')]: { fontSize: '3.25rem' },
+      [up('lg')]: { fontSize: '4rem' },
+    },
+    /** Screen titles. */
+    h1: {
+      ...heading,
+      fontSize: '1.875rem',
+      lineHeight: 1.15,
+      letterSpacing: '-.03em',
+      [up('sm')]: { fontSize: '2.125rem' },
+    },
+    /** Landing section headings and closing call to action. */
+    h2: {
+      ...heading,
+      fontSize: '2rem',
+      lineHeight: 1.1,
+      letterSpacing: '-.02em',
+      [up('md')]: { fontSize: '2.75rem' },
+      [up('lg')]: { fontSize: '3.25rem' },
+    },
+    /** Subject header name. */
+    h3: {
+      ...heading,
+      fontSize: '1.5rem',
+      lineHeight: 1.15,
+      letterSpacing: '-.025em',
+      [up('sm')]: { fontSize: '3rem' },
+    },
+    /** Dialog hero titles. */
+    h4: { ...heading, fontSize: '1.75rem', lineHeight: 1.2, letterSpacing: '-.02em' },
+    /** Panel titles. */
+    h5: { ...heading, fontSize: '1.375rem', lineHeight: 1.3, letterSpacing: '-.015em' },
+    /** Section headings. */
+    h6: { ...heading, fontSize: '1.125rem', lineHeight: 1.35, letterSpacing: '-.01em' },
+    subtitle1: { fontWeight: fontWeight.semibold, fontSize: '1rem', lineHeight: 1.5 },
+    subtitle2: { fontWeight: fontWeight.semibold, fontSize: '.875rem', lineHeight: 1.5 },
+    body1: { fontSize: '1rem', lineHeight: 1.6 },
+    body2: { fontSize: '.875rem', lineHeight: 1.55 },
+    caption: { fontSize: '.8125rem', lineHeight: 1.5 },
+    overline: { fontWeight: fontWeight.semibold, fontSize: '.75rem', lineHeight: 1.5, letterSpacing: '.12em' },
+    button: { fontWeight: fontWeight.semibold, textTransform: 'none' },
+    /** Landing lede under the headline. */
+    lede: { fontSize: '1.0625rem', lineHeight: 1.55, [up('md')]: { fontSize: '1.1875rem' } },
+    /** Question stems and flashcard fronts. */
+    stem: { fontWeight: fontWeight.medium, fontSize: '1.25rem', lineHeight: 1.5, [up('sm')]: { fontSize: '1.375rem' } },
+    /** Large numbers: stat values, scores. Tabular so digits do not shift. */
+    stat: {
+      fontWeight: fontWeight.heading,
+      fontSize: '1.625rem',
+      lineHeight: 1.1,
+      letterSpacing: '-.03em',
+      fontVariantNumeric: 'tabular-nums',
+      [up('sm')]: { fontSize: '1.75rem' },
+    },
   },
   components: {
     MuiCard: {
@@ -123,7 +215,7 @@ export const theme = createTheme({
       styleOverrides: { circle: { strokeLinecap: 'round' } },
     },
     MuiButton: {
-      styleOverrides: { root: { borderRadius: radius.control, padding: '9px 16px' } },
+      styleOverrides: { root: { borderRadius: radius.control, padding: '9px 16px' }, sizeLarge: { fontSize: '1rem' } },
     },
     MuiToggleButton: {
       styleOverrides: { root: { borderRadius: radius.control } },
@@ -131,8 +223,10 @@ export const theme = createTheme({
     MuiOutlinedInput: {
       styleOverrides: { root: { borderRadius: radius.control } },
     },
-    MuiDialogTitle: {
-      styleOverrides: { root: { fontWeight: 700 } },
+    MuiTypography: {
+      defaultProps: {
+        variantMapping: { display: 'h1', lede: 'p', stem: 'p', stat: 'p', subtitle1: 'p', subtitle2: 'p' },
+      },
     },
   },
 });

@@ -3,7 +3,7 @@ import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import StyleRoundedIcon from '@mui/icons-material/StyleRounded';
 import SettingsBackupRestoreRoundedIcon from '@mui/icons-material/SettingsBackupRestoreRounded';
 import HelpOutlineRoundedIcon from '@mui/icons-material/HelpOutlineRounded';
-import { Box, ButtonBase, Drawer, Tooltip, useMediaQuery } from '@mui/material';
+import { alpha, Box, ButtonBase, Drawer, Tooltip, useMediaQuery } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import { useTheme } from '@mui/material/styles';
 import { brand } from '../../shared/brand';
@@ -11,7 +11,7 @@ import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { DrawerEdgeToggle } from './drawer/DrawerEdgeToggle';
 import { DrawerSurface } from './drawer/DrawerSurface';
 import { reducedMotion } from '../../shared/ui/motion';
-import { focusRing, radius } from '../../shared/theme';
+import { focusRing, fontWeight, radius } from '../../shared/theme';
 
 const learnerDrawerExpandedWidth = 240;
 const learnerDrawerCollapsedWidth = 64;
@@ -70,8 +70,8 @@ export function AppNavigationDrawer({
           justifyContent: compact ? 'center' : 'flex-start',
           gap: 1.5,
           color: current ? 'primary.dark' : 'text.secondary',
-          bgcolor: current ? 'rgba(185,81,27,.1)' : 'transparent',
-          '&:hover, &:active': { bgcolor: current ? 'rgba(185,81,27,.1)' : 'transparent' },
+          bgcolor: current ? (t) => alpha(t.palette.primary.main, 0.1) : 'transparent',
+          '&:hover, &:active': { bgcolor: current ? (t) => alpha(t.palette.primary.main, 0.1) : 'transparent' },
           '&:focus-visible': focusRing,
         }}
       >
@@ -79,7 +79,10 @@ export function AppNavigationDrawer({
           {icon}
         </Box>
         {!compact && (
-          <Box component="span" sx={{ fontWeight: current ? 700 : 600, whiteSpace: 'nowrap' }}>
+          <Box
+            component="span"
+            sx={{ fontWeight: current ? fontWeight.heading : fontWeight.semibold, whiteSpace: 'nowrap' }}
+          >
             {label}
           </Box>
         )}
@@ -187,7 +190,7 @@ export function AppNavigationDrawer({
                     <SettingsBackupRestoreRoundedIcon />
                   </Box>
                   {!compact && (
-                    <Box component="span" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                    <Box component="span" sx={{ fontWeight: fontWeight.semibold, whiteSpace: 'nowrap' }}>
                       Progress
                     </Box>
                   )}
@@ -221,7 +224,7 @@ export function AppNavigationDrawer({
                   <HelpOutlineRoundedIcon />
                 </Box>
                 {!compact && (
-                  <Box component="span" sx={{ fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  <Box component="span" sx={{ fontWeight: fontWeight.semibold, whiteSpace: 'nowrap' }}>
                     Help
                   </Box>
                 )}

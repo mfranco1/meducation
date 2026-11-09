@@ -135,7 +135,7 @@ function StudyProgress({
               right: 0,
               width: 24,
               borderRadius: `0 ${radius.pill} ${radius.pill} 0`,
-              background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, .85))',
+              background: (theme) => `linear-gradient(90deg, transparent, ${alpha(theme.palette.common.white, 0.85)})`,
               animation: `${glint} 650ms ease-out both`,
               [reducedMotion]: { display: 'none' },
             }}

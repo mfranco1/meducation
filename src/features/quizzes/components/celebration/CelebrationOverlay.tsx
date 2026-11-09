@@ -324,7 +324,7 @@ function CelebrationPlayback({
                 left: 0,
                 width: '18%',
                 background: (t) =>
-                  `linear-gradient(90deg, transparent, rgba(255,255,255,.75), ${alpha(t.palette.reward.light, 0.35)}, transparent)`,
+                  `linear-gradient(90deg, transparent, ${alpha(t.palette.common.white, 0.75)}, ${alpha(t.palette.reward.light, 0.35)}, transparent)`,
                 animation: `${shine} 900ms ${easing.out} 700ms both`,
               },
               ...(perfect && {
@@ -336,7 +336,7 @@ function CelebrationPlayback({
                   left: 0,
                   width: '18%',
                   background: (t) =>
-                    `linear-gradient(90deg, transparent, ${alpha(t.palette.reward.light, 0.35)}, rgba(255,255,255,.75), transparent)`,
+                    `linear-gradient(90deg, transparent, ${alpha(t.palette.reward.light, 0.35)}, ${alpha(t.palette.common.white, 0.75)}, transparent)`,
                   animation: `${returnShine} 900ms ${easing.out} 1850ms both`,
                 },
               }),
@@ -376,9 +376,6 @@ function CelebrationPlayback({
                 variant="h6"
                 sx={[
                   {
-                    fontWeight: 800,
-                    lineHeight: 1.2,
-                    letterSpacing: '-.01em',
                     color: 'primary.dark',
                   },
                   titleSizzling && {

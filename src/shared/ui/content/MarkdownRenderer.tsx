@@ -12,7 +12,7 @@ import {
 import { remarkMathPlugin } from '../../../content/richText/remarkMathPolicy';
 import './katex.css';
 import type { MarkdownContentKind, MarkdownVariant } from './MarkdownContent';
-import { radius } from '../../theme';
+import { fontWeight as weight, monoFontFamily, radius } from '../../theme';
 
 function ContentImage({ src, alt }: { src?: string; alt?: string }) {
   if (!src || !isAllowedImageUrl(src)) return null;
@@ -62,10 +62,10 @@ export default function MarkdownRenderer({
             <>{children}</>
           ) : (
             <Typography
-              variant={variant === 'stem' ? 'h5' : 'body1'}
+              variant={variant === 'stem' ? 'stem' : 'body1'}
+              component={variant === 'stem' ? 'h5' : 'p'}
               sx={{
-                lineHeight: variant === 'stem' ? 1.45 : 1.75,
-                fontSize: variant === 'explanation' ? { xs: '1rem', sm: '1.0625rem' } : undefined,
+                lineHeight: variant === 'explanation' ? 1.7 : undefined,
                 textAlign: align,
                 fontWeight,
                 '& + &': { mt: 1.5 },
@@ -76,21 +76,17 @@ export default function MarkdownRenderer({
             </Typography>
           ),
         h1: ({ children }) => (
-          <Typography
-            variant={variant === 'stem' ? 'h5' : 'h6'}
-            component="h2"
-            sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}
-          >
+          <Typography variant={variant === 'stem' ? 'h5' : 'h6'} component="h2" sx={{ mt: 2, mb: 1, textAlign: align }}>
             {children}
           </Typography>
         ),
         h2: ({ children }) => (
-          <Typography variant="h6" component="h3" sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}>
+          <Typography variant="h6" component="h3" sx={{ mt: 2, mb: 1, textAlign: align }}>
             {children}
           </Typography>
         ),
         h3: ({ children }) => (
-          <Typography variant="subtitle1" component="h4" sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}>
+          <Typography variant="subtitle1" component="h4" sx={{ mt: 2, mb: 1, textAlign: align }}>
             {children}
           </Typography>
         ),
@@ -105,7 +101,7 @@ export default function MarkdownRenderer({
           </Box>
         ),
         li: ({ children }) => (
-          <Typography component="li" sx={{ lineHeight: 1.7, fontWeight }}>
+          <Typography component="li" sx={{ fontWeight }}>
             {children}
           </Typography>
         ),
@@ -141,7 +137,7 @@ export default function MarkdownRenderer({
                   borderBottom: '1px solid',
                   borderColor: 'divider',
                 },
-                '& th': { bgcolor: 'action.hover', fontWeight: 800 },
+                '& th': { bgcolor: 'action.hover', fontWeight: weight.semibold },
                 '& tr:last-child td': { borderBottom: 0 },
               }}
             >
@@ -174,7 +170,7 @@ export default function MarkdownRenderer({
                 py: 0.15,
                 borderRadius: radius.inline,
                 bgcolor: 'action.hover',
-                fontFamily: 'monospace',
+                fontFamily: monoFontFamily,
                 fontSize: '.9em',
               }}
             >

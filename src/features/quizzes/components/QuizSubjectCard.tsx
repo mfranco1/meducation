@@ -1,4 +1,5 @@
 import { Chip, Stack, Typography } from '@mui/material';
+import { fontWeight } from '../../../shared/theme';
 import type { SubjectStat } from '../selectors/progress';
 import { ScoreTrendIndicator } from './ScoreTrendIndicator';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
@@ -28,13 +29,13 @@ export function QuizSubjectCard({
           <Chip
             label={`${activeQuizCount} in progress`}
             size="small"
-            sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: 700 }}
+            sx={{ bgcolor: 'primary.light', color: 'primary.dark', fontWeight: fontWeight.semibold }}
           />
         </Stack>
       )}
       {latest !== undefined && (
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 2 }}>
-          <Typography variant="body2" sx={{ color: 'primary.dark', fontWeight: 700 }}>
+          <Typography variant="subtitle2" sx={{ color: 'primary.dark' }}>
             Latest Score {latest}%
           </Typography>
           {trend && <ScoreTrendIndicator trend={trend} />}
