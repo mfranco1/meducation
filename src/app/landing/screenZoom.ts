@@ -90,17 +90,29 @@ export function photoScreenQuad(photo: HTMLElement): Quad | undefined {
   return photoScreen.map(([x, y]) => [rect.left + x * rect.width, rect.top + y * rect.height]) as Quad;
 }
 
+const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
 /**
  * Pushes the camera into the photo's screen. The landing page carries the
  * photo toward the viewer while the app layer, mapped onto the screen, grows
- * to fill the viewport and fades in. Ends with the app layer untransformed.
+ * to fill the viewport and fades in. The app layer is placed and hidden before
+ * mount runs, and the motion starts once mount settles and the result has
+ * painted, so no rendering competes with it. Ends with the app layer
+ * untransformed.
  */
-export async function zoomIntoScreen(screen: Quad, landing: HTMLElement, app: HTMLElement) {
+export async function zoomIntoScreen(
+  screen: Quad,
+  landing: HTMLElement,
+  app: HTMLElement,
+  mount: () => Promise<unknown>,
+) {
+  // The fixed app layer fills the viewport without its scrollbar.
+  const { clientWidth: width, clientHeight: height } = document.documentElement;
   const viewport: Quad = [
     [0, 0],
-    [innerWidth, 0],
-    [innerWidth, innerHeight],
-    [0, innerHeight],
+    [width, 0],
+    [width, height],
+    [0, height],
   ];
   const landingFrames: Keyframe[] = [];
   const appFrames: Keyframe[] = [];
@@ -109,8 +121,22 @@ export async function zoomIntoScreen(screen: Quad, landing: HTMLElement, app: HT
     landingFrames.push({ transform: quadToQuad(screen, quad) });
     appFrames.push({ transform: quadToQuad(viewport, quad) });
   }
-  landing.style.transformOrigin = `${scrollX}px ${scrollY}px`;
-  Object.assign(app.style, { position: 'fixed', inset: '0', zIndex: '1', overflow: 'hidden', transformOrigin: '0 0' });
+  // Pushing in never brings more of the page into view, so only what is on screen now is painted.
+  Object.assign(landing.style, {
+    transformOrigin: `${scrollX}px ${scrollY}px`,
+    clipPath: `inset(${scrollY}px 0 calc(100% - ${scrollY + height}px) 0)`,
+  });
+  Object.assign(app.style, {
+    position: 'fixed',
+    inset: '0',
+    zIndex: '1',
+    overflow: 'hidden',
+    transformOrigin: '0 0',
+    opacity: '0',
+  });
+  await mount();
+  await nextFrame();
+  await nextFrame();
   const timing = { duration, fill: 'both' } as const;
   const animations = [
     landing.animate(landingFrames, timing),

@@ -7,6 +7,7 @@ import {
   alpha,
   Box,
   Button,
+  buttonClasses,
   ClickAwayListener,
   IconButton,
   Tooltip,
@@ -249,16 +250,39 @@ function Reveal({ children, delay = 0, sx }: { children: ReactNode; delay?: numb
 }
 
 const startButton = { px: 3.5, py: 1.75 } as const;
+// A pressed Start studying button keeps its color while it waits, since the app is on its way rather than unavailable.
+const startLoading = {
+  [`&.${buttonClasses.loading}`]: { bgcolor: 'primary.main', color: 'transparent' },
+  [`& .${buttonClasses.loadingIndicator}`]: { color: 'primary.contrastText' },
+} as const;
+// Most starts are near instant, so the spinner appears only once the wait is noticeable.
+const slowStart = 400;
+// Samples start from their own finish buttons, which show no spinner.
+type StartButton = 'header' | 'hero' | 'closing' | 'sample';
 
 /** Calls onStart with the hero photo's laptop screen when the page should zoom into it on the way to the app. */
 export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => void }) {
   const photo = useRef<HTMLImageElement>(null);
-  const onStart = () =>
-    start(
+  // While zooming, the page holds still: the push in would otherwise read as scrolling to the observers below.
+  const [zooming, setZooming] = useState(false);
+  const [pressed, setPressed] = useState<StartButton>();
+  const [slow, setSlow] = useState(false);
+  useEffect(() => {
+    if (!pressed) return;
+    const timer = setTimeout(() => setSlow(true), slowStart);
+    return () => clearTimeout(timer);
+  }, [pressed]);
+  const startProps = (button: StartButton) => ({ onClick: () => onStart(button), loading: slow && pressed === button });
+  const onStart = (button: StartButton) => {
+    if (pressed) return;
+    setPressed(button);
+    const screen =
       photo.current && matchMedia('(min-width: 900px) and (prefers-reduced-motion: no-preference)').matches
         ? photoScreenQuad(photo.current)
-        : undefined,
-    );
+        : undefined;
+    if (screen) setZooming(true);
+    start(screen);
+  };
   const heroCta = useRef<HTMLButtonElement>(null);
   const closingCta = useRef<HTMLButtonElement>(null);
   const topSentinel = useRef<HTMLDivElement>(null);
@@ -279,6 +303,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
 
   // On phones the header shows Start studying only while neither page button is in view.
   useEffect(() => {
+    if (zooming) return;
     const observer = new IntersectionObserver((entries) =>
       setCtaInView((current) => {
         const next = { ...current };
@@ -290,15 +315,16 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
     );
     [heroCta.current, closingCta.current].forEach((element) => element && observer.observe(element));
     return () => observer.disconnect();
-  }, []);
+  }, [zooming]);
   const showHeaderCta = !ctaInView.hero && !ctaInView.closing;
 
   // The header floats as a bar once the page leaves the top.
   useEffect(() => {
+    if (zooming) return;
     const observer = new IntersectionObserver(([entry]) => setScrolled(!entry.isIntersecting));
     if (topSentinel.current) observer.observe(topSentinel.current);
     return () => observer.disconnect();
-  }, []);
+  }, [zooming]);
 
   return (
     <Box
@@ -355,8 +381,9 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
           <Button
             variant="contained"
             disableElevation
-            onClick={onStart}
+            {...startProps('header')}
             sx={{
+              ...startLoading,
               justifySelf: 'end',
               visibility: { xs: showHeaderCta ? 'visible' : 'hidden', md: 'visible' },
               opacity: { xs: showHeaderCta ? 1 : 0, md: 1 },
@@ -415,8 +442,8 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                   variant="contained"
                   size="large"
                   disableElevation
-                  onClick={onStart}
-                  sx={startButton}
+                  {...startProps('hero')}
+                  sx={{ ...startButton, ...startLoading }}
                 >
                   Start studying
                 </Button>
@@ -503,7 +530,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               <Steps items={notes} label="How it works" done={stepsDone} sx={{ mt: 4 }} />
             </Reveal>
             <Reveal delay={100} sx={{ gridColumn: { md: '6 / span 7' }, minWidth: 0 }}>
-              <SampleCases active={quizActive} onStart={onStart} onStep={completeStep} />
+              <SampleCases active={quizActive} onStart={() => onStart('sample')} onStep={completeStep} />
             </Reveal>
           </Box>
 
@@ -535,7 +562,11 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               />
             </Reveal>
             <Reveal delay={100} sx={{ gridColumn: { md: '6 / span 7' }, minWidth: 0 }}>
-              <SampleFlashcards active={flashcardsActive} onStart={onStart} onStep={completeFlashcardStep} />
+              <SampleFlashcards
+                active={flashcardsActive}
+                onStart={() => onStart('sample')}
+                onStep={completeFlashcardStep}
+              />
             </Reveal>
           </Box>
 
@@ -695,8 +726,8 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               variant="contained"
               size="large"
               disableElevation
-              onClick={onStart}
-              sx={{ px: 3, py: 1.5 }}
+              {...startProps('closing')}
+              sx={{ px: 3, py: 1.5, ...startLoading }}
             >
               Start studying
             </Button>

@@ -162,6 +162,21 @@ test('hero photo fades behind the copy on desktop and sits below the actions on 
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
 });
 
+test('a slow start keeps the pressed button busy until the app opens', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.route('**/api/v1/subjects', async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await route.continue();
+  });
+  await page.goto('/');
+  const hero = page.getByRole('region', { name: 'Study medicine one question at a time' });
+  const start = hero.getByRole('button', { name: 'Start studying' });
+  await start.click();
+  await expect(start).toBeDisabled();
+  await expect(page.getByRole('banner').getByRole('button', { name: 'Start studying' })).toBeEnabled();
+  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
+});
+
 test('flashcard steps track revealing and navigating independently', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

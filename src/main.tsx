@@ -86,12 +86,10 @@ async function showLanding() {
         </>,
       );
     const loadApp = () => import('./app/App');
-    let starting = false;
+    const loadContent = async () => (await import('./content/api/runtimeQuestionBank')).loadRuntimeContent();
     const landing = (
       <LandingPage
         onStart={(screen) => {
-          if (starting) return;
-          starting = true;
           markStartedStudying();
           if (showingAbout) {
             window.location.replace('/');
@@ -107,9 +105,14 @@ async function showLanding() {
             landingLayer.current!.inert = true;
             scrollEvents.forEach((name) => window.addEventListener(name, blockScroll, { passive: false }));
             try {
-              const zoom = zoomIntoScreen(screen, landingLayer.current!, appLayer.current!);
-              layers(<App />, landing);
-              const finish = await zoom;
+              const finish = await zoomIntoScreen(screen, landingLayer.current!, appLayer.current!, async () => {
+                flushSync(() => layers(<App />, landing));
+                // The dashboard's content usually loaded during the visit; a slow request shows as loading on screen.
+                await Promise.race([
+                  loadContent().catch(() => undefined),
+                  new Promise((resolve) => setTimeout(resolve, 1000)),
+                ]);
+              });
               flushSync(() => layers(<App />, null));
               window.scrollTo(0, 0);
               finish();
@@ -125,9 +128,9 @@ async function showLanding() {
       />
     );
     layers(null, landing);
-    // Fetch the app early so the zoom starts the moment Start studying is pressed.
+    // Fetch the app and the dashboard's content early so the zoom starts the moment Start studying is pressed.
     const idle = window.requestIdleCallback ?? ((callback: () => void) => setTimeout(callback, 1500));
-    idle(() => void loadApp().catch(() => undefined));
+    idle(() => void Promise.all([loadApp(), loadContent()]).catch(() => undefined));
   } catch (error) {
     console.error('Landing page could not load.', error);
     void boot();
