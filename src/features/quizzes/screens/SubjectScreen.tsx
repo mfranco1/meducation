@@ -69,7 +69,7 @@ export function SubjectScreen({
         chips: [
           ...(latestScore !== undefined
             ? [
-                <Box key="score" component="span" sx={{ alignItems: 'center', display: 'inline-flex', gap: 0.75 }}>
+                <Box key="score" component="span" sx={{ alignItems: 'center', display: 'inline-flex', gap: 1 }}>
                   Score {latestScore}%{trend && <ScoreTrendIndicator trend={trend} />}
                 </Box>,
               ]

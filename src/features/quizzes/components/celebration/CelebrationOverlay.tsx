@@ -300,7 +300,7 @@ function CelebrationPlayback({
           borderRadius: 1,
           bgcolor: 'background.paper',
           px: 2.5,
-          py: 1.75,
+          py: 2,
           boxShadow: (t) =>
             `0 2px 6px ${alpha(t.palette.primary.dark, 0.08)}, 0 16px 40px ${alpha(t.palette.primary.dark, 0.14)}${perfect ? `, 0 0 0 1px ${alpha(t.palette.reward.light, 0.8)}, 0 0 18px ${alpha(t.palette.reward.main, 0.45)}` : ''}`,
           animation: `${reducedMotion ? reducedEnter : enter} ${durationMs}ms ease-in-out both`,

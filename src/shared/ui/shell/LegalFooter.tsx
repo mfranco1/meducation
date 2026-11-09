@@ -214,7 +214,7 @@ export function LegalFooter({ showAbout = false }: { showAbout?: boolean }) {
               </Typography>
               {document.sections.map(([heading, body], index) => (
                 <Box component="section" key={heading} sx={{ '& + &': { mt: 3 } }}>
-                  <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700, mb: 0.75 }}>
+                  <Typography variant="subtitle1" component="h3" sx={{ fontWeight: 700, mb: 1 }}>
                     {index + 1}. {heading}
                   </Typography>
                   {body}

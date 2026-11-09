@@ -24,7 +24,7 @@ export function QuizSubjectCard({
   return (
     <SubjectCard subject={subject} onSelect={onSelect}>
       {activeQuizCount > 0 && (
-        <Stack direction="row" spacing={1} sx={{ mt: 1.25 }}>
+        <Stack direction="row" spacing={1} sx={{ mt: 1.5 }}>
           <Chip
             label={`${activeQuizCount} in progress`}
             size="small"
@@ -33,7 +33,7 @@ export function QuizSubjectCard({
         </Stack>
       )}
       {latest !== undefined && (
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', mt: 2 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 2 }}>
           <Typography variant="body2" sx={{ color: 'primary.dark', fontWeight: 700 }}>
             Latest Score {latest}%
           </Typography>

@@ -295,7 +295,7 @@ export function TopicSetBrowser({
               </Stack>
             )}
             {set.progress && (
-              <Box sx={{ mt: 1.25 }}>
+              <Box sx={{ mt: 1.5 }}>
                 <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
                   <LinearProgress
                     aria-hidden
@@ -386,7 +386,7 @@ export function TopicSetBrowser({
                       {topic.name}
                     </Box>
                   </Typography>
-                  <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 0.75 }}>
+                  <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1 }}>
                     <LinearProgress
                       aria-hidden
                       variant="determinate"
@@ -457,7 +457,7 @@ export function TopicSetBrowser({
           </Stack>
           <Typography
             variant="body2"
-            sx={{ color: 'text.secondary', mt: 0.75 }}
+            sx={{ color: 'text.secondary', mt: 1 }}
           >{`${completed} of ${own.length} ${nouns} completed`}</Typography>
           <Box sx={{ height: '1px', bgcolor: '#eee5df', opacity: 0.8, my: 2.5 }} />
           <Typography variant="h6" component="h3" sx={{ mb: 1.5 }}>
@@ -542,7 +542,7 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
                 <LoadingSkeleton variant="rounded" width={22} height={22} />
                 <LoadingSkeleton variant="text" width={width} height={22} />
               </Stack>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 0.75 }}>
+              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1 }}>
                 <Box sx={{ flex: 1 }}>
                   <LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} />
                 </Box>
@@ -573,7 +573,7 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
             </Box>
             <LoadingSkeleton variant="text" width={32} height={20} />
           </Stack>
-          <Box sx={{ mt: 0.75 }}>
+          <Box sx={{ mt: 1 }}>
             <LoadingSkeleton variant="text" width="30%" height={20} />
           </Box>
         </Box>

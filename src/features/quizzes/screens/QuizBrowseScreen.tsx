@@ -127,7 +127,7 @@ function QuestionGrid({
         gap: 1,
         maxHeight: { xs: 'calc(100vh - 110px)', md: 470 },
         overflowY: 'auto',
-        p: 0.75,
+        p: 1,
       }}
     >
       {questions.map((question, itemIndex) => (

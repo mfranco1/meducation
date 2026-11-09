@@ -65,7 +65,7 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
       {!controller.busy && controller.notice && (
         <Stack
           direction="row"
-          spacing={0.75}
+          spacing={1}
           role="status"
           aria-live="polite"
           sx={{ alignItems: 'center', color: 'success.main' }}

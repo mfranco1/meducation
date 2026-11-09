@@ -29,11 +29,10 @@ export function SubjectFilterPill({
         '& .MuiToggleButtonGroup-grouped': {
           border: 0,
           borderRadius: 99,
-          px: 2.5,
           minWidth: 108,
           minHeight: 32,
           height: 32,
-          padding: '0 18px',
+          padding: '0 16px',
           lineHeight: 1.2,
           textTransform: 'none',
           fontWeight: 700,

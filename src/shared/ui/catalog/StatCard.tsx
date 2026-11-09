@@ -89,7 +89,7 @@ export function StatCard({
           sx={
             dashboard
               ? {
-                  mt: 1.25,
+                  mt: 1.5,
                   minHeight: 32,
                   fontSize: { xs: '1.625rem', sm: '1.75rem' },
                   lineHeight: 1.1,
@@ -111,7 +111,7 @@ export function StatCard({
             variant="body2"
             sx={[
               {
-                mt: 0.25,
+                mt: 0.5,
                 minHeight: '1.25em',
                 fontWeight: 500,
                 lineHeight: 1.25,
@@ -124,7 +124,7 @@ export function StatCard({
             {supportingText ?? ''}
           </Typography>
         )}
-        {footer && <Stack sx={{ justifyContent: 'flex-end', minHeight: 36, mt: 0.25 }}>{footer}</Stack>}
+        {footer && <Stack sx={{ justifyContent: 'flex-end', minHeight: 36, mt: 0.5 }}>{footer}</Stack>}
       </CardContent>
     </Card>
   );

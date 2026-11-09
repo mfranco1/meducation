@@ -13,13 +13,13 @@ export function SubjectProgressSummary({
   const theme = useTheme();
   const hasPercent = percent !== undefined && Number.isFinite(percent) && percent >= 0 && percent <= 100;
   return (
-    <Stack spacing={0.75}>
+    <Stack spacing={1}>
       <Stack
         direction="row"
-        spacing={0.75}
+        spacing={1}
         sx={{ alignItems: 'center', justifyContent: 'space-between', minHeight: { xs: 40, sm: 20 }, flexWrap: 'wrap' }}
       >
-        <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center', minHeight: 20 }}>
+        <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minHeight: 20 }}>
           {label}
         </Stack>
         <Typography

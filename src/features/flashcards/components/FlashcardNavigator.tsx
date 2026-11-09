@@ -57,7 +57,7 @@ export function FlashcardNavigator({
           Flagged
         </ToggleButton>
       </ToggleButtonGroup>
-      <Box ref={scrollArea} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: 0.75 }}>
+      <Box ref={scrollArea} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 110px)', md: 470 }, p: 1 }}>
         {visible.length ? (
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1 }}>
             {visible.map((index) => {

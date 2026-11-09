@@ -125,7 +125,7 @@ export function QuestionNavigator({
           </ToggleButton>
         ))}
       </ToggleButtonGroup>
-      <Box ref={scrollAreaRef} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 170px)', md: 470 }, p: 0.75 }}>
+      <Box ref={scrollAreaRef} sx={{ overflowY: 'auto', maxHeight: { xs: 'calc(100vh - 170px)', md: 470 }, p: 1 }}>
         {visibleItems.length ? (
           <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, minmax(0, 1fr))', gap: 1 }}>
             {visibleItems.map((item) => (

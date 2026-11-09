@@ -68,7 +68,7 @@ export function ContentRecoveryBanner({
       sx={{ width: '100%', borderBottom: '1px solid', borderColor: 'warning.light', bgcolor: '#fff7ed' }}
     >
       <Container maxWidth="lg">
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} sx={{ alignItems: { sm: 'center' }, py: 1.5 }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ alignItems: { sm: 'center' }, py: 1.5 }}>
           <CloudOffRoundedIcon color="primary" aria-hidden="true" />
           <Typography variant="body2" sx={{ flex: 1 }}>
             <Box component="span" role="alert" sx={{ fontWeight: 800 }}>

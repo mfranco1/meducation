@@ -31,7 +31,7 @@ export function ReadOnlyQuizHeader({
         finalTimeMs !== undefined ? (
           <Stack
             direction="row"
-            spacing={0.75}
+            spacing={1}
             aria-label={`Final time: ${formatDuration(finalTimeMs)}`}
             sx={{ alignItems: 'center' }}
           >

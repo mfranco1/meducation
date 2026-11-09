@@ -15,7 +15,7 @@ function ExplanationContent({ question }: { question: Question }) {
     <Box sx={{ maxWidth: '72ch' }}>
       <Typography
         variant="subtitle2"
-        sx={{ mb: 0.75, color: 'text.secondary', letterSpacing: '.02em', textTransform: 'uppercase' }}
+        sx={{ mb: 1, color: 'text.secondary', letterSpacing: '.02em', textTransform: 'uppercase' }}
       >
         Explanation
       </Typography>
@@ -78,7 +78,7 @@ export function FeedbackPanel({
       <Box
         sx={{
           px: { xs: 2, sm: 2.5 },
-          py: 1.75,
+          py: 1.5,
           bgcolor: tone.surface,
           borderBottom: '1px solid',
           borderColor: tone.separator,

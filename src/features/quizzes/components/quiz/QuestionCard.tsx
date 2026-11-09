@@ -107,7 +107,7 @@ export function QuestionCard({
         <RadioGroup
           value={response.selectedChoiceId ?? ''}
           onChange={(_, choice) => select(choice)}
-          sx={{ mt: 3, gap: 1.25 }}
+          sx={{ mt: 3, gap: 1.5 }}
         >
           {question.choices.map((choice, position) => {
             const selected = response.selectedChoiceId === choice.id;
@@ -173,7 +173,7 @@ export function QuestionCard({
                     />
                   }
                   label={
-                    <Typography component="div" sx={{ py: 0.8 }}>
+                    <Typography component="div" sx={{ py: 1 }}>
                       <b>{String.fromCharCode(65 + position)}.</b>{' '}
                       <MarkdownContent markdown={choice.text} variant="inline" />
                     </Typography>

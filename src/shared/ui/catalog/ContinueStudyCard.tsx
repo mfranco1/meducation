@@ -45,21 +45,14 @@ export function ContinueStudyCard({
           background: 'linear-gradient(110deg, #fcf7f3 0%, #fff8f2 58%, #ffe5d3 100%)',
           '& .continue-study-action': {
             minHeight: 152,
-            pl: 'calc(22px + var(--study-carousel-control-gutter, 0px))',
-            pr: 'calc(38px + var(--study-carousel-control-gutter, 0px))',
-            py: '14px',
-          },
-          '@container continue-card (min-width: 298px) and (max-width: 477px)': {
-            '& .continue-study-action': {
-              pl: 'calc(22px + var(--study-carousel-control-gutter, 0px))',
-              pr: 'calc(38px + var(--study-carousel-control-gutter, 0px))',
-              py: '14px',
-            },
+            pl: 'calc(24px + var(--study-carousel-control-gutter, 0px))',
+            pr: 'calc(40px + var(--study-carousel-control-gutter, 0px))',
+            py: '16px',
           },
           '@container continue-card (max-width: 297px)': {
             '& .continue-study-action': {
               pl: 'calc(16px + var(--study-carousel-control-gutter, 0px))',
-              pr: 'calc(34px + var(--study-carousel-control-gutter, 0px))',
+              pr: 'calc(32px + var(--study-carousel-control-gutter, 0px))',
               py: '12px',
             },
           },
@@ -67,8 +60,8 @@ export function ContinueStudyCard({
             '& .continue-study-action': {
               minHeight: 156,
               px: 0,
-              pl: 'calc(26px + var(--study-carousel-control-gutter, 0px))',
-              pr: 'calc(26px + var(--study-carousel-control-gutter, 0px))',
+              pl: 'calc(24px + var(--study-carousel-control-gutter, 0px))',
+              pr: 'calc(24px + var(--study-carousel-control-gutter, 0px))',
               py: '16px',
             },
           },
@@ -77,7 +70,7 @@ export function ContinueStudyCard({
               minHeight: 160,
               pl: 'calc(32px + var(--study-carousel-control-gutter, 0px))',
               pr: 'calc(32px + var(--study-carousel-control-gutter, 0px))',
-              py: '18px',
+              py: '20px',
             },
           },
         },
@@ -197,14 +190,13 @@ export function ContinueStudyCard({
               display: 'inline-flex',
               fontSize: 16,
               fontWeight: 700,
-              gap: '10px',
+              gap: '8px',
               lineHeight: 1.25,
               minHeight: 42,
-              mt: '14px',
+              mt: '16px',
               px: '22px',
               transition: 'filter 120ms ease',
               [reducedMotion]: { transition: 'none' },
-              '@container continue-card (min-width: 638px)': { mt: '16px' },
             }}
           >
             {actionLabel}

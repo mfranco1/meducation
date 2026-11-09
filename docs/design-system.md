@@ -5,6 +5,15 @@ Visual and interaction conventions. Use the MUI theme in `src/shared/theme.ts`, 
 ## Foundations
 
 - Warm, light palette: primary accent `#b9511b`, off-white surfaces, soft borders, 14px card radius (10px for rows and nav buttons), strong type hierarchy: panel titles h5, section headings h6, row names bold.
+- Spacing uses multiples of 4px (theme spacing in steps of 0.5). Closer means more related:
+  - 4px: a value and its caption
+  - 8px: an icon and its label, items within a group
+  - 12px: rows in a list, such as answer choices
+  - 16px: between groups
+  - 20 to 24px: card padding
+  - 32px and up: between sections
+
+  Exceptions: padding inside a control (button, chip, toggle) follows the control's height, and 1 to 2px nudges are allowed to align text with icons optically.
 - Gold (`reward` token) is reserved for streak and perfect-score rewards and the flashcard momentum glow.
 - Icon backgrounds are pale rounded squares (10–12px radius, 20px for the large empty-state badge), never circles. Completion rings have rounded arc ends (theme `MuiCircularProgress` override). Subject icons are duotone glyphs on a 24-unit grid (solid or stroked line art with a soft tint), mostly adapted from Health Icons (MIT and CC0), all defined in `SubjectIcon`. The licenses of every adapted icon set ship in `public/icon-licenses.txt`; add any new source set there. Topic icons use the same style and are defined in `TopicIcon`, mapped by topic ID and shared by topics on the same concept. Topics without one (Practice Tests, new topics) show their subject icon. Topic rows show the icon at the name's line height; the topic header has no icon.
 - Correctness combines written feedback, an icon and color. Semantic green, red and warning tones are reserved for correctness, errors and warnings; primary action buttons (Finish, Submit, Save) use the primary color.

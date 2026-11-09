@@ -67,7 +67,7 @@ export default function MarkdownRenderer({
                 fontSize: variant === 'explanation' ? { xs: '1rem', sm: '1.0625rem' } : undefined,
                 textAlign: align,
                 fontWeight,
-                '& + &': { mt: 1.25 },
+                '& + &': { mt: 1.5 },
                 '& .katex-display': { maxWidth: '100%', overflowX: 'auto', overflowY: 'hidden', textAlign: align },
               }}
             >
@@ -89,17 +89,17 @@ export default function MarkdownRenderer({
           </Typography>
         ),
         h3: ({ children }) => (
-          <Typography variant="subtitle1" component="h4" sx={{ mt: 1.75, mb: 0.75, fontWeight: 800, textAlign: align }}>
+          <Typography variant="subtitle1" component="h4" sx={{ mt: 2, mb: 1, fontWeight: 800, textAlign: align }}>
             {children}
           </Typography>
         ),
         ul: ({ children }) => (
-          <Box component="ul" sx={{ my: 1.25, pl: 3, '& li + li': { mt: 0.65 } }}>
+          <Box component="ul" sx={{ my: 1.5, pl: 3, '& li + li': { mt: 0.5 } }}>
             {children}
           </Box>
         ),
         ol: ({ children }) => (
-          <Box component="ol" sx={{ my: 1.25, pl: 3, '& li + li': { mt: 0.65 } }}>
+          <Box component="ol" sx={{ my: 1.5, pl: 3, '& li + li': { mt: 0.5 } }}>
             {children}
           </Box>
         ),
@@ -132,7 +132,7 @@ export default function MarkdownRenderer({
                 minWidth: 440,
                 borderCollapse: 'collapse',
                 '& th, & td': {
-                  p: 1.25,
+                  p: 1.5,
                   textAlign: 'left',
                   verticalAlign: 'top',
                   borderBottom: '1px solid',

@@ -61,7 +61,7 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
           }}
         >
           {isDashboardGrid ? (
-            <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'nowrap', gap: 1.25, minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'flex-start', flexWrap: 'nowrap', gap: 1.5, minWidth: 0 }}>
               <SubjectIconBadge subjectId={subject.id} size={80} />
               <Box
                 sx={{
@@ -92,7 +92,7 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
                     sx={{
                       color: 'text.secondary',
                       display: '-webkit-box',
-                      mt: 0.25,
+                      mt: 0.5,
                       overflow: 'hidden',
                       WebkitBoxOrient: 'vertical',
                       WebkitLineClamp: 3,

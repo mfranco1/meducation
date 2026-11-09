@@ -130,8 +130,8 @@ export function SubjectBrowseLayout({
             </Stack>
             {showProgress && (
               <Stack
-                spacing={0.75}
-                sx={{ alignItems: 'center', flex: '0 0 auto', width: 160, minHeight: 88, textAlign: 'center' }}
+                spacing={1}
+                sx={{ alignItems: 'center', flex: '0 0 auto', width: 160, minHeight: 90, textAlign: 'center' }}
               >
                 {progress === null ? (
                   <>

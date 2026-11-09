@@ -114,7 +114,7 @@ export function ResultsScreen({
                       {row.correct}/{row.total} · {row.percentage}%
                     </Typography>
                   </Stack>
-                  <LinearProgress variant="determinate" value={row.percentage} sx={{ mt: 0.75 }} />
+                  <LinearProgress variant="determinate" value={row.percentage} sx={{ mt: 1 }} />
                 </Box>
               ))}
             </CardContent>

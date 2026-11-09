@@ -12,7 +12,7 @@ export function Stopwatch({ attempt }: { attempt: Attempt }) {
     return () => clearInterval(interval);
   }, []);
   return (
-    <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
       <TimerOutlinedIcon fontSize="small" />
       <Typography sx={{ fontWeight: 700, fontVariantNumeric: 'tabular-nums' }}>
         {formatDuration(elapsedTimeFor(attempt, now))}
