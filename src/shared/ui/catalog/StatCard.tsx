@@ -47,10 +47,7 @@ export function StatCard({
           minWidth: 0,
           ...(dashboard && {
             minHeight: { xs: 104, sm: 108 },
-            borderRadius: 1,
-            borderColor: '#f0e6df',
             backgroundColor: (theme) => lighten(theme.palette.primary.light, 0.38),
-            boxShadow: '0 3px 14px rgba(70, 38, 20, .045)',
           }),
         },
         ...(Array.isArray(sx) ? sx : [sx]),

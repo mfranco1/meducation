@@ -26,6 +26,7 @@ import {
 } from '../core/recordDraft';
 import { descriptionMaxLength } from '../../content/validation/descriptionLimit';
 import { AdminRecordPreview } from './AdminRecordPreview';
+import { radius } from '../../shared/theme';
 
 function OptionalString({
   label,
@@ -260,7 +261,11 @@ export function AdminRecordEditor({
               {input('stem', 'Question stem', true)}
               <Typography variant="subtitle2">Choices · IDs stay with their authored text</Typography>
               {choices?.map((choice, index) => (
-                <Stack key={index} spacing={1} sx={{ border: 1, borderColor: 'divider', borderRadius: 1, p: 2 }}>
+                <Stack
+                  key={index}
+                  spacing={1}
+                  sx={{ border: 1, borderColor: 'divider', borderRadius: radius.control, p: 2 }}
+                >
                   <TextField
                     label={`Choice ${choice.id}`}
                     value={choice.text}

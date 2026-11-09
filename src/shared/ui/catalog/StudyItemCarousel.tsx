@@ -4,6 +4,7 @@ import { Box, IconButton, Typography, useMediaQuery } from '@mui/material';
 import { visuallyHidden } from '@mui/utils';
 import useEmblaCarousel from 'embla-carousel-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { shadow } from '../../theme';
 
 type StudyCarouselLayout = 'standard' | 'continueStudy';
 
@@ -119,7 +120,7 @@ export function StudyItemCarousel<T>({
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 2,
-              ...(continueStudy ? { width: 40, height: 40, boxShadow: '0 2px 8px rgba(70,38,20,.12)' } : {}),
+              ...(continueStudy ? { width: 40, height: 40, boxShadow: shadow.raised } : {}),
             }}
           >
             <ChevronLeftRoundedIcon />
@@ -164,7 +165,7 @@ export function StudyItemCarousel<T>({
               top: '50%',
               transform: 'translateY(-50%)',
               zIndex: 2,
-              ...(continueStudy ? { width: 40, height: 40, boxShadow: '0 2px 8px rgba(70,38,20,.12)' } : {}),
+              ...(continueStudy ? { width: 40, height: 40, boxShadow: shadow.raised } : {}),
             }}
           >
             <ChevronRightRoundedIcon />

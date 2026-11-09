@@ -3,6 +3,7 @@ import RadioButtonUncheckedIcon from '@mui/icons-material/RadioButtonUnchecked';
 import { Box, Stack, Typography, useTheme } from '@mui/material';
 import type { Question } from '../../../../domain/types';
 import { MarkdownContent } from '../../../../shared/ui/content/MarkdownContent';
+import { radius } from '../../../../shared/theme';
 
 export function ReadOnlyChoiceList({
   question,
@@ -37,7 +38,7 @@ export function ReadOnlyChoiceList({
                 : incorrectSelection
                   ? theme.palette.feedback.incorrect.surface
                   : 'background.paper',
-              borderRadius: 1,
+              borderRadius: radius.control,
               p: 0.5,
             }}
           >

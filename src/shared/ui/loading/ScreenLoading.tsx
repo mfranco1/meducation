@@ -4,6 +4,7 @@ import { useEffect, type ReactNode } from 'react';
 import { AppBrand } from '../brand/AppBrand';
 import { easing, reducedMotion } from '../motion';
 import { screenTransitionDurationMs } from '../transitions/ScreenTransition';
+import { radius } from '../../theme';
 
 const enterContent = keyframes`
   from { opacity: 0; }
@@ -33,9 +34,9 @@ export function ScreenLoading({ label = 'Loading…' }: { label?: string }) {
         sx={{
           width: { xs: 'min(208px, calc(100% - 32px))', sm: 240 },
           height: 6,
-          borderRadius: 99,
+          borderRadius: radius.pill,
           bgcolor: 'action.hover',
-          '& .MuiLinearProgress-bar': { borderRadius: 99 },
+          '& .MuiLinearProgress-bar': { borderRadius: radius.pill },
           [reducedMotion]: {
             '& .MuiLinearProgress-bar': { animation: 'none', transform: 'translateX(-35%)', width: '45%' },
           },

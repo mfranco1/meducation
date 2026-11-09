@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { MarkdownContent } from '../../../../shared/ui/content/MarkdownContent';
 import { isCorrect } from '../../../../domain/quizEngine';
 import type { Question } from '../../../../domain/types';
+import { radius } from '../../../../shared/theme';
 
 export type ReadOnlyFeedbackStatus = 'correct' | 'incorrect' | 'unanswered' | 'unavailable';
 
@@ -71,7 +72,7 @@ export function FeedbackPanel({
         overflow: 'hidden',
         border: '1px solid',
         borderColor: tone.border,
-        borderRadius: 1,
+        borderRadius: radius.card,
         bgcolor: 'background.paper',
       }}
     >

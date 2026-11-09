@@ -3,6 +3,7 @@ import { Box, CardActionArea, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { useId, type ReactNode } from 'react';
 import { reducedMotion } from '../motion';
+import { focusRingInset, radius } from '../../theme';
 
 export type ContinueStudyCardProps = {
   title: string;
@@ -32,8 +33,9 @@ export function ContinueStudyCard({
     <Box
       sx={[
         {
-          border: '1px solid #f4ebe5',
-          borderRadius: '22px',
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: radius.feature,
           boxSizing: 'border-box',
           containerName: 'continue-card',
           containerType: 'inline-size',
@@ -118,9 +120,7 @@ export function ContinueStudyCard({
           width: '100%',
           zIndex: 1,
           '&.Mui-focusVisible': {
-            outline: '3px solid',
-            outlineColor: 'primary.main',
-            outlineOffset: '-3px',
+            ...focusRingInset,
             borderRadius: 'inherit',
           },
           '&:hover .continue-study-cta': { filter: 'brightness(.96)' },
@@ -185,7 +185,7 @@ export function ContinueStudyCard({
               alignItems: 'center',
               bgcolor: '#b9511b',
               background: 'linear-gradient(180deg, #c45117 0%, #b9511b 100%)',
-              borderRadius: '14px',
+              borderRadius: radius.control,
               color: '#fff',
               display: 'inline-flex',
               fontSize: 16,

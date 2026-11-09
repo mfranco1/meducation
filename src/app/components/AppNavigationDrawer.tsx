@@ -11,6 +11,7 @@ import { AppBrand } from '../../shared/ui/brand/AppBrand';
 import { DrawerEdgeToggle } from './drawer/DrawerEdgeToggle';
 import { DrawerSurface } from './drawer/DrawerSurface';
 import { reducedMotion } from '../../shared/ui/motion';
+import { focusRing, radius } from '../../shared/theme';
 
 const learnerDrawerExpandedWidth = 240;
 const learnerDrawerCollapsedWidth = 64;
@@ -64,14 +65,14 @@ export function AppNavigationDrawer({
           width: '100%',
           minHeight: 48,
           px: compact ? 0 : 1.5,
-          borderRadius: '10px',
+          borderRadius: radius.control,
           display: 'flex',
           justifyContent: compact ? 'center' : 'flex-start',
           gap: 1.5,
           color: current ? 'primary.dark' : 'text.secondary',
           bgcolor: current ? 'rgba(185,81,27,.1)' : 'transparent',
           '&:hover, &:active': { bgcolor: current ? 'rgba(185,81,27,.1)' : 'transparent' },
-          '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+          '&:focus-visible': focusRing,
         }}
       >
         <Box aria-hidden="true" sx={{ display: 'flex', color: current ? 'primary.main' : 'inherit' }}>
@@ -107,7 +108,7 @@ export function AppNavigationDrawer({
               right: 20,
               height: '1px',
               transform: 'translateY(-50%)',
-              bgcolor: '#eee5df',
+              bgcolor: 'divider',
               opacity: 0.8,
               pointerEvents: 'none',
               zIndex: 1,
@@ -138,7 +139,8 @@ export function AppNavigationDrawer({
             py: 2,
             gap: 1,
             bgcolor: 'background.paper',
-            borderRight: '1px solid #eee5df',
+            borderRight: '1px solid',
+            borderColor: 'divider',
           }}
         >
           <AppBrand
@@ -155,7 +157,7 @@ export function AppNavigationDrawer({
           <Box sx={{ mt: 'auto', display: 'flex', flexDirection: 'column', gap: 1 }}>
             <Box
               aria-hidden="true"
-              sx={{ height: '1px', ml: 0, mr: compact ? '12px' : '4px', bgcolor: '#eee5df', opacity: 0.8 }}
+              sx={{ height: '1px', ml: 0, mr: compact ? '12px' : '4px', bgcolor: 'divider', opacity: 0.8 }}
             />
             <Tooltip
               title={compact ? (progressDisabledReason ?? 'Progress') : (progressDisabledReason ?? '')}
@@ -172,13 +174,13 @@ export function AppNavigationDrawer({
                     width: '100%',
                     minHeight: 48,
                     px: compact ? 0 : 1.5,
-                    borderRadius: '10px',
+                    borderRadius: radius.control,
                     display: 'flex',
                     justifyContent: compact ? 'center' : 'flex-start',
                     gap: 1.5,
                     color: 'text.secondary',
                     '&:hover, &:active': { bgcolor: 'transparent' },
-                    '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+                    '&:focus-visible': focusRing,
                   }}
                 >
                   <Box aria-hidden="true" sx={{ display: 'flex' }}>
@@ -206,13 +208,13 @@ export function AppNavigationDrawer({
                   width: '100%',
                   minHeight: 48,
                   px: compact ? 0 : 1.5,
-                  borderRadius: '10px',
+                  borderRadius: radius.control,
                   display: 'flex',
                   justifyContent: compact ? 'center' : 'flex-start',
                   gap: 1.5,
                   color: 'text.secondary',
                   '&:hover, &:active': { bgcolor: 'transparent' },
-                  '&:focus-visible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+                  '&:focus-visible': focusRing,
                 }}
               >
                 <Box aria-hidden="true" sx={{ display: 'flex' }}>

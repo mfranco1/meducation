@@ -2,6 +2,7 @@ import KeyboardArrowLeftRoundedIcon from '@mui/icons-material/KeyboardArrowLeftR
 import { Box, ButtonBase } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { reducedMotion } from '../../../shared/ui/motion';
+import { focusRing } from '../../../shared/theme';
 
 export interface DrawerEdgeToggleProps {
   expanded: boolean;
@@ -55,9 +56,7 @@ export function DrawerEdgeToggle({
         '&:hover::before, &:focus-visible::before': { opacity: disabled ? 0 : 0.55 },
         '&:focus-visible': { outline: 'none' },
         '&:focus-visible .drawer-edge-toggle-arrow': {
-          outline: '2px solid',
-          outlineColor: 'primary.main',
-          outlineOffset: 2,
+          ...focusRing,
           borderRadius: '50%',
         },
         '& .drawer-edge-toggle-arrow': { opacity: 0 },
@@ -89,7 +88,7 @@ export function DrawerEdgeToggle({
           color: 'primary.main',
           bgcolor: 'background.paper',
           border: '1px solid',
-          borderColor: '#eee5df',
+          borderColor: 'divider',
           borderRadius: '50%',
           transform: `translate(-50%, -50%) rotate(${expanded ? 0 : 180}deg)`,
           transition: `transform ${motion}ms ease, opacity ${motion}ms ease`,

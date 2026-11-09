@@ -4,6 +4,7 @@ import { alpha, useTheme } from '@mui/material/styles';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { easing } from '../motion';
+import { shadow } from '../../theme';
 
 export type ToastSeverity = 'success' | 'info' | 'warning' | 'error';
 export type ToastPosition = 'top-left' | 'top-center' | 'top-right' | 'bottom-left' | 'bottom-center' | 'bottom-right';
@@ -177,7 +178,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                       }
                       sx={{
                         width: '100%',
-                        boxShadow: '0 2px 8px rgba(70, 38, 20, 0.06)',
+                        boxShadow: shadow.raised,
                         border: 1,
                         borderColor: alpha(theme.palette.divider, 0.55),
                         alignItems: 'flex-start',

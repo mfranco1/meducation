@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 import type { Subject } from '../../../domain/types';
 import { SubjectIconBadge } from './icons/SubjectIconBadge';
 import { reducedMotion } from '../motion';
+import { focusRingInset } from '../../theme';
 
 type SubjectCardProps = {
   subject: Subject;
@@ -35,9 +36,7 @@ export function SubjectCard({ subject, onSelect, children, appearance = 'standar
           textAlign: 'left',
           minWidth: 0,
           width: '100%',
-          ...(isDashboardGrid
-            ? { '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: '-2px' } }
-            : {}),
+          ...(isDashboardGrid ? { '&.Mui-focusVisible': { ...focusRingInset } } : {}),
         }}
       >
         <CardContent

@@ -18,6 +18,7 @@ import type { Selection } from '../useRecordEditor';
 import { AdminRecordSelection, useAdminRecordSelection } from './AdminRecordSelection';
 import { AdminTopicFilter, topicTotals } from './AdminTopicFilter';
 import { AdminParentActions } from './AdminParentActions';
+import { radius } from '../../shared/theme';
 
 export const adminNavigatorLayout = { width: { xs: '100%', lg: 320 }, flexShrink: 0, minWidth: 0 };
 
@@ -120,7 +121,7 @@ export function AdminNavList({
               <ListItemButton
                 selected={row.selected}
                 onClick={row.open}
-                sx={{ borderRadius: '10px', mx: 0.5, width: 'calc(100% - 8px)' }}
+                sx={{ borderRadius: radius.control, mx: 0.5, width: 'calc(100% - 8px)' }}
               >
                 <ListItemText
                   primary={row.primary}

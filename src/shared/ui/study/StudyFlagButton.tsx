@@ -4,6 +4,7 @@ import { keyframes } from '@emotion/react';
 import { Box, IconButton, type SxProps, type Theme } from '@mui/material';
 import { useState } from 'react';
 import { reducedMotion } from '../motion';
+import { focusRing } from '../../theme';
 
 export const flagFlutter = keyframes`
   from { transform: none; }
@@ -43,7 +44,7 @@ export function StudyFlagButton({
         {
           bgcolor: 'transparent',
           '&:hover': { bgcolor: 'transparent' },
-          '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+          '&.Mui-focusVisible': { ...focusRing },
         },
         ...(Array.isArray(sx) ? sx : [sx]),
       ]}

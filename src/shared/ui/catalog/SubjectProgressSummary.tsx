@@ -1,5 +1,6 @@
 import { Box, Stack, Typography, alpha, useTheme } from '@mui/material';
 import type { ReactNode } from 'react';
+import { radius } from '../../theme';
 
 export function SubjectProgressSummary({
   label,
@@ -35,7 +36,7 @@ export function SubjectProgressSummary({
         data-testid="subject-score-track"
         sx={{
           bgcolor: alpha(theme.palette.text.primary, 0.06),
-          borderRadius: 99,
+          borderRadius: radius.pill,
           height: 6,
           overflow: 'hidden',
           width: '100%',

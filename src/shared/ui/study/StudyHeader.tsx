@@ -4,6 +4,7 @@ import { keyframes } from '@emotion/react';
 import { alpha, Box, Button, IconButton, Stack, Typography } from '@mui/material';
 import { useState, type MutableRefObject, type ReactNode } from 'react';
 import { easing, reducedMotion } from '../motion';
+import { radius } from '../../theme';
 
 const fillTransition = `450ms ${easing.out}`;
 const glint = keyframes`
@@ -95,7 +96,7 @@ function StudyProgress({
     top: 0,
     bottom: 0,
     left: 0,
-    borderRadius: 5,
+    borderRadius: radius.pill,
     transition: `width ${fillTransition}`,
     [reducedMotion]: { transition: 'none' },
   } as const;
@@ -115,7 +116,7 @@ function StudyProgress({
         position: 'relative',
         mt: 1.5,
         height: 7,
-        borderRadius: 5,
+        borderRadius: radius.pill,
         bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
       }}
     >
@@ -133,7 +134,7 @@ function StudyProgress({
               bottom: 0,
               right: 0,
               width: 24,
-              borderRadius: '0 5px 5px 0',
+              borderRadius: `0 ${radius.pill} ${radius.pill} 0`,
               background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, .85))',
               animation: `${glint} 650ms ease-out both`,
               [reducedMotion]: { display: 'none' },

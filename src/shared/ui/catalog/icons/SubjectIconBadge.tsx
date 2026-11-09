@@ -1,5 +1,6 @@
 import { Box, alpha, useTheme } from '@mui/material';
 import { SubjectIcon } from './SubjectIcon';
+import { radius } from '../../../theme';
 
 export function SubjectIconBadge({
   subjectId,
@@ -16,7 +17,7 @@ export function SubjectIconBadge({
       sx={{
         alignItems: 'center',
         bgcolor: alpha(theme.palette.primary.main, 0.07),
-        borderRadius: '12px',
+        borderRadius: radius.badge,
         color: 'primary.main',
         display: 'flex',
         flex: `0 0 ${size}px`,

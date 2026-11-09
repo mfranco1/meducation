@@ -1,6 +1,7 @@
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { Box, Button, Stack, Typography } from '@mui/material';
 import { AppBrand } from '../brand/AppBrand';
+import { radius } from '../../theme';
 
 export function SubjectCatalogEmptyState({ title, onShowAll }: { title: string; onShowAll?: () => void }) {
   return (
@@ -28,7 +29,7 @@ export function SubjectCatalogEmptyState({ title, onShowAll }: { title: string; 
           display: 'grid',
           placeItems: 'center',
           position: 'relative',
-          borderRadius: '20px',
+          borderRadius: radius.feature,
           bgcolor: 'rgba(185, 81, 27, .08)',
         }}
       >

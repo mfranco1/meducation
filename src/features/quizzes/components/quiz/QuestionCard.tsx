@@ -19,6 +19,7 @@ import { FeedbackPanel } from '../feedback/FeedbackPanel';
 import { StudyFlagButton } from '../../../../shared/ui/study/StudyFlagButton';
 import { canHandleStudyShortcut } from '../../../../shared/ui/study/studyKeyboard';
 import { easing, reducedMotion } from '../../../../shared/ui/motion';
+import { radius } from '../../../../shared/theme';
 
 interface CorrectAnswerBurst {
   choiceId: string;
@@ -132,7 +133,7 @@ export function QuestionCard({
                   border: '1px solid',
                   borderColor: selected ? 'primary.main' : theme.palette.feedback.choiceBorder,
                   bgcolor: state,
-                  borderRadius: 1,
+                  borderRadius: radius.control,
                   p: 0.5,
                   transition: 'transform 120ms ease-out, border-color 160ms ease-out, background-color 160ms ease-out',
                   animation: pressed ? `${choicePress} 220ms ease-out` : undefined,

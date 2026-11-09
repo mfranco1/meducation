@@ -5,6 +5,7 @@ import { brand } from '../../../../shared/brand';
 import { easing, sizzle, useReducedMotion } from '../../../../shared/ui/motion';
 import { Crackle } from '../../../../shared/ui/transitions/Crackle';
 import { type CelebrationLevel, GoldBurst } from './GoldBurst';
+import { radius } from '../../../../shared/theme';
 
 export type CelebrationVariant = 'streak' | 'perfect';
 
@@ -296,8 +297,8 @@ function CelebrationPlayback({
         sx={{
           position: 'relative',
           border: '1px solid',
-          borderColor: level >= 4 ? 'reward.main' : '#eee5df',
-          borderRadius: 1,
+          borderColor: level >= 4 ? 'reward.main' : 'divider',
+          borderRadius: radius.card,
           bgcolor: 'background.paper',
           px: 2.5,
           py: 2,

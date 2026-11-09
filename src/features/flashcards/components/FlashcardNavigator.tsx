@@ -4,6 +4,7 @@ import type { FlashcardCard } from '../../../domain/types';
 import { filterFlashcardIndices, type FlashcardNavigatorFilter } from '../../../domain/flashcardStudy';
 import { useScrollCurrentQuestion } from '../../../shared/ui/study/useScrollCurrentQuestion';
 import { StudyNavigatorEmpty, StudyNavigatorTile } from '../../../shared/ui/study/StudyNavigatorTile';
+import { radius } from '../../../shared/theme';
 
 export function FlashcardNavigator({
   cards,
@@ -47,13 +48,21 @@ export function FlashcardNavigator({
           if (value) onFilterChange(value);
         }}
       >
-        <ToggleButton value="all" sx={{ borderRadius: '10px' }} aria-label={`All cards, ${counts.all}`}>
+        <ToggleButton value="all" sx={{ borderRadius: radius.control }} aria-label={`All cards, ${counts.all}`}>
           All
         </ToggleButton>
-        <ToggleButton value="unopened" sx={{ borderRadius: '10px' }} aria-label={`Hidden cards, ${counts.unopened}`}>
+        <ToggleButton
+          value="unopened"
+          sx={{ borderRadius: radius.control }}
+          aria-label={`Hidden cards, ${counts.unopened}`}
+        >
           Hidden
         </ToggleButton>
-        <ToggleButton value="flagged" sx={{ borderRadius: '10px' }} aria-label={`Flagged cards, ${counts.flagged}`}>
+        <ToggleButton
+          value="flagged"
+          sx={{ borderRadius: radius.control }}
+          aria-label={`Flagged cards, ${counts.flagged}`}
+        >
           Flagged
         </ToggleButton>
       </ToggleButtonGroup>

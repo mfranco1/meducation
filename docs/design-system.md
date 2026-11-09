@@ -4,7 +4,7 @@ Visual and interaction conventions. Use the MUI theme in `src/shared/theme.ts`, 
 
 ## Foundations
 
-- Warm, light palette: primary accent `#b9511b`, off-white surfaces, soft borders, 14px card radius (10px for rows and nav buttons), strong type hierarchy: panel titles h5, section headings h6, row names bold.
+- Warm, light palette: primary accent `#b9511b`, off-white surfaces, soft borders (see [Shape and depth](#shape-and-depth)), strong type hierarchy: panel titles h5, section headings h6, row names bold.
 - Spacing uses multiples of 4px (theme spacing in steps of 0.5). Closer means more related:
   - 4px: a value and its caption
   - 8px: an icon and its label, items within a group
@@ -15,7 +15,7 @@ Visual and interaction conventions. Use the MUI theme in `src/shared/theme.ts`, 
 
   Exceptions: padding inside a control (button, chip, toggle) follows the control's height, and 1 to 2px nudges are allowed to align text with icons optically.
 - Gold (`reward` token) is reserved for streak and perfect-score rewards and the flashcard momentum glow.
-- Icon backgrounds are pale rounded squares (10–12px radius, 20px for the large empty-state badge), never circles. Completion rings have rounded arc ends (theme `MuiCircularProgress` override). Subject icons are duotone glyphs on a 24-unit grid (solid or stroked line art with a soft tint), mostly adapted from Health Icons (MIT and CC0), all defined in `SubjectIcon`. The licenses of every adapted icon set ship in `public/icon-licenses.txt`; add any new source set there. Topic icons use the same style and are defined in `TopicIcon`, mapped by topic ID and shared by topics on the same concept. Topics without one (Practice Tests, new topics) show their subject icon. Topic rows show the icon at the name's line height; the topic header has no icon.
+- Icon backgrounds are pale rounded squares (`radius.badge`, `radius.feature` for the large empty-state badge), never circles. Completion rings have rounded arc ends (theme `MuiCircularProgress` override). Subject icons are duotone glyphs on a 24-unit grid (solid or stroked line art with a soft tint), mostly adapted from Health Icons (MIT and CC0), all defined in `SubjectIcon`. The licenses of every adapted icon set ship in `public/icon-licenses.txt`; add any new source set there. Topic icons use the same style and are defined in `TopicIcon`, mapped by topic ID and shared by topics on the same concept. Topics without one (Practice Tests, new topics) show their subject icon. Topic rows show the icon at the name's line height; the topic header has no icon.
 - Correctness combines written feedback, an icon and color. Semantic green, red and warning tones are reserved for correctness, errors and warnings; primary action buttons (Finish, Submit, Save) use the primary color.
 - Feedback tones for correct, incorrect and unanswered or unavailable answers come from theme tokens (`feedback.correct`, `incorrect`, `review`); one pearl, chosen at random when a question has several, sits below the explanation with a left rule in the same tone's border color and a lightbulb icon in the status color. Collapsible sources come last. Immediate feedback is a compact tinted header over a neutral reading surface with generous line height and constrained measure. Do not repeat answer summaries that the highlighted choices already show.
 - Layouts must not overflow horizontally at 320, 390, 1048 or 1440px; enlarged text must stay usable.
@@ -46,6 +46,26 @@ Judgment calls, not gates.
 Review at 20 and 24px for topic rows, 46px in an 80px card badge, and 64px in an 88px header badge. Check contours, clipping, alignment, negative space and visual weight together. The studio uses the existing light palette and dark brand accent `#EF9B6B` on a dark review surface; the application currently has a light theme only.
 
 Sourcing, the icon studio (`npm run icons`), review and integration follow the [icon skill](../.agents/skills/meducation-icons/SKILL.md). The app glyph definitions and `public/icon-licenses.txt` are the maintained copies.
+
+## Shape and depth
+
+Radii, shadows, border colors and focus rings come from tokens in `src/shared/theme.ts`. Lint rejects raw radius values, raw colors in shadows, borders and outlines, and literal outline offsets. Never pass a number to `borderRadius` in `sx`: it multiplies the theme radius.
+
+| Radius token | Value | Use |
+| --- | --- | --- |
+| `inline` | 6px | inline code |
+| `control` | 10px | buttons, toggles, inputs, nav items, list rows, answer choices, navigator tiles, bordered groups inside a card |
+| `badge` | 12px | pale square behind an icon |
+| `card` | 14px | cards, panels, dialogs, toasts, images, tables, the landing header (theme default) |
+| `feature` | 22px | Continue Studying card, large empty-state badge |
+| `pill` | 999px | progress bars, segmented filters |
+
+Circles (`'50%'`) are for dots, rings and round buttons only.
+
+- Borders: `divider` (warm hairline) for card edges, separators and rules; `feedback.choiceBorder` for interactive outlines such as unselected choices and tiles; `primary.main` for selected and current; feedback tones for correctness. Hairlines are 1px, emphasis rules (pearls, blockquotes) 3px on the left, the selected topic row 2px.
+- Shadows: `shadow.card` for resting cards (the `MuiCard` default), `shadow.raised` for toasts and carousel arrows, `shadow.overlay` for bars over content, `shadow.currentRing` for the current item.
+- Focus: spread `focusRing` (2px primary, 2px offset) into the focus-visible rule; use `focusRingInset` where the parent clips overflow.
+- Deliberate exceptions: flashcard faces (`radius.flashcard`, 22 to 28px, with a layered thickness shadow and the gold momentum glow), celebration cards, the results score ring and its glow, and the landing page's rules-not-cards layout. Effect shadows are built from palette colors.
 
 ## Motion
 

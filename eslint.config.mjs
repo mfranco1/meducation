@@ -114,6 +114,33 @@ export default tseslint.config(
     },
   },
   {
+    // Shape and depth come from tokens in src/shared/theme.ts (see docs/design-system.md).
+    files: ['src/**/*.{ts,tsx}'],
+    ignores: ['src/shared/theme.ts', ...testFiles],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: 'Property[key.name=/Radius$/] Literal:not([value=0]):not([value="inherit"]):not([value="50%"])',
+          message: 'Use a `radius` token from src/shared/theme.ts.',
+        },
+        {
+          selector:
+            'Property[key.name="boxShadow"] :matches(Literal[value=/#|rgba?\\(/], TemplateElement[value.raw=/#|rgba?\\(/])',
+          message: 'Use a `shadow` token from src/shared/theme.ts, or build effect shadows from palette colors.',
+        },
+        {
+          selector: 'Property[key.name=/^(border|outline)/] Literal[value=/#[0-9a-fA-F]{3,8}\\b|rgba?\\(/]',
+          message: 'Use a palette token (divider, feedback.choiceBorder, primary.*) for borders and outlines.',
+        },
+        {
+          selector: 'Property[key.name="outlineOffset"] Literal',
+          message: 'Spread `focusRing` or `focusRingInset` from src/shared/theme.ts.',
+        },
+      ],
+    },
+  },
+  {
     files: ['src/**/*.{ts,tsx}'],
     plugins: { 'react-hooks': reactHooks },
     rules: {

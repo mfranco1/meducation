@@ -9,6 +9,7 @@ import {
   type BrandTheme,
   type BrandVariant,
 } from './BrandGraphic';
+import { focusRing, radius } from '../../theme';
 
 export type {
   BrandColorMode,
@@ -71,12 +72,12 @@ export function AppBrand({
         height: 48,
         boxSizing: 'border-box',
         p: 1,
-        borderRadius: '10px',
+        borderRadius: radius.control,
         justifyContent: variant === 'icon' ? 'center' : 'flex-start',
         color: 'text.primary',
         bgcolor: 'transparent',
         '&:hover, &:active': { bgcolor: 'transparent' },
-        '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+        '&.Mui-focusVisible': { ...focusRing },
       }}
     >
       {graphic}

@@ -24,7 +24,7 @@ import { SubjectIcon } from '../../shared/ui/catalog/icons/SubjectIcon';
 import { faqs, useSingleOpen } from '../components/HelpDialog';
 import { LegalFooter } from '../../shared/ui/shell/LegalFooter';
 import { easing, reducedMotion } from '../../shared/ui/motion';
-import { theme } from '../../shared/theme';
+import { radius, shadow, theme } from '../../shared/theme';
 import { SampleCases } from './SampleCases';
 import { SampleFlashcards } from './SampleFlashcards';
 import { useSampleActive } from './useSampleActive';
@@ -209,7 +209,7 @@ function IconTile({ children }: { children: ReactNode }) {
         placeItems: 'center',
         width: 48,
         height: 48,
-        borderRadius: '12px',
+        borderRadius: radius.badge,
         bgcolor: (theme) => alpha(theme.palette.primary.main, 0.07),
         color: 'primary.main',
       }}
@@ -325,11 +325,11 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
             py: { xs: 1.5, md: 2 },
             px: scrolled ? { xs: 1.5, md: 2.5 } : 0,
             border: '1px solid',
-            borderRadius: '14px',
+            borderRadius: radius.card,
             borderColor: scrolled ? 'feedback.choiceBorder' : 'transparent',
             bgcolor: scrolled ? alpha(theme.palette.background.paper, 0.72) : 'transparent',
             backdropFilter: scrolled ? 'saturate(180%) blur(20px)' : 'none',
-            boxShadow: `0 8px 24px ${alpha(theme.palette.text.primary, scrolled ? 0.06 : 0)}`,
+            boxShadow: scrolled ? shadow.overlay : 'none',
             transition: `background-color 220ms ${easing.standard}, border-color 220ms ${easing.standard}, box-shadow 220ms ${easing.standard}, padding 220ms ${easing.standard}`,
             [reducedMotion]: { transition: 'none' },
           })}
@@ -473,7 +473,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                 width: { xs: '100%', md: '64%' },
                 height: { xs: 340, sm: 420, md: 'auto' },
                 aspectRatio: { md: '1448 / 1086' },
-                borderRadius: { xs: '14px', md: 0 },
+                borderRadius: { xs: radius.card, md: 0 },
                 maskImage: {
                   xs: 'linear-gradient(to bottom, transparent, #000 28%)',
                   md: 'linear-gradient(to right, transparent, #000 40%, #000 90%, transparent), linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent)',

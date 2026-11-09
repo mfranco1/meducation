@@ -12,6 +12,7 @@ import {
 import { remarkMathPlugin } from '../../../content/richText/remarkMathPolicy';
 import './katex.css';
 import type { MarkdownContentKind, MarkdownVariant } from './MarkdownContent';
+import { radius } from '../../theme';
 
 function ContentImage({ src, alt }: { src?: string; alt?: string }) {
   if (!src || !isAllowedImageUrl(src)) return null;
@@ -21,7 +22,7 @@ function ContentImage({ src, alt }: { src?: string; alt?: string }) {
       src={src}
       alt={alt ?? ''}
       loading="lazy"
-      sx={{ display: 'block', maxWidth: '100%', height: 'auto', maxHeight: 520, my: 2, borderRadius: 1 }}
+      sx={{ display: 'block', maxWidth: '100%', height: 'auto', maxHeight: 520, my: 2, borderRadius: radius.card }}
     />
   );
 }
@@ -124,7 +125,9 @@ export default function MarkdownRenderer({
           </Box>
         ),
         table: ({ children }) => (
-          <Box sx={{ my: 2, overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
+          <Box
+            sx={{ my: 2, overflowX: 'auto', border: '1px solid', borderColor: 'divider', borderRadius: radius.card }}
+          >
             <Box
               component="table"
               sx={{
@@ -169,7 +172,7 @@ export default function MarkdownRenderer({
               sx={{
                 px: 0.5,
                 py: 0.15,
-                borderRadius: 0.5,
+                borderRadius: radius.inline,
                 bgcolor: 'action.hover',
                 fontFamily: 'monospace',
                 fontSize: '.9em',
@@ -187,7 +190,7 @@ export default function MarkdownRenderer({
               p: 1.5,
               overflowX: 'auto',
               maxWidth: '100%',
-              borderRadius: 1,
+              borderRadius: radius.card,
               bgcolor: 'action.hover',
               '& .katex-display': { my: 0, textAlign: 'left' },
             }}

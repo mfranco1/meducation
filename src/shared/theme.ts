@@ -1,4 +1,4 @@
-import { createTheme } from '@mui/material/styles';
+import { alpha, createTheme } from '@mui/material/styles';
 import { brand } from './brand';
 
 interface FeedbackTone {
@@ -39,9 +39,51 @@ declare module '@mui/material/styles' {
   }
 }
 
+/**
+ * Shape and depth tokens. Use these instead of raw values (lint enforces it); sx numbers
+ * multiply shape.borderRadius, so never write `borderRadius: 1`. See docs/design-system.md.
+ */
+export const radius = {
+  /** Inline code. */
+  inline: '6px',
+  /** Buttons, toggles, inputs, nav items, list rows, answer choices, navigator tiles. */
+  control: '10px',
+  /** Pale square behind an icon. */
+  badge: '12px',
+  /** Cards, panels, dialogs, toasts, images, tables. */
+  card: '14px',
+  /** Continue Studying card and the large empty-state badge. */
+  feature: '22px',
+  /** Flashcard faces (deliberately larger). */
+  flashcard: { xs: '22px', sm: '28px' },
+  /** Progress bars and segmented filters. */
+  pill: '999px',
+  circle: '50%',
+} as const;
+
+const shadowTint = 'rgba(70, 38, 20, ';
+export const shadow = {
+  /** Resting cards. */
+  card: `0 3px 14px ${shadowTint}.045)`,
+  /** Small floating elements: toasts, carousel arrows. */
+  raised: `0 2px 8px ${shadowTint}.1)`,
+  /** Bars floating over content, such as the sticky landing header. */
+  overlay: `0 8px 24px ${shadowTint}.07)`,
+  /** Marks the current item, such as the current navigator tile. */
+  currentRing: `0 0 0 3px ${alpha(brand.accentColor, 0.18)}`,
+} as const;
+
+/** The one keyboard focus ring. Spread into a `:focus-visible` or `.Mui-focusVisible` rule. */
+export const focusRing = { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: '2px' } as const;
+/** For elements whose parent clips overflow. */
+export const focusRingInset = { ...focusRing, outlineOffset: '-2px' } as const;
+
+const hairline = '#eee5df';
+
 export const theme = createTheme({
   palette: {
     mode: 'light',
+    divider: hairline,
     primary: { main: brand.accentColor, dark: '#853812', light: '#f7dfcf' },
     background: { default: '#fbf8f5', paper: '#fffdfb' },
     text: { primary: '#27211e', secondary: '#766a63' },
@@ -72,8 +114,8 @@ export const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          border: '1px solid #eee5df',
-          boxShadow: '0 3px 14px rgba(70, 38, 20, .045)',
+          border: `1px solid ${hairline}`,
+          boxShadow: shadow.card,
         },
       },
     },
@@ -81,7 +123,13 @@ export const theme = createTheme({
       styleOverrides: { circle: { strokeLinecap: 'round' } },
     },
     MuiButton: {
-      styleOverrides: { root: { borderRadius: 10, padding: '9px 16px' } },
+      styleOverrides: { root: { borderRadius: radius.control, padding: '9px 16px' } },
+    },
+    MuiToggleButton: {
+      styleOverrides: { root: { borderRadius: radius.control } },
+    },
+    MuiOutlinedInput: {
+      styleOverrides: { root: { borderRadius: radius.control } },
     },
     MuiDialogTitle: {
       styleOverrides: { root: { fontWeight: 700 } },

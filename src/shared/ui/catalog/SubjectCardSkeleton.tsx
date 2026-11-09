@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
+import { radius } from '../../theme';
 
 export function SubjectCardSkeleton({ dashed = false }: { dashed?: boolean }) {
   return (
@@ -10,7 +11,7 @@ export function SubjectCardSkeleton({ dashed = false }: { dashed?: boolean }) {
         bgcolor: 'background.paper',
         border: dashed ? '1px dashed' : '1px solid',
         borderColor: 'divider',
-        borderRadius: 2,
+        borderRadius: radius.card,
         boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
@@ -29,7 +30,7 @@ export function SubjectCardSkeleton({ dashed = false }: { dashed?: boolean }) {
       </Box>
       <Box>
         <LoadingSkeleton variant="text" width="45%" height={20} />
-        <LoadingSkeleton variant="rounded" width="100%" height={6} sx={{ borderRadius: 99 }} />
+        <LoadingSkeleton variant="rounded" width="100%" height={6} sx={{ borderRadius: radius.pill }} />
       </Box>
     </Box>
   );

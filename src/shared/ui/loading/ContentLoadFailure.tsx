@@ -1,6 +1,7 @@
 import { Button, Stack, Typography } from '@mui/material';
 import { ContentLoadError } from '../../../content/api/contentTransport';
 import { contentLoadMessage } from './contentLoadMessage';
+import { focusRing } from '../../theme';
 
 export function ContentLoadFailure({ title, error, onRetry }: { title: string; error?: Error; onRetry: () => void }) {
   const revisionConflict = error instanceof ContentLoadError && error.kind === 'revision';
@@ -26,7 +27,7 @@ export function ContentLoadFailure({ title, error, onRetry }: { title: string; e
           minHeight: 44,
           minWidth: 44,
           px: 0.5,
-          '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main', outlineOffset: 2 },
+          '&.Mui-focusVisible': { ...focusRing },
         }}
       >
         {revisionConflict ? 'Reload content' : 'Retry'}

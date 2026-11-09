@@ -7,6 +7,7 @@ import { StudyFlagButton } from '../../../shared/ui/study/StudyFlagButton';
 import { FlashcardFaceDecoration } from './FlashcardFaceDecoration';
 import { FlashcardMomentum } from './FlashcardMomentum';
 import { reducedMotion } from '../../../shared/ui/motion';
+import { focusRing, radius } from '../../../shared/theme';
 
 const cardThickness =
   'inset 0 1px 0 rgba(255,255,255,.9), 0 1px 0 rgba(118,106,99,.06), 0 3px 8px rgba(57,38,22,.045), 0 8px 16px rgba(57,38,22,.04)';
@@ -149,7 +150,7 @@ export function FlashcardStudyCard({
                   p: { xs: '40px 32px', sm: '52px 48px' },
                   border: '1px solid',
                   borderColor: 'divider',
-                  borderRadius: { xs: '22px', sm: '28px' },
+                  borderRadius: radius.flashcard,
                   ...frameRadiusStyles,
                   bgcolor: 'background.paper',
                   color: '#fff',
@@ -157,9 +158,7 @@ export function FlashcardStudyCard({
                   backfaceVisibility: 'hidden',
                   WebkitBackfaceVisibility: 'hidden',
                   '&:hover': { bgcolor: 'background.paper' },
-                  '&:focus-visible': suppressFocusRing
-                    ? { outline: 'none' }
-                    : { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 3 },
+                  '&:focus-visible': suppressFocusRing ? { outline: 'none' } : focusRing,
                 }}
               >
                 <FlashcardFaceDecoration element={frontFace} />
@@ -209,16 +208,14 @@ export function FlashcardStudyCard({
                   p: { xs: '40px 32px', sm: '52px 48px' },
                   border: '1px solid',
                   borderColor: 'divider',
-                  borderRadius: { xs: '22px', sm: '28px' },
+                  borderRadius: radius.flashcard,
                   ...frameRadiusStyles,
                   bgcolor: 'background.paper',
                   boxShadow: cardThickness,
                   color: '#fff',
                   textAlign: 'center',
                   cursor: revealed ? 'pointer' : 'default',
-                  '&:focus-visible': suppressFocusRing
-                    ? { outline: 'none' }
-                    : { outline: '3px solid', outlineColor: 'primary.main', outlineOffset: 3 },
+                  '&:focus-visible': suppressFocusRing ? { outline: 'none' } : focusRing,
                   '& a': { color: 'inherit' },
                   '& img': { marginInline: 'auto' },
                 }}

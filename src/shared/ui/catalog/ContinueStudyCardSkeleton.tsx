@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
+import { radius } from '../../theme';
 
 export function ContinueStudyCardSkeleton() {
   return (
@@ -7,8 +8,9 @@ export function ContinueStudyCardSkeleton() {
       aria-hidden="true"
       sx={{
         background: 'linear-gradient(110deg, #fcf7f3 0%, #fff8f2 58%, #ffe5d3 100%)',
-        border: '1px solid #f4ebe5',
-        borderRadius: '22px',
+        border: '1px solid',
+        borderColor: 'divider',
+        borderRadius: radius.feature,
         boxSizing: 'border-box',
         containerName: 'continue-card',
         containerType: 'inline-size',
@@ -25,7 +27,7 @@ export function ContinueStudyCardSkeleton() {
       <LoadingSkeleton variant="text" width="34%" height={27} />
       <LoadingSkeleton variant="text" width="48%" height={35} sx={{ mt: 0.25 }} />
       <LoadingSkeleton variant="text" width="28%" height={24} sx={{ mt: 0.25 }} />
-      <LoadingSkeleton variant="rounded" width={164} height={42} sx={{ borderRadius: '14px', mt: 2 }} />
+      <LoadingSkeleton variant="rounded" width={164} height={42} sx={{ borderRadius: radius.control, mt: 2 }} />
     </Box>
   );
 }

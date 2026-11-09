@@ -1,5 +1,6 @@
 import { Box } from '@mui/material';
 import type { ScoreTrend } from '../../../domain/scores';
+import { radius } from '../../../shared/theme';
 
 export function ScoreTrendIndicator({ trend }: { trend: ScoreTrend }) {
   const labels: Record<ScoreTrend, string> = {
@@ -14,7 +15,7 @@ export function ScoreTrendIndicator({ trend }: { trend: ScoreTrend }) {
       role="img"
       sx={
         trend === 'unchanged'
-          ? { bgcolor: 'primary.dark', borderRadius: 1, display: 'inline-block', height: 2, width: 10 }
+          ? { bgcolor: 'primary.dark', borderRadius: radius.pill, display: 'inline-block', height: 2, width: 10 }
           : {
               borderLeft: '5px solid transparent',
               borderRight: '5px solid transparent',

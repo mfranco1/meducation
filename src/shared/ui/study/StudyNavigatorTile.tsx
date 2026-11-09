@@ -1,8 +1,9 @@
 import FlagRoundedIcon from '@mui/icons-material/FlagRounded';
-import { Box, ButtonBase, Typography, useTheme } from '@mui/material';
+import { alpha, Box, ButtonBase, Typography, useTheme } from '@mui/material';
 import { useState, type Ref } from 'react';
 import { flagFlutter } from './StudyFlagButton';
 import { reducedMotion } from '../motion';
+import { focusRing, radius, shadow } from '../../theme';
 
 /** `result` colors a graded tile green or red in place of the answered highlight. */
 export function StudyNavigatorTile({
@@ -51,16 +52,18 @@ export function StudyNavigatorTile({
       sx={{
         aspectRatio: '1 / 1',
         width: '100%',
-        borderRadius: 1,
+        borderRadius: radius.control,
         position: 'relative',
         border: '1px solid',
-        borderColor: current ? 'primary.main' : (tone?.border ?? (highlighted ? '#e6b18d' : '#d9dfe7')),
-        bgcolor: tone?.surface ?? (highlighted ? 'primary.light' : '#fffdfb'),
+        borderColor: current
+          ? 'primary.main'
+          : (tone?.border ?? (highlighted ? alpha(palette.primary.main, 0.4) : 'feedback.choiceBorder')),
+        bgcolor: tone?.surface ?? (highlighted ? 'primary.light' : 'background.paper'),
         color: textColor,
         fontWeight: 750,
-        boxShadow: current ? '0 0 0 3px rgba(185, 81, 27, .18)' : 'none',
-        '&:hover': { bgcolor: tone?.border ?? (highlighted ? '#efc7ac' : '#f7dfcf') },
-        '&:focus-visible': { outline: '3px solid #b9511b', outlineOffset: 2 },
+        boxShadow: current ? shadow.currentRing : 'none',
+        '&:hover': { bgcolor: tone?.border ?? (highlighted ? alpha(palette.primary.main, 0.3) : 'primary.light') },
+        '&:focus-visible': focusRing,
       }}
     >
       {number}
@@ -86,7 +89,16 @@ export function StudyNavigatorTile({
 
 export function StudyNavigatorEmpty({ children }: { children: string }) {
   return (
-    <Box sx={{ py: 5, px: 2, textAlign: 'center', border: '1px dashed', borderColor: 'divider', borderRadius: '10px' }}>
+    <Box
+      sx={{
+        py: 5,
+        px: 2,
+        textAlign: 'center',
+        border: '1px dashed',
+        borderColor: 'divider',
+        borderRadius: radius.control,
+      }}
+    >
       <Typography variant="body2" sx={{ color: 'text.secondary' }}>
         {children}
       </Typography>

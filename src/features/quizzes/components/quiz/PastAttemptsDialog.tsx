@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import type { CompletedAttempt } from '../../../../domain/types';
 import { formatDateTime, formatDuration } from '../../format';
+import { radius } from '../../../../shared/theme';
 
 export function PastAttemptsDialog({
   quizName,
@@ -85,9 +86,9 @@ export function PastAttemptsDialog({
                       sx={{
                         flexGrow: 1,
                         height: 7,
-                        borderRadius: 5,
+                        borderRadius: radius.pill,
                         bgcolor: alpha(color, 0.15),
-                        '& .MuiLinearProgress-bar': { borderRadius: 5, bgcolor: color },
+                        '& .MuiLinearProgress-bar': { borderRadius: radius.pill, bgcolor: color },
                       }}
                     />
                     <Typography sx={{ fontWeight: 700 }}>{percentage}%</Typography>

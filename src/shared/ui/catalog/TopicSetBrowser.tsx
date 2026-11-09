@@ -28,6 +28,7 @@ import { TopicIcon } from './icons/TopicIcon';
 import { reducedMotion } from '../motion';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 import { SwapTransition } from '../transitions/SwapTransition';
+import { focusRing, radius } from '../../theme';
 
 export interface TopicSet {
   id: string;
@@ -111,9 +112,9 @@ function TopicSearch({
 
 const trackSx = {
   height: 6,
-  borderRadius: 3,
+  borderRadius: radius.pill,
   bgcolor: 'divider',
-  '& .MuiLinearProgress-bar': { borderRadius: 3, [reducedMotion]: { transition: 'none' } },
+  '& .MuiLinearProgress-bar': { borderRadius: radius.pill, [reducedMotion]: { transition: 'none' } },
 };
 
 /** Case- and accent-insensitive form for substring search. */
@@ -251,7 +252,7 @@ export function TopicSetBrowser({
       component="li"
       key={set.id}
       ref={set.id === initialSet?.id ? initialRowRef : undefined}
-      sx={{ border: '1px solid', borderColor: 'divider', borderRadius: '10px', p: 2 }}
+      sx={{ border: '1px solid', borderColor: 'divider', borderRadius: radius.control, p: 2 }}
     >
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center', flex: 1, minWidth: 0 }}>
@@ -352,7 +353,7 @@ export function TopicSetBrowser({
                   alignItems: 'center',
                   border: '2px solid',
                   borderColor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, 0.3) : 'transparent',
-                  borderRadius: '10px',
+                  borderRadius: radius.control,
                   display: 'flex',
                   gap: 1.5,
                   p: 1.5,
@@ -362,7 +363,7 @@ export function TopicSetBrowser({
                   '&:hover': {
                     bgcolor: isSelected ? (theme: Theme) => alpha(theme.palette.primary.main, 0.1) : 'action.hover',
                   },
-                  '&.Mui-focusVisible': { outline: '2px solid', outlineColor: 'primary.main' },
+                  '&.Mui-focusVisible': { ...focusRing },
                 }}
               >
                 <Box sx={{ flex: 1, minWidth: 0 }}>
@@ -459,7 +460,7 @@ export function TopicSetBrowser({
             variant="body2"
             sx={{ color: 'text.secondary', mt: 1 }}
           >{`${completed} of ${own.length} ${nouns} completed`}</Typography>
-          <Box sx={{ height: '1px', bgcolor: '#eee5df', opacity: 0.8, my: 2.5 }} />
+          <Box sx={{ height: '1px', bgcolor: 'divider', opacity: 0.8, my: 2.5 }} />
           <Typography variant="h6" component="h3" sx={{ mb: 1.5 }}>
             {noun === 'quiz' ? 'Quizzes' : 'Decks'}
           </Typography>
@@ -544,7 +545,7 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
               </Stack>
               <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1 }}>
                 <Box sx={{ flex: 1 }}>
-                  <LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} />
+                  <LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: radius.pill }} />
                 </Box>
                 <LoadingSkeleton variant="text" width={24} height={16} />
               </Stack>
@@ -569,7 +570,7 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
           </Stack>
           <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center', mt: 1.5 }}>
             <Box sx={{ flex: 1 }}>
-              <LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: 3 }} />
+              <LoadingSkeleton variant="rounded" height={6} sx={{ borderRadius: radius.pill }} />
             </Box>
             <LoadingSkeleton variant="text" width={32} height={20} />
           </Stack>
@@ -577,13 +578,13 @@ export function TopicSetBrowserSkeleton({ noun, dashed = false }: { noun: 'quiz'
             <LoadingSkeleton variant="text" width="30%" height={20} />
           </Box>
         </Box>
-        <Box sx={{ height: '1px', bgcolor: '#eee5df', opacity: 0.8, my: 2.5 }} />
+        <Box sx={{ height: '1px', bgcolor: 'divider', opacity: 0.8, my: 2.5 }} />
         <Typography variant="h6" component="h3" sx={{ mb: 1.5 }}>
           {noun === 'quiz' ? 'Quizzes' : 'Decks'}
         </Typography>
         <Stack component="ul" aria-hidden spacing={1.5} sx={{ listStyle: 'none', m: 0, ...scrollSx(desktop) }}>
           {[0, 1, 2, 3].map((index) => (
-            <Box component="li" key={index} sx={{ border, borderColor: 'divider', borderRadius: '10px', p: 2 }}>
+            <Box component="li" key={index} sx={{ border, borderColor: 'divider', borderRadius: radius.control, p: 2 }}>
               <Stack
                 direction={{ xs: 'column', sm: 'row' }}
                 spacing={2}

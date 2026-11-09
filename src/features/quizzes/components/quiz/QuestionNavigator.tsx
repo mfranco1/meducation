@@ -4,6 +4,7 @@ import { isCorrect } from '../../../../domain/quizEngine';
 import type { Attempt, Question } from '../../../../domain/types';
 import { useScrollCurrentQuestion } from '../../../../shared/ui/study/useScrollCurrentQuestion';
 import { StudyNavigatorEmpty, StudyNavigatorTile } from '../../../../shared/ui/study/StudyNavigatorTile';
+import { radius } from '../../../../shared/theme';
 
 export type QuestionNavigatorFilter = 'all' | 'unanswered' | 'wrong' | 'flagged';
 export type QuestionNavigatorFilterSet = 'quiz' | 'review';
@@ -119,7 +120,7 @@ export function QuestionNavigator({
             key={item.value}
             value={item.value}
             aria-label={item.accessibleLabel}
-            sx={{ borderRadius: '10px' }}
+            sx={{ borderRadius: radius.control }}
           >
             {item.label}
           </ToggleButton>
