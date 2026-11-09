@@ -24,8 +24,29 @@ export function StudyDashboardLayout({
           {title}
         </Typography>
       )}
-      {summary}
-      {continueStudying}
+      {continueStudying ? (
+        // With Continue Studying, the stats share its row on wide widths (see StatCardRow).
+        <Box sx={{ containerName: 'study-hero', containerType: 'inline-size', mb: 4 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: { xs: 2, sm: 3 },
+              '& .stat-card-row': { mb: 0 },
+              '@container study-hero (min-width: 960px)': {
+                alignItems: 'stretch',
+                flexDirection: 'row-reverse',
+                gap: 5,
+              },
+            }}
+          >
+            <Box sx={{ '@container study-hero (min-width: 960px)': { flex: '0 0 280px', py: 0.5 } }}>{summary}</Box>
+            <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>{continueStudying}</Box>
+          </Box>
+        </Box>
+      ) : (
+        summary
+      )}
       <Box
         sx={{
           display: 'flex',

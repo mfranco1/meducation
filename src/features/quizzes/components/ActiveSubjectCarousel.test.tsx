@@ -6,9 +6,29 @@ import { theme } from '../../../shared/theme';
 import { ActiveSubjectCarousel } from './ActiveSubjectCarousel';
 
 const stats: SubjectStat[] = [
-  { subject: { id: 'biochem', name: 'Biochemistry', accent: '#b9511b' }, quizCount: 8, activeQuizCount: 1 },
-  { subject: { id: 'physio', name: 'Physiology', accent: '#b9511b' }, quizCount: 6, activeQuizCount: 2 },
+  {
+    subject: { id: 'biochem', name: 'Biochemistry', accent: '#b9511b' },
+    quizCount: 8,
+    completedQuizCount: 3,
+    activeQuizCount: 1,
+    latest: 74,
+  },
+  {
+    subject: { id: 'physio', name: 'Physiology', accent: '#b9511b' },
+    quizCount: 6,
+    completedQuizCount: 0,
+    activeQuizCount: 2,
+  },
 ];
+
+/** The one card a learner can reach; peeking cards and loop copies are inert. */
+function centeredCard() {
+  const [card, ...others] = screen
+    .getAllByRole('button', { name: /^Continue studying / })
+    .filter((button) => !button.closest('[inert]'));
+  expect(others).toHaveLength(0);
+  return card!;
+}
 
 function renderCarousel(subjects = stats) {
   const onSelectSubject = vi.fn();
@@ -30,33 +50,31 @@ describe('ActiveSubjectCarousel', () => {
   it('provides working forward and backward carousel controls', () => {
     renderCarousel();
 
-    const region = screen.getByRole('region', { name: 'Continue Studying' });
-    expect(screen.getByRole('button', { name: 'Continue studying Biochemistry' })).toHaveAccessibleDescription(
-      '1 quiz in progress',
-    );
-    expect(within(region).getByText('1 quiz in progress')).toBeVisible();
+    const biochemistry = centeredCard();
+    expect(biochemistry).toHaveAccessibleName('Continue studying Biochemistry');
+    expect(biochemistry).toHaveAccessibleDescription('1 quiz in progress · Latest Score 74% 3 of 8 quizzes completed');
+    expect(within(biochemistry).getByText('3 of 8 quizzes completed')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
-    expect(screen.getByRole('button', { name: 'Continue studying Physiology' })).toHaveAccessibleDescription(
-      '2 quizzes in progress',
-    );
+    expect(centeredCard()).toHaveAccessibleName('Continue studying Physiology');
+    expect(centeredCard()).toHaveAccessibleDescription('2 quizzes in progress 0 of 6 quizzes completed');
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
-    expect(screen.getByRole('button', { name: 'Continue studying Biochemistry' })).toBeInTheDocument();
+    expect(centeredCard()).toHaveAccessibleName('Continue studying Biochemistry');
     fireEvent.click(screen.getByRole('button', { name: 'Previous active subject' }));
-    expect(screen.getByRole('button', { name: 'Continue studying Physiology' })).toBeInTheDocument();
+    expect(centeredCard()).toHaveAccessibleName('Continue studying Physiology');
   });
 
-  it('shows only side arrows, without a position count', () => {
+  it('shows the selected position between the arrows', () => {
     renderCarousel();
 
     expect(screen.getByRole('button', { name: 'Previous active subject' })).toBeVisible();
     expect(screen.getByRole('button', { name: 'Next active subject' })).toBeVisible();
-    expect(screen.queryByText('1 of 2')).toBeNull();
+    expect(screen.getByText('1 of 2')).toBeVisible();
   });
 
   it('selects the visible subject', () => {
     const { onSelectSubject } = renderCarousel();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Continue studying Biochemistry' }));
+    fireEvent.click(centeredCard());
 
     expect(onSelectSubject).toHaveBeenCalledWith(stats[0].subject);
   });

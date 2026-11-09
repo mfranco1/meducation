@@ -40,6 +40,7 @@ export function StatCard({
   const dashboard = variant === 'dashboard';
   return (
     <Card
+      className="stat-card"
       role="group"
       aria-label={accessibleLabel}
       sx={[
@@ -65,12 +66,17 @@ export function StatCard({
         ]}
       >
         <Stack
+          className="stat-head"
           direction="row"
           spacing={dashboard ? 1.5 : 0.75}
           sx={{ alignItems: 'center', flexWrap: 'wrap', rowGap: 0.5 }}
         >
           {icon && dashboard && (
-            <Box aria-hidden="true" sx={{ display: 'inline-flex', color: 'primary.main', fontSize: 24 }}>
+            <Box
+              className="stat-icon"
+              aria-hidden="true"
+              sx={{ display: 'inline-flex', color: 'primary.main', fontSize: 24 }}
+            >
               {icon}
             </Box>
           )}
@@ -83,6 +89,7 @@ export function StatCard({
           {badge && <Chip label={badge} size="small" sx={{ height: 20, '& .MuiChip-label': { px: 0.75 } }} />}
         </Stack>
         <Typography
+          className="stat-value"
           variant={dashboard ? 'stat' : 'h5'}
           component={dashboard ? 'h4' : 'h5'}
           sx={
@@ -101,6 +108,7 @@ export function StatCard({
         </Typography>
         {dashboard && (
           <Typography
+            className="stat-support"
             component="div"
             variant="body2"
             sx={[
@@ -118,7 +126,11 @@ export function StatCard({
             {supportingText ?? ''}
           </Typography>
         )}
-        {footer && <Stack sx={{ justifyContent: 'flex-end', minHeight: 36, mt: 0.5 }}>{footer}</Stack>}
+        {footer && (
+          <Stack className="stat-footer" sx={{ justifyContent: 'flex-end', minHeight: 36, mt: 0.5 }}>
+            {footer}
+          </Stack>
+        )}
       </CardContent>
     </Card>
   );

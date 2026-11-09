@@ -15,6 +15,8 @@ export interface QuizProgress {
 export interface SubjectStat {
   subject: Subject;
   quizCount: number;
+  /** Quizzes completed at least once. */
+  completedQuizCount: number;
   activeQuizCount: number;
   latestActiveAt?: string;
   latest?: number;
@@ -71,6 +73,7 @@ export function subjectStatsFor(
     return {
       subject,
       quizCount: quizIds.length,
+      completedQuizCount: recentQuizScores.length,
       activeQuizCount: activeQuizIds.length,
       latestActiveAt: activeQuizIds
         .map((quizId) => progress.activityAt[quizId])

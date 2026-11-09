@@ -92,7 +92,7 @@ describe('FlashcardsDashboardScreen', () => {
     expect(screen.getByRole('heading', { name: 'Continue Studying' })).toHaveStyle({ position: 'absolute' });
     expect(
       within(continueRegion).getByRole('button', { name: 'Continue studying Anatomy' }),
-    ).toHaveAccessibleDescription('1 deck in progress');
+    ).toHaveAccessibleDescription('1 deck in progress 2 of 4 decks completed');
     expect(within(continueRegion).getByText('Continue')).toBeVisible();
     const grid = screen.getByTestId('all-subjects-grid');
     expect(within(grid).getByText('1 in progress')).toBeVisible();

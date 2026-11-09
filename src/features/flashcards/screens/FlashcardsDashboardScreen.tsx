@@ -7,7 +7,7 @@ import type { FlashcardDashboardSubject } from '../selectors/flashcards';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
 import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardLayout';
 import { StudyItemCarousel } from '../../../shared/ui/catalog/StudyItemCarousel';
-import { ContinueStudyCard } from '../../../shared/ui/catalog/ContinueStudyCard';
+import { ContinueStudyCard, completedPercent, completionProgress } from '../../../shared/ui/catalog/ContinueStudyCard';
 import { StudyCardIllustration } from '../../../shared/ui/catalog/StudyCardIllustration';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
 import { SubjectCatalogPage, SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
@@ -30,9 +30,7 @@ function FlashcardSubjectCard({
   progressUnavailable: boolean;
   onSelect: (subject: Subject) => void;
 }) {
-  const completed = progressUnavailable ? 0 : item.completedDeckCount;
-  // Any completed deck shows at least 1% so real progress never reads as zero.
-  const percent = completed > 0 ? Math.max(1, Math.round((completed / item.deckCount) * 100)) : 0;
+  const percent = completedPercent(progressUnavailable ? 0 : item.completedDeckCount, item.deckCount);
   return (
     <SubjectCard subject={item.subject} onSelect={onSelect} appearance="dashboardGrid">
       <SubjectProgressSummary
@@ -127,21 +125,22 @@ export function FlashcardsDashboardScreen({
           </StatCardRow>
         }
         continueStudying={
-          !loading && !error ? (
+          !loading && !error && activeSubjects.length > 0 ? (
             <StudyItemCarousel
               items={activeSubjects}
               id="continue-studying-flashcards"
               title="Continue Studying"
               itemLabel="active subject"
               itemKey={(item) => item.subject.id}
-              layout="continueStudy"
-              headingVisibility="srOnly"
               renderItem={(item) => (
                 <ContinueStudyCard
                   title={item.subject.name}
                   activityLabel={`${item.activeDeckCount} ${item.activeDeckCount === 1 ? 'deck' : 'decks'} in progress`}
                   accessibleLabel={`Continue studying ${item.subject.name}`}
                   onContinue={() => onContinueSubject(item.subject)}
+                  progress={
+                    progressError ? undefined : completionProgress(item.completedDeckCount, item.deckCount, 'deck')
+                  }
                   illustration={<StudyCardIllustration subjectId={item.subject.id} />}
                 />
               )}

@@ -111,7 +111,7 @@ test('quiz Continue Studying card is responsive and reveals the active quiz', as
 
   const region = page.getByRole('region', { name: 'Continue Studying' });
   const card = region.getByRole('button', { name: 'Continue studying Browser Test Subject' });
-  await expect(card).toHaveAccessibleDescription('1 quiz in progress');
+  await expect(card).toHaveAccessibleDescription(/^1 quiz in progress \d+ of \d+ (quiz|quizzes) completed$/);
   await expect(card.locator('.continue-study-cta')).toHaveText(/Continue/);
   await expectSingleCardAtAllWidths(
     page,
@@ -154,7 +154,7 @@ test('flashcard Continue Studying card shows deck activity and reveals the saved
 
   const region = page.getByRole('region', { name: 'Continue Studying' });
   const card = region.getByRole('button', { name: 'Continue studying Browser Test Subject' });
-  await expect(card).toHaveAccessibleDescription('1 deck in progress');
+  await expect(card).toHaveAccessibleDescription(/^1 deck in progress \d+ of \d+ (deck|decks) completed$/);
   await expect(card.locator('.continue-study-cta')).toHaveText(/Continue/);
   await expect(region.getByTestId('subject-score-track')).toHaveCount(0);
   await expectSingleCardAtAllWidths(

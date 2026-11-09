@@ -36,6 +36,7 @@
     "@mui/material": "^9.5.0",
     "@mui/utils": "^9.5.0",
     "embla-carousel-react": "^8.6.0",
+    "embla-carousel-wheel-gestures": "^8.1.0",
     "katex": "^0.19.1",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",

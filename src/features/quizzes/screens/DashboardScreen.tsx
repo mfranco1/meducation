@@ -165,6 +165,7 @@ export function DashboardScreen({
     return onRetry();
   };
   const sharedRecovery = Boolean(sharedError || retrying || manualRetryPending);
+  const activeSubjects = activeSubjectStats(subjectStats);
   const catalog = useSubjectCatalog(
     'quizzes',
     subjectStats,
@@ -263,15 +264,19 @@ export function DashboardScreen({
         continueStudying={
           (loading || retrying || sharedError || manualRetryPending) && activeAttempts ? (
             <Box
-              sx={{ mb: 3 }}
               role="status"
               aria-busy={!sharedError}
               aria-label={retrying ? 'Retrying active subjects' : 'Loading active subjects'}
             >
               <ContinueStudyCardSkeleton />
             </Box>
-          ) : !loading && !sharedError && !subjectsFailure && !retrying && !manualRetryPending ? (
-            <ActiveSubjectCarousel subjects={activeSubjectStats(subjectStats)} onSelectSubject={onContinueSubject} />
+          ) : !loading &&
+            !sharedError &&
+            !subjectsFailure &&
+            !retrying &&
+            !manualRetryPending &&
+            activeSubjects.length > 0 ? (
+            <ActiveSubjectCarousel subjects={activeSubjects} onSelectSubject={onContinueSubject} />
           ) : null
         }
       >

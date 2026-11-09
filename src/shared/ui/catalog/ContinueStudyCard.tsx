@@ -4,9 +4,24 @@ import type { SxProps, Theme } from '@mui/material/styles';
 import { useId, type ReactNode } from 'react';
 import { reducedMotion } from '../motion';
 import { focusRingInset, radius } from '../../theme';
+import { ProgressTrack } from './SubjectProgressSummary';
 
 export const continueCardBackground = ({ palette }: Theme) =>
   `linear-gradient(110deg, ${palette.background.default} 0%, ${palette.background.paper} 58%, ${palette.primary.light} 100%)`;
+
+/** Whole-number share of items completed; any completion shows at least 1% so it never reads as zero. */
+export function completedPercent(completed: number, total: number) {
+  return completed > 0 && total > 0 ? Math.max(1, Math.round((completed / total) * 100)) : 0;
+}
+
+/** The Continue Studying progress line, such as "12 of 40 quizzes completed". */
+export function completionProgress(completed: number, total: number, unit: 'quiz' | 'deck') {
+  const plural = unit === 'quiz' ? 'quizzes' : 'decks';
+  return {
+    percent: completedPercent(completed, total),
+    label: `${completed} of ${total} ${total === 1 ? unit : plural} completed`,
+  };
+}
 
 export type ContinueStudyCardProps = {
   title: string;
@@ -16,6 +31,8 @@ export type ContinueStudyCardProps = {
   accessibleLabel: string;
   eyebrow?: string;
   illustration: ReactNode;
+  /** Share of the subject completed, shown as a bar with its label. */
+  progress?: { percent: number; label: string };
   sx?: SxProps<Theme>;
 };
 
@@ -27,9 +44,11 @@ export function ContinueStudyCard({
   accessibleLabel,
   eyebrow = 'Continue Studying',
   illustration,
+  progress,
   sx,
 }: ContinueStudyCardProps) {
   const activityId = useId();
+  const progressId = useId();
   const customSx = sx === undefined ? [] : Array.isArray(sx) ? sx : [sx];
 
   return (
@@ -48,35 +67,15 @@ export function ContinueStudyCard({
           overflow: 'hidden',
           position: 'relative',
           background: continueCardBackground,
-          '& .continue-study-action': {
-            minHeight: 152,
-            pl: 'calc(24px + var(--study-carousel-control-gutter, 0px))',
-            pr: 'calc(40px + var(--study-carousel-control-gutter, 0px))',
-            py: '16px',
-          },
+          '& .continue-study-action': { minHeight: 152, pl: '24px', pr: '40px', py: '16px' },
           '@container continue-card (max-width: 297px)': {
-            '& .continue-study-action': {
-              pl: 'calc(16px + var(--study-carousel-control-gutter, 0px))',
-              pr: 'calc(32px + var(--study-carousel-control-gutter, 0px))',
-              py: '12px',
-            },
+            '& .continue-study-action': { pl: '16px', pr: '32px', py: '12px' },
           },
           '@container continue-card (min-width: 478px)': {
-            '& .continue-study-action': {
-              minHeight: 156,
-              px: 0,
-              pl: 'calc(24px + var(--study-carousel-control-gutter, 0px))',
-              pr: 'calc(24px + var(--study-carousel-control-gutter, 0px))',
-              py: '16px',
-            },
+            '& .continue-study-action': { minHeight: 156, px: '24px', py: '16px' },
           },
           '@container continue-card (min-width: 638px)': {
-            '& .continue-study-action': {
-              minHeight: 160,
-              pl: 'calc(32px + var(--study-carousel-control-gutter, 0px))',
-              pr: 'calc(32px + var(--study-carousel-control-gutter, 0px))',
-              py: '20px',
-            },
+            '& .continue-study-action': { minHeight: 160, px: '32px', py: '20px' },
           },
         },
         ...customSx,
@@ -108,7 +107,7 @@ export function ContinueStudyCard({
         component="button"
         type="button"
         aria-label={accessibleLabel}
-        aria-describedby={activityId}
+        aria-describedby={progress ? `${activityId} ${progressId}` : activityId}
         onClick={() => onContinue()}
         sx={{
           alignItems: 'stretch',
@@ -155,6 +154,17 @@ export function ContinueStudyCard({
           >
             {activityLabel}
           </Typography>
+          {progress && (
+            <Box
+              component="span"
+              sx={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '4px 10px', mt: '10px' }}
+            >
+              <ProgressTrack percent={progress.percent} sx={{ flexShrink: 0, width: 120 }} />
+              <Typography id={progressId} variant="caption" component="span" sx={{ color: 'text.secondary' }}>
+                {progress.label}
+              </Typography>
+            </Box>
+          )}
           <Box
             component="span"
             className="continue-study-cta"

@@ -17,6 +17,8 @@ const carousel = vi.hoisted(() => ({
   canScrollNext: vi.fn(() => carousel.canNext),
   scrollSnapList: vi.fn(() => carousel.snaps),
   selectedScrollSnap: vi.fn(() => carousel.selected),
+  rootNode: vi.fn(() => document.createElement('div')),
+  slideNodes: vi.fn(() => []),
 }));
 
 vi.mock('embla-carousel-react', () => ({ default: () => [() => undefined, carousel] }));
@@ -84,8 +86,6 @@ describe('StudyItemCarousel', () => {
         itemLabel="active subject"
         itemKey={(x) => x}
         renderItem={(x) => x}
-        layout="continueStudy"
-        headingVisibility="srOnly"
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));

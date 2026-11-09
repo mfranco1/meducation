@@ -11,7 +11,7 @@ const renderDashboard = (trend: SubjectStat['trend'], activeQuizCount = 0) =>
     <ThemeProvider theme={theme}>
       <DashboardScreen
         attempts={[]}
-        subjectStats={[{ subject, quizCount: 8, activeQuizCount, latest: 75, trend }]}
+        subjectStats={[{ subject, quizCount: 8, completedQuizCount: 0, activeQuizCount, latest: 75, trend }]}
         onSelectSubject={() => {}}
       />
     </ThemeProvider>,
@@ -134,7 +134,7 @@ describe('dashboard lowest score', () => {
           attempts={[]}
           personalLowest={42}
           personalLowestSubject="Physiology"
-          subjectStats={[{ subject, quizCount: 8, activeQuizCount: 0, latest: 75 }]}
+          subjectStats={[{ subject, quizCount: 8, completedQuizCount: 0, activeQuizCount: 0, latest: 75 }]}
           onSelectSubject={() => {}}
         />
       </ThemeProvider>,
@@ -184,7 +184,9 @@ describe('dashboard in-progress indicator', () => {
     const continueRegion = screen.getByRole('region', { name: 'Continue Studying' });
     expect(within(grid).getAllByText(`${activeQuizCount} in progress`)).toHaveLength(1);
     expect(
-      within(continueRegion).getByText(`${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress`),
+      within(continueRegion).getByText(
+        `${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress · Latest Score 75%`,
+      ),
     ).toBeVisible();
   });
 
@@ -199,6 +201,7 @@ it('pages the All Subjects grid and filters it to active subjects', () => {
   const stats = Array.from({ length: 13 }, (_, index) => ({
     subject: { ...subject, id: `s${index}`, name: `Subject ${index + 1}` },
     quizCount: 1,
+    completedQuizCount: 0,
     activeQuizCount: index === 12 ? 1 : 0,
   }));
   render(
@@ -223,7 +226,7 @@ it('uses separate continuation and ordinary subject actions', () => {
     <ThemeProvider theme={theme}>
       <DashboardScreen
         attempts={[]}
-        subjectStats={[{ subject, quizCount: 2, activeQuizCount: 1 }]}
+        subjectStats={[{ subject, quizCount: 2, completedQuizCount: 0, activeQuizCount: 1 }]}
         onSelectSubject={onSelectSubject}
         onContinueSubject={onContinueSubject}
       />
