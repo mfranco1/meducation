@@ -83,6 +83,8 @@ Update the relevant doc in the same change when behavior or commands change. Do 
 Reusable workflows live in `.agents/skills/<name>/SKILL.md`. When a task matches one, read its `SKILL.md` and follow it.
 
 - `write-quizzes`: write new quizzes for a subject and stage them in the draft for review.
+- `meducation-icons`: find, draw and integrate subject and topic icons.
+- `meducation-code-review`: review a diff, commit or pull request.
 
 ## Work tracking
 
