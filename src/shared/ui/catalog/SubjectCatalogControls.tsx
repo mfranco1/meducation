@@ -4,6 +4,7 @@ import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useEffect, useRef, type Ref } from 'react';
 import { alpha } from '@mui/material/styles';
 import { radius } from '../../theme';
+import { easing, reducedMotion } from '../motion';
 
 export type SubjectFilter = 'all' | 'inProgress';
 
@@ -25,25 +26,39 @@ export function SubjectFilterPill({
       aria-label="Filter subjects"
       onChange={(_, nextValue: SubjectFilter | null) => nextValue && onChange(nextValue)}
       sx={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        position: 'relative',
         borderRadius: radius.pill,
-        bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-        p: 0,
+        bgcolor: (theme) => alpha(theme.palette.text.primary, 0.05),
+        p: '2px',
+        // The active blob slides between the two equal-width segments.
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 2,
+          bottom: 2,
+          left: 2,
+          width: 'calc(50% - 2px)',
+          borderRadius: radius.pill,
+          bgcolor: 'primary.light',
+          transform: value === 'inProgress' ? 'translateX(100%)' : 'none',
+          transition: `transform 240ms ${easing.standard}`,
+          [reducedMotion]: { transition: 'none' },
+        },
         '& .MuiToggleButtonGroup-grouped': {
+          position: 'relative',
           border: 0,
           borderRadius: radius.pill,
-          minWidth: 108,
-          minHeight: 32,
-          height: 32,
-          padding: '0 16px',
+          height: 26,
+          padding: '0 12px',
+          fontSize: (theme) => theme.typography.caption.fontSize,
           lineHeight: 1.2,
           color: 'text.secondary',
+          transition: `color 180ms ${easing.standard}`,
           '&:not(:first-of-type)': { borderLeft: 0, ml: 0 },
-          '&.Mui-selected': {
-            bgcolor: 'primary.main',
-            color: 'common.white',
-            '&:hover': { bgcolor: 'primary.main' },
-          },
-          '&:hover': { bgcolor: 'transparent' },
+          '&.Mui-selected, &.Mui-selected:hover': { bgcolor: 'transparent', color: 'primary.dark' },
+          '&:hover': { bgcolor: 'transparent', color: 'text.primary' },
         },
       }}
     >

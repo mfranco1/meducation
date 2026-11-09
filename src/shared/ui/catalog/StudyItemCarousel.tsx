@@ -156,7 +156,20 @@ export function StudyItemCarousel<T>({
       <Typography id={headingId} component="h2" variant="h6" sx={visuallyHidden}>
         {title}
       </Typography>
-      <Box ref={viewportRef} data-carousel-id={id} sx={{ overflow: 'hidden', py: 0.5 }}>
+      <Box
+        ref={viewportRef}
+        data-carousel-id={id}
+        sx={{
+          overflow: 'hidden',
+          py: 0.5,
+          // Fades the outer edges of the peeking cards into the page.
+          '--edge-fade': '20px',
+          '@container study-carousel (min-width: 600px)': { '--edge-fade': '96px' },
+          maskImage: single
+            ? undefined
+            : 'linear-gradient(to right, transparent, #000 var(--edge-fade), #000 calc(100% - var(--edge-fade)), transparent)',
+        }}
+      >
         <Box data-testid="study-carousel-track" sx={{ alignItems: 'stretch', display: 'flex', gap: `${SLIDE_GAP}px` }}>
           {slides.map(({ item, copy }, index) => (
             <Box
@@ -173,7 +186,7 @@ export function StudyItemCarousel<T>({
                 minWidth: 0,
                 position: 'relative',
                 '& > *': { transformOrigin: 'center', willChange: 'transform' },
-                '@container study-carousel (min-width: 600px)': single ? {} : { flex: '0 0 calc(100% - 128px)' },
+                '@container study-carousel (min-width: 600px)': single ? {} : { flex: '0 0 calc(100% - 240px)' },
               }}
             >
               <Box inert={!single && index !== selectedSlide}>{renderItem(item)}</Box>
