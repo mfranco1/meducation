@@ -17,7 +17,8 @@ Deferred while learner content, data model and UI work come first. Scope rules a
    - Option B: put `/api/admin` and `/admin.html` behind the host's auth proxy, then simplify or remove the backend session, CSRF and fresh-factor code to whatever the proxy doesn't cover.
    - Prefer the option with less code we own, as long as it keeps MFA, CSRF/Origin protection and per-editor identity.
 3. Set up a stable HTTPS origin with same-origin `/api`. Restore the authority dump into the hosted database and deploy the containers. Set `MEDUCATION_RELEASE`, then configure log retention, an uptime check on `/health/ready` and an alert on `level=error` ([logs](../../operations.md#logs-and-alerts)).
-4. Run a deployed smoke test, real-device browser checks, and manual acceptance of the redesigned admin.
+4. Add cookieless visitor analytics (unique visitors per hour and day, no consent banner): Cloudflare Web Analytics if the host is behind Cloudflare, otherwise Umami Cloud's free tier. Add the script tag to `index.html`, its origins to `script-src` and `connect-src` in `ops/containers/security-headers.conf`, and a sentence to the Privacy dialog. Not Google Analytics: it needs cookie consent and ad blockers block it.
+5. Run a deployed smoke test, real-device browser checks, and manual acceptance of the redesigned admin.
 
 ## Open questions
 
