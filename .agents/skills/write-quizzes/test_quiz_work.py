@@ -93,6 +93,16 @@ def test_check_blind_refuses_answers_shifted_by_one_item(tmp_path):
     assert "misaligned, rerun this file" in result.stderr
 
 
+def test_check_blind_refuses_answers_shifted_partway_through_the_file(tmp_path):
+    topic_dir = setup(tmp_path, count=20)
+    run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")
+    k = keys(topic_dir)
+    answer(topic_dir, "r1", k[:12] + k[11:19])  # items 13 to 20 slid by one
+    result = run(tmp_path, "check-blind", TOPIC, "--round", "r1")
+    assert result.returncode != 0
+    assert "misaligned, rerun this file" in result.stderr
+
+
 def test_triage_escalates_blind_disagreements_not_writer_unverified_facts(tmp_path):
     topic_dir = setup(tmp_path)
     run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")

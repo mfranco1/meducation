@@ -15,7 +15,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 
 ## Subject notes (for SUBJECT_NOTES)
 
-Kept in the session scratchpad as `subject-notes.md`; rebuild from this section in a new session.
+Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>.md` per topic; rebuild from this section and the blueprint `excludes` in a new session.
 
 - Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines, adult internal medicine. Use current international guidelines (ACC/AHA, ESC, GOLD, GINA, KDIGO, ADA, IDSA, ACR/EULAR, AHA/ASA, WHO, CDC). Where a Philippine body sets national practice (DOH programs, NTP Manual of Procedures for TB, PSMID CAP and UTI guidelines, PSH/PHA hypertension, DOH HIV, rabies, dengue and malaria programs), use its current edition and name it in the stem or sources.
 - Current classifications only (e.g. Fourth Universal Definition of MI, current GOLD and GINA reports, KDIGO staging, Sepsis-3, ILAE 2017, DSM-5-TR). Never test a retired scheme kept in the handout.
@@ -29,9 +29,9 @@ Kept in the session scratchpad as `subject-notes.md`; rebuild from this section 
 | Cardiovascular Medicine | staged 2026-11-10 (q645 to q647, 120) |
 | Structural Heart Disease, Arrhythmia and Heart Failure | staged 2026-11-10 (q648 to q650, 120) |
 | Pulmonology | staged 2026-11-10 (q658 to q659, 100) |
-| Critical Care Medicine | |
-| Infectious Diseases | |
-| Enteric, Tropical and Zoonotic Infections | |
+| Critical Care Medicine | staged 2026-11-11 (q664 to q665, 100) |
+| Infectious Diseases | staged 2026-11-11 (q666 to q667, 100) |
+| Enteric, Tropical and Zoonotic Infections | staged 2026-11-11 (q668 to q670, 120) |
 | Dermatology | |
 | Hematology | |
 | Oncology | |

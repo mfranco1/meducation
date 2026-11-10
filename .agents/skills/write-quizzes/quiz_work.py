@@ -240,6 +240,21 @@ def agreement(rows, keys, offset: int) -> float:
     return sum(a == k for a, k in pairs) / (len(pairs) or 1)
 
 
+def shifted_run(rows, keys) -> int:
+    """Most wrong answers in one stretch where every answer is a neighbor item's key."""
+    best = 0
+    for offset in (-1, 1):
+        run = 0
+        for i, row in enumerate(rows):
+            j = i + offset
+            if 0 <= j < len(keys) and row["answer"] == keys[j]:
+                run += row["answer"] != keys[i]
+            else:
+                run = 0
+            best = max(best, run)
+    return best
+
+
 def cmd_check_blind(work: Work, args) -> None:
     """Validate a round's answer files, refuse misaligned ones, and log clean solves."""
     round_dir = work.dir / "blind" / args.round
@@ -274,7 +289,9 @@ def cmd_check_blind(work: Work, args) -> None:
         keys = [batch[r]["answer"] for r in order]
         direct = agreement(rows, keys, 0)
         shifted = max(agreement(rows, keys, -1), agreement(rows, keys, 1))
-        if len(rows) >= 10 and (direct < 0.5 or shifted > direct):
+        if len(rows) >= 10 and (
+            direct < 0.5 or shifted > direct or shifted_run(rows, keys) >= 5
+        ):
             errors.append(
                 f"{path.name}: misaligned, rerun this file (agreement {direct:.0%}, shifted {shifted:.0%})."
             )
