@@ -1,29 +1,7 @@
-import { readFile, realpath, mkdir, writeFile, unlink, rename } from 'node:fs/promises';
-import { resolve, sep } from 'node:path';
 import { SaxesParser } from 'saxes';
 import { optimize } from 'svgo';
 
-export interface IconSource {
-  collection: string;
-  asset: string;
-  url?: string;
-  revision?: string;
-  author: string;
-  license: string;
-  licenseUrl?: string;
-  attribution: string;
-}
-
-export interface IconRecord {
-  id: string;
-  concept: string;
-  keywords: string[];
-  file: string;
-  source: IconSource;
-  notes: string;
-  alternatives: { file: string; source: IconSource; assessment: string }[];
-}
-
+// The static SVG subset the family uses: no CSS, scripts, references, images, animation, clips, masks or filters.
 const elements = new Set([
   'svg',
   'g',
@@ -71,19 +49,12 @@ const attributes = new Set([
   'points',
 ]);
 
-/** A deliberately small static SVG subset. Parse before SVGO or browser rendering. */
-export function validateSvg(svg: string, normalized = false): number[] {
-  if (Buffer.byteLength(svg) > 200_000) throw new Error('SVG exceeds 200 KB. Simplify the artwork.');
+/** Checks the SVG uses only the family's static subset and returns its viewBox. */
+export function validateSvg(svg: string): number[] {
   const parser = new SaxesParser({ xmlns: true });
   let depth = 0;
   let shapes = 0;
   let viewBox: number[] = [];
-  parser.on('doctype', () => {
-    throw new Error('SVG DTDs are prohibited.');
-  });
-  parser.on('processinginstruction', () => {
-    throw new Error('SVG processing instructions are prohibited.');
-  });
   parser.on('opentag', (tag) => {
     if (!elements.has(tag.name) || tag.uri !== 'http://www.w3.org/2000/svg')
       throw new Error(`Unsupported SVG element: ${tag.name}`);
@@ -95,24 +66,14 @@ export function validateSvg(svg: string, normalized = false): number[] {
         .map(Number);
       if (viewBox.length !== 4 || !viewBox.every(Number.isFinite) || viewBox[2] <= 0 || viewBox[3] <= 0)
         throw new Error('SVG needs a finite, positive viewBox.');
-      if (normalized && viewBox.join(' ') !== '0 0 24 24') throw new Error('Registered SVGs need viewBox="0 0 24 24".');
     } else if (tag.name === 'svg') throw new Error('Nested SVGs are unsupported.');
     for (const attr of Object.values(tag.attributes)) {
       if (!attributes.has(attr.name)) throw new Error(`Unsupported SVG attribute: ${attr.name}`);
-      if (attr.name === 'xmlns' && attr.value !== 'http://www.w3.org/2000/svg')
-        throw new Error('Invalid SVG namespace.');
-      if (/url\s*\(|[<>]|javascript:|data:/i.test(attr.value)) throw new Error(`Unsafe SVG attribute: ${attr.name}`);
-      if (['fill', 'stroke'].includes(attr.name)) {
-        if (!/^(none|currentColor|black|white|#[\da-f]{3,8})$/i.test(attr.value))
-          throw new Error('Unsupported SVG paint.');
-        if (normalized && !['none', 'currentColor'].includes(attr.value))
-          throw new Error('Registered paints must use currentColor or none.');
-      }
       if (
-        ['opacity', 'fill-opacity', 'stroke-opacity'].includes(attr.name) &&
-        (!Number.isFinite(Number(attr.value)) || Number(attr.value) < 0 || Number(attr.value) > 1)
+        ['fill', 'stroke'].includes(attr.name) &&
+        !/^(none|currentColor|black|white|#[\da-f]{3,8})$/i.test(attr.value)
       )
-        throw new Error('Invalid SVG opacity.');
+        throw new Error(`Unsupported SVG paint: ${attr.value}`);
     }
     if (!['svg', 'g', 'title', 'desc'].includes(tag.name)) shapes++;
   });
@@ -127,12 +88,14 @@ export function validateSvg(svg: string, normalized = false): number[] {
 const round = (value: number) => Number(value.toFixed(3));
 const blacks = ['currentcolor', 'black', '#000', '#000000'];
 
-/** Fits the art into a 20-unit live area (2 units clear space) of a 24 grid, or the full grid with `fill`. */
-export function normalizeSvg(svg: string, { fill = false } = {}): { svg: string; warnings: string[] } {
+/**
+ * Puts art on the 24 grid. A 0 0 24 24 viewBox is kept as drawn; any other is fitted, preserving aspect ratio,
+ * into the 20-unit live area. Black paint becomes currentColor and strokes keep their 24-grid width.
+ */
+export function normalizeSvg(svg: string): { svg: string; warnings: string[] } {
   const [x, y, width, height] = validateSvg(svg);
-  // Deterministic fit, preserving aspect ratio. Artistic optical changes belong in the source.
-  const size = fill ? 24 : 20;
-  const scale = size / Math.max(width, height);
+  const onGrid = [x, y, width, height].join(' ') === '0 0 24 24';
+  const scale = onGrid ? 1 : 20 / Math.max(width, height);
   const tx = round((24 - width * scale) / 2);
   const ty = round((24 - height * scale) / 2);
   // A stroke drawn on the source grid keeps its 24-grid equivalent after scaling.
@@ -162,16 +125,13 @@ export function normalizeSvg(svg: string, { fill = false } = {}): { svg: string;
                 node.attributes.viewBox = '0 0 24 24';
                 delete node.attributes.width;
                 delete node.attributes.height;
-                if (parent.type === 'root' && (scale !== 1 || x || y || tx || ty)) {
-                  const children = node.children;
+                if (parent.type === 'root' && !onGrid) {
                   node.children = [
                     {
                       type: 'element',
                       name: 'g',
-                      attributes: {
-                        transform: `translate(${tx} ${ty}) scale(${scale}) translate(${-x} ${-y})`,
-                      },
-                      children,
+                      attributes: { transform: `translate(${tx} ${ty}) scale(${scale}) translate(${-x} ${-y})` },
+                      children: node.children,
                     },
                   ];
                 }
@@ -200,117 +160,7 @@ export function normalizeSvg(svg: string, { fill = false } = {}): { svg: string;
       },
     ],
   }).data;
-  validateSvg(output, true);
   return { svg: output + '\n', warnings };
-}
-
-const licenses = ['CC0-1.0', 'MIT', 'ISC', 'Apache-2.0', 'CC-BY-3.0', 'CC-BY-4.0', 'CC-BY-SA-3.0', 'CC-BY-SA-4.0'];
-const textFields = (value: unknown, fields: string[]): value is Record<string, string> =>
-  !!value &&
-  typeof value === 'object' &&
-  fields.every(
-    (key) =>
-      typeof (value as Record<string, unknown>)[key] === 'string' &&
-      String((value as Record<string, unknown>)[key]).trim(),
-  );
-
-export function assertSource(value: unknown): asserts value is IconSource {
-  const original = (value as Partial<IconSource> | null)?.collection === 'Meducation original';
-  if (
-    !textFields(
-      value,
-      original
-        ? ['collection', 'asset', 'author', 'license']
-        : ['collection', 'asset', 'url', 'revision', 'author', 'license', 'licenseUrl'],
-    ) ||
-    typeof value.attribution !== 'string'
-  )
-    throw new Error(
-      original
-        ? 'Original artwork needs asset, author, license, and attribution.'
-        : 'Source needs collection, asset, URL, revision, author, license, license URL, and attribution.',
-    );
-  for (const key of ['url', 'licenseUrl']) {
-    if (value[key]?.trim() && new URL(value[key]).protocol !== 'https:')
-      throw new Error('Source and license evidence must use HTTPS.');
-  }
-  if (!licenses.includes(value.license)) throw new Error(`Unverified or unsupported license: ${value.license}`);
-  if (value.license !== 'CC0-1.0' && !value.attribution.trim())
-    throw new Error('This license needs an attribution notice.');
-}
-
-/** Registry paths must stay inside its asset directory, including symlink targets. */
-export async function assetPath(root: string, relative: string): Promise<string> {
-  if (
-    typeof relative !== 'string' ||
-    !/^[a-zA-Z0-9_./-]+$/.test(relative) ||
-    relative.startsWith('/') ||
-    relative.split('/').includes('..')
-  )
-    throw new Error('Unsafe asset path.');
-  const base = await realpath(root);
-  const path = await realpath(resolve(root, relative));
-  if (!path.startsWith(base + sep)) throw new Error('Asset path escapes the registry directory.');
-  return path;
-}
-
-export async function validateRegistry(value: unknown, root: string): Promise<IconRecord[]> {
-  if (!Array.isArray(value)) throw new Error('Icon registry must be an array.');
-  const ids = new Set<string>();
-  const files = new Set<string>();
-  for (const item of value) {
-    if (!textFields(item, ['id', 'concept', 'file', 'notes']) || !/^[a-z][a-z0-9-]*$/.test(item.id) || ids.has(item.id))
-      throw new Error('Registry has an invalid or duplicate icon ID.');
-    ids.add(item.id);
-    const record = item as unknown as IconRecord;
-    if (
-      !Array.isArray(record.keywords) ||
-      !record.keywords.length ||
-      !record.keywords.every((word) => typeof word === 'string' && word.trim()) ||
-      !Array.isArray(record.alternatives)
-    )
-      throw new Error(`Invalid metadata for ${record.id}.`);
-    if (files.has(record.file)) throw new Error('Registry assets must have distinct paths.');
-    files.add(record.file);
-    for (const art of [record, ...record.alternatives]) {
-      if (!textFields(art, ['file']) || (art !== record && !textFields(art, ['assessment'])))
-        throw new Error('Invalid alternative metadata.');
-      assertSource(art.source);
-      const svg = await readFile(await assetPath(root, art.file), 'utf8');
-      validateSvg(svg, art === record);
-    }
-  }
-  return value as IconRecord[];
-}
-
-export async function registerCandidate(
-  root: string,
-  records: IconRecord[],
-  record: IconRecord,
-  svg: string,
-): Promise<void> {
-  if (!/^[a-z][a-z0-9-]*$/.test(record.id) || record.file !== `candidates/${record.id}.svg`)
-    throw new Error('New icons must have a safe candidate ID and path.');
-  if (records.some((existing) => existing.id === record.id))
-    throw new Error('That icon ID already exists. Create a new candidate ID.');
-  await mkdir(resolve(root, 'candidates'), { recursive: true });
-  const directory = await assetPath(root, 'candidates');
-  const file = resolve(directory, `${record.id}.svg`);
-  // Exclusive creation preserves candidates already being reviewed.
-  await writeFile(file, svg, { flag: 'wx' });
-  const temporaryRegistry = resolve(root, `.registry-${process.pid}.tmp`);
-  try {
-    await validateRegistry([...records, record], root);
-    await writeFile(temporaryRegistry, JSON.stringify([...records, record], null, 2) + '\n');
-    await rename(temporaryRegistry, resolve(root, 'registry.json'));
-  } catch (error) {
-    await unlink(file);
-    throw new Error(`Candidate was not registered: ${String(error)}`, { cause: error });
-  } finally {
-    await unlink(temporaryRegistry).catch((error: NodeJS.ErrnoException) => {
-      if (error.code !== 'ENOENT') throw error;
-    });
-  }
 }
 
 export interface SearchCandidate {
@@ -319,7 +169,6 @@ export interface SearchCandidate {
   tier: number;
   keywords: string[];
   svg: string;
-  source?: IconSource;
   note: string;
   url?: string;
 }
