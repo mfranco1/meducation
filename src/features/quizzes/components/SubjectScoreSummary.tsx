@@ -19,7 +19,7 @@ export function SubjectScoreSummary({
       label={
         hasScore && (
           <>
-            <SubjectProgressLabel>Latest Score {score}%</SubjectProgressLabel>
+            <SubjectProgressLabel>Latest score {score}%</SubjectProgressLabel>
             {trend && <ScoreTrendIndicator trend={trend} />}
           </>
         )

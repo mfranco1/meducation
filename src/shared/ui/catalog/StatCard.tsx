@@ -1,4 +1,4 @@
-import { lighten } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material/styles';
 import { Box, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
@@ -49,7 +49,7 @@ export function StatCard({
           minWidth: 0,
           ...(dashboard && {
             minHeight: { xs: 104, sm: 108 },
-            backgroundColor: (theme) => lighten(theme.palette.primary.light, 0.38),
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.07),
           }),
         },
         ...(Array.isArray(sx) ? sx : [sx]),

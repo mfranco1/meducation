@@ -52,7 +52,7 @@ describe('ActiveSubjectCarousel', () => {
 
     const biochemistry = centeredCard();
     expect(biochemistry).toHaveAccessibleName('Continue studying Biochemistry');
-    expect(biochemistry).toHaveAccessibleDescription('1 quiz in progress · Latest Score 74% 3 of 8 quizzes completed');
+    expect(biochemistry).toHaveAccessibleDescription('1 quiz in progress · Latest score 74% 3 of 8 quizzes completed');
     expect(within(biochemistry).getByText('3 of 8 quizzes completed')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
     expect(centeredCard()).toHaveAccessibleName('Continue studying Physiology');

@@ -36,7 +36,7 @@ export function QuizSubjectCard({
       {latest !== undefined && (
         <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 2 }}>
           <Typography variant="subtitle2" sx={{ color: 'primary.dark' }}>
-            Latest Score {latest}%
+            Latest score {latest}%
           </Typography>
           {trend && <ScoreTrendIndicator trend={trend} />}
         </Stack>

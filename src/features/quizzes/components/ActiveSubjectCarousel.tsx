@@ -22,7 +22,7 @@ export function ActiveSubjectCarousel({
           title={stat.subject.name}
           activityLabel={[
             `${stat.activeQuizCount} ${stat.activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress`,
-            stat.latest !== undefined && `Latest Score ${stat.latest}%`,
+            stat.latest !== undefined && `Latest score ${stat.latest}%`,
           ]
             .filter(Boolean)
             .join(' · ')}

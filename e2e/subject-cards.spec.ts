@@ -33,7 +33,7 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   expect(await grid.getByRole('button').count()).toBe(1);
   await expect(card.locator('[data-subject-icon="s1"]')).toBeVisible();
   await expect(card.getByTestId('subject-score-track')).toBeVisible();
-  await expect(card.getByText(/Latest Score/)).toHaveCount(0);
+  await expect(card.getByText(/Latest score/)).toHaveCount(0);
 
   const title = card.locator('h3');
   await title.evaluate((element) => {
@@ -119,7 +119,7 @@ test('flashcard subject grid shares the subject header and progress track withou
   await expect(card).toBeVisible();
   await expect(card.locator('[data-subject-icon="s1"]')).toBeVisible();
   await expect(card.getByTestId('subject-score-track')).toBeVisible();
-  await expect(card.getByText(/Latest Score|Completed|in progress/)).toHaveCount(0);
+  await expect(card.getByText(/Latest score|Completed|in progress/)).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
   await testInfo.attach('flashcard-subject-grid-mobile', { body: await page.screenshot(), contentType: 'image/png' });
 

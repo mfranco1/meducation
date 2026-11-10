@@ -11,7 +11,7 @@ describe('SubjectScoreSummary', () => {
         <SubjectScoreSummary score={score} />
       </ThemeProvider>,
     );
-    expect(screen.getByText(`Latest Score ${score}%`)).toBeVisible();
+    expect(screen.getByText(`Latest score ${score}%`)).toBeVisible();
   });
 
   it.each([undefined, NaN, Infinity, -1, 101])('omits unavailable score %s and trend', (score) => {
@@ -20,7 +20,7 @@ describe('SubjectScoreSummary', () => {
         <SubjectScoreSummary score={score} trend="increase" />
       </ThemeProvider>,
     );
-    expect(screen.queryByText(/Latest Score/)).toBeNull();
+    expect(screen.queryByText(/Latest score/)).toBeNull();
     expect(screen.queryByRole('img', { name: /Score increased/ })).toBeNull();
   });
 

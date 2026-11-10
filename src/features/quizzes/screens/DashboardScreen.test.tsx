@@ -115,13 +115,13 @@ describe('dashboard score trend indicator', () => {
     ['unchanged', 'Score unchanged from previous attempt'],
   ] as const)('renders the %s indicator beside the latest score', (trend, label) => {
     renderDashboard(trend);
-    expect(screen.getByText('Latest Score 75%')).toBeVisible();
+    expect(screen.getByText('Latest score 75%')).toBeVisible();
     expect(screen.getByRole('img', { name: label })).toBeVisible();
   });
 
   it('omits the indicator when there is no previous score', () => {
     renderDashboard(undefined);
-    expect(screen.getByText('Latest Score 75%')).toBeVisible();
+    expect(screen.getByText('Latest score 75%')).toBeVisible();
     expect(screen.queryByRole('img')).toBeNull();
   });
 });
@@ -185,7 +185,7 @@ describe('dashboard in-progress indicator', () => {
     expect(within(grid).getAllByText(`${activeQuizCount} in progress`)).toHaveLength(1);
     expect(
       within(continueRegion).getByText(
-        `${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress · Latest Score 75%`,
+        `${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress · Latest score 75%`,
       ),
     ).toBeVisible();
   });

@@ -1,11 +1,11 @@
 import { Box } from '@mui/material';
-import { lighten } from '@mui/material/styles';
+import { alpha } from '@mui/material/styles';
 import type { SxProps, Theme } from '@mui/material/styles';
 import type { ReactNode } from 'react';
 import { radius, shadow } from '../../theme';
 
 const panel = {
-  backgroundColor: (theme: Theme) => lighten(theme.palette.primary.light, 0.38),
+  backgroundColor: (theme: Theme) => alpha(theme.palette.primary.main, 0.07),
   border: '1px solid',
   borderColor: 'divider',
   borderRadius: radius.card,
@@ -46,7 +46,7 @@ export function StatCardRow({ children, sx }: { children: ReactNode; sx?: SxProp
             '& .stat-icon': { display: 'none' },
             '& .stat-head > *': { m: 0 },
             '& .stat-value': { typography: 'h5', minHeight: 0, mt: 0.5 },
-            '& .stat-support': { typography: 'caption', mt: 0.25 },
+            '& .stat-support': { typography: 'caption', mt: 0.5 },
             '& .stat-footer > *': { flexWrap: 'wrap', rowGap: 0.5 },
           },
           '@container study-hero (min-width: 960px)': {
@@ -64,11 +64,11 @@ export function StatCardRow({ children, sx }: { children: ReactNode; sx?: SxProp
               display: 'grid',
               gridTemplateColumns: 'minmax(0, 1fr) auto',
               px: 0,
-              py: 1.25,
+              py: 1.5,
               width: '100%',
             },
             '& .stat-head': { gridColumn: 1, gridRow: 1 },
-            '& .stat-support': { gridColumn: 1, gridRow: 2, minHeight: 0, mt: 0.25, pl: '36px' },
+            '& .stat-support': { gridColumn: 1, gridRow: 2, minHeight: 0, mt: 0.5, pl: '36px' },
             '& .stat-value': { gridColumn: 2, gridRow: '1 / span 2', justifySelf: 'end', minHeight: 0, mt: 0 },
             // Values without a % suffix reserve its width so all numbers right-align on their digits.
             '& .stat-value:not(:has(.stat-suffix))::after': {

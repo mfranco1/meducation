@@ -157,7 +157,7 @@ export function ContinueStudyCard({
           {progress && (
             <Box
               component="span"
-              sx={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '4px 10px', mt: '10px' }}
+              sx={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '4px 8px', mt: '8px' }}
             >
               <ProgressTrack percent={progress.percent} sx={{ flexShrink: 0, width: 120 }} />
               <Typography id={progressId} variant="caption" component="span" sx={{ color: 'text.secondary' }}>

@@ -3,7 +3,7 @@ import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import { useEffect, useRef, type Ref } from 'react';
 import { alpha } from '@mui/material/styles';
-import { radius } from '../../theme';
+import { fontWeight, radius } from '../../theme';
 import { easing, reducedMotion } from '../motion';
 
 export type SubjectFilter = 'all' | 'inProgress';
@@ -52,8 +52,8 @@ export function SubjectFilterPill({
           borderRadius: radius.pill,
           height: 26,
           padding: '0 12px',
-          fontSize: (theme) => theme.typography.caption.fontSize,
-          lineHeight: 1.2,
+          typography: 'caption',
+          fontWeight: fontWeight.semibold,
           color: 'text.secondary',
           transition: `color 180ms ${easing.standard}`,
           '&:not(:first-of-type)': { borderLeft: 0, ml: 0 },
