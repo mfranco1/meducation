@@ -74,18 +74,14 @@ export const icons: Readonly<Record<string, ReactNode>> = {
   ),
   antibody: (
     <>
-      <g transform="translate(.4 1)scale(.989)">
-        <g fill="currentColor" fillOpacity=".2" stroke="none">
-          <path d="m2.5 12 12-6v12Z" />
-        </g>
-        <g>
-          <g>
-            <path d="M2.5 12H9l5.5-5.5M9 12l5.5 5.5" />
-          </g>
-        </g>
-        <g fill="currentColor" fillOpacity=".8" stroke="none">
-          <path d="m18.8 8.2 3.8 3.8-3.8 3.8L15 12z" />
-        </g>
+      <g>
+        <path
+          fill="currentColor"
+          fillOpacity=".16"
+          stroke="none"
+          d="m4.8 5 3.14 4.18-2.08 1.56-3.14-4.18zm14.4 0-3.14 4.18 2.08 1.56 3.14-4.18z"
+        />
+        <path d="M10.5 21.5v-8.9L4.8 5m8.7 16.5v-8.9L19.2 5M2.72 6.56l3.14 4.18m15.42-4.18-3.14 4.18M10.5 16.5h3" />
       </g>
     </>
   ),
@@ -103,27 +99,10 @@ export const icons: Readonly<Record<string, ReactNode>> = {
   ),
   autoimmune: (
     <>
-      <g transform="translate(2.9 3.3)scale(.815)">
-        <g fill="currentColor" fillOpacity=".2" stroke="none">
-          <circle cx="12" cy="13" r="4.3" />
-        </g>
-        <g>
-          <g>
-            <circle cx="12" cy="13" r="4.3" />
-            <g>
-              <path d="M12 1.5V5m0 0L8.8 6.7M12 5l3.2 1.7" />
-            </g>
-            <g transform="rotate(120 12 13)">
-              <path d="M12 1.5V5m0 0L8.8 6.7M12 5l3.2 1.7" />
-            </g>
-            <g transform="rotate(240 12 13)">
-              <path d="M12 1.5V5m0 0L8.8 6.7M12 5l3.2 1.7" />
-            </g>
-          </g>
-        </g>
-        <g fill="currentColor" fillOpacity=".8" stroke="none">
-          <circle cx="12" cy="13" r="1.5" />
-        </g>
+      <g>
+        <circle cx="12" cy="12.5" r="2.9" fill="currentColor" fillOpacity=".16" stroke="none" />
+        <circle cx="12" cy="12.5" r="2.9" />
+        <path d="M12 2.2v2.7l-2.65 3m2.65-3 2.65 3M20.92 17.65l-2.338-1.35-1.273-3.795m1.273 3.795-3.923.795M3.08 17.65l2.338-1.35 3.923.795M5.418 16.3l1.273-3.795" />
       </g>
     </>
   ),
@@ -593,18 +572,15 @@ export const icons: Readonly<Record<string, ReactNode>> = {
   ),
   esophagus: (
     <>
-      <g transform="translate(.6 .3)scale(1.042)">
-        <g fill="currentColor" fillOpacity=".2" stroke="none">
-          <path d="M8 2.5h5c0 4 2.5 5 2.5 9.5S13 17.5 13 21.5H8c0-4 2.5-5 2.5-9.5S8 6.5 8 2.5" />
-        </g>
-        <g>
-          <g>
-            <path d="M8 2.5h5c0 4 2.5 5 2.5 9.5S13 17.5 13 21.5H8c0-4 2.5-5 2.5-9.5S8 6.5 8 2.5" />
-          </g>
-        </g>
-        <g fill="currentColor" fillOpacity=".8" stroke="none">
-          <ellipse cx="11.5" cy="12" rx="1.8" ry="2.5" />
-        </g>
+      <g>
+        <path
+          fill="currentColor"
+          fillOpacity=".16"
+          stroke="none"
+          d="M10.5 2.5v10c0 4-2.5 5.2-6 5.2v3.8H12c4.5 0 8-2.5 8-6.7 0-4.8-5.5-5-6.5-2.3v-10z"
+        />
+        <path d="M10.5 2.5v10c0 4-2.5 5.2-6 5.2m9-15.2v10c1-2.7 6.5-2.5 6.5 2.3 0 4.2-3.5 6.7-8 6.7H4.5" />
+        <ellipse cx="12" cy="6.5" fill="currentColor" stroke="none" rx="2.2" ry="2.7" />
       </g>
     </>
   ),
@@ -789,20 +765,12 @@ export const icons: Readonly<Record<string, ReactNode>> = {
   ),
   fungus: (
     <>
-      <g transform="translate(.4 1.1)scale(1.016)">
-        <g fill="currentColor" fillOpacity=".2" stroke="none">
-          <circle cx="10" cy="13.5" r="7" />
-          <circle cx="18" cy="6" r="3.5" />
-        </g>
-        <g>
-          <g>
-            <circle cx="10" cy="13.5" r="7" />
-            <circle cx="18" cy="6" r="3.5" />
-          </g>
-        </g>
-        <g fill="currentColor" stroke="none">
-          <circle cx="10" cy="13.5" r="2.2" />
-        </g>
+      <g>
+        <path fill="currentColor" fillOpacity=".16" stroke="none" d="M3.5 12c0-5 3.8-8.5 8.5-8.5S20.5 7 20.5 12z" />
+        <path d="M3.5 12c0-5 3.8-8.5 8.5-8.5S20.5 7 20.5 12zm6 0v6.5a2.5 2.5 0 0 0 5 0V12" />
+        <circle cx="8.3" cy="8.3" r="1.1" fill="currentColor" stroke="none" />
+        <circle cx="13.2" cy="6.6" r="1.1" fill="currentColor" stroke="none" />
+        <circle cx="16.3" cy="9.3" r=".9" fill="currentColor" stroke="none" />
       </g>
     </>
   ),
@@ -1186,22 +1154,18 @@ export const icons: Readonly<Record<string, ReactNode>> = {
   ),
   'lymph-node': (
     <>
-      <g transform="translate(2.6 2.3)scale(.854)">
-        <g>
-          <g>
-            <path d="m1.5 21 21-18" />
-          </g>
-        </g>
-        <g fill="currentColor" fillOpacity=".2" stroke="none">
-          <ellipse cx="5.5" cy="17.5" rx="3.8" ry="3" />
-          <ellipse cx="12" cy="12" rx="4.2" ry="3.4" />
-          <ellipse cx="18.5" cy="6.5" rx="3.4" ry="2.8" />
-        </g>
-        <g fill="currentColor" fillOpacity=".8" stroke="none">
-          <ellipse cx="5.5" cy="17.5" rx="3.8" ry="3" transform="rotate(-40 5.5 17.5)" />
-          <ellipse cx="12" cy="12" rx="4.2" ry="3.4" transform="rotate(-40 12 12)" />
-          <ellipse cx="18.5" cy="6.5" rx="3.4" ry="2.8" transform="rotate(-40 18.5 6.5)" />
-        </g>
+      <g>
+        <path
+          fill="currentColor"
+          fillOpacity=".16"
+          stroke="none"
+          d="M14.5 3.8C8.5 2.7 4 7 4 12s4.5 9.3 10.5 8.2c3.3-.6 4.3-3.4 2.6-5.6-1.1-1.4-1.1-3.8 0-5.2 1.7-2.2.7-5-2.6-5.6"
+        />
+        <path d="M14.5 3.8C8.5 2.7 4 7 4 12s4.5 9.3 10.5 8.2c3.3-.6 4.3-3.4 2.6-5.6-1.1-1.4-1.1-3.8 0-5.2 1.7-2.2.7-5-2.6-5.6M4 12H1.8M6 6 4.3 4.3M6 18l-1.7 1.7m12-7.7h5.9" />
+        <circle cx="8.3" cy="9.2" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="8.3" cy="14.8" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="12.4" cy="7" r="1.2" fill="currentColor" stroke="none" />
+        <circle cx="12.4" cy="17" r="1.2" fill="currentColor" stroke="none" />
       </g>
     </>
   ),
@@ -1320,23 +1284,12 @@ export const icons: Readonly<Record<string, ReactNode>> = {
   ),
   'mother-child': (
     <>
-      <g transform="translate(1.1 .8)scale(.942)">
-        <g fill="currentColor" fillOpacity=".2" stroke="none">
-          <path d="M2.5 21v-2.5a6.5 6.5 0 0 1 13 0V21z" />
-        </g>
-        <g>
-          <g>
-            <circle cx="9" cy="5.5" r="2.8" />
-            <path d="M2.5 21v-2.5a6.5 6.5 0 0 1 13 0V21z" />
-            <circle cx="19.5" cy="10.5" r="2.2" />
-          </g>
-        </g>
-        <g fill="currentColor" fillOpacity=".2" stroke="none">
-          <circle cx="19.5" cy="10.5" r="2.2" />
-        </g>
-        <g fill="currentColor" fillOpacity=".8" stroke="none">
-          <ellipse cx="16" cy="17" rx="5.5" ry="3.2" transform="rotate(-35 16 17)" />
-        </g>
+      <g>
+        <circle cx="9" cy="5.8" r="3" />
+        <path d="M3 21v-2.8a6 6 0 0 1 9.8-4.6" />
+        <circle cx="16.3" cy="12.8" r="2.1" fill="currentColor" stroke="none" />
+        <path fill="currentColor" fillOpacity=".16" stroke="none" d="M11.5 21c0-3 2-4.8 4.8-4.8S21 18 21 21z" />
+        <path d="M11.5 21c0-3 2-4.8 4.8-4.8S21 18 21 21zM3 21h8.5" />
       </g>
     </>
   ),
@@ -1380,20 +1333,16 @@ export const icons: Readonly<Record<string, ReactNode>> = {
   ),
   newborn: (
     <>
-      <g transform="translate(.4 -.4)scale(1.015)">
-        <g fill="currentColor" fillOpacity=".2" stroke="none">
-          <rect width="14" height="9" x="8" y="8.5" rx="4.5" />
-        </g>
-        <g>
-          <g>
-            <rect width="14" height="9" x="8" y="8.5" rx="4.5" />
-            <circle cx="6" cy="13" r="3.5" />
-          </g>
-        </g>
-        <g>
-          <g>
-            <path d="m13 9-1.5 8M18 9l-1.5 8" />
-          </g>
+      <g>
+        <g transform="rotate(-25 12 12)">
+          <path
+            fill="currentColor"
+            fillOpacity=".16"
+            stroke="none"
+            d="M6.8 12.5c0-1.8 1.7-2.5 5.2-2.5s5.2.7 5.2 2.5c0 4.5-2.3 7.8-5.2 9.7-2.9-1.9-5.2-5.2-5.2-9.7"
+          />
+          <circle cx="12" cy="5.8" r="3.5" />
+          <path d="M6.8 12.5c0-1.8 1.7-2.5 5.2-2.5s5.2.7 5.2 2.5c0 4.5-2.3 7.8-5.2 9.7-2.9-1.9-5.2-5.2-5.2-9.7M7.1 14l7.3 6.2m2.6-6.4-5.3 4.4" />
         </g>
       </g>
     </>
