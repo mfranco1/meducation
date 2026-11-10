@@ -1,0 +1,5 @@
+// Downward noise sweep for the tail of an impact or a fast cut. Original patch for sfizz built-in oscillators.
+<global>
+ampeg_attack=0.005 ampeg_decay=1.6 ampeg_sustain=0 ampeg_release=0.2 amp_veltrack=60 volume=-10
+fil_type=lpf_2p cutoff=200 resonance=2 fileg_attack=0 fileg_decay=1.3 fileg_sustain=0 fileg_depth=6600
+<region> sample=*noise

@@ -1,0 +1,8 @@
+// Bright detuned saw stab for hits. Original patch for sfizz built-in oscillators.
+<global>
+ampeg_attack=0.002 ampeg_decay=0.7 ampeg_sustain=0 ampeg_release=0.25
+amp_veltrack=70 volume=-12
+fil_type=lpf_2p cutoff=600 resonance=3 fil_veltrack=1800
+fileg_attack=0 fileg_decay=0.35 fileg_sustain=0 fileg_depth=5400
+<region> sample=*saw oscillator_multi=7 oscillator_detune=22 pan=-25
+<region> sample=*saw oscillator_multi=7 oscillator_detune=18 pan=25 transpose=12 volume=-6
