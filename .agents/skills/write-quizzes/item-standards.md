@@ -11,7 +11,10 @@ Write as a senior attending physician and medical educator. The output is parsed
   3. Confirm the exact numbers and wording there.
   4. Publisher, society and NCBI Bookshelf pages often refuse automated fetches; drug labels on DailyMed and PubMed Central copies usually load. If the primary text can't be reached, don't write numbers you couldn't confirm. Test the concept without them, or list the fact in your `unverified-<n>.json`.
   5. For a law, regulation or circular, verify every article or section number, penalty, period and amount you write, however old the law, and confirm the provision is still in force: not repealed, amended, or a temporary or transition rule that has lapsed. Review handouts often keep superseded rules. Never cite a provision number from memory; leave it out if you can't confirm it. 
-- Put the reference in `rationaleMeta.sources` as plain text with the document's real title and year, e.g. `AAP Clinical Practice Guideline: Management of Hyperbilirubinemia in the Newborn Infant 35 or More Weeks of Gestation (2022)`. Don't name individual authors unless needed to identify a trial. Leave `sources` empty for stable textbook facts.
+- Put the reference in `rationaleMeta.sources` as an AMA-style citation (AMA Manual of Style, 11th edition): authors (up to 6, then "et al") or the issuing organization, title, journal abbreviation in italics, year;volume(issue):pages, and DOI when one exists. Italicize journal and book titles with `*...*`. Separate several references with semicolons. Never add access or retrieval dates. Examples:
+  - `Kemper AR, Newman TB, Slaughter JL, et al. Clinical practice guideline revision: management of hyperbilirubinemia in the newborn infant 35 or more weeks of gestation. *Pediatrics*. 2022;150(3):e2022058859. doi:10.1542/peds.2022-058859`
+  - `World Health Organization. *WHO Recommendations on Antenatal Care for a Positive Pregnancy Experience*. World Health Organization; 2016.`
+  Write only details you confirmed in the document or its publisher record (Crossref or PubMed). Never guess an author, volume, page or DOI: leave out what you couldn't confirm. Leave `sources` empty for stable textbook facts.
 - Read the source ledger (`var/quiz-work/sources.json`, shared by all subjects) before searching. It records which documents were verified, read only as a summary, or blocked, and the facts already confirmed, so use the same facts and don't retry known-blocked pages. Record every guideline check you make in your `sources-<n>.json`: `[{ "title": "", "year": "", "url": "", "status": "verified | summary-only | blocked | unconfirmed", "facts": ["one short confirmed fact"] }]`.
 - List each guideline-dependent fact you couldn't confirm in a primary text in your `unverified-<n>.json`: `[{ "item": 12, "fact": "IPNA 2022 steroid-resistance definition, abstract only" }]`, with `item` the item's number in your quiz. Don't list stable textbook facts.
 - Where practice varies by region or guideline body, test what is consistent across them or name the guideline in the stem.
@@ -19,7 +22,7 @@ Write as a senior attending physician and medical educator. The output is parsed
 
 ## Originality
 
-Write every stem, choice, rationale and pearl in your own words. Never copy sentences from sources. Never mention source documents, their authors, schools or review centers anywhere in the output. Use only mnemonics that are widely known in medicine.
+Write every stem, choice, rationale and pearl in your own words. Never copy sentences from sources. Never mention  source documents, reviewers, handouts, lecture notes, their authors, schools, review centers, or their comments anywhere in the output. `rationaleMeta.sources` cites only published primary references. Use only mnemonics that are widely known in medicine.
 
 ## Item format (single best answer)
 
@@ -80,5 +83,5 @@ Pearls: 1 to 3 short, standalone exam or clinical facts that extend the item, no
 
 - English, active voice, standard medical terminology, generic drug names, SI units with conventional units in parentheses where both are common.
 - The file must be valid JSON. Escape backslashes in LaTeX (`\\frac`, `\\alpha`), write line breaks as `\n`, and use `\$` for a literal dollar sign that could be read as math.
-- Only `stem` and `rationale` take Markdown and the `<sub>`/`<sup>` subset. `choices`, `pearls` and `rationaleMeta.sources` are plain text: write 10⁹/L, m² and CO₂ with Unicode characters there.
+- Only `stem` and `rationale` take Markdown and the `<sub>`/`<sup>` subset. `choices`, `pearls` and `rationaleMeta.sources` take no HTML; `rationaleMeta.sources` may use `*italics*` for titles. Write 10⁹/L, m² and CO₂ with Unicode characters there.
 - Images are not supported yet. Describe findings in words.
