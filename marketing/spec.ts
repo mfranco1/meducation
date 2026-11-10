@@ -14,7 +14,7 @@ const action = z.discriminatedUnion('type', [
     text: z.string(),
     delay: z.number().int().min(0).max(500).default(70),
   }),
-  z.object({ type: z.literal('press'), key: z.string().min(1) }),
+  z.strictObject({ type: z.literal('press'), key: z.string().min(1) }),
   z.object({ type: z.literal('wait'), ms: z.number().int().min(0).max(30000) }),
   z.object({ type: z.literal('scroll'), text: z.string().min(1) }),
   z.object({
@@ -23,6 +23,24 @@ const action = z.discriminatedUnion('type', [
     ms: z.number().int().min(0).max(10000).default(600),
   }),
 ]);
+const pressKeys = z.strictObject({
+  type: z.literal('press'),
+  keys: z.array(z.string().min(1)).min(1).max(1000),
+  delay: z.number().int().min(0).max(5000).default(0),
+});
+/** `press` with `keys` expands to one press per key, each followed by a `wait` of `delay` ms when it is above 0. */
+const actions = z
+  .array(z.union([action, pressKeys]))
+  .transform((list) =>
+    list.flatMap((step) =>
+      'keys' in step
+        ? step.keys.flatMap((key) => [
+            { type: 'press' as const, key },
+            ...(step.delay > 0 ? [{ type: 'wait' as const, ms: step.delay }] : []),
+          ])
+        : [step],
+    ),
+  );
 export const recipeSchema = z.object({
   viewport: z.object({ width: z.number().int().min(320), height: z.number().int().min(320) }),
   deviceScaleFactor: z.number().min(1).max(3),
@@ -32,8 +50,8 @@ export const recipeSchema = z.object({
     .array(
       z.object({
         id: z.string().regex(/^[a-z0-9-]+$/),
-        setup: z.array(action),
-        record: z.array(action).min(1),
+        setup: actions,
+        record: actions.refine((list) => list.length > 0, 'A shot needs at least one record action'),
       }),
     )
     .min(1),
@@ -122,6 +140,7 @@ const soundtrackSchema = z.object({
     .default([]),
 });
 export type Soundtrack = z.infer<typeof soundtrackSchema>;
+export type SoundtrackInput = z.input<typeof soundtrackSchema>;
 function checkSoundtrack(soundtrack: Soundtrack, frames: number, ctx: z.RefinementCtx) {
   const issue = (message: string) => ctx.addIssue({ code: 'custom', path: ['soundtrack'], message });
   if (!soundtrack.score && soundtrack.clips.length === 0 && soundtrack.voiceover.length === 0)

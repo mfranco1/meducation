@@ -5,8 +5,8 @@ import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { cacheKey } from '../capture';
-import { validateAssets } from '../cli';
-import { assetsSchema, specSchema } from '../spec';
+import { loadSpec, validateAssets } from '../cli';
+import { assetsSchema, recipeSchema, specSchema } from '../spec';
 import ToneMidi from '@tonejs/midi';
 import { gitBlobSha, matchesHuggingfaceFile, scoreMidi } from '../audio';
 import { ffmpeg } from '../media';
@@ -146,6 +146,53 @@ test('assets referenced by ad code must exist and decode before rendering', asyn
       join(directory, 'encode.log'),
     );
     await validateAssets(spec, ad, directory);
+  } finally {
+    await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test('press with keys expands into flat press and wait actions', () => {
+  const parse = (record: unknown[]) =>
+    recipeSchema.safeParse({
+      viewport: { width: 400, height: 800 },
+      deviceScaleFactor: 1,
+      sources: ['/api/v1/subjects'],
+      shots: [{ id: 'a', setup: [], record }],
+    });
+  const record = (step: object) => {
+    const parsed = parse([step]);
+    return parsed.success && parsed.data.shots[0].record;
+  };
+  assert.deepEqual(record({ type: 'press', keys: ['3', 'ArrowRight'], delay: 150 }), [
+    { type: 'press', key: '3' },
+    { type: 'wait', ms: 150 },
+    { type: 'press', key: 'ArrowRight' },
+    { type: 'wait', ms: 150 },
+  ]);
+  assert.deepEqual(record({ type: 'press', keys: ['a', 'b'] }), [
+    { type: 'press', key: 'a' },
+    { type: 'press', key: 'b' },
+  ]);
+  for (const step of [
+    { type: 'press', key: 'a', keys: ['b'] },
+    { type: 'press', key: 'a', delay: 10 },
+    { type: 'press' },
+    { type: 'press', keys: [] },
+    { type: 'press', keys: ['a'], delay: 5001 },
+  ])
+    assert.equal(parse([step]).success, false);
+});
+
+test('a soundtrack named in ad.json is read from a module in the ad directory', async () => {
+  const directory = await mkdtemp(join(tmpdir(), 'meducation-marketing-'));
+  try {
+    const write = (soundtrack: unknown) =>
+      writeFile(join(directory, 'ad.json'), JSON.stringify({ ...production, soundtrack }));
+    await writeFile(join(directory, 'soundtrack.ts'), `export default ${JSON.stringify({ score })};`);
+    await write('soundtrack.ts');
+    assert.equal((await loadSpec(join(directory, 'ad.json'))).soundtrack?.score?.bpm, 120);
+    await write('../soundtrack.ts');
+    await assert.rejects(loadSpec(join(directory, 'ad.json')), /TypeScript file name/);
   } finally {
     await rm(directory, { recursive: true, force: true });
   }

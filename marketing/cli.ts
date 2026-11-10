@@ -5,7 +5,7 @@ import { appendFileSync } from 'node:fs';
 import { access, mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { parseArgs } from 'node:util';
 import { capture } from './capture';
 import { fetchAssets, generateAudio, setupAudio, validateAudio } from './audio';
@@ -96,6 +96,17 @@ async function validateVideo(spec: AdSpec, format: Format, path: string) {
   );
 }
 
+/** Reads ad.json. A string `soundtrack` names a TypeScript module in the ad directory whose default export is the soundtrack. */
+export async function loadSpec(specPath: string) {
+  const raw = JSON.parse(await readFile(specPath, 'utf8'));
+  if (typeof raw.soundtrack === 'string') {
+    if (!/^[\w.-]+\.ts$/.test(raw.soundtrack))
+      throw new Error('soundtrack must be a TypeScript file name in the ad directory, for example soundtrack.ts');
+    raw.soundtrack = (await import(pathToFileURL(join(dirname(specPath), raw.soundtrack)).href)).default;
+  }
+  return specSchema.parse(raw);
+}
+
 async function bundleAd(adDir: string) {
   await mkdir(dirname(log('browser')), { recursive: true });
   await writeFile(log('browser'), '');
@@ -110,7 +121,14 @@ async function bundleAd(adDir: string) {
  * painted and repeated. Playwright exposes the shell's path only through a launched server.
  */
 async function headlessShell() {
-  const server = await chromium.launchServer();
+  const server = await chromium.launchServer().catch((cause) => {
+    throw new Error(
+      'Chromium for this Playwright version is not installed. Run: cd marketing && npx playwright install chromium',
+      {
+        cause,
+      },
+    );
+  });
   try {
     return server.process().spawnfile;
   } finally {
@@ -164,7 +182,7 @@ async function render(
     scale: preview ? 0.5 : 1,
     frameRange: range,
     concurrency: 2,
-    imageFormat: 'png',
+    imageFormat: preview ? 'jpeg' : 'png',
     colorSpace: 'bt709',
     x264Preset: preview ? 'fast' : 'slow',
   });
@@ -182,7 +200,7 @@ async function main() {
     if (values.id) await fetchAssets(root, { id: values.id });
     else if (values.spec)
       await fetchAssets(root, {
-        spec: specSchema.parse(JSON.parse(await readFile(resolve(root, values.spec), 'utf8'))),
+        spec: await loadSpec(resolve(root, values.spec)),
       });
     else throw new Error('Use --id <asset-id> or --spec ads/<id>/ad.json.');
     return;
@@ -203,7 +221,7 @@ async function main() {
   if (!values.spec) throw new Error('Choose a production with --spec ads/<id>/ad.json. See marketing/README.md.');
   const specPath = resolve(root, values.spec);
   const adDir = dirname(specPath);
-  const spec = specSchema.parse(JSON.parse(await readFile(specPath, 'utf8')));
+  const spec = await loadSpec(specPath);
   await access(join(adDir, 'Ad.tsx')).catch(() => {
     throw new Error(`Missing ${join(adDir, 'Ad.tsx')}. Each production needs ad.json and Ad.tsx.`);
   });
@@ -237,9 +255,10 @@ async function main() {
       await validateVideo(spec, format, values.video ? resolve(root, values.video) : join(output(format), 'final.mp4'));
     return;
   }
+  const chosen = command === 'contact-sheet' && values.frames ? chosenFrames(values.frames, spec) : sheetFrames(spec);
   if (command === 'contact-sheet' && values.video) {
     if (selected.length !== 1) throw new Error('Choose the video format with --format.');
-    await sheet(spec, selected[0], output(selected[0]), resolve(root, values.video));
+    await sheet(selected[0], output(selected[0]), resolve(root, values.video), chosen);
     return;
   }
   let serveUrl: string | undefined;
@@ -263,22 +282,22 @@ async function main() {
     );
     return;
   }
-  if (values.frames) throw new Error('--frames START-END is supported for previews only');
+  if (values.frames && command !== 'contact-sheet')
+    throw new Error('--frames is supported for previews (START-END) and contact sheets (12,48,96) only');
   if (command === 'contact-sheet') {
     const format = selected[0];
-    const frames = sheetFrames(spec);
     const frameDir = join(output(format), 'frames');
     await rm(frameDir, { recursive: true, force: true });
     await mkdir(frameDir, { recursive: true });
     const options = await renderer(await serve(), format);
-    for (const [index, frame] of frames.entries())
+    for (const [index, frame] of chosen.entries())
       await renderStill({
         ...options,
         frame,
         output: join(frameDir, `${String(index).padStart(3, '0')}.png`),
         imageFormat: 'png',
       });
-    await tile(format, frameDir, frames, output(format));
+    await tile(format, frameDir, chosen, output(format));
     return;
   }
   for (const format of selected) {
@@ -293,7 +312,7 @@ async function main() {
       await render(spec, await serve(), format, final, false);
       await writeFile(keyFile, key);
     }
-    if (command === 'produce') await sheet(spec, format, output(format), final);
+    if (command === 'produce') await sheet(format, output(format), final, sheetFrames(spec));
   }
 }
 
@@ -304,8 +323,16 @@ export function sheetFrames(spec: AdSpec) {
   frames.add(spec.frames - 1);
   return [...frames].filter((frame) => frame < spec.frames).sort((a, b) => a - b);
 }
-async function sheet(spec: AdSpec, format: Format, output: string, video: string) {
-  const frames = sheetFrames(spec);
+/** `--frames 12,48,96`: whole frame numbers inside the ad, shown in the order given. */
+function chosenFrames(value: string, spec: AdSpec) {
+  const frames = value.split(',').map((frame) => (/^\d+$/.test(frame) ? Number(frame) : NaN));
+  if (frames.some((frame) => !(frame < spec.frames)))
+    throw new Error(
+      `Use --frames with comma-separated frame numbers from 0 to ${spec.frames - 1}, for example 12,48,96`,
+    );
+  return frames;
+}
+async function sheet(format: Format, output: string, video: string, frames: number[]) {
   const directory = join(output, 'frames');
   await rm(directory, { recursive: true, force: true });
   await mkdir(directory, { recursive: true });

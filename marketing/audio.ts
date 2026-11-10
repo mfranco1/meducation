@@ -593,5 +593,18 @@ export async function generateAudio(root: string, spec: AdSpec, force: boolean) 
   await copyFile(partial, `${master}.partial`);
   await rename(`${master}.partial`, master);
   await writeFile(join(destination, 'cache-key'), `${cacheKey}\n${await hashFile(master)}`);
-  console.log(`Audio generated: ${master} (stems in ${working})`);
+  const picture = join(working, 'mix.png');
+  await ffmpeg(
+    [
+      '-i',
+      master,
+      '-filter_complex',
+      '[0:a]asplit[a][b];[a]showspectrumpic=s=1600x480:legend=0[s];[b]showwavespic=s=1600x160:split_channels=0[w];[s][w]vstack',
+      '-frames:v',
+      '1',
+      picture,
+    ],
+    logPath(root, 'picture'),
+  );
+  console.log(`Audio generated: ${master} (stems in ${working}, picture ${picture})`);
 }

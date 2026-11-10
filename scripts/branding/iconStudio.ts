@@ -187,3 +187,35 @@ export function rankCandidates(query: string, candidates: SearchCandidate[]) {
     .filter((candidate) => candidate.score > 0)
     .sort((a, b) => b.score - a.score || a.tier - b.tier || a.id.localeCompare(b.id));
 }
+
+/**
+ * Sets `key` in the TopicIcon `icons` map to a JSX fragment, replacing the entry (and the source comment above it)
+ * or adding one in alphabetical order. A `comment` becomes a `//` line above the entry. Run prettier afterwards.
+ */
+export function setGlyph(source: string, key: string, jsx: string, comment?: string): string {
+  const lines = source.split('\n');
+  const open = lines.findIndex((line) => /^export const icons\b.*= \{$/.test(line));
+  const close = open < 0 ? -1 : lines.indexOf('};', open);
+  if (close < 0) throw new Error('Cannot find the `icons` map in TopicIcon.tsx.');
+  const entries: { key: string; from: number; to: number }[] = [];
+  for (let i = open + 1; i < close; i++) {
+    const found = /^ {2}(?:'([^']+)'|([\w-]+)): \($/.exec(lines[i]);
+    if (!found) continue;
+    let from = i;
+    while (lines[from - 1]?.startsWith('  //')) from--;
+    const to = lines.indexOf('  ),', i);
+    entries.push({ key: found[1] ?? found[2], from, to });
+    i = to;
+  }
+  const name = /^[A-Za-z_$][\w$]*$/.test(key) ? key : `'${key}'`;
+  const entry = [
+    ...(comment ? [`  // ${comment}`] : []),
+    `  ${name}: (`,
+    ...jsx.split('\n').map((line) => `    ${line}`),
+    '  ),',
+  ];
+  const old = entries.find((item) => item.key === key);
+  if (old) lines.splice(old.from, old.to - old.from + 1, ...entry);
+  else lines.splice(entries.find((item) => item.key > key)?.from ?? close, 0, ...entry);
+  return lines.join('\n');
+}

@@ -1,21 +1,23 @@
 import { createElement, type ReactNode } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { SvgIcon } from '@mui/material';
-import { readFile, writeFile, mkdir, readdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, readdir, rm } from 'node:fs/promises';
 import { resolve, dirname, basename } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
+import { format, resolveConfig } from 'prettier';
 import { SaxesParser } from 'saxes';
 import sharp from 'sharp';
 import { iconsBySubjectId, strokeWrapper, SubjectIcon } from '../../src/shared/ui/catalog/icons/SubjectIcon';
 import { icons as topicIcons } from '../../src/shared/ui/catalog/icons/TopicIcon';
 import { brand } from '../../src/shared/brand';
 import { theme } from '../../src/shared/theme';
-import { normalizeSvg, rankCandidates, type SearchCandidate } from './iconStudio';
+import { normalizeSvg, rankCandidates, setGlyph, type SearchCandidate } from './iconStudio';
 
 const project = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const cache = resolve(project, '.cache/icons');
 const workspace = resolve(cache, 'workspace');
+const topicFile = resolve(project, 'src/shared/ui/catalog/icons/TopicIcon.tsx');
 const escape = (text: string) =>
   text.replace(/[&<>"']/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[char]!);
 const productionSvg = (markup: string) => {
@@ -135,8 +137,11 @@ const modes = [
   { background: '#201b18', text: '#fff6ef', accent: brand.palette.dark.left, badge: '#392a23' },
 ];
 
-/** One row per candidate, then the production family, at 24px and in an 88px badge, in light and dark. */
-async function sheet(candidates: { name: string; svg: string }[], output: string) {
+/**
+ * One row per candidate, then the current production glyph it replaces (a reserved, labeled column, blank if none),
+ * then the production family. Each is a 24px glyph and a 64px glyph in an 88px badge, in light and dark.
+ */
+async function sheet(candidates: { name: string; svg: string; current?: string }[], output: string) {
   const cellWidth = 136;
   const rowHeight = 104;
   const label = 240;
@@ -150,18 +155,21 @@ async function sheet(candidates: { name: string; svg: string }[], output: string
     for (const [row, candidate] of candidates.entries()) {
       const y = top + row * rowHeight + 8;
       body += `<text x="8" y="${y + 48}" font-family="sans-serif" font-size="13" fill="${mode.text}">${escape(candidate.name)}</text>`;
-      for (const [column, svg] of [candidate.svg, ...family].entries()) {
+      for (const [column, svg] of [candidate.svg, candidate.current, ...family].entries()) {
+        if (!svg) continue;
         const art = renderToStaticMarkup(artwork(svg));
         const x = label + column * cellWidth;
         const glyph = (px: number, gx: number, gy: number) =>
           `<svg x="${gx}" y="${gy}" width="${px}" height="${px}" viewBox="0 0 24 24">${art}</svg>`;
         body += glyph(24, x, y + 32);
+        if (column === 1)
+          body += `<text x="${x + 36}" y="${y + 100}" font-family="sans-serif" font-size="10" fill="${mode.text}">current</text>`;
         body += `<rect x="${x + 36}" y="${y}" width="88" height="88" rx="14" fill="${mode.badge}"/>${glyph(64, x + 48, y + 12)}`;
       }
     }
     body += '</g>';
   }
-  const width = label + (family.length + 1) * cellWidth;
+  const width = label + (family.length + 2) * cellWidth;
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${blockHeight * modes.length}">${body}</svg>`;
   await mkdir(dirname(output), { recursive: true });
   await sharp(Buffer.from(svg), { density: 144 }).png().toFile(output);
@@ -220,9 +228,10 @@ async function candidate(nameOrFile: string): Promise<{ name: string; svg: strin
 }
 
 const usage =
-  'Usage: npm run icons -- search "concept" [--json] [--catalogs directory]\n' +
+  'Usage: npm run icons -- search "concept" ["concept" ...] [--json] [--catalogs directory]\n' +
   '       npm run icons -- get search-id [name]\n' +
   '       npm run icons -- sheet [--output sheet.png]\n' +
+  '       npm run icons -- integrate key=candidate [key=candidate ...] [--source "credit"]\n' +
   '       npm run icons -- jsx name-or-file.svg';
 
 async function main() {
@@ -231,18 +240,44 @@ async function main() {
       catalogs: { type: 'string', default: resolve(cache, 'catalogs') },
       output: { type: 'string', default: resolve(cache, 'sheet.png') },
       json: { type: 'boolean' },
+      source: { type: 'string' },
     },
     allowPositionals: true,
   });
   const [command, argument, extra] = positionals;
   if (command === 'sheet') {
     const names = (await readdir(workspace).catch(() => [])).filter((name) => name.endsWith('.svg')).sort();
-    const candidates = await Promise.all(names.map((name) => candidate(resolve(workspace, name))));
+    const production = productionCandidates();
+    const candidates = await Promise.all(
+      names.map(async (name) => {
+        const { name: base, svg } = await candidate(resolve(workspace, name));
+        const key = Object.keys(topicIcons)
+          .filter((key) => base === key || base.startsWith(`${key}-`))
+          .sort((a, b) => b.length - a.length)[0];
+        return { name: base, svg, current: production.find((item) => item.id === `meducation:topic:${key}`)?.svg };
+      }),
+    );
     await sheet(candidates, resolve(values.output));
     console.log(resolve(values.output));
     return;
   }
   if (!argument?.trim()) throw new Error(usage);
+  if (command === 'integrate') {
+    if (values.source && positionals.length > 2) throw new Error('--source applies to a single key=candidate pair.');
+    const pairs = positionals.slice(1).map((pair) => pair.split('='));
+    if (pairs.some((pair) => pair.length !== 2 || !pair[0] || !pair[1])) throw new Error(usage);
+    let source = await readFile(topicFile, 'utf8');
+    const integrated: string[] = [];
+    for (const [key, name] of pairs) {
+      source = setGlyph(source, key, jsx((await candidate(name)).svg), values.source);
+      if (!name.endsWith('.svg')) integrated.push(resolve(workspace, `${name}.svg`));
+    }
+    const options = { ...(await resolveConfig(topicFile)), filepath: topicFile };
+    await writeFile(topicFile, await format(source, options));
+    await Promise.all(integrated.map((file) => rm(file)));
+    console.log(`Integrated ${pairs.map(([key]) => key).join(', ')}.`);
+    return;
+  }
   if (command === 'jsx') {
     console.log(jsx((await candidate(argument)).svg));
     return;
@@ -261,20 +296,28 @@ async function main() {
     return;
   }
   if (command !== 'search') throw new Error(usage);
-  const matches = rankCandidates(argument, all).slice(0, 20);
+  const results = positionals.slice(1).map((query) => ({ query, matches: rankCandidates(query, all).slice(0, 20) }));
   if (values.json) {
     console.log(
       JSON.stringify(
-        matches.map(({ id, name, matches, note, url }) => ({ id, name, matches, note, url })),
+        Object.fromEntries(
+          results.map(({ query, matches }) => [
+            query,
+            matches.map(({ id, name, matches, note, url }) => ({ id, name, matches, note, url })),
+          ]),
+        ),
         null,
         2,
       ),
     );
     return;
   }
-  for (const item of matches)
-    console.log(`\n${item.id} · ${item.matches.join(', ')}\n${item.note}${item.url ? '\n' + item.url : ''}`);
-  if (!matches.length) console.log('No local matches. Download a catalog into .cache/icons/catalogs.');
+  for (const { query, matches } of results) {
+    console.log(`\n== ${query} ==`);
+    for (const item of matches)
+      console.log(`\n${item.id} · ${item.matches.join(', ')}\n${item.note}${item.url ? '\n' + item.url : ''}`);
+    if (!matches.length) console.log('No local matches. Download a catalog into .cache/icons/catalogs.');
+  }
 }
 
 main().catch((error) => {

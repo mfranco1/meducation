@@ -13,7 +13,10 @@ import Ad from '@ad/Ad';
 import raw from '@ad/ad.json';
 import { FPS, formatId, formats, specSchema, type AdSpec } from '../spec';
 
-const spec = specSchema.parse(raw);
+// A soundtrack may be a module name that only the CLI resolves; the page needs just to know one exists.
+const { soundtrack, ...rest } = raw as Record<string, unknown>;
+const spec = specSchema.parse(rest);
+const hasSoundtrack = soundtrack !== undefined;
 
 function Production({ spec }: { spec: AdSpec }) {
   const [handle] = useState(() => delayRender('Load local Inter'));
@@ -31,7 +34,7 @@ function Production({ spec }: { spec: AdSpec }) {
   return (
     <AbsoluteFill style={{ fontFamily: 'Inter, sans-serif' }}>
       {ready && <Ad spec={spec} />}
-      {spec.soundtrack && <Audio src={staticFile(`audio/${spec.id}/mix.wav`)} />}
+      {hasSoundtrack && <Audio src={staticFile(`audio/${spec.id}/mix.wav`)} />}
     </AbsoluteFill>
   );
 }

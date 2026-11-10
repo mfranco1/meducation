@@ -40,7 +40,7 @@ ads/<id>/Ad.tsx      the composition (default export, receives { spec })
 recipes/<name>.json  capture recipe, optional
 ```
 
-`ad.json` fields (contract in `spec.ts`): `id`, `brief` (`audience`, `message`, `hook`, `concept`, `cta`), `frames` (integer frames at 30 fps), `formats` (any of `9:16`, `4:5`, `16:9`; default `9:16`), optional `recipe` and optional `soundtrack` (see [Music and sound](#music-and-sound)). `Ad.tsx` is ordinary Remotion code; see [remotion.md](remotion.md). Read `width`/`height` from `useVideoConfig()` so one composition serves every format.
+`ad.json` fields (contract in `spec.ts`): `id`, `brief` (`audience`, `message`, `hook`, `concept`, `cta`), `frames` (integer frames at 30 fps), `formats` (any of `9:16`, `4:5`, `16:9`; default `9:16`), optional `recipe` and optional `soundtrack` (see [Music and sound](#music-and-sound)). `soundtrack` is an object, or the name of a TypeScript file in the ad directory (`"soundtrack": "soundtrack.ts"`) whose default export is that object: `export default { ... } satisfies SoundtrackInput` (type from `../../spec`). A module can build notes with loops and helpers. `Ad.tsx` is ordinary Remotion code; see [remotion.md](remotion.md). Read `width`/`height` from `useVideoConfig()` so one composition serves every format.
 
 The kit in `src/kit/` is optional: `themes` and `safeZone()`, `Footage` (crop, keyframed camera, tap indicators), `Phone` (CSS device frame), `KineticText`, `Captions`, and the `progress`/`Reveal`/`Rule` motion helpers. Import it with `import { Footage } from '../../src/kit'`. Extend the kit when something proves reusable across ads.
 
@@ -54,7 +54,7 @@ Actions:
 
 - `click`, `hover`: `role` (any ARIA role), `name`, optional `exact`
 - `fill`: types `text` into the field labelled `label`, `delay` ms per character (default 70)
-- `press`: keyboard `key`
+- `press`: keyboard `key`, or `keys` (1 to 1000 key names) with optional `delay` ms (default 0) after each key, for long key sequences
 - `scroll`: brings exact `text` into view; `scrollBy`: scrolls the container under the viewport centre by `y` CSS pixels, evenly over `ms` (default 600)
 - `wait`: `ms`
 
@@ -71,6 +71,7 @@ npm --prefix marketing run capture -- --spec ads/my-ad/ad.json
 npm --prefix marketing run preview -- --spec ads/my-ad/ad.json --frames 0-89
 npm --prefix marketing run preview -- --spec ads/my-ad/ad.json --format 16:9
 npm --prefix marketing run contact-sheet -- --spec ads/my-ad/ad.json
+npm --prefix marketing run contact-sheet -- --spec ads/my-ad/ad.json --frames 12,48,96
 npm --prefix marketing run render -- --spec ads/my-ad/ad.json
 npm --prefix marketing run validate -- --spec ads/my-ad/ad.json
 npm --prefix marketing run produce -- --spec ads/my-ad/ad.json
@@ -81,7 +82,7 @@ Capture and produce accept `--base-url http://127.0.0.1:5175` and `--force`. `pr
 
 `preview` renders at half size with an optional inclusive frame range. `render` makes 30 fps H.264/yuv420p MP4s at full size: 1080×1920, 1080×1350 or 1920×1080. Validation checks asset availability, dimensions, frame rate, duration within one frame, codec, pixel format, audio expectations and complete decoding, and flags dark intervals. These checks do not establish creative quality.
 
-Outputs go to ignored `output/<ad-id>/<format>/` (`9x16`, `4x5`, `16x9`): `final.mp4`, `preview*.mp4`, `contact-sheet.jpg` and full-size `frames/*.png`. The contact sheet samples every half second through the 2-second hook, then every second, plus the last frame; `frames/index.txt` maps positions to timestamps. On 9:16 and 4:5 sheets, red shading marks where platform interface usually covers the video. `contact-sheet --video <file> --format <f>` samples an existing render instead of rendering stills. Tool logs, including browser console output, go to `.cache/logs/`.
+Outputs go to ignored `output/<ad-id>/<format>/` (`9x16`, `4x5`, `16x9`): `final.mp4`, `preview*.mp4`, `contact-sheet.jpg` and full-size `frames/*.png`. The contact sheet samples every half second through the 2-second hook, then every second, plus the last frame; `frames/index.txt` maps positions to timestamps. On 9:16 and 4:5 sheets, red shading marks where platform interface usually covers the video. `contact-sheet --frames 12,48,96` shows only the chosen frames (whole frame numbers inside the ad). `contact-sheet --video <file> --format <f>` samples an existing render instead of rendering stills; it takes `--frames` too. Tool logs, including browser console output, go to `.cache/logs/`.
 
 ## Music and sound
 
@@ -95,7 +96,7 @@ An ad's optional `soundtrack` in `ad.json` describes one mix: an original score 
 
 The master is limited, normalized in two passes to `lufs` with a -1.5 dBTP ceiling, and played by every format.
 
-References are `<asset-id>/<path>` for entries in `assets.json`, or `local/<path>` for files in `marketing/audio/`. Local instruments are original patches using sfizz's built-in oscillators: `local/instruments/pad.sfz`, `bass.sfz`, `pluck.sfz`, `riser.sfz` (two-second noise rise) and `boom.sfz` (sub impact). Write new patches there when a sound is missing; see the [SFZ opcode reference](https://sfzformat.com/opcodes/).
+References are `<asset-id>/<path>` for entries in `assets.json`, or `local/<path>` for files in `marketing/audio/`. Local instruments are original patches using sfizz's built-in oscillators: `local/instruments/pad.sfz`, `bass.sfz`, `pluck.sfz`, `riser.sfz` (two-second noise rise), `boom.sfz` (sub impact), `kick.sfz` (tight electronic kick), `stab.sfz` (bright saw hit) and `sweep.sfz` (downward noise sweep). Write new patches there when a sound is missing; see the [SFZ opcode reference](https://sfzformat.com/opcodes/).
 
 `assets.json` records every external asset with its licence, attribution and integrity data:
 
@@ -112,7 +113,7 @@ npm --prefix marketing run audio:validate -- --spec ads/my-ad/ad.json
 npm --prefix marketing run audio:validate -- --spec ads/my-ad/ad.json --video output/my-ad/9x16/final.mp4
 ```
 
-Generation prints each track's level before gain (libraries differ by 20 dB or more, so balance with `gain`), writes the master to ignored `public/audio/<ad-id>/mix.wav` and keeps stems (each track, score, music, effects and voice buses) in `.cache/audio/<ad-id>/` for listening. Validation checks decoding, duration, 48 kHz stereo, integrated loudness within 1 LU and true peak at or below -1 dBTP. Listen to the stems, mix and final video to judge timbre, balance and timing.
+Generation prints each track's level before gain (libraries differ by 20 dB or more, so balance with `gain`), writes the master to ignored `public/audio/<ad-id>/mix.wav` and keeps stems (each track, score, music, effects and voice buses) in `.cache/audio/<ad-id>/` for listening, with `mix.png` beside them: the master's spectrogram over its waveform. Its x axis is linear time across the ad. Validation checks decoding, duration, 48 kHz stereo, integrated loudness within 1 LU and true peak at or below -1 dBTP. Listen to the stems, mix and final video to judge timbre, balance and timing; `mix.png` and the printed track levels show timing and balance but not timbre.
 
 ## Reuse and cleanup
 

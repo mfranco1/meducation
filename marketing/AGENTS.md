@@ -9,8 +9,8 @@ Work in this order and stop for the user at each **Check**.
 1. **Brief.** Audience, single message, CTA. Inspect the current app, branding and the published content you plan to show.
 2. **Hooks.** Write three distinct hook options for the first 2 seconds (visual + on-screen line), each with a one-line concept for the rest. **Check:** the user picks or redirects.
 3. **Animatic.** Create `ads/<id>/ad.json` and `ads/<id>/Ad.tsx`, capture real footage, add placeholder type and timing, render a preview and contact sheet. **Check:** the user approves structure and pacing.
-4. **Polish.** Motion design, typography, camera moves, transitions, sound design, music, optional voiceover, captions, extra formats. Review frames and previews, fix, repeat.
-5. **Final.** Render, validate, report outputs and any remaining defects.
+4. **Polish.** Motion design, typography, camera moves, transitions, sound design, music, optional voiceover, captions, extra formats. Review frames and previews, fix, repeat. Iterate on chosen stills (`contact-sheet --frames 12,48,96`) and ranged previews (`preview --frames START-END`). Review one contact sheet per round; open a full-size frame only when one looks wrong.
+5. **Final.** Render once, after the user approves at a Check or asks for it (a final takes 5 to 10 minutes). Validate, report outputs and any remaining defects.
 
 ## Quality bar
 
@@ -21,7 +21,8 @@ Aim for work a professional motion studio would ship. Creative choices are open:
 - Works with sound off: on-screen type or captions carry the message.
 - Keep text and key product UI inside the safe zones shaded on contact sheets. Check legibility at phone size.
 - Use the brand: the Meducation logo, Inter, warm neutrals and autumn orange (`src/kit/theme.ts`, `../src/shared/brand.ts`). Add colours only when a concept needs them.
-- Audio, when used: mixed, not decorative. Music supports pacing, effects land on cuts and taps, voiceover is clear over the music. Listen to the stems in `.cache/audio/<id>/` and the final video before calling audio done.
+- Audio, when used: mixed, not decorative. Music supports pacing, effects land on cuts and taps, voiceover is clear over the music. Write scores as `soundtrack.ts` with loops and helpers, never as inline JSON notes. An agent cannot hear: read `.cache/audio/<id>/mix.png` and the printed track levels for timing and balance, say plainly that the audio has not been heard, and ask the user to listen before calling audio done.
+- In recipes, use `press` with `keys` for long key sequences.
 - Copy follows the root AGENTS.md copy rules.
 
 ## Hard rules

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { normalizeSvg, rankCandidates, validateSvg } from './iconStudio';
+import { normalizeSvg, rankCandidates, setGlyph, validateSvg } from './iconStudio';
 
 const svg =
   '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>';
@@ -69,4 +69,40 @@ it('ranks by match score first, then by source tier', () => {
   ]);
   expect(ranked.map((item) => item.id)).toEqual(['b', 'c', 'a']);
   expect(rankCandidates('unrelated', [candidate('a', 'red', 1)])).toEqual([]);
+});
+
+describe('setGlyph', () => {
+  const source = [
+    'export const icons: Readonly<Record<string, ReactNode>> = {',
+    '  // Old credit',
+    '  bone: (',
+    '    <>',
+    '      <path d="a" />',
+    '    </>',
+    '  ),',
+    "  'red-cell': (",
+    '    <>',
+    '      <path d="b" />',
+    '    </>',
+    '  ),',
+    '};',
+    '',
+  ].join('\n');
+  const glyph = '<>\n  <path d="new" />\n</>';
+
+  it('replaces an entry with the comment above it, and sets a new comment', () => {
+    const output = setGlyph(source, 'bone', glyph, 'Health Icons "bone", CC0');
+    expect(output).toContain('  // Health Icons "bone", CC0\n  bone: (');
+    expect(output).not.toContain('Old credit');
+    expect(output).not.toContain('"a"');
+    expect(output).toContain('"b"');
+  });
+
+  it('adds a new entry in alphabetical order and fails without the map', () => {
+    const output = setGlyph(source, 'kidney', glyph);
+    expect(output.indexOf('  kidney: (')).toBeGreaterThan(output.indexOf('  bone: ('));
+    expect(output.indexOf('  kidney: (')).toBeLessThan(output.indexOf("'red-cell'"));
+    expect(setGlyph(source, 'zinc', glyph)).toMatch(/<path d="new" \/>\n {4}<\/>\n {2}\),\n\};/);
+    expect(() => setGlyph('const x = 1;', 'kidney', glyph)).toThrow(/icons/);
+  });
 });
