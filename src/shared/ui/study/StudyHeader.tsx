@@ -19,7 +19,9 @@ const pulse = keyframes`
 `;
 
 /** `completed` counts finished items (answered questions, revealed cards); without it the bar shows position only. */
+/** `title` names the quiz or deck and is the screen's h1. */
 export function StudyHeader({
+  title,
   itemLabel,
   index,
   total,
@@ -31,6 +33,7 @@ export function StudyHeader({
   completed,
   completedLabel = 'answered',
 }: {
+  title: string;
   itemLabel: string;
   index: number;
   total: number;
@@ -44,9 +47,14 @@ export function StudyHeader({
 }) {
   return (
     <>
-      <IconButton aria-label={exitLabel} onClick={onExit} disabled={disabled} sx={{ p: 0.5, mb: 0.5 }}>
-        <ArrowBackRoundedIcon />
-      </IconButton>
+      <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mb: 0.5 }}>
+        <IconButton aria-label={exitLabel} onClick={onExit} disabled={disabled} sx={{ p: 0.5 }}>
+          <ArrowBackRoundedIcon />
+        </IconButton>
+        <Typography component="h1" variant="subtitle2" sx={{ color: 'text.secondary', minWidth: 0 }}>
+          {title}
+        </Typography>
+      </Stack>
       <Stack direction="row" sx={{ justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography
           variant="body2"

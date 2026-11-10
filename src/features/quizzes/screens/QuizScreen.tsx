@@ -39,7 +39,15 @@ interface QuizScreenProps {
   onRequestExit: () => void;
 }
 
-export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, onRequestExit }: QuizScreenProps) {
+export function QuizScreen({
+  quiz,
+  attempt,
+  index,
+  questions,
+  onCheckpoint,
+  onFinish,
+  onRequestExit,
+}: QuizScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
   const [celebration, setCelebration] = useState<CelebrationEvent & { playbackId: number }>();
@@ -132,6 +140,7 @@ export function QuizScreen({ attempt, index, questions, onCheckpoint, onFinish, 
         />
       )}
       <StudyHeader
+        title={quiz.name}
         itemLabel="Question"
         index={index}
         total={questions.length}

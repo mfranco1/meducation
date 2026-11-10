@@ -20,7 +20,7 @@ interface QuizBrowseScreenProps {
   onDone: () => void;
 }
 
-export function QuizBrowseScreen({ index, questions, onNavigate, onDone }: QuizBrowseScreenProps) {
+export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }: QuizBrowseScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
@@ -61,6 +61,7 @@ export function QuizBrowseScreen({ index, questions, onNavigate, onDone }: QuizB
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
       <ReadOnlyQuizHeader
+        title={quiz.name}
         index={index}
         total={questions.length}
         mode="Browse answers"

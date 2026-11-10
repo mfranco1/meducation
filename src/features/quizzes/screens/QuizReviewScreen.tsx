@@ -28,6 +28,7 @@ interface QuizReviewScreenProps {
 }
 
 export function QuizReviewScreen({
+  quiz,
   attempt,
   index,
   questions,
@@ -106,6 +107,7 @@ export function QuizReviewScreen({
         </Alert>
       )}
       <ReadOnlyQuizHeader
+        title={quiz.name}
         index={index}
         total={questions.length}
         mode="Review results"

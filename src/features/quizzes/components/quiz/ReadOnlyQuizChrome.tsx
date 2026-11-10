@@ -5,6 +5,7 @@ import { StudyHeader, StudyNavigationFooter } from '../../../../shared/ui/study/
 import type { MutableRefObject } from 'react';
 
 export function ReadOnlyQuizHeader({
+  title,
   index,
   total,
   mode,
@@ -12,6 +13,7 @@ export function ReadOnlyQuizHeader({
   onExit,
   finalTimeMs,
 }: {
+  title: string;
   index: number;
   total: number;
   mode?: 'Browse answers' | 'Review results';
@@ -21,6 +23,7 @@ export function ReadOnlyQuizHeader({
 }) {
   return (
     <StudyHeader
+      title={title}
       itemLabel="Question"
       index={index}
       total={total}

@@ -1,4 +1,4 @@
-import { Alert, Box, Container } from '@mui/material';
+import { Alert, Container } from '@mui/material';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
 import type { FlashcardDeckSummary } from '../../../content/api/flashcardApiDecoders';
@@ -94,30 +94,13 @@ export function FlashcardStudyScreen({
   };
   return (
     <Container maxWidth="md" sx={{ py: { xs: 2, md: 4 } }}>
-      <Box
-        component="h1"
-        sx={{
-          position: 'absolute',
-          left: 0,
-          top: 0,
-          width: '1px',
-          height: '1px',
-          p: 0,
-          m: '-1px',
-          overflow: 'hidden',
-          clip: 'rect(0, 0, 0, 0)',
-          whiteSpace: 'nowrap',
-          border: 0,
-        }}
-      >
-        {deck.name}
-      </Box>
       {persistenceError && (
         <Alert severity="error" role="alert" sx={{ mb: 2 }}>
           {persistenceError}
         </Alert>
       )}
       <StudyHeader
+        title={deck.name}
         itemLabel="Card"
         index={index}
         total={cards.length}
