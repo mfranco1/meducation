@@ -16,7 +16,6 @@
     "lint": "eslint src scripts e2e eslint.config.mjs vite.config.ts playwright.config.ts playwright.admin.config.ts",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "pretest:e2e": "VITE_CONTENT_MAX_RETRIES=0 npm run build:learner",
     "test:e2e": "playwright test",
     "test:e2e:admin": "playwright test --config=playwright.admin.config.ts",
     "validate:content": "tsx scripts/content/validate-paired-files.ts",
