@@ -12,14 +12,14 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Infections: the pregnancy infection quizzes own pregnancy-specific points (treatment in pregnancy, congenital syphilis, HSV and cesarean, GBS). Gynecology's infection quizzes own diagnosis and nonpregnant treatment. BV partner treatment and chancroid basics are already staged in Microbiology & Parasitology.
 - Pelvic anatomy lives in Obstetrics › Maternal Physiology and the Obstetric Pelvis. Leopold maneuvers, fetal lie and cardinal movements live in Labor and Delivery › Normal Labor and Delivery.
 - Each topic's writer prompts get a "Topic boundary" block appended to SUBJECT_NOTES: which quiz owns which shared points, built from the blueprint subtopics and `excludes`.
-- Already staged, don't retest: pelvic types, NST/CST/BPP and Doppler, hCG and dating, prenatal labs and vaccines, puerperal infections, mastitis, postpartum mood disorders, labor stages and active management of the third stage, FHR categories, labor arrest definitions (ACOG CPG 8), shoulder dystocia, ECV and previa, Bishop score, TOLAC, tocolysis, antenatal steroids, magnesium neuroprotection, PROM and PPROM by gestational age (ACOG PB 217), postterm induction.
-- Session 2 starts with Pregnancy Complications (6 × 30), then Medical Disorders in Pregnancy (7 × 30).
+- Already staged, don't retest: pelvic types, NST/CST/BPP and Doppler, hCG and dating, prenatal labs and vaccines, puerperal infections, mastitis, postpartum mood disorders, labor stages and active management of the third stage, FHR categories, labor arrest definitions (ACOG CPG 8), shoulder dystocia, ECV and previa, Bishop score, TOLAC, tocolysis, antenatal steroids, magnesium neuroprotection, PROM and PPROM by gestational age (ACOG PB 217), postterm induction; all of Pregnancy Complications (incl. APS, GTD with FIGO 2026, PPH, accreta) and Medical Disorders in Pregnancy (incl. pregnancy infections, thyroid, lupus, VTE, UTI); grep `stems.txt` for gynecologic overlaps (vaginitis, PID, HSV, syphilis, ovarian cysts, cervical cancer in pregnancy).
+- Session 3 order: Reproductive Endocrinology, Fertility and Contraception, then Gynecology, then Gynecologic Oncology. Session 2 notes with topic boundaries were built per topic from the blueprint; rebuild them the same way.
 - Antiphospholipid syndrome: Early Pregnancy Loss. Hepatitis B: Viral and Parasitic Infections. Benign ovarian neoplasms (teratoma, cystadenomas, fibroma/Meigs): Gynecology. Malignant ovarian tumors: Oncology.
 
 ## Subject notes (for SUBJECT_NOTES)
 
-- Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines. Use current ACOG, SMFM, RCOG, FIGO, WHO and CDC (STI 2021) guidance; where a Philippine DOH or POGS program sets national practice (family planning, maternal immunization, HIV, syphilis, TB), use its current edition and name it in the stem or sources.
-- Current classifications only: FIGO 2018 cervical, FIGO 2023 endometrial, FIGO 2014 ovarian, FIGO 2000 GTN scoring, PALM-COEIN, NICHD three-tier FHR categories, ACOG Obstetric Care Consensus labor definitions (active phase from 6 cm), the 2022 ACOG/SMFM hypertension threshold for treatment in pregnancy, IADPSG 75-g OGTT thresholds alongside Carpenter-Coustan.
+- Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines. ACOG is not the only authority: POGS clinical practice guidelines and FIGO guidance are equally valid primary sources, alongside SMFM, RCOG, WHO and CDC (STI 2021). Prefer POGS or FIGO where they address the point, especially where Philippine practice differs; where a Philippine DOH or POGS program sets national practice (family planning, maternal immunization, HIV, syphilis, TB), use its current edition and name it in the stem or sources.
+- Current classifications only: FIGO 2018 cervical, FIGO 2023 endometrial, FIGO 2014 ovarian, FIGO 2026 GTN staging and scoring (Ngan et al, Int J Gynaecol Obstet 2026, doi:10.1002/ijgo.71229: cervix in stage I, nodal disease in stages III and IV, no prior-chemotherapy score factor, no 6-month persistence criterion, ultra-high risk at 13 or more, separate PSTT/ETT staging), PALM-COEIN, NICHD three-tier FHR categories, ACOG Obstetric Care Consensus labor definitions (active phase from 6 cm), the 2022 ACOG/SMFM hypertension threshold for treatment in pregnancy, IADPSG 75-g OGTT thresholds alongside Carpenter-Coustan.
 - Besides the brief's `source-<n>.txt`, grep `src/buzzwords.txt` and `src/flashcards.txt` (in the work dir) for your quiz's entities and cover their tested points.
 
 ## Status
@@ -28,8 +28,8 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 | --- | --- |
 | Obstetrics | staged 2026-11-10 (q595 to q598, 160) |
 | Labor and Delivery | staged 2026-11-10 (q607 to q611, 150) |
-| Pregnancy Complications | |
-| Medical Disorders in Pregnancy | |
+| Pregnancy Complications | staged 2026-11-10 (q624 to q629, 180) |
+| Medical Disorders in Pregnancy | staged 2026-11-10 (q632 to q638, 210) |
 | Reproductive Endocrinology, Fertility and Contraception | |
 | Gynecology | |
 | Gynecologic Oncology | |
