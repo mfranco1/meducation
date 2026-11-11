@@ -277,6 +277,17 @@ export function buildReport(
             where,
             message: `${type} is ${pct(n, quizEntries.length)}% of the quiz; keep Recall at 30% or less and other types at 40% or less.`,
           });
+      const longestKeys = quizEntries.filter(({ item }) => {
+        const index = item.answer.charCodeAt(0) - 65;
+        const lengths = item.choices.map((choice) => choice.length);
+        return lengths.every((length, i) => i === index || length < lengths[index]);
+      }).length;
+      if (quizEntries.length >= 10 && pct(longestKeys, quizEntries.length) > 35)
+        findings.push({
+          level: 'warning',
+          where,
+          message: `The correct choice is the longest in ${pct(longestKeys, quizEntries.length)}% of items; aim for about 25%.`,
+        });
       for (const [name] of dist.deviations)
         findings.push({
           level: 'warning',

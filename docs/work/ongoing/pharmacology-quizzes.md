@@ -32,8 +32,8 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Neuropsychopharmacology | staged 2026-11-11 (q693 to q696, 159; 1 in backlog) |
 | Anesthesia and Pain Pharmacology | staged 2026-11-11 (q697 to q699, 120) |
 | Hematology and Antithrombotic Pharmacology | staged 2026-11-11 (q706 to q707, 100) |
-| Anti-Inflammatory and Rheumatologic Pharmacology | |
-| Endocrine and Reproductive Pharmacology | |
+| Anti-Inflammatory and Rheumatologic Pharmacology | staged 2026-11-11 (q714 to q715, 100) |
+| Endocrine and Reproductive Pharmacology | staged 2026-11-11 (q724 to q727, 160) |
 | Antibacterial and Antimycobacterial Pharmacology | |
 | Antifungal, Antiviral, and Antiparasitic Pharmacology | |
 | Cancer Pharmacology | |

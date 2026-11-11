@@ -35,6 +35,15 @@ describe('quiz batch report', () => {
     expect(report.text).toContain('Recall is 67% of the quiz');
   });
 
+  it('warns when the correct choice is the longest in too many items of a quiz', () => {
+    const stems = Array.from({ length: 10 }, (_, i) => `Stem number ${i + 1}?`);
+    const longKey = { choices: ['Alpha', 'Beta with more words', 'Gamma', 'Delta'] };
+    const skewed = stems.map((stem, i) => item(stem, i < 4 ? longKey : {}));
+    expect(run(skewed).text).toContain('The correct choice is the longest in 40% of items');
+    const balanced = stems.map((stem, i) => item(stem, i < 3 ? longKey : {}));
+    expect(run(balanced).text).not.toContain('The correct choice is the longest');
+  });
+
   it('flags a topic with a single quiz only when checking against a blueprint', () => {
     const items = [item('Only stem here?')];
     expect(run(items).text).not.toContain('Topic has fewer than 2 quizzes');
