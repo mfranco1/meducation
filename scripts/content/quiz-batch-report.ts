@@ -123,6 +123,14 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
       .includes('**')
   )
     add('warning', 'Rationale does not open with the bolded answer.');
+  const plain = (text: string) => text.replace(/\*/g, '').trim().toLowerCase();
+  const opening = rationale
+    .trimStart()
+    .split('\n')[0]
+    .match(/\*\*(.+?)\*\*(?!\*)/)?.[1];
+  const named = opening ? item.choices.findIndex((choice) => plain(choice) === plain(opening)) : -1;
+  if (named >= 0 && 'ABCD'[named] !== item.answer)
+    add('error', `Rationale opens with choice ${'ABCD'[named]} but the answer is ${item.answer}.`);
   if (!/^\s*[-*] /m.test(rationale)) add('warning', 'Rationale has no bulleted list of the other choices.');
   const hasTable = /^\s*\|.*\|\s*$/m.test(rationale);
   if (questionType === 'Comparison' && !hasTable) add('warning', 'Comparison rationale has no table.');

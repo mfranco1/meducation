@@ -17,7 +17,7 @@ SUBJECT_NOTES
 
 Output: the editor's bulk-add JSON (batch shape in .agents/skills/write-quizzes/SKILL.md, step 3), one topic with one quiz, using the names and descriptions from the brief.
 
-Before the gate, check each item for the flaws reviewers fix most: a distractor bullet that doesn't say what the choice fits, a key longer or more qualified than the distractors, a distractor no partly prepared learner would pick, a partly true distractor (dual nerve or arterial supply), a rationale, table or pearl that gives away another item's answer, and a pearl that restates the rationale.
+Before the gate, check each item for the flaws reviewers fix most: a distractor bullet that doesn't say what the choice fits, a key longer or more qualified than the distractors, a stem that states the answer or its defining clue (naming the drug asked for, esterase metabolism for remifentanil, train-of-four fade for a nondepolarizing block), a distractor no partly prepared learner would pick, a partly true distractor (dual nerve or arterial supply), a rationale, table or pearl that gives away another item's answer, and a pearl that restates the rationale.
 
 Then run the gate on your own batch:
   npm run report:quiz-batch -- BATCH --outline WORK/outline.json --blueprint WORK/blueprint.json

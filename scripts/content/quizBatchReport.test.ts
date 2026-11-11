@@ -78,6 +78,18 @@ describe('quiz batch report', () => {
     expect(text).not.toContain('item 2 ("Ordered one?"): Rationale does not open');
   });
 
+  it('fails a key that differs from the choice the rationale opens with', () => {
+    const report = run([
+      item('Wrong key one?', { rationale: '**Gamma** is correct.\n\n- **Beta**: no.' }),
+      item('Right key one?', {
+        choices: ['Alpha', '*Beta* gene', 'Gamma', 'Delta'],
+        rationale: '**A *Beta* gene** fits.\n\n- **Gamma**: no.',
+      }),
+    ]);
+    expect(report.text).toContain('item 1 ("Wrong key one?"): Rationale opens with choice C but the answer is B.');
+    expect(report.errors).toBe(1);
+  });
+
   it('counts rationale length outside tables', () => {
     const words = (n: number) => Array(n).fill('word').join(' ');
     const table = `\n\n| A | B |\n| --- | --- |\n| ${words(100)} | x |`;
