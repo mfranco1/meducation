@@ -37,7 +37,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Oncology | staged 2026-11-11 (q681 to q682, 100) |
 | Gastroenterology | staged 2026-11-11 (q689 to q692, 159; 1 in backlog for Cirrhosis, Pancreatic and Biliary Disease) |
 | Nephrology | staged 2026-11-11 (q702 to q705, 156; 4 in backlog: 1 Acid-Base, 2 Fluid and Electrolyte, 1 Acute and Chronic Kidney Disease) |
-| Endocrinology | |
+| Endocrinology | staged 2026-11-11 (q710 to q711, 100) |
 | Thyroid, Pituitary and Adrenal Disorders | |
 | Obesity, Lipid and Bone Disorders | |
 | Rheumatology | |

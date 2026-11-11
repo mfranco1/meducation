@@ -11,7 +11,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 
 - Ownership (each quiz's `excludes` has the full list): organ-specific infections live in the organ topic (pneumonia in Lung, enteric infections in GI, hepatitis in Liver, meningitis, neurosyphilis and CNS toxoplasmosis in CNS, endocarditis in Heart, osteomyelitis in Bones, skin infections in Skin). Infectious Disease Pathology owns systemic infections, TB, leprosy, syphilis stages and aortitis, mycoses, parasites and STIs.
 - Genetic Disorders owns inheritance, storage diseases and all inborn errors; cystic fibrosis is in Infancy; DMD and myotonic dystrophy clinical disease in Peripheral Nerves and Skeletal Muscle; DiGeorge in Immune; neurocutaneous syndromes (NF, TSC, VHL, Sturge-Weber) in CNS.
-- Septic shock pathogenesis in Inflammation; other shock in Hemodynamic. Hemostasis and thrombosis in Hemodynamic; bleeding disorders, HIT, TTP/HUS and DIC in Red Cells. APS in Immune.
+- Septic shock pathogenesis in Inflammation; other shock in Hemodynamic. Leukocytosis types and leukemoid reaction in Hematolymphoid, not Inflammation. Hemostasis and thrombosis in Hemodynamic; bleeding disorders, HIT, TTP/HUS and DIC in Red Cells. APS in Immune.
 - Neoplasia owns paraneoplastic syndromes, general tumor markers and carcinogen mechanisms (HPV, EBV); organ topics own the organ lesions and germ cell marker profiles (Male Genital).
 - Vitamins in Environmental and Nutritional, except rickets/osteomalacia (Bones), B12/folate and iron anemias (Red Cells). Wernicke in Nutrition. Lead in Environmental.
 - Diabetic nephropathy in Endocrine; diabetic neuropathy in PNS; diabetic retinopathy in Eye. Hemangiomas and Kaposi in Blood Vessels. Mycosis fungoides and MALT lymphoma in Hematolymphoid.
@@ -30,7 +30,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Topic | Status |
 | --- | --- |
 | Cell Injury and Adaptation | staged 2026-11-11 (q700 to q701, 77; 3 in backlog) |
-| Inflammation and Repair | |
+| Inflammation and Repair | staged 2026-11-11 (q708 to q709, 78; 2 in backlog) |
 | Hemodynamic Disorders | |
 | Genetic Disorders | |
 | Immune System Disorders | |

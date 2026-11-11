@@ -31,7 +31,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Autacoids and Respiratory Pharmacology | staged 2026-11-11 (q687 to q688, 95; 5 in backlog) |
 | Neuropsychopharmacology | staged 2026-11-11 (q693 to q696, 159; 1 in backlog) |
 | Anesthesia and Pain Pharmacology | staged 2026-11-11 (q697 to q699, 120) |
-| Hematology and Antithrombotic Pharmacology | |
+| Hematology and Antithrombotic Pharmacology | staged 2026-11-11 (q706 to q707, 100) |
 | Anti-Inflammatory and Rheumatologic Pharmacology | |
 | Endocrine and Reproductive Pharmacology | |
 | Antibacterial and Antimycobacterial Pharmacology | |
