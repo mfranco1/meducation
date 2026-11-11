@@ -148,7 +148,9 @@ def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_acc
     (topic_dir / "escalated.json").write_text(
         json.dumps([{"ref": ref(5), "reasons": ["Blind note: unclear"]}])
     )
-    (topic_dir / "standards-input-1.json").write_text("[]")
+    (topic_dir / "standards-input-1.json").write_text(
+        json.dumps([{"ref": ref(n)} for n in range(1, 7)])
+    )
     (topic_dir / "review-standards-1.json").write_text(
         json.dumps(
             [
@@ -206,14 +208,34 @@ def test_route_standards_refuses_a_quiz_without_its_review(tmp_path):
     assert "review-standards-1.json is missing" in result.stderr
 
 
+def test_route_standards_refuses_refs_outside_the_quiz_input(tmp_path):
+    topic_dir = setup(tmp_path)
+    (topic_dir / "escalated.json").write_text("[]")
+    (topic_dir / "standards-input-1.json").write_text(json.dumps([{"ref": ref(1)}, {"ref": ref(3)}]))
+    (topic_dir / "review-standards-1.json").write_text(
+        json.dumps([{"ref": ref(2), "severity": "flaw", "edits": {}, "reason": "x"}])
+    )
+    (topic_dir / "standards-escalate-1.json").write_text("[]")
+    result = run(tmp_path, "route-standards", TOPIC)
+    assert result.returncode != 0
+    assert ref(2) in result.stderr
+
+
 def test_apply_moves_drops_to_the_backlog_and_clean_waits_for_it(tmp_path):
     topic_dir = setup(tmp_path)
     (topic_dir / "review.json").write_text(
-        json.dumps([{"ref": ref(1), "drop": True, "reason": "near-duplicate of item 4"}])
+        json.dumps(
+            [
+                {"ref": ref(1), "drop": True, "reason": "near-duplicate of item 4"},
+                {"ref": ref(3), "edits": {"stem": "New stem?"}},
+            ]
+        )
     )
     args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json", "review.json"]
     assert run(tmp_path, *args).returncode == 0
     assert len(keys(topic_dir, "out.json")) == 11
+    # The rewritten item moved up one place when item 1 was dropped.
+    assert json.loads((topic_dir / "rewritten-out.json").read_text()) == [ref(2)]
     (topic_dir / "out.json").unlink()
     assert run(tmp_path, *args).returncode == 0  # a rerun doesn't list the item twice
     backlog = json.loads((tmp_path / "subject" / "replace-backlog.json").read_text())

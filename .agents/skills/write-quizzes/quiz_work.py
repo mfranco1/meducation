@@ -376,11 +376,18 @@ def cmd_route_standards(work: Work, args) -> None:
     review, flagged = [], []
     for source in sorted(work.dir.glob("standards-input-*.json")):
         n = source.stem.rsplit("-", 1)[1]
+        inputs = {item["ref"] for item in load(source)}
         for name, rows in (("review-standards", review), ("standards-escalate", flagged)):
             path = work.dir / f"{name}-{n}.json"
             if not path.exists():
                 sys.exit(f"{path.name} is missing; run the standards pass on {source.name}.")
-            rows += load(path)
+            entries = load(path)
+            if stray := [e["ref"] for e in entries if e["ref"] not in inputs]:
+                sys.exit(
+                    f"{path.name} has refs not in {source.name} (keyed by position instead of ref?): "
+                    + ", ".join(stray)
+                )
+            rows += entries
     escalated = load(work.dir / "escalated.json")
     replace = []
     known = {e["ref"] for e in escalated}
@@ -487,6 +494,7 @@ def cmd_apply(work: Work, args) -> None:
     if errors:
         sys.exit("\n".join(errors))
     backlog = work.backlog()
+    renumber = {}
     for topic in batch["topics"]:
         for quiz in topic["quizzes"]:
             for n, item in enumerate(quiz["items"], 1):
@@ -507,11 +515,15 @@ def cmd_apply(work: Work, args) -> None:
                         "stem": item["stem"],
                     }
                 )
-            quiz["items"] = [
-                item
-                for n, item in enumerate(quiz["items"], 1)
-                if SEP.join((topic["name"], quiz["name"], str(n))) not in drop
-            ]
+            kept = []
+            for n, item in enumerate(quiz["items"], 1):
+                ref = SEP.join((topic["name"], quiz["name"], str(n)))
+                if ref not in drop:
+                    kept.append(item)
+                    renumber[ref] = SEP.join((topic["name"], quiz["name"], str(len(kept))))
+            quiz["items"] = kept
+    # Drops renumber the items after them; rewritten refs name items in the output batch.
+    rewritten = [renumber[r] for r in rewritten if r in renumber]
     dump(out_path, batch)
     if drop:
         dump(work.backlog_path, backlog)
@@ -545,16 +557,13 @@ def cmd_accept(work: Work, args) -> None:
 def cmd_ready(work: Work, args) -> None:
     """Every item must have a clean blind solve of its current content, or have been judged as is."""
     log = work.log()
-    judged = set(log["judged"])
-    missing = []
-    for ref, _, item in items_of(work.batch(args.batch)):
-        digest = content_hash(item)
-        if digest in judged:
-            continue
-        if not any(
-            s["hash"] == digest and s["clean"] for s in log["solved"].get(ref, [])
-        ):
-            missing.append(ref)
+    # Match by content, not ref: drops renumber items between rounds.
+    cleared = set(log["judged"]) | {
+        s["hash"] for solves in log["solved"].values() for s in solves if s["clean"]
+    }
+    missing = [
+        ref for ref, _, item in items_of(work.batch(args.batch)) if content_hash(item) not in cleared
+    ]
     if missing:
         sys.exit(
             "Not ready; these need a blind solve of their current content (or a fix):\n"

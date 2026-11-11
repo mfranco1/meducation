@@ -6,7 +6,7 @@ Change a questionType only when the current one is wrong for the item, not to re
 
 SUBJECT_NOTES
 
-Write TOPICDIR/review-standards-N.json and TOPICDIR/standards-escalate-N.json in the rubric's formats (an empty array when there is nothing to report). Never drop. Keep any rewritten rationale at 70 to 140 words outside tables. Give complete final values for every edited field.
+Write TOPICDIR/review-standards-N.json and TOPICDIR/standards-escalate-N.json in the rubric's formats (an empty array when there is nothing to report). Never drop. Keep any rewritten rationale at 70 to 140 words outside tables. Give complete final values for every edited field. Copy each entry's `ref` from its item in the input file, never from its list position: the input skips escalated items, so positions and refs differ.
 
 Use your own scratchpad subfolder SCRATCH under SCRATCHPAD for helpers.
 

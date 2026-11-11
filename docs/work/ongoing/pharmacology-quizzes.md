@@ -28,7 +28,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | General Pharmacology | staged 2026-11-11 (q671 to q672, 100) |
 | Autonomic and Ophthalmic Pharmacology | staged 2026-11-11 (q675 to q677, 120) |
 | Cardiovascular and Renal Pharmacology | staged 2026-11-11 (q683 to q686, 160) |
-| Autacoids and Respiratory Pharmacology | |
+| Autacoids and Respiratory Pharmacology | staged 2026-11-11 (q687 to q688, 95; 5 in backlog) |
 | Neuropsychopharmacology | |
 | Anesthesia and Pain Pharmacology | |
 | Hematology and Antithrombotic Pharmacology | |
