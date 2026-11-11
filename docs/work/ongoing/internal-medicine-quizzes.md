@@ -35,7 +35,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Dermatology | staged 2026-11-11 (q673 to q674, 100) |
 | Hematology | staged 2026-11-11 (q678 to q680, 120) |
 | Oncology | staged 2026-11-11 (q681 to q682, 100) |
-| Gastroenterology | |
+| Gastroenterology | staged 2026-11-11 (q689 to q692, 159; 1 in backlog for Cirrhosis, Pancreatic and Biliary Disease) |
 | Nephrology | |
 | Endocrinology | |
 | Thyroid, Pituitary and Adrenal Disorders | |

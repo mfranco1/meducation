@@ -50,7 +50,7 @@ The rationale does most of the teaching, and learners skim it on a phone. Make i
 **Structure** (about 70 to 140 words outside tables; more only when a table carries it):
 
 1. **Answer and key reasoning**: open with the correct answer in bold and the reasoning step that gets there, in 1 to 3 sentences. Bold the findings that discriminate it from the distractors.
-2. **Core teaching**: what a learner should take away. Use a table whenever 2 or more entities are compared on 2 or more features: look-alike diagnoses, drug choices, thresholds by age or gestation, staging or classification levels, or lab patterns. Use a numbered list for sequences, e.g. a resuscitation algorithm, a stepwise work-up or a calculation.
+2. **Core teaching**: what a learner should take away. Use a table whenever 2 or more entities are compared on 2 or more features: look-alike diagnoses, drug choices, thresholds by age or gestation, staging or classification levels, or lab patterns. Use a numbered list for sequences, e.g. a resuscitation algorithm, a stepwise work-up or a calculation. Add only facts a standard reference states; leave out side claims you can't support.
 3. **Other choices**: a bulleted list with one bullet per distractor, each starting with the choice's content in bold, then why it's wrong or which presentation it fits instead. Never refer to choices by letter.
 
 **Formatting rules:**

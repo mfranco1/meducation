@@ -441,7 +441,15 @@ def cmd_judge_input(work: Work, args) -> None:
     batch = {ref: item for ref, _, item in items_of(work.batch(args.batch))}
     log = work.log()
     rows = []
-    for entry in load(work.dir / "escalated.json"):
+    if args.round == "initial":
+        entries = load(work.dir / "escalated.json")
+    else:  # a recheck: the items whose solve in this round wasn't clean
+        entries = [
+            {"ref": ref, "reasons": [f"Recheck answer {s['answer']}, defensible {s.get('defensible') or 'none'}."]}
+            for ref in batch
+            if (s := latest(log, ref, args.round)) and not s["clean"]
+        ]
+    for entry in entries:
         item = batch[entry["ref"]]
         rows.append(
             {

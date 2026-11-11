@@ -272,6 +272,18 @@ def test_accept_marks_a_recheck_disagreement_ready(tmp_path):
     assert run(tmp_path, "ready", TOPIC, "--batch", "batch.json").returncode == 0
 
 
+def test_judge_input_for_a_recheck_takes_that_rounds_unclean_solves(tmp_path):
+    topic_dir = setup(tmp_path)
+    (topic_dir / "escalated.json").write_text(json.dumps([{"ref": ref(1), "reasons": ["x"]}]))
+    run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "recheck-1")
+    answer(topic_dir, "recheck-1", keys(topic_dir), defensible={4: ["B"]})
+    run(tmp_path, "check-blind", TOPIC, "--round", "recheck-1")
+    result = run(tmp_path, "judge-input", TOPIC, "--batch", "batch.json", "--round", "recheck-1")
+    assert result.returncode == 0
+    rows = json.loads((topic_dir / "judgment-input.json").read_text())
+    assert [r["ref"] for r in rows] == [ref(4)]
+
+
 def test_slices_adds_unstaged_stems_and_source_pages(tmp_path):
     setup(tmp_path)
     work = tmp_path / "subject"
