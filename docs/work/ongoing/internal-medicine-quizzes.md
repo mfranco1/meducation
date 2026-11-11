@@ -5,7 +5,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Work dir: `var/quiz-work/internal-medicine/` (`blueprint.json` is the approved plan: 19 topics, 49 quizzes, 2,180 questions)
 - Sources: `~/Downloads/tn-pdfs/medicine/handouts/*.pdf`, extracted to `src/`. Blueprint `pages` refer to `src/main.txt` (main handout, raw `pdftotext`, form-feed pages; `main-layout.txt` is the same in layout mode). `src/buzzwords.txt` and `src/flashcards.txt` are part of the minimum coverage map.
 - Topics: the subject's 19 existing topics, all empty at the start. Topics with 2 quizzes target 50 each, topics with 3 or 4 target 40.
-- Session split (6 sessions): 1 Cardiovascular Medicine, Structural Heart Disease, Pulmonology. 2 Critical Care, Infectious Diseases, Enteric/Tropical. 3 Dermatology, Hematology, Oncology. 4 Gastroenterology, Nephrology, Endocrinology. 5 Thyroid/Pituitary/Adrenal, Obesity/Lipid/Bone, Rheumatology. 6 Systemic Autoimmune, Allergology, Neurology, Psychiatry, then cleanup.
+- Sessions: one topic per session, in the order of the status table, then the replacement batch and cleanup.
 
 ## Decisions
 

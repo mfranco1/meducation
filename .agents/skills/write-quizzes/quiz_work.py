@@ -3,7 +3,7 @@
 Usage: python3 -I quiz_work.py --work WORK <command> TOPIC [options]
 
 WORK (var/quiz-work/<subject-slug>) holds blueprint.json, outline.json,
-stems.txt and optionally src/main.txt; each topic has its own folder
+stems.txt, replace-backlog.json and optionally src/main.txt; each topic has its own folder
 (WORK/<topic-slug>/) with briefs, batches, blind rounds and review files under
 fixed names. The source ledger is shared by all subjects: WORK/../sources.json.
 Run `--help` on a command for its options.
@@ -83,12 +83,12 @@ class Work:
     def ledger(self) -> Path:
         return self.root.parent / "sources.json"
 
-    def target(self, topic: str, quiz: str) -> int | None:
-        for t in load(self.root / "blueprint.json")["topics"]:
-            for q in t["quizzes"] if t["name"] == topic else []:
-                if q["name"] == quiz:
-                    return q.get("target")
-        return None
+    @property
+    def backlog_path(self) -> Path:
+        return self.root / "replace-backlog.json"
+
+    def backlog(self) -> list:
+        return load(self.backlog_path) if self.backlog_path.exists() else []
 
     def batch(self, name: str):
         return load(self.dir / name)
@@ -324,7 +324,7 @@ def latest(log, ref, round_name):
 
 
 def cmd_triage(work: Work, args) -> None:
-    """Split items into the standards pass and the escalated set after the first blind round."""
+    """Split items into the standards pass (one file per quiz) and the escalated set."""
     batch = work.batch(args.batch)
     log = work.log()
     unverified = {}
@@ -334,8 +334,9 @@ def cmd_triage(work: Work, args) -> None:
             quiz = load(brief)["quiz"]["name"]
             for row in rows:
                 unverified[SEP.join((work.topic, quiz, str(row["item"])))] = row["fact"]
-    standards, escalated = [], []
-    for ref, _, item in items_of(batch):
+    standards: dict[str, list] = {}
+    escalated = []
+    for ref, quiz, item in items_of(batch):
         solve = latest(log, ref, args.round)
         if solve is None:
             sys.exit(
@@ -357,17 +358,29 @@ def cmd_triage(work: Work, args) -> None:
         if why:
             escalated.append({"ref": ref, "reasons": why})
         else:
-            standards.append({"ref": ref, **item})
-    dump(work.dir / "standards-input.json", standards)
+            standards.setdefault(quiz, []).append({"ref": ref, **item})
+    for old in work.dir.glob("standards-input-*.json"):
+        old.unlink()
+    for n, rows in enumerate(standards.values(), 1):
+        dump(work.dir / f"standards-input-{n}.json", rows)
     dump(work.dir / "escalated.json", escalated)
-    print(f"{len(standards)} to the standards pass, {len(escalated)} escalated")
+    print(
+        f"{sum(map(len, standards.values()))} to the standards pass in {len(standards)} files, "
+        f"{len(escalated)} escalated"
+    )
 
 
 def cmd_route_standards(work: Work, args) -> None:
-    """Keep only flaw, metadata and correction edits; send the rest to judgment or replacement."""
-    batch = {ref: item for ref, _, item in items_of(work.batch(args.batch))}
-    review = load(work.dir / "review-standards.json")
-    flagged = load(work.dir / "standards-escalate.json")
+    """Merge the per-quiz standards reviews. Keep only flaw, metadata and correction edits;
+    send the rest to judgment, and drops and near-duplicates to review-drops.json."""
+    review, flagged = [], []
+    for source in sorted(work.dir.glob("standards-input-*.json")):
+        n = source.stem.rsplit("-", 1)[1]
+        for name, rows in (("review-standards", review), ("standards-escalate", flagged)):
+            path = work.dir / f"{name}-{n}.json"
+            if not path.exists():
+                sys.exit(f"{path.name} is missing; run the standards pass on {source.name}.")
+            rows += load(path)
     escalated = load(work.dir / "escalated.json")
     replace = []
     known = {e["ref"] for e in escalated}
@@ -411,18 +424,9 @@ def cmd_route_standards(work: Work, args) -> None:
         kept.remove(entry)
     dump(work.dir / "review-standards.json", kept)
     dump(work.dir / "escalated.json", escalated)
-    dump(
-        work.dir / "replace.json",
-        [
-            {
-                **r,
-                "item": {k: batch[r["ref"]][k] for k in ("answer", "metadata", "stem")},
-            }
-            for r in replace
-        ],
-    )
+    dump(work.dir / "review-drops.json", [{**r, "drop": True} for r in replace])
     print(
-        f"{len(kept)} standards edits kept, {len(escalated)} escalated, {len(replace)} to replace"
+        f"{len(kept)} standards edits kept, {len(escalated)} escalated, {len(replace)} to drop and replace"
     )
 
 
@@ -448,21 +452,22 @@ def cmd_judge_input(work: Work, args) -> None:
 
 
 def cmd_apply(work: Work, args) -> None:
-    """Apply review edits as written; refuse unknown refs and fields and undersized quizzes."""
+    """Apply review edits as written and refuse unknown refs and fields. Dropped items go to
+    the subject's replacement backlog, so their quizzes stay short until it is written."""
     out_path = work.dir / args.output
     if out_path.exists():
         sys.exit(f"{out_path} already exists.")
     batch = work.batch(args.batch)
     items = {ref: item for ref, _, item in items_of(batch)}
     entries = [entry for name in args.reviews for entry in load(work.dir / name)]
-    errors, drop, rewritten = [], set(), []
+    errors, drop, rewritten = [], {}, []
     for entry in entries:
         ref, edits = entry.get("ref"), entry.get("edits", {})
         if ref not in items:
             errors.append(f"{ref}: no such item.")
             continue
         if entry.get("drop"):
-            drop.add(ref)
+            drop.setdefault(ref, entry.get("reason", ""))
             continue
         item = items[ref]
         for field, value in edits.items():
@@ -479,33 +484,44 @@ def cmd_apply(work: Work, args) -> None:
             errors.append(f"{ref}: choices and answer don't match.")
         if {"stem", "choices", "answer"} & edits.keys() and ref not in rewritten:
             rewritten.append(ref)
-    for topic in batch["topics"]:
-        for quiz in topic["quizzes"]:
-            gone = sum(
-                SEP.join((topic["name"], quiz["name"], str(n))) in drop
-                for n in range(1, len(quiz["items"]) + 1)
-            )
-            least = args.min or min(50, work.target(topic["name"], quiz["name"]) or 50)
-            if gone and len(quiz["items"]) - gone < least:
-                errors.append(
-                    f"{quiz['name']}: dropping {gone} leaves fewer than {least}; replace instead."
-                )
     if errors:
         sys.exit("\n".join(errors))
+    backlog = work.backlog()
     for topic in batch["topics"]:
         for quiz in topic["quizzes"]:
+            for n, item in enumerate(quiz["items"], 1):
+                ref = SEP.join((topic["name"], quiz["name"], str(n)))
+                if ref not in drop:
+                    continue
+                backlog = [
+                    b for b in backlog if (b["ref"], b["stem"]) != (ref, item["stem"])
+                ]
+                backlog.append(
+                    {
+                        "ref": ref,
+                        "topic": topic["name"],
+                        "quiz": quiz["name"],
+                        "reason": drop[ref],
+                        "answer": item["answer"],
+                        "metadata": item.get("metadata", {}),
+                        "stem": item["stem"],
+                    }
+                )
             quiz["items"] = [
                 item
                 for n, item in enumerate(quiz["items"], 1)
                 if SEP.join((topic["name"], quiz["name"], str(n))) not in drop
             ]
     dump(out_path, batch)
+    if drop:
+        dump(work.backlog_path, backlog)
     dump(work.dir / f"rewritten-{Path(args.output).stem}.json", rewritten)
     print(
         json.dumps(
             {
                 "applied": len(entries) - len(drop),
                 "dropped": sorted(drop),
+                "replacementBacklog": len(backlog),
                 "rewritten": len(rewritten),
                 "rewrittenFile": f"rewritten-{Path(args.output).stem}.json",
             },
@@ -577,11 +593,29 @@ def cmd_ledger(work: Work, args) -> None:
     print(f"{len(index)} sources ({added} new) in {path}")
 
 
+def cmd_backlog(work: Work, args) -> None:
+    """Count the dropped items awaiting replacement, per quiz; --clear once they are staged."""
+    if args.clear:
+        work.backlog_path.unlink(missing_ok=True)
+        print("Backlog cleared.")
+        return
+    counts: dict[str, int] = {}
+    for entry in work.backlog():
+        where = SEP.join((entry["topic"], entry["quiz"]))
+        counts[where] = counts.get(where, 0) + 1
+    print("\n".join(f"{n} {where}" for where, n in counts.items()) or "Backlog is empty.")
+
+
 KEEP = {"blueprint.json"}
 
 
 def cmd_clean(work: Work, args) -> None:
     """Merge the ledger, then delete everything but blueprint.json."""
+    if work.backlog():
+        sys.exit(
+            f"{len(work.backlog())} dropped items still await replacement; "
+            "write and stage them, then run backlog --clear."
+        )
     cmd_ledger(work, args)
     removed = []
     for path in sorted(work.root.iterdir()):
@@ -602,24 +636,23 @@ def main() -> None:
         ("blind", cmd_blind, ["batch", "round", "refs?"]),
         ("check-blind", cmd_check_blind, ["round"]),
         ("triage", cmd_triage, ["batch", "round"]),
-        ("route-standards", cmd_route_standards, ["batch"]),
+        ("route-standards", cmd_route_standards, []),
         ("judge-input", cmd_judge_input, ["batch", "round"]),
-        ("apply", cmd_apply, ["batch", "output", "min"]),
+        ("apply", cmd_apply, ["batch", "output"]),
         ("accept", cmd_accept, ["batch"]),
         ("ready", cmd_ready, ["batch"]),
         ("ledger", cmd_ledger, []),
+        ("backlog", cmd_backlog, []),
         ("clean", cmd_clean, []),
     ]:
         p = sub.add_parser(name, help=fn.__doc__)
         p.add_argument(
-            "topic", nargs="?" if name in ("ledger", "clean") else None, default=""
+            "topic",
+            nargs="?" if name in ("ledger", "backlog", "clean") else None,
+            default="",
         )
         for opt in opts:
-            if opt == "min":
-                p.add_argument(
-                    "--min", type=int, help="default: the quiz's target, at most 50"
-                )
-            elif opt.endswith("?"):
+            if opt.endswith("?"):
                 p.add_argument(f"--{opt[:-1]}")
             else:
                 p.add_argument(f"--{opt}", required=True)
@@ -627,6 +660,8 @@ def main() -> None:
             p.add_argument("reviews", nargs="+")
         if name == "accept":
             p.add_argument("refs", nargs="+")
+        if name == "backlog":
+            p.add_argument("--clear", action="store_true")
         p.set_defaults(fn=fn)
     args = parser.parse_args()
     args.fn(Work(args.work, args.topic), args)

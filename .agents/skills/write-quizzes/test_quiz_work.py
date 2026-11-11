@@ -148,7 +148,8 @@ def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_acc
     (topic_dir / "escalated.json").write_text(
         json.dumps([{"ref": ref(5), "reasons": ["Blind note: unclear"]}])
     )
-    (topic_dir / "review-standards.json").write_text(
+    (topic_dir / "standards-input-1.json").write_text("[]")
+    (topic_dir / "review-standards-1.json").write_text(
         json.dumps(
             [
                 {
@@ -179,11 +180,11 @@ def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_acc
             ]
         )
     )
-    (topic_dir / "standards-escalate.json").write_text(
+    (topic_dir / "standards-escalate-1.json").write_text(
         json.dumps([{"ref": ref(6), "reason": "near-duplicate of item 7"}])
     )
     assert (
-        run(tmp_path, "route-standards", TOPIC, "--batch", "batch.json").returncode == 0
+        run(tmp_path, "route-standards", TOPIC).returncode == 0
     )
     assert [
         e["ref"] for e in json.loads((topic_dir / "review-standards.json").read_text())
@@ -192,37 +193,38 @@ def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_acc
         (e["ref"], e["proposed"])
         for e in json.loads((topic_dir / "escalated.json").read_text())
     ] == [(ref(5), {"pearls": ["New."]}), (ref(2), {"rationale": "Changed fact."})]
-    assert {r["ref"] for r in json.loads((topic_dir / "replace.json").read_text())} == {
-        ref(3),
-        ref(6),
-    }
+    drops = json.loads((topic_dir / "review-drops.json").read_text())
+    assert {r["ref"] for r in drops} == {ref(3), ref(6)} and all(r["drop"] for r in drops)
 
 
-def test_apply_refuses_a_drop_that_leaves_the_quiz_undersized(tmp_path):
+def test_route_standards_refuses_a_quiz_without_its_review(tmp_path):
     topic_dir = setup(tmp_path)
-    (topic_dir / "review.json").write_text(json.dumps([{"ref": ref(1), "drop": True}]))
-    result = run(
-        tmp_path,
-        "apply",
-        TOPIC,
-        "--batch",
-        "batch.json",
-        "--output",
-        "out.json",
-        "--min",
-        "12",
-        "review.json",
-    )
+    (topic_dir / "escalated.json").write_text("[]")
+    (topic_dir / "standards-input-1.json").write_text("[]")
+    result = run(tmp_path, "route-standards", TOPIC)
     assert result.returncode != 0
-    assert "replace instead" in result.stderr
+    assert "review-standards-1.json is missing" in result.stderr
 
 
-def test_apply_defaults_the_minimum_to_the_quiz_target(tmp_path):
+def test_apply_moves_drops_to_the_backlog_and_clean_waits_for_it(tmp_path):
     topic_dir = setup(tmp_path)
-    (topic_dir / "review.json").write_text(json.dumps([{"ref": ref(1), "drop": True}]))
-    args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json"]
-    result = run(tmp_path, *args, "review.json")
-    assert "leaves fewer than 12" in result.stderr
+    (topic_dir / "review.json").write_text(
+        json.dumps([{"ref": ref(1), "drop": True, "reason": "near-duplicate of item 4"}])
+    )
+    args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json", "review.json"]
+    assert run(tmp_path, *args).returncode == 0
+    assert len(keys(topic_dir, "out.json")) == 11
+    (topic_dir / "out.json").unlink()
+    assert run(tmp_path, *args).returncode == 0  # a rerun doesn't list the item twice
+    backlog = json.loads((tmp_path / "subject" / "replace-backlog.json").read_text())
+    assert [(b["quiz"], b["stem"], b["reason"]) for b in backlog] == [
+        (QUIZ, "Stem number 1?", "near-duplicate of item 4")
+    ]
+    assert f"1 {TOPIC} › {QUIZ}" in run(tmp_path, "backlog").stdout
+    result = run(tmp_path, "clean")
+    assert result.returncode != 0 and "await replacement" in result.stderr
+    assert run(tmp_path, "backlog", "--clear").returncode == 0
+    assert run(tmp_path, "clean").returncode == 0
 
 
 def test_apply_refuses_a_choices_edit_without_answer(tmp_path):
@@ -230,7 +232,7 @@ def test_apply_refuses_a_choices_edit_without_answer(tmp_path):
     (topic_dir / "review.json").write_text(
         json.dumps([{"ref": ref(1), "edits": {"choices": ["w", "x", "y", "z"]}}])
     )
-    args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json", "--min", "1"]
+    args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json"]
     result = run(tmp_path, *args, "review.json")
     assert result.returncode != 0
     assert "must also send answer" in result.stderr
@@ -296,8 +298,6 @@ def test_ready_flags_an_item_edited_after_its_blind_solve(tmp_path):
             "batch.json",
             "--output",
             "final.json",
-            "--min",
-            "1",
             "edit.json",
         ).returncode
         == 0

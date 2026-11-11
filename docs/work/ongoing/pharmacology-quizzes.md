@@ -5,7 +5,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Work dir: `var/quiz-work/pharmacology/` (`blueprint.json` is the approved plan: 15 topics, 41 quizzes, 1,800 questions)
 - Sources: `~/Downloads/tn-pdfs/pharm/handouts/*.pdf`, extracted to `src/`. Blueprint `pages` refer to `src/main.txt` (main handout, raw `pdftotext`, form-feed pages; `main-layout.txt` is layout mode). `src/flashcards.txt` and `src/addendum.txt` (mnemonics) are part of the minimum coverage map.
 - Topics: the subject's 15 existing topics, all empty at the start. Topics with 2 quizzes target 50 each, topics with 3 or 4 target 40.
-- Session split (6 sessions): 1 General, Autonomic and Ophthalmic, Cardiovascular and Renal. 2 Autacoids and Respiratory, Neuropsychopharmacology, Anesthesia and Pain. 3 Hematology, Anti-Inflammatory and Rheumatologic, Endocrine and Reproductive. 4 Antibacterial, Antifungal/Antiviral/Antiparasitic. 5 Cancer, Gastrointestinal. 6 Immunopharmacology, Toxicology, then cleanup.
+- Sessions: one topic per session, in the order of the status table, then the replacement batch and cleanup.
 
 ## Decisions
 
