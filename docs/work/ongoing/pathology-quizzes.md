@@ -14,6 +14,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Septic shock pathogenesis in Inflammation; other shock in Hemodynamic. Leukocytosis types and leukemoid reaction in Hematolymphoid, not Inflammation. Hemostasis and thrombosis in Hemodynamic; bleeding disorders, HIT, TTP/HUS and DIC in Red Cells. APS in Immune.
 - Neoplasia owns paraneoplastic syndromes, general tumor markers and carcinogen mechanisms (HPV, EBV); organ topics own the organ lesions and germ cell marker profiles (Male Genital).
 - Vitamins in Environmental and Nutritional, except rickets/osteomalacia (Bones), B12/folate and iron anemias (Red Cells). Wernicke in Nutrition. Lead in Environmental.
+- Sturge-Weber diagnosis (port wine stain, leptomeningeal angioma, GNAQ) is staged in Blood Vessels (q752); CNS covers the other neurocutaneous syndromes and must not retest it.
 - Diabetic nephropathy in Endocrine; diabetic neuropathy in PNS; diabetic retinopathy in Eye. Hemangiomas and Kaposi in Blood Vessels. Mycosis fungoides and MALT lymphoma in Hematolymphoid.
 - The handout's post-test questions are not to be copied or paraphrased.
 
@@ -21,7 +22,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 
 Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>.md` per topic; rebuild from this section and the blueprint `excludes` in a new session.
 
-- Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines. Pathology is tested through pathogenesis, morphology (gross and microscopic buzzwords), markers and clinicopathologic correlation, mostly as short vignettes. Use current references: Robbins & Cotran Pathologic Basis of Disease (11th ed.), current WHO Classification of Tumours (5th ed.), AJCC 8th ed. staging, current consensus nomenclature (e.g. MASLD, pituitary neuroendocrine tumor, IDH-based glioma classification).
+- Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines. Pathology is tested through pathogenesis, morphology (gross and microscopic buzzwords), markers and clinicopathologic correlation, mostly as short vignettes. Use current references: Robbins & Cotran Pathologic Basis of Disease (11th ed.), current WHO Classification of Tumours (5th ed.), AJCC 8th ed. staging, current consensus nomenclature (e.g. MASLD, pituitary neuroendocrine tumor, IDH-based glioma classification, WHO-HAEM5 names such as "extranodal NK/T-cell lymphoma" without "nasal type").
 - Do not test superseded classifications kept in the handout as current (e.g. pre-2021 CNS tumor names, "NAFLD") except as "formerly called".
 - Besides the brief's `source-<n>.txt`, grep `var/quiz-work/pathology/src/flashcards.txt`, `src/buzzwords.txt` and `src/atlas.txt` for your quiz's entities and cover their tested points.
 
@@ -34,13 +35,13 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Hemodynamic Disorders | staged 2026-11-11 (q712 to q713, 79; 1 in backlog) |
 | Genetic Disorders | staged 2026-11-11 (q716 to q717, 80; 0 in backlog) |
 | Immune System Disorders | staged 2026-11-11 (q722 to q723, 79; 1 in backlog) |
-| Neoplasia | |
-| Infectious Disease Pathology | |
-| Environmental and Nutritional Pathology | |
-| Infancy and Childhood | |
-| Blood Vessels | |
-| Heart | |
-| Hematolymphoid Neoplasia | |
+| Neoplasia | staged 2026-11-11 (q730 to q731, 80; 0 in backlog) |
+| Infectious Disease Pathology | staged 2026-11-11 (q736 to q737, 80; 0 in backlog) |
+| Environmental and Nutritional Pathology | staged 2026-11-11 (q740 to q741, 80; 0 in backlog) |
+| Infancy and Childhood | staged 2026-11-11 (q747 to q748, 79; 1 in backlog) |
+| Blood Vessels | staged 2026-11-11 (q751 to q752, 80; 0 in backlog) |
+| Heart | staged 2026-11-12 (q758 to q759, 80; 0 in backlog) |
+| Hematolymphoid Neoplasia | staged 2026-11-12 (q762 to q763, 80; 0 in backlog) |
 | Red Cells and Hemostasis | |
 | Lung and Pleura | |
 | Head and Neck | |

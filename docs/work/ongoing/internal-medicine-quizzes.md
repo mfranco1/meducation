@@ -5,7 +5,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Work dir: `var/quiz-work/internal-medicine/` (`blueprint.json` is the approved plan: 19 topics, 49 quizzes, 2,180 questions)
 - Sources: `~/Downloads/tn-pdfs/medicine/handouts/*.pdf`, extracted to `src/`. Blueprint `pages` refer to `src/main.txt` (main handout, raw `pdftotext`, form-feed pages; `main-layout.txt` is the same in layout mode). `src/buzzwords.txt` and `src/flashcards.txt` are part of the minimum coverage map.
 - Topics: the subject's 19 existing topics, all empty at the start. Topics with 2 quizzes target 50 each, topics with 3 or 4 target 40.
-- Sessions: one topic per session, in the order of the status table, then the replacement batch and cleanup.
+- Sessions: one topic per session, in the order of the status table, then the replacement batch and cleanup. All 19 topics are staged; next is the replacement batch (14 backlog items) and cleanup.
 
 ## Decisions
 
@@ -17,7 +17,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 
 Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>.md` per topic; rebuild from this section and the blueprint `excludes` in a new session.
 
-- Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines, adult internal medicine. Use current international guidelines (ACC/AHA, ESC, GOLD, GINA, KDIGO, ADA, IDSA, ACR/EULAR, AHA/ASA, WHO, CDC). Where a Philippine body sets national practice (DOH programs, NTP Manual of Procedures for TB, PSMID CAP and UTI guidelines, PSH/PHA hypertension, DOH HIV, rabies, dengue and malaria programs), use its current edition and name it in the stem or sources.
+- Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines, adult internal medicine. Patients in vignettes are adults (18 or older); no pediatric vignettes. Use current international guidelines (ACC/AHA, ESC, GOLD, GINA, KDIGO, ADA, IDSA, ACR/EULAR, AHA/ASA, WHO, CDC). Where a Philippine body sets national practice (DOH programs, NTP Manual of Procedures for TB, PSMID CAP and UTI guidelines, PSH/PHA hypertension, DOH HIV, rabies, dengue and malaria programs), use its current edition and name it in the stem or sources.
 - Current classifications only (e.g. Fourth Universal Definition of MI, current GOLD and GINA reports, KDIGO staging, Sepsis-3, ILAE 2017, DSM-5-TR). Never test a retired scheme kept in the handout.
 - Crossovers: adult diagnosis and medical management is the angle. An operative or pregnancy angle is allowed only when it is necessary and useful to an internist (e.g. when to refer for surgery, a chronic-disease drug that is unsafe in pregnancy), at most about 2 items per quiz, and never retesting a point already in Surgery or Obstetrics & Gynecology.
 - Besides the brief's `source-<n>.txt`, grep `var/quiz-work/internal-medicine/src/buzzwords.txt` and `src/flashcards.txt` for your quiz's entities and cover their tested points.
@@ -40,8 +40,8 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Endocrinology | staged 2026-11-11 (q710 to q711, 100) |
 | Thyroid, Pituitary and Adrenal Disorders | staged 2026-11-11 (q718 to q721, 159; 1 in backlog for Hypothyroidism, Thyroid Nodules and Cancer) |
 | Obesity, Lipid and Bone Disorders | staged 2026-11-11 (q728 to q729, 100) |
-| Rheumatology | |
-| Systemic Autoimmune and Rheumatic Disease | |
-| Allergology and Immunology | |
-| Neurology | |
-| Psychiatry | |
+| Rheumatology | staged 2026-11-11 (q738 to q739, 98; 2 in backlog: 1 Joint Evaluation, OA and RA, 1 Gout, Septic Arthritis and Spondyloarthritis) |
+| Systemic Autoimmune and Rheumatic Disease | staged 2026-11-11 (q742 to q743, 96; 4 in backlog: 1 Systemic Lupus Erythematosus, 3 Rheumatic Fever, Vasculitis and Connective Tissue Diseases) |
+| Allergology and Immunology | staged 2026-11-11 (q749 to q750, 98; 2 in backlog: 1 Anaphylaxis, Urticaria and Drug Allergy, 1 Allergic Rhinitis, Antiphospholipid Syndrome and Immunodeficiency) |
+| Neurology | staged 2026-11-12 (q755 to q757, 120) |
+| Psychiatry | staged 2026-11-12 (q764 to q765, 100) |

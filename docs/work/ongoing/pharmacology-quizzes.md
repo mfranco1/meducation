@@ -10,6 +10,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 ## Decisions
 
 - Ownership (each quiz's `excludes` has the full list): drug-specific poisonings stay with their class (organophosphates in Autonomic, digoxin in Cardiovascular, TCA and lithium in Neuropsychopharmacology, opioid overdose in Opioids, anticoagulant reversal in Hematology). Toxicology owns toxidromes, decontamination, acetaminophen, salicylate, iron and toxic alcohol poisoning, metals, gases and pesticides. Rheumatologic biologics and JAK inhibitors in DMARDs; transplant drugs, asthma biologics, MS drugs, complement inhibitors and thalidomide in Immunopharmacology; cancer antibodies and checkpoint inhibitors in Cancer. Hormonal cancer therapy in Sex Hormones. Prostaglandin uterotonics and misoprostol in Eicosanoids; oxytocin in Pituitary. Antiemetics in GI. Neuromuscular blockers in Anesthesia.
+- Philippine malaria: DOH AO 2009-0001 is still in force (artemether-lumefantrine first line), but DOH DM 2023-0128 made pyronaridine-artesunate second line, not quinine-doxycycline.
 - Never test FDA pregnancy letter categories (retired 2015); test the specific teratogen or current labeling.
 - Each topic's writer prompts get a "Topic boundary" block appended to the subject notes, built from the blueprint subtopics and `excludes`.
 
@@ -34,9 +35,9 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Hematology and Antithrombotic Pharmacology | staged 2026-11-11 (q706 to q707, 100) |
 | Anti-Inflammatory and Rheumatologic Pharmacology | staged 2026-11-11 (q714 to q715, 100) |
 | Endocrine and Reproductive Pharmacology | staged 2026-11-11 (q724 to q727, 160) |
-| Antibacterial and Antimycobacterial Pharmacology | |
-| Antifungal, Antiviral, and Antiparasitic Pharmacology | |
-| Cancer Pharmacology | |
-| Gastrointestinal Pharmacology | |
+| Antibacterial and Antimycobacterial Pharmacology | staged 2026-11-11 (q732 to q735, 157; 3 in backlog) |
+| Antifungal, Antiviral, and Antiparasitic Pharmacology | staged 2026-11-11 (q744 to q746, 120) |
+| Cancer Pharmacology | staged 2026-11-11 (q753 to q754, 99; 1 in backlog) |
+| Gastrointestinal Pharmacology | staged 2026-11-12 (q760 to q761, 99; 1 in backlog) |
 | Immunopharmacology | |
 | Toxicology and Antidotes | |
