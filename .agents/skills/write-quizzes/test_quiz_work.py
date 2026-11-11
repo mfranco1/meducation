@@ -126,11 +126,28 @@ def test_triage_escalates_blind_disagreements_not_writer_unverified_facts(tmp_pa
     assert escalated == {ref(3)}
 
 
+def test_triage_escalates_unverified_facts_when_a_quiz_has_more_than_five(tmp_path):
+    topic_dir = setup(tmp_path)
+    run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")
+    answer(topic_dir, "r1", keys(topic_dir))
+    (topic_dir / "brief-1.json").write_text(json.dumps({"quiz": {"name": QUIZ}}))
+    (topic_dir / "unverified-1.json").write_text(
+        json.dumps([{"item": n, "fact": f"fact {n}"} for n in range(1, 7)])
+    )
+    assert run(tmp_path, "check-blind", TOPIC, "--round", "r1").returncode == 0
+    run(tmp_path, "triage", TOPIC, "--batch", "batch.json", "--round", "r1")
+    escalated = json.loads((topic_dir / "escalated.json").read_text())
+    assert [e["ref"] for e in escalated] == [ref(n) for n in range(1, 7)]
+    assert escalated[0]["reasons"] == ["Writer could not verify: fact 1"]
+
+
 def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_accuracy_edits(
     tmp_path,
 ):
     topic_dir = setup(tmp_path)
-    (topic_dir / "escalated.json").write_text("[]")
+    (topic_dir / "escalated.json").write_text(
+        json.dumps([{"ref": ref(5), "reasons": ["Blind note: unclear"]}])
+    )
     (topic_dir / "review-standards.json").write_text(
         json.dumps(
             [
@@ -153,6 +170,12 @@ def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_acc
                     "edits": {"rationale": "Fixed arithmetic."},
                     "reason": "math",
                 },
+                {
+                    "ref": ref(5),
+                    "severity": "flaw",
+                    "edits": {"pearls": ["New."]},
+                    "reason": "pearl",
+                },
             ]
         )
     )
@@ -168,7 +191,7 @@ def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_acc
     assert [
         (e["ref"], e["proposed"])
         for e in json.loads((topic_dir / "escalated.json").read_text())
-    ] == [(ref(2), {"rationale": "Changed fact."})]
+    ] == [(ref(5), {"pearls": ["New."]}), (ref(2), {"rationale": "Changed fact."})]
     assert {r["ref"] for r in json.loads((topic_dir / "replace.json").read_text())} == {
         ref(3),
         ref(6),

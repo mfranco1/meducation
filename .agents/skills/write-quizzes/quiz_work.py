@@ -29,6 +29,7 @@ NESTED = {
     "metadata.questionType",
 }
 STANDARDS_SEVERITIES = {"flaw", "metadata", "correction"}
+UNVERIFIED_LIMIT = 5  # a quiz with more unverified facts sends those items to judgment
 STATUS_RANK = {"verified": 3, "summary-only": 2, "unconfirmed": 1, "blocked": 0}
 
 
@@ -326,6 +327,13 @@ def cmd_triage(work: Work, args) -> None:
     """Split items into the standards pass and the escalated set after the first blind round."""
     batch = work.batch(args.batch)
     log = work.log()
+    unverified = {}
+    for path in sorted(work.dir.glob("unverified-*.json")):
+        rows, brief = load(path), path.with_name(path.name.replace("unverified", "brief"))
+        if len(rows) > UNVERIFIED_LIMIT and brief.exists():
+            quiz = load(brief)["quiz"]["name"]
+            for row in rows:
+                unverified[SEP.join((work.topic, quiz, str(row["item"])))] = row["fact"]
     standards, escalated = [], []
     for ref, _, item in items_of(batch):
         solve = latest(log, ref, args.round)
@@ -344,6 +352,8 @@ def cmd_triage(work: Work, args) -> None:
             )
         if solve["note"]:
             why.append(f"Blind note: {solve['note']}")
+        if ref in unverified:
+            why.append(f"Writer could not verify: {unverified[ref]}")
         if why:
             escalated.append({"ref": ref, "reasons": why})
         else:
@@ -391,6 +401,14 @@ def cmd_route_standards(work: Work, args) -> None:
     replacing = {r["ref"] for r in replace}
     escalated = [e for e in escalated if e["ref"] not in replacing]
     kept = [e for e in kept if e["ref"] not in replacing]
+    # One reviewer per item: the judge gets standards edits on escalated items as proposals.
+    for entry in [e for e in kept if e["ref"] in known]:
+        target = next(e for e in escalated if e["ref"] == entry["ref"])
+        target["reasons"].append(
+            f"Standards reviewer also proposed ({entry['severity']}): {entry.get('reason', '')}"
+        )
+        target["proposed"] = {**entry.get("edits", {}), **target.get("proposed", {})}
+        kept.remove(entry)
     dump(work.dir / "review-standards.json", kept)
     dump(work.dir / "escalated.json", escalated)
     dump(

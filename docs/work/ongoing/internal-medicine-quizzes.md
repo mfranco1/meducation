@@ -32,9 +32,9 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Critical Care Medicine | staged 2026-11-11 (q664 to q665, 100) |
 | Infectious Diseases | staged 2026-11-11 (q666 to q667, 100) |
 | Enteric, Tropical and Zoonotic Infections | staged 2026-11-11 (q668 to q670, 120) |
-| Dermatology | |
-| Hematology | |
-| Oncology | |
+| Dermatology | staged 2026-11-11 (q673 to q674, 100) |
+| Hematology | staged 2026-11-11 (q678 to q680, 120) |
+| Oncology | staged 2026-11-11 (q681 to q682, 100) |
 | Gastroenterology | |
 | Nephrology | |
 | Endocrinology | |

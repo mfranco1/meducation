@@ -98,6 +98,12 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
     add('warning', 'Correct choice is much longer than the others.');
   if (item.choices.some((choice) => /\b(always|never|only|all|none)\b/i.test(choice)))
     add('warning', 'A choice uses an absolute word.');
+  const numbers = item.choices.map((choice) => choice.trim().match(/^[<>≤≥~]?\s*(-?\d[\d,]*(?:\.\d+)?)/)?.[1]);
+  if (numbers.every(Boolean)) {
+    const values = numbers.map((n) => Number(n!.replace(/,/g, '')));
+    if (values.some((value, index) => index > 0 && value < values[index - 1]))
+      add('warning', 'Numeric choices are not in ascending order.');
+  }
   if (/\b(EXCEPT|NOT|LEAST)\b/.test(item.stem)) add('warning', 'Stem uses a negative lead-in.');
   if (!item.stem.trim().endsWith('?')) add('warning', 'Stem does not end with a question mark.');
 
@@ -110,6 +116,13 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
   if (words < 70) add('warning', `Rationale is short (${words} words outside tables; aim for 70 to 140).`);
   if (words > 140) add('warning', `Rationale is long (${words} words outside tables; aim for 70 to 140).`);
   if (!/\*\*[^*\n]+\*\*/.test(rationale)) add('warning', 'Rationale has no bold text.');
+  else if (
+    !rationale
+      .trimStart()
+      .split(/\.\s|\n/)[0]
+      .includes('**')
+  )
+    add('warning', 'Rationale does not open with the bolded answer.');
   if (!/^\s*[-*] /m.test(rationale)) add('warning', 'Rationale has no bulleted list of the other choices.');
   const hasTable = /^\s*\|.*\|\s*$/m.test(rationale);
   if (questionType === 'Comparison' && !hasTable) add('warning', 'Comparison rationale has no table.');

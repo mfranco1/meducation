@@ -67,6 +67,17 @@ describe('quiz batch report', () => {
     expect(text).not.toContain('item 2 ("Terms one?"): Rationale refers');
   });
 
+  it('flags numeric choices out of order and rationales that do not open in bold', () => {
+    const text = run([
+      item('Unordered one?', { choices: ['0.60', '0.15', '1.67', '0.30'], rationale: 'Divide the AUCs. So **0.30**.' }),
+      item('Ordered one?', { choices: ['0.15', '0.30', '0.60', '1,200 mg'], rationale: 'It is **0.30**. More.' }),
+    ]).text;
+    expect(text).toContain('item 1 ("Unordered one?"): Numeric choices are not in ascending order.');
+    expect(text).toContain('item 1 ("Unordered one?"): Rationale does not open with the bolded answer.');
+    expect(text).not.toContain('item 2 ("Ordered one?"): Numeric');
+    expect(text).not.toContain('item 2 ("Ordered one?"): Rationale does not open');
+  });
+
   it('counts rationale length outside tables', () => {
     const words = (n: number) => Array(n).fill('word').join(' ');
     const table = `\n\n| A | B |\n| --- | --- |\n| ${words(100)} | x |`;
