@@ -46,7 +46,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Red Cells and Hemostasis | staged 2026-11-12 (q766 to q767, 79; 1 in backlog) |
 | Lung and Pleura | staged 2026-11-12 (q772 to q773, 78; 2 in backlog) |
 | Head and Neck | staged 2026-11-12 (q774 to q775, 97; 3 in backlog; Upper Airway quiz is 8% hard, ask for hard replacements) |
-| Gastrointestinal Tract | |
+| Gastrointestinal Tract | staged 2026-11-12 (q776 to q779, 4 quizzes of 40, 159; 1 in backlog) |
 | Liver, Gallbladder, and Pancreas | |
 | Kidney | |
 | Lower Urinary and Male Genital Tract | |
