@@ -44,6 +44,14 @@ export const faqs: (readonly [string, ReactNode])[] = [
     'If questions, answers or cards have changed, the app may ask you to restart the quiz or deck. Your saved session stays unchanged unless you confirm the restart.',
   ],
   [
+    'Where does the content come from?',
+    'All questions and flashcards are written and verified by the Meducation team. Each item is reviewed for accuracy before it is published.',
+  ],
+  [
+    'What references are used?',
+    'Content cites clinical practice guidelines and landmark trials where they apply. Items without an explicit citation are drawn from primary reference textbooks, including, but not limited to, Harrison’s, Robbins & Cotran, Schwartz’s, Nelson, and Williams.',
+  ],
+  [
     'How do I report a content mistake?',
     <>
       Message us on{' '}

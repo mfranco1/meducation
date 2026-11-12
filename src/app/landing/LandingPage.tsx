@@ -56,6 +56,8 @@ const helpFaq = (question: string) => faqs.find(([item]) => item === question)!;
 const landingFaqs = [
   ['Is it free?', 'Yes. Every quiz and flashcard deck is free to use.'],
   helpFaq('Where is my progress saved?'),
+  helpFaq('Where does the content come from?'),
+  helpFaq('What references are used?'),
   [
     'Can I use it on my phone?',
     'Yes. It works in any modern browser on phones, tablets and computers. Progress stays in the browser where you study.',
