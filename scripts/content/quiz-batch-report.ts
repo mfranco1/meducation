@@ -107,6 +107,10 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
   if (/\b(EXCEPT|NOT|LEAST)\b/.test(item.stem)) add('warning', 'Stem uses a negative lead-in.');
   if (!item.stem.trim().endsWith('?')) add('warning', 'Stem does not end with a question mark.');
 
+  const sources = item.rationaleMeta?.sources?.trim();
+  if (sources && !/(\.|doi:\S+|https?:\/\/\S+)$/.test(sources))
+    add('warning', `Source citation does not end with a period: "${sources.slice(-30)}".`);
+
   const rationale = item.rationale;
   const prose = rationale
     .split('\n')
@@ -128,7 +132,15 @@ function itemFindings({ item, where }: Entry, vocabulary: Vocabulary) {
     .trimStart()
     .split('\n')[0]
     .match(/\*\*(.+?)\*\*(?!\*)/)?.[1];
-  const named = opening ? item.choices.findIndex((choice) => plain(choice) === plain(opening)) : -1;
+  // The opening bold names a choice when it is that choice or starts with it as a phrase ("Group 3 medulloblastoma").
+  const names = (choice: string) => {
+    const [o, c] = [plain(opening ?? ''), plain(choice)];
+    return o.startsWith(c) && !/[a-z0-9]/.test(o[c.length] ?? '');
+  };
+  const named = item.choices.reduce(
+    (best, choice, i) => (names(choice) && (best < 0 || choice.length > item.choices[best].length) ? i : best),
+    -1,
+  );
   if (named >= 0 && 'ABCD'[named] !== item.answer)
     add('error', `Rationale opens with choice ${'ABCD'[named]} but the answer is ${item.answer}.`);
   if (!/^\s*[-*] /m.test(rationale)) add('warning', 'Rationale has no bulleted list of the other choices.');

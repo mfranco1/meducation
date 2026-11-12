@@ -9,6 +9,7 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | AHA/ACC (ahajournals, JACC) | 403 | The guideline's own PubMed Central copy (many are there), then the Web Archive raw form of the full-text page. ACC "Guidelines Made Simple" or pocket-guide PDFs for recommendation classes and thresholds |
 | AHA resuscitation (CPR, ECC) | | Guideline pages on cpr.heart.org subdomains |
 | 2025 AHA/ACC and 2024 ESC hypertension | Blocked everywhere | 2020 Philippine hypertension guideline (PMC8678709), NICE NG136 and NG133, or ADA Standards section 10; cite that body |
+| ESMO (Annals of Oncology guidelines) | 403, not open access | 2025 UK bone sarcoma guideline (Gerrand et al., Br J Cancer, PMC11723950) for bone sarcomas; otherwise an equivalent open guideline; cite that body |
 | ESC, ERS | 403 | PubMed Central copy, then society pocket-guide PDFs |
 | BTS | 403 | PDFs in the brit-thoracic.org.uk document library |
 | CDC STI treatment pages | Often refused | PubMed Central copy of the MMWR guideline |

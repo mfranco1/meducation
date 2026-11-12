@@ -24,6 +24,7 @@ Before the gate, check each item for the flaws reviewers fix most:
 - A distractor bullet that doesn't say what the choice fits.
 - A stem, rationale, table or pearl that gives away another item's answer (a stem naming the disease another item in the quiz keys).
 - A pearl that restates the rationale, or a rationale padded with repeated or filler sentences (add a distinguishing fact instead).
+- A rationale left garbled by your own fixes: a stray sentence after the distractor bullets, a sentence repeated or cut off. Reread every edited rationale whole.
 - Any fact, number or absolute claim ("only", "never", "most common", a percentage) in a rationale, table row, distractor bullet or pearl that the cited document or a standard textbook doesn't state.
 
 Then run the gate on your own batch:

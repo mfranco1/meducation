@@ -94,9 +94,26 @@ describe('quiz batch report', () => {
         choices: ['Alpha', '*Beta* gene', 'Gamma', 'Delta'],
         rationale: '**A *Beta* gene** fits.\n\n- **Gamma**: no.',
       }),
+      item('Phrase key one?', {
+        choices: ['Group 3', 'Group 4', 'WNT-activated', 'SHH-activated'],
+        answer: 'A',
+        rationale: '**Group 4 medulloblastoma** fits.\n\n- **Group 3**: no.',
+      }),
     ]);
     expect(report.text).toContain('item 1 ("Wrong key one?"): Rationale opens with choice C but the answer is B.');
-    expect(report.errors).toBe(1);
+    expect(report.text).toContain('item 3 ("Phrase key one?"): Rationale opens with choice B but the answer is A.');
+    expect(report.errors).toBe(2);
+  });
+
+  it('flags a source citation without a closing period unless it ends with a DOI', () => {
+    const report = run([
+      item('First stem here?', { rationaleMeta: { sources: 'WHO. *Guideline*. WHO; 2020' } }),
+      item('Second stem differs?', {
+        rationaleMeta: { sources: 'WHO. *Guide*. WHO; 2020; Doe J. Title. *J Med*. 2021. doi:10.1/x' },
+      }),
+    ]);
+    expect(report.text).toContain('item 1 ("First stem here?"): Source citation does not end with a period');
+    expect(report.text).not.toContain('item 2 ("Second stem differs?"): Source citation');
   });
 
   it('counts rationale length outside tables', () => {

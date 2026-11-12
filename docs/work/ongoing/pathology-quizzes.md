@@ -15,9 +15,10 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Septic shock pathogenesis in Inflammation; other shock in Hemodynamic. Leukocytosis types and leukemoid reaction in Hematolymphoid, not Inflammation. Hemostasis and thrombosis in Hemodynamic; bleeding disorders, HIT, TTP/HUS and DIC in Red Cells. APS in Immune.
 - Neoplasia owns paraneoplastic syndromes, general tumor markers and carcinogen mechanisms (HPV, EBV); organ topics own the organ lesions and germ cell marker profiles (Male Genital).
 - Vitamins in Environmental and Nutritional, except rickets/osteomalacia (Bones), B12/folate and iron anemias (Red Cells). Wernicke in Nutrition. Lead in Environmental.
-- Sturge-Weber diagnosis (port wine stain, leptomeningeal angioma, GNAQ) is staged in Blood Vessels (q752); CNS covers the other neurocutaneous syndromes and must not retest it.
+- Sturge-Weber diagnosis (port wine stain, leptomeningeal angioma, GNAQ) is staged in Blood Vessels (q752). CNS (q811) uses "NF2-related schwannomatosis" (2022 consensus name); Eye must not retest CNS tumor or neurocutaneous points.
 - Female genital: HPV-based post-treatment surveillance, cervical spread and hydronephrosis in Vulva/Cervix; endometrial hyperplasia in Uterine Corpus; theca lutein cysts and gestational choriocarcinoma in Pregnancy; PCOS named as PCOS with PMOS (2026) as the new name in transition.
 - Breast: fat necrosis as a necrosis pattern stays in Cell Injury; ALH and ADH risk in Benign, DCIS, LCIS and E-cadherin in Carcinoma; male breast cancer in Benign.
+- Endocrine: Cushing disease tumor morphology in Pituitary; MEN syndromes and RET germline testing in Adrenal/MEN; medullary carcinoma as a tumor in Thyroid.
 - Diabetic nephropathy in Endocrine; diabetic neuropathy in PNS; diabetic retinopathy in Eye. Hemangiomas and Kaposi in Blood Vessels. Mycosis fungoides and MALT lymphoma in Hematolymphoid.
 - The handout's post-test questions are not to be copied or paraphrased.
 
@@ -25,7 +26,7 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 
 Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>.md` per topic; rebuild from this section and the blueprint `excludes` in a new session.
 
-- Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines. Pathology is tested through pathogenesis, morphology (gross and microscopic buzzwords), markers and clinicopathologic correlation, mostly as short vignettes. Use current references: Robbins & Cotran Pathologic Basis of Disease (11th ed.), current WHO Classification of Tumours (5th ed.), AJCC 8th ed. staging, current consensus nomenclature (e.g. MASLD, pituitary neuroendocrine tumor, IDH-based glioma classification, WHO-HAEM5 names such as "extranodal NK/T-cell lymphoma" without "nasal type").
+- Audience: Philippine Physician Licensure Exam (PLE) and new physicians in the Philippines. Pathology is tested through pathogenesis, morphology (gross and microscopic buzzwords), markers and clinicopathologic correlation, mostly as short vignettes. Use current references: Robbins & Cotran Pathologic Basis of Disease (11th ed.), current WHO Classification of Tumours (5th ed.; Soft Tissue and Bone 6th ed., 2026, see currency-notes.md), AJCC 8th ed. staging, current consensus nomenclature (e.g. MASLD, pituitary neuroendocrine tumor, IDH-based glioma classification, WHO-HAEM5 names such as "extranodal NK/T-cell lymphoma" without "nasal type").
 - Do not test superseded classifications kept in the handout as current (e.g. pre-2021 CNS tumor names, "NAFLD") except as "formerly called".
 - Besides the brief's `source-<n>.txt`, grep `var/quiz-work/pathology/src/flashcards.txt`, `src/buzzwords.txt` and `src/atlas.txt` for your quiz's entities and cover their tested points.
 
@@ -54,9 +55,9 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Lower Urinary and Male Genital Tract | staged 2026-11-12 (q788 to q789, 98; 2 in backlog) |
 | Female Genital Tract and Gestational Disease | staged 2026-11-12 (q790 to q793, 4 quizzes of 40, 158; 2 in backlog) |
 | Breast | staged 2026-11-12 (q794 to q795, 97; 3 in backlog) |
-| Endocrine System | |
-| Skin | |
-| Bones, Joints, and Soft Tissue | |
-| Peripheral Nerves and Skeletal Muscle | |
-| Central Nervous System | |
+| Endocrine System | staged 2026-11-12 (q796 to q799, 4 quizzes of 40, 157; 3 in backlog; Thyroid quiz is 16% hard, ask for hard replacements) |
+| Skin | staged 2026-11-12 (q800 to q801, 98; 2 in backlog; Inflammatory quiz is 12% hard, ask for a hard replacement) |
+| Bones, Joints, and Soft Tissue | staged 2026-11-12 (q802 to q804, 3 quizzes of 40, 117; 3 in backlog; Joint quiz is 13% hard, ask for hard replacements) |
+| Peripheral Nerves and Skeletal Muscle | staged 2026-11-12 (q805 to q806, 98; 2 in backlog) |
+| Central Nervous System | staged 2026-11-12 (q807 to q811, 5 quizzes of 30, 148; 2 in backlog; Cerebrovascular and Infections are 10% hard, ask for a hard replacement in Cerebrovascular) |
 | Eye | |
