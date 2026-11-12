@@ -39,5 +39,5 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Antifungal, Antiviral, and Antiparasitic Pharmacology | staged 2026-11-11 (q744 to q746, 120) |
 | Cancer Pharmacology | staged 2026-11-11 (q753 to q754, 99; 1 in backlog) |
 | Gastrointestinal Pharmacology | staged 2026-11-12 (q760 to q761, 99; 1 in backlog) |
-| Immunopharmacology | |
+| Immunopharmacology | staged 2026-11-12 (q768 to q769, 99; 1 in backlog) |
 | Toxicology and Antidotes | |

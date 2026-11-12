@@ -530,6 +530,9 @@ def cmd_apply(work: Work, args) -> None:
                     kept.append(item)
                     renumber[ref] = SEP.join((topic["name"], quiz["name"], str(len(kept))))
             quiz["items"] = kept
+        # A replacement batch has one item per quiz, so a drop can empty a quiz.
+        topic["quizzes"] = [q for q in topic["quizzes"] if q["items"]]
+    batch["topics"] = [t for t in batch["topics"] if t["quizzes"]]
     # Drops renumber the items after them; rewritten refs name items in the output batch.
     rewritten = [renumber[r] for r in rewritten if r in renumber]
     dump(out_path, batch)

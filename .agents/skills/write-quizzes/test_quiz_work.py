@@ -382,3 +382,11 @@ def test_concurrent_ledger_runs_for_two_subjects_keep_both_entries(tmp_path):
     assert all(p.wait() == 0 for p in procs)
     titles = {e["title"] for e in json.loads((tmp_path / "sources.json").read_text())}
     assert titles == {"alpha guideline", "beta guideline"}
+
+
+def test_apply_leaves_out_a_quiz_that_its_drops_empty(tmp_path):
+    topic_dir = setup(tmp_path, count=1)
+    (topic_dir / "review.json").write_text(json.dumps([{"ref": ref(1), "drop": True, "reason": "dup"}]))
+    args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json", "review.json"]
+    assert run(tmp_path, *args).returncode == 0
+    assert json.loads((topic_dir / "out.json").read_text())["topics"] == []

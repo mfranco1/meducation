@@ -144,7 +144,7 @@ When every topic in scope is staged, write the replacement backlog as one batch.
 2. Spawn one replacement writer (mid tier) with [prompts/replace.md](prompts/replace.md). It writes one new item per backlog entry into `<work>/replacements/batch.json`, under the entry's topic and quiz names.
 3. Run the gate on that batch and ignore its size warnings. Check each new item against `stems.txt` and the blueprint's `excludes`.
 4. Blind-solve it like a topic named `replacements`: `Q blind replacements --batch batch.json --round initial`, `check-blind`, then `triage`. Send any escalated item to the judge, apply and recheck as in step 5. Run `Q ready replacements` on the final batch.
-5. Stage the batch. Staging adds the items to their existing quizzes by name. Refresh the outline to confirm the quizzes are back at their targets, then run `Q backlog --clear`.
+5. Stage the batch. Staging adds the items to their existing quizzes by name. Refresh the outline to confirm the quizzes are back at their targets, then run `Q backlog --clear`. If the review dropped a replacement, the backlog also holds that drop: save it first, restore it after the clear (one entry per quiz still short, with the earlier entry's reason appended), move `replacements/` aside and repeat this step for it.
 
 Then run `clean`. It refuses while the backlog has entries. It merges any remaining source records into the shared ledger, then deletes the work dir except `blueprint.json` (the coverage map for later expansion or revision). That removes briefs, batches, blind rounds, review files, the outline, the staged stems and any copied source text. Make the last lessons pass below, then delete the tracker in `docs/work/ongoing/`.
 

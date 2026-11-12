@@ -42,7 +42,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Blood Vessels | staged 2026-11-11 (q751 to q752, 80; 0 in backlog) |
 | Heart | staged 2026-11-12 (q758 to q759, 80; 0 in backlog) |
 | Hematolymphoid Neoplasia | staged 2026-11-12 (q762 to q763, 80; 0 in backlog) |
-| Red Cells and Hemostasis | |
+| Red Cells and Hemostasis | staged 2026-11-12 (q766 to q767, 79; 1 in backlog) |
 | Lung and Pleura | |
 | Head and Neck | |
 | Gastrointestinal Tract | |
