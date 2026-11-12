@@ -22,7 +22,7 @@ You run one of two passes on separate sets of items:
   - Defensible choice or blind note: make one answer clearly best (checks 1 and 4). This rarely needs a lookup.
   - Standards reviewer flag: check the named fact (checks 2 and 3). The item's `proposed` field holds the reviewer's suggested edits, if any. Send them as your edits when the fact checks out, revise them, or leave the item unchanged.
 
-  Don't re-verify the item's other guideline facts unless you think one is wrong; the writer already checked them. Checks 4 to 8 need no web. Read the source ledger first: use the facts it marks `verified` without fetching them again, don't retry documents it marks `blocked`, and search only for what it lacks. Record what you check in the sources file you are given.
+  Don't re-verify the item's other guideline facts unless you think one is wrong; the writer already checked them. Checks 4 to 8 need no web. Check the source ledger first (`ledger --find`, see [item-standards.md](item-standards.md#accuracy-and-currency)): use the facts it marks `verified` without fetching them again, don't retry documents it marks `blocked`, and search only for what it lacks. Record what you check in the sources file you are given.
 
 For each item, check:
 

@@ -583,8 +583,39 @@ def cmd_ready(work: Work, args) -> None:
     print("Ready to stage.")
 
 
+FIND_FULL, FIND_TITLES = 8, 40  # past FIND_FULL matches, list titles only
+
+
+def find_sources(path: Path, terms: list[str]) -> None:
+    """Print the ledger entries that contain every term, newest first."""
+    terms = [t.lower() for t in terms]
+    hits = [
+        e
+        for e in (load(path) if path.exists() else [])
+        if all(t in json.dumps(e, ensure_ascii=False).lower() for t in terms)
+    ]
+    hits.sort(key=lambda e: str(e.get("year", "")), reverse=True)
+    full = len(hits) <= FIND_FULL
+    for e in hits[:FIND_TITLES]:
+        print(f"{e['status']} {e.get('year', '')} {e['title']}")
+        if full:
+            print(f"  {e.get('url', '')}")
+            print("".join(f"  - {f}\n" for f in e.get("facts", [])), end="")
+    if not hits:
+        print("No matching sources.")
+    elif not full:
+        print(f"{len(hits)} matches. Add a term from the title you need to see its URL and facts.")
+
+
 def cmd_ledger(work: Work, args) -> None:
-    """Merge every topic's sources-<n>.json into the shared ledger, WORK/../sources.json."""
+    """Merge every topic's sources-<n>.json into the shared ledger, WORK/../sources.json; --find TERM... looks entries up."""
+    if args.find:
+        find_sources(work.ledger, args.find)
+    else:
+        merge_ledger(work)
+
+
+def merge_ledger(work: Work) -> None:
     path = work.ledger
     path.parent.mkdir(parents=True, exist_ok=True)
     # Sessions for other subjects share this ledger; hold the lock across read, merge and write.
@@ -636,7 +667,7 @@ def cmd_clean(work: Work, args) -> None:
             f"{len(work.backlog())} dropped items still await replacement; "
             "write and stage them, then run backlog --clear."
         )
-    cmd_ledger(work, args)
+    merge_ledger(work)
     removed = []
     for path in sorted(work.root.iterdir()):
         if path.name in KEEP:
@@ -680,6 +711,8 @@ def main() -> None:
             p.add_argument("reviews", nargs="+")
         if name == "accept":
             p.add_argument("refs", nargs="+")
+        if name == "ledger":
+            p.add_argument("--find", nargs="+", metavar="TERM")
         if name == "backlog":
             p.add_argument("--clear", action="store_true")
         p.set_defaults(fn=fn)

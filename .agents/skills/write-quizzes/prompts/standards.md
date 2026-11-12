@@ -10,6 +10,6 @@ Write TOPICDIR/review-standards-N.json and TOPICDIR/standards-escalate-N.json in
 
 Use your own scratchpad subfolder SCRATCH under SCRATCHPAD for helpers.
 
-Escalate every fact you doubt or can't confirm from the ledger (an old circular, a dose, a threshold); never mention one only in your summary, because the summary isn't routed.
+Escalate every fact you doubt or can't confirm from the ledger, such as an old circular, a dose or a threshold (look entries up with `ledger --find`, command in item-standards.md); never mention one only in your summary, because the summary isn't routed.
 
 Return only the one-line severity count summary and the number of escalations.

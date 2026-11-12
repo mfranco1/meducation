@@ -21,6 +21,8 @@ Ask only for what isn't given or inferable:
 ## Files
 
 - [item-standards.md](item-standards.md): how to write an item. Every writer and reviewer reads it.
+- [currency-notes.md](currency-notes.md): retired names, schemes and editions that sources still use, with the current form.
+- [fetch-access.md](fetch-access.md): sites that refuse automated fetches and the route that loads instead. Writers and the judge use it.
 - [review-rubric.md](review-rubric.md): the reviewers' procedures and output formats.
 - [quiz_work.py](quiz_work.py): briefs, merging, blind rounds, triage, routing, applying edits, the replacement backlog, the stage check and the source ledger. `--help` on each command.
 - [metadata.md](metadata.md) and [vocabulary.json](vocabulary.json): metadata fields and allowed values.
@@ -44,7 +46,8 @@ Q judge-input "<Topic>" --batch batch.json --round initial
 Q apply "<Topic>" --batch batch.json --output reviewed.json review-standards.json review-judgment.json review-drops.json
 Q accept "<Topic>" --batch reviewed.json "<ref>"   # judged as is: a recheck disagreement where the key is clearly right
 Q ready "<Topic>" --batch reviewed.json
-Q ledger
+Q ledger                                # merge the topics' sources-<n>.json into the shared ledger
+Q ledger --find <term>...               # ledger entries containing every term, newest first
 Q backlog [--clear]                     # dropped items awaiting replacement, per quiz
 Q clean                                 # after the whole scope is staged
 .venv/bin/python scripts/local-authoring/job.py stage-quizzes --subject "<Subject>" --file <work>/<topic>/reviewed.json --actor agent:write-quizzes
@@ -94,7 +97,14 @@ Show the user the coverage summary (topics, quizzes, targets) and wait for appro
 
 ### 3. Write
 
-Run `slices` for the topic, and rerun it right before spawning each writer: `stems.txt` is a snapshot, and writers started before another topic's batches existed retested its points. When topics share drugs or entities (adrenergic blockers and antihypertensives), don't start the later topic's writer until the earlier topic's overlapping quiz is written. Each brief names the quiz, its subtopics and `excludes`, the other planned quizzes, the stems file, the ledger, its source pages and the output paths. Spawn each writer with [prompts/writer.md](prompts/writer.md). If a quiz draws on sources other than `src/main.txt`, name those files and page ranges in `SUBJECT_NOTES`. Quizzes of the same topic overlap most, so give each writer in `SUBJECT_NOTES` the topic's boundary: which shared points (enzymes, drugs, disorders) each quiz owns, and every tracker ownership decision that gives an entity fitting its subtopics to another topic (Sturge-Weber to CNS, not vascular tumors). For a topic that builds on earlier ones (integration, inborn errors, clinical genetics), grep `stems.txt` for its key terms yourself and list the specific staged points in `SUBJECT_NOTES` as "already staged, don't retest: ..."; writers given only keywords to grep left a third of a quiz as near-duplicates. Tell an integration writer that a classic single-organism vignette phrased as a syndrome (eschar in a hide handler, raw oysters in cirrhosis) is still a near-duplicate of that organism's quiz. Where the schedule allows, start a topic's later quiz after an earlier one is written and tell its writer to read that `batch-<n>.json` first. Writers run on the mid tier at low effort (see [Models](#models)).
+Spawn each writer with [prompts/writer.md](prompts/writer.md), on the mid tier at low effort (see [Models](#models)). Each brief names the quiz, its subtopics and `excludes`, the other planned quizzes, the stems file, the ledger, its source pages and the output paths.
+
+- **Fresh stems.** Run `slices` for the topic, and rerun it right before spawning each writer: `stems.txt` is a snapshot, and writers started before another topic's batches existed retested its points.
+- **Shared entities across topics.** When topics share drugs or entities (adrenergic blockers and antihypertensives), don't start the later topic's writer until the earlier topic's overlapping quiz is written.
+- **Other sources.** If a quiz draws on sources other than `src/main.txt`, name those files and page ranges in `SUBJECT_NOTES`.
+- **Topic boundary.** Quizzes of the same topic overlap most, so give each writer in `SUBJECT_NOTES` the topic's boundary: which shared points each quiz owns, and every tracker ownership decision that gives an entity fitting its subtopics to another topic (Sturge-Weber to CNS, not vascular tumors).
+- **Building topics.** For a topic that builds on earlier ones (integration, clinical genetics), grep `stems.txt` for its key terms yourself and list the specific staged points in `SUBJECT_NOTES` as "already staged, don't retest: ..."; writers given only keywords to grep left a third of a quiz as near-duplicates. Tell an integration writer that a classic single-organism vignette phrased as a syndrome (eschar in a hide handler) is still a near-duplicate of that organism's quiz.
+- **Sequencing.** Where the schedule allows, start a topic's later quiz after an earlier one is written and tell its writer to read that `batch-<n>.json` first.
 
 Writers verify guideline-dependent facts in the primary document as [item-standards.md](item-standards.md#accuracy-and-currency) describes. They read the ledger first, record each guideline check in their `sources-<n>.json`, and list the guideline-dependent facts they couldn't confirm in `unverified-<n>.json`. Without web access, they list those facts for the user to verify instead of guessing.
 
@@ -153,6 +163,6 @@ Then run `clean`. It refuses while the backlog has entries. It merges any remain
 Later runs depend on what this run learned. Lessons go into the skill, not into the tracker, because the tracker is deleted at the end.
 
 - **Tracker** (`docs/work/ongoing/<subject>-quizzes.md`, under about 60 lines): work dir, scope, decisions that apply only to this subject (sizing exceptions, deconfliction rules, page conventions, session split), subject notes for `SUBJECT_NOTES`, and status per topic. Update the status after each topic is staged, with the number of its items in the replacement backlog.
-- **After each topic is staged**, read the severities and reasons in the review files and the issues you fixed by hand. When the same mistake shows up in about 3 or more items, or a workaround was needed, fix it at the source. Put deterministic checks in the gate or `quiz_work.py`, writing rules in `item-standards.md` or `prompts/writer.md`, review rules in `review-rubric.md` or the reviewer's prompt, and orchestration steps in this file.
+- **After each topic is staged**, read the severities and reasons in the review files and the issues you fixed by hand. When the same mistake shows up in about 3 or more items, or a workaround was needed, fix it at the source. Put deterministic checks in the gate or `quiz_work.py`, writing rules in `item-standards.md` or `prompts/writer.md`, review rules in `review-rubric.md` or the reviewer's prompt, and orchestration steps in this file. Lookups go in their own files, one row per entry: retired terms and editions in `currency-notes.md`, and site access routes in `fetch-access.md` (edit the site's existing row).
 - **At the end of each session and before deleting the tracker**, move anything in the tracker that would help another subject into the skill, and tell the user what changed in the skill.
-- Edit the existing line or section a lesson belongs to. Don't add a lessons log, and remove rules that no longer apply. Sessions for other subjects may edit the same files: re-read a file right before editing it, and merge with a similar rule already there instead of adding a second one.
+- Edit the existing line or section a lesson belongs to. Don't add a lessons log, and remove rules that no longer apply. Keep one example per rule: when a new example fits a rule better, replace the old one instead of adding it. Sessions for other subjects may edit the same files: re-read a file right before editing it, and merge with a similar rule already there instead of adding a second one.

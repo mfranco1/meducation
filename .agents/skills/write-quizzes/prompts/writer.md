@@ -17,7 +17,14 @@ SUBJECT_NOTES
 
 Output: the editor's bulk-add JSON (batch shape in .agents/skills/write-quizzes/SKILL.md, step 3), one topic with one quiz, using the names and descriptions from the brief.
 
-Before the gate, check each item for the flaws reviewers fix most: a distractor bullet that doesn't say what the choice fits, a key longer or more qualified than the distractors, a stem that states the answer or its defining clue (naming the drug asked for, a key that repeats a drug the stem names, a stem stating the target that identifies the drug such as VEGFR2 or BTK inhibition, esterase metabolism for remifentanil, train-of-four fade for a nondepolarizing block), a distractor no partly prepared learner would pick, a partly true distractor (dual nerve or arterial supply), a stem, rationale, table or pearl that gives away another item's answer (a stem naming the disease another item in the quiz keys, such as "a patient with Takayasu arteritis"), a pearl that restates the rationale, a rationale padded to the word count with repeated or filler sentences (add a distinguishing fact instead), and any fact, number or absolute claim ("only", "never", "minimal", "most common", a percentage) in a rationale, table row, distractor bullet or pearl that the cited document or a standard textbook doesn't state.
+Before the gate, check each item for the flaws reviewers fix most:
+- A stem that states the answer or its defining clue (the target that identifies the drug asked for, such as BTK inhibition), or a key that repeats a term the stem names.
+- A key longer or more qualified than the distractors.
+- A distractor no partly prepared learner would pick, or one that is partly true (dual nerve or arterial supply).
+- A distractor bullet that doesn't say what the choice fits.
+- A stem, rationale, table or pearl that gives away another item's answer (a stem naming the disease another item in the quiz keys).
+- A pearl that restates the rationale, or a rationale padded with repeated or filler sentences (add a distinguishing fact instead).
+- Any fact, number or absolute claim ("only", "never", "most common", a percentage) in a rationale, table row, distractor bullet or pearl that the cited document or a standard textbook doesn't state.
 
 Then run the gate on your own batch:
   npm run report:quiz-batch -- BATCH --outline WORK/outline.json --blueprint WORK/blueprint.json
@@ -25,6 +32,6 @@ Clear every error and every applicable warning. The common misses: Recall above 
 
 Use your own scratchpad subfolder SCRATCH under SCRATCHPAD for helper scripts. Write nowhere else except your output paths.
 
-Verify every guideline-dependent fact on the web before you return, as item-standards.md describes. "Written from memory" is never a reason to list a fact as unverified: list it only after the primary text couldn't be reached.
+Verify every guideline-dependent fact on the web before you return, as item-standards.md describes. When a page refuses the fetch, look up its site in .agents/skills/write-quizzes/fetch-access.md before trying anything else. "Written from memory" is never a reason to list a fact as unverified: list it only after the primary text couldn't be reached.
 
 Return only a short summary: item count, letter and difficulty spread, remaining gate warnings, the number of guideline facts verified on the web, the number of unverified facts, and how many items cover points found only in the extra source files the subject notes name. Do not return the items.

@@ -390,3 +390,20 @@ def test_apply_leaves_out_a_quiz_that_its_drops_empty(tmp_path):
     args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json", "review.json"]
     assert run(tmp_path, *args).returncode == 0
     assert json.loads((topic_dir / "out.json").read_text())["topics"] == []
+
+
+def test_ledger_find_prints_entries_matching_every_term_newest_first(tmp_path):
+    setup(tmp_path)
+    (tmp_path / "sources.json").write_text(
+        json.dumps(
+            [
+                {"title": "KDIGO AKI", "year": "2012", "url": "u1", "status": "verified", "facts": ["Stages by creatinine"]},
+                {"title": "KDIGO CKD", "year": "2024", "url": "u2", "status": "verified", "facts": ["Refer below eGFR 30"]},
+                {"title": "ESC hypertension", "year": "2024", "url": "u3", "status": "blocked", "facts": []},
+            ]
+        )
+    )
+    out = run(tmp_path, "ledger", "--find", "kdigo", "creatinine").stdout
+    assert "KDIGO AKI" in out and "Stages by creatinine" in out and "CKD" not in out
+    out = run(tmp_path, "ledger", "--find", "KDIGO").stdout
+    assert out.index("KDIGO CKD") < out.index("KDIGO AKI")
