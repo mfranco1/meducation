@@ -72,6 +72,7 @@ interface QuestionNavigatorProps {
   filterSet?: QuestionNavigatorFilterSet;
   finishLabel: string;
   onFinish: () => void;
+  onLeave?: () => void;
 }
 
 export function QuestionNavigator({
@@ -85,6 +86,7 @@ export function QuestionNavigator({
   filterSet = 'quiz',
   finishLabel,
   onFinish,
+  onLeave,
 }: QuestionNavigatorProps) {
   const items = questionNavigationItems(questions, attempt, revealAnswers);
   const visibleItems = filterQuestionNavigationItems(items, filter);
@@ -149,9 +151,16 @@ export function QuestionNavigator({
           </StudyNavigatorEmpty>
         )}
       </Box>
-      <Button variant="contained" fullWidth onClick={onFinish}>
-        {finishLabel}
-      </Button>
+      <Stack direction="row" spacing={1}>
+        {onLeave && (
+          <Button variant="outlined" fullWidth onClick={onLeave}>
+            Leave
+          </Button>
+        )}
+        <Button variant="contained" fullWidth onClick={onFinish}>
+          {finishLabel}
+        </Button>
+      </Stack>
     </Stack>
   );
 }

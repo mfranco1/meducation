@@ -132,18 +132,33 @@ export function ProgressBackupDialog({ controller }: { controller: ProgressBacku
                   ) : (
                     <Typography>Some saved progress could not be read. Resetting clears it.</Typography>
                   )}
-                  <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-                    <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                      Download a backup first if you might want this progress later
-                    </Typography>
+                  <Box
+                    component="section"
+                    aria-labelledby="progress-reset-download"
+                    sx={{
+                      display: 'flex',
+                      flexDirection: { xs: 'column', sm: 'row' },
+                      alignItems: { xs: 'flex-start', sm: 'center' },
+                      justifyContent: 'space-between',
+                      gap: 1.5,
+                    }}
+                  >
+                    <Box>
+                      <Typography id="progress-reset-download" variant="subtitle1">
+                        Download backup
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                        You might want this progress restored later
+                      </Typography>
+                    </Box>
                     <Button
-                      size="small"
+                      variant="outlined"
                       onClick={controller.download}
                       disabled={controller.busy || locked || !files.download}
                     >
-                      Download backup
+                      Download
                     </Button>
-                  </Stack>
+                  </Box>
                 </>
               )}
               {messages}

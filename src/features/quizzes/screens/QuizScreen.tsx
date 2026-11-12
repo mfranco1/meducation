@@ -125,6 +125,10 @@ export function QuizScreen({
         setNavigatorOpen(false);
         requestSubmit();
       }}
+      onLeave={() => {
+        setNavigatorOpen(false);
+        onRequestExit();
+      }}
     />
   );
 
