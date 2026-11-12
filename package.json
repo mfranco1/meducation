@@ -25,7 +25,10 @@
     "icons": "tsx --tsconfig tsconfig.app.json scripts/branding/icons.ts"
   },
   "lint-staged": {
-    "*": "prettier --check --ignore-unknown"
+    "{src,scripts,e2e}/**/*.{ts,tsx,mjs}": "eslint --fix",
+    "{eslint,vite,playwright,playwright.admin}.config.{ts,mjs}": "eslint --fix",
+    "{backend,scripts}/**/*.py": ".venv/bin/ruff check --fix",
+    "*": "prettier --write --ignore-unknown"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
