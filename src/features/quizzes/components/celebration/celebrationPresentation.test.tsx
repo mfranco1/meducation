@@ -62,6 +62,18 @@ describe('celebration overlay', () => {
     expect(onComplete).toHaveBeenCalledOnce();
   });
 
+  it('shows milestone pips for streaks but not for the perfect test', () => {
+    const overlay = (variant: 'streak' | 'perfect') => (
+      <ThemeProvider theme={theme}>
+        <CelebrationOverlay open title="Title" message="Message" variant={variant} level={5} />
+      </ThemeProvider>
+    );
+    const { rerender } = render(overlay('streak'));
+    expect(screen.getByTestId('milestone-pips').children).toHaveLength(5);
+    rerender(overlay('perfect'));
+    expect(screen.queryByTestId('milestone-pips')).toBeNull();
+  });
+
   it('starts fresh after closing and reopening, including during preparation', () => {
     vi.useFakeTimers();
     const onComplete = vi.fn();

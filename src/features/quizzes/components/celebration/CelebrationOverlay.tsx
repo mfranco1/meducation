@@ -1,11 +1,11 @@
 import { keyframes } from '@emotion/react';
-import { alpha, Box, Stack, Typography, useTheme } from '@mui/material';
+import { alpha, Box, Stack, type Theme, Typography, useTheme } from '@mui/material';
 import { useEffect, useId, useLayoutEffect, useRef } from 'react';
 import { brand } from '../../../../shared/brand';
 import { easing, sizzle, useReducedMotion } from '../../../../shared/ui/motion';
 import { Crackle } from '../../../../shared/ui/transitions/Crackle';
-import { type CelebrationLevel, GoldBurst } from './GoldBurst';
-import { radius } from '../../../../shared/theme';
+import { type CelebrationLevel, GoldBurst, rnd } from './GoldBurst';
+import { radius, shadowTint } from '../../../../shared/theme';
 
 export type CelebrationVariant = 'streak' | 'perfect';
 
@@ -23,6 +23,10 @@ export interface CelebrationOverlayProps {
 
 const durations = [2500, 2500, 2600, 2900, 3200] as const;
 const flameSizes = [46, 48, 50, 53, 56] as const;
+const halos = [0.2, 0.34, 0.46, 0.6, 0.75] as const;
+const washes = [0, 0, 0.1, 0.18, 0.26] as const;
+const glows = [0, 0, 0.14, 0.24, 0.34] as const;
+const glintStar = 'polygon(50% 0, 58% 42%, 100% 50%, 58% 58%, 50% 100%, 42% 58%, 0 50%, 42% 42%)';
 
 const enter = keyframes`
   0% { opacity: 0; transform: translateY(-10px) scale(.95); animation-timing-function: ${easing.out}; }
@@ -46,11 +50,43 @@ const flicker = keyframes`
 `;
 const shine = keyframes`
   0% { transform: translateX(-120%) skewX(-20deg); }
-  100% { transform: translateX(680%) skewX(-20deg); }
+  100% { transform: translateX(480%) skewX(-20deg); }
 `;
 const returnShine = keyframes`
-  0% { transform: translateX(680%) skewX(20deg); }
+  0% { transform: translateX(480%) skewX(20deg); }
   100% { transform: translateX(-120%) skewX(20deg); }
+`;
+const halo = keyframes`
+  0% { opacity: 0; transform: scale(.5); }
+  100% { opacity: 1; transform: scale(1); }
+`;
+const comet = keyframes`
+  0% { opacity: 0; transform: rotate(-90deg); }
+  15%, 80% { opacity: 1; }
+  100% { opacity: 0; transform: rotate(360deg); }
+`;
+const breathe = keyframes`
+  0%, 100% { opacity: .45; }
+  50% { opacity: 1; }
+`;
+const twinkle = keyframes`
+  0% { opacity: 0; transform: scale(0) rotate(0); }
+  40% { opacity: 1; transform: scale(1.15) rotate(45deg); }
+  100% { opacity: 0; transform: scale(0) rotate(90deg); }
+`;
+const rise = keyframes`
+  0% { opacity: 0; transform: translate(0, 0) scale(1); }
+  18% { opacity: 1; }
+  100% { opacity: 0; transform: translate(var(--sway), calc(var(--rise) * -1)) scale(.3); }
+`;
+const pipPop = keyframes`
+  0% { transform: scale(0); }
+  60% { transform: scale(1.5); }
+  100% { transform: scale(1); }
+`;
+const pipRing = keyframes`
+  0% { opacity: .9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(3.2); }
 `;
 const titleSizzle = keyframes`
   0%, 100% { text-shadow: 0 0 3px var(--sizzle); } 12% { text-shadow: 0 0 7px var(--sizzle); } 27% { text-shadow: 0 0 2px var(--sizzle); }
@@ -235,7 +271,7 @@ function CelebrationPlayback({
     const align = () => {
       const { left, width } = horizontalAnchor.getBoundingClientRect();
       element.style.left = `${left + width / 2}px`;
-      element.style.width = `${Math.min(width - 32, 390)}px`;
+      element.style.maxWidth = `${Math.min(width - 32, 390)}px`;
     };
     align();
     const observer = new ResizeObserver(align);
@@ -247,7 +283,7 @@ function CelebrationPlayback({
       window.removeEventListener('resize', align);
       window.removeEventListener('scroll', align, true);
       element.style.removeProperty('left');
-      element.style.removeProperty('width');
+      element.style.removeProperty('max-width');
     };
   }, [horizontalAnchor]);
   useEffect(() => {
@@ -263,8 +299,7 @@ function CelebrationPlayback({
 
   const size = flameSizes[level - 1];
   const perfect = variant === 'perfect';
-  const sizzling = perfect && !reducedMotion;
-  const titleSizzling = level === 5 && !reducedMotion;
+  const finale = level === 5 && !reducedMotion;
   return (
     <Box
       ref={root}
@@ -278,7 +313,8 @@ function CelebrationPlayback({
         top: '50%',
         left: '50%',
         transform: 'translate(-50%, -50%)',
-        width: 'min(calc(100% - 32px), 390px)',
+        width: 'max-content',
+        maxWidth: 'min(calc(100% - 32px), 390px)',
         pointerEvents: 'none',
         '&[data-playing="false"]': {
           opacity: 0,
@@ -296,14 +332,23 @@ function CelebrationPlayback({
         }}
         sx={{
           position: 'relative',
-          border: '1px solid',
-          borderColor: level >= 4 ? 'reward.main' : 'divider',
+          border: '1px solid transparent',
           borderRadius: radius.card,
-          bgcolor: 'background.paper',
-          px: 2.5,
+          pl: 2.5,
+          pr: '28px',
           py: 2,
+          background: ({ palette: { reward, divider, background, common } }) => {
+            const edge = [
+              `linear-gradient(${divider}, ${divider})`,
+              `linear-gradient(${divider}, ${divider})`,
+              `linear-gradient(135deg, color-mix(in srgb, ${reward.main} 55%, ${divider}), ${divider} 45%, color-mix(in srgb, ${reward.main} 55%, ${divider}))`,
+              `linear-gradient(135deg, ${reward.light}, ${reward.main} 40%, ${reward.light} 60%, ${reward.main})`,
+              `linear-gradient(135deg, ${reward.light}, ${reward.main} 30%, ${common.white} 50%, ${reward.main} 70%, ${reward.light})`,
+            ][level - 1];
+            return `radial-gradient(130% 150% at 0% 50%, ${alpha(reward.light, washes[level - 1])}, transparent 62%) padding-box, linear-gradient(${background.paper}, ${background.paper}) padding-box, ${edge} border-box`;
+          },
           boxShadow: (t) =>
-            `0 2px 6px ${alpha(t.palette.primary.dark, 0.08)}, 0 16px 40px ${alpha(t.palette.primary.dark, 0.14)}${perfect ? `, 0 0 0 1px ${alpha(t.palette.reward.light, 0.8)}, 0 0 18px ${alpha(t.palette.reward.main, 0.45)}` : ''}`,
+            `0 1px 2px ${shadowTint}.06), 0 8px 22px ${shadowTint}.09), 0 26px 56px ${shadowTint}.1), 0 0 34px ${alpha(t.palette.reward.main, glows[level - 1])}`,
           animation: `${reducedMotion ? reducedEnter : enter} ${durationMs}ms ease-in-out both`,
         }}
       >
@@ -316,34 +361,24 @@ function CelebrationPlayback({
               overflow: 'hidden',
               borderRadius: 'inherit',
               pointerEvents: 'none',
-              '&::after': {
+              '&::before, &::after': {
                 content: '""',
                 position: 'absolute',
-                top: 0,
-                bottom: 0,
+                top: '-10%',
+                bottom: '-10%',
                 left: 0,
-                width: '18%',
+                width: '26%',
                 background: (t) =>
-                  `linear-gradient(90deg, transparent, ${alpha(t.palette.common.white, 0.75)}, ${alpha(t.palette.reward.light, 0.35)}, transparent)`,
-                animation: `${shine} 900ms ${easing.out} 700ms both`,
+                  `linear-gradient(90deg, transparent, ${alpha(t.palette.reward.light, 0.22)} 30%, ${alpha(t.palette.common.white, 0.85)} 50%, ${alpha(t.palette.reward.light, 0.22)} 70%, transparent)`,
               },
-              ...(perfect && {
-                '&::before': {
-                  content: '""',
-                  position: 'absolute',
-                  top: 0,
-                  bottom: 0,
-                  left: 0,
-                  width: '18%',
-                  background: (t) =>
-                    `linear-gradient(90deg, transparent, ${alpha(t.palette.reward.light, 0.35)}, ${alpha(t.palette.common.white, 0.75)}, transparent)`,
-                  animation: `${returnShine} 900ms ${easing.out} 1850ms both`,
-                },
-              }),
+              '&::after': { animation: `${shine} 950ms ${easing.out} 700ms both` },
+              '&::before': perfect
+                ? { animation: `${returnShine} 950ms ${easing.out} 1850ms both` }
+                : { display: 'none' },
             }}
           />
         )}
-        {sizzling && (
+        {finale && (
           <>
             <Box
               aria-hidden
@@ -354,19 +389,105 @@ function CelebrationPlayback({
                 border: '1px solid',
                 borderColor: 'reward.light',
                 boxShadow: (t) =>
-                  `0 0 12px ${t.palette.reward.light}, inset 0 0 6px ${alpha(t.palette.reward.light, 0.6)}`,
+                  `0 0 14px ${t.palette.reward.light}, inset 0 0 6px ${alpha(t.palette.reward.light, 0.55)}`,
                 pointerEvents: 'none',
-                animation: `${sizzle} 800ms linear infinite`,
+                animation: perfect ? `${sizzle} 800ms linear infinite` : `${breathe} 1600ms ease-in-out infinite`,
               }}
             />
-            <Crackle points={borderSparks} size={4} />
+            {perfect && <Crackle points={borderSparks} size={4} />}
+            <Box aria-hidden sx={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}>
+              {Array.from({ length: 9 }, (_, i) => (
+                <Box
+                  key={i}
+                  component="span"
+                  sx={{
+                    position: 'absolute',
+                    top: '-2px',
+                    left: `${6 + i * 11 + Math.round(rnd(i, 11) * 5)}%`,
+                    width: 3 + Math.round(rnd(i, 12) * 2),
+                    height: 3 + Math.round(rnd(i, 12) * 2),
+                    borderRadius: radius.circle,
+                    background: (t) =>
+                      `radial-gradient(circle, ${t.palette.common.white} 0, ${t.palette.reward.light} 40%, ${t.palette.reward.main})`,
+                    boxShadow: (t) => `0 0 5px ${t.palette.reward.main}`,
+                    '--rise': `${46 + Math.round(rnd(i, 13) * 44)}px`,
+                    '--sway': `${Math.round((rnd(i, 14) - 0.5) * 28)}px`,
+                    animation: `${rise} ${1100 + Math.round(rnd(i, 15) * 600)}ms ease-out ${520 + i * 150}ms both`,
+                  }}
+                />
+              ))}
+            </Box>
+            {perfect &&
+              [
+                { sx: { right: 10, top: 0 }, delay: 1250 },
+                { sx: { left: 10, top: '100%' }, delay: 2350 },
+              ].map(({ sx, delay }) => (
+                <Box
+                  key={delay}
+                  aria-hidden
+                  component="span"
+                  sx={{
+                    position: 'absolute',
+                    ...sx,
+                    width: 14,
+                    height: 14,
+                    margin: '-7px',
+                    background: (t) =>
+                      `radial-gradient(circle, ${t.palette.common.white} 0 18%, ${t.palette.reward.light} 40%, ${t.palette.reward.main} 100%)`,
+                    clipPath: glintStar,
+                    filter: (t) => `drop-shadow(0 0 3px ${t.palette.reward.main})`,
+                    pointerEvents: 'none',
+                    animation: `${twinkle} 700ms ${easing.out} ${delay}ms both`,
+                  }}
+                />
+              ))}
           </>
         )}
         <Stack direction="row" spacing={2} sx={{ alignItems: 'center', position: 'relative', zIndex: 1 }}>
           <Box
             aria-hidden
-            sx={{ position: 'relative', display: 'grid', placeItems: 'center', width: 56, height: 56, flexShrink: 0 }}
+            sx={{
+              position: 'relative',
+              display: 'grid',
+              placeItems: 'center',
+              width: 56,
+              height: 56,
+              flexShrink: 0,
+              '& > .halo': {
+                position: 'absolute',
+                inset: '-10px',
+                borderRadius: radius.circle,
+                background: (t) =>
+                  `radial-gradient(circle, ${alpha(t.palette.reward.light, halos[level - 1])} 0%, transparent 70%)`,
+                animation: reducedMotion ? undefined : `${halo} 520ms ${easing.out} both`,
+              },
+              '& > .ring': {
+                position: 'absolute',
+                inset: '-5px',
+                borderRadius: radius.circle,
+                border: '1px solid',
+                borderColor: (t: Theme) => alpha(t.palette.reward.main, 0.4),
+                animation: `${halo} 520ms ${easing.out} both`,
+              },
+              '& > .comet': {
+                position: 'absolute',
+                inset: '-6px',
+                borderRadius: radius.circle,
+                background: (t: Theme) =>
+                  `conic-gradient(from 0deg, transparent 0 55%, ${t.palette.reward.main} 78%, ${t.palette.common.white} 94%, transparent 100%)`,
+                mask: 'radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px))',
+                WebkitMask: 'radial-gradient(closest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px))',
+                animation: `${comet} 1200ms ${easing.out} 200ms both`,
+              },
+            }}
           >
+            <span className="halo" />
+            {level >= 4 && !reducedMotion && (
+              <>
+                <span className="ring" />
+                <span className="comet" />
+              </>
+            )}
             <GoldBurst level={level} durationMs={durationMs} />
             {perfect ? <Trophy animated={!reducedMotion} /> : <StreakFlame size={size} animated={!reducedMotion} />}
           </Box>
@@ -378,7 +499,7 @@ function CelebrationPlayback({
                   {
                     color: 'primary.dark',
                   },
-                  titleSizzling && {
+                  finale && {
                     '--sizzle': (t) => t.palette.reward.light,
                     animation: `${titleSizzle} 900ms linear infinite`,
                   },
@@ -386,11 +507,44 @@ function CelebrationPlayback({
               >
                 {title}
               </Typography>
-              {titleSizzling && <Crackle points={titleSparks} size={3} />}
+              {finale && <Crackle points={titleSparks} size={3} />}
             </Box>
             <Typography variant="body2" sx={{ color: 'text.secondary' }}>
               {message}
             </Typography>
+            {!perfect && (
+              <Box aria-hidden data-testid="milestone-pips" sx={{ display: 'flex', gap: '5px', mt: '7px' }}>
+                {[1, 2, 3, 4, 5].map((pip) => (
+                  <Box
+                    key={pip}
+                    sx={{
+                      position: 'relative',
+                      width: 6,
+                      height: 6,
+                      borderRadius: radius.circle,
+                      background: (t) =>
+                        pip <= level
+                          ? `linear-gradient(${t.palette.reward.light}, ${t.palette.reward.main})`
+                          : `color-mix(in srgb, ${t.palette.reward.main} 22%, ${t.palette.divider})`,
+                      ...(pip === level &&
+                        !reducedMotion && {
+                          animation: `${pipPop} 520ms ${easing.out} 520ms both`,
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            inset: '-1px',
+                            borderRadius: radius.circle,
+                            border: '1px solid',
+                            borderColor: 'reward.main',
+                            opacity: 0,
+                            animation: `${pipRing} 800ms ${easing.out} 620ms both`,
+                          },
+                        }),
+                    }}
+                  />
+                ))}
+              </Box>
+            )}
           </Box>
         </Stack>
       </Box>

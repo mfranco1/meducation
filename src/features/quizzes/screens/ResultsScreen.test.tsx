@@ -41,13 +41,13 @@ describe('perfect score ring', () => {
   it('turns gold for an exact non-empty perfect score only', () => {
     const arcStroke = () => screen.getByTestId('score-ring-arc').getAttribute('stroke');
     const { rerender } = renderResults(attemptFor(3, 3, 100));
-    expect(arcStroke()).toBe(theme.palette.reward.main);
+    expect(arcStroke()).toMatch(/^url\(#/);
     rerender(
       <ThemeProvider theme={theme}>
         <ResultsScreen quiz={quiz} attempt={attemptFor(99, 100, 99)} questions={[]} onBack={() => {}} />
       </ThemeProvider>,
     );
-    expect(arcStroke()).not.toBe(theme.palette.reward.main);
+    expect(arcStroke()).not.toMatch(/^url\(#/);
   });
 });
 

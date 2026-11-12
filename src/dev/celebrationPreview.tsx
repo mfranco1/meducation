@@ -15,7 +15,8 @@ import {
 
 const milestones: StreakMilestone[] = [3, 5, 10, 25, 50];
 const quiz = { id: 'preview', subjectId: 'preview', topicId: 'preview', name: 'Preview', questionCount: 10 };
-const perfectAttempt: CompletedAttempt = {
+const resultPercentages = [45, 68, 82, 94, 100];
+const attemptWith = (percentage: number): CompletedAttempt => ({
   id: 'preview',
   quizId: quiz.id,
   subjectId: quiz.subjectId,
@@ -25,13 +26,20 @@ const perfectAttempt: CompletedAttempt = {
   completedAt: new Date(300000).toISOString(),
   responses: {},
   celebrationProgress: { correctStreak: 10, awardedStreakMilestones: [] },
-  score: { correct: 10, incorrect: 0, unanswered: 0, total: 10, percentage: 100, elapsedMs: 300000 },
-};
+  score: {
+    correct: Math.round(percentage / 10),
+    incorrect: 10 - Math.round(percentage / 10),
+    unanswered: 0,
+    total: 10,
+    percentage,
+    elapsedMs: 300000,
+  },
+});
 
 function CelebrationPreview() {
   const [run, setRun] = useState(0);
   const [streak, setStreak] = useState<CelebrationEvent>();
-  const [results, setResults] = useState(false);
+  const [results, setResults] = useState<number>();
   const replay = (next: () => void) => {
     setRun((value) => value + 1);
     next();
@@ -45,7 +53,7 @@ function CelebrationPreview() {
             variant="outlined"
             onClick={() =>
               replay(() => {
-                setResults(false);
+                setResults(undefined);
                 setStreak(celebrationForStreak(milestone));
               })
             }
@@ -57,24 +65,27 @@ function CelebrationPreview() {
           variant="outlined"
           onClick={() =>
             replay(() => {
-              setResults(false);
+              setResults(undefined);
               setStreak(perfectTestCelebration());
             })
           }
         >
           Perfect test
         </Button>
-        <Button
-          variant="contained"
-          onClick={() =>
-            replay(() => {
-              setStreak(undefined);
-              setResults(true);
-            })
-          }
-        >
-          Perfect results
-        </Button>
+        {resultPercentages.map((percentage) => (
+          <Button
+            key={percentage}
+            variant="contained"
+            onClick={() =>
+              replay(() => {
+                setStreak(undefined);
+                setResults(percentage);
+              })
+            }
+          >
+            {percentage === 100 ? 'Perfect results' : `${percentage}% results`}
+          </Button>
+        ))}
       </Stack>
       {streak && (
         <CelebrationOverlay
@@ -87,8 +98,14 @@ function CelebrationPreview() {
           onComplete={() => setStreak(undefined)}
         />
       )}
-      {results && (
-        <ResultsScreen key={run} quiz={quiz} attempt={perfectAttempt} questions={[]} onBack={() => setResults(false)} />
+      {results !== undefined && (
+        <ResultsScreen
+          key={run}
+          quiz={quiz}
+          attempt={attemptWith(results)}
+          questions={[]}
+          onBack={() => setResults(undefined)}
+        />
       )}
     </>
   );

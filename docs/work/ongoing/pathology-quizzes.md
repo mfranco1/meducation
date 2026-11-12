@@ -16,6 +16,8 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Neoplasia owns paraneoplastic syndromes, general tumor markers and carcinogen mechanisms (HPV, EBV); organ topics own the organ lesions and germ cell marker profiles (Male Genital).
 - Vitamins in Environmental and Nutritional, except rickets/osteomalacia (Bones), B12/folate and iron anemias (Red Cells). Wernicke in Nutrition. Lead in Environmental.
 - Sturge-Weber diagnosis (port wine stain, leptomeningeal angioma, GNAQ) is staged in Blood Vessels (q752); CNS covers the other neurocutaneous syndromes and must not retest it.
+- Female genital: HPV-based post-treatment surveillance, cervical spread and hydronephrosis in Vulva/Cervix; endometrial hyperplasia in Uterine Corpus; theca lutein cysts and gestational choriocarcinoma in Pregnancy; PCOS named as PCOS with PMOS (2026) as the new name in transition.
+- Breast: fat necrosis as a necrosis pattern stays in Cell Injury; ALH and ADH risk in Benign, DCIS, LCIS and E-cadherin in Carcinoma; male breast cancer in Benign.
 - Diabetic nephropathy in Endocrine; diabetic neuropathy in PNS; diabetic retinopathy in Eye. Hemangiomas and Kaposi in Blood Vessels. Mycosis fungoides and MALT lymphoma in Hematolymphoid.
 - The handout's post-test questions are not to be copied or paraphrased.
 
@@ -50,8 +52,8 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Liver, Gallbladder, and Pancreas | staged 2026-11-12 (q780 to q783, 4 quizzes of 40, 159; 1 in backlog) |
 | Kidney | staged 2026-11-12 (q784 to q787, 4 quizzes of 40, 158; 2 in backlog; Cystic quiz is 10% hard, ask for a hard replacement there if it gets one) |
 | Lower Urinary and Male Genital Tract | staged 2026-11-12 (q788 to q789, 98; 2 in backlog) |
-| Female Genital Tract and Gestational Disease | |
-| Breast | |
+| Female Genital Tract and Gestational Disease | staged 2026-11-12 (q790 to q793, 4 quizzes of 40, 158; 2 in backlog) |
+| Breast | staged 2026-11-12 (q794 to q795, 97; 3 in backlog) |
 | Endocrine System | |
 | Skin | |
 | Bones, Joints, and Soft Tissue | |

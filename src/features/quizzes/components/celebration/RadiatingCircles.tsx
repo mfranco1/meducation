@@ -9,6 +9,8 @@ const radiate = keyframes`
   100% { opacity: 0; transform: translate(var(--particle-x), var(--particle-y)) scale(1.1); }
 `;
 
+export const greenSparks = ['#74b98d', '#2f7a55'] as const;
+
 export interface RadiatingCirclesProps {
   particleCount?: number;
   durationMs?: number;
@@ -24,7 +26,7 @@ export function RadiatingCircles({
   particleCount = 5,
   durationMs = 900,
   delayMs = 0,
-  colors = ['#74b98d', '#2f7a55'],
+  colors = greenSparks,
   horizontalSpread = 18,
   verticalSpread = 22,
   particleSize = 8,

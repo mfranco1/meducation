@@ -121,7 +121,7 @@ describe('ResultsScoreHero', () => {
     renderHero(<ResultsScoreHero percentage={100} perfect />);
     frameAt(1000);
     frameAt(1000 + scoreAnimationDuration(100));
-    expect(screen.getByTestId('score-ring-arc')).toHaveAttribute('stroke', theme.palette.reward.main);
+    expect(screen.getByTestId('score-ring-arc').getAttribute('stroke')).toMatch(/^url\(#/);
   });
 
   it('shows final number, arc, and color immediately with reduced motion on load or mid-animation', () => {

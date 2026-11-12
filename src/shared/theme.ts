@@ -83,7 +83,7 @@ export const radius = {
   circle: '50%',
 } as const;
 
-const shadowTint = 'rgba(70, 38, 20, ';
+export const shadowTint = 'rgba(70, 38, 20, ';
 export const shadow = {
   /** Resting cards. */
   card: `0 3px 14px ${shadowTint}.045)`,
