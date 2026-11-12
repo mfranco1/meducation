@@ -6,6 +6,8 @@ import { canHandleStudyShortcut, hasOpenModal } from './studyKeyboard';
 const SWIPE_DISTANCE = 60;
 /** Touches that start this close to a screen edge belong to the browser's back and forward gestures. */
 const SWIPE_EDGE = 24;
+/** A pause in wheel events, in ms, that ends a trackpad swipe. */
+const WHEEL_GESTURE_GAP = 200;
 
 /**
  * A swipe must start on the question or card itself, not in a form control or inside anything that
@@ -40,7 +42,7 @@ export function useStudyArrowNavigation({
   hasNext?: boolean;
   onPrevious: () => void;
   onNext: () => void;
-  /** The question or card; touch swipes that start inside it navigate like the arrows. */
+  /** The question or card; touch and trackpad swipes that start inside it navigate like the arrows. */
   swipeArea: RefObject<HTMLElement | null>;
   nextButtonRef?: MutableRefObject<HTMLButtonElement | null>;
   finishButtonRef?: MutableRefObject<HTMLButtonElement | null>;
@@ -89,7 +91,7 @@ export function useStudyArrowNavigation({
       event.preventDefault();
       if (!event.repeat) move(event.key === 'ArrowLeft' ? 'previous' : 'next');
     };
-    // Touch swipes on the item act like the arrows: left for next, right for previous. Mouse drags keep selecting text.
+    // Touch and trackpad swipes on the item act like the arrows: left for next, right for previous. Mouse drags keep selecting text.
     let swipeStart: { x: number; y: number } | null = null;
     const handleTouchStart = (event: TouchEvent) => {
       const touch = event.touches[0];
@@ -116,11 +118,30 @@ export function useStudyArrowNavigation({
     const cancelSwipe = () => {
       swipeStart = null;
     };
+    // Trackpad swipes arrive as wheel events. Sideways scrolling past SWIPE_DISTANCE moves once per
+    // gesture; the gesture (including momentum) ends after a short pause in wheel events.
+    let wheel = { x: 0, y: 0, last: 0, done: false };
+    const handleWheel = (event: WheelEvent) => {
+      if (event.ctrlKey || latest.current.disabled || !canSwipeFrom(event.target, swipeArea.current)) return;
+      if (event.timeStamp - wheel.last > WHEEL_GESTURE_GAP) wheel = { x: 0, y: 0, last: 0, done: false };
+      const scale = event.deltaMode === WheelEvent.DOM_DELTA_LINE ? 16 : 1;
+      wheel.x += event.deltaX * scale;
+      wheel.y += event.deltaY * scale;
+      wheel.last = event.timeStamp;
+      if (Math.abs(wheel.x) < 2 * Math.abs(wheel.y)) return;
+      // Keep the browser's own back and forward swipe from taking over.
+      event.preventDefault();
+      if (wheel.done || Math.abs(wheel.x) < SWIPE_DISTANCE || hasOpenModal()) return;
+      wheel.done = true;
+      move(wheel.x > 0 ? 'next' : 'previous');
+    };
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('touchstart', handleTouchStart, { passive: true });
     window.addEventListener('touchend', handleTouchEnd);
     window.addEventListener('touchcancel', cancelSwipe);
+    window.addEventListener('wheel', handleWheel, { passive: false });
     return () => {
+      window.removeEventListener('wheel', handleWheel);
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('touchstart', handleTouchStart);
       window.removeEventListener('touchend', handleTouchEnd);

@@ -133,6 +133,24 @@ describe('useStudyArrowNavigation', () => {
     expect(onMove).toHaveBeenCalledTimes(2);
   });
 
+  it('moves once per sideways trackpad swipe on the item', () => {
+    vi.useFakeTimers();
+    const onMove = vi.fn();
+    render(<Harness total={3} onMove={onMove} />);
+    const swipe = (element: Element, deltaX: number, deltaY = 0) => {
+      for (let step = 0; step < 5; step += 1) fireEvent.wheel(element, { deltaX, deltaY });
+      vi.advanceTimersByTime(500);
+    };
+    swipe(screen.getByText('Item 1'), 40);
+    expect(screen.getByText('Item 2')).toBeInTheDocument();
+    swipe(screen.getByText('Item 2'), -40);
+    expect(screen.getByText('Item 1')).toBeInTheDocument();
+    swipe(screen.getByText('Item 1'), 40, 60);
+    swipe(screen.getByText('Navigator'), 40);
+    expect(onMove).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
+
   it('ignores empty or invalid positions and removes the listener when unmounted', () => {
     const onMove = vi.fn();
     const { rerender, unmount } = render(<Harness total={0} onMove={onMove} />);

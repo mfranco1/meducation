@@ -47,7 +47,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Lung and Pleura | staged 2026-11-12 (q772 to q773, 78; 2 in backlog) |
 | Head and Neck | staged 2026-11-12 (q774 to q775, 97; 3 in backlog; Upper Airway quiz is 8% hard, ask for hard replacements) |
 | Gastrointestinal Tract | staged 2026-11-12 (q776 to q779, 4 quizzes of 40, 159; 1 in backlog) |
-| Liver, Gallbladder, and Pancreas | |
+| Liver, Gallbladder, and Pancreas | staged 2026-11-12 (q780 to q783, 4 quizzes of 40, 159; 1 in backlog) |
 | Kidney | |
 | Lower Urinary and Male Genital Tract | |
 | Female Genital Tract and Gestational Disease | |
