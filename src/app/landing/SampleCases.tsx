@@ -101,7 +101,9 @@ export function SampleCases({
     setAttempt(freshAttempt());
     setIndex(0);
   };
+  const swipeArea = useRef<HTMLDivElement>(null);
   useStudyArrowNavigation({
+    swipeArea,
     index,
     total: cases.length,
     disabled: !active || Boolean(celebration),
@@ -140,7 +142,7 @@ export function SampleCases({
         })}
       </SampleHeader>
       <Box sx={{ position: 'relative' }}>
-        <SwapTransition swapKey={index}>
+        <SwapTransition swapKey={index} ref={swipeArea}>
           <QuestionCard
             key={question.id}
             question={question}

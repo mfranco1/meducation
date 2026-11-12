@@ -54,7 +54,9 @@ export function FlashcardStudyScreen({
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
   const card = cards[index];
+  const swipeArea = useRef<HTMLDivElement>(null);
   const arrowNext = useStudyArrowNavigation({
+    swipeArea,
     index,
     total: cards.length,
     disabled: saving || !card || navigatorOpen,
@@ -131,7 +133,7 @@ export function FlashcardStudyScreen({
         itemLabel="Cards"
       >
         {tip}
-        <SwapTransition swapKey={index}>
+        <SwapTransition swapKey={index} ref={swipeArea}>
           <FlashcardStudyCard
             card={card}
             revealed={revealed}

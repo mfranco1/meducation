@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { useStudyArrowNavigation } from './useStudyArrowNavigation';
 
@@ -13,7 +13,9 @@ function Harness({
   onMove?: (index: number) => void;
 }) {
   const [index, setIndex] = useState(0);
+  const swipeArea = useRef<HTMLDivElement>(null);
   useStudyArrowNavigation({
+    swipeArea,
     index,
     total,
     disabled,
@@ -28,7 +30,13 @@ function Harness({
   });
   return (
     <div>
-      <span>Item {index + 1}</span>
+      <div ref={swipeArea}>
+        Item {index + 1}
+        <div data-testid="wide-table" style={{ overflowX: 'auto' }}>
+          <span>Table cell</span>
+        </div>
+      </div>
+      <nav>Navigator</nav>
       <button>Ordinary button</button>
       <input aria-label="Editable" />
       <a href="#source">Source</a>
@@ -101,6 +109,28 @@ describe('useStudyArrowNavigation', () => {
     rerender(<Harness onMove={onMove} />);
     fireEvent.keyDown(window, { key: 'ArrowRight' });
     expect(onMove).toHaveBeenCalledOnce();
+  });
+
+  it('moves on horizontal touch swipes that start on the item, outside sideways scrollers', () => {
+    const onMove = vi.fn();
+    render(<Harness total={3} onMove={onMove} />);
+    const swipe = (element: Element, dx: number, dy = 0) => {
+      fireEvent.touchStart(element, { touches: [{ clientX: 200, clientY: 200 }] });
+      fireEvent.touchEnd(element, { touches: [], changedTouches: [{ clientX: 200 + dx, clientY: 200 + dy }] });
+    };
+    swipe(screen.getByText('Item 1'), -100);
+    expect(screen.getByText('Item 2')).toBeInTheDocument();
+    swipe(screen.getByText('Item 2'), 100);
+    expect(screen.getByText('Item 1')).toBeInTheDocument();
+    swipe(screen.getByText('Item 1'), -30);
+    swipe(screen.getByText('Item 1'), -100, 120);
+    swipe(screen.getByText('Navigator'), -100);
+    expect(onMove).toHaveBeenCalledTimes(2);
+    const table = screen.getByTestId('wide-table');
+    Object.defineProperty(table, 'scrollWidth', { value: 800 });
+    Object.defineProperty(table, 'clientWidth', { value: 300 });
+    swipe(screen.getByText('Table cell'), -100);
+    expect(onMove).toHaveBeenCalledTimes(2);
   });
 
   it('ignores empty or invalid positions and removes the listener when unmounted', () => {

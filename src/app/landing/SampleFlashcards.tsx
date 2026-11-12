@@ -51,7 +51,9 @@ export function SampleFlashcards({
       if (!next.delete(card.id)) next.add(card.id);
       return next;
     });
+  const swipeArea = useRef<HTMLDivElement>(null);
   useStudyArrowNavigation({
+    swipeArea,
     index,
     total: cards.length,
     disabled: !active,
@@ -106,7 +108,7 @@ export function SampleFlashcards({
           );
         })}
       </SampleHeader>
-      <SwapTransition swapKey={index}>
+      <SwapTransition swapKey={index} ref={swipeArea}>
         <FlashcardStudyCard
           card={card}
           revealed={revealed}

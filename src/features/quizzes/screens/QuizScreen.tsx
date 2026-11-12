@@ -71,7 +71,9 @@ export function QuizScreen({
   const hasNext = next !== undefined;
   const goPrevious = () => hasPrevious && navigateToQuestion(previous);
   const goNext = () => hasNext && navigateToQuestion(next);
+  const swipeArea = useRef<HTMLDivElement>(null);
   useStudyArrowNavigation({
+    swipeArea,
     index,
     total: questions.length,
     disabled: navigatorOpen || submitOpen,
@@ -164,7 +166,7 @@ export function QuizScreen({
       >
         <Box ref={questionColumn}>
           {tip}
-          <SwapTransition swapKey={index}>
+          <SwapTransition swapKey={index} ref={swipeArea}>
             <QuestionCard
               key={question.id}
               question={question}

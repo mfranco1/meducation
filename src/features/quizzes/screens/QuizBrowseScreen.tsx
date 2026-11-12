@@ -24,7 +24,9 @@ export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }:
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const nextRef = useRef<HTMLButtonElement>(null);
   const finishRef = useRef<HTMLButtonElement>(null);
+  const swipeArea = useRef<HTMLDivElement>(null);
   useStudyArrowNavigation({
+    swipeArea,
     index,
     total: questions.length,
     disabled: navigatorOpen,
@@ -74,7 +76,7 @@ export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }:
         onOpen={() => setNavigatorOpen(true)}
         onClose={() => setNavigatorOpen(false)}
       >
-        <SwapTransition swapKey={index}>
+        <SwapTransition swapKey={index} ref={swipeArea}>
           <Card>
             <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
               <MarkdownContent markdown={question.stem} variant="stem" contentKind="rich" />

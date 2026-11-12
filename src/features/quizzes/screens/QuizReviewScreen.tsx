@@ -45,7 +45,9 @@ export function QuizReviewScreen({
     navigatorFilter,
     index,
   );
+  const swipeArea = useRef<HTMLDivElement>(null);
   useStudyArrowNavigation({
+    swipeArea,
     index,
     total: questions.length,
     disabled: navigatorOpen,
@@ -121,7 +123,7 @@ export function QuizReviewScreen({
         onOpen={() => setNavigatorOpen(true)}
         onClose={() => setNavigatorOpen(false)}
       >
-        <SwapTransition swapKey={index}>
+        <SwapTransition swapKey={index} ref={swipeArea}>
           <Card>
             <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
               <Stack direction="row" spacing={2} sx={{ justifyContent: 'space-between', alignItems: 'flex-start' }}>

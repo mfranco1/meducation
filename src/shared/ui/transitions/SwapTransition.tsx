@@ -1,5 +1,5 @@
 import { Box, useMediaQuery } from '@mui/material';
-import { useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, type ReactNode, type Ref } from 'react';
 import { easing } from '../motion';
 
 const slideDurationMs = 220;
@@ -16,10 +16,12 @@ export function SwapTransition({
   swapKey,
   direction,
   children,
+  ref,
 }: {
   swapKey: string | number;
   direction?: 1 | -1;
   children: ReactNode;
+  ref?: Ref<HTMLDivElement>;
 }) {
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
   const ghostHost = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export function SwapTransition({
   }, [swapKey, direction, reducedMotion]);
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box ref={ref} sx={{ position: 'relative' }}>
       <Box ref={ghostHost} sx={{ position: 'absolute', inset: '0 0 auto', pointerEvents: 'none' }} />
       <Box key={swapKey} ref={item} sx={{ position: 'relative', scrollMarginTop: 16 }}>
         {children}

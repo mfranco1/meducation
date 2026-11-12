@@ -19,7 +19,11 @@ export function canHandleStudyShortcut(event: KeyboardEvent, key: 'arrow' | 'spa
     )
       return false;
   }
-  return !Array.from(document.querySelectorAll<HTMLElement>('[aria-modal="true"]')).some((modal) => {
+  return !hasOpenModal();
+}
+
+export function hasOpenModal() {
+  return Array.from(document.querySelectorAll<HTMLElement>('[aria-modal="true"]')).some((modal) => {
     const style = window.getComputedStyle(modal);
     return style.visibility !== 'hidden' && style.display !== 'none';
   });
