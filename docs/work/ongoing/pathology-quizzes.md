@@ -1,11 +1,12 @@
 # Pathology quizzes
 
-Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user approved the blueprint on 2026-11-11.
+Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user approved the blueprint on 2026-11-11 and the resize of the remaining topics on 2026-11-12.
 
-- Work dir: `var/quiz-work/pathology/` (`blueprint.json`: 27 topics, 54 quizzes, 2,160 questions)
+- Work dir: `var/quiz-work/pathology/` (`blueprint.json`: 27 topics, 68 quizzes, 2,790 questions; `blueprint.before-resize.json` is the 2026-11-11 version)
 - Sources: `~/Downloads/tn-pdfs/patho/handouts/*.pdf`, extracted to `src/`. Blueprint `pages` refer to `src/main.txt` (main handout, raw `pdftotext`, form-feed pages; `main-layout.txt` is layout mode). `src/flashcards.txt`, `src/flashcards-condensed.txt`, `src/buzzwords.txt` and `src/atlas.txt` (image captions only) are part of the minimum coverage map.
-- Topics: the subject's 27 existing topics, all empty at the start, in handout (Robbins) chapter order. Sizing exception (user decision): every topic has exactly 2 quizzes of 40. No topic merges.
-- Sessions: one topic per session, in the order of the status table, then the replacement batch and cleanup.
+- Topics: the subject's 27 existing topics, all empty at the start, in handout (Robbins) chapter order. No topic merges.
+- Sizing (user decision 2026-11-12): skill defaults, with as many quizzes as the topic needs (2 of 50, 3 to 4 of 40, 5+ of 30). The 14 topics staged before then have 2 quizzes of 40.
+- Sessions: one topic per session, in the order of the status table. Then revisit the 14 earlier topics (resize or add quizzes to match), then the replacement batch and cleanup.
 
 ## Decisions
 
@@ -43,7 +44,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Heart | staged 2026-11-12 (q758 to q759, 80; 0 in backlog) |
 | Hematolymphoid Neoplasia | staged 2026-11-12 (q762 to q763, 80; 0 in backlog) |
 | Red Cells and Hemostasis | staged 2026-11-12 (q766 to q767, 79; 1 in backlog) |
-| Lung and Pleura | |
+| Lung and Pleura | staged 2026-11-12 (q772 to q773, 78; 2 in backlog) |
 | Head and Neck | |
 | Gastrointestinal Tract | |
 | Liver, Gallbladder, and Pancreas | |

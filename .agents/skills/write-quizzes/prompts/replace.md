@@ -4,7 +4,7 @@ Read .agents/skills/write-quizzes/item-standards.md, metadata.md, vocabulary.jso
 
 SUBJECT_NOTES
 
-Write the items to WORK/replacements/batch.json in the editor's bulk-add shape, `{ "topics": [ { "name": "", "quizzes": [ { "name": "", "items": [ ... ] } ] } ] }`, using each entry's exact topic and quiz names and no descriptions. Each item has stem, choices, answer, rationale, pearls, rationaleMeta.sources and metadata (subtopic, system, difficulty, questionType). `rationaleMeta.sources` is a string (empty for stable textbook facts), never a list. Keep rationales at 70 to 140 words outside tables, and keep the correct choice no longer than the distractors. Record guideline checks in WORK/replacements/sources-1.json (format in item-standards.md).
+Write the items to WORK/replacements/batch.json in the editor's bulk-add shape, `{ "topics": [ { "name": "", "quizzes": [ { "name": "", "items": [ ... ] } ] } ] }`, using each entry's exact topic and quiz names and no descriptions. Each item has stem, choices, answer, rationale, pearls, rationaleMeta.sources and metadata (subtopic, system, difficulty, questionType). `rationaleMeta.sources` is a string (empty for stable textbook facts), never a list. Keep rationales at 70 to 140 words outside tables, and keep the correct choice no longer than the distractors. Verify every guideline- or label-dependent fact in its primary document as item-standards.md describes, rather than listing it unverified: the last replacement writer did no lookups and sent 3 of 12 items to the judge. Record the checks in WORK/replacements/sources-1.json and the facts you couldn't confirm in WORK/replacements/unverified-1.json (formats in item-standards.md).
 
 Use your own scratchpad subfolder SCRATCH under SCRATCHPAD.
 
