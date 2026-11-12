@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Box, Container } from '@mui/material';
 import {
   blankResponse,
@@ -37,6 +37,8 @@ interface QuizScreenProps {
   onCheckpoint: (attempt: Attempt, index?: number) => void;
   onFinish: () => void;
   onRequestExit: () => void;
+  /** Shown above the question. */
+  tip?: ReactNode;
 }
 
 export function QuizScreen({
@@ -47,6 +49,7 @@ export function QuizScreen({
   onCheckpoint,
   onFinish,
   onRequestExit,
+  tip,
 }: QuizScreenProps) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [navigatorFilter, setNavigatorFilter] = useState<QuestionNavigatorFilter>('all');
@@ -156,6 +159,7 @@ export function QuizScreen({
         onClose={() => setNavigatorOpen(false)}
       >
         <Box ref={questionColumn}>
+          {tip}
           <SwapTransition swapKey={index}>
             <QuestionCard
               key={question.id}

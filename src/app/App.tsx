@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Alert,
   Button,
@@ -15,6 +15,7 @@ import { ContentLoadError } from '../content/api/contentTransport';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import { LocalFlashcardProgressRepository } from '../persistence/localFlashcardProgressRepository';
 import { consumeProgressChangeNotice } from '../persistence/progressBackupStorage';
+import { hasSeenTip, markTipSeen, type TipId } from '../persistence/onboardingTips';
 import type { Subject } from '../domain/types';
 import { attemptQuestions } from '../domain/quizEngine';
 import { contentSignature } from '../domain/contentSignature';
@@ -30,6 +31,7 @@ import { ExitQuizDialog } from '../features/quizzes/components/quiz/ExitQuizDial
 import { LeaveReviewDialog } from '../features/quizzes/components/quiz/LeaveReviewDialog';
 import { ResumeContentDialog } from '../features/quizzes/components/quiz/ResumeContentDialog';
 import { ToastProvider, useToast } from '../shared/ui/notifications/ToastProvider';
+import { ShortcutTip } from '../shared/ui/study/ShortcutTip';
 import { contentLoadMessage } from '../shared/ui/loading/contentLoadMessage';
 import type { SubjectStat } from '../features/quizzes/selectors/progress';
 import {
@@ -62,6 +64,10 @@ import { activeFlashcardSubjects, flashcardDashboardSubjects } from '../features
 
 const attemptRepository = new LocalAttemptRepository();
 const flashcardProgressRepository = new LocalFlashcardProgressRepository();
+const quizTipKeys = ['arrowleft', 'arrowright', ...'123456789abcdefghi'];
+const deckTipKeys = ['arrowleft', 'arrowright', ' ', 'enter'];
+const sum = (counts: Readonly<Record<string, number>>) =>
+  Object.values(counts).reduce((total, count) => total + count, 0);
 
 function LearnerApp({ onProgress }: { onProgress: () => void }) {
   const toast = useToast();
@@ -257,6 +263,50 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     }
     onProgress();
   };
+  const latestRequestProgress = useRef(requestProgress);
+  latestRequestProgress.current = requestProgress;
+
+  // First-time tips. Saved completions mean the learner is not new, so restored progress hides them too.
+  const [seenTips, setSeenTips] = useState(
+    () => new Set<TipId>((['quiz-keys', 'deck-keys'] as const).filter((id) => hasSeenTip(id))),
+  );
+  const seeTip = useCallback((id: TipId) => {
+    markTipSeen(id);
+    setSeenTips((current) => new Set(current).add(id));
+  }, []);
+  const seeQuizTip = useCallback(() => seeTip('quiz-keys'), [seeTip]);
+  const seeDeckTip = useCallback(() => seeTip('deck-keys'), [seeTip]);
+  const quizCompletions = sum(progressSnapshot.completionCounts);
+  const deckCompletions = sum(flashcards.progress.completionCounts);
+  const totalCompletions = quizCompletions + deckCompletions;
+  const previousCompletions = useRef(totalCompletions);
+  const backupTipPending = useRef(false);
+  const studying = view.page === 'quiz' || view.page === 'flashcards-study';
+  useEffect(() => {
+    const previous = previousCompletions.current;
+    previousCompletions.current = totalCompletions;
+    if (previous === 0 && totalCompletions > 0 && !hasSeenTip('backup')) backupTipPending.current = true;
+    // Wait for the screen that follows the finish, then keep the tip until closed or that screen is left.
+    if (!backupTipPending.current || studying) return;
+    backupTipPending.current = false;
+    markTipSeen('backup');
+    const id = toast.show({
+      id: 'backup-tip',
+      message: 'Your progress is saved only in this browser. Download a backup to keep it safe.',
+      severity: 'info',
+      ttlMs: null,
+      closeButton: true,
+      dismissPolicy: 'manual',
+      scope: { type: 'screen', key: currentScreenKey },
+      action: {
+        label: 'Back up',
+        onClick: () => {
+          toast.dismiss(id);
+          latestRequestProgress.current();
+        },
+      },
+    });
+  }, [toast, totalCompletions, studying, currentScreenKey]);
   const handleNavigation = (section: LearnerSection) => {
     cancel();
     flashcards.cancelLaunch();
@@ -500,6 +550,16 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
               onCheckpoint={session.checkpoint}
               onFinish={session.finishQuiz}
               onRequestExit={() => requestQuizExit('subject')}
+              tip={
+                quizCompletions === 0 &&
+                !seenTips.has('quiz-keys') && (
+                  <ShortcutTip
+                    message="Press a choice's number or letter to answer. Use ← and → to move between questions."
+                    keys={quizTipKeys}
+                    onDone={seeQuizTip}
+                  />
+                )
+              }
             />
           )}
           {import.meta.env.DEV && view.page === 'quiz-browse' && (
@@ -547,6 +607,16 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
               onNext={flashcards.next}
               onSaveAndExit={flashcards.saveAndExit}
               onFinish={flashcards.finish}
+              tip={
+                deckCompletions === 0 &&
+                !seenTips.has('deck-keys') && (
+                  <ShortcutTip
+                    message="Press Space to reveal a card and again to go to the next one. Use ← and → to move. Click a revealed answer to hide it."
+                    keys={deckTipKeys}
+                    onDone={seeDeckTip}
+                  />
+                )
+              }
             />
           )}
         </ScreenLoadBoundary>

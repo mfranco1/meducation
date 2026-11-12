@@ -1,5 +1,5 @@
 import { Alert, Container } from '@mui/material';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import type { FlashcardCard } from '../../../domain/types';
 import type { FlashcardDeckSummary } from '../../../content/api/flashcardApiDecoders';
 import type { FlashcardNavigatorFilter } from '../../../domain/flashcardStudy';
@@ -27,6 +27,7 @@ export function FlashcardStudyScreen({
   onNext,
   onSaveAndExit,
   onFinish,
+  tip,
 }: {
   deck: FlashcardDeckSummary;
   cards: readonly FlashcardCard[];
@@ -43,6 +44,8 @@ export function FlashcardStudyScreen({
   onNext: () => void;
   onSaveAndExit: () => void;
   onFinish: () => void;
+  /** Shown above the card. */
+  tip?: ReactNode;
 }) {
   const [navigatorOpen, setNavigatorOpen] = useState(false);
   const [suppressCardFocusRing, setSuppressCardFocusRing] = useState(false);
@@ -127,6 +130,7 @@ export function FlashcardStudyScreen({
         onClose={() => setNavigatorOpen(false)}
         itemLabel="Cards"
       >
+        {tip}
         <SwapTransition swapKey={index}>
           <FlashcardStudyCard
             card={card}

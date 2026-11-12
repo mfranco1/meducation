@@ -160,7 +160,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                       action={
                         <Stack direction="row" spacing={0.5} sx={{ alignItems: 'center' }}>
                           {toast.action && (
-                            <Button color="inherit" size="small" onClick={toast.action.onClick}>
+                            <Button color="inherit" variant="outlined" size="small" onClick={toast.action.onClick}>
                               {toast.action.label}
                             </Button>
                           )}
