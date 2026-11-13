@@ -43,11 +43,11 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Neoplasia | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q730 to q731, 97; 3 in backlog: 2 in Tumor Features, 1 in Molecular Basis) |
 | Infectious Disease Pathology | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q736 to q737, 100; 0 in backlog) |
 | Environmental and Nutritional Pathology | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q740 to q741, 99; 1 in backlog: an Alcohol item in Environmental, not methanol) |
-| Infancy and Childhood | staged 2026-11-11 (q747 to q748, 79; 1 in backlog) |
-| Blood Vessels | staged 2026-11-11 (q751 to q752, 80; 0 in backlog) |
-| Heart | staged 2026-11-12 (q758 to q759, 80; 0 in backlog) |
-| Hematolymphoid Neoplasia | staged 2026-11-12 (q762 to q763, 80; 0 in backlog) |
-| Red Cells and Hemostasis | staged 2026-11-12 (q766 to q767, 79; 1 in backlog) |
+| Infancy and Childhood | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q747 to q748, 100; 0 in backlog) |
+| Blood Vessels | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q751 to q752, 99; 1 in backlog: a Large-Vessel Vasculitis item in Vasculitis, not a Takayasu diagnosis vignette) |
+| Heart | staged 2026-11-12, resized 2026-11-13 to 2 of 50 (q758 to q759, 97; 3 in backlog: one each in Hypertensive Heart Disease and Cor Pulmonale, Degenerative Valve Disease, Pericardial Disease in q759, not Heyde, tamponade pulsus paradoxus or hypertrophy vs hyperplasia; q759 is 15% hard, ask for hard replacements) |
+| Hematolymphoid Neoplasia | staged 2026-11-12, resized 2026-11-13 to 3 of 40 (q762, q763, q814; 120; 0 in backlog; q763 split: its 18 myeloid questions moved to new q814 Myeloid Neoplasms) |
+| Red Cells and Hemostasis | staged 2026-11-12, resized 2026-11-13 to 3 of 40 (q766, q815, q767; 119; 1 in backlog: a secondary polycythemia slot in q815, not hypoxia-driven EPO; q766 split: its 16 production-anemia questions moved to new q815 Anemias of Diminished Erythropoiesis, q766 renamed Hemolytic Anemias; both 15% hard, ask for a hard replacement) |
 | Lung and Pleura | staged 2026-11-12 (q772 to q773, 78; 2 in backlog) |
 | Head and Neck | staged 2026-11-12 (q774 to q775, 97; 3 in backlog; Upper Airway quiz is 8% hard, ask for hard replacements) |
 | Gastrointestinal Tract | staged 2026-11-12 (q776 to q779, 4 quizzes of 40, 159; 1 in backlog) |

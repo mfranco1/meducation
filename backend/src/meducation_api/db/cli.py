@@ -47,6 +47,15 @@ def main() -> None:
     command.add_argument("--subject", required=True)
     command.add_argument("--file", type=Path, required=True)
     command.add_argument("--actor", required=True)
+    command = commands.add_parser("split-quiz")
+    command.add_argument("--subject", required=True)
+    command.add_argument("--quiz", required=True)
+    command.add_argument("--subtopic", action="append", required=True)
+    command.add_argument("--name", required=True)
+    command.add_argument("--description", default="")
+    command.add_argument("--rename", default="")
+    command.add_argument("--rename-description", default="")
+    command.add_argument("--actor", required=True)
     command = commands.add_parser("advance-id-sequences")
     command.add_argument("--by", type=int, required=True)
     command = commands.add_parser("export-release")
@@ -87,7 +96,7 @@ def main() -> None:
         ):
             secret, role = settings.migration_database_url, "meducation_migrator"
             passwords = None
-        elif args.action in ("publish-draft", "draft-outline", "stage-quizzes"):
+        elif args.action in ("publish-draft", "draft-outline", "stage-quizzes", "split-quiz"):
             # The editor's role and privileges, for when the API cannot start to publish.
             secret, role = settings.admin_editor_database_url, "meducation_editor"
             passwords = None
@@ -104,9 +113,7 @@ def main() -> None:
             if args.action == "bootstrap-local":
                 assert passwords is not None
                 bootstrap(engine, passwords)
-                print(
-                    "Local roles/schema reconciled. Schema migration remains an explicit job."
-                )
+                print("Local roles/schema reconciled. Schema migration remains an explicit job.")
             elif args.action == "upgrade":
                 upgrade(engine)
                 print("Content schema upgraded to the packaged head.")
@@ -166,9 +173,9 @@ def main() -> None:
                 except DraftError as error:
                     raise ContentDatabaseError(str(error)) from None
                 print(json.dumps(result))
-            elif args.action in ("draft-outline", "stage-quizzes"):
+            elif args.action in ("draft-outline", "stage-quizzes", "split-quiz"):
                 from meducation_api.admin.service import DraftError, DraftService
-                from meducation_api.admin.staging import outline, stage_quizzes
+                from meducation_api.admin.staging import outline, split_quiz, stage_quizzes
                 from meducation_api.content_policy import ContentPolicyError
 
                 service = DraftService(engine, getattr(args, "actor", "agent"), lambda fresh: None)
@@ -182,10 +189,17 @@ def main() -> None:
                         with args.output.open("x", encoding="utf-8") as output:
                             output.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
                         print(f"Outline written to {args.output}.")
+                    elif args.action == "split-quiz":
+                        new = {"name": args.name, "description": args.description}
+                        rename = {"name": args.rename, "description": args.rename_description}
+                        split_quiz(
+                            service, args.subject, args.quiz, args.subtopic, new, rename, saved
+                        )
+                        print(json.dumps(saved, ensure_ascii=False, indent=2))
                     else:
                         try:
                             batch = json.loads(args.file.read_text("utf-8"))
-                        except (OSError, ValueError):
+                        except OSError, ValueError:
                             raise ContentDatabaseError(
                                 f"{args.file} could not be read as JSON."
                             ) from None

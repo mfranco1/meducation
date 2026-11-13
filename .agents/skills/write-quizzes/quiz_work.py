@@ -157,7 +157,11 @@ def cmd_slices(work: Work, args) -> None:
         for q in t["quizzes"]
     ]
     counts = {(t["name"], q["name"]): len(q.get("stems", [])) for t in outline["topics"] for q in t.get("quizzes", [])}
+    briefed = 0
     for n, quiz in enumerate(topic["quizzes"], 1):
+        if "add" not in quiz and counts.get((topic["name"], quiz["name"])):
+            continue  # staged and not being topped up
+        briefed += 1
         if "add" in quiz:  # a top-up of a staged quiz: brief only the new items
             staged = counts.get((topic["name"], quiz["name"]), 0)
             quiz = {k: v for k, v in quiz.items() if k != "add"} | quiz["add"] | {"staged": staged}
@@ -184,7 +188,7 @@ def cmd_slices(work: Work, args) -> None:
                 },
             },
         )
-    print(f"{len(topic['quizzes'])} briefs in {work.dir}")
+    print(f"{briefed} briefs in {work.dir}")
 
 
 def cmd_merge(work: Work, args) -> None:

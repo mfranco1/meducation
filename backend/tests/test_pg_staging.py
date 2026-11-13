@@ -4,7 +4,7 @@ import pytest
 from support import scalar, seed
 
 from meducation_api.admin.service import DraftError, DraftService
-from meducation_api.admin.staging import outline, stage_quizzes
+from meducation_api.admin.staging import outline, split_quiz, stage_quizzes
 from meducation_api.content_policy import ContentPolicyError
 
 pytestmark = pytest.mark.postgres
@@ -146,3 +146,26 @@ def test_outline_lists_topics_counts_subtopics_and_stems(staged):
     ]
     with pytest.raises(DraftError, match="No subject"):
         outline(service, "Missing")
+
+
+def test_split_moves_subtopic_questions_with_their_ids_and_renames_the_quiz(staged):
+    service, subject = staged
+    items = [item(f"S{i}", metadata={"subtopic": s}) for i, s in enumerate("abab")]
+    stage(
+        service,
+        subject,
+        {"topics": [{"name": "Split", "quizzes": [{"name": "Old", "items": items}]}]},
+    )
+    before = service.snapshot()
+    report = {}
+    split_quiz(service, subject, "old", ["B"], {"name": "New"}, {"name": "Renamed"}, report)
+    after = service.snapshot()
+    new = report["createdQuiz"]["id"]
+    old = next(q for q in before["quizzes"] if q["name"] == "Old")["id"]
+    stems = {i: [q["stem"] for q in after["questions"] if q["quizId"] == i] for i in (old, new)}
+    assert stems == {old: ["S0", "S2"], new: ["S1", "S3"]}
+    assert {q["id"] for q in after["questions"]} == {q["id"] for q in before["questions"]}
+    names = [q["name"] for q in after["quizzes"] if q["topicId"] == after["quizzes"][-1]["topicId"]]
+    assert names == ["Renamed", "New"]
+    with pytest.raises(DraftError, match="not found"):
+        split_quiz(service, subject, "Renamed", ["zzz"], {"name": "Other"}, {}, {})

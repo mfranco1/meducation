@@ -318,14 +318,15 @@ def test_slices_briefs_only_the_new_items_of_a_top_up(tmp_path):
     setup(tmp_path)
     work = tmp_path / "subject"
     quiz = {"name": QUIZ, "target": 3, "subtopics": {"A": 2, "B": 1}, "add": {"target": 1, "subtopics": {"B": 1}}}
-    (work / "blueprint.json").write_text(json.dumps({"topics": [{"name": TOPIC, "quizzes": [quiz]}]}))
-    (work / "outline.json").write_text(
-        json.dumps({"topics": [{"name": TOPIC, "quizzes": [{"name": QUIZ, "stems": ["S1?", "S2?"]}]}]})
-    )
+    full = {"name": "Full", "target": 1, "subtopics": {"C": 1}}
+    (work / "blueprint.json").write_text(json.dumps({"topics": [{"name": TOPIC, "quizzes": [quiz, full]}]}))
+    staged = [{"name": QUIZ, "stems": ["S1?", "S2?"]}, {"name": "Full", "stems": ["S3?"]}]
+    (work / "outline.json").write_text(json.dumps({"topics": [{"name": TOPIC, "quizzes": staged}]}))
     assert run(tmp_path, "slices", TOPIC).returncode == 0
     brief = json.loads(next(work.glob("*/brief-1.json")).read_text())["quiz"]
     assert (brief["target"], brief["subtopics"], brief["staged"]) == (1, {"B": 1}, 2)
     assert "add" not in brief
+    assert not list(work.glob("*/brief-2.json"))
 
 
 def test_ready_flags_an_item_edited_after_its_blind_solve(tmp_path):

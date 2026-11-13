@@ -198,3 +198,52 @@ def stage_quizzes(
                 )
                 changes.extend(done["changeIds"])
                 added["count"] += len(done["records"])
+
+
+def split_quiz(
+    service: DraftService,
+    subject_name: str,
+    quiz_name: str,
+    subtopics: list[str],
+    new: dict[str, Any],
+    rename: dict[str, Any],
+    report: dict[str, Any],
+) -> None:
+    """Moves the questions of `subtopics` out of the named quiz into a new quiz placed after
+    it, keeping their IDs and order, then optionally renames the old quiz. `report` fills in
+    as records are saved."""
+    snapshot = service.snapshot()
+    subject = _subject(snapshot, subject_name)
+    topic_ids = {t["id"] for t in snapshot["topics"] if t["subjectId"] == subject["id"]}
+    matches = [
+        q
+        for q in snapshot["quizzes"]
+        if q["topicId"] in topic_ids and _key(q["name"]) == _key(quiz_name)
+    ]
+    if len(matches) != 1:
+        raise DraftError(404, "quiz_not_found", f"{len(matches)} quizzes are named {quiz_name!r}.")
+    quiz = matches[0]
+    if _blank(new.get("name")):
+        raise _reject("name", "must be a non-empty string.")
+    if _find([q for q in snapshot["quizzes"] if q["topicId"] == quiz["topicId"]], new["name"]):
+        raise _reject("name", f"{new['name']!r} already exists in the topic.")
+    wanted = {_key(s) for s in subtopics}
+    questions = [q for q in snapshot["questions"] if q["quizId"] == quiz["id"]]
+    found = {_key(q.get("metadata", {}).get("subtopic", "")) for q in questions}
+    if missing := sorted(wanted - found):
+        raise _reject("subtopic", f"{missing} not found in {quiz['name']!r}.")
+    moving = [q for q in questions if _key(q.get("metadata", {}).get("subtopic", "")) in wanted]
+    report.update(createdQuiz=None, moved=[], renamed=None, changeIds=[])
+    done = service.create(KINDS["quizzes"], quiz["topicId"], quiz["id"], _fields(new))
+    report["changeIds"].append(done["changeId"])
+    target = done["record"]["id"]
+    report["createdQuiz"] = {"id": target, "name": done["record"]["name"]}
+    after = None
+    for question in moving:
+        done = service.move(KINDS["questions"], question["id"], question["version"], target, after)
+        report["changeIds"].append(done["changeId"])
+        report["moved"].append(after := question["id"])
+    if fields := _fields(rename):
+        done = service.update(KINDS["quizzes"], quiz["id"], quiz["version"], fields)
+        report["changeIds"].append(done["changeId"])
+        report["renamed"] = {"id": quiz["id"], "name": done["record"]["name"]}
