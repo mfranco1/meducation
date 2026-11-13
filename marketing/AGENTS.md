@@ -20,7 +20,7 @@ Aim for work a professional motion studio would ship. Creative choices are open:
 - One idea per ad. Show the product doing something real, at a readable size.
 - Works with sound off: on-screen type or captions carry the message.
 - Keep text and key product UI inside the safe zones shaded on contact sheets. Check legibility at phone size.
-- Use the brand: the Meducation logo, DM Sans, warm neutrals and autumn orange (`src/kit/theme.ts`, `../src/shared/brand.ts`). Add colours only when a concept needs them.
+- Use the brand: the Meducation logo, Plus Jakarta Sans, warm neutrals and autumn orange (`src/kit/theme.ts`, `../src/shared/brand.ts`). Add colours only when a concept needs them.
 - Audio, when used: mixed, not decorative. Music supports pacing, effects land on cuts and taps, voiceover is clear over the music. Write scores as `soundtrack.ts` with loops and helpers, never as inline JSON notes. An agent cannot hear: read `.cache/audio/<id>/mix.png` and the printed track levels for timing and balance, say plainly that the audio has not been heard, and ask the user to listen before calling audio done.
 - In recipes, use `press` with `keys` for long key sequences.
 - Copy follows the root AGENTS.md copy rules.

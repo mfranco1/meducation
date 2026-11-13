@@ -22,7 +22,7 @@ export async function sourceFingerprint(root: string): Promise<string> {
   hash.update(await readFile(join(root, '../package-lock.json')));
   hash.update(await readFile(join(root, 'capture.ts')));
   hash.update(await readFile(join(root, 'package-lock.json')));
-  hash.update(await readFile(join(root, 'public/fonts/DMSansVariable.woff2')));
+  hash.update(await readFile(join(root, 'public/fonts/PlusJakartaSansVariable.woff2')));
   return hash.digest('hex');
 }
 export const cacheKey = (recipe: unknown, source: string, revisions: string[], baseURL: string) =>
@@ -236,13 +236,13 @@ export async function capture(root: string, recipePath: string, baseURL: string,
         page.setDefaultTimeout(20000);
         // Supply the theme's intended font only in the recording browser, never the app source.
         await page.route('**/__marketing-font.woff2', (route) =>
-          route.fulfill({ path: join(root, 'public/fonts/DMSansVariable.woff2'), contentType: 'font/woff2' }),
+          route.fulfill({ path: join(root, 'public/fonts/PlusJakartaSansVariable.woff2'), contentType: 'font/woff2' }),
         );
         await page.goto(baseURL);
         await page.addStyleTag({
-          content: `@font-face {font-family:'DM Sans';src:url('/__marketing-font.woff2');font-weight:100 900;font-display:block}`,
+          content: `@font-face {font-family:'Plus Jakarta Sans';src:url('/__marketing-font.woff2');font-weight:200 800;font-display:block}`,
         });
-        await page.evaluate(() => document.fonts.load('600 16px "DM Sans"'));
+        await page.evaluate(() => document.fonts.load('600 16px "Plus Jakarta Sans"'));
         await actions(page, shot.setup, {
           frame: 16,
           now: () => 0,

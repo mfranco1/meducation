@@ -1,5 +1,5 @@
-import '@fontsource-variable/dm-sans/opsz.css';
-import '@fontsource-variable/dm-sans/opsz-italic.css';
+import '@fontsource-variable/plus-jakarta-sans/wght.css';
+import '@fontsource-variable/plus-jakarta-sans/wght-italic.css';
 import { StrictMode } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';

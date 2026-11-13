@@ -155,7 +155,7 @@ async function renderKey(spec: AdSpec, adDir: string, format: Format) {
     ...['spec.ts', 'cli.ts', 'webpack.ts', 'package-lock.json', '../package-lock.json'].map((file) => join(root, file)),
     join(root, '../src/shared/brand.ts'),
     ...(await files(join(root, '../src/shared/ui/brand'))),
-    join(root, 'public/fonts/DMSansVariable.woff2'),
+    join(root, 'public/fonts/PlusJakartaSansVariable.woff2'),
     ...(await adAssets(spec, adDir)).map((path) => join(root, 'public', path)),
   ];
   for (const file of inputs) hash.update(file).update(await readFile(file));

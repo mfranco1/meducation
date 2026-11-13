@@ -138,7 +138,7 @@ export const theme = createTheme({
   shape: { borderRadius: 14 },
   typography: {
     fontFamily:
-      '"DM Sans Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      '"Plus Jakarta Sans Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
     fontWeightRegular: fontWeight.regular,
     fontWeightMedium: fontWeight.medium,
     fontWeightBold: fontWeight.heading,

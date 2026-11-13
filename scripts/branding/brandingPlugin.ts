@@ -55,7 +55,7 @@ export function brandingPlugin(): Plugin {
   };
 }
 
-const preloadedFont = /(^|\/)dm-sans-latin-opsz-normal-[\w-]+\.woff2$/;
+const preloadedFont = /(^|\/)plus-jakarta-sans-latin-wght-normal-[\w-]+\.woff2$/;
 
 /** Preload tag for the Latin brand font among the built files. Throws so a renamed font fails the build. */
 export function fontPreloadTag(fileNames: string[], base = '/'): HtmlTagDescriptor {

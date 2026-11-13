@@ -30,7 +30,7 @@ export function Captions({
     <AbsoluteFill style={{ justifyContent: 'center', alignItems: 'center', ...style }}>
       <div
         style={{
-          fontFamily: "'DM Sans', sans-serif",
+          fontFamily: "'Plus Jakarta Sans', sans-serif",
           fontSize,
           fontWeight: 780,
           letterSpacing: '-0.03em',

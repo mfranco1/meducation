@@ -49,7 +49,7 @@ Sourcing, the icon studio (`npm run icons`), review and integration follow the [
 
 ## Typography
 
-One family, DM Sans Variable with optical sizing, self-hosted from `@fontsource-variable/dm-sans` and imported by each entry point. The build preloads only the Latin upright file (`fontPreloadPlugin`) and fails if it cannot find it. Sizes, weights, line heights and tracking live in the theme's typography variants; pick a variant instead of setting them in `sx`. Lint rejects literal font weights, rem or px font sizes, letter spacing and font families outside the theme (numeric font sizes are for icons). For emphasis inside text, use the `fontWeight` token: `semibold` (600) for labels, row names and buttons, `heading` (650) for titles. Code and JSON fields use `monoFontFamily`.
+One family, Plus Jakarta Sans Variable, self-hosted from `@fontsource-variable/plus-jakarta-sans` and imported by each entry point. The build preloads only the Latin upright file (`fontPreloadPlugin`) and fails if it cannot find it. Sizes, weights, line heights and tracking live in the theme's typography variants; pick a variant instead of setting them in `sx`. Lint rejects literal font weights, rem or px font sizes, letter spacing and font families outside the theme (numeric font sizes are for icons). For emphasis inside text, use the `fontWeight` token: `semibold` (600) for labels, row names and buttons, `heading` (650) for titles. Code and JSON fields use `monoFontFamily`.
 
 | Variant | Use |
 | --- | --- |

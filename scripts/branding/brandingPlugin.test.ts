@@ -17,13 +17,13 @@ describe('branding HTML and favicon', () => {
 
   it('preloads only the Latin brand font and fails the build when it is missing', () => {
     const files = [
-      'assets/dm-sans-latin-opsz-italic-a1.woff2',
-      'assets/dm-sans-latin-opsz-normal-B2_c.woff2',
+      'assets/plus-jakarta-sans-latin-wght-italic-a1.woff2',
+      'assets/plus-jakarta-sans-latin-wght-normal-B2_c.woff2',
       'assets/index.js',
     ];
     expect(fontPreloadTag(files, '/study/').attrs).toEqual({
       rel: 'preload',
-      href: '/study/assets/dm-sans-latin-opsz-normal-B2_c.woff2',
+      href: '/study/assets/plus-jakarta-sans-latin-wght-normal-B2_c.woff2',
       as: 'font',
       type: 'font/woff2',
       crossorigin: true,
