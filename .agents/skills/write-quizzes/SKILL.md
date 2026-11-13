@@ -25,6 +25,8 @@ Ask only for what isn't given or inferable:
 - [fetch-access.md](fetch-access.md): sites that refuse automated fetches and the route that loads instead. Writers and the judge use it.
 - [review-rubric.md](review-rubric.md): the reviewers' procedures and output formats.
 - [quiz_work.py](quiz_work.py): briefs, merging, blind rounds, triage, routing, applying edits, the replacement backlog, the stage check and the source ledger. `--help` on each command.
+- [blueprint.md](blueprint.md): writing the blueprint, and enlarging or splitting staged quizzes. Read it only for those.
+- [replacements.md](replacements.md): the replacement batch and clean up, after every topic is staged.
 - [metadata.md](metadata.md) and [vocabulary.json](vocabulary.json): metadata fields and allowed values.
 - [prompts/](prompts/): spawn prompts for the writer, blind solver, standards reviewer, replacement writer and judge. Fill the uppercase placeholders, and put the subject's notes from its tracker in `SUBJECT_NOTES`.
 
@@ -51,7 +53,6 @@ Q ledger --find <term>...               # ledger entries containing every term, 
 Q backlog [--clear]                     # dropped items awaiting replacement, per quiz
 Q clean                                 # after the whole scope is staged
 .venv/bin/python scripts/local-authoring/job.py stage-quizzes --subject "<Subject>" --file <work>/<topic>/reviewed.json --actor agent:write-quizzes
-.venv/bin/python scripts/local-authoring/job.py split-quiz --subject "<Subject>" --quiz "<Old>" --subtopic "<Sub>"... --name "<New>" --description "..." --rename "<Old renamed>" --rename-description "..." --actor agent:write-quizzes
 ```
 
 ## Models
@@ -77,25 +78,11 @@ Keep the orchestrating session's context small. Every turn re-reads all of it on
 
 ### 1. Context
 
-Read the subject's tracker in `docs/work/ongoing/` if there is one. Refresh the outline for the subject. When resuming an approved blueprint, read only the tracker and the next topic's blueprint entry, and go to step 3. Otherwise note the existing topics, quizzes, sizes, subtopics and stems, list and skim the sources, if any, and extract them to `src/`.
+Read the subject's tracker in `docs/work/ongoing/` if there is one, and refresh the outline. When resuming an approved blueprint, read only the tracker and the next topic's blueprint entry, and go to step 3.
 
 ### 2. Blueprint
 
-Write `<work>/blueprint.json` and a short coverage summary:
-
-```json
-{ "topics": [ { "name": "Neonatology", "description": "", "quizzes": [ { "name": "Neonatal Jaundice and Sepsis", "description": "One sentence on scope.", "target": 80, "pages": "10-12",
-  "subtopics": { "Neonatal Hyperbilirubinemia": 20 }, "excludes": ["Rehydration plans (Preventive Pediatrics › IMCI and Dehydration)"] } ] } ] }
-```
-
-- Cover every source section, every in-scope topic, and the high-yield content a well-prepared examinee and a safe new physician should know, even where the sources are silent.
-- Weight subtopics by exam frequency and clinical importance, not by how many pages a source spends on them.
-- Order topics and quizzes for learner progression (foundations before applications). Use existing topics where they fit. Add a topic only when its content fills 2 quizzes of 50. Otherwise merge it into a related topic.
-- Quiz names are specific and don't repeat the topic name. Split by subtopic, not "Part 2". Every quiz gets a one-sentence description. New topics get a 1 to 2 sentence description, and existing topics get none.
-- **Enlarging a staged quiz.** Set its final `target` and `subtopics`, and add `"add": { "target": 10, "subtopics": { ... } }` with only the new items. `slices` briefs the writer for those and the gate checks them. Remove `add` after staging. To split a staged quiz, run `split-quiz` (below) first: it moves the named subtopics' questions, with their IDs, into a new quiz after the old one and renames the old one. Then refresh the outline, give each changed quiz its `add`, replace the old quiz name in every `excludes` of the blueprint, and move the topic's earlier work files into a subfolder so `merge` doesn't pick up stale `batch-<n>.json`.
-- **Deconflict.** Each tested point belongs to one quiz. Compare every quiz with the existing outline subtopics and with the other planned quizzes, including other topics (for example rehydration in a gastroenterology quiz and in an IMCI quiz, or iron in nutrition and in hematology) and quizzes in the same topic (fracture-nerve associations in a bones quiz and the same nerve lesions in a nerves quiz). Give the point to one quiz and list it in the other's `excludes`, naming where it lives.
-
-Show the user the coverage summary (topics, quizzes, targets) and wait for approval before writing. For work that spans sessions, keep a tracker (see [Sessions and lessons](#sessions-and-lessons)).
+Without an approved blueprint, or to enlarge or split staged quizzes, follow [blueprint.md](blueprint.md). The user approves the coverage summary before any writing.
 
 ### 3. Write
 
@@ -134,8 +121,8 @@ Review is tiered so the top-tier model only judges the items that need it (see [
 
 1. **Blind solve** (mid-tier model): run `blind --round initial`. Give the solver the round's `items-<k>.json` files, to answer one file at a time into the matching `answers-<k>.json`. Then run `check-blind`. It refuses incomplete or misaligned files; rerun those files in a fresh context. If the rerun is misaligned the same way, the keys are wrong, not the solver: send the quiz back to its writer, then rebuild the round.
 2. **Triage:** run `triage`. It escalates every item whose blind answer differs from the key, or that has a defensible alternative or a note. Writers' unverified facts go in the report and escalate only when their quiz has more than 5 (therapy-heavy quizzes do), with the fact as the reason; otherwise the judgment pass reaches most of them through the other routes in [item-standards.md](item-standards.md#accuracy-and-currency). The rest go to one `standards-input-<n>.json` per quiz.
-3. **Standards pass** (mid-tier model): spawn one reviewer per `standards-input-<n>.json`, one after another. A whole topic overflows one reviewer's context. Each writes `review-standards-<n>.json` and `standards-escalate-<n>.json`. Run `route-standards`. It merges them, keeps only flaw, metadata and self-evident correction edits in `review-standards.json`, adds suspected key, currency and accuracy problems to `escalated.json` with the reviewer's edits as `proposed`, turns kept edits on escalated items into `proposed` too, so only one reviewer edits each item, and moves drops and near-duplicates to `review-drops.json`.
-4. **Drops:** read `review-drops.json`. A near-duplicate between two quizzes reviewed together (the two quizzes of a topic, or two topics in review at once) is often flagged on both sides: drop only one side, keeping the item in the quiz whose subtopics or boundary own the point. Dropped items are not replaced now. `apply` moves them to the subject's replacement backlog, and the topic is staged that many items short until the [replacement batch](#7-replacements-and-clean-up).
+3. **Standards pass** (mid-tier model): spawn one reviewer per `standards-input-<n>.json`, one after another. A whole topic overflows one reviewer's context. Each writes `review-standards-<n>.json` and `standards-escalate-<n>.json`. Run `route-standards`. It keeps flaw, metadata and self-evident correction edits in `review-standards.json`, escalates suspected key, currency and accuracy problems to the judge, and moves drops and near-duplicates to `review-drops.json`.
+4. **Drops:** read `review-drops.json`. A near-duplicate between two quizzes reviewed together (the two quizzes of a topic, or two topics in review at once) is often flagged on both sides: drop only one side, keeping the item in the quiz whose subtopics or boundary own the point. Dropped items are not replaced now. `apply` moves them to the subject's replacement backlog, and the topic is staged that many items short until the [replacement batch](replacements.md).
 5. **Judgment pass** (top-tier model): run `judge-input`. If it reports 0 items, skip the judge and leave `review-judgment.json` out of `apply`. Otherwise spawn the judge with `judgment-input.json` and the ledger, even for 1 item. A fresh judge starts with a small context, and the session's is large. It verifies the facts in primary documents, writes `review-judgment.json`, and adds what it checked to the ledger file it is given (`<work>/<topic>/sources-judgment.json`).
 6. **Apply:** run `apply` with every review file. It refuses unknown refs and fields, adds every dropped item to the backlog, and writes the rewritten refs to `rewritten-<output>.json`. Read the edits to items flagged `wrong-key`, `ambiguous` or `correction` before accepting them: a standards `correction` is applied without a judgment pass and can introduce an error. Remove a wrong one from `review-standards.json` before applying.
 7. **Recheck:** rerun the gate on the reviewed batch. Run `blind --batch reviewed.json --round recheck-1 --refs rewritten-reviewed.json` and `check-blind` for it. Items whose recheck answer differs from the key or has a defensible alternative go back through the judgment pass or get a fix and another recheck round. For the judge, move the first `judgment-input.json` and `review-judgment.json` aside, run `judge-input --batch reviewed.json --round recheck-1` (it takes that round's unclean solves), and `apply` the new review to `reviewed.json` with a new output name. If you confirm the key is right and the item needs no change, record it with `accept`.
@@ -150,15 +137,7 @@ Review is tiered so the top-tier model only judges the items that need it (see [
 
 ### 7. Replacements and clean up
 
-When every topic in scope is staged, write the replacement backlog as one batch. Skip to `clean` if `backlog` is empty.
-
-1. Refresh the outline and rerun `slices` for any topic, so `stems.txt` holds the whole staged subject.
-2. Spawn one replacement writer (mid tier) with [prompts/replace.md](prompts/replace.md). It writes one new item per backlog entry into `<work>/replacements/batch.json`, under the entry's topic and quiz names.
-3. Run the gate on that batch and ignore its size warnings. Check each new item against `stems.txt` and the blueprint's `excludes`.
-4. Blind-solve it like a topic named `replacements`: `Q blind replacements --batch batch.json --round initial`, `check-blind`, then `triage`. Send any escalated item to the judge, apply and recheck as in step 5. Run `Q ready replacements` on the final batch.
-5. Stage the batch. Staging adds the items to their existing quizzes by name. Refresh the outline to confirm the quizzes are back at their targets, then run `Q backlog --clear`. If the review dropped a replacement, the backlog also holds that drop: save it first, restore it after the clear (one entry per quiz still short, with the earlier entry's reason appended), move `replacements/` aside and repeat this step for it.
-
-Then run `clean`. It refuses while the backlog has entries. It merges any remaining source records into the shared ledger, then deletes the work dir except `blueprint.json` (the coverage map for later expansion or revision). That removes briefs, batches, blind rounds, review files, the outline, the staged stems and any copied source text. Make the last lessons pass below, then delete the tracker in `docs/work/ongoing/`.
+When every topic in scope is staged, follow [replacements.md](replacements.md).
 
 ## Sessions and lessons
 

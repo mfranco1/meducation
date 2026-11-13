@@ -65,7 +65,7 @@ Keep domain logic independent of React, keep localStorage access inside `src/per
 
 ## Documentation
 
-Docs describe the current system only, briefly. No dated status layers, history narratives, superseded designs or restatements of what the code already says; git history is the archive.
+Docs hold what an agent would get wrong after reading the code: conventions, contracts, commands and decisions. If code, lint, tests, `--help` or an `.env.example` already answers it, link to that instead of restating it. Describe the current system only: no dated status layers, history narratives or superseded designs; git history is the archive.
 
 - `docs/glossary.md`: shared domain terms and their code names
 - `docs/architecture.md`: module boundaries and data flow
@@ -76,7 +76,7 @@ Docs describe the current system only, briefly. No dated status layers, history 
 - `docs/testing.md`: how to verify changes
 - `docs/operations.md`: running, backing up and deploying
 
-Update the relevant doc in the same change when behavior or commands change. Do not create new docs without a clear need.
+Update a doc in the same change only when a convention, contract, command or documented behavior changes. Replace or tighten existing text instead of appending. Keep each fact in one doc and link to it from the others. Keep each doc under about 12 KB. Do not create new docs without a clear need.
 
 ## Agent workflows
 

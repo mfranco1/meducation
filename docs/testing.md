@@ -6,7 +6,7 @@ Pick checks by the contract you changed. Do not add tests that mirror implementa
 
 Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operations](operations.md#prerequisites), `npx playwright install chromium`. Browser suites need Docker.
 
-`npm ci` and `npm install` install the Git pre-commit hook through Husky. On staged files it runs, in order: `eslint --fix` on the files `npm run lint` covers, `ruff check --fix` on Python in `backend` and `scripts`, and `prettier --write` using the root `.prettierignore` (unsupported file types are skipped). Fixes are staged automatically. Lint errors that cannot be fixed automatically block the commit. lint-staged hides unstaged changes in partially staged files while it runs. CI still runs the full lint, ruff and format checks.
+`npm ci` installs a pre-commit hook that fixes and formats staged files (`lint-staged` in `package.json`); errors it cannot fix block the commit. CI still runs the full lint, ruff and format checks.
 
 | Suite | Command |
 | --- | --- |
@@ -44,7 +44,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 
 ## Marketing videos
 
-The isolated video workspace uses `npm --prefix marketing run typecheck`, `npm --prefix marketing test` and `npm --prefix marketing run format:check`. Verify a real capture and render, run media validation, and inspect representative frames and a complete preview. Audio changes also require a real `audio:generate` run, `audio:validate` for the master and encoded video, and listening review. See [marketing](../marketing/README.md) for setup and commands. Cached footage is a production artifact, never a content authority.
+The isolated video workspace has its own checks; see [marketing](../marketing/README.md). Cached footage is a production artifact, never a content authority.
 
 ## Icon studio
 

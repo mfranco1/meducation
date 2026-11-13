@@ -7,7 +7,9 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Topics: the subject's 27 existing topics, all empty at the start, in handout (Robbins) chapter order. No topic merges.
 - Sizing (user decision 2026-11-12): skill defaults, with as many quizzes as the topic needs (2 of 50, 3 to 4 of 40, 5+ of 30). The 14 topics staged before then have 2 quizzes of 40.
 - Sessions: one topic per session, in the order of the status table. Then revisit the 14 earlier topics, one per session, then the replacement batch and cleanup.
-- Resize of the 14 earlier topics (user decision 2026-11-13): size each by its content, 2 of 50, 3 to 4 of 40 or 5+ of 30. Existing quizzes may be split into more quizzes to deepen coverage. Top-ups use the blueprint `add` field. A split needs moving staged questions between quizzes (keep their IDs; `DraftService.move` and `update` with actor `agent:write-quizzes`). A top-up fills the quiz's backlog slots: remove those entries from `replace-backlog.json` after staging.
+- Resize of the 14 earlier topics (user decision 2026-11-13): size each by its content, 2 of 50, 3 to 4 of 40 or 5+ of 30. Split a quiz with `split-quiz` and top up with the blueprint `add` field (skill `blueprint.md`). A top-up fills the quiz's backlog slots: remove those entries from `replace-backlog.json` after staging.
+- What each replacement must cover or avoid is in `replace-backlog.json`; the status table holds only counts.
+- Ask for hard replacements in these quizzes (current share of hard items): both Cell Injury quizzes (16%), Heart q759 (15%), both resized Red Cells quizzes q766 and q815 (15%), Head and Neck Upper Airway (8%), Kidney Cystic (10%, if it gets a replacement), Endocrine Thyroid (16%), Skin Inflammatory (12%), Bones Joint (13%), CNS Cerebrovascular (10%).
 
 ## Decisions
 
@@ -35,30 +37,30 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 
 | Topic | Status |
 | --- | --- |
-| Cell Injury and Adaptation | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q700 to q701, 98; 2 in backlog; both quizzes 16% hard, ask for hard replacements) |
-| Inflammation and Repair | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q708 to q709, 99; 1 in backlog: a chemical mediators item in Acute) |
+| Cell Injury and Adaptation | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q700 to q701, 98; 2 in backlog) |
+| Inflammation and Repair | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q708 to q709, 99; 1 in backlog) |
 | Hemodynamic Disorders | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q712 to q713, 100; 0 in backlog) |
 | Genetic Disorders | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q716 to q717, 100; 0 in backlog) |
-| Immune System Disorders | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q722 to q723, 99; 1 in backlog: an HIV item in Immunodeficiency) |
-| Neoplasia | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q730 to q731, 97; 3 in backlog: 2 in Tumor Features, 1 in Molecular Basis) |
+| Immune System Disorders | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q722 to q723, 99; 1 in backlog) |
+| Neoplasia | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q730 to q731, 97; 3 in backlog) |
 | Infectious Disease Pathology | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q736 to q737, 100; 0 in backlog) |
-| Environmental and Nutritional Pathology | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q740 to q741, 99; 1 in backlog: an Alcohol item in Environmental, not methanol) |
+| Environmental and Nutritional Pathology | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q740 to q741, 99; 1 in backlog) |
 | Infancy and Childhood | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q747 to q748, 100; 0 in backlog) |
-| Blood Vessels | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q751 to q752, 99; 1 in backlog: a Large-Vessel Vasculitis item in Vasculitis, not a Takayasu diagnosis vignette) |
-| Heart | staged 2026-11-12, resized 2026-11-13 to 2 of 50 (q758 to q759, 97; 3 in backlog: one each in Hypertensive Heart Disease and Cor Pulmonale, Degenerative Valve Disease, Pericardial Disease in q759, not Heyde, tamponade pulsus paradoxus or hypertrophy vs hyperplasia; q759 is 15% hard, ask for hard replacements) |
-| Hematolymphoid Neoplasia | staged 2026-11-12, resized 2026-11-13 to 3 of 40 (q762, q763, q814; 120; 0 in backlog; q763 split: its 18 myeloid questions moved to new q814 Myeloid Neoplasms) |
-| Red Cells and Hemostasis | staged 2026-11-12, resized 2026-11-13 to 3 of 40 (q766, q815, q767; 119; 1 in backlog: a secondary polycythemia slot in q815, not hypoxia-driven EPO; q766 split: its 16 production-anemia questions moved to new q815 Anemias of Diminished Erythropoiesis, q766 renamed Hemolytic Anemias; both 15% hard, ask for a hard replacement) |
+| Blood Vessels | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q751 to q752, 99; 1 in backlog) |
+| Heart | staged 2026-11-12, resized 2026-11-13 to 2 of 50 (q758 to q759, 97; 3 in backlog) |
+| Hematolymphoid Neoplasia | staged 2026-11-12, resized 2026-11-13 to 3 of 40 (q762, q763, q814; 120; 0 in backlog) |
+| Red Cells and Hemostasis | staged 2026-11-12, resized 2026-11-13 to 3 of 40 (q766, q815, q767; 119; 1 in backlog) |
 | Lung and Pleura | staged 2026-11-12 (q772 to q773, 78; 2 in backlog) |
-| Head and Neck | staged 2026-11-12 (q774 to q775, 97; 3 in backlog; Upper Airway quiz is 8% hard, ask for hard replacements) |
+| Head and Neck | staged 2026-11-12 (q774 to q775, 97; 3 in backlog) |
 | Gastrointestinal Tract | staged 2026-11-12 (q776 to q779, 4 quizzes of 40, 159; 1 in backlog) |
 | Liver, Gallbladder, and Pancreas | staged 2026-11-12 (q780 to q783, 4 quizzes of 40, 159; 1 in backlog) |
-| Kidney | staged 2026-11-12 (q784 to q787, 4 quizzes of 40, 158; 2 in backlog; Cystic quiz is 10% hard, ask for a hard replacement there if it gets one) |
+| Kidney | staged 2026-11-12 (q784 to q787, 4 quizzes of 40, 158; 2 in backlog) |
 | Lower Urinary and Male Genital Tract | staged 2026-11-12 (q788 to q789, 98; 2 in backlog) |
 | Female Genital Tract and Gestational Disease | staged 2026-11-12 (q790 to q793, 4 quizzes of 40, 158; 2 in backlog) |
 | Breast | staged 2026-11-12 (q794 to q795, 97; 3 in backlog) |
-| Endocrine System | staged 2026-11-12 (q796 to q799, 4 quizzes of 40, 157; 3 in backlog; Thyroid quiz is 16% hard, ask for hard replacements) |
-| Skin | staged 2026-11-12 (q800 to q801, 98; 2 in backlog; Inflammatory quiz is 12% hard, ask for a hard replacement) |
-| Bones, Joints, and Soft Tissue | staged 2026-11-12 (q802 to q804, 3 quizzes of 40, 117; 3 in backlog; Joint quiz is 13% hard, ask for hard replacements) |
+| Endocrine System | staged 2026-11-12 (q796 to q799, 4 quizzes of 40, 157; 3 in backlog) |
+| Skin | staged 2026-11-12 (q800 to q801, 98; 2 in backlog) |
+| Bones, Joints, and Soft Tissue | staged 2026-11-12 (q802 to q804, 3 quizzes of 40, 117; 3 in backlog) |
 | Peripheral Nerves and Skeletal Muscle | staged 2026-11-12 (q805 to q806, 98; 2 in backlog) |
-| Central Nervous System | staged 2026-11-12 (q807 to q811, 5 quizzes of 30, 148; 2 in backlog; Cerebrovascular and Infections are 10% hard, ask for a hard replacement in Cerebrovascular) |
+| Central Nervous System | staged 2026-11-12 (q807 to q811, 5 quizzes of 30, 148; 2 in backlog) |
 | Eye | staged 2026-11-12 (q812 to q813, 98; 2 in backlog) |

@@ -6,28 +6,7 @@ The relationship chain is `card.deckId → deck.topicId → topic.subjectId → 
 
 ## Stored records
 
-```ts
-interface StoredFlashcardDeck {
-  id: string; // stable opaque ID prefixed with d
-  topicId: string; // existing shared topic ID
-  name: string;
-  description?: string; // plain text, at most 500 characters, no line breaks
-}
-
-interface StoredFlashcard {
-  id: string; // stable opaque ID prefixed with f
-  deckId: string;
-  front: string;
-  back: string;
-  sources?: string;
-}
-
-interface StoredFlashcardBank {
-  schemaVersion: 4;
-  decks: StoredFlashcardDeck[];
-  cards: StoredFlashcard[];
-}
-```
+The types are `StoredFlashcardBank`, `StoredFlashcardDeck` and `StoredFlashcard` in `src/content/schema/schema.ts`. A deck has `id` (prefixed `d`), `topicId`, `name` and an optional `description`. A card has `id` (prefixed `f`), `deckId`, `front`, `back` and optional `sources`.
 
 IDs are assigned by the server on create, are immutable and never encode ordering. Optional fields are omitted rather than set to `null`. Unknown keys, duplicate IDs, empty names or card faces, and broken references are invalid. Empty decks are allowed for authoring; the learner cannot launch an empty deck.
 

@@ -1,70 +1,71 @@
 # Architecture
 
-PostgreSQL holds the only writable paired quiz/flashcard bank. The FastAPI service publishes a request-pinned release to the learner and, behind authentication, serves the editor. Learner progress lives in browser `localStorage`. There is no runtime generative AI, and nothing falls back to content files. Operations are in [operations](operations.md).
+PostgreSQL holds the only writable paired quiz/flashcard bank. The FastAPI service serves the active release to learners and, behind authentication, the editor. Learner progress lives in browser `localStorage`. Nothing falls back to content files. Operations are in [operations](operations.md).
 
 ## Repository ownership
 
-One frontend package and one Python package. Root HTML entries and tool configuration stay at the root. Use relative imports; add aliases only when TypeScript, Vite, tests, scripts and the lint boundary patterns all resolve them.
+One frontend package and one Python package. Root HTML entries and tool configuration stay at the root. Use relative imports.
 
-- `src/app`: learner composition, navigation identity, lazy screens, drawer, progress backup wiring.
+- `src/app`: learner composition, navigation, lazy screens, landing page, progress backup wiring.
 - `src/features/quizzes`, `src/features/flashcards`: screens, session coordination, selectors.
-- `src/shared`: theme, brand and reusable presentation under `ui/` (shell, loading, transitions, notifications, content, study, catalog).
+- `src/shared`: theme, brand and reusable presentation under `ui/`.
 - `src/domain`: pure rules, types, repository interfaces. `src/persistence`: storage repositories and codecs.
 - `src/content`: `schema` (stored contracts), `api` (transport, decoders, runtime repositories), `validation`, `richText`.
 - `src/admin`: authoring composition and presentation, with `core` (pure operations) and `data` (HTTP gateway) kept free of UI.
-- `backend/src/meducation_api`: `main.py` learner routes, `content` (draft records, releases, export and import), `repositories` (release-pinned PostgreSQL readers and response models), `db` (engines, migrations, bootstrap, recovery, the `meducation-db` CLI), `auth` (OIDC and sessions), `admin` (paired editor API and service), `content_policy` (packaged validator), `observability.py` (logs and request middleware).
-- `scripts/content`, `scripts/containers`, `scripts/local-authoring`, `scripts/testing`: maintenance tooling outside the application graph.
+- `backend/src/meducation_api`: `main.py` learner routes, `content` (draft records, releases, export), `repositories` (release-pinned readers), `db` (engines, migrations, recovery, the `meducation-db` CLI), `auth` (OIDC and sessions), `admin` (editor API and service), `content_policy` (packaged validator), `observability.py`.
+- `scripts/`: maintenance tooling outside the application graph.
 - Tests sit beside their modules; `src/test` has setup and fixtures, `tests/fixtures` shared contracts, `e2e` browser workflows.
-- `marketing/`: separate package for local ad videos (Playwright capture, Remotion, sfizz-rendered scores). It reuses brand presentation and adds nothing to the app build; see its README and AGENTS files.
+- `marketing/`: separate package for ad videos. It adds nothing to the app build; see its README and AGENTS files.
 
 Extend existing modules before adding files. Avoid barrels, forwarding modules and speculative shared layers.
 
-## Checked dependency boundaries
+## Dependency boundaries
 
-`npm run lint` enforces these with `@typescript-eslint/no-restricted-imports` blocks in `eslint.config.mjs` (one per directory; tests keep only the UI-library rule). Cycles are not checked, and the learner bundle's exclusion of admin and bank modules is checked on the built output (`scripts/containers/check-learner-artifacts.mjs`).
+`npm run lint` enforces the import boundaries defined in `eslint.config.mjs`. In short:
 
-- `domain`, `persistence` and `content` import only `domain` (plus themselves) and no application layers.
-- `domain`, `persistence`, `content` and `admin/core`, `admin/data` cannot import React, MUI or Emotion. Production code never imports tests, fixtures, `e2e` or `scripts`.
-- `shared` never imports `app`, `features`, `admin` or `persistence`.
-- `features` never import `app`, `admin` or sibling features. Only `session/` modules use concrete persistence; elsewhere import types only.
-- `admin/core` and `admin/data` do not import admin presentation, `app`, `features` or `shared`. `app` is the composition root.
+- `domain`, `persistence` and `content` import only `domain` and themselves.
+- `domain`, `persistence`, `content`, `admin/core` and `admin/data` are free of React, MUI and Emotion.
+- `shared` imports no application layer. `features` never import `app`, `admin` or sibling features, and only their `session/` modules use concrete persistence.
+- `app` is the composition root. Production code never imports tests, fixtures, `e2e` or `scripts`.
+
+Cycles are not checked. The learner build fails if it ships admin or bank modules (`scripts/containers/check-learner-artifacts.mjs`).
 
 ## Content flow
 
-1. Editors change draft records in the editor app; publication builds both documents from the draft, creates an immutable release and moves the active pointer (see Releases).
-2. Each API content request reads the active pointer once and pins that finalized release for both quiz and flashcard readers. Immutable catalogs are cached per release (two latest per worker). Database failure returns a sanitized `content_unavailable` 503; nothing falls back to files or stale caches.
-3. The learner loads content in stages and revalidates at launch ([product](product.md#loading-and-freshness)). The API gzips responses (Starlette `GZipMiddleware`). `src/content/api` validates every DTO (membership, order, ownership, answer references) before it enters a revision-scoped cache; `contentTransport` owns timeouts, retries and cancellation; `launchFreshness.ts` owns the launch check.
+1. Editors change draft records; publication builds both documents from the draft, stores an immutable release and moves the active pointer.
+2. Each API content request reads the active pointer once and pins that release for both quiz and flashcard readers. A database failure returns a sanitized 503; nothing falls back to files or stale caches.
+3. The learner loads content in stages and revalidates at launch ([product](product.md#loading-and-freshness)). `src/content/api` validates every response before it enters a revision-scoped cache.
 
-Worker startup checks schema and publication once; workers never migrate, import or bootstrap, and health routes do not query Postgres.
+Worker startup checks schema and publication once. Workers never migrate or bootstrap, and health routes do not query Postgres.
 
 ## Releases
 
-- A release is an immutable, finalized pair of banks identified by a UUID. It is stored once, as normalized `content` rows keyed `(release_id, id)` with composite foreign keys and a zero-based global `position`. SQL NULL means an omitted optional field. Documents (draft, release and export) are rebuilt from rows in canonical key order (`Kind.keys` per record, sorted keys inside nested values), so the same content always serializes identically. Quiz and flashcard revisions are `sha256-` digests of those documents, separate from the publication sequence.
-- A singleton pointer holds `(release_id, publication_sequence)`. Activation locks it, checks the expected sequence and appends an event; every activation, including rollback, gets a new sequence. Rollback never deletes newer releases or resets counters.
-- Publication history (`publication_events`: who activated which release, when, why) and draft change history are append-only.
-- Release writes go through fixed-search-path, narrowly granted SQL functions. The reader sees only published views; the editor writes only draft tables and calls the release functions; owner and migrator are trusted maintenance roles.
+- A release is an immutable pair of banks stored as normalized rows. Draft, release and export documents are rebuilt from rows in canonical key order, so the same content always serializes identically. Quiz and flashcard revisions are `sha256-` digests of those documents.
+- A singleton pointer holds the active release and a publication sequence. Every activation, including rollback, gets a new sequence; rollback never deletes newer releases.
+- Publication history and draft change history are append-only.
+- Database roles are narrow: the reader sees only published views; the editor writes only draft tables and calls the release functions; owner and migrator are maintenance roles.
 - Subject, topic, quiz and question IDs come from sequences that never move backward; decks and cards use UUID-based IDs. A restored database can rewind sequences, so recovery advances them ([operations](operations.md#backup-and-restore)).
-- Alembic migrations live in `backend/src/meducation_api/migrations`: one baseline revision (`baseline.sql`, pg_dump format) plus any later revisions. Destructive downgrade is refused.
+- Alembic migrations live in `backend/src/meducation_api/migrations`: a baseline plus later revisions. Destructive downgrade is refused.
 
 ## Learner progress
 
-`src/main.tsx` lazy-loads the landing page (`src/app/landing`) when `about=1` is in the query string. Otherwise it checks `hasStartedStudying` (`persistence/visitorStart.ts`) before the first render: returning learners boot the app, and new visitors see the landing page. Dashboard About links use ordinary page navigation; Start studying from About replaces the URL with `/`. `LocalAttemptRepository` stores quiz progress under `meducation.progress.v2`; flashcard checkpoints use `meducation.flashcards.progress.v2`. Only current keys are read. Malformed current data is preserved and reported, never replaced. Quiz completions commit history, durable counts, scores, activity and completed IDs in one write; history is capped at 250 attempts or about 2.5 MB, and when browser storage is full the oldest attempts are dropped so saving continues. Completed IDs, counts and scores stay durable. A write is rejected as a conflict when the stored value differs from what the tab last read or wrote. Active attempts carry a content signature so changed content forces an explicit restart.
+Progress repositories live in `src/persistence` and are exposed through `useSyncExternalStore`. Invariants:
 
-Repositories cache frozen snapshots exposed through `useSyncExternalStore`; getters never write, and writes or `storage` events invalidate. Revisions are optimistic edit tokens: a stale tab must reload. Paired restore writes both keys and rolls both back if either write fails; there is no cross-tab lock ([product](product.md#progress-backup-restore-and-reset)).
+- Only current storage keys are read. Malformed stored data is preserved and reported, never replaced.
+- Getters never write. A write is rejected as a conflict when the stored value differs from what the tab last read, so a stale tab must reload.
+- A quiz completion commits history, counts, scores and completed IDs in one write. History is capped; when storage is full the oldest attempts are dropped, while completed IDs, counts and scores stay.
+- Active attempts and checkpoints carry a content signature, so changed content forces an explicit restart.
+- Restore writes both progress keys and rolls both back if either write fails. There is no cross-tab lock.
 
 ## Rich content
 
-The policy is defined in [question schema](question-schema.md#markdown-and-rationale-metadata). `src/content/richText` implements it; `MarkdownContent` is the only renderer; it lazy-loads `MarkdownRenderer` (Markdown, KaTeX with woff2 fonts, `rehype-sanitize`) so the landing page and shell load without it. The learner and admin bundles never import `src/content/validation` beyond its small limit constants. Content is validated at authoring time (`src/content/validation`, packaged as a Node worker for the API) and sanitized again at render time; the browser never rewrites authored text.
+The policy is defined in [question schema](question-schema.md#markdown-and-rationale-metadata) and implemented in `src/content/richText`. `MarkdownContent` is the only renderer and lazy-loads the Markdown and KaTeX pipeline so the landing page and shell load without it. Content is validated at authoring time (`src/content/validation`, packaged as a Node worker for the API) and sanitized again at render time. The browser never rewrites authored text, and the learner and admin bundles import nothing from `src/content/validation` beyond its limit constants.
 
 ## Admin and editor
 
-- `admin.html` is a separate optional entry (`npm run build:admin`); learner builds omit it. Static assets and build flags grant nothing.
-- `PairedHttpClient` (`src/admin/data`) owns session, CSRF, one-attempt requests, one-command-at-a-time admission and the sign-in requirement. `DraftStore` is the only record gateway: it loads the draft once, and every write is one record call (create, patch with `expectedVersion`, move, delete with `cascade`, bulk create, revert, discard, publish, activate). An edit replaces the local record with the server's response; creates, moves, deletes, bulk adds and reverts reload the draft. The server assigns IDs and runs validation; the client sends only the fields the author changed and never rebuilds or remaps a bank.
-- `useRecordEditor` is the one editing hook for every record kind (subject, topic, quiz, question, deck, card): unsaved JSON text, Save, version-conflict handling (the author's text is kept beside the server's copy) and following server changes. `quizzes/QuizAdminPanel`, `flashcards/FlashcardAdminPanel` and `SubjectEditorDialog` use it; both panels build their navigators from the shared parts in `components/AdminNavigatorPanel` (shell, level picker, row list), and `AdminNavigatorPanel` is the quiz navigator; `AdminWorkspace` owns the shared delete dialog, whose impact counts come from the loaded draft. Bulk adds compile content-only JSON into a plan (`core/bulkAddDraft.ts`, `core/flashcardBulkAddDraft.ts`) that `DraftStore.addTree` runs as creates plus bulk calls; topics, quizzes and decks whose names match existing siblings are reused rather than created. Unique sibling names are enforced by indexes on the draft tables. Search, pagination and reorder targets (`core/navigator.ts`) stay in `admin/core`. Hook, panel and app tests run the real store over a fake record API (`src/test/adminGateway.ts`).
-- The server owns the draft, its change history, per-record revert and discard. The editor shows unpublished changes from the draft's `changed` flag, lists recent changes with Revert, and keeps only unsaved text locally.
-- `backend/.../auth` verifies OIDC identity, stores sessions in `admin_auth`, and authorizes the whole `/api/admin` prefix ([operations](operations.md#editor-login-and-sessions)). `backend/.../admin` implements the per-record draft API, publish, activate and export under the editor role, which may write only the draft tables and change log and calls the release store/activate functions. Details: [content management](content-management.md#record-api-and-publication).
-- Public learner routes use the reader role and ignore admin cookies.
-
-## Entry points
-
-`src/main.tsx` boots the learner through `index.html`; Vite proxies `/api` to the API in development, and production hosting must route `/api` to FastAPI. Container packaging: pinned non-root API and Nginx images ([operations](operations.md#containers)).
+- `admin.html` is a separate optional entry (`npm run build:admin`); learner builds omit it. Static assets and build flags grant nothing: the API authorizes the whole `/api/admin` prefix. Public learner routes use the reader role and ignore admin cookies.
+- `PairedHttpClient` (`src/admin/data`) owns session, CSRF and request admission. `DraftStore` is the only record gateway: every write is one record call, and the server assigns IDs and runs validation. The client sends only the fields the author changed and never rebuilds or remaps a bank.
+- `useRecordEditor` is the one editing hook for every record kind. Search, pagination and reorder logic stay in `admin/core`.
+- The server owns the draft, its change history, revert and discard. The editor keeps only unsaved text locally.
+- Hook, panel and app tests run the real store over a fake record API (`src/test/adminGateway.ts`).
+- The record API and publication are described in [content management](content-management.md#record-api-and-publication).
