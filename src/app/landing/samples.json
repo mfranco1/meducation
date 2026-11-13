@@ -25,7 +25,7 @@
             "subject": "Legal Medicine"
         }
     ],
-    "release": "e7915468-0eee-48c8-8949-1244ba8dfeb7",
+    "release": "a75bd554-5f54-4192-bd71-21a2ea982b15",
     "subjects": [
         {
             "id": "s1",
@@ -78,112 +78,113 @@
     ],
     "questions": [
         {
-            "id": "i14589",
-            "stem": "A young man has recurrent sinopulmonary infections beginning at age 6 months, absent B cells, and very low immunoglobulins of all classes. Which defect is present?",
-            "topic": "Immunology",
-            "answer": "D",
-            "pearls": [
-                "XLA: BTK; no B cells; recurrent bacterial infections after 6 months."
-            ],
-            "quizId": "q169",
-            "choices": [
-                {
-                    "id": "A",
-                    "text": "CD40 ligand mutation"
-                },
-                {
-                    "id": "B",
-                    "text": "ADA deficiency"
-                },
-                {
-                    "id": "C",
-                    "text": "Adenylate kinase mutation"
-                },
-                {
-                    "id": "D",
-                    "text": "BTK mutation in X-linked agammaglobulinemia"
-                }
-            ],
-            "subject": "Biochemistry",
-            "metadata": {
-                "system": "Immunology",
-                "subtopic": "Immunodeficiency",
-                "difficulty": "medium",
-                "questionType": "Clinical vignette"
-            },
-            "rationale": "Bruton agammaglobulinemia is X-linked BTK deficiency, preventing pre-B cell maturation. Infections occur after maternal IgG wanes, at 6 months. CD19-positive cells are absent, and lymph nodes and tonsils are small.\n\nTreat with IVIG."
-        },
-        {
-            "id": "i17861",
-            "stem": "A man is brought in after ingesting antifreeze. He has an elevated anion gap metabolic acidosis, an osmolar gap, and acute kidney injury. Which finding is expected on urine microscopy?",
-            "topic": "Kidney",
+            "id": "i23526",
+            "stem": "An infant with X-linked agammaglobulinemia has no infections for the first several months of life and then develops recurrent otitis media and pneumonia. Which of the following best explains this timing?",
+            "topic": "Immunology and Allergy",
             "answer": "C",
             "pearls": [
-                "Anion gap acidosis plus osmolar gap plus oxalate crystals: ethylene glycol."
+                "Onset before 6 months points toward a severe T-cell or combined defect rather than an isolated antibody defect.",
+                "Preterm infants receive less maternal IgG and reach their nadir earlier."
             ],
-            "quizId": "q234",
+            "quizId": "q343",
             "choices": [
                 {
                     "id": "A",
-                    "text": "Hexagonal cystine crystals"
+                    "text": "Antibodies in breast milk protect the airway until weaning"
                 },
                 {
                     "id": "B",
-                    "text": "Rhomboid uric acid crystals"
+                    "text": "Neonatal B cells make adequate IgM until 6 months of age"
                 },
                 {
                     "id": "C",
-                    "text": "Birefringent calcium oxalate crystals"
+                    "text": "Maternal IgG acquired across the placenta declines after birth"
                 },
                 {
                     "id": "D",
-                    "text": "Coffin-lid magnesium ammonium phosphate crystals"
+                    "text": "Thymic output is greatest in the first months of life"
                 }
             ],
-            "subject": "Pathology",
+            "subject": "Pediatrics",
             "metadata": {
-                "system": "Renal",
-                "subtopic": "Toxic Acute Kidney Injury",
+                "system": "Immune",
+                "subtopic": "Approach to Immunodeficiency",
                 "difficulty": "medium",
-                "questionType": "Clinical Correlation"
+                "questionType": "Clinical Vignette: Mechanism"
             },
-            "rationale": "Ethylene glycol is metabolized by alcohol dehydrogenase to glycolic and oxalic acids. Oxalate precipitates with calcium in tubules as needle-shaped (monohydrate) or envelope-shaped (dihydrate) crystals, causing tubular obstruction and direct toxic ATN. Treatment: fomepizole (alcohol dehydrogenase inhibitor), hemodialysis, and correction of acidosis.\n\n**Why the others are wrong**\n- Cystine crystals: cystinuria.\n- Uric acid crystals: acidic urine, tumor lysis, or gout.\n- Struvite crystals: alkaline urine from urease-producing bacteria."
+            "rationale": "**Transplacentally acquired maternal IgG** protects the infant at first. It falls to its lowest level at about 3 to 6 months, and **antibody-deficient infants then become symptomatic**.\n\n| Defect | Onset | Examples |\n| --- | --- | --- |\n| Combined or T-cell | First weeks to 6 months | SCID, CD40 ligand deficiency |\n| Antibody | After 3 to 6 months | X-linked agammaglobulinemia |\n| Phagocyte | Early infancy to childhood | Chronic granulomatous disease |\n| Complement | Variable, any age | C3 deficiency |\n\n- **Antibodies in breast milk** give mucosal IgA but do not replace systemic IgG.\n- **Neonatal B-cell IgM** cannot be made in X-linked agammaglobulinemia because B cells are absent.\n- **Thymic output** concerns T cells and does not protect a patient who lacks B cells."
         },
         {
-            "id": "i15221",
-            "stem": "A term pregnancy has a nonreactive NST. The remaining four biophysical profile components, including amniotic fluid volume, are normal. What is the biophysical profile score?",
-            "topic": "Obstetrics",
-            "answer": "A",
+            "id": "i37570",
+            "stem": "A 32-year-old man drank automotive antifreeze 12 hours ago. He has flank pain, creatinine 3.1 mg/dL (274 µmol/L) and calcium 7.2 mg/dL (1.8 mmol/L). The anion gap is 28 mEq/L. Urine microscopy shows needle- and envelope-shaped crystals. Which of the following best explains his kidney injury?",
+            "topic": "Nephrology",
+            "answer": "D",
             "pearls": [
-                "Oligohydramnios is the component most tied to chronic uteroplacental insufficiency; it is an indication for further evaluation or delivery depending on GA."
+                "Fluorescein in antifreeze makes urine glow under a Wood lamp, but it is an unreliable test."
             ],
-            "quizId": "q181",
+            "quizId": "q702",
             "choices": [
                 {
                     "id": "A",
-                    "text": "8/10"
+                    "text": "Uric acid crystal obstruction from tumor lysis"
                 },
                 {
                     "id": "B",
-                    "text": "10/10"
+                    "text": "Myoglobin casts from severe rhabdomyolysis"
                 },
                 {
                     "id": "C",
-                    "text": "6/10"
+                    "text": "Formate toxicity to the renal tubule"
                 },
                 {
                     "id": "D",
-                    "text": "4/10"
+                    "text": "Calcium oxalate crystals formed from glycolate"
+                }
+            ],
+            "subject": "Internal Medicine",
+            "metadata": {
+                "system": "Renal and Urinary",
+                "subtopic": "High Anion Gap Metabolic Acidosis",
+                "difficulty": "medium",
+                "questionType": "Clinical Vignette: Mechanism"
+            },
+            "rationale": "**Calcium oxalate deposition** explains it. Alcohol dehydrogenase converts ethylene glycol to glycolic acid, which drives the **high anion gap acidosis**, and then to oxalate. Oxalate binds calcium, causing **hypocalcemia**, **calcium oxalate crystals** and tubular injury.\n\n- **Myoglobin casts** need rhabdomyolysis, with a very high creatine kinase and dark urine.\n- **Formate** is the toxic metabolite of methanol and injures the optic nerve, not the kidney.\n- **Uric acid crystals** occur in tumor lysis and do not cause the hypocalcemia or acidosis here.\n\nTreat with fomepizole. Intermittent hemodialysis is advised for severe features such as coma, seizures or acute kidney injury."
+        },
+        {
+            "id": "i33623",
+            "stem": "A 28-year-old woman at 36 weeks of gestation with gestational diabetes has a biophysical profile. The ultrasound shows normal breathing, movement and tone, and a single deepest vertical pocket of 4 cm. A nonstress test was not done. How should the result be interpreted?",
+            "topic": "Obstetrics",
+            "answer": "C",
+            "pearls": [
+                "The nonstress test is added when any of the four ultrasonographic variables is abnormal."
+            ],
+            "quizId": "q597",
+            "choices": [
+                {
+                    "id": "A",
+                    "text": "Equivocal, because the missing nonstress test scores 0"
+                },
+                {
+                    "id": "B",
+                    "text": "Abnormal, because the nonstress test is required for a valid profile"
+                },
+                {
+                    "id": "C",
+                    "text": "Normal, and the nonstress test can be omitted"
+                },
+                {
+                    "id": "D",
+                    "text": "Normal, provided it is repeated within 24 hours"
                 }
             ],
             "subject": "Obstetrics & Gynecology",
             "metadata": {
-                "system": "Reproductive",
-                "subtopic": "Fetal surveillance",
+                "system": "Pregnancy and Childbirth",
+                "subtopic": "Biophysical Profile",
                 "difficulty": "medium",
-                "questionType": "Calculation"
+                "questionType": "Lab Interpretation"
             },
-            "rationale": "Each normal component earns 2 points. With four normal components (breathing, movement, tone, fluid) and only the NST abnormal (0 points), the total is **8/10**, which is considered reassuring when the amniotic fluid is normal.\n\nThe **modified BPP** combines the NST with an amniotic fluid assessment (AFI above 5 cm or deepest pocket ≥2 cm) and is commonly used for antenatal surveillance."
+            "rationale": "**Normal.** The nonstress test can be omitted when all four ultrasonographic components are normal. The score is 8 of 8, which is interpreted as normal and needs no change in management.\n\n- **Equivocal, with the missing test scored 0** is wrong because an omitted component is not scored as abnormal.\n- **Abnormal, because the test is required** is wrong because the nonstress test is optional when the four sonographic variables are normal.\n- **Normal if repeated in 24 hours** invents a repeat interval. A normal profile is repeated on the usual schedule for the underlying risk."
         }
     ]
 }

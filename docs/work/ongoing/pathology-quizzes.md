@@ -42,7 +42,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Immune System Disorders | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q722 to q723, 99; 1 in backlog: an HIV item in Immunodeficiency) |
 | Neoplasia | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q730 to q731, 97; 3 in backlog: 2 in Tumor Features, 1 in Molecular Basis) |
 | Infectious Disease Pathology | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q736 to q737, 100; 0 in backlog) |
-| Environmental and Nutritional Pathology | staged 2026-11-11 (q740 to q741, 80; 0 in backlog) |
+| Environmental and Nutritional Pathology | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q740 to q741, 99; 1 in backlog: an Alcohol item in Environmental, not methanol) |
 | Infancy and Childhood | staged 2026-11-11 (q747 to q748, 79; 1 in backlog) |
 | Blood Vessels | staged 2026-11-11 (q751 to q752, 80; 0 in backlog) |
 | Heart | staged 2026-11-12 (q758 to q759, 80; 0 in backlog) |

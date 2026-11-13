@@ -36,7 +36,7 @@ for (const width of [390, 1440]) {
     const quiz = page.getByRole('region', { name: 'Sample Quizzes' });
     const flashcards = page.getByRole('region', { name: 'Sample Flashcards' });
     await enterSection(page, 'Board-style Questions');
-    await page.keyboard.press('4');
+    await page.keyboard.press('3');
     await expect(quiz.getByText('Correct', { exact: true })).toBeVisible();
     await page.keyboard.press('ArrowRight');
     await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
@@ -231,7 +231,7 @@ test('a first visit shows the landing page until the visitor starts studying', a
 
   await enterSection(page, 'Board-style Questions');
   await page.getByRole('radio').first().focus();
-  await page.keyboard.press('4');
+  await page.keyboard.press('3');
   await expect(page.getByText('Correct', { exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Case 1, correct, current case' })).toBeVisible();
   await expect(page.getByRole('list', { name: 'How it works' })).toContainText('Choose an answer (done)');
@@ -332,11 +332,11 @@ test('the sample streak stays centered in the viewport vertically and the quiz h
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   const sample = page.getByRole('region', { name: 'Sample Quizzes' });
-  await sample.getByRole('radio', { name: /BTK mutation/ }).click();
+  await sample.getByRole('radio', { name: /Maternal IgG/ }).click();
   await sample.getByRole('button', { name: 'Continue', exact: true }).click();
-  await sample.getByRole('radio', { name: /Birefringent calcium oxalate/ }).click();
+  await sample.getByRole('radio', { name: /Calcium oxalate crystals formed/ }).click();
   await sample.getByRole('button', { name: 'Continue', exact: true }).click();
-  await sample.getByRole('radio', { name: /8\/10/ }).click();
+  await sample.getByRole('radio', { name: /Normal, and the nonstress test/ }).click();
   const celebration = page.getByRole('status').filter({ has: page.getByTestId('celebration-card') });
   await expect(celebration).toBeVisible();
   // Keep the reward visible while checking scroll and breakpoint changes.
