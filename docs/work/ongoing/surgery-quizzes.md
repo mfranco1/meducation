@@ -26,7 +26,7 @@ Every quiz in the 10 topics with 3 or 4 quizzes grows from 30 to 40 items (33 qu
 
 | Topic | Status | Backlog |
 | --- | --- | --- |
-| Surgical Foundations | writing | |
+| Surgical Foundations | staged (40 per quiz) | 0 |
 | Trauma and Emergency Surgery | | |
 | Endocrine Surgery | | |
 | Small Bowel and Appendix | | |

@@ -16,6 +16,7 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | clinicalinfo.hiv.gov (NIH HIV and opportunistic infection guidelines) | 403 | Web Archive raw form of the guideline PDF |
 | PubMed Central | Browser check | Europe PMC full-text copy |
 | NCBI Bookshelf | Often refused | Europe PMC or a copy hosted by another agency |
+| ASRA neuraxial anticoagulation (rapm.bmj.com) | Full text blocked, summaries only | The anticoagulant's DailyMed label (spinal/epidural hematoma and catheter timing sections); cite the label |
 | EULAR (ard.bmj.com) | 403 | Author manuscript in a university repository (eprints, institutional open-access pages) |
 | ESGO | | Pocket-guideline PDFs on esgo.org; some full texts are hosted by national societies (BGCS) |
 | ACOG | 402 | An SMFM-hosted copy of the ACOG document, or an equivalent current guideline that loads: NICE (also through the UK Government Web Archive), WHO, SMFM, FIGO |
