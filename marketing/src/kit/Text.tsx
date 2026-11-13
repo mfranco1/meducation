@@ -33,7 +33,7 @@ export function KineticText({
   const { fontSize: fitted } = fitText({
     text: longest,
     withinWidth: width,
-    fontFamily: 'Inter',
+    fontFamily: "'DM Sans'",
     fontWeight: weight,
     letterSpacing,
   });
@@ -42,7 +42,7 @@ export function KineticText({
   return (
     <div
       style={{
-        fontFamily: 'Inter, sans-serif',
+        fontFamily: "'DM Sans', sans-serif",
         fontSize,
         fontWeight: weight,
         letterSpacing,

@@ -19,10 +19,10 @@ const spec = specSchema.parse(rest);
 const hasSoundtrack = soundtrack !== undefined;
 
 function Production({ spec }: { spec: AdSpec }) {
-  const [handle] = useState(() => delayRender('Load local Inter'));
+  const [handle] = useState(() => delayRender('Load local DM Sans'));
   const [ready, setReady] = useState(false);
   useEffect(() => {
-    new FontFace('Inter', `url(${staticFile('fonts/InterVariable.woff2')})`, { weight: '100 900' })
+    new FontFace('DM Sans', `url(${staticFile('fonts/DMSansVariable.woff2')})`, { weight: '100 900' })
       .load()
       .then((font) => {
         document.fonts.add(font);
@@ -32,7 +32,7 @@ function Production({ spec }: { spec: AdSpec }) {
       .catch(cancelRender);
   }, [handle]);
   return (
-    <AbsoluteFill style={{ fontFamily: 'Inter, sans-serif' }}>
+    <AbsoluteFill style={{ fontFamily: "'DM Sans', sans-serif" }}>
       {ready && <Ad spec={spec} />}
       {hasSoundtrack && <Audio src={staticFile(`audio/${spec.id}/mix.wav`)} />}
     </AbsoluteFill>

@@ -9,7 +9,7 @@ Digest of the official [remotion-dev/skills](https://github.com/remotion-dev/ski
 - Keep `useCurrentFrame()` in the smallest component that needs it.
 - Prefer the `scale`, `translate` and `rotate` CSS properties over `transform` strings.
 - For `scale` animations pass `output: 'perceptual-scale'` to `interpolate`.
-- Anything asynchronous (data, measurements) must use `delayRender()`/`continueRender()`. `src/index.tsx` already loads Inter and renders the ad only after it is ready.
+- Anything asynchronous (data, measurements) must use `delayRender()`/`continueRender()`. `src/index.tsx` already loads DM Sans and renders the ad only after it is ready.
 
 ## Structure
 

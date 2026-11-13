@@ -1,5 +1,5 @@
-import '@fontsource-variable/inter/opsz.css';
-import '@fontsource-variable/inter/opsz-italic.css';
+import '@fontsource-variable/dm-sans/opsz.css';
+import '@fontsource-variable/dm-sans/opsz-italic.css';
 import { StrictMode } from 'react';
 import type { ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
