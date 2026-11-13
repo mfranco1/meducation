@@ -58,6 +58,19 @@ describe('quiz batch report', () => {
     expect(buildReport(batch(items), { vocabulary, blueprint }).text).not.toContain('expected 50 to 100');
   });
 
+  it('checks a top-up against its added items and ignores topics outside the batch', () => {
+    const items = [item('Only stem here?', { metadata: { ...item('').metadata, subtopic: 'Valves' } })];
+    const blueprint = {
+      topics: [
+        { name: 'T', quizzes: [{ name: 'Q', target: 50, add: { target: 1, subtopics: { Valves: 1 } } }] },
+        { name: 'Other', quizzes: [{ name: 'Elsewhere', target: 40 }] },
+      ],
+    };
+    const report = buildReport(batch(items), { vocabulary, blueprint }).text;
+    expect(report).toContain('T › Q items: 1/1');
+    expect(report).not.toContain('Elsewhere');
+  });
+
   it('flags letter-prefixed choices but not genus abbreviations', () => {
     const report = run([
       item('Prefixed one?', { choices: ['A. Alpha', 'Beta', 'Gamma', 'Delta'] }),

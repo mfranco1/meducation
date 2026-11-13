@@ -91,6 +91,7 @@ Write `<work>/blueprint.json` and a short coverage summary:
 - Weight subtopics by exam frequency and clinical importance, not by how many pages a source spends on them.
 - Order topics and quizzes for learner progression (foundations before applications). Use existing topics where they fit. Add a topic only when its content fills 2 quizzes of 50. Otherwise merge it into a related topic.
 - Quiz names are specific and don't repeat the topic name. Split by subtopic, not "Part 2". Every quiz gets a one-sentence description. New topics get a 1 to 2 sentence description, and existing topics get none.
+- **Enlarging a staged quiz.** Set its final `target` and `subtopics`, and add `"add": { "target": 10, "subtopics": { ... } }` with only the new items. `slices` briefs the writer for those and the gate checks them. Remove `add` after staging.
 - **Deconflict.** Each tested point belongs to one quiz. Compare every quiz with the existing outline subtopics and with the other planned quizzes, including other topics (for example rehydration in a gastroenterology quiz and in an IMCI quiz, or iron in nutrition and in hematology) and quizzes in the same topic (fracture-nerve associations in a bones quiz and the same nerve lesions in a nerves quiz). Give the point to one quiz and list it in the other's `excludes`, naming where it lives.
 
 Show the user the coverage summary (topics, quizzes, targets) and wait for approval before writing. For work that spans sessions, keep a tracker (see [Sessions and lessons](#sessions-and-lessons)).

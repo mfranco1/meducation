@@ -156,7 +156,11 @@ def cmd_slices(work: Work, args) -> None:
         for t in load(work.root / "blueprint.json")["topics"]
         for q in t["quizzes"]
     ]
+    counts = {(t["name"], q["name"]): len(q.get("stems", [])) for t in outline["topics"] for q in t.get("quizzes", [])}
     for n, quiz in enumerate(topic["quizzes"], 1):
+        if "add" in quiz:  # a top-up of a staged quiz: brief only the new items
+            staged = counts.get((topic["name"], quiz["name"]), 0)
+            quiz = {k: v for k, v in quiz.items() if k != "add"} | quiz["add"] | {"staged": staged}
         pages = page_text(work, quiz.get("pages", ""))
         if pages:
             work.dir.mkdir(exist_ok=True)

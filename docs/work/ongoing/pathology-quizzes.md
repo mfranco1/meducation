@@ -6,7 +6,8 @@ Run with `/write-quizzes` (skill in `.agents/skills/write-quizzes/`). The user a
 - Sources: `~/Downloads/tn-pdfs/patho/handouts/*.pdf`, extracted to `src/`. Blueprint `pages` refer to `src/main.txt` (main handout, raw `pdftotext`, form-feed pages; `main-layout.txt` is layout mode). `src/flashcards.txt`, `src/flashcards-condensed.txt`, `src/buzzwords.txt` and `src/atlas.txt` (image captions only) are part of the minimum coverage map.
 - Topics: the subject's 27 existing topics, all empty at the start, in handout (Robbins) chapter order. No topic merges.
 - Sizing (user decision 2026-11-12): skill defaults, with as many quizzes as the topic needs (2 of 50, 3 to 4 of 40, 5+ of 30). The 14 topics staged before then have 2 quizzes of 40.
-- Sessions: one topic per session, in the order of the status table. Then revisit the 14 earlier topics (resize or add quizzes to match), then the replacement batch and cleanup.
+- Sessions: one topic per session, in the order of the status table. Then revisit the 14 earlier topics, one per session, then the replacement batch and cleanup.
+- Resize of the 14 earlier topics (user decision 2026-11-13): size each by its content, 2 of 50, 3 to 4 of 40 or 5+ of 30. Existing quizzes may be split into more quizzes to deepen coverage. Top-ups use the blueprint `add` field. A split needs moving staged questions between quizzes (keep their IDs; `DraftService.move` and `update` with actor `agent:write-quizzes`). A top-up fills the quiz's backlog slots: remove those entries from `replace-backlog.json` after staging.
 
 ## Decisions
 
@@ -34,7 +35,7 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 
 | Topic | Status |
 | --- | --- |
-| Cell Injury and Adaptation | staged 2026-11-11 (q700 to q701, 77; 3 in backlog) |
+| Cell Injury and Adaptation | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q700 to q701, 98; 2 in backlog; both quizzes 16% hard, ask for hard replacements) |
 | Inflammation and Repair | staged 2026-11-11 (q708 to q709, 78; 2 in backlog) |
 | Hemodynamic Disorders | staged 2026-11-11 (q712 to q713, 79; 1 in backlog) |
 | Genetic Disorders | staged 2026-11-11 (q716 to q717, 80; 0 in backlog) |
@@ -60,4 +61,4 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Bones, Joints, and Soft Tissue | staged 2026-11-12 (q802 to q804, 3 quizzes of 40, 117; 3 in backlog; Joint quiz is 13% hard, ask for hard replacements) |
 | Peripheral Nerves and Skeletal Muscle | staged 2026-11-12 (q805 to q806, 98; 2 in backlog) |
 | Central Nervous System | staged 2026-11-12 (q807 to q811, 5 quizzes of 30, 148; 2 in backlog; Cerebrovascular and Infections are 10% hard, ask for a hard replacement in Cerebrovascular) |
-| Eye | |
+| Eye | staged 2026-11-12 (q812 to q813, 98; 2 in backlog) |

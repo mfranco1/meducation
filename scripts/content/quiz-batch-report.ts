@@ -16,7 +16,16 @@ export interface Outline {
   }[];
 }
 export interface Blueprint {
-  topics: { name: string; quizzes: { name: string; target: number; subtopics?: Record<string, number> }[] }[];
+  topics: {
+    name: string;
+    quizzes: {
+      name: string;
+      target: number;
+      subtopics?: Record<string, number>;
+      // A top-up of a staged quiz: the batch holds only these new items.
+      add?: { target: number; subtopics?: Record<string, number> };
+    }[];
+  }[];
 }
 export interface Finding {
   level: 'error' | 'warning';
@@ -203,7 +212,8 @@ function blueprintFindings(entries: Entry[], blueprint: Blueprint) {
     if (Math.abs(actual - target) > target * 0.2)
       out.push({ level: 'warning', where, message: `${label}: actual ${actual}, target ${target}.` });
   };
-  for (const topic of blueprint.topics)
+  const inBatch = new Set(entries.map((e) => key(e.topic)));
+  for (const topic of blueprint.topics.filter((t) => inBatch.has(key(t.name))))
     for (const quiz of topic.quizzes) {
       const where = `${topic.name} › ${quiz.name}`;
       const items = entries.filter((e) => key(e.topic) === key(topic.name) && key(e.quiz) === key(quiz.name));
@@ -211,8 +221,9 @@ function blueprintFindings(entries: Entry[], blueprint: Blueprint) {
         out.push({ level: 'warning', where, message: 'Quiz is in the blueprint but missing from the batch.' });
         continue;
       }
-      check(where, 'items', items.length, quiz.target);
-      for (const [name, target] of Object.entries(quiz.subtopics ?? {}))
+      const plan = quiz.add ?? quiz;
+      check(where, 'items', items.length, plan.target);
+      for (const [name, target] of Object.entries(plan.subtopics ?? {}))
         check(
           where,
           `subtopic "${name}"`,
