@@ -177,7 +177,11 @@ def cmd_slices(work: Work, args) -> None:
                     "description": topic.get("description", ""),
                 },
                 "quiz": quiz,
-                "otherPlannedQuizzes": [p for p in plan if p["quiz"] != quiz["name"]],
+                "otherPlannedQuizzes": [
+                    p if p["topic"] == topic["name"] else {k: p[k] for k in ("topic", "quiz", "subtopics")}
+                    for p in plan
+                    if p["quiz"] != quiz["name"]
+                ],
                 "stagedStems": str(work.root / "stems.txt"),
                 "sourceLedger": str(work.ledger),
                 "sourcePages": str(work.dir / f"source-{n}.txt") if pages else "",
@@ -629,25 +633,30 @@ def merge_ledger(work: Work) -> None:
     # Sessions for other subjects share this ledger; hold the lock across read, merge and write.
     with open(path.with_name(path.name + ".lock"), "w") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        ledger = load(path) if path.exists() else []
-        index = {(e["title"].strip().lower(), str(e.get("year", ""))): e for e in ledger}
+        index: dict[tuple[str, str], dict] = {}
+
+        def fold(row: dict) -> bool:
+            """Merge a row into the index; True when it is a new entry."""
+            url = re.sub(r"^(https?://)?(www\.)?", "", row.get("url", "").strip().lower()).rstrip("/")
+            k = (url or row["title"].strip().lower(), str(row.get("year", "")))
+            entry = index.get(k)
+            if entry is None:
+                index[k] = {**row, "facts": list(row.get("facts", []))}
+                return True
+            if STATUS_RANK[row["status"]] > STATUS_RANK[entry["status"]]:
+                entry["status"] = row["status"]
+                entry["url"] = row.get("url", entry.get("url", ""))
+            entry["facts"] += [f for f in row.get("facts", []) if f not in entry["facts"]]
+            return False
+
+        for row in load(path) if path.exists() else []:
+            fold(row)
         added = 0
         for source in sorted(work.root.glob("*/sources-*.json")):
             for row in load(source):
-                k = (row["title"].strip().lower(), str(row.get("year", "")))
                 if row.get("status") not in STATUS_RANK:
                     sys.exit(f"{source}: {row['title']} has status {row.get('status')!r}.")
-                if k not in index:
-                    index[k] = {**row, "facts": list(row.get("facts", []))}
-                    added += 1
-                    continue
-                entry = index[k]
-                if STATUS_RANK[row["status"]] > STATUS_RANK[entry["status"]]:
-                    entry["status"] = row["status"]
-                    entry["url"] = row.get("url", entry.get("url", ""))
-                entry["facts"] += [
-                    f for f in row.get("facts", []) if f not in entry["facts"]
-                ]
+                added += fold(row)
         dump(path, sorted(index.values(), key=lambda e: e["title"].lower()))
     print(f"{len(index)} sources ({added} new) in {path}")
 

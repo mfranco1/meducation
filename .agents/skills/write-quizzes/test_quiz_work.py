@@ -291,8 +291,14 @@ def test_slices_adds_unstaged_stems_and_source_pages(tmp_path):
         json.dumps(
             {
                 "topics": [
-                    {"name": TOPIC, "quizzes": [{"name": QUIZ, "target": 12}]},
-                    {"name": "Renal", "quizzes": [{"name": "AKI", "pages": "2-3"}]},
+                    {"name": TOPIC, "quizzes": [{"name": QUIZ, "target": 12, "description": "d", "subtopics": {"A": 1}}]},
+                    {
+                        "name": "Renal",
+                        "quizzes": [
+                            {"name": "AKI", "pages": "2-3"},
+                            {"name": "CKD", "description": "d", "subtopics": {"B": 1}, "excludes": ["x"]},
+                        ],
+                    },
                 ]
             }
         )
@@ -312,6 +318,9 @@ def test_slices_adds_unstaged_stems_and_source_pages(tmp_path):
     assert "two" in source and "three" in source and "four" not in source
     brief = json.loads((work / "renal" / "brief-1.json").read_text())
     assert brief["sourcePages"].endswith("source-1.txt")
+    others = {p["quiz"]: p for p in brief["otherPlannedQuizzes"]}
+    assert set(others[QUIZ]) == {"topic", "quiz", "subtopics"}
+    assert set(others["CKD"]) == {"topic", "quiz", "description", "subtopics", "excludes"}
 
 
 def test_slices_briefs_only_the_new_items_of_a_top_up(tmp_path):
@@ -376,6 +385,21 @@ def test_clean_keeps_the_blueprint_and_merges_the_shared_ledger(tmp_path):
     assert (
         json.loads((tmp_path / "sources.json").read_text())[0]["title"] == "KDIGO AKI"
     )
+
+
+def test_ledger_merges_a_url_across_titles_and_compacts_existing_duplicates(tmp_path):
+    topic_dir = setup(tmp_path)
+    row = {"title": "KDIGO AKI", "year": "2012", "url": "https://www.example.org/kdigo/", "status": "blocked", "facts": ["a"]}
+    same = {**row, "title": "Other title", "url": "HTTP://example.org/kdigo", "status": "verified", "facts": ["a", "b"]}
+    other_year = {**row, "year": "2024", "facts": ["c"]}
+    (topic_dir / "sources-1.json").write_text(json.dumps([row, same, other_year]))
+    (tmp_path / "sources.json").write_text(json.dumps([{**row, "title": "Third", "facts": ["z"]}, {**row, "title": "Fourth", "facts": ["y"]}]))
+    assert run(tmp_path, "ledger").returncode == 0
+    entries = {e["year"]: e for e in json.loads((tmp_path / "sources.json").read_text())}
+    assert len(entries) == 2
+    assert entries["2012"]["status"] == "verified" and entries["2012"]["title"] == "Third"
+    assert sorted(entries["2012"]["facts"]) == ["a", "b", "y", "z"]
+    assert entries["2024"]["facts"] == ["c"]
 
 
 def test_concurrent_ledger_runs_for_two_subjects_keep_both_entries(tmp_path):

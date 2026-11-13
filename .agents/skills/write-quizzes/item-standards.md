@@ -41,7 +41,7 @@ Write every stem, choice, rationale and pearl in your own words. Never copy sent
 - **Cognitive level**: favor application (vignettes on diagnosis, mechanism, next step, management, complication, prevention, lab interpretation) over pure recall. Aim for at most about 30% Recall. For laws, write short scenarios that ask what the law requires or allows, rather than asking for the provision itself. Include comparisons of look-alike entities and multi-step items that chain two or more concepts (e.g. vignette, then diagnosis, then underlying mutation).
 - **Difficulty** (author estimate): about 20% easy, 60% medium, 20% hard. Hard items demand synthesis or discrimination between close distractors, not obscure facts. An item whose stem names the clue that leads straight to the key (the signaling pathway, the classic exposure, the named defect) is not hard.
 - **Answer letters**: spread roughly evenly across A to D.
-- Revisiting a core concept from a different angle is welcome. Near-duplicates are not, within the quiz or across the subject. Before writing, skim the staged stems (`stems.txt`) and the other planned quizzes in your brief. Leave out the points in your quiz's `excludes`: they belong to another quiz.
+- Revisiting a core concept from a different angle is welcome. Near-duplicates are not, within the quiz or across the subject. Before writing, read your topic's sections of the staged stems (`stems.txt`) and the other planned quizzes in your brief. Leave out the points in your quiz's `excludes`: they belong to another quiz.
 
 ## Rationale
 
