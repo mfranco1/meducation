@@ -245,6 +245,13 @@ export function buildReport(
 
   const entries = entriesOf(draft);
   const outlineTopic = (name: string) => outline?.topics.find((t) => key(t.name) === key(name));
+  // A blueprint subtopic with no staged items yet is planned, not unknown.
+  const plannedSubtopics = (topicName: string, quizName: string) => {
+    const quiz = blueprint?.topics
+      .find((t) => key(t.name) === key(topicName))
+      ?.quizzes.find((q) => key(q.name) === key(quizName));
+    return Object.keys({ ...quiz?.subtopics, ...quiz?.add?.subtopics });
+  };
   const outlineStems = (outline?.topics ?? []).flatMap((topic) =>
     (topic.quizzes ?? []).flatMap((quiz) =>
       (quiz.stems ?? []).map((stem) => ({
@@ -322,8 +329,8 @@ export function buildReport(
         if (!sub) continue;
         const folded = sub.toLowerCase().replace(/\s+/g, '');
         subtopics.set(folded, (subtopics.get(folded) ?? new Set()).add(sub));
-        const known = outlineTopic(topic.name)?.subtopics;
-        if (known?.length && !known.some((k) => key(k) === key(sub)))
+        const known = [...(outlineTopic(topic.name)?.subtopics ?? []), ...plannedSubtopics(topic.name, quiz.name)];
+        if (outlineTopic(topic.name)?.subtopics?.length && !known.some((k) => key(k) === key(sub)))
           findings.push({ level: 'warning', where: e.where, message: `Subtopic "${sub}" is not in the outline.` });
       }
     }

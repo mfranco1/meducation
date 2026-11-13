@@ -71,6 +71,20 @@ describe('quiz batch report', () => {
     expect(report).not.toContain('Elsewhere');
   });
 
+  it('accepts a subtopic missing from the outline when the blueprint plans it', () => {
+    const items = [
+      item('Planned one?', { metadata: { ...item('').metadata, subtopic: 'Valves' } }),
+      item('Stray one?'),
+    ];
+    const outline = { topics: [{ name: 'T', subtopics: ['Pumps'] }] };
+    const blueprint = {
+      topics: [{ name: 'T', quizzes: [{ name: 'Q', target: 50, add: { target: 2, subtopics: { Valves: 1 } } }] }],
+    };
+    const text = buildReport(batch(items), { vocabulary, outline, blueprint }).text;
+    expect(text).not.toContain('"Valves" is not in the outline');
+    expect(text).toContain('"Rhythm" is not in the outline');
+  });
+
   it('flags letter-prefixed choices but not genus abbreviations', () => {
     const report = run([
       item('Prefixed one?', { choices: ['A. Alpha', 'Beta', 'Gamma', 'Delta'] }),

@@ -29,7 +29,7 @@ Before the gate, check each item for the flaws reviewers fix most:
 
 Then run the gate on your own batch:
   npm run report:quiz-batch -- BATCH --outline WORK/outline.json --blueprint WORK/blueprint.json
-Clear every error and every applicable warning. The common misses: Recall above 30% or another question type above 40%, `<sup>`/`<sub>` in `choices` or `pearls` (use Unicode: Na⁺, CO₂), answer letters not spread evenly, the correct choice being the longest in more than about a quarter of items, rationales outside 70 to 140 words, numeric choices out of ascending order, and calculation rationales that open with the formula instead of the bolded answer.
+Clear every error and every applicable warning. The common misses: Recall above 30% or another question type above 40%, `<sup>`/`<sub>` in `choices` or `pearls` (use Unicode: Na⁺, CO₂) and Unicode in stems and rationales (use `<sub>`/`<sup>`), answer letters not spread evenly, the correct choice being the longest in more than about a quarter of items, rationales outside 70 to 140 words, numeric choices out of ascending order, and calculation rationales that open with the formula instead of the bolded answer.
 
 Use your own scratchpad subfolder SCRATCH under SCRATCHPAD for helper scripts. Write nowhere else except your output paths.
 
