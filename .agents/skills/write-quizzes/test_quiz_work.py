@@ -249,6 +249,23 @@ def test_apply_moves_drops_to_the_backlog_and_clean_waits_for_it(tmp_path):
     assert run(tmp_path, "clean").returncode == 0
 
 
+def test_backlog_clear_keeps_dropped_replacements_with_the_earlier_reason(tmp_path):
+    setup(tmp_path)
+    work = tmp_path / "subject"
+    old = {"topic": TOPIC, "quiz": QUIZ, "stem": "Old stem?", "reason": "duplicate of item 2."}
+    new = {"topic": TOPIC, "quiz": QUIZ, "stem": "Stem number 1?", "reason": "duplicate of item 5."}
+    filled = {**old, "quiz": "Other", "stem": "Filled stem?"}
+    (work / "replace-backlog.json").write_text(json.dumps([old, filled, new]))
+    (work / "replacements").mkdir()
+    batch = {"topics": [{"name": TOPIC, "quizzes": [{"name": QUIZ, "items": [item(1)]}]}]}
+    (work / "replacements" / "batch.json").write_text(json.dumps(batch))
+    assert run(tmp_path, "backlog", "--clear").returncode == 0
+    backlog = json.loads((work / "replace-backlog.json").read_text())
+    assert [(b["stem"], b["reason"]) for b in backlog] == [
+        ("Stem number 1?", "duplicate of item 5. Earlier drop in this slot: duplicate of item 2.")
+    ]
+
+
 def test_apply_refuses_a_choices_edit_without_answer(tmp_path):
     topic_dir = setup(tmp_path)
     (topic_dir / "review.json").write_text(

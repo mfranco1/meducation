@@ -15,6 +15,7 @@ When a lesson finds another retired term, add a row. When the current form here 
 | Extranodal NK/T-cell lymphoma, nasal type | Extranodal NK/T-cell lymphoma | WHO-HAEM5, 2022 |
 | Chondrosarcoma, grade 1 of the long and short tubular bones | Atypical cartilaginous tumor; "chondrosarcoma, grade 1" only for axial sites (pelvis, scapula, skull base) | WHO Soft Tissue and Bone, 6th ed., 2026 |
 | Brown tumor as a reactive, non-neoplastic lesion | Brown tumor of hyperparathyroidism: a separate benign *KRAS*-mutant neoplasm that regresses when PTH normalizes | WHO Soft Tissue and Bone, 6th ed., 2026 |
+| HIV-1/HIV-2 Western blot as the confirmatory test | HIV-1/HIV-2 antibody differentiation immunoassay, then HIV-1 RNA if discordant (laboratory testing algorithm) | CDC/APHL 2014 |
 
 ## Current editions
 

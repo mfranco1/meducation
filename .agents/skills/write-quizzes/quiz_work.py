@@ -662,10 +662,24 @@ def merge_ledger(work: Work) -> None:
 
 
 def cmd_backlog(work: Work, args) -> None:
-    """Count the dropped items awaiting replacement, per quiz; --clear once they are staged."""
+    """Count the dropped items awaiting replacement, per quiz; --clear once they are staged.
+    --clear keeps the drops from replacements/batch.json, each with its slot's earlier reason."""
     if args.clear:
-        work.backlog_path.unlink(missing_ok=True)
-        print("Backlog cleared.")
+        batch_path = work.root / "replacements" / "batch.json"
+        new = {i["stem"] for _, _, i in items_of(load(batch_path))} if batch_path.exists() else set()
+        keep = [b for b in work.backlog() if b["stem"] in new]
+        earlier = [b for b in work.backlog() if b["stem"] not in new]
+        for entry in keep:
+            slot = (entry["topic"], entry["quiz"])
+            prior = next((e for e in earlier if (e["topic"], e["quiz"]) == slot), None)
+            if prior:
+                earlier.remove(prior)
+                entry["reason"] += f" Earlier drop in this slot: {prior['reason']}"
+        if keep:
+            dump(work.backlog_path, keep)
+        else:
+            work.backlog_path.unlink(missing_ok=True)
+        print(f"Backlog cleared; {len(keep)} dropped replacements kept for the next round.")
         return
     counts: dict[str, int] = {}
     for entry in work.backlog():
