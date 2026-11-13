@@ -38,9 +38,9 @@ Kept in the session scratchpad as `subject-notes.md`, with one `boundary-<topic>
 | Cell Injury and Adaptation | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q700 to q701, 98; 2 in backlog; both quizzes 16% hard, ask for hard replacements) |
 | Inflammation and Repair | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q708 to q709, 99; 1 in backlog: a chemical mediators item in Acute) |
 | Hemodynamic Disorders | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q712 to q713, 100; 0 in backlog) |
-| Genetic Disorders | staged 2026-11-11 (q716 to q717, 80; 0 in backlog) |
-| Immune System Disorders | staged 2026-11-11 (q722 to q723, 79; 1 in backlog) |
-| Neoplasia | staged 2026-11-11 (q730 to q731, 80; 0 in backlog) |
+| Genetic Disorders | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q716 to q717, 100; 0 in backlog) |
+| Immune System Disorders | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q722 to q723, 99; 1 in backlog: an HIV item in Immunodeficiency) |
+| Neoplasia | staged 2026-11-11, resized 2026-11-13 to 2 of 50 (q730 to q731, 97; 3 in backlog: 2 in Tumor Features, 1 in Molecular Basis) |
 | Infectious Disease Pathology | staged 2026-11-11 (q736 to q737, 80; 0 in backlog) |
 | Environmental and Nutritional Pathology | staged 2026-11-11 (q740 to q741, 80; 0 in backlog) |
 | Infancy and Childhood | staged 2026-11-11 (q747 to q748, 79; 1 in backlog) |
