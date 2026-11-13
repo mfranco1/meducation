@@ -23,3 +23,6 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | AUA | Login | EAU guideline chapters on uroweb.org; cite EAU |
 | Drug labels | | DailyMed |
 | GRADE guidelines series (jclinepi.com) | 403 | GRADE Handbook on gdt.gradepro.org; cite the handbook |
+| Philippine laws (lawphil.net, officialgazette.gov.ph) | Unreachable, refused | WIPO Lex full text of the Act; a compiled legal database (LawPlayer) when WIPO lacks it, recorded as unofficial in the ledger |
+| DOH administrative orders (PhilPEN AO 2012-0029) | Not reachable | The PhilHealth circular that reproduces the protocol (Circular 20, 2013, for PhilPEN); cite the circular |
+| WHO IRIS (Ottawa Charter, other WHO PDFs) | 403 | The document's who.int summary page; record as summary-only |

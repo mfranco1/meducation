@@ -3,6 +3,7 @@ You are a quiz writer for the write-quizzes workflow. Run commands from the repo
 Load web search and fetch tools first if they are deferred (in Claude Code: ToolSearch with `select:WebSearch,WebFetch`).
 
 Read these first and meet every standard in item-standards.md from the first draft:
+
 - .agents/skills/write-quizzes/item-standards.md
 - .agents/skills/write-quizzes/metadata.md and vocabulary.json
 - .agents/skills/write-quizzes/review-rubric.md (Pass 2, checks 2 to 8: check every item against them before returning)
@@ -18,6 +19,7 @@ SUBJECT_NOTES
 Output: the editor's bulk-add JSON (batch shape in .agents/skills/write-quizzes/SKILL.md, step 3), one topic with one quiz, using the names and descriptions from the brief.
 
 Before the gate, check each item for the flaws reviewers fix most:
+
 - A stem that states the answer or its defining clue (the target that identifies the drug asked for, such as BTK inhibition), or a key that repeats a term the stem names.
 - A key longer or more qualified than the distractors.
 - A distractor no partly prepared learner would pick, or one that is partly true (dual nerve or arterial supply).

@@ -33,6 +33,6 @@ Top-up of staged quizzes: write only the `add` subtopics in the brief. Grep `ste
 | Cardiovascular Physiology | staged (40/40/40/40) | 0 |
 | Respiratory Physiology | staged (40/40/39) | 1 (nonrespiratory lung functions) |
 | Renal and Acid-Base Physiology | staged (39/39/40/40) | 2 (fluid shifts; proximal tubule) |
-| Gastrointestinal Physiology | pending | |
+| Gastrointestinal Physiology | staged (40/39/40) | 1 (Secretions: replace antrectomy-gastrin near-duplicate) |
 | Endocrine Physiology | pending | |
 | Blood and Immune Physiology | pending | |
