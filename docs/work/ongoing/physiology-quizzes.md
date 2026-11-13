@@ -16,6 +16,7 @@ Next session: run `slices` for the next pending topic, write its notes file (bou
   - Visual field defects and pupillary reflexes: Neuro › Sensory. Neglect, aphasia, cortical deficits: Neuro › Motor and Higher.
   - Cardiovascular reflexes and Valsalva: CV › Hemodynamics. Shock and coronary flow: CV › Microcirculation. Myocardial O2 demand: CV › Cardiac Cycle. Potassium and calcium ECG changes: CV › ECG.
   - CO, methemoglobin, cyanide, O2 curve and 2,3-BPG: Resp › Gas Exchange. Hemoglobin variants and red cell disorders: Blood › Blood Cells.
+  - ACE inhibitor bradykinin effects: CV › Microcirculation.
   - Hyponatremia and hypernatremia: Renal › Electrolytes. Prerenal vs intrinsic AKI: Renal › Body Fluids. Compensation formulas and mixed disorders: Renal › Acid-Base. RTA types: Acid-Base › Renal Regulation.
   - Peptic ulcer, ZES: GI › Secretions. Motility disorders: GI › Regulation and Motility. B12 and folate absorption: GI › Digestion; iron and anemias: Blood.
   - Metabolic bone disease and PTH/vitamin D actions on bone: Endocrine › Pancreatic Hormones, Calcium and Bone.
@@ -30,8 +31,8 @@ Top-up of staged quizzes: write only the `add` subtopics in the brief. Grep `ste
 | --- | --- | --- |
 | Neurophysiology | staged (39/40/40) | 1 (ANS central control) |
 | Cardiovascular Physiology | staged (40/40/40/40) | 0 |
-| Respiratory Physiology | pending | |
-| Renal and Acid-Base Physiology | pending | |
+| Respiratory Physiology | staged (40/40/39) | 1 (nonrespiratory lung functions) |
+| Renal and Acid-Base Physiology | staged (39/39/40/40) | 2 (fluid shifts; proximal tubule) |
 | Gastrointestinal Physiology | pending | |
 | Endocrine Physiology | pending | |
 | Blood and Immune Physiology | pending | |

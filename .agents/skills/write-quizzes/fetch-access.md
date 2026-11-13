@@ -22,3 +22,4 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | ACOG | 402 | An SMFM-hosted copy of the ACOG document, or an equivalent current guideline that loads: NICE (also through the UK Government Web Archive), WHO, SMFM, FIGO |
 | AUA | Login | EAU guideline chapters on uroweb.org; cite EAU |
 | Drug labels | | DailyMed |
+| GRADE guidelines series (jclinepi.com) | 403 | GRADE Handbook on gdt.gradepro.org; cite the handbook |

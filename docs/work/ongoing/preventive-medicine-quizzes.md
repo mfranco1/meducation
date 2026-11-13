@@ -6,7 +6,7 @@ Work dir: `var/quiz-work/preventive-medicine/`. Sources: none (medical knowledge
 
 Enlarge every quiz in the 3- and 4-quiz topics from 30 to 40 items (31 quizzes, 310 new items). Each blueprint quiz has an `add` block with the 10 new items' subtopics; `add-proposal.json` lists each quiz's `gaps` (the points to test). Remove `add` after the topic is staged. Communicable Disease Prevention (6 quizzes, 30 each) is out of scope. Approved 2026-11-13.
 
-Next session: run `slices` for the next pending topic, write its notes file (subject notes, the topic's boundary block from Decisions, and each quiz's `gaps`), then follow the skill from step 3.
+Next session: run `slices` for the next pending topic (Prevention, Health Promotion, and Clinical Screening), write its notes file (subject notes, the topic's boundary block from Decisions, and each quiz's `gaps`), then follow the skill from step 3.
 
 ## Decisions
 
@@ -29,8 +29,8 @@ Top-up of staged quizzes: write only the `add` subtopics in the brief, testing t
 
 | Topic | Status | Backlog |
 | --- | --- | --- |
-| Epidemiology and Population Health | writing | |
-| Biostatistics and Evidence-Based Decisions | pending | |
+| Epidemiology and Population Health | staged (40/40/40/39) | 1 (incidence rate, Frequency) |
+| Biostatistics and Evidence-Based Decisions | staged (40/40/40/40) | 0 |
 | Prevention, Health Promotion, and Clinical Screening | pending | |
 | Occupational and Environmental Health | pending | |
 | Maternal, Child, Nutrition, and Immunization Programs | pending | |
