@@ -31,8 +31,7 @@ describe('FlashcardsDashboardScreen', () => {
       within(screen.getByRole('group', { name: 'Average flashcard deck finishes per day' })).getByText('0'),
     ).toBeVisible();
     expect(screen.getByText('decks')).toBeVisible();
-    expect(screen.getByText('decks / day')).toBeVisible();
-    expect(screen.getByText('decks finished in a day')).toBeVisible();
+    expect(screen.getAllByText('decks / day')).toHaveLength(2);
   });
 
   it('opens the privacy notice from the footer', async () => {

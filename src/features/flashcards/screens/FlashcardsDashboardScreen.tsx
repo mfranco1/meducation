@@ -120,7 +120,7 @@ export function FlashcardsDashboardScreen({
               accessibleLabel="Highest flashcard deck finishes in a day"
               icon={<EmojiEventsOutlinedIcon aria-hidden="true" focusable="false" />}
               value={metric(stats.highestInDay)}
-              supportingText="decks finished in a day"
+              supportingText="decks / day"
             />
           </StatCardRow>
         }
