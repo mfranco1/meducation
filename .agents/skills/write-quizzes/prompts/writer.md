@@ -5,6 +5,7 @@ Load web search and fetch tools first if they are deferred (in Claude Code: Tool
 Read these first and meet every standard in item-standards.md from the first draft:
 
 - .agents/skills/write-quizzes/item-standards.md
+- .agents/skills/write-quizzes/currency-notes.md: use the current term in every stem, choice, rationale and pearl (PitNET, not pituitary adenoma)
 - .agents/skills/write-quizzes/metadata.md and vocabulary.json
 - .agents/skills/write-quizzes/review-rubric.md (Pass 2, checks 2 to 8: check every item against them before returning)
 

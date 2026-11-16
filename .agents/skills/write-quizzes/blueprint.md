@@ -21,7 +21,7 @@ Show the user the coverage summary (topics, quizzes, targets) and wait for appro
 
 ## Enlarging or splitting a staged quiz
 
-- **Enlarge.** Set the quiz's final `target` and `subtopics`, and add `"add": { "target": 10, "subtopics": { ... } }` with only the new items. `slices` briefs the writer for those and the gate checks them. Remove `add` after staging.
+- **Enlarge.** Set the quiz's final `target` and `subtopics`, and add `"add": { "target": 10, "subtopics": { ... } }` with only the new items. `slices` briefs the writer for those and the gate checks them. Before spawning each writer, grep the whole `stems.txt` for every point the `add` notes name and replace any point already staged anywhere in the subject: writers follow the notes, so a note that names a staged point (heparin before CTA in mesenteric ischemia, staged under a guideline-cited stem) becomes a near-duplicate drop. Remove `add` after staging.
 - **Split.** Run `split-quiz` first: it moves the named subtopics' questions, with their IDs, into a new quiz after the old one and can rename the old one. Then refresh the outline, give each changed quiz its `add`, replace the old quiz name in every `excludes` of the blueprint, and move the topic's earlier work files into a subfolder so `merge` doesn't pick up stale `batch-<n>.json`.
 
 ```sh
