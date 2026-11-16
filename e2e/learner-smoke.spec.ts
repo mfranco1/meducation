@@ -105,7 +105,7 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
   ];
   await expect(flashcardCards[0]).toContainText('decks');
   await expect(flashcardCards[1]).toContainText('decks / day');
-  await expect(flashcardCards[2]).toContainText('decks finished in a day');
+  await expect(flashcardCards[2]).toContainText('decks / day');
   await expectStatCardsLayout(page, flashcardCards[0]!);
   await page.setViewportSize({ width: 1280, height: 800 });
   const flashcardDesktop = testInfo.outputPath('flashcard-dashboard-stat-cards.png');
