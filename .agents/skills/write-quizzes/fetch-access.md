@@ -20,6 +20,7 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | EULAR (ard.bmj.com) | 403 | Author manuscript in a university repository (eprints, institutional open-access pages) |
 | ESGO | | Pocket-guideline PDFs on esgo.org; some full texts are hosted by national societies (BGCS) |
 | ACOG | 402 | An SMFM-hosted copy of the ACOG document, or an equivalent current guideline that loads: NICE (also through the UK Government Web Archive), WHO, SMFM, FIGO |
+| ASCRS (Diseases of the Colon & Rectum) | Paywalled, summaries only | A repository copy when one exists (ASCRS 2020 Crohn guideline on eScholarship); otherwise an open guideline on the same point: WSES (World J Emerg Surg), AGA clinical practice updates, UEG/ESCP; cite that body |
 | AUA | Login | EAU guideline chapters on uroweb.org; cite EAU |
 | Drug labels | | DailyMed |
 | GRADE guidelines series (jclinepi.com) | 403 | GRADE Handbook on gdt.gradepro.org; cite the handbook |

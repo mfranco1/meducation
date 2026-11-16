@@ -6,7 +6,7 @@ Work dir: `var/quiz-work/physiology/`. Sources: none (medical knowledge only; bl
 
 Enlarge every quiz in the 3- and 4-quiz topics from 30 to 40 items (23 quizzes, 230 new items). Each blueprint quiz has an `add` block with the 10 new items' subtopics. Remove `add` after the topic is staged. 2-quiz topics (50 each) are out of scope.
 
-Next session: Blood and Immune Physiology. Run `slices`, write its notes file (boundary block from Decisions, plus the staged Resp gas-exchange and Renal points its subtopics border, listed as "already staged"), then follow the skill from step 3. After it, the replacement batch (`backlog`: 7 items).
+Next session: the replacement batch (`backlog`: 7 items), then clean up per replacements.md.
 
 ## Decisions
 
@@ -35,4 +35,4 @@ Top-up of staged quizzes: write only the `add` subtopics in the brief. Grep `ste
 | Renal and Acid-Base Physiology | staged (39/39/40/40) | 2 (fluid shifts; proximal tubule) |
 | Gastrointestinal Physiology | staged (40/39/40) | 1 (Secretions: replace antrectomy-gastrin near-duplicate) |
 | Endocrine Physiology | staged (40/40/38) | 2 (Metabolic Bone Disease: replace XLH and CKD-calcitriol near-duplicates of Renal) |
-| Blood and Immune Physiology | pending | |
+| Blood and Immune Physiology | staged (40/40/40) | 0 |
