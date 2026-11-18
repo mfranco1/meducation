@@ -15,6 +15,7 @@ When a lesson finds another retired term, add a row. When the current form here 
 | Extranodal NK/T-cell lymphoma, nasal type | Extranodal NK/T-cell lymphoma | WHO-HAEM5, 2022 |
 | Chondrosarcoma, grade 1 of the long and short tubular bones | Atypical cartilaginous tumor; "chondrosarcoma, grade 1" only for axial sites (pelvis, scapula, skull base) | WHO Soft Tissue and Bone, 6th ed., 2026 |
 | Brown tumor as a reactive, non-neoplastic lesion | Brown tumor of hyperparathyroidism: a separate benign *KRAS*-mutant neoplasm that regresses when PTH normalizes | WHO Soft Tissue and Bone, 6th ed., 2026 |
+| ACOG Committee Opinion 348 (umbilical cord blood gas analysis) | Withdrawn; cite the AAP and ACOG Apgar score statement (Committee Opinion 644) or the 2014 ACOG and AAP neonatal encephalopathy report | ACOG withdrawal |
 | Bezlotoxumab to prevent C. difficile recurrence | Withdrawn by the manufacturer; never key or recommend it. Fecal microbiota-based therapy for recurrence | 2025 |
 | HIV-1/HIV-2 Western blot as the confirmatory test | HIV-1/HIV-2 antibody differentiation immunoassay, then HIV-1 RNA if discordant (laboratory testing algorithm) | CDC/APHL 2014 |
 | SDG 3.8.2 catastrophic spending at 10% or 25% of total household budget | Out-of-pocket health spending above 40% of household discretionary budget (consumption or income minus the societal poverty line) | UN indicator metadata, current in 2026 |
@@ -27,3 +28,4 @@ When a lesson finds another retired term, add a row. When the current form here 
 - Tumor classification: WHO Classification of Tumours, 5th edition, except Soft Tissue and Bone (6th edition, 2026; Hornick et al., Am J Surg Pathol 2026;50(12):e48-e64). Check whether a site's 6th edition volume has appeared before writing.
 - Staging: AJCC 8th edition, unless the site has a Version 9 chapter; check the site before writing a stage.
 - Contraceptive eligibility: WHO Medical Eligibility Criteria, 6th edition (November 2025). DMPA in breastfeeding women before 6 weeks postpartum is category 2 (was 3 in the 2015 5th edition); name the edition in the stem.
+- HPV vaccine dose count: WHO SAGE recommends a single dose for girls aged 9 to 14 (October 2026); the PIDSP 2026 calendar still gives 2 doses, and no DOH issuance on the NIP dose count was found. Don't key a dose count for girls 9 to 14 without naming the schedule's body in the stem.
