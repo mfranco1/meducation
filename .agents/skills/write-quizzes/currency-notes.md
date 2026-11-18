@@ -17,6 +17,10 @@ When a lesson finds another retired term, add a row. When the current form here 
 | Brown tumor as a reactive, non-neoplastic lesion | Brown tumor of hyperparathyroidism: a separate benign *KRAS*-mutant neoplasm that regresses when PTH normalizes | WHO Soft Tissue and Bone, 6th ed., 2026 |
 | Bezlotoxumab to prevent C. difficile recurrence | Withdrawn by the manufacturer; never key or recommend it. Fecal microbiota-based therapy for recurrence | 2025 |
 | HIV-1/HIV-2 Western blot as the confirmatory test | HIV-1/HIV-2 antibody differentiation immunoassay, then HIV-1 RNA if discordant (laboratory testing algorithm) | CDC/APHL 2014 |
+| SDG 3.8.2 catastrophic spending at 10% or 25% of total household budget | Out-of-pocket health spending above 40% of household discretionary budget (consumption or income minus the societal poverty line) | UN indicator metadata, current in 2026 |
+| PhilHealth 45-day annual confinement limit per member and dependents | Lifted; never key the 45-day limit as current | PhilHealth Circular 2025-0007 |
+| EO 138 full devolution by end of FY 2024 | Deadline extended: cities FY 2027, provinces and municipalities FY 2028 | EO 103 (2025) |
+| NeuPSIG 2015 neuropathic pain recommendations (Finnerup) | NeuPSIG 2025 update (Soliman et al., Lancet Neurol 2025); cite it for first-line and not-recommended drugs | 2025 |
 
 ## Current editions
 

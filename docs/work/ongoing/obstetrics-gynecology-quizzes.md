@@ -25,7 +25,7 @@ All 39 quizzes in 7 topics grow to 50 items (user sizing overrides the skill def
 
 | Topic | Status | Backlog |
 | --- | --- | --- |
-| Obstetrics | blueprint approved (+40) | |
+| Obstetrics | staged (+39; Prenatal Care 49) | 1 (Prenatal Care: IOM weight gain dropped as near-duplicate) |
 | Labor and Delivery | | |
 | Pregnancy Complications | | |
 | Medical Disorders in Pregnancy | | |

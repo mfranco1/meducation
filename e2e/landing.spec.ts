@@ -1,6 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
 
+const heroTitle = 'Practice for your medical boards';
+
 async function enterSection(page: Page, name: string) {
   await page.getByRole('region', { name, exact: true }).evaluate(async (element) => {
     element.scrollIntoView({ block: 'start' });
@@ -67,7 +69,7 @@ test('samples follow the hero with copy beside them on desktop and above them on
     const quizzes = page.getByRole('region', { name: 'Board-style Questions', exact: true });
     await expect
       .poll(async () => {
-        const hero = await page.getByRole('region', { name: 'Study medicine one question at a time' }).boundingBox();
+        const hero = await page.getByRole('region', { name: heroTitle }).boundingBox();
         const quizSection = await quizzes.boundingBox();
         return quizSection!.y - (hero!.y + hero!.height);
       })
@@ -140,22 +142,34 @@ test('header and hero links jump to the quiz, flashcard and subject sections', a
   await expect(page).toHaveURL(/#quizzes$/);
 });
 
-test('hero photo fades behind the copy on desktop and sits below the actions on smaller screens', async ({ page }) => {
+test('hero copy stays readable beside the photo on desktop and above it on smaller screens', async ({ page }) => {
   await page.goto('/');
   await page.evaluate(() => document.fonts.ready);
-  const hero = page.getByRole('region', { name: 'Study medicine one question at a time' });
+  const hero = page.getByRole('region', { name: heroTitle });
   const photo = hero.locator('img');
+  const lede = hero.getByText('Answer board-style questions with explanations and review with flashcards', {
+    exact: true,
+  });
+  const reassurance = hero.getByText('Free to use. No account needed.');
+  await expect(reassurance).toBeVisible();
   await expect
     .poll(() => photo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0))
     .toBe(true);
-  for (const width of [320, 390, 820, 1048, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
+  for (const width of [320, 390, 820, 900, 1048, 1440]) {
+    await page.setViewportSize({ width, height: 844 });
     const heading = await hero.getByRole('heading').boundingBox();
-    const actions = await hero.getByRole('link', { name: 'Try a question' }).boundingBox();
+    const subtitle = await lede.boundingBox();
+    const note = await reassurance.boundingBox();
     const image = await photo.boundingBox();
     // The left 40% of the photo fades into the background on desktop.
-    if (width >= 900) expect(heading!.x + heading!.width).toBeLessThanOrEqual(image!.x + image!.width * 0.4);
-    else expect(image!.y).toBeGreaterThanOrEqual(actions!.y + actions!.height);
+    if (width >= 900) {
+      const fadeEnd = image!.x + image!.width * 0.4;
+      expect(heading!.x + heading!.width).toBeLessThanOrEqual(fadeEnd);
+      expect(subtitle!.x + subtitle!.width).toBeLessThanOrEqual(fadeEnd);
+    } else {
+      expect(image!.y).toBeGreaterThanOrEqual(note!.y + note!.height);
+    }
+    if (width === 390) await expect(page.getByRole('heading', { name: 'Board-style Questions' })).toBeInViewport();
     expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
   }
   await hero.getByRole('button', { name: 'Start studying' }).click();
@@ -169,7 +183,7 @@ test('a slow start keeps the pressed button busy until the app opens', async ({ 
     await route.continue();
   });
   await page.goto('/');
-  const hero = page.getByRole('region', { name: 'Study medicine one question at a time' });
+  const hero = page.getByRole('region', { name: heroTitle });
   const start = hero.getByRole('button', { name: 'Start studying' });
   await start.click();
   await expect(start).toBeDisabled();
@@ -184,7 +198,8 @@ test('flashcard steps track revealing and navigating independently', async ({ pa
   const steps = page.getByRole('list', { name: 'How flashcards work' }).getByRole('listitem');
   const sample = page.getByRole('region', { name: 'Sample Flashcards' });
   const question = sample.getByText('What is the classic murmur of patent ductus arteriosus?');
-  await question.evaluate((element) => element.scrollIntoView({ block: 'center' }));
+  await question.evaluate(() => document.fonts.ready);
+  await question.scrollIntoViewIfNeeded();
   await expect(question).toBeInViewport();
   await expect(steps.filter({ hasText: '(done)' })).toHaveCount(0);
 
@@ -222,7 +237,7 @@ test('on phones the header offers Start studying only while the page buttons are
 test('a first visit shows the landing page until the visitor starts studying', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await expect(page.getByRole('heading', { level: 1, name: /one question at a time/ })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: heroTitle })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Sample Quizzes' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Sample Flashcards' })).toBeVisible();
   const steps = page.getByRole('list', { name: 'How it works' });
@@ -252,12 +267,12 @@ test('a first visit shows the landing page until the visitor starts studying', a
   await expect(page.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
 
   await page.getByRole('banner').getByRole('button', { name: 'Start studying' }).click();
-  await expect(page.getByRole('heading', { level: 1, name: /one question at a time/ })).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 1, name: heroTitle })).toHaveCount(0);
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
 
   await page.reload();
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: /one question at a time/ })).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 1, name: heroTitle })).toHaveCount(0);
 });
 
 test('About opens from both dashboards and preserves saved progress through browser navigation', async ({ page }) => {
@@ -284,7 +299,7 @@ test('About opens from both dashboards and preserves saved progress through brow
     }));
   const before = await storedProgress();
   const about = page.locator('footer').getByRole('link', { name: 'About', exact: true });
-  const landing = page.getByRole('heading', { level: 1, name: /one question at a time/ });
+  const landing = page.getByRole('heading', { level: 1, name: heroTitle });
   await expect(about).toHaveAttribute('href', '/?about=1');
   await about.click();
   await expect(landing).toBeVisible();
@@ -317,7 +332,7 @@ test('About opens from both dashboards and preserves saved progress through brow
 
 test('a direct About visit saves nothing until Start studying', async ({ page }) => {
   await page.goto('/?about=1');
-  await expect(page.getByRole('heading', { level: 1, name: /one question at a time/ })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: heroTitle })).toBeVisible();
   await expect(page.locator('footer').getByRole('link', { name: 'About', exact: true })).toHaveCount(0);
   await page.reload();
   await expect(page.getByRole('banner').getByRole('button', { name: 'Start studying' })).toBeVisible();
@@ -373,5 +388,5 @@ test('a visitor with saved progress opens the dashboard directly', async ({ page
   await page.addInitScript(() => localStorage.setItem('meducation.flashcards.progress.v2', '{}'));
   await page.goto('/');
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
-  await expect(page.getByRole('heading', { level: 1, name: /one question at a time/ })).toHaveCount(0);
+  await expect(page.getByRole('heading', { level: 1, name: heroTitle })).toHaveCount(0);
 });

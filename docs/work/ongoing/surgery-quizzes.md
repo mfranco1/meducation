@@ -33,8 +33,8 @@ Every quiz in the 10 topics with 3 or 4 quizzes grows from 30 to 40 items (33 qu
 | Colorectal and Anorectal Surgery | staged (40, 39, 40, 40) | 1 |
 | Thoracic and Cardiac Surgery | staged (40 per quiz) | 0 |
 | Vascular Surgery | staged (40 per quiz) | 0 |
-| Pediatric Surgery | | |
-| Orthopedic Surgery | | |
-| Urologic Surgery | | |
+| Pediatric Surgery | staged (40 per quiz) | 0 |
+| Orthopedic Surgery | staged (40 per quiz) | 0 |
+| Urologic Surgery | staged (40 per quiz) | 0 |
 
-One topic per session, in table order.
+All topics staged. Next session: the replacement batch (5 backlog items) and clean up, per `replacements.md`.

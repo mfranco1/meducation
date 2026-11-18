@@ -1,4 +1,4 @@
-import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { keyframes } from '@emotion/react';
 import {
   Accordion,
@@ -25,7 +25,7 @@ import { SubjectIcon } from '../../shared/ui/catalog/icons/SubjectIcon';
 import { faqs, useSingleOpen } from '../components/HelpDialog';
 import { LegalFooter } from '../../shared/ui/shell/LegalFooter';
 import { easing, reducedMotion } from '../../shared/ui/motion';
-import { fontWeight, radius, shadow, theme } from '../../shared/theme';
+import { radius, shadow, theme } from '../../shared/theme';
 import { SampleCases } from './SampleCases';
 import { SampleFlashcards } from './SampleFlashcards';
 import { useSampleActive } from './useSampleActive';
@@ -45,12 +45,6 @@ const section = {
 } as const;
 const split = { ...grid, rowGap: 4 } as const;
 const centered = { textAlign: 'center', maxWidth: 720, mx: 'auto' } as const;
-
-const stats = [
-  ['17,000+', 'questions'],
-  ['20,000+', 'flashcards'],
-  ['12', 'subjects'],
-];
 
 const helpFaq = (question: string) => faqs.find(([item]) => item === question)!;
 const landingFaqs = [
@@ -406,10 +400,12 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               position: 'relative',
               isolation: 'isolate',
               display: 'flex',
+              flexDirection: { xs: 'column', md: 'row' },
               alignItems: 'center',
               minHeight: { md: 640, lg: 720 },
               pt: { xs: 4, md: 8 },
-              pb: { xs: 46, sm: 58, md: 8 },
+              pb: { xs: 3, md: 8 },
+              gap: { xs: 2, md: 0 },
             }}
           >
             <Box
@@ -421,13 +417,18 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               }}
             >
               <Typography variant="display" id="hero-title" sx={{ maxWidth: '18ch', mx: { xs: 'auto', md: 0 } }}>
-                Study medicine one question at a time
+                Practice for your medical boards
               </Typography>
               <Typography
                 variant="lede"
-                sx={{ maxWidth: '44ch', color: 'text.secondary', mt: { xs: 2, md: 3 }, mx: { xs: 'auto', md: 0 } }}
+                sx={{
+                  maxWidth: { xs: '36ch', md: '73%' },
+                  color: 'text.secondary',
+                  mt: { xs: 2, md: 3 },
+                  mx: { xs: 'auto', md: 0 },
+                }}
               >
-                Practice quizzes and flashcards across twelve subjects for free
+                Answer board-style questions with explanations and review with flashcards
               </Typography>
               <Box
                 sx={{
@@ -453,22 +454,8 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                   Try a question
                 </Button>
               </Box>
-              <Typography
-                variant="body2"
-                sx={{
-                  color: 'text.secondary',
-                  mt: { xs: 3, md: 4 },
-                  '& b': { fontWeight: fontWeight.semibold, color: 'text.primary' },
-                }}
-              >
-                {stats.map(([number, words], position) => (
-                  <Fragment key={words}>
-                    {position > 0 && ' · '}
-                    <Box component="span" sx={{ whiteSpace: 'nowrap' }}>
-                      <b>{number}</b> {words}
-                    </Box>
-                  </Fragment>
-                ))}
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
+                Free to use. No account needed.
               </Typography>
             </Box>
             <Box
@@ -485,20 +472,18 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               fetchPriority="high"
               decoding="async"
               sx={{
-                position: 'absolute',
-                zIndex: -1,
+                position: { md: 'absolute' },
+                zIndex: { md: -1 },
                 display: 'block',
                 pointerEvents: 'none',
                 objectFit: 'cover',
                 // Phones: a full-width band below the actions, faded at the top.
                 // Desktop: the whole photo at its own ratio, centered right of the copy, fading out on every edge.
-                left: { xs: 0, md: 'auto' },
-                right: { xs: 0, md: -32 },
+                right: { md: -32 },
                 top: { md: '50%' },
-                bottom: { xs: 32, md: 'auto' },
                 transform: { md: 'translateY(-50%)' },
                 width: { xs: '100%', md: '64%' },
-                height: { xs: 340, sm: 420, md: 'auto' },
+                height: { xs: 216, sm: 280, md: 'auto' },
                 aspectRatio: { md: '1448 / 1086' },
                 borderRadius: { xs: radius.card, md: 0 },
                 maskImage: {
@@ -576,7 +561,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
             <Reveal sx={centered}>
               <SectionHead title="Twelve Subjects" id="contents-title" />
               <Typography sx={{ mt: 2.5, mx: 'auto', maxWidth: '62ch', color: 'text.secondary' }}>
-                Quizzes and flashcard decks are grouped by topic within each subject
+                Explore 17,000+ questions and 20,000+ flashcards organized by topic
               </Typography>
             </Reveal>
             <Reveal delay={100} sx={{ mt: { xs: 5, md: 8 } }}>
