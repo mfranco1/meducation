@@ -32,7 +32,7 @@ Every quiz in the 10 topics with 3 or 4 quizzes grows from 30 to 40 items (33 qu
 | Small Bowel and Appendix | staged (37, 40, 40) | 3 |
 | Colorectal and Anorectal Surgery | staged (40, 39, 40, 40) | 1 |
 | Thoracic and Cardiac Surgery | staged (40 per quiz) | 0 |
-| Vascular Surgery | | |
+| Vascular Surgery | staged (40 per quiz) | 0 |
 | Pediatric Surgery | | |
 | Orthopedic Surgery | | |
 | Urologic Surgery | | |

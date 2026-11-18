@@ -14,7 +14,7 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | BTS | 403 | PDFs in the brit-thoracic.org.uk document library |
 | CDC STI treatment pages | Often refused | PubMed Central copy of the MMWR guideline |
 | clinicalinfo.hiv.gov (NIH HIV and opportunistic infection guidelines) | 403 | Web Archive raw form of the guideline PDF |
-| PubMed Central | Browser check | Europe PMC full-text copy |
+| PubMed Central | Browser check | Europe PMC full-text copy, or NCBI E-utilities `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=<PMCID digits>` (full-text XML) when Europe PMC also refuses |
 | RSNA (pubs.rsna.org: *Radiology*, Fleischner statements) | Refused | Europe PMC copy, or a hospital- or society-hosted copy of the recommendation table |
 | NCBI Bookshelf | Often refused | Europe PMC or a copy hosted by another agency |
 | ASRA neuraxial anticoagulation (rapm.bmj.com) | Full text blocked, summaries only | The anticoagulant's DailyMed label (spinal/epidural hematoma and catheter timing sections); cite the label |
@@ -28,4 +28,5 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | Philippine laws (lawphil.net, officialgazette.gov.ph) | Unreachable, refused | WIPO Lex full text of the Act; a compiled legal database (LawPlayer) when WIPO lacks it, recorded as unofficial in the ledger |
 | DOH administrative orders and implementing rules (PhilPEN AO 2012-0029) | Not reachable | Supreme Court E-Library (elibrary.judiciary.gov.ph) copy of the issuance; otherwise the PhilHealth circular that reproduces the protocol (Circular 20, 2013, for PhilPEN); cite the circular |
 | DOLE department orders (DO 53-03, DO 208-20) | Not reachable, secondary copies only | Supreme Court E-Library copy, then the Web Archive copy of the DOLE PDF; ECC rules from the ECC's booklet of the Amended Rules |
-| WHO IRIS (Ottawa Charter, other WHO PDFs) | 403 | The document's who.int summary page; record as summary-only |
+| WHO IRIS (Ottawa Charter, other WHO PDFs) | 403 | The Web Archive or PAHO (iris.paho.org) copy of the PDF; otherwise the document's who.int summary page, recorded as summary-only. For contraception, the WHO MEC 6th edition annex; for STI regimens, CDC 2021 STI guidelines, cited as CDC |
+| FNRI-DOST (fnri.dost.gov.ph: Pinggang Pinoy, dietary guidelines) | Firewall error | Web Archive copy of the FNRI page or PDF |

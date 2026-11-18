@@ -7,7 +7,7 @@ When a lesson finds another retired term, add a row. When the current form here 
 | Retired | Current | Since |
 | --- | --- | --- |
 | FDA pregnancy letter categories (A, B, C, D, X) | Narrative pregnancy and lactation labeling (PLLR); never test the letters | 2015 |
-| Polycystic ovary syndrome (PCOS) | Polyendocrine metabolic ovarian syndrome (PMOS) | 2026 consensus |
+| Polycystic ovary syndrome (PCOS) | Polyendocrine metabolic ovarian syndrome (PMOS); write PMOS with no "formerly called" note | 2026 consensus |
 | NAFLD, NASH | MASLD, MASH | 2023 multisociety nomenclature |
 | Pituitary adenoma | Pituitary neuroendocrine tumor (PitNET) | WHO Classification of Tumours, 5th ed. |
 | Neurofibromatosis type 2 (NF2) | NF2-related schwannomatosis | 2022 international consensus (Plotkin et al.) |
@@ -22,3 +22,4 @@ When a lesson finds another retired term, add a row. When the current form here 
 
 - Tumor classification: WHO Classification of Tumours, 5th edition, except Soft Tissue and Bone (6th edition, 2026; Hornick et al., Am J Surg Pathol 2026;50(12):e48-e64). Check whether a site's 6th edition volume has appeared before writing.
 - Staging: AJCC 8th edition, unless the site has a Version 9 chapter; check the site before writing a stage.
+- Contraceptive eligibility: WHO Medical Eligibility Criteria, 6th edition (November 2025). DMPA in breastfeeding women before 6 weeks postpartum is category 2 (was 3 in the 2015 5th edition); name the edition in the stem.
