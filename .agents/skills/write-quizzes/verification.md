@@ -35,7 +35,7 @@ Write every check to the sources file you are given:
 
 `year` is the document's revision year, `url` the document's own page (not a home or search page), and each fact a specific point confirmed there, never "read in full".
 
-List each guideline-dependent fact you couldn't confirm in a primary text, including facts read only in a summary or abstract, in the unverified file you are given, with `item` the item's number in its quiz:
+List each guideline-dependent fact you couldn't confirm in a primary text, including facts read only in a summary or abstract, in the unverified file you are given, with `item` the item's number in its quiz. A keyed ranking ("most common", "leading") that rests only on one narrative review, one single-center or single-region series, or rates within a few points of placebo goes there too, so the judge weighs it:
 
 ```json
 [{ "item": 12, "fact": "IPNA 2022 steroid-resistance definition, abstract only" }]
