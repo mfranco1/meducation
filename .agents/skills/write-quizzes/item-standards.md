@@ -31,10 +31,10 @@ Check every item against these before returning it. They are the flaws reviewers
 
 - The key is the longest or most qualified choice, shares words with the stem that others don't, is the only grammatical fit, or is the odd one out.
 - The stem states the answer or its defining clue (the drug's target when asking for the drug), or the key repeats a term from the stem.
-- Two choices mean the same thing, one contains another, or a distractor is partly true.
+- Two choices mean the same thing, one contains another, or a distractor is partly true. In a "most common" item, a distractor the source lists alongside the key or at a similar rate is partly true: use effects the source gives a clearly lower rate, or rare serious ones.
 - A distractor no partly prepared learner would pick.
 - Irrelevant difficulty: vague frequency terms, double negatives, needless jargon, a long stem for a simple recall fact, trick wording, trivia.
-- A stem, rationale, table or pearl that gives away another item's answer.
+- A stem, rationale, table or pearl that gives away another item's answer, including staged items in the same quiz (pearls often state a staged item's next step or key). Grep `stems.txt` for each pearl's fact.
 - A fact, number or absolute claim ("only", "never", "most common", a percentage) in any field that the cited document or a standard textbook doesn't state.
 - A pearl that restates the rationale, or a rationale padded with repeated or filler sentences. Add a distinguishing fact instead.
 - A rationale left garbled by edits (a stray sentence after the bullets, a sentence repeated or cut off). Reread every edited rationale whole.
