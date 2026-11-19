@@ -10,10 +10,11 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | AHA resuscitation (CPR, ECC) | | Guideline pages on cpr.heart.org subdomains |
 | 2025 AHA/ACC and 2024 ESC hypertension | Blocked everywhere | 2020 Philippine hypertension guideline (PMC8678709), NICE NG136 and NG133, or ADA Standards section 10; cite that body |
 | ESMO (Annals of Oncology guidelines) | 403, not open access | 2025 UK bone sarcoma guideline (Gerrand et al., Br J Cancer, PMC11723950) for bone sarcomas; otherwise an equivalent open guideline; cite that body |
-| ESC, ERS | 403 | PubMed Central copy, then society pocket-guide PDFs |
+| ESC, ERS | 403 | PubMed Central copy, then society pocket-guide PDFs. Recent guidelines without a PMCID (2025 pregnancy guideline): the OUP full text at academic.oup.com loads but truncates partway, so fetch the later sections from the OUP chapter or supplementary links |
 | BTS | 403 | PDFs in the brit-thoracic.org.uk document library |
 | CDC STI treatment pages | Often refused | PubMed Central copy of the MMWR guideline |
 | clinicalinfo.hiv.gov (NIH HIV and opportunistic infection guidelines) | 403 | Web Archive raw form of the guideline PDF |
+| ADA Standards of Care (diabetesjournals.org, Diabetes Care) | Cloudflare challenge; PMC, Europe PMC and efetch return metadata without the body (2026 edition) | Try the Wayback Machine copy of the diabetesjournals.org section; otherwise verify in an ACOG Committee Opinion or Clinical Consensus that loads, or list the fact as unverified |
 | PubMed Central | Browser check | Europe PMC full-text copy, or NCBI E-utilities `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=<PMCID digits>` (full-text XML) when Europe PMC also refuses |
 | RSNA (pubs.rsna.org: *Radiology*, Fleischner statements) | Refused | Europe PMC copy, or a hospital- or society-hosted copy of the recommendation table |
 | NCBI Bookshelf | Often refused | Europe PMC or a copy hosted by another agency |

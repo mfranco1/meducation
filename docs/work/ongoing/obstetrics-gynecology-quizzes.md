@@ -30,8 +30,8 @@ All 39 quizzes in 7 topics grow to 50 items (user sizing overrides the skill def
 | Obstetrics | staged (+39; Prenatal Care 49) | 1 (Prenatal Care: IOM weight gain dropped as near-duplicate) |
 | Labor and Delivery | staged (+96; FHR 50, others 49) | 4 (near-duplicates of staged items: perineal warm compresses, ripening regimen choice, PPROM latency antibiotics; prolonged-labor atony duplicated Induction) |
 | Pregnancy Complications | staged (+114; GTD and Fetal Growth 50, Ectopic and Rh 49, PPH 48, APH 47) | 7 (6 near-duplicates of staged items: misoprostol regimen, previa ultrasound, low-lying placenta, impending rupture, septic abortion, calcium for magnesium; 1 staged selective-reduction item deleted under the abortion rule) |
-| Medical Disorders in Pregnancy | | |
-| Reproductive Endocrinology, Fertility and Contraception | | |
+| Medical Disorders in Pregnancy | staged (+137; all 7 quizzes at 50) | 0 |
+| Reproductive Endocrinology, Fertility and Contraception | staged (+120; all 6 quizzes at 50) | 0 |
 | Gynecology | | |
 | Gynecologic Oncology | | |
 
