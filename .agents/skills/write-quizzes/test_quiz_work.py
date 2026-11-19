@@ -1,4 +1,5 @@
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -303,16 +304,92 @@ def test_accept_marks_a_recheck_disagreement_ready(tmp_path):
     assert run(tmp_path, "ready", TOPIC, "--batch", "batch.json").returncode == 0
 
 
-def test_judge_input_for_a_recheck_takes_that_rounds_unclean_solves(tmp_path):
+def test_blind_names_rounds_in_order_and_later_commands_follow_the_latest(tmp_path):
     topic_dir = setup(tmp_path)
     (topic_dir / "escalated.json").write_text(json.dumps([{"ref": ref(1), "reasons": ["x"]}]))
-    run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "recheck-1")
-    answer(topic_dir, "recheck-1", keys(topic_dir), defensible={4: ["B"]})
-    run(tmp_path, "check-blind", TOPIC, "--round", "recheck-1")
-    result = run(tmp_path, "judge-input", TOPIC, "--batch", "batch.json", "--round", "recheck-1")
+    assert "round initial, batch batch.json" in run(tmp_path, "blind", TOPIC).stdout
+    answer(topic_dir, "initial", keys(topic_dir))
+    assert run(tmp_path, "check-blind", TOPIC).returncode == 0
+    result = run(tmp_path, "judge-input", TOPIC)
+    assert "round initial" in result.stdout and "review-judgment-initial.json" in result.stdout
+    assert [r["ref"] for r in json.loads((topic_dir / "judgment-input-initial.json").read_text())] == [ref(1)]
+    result = run(tmp_path, "blind", TOPIC)  # a recheck needs the rewritten refs
+    assert result.returncode != 0 and "rewritten-batch.json is missing" in result.stderr
+    (topic_dir / "rewritten-batch.json").write_text(json.dumps([ref(2), ref(4)]))
+    assert "round recheck-1" in run(tmp_path, "blind", TOPIC).stdout
+    assert "round recheck-2" in run(tmp_path, "blind", TOPIC, "--refs", "rewritten-batch.json").stdout
+    assert json.loads((topic_dir / "blind" / "rounds.json").read_text()) == ["initial", "recheck-1", "recheck-2"]
+    rows = json.loads((topic_dir / "blind" / "recheck-1" / "items-1.json").read_text())
+    assert [r["ref"] for r in rows] == [ref(2), ref(4)]
+    answer(topic_dir, "recheck-2", [keys(topic_dir)[1], "A" if keys(topic_dir)[3] != "A" else "B"])
+    assert "round recheck-2" in run(tmp_path, "check-blind", TOPIC).stdout
+    result = run(tmp_path, "judge-input", TOPIC)
     assert result.returncode == 0
-    rows = json.loads((topic_dir / "judgment-input.json").read_text())
+    rows = json.loads((topic_dir / "judgment-input-recheck-2.json").read_text())
     assert [r["ref"] for r in rows] == [ref(4)]
+
+
+def test_prompt_fills_paths_and_notes_and_leaves_no_placeholders(tmp_path):
+    topic_dir = setup(tmp_path)
+    work = tmp_path / "subject"
+    (work / "notes.md").write_text("Subject note.")
+    (topic_dir / "notes.md").write_text("Topic note.")
+    (topic_dir / "brief-2.json").write_text("{}")
+    run(tmp_path, "blind", TOPIC)
+    words = r"\b(WORK|TOPICDIR|TOPICNAME|BRIEF|BATCH|ROUND|INPUTS|REPO|FILES|SCRATCH|SUBJECT_NOTES)\b"
+    result = run(tmp_path, "prompt", "writer", TOPIC, "--n", "2")
+    out = Path(result.stdout.strip())
+    assert out == topic_dir.resolve() / "prompt-writer-2.md"
+    text = out.read_text()
+    assert str(topic_dir.resolve() / "brief-2.json") in text and not re.search(words, text)
+    assert "Subject note." in text and "Topic note." in text
+    assert (topic_dir / "scratch" / "writer-2").is_dir()
+    out = Path(run(tmp_path, "prompt", "blind", TOPIC).stdout.strip())
+    text = out.read_text()
+    assert str(topic_dir.resolve() / "blind" / "initial" / "items-1.json") in text
+    assert not re.search(words, text)
+    assert "items-1.json" in Path(run(tmp_path, "prompt", "blind", TOPIC, "--n", "1").stdout.strip()).read_text()
+    text = Path(run(tmp_path, "prompt", "judge", TOPIC).stdout.strip()).read_text()
+    assert str(topic_dir.resolve() / "batch.json") in text and not re.search(words, text)
+    out = Path(run(tmp_path, "prompt", "replace").stdout.strip())
+    assert out == (work / "replacements" / "prompt-replace.md").resolve() and not re.search(words, out.read_text())
+    assert run(tmp_path, "prompt", "writer", TOPIC, "--n", "9").returncode != 0
+    assert run(tmp_path, "prompt", "judge").returncode != 0
+
+
+def test_similar_lists_a_near_duplicate_staged_stem_but_not_an_unrelated_one(tmp_path):
+    topic_dir = setup(tmp_path, count=2)
+    batch = json.loads((topic_dir / "batch.json").read_text())
+    items = batch["topics"][0]["quizzes"][0]["items"]
+    items[0]["stem"] = "A 45-year-old man has nephrotic syndrome with minimal change disease. Which drug is first line?"
+    items[0]["choices"][0] = "Prednisone"
+    items[1]["stem"] = "Which vitamin deficiency causes scurvy?"
+    (topic_dir / "batch.json").write_text(json.dumps(batch))
+    (tmp_path / "subject" / "stems.txt").write_text(
+        "## Nephrology › Other\n"
+        "- Minimal change disease causes nephrotic syndrome; which drug is first line, prednisone?\n"
+        "- Which structure forms the blood-brain barrier?\n"
+    )
+    out = run(tmp_path, "similar", TOPIC).stdout
+    assert ref(1) in out and "Nephrology › Other: Minimal change" in out
+    assert ref(2) not in out and "blood-brain" not in out
+    assert "1 of 2 items" in out
+
+
+def test_backlog_clear_moves_replacements_aside_and_backlog_shows_the_hard_share(tmp_path):
+    setup(tmp_path)
+    work = tmp_path / "subject"
+    row = {"topic": TOPIC, "quiz": QUIZ, "stem": "Gone?", "reason": "dup"}
+    (work / "replace-backlog.json").write_text(json.dumps([row]))
+    outline = {"topics": [{"name": TOPIC, "quizzes": [{"name": QUIZ, "questionCount": 10, "difficulty": {"hard": 3}}]}]}
+    (work / "outline.json").write_text(json.dumps(outline))
+    assert f"1 {TOPIC} › {QUIZ} (hard 3/10 staged)" in run(tmp_path, "backlog").stdout
+    (work / "replacements-1").mkdir()
+    (work / "replacements").mkdir()
+    (work / "replacements" / "sources-1.json").write_text("[]")
+    assert "replacements-2" in run(tmp_path, "backlog", "--clear").stdout
+    assert not (work / "replacements").exists()
+    assert (work / "replacements-2" / "sources-1.json").exists()
 
 
 def test_slices_adds_unstaged_stems_and_source_pages(tmp_path):

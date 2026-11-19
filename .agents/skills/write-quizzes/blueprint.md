@@ -1,8 +1,8 @@
 # Blueprint
 
-Read this when a subject has no approved blueprint, or when enlarging or splitting staged quizzes.
+Read this when a subject has no approved blueprint, or to enlarge or split staged quizzes.
 
-Note the existing topics, quizzes, sizes, subtopics and stems in the outline. List and skim the sources, if any, and extract them to `src/`.
+Note the existing topics, quizzes, sizes and subtopics in the outline. List and skim the sources, if any, and extract them as plain text to `<work>/src/`.
 
 Write `<work>/blueprint.json` and a short coverage summary:
 
@@ -12,17 +12,25 @@ Write `<work>/blueprint.json` and a short coverage summary:
 ```
 
 - Cover every source section, every in-scope topic, and the high-yield content a well-prepared examinee and a safe new physician should know, even where the sources are silent.
-- Weight subtopics by exam frequency and clinical importance, not by how many pages a source spends on them.
-- Order topics and quizzes for learner progression (foundations before applications). Use existing topics where they fit. Add a topic only when its content fills 2 quizzes of 50. Otherwise merge it into a related topic.
-- Quiz names are specific and don't repeat the topic name. Split by subtopic, not "Part 2". Every quiz gets a one-sentence description. New topics get a 1 to 2 sentence description, and existing topics get none.
-- **Deconflict.** Each tested point belongs to one quiz. Compare every quiz with the existing outline subtopics and with the other planned quizzes, including other topics (for example rehydration in a gastroenterology quiz and in an IMCI quiz, or iron in nutrition and in hematology) and quizzes in the same topic (fracture-nerve associations in a bones quiz and the same nerve lesions in a nerves quiz). Give the point to one quiz and list it in the other's `excludes`, naming where it lives.
+- Weight subtopics by exam frequency and clinical importance, not by source page count.
+- Order topics and quizzes for learner progression. Use existing topics where they fit. Add a topic only when its content fills 2 quizzes of 50; otherwise merge it into a related topic.
+- Sizing: at least 2 quizzes per topic. Topics with 2 quizzes target 50 questions per quiz, 3 or 4 quizzes target 40, 5 or more target 30. Keep topics and quizzes balanced.
+- Quiz names are specific, don't repeat the topic name, and split by subtopic (never "Part 2"). Every quiz gets a one-sentence description; new topics get 1 to 2 sentences, existing topics none.
+- `pages` refers to form-feed-separated pages of `src/main.txt`; `slices` writes them to each quiz's `source-<n>.txt`.
+- **Deconflict.** Each tested point belongs to one quiz. Compare every quiz with the outline and with every other planned quiz, in the same topic and in others. Give a shared point to one quiz and list it in the other's `excludes`, naming where it lives.
 
-Show the user the coverage summary (topics, quizzes, targets) and wait for approval before writing. For work that spans sessions, keep a tracker (see Sessions and lessons in [SKILL.md](SKILL.md)).
+Show the user the coverage summary (topics, quizzes, targets) and wait for approval before writing.
 
-## Enlarging or splitting a staged quiz
+## Enlarging a staged quiz
 
-- **Enlarge.** Set the quiz's final `target` and `subtopics`, and add `"add": { "target": 10, "subtopics": { ... } }` with only the new items. `slices` briefs the writer for those and the gate checks them. Before spawning each writer, grep the whole `stems.txt` for every point the `add` notes name and replace any point already staged anywhere in the subject: writers follow the notes, so a note that names a staged point (heparin before CTA in mesenteric ischemia, staged under a guideline-cited stem) becomes a near-duplicate drop. Grep each note's treatment and antidote terms too, since they are often staged under another topic (calcium for magnesium toxicity, staged in hypertensive disorders, written again as a cardiac arrest cause), and each note's expected key in the quiz's own section: a staged vignette that keys the same fact under other wording ("greatest risk in the next 48 hours" keying dengue shock) makes a "most common X" note a near-duplicate. Name each note's point without asserting its threshold, schedule or guideline position from memory. Remove `add` after staging. For a top-up that fills a measured gap (such as general "most common X" recall), put the required stem form, the fact classes it covers (cause, adverse effect, complication, site, risk factor, route, reservoir) and a minimum count in the writer's `SUBJECT_NOTES`, and count the matching stems in the batch before review. Mark the gap list's own rows as required points, separate from optional extras: writers handed one candidate list to "swap freely" pick side facts (thionamide rash) and skip the headline rows (Graves as the most common cause of hyperthyroidism). Read the matching stems too: a "usual" stem about a procedure step or a definition fits the wording but not the gap, and check that each required row has an item. The 2 items allowed outside the stem form still come from the notes' optional extras: writers who can't source a ranking fill those slots with free picks (TURP hyponatremia, a staged infection-related GN vignette), and those come back as near-duplicates of other subjects' stems or off-target items. The brief and batch file numbers are the quiz's position in its topic, not 1.
-- **Split.** Run `split-quiz` first: it moves the named subtopics' questions, with their IDs, into a new quiz after the old one and can rename the old one. Then refresh the outline, give each changed quiz its `add`, replace the old quiz name in every `excludes` of the blueprint, and move the topic's earlier work files into a subfolder so `merge` doesn't pick up stale `batch-<n>.json`.
+- Set the quiz's final `target` and `subtopics`, and add `"add": { "target": 10, "subtopics": { ... }, "notes": "..." }` with only the new items. `slices` briefs the writer for those, and the gate checks them. Remove `add` after staging. Brief and batch numbers are the quiz's position in its topic.
+- Writers follow `add` notes literally, so a note naming a staged point becomes a near-duplicate. Before spawning (and again when resuming), check every point the notes name against the whole `stems.txt`: its key term, its treatment and antidote terms (often staged under another topic), and the expected key in the quiz's own section under other wording. Replace or strike each staged point.
+- Name each note's point without asserting a threshold, schedule or guideline position.
+- **Gap-filling top-ups** (a measured gap such as "most common X" recall): give writers the required stem form, the fact classes it covers and a minimum count. Mark required points apart from optional extras, since writers given one list pick the side facts over the headline ones. Before review, count the stems that match the form and check that each required point has an item.
+
+## Splitting a staged quiz
+
+Run `split-quiz`: it moves the named subtopics' questions, with their IDs, into a new quiz after the old one, and can rename the old one. Then refresh the outline, give each changed quiz its `add`, replace the old quiz name in every `excludes`, and move the topic's earlier work files into a subfolder so `merge` doesn't pick up stale `batch-<n>.json`.
 
 ```sh
 .venv/bin/python scripts/local-authoring/job.py split-quiz --subject "<Subject>" --quiz "<Old>" --subtopic "<Sub>"... --name "<New>" --description "..." --rename "<Old renamed>" --rename-description "..." --actor agent:write-quizzes

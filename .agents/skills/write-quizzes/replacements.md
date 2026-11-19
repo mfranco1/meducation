@@ -1,13 +1,13 @@
 # Replacements and clean up
 
-Read this when every topic in scope is staged. `Q` is the alias defined in [SKILL.md](SKILL.md).
+Read this when every topic in scope is staged. `Q` is the alias in [SKILL.md](SKILL.md). If `Q backlog` is empty, skip to clean up.
 
-Write the replacement backlog as one batch. Skip to `clean` if `Q backlog` is empty.
+1. Refresh the outline and rerun `slices` for any topic, so `stems.txt` holds the whole staged subject. Run `Q backlog`: it lists the slots per quiz and each quiz's staged hard share.
+2. Write `<work>/replacements/notes.md`: ask for hard replacements in quizzes below about 20% hard, and for each slot, grep `stems.txt` for its subtopic and list the staged points as "already staged, don't retest". The backlog reasons alone don't keep writers off staged vignettes.
+3. Spawn one replacement writer (mid tier) with `Q prompt replace`.
+4. Review the batch like a topic named `replacements`: `Q gate replacements` (ignore size warnings), `Q blind replacements`, blind solve, `Q check-blind replacements && Q triage replacements`. One standards reviewer takes every input file (`Q prompt standards replacements`); tell it in the notes to ignore the questionType mix. Judge, apply and recheck as in [SKILL.md](SKILL.md#5-review), then `Q ready replacements --batch <final>`.
+5. Stage the batch: staging adds the items to their quizzes by name. Refresh the outline to confirm the quizzes are back at their targets, then run `Q backlog --clear`. It keeps any replacements the review dropped, with the slot's earlier reason, and moves `replacements/` aside. If it kept any, rerun `slices` and repeat from step 2.
 
-1. Refresh the outline and rerun `slices` for any topic, so `stems.txt` holds the whole staged subject.
-2. Spawn one replacement writer (mid tier) with [prompts/replace.md](prompts/replace.md). It writes one new item per backlog entry into `<work>/replacements/batch.json`, under the entry's topic and quiz names. In `SUBJECT_NOTES`, name the quizzes whose share of hard items is below the [difficulty mix](item-standards.md) (about 20%), and ask for hard replacements there. The outline has no difficulty, so count it in the draft: `docker exec meducation-authority-postgres sh -c 'psql -U $POSTGRES_USER -d meducation_authority'` and group `content.draft_questions.metadata->>'difficulty'` by quiz (join `draft_quizzes.topic_id` to `draft_topics`, and `draft_topics.subject_id` to `draft_subjects`, filtering on the subject's name). For each slot, grep `stems.txt` for its subtopic yourself and list the staged points in `SUBJECT_NOTES` as "already staged, don't retest": with only the backlog reasons, writers pick a new question on a staged vignette (steroid leukocytosis in afebrile PPROM after the latency-antibiotic slot), and reviewers drop it.
-3. Run the gate on that batch and ignore its size warnings. Check each new item against `stems.txt` and the blueprint's `excludes`.
-4. Blind-solve it like a topic named `replacements`: `Q blind replacements --batch batch.json --round initial`, `check-blind`, then `triage`. One standards reviewer takes every `standards-input-<n>.json` of this batch (each holds 1 to 3 items); tell it to ignore the questionType mix rule. Send any escalated item to the judge, apply and recheck as in step 5 of the workflow. Run `Q ready replacements` on the final batch.
-5. Stage the batch. Staging adds the items to their existing quizzes by name. Refresh the outline to confirm the quizzes are back at their targets, then run `Q backlog --clear`. It keeps the replacements the review dropped, each with its slot's earlier reason appended. If it kept any, move `replacements/` aside, rerun `slices`, and repeat from step 2 for them.
+## Clean up
 
-Then run `Q clean`. It refuses while the backlog has entries. It merges any remaining source records into the shared ledger, then deletes the work dir except `blueprint.json` (the coverage map for later expansion or revision). Make the last lessons pass (Sessions and lessons in [SKILL.md](SKILL.md)), then delete the tracker in `docs/work/ongoing/`.
+Run `Q clean`. It refuses while the backlog has entries, merges remaining source records into the shared ledger, and deletes the work dir except `blueprint.json`. Make the last lessons pass ([SKILL.md](SKILL.md#lessons)), then delete the tracker.

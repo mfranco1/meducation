@@ -1,68 +1,81 @@
 # Item standards
 
-Write as a senior attending physician and medical educator. The output is parsed by software, and the metadata feeds analytics.
+How to write a single-best-answer item. Write as a senior attending physician and medical educator. The output is parsed by software, and the metadata feeds analytics.
 
-## Accuracy and currency
+## Content
 
-- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC, AAP, NCCN, AJCC and similar. Sources are a minimum coverage map. When a source is outdated or wrong, write the current fact. That includes terms and classification schemes: older textbooks keep retired ones. Use the current nomenclature and consensus classification, and never test a retired scheme or a withdrawn drug as current therapy. [currency-notes.md](currency-notes.md) lists the retired names, schemes and editions found so far; read it before writing or reviewing.
-- Verify against the primary document any fact that depends on a guideline, classification, set of criteria, staging system, threshold, dose or schedule revised in the last 10 years. Search results and secondary summaries only locate the document:
-  1. Search for the newest version first, so you don't verify against a superseded edition. Cite that edition, not the older one you may know better; an older edition can still be marked `verified` in the ledger, so search the ledger for a newer entry of the same document (it names what it supersedes) before reusing an old one.
-  2. Fetch the page itself: the publisher's full text (journal, PubMed Central, society, CDC, WHO or government site).
-  3. Confirm the exact numbers and wording there. State a recommendation's strength or certainty grade only if you read it there; otherwise leave the grade out.
-  4. When a page refuses the fetch, look up its site or issuing body in [fetch-access.md](fetch-access.md). For a site not listed there, try the PubMed Central copy (Europe PMC when PMC shows a browser check), then the Web Archive raw form of the page or PDF (`web.archive.org/web/<timestamp>id_/<url>`), then a copy hosted by another society, health agency or university repository. If the primary text can't be reached, don't write numbers you couldn't confirm. Test the concept without them, or list the fact in your `unverified-<n>.json`.
-  5. For a law, regulation or circular, verify every article or section number, penalty, period and amount you write, however old the law, and confirm the provision is still in force: not repealed, amended, or a temporary or transition rule that has lapsed. Review handouts often keep superseded rules. Never cite a provision number from memory; leave it out if you can't confirm it. 
-- Put the reference in `rationaleMeta.sources` as an AMA-style citation (AMA Manual of Style, 11th edition). Required: authors (up to 6, then "et al") or the issuing organization, the title, the journal abbreviation or publisher, and the year. Add the volume, issue, pages and DOI only when they are on the page you read. Don't make a separate lookup for them: a citation without them is complete. Italicize journal and book titles with `*...*`. Separate several references with semicolons. Never add access or retrieval dates. Examples:
-  - `Kemper AR, Newman TB, Slaughter JL, et al. Clinical practice guideline revision: management of hyperbilirubinemia in the newborn infant 35 or more weeks of gestation. *Pediatrics*. 2022;150(3):e2022058859. doi:10.1542/peds.2022-058859`
-  - `World Health Organization. *WHO Recommendations on Antenatal Care for a Positive Pregnancy Experience*. World Health Organization; 2016.`
-  Cite the document that covers the tested point itself, not a related guideline from the same body (a hormone replacement guideline for a diagnostic workup, a medullary carcinoma guideline for MEN1 genetics), and keep rationale and pearl details to what that document or a standard textbook supports. Write only details you read in the document or its publisher record. Never write an author, volume, page or DOI from memory: leave out what you didn't read. Cite a society guideline read as web chapters (EAU on uroweb.org) by its issuing organization, since the chapter pages don't list the panel. Every citation has a year; for a continuously updated web summary (NCI PDQ, CDC pages), use the year of the version you read. Leave `sources` empty for stable textbook facts.
-- Check the source ledger (`var/quiz-work/sources.json`, shared by all subjects) before searching: `python3 -I .agents/skills/write-quizzes/quiz_work.py --work <work> ledger --find <term>...` prints the entries that contain every term, newest first (`--find kdigo "acute kidney"`). It records which documents were verified, read only as a summary, or blocked, and the facts already confirmed, so use the same facts and don't retry known-blocked pages. Record every guideline check you make in your `sources-<n>.json`: `[{ "title": "", "year": "", "url": "", "status": "verified | summary-only | blocked | unconfirmed", "facts": ["one short confirmed fact"] }]`. `year` is the document's revision year, `url` is the document's own page (not a site's home or search page), and each fact is a specific point you confirmed there, never "read in full" or "current label".
-- List each guideline-dependent fact you couldn't confirm in a primary text, including every fact you read only in a summary, abstract or search result (a `summary-only` source), in your `unverified-<n>.json`: `[{ "item": 12, "fact": "IPNA 2022 steroid-resistance definition, abstract only" }]`, with `item` the item's number in your quiz. Don't list stable textbook facts.
-- The audience trains for Philippine licensure. Scope epidemiology, rankings and data to the Philippines first, then the region (Southeast Asia, Asia), then global; never key a fact scoped only to the United States or another single foreign country (a US surveillance ranking). Key a ranking only from a guideline, national surveillance or multicenter data, never from one hospital's case series, even a Philippine one: it describes local patterns, not the fact an examinee is expected to know. Where Philippine and international guidance differ, key the Philippine specialty society guideline (POGS in obstetrics and gynecology) first, then the international body (FIGO, WHO), then the US body (ACOG), which stays acceptable; cite the body whose position is keyed. Philippine law sets the legal scope: induced abortion is illegal, so no item keys elective termination, termination for fetal anomaly or selective fetal reduction, while postabortion care and management of spontaneous loss and fetal death stay in scope.
-- Where practice or notation varies by region, guideline body or author, test what is consistent across them or name the guideline in the stem. 
-- Every item has exactly one best answer that a panel of experts would agree on. In next-step and management items, the stem gives the finding that rules out each close alternative: the test already done or its result, the value that points away from the other source, the symptom or finding that is absent. When current guidance also accepts a more selective or less invasive option than the classic rule, the stem gives the finding that excludes it (an expanding perirenal hematoma, since a stable one found at laparotomy is left unopened). When the guideline only suggests the keyed option and accepts an alternative (serial imaging or anticoagulation for isolated calf DVT), the stem gives the patient factor the guideline names for choosing the key (a recent major bleed).
+- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC and similar. Provided sources are a minimum coverage map, never the authority on facts. When a source is outdated or wrong, write the current fact, term and classification. Never test a retired scheme or a withdrawn drug as current. [currency-notes.md](currency-notes.md) lists the retired forms found so far.
+- Guideline-dependent facts (guidelines, criteria, classifications, staging, thresholds, doses, schedules, laws) are verified in the primary document as [verification.md](verification.md) describes. Roles without web access escalate them instead.
+- The audience trains for Philippine licensure. Scope epidemiology, rankings and data to the Philippines first, then the region (Southeast Asia, Asia), then global. Never key a fact scoped only to one foreign country. Key a ranking only from a guideline, national surveillance or multicenter data, never one hospital's case series.
+- Where Philippine and international guidance differ, key the Philippine specialty society (POGS in obstetrics and gynecology), then the international body (FIGO, WHO), then the US body (ACOG). Cite the body whose position is keyed.
+- Induced abortion is illegal in the Philippines: no item keys elective termination, termination for fetal anomaly or selective reduction. Postabortion care and management of spontaneous loss and fetal death stay in scope.
+- Where practice or notation varies by region, body or author, test what is consistent across them or name the guideline in the stem.
+- Every item has exactly one answer an expert panel would agree on. In next-step and management items, the stem gives the finding that rules out each close alternative (the test already done, the value pointing away from another cause, the absent finding). When current guidance also accepts a more selective or less invasive option, the stem gives the finding that excludes it. When a guideline only suggests the key and accepts an alternative, the stem gives the patient factor the guideline names for choosing the key.
 
 ## Originality
 
-Write every stem, choice, rationale and pearl in your own words. Never copy sentences from sources. Never mention  source documents, reviewers, handouts, lecture notes, their authors, schools, review centers, or their comments anywhere in the output. `rationaleMeta.sources` cites only published primary references. Use only mnemonics that are widely known in medicine.
+Write every field in your own words; never copy sentences from sources. Never mention source documents, handouts, lecture notes, reviewers, their authors, schools or review centers anywhere. `rationaleMeta.sources` cites only published primary references. Use only mnemonics widely known in medicine.
 
-## Item format (single best answer)
+## Item format
 
-- **Stem**: a self-contained clinical vignette or a focused question. The app shuffles questions, so never refer to other items, shared cases or item numbers.
-- **Vignette order**: age and sex, setting, chief complaint, history, examination, then labs or imaging. Give vital signs and lab values with units and reference ranges when they aren't common knowledge. Include only details that matter or that a real presentation would plausibly contain.
-- **Lead-in**: a clear question ending in "?" that a prepared learner can answer with the choices covered, e.g. "Which of the following is the most likely diagnosis?", "What is the most appropriate next step in management?" Avoid negative lead-ins (EXCEPT, NOT, LEAST).
-- **Choices**: exactly 4, with no letter prefixes. All in the same category (all diagnoses, all drugs, all next steps), parallel in grammar and similar in length and detail. Each distractor is a mistake a partly prepared learner would plausibly make. List numeric choices in ascending order. Never use "all of the above", "none of the above", "both" combinations, or absolute words that give the answer away.
+- **Stem**: a self-contained clinical vignette or focused question. The app shuffles questions, so never refer to other items, shared cases or item numbers.
+- **Vignette order**: age and sex, setting, chief complaint, history, examination, then labs or imaging. Give vital signs and lab values with units, and reference ranges when not common knowledge. Include only details that matter or that a real presentation would plausibly contain.
+- **Lead-in**: a clear question ending in "?" that a prepared learner can answer with the choices covered. No negative lead-ins (EXCEPT, NOT, LEAST).
+- **Choices**: exactly 4, no letter prefixes, all in one category (all diagnoses, all drugs, all next steps), parallel in grammar, similar in length and detail. Each distractor is a mistake a partly prepared learner would plausibly make. Numeric choices in ascending order. No "all of the above", "none of the above", combinations or giveaway absolutes.
+- **Laws**: short scenarios asking what the law requires or allows, not the provision number.
+- **Trials**: ask for the decision the evidence supports; never put a trial's name in a stem or choice.
 
-## Technical flaws to avoid
+## Technical flaws
 
-- Testwiseness cues: the correct choice is longest or most qualified, shares words with the stem that the others don't, is the only grammatical fit, or is the odd one out. Two choices mean the same thing, or one contains another.
-- Irrelevant difficulty: vague frequency terms ("often", "usually"), double negatives, unneeded jargon, long stems for a simple recall fact, trick wording, and trivia that a prepared examinee wouldn't need to know.
+Check every item against these before returning it. They are the flaws reviewers fix most.
+
+- The key is the longest or most qualified choice, shares words with the stem that others don't, is the only grammatical fit, or is the odd one out.
+- The stem states the answer or its defining clue (the drug's target when asking for the drug), or the key repeats a term from the stem.
+- Two choices mean the same thing, one contains another, or a distractor is partly true.
+- A distractor no partly prepared learner would pick.
+- Irrelevant difficulty: vague frequency terms, double negatives, needless jargon, a long stem for a simple recall fact, trick wording, trivia.
+- A stem, rationale, table or pearl that gives away another item's answer.
+- A fact, number or absolute claim ("only", "never", "most common", a percentage) in any field that the cited document or a standard textbook doesn't state.
+- A pearl that restates the rationale, or a rationale padded with repeated or filler sentences. Add a distinguishing fact instead.
+- A rationale left garbled by edits (a stray sentence after the bullets, a sentence repeated or cut off). Reread every edited rationale whole.
 
 ## Mix within each quiz
 
-- **Cognitive level**: favor application (vignettes on diagnosis, mechanism, next step, management, complication, prevention, lab interpretation) over pure recall. Aim for at most about 30% Recall. For laws, write short scenarios that ask what the law requires or allows, rather than asking for the provision itself. For evidence from a named trial, ask for the decision it supports (eligibility, next step, regimen); never put the trial's name in a stem or choice, since recalling acronyms isn't clinical skill. Include comparisons of look-alike entities and multi-step items that chain two or more concepts (e.g. vignette, then diagnosis, then underlying mutation).
-- **Difficulty** (author estimate): about 20% easy, 60% medium, 20% hard. Hard items demand synthesis or discrimination between close distractors, not obscure facts. An item whose stem names the clue that leads straight to the key (the signaling pathway, the classic exposure, the named defect) is not hard.
-- **Answer letters**: spread roughly evenly across A to D.
-- Revisiting a core concept from a different angle is welcome. Near-duplicates are not, within the quiz or across the subject. Before writing, read your topic's sections of the staged stems (`stems.txt`) and the other planned quizzes in your brief. Leave out the points in your quiz's `excludes`: they belong to another quiz.
+The gate (`quiz_work.py gate`) measures these.
+
+- **Cognitive level**: favor application (diagnosis, mechanism, next step, management, complication, prevention, lab interpretation) over recall. Recall at most 30% and any other question type at most 40%. Include look-alike comparisons and items that chain two or more concepts.
+- **Difficulty**: about 20% easy, 60% medium, 20% hard. Hard means synthesis or discrimination between close distractors, with the leading clue withheld. An item whose stem names the clue that leads straight to the key is not hard, and obscure facts don't make an item hard.
+- **Answer letters**: spread roughly evenly across A to D. Rebalance by reordering choices and updating `answer`.
+
+## Near-duplicates
+
+Revisiting a core concept from a different angle is welcome. Testing the same point the same way, within the quiz or anywhere in the subject, is not. Points in a quiz's `excludes` belong to another quiz.
+
+`stems.txt` holds every staged stem of the subject plus `(unstaged)` sections from other topics in progress, one `## <Topic> › <Quiz>` section per quiz. To check items against it:
+
+1. Run `quiz_work.py similar` on the batch. It lists the closest stems per item; read every candidate it lists.
+2. It only matches wording. Also grep `stems.txt` for each item's keyed entity (drug, organism, disorder, mechanism) and for the findings that describe it, since staged stems often describe a finding without naming it.
+3. Compare items within your own batch the same way: two items on one entity must test different facts, and neither may give away the other's key.
 
 ## Rationale
 
-The rationale does most of the teaching, and learners skim it on a phone. Make it dense, high-yield and easy to scan. The app renders GitHub Flavored Markdown, a small HTML subset (`<sub>`, `<sup>`) and KaTeX math. Tables and display math scroll on narrow screens.
+The rationale does most of the teaching, and learners skim it on a phone. Make it dense, high-yield and easy to scan. The app renders GitHub Flavored Markdown, `<sub>`/`<sup>` and KaTeX math.
 
-**Structure** (about 70 to 140 words outside tables; more only when a table carries it):
+**Structure** (70 to 140 words outside tables; more only when a table carries it):
 
-1. **Answer and key reasoning**: open with the correct answer in bold and the reasoning step that gets there, in 1 to 3 sentences. Bold the findings that discriminate it from the distractors.
-2. **Core teaching**: what a learner should take away. Use a table whenever 2 or more entities are compared on 2 or more features: look-alike diagnoses, drug choices, thresholds by age or gestation, staging or classification levels, or lab patterns. Use a numbered list for sequences, e.g. a resuscitation algorithm, a stepwise work-up or a calculation. Add only facts a standard reference states; leave out side claims you can't support.
-3. **Other choices**: a bulleted list with one bullet per distractor, each starting with the choice's content in bold, then why it's wrong or which presentation it fits instead. Never refer to choices by letter.
+1. **Answer and key reasoning**: open with the correct answer in bold and the reasoning that reaches it, in 1 to 3 sentences. Bold the discriminating findings. A calculation opens with the bolded answer, not the formula.
+2. **Core teaching**: a table whenever 2 or more entities are compared on 2 or more features (look-alike diagnoses, drug choices, thresholds, staging levels, lab patterns). A numbered list for sequences (an algorithm, a work-up, a calculation). Only facts a standard reference states.
+3. **Other choices**: one bullet per distractor, starting with the choice's content in bold, then why it's wrong or what it fits instead. Never refer to choices by letter.
 
-**Formatting rules:**
+**Formatting**:
 
-- **Bold** the correct answer, the discriminating findings, and the one or two facts a learner must remember. Don't bold whole sentences or more than about a fifth of the text.
-- *Italics* for organism names (*Streptococcus agalactiae*, *Listeria monocytogenes*), Latin terms and gene names (*UGT1A1*), and for a term at the point it's defined.
-- Tables: at most 4 columns, short cells (a few words), a header row, and the entity being discussed in the first column. Every Comparison question has one.
-- Math: use LaTeX for formulas, calculations, ratios and anything with fractions or exponents, inline as `$...$`, e.g. `$\text{dose} = 10\ \text{mL/kg} \times 3.2\ \text{kg} = 32\ \text{mL}$`, or as a display block (`$$` on its own lines) for a multi-step calculation. Write plain numbers and units as text. Use `<sub>`/`<sup>` for chemical formulas and simple subscripts (CO<sub>2</sub>, SpO<sub>2</sub>, Ca<sup>2+</sup>).
-- No headings, blockquotes or horizontal rules inside a rationale. Use bold lead-ins instead.
+- **Bold** the answer, the discriminating findings and the one or two facts to remember; at most about a fifth of the text.
+- *Italics* for organisms, Latin terms, gene names and a term where it is defined.
+- Tables: at most 4 columns, short cells, a header row, the entity in the first column. Every Comparison item has one.
+- LaTeX for formulas, calculations, ratios and anything with fractions or exponents (`$...$` inline, `$$` blocks for multi-step work). Plain numbers and units as text. `<sub>`/`<sup>` for chemical formulas and simple subscripts (CO<sub>2</sub>, Ca<sup>2+</sup>).
+- No headings, blockquotes or horizontal rules.
 
-Example rationale (as rendered Markdown):
+Example (rendered Markdown):
 
 ```markdown
 **Transient tachypnea of the newborn** fits best: a **term infant born by cesarean without labor** with **mild tachypnea and a low oxygen need** that **improves within 24 to 48 hours**. Delayed clearance of fetal lung fluid is the cause.
@@ -78,11 +91,41 @@ Example rationale (as rendered Markdown):
 - **Progressive hypercapnia needing intubation** is not expected in TTN.
 ```
 
-Pearls: 1 to 3 short, standalone exam or clinical facts that extend the item, not a restatement of the answer.
+**Pearls**: 1 to 3 short, standalone exam or clinical facts that extend the item.
+
+## Citations
+
+`rationaleMeta.sources` is a string: AMA-style references (AMA Manual of Style, 11th edition) separated by semicolons, or empty for stable textbook facts.
+
+- Required: authors (up to 6, then "et al") or the issuing organization, title, journal abbreviation or publisher, and year. Add volume, issue, pages and DOI only when they are on the page you read; never look them up separately, and a citation without them is complete. Never add access dates.
+- Italicize journal and book titles with `*...*`. End with a period.
+- Cite the document that covers the tested point itself, not a related guideline from the same body. Cite a guideline read as web chapters (EAU on uroweb.org) by its organization. For a continuously updated web page, use the year of the version read.
+- Write only details read in the document or its publisher record, never from memory.
+
+```text
+Kemper AR, Newman TB, Slaughter JL, et al. Clinical practice guideline revision: management of hyperbilirubinemia in the newborn infant 35 or more weeks of gestation. *Pediatrics*. 2022;150(3):e2022058859. doi:10.1542/peds.2022-058859
+World Health Organization. *WHO Recommendations on Antenatal Care for a Positive Pregnancy Experience*. World Health Organization; 2016.
+```
+
+## Metadata
+
+Use the values exactly as written; allowed values are in [vocabulary.json](vocabulary.json). Don't set `metadata.topic` or `tags`. A genuinely new value is added to `vocabulary.json` in the same change, and the user is told.
+
+- `subtopic`: the blueprint's Title Case subtopic name, the same string for every item on it. Reuse outline subtopics when they fit.
+- `system`: the organ system tested. `Multisystem` for systemic disease (sepsis). `General Principles` for growth, nutrition, immunization schedules, genetics, pharmacology principles and biostatistics.
+- `difficulty`: `easy`, `medium` or `hard` (see the mix above).
+- `questionType`: the task asked. `Clinical Vignette: Next Step` is the immediate diagnostic or therapeutic step; `Clinical Vignette: Management` is the definitive treatment; `Multi-step Reasoning` chains two or more inferences. Choose the type that fits the item, never one that rebalances the mix.
 
 ## Language and JSON
 
-- English, active voice, standard medical terminology, generic drug names, SI units with conventional units in parentheses where both are common.
-- The file must be valid JSON. Escape backslashes in LaTeX (`\\frac`, `\\alpha`), write line breaks as `\n`, and use `\$` for a literal dollar sign that could be read as math.
-- Only `stem` and `rationale` take Markdown and the `<sub>`/`<sup>` subset. `choices`, `pearls` and `rationaleMeta.sources` take no HTML; `rationaleMeta.sources` may use `*italics*` for titles. Write 10⁹/L, m² and CO₂ with Unicode characters there.
-- Images are not supported yet. Describe findings in words.
+- English, active voice, standard terminology, generic drug names, SI units with conventional units in parentheses where both are common. No patient details that stereotype without clinical relevance. Images aren't supported; describe findings in words.
+- Only `stem` and `rationale` take Markdown and `<sub>`/`<sup>`. `choices`, `pearls` and `rationaleMeta.sources` take no HTML (titles in sources may use `*italics*`); write Unicode there (10⁹/L, m², CO₂, Na⁺).
+- Valid JSON: escape LaTeX backslashes (`\\frac`), write line breaks as `\n`, and use `\$` for a literal dollar sign.
+
+Batch shape (the editor's bulk-add JSON):
+
+```json
+{ "topics": [ { "name": "", "description": "", "quizzes": [ { "name": "", "description": "", "items": [
+  { "stem": "", "choices": ["", "", "", ""], "answer": "A", "rationale": "", "rationaleMeta": { "sources": "" }, "pearls": [""],
+    "metadata": { "subtopic": "", "system": "", "difficulty": "medium", "questionType": "" } } ] } ] } ] }
+```

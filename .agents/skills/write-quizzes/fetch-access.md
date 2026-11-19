@@ -1,6 +1,6 @@
 # Fetch access
 
-Sites that refuse automated fetches, and the route that loads instead. Look up the site or issuing body when a fetch fails; the general fallbacks are in [item-standards.md](item-standards.md#accuracy-and-currency). The source ledger records blocked documents; this file records blocked sites.
+Sites that refuse automated fetches, and the route that loads instead. Look up the site or issuing body when a fetch fails; the general fallbacks are in [verification.md](verification.md#procedure). The source ledger records blocked documents; this file records blocked sites.
 
 When you verify a fact in another body's guideline, cite that body, and name it in the stem where the bodies differ.
 

@@ -1,5 +1,6 @@
 """Agent staging into the editor draft through DraftService. Nothing here publishes."""
 
+from collections import Counter
 from typing import Any
 
 from meducation_api.admin.service import MISSING, DraftError, DraftService
@@ -49,6 +50,9 @@ def outline(service: DraftService, subject_name: str) -> dict[str, Any]:
                     "name": quiz["name"],
                     **({"description": quiz["description"]} if "description" in quiz else {}),
                     "questionCount": len(questions),
+                    "difficulty": dict(
+                        Counter(q["metadata"]["difficulty"] for q in questions if q.get("metadata", {}).get("difficulty"))
+                    ),
                     "stems": [q["stem"] for q in questions],
                 }
             )

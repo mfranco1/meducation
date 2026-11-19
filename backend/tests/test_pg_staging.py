@@ -127,8 +127,8 @@ def test_outline_lists_topics_counts_subtopics_and_stems(staged):
                         {
                             "name": "Q",
                             "items": [
-                                item("S1", metadata={"subtopic": "b"}),
-                                item("S2", metadata={"subtopic": "a"}),
+                                item("S1", metadata={"subtopic": "b", "difficulty": "hard"}),
+                                item("S2", metadata={"subtopic": "a", "difficulty": "hard"}),
                             ],
                         }
                     ],
@@ -144,6 +144,7 @@ def test_outline_lists_topics_counts_subtopics_and_stems(staged):
         "S1",
         "S2",
     ]
+    assert topic["quizzes"][0]["difficulty"] == {"hard": 2}
     with pytest.raises(DraftError, match="No subject"):
         outline(service, "Missing")
 

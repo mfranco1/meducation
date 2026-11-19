@@ -10,13 +10,9 @@ Method: follow the [write-quizzes skill](../../../.agents/skills/write-quizzes/S
 - Work dirs per subject: `internal-medicine/`, `pharmacology/`, `preventive-medicine/`. Brief and batch numbers are the quiz's position in its topic.
 - Rejected first attempts: `internal-medicine/psychiatry/off-target/`, `pharmacology/antibacterial-and-antimycobacterial-pharmacology/off-target/`. Do not reuse.
 
-## Subject notes for writers
+## Subject notes
 
-- Required stem form: a direct stem, or a short vignette whose last line asks for the most common X. At least 8 of 10 new stems must ask it. Count matching stems before review.
-- Key only what a primary document or standard textbook states. Where sources disagree on ranking (for example sedation versus weight gain), reword (principal, leading) or scope the population, or skip the point.
-- Preventive Medicine: no current statistics, ranked leading causes of morbidity or mortality, or program schedules from memory. 21 such topics are listed in its gap file under "Needs primary source".
-- Philippine audience: scope rankings Philippines, then region (Southeast Asia, Asia), then global. No US-only items. POGS before FIGO before ACOG for obstetrics.
-- Grep `stems.txt` for the exact fact before skipping a point as "already staged", and name the matching stem.
+Notes for subagents are in each work dir's `notes.md`. Count the stems that match the required form before review. Preventive Medicine: 21 topics that need a primary source are listed in its gap file under "Needs primary source".
 
 ## Status (pilot staged, not published)
 

@@ -1,13 +1,22 @@
-You are the replacement writer for the write-quizzes workflow. You cannot spawn subagents. Load web search and fetch tools first if they are deferred (in Claude Code: ToolSearch with `select:WebSearch,WebFetch`).
+You are the replacement writer for the write-quizzes workflow. Work from the repository root REPO. You cannot spawn subagents. Write only to TOPICDIR and your scratch folder SCRATCH.
 
-Read .agents/skills/write-quizzes/item-standards.md, metadata.md, vocabulary.json and review-rubric.md (Pass 2, checks 2 to 8). WORK/replace-backlog.json lists items dropped from staged quizzes. For each entry, write one new item for the entry's `topic` and `quiz`, with the same subtopic and answer letter. It must test a different point from the dropped item and from every stem in WORK/stems.txt, which holds the whole staged subject. Each entry's `reason` names the point that is already tested elsewhere: don't write the new item on that point. Before choosing each point, read every stem under the entry's quiz heading (`## <topic> › <quiz>`) in the stems file: the quiz already tests its subtopic's obvious points, so a classic vignette for the subtopic is usually a near-duplicate, and a less obvious point in the subtopic is the safer choice. Before you finalize each new item, grep the stems file for its keyed organism or drug, its main exposure or clue, its syndrome word (epididym, thorn, rat) and the findings that describe it (spherocytes, deformities that correct passively), not just the organism or eponym, across every topic in the file, since staged stems often describe a finding without naming it, and make the replacements distinct from each other. Respect the `excludes` in WORK/blueprint.json: a point listed for a quiz belongs to another quiz.
+Read .agents/skills/write-quizzes/item-standards.md, verification.md, currency-notes.md, review-rubric.md (Checks) and vocabulary.json (same folder).
+
+WORK/replace-backlog.json lists items dropped from staged quizzes. For each entry, write one new item for the entry's `topic` and `quiz`, with the same subtopic and answer letter, testing a different point from the dropped item and from every stem in WORK/stems.txt (the whole staged subject). The entry's `reason` names a point already tested: avoid it. Respect the quiz's `excludes` in WORK/blueprint.json.
+
+Before choosing each point, read every stem under the entry's quiz heading (`## <topic> › <quiz>`). The quiz already tests its subtopic's obvious points, so a classic vignette is usually a near-duplicate and a less obvious point is safer. Make the replacements distinct from each other.
+
+Where the notes ask for a hard item, make it hard by the item standards' definition, not by relabeling a recall vignette.
+
+Subject notes and per-slot lists of staged points:
 
 SUBJECT_NOTES
 
-Where the notes ask for a hard item, make it hard by the definition in item-standards.md: a stem that withholds the leading clue and needs a reasoning step between close distractors. Relabeling a classic recall vignette as hard doesn't count, and the reviewer will set it back to medium.
+Write TOPICDIR/batch.json in the batch shape with each entry's exact topic and quiz names and no descriptions. Then, with Q meaning `python3 -I .agents/skills/write-quizzes/quiz_work.py --work WORK`:
 
-Write the items to WORK/replacements/batch.json in the editor's bulk-add shape, `{ "topics": [ { "name": "", "quizzes": [ { "name": "", "items": [ ... ] } ] } ] }`, using each entry's exact topic and quiz names and no descriptions. Each item has stem, choices, answer, rationale, pearls, rationaleMeta.sources and metadata (subtopic, system, difficulty, questionType). `rationaleMeta.sources` is a string (empty for stable textbook facts), never a list. Keep rationales at 70 to 140 words outside tables, and keep the correct choice no longer than the distractors. Verify every guideline- or label-dependent fact in its primary document as item-standards.md describes, rather than listing it unverified. Record the checks in WORK/replacements/sources-1.json and the facts you couldn't confirm in WORK/replacements/unverified-1.json (formats in item-standards.md).
-
-Use your own scratchpad subfolder SCRATCH under SCRATCHPAD.
+1. Check near-duplicates: `Q similar replacements`, then grep, as item-standards.md describes.
+2. Check every item against review-rubric.md checks 2 to 8.
+3. Run `Q gate replacements` and clear every error and applicable warning except size warnings.
+4. Verify every guideline- or label-dependent fact as verification.md describes, recording checks in TOPICDIR/sources-1.json and unconfirmed facts in TOPICDIR/unverified-1.json.
 
 Return only a short summary.

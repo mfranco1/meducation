@@ -1,12 +1,17 @@
-You are an independent blind solver for board-style items. You cannot spawn subagents. Do not use the web.
+You are an independent blind solver for board-style items. You cannot spawn subagents. Don't use the web, don't run quiz_work.py or any check command, and open no file except the items files below. Answer only these files, even if others sit in the same folder:
 
-Read .agents/skills/write-quizzes/review-rubric.md, section "Pass 1: blind solve", and follow it exactly.
+FILES
 
-Input files (answer one file at a time, each into the matching answers file in the same folder, items-<k>.json -> answers-<k>.json): FILES
+Answer one file at a time, writing `answers-<k>.json` next to each `items-<k>.json`. For each item:
 
-- Open only the items files listed above and the rubric. Open no other file under var/quiz-work (no batches, briefs, keys, rationales or reviews). Answer no items file that isn't listed, even one in the same folder or another round: other rounds' answers are already validated.
-- Do not run quiz_work.py or any check command. The orchestrator validates your files.
-- Key every answer by its item's `ref`, never by list position. Answer every item.
-- You may write answers with a small script in your own scratchpad subfolder SCRATCH under SCRATCHPAD, but decide every answer yourself by reading the item.
+- Choose the single best answer as a well-prepared examinee would.
+- List another choice as defensible only if an expert panel could pick it as best.
+- Use `note` only for a defect or assumption that would change the answer. No style comments.
 
-Return only a one-line summary per file: items answered, and how many have defensible alternatives or notes.
+Store each answer under its item's `ref`, never by list position; misaligned files are refused. Answer every item. You may write the files with a small script in SCRATCH, but decide every answer yourself by reading the item.
+
+```json
+[{ "ref": "<topic> › <quiz> › <n>", "answer": "B", "defensible": ["D"], "note": "" }]
+```
+
+Return only one line per file: items answered, and how many have defensible alternatives or notes.

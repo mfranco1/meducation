@@ -3,20 +3,26 @@
 Usage: python3 -I quiz_work.py --work WORK <command> TOPIC [options]
 
 WORK (var/quiz-work/<subject-slug>) holds blueprint.json, outline.json,
-stems.txt, replace-backlog.json and optionally src/main.txt; each topic has its own folder
-(WORK/<topic-slug>/) with briefs, batches, blind rounds and review files under
-fixed names. The source ledger is shared by all subjects: WORK/../sources.json.
-Run `--help` on a command for its options.
+stems.txt, replace-backlog.json, optional notes.md and src/main.txt; each topic has its own
+folder (WORK/<topic-slug>/) with briefs, batches, blind rounds (blind/rounds.json lists them
+in order) and review files under fixed names. The source ledger is shared by all subjects:
+WORK/../sources.json. Blind rounds default to the next one (initial, recheck-1, ...) and later
+commands default to the latest round. `prompt` renders a role's prompt template, `similar`
+lists lexical near-duplicates, `gate` runs the batch report. Run `--help` on a command for
+its options.
 """
 
 import argparse
 import fcntl
 import hashlib
 import json
+import math
 import os
 import re
 import shutil
+import subprocess
 import sys
+from collections import Counter
 from pathlib import Path
 
 SEP = " › "
@@ -92,6 +98,16 @@ class Work:
 
     def batch(self, name: str):
         return load(self.dir / name)
+
+    def rounds(self) -> list:
+        path = self.dir / "blind" / "rounds.json"
+        return load(path) if path.exists() else []
+
+    def use_round(self, args) -> None:
+        """Default --round to the latest round and --batch to that round's batch."""
+        args.round = args.round or (self.rounds() or sys.exit("No blind round yet; run blind first."))[-1]
+        meta = load(self.dir / "blind" / args.round / "meta.json")
+        args.batch = getattr(args, "batch", None) or meta["batch"]
 
     def log(self):
         path = self.dir / "blind-log.json"
@@ -220,10 +236,18 @@ def cmd_merge(work: Work, args) -> None:
 
 
 def cmd_blind(work: Work, args) -> None:
-    """Per-quiz blind files for a round; the round remembers which batch it solves."""
+    """Per-quiz blind files for a round; the round remembers which batch it solves.
+    --round defaults to initial, then recheck-<k>; a recheck defaults --refs to rewritten-<batch>.json."""
+    rounds = work.rounds()
+    rechecks = [int(m[1]) for r in rounds if (m := re.fullmatch(r"recheck-(\d+)", r))]
+    name = args.round or ("initial" if not rounds else f"recheck-{max(rechecks, default=0) + 1}")
+    if name.startswith("recheck") and not args.refs:
+        args.refs = f"rewritten-{Path(args.batch).stem}.json"
+        if not (work.dir / args.refs).exists():
+            sys.exit(f"{args.refs} is missing; run apply first or pass --refs.")
     batch = work.batch(args.batch)
     refs = set(load(work.dir / args.refs)) if args.refs else None
-    round_dir = work.dir / "blind" / args.round
+    round_dir = work.dir / "blind" / name
     if round_dir.exists():
         sys.exit(f"{round_dir} already exists; pick a new round name.")
     files: dict[str, list] = {}
@@ -239,8 +263,9 @@ def cmd_blind(work: Work, args) -> None:
     for n, rows in enumerate(files.values(), 1):
         dump(round_dir / f"items-{n}.json", rows)
     dump(round_dir / "meta.json", {"batch": args.batch, "files": len(files)})
+    dump(work.dir / "blind" / "rounds.json", rounds + [name])
     print(
-        f"{sum(map(len, files.values()))} items in {len(files)} files under {round_dir}"
+        f"round {name}, batch {args.batch}: {sum(map(len, files.values()))} items in {len(files)} files under {round_dir}"
     )
 
 
@@ -269,7 +294,9 @@ def shifted_run(rows, keys) -> int:
 
 
 def cmd_check_blind(work: Work, args) -> None:
-    """Validate a round's answer files, refuse misaligned ones, and log clean solves."""
+    """Validate a round's answer files, refuse misaligned ones, and log clean solves.
+    --round defaults to the latest round."""
+    work.use_round(args)
     round_dir = work.dir / "blind" / args.round
     meta = load(round_dir / "meta.json")
     batch = {ref: item for ref, _, item in items_of(work.batch(meta["batch"]))}
@@ -325,7 +352,7 @@ def cmd_check_blind(work: Work, args) -> None:
     if errors:
         sys.exit("\n".join(errors))
     dump(work.dir / "blind-log.json", log)
-    print("\n".join(report))
+    print("\n".join([f"round {args.round}", *report]))
 
 
 def latest(log, ref, round_name):
@@ -336,7 +363,9 @@ def latest(log, ref, round_name):
 
 
 def cmd_triage(work: Work, args) -> None:
-    """Split items into the standards pass (one file per quiz) and the escalated set."""
+    """Split items into the standards pass (one file per quiz) and the escalated set.
+    --round defaults to the latest round, --batch to that round's batch."""
+    work.use_round(args)
     batch = work.batch(args.batch)
     log = work.log()
     sizes: dict[str, int] = {}
@@ -382,6 +411,7 @@ def cmd_triage(work: Work, args) -> None:
         dump(work.dir / f"standards-input-{n}.json", rows)
     dump(work.dir / "escalated.json", escalated)
     print(
+        f"round {args.round}, batch {args.batch}: "
         f"{sum(map(len, standards.values()))} to the standards pass in {len(standards)} files, "
         f"{len(escalated)} escalated"
     )
@@ -455,6 +485,9 @@ def cmd_route_standards(work: Work, args) -> None:
 
 
 def cmd_judge_input(work: Work, args) -> None:
+    """Write judgment-input-<round>.json: the escalated items, or a recheck's unclean solves.
+    --round defaults to the latest round, --batch to that round's batch."""
+    work.use_round(args)
     batch = {ref: item for ref, _, item in items_of(work.batch(args.batch))}
     log = work.log()
     rows = []
@@ -478,9 +511,12 @@ def cmd_judge_input(work: Work, args) -> None:
             }
         )
         log["judged"].append(content_hash(item))
-    dump(work.dir / "judgment-input.json", rows)
+    dump(work.dir / f"judgment-input-{args.round}.json", rows)
     dump(work.dir / "blind-log.json", log)
-    print(f"{len(rows)} items for judgment")
+    print(
+        f"round {args.round}, batch {args.batch}: {len(rows)} items for judgment in "
+        f"judgment-input-{args.round}.json; the judge writes review-judgment-{args.round}.json"
+    )
 
 
 def cmd_apply(work: Work, args) -> None:
@@ -668,7 +704,8 @@ def merge_ledger(work: Work) -> None:
 
 def cmd_backlog(work: Work, args) -> None:
     """Count the dropped items awaiting replacement, per quiz; --clear once they are staged.
-    --clear keeps the drops from replacements/batch.json, each with its slot's earlier reason."""
+    --clear keeps the drops from replacements/batch.json, each with its slot's earlier reason, and
+    moves WORK/replacements aside as replacements-<k>. With an outline, shows each quiz's hard share."""
     if args.clear:
         batch_path = work.root / "replacements" / "batch.json"
         new = {i["stem"] for _, _, i in items_of(load(batch_path))} if batch_path.exists() else set()
@@ -684,13 +721,146 @@ def cmd_backlog(work: Work, args) -> None:
             dump(work.backlog_path, keep)
         else:
             work.backlog_path.unlink(missing_ok=True)
-        print(f"Backlog cleared; {len(keep)} dropped replacements kept for the next round.")
+        moved = ""
+        if (work.root / "replacements").exists():
+            k = 1
+            while (work.root / f"replacements-{k}").exists():
+                k += 1
+            (work.root / "replacements").rename(work.root / f"replacements-{k}")
+            moved = f" replacements moved to replacements-{k}."
+        print(f"Backlog cleared; {len(keep)} dropped replacements kept for the next round.{moved}")
         return
-    counts: dict[str, int] = {}
+    outline = load(work.root / "outline.json") if (work.root / "outline.json").exists() else {"topics": []}
+    staged = {(t["name"], q["name"]): q for t in outline["topics"] for q in t.get("quizzes", [])}
+    counts: dict[tuple, int] = {}
     for entry in work.backlog():
-        where = SEP.join((entry["topic"], entry["quiz"]))
-        counts[where] = counts.get(where, 0) + 1
-    print("\n".join(f"{n} {where}" for where, n in counts.items()) or "Backlog is empty.")
+        key = (entry["topic"], entry["quiz"])
+        counts[key] = counts.get(key, 0) + 1
+    lines = []
+    for key, n in counts.items():
+        quiz = staged.get(key, {})
+        hard = f" (hard {quiz['difficulty'].get('hard', 0)}/{quiz['questionCount']} staged)" if "difficulty" in quiz else ""
+        lines.append(f"{n} {SEP.join(key)}{hard}")
+    print("\n".join(lines) or "Backlog is empty.")
+
+
+ROLES = ("writer", "blind", "standards", "judge", "replace")
+PROMPTS = Path(__file__).resolve().parent / "prompts"
+
+
+def numbered(folder: Path, pattern: str) -> list[Path]:
+    return sorted(folder.glob(pattern), key=lambda p: int(p.stem.rsplit("-", 1)[1]))
+
+
+def cmd_prompt(work: Work, args) -> None:
+    """Render prompts/<role>.md for ROLE (writer, blind, standards, judge, replace) into
+    TOPICDIR/prompt-<role>.md (writer: prompt-writer-<n>.md) and print its path. writer needs
+    exactly one --n; blind and standards take --n values (default all of the round's items files or
+    all standards-input files). replace needs no topic."""
+    role, root = args.role, work.root.resolve()
+    if role != "replace" and not args.topic:
+        sys.exit(f"{role} needs a topic.")
+    folder = root / "replacements" if role == "replace" else root / work.dir.name
+    n = None
+    if role == "writer":
+        if not args.n or len(args.n) != 1:
+            sys.exit("writer needs exactly one --n.")
+        n = args.n[0]
+        if not (folder / f"brief-{n}.json").exists():
+            sys.exit(f"{folder / f'brief-{n}.json'} does not exist; run slices first.")
+    tag = f"{role}-{n}" if n else role
+    scratch = folder / "scratch" / tag
+    scratch.mkdir(parents=True, exist_ok=True)
+    notes = [p.read_text("utf-8").strip() for p in (root / "notes.md", folder / "notes.md") if p.exists()]
+    subs = {"WORK": str(root), "TOPICDIR": str(folder), "TOPICNAME": "replacements" if role == "replace" else args.topic, "SCRATCH": str(scratch) + "/", "REPO": str(Path(__file__).resolve().parents[3])}
+    if role == "writer":
+        subs |= {"BRIEF": str(folder / f"brief-{n}.json"), "BATCH": str(folder / f"batch-{n}.json")}
+    if role in ("blind", "judge"):
+        subs["ROUND"] = (work.rounds() or sys.exit("No blind round yet; run blind first."))[-1]
+    if role == "judge":
+        subs["BATCH"] = str(folder / load(folder / "blind" / subs["ROUND"] / "meta.json")["batch"])
+    if role == "blind":
+        round_dir = folder / "blind" / subs["ROUND"]
+        paths = [round_dir / f"items-{k}.json" for k in args.n] if args.n else numbered(round_dir, "items-*.json")
+        subs["FILES"] = "\n".join(f"- {p}" for p in paths)
+    if role == "standards":
+        paths = [folder / f"standards-input-{k}.json" for k in args.n] if args.n else numbered(folder, "standards-input-*.json")
+        if not paths:
+            sys.exit("No standards-input files; run triage first.")
+        subs["INPUTS"] = "\n".join(f"- {p}" for p in paths)
+    subs["SUBJECT_NOTES"] = "\n\n".join(notes) or "None."
+    text = (PROMPTS / f"{role}.md").read_text("utf-8")
+    # One pass over whole tokens, so substituted text is never scanned again.
+    text = re.sub(r"\b(" + "|".join(subs) + r")\b", lambda m: subs[m[1]], text)
+    out = folder / f"prompt-{tag}.md"
+    out.write_text(text, "utf-8")
+    print(out)
+
+
+STOP = set(
+    """the and for with that this are was were has had have not but you your from into over under than then
+    their there these those they them its his her who whom what when where while will would should could may might can does did
+    been being any all each both either other such only also more less very per via about after before during without within
+    year years old woman man boy girl male female patient patients presents presented presenting history following which most
+    likely appropriate next step steps management diagnosis examination exam shows reveals reveal show mg dl kg ml mmhg bpm
+    one two three four five six seven eight nine ten days day weeks week months month hours hour ago brought comes came
+    physical findings finding test tests result results reported complains complaint""".split()
+)
+
+
+def tokens(text: str) -> list[str]:
+    return [t for t in re.findall(r"[a-z0-9]+", text.lower()) if len(t) >= 3 and t not in STOP]
+
+
+def cmd_similar(work: Work, args) -> None:
+    """Near-duplicate candidates for each batch item (stem plus keyed choice): TF-IDF cosine against
+    WORK/stems.txt and the batch's other items. Lists up to --top matches scoring 0.35 or more."""
+    corpus, section = [], ""
+    stems = work.root / "stems.txt"
+    for line in stems.read_text("utf-8").splitlines() if stems.exists() else []:
+        if line.startswith("## "):
+            section = line[3:]
+        elif line.startswith("- "):
+            corpus.append((section, line[2:]))
+    rows = list(items_of(work.batch(args.batch)))
+    corpus += [(f"this batch{SEP}{ref}", item["stem"]) for ref, _, item in rows]
+    docs = [Counter(tokens(stem)) for _, stem in corpus]
+    df = Counter(t for d in docs for t in d)
+    idf = lambda t: math.log((len(docs) + 1) / (df[t] + 1)) + 1
+
+    def vec(counts):
+        v = {t: c * idf(t) for t, c in counts.items()}
+        norm = math.sqrt(sum(x * x for x in v.values())) or 1
+        return {t: x / norm for t, x in v.items()}
+
+    vectors, flagged = [vec(d) for d in docs], 0
+    for ref, _, item in rows:
+        keyed = item["choices"]["ABCD".index(item["answer"])]
+        query = vec(Counter(tokens(f"{item['stem']} {keyed}")))
+        scored = sorted(
+            (
+                (sum(w * v.get(t, 0) for t, w in query.items()), sec, stem)
+                for (sec, stem), v in zip(corpus, vectors)
+                if sec != f"this batch{SEP}{ref}" and stem != item["stem"]
+            ),
+            reverse=True,
+        )
+        hits = [s for s in scored[: args.top] if s[0] >= 0.35]
+        if hits:
+            flagged += 1
+            print(ref)
+            for score, sec, stem in hits:
+                print(f"  {score:.2f} {sec}: {stem[:160]}")
+    print(f"{flagged} of {len(rows)} items have near-duplicate candidates.")
+
+
+def cmd_gate(work: Work, args) -> None:
+    """Run the batch report (npm run report:quiz-batch) on a batch with the outline and blueprint."""
+    repo = Path(__file__).resolve().parents[3]
+    root = work.root.resolve()
+    cmd = ["npm", "run", "-s", "report:quiz-batch", "--", str(work.dir.resolve() / args.batch),
+           "--outline", str(root / "outline.json"), "--blueprint", str(root / "blueprint.json")]
+    sys.exit(subprocess.run(cmd, cwd=repo, check=False).returncode)
 
 
 KEEP = {"blueprint.json"}
@@ -720,27 +890,35 @@ def main() -> None:
     for name, fn, opts in [
         ("slices", cmd_slices, []),
         ("merge", cmd_merge, []),
-        ("blind", cmd_blind, ["batch", "round", "refs?"]),
-        ("check-blind", cmd_check_blind, ["round"]),
-        ("triage", cmd_triage, ["batch", "round"]),
+        ("blind", cmd_blind, ["batch=batch.json", "round?", "refs?"]),
+        ("check-blind", cmd_check_blind, ["round?"]),
+        ("triage", cmd_triage, ["batch?", "round?"]),
         ("route-standards", cmd_route_standards, []),
-        ("judge-input", cmd_judge_input, ["batch", "round"]),
+        ("judge-input", cmd_judge_input, ["batch?", "round?"]),
         ("apply", cmd_apply, ["batch", "output"]),
         ("accept", cmd_accept, ["batch"]),
         ("ready", cmd_ready, ["batch"]),
         ("ledger", cmd_ledger, []),
         ("backlog", cmd_backlog, []),
+        ("prompt", cmd_prompt, []),
+        ("similar", cmd_similar, ["batch=batch.json"]),
+        ("gate", cmd_gate, ["batch=batch.json"]),
         ("clean", cmd_clean, []),
     ]:
-        p = sub.add_parser(name, help=fn.__doc__)
+        p = sub.add_parser(name, help=fn.__doc__, description=fn.__doc__)
+        if name == "prompt":
+            p.add_argument("role", choices=ROLES)
         p.add_argument(
             "topic",
-            nargs="?" if name in ("ledger", "backlog", "clean") else None,
+            nargs="?" if name in ("ledger", "backlog", "clean", "prompt") else None,
             default="",
         )
         for opt in opts:
+            opt, _, default = opt.partition("=")
             if opt.endswith("?"):
                 p.add_argument(f"--{opt[:-1]}")
+            elif default:
+                p.add_argument(f"--{opt}", default=default)
             else:
                 p.add_argument(f"--{opt}", required=True)
         if name == "apply":
@@ -751,6 +929,10 @@ def main() -> None:
             p.add_argument("--find", nargs="+", metavar="TERM")
         if name == "backlog":
             p.add_argument("--clear", action="store_true")
+        if name == "prompt":
+            p.add_argument("--n", nargs="+", type=int)
+        if name == "similar":
+            p.add_argument("--top", type=int, default=3)
         p.set_defaults(fn=fn)
     args = parser.parse_args()
     args.fn(Work(args.work, args.topic), args)

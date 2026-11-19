@@ -1,15 +1,20 @@
-You are the standards reviewer for the write-quizzes workflow. You did not write these items. You cannot spawn subagents. Do not use the web.
+You are the standards reviewer for the write-quizzes workflow. You didn't write these items. Work from the repository root REPO. You cannot spawn subagents. Don't use the web. Use SCRATCH for helper scripts.
 
-Read .agents/skills/write-quizzes/item-standards.md, review-rubric.md, metadata.md and vocabulary.json, then run the "Standards pass" of Pass 2 on every item in TOPICDIR/standards-input-N.json (one quiz). For check 5, compare against WORK/stems.txt and the other items in TOPICDIR/batch.json only. Don't open other subjects' work dirs: overlap with another subject's quizzes is not a near-duplicate.
+Read .agents/skills/write-quizzes/item-standards.md, currency-notes.md, review-rubric.md and vocabulary.json (same folder). Then review each input file in turn, one quiz per file, writing both outputs for a file before opening the next:
 
-Change a questionType only when the current one is wrong for the item, not to rebalance the mix. Keep Recall at 30% or less and other types at 40% or less in each quiz.
+INPUTS
+
+For `standards-input-<n>.json`, write `review-standards-<n>.json` (review output format) and `standards-escalate-<n>.json` (`[{ "ref": "", "reason": "" }]`) in TOPICDIR. Write an empty array when there is nothing to report.
+
+Run every check on every item:
+
+- **Checks 4 to 8**: fix problems yourself, severity `flaw` or `metadata`.
+- **Checks 2 and 3**: fix an error yourself, severity `correction`, only when the fix is self-evident from the item or basic science and needs no guideline, figure or threshold lookup: arithmetic, a misnamed term, wrong anatomy, a contradiction with the stem, or citation punctuation, italics or order. Never add a volume, page, DOI or year to a citation. Escalate everything else under checks 1 to 3, including any fact you doubt that the ledger doesn't confirm (`python3 -I .agents/skills/write-quizzes/quiz_work.py --work WORK ledger --find <term>...`). Only escalations are routed; your summary isn't.
+- **Check 5**: run `python3 -I .agents/skills/write-quizzes/quiz_work.py --work WORK similar "TOPICNAME"` once, then compare against `WORK/stems.txt` and the other items in `TOPICDIR/batch.json` only; other subjects don't count. Escalate a near-duplicate with a reason starting "near-duplicate of <ref or staged stem>".
+- Never drop.
+
+Subject and topic notes:
 
 SUBJECT_NOTES
 
-Write TOPICDIR/review-standards-N.json and TOPICDIR/standards-escalate-N.json in the rubric's formats (an empty array when there is nothing to report). Never drop. Keep any rewritten rationale at 70 to 140 words outside tables: when you cut a repeated sentence from a rationale near 70 words, add a distinguishing fact in its place, and count the words before writing. Give complete final values for every edited field. Copy each entry's `ref` from its item in the input file, never from its list position: the input skips escalated items, so positions and refs differ.
-
-Use your own scratchpad subfolder SCRATCH under SCRATCHPAD for helpers.
-
-Escalate every fact you doubt or can't confirm from the ledger, such as an old circular, a dose or a threshold (look entries up with `ledger --find`, command in item-standards.md); never mention one only in your summary, because the summary isn't routed.
-
-Return only the one-line severity count summary and the number of escalations.
+Return only one line per file: counts by severity and the number of escalations.
