@@ -127,7 +127,7 @@ def test_triage_escalates_blind_disagreements_not_writer_unverified_facts(tmp_pa
 
 
 def test_triage_escalates_unverified_facts_when_a_quiz_has_more_than_five(tmp_path):
-    topic_dir = setup(tmp_path)
+    topic_dir = setup(tmp_path, count=60)
     run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")
     answer(topic_dir, "r1", keys(topic_dir))
     (topic_dir / "brief-1.json").write_text(json.dumps({"quiz": {"name": QUIZ}}))
@@ -139,6 +139,20 @@ def test_triage_escalates_unverified_facts_when_a_quiz_has_more_than_five(tmp_pa
     escalated = json.loads((topic_dir / "escalated.json").read_text())
     assert [e["ref"] for e in escalated] == [ref(n) for n in range(1, 7)]
     assert escalated[0]["reasons"] == ["Writer could not verify: fact 1"]
+
+
+def test_triage_escalates_unverified_facts_above_one_per_ten_items(tmp_path):
+    topic_dir = setup(tmp_path)  # 12 items: a top-up quiz
+    run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")
+    answer(topic_dir, "r1", keys(topic_dir))
+    (topic_dir / "brief-1.json").write_text(json.dumps({"quiz": {"name": QUIZ}}))
+    (topic_dir / "unverified-1.json").write_text(
+        json.dumps([{"item": n, "fact": f"fact {n}"} for n in (2, 4)])
+    )
+    assert run(tmp_path, "check-blind", TOPIC, "--round", "r1").returncode == 0
+    run(tmp_path, "triage", TOPIC, "--batch", "batch.json", "--round", "r1")
+    escalated = json.loads((topic_dir / "escalated.json").read_text())
+    assert [e["ref"] for e in escalated] == [ref(2), ref(4)]
 
 
 def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_accuracy_edits(

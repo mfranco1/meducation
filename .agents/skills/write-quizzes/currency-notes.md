@@ -10,6 +10,7 @@ When a lesson finds another retired term, add a row. When the current form here 
 | Polycystic ovary syndrome (PCOS) | Polyendocrine metabolic ovarian syndrome (PMOS); write PMOS with no "formerly called" note | 2026 consensus |
 | NAFLD, NASH | MASLD, MASH | 2023 multisociety nomenclature |
 | Pituitary adenoma | Pituitary neuroendocrine tumor (PitNET) | WHO Classification of Tumours, 5th ed. |
+| ACOG Committee Opinion 734 (2018): ultrasound alone (endometrium 4 mm or less) is enough after postmenopausal bleeding | ACOG Clinical Practice Update on postmenopausal bleeding (Obstet Gynecol 2026;148(1):e87-e91): ultrasound plus endometrial sampling for most; ultrasound alone only for a single episode with a fully seen endometrium of 4 mm or less, no strong risk factors and prompt follow-up | April 2026 |
 | Neurofibromatosis type 2 (NF2) | NF2-related schwannomatosis | 2022 international consensus (Plotkin et al.) |
 | Pre-2021 CNS tumor names (IDH-mutant glioblastoma) | IDH-based WHO CNS5 names: glioblastoma is IDH-wildtype only; IDH-mutant grade 4 is astrocytoma | WHO CNS5, 2021 |
 | Extranodal NK/T-cell lymphoma, nasal type | Extranodal NK/T-cell lymphoma | WHO-HAEM5, 2022 |

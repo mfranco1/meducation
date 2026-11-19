@@ -36,6 +36,6 @@ Clear every error and every applicable warning. The common misses: Recall above 
 
 Use your own scratchpad subfolder SCRATCH under SCRATCHPAD for helper scripts. Write nowhere else except your output paths.
 
-Verify every guideline-dependent fact on the web before you return, as item-standards.md describes. When a page refuses the fetch, look up its site in .agents/skills/write-quizzes/fetch-access.md before trying anything else. "Written from memory" is never a reason to list a fact as unverified: list it only after the primary text couldn't be reached.
+Verify every guideline-dependent fact on the web before you return, as item-standards.md describes. When a page refuses the fetch, look up its site in .agents/skills/write-quizzes/fetch-access.md before trying anything else. "Written from memory" is never a reason to list a fact as unverified: list it only after the primary text couldn't be reached by the fetch-access.md route as well, and never cite in `rationaleMeta.sources` a document you didn't read.
 
 Return only a short summary: item count, letter and difficulty spread, remaining gate warnings, the number of guideline facts verified on the web, the number of unverified facts, and how many items cover points found only in the extra source files the subject notes name. Do not return the items.

@@ -32,7 +32,7 @@ All 39 quizzes in 7 topics grow to 50 items (user sizing overrides the skill def
 | Pregnancy Complications | staged (+114; GTD and Fetal Growth 50, Ectopic and Rh 49, PPH 48, APH 47) | 7 (6 near-duplicates of staged items: misoprostol regimen, previa ultrasound, low-lying placenta, impending rupture, septic abortion, calcium for magnesium; 1 staged selective-reduction item deleted under the abortion rule) |
 | Medical Disorders in Pregnancy | staged (+137; all 7 quizzes at 50) | 0 |
 | Reproductive Endocrinology, Fertility and Contraception | staged (+120; all 6 quizzes at 50) | 0 |
-| Gynecology | | |
-| Gynecologic Oncology | | |
+| Gynecology | staged (+139; Vulvovaginitis 49, others 50) | 1 (Vulvovaginitis: syphilis treatment failure duplicated a staged pregnancy item) |
+| Gynecologic Oncology | staged (+40; all 4 quizzes at 50) | 0 |
 
-One topic per session, in table order.
+Next: the replacement batch for the 13 backlog items, then clean up (replacements.md).

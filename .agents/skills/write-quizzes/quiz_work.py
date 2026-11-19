@@ -29,7 +29,7 @@ NESTED = {
     "metadata.questionType",
 }
 STANDARDS_SEVERITIES = {"flaw", "metadata", "correction"}
-UNVERIFIED_LIMIT = 5  # a quiz with more unverified facts sends those items to judgment
+UNVERIFIED_LIMIT = 5  # a quiz with more unverified facts, or more than 1 per 10 items, sends those items to judgment
 STATUS_RANK = {"verified": 3, "summary-only": 2, "unconfirmed": 1, "blocked": 0}
 
 
@@ -339,11 +339,16 @@ def cmd_triage(work: Work, args) -> None:
     """Split items into the standards pass (one file per quiz) and the escalated set."""
     batch = work.batch(args.batch)
     log = work.log()
+    sizes: dict[str, int] = {}
+    for _, quiz, _ in items_of(batch):
+        sizes[quiz] = sizes.get(quiz, 0) + 1
     unverified = {}
     for path in sorted(work.dir.glob("unverified-*.json")):
         rows, brief = load(path), path.with_name(path.name.replace("unverified", "brief"))
-        if len(rows) > UNVERIFIED_LIMIT and brief.exists():
-            quiz = load(brief)["quiz"]["name"]
+        if not brief.exists():
+            continue
+        quiz = load(brief)["quiz"]["name"]
+        if len(rows) > min(UNVERIFIED_LIMIT, sizes.get(quiz, 0) // 10):
             for row in rows:
                 unverified[SEP.join((work.topic, quiz, str(row["item"])))] = row["fact"]
     standards: dict[str, list] = {}
