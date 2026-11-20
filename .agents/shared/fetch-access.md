@@ -32,7 +32,7 @@ General indexes first, then the rest alphabetically by body.
 | ASH, ISTH and BSH hematology guidelines | efetch returns abstract or front matter only | Guideline PDFs hosted on thebloodproject.com, as a PDF through WebFetch |
 | ASRA neuraxial anticoagulation (rapm.bmj.com) | Full text blocked, summaries only | The anticoagulant's label (spinal/epidural hematoma and catheter timing sections; see Drug labels); cite the label |
 | AUA (auanet.org) | Login | EAU guideline chapters on uroweb.org; cite EAU |
-| *BMJ* (bmj.com) | 403 | The PMC copy (older research articles are in PMC) |
+| *BMJ* (bmj.com) | 403 | The PMC copy (older research articles are in PMC). Pre-2000 articles in PMC are page scans: Europe PMC XML and efetch return no body and the PMC page shows a reCAPTCHA, so record them as abstract-only and verify in a later review |
 | BMJ specialty journals (lupus.bmj.com and other *.bmj.com) | 403 | The raw archive copy of the article page |
 | BTS (brit-thoracic.org.uk) | 403 | PDFs in the brit-thoracic.org.uk document library |
 | CDC (cdc.gov pages, stacks.cdc.gov PDFs) | 403 or HTML with curl; STI treatment pages often refused | WebFetch for pages; a Stacks PDF as a PDF through WebFetch. STI treatment: the PubMed Central copy of the MMWR guideline |
@@ -61,6 +61,7 @@ General indexes first, then the rest alphabetically by body.
 | Philippine Statistics Authority (psa.gov.ph: causes of death, press-release PDFs) | 403 or HTML instead of the PDF | The raw archive copy |
 | *Respiratory Care* (rcjournal.com) | Refused | The raw archive copy of the PDF |
 | RSNA (pubs.rsna.org: *Radiology*, Fleischner statements) | Refused | Europe PMC copy, or a hospital- or society-hosted copy of the recommendation table |
+| Thieme (thieme-connect.com) | Bot check, PDF links included | The article's PMC or Europe PMC copy, then the abstract through Europe PMC REST search; otherwise a later review that loads |
 | WHO (who.int, WHO IRIS: Ottawa Charter, fact sheets, other WHO PDFs) | 403, 502, 503 or timeouts | The raw archive copy or the PAHO (iris.paho.org) copy of the PDF; otherwise the document's who.int summary page, recorded as summary-only. For contraception, the WHO MEC 6th edition annex; for STI regimens, CDC 2021 STI guidelines, cited as CDC. Country TB estimates by age and sex: CSV with curl from `extranet.who.int/tme/generateCSV.asp?ds=estimates_age_sex` (`ds=dictionary` for fields) |
 | Wolters Kluwer (journals.lww.com: *Crit Care Med*, PADIS 2018, *Anesth Analg*, PONV consensus guidelines) | 402 or 403 | PubMed Central copy if one exists; otherwise list the fact as unverified |
 

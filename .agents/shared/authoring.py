@@ -89,6 +89,16 @@ def url_key(url: str) -> str:
     return re.sub(r"^(https?://)?(www\.)?", "", url.strip().lower()).rstrip("/")
 
 
+# Reference sites, summaries, narrative reviews and case reports are never cited (content-standards.md, Citations), so the ledger drops them.
+NON_CITABLE = re.compile(
+    r"\b(MSD Manual|Merck Manual|StatPearls|UpToDate|Medscape|Wikipedia|Radiopaedia|DermNet|EyeWiki|Amboss|Cureus"
+    r"|Am Fam Physician|case reports?|narrative review|state of the art)\b"
+    r"|//(www\.)?(\w+\.)?(msdmanuals|merckmanuals|statpearls|uptodate|medscape|wikipedia|radiopaedia|dermnetnz|eyewiki"
+    r"|amboss|cureus|aafp|emdocs|guidelinecentral|obgproject|mdcalc|drugs|medlineplus)\.",
+    re.I,
+)
+
+
 def saved_copy(ledger: Path, url: str) -> Path:
     """Where save-source keeps the text of the document at URL."""
     return ledger.with_name("sources") / f"{hashlib.sha256(url_key(url).encode()).hexdigest()[:16]}.txt"
@@ -188,6 +198,8 @@ def merge_ledger(ledger: Path, work: Path) -> None:
 
         def fold(row: dict) -> bool:
             """Merge a row into the index; True when it is a new entry."""
+            if NON_CITABLE.search(f"{row['title']} {row.get('url', '')}"):
+                return False
             url = url_key(row.get("url", ""))
             k = (url or row["title"].strip().lower(), str(row.get("year", "")))
             entry = index.get(k)

@@ -8,7 +8,7 @@ Verify in the primary document every fact that depends on a guideline, classific
 
 ## Ledger first
 
-The source ledger (`var/source-ledger.json`, shared by all subjects and both skills) records documents already verified, read only as a summary, or blocked, with the facts confirmed in them. Look up each document before searching:
+The source ledger (`var/source-ledger.json`, shared by all subjects and both skills) records documents already verified, read only as a summary, or blocked, with the facts confirmed in them. Merging drops sources content-standards.md (Citations) bars, so don't record them. Look up each document before searching:
 
 ```sh
 python3 -I .agents/shared/authoring.py find-sources <term>...

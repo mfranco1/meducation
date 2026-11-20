@@ -17,7 +17,7 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - Pilot done: Critical Care, 109 cards, 12 edits (11%), 8 trivia or duplicate cards deleted. Reviewers kept reporting ledger-only doubts; the reviewer prompt now loads web tools up front and asks for URLs. Send back any reviewer that reports an unchecked doubt.
 - Unresolved doubts: user rule is to follow the latest guideline; where it differs from the latest primary textbook, give both, labelled by name (now in content-standards Facts).
 - Sources: a guideline-dependent correction cites the primary document; a stable textbook fact takes no citation (content-standards Citations). The gate warns on non-citable sources (MSD Manual, *Cureus* and similar) and on unnamed attributions.
-- Re-source before publishing: 29 staged IM cards cite a non-citable source (Dermatology 10, Nephrology 5, Enteric 4, Hematology 3, Cardiovascular 2, Structural Heart 2, Oncology 2, Pulmonology 1). Re-audit those cards: cite the primary document and recheck the fact, or clear the citation when the fact is a stable one. Narrative reviews and single-hospital protocols the gate can't match need a read of each `sources` too.
+- Narrative reviews and single-hospital protocols the gate can't match: read each staged `sources` before publishing.
 - Per topic: audit, then delete the reviewers' trivia and existing-duplicate cards on your own judgment (user approved; top-ups can add better cards). Ask only about cards whose fix rests on judgment, not a source. Add coverage gaps to Top-ups below.
 - Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: the topics under Staged. Next: Endocrinology. Run one IM topic per session to save context.
 
@@ -47,4 +47,5 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - IM › Gastroenterology: 23 edits, 5 deletes.
 - IM › Nephrology: 15 edits, 4 deletes.
 - Sources backfill: 47 edits (13 back changes, 1 front), 1 delete, across IM and 1 Biochemistry card.
+- Re-source of 29 non-citable citations: 29 edits (7 back changes, 2 re-cited to primary documents, 20 cleared as stable facts).
 - Full check of 16 weakly sourced cards: 12 edits (6 fact changes, 2 fronts), 1 duplicate deleted.

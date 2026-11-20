@@ -35,6 +35,17 @@ def test_merge_ledger_folds_a_url_across_titles_and_compacts_existing_duplicates
     assert entries["2024"]["facts"] == ["c"]
 
 
+def test_merge_ledger_drops_non_citable_sources(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    keep = {"title": "KDIGO AKI", "year": "2012", "url": "https://kdigo.org/aki", "status": "verified", "facts": ["a"]}
+    site = {**keep, "title": "Hyponatremia", "url": "https://www.msdmanuals.com/professional/hyponatremia"}
+    review = {**keep, "title": "SVC syndrome review (Cureus 2022)", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC1/"}
+    write(ledger, [keep, site])
+    write(tmp_path / "work" / "topic" / "sources-1.json", [review])
+    assert merge(ledger, tmp_path / "work").wait() == 0
+    assert [e["title"] for e in json.loads(ledger.read_text())] == ["KDIGO AKI"]
+
+
 def test_concurrent_merges_from_two_work_dirs_keep_both_entries(tmp_path):
     ledger = tmp_path / "ledger.json"
     for work in ("quizzes", "flashcards"):
