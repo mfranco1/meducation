@@ -4,7 +4,7 @@ For roles with web access: writers, the judge and the replacement writer. Load w
 
 ## What to verify
 
-Verify in the primary document every fact that depends on a guideline, classification, set of criteria, staging system, threshold, dose or schedule revised in the last 10 years, and every article or section number, penalty, period and amount from a law, regulation or circular, however old. Numbers, cutoffs and rules given to you in briefs or notes are prompts, not verified facts. Stable textbook facts need no lookup.
+Verify in the primary document every fact that depends on a guideline, classification, set of criteria, staging system, threshold, dose or schedule revised in the last 10 years, and every article or section number, penalty, period and amount from a law, regulation or circular, however old. Numbers, cutoffs and rules given to you in briefs or notes are prompts, not verified facts. Stable textbook facts need no lookup, but a keyed ranking ("most common", "leading", "strongest") is not one: confirm it in a source that states the order, since sources often rank differently.
 
 ## Ledger first
 

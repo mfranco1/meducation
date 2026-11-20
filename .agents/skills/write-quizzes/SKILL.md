@@ -140,7 +140,7 @@ Later runs depend on what this run learned. After each topic is staged, read the
 | A retired term or edition | a row in `currency-notes.md` |
 | A site that refuses fetches | its row in `fetch-access.md` |
 
-Subagents report retired terms and fetch routes in their summaries; add them. Before deleting the tracker, move anything in it that would help another subject into the skill, and tell the user what changed.
+Subagents report retired terms and fetch routes in their summaries; add them. The write-flashcards skill also reads `verification.md`, `currency-notes.md` and `fetch-access.md`: keep them valid for both. Before deleting the tracker, move anything in it that would help another subject into the skill, and tell the user what changed.
 
 How to write a lesson:
 

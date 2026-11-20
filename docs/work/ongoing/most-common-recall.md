@@ -17,13 +17,13 @@ Count the stems that match the required form before review. Preventive Medicine:
 
 Items added per quiz, about 2 to 10 each.
 
-- Internal Medicine (all quizzes of each topic): Gastroenterology (Cirrhosis, Pancreatic and Biliary only), Dermatology (Skin Lesions only), Psychiatry (Psychotic and Mood only), Oncology (GI Cancers only), Structural Heart (both), Allergology (both), Thyroid/Pituitary/Adrenal, Enteric/Tropical/Zoonotic, Nephrology, Neurology, Obesity/Lipid/Bone, Pulmonology, Cardiovascular Medicine, Critical Care, Hematology.
+- Internal Medicine (all quizzes of each topic): Gastroenterology (Cirrhosis, Pancreatic and Biliary only), Dermatology (Skin Lesions only), Psychiatry (Psychotic and Mood only), Oncology (GI Cancers only), Structural Heart (both), Allergology (both), Thyroid/Pituitary/Adrenal, Enteric/Tropical/Zoonotic, Nephrology, Neurology, Obesity/Lipid/Bone, Pulmonology, Cardiovascular Medicine, Critical Care, Hematology, Infectious Diseases, Rheumatology, Systemic Autoimmune.
 - Pharmacology: Protein Synthesis Inhibitors; Cardiovascular and Renal (Antihypertensives, Diuretics and Lipid-Lowering, Angina and Heart Failure, Antiarrhythmic); Neuropsychopharmacology, Cancer, Endocrine and Reproductive, Anesthesia and Pain, Toxicology and Antidotes, Antifungal/Antiviral/Antiparasitic, Hematology and Antithrombotic, Anti-Inflammatory and Rheumatologic, Immunopharmacology, Gastrointestinal, General Pharmacology, Autacoids and Respiratory (all quizzes); Antibacterial (Cell Wall, Antifolates; Antimycobacterial had no sourceable unstaged rows); Autonomic and Ophthalmic (Cholinergic, Adrenergic Antagonists and Glaucoma; Adrenergic Agonists had no gap rows).
-- Preventive Medicine: Food- and Waterborne Diseases, Outbreak Investigation, Occupational Diseases.
+- Preventive Medicine: Food- and Waterborne Diseases, Outbreak Investigation, Occupational Diseases; Communicable Disease (TB, COVID-19 and Respiratory, Vector-Borne; its other rows were already staged or had no fitting quiz).
 
 ## Remaining
 
 1. User reviews and publishes in Review & publish.
-2. Next topics by gap-list rank. Pharmacology: done. Internal Medicine: Infectious Diseases, Rheumatology, Systemic Autoimmune (lower priority). Preventive Medicine: Biostatistics (3 thin rows, likely skip), then Communicable Disease's remaining rows.
+2. Gap-list topics: done. Preventive Medicine Biostatistics skipped (its rows are not rankings a source states).
 3. Run the replacement batch for each work dir's backlog ([replacements.md](../../../.agents/skills/write-quizzes/replacements.md)).
 4. When done, delete this tracker and `var/quiz-work/cross-subject-stems.txt`.

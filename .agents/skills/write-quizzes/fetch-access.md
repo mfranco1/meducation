@@ -22,7 +22,7 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | ADA Standards of Care (diabetesjournals.org, Diabetes Care) | Cloudflare challenge; PMC, Europe PMC and efetch return metadata without the body (2026 edition) | Try the Wayback Machine copy of the diabetesjournals.org section; otherwise verify in an ACOG Committee Opinion or Clinical Consensus that loads, or list the fact as unverified |
 | PubMed Central | Browser check | The article page with `curl -sL` and a browser User-Agent, then the Europe PMC full-text XML (`https://www.ebi.ac.uk/europepmc/webservices/rest/<PMCID>/fullTextXML`), or NCBI E-utilities `https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=<PMCID digits>` (full-text XML) when Europe PMC also refuses; articles outside the open-access subset come back abstract-only from all three, so record them as abstract-only. When Europe PMC XML returns 500 and efetch returns metadata only (the publisher blocks XML), WebFetch on the PMC article page often works |
 | PubMed (pubmed.ncbi.nlm.nih.gov) | Cookie wall | Europe PMC REST search for the abstract and full citation: `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:<PMID>%20AND%20SRC:MED&resultType=core` |
-| Philippine Statistics Authority (psa.gov.ph: causes of death) | 403, including press-release PDFs | Web Archive raw form with curl (`web.archive.org/web/2025id_/<URL>`) |
+| Philippine Statistics Authority (psa.gov.ph: causes of death); DOH Epidemiology Bureau surveillance PDFs (HIV/AIDS reports hosted on pia.gov.ph) | 403 or HTML instead of the PDF, including press-release PDFs | Web Archive raw form with curl and a browser User-Agent (`web.archive.org/web/2025id_/<URL>`) |
 | Japanese Circulation Society (Circ J guidelines) | Not tested on J-STAGE | University-hosted PDF of the guideline (JCS 2023 vasospastic angina on a Tohoku University page) |
 | RSNA (pubs.rsna.org: *Radiology*, Fleischner statements) | Refused | Europe PMC copy, or a hospital- or society-hosted copy of the recommendation table |
 | NCBI Bookshelf | Often refused | Europe PMC or a copy hosted by another agency |
@@ -30,6 +30,9 @@ When you verify a fact in another body's guideline, cite that body, and name it 
 | *Respiratory Care* (rcjournal.com) | Refused | Web Archive raw form of the PDF with `curl -sL` (`web.archive.org/web/2020id_/<PDF URL>`) |
 | ASRA neuraxial anticoagulation (rapm.bmj.com) | Full text blocked, summaries only | The anticoagulant's DailyMed label (spinal/epidural hematoma and catheter timing sections); cite the label |
 | *BMJ* (bmj.com) | 403 | The PMC copy: search `https://pmc.ncbi.nlm.nih.gov/search/?term=<DOI>` (older research articles are in PMC) |
+| BMJ specialty journals (lupus.bmj.com) | 403 | The Web Archive raw form with `curl -sL` (`web.archive.org/web/2023id_/<article URL>`) |
+| Medscape (emedicine.medscape.com) | 402 | A PubMed Central review or a textbook |
+| BVS / LILACS (search.bvsalud.org) | 403 | Europe PMC REST search for the same record |
 | EULAR (ard.bmj.com) | 403 | Author manuscript in a university repository (eprints, institutional open-access pages) |
 | ESGO | | Pocket-guideline PDFs on esgo.org; some full texts are hosted by national societies (BGCS) |
 | ACOG | 402 | Committee Opinions, Clinical Consensus documents and Practice Advisories load through the Wayback Machine (`web.archive.org/web/2026/<acog.org URL>`; for a PDF, `web.archive.org/web/2026id_/<URL>` returns the raw file); Practice Bulletins there are paywalled stubs. Otherwise an SMFM-hosted copy, or an equivalent current guideline that loads: NICE (also through the UK Government Web Archive), WHO, SMFM, FIGO |
