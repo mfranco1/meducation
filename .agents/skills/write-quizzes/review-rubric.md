@@ -5,7 +5,7 @@ Writers check their own items against checks 2 to 8 before returning them. Revie
 ## Checks
 
 1. **Key**: the key is correct and no other choice is defensible as best.
-2. **Currency**: guideline-dependent facts, criteria, classifications, staging, thresholds, doses and schedules match the current version, and no retired term from [currency-notes.md](currency-notes.md) is used. Each such item cites the right document in AMA style (Citations). Missing volume, pages or DOI is not a defect.
+2. **Currency**: guideline-dependent facts, criteria, classifications, staging, thresholds, doses and schedules match the current version, and no retired term from [currency-notes.md](../../shared/currency-notes.md) is used. Each such item cites the right document in AMA style (Citations). Missing volume, pages or DOI is not a defect.
 3. **Accuracy**: the rationale, pearls and distractor bullets contain no errors and no unsupported claims.
 4. **Standards**: the stem is self-contained, the lead-in is answerable with the choices covered, the choices are homogeneous, and none of the technical flaws apply.
 5. **Near-duplicates and enemy items**: no item gives away another's answer, and no item tests a point already tested the same way in the batch or in `stems.txt` (Near-duplicates).

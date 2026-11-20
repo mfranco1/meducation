@@ -5,28 +5,33 @@ Usage: python3 -I deck_work.py --work WORK <command> [TOPIC] [options]
 WORK (var/flashcard-work/<subject-slug>) holds outline.json, plan.json, optional notes.md,
 fronts.txt and src/main.txt; each topic has its own folder (WORK/<topic-slug>/) with briefs,
 writer output (cards-<n>.json), review files and stage.json under fixed names. Deck number <n>
-is the deck's 1-based position in its topic's plan entry. The source ledger is shared with
-write-quizzes (var/quiz-work/sources.json). Run `--help` on a command for its options.
+is the deck's 1-based position in its topic's plan entry. Shared helpers and the source ledger
+path are in .agents/shared/authoring.py. Run `--help` on a command for its options.
 """
 
 import argparse
-import importlib.util
 import json
 import re
-import shutil
 import subprocess
 import sys
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[3]
-_spec = importlib.util.spec_from_file_location(
-    "quiz_work", Path(__file__).resolve().parents[1] / "write-quizzes" / "quiz_work.py"
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+from authoring import (  # noqa: E402
+    LEDGER,
+    REPO,
+    SEP,
+    clean_work,
+    dump,
+    load,
+    merge_ledger,
+    notes,
+    numbered,
+    page_text,
+    render_prompt,
+    slug,
 )
-qw = importlib.util.module_from_spec(_spec)
-_spec.loader.exec_module(qw)
-load, dump, slug = qw.load, qw.dump, qw.slug
 
-SEP = " › "
 SEVERITIES = {"inaccurate", "outdated", "unclear", "duplicate", "format"}
 EDIT_KEYS = {"front", "back", "sources"}
 GENERIC = {"disorders", "diseases", "management", "clinical", "principles", "general"}
@@ -62,9 +67,7 @@ class Work:
         )
 
     def numbered(self, pattern: str) -> list[Path]:
-        return sorted(
-            self.dir.glob(pattern), key=lambda p: int(p.stem.rsplit("-", 1)[1])
-        )
+        return numbered(self.dir, pattern)
 
 
 def flat(text: str) -> str:
@@ -132,9 +135,7 @@ def write_fronts(work: Work) -> None:
             ]
     plan = {slug(t["name"]): t for t in work.plan["topics"]}
     for folder in sorted(p for p in work.root.iterdir() if p.is_dir() and p.name in plan):
-        for path in sorted(
-            folder.glob("cards-*.json"), key=lambda p: int(p.stem.rsplit("-", 1)[1])
-        ):
+        for path in numbered(folder, "cards-*.json"):
             deck = plan[folder.name]["decks"][int(path.stem.rsplit("-", 1)[1]) - 1]
             lines.append(
                 f"## (unstaged) {plan[folder.name]['name']}{SEP}{deck['name']}"
@@ -157,7 +158,7 @@ def cmd_brief(work: Work, args) -> None:
         if not deck.get("add"):
             continue
         briefed += 1
-        pages = qw.page_text(work, deck.get("pages", ""))
+        pages = page_text(work.root, deck.get("pages", ""))
         if pages:
             (work.dir / f"source-{n}.txt").parent.mkdir(parents=True, exist_ok=True)
             (work.dir / f"source-{n}.txt").write_text(pages, "utf-8")
@@ -208,18 +209,13 @@ def cmd_prompt(work: Work, args) -> None:
         sys.exit(f"{folder / needs} does not exist.")
     scratch = folder / "scratch" / tag
     scratch.mkdir(parents=True, exist_ok=True)
-    notes = [
-        p.read_text("utf-8").strip()
-        for p in (root / "notes.md", folder / "notes.md")
-        if p.exists()
-    ]
     subs = {
         "REPO": str(REPO),
         "WORK": str(root),
         "TOPICDIR": str(folder),
         "TOPICNAME": work.topic,
         "SCRATCH": str(scratch) + "/",
-        "NOTES": "\n\n".join(notes) or "None.",
+        "NOTES": notes(root / "notes.md", folder / "notes.md"),
     }
     if args.role == "writer":
         subs |= {"BRIEF": str(folder / needs), "CARDS": str(folder / f"cards-{n}.json")}
@@ -228,12 +224,7 @@ def cmd_prompt(work: Work, args) -> None:
             "INPUT": str(folder / needs),
             "OUTPUT": str(folder / f"review-{n}.json"),
         }
-    text = (PROMPTS / f"{args.role}.md").read_text("utf-8")
-    # One pass over whole tokens, so substituted text is never scanned again.
-    text = re.sub(r"\b(" + "|".join(subs) + r")\b", lambda m: subs[m[1]], text)
-    out = folder / f"prompt-{tag}.md"
-    out.write_text(text, "utf-8")
-    print(out)
+    render_prompt(PROMPTS / f"{args.role}.md", subs, folder / f"prompt-{tag}.md")
 
 
 def assemble_batch(work: Work) -> dict:
@@ -439,31 +430,19 @@ def cmd_build(work: Work, args) -> None:
 
 
 def cmd_ledger(work: Work, args) -> None:
-    """Merge every topic's sources-<n>.json into the shared ledger (var/quiz-work/sources.json); --find TERM... looks entries up."""
-    if args.find:
-        qw.find_sources(work.ledger, args.find)
-    else:
-        qw.merge_ledger(work)
+    """Merge every topic's sources-<n>.json into the shared source ledger."""
+    merge_ledger(work.ledger, work.root)
 
 
 def cmd_clean(work: Work, args) -> None:
     """Merge the ledger, then delete everything in WORK but plan.json."""
-    qw.merge_ledger(work)
-    removed = []
-    for path in sorted(work.root.iterdir()):
-        if path.name == "plan.json":
-            continue
-        shutil.rmtree(path) if path.is_dir() else path.unlink()
-        removed.append(path.name)
-    print(f"Removed {len(removed)} entries; kept plan.json")
+    clean_work(work.ledger, work.root, {"plan.json"})
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--work", type=Path, required=True)
-    parser.add_argument(
-        "--ledger", type=Path, default=REPO / "var" / "quiz-work" / "sources.json"
-    )
+    parser.add_argument("--ledger", type=Path, default=LEDGER)
     sub = parser.add_subparsers(dest="command", required=True)
     for name, fn in [
         ("coverage", cmd_coverage),
@@ -487,8 +466,6 @@ def main() -> None:
             p.add_argument("--n", nargs="+", type=int)
         if name == "gate":
             p.add_argument("--batch")
-        if name == "ledger":
-            p.add_argument("--find", nargs="+", metavar="TERM")
         p.set_defaults(fn=fn)
     args = parser.parse_args()
     args.fn(Work(args.work, args.ledger, args.topic), args)

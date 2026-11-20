@@ -5,27 +5,26 @@ Usage: python3 -I quiz_work.py --work WORK <command> TOPIC [options]
 WORK (var/quiz-work/<subject-slug>) holds blueprint.json, outline.json,
 stems.txt, replace-backlog.json, optional notes.md and src/main.txt; each topic has its own
 folder (WORK/<topic-slug>/) with briefs, batches, blind rounds (blind/rounds.json lists them
-in order) and review files under fixed names. The source ledger is shared by all subjects:
-WORK/../sources.json. Blind rounds default to the next one (initial, recheck-1, ...) and later
+in order) and review files under fixed names. Shared helpers and the source ledger path are in
+.agents/shared/authoring.py. Blind rounds default to the next one (initial, recheck-1, ...) and later
 commands default to the latest round. `prompt` renders a role's prompt template, `similar`
 lists lexical near-duplicates, `gate` runs the batch report. Run `--help` on a command for
 its options.
 """
 
 import argparse
-import fcntl
 import hashlib
 import json
 import math
-import os
 import re
-import shutil
 import subprocess
 import sys
 from collections import Counter
 from pathlib import Path
 
-SEP = " › "
+sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
+from authoring import LEDGER, REPO, SEP, clean_work, dump, load, merge_ledger, notes, numbered, page_text, render_prompt, slug  # noqa: E402
+
 ITEM_FIELDS = {"stem", "choices", "answer", "rationale", "pearls"}
 NESTED = {
     "rationaleMeta.sources",
@@ -36,23 +35,6 @@ NESTED = {
 }
 STANDARDS_SEVERITIES = {"flaw", "metadata", "correction"}
 UNVERIFIED_LIMIT = 5  # a quiz with more unverified facts, or more than 1 per 10 items, sends those items to judgment
-STATUS_RANK = {"verified": 3, "summary-only": 2, "unconfirmed": 1, "blocked": 0}
-
-
-def load(path: Path):
-    return json.loads(path.read_text("utf-8"))
-
-
-def dump(path: Path, data) -> None:
-    """Write via a temp file so a concurrent reader never sees a partial file."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
-    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1) + "\n", "utf-8")
-    os.replace(tmp, path)
-
-
-def slug(name: str) -> str:
-    return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
 
 
 def items_of(batch):
@@ -75,8 +57,8 @@ def content_hash(item) -> str:
 
 
 class Work:
-    def __init__(self, root: Path, topic: str):
-        self.root, self.topic = root, topic
+    def __init__(self, root: Path, ledger: Path, topic: str):
+        self.root, self.ledger, self.topic = root, ledger, topic
         self.dir = root / slug(topic)
 
     def blueprint_topic(self):
@@ -84,10 +66,6 @@ class Work:
             if topic["name"] == self.topic:
                 return topic
         sys.exit(f"{self.topic} is not in the blueprint.")
-
-    @property
-    def ledger(self) -> Path:
-        return self.root.parent / "sources.json"
 
     @property
     def backlog_path(self) -> Path:
@@ -125,21 +103,6 @@ def unstaged_batches(work: Work):
                 break
         else:
             yield from (load(p) for p in sorted(folder.glob("batch-*.json")))
-
-
-def page_text(work: Work, pages: str) -> str | None:
-    """Pages "10-12, 15" of WORK/src/main.txt, where page N is the Nth form-feed chunk."""
-    source = work.root / "src" / "main.txt"
-    if not pages or not source.exists():
-        return None
-    chunks = source.read_text("utf-8").split("\f")
-    out = []
-    for part in str(pages).split(","):
-        first, _, last = part.strip().partition("-")
-        for n in range(int(first), int(last or first) + 1):
-            if 1 <= n <= len(chunks):
-                out.append(f"=== page {n} ===\n{chunks[n - 1].strip()}")
-    return "\n\n".join(out) + "\n"
 
 
 def cmd_slices(work: Work, args) -> None:
@@ -181,7 +144,7 @@ def cmd_slices(work: Work, args) -> None:
         if "add" in quiz:  # a top-up of a staged quiz: brief only the new items
             staged = counts.get((topic["name"], quiz["name"]), 0)
             quiz = {k: v for k, v in quiz.items() if k != "add"} | quiz["add"] | {"staged": staged}
-        pages = page_text(work, quiz.get("pages", ""))
+        pages = page_text(work.root, quiz.get("pages", ""))
         if pages:
             work.dir.mkdir(exist_ok=True)
             (work.dir / f"source-{n}.txt").write_text(pages, "utf-8")
@@ -199,7 +162,7 @@ def cmd_slices(work: Work, args) -> None:
                     if p["quiz"] != quiz["name"]
                 ],
                 "stagedStems": str(work.root / "stems.txt"),
-                "sourceLedger": str(work.ledger),
+                "sourceLedger": str(work.ledger.resolve()),
                 "sourcePages": str(work.dir / f"source-{n}.txt") if pages else "",
                 "outputs": {
                     "batch": str(work.dir / f"batch-{n}.json"),
@@ -642,70 +605,9 @@ def cmd_ready(work: Work, args) -> None:
     print("Ready to stage.")
 
 
-FIND_FULL, FIND_TITLES = 8, 40  # past FIND_FULL matches, list titles only
-
-
-def find_sources(path: Path, terms: list[str]) -> None:
-    """Print the ledger entries that contain every term, newest first."""
-    terms = [t.lower() for t in terms]
-    hits = [
-        e
-        for e in (load(path) if path.exists() else [])
-        if all(t in json.dumps(e, ensure_ascii=False).lower() for t in terms)
-    ]
-    hits.sort(key=lambda e: str(e.get("year", "")), reverse=True)
-    full = len(hits) <= FIND_FULL
-    for e in hits[:FIND_TITLES]:
-        print(f"{e['status']} {e.get('year', '')} {e['title']}")
-        if full:
-            print(f"  {e.get('url', '')}")
-            print("".join(f"  - {f}\n" for f in e.get("facts", [])), end="")
-    if not hits:
-        print("No matching sources.")
-    elif not full:
-        print(f"{len(hits)} matches. Add a term from the title you need to see its URL and facts.")
-
-
 def cmd_ledger(work: Work, args) -> None:
-    """Merge every topic's sources-<n>.json into the shared ledger, WORK/../sources.json; --find TERM... looks entries up."""
-    if args.find:
-        find_sources(work.ledger, args.find)
-    else:
-        merge_ledger(work)
-
-
-def merge_ledger(work: Work) -> None:
-    path = work.ledger
-    path.parent.mkdir(parents=True, exist_ok=True)
-    # Sessions for other subjects share this ledger; hold the lock across read, merge and write.
-    with open(path.with_name(path.name + ".lock"), "w") as lock:
-        fcntl.flock(lock, fcntl.LOCK_EX)
-        index: dict[tuple[str, str], dict] = {}
-
-        def fold(row: dict) -> bool:
-            """Merge a row into the index; True when it is a new entry."""
-            url = re.sub(r"^(https?://)?(www\.)?", "", row.get("url", "").strip().lower()).rstrip("/")
-            k = (url or row["title"].strip().lower(), str(row.get("year", "")))
-            entry = index.get(k)
-            if entry is None:
-                index[k] = {**row, "facts": list(row.get("facts", []))}
-                return True
-            if STATUS_RANK[row["status"]] > STATUS_RANK[entry["status"]]:
-                entry["status"] = row["status"]
-                entry["url"] = row.get("url", entry.get("url", ""))
-            entry["facts"] += [f for f in row.get("facts", []) if f not in entry["facts"]]
-            return False
-
-        for row in load(path) if path.exists() else []:
-            fold(row)
-        added = 0
-        for source in sorted(work.root.glob("*/sources-*.json")):
-            for row in load(source):
-                if row.get("status") not in STATUS_RANK:
-                    sys.exit(f"{source}: {row['title']} has status {row.get('status')!r}.")
-                added += fold(row)
-        dump(path, sorted(index.values(), key=lambda e: e["title"].lower()))
-    print(f"{len(index)} sources ({added} new) in {path}")
+    """Merge every topic's sources-<n>.json into the shared source ledger."""
+    merge_ledger(work.ledger, work.root)
 
 
 def cmd_backlog(work: Work, args) -> None:
@@ -754,10 +656,6 @@ ROLES = ("writer", "blind", "standards", "judge", "replace")
 PROMPTS = Path(__file__).resolve().parent / "prompts"
 
 
-def numbered(folder: Path, pattern: str) -> list[Path]:
-    return sorted(folder.glob(pattern), key=lambda p: int(p.stem.rsplit("-", 1)[1]))
-
-
 def cmd_prompt(work: Work, args) -> None:
     """Render prompts/<role>.md for ROLE (writer, blind, standards, judge, replace) into
     TOPICDIR/prompt-<role>.md (writer: prompt-writer-<n>.md) and print its path. writer needs
@@ -777,8 +675,7 @@ def cmd_prompt(work: Work, args) -> None:
     tag = f"{role}-{n}" if n else role
     scratch = folder / "scratch" / tag
     scratch.mkdir(parents=True, exist_ok=True)
-    notes = [p.read_text("utf-8").strip() for p in (root / "notes.md", folder / "notes.md") if p.exists()]
-    subs = {"WORK": str(root), "TOPICDIR": str(folder), "TOPICNAME": "replacements" if role == "replace" else args.topic, "SCRATCH": str(scratch) + "/", "REPO": str(Path(__file__).resolve().parents[3])}
+    subs = {"WORK": str(root), "TOPICDIR": str(folder), "TOPICNAME": "replacements" if role == "replace" else args.topic, "SCRATCH": str(scratch) + "/", "REPO": str(REPO)}
     if role == "writer":
         subs |= {"BRIEF": str(folder / f"brief-{n}.json"), "BATCH": str(folder / f"batch-{n}.json")}
     if role in ("blind", "judge"):
@@ -794,13 +691,8 @@ def cmd_prompt(work: Work, args) -> None:
         if not paths:
             sys.exit("No standards-input files; run triage first.")
         subs["INPUTS"] = "\n".join(f"- {p}" for p in paths)
-    subs["SUBJECT_NOTES"] = "\n\n".join(notes) or "None."
-    text = (PROMPTS / f"{role}.md").read_text("utf-8")
-    # One pass over whole tokens, so substituted text is never scanned again.
-    text = re.sub(r"\b(" + "|".join(subs) + r")\b", lambda m: subs[m[1]], text)
-    out = folder / f"prompt-{tag}.md"
-    out.write_text(text, "utf-8")
-    print(out)
+    subs["SUBJECT_NOTES"] = notes(root / "notes.md", folder / "notes.md")
+    render_prompt(PROMPTS / f"{role}.md", subs, folder / f"prompt-{tag}.md")
 
 
 STOP = set(
@@ -862,14 +754,10 @@ def cmd_similar(work: Work, args) -> None:
 
 def cmd_gate(work: Work, args) -> None:
     """Run the batch report (npm run report:quiz-batch) on a batch with the outline and blueprint."""
-    repo = Path(__file__).resolve().parents[3]
     root = work.root.resolve()
     cmd = ["npm", "run", "-s", "report:quiz-batch", "--", str(work.dir.resolve() / args.batch),
            "--outline", str(root / "outline.json"), "--blueprint", str(root / "blueprint.json")]
-    sys.exit(subprocess.run(cmd, cwd=repo, check=False).returncode)
-
-
-KEEP = {"blueprint.json"}
+    sys.exit(subprocess.run(cmd, cwd=REPO, check=False).returncode)
 
 
 def cmd_clean(work: Work, args) -> None:
@@ -879,19 +767,13 @@ def cmd_clean(work: Work, args) -> None:
             f"{len(work.backlog())} dropped items still await replacement; "
             "write and stage them, then run backlog --clear."
         )
-    merge_ledger(work)
-    removed = []
-    for path in sorted(work.root.iterdir()):
-        if path.name in KEEP:
-            continue
-        shutil.rmtree(path) if path.is_dir() else path.unlink()
-        removed.append(path.name)
-    print(f"Removed {len(removed)} entries; kept {', '.join(sorted(KEEP))}")
+    clean_work(work.ledger, work.root, {"blueprint.json"})
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--work", type=Path, required=True)
+    parser.add_argument("--ledger", type=Path, default=LEDGER)
     sub = parser.add_subparsers(dest="command", required=True)
     for name, fn, opts in [
         ("slices", cmd_slices, []),
@@ -931,8 +813,6 @@ def main() -> None:
             p.add_argument("reviews", nargs="+")
         if name == "accept":
             p.add_argument("refs", nargs="+")
-        if name == "ledger":
-            p.add_argument("--find", nargs="+", metavar="TERM")
         if name == "backlog":
             p.add_argument("--clear", action="store_true")
         if name == "prompt":
@@ -941,7 +821,7 @@ def main() -> None:
             p.add_argument("--top", type=int, default=3)
         p.set_defaults(fn=fn)
     args = parser.parse_args()
-    args.fn(Work(args.work, args.topic), args)
+    args.fn(Work(args.work, args.ledger, args.topic), args)
 
 
 if __name__ == "__main__":

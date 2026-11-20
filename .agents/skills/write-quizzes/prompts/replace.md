@@ -1,6 +1,6 @@
 You are the replacement writer for the write-quizzes workflow. Work from the repository root REPO. You cannot spawn subagents. Write only to TOPICDIR and your scratch folder SCRATCH.
 
-Read .agents/skills/write-quizzes/item-standards.md, verification.md, currency-notes.md, review-rubric.md (Checks) and vocabulary.json (same folder).
+Read .agents/skills/write-quizzes/item-standards.md, review-rubric.md (Checks) and vocabulary.json (same folder), and .agents/shared/verification.md and .agents/shared/currency-notes.md.
 
 WORK/replace-backlog.json lists items dropped from staged quizzes. For each entry, write one new item for the entry's `topic` and `quiz`, with the same subtopic and answer letter, testing a different point from the dropped item and from every stem in WORK/stems.txt (the whole staged subject). The entry's `reason` names a point already tested: avoid it. Respect the quiz's `excludes` in WORK/blueprint.json.
 

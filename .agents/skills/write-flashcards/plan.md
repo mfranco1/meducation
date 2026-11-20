@@ -31,7 +31,7 @@ List only the topics and decks in scope.
 
 ## Audits
 
-Audit when the user asks, when a guideline, classification or law the deck depends on has changed, or when [currency-notes.md](../write-quizzes/currency-notes.md) gains a term the deck uses (`grep -il "<term>" <work>/fronts.txt` finds the decks). An audit changes only what is wrong, outdated or unclear; it never restyles cards.
+Audit when the user asks, when a guideline, classification or law the deck depends on has changed, or when [currency-notes.md](../../shared/currency-notes.md) gains a term the deck uses (`grep -il "<term>" <work>/fronts.txt` finds the decks). An audit changes only what is wrong, outdated or unclear; it never restyles cards.
 
 ## Approval
 

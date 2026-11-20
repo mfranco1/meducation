@@ -5,7 +5,7 @@ description: Write new flashcard decks, top up thin decks, and audit or correct 
 
 # Write flashcards
 
-Produces accurate, current, high-yield cards and stages them in the editor draft. `deck_work.py` does the planning aids, checks, bookkeeping and prompt filling; subagents write and review; this session orchestrates. It is a lighter sibling of [write-quizzes](../write-quizzes/SKILL.md) and shares its verification rules and source ledger.
+Produces accurate, current, high-yield cards and stages them in the editor draft. `deck_work.py` does the planning aids, checks, bookkeeping and prompt filling; subagents write and review; this session orchestrates. It is a lighter sibling of [write-quizzes](../write-quizzes/SKILL.md); both use the files in [.agents/shared/](../../shared/) and the same source ledger.
 
 Never publish. The user reviews the staged draft in `/admin.html` and publishes from **Review & publish**.
 
@@ -25,12 +25,12 @@ This session reads only this file, plus [plan.md](plan.md) when planning. Don't 
 | --- | --- |
 | [card-standards.md](card-standards.md) | writers, reviewers |
 | [prompts/](prompts/) | one template per role, rendered by `D prompt` |
-| write-quizzes [verification.md](../write-quizzes/verification.md), [currency-notes.md](../write-quizzes/currency-notes.md) | writers, reviewers |
-| write-quizzes [fetch-access.md](../write-quizzes/fetch-access.md) | whoever hits a refused fetch |
+| shared [verification.md](../../shared/verification.md), [currency-notes.md](../../shared/currency-notes.md) | writers, reviewers |
+| shared [fetch-access.md](../../shared/fetch-access.md) | whoever hits a refused fetch |
 
 ## Work dir and commands
 
-The work dir `var/flashcard-work/<subject-slug>/` (gitignored, kept across sessions) holds `outline.json`, `plan.json`, `fronts.txt`, sources in `src/`, and one folder per topic. The source ledger `var/quiz-work/sources.json` is shared with write-quizzes. Notes for subagents go in `<work>/notes.md` (subject-wide) and `<work>/<topic>/notes.md`; `D prompt` inserts both.
+The work dir `var/flashcard-work/<subject-slug>/` (gitignored, kept across sessions) holds `outline.json`, `plan.json`, `fronts.txt`, sources in `src/`, and one folder per topic. The source ledger `var/source-ledger.json` is shared with write-quizzes. Notes for subagents go in `<work>/notes.md` (subject-wide) and `<work>/<topic>/notes.md`; `D prompt` inserts both.
 
 Run from the repository root. Local authoring needs `docker start meducation-authority-postgres`.
 
@@ -100,7 +100,7 @@ When the same mistake shows up in about 3 or more cards, or a workaround was nee
 
 | Lesson | Goes in |
 | --- | --- |
-| A check a script can make | `scripts/content/flashcard-batch-report.ts` or `deck_work.py`, with a test |
+| A check a script can make | `scripts/content/flashcard-batch-report.ts` or `deck_work.py`, with a test; `.agents/shared/authoring.py` only for a helper both skills need |
 | How to write or review a card | `card-standards.md` or the role's prompt |
 | Orchestration | this file or `plan.md` |
-| How to verify a fact, a retired term, a site that refuses fetches | the shared write-quizzes file, kept valid for both skills |
+| How to verify a fact, a retired term, a site that refuses fetches | the file in `.agents/shared/`, kept valid for both skills |

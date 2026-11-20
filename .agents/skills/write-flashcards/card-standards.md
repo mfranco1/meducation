@@ -4,8 +4,8 @@ How to write and review a flashcard. Write as a senior attending physician and m
 
 ## Content
 
-- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC and similar. Provided sources are a minimum coverage map, never the authority on facts. When a source is outdated or wrong, write the current fact, term and classification. Use the current forms in [currency-notes.md](../write-quizzes/currency-notes.md).
-- Verify guideline-dependent facts (guidelines, criteria, classifications, staging, thresholds, doses, schedules, laws, keyed rankings) in the primary document as [verification.md](../write-quizzes/verification.md) describes. Where it says "item", read "card"; where it gives a `quiz_work.py ledger` command, use the ledger command in your prompt.
+- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC and similar. Provided sources are a minimum coverage map, never the authority on facts. When a source is outdated or wrong, write the current fact, term and classification. Use the current forms in [currency-notes.md](../../shared/currency-notes.md).
+- Verify guideline-dependent facts (guidelines, criteria, classifications, staging, thresholds, doses, schedules, laws, keyed rankings) in the primary document as [verification.md](../../shared/verification.md) describes.
 - The audience trains for Philippine licensure. Scope epidemiology, rankings and data to the Philippines first, then the region, then global. Where Philippine and international guidance differ, give the Philippine specialty society's position (POGS in obstetrics and gynecology), then the international body (FIGO, WHO), then the US body (ACOG), and name the body on the card.
 - Induced abortion is illegal in the Philippines: no card teaches elective termination as an option. Postabortion care and management of spontaneous loss and fetal death stay in scope.
 - Legal Medicine: current law only, with no superseded rules.

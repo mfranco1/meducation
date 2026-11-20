@@ -24,15 +24,15 @@ This session reads only this file, plus [blueprint.md](blueprint.md) when planni
 | File | Read by |
 | --- | --- |
 | [item-standards.md](item-standards.md) | writers, reviewers |
-| [verification.md](verification.md) | writers, judge (roles with web access) |
+| shared [verification.md](../../shared/verification.md) | writers, judge (roles with web access) |
 | [review-rubric.md](review-rubric.md) | writers (self-check), reviewers |
-| [currency-notes.md](currency-notes.md), [vocabulary.json](vocabulary.json) | writers, reviewers |
-| [fetch-access.md](fetch-access.md) | whoever hits a refused fetch |
+| shared [currency-notes.md](../../shared/currency-notes.md), [vocabulary.json](vocabulary.json) | writers, reviewers |
+| shared [fetch-access.md](../../shared/fetch-access.md) | whoever hits a refused fetch |
 | [prompts/](prompts/) | one template per role, rendered by `Q prompt` |
 
 ## Work dir and commands
 
-The work dir `var/quiz-work/<subject-slug>/` (gitignored, kept across sessions) holds `blueprint.json`, `outline.json`, `stems.txt`, `replace-backlog.json`, sources in `src/`, and one folder per topic. The source ledger `var/quiz-work/sources.json` is shared by all subjects. Notes for subagents go in `notes.md` files, which `Q prompt` inserts:
+The work dir `var/quiz-work/<subject-slug>/` (gitignored, kept across sessions) holds `blueprint.json`, `outline.json`, `stems.txt`, `replace-backlog.json`, sources in `src/`, and one folder per topic. The source ledger `var/source-ledger.json` is shared by all subjects and with write-flashcards. Notes for subagents go in `notes.md` files, which `Q prompt` inserts:
 
 - `<work>/notes.md`: subject-wide notes (deconfliction rules, extra source files and their page ranges, style decisions).
 - `<work>/<topic>/notes.md`: the topic's boundary and its "already staged, don't retest" list (step 3).
@@ -132,15 +132,15 @@ Later runs depend on what this run learned. After each topic is staged, read the
 
 | Lesson | Goes in |
 | --- | --- |
-| A check a script can make | the gate (`scripts/content/quiz-batch-report.ts`) or `quiz_work.py`, with a test |
+| A check a script can make | the gate (`scripts/content/quiz-batch-report.ts`) or `quiz_work.py`, with a test; `.agents/shared/authoring.py` only for a helper both skills need |
 | How to write an item | `item-standards.md` |
-| How to verify a fact | `verification.md` |
+| How to verify a fact | shared `verification.md` |
 | What a reviewer checks | `review-rubric.md` or the role's prompt |
 | Orchestration | this file, `blueprint.md` or `replacements.md` |
-| A retired term or edition | a row in `currency-notes.md` |
-| A site that refuses fetches | its row in `fetch-access.md` |
+| A retired term or edition | a row in shared `currency-notes.md` |
+| A site that refuses fetches | its row in shared `fetch-access.md` |
 
-Subagents report retired terms and fetch routes in their summaries; add them. The write-flashcards skill also reads `verification.md`, `currency-notes.md` and `fetch-access.md`: keep them valid for both. Before deleting the tracker, move anything in it that would help another subject into the skill, and tell the user what changed.
+Subagents report retired terms and fetch routes in their summaries; add them. Files in `.agents/shared/` serve write-flashcards too: keep them valid for both skills. Before deleting the tracker, move anything in it that would help another subject into the skill, and tell the user what changed.
 
 How to write a lesson:
 

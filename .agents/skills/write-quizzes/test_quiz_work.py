@@ -51,7 +51,7 @@ def setup(tmp: Path, count: int = 12) -> Path:
 
 def run(tmp: Path, *args: str) -> subprocess.CompletedProcess:
     return subprocess.run(
-        [sys.executable, "-I", str(TOOL), "--work", str(tmp / "subject"), *args],
+        [sys.executable, "-I", str(TOOL), "--work", str(tmp / "subject"), "--ledger", str(tmp / "ledger.json"), *args],
         capture_output=True,
         text=True,
         check=False,
@@ -505,44 +505,8 @@ def test_clean_keeps_the_blueprint_and_merges_the_shared_ledger(tmp_path):
     assert run(tmp_path, "clean").returncode == 0
     assert [p.name for p in (tmp_path / "subject").iterdir()] == ["blueprint.json"]
     assert (
-        json.loads((tmp_path / "sources.json").read_text())[0]["title"] == "KDIGO AKI"
+        json.loads((tmp_path / "ledger.json").read_text())[0]["title"] == "KDIGO AKI"
     )
-
-
-def test_ledger_merges_a_url_across_titles_and_compacts_existing_duplicates(tmp_path):
-    topic_dir = setup(tmp_path)
-    row = {"title": "KDIGO AKI", "year": "2012", "url": "https://www.example.org/kdigo/", "status": "blocked", "facts": ["a"]}
-    same = {**row, "title": "Other title", "url": "HTTP://example.org/kdigo", "status": "verified", "facts": ["a", "b"]}
-    other_year = {**row, "year": "2024", "facts": ["c"]}
-    (topic_dir / "sources-1.json").write_text(json.dumps([row, same, other_year]))
-    (tmp_path / "sources.json").write_text(json.dumps([{**row, "title": "Third", "facts": ["z"]}, {**row, "title": "Fourth", "facts": ["y"]}]))
-    assert run(tmp_path, "ledger").returncode == 0
-    entries = {e["year"]: e for e in json.loads((tmp_path / "sources.json").read_text())}
-    assert len(entries) == 2
-    assert entries["2012"]["status"] == "verified" and entries["2012"]["title"] == "Third"
-    assert sorted(entries["2012"]["facts"]) == ["a", "b", "y", "z"]
-    assert entries["2024"]["facts"] == ["c"]
-
-
-def test_concurrent_ledger_runs_for_two_subjects_keep_both_entries(tmp_path):
-    for subject in ("alpha", "beta"):
-        topic = tmp_path / subject / "topic"
-        topic.mkdir(parents=True)
-        (topic / "sources-1.json").write_text(
-            json.dumps([{"title": f"{subject} guideline", "year": "2024", "status": "verified"}])
-        )
-    procs = [
-        subprocess.Popen(
-            [sys.executable, "-I", str(TOOL), "--work", str(tmp_path / s), "ledger"],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-        )
-        for _ in range(5)
-        for s in ("alpha", "beta")
-    ]
-    assert all(p.wait() == 0 for p in procs)
-    titles = {e["title"] for e in json.loads((tmp_path / "sources.json").read_text())}
-    assert titles == {"alpha guideline", "beta guideline"}
 
 
 def test_apply_leaves_out_a_quiz_that_its_drops_empty(tmp_path):
@@ -551,20 +515,3 @@ def test_apply_leaves_out_a_quiz_that_its_drops_empty(tmp_path):
     args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json", "review.json"]
     assert run(tmp_path, *args).returncode == 0
     assert json.loads((topic_dir / "out.json").read_text())["topics"] == []
-
-
-def test_ledger_find_prints_entries_matching_every_term_newest_first(tmp_path):
-    setup(tmp_path)
-    (tmp_path / "sources.json").write_text(
-        json.dumps(
-            [
-                {"title": "KDIGO AKI", "year": "2012", "url": "u1", "status": "verified", "facts": ["Stages by creatinine"]},
-                {"title": "KDIGO CKD", "year": "2024", "url": "u2", "status": "verified", "facts": ["Refer below eGFR 30"]},
-                {"title": "ESC hypertension", "year": "2024", "url": "u3", "status": "blocked", "facts": []},
-            ]
-        )
-    )
-    out = run(tmp_path, "ledger", "--find", "kdigo", "creatinine").stdout
-    assert "KDIGO AKI" in out and "Stages by creatinine" in out and "CKD" not in out
-    out = run(tmp_path, "ledger", "--find", "KDIGO").stdout
-    assert out.index("KDIGO CKD") < out.index("KDIGO AKI")

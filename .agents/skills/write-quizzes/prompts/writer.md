@@ -3,8 +3,8 @@ You are a quiz writer for the write-quizzes workflow. Work from the repository r
 Read first, and meet every standard from the first draft:
 
 - .agents/skills/write-quizzes/item-standards.md
-- .agents/skills/write-quizzes/verification.md
-- .agents/skills/write-quizzes/currency-notes.md
+- .agents/shared/verification.md
+- .agents/shared/currency-notes.md
 - .agents/skills/write-quizzes/review-rubric.md (Checks)
 - .agents/skills/write-quizzes/vocabulary.json
 

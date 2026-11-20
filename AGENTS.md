@@ -87,6 +87,8 @@ Reusable workflows live in `.agents/skills/<name>/SKILL.md`. When a task matches
 - `meducation-icons`: find, draw and integrate subject and topic icons.
 - `meducation-code-review`: review a diff, commit or pull request.
 
+`write-quizzes` and `write-flashcards` share `.agents/shared/`. Change shared behavior there, never by copying it into one skill, and keep it valid for both; run both skills' tests and the shared tests after a change.
+
 ## Work tracking
 
 Routine work needs no tracker. For multi-session work, keep one short Markdown tracker (under about 100 lines) in `docs/work/ongoing` with scope, remaining steps and decisions. Delete it when the work is done. Do not create evidence JSON files, logs of check runs, or "done" archives.
