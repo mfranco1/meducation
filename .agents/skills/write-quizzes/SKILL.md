@@ -23,7 +23,7 @@ This session reads only this file, plus [blueprint.md](blueprint.md) when planni
 
 | File | Read by |
 | --- | --- |
-| [item-standards.md](item-standards.md) | writers, reviewers |
+| shared [content-standards.md](../../shared/content-standards.md), [item-standards.md](item-standards.md) | writers, reviewers |
 | shared [verification.md](../../shared/verification.md) | writers, judge (roles with web access) |
 | [review-rubric.md](review-rubric.md) | writers (self-check), reviewers |
 | shared [currency-notes.md](../../shared/currency-notes.md), [vocabulary.json](vocabulary.json) | writers, reviewers |
@@ -133,7 +133,7 @@ Later runs depend on what this run learned. After each topic is staged, read the
 | Lesson | Goes in |
 | --- | --- |
 | A check a script can make | the gate (`scripts/content/quiz-batch-report.ts`) or `quiz_work.py`, with a test; `.agents/shared/authoring.py` only for a helper both skills need |
-| How to write an item | `item-standards.md` |
+| How to write an item | `item-standards.md`; shared `content-standards.md` for a rule that holds for cards too |
 | How to verify a fact | shared `verification.md` |
 | What a reviewer checks | `review-rubric.md` or the role's prompt |
 | Orchestration | this file, `blueprint.md` or `replacements.md` |

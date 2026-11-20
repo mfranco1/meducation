@@ -4,17 +4,9 @@ How to write a single-best-answer item. Write as a senior attending physician an
 
 ## Content
 
-- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC and similar. Provided sources are a minimum coverage map, never the authority on facts. When a source is outdated or wrong, write the current fact, term and classification. Never test a retired scheme or a withdrawn drug as current. [currency-notes.md](../../shared/currency-notes.md) lists the retired forms found so far.
-- Guideline-dependent facts (guidelines, criteria, classifications, staging, thresholds, doses, schedules, laws) are verified in the primary document as [verification.md](../../shared/verification.md) describes. Roles without web access escalate them instead.
-- The audience trains for Philippine licensure. Scope epidemiology, rankings and data to the Philippines first, then the region (Southeast Asia, Asia), then global. Never key a fact scoped only to one foreign country. Key a ranking only from a guideline, national surveillance or multicenter data, never one hospital's case series.
-- Where Philippine and international guidance differ, key the Philippine specialty society (POGS in obstetrics and gynecology), then the international body (FIGO, WHO), then the US body (ACOG). Cite the body whose position is keyed.
-- Induced abortion is illegal in the Philippines: no item keys elective termination, termination for fetal anomaly or selective reduction. Postabortion care and management of spontaneous loss and fetal death stay in scope.
-- Where practice or notation varies by region, body or author, test what is consistent across them or name the guideline in the stem.
+Follow the shared [content-standards.md](../../shared/content-standards.md) (facts, Philippine audience, originality, citations, language). Then:
+
 - Every item has exactly one answer an expert panel would agree on. In next-step and management items, the stem gives the finding that rules out each close alternative (the test already done, the value pointing away from another cause, the absent finding). When current guidance also accepts a more selective or less invasive option, the stem gives the finding that excludes it. When a guideline only suggests the key and accepts an alternative, the stem gives the patient factor the guideline names for choosing the key.
-
-## Originality
-
-Write every field in your own words; never copy sentences from sources. Never mention source documents, handouts, lecture notes, reviewers, their authors, schools or review centers anywhere. `rationaleMeta.sources` cites only published primary references. Use only mnemonics widely known in medicine.
 
 ## Item format
 
@@ -59,7 +51,7 @@ Revisiting a core concept from a different angle is welcome. Testing the same po
 
 ## Rationale
 
-The rationale does most of the teaching, and learners skim it on a phone. Make it dense, high-yield and easy to scan. The app renders GitHub Flavored Markdown, `<sub>`/`<sup>` and KaTeX math.
+The rationale does most of the teaching, and learners skim it on a phone. Make it dense, high-yield and easy to scan.
 
 **Structure** (70 to 140 words outside tables; more only when a table carries it):
 
@@ -70,10 +62,8 @@ The rationale does most of the teaching, and learners skim it on a phone. Make i
 **Formatting**:
 
 - **Bold** the answer, the discriminating findings and the one or two facts to remember; at most about a fifth of the text.
-- *Italics* for organisms, Latin terms, gene names and a term where it is defined.
-- Tables: at most 4 columns, short cells, a header row, the entity in the first column. Every Comparison item has one.
+- Every Comparison item has a table.
 - LaTeX for formulas, calculations, ratios and anything with fractions or exponents (`$...$` inline, `$$` blocks for multi-step work). Plain numbers and units as text. `<sub>`/`<sup>` for chemical formulas and simple subscripts (CO<sub>2</sub>, Ca<sup>2+</sup>).
-- No headings, blockquotes or horizontal rules.
 
 Example (rendered Markdown):
 
@@ -95,17 +85,7 @@ Example (rendered Markdown):
 
 ## Citations
 
-`rationaleMeta.sources` is a string: AMA-style references (AMA Manual of Style, 11th edition) separated by semicolons, or empty for stable textbook facts.
-
-- Required: authors (up to 6, then "et al") or the issuing organization, title, journal abbreviation or publisher, and year. Add volume, issue, pages and DOI only when they are on the page you read; never look them up separately, and a citation without them is complete. Never add access dates.
-- Italicize journal and book titles with `*...*`. End with a period.
-- Cite the document that covers the tested point itself, not a related guideline from the same body. Cite a guideline read as web chapters (EAU on uroweb.org) by its organization. For a continuously updated web page, use the year of the version read.
-- Write only details read in the document or its publisher record, never from memory.
-
-```text
-Kemper AR, Newman TB, Slaughter JL, et al. Clinical practice guideline revision: management of hyperbilirubinemia in the newborn infant 35 or more weeks of gestation. *Pediatrics*. 2022;150(3):e2022058859. doi:10.1542/peds.2022-058859
-World Health Organization. *WHO Recommendations on Antenatal Care for a Positive Pregnancy Experience*. World Health Organization; 2016.
-```
+`rationaleMeta.sources` holds the references as [content-standards.md](../../shared/content-standards.md#citations) describes, or is empty for stable textbook facts.
 
 ## Metadata
 
@@ -116,11 +96,9 @@ Use the values exactly as written; allowed values are in [vocabulary.json](vocab
 - `difficulty`: `easy`, `medium` or `hard` (see the mix above).
 - `questionType`: the task asked. `Clinical Vignette: Next Step` is the immediate diagnostic or therapeutic step; `Clinical Vignette: Management` is the definitive treatment; `Multi-step Reasoning` chains two or more inferences. Choose the type that fits the item, never one that rebalances the mix.
 
-## Language and JSON
+## JSON
 
-- English, active voice, standard terminology, generic drug names, SI units with conventional units in parentheses where both are common. No patient details that stereotype without clinical relevance. Images aren't supported; describe findings in words.
 - Only `stem` and `rationale` take Markdown and `<sub>`/`<sup>`. `choices`, `pearls` and `rationaleMeta.sources` take no HTML (titles in sources may use `*italics*`); write Unicode there (10⁹/L, m², CO₂, Na⁺).
-- Valid JSON: escape LaTeX backslashes (`\\frac`), write line breaks as `\n`, and use `\$` for a literal dollar sign.
 
 Batch shape (the editor's bulk-add JSON):
 

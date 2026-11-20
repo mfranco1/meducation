@@ -23,7 +23,7 @@ This session reads only this file, plus [plan.md](plan.md) when planning. Don't 
 
 | File | Read by |
 | --- | --- |
-| [card-standards.md](card-standards.md) | writers, reviewers |
+| shared [content-standards.md](../../shared/content-standards.md), [card-standards.md](card-standards.md) | writers, reviewers |
 | [prompts/](prompts/) | one template per role, rendered by `D prompt` |
 | shared [verification.md](../../shared/verification.md), [currency-notes.md](../../shared/currency-notes.md) | writers, reviewers |
 | shared [fetch-access.md](../../shared/fetch-access.md) | whoever hits a refused fetch |
@@ -101,6 +101,6 @@ When the same mistake shows up in about 3 or more cards, or a workaround was nee
 | Lesson | Goes in |
 | --- | --- |
 | A check a script can make | `scripts/content/flashcard-batch-report.ts` or `deck_work.py`, with a test; `.agents/shared/authoring.py` only for a helper both skills need |
-| How to write or review a card | `card-standards.md` or the role's prompt |
+| How to write or review a card | `card-standards.md` or the role's prompt; shared `content-standards.md` for a rule that holds for items too |
 | Orchestration | this file or `plan.md` |
 | How to verify a fact, a retired term, a site that refuses fetches | the file in `.agents/shared/`, kept valid for both skills |

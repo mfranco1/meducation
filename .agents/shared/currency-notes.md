@@ -9,6 +9,7 @@ When a lesson finds another retired term, add a row. When the current form here 
 | FDA pregnancy letter categories (A, B, C, D, X) | Narrative pregnancy and lactation labeling (PLLR); never test the letters | 2015 |
 | Polycystic ovary syndrome (PCOS) | Polyendocrine metabolic ovarian syndrome (PMOS); write PMOS with no "formerly called" note | 2026 consensus |
 | NAFLD, NASH | MASLD, MASH | 2023 multisociety nomenclature |
+| Severe sepsis, SIRS-based sepsis definitions | Sepsis (life-threatening organ dysfunction from a dysregulated host response) and septic shock (Sepsis-3); "severe sepsis" is not a category | 2016 Sepsis-3 |
 | Amrinone | Inamrinone | USAN change |
 | Pituitary adenoma | Pituitary neuroendocrine tumor (PitNET) | WHO Classification of Tumours, 5th ed. |
 | ACOG Committee Opinion 734 (2018): ultrasound alone (endometrium 4 mm or less) is enough after postmenopausal bleeding | ACOG Clinical Practice Update on postmenopausal bleeding (Obstet Gynecol 2026;148(1):e87-e91): ultrasound plus endometrial sampling for most; ultrasound alone only for a single episode with a fully seen endometrium of 4 mm or less, no strong risk factors and prompt follow-up | April 2026 |
@@ -35,4 +36,3 @@ When a lesson finds another retired term, add a row. When the current form here 
 - Staging: AJCC 8th edition, unless the site has a Version 9 chapter; check the site before writing a stage.
 - Contraceptive eligibility: WHO Medical Eligibility Criteria, 6th edition (November 2025). DMPA in breastfeeding women before 6 weeks postpartum is category 2 (was 3 in the 2015 5th edition); name the edition in the stem or on the card.
 - HPV vaccine dose count: WHO SAGE recommends a single dose for girls aged 9 to 14 (October 2026); the PIDSP 2026 calendar still gives 2 doses, and no DOH issuance on the NIP dose count was found. Don't key a dose count for girls 9 to 14 without naming the schedule's body in the stem or on the card.
-| Severe sepsis, SIRS-based sepsis definitions | Sepsis (life-threatening organ dysfunction from a dysregulated host response) and septic shock (Sepsis-3); "severe sepsis" is not a category | 2016 Sepsis-3 |

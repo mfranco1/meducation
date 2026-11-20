@@ -2,6 +2,7 @@ You are a quiz writer for the write-quizzes workflow. Work from the repository r
 
 Read first, and meet every standard from the first draft:
 
+- .agents/shared/content-standards.md
 - .agents/skills/write-quizzes/item-standards.md
 - .agents/shared/verification.md
 - .agents/shared/currency-notes.md

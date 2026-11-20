@@ -4,11 +4,8 @@ How to write and review a flashcard. Write as a senior attending physician and m
 
 ## Content
 
-- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC and similar. Provided sources are a minimum coverage map, never the authority on facts. When a source is outdated or wrong, write the current fact, term and classification. Use the current forms in [currency-notes.md](../../shared/currency-notes.md).
-- Verify guideline-dependent facts (guidelines, criteria, classifications, staging, thresholds, doses, schedules, laws, keyed rankings) in the primary document as [verification.md](../../shared/verification.md) describes.
-- The audience trains for Philippine licensure. Scope epidemiology, rankings and data to the Philippines first, then the region, then global. Where Philippine and international guidance differ, give the Philippine specialty society's position (POGS in obstetrics and gynecology), then the international body (FIGO, WHO), then the US body (ACOG), and name the body on the card.
-- Induced abortion is illegal in the Philippines: no card teaches elective termination as an option. Postabortion care and management of spontaneous loss and fetal death stay in scope.
-- Legal Medicine: current law only, with no superseded rules.
+Follow the shared [content-standards.md](../../shared/content-standards.md) (facts, Philippine audience, originality, citations, language). Then:
+
 - High-yield only: what a licensure exam tests or a new physician needs. No trivia, and no fact a card needs a paragraph to state.
 
 ## One card, one fact
@@ -24,10 +21,8 @@ How to write and review a flashcard. Write as a senior attending physician and m
 
 - **Front**: one question or prompt, usually under 100 characters ("Which enzyme...?", "JVP y descent: event.").
 - **Back**: the answer first, in bold when it is a term or value, then at most one short sentence of reason or context. Usually under 150 characters outside tables.
-- Both faces take GitHub Flavored Markdown, `<sub>`/`<sup>` and KaTeX math (`$...$` inline, `$$...$$` for a formula on its own). Tables: at most 4 columns, short cells, a header row. No headings, blockquotes, horizontal rules or images.
-- *Italics* for organisms, Latin terms and gene names. Generic drug names. SI units, with conventional units in parentheses where both are common.
-- **Sources**: a string of AMA-style references separated by semicolons, for cards with a guideline-dependent fact; omit it for stable textbook facts. Authors (up to 6, then "et al") or the issuing organization, title, journal abbreviation or publisher, and year; `*italics*` for journal and book titles; no HTML. Cite only documents you read, and only details on the page you read.
-- Valid JSON: escape LaTeX backslashes (`\\frac`), write line breaks as `\n`, and use `\$` for a literal dollar sign.
+- Both faces take Markdown.
+- **Sources**: the references as [content-standards.md](../../shared/content-standards.md#citations) describes, for cards with a guideline-dependent fact; omit it for stable textbook facts.
 
 ```json
 { "cards": [
@@ -35,10 +30,6 @@ How to write and review a flashcard. Write as a senior attending physician and m
   { "front": "Why does severe insulin deficiency cause ketosis?", "back": "Unrestrained lipolysis supplies fatty acids for hepatic ketone production." },
   { "front": "<a guideline-dependent question, naming the body>", "back": "**<value>** <one short reason>", "sources": "<Organization>. *<Title>*. <Publisher>; <year>." } ] }
 ```
-
-## Originality
-
-Write every card in your own words; never copy sentences from sources. Never mention source documents, handouts, lecture notes, reviewers, their authors, schools or review centers on a card. Use only mnemonics widely known in medicine.
 
 ## Duplicates
 

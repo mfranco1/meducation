@@ -2,6 +2,7 @@ You are a flashcard writer for the write-flashcards workflow. Work from the repo
 
 Read first, and meet every standard from the first draft:
 
+- .agents/shared/content-standards.md
 - .agents/skills/write-flashcards/card-standards.md
 - .agents/shared/verification.md
 - .agents/shared/currency-notes.md
