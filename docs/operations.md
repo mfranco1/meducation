@@ -65,7 +65,7 @@ Entry point `meducation_api.db.cli`. Run `meducation-db <command> --help` for fl
 
 - Schema and roles: `bootstrap-local`, `head`, `upgrade`, `restore-permissions`, `invalidate-restored-sessions`.
 - Releases: `publish-draft` publishes the draft exactly as the editor's **Publish** does, over the editor connection, with no running API. `activate` switches to a retained release. `export-release` writes one to a new directory.
-- Staging: `draft-outline` (read-only), `stage-quizzes` and `split-quiz` serve the [write-quizzes skill](../.agents/skills/write-quizzes/SKILL.md). They use the editor connection and never publish.
+- Staging: `draft-outline`, `stage-quizzes` and `split-quiz` serve the [write-quizzes skill](../.agents/skills/write-quizzes/SKILL.md). `deck-outline` and `stage-flashcards` serve the [write-flashcards skill](../.agents/skills/write-flashcards/SKILL.md). The outlines are read-only. All use the editor connection and never publish.
 - `advance-id-sequences --by N` moves the ID sequences N past the largest ID in any release or the draft. Run it after restoring an older backup.
 - `validate-export` and `audit-export` verify an export's bytes, hashes and policy. Digests prove internal consistency, not live currency; export fresh from the target when currency matters.
 

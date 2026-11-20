@@ -3,8 +3,15 @@
 import pytest
 from support import scalar, seed
 
-from meducation_api.admin.service import DraftError, DraftService
-from meducation_api.admin.staging import outline, split_quiz, stage_quizzes
+from meducation_api.admin.service import MISSING, DraftError, DraftService
+from meducation_api.admin.staging import (
+    deck_outline,
+    outline,
+    split_quiz,
+    stage_flashcards,
+    stage_quizzes,
+)
+from meducation_api.content.draft import KINDS
 from meducation_api.content_policy import ContentPolicyError
 
 pytestmark = pytest.mark.postgres
@@ -170,3 +177,199 @@ def test_split_moves_subtopic_questions_with_their_ids_and_renames_the_quiz(stag
     assert names == ["Renamed", "New"]
     with pytest.raises(DraftError, match="not found"):
         split_quiz(service, subject, "Renamed", ["zzz"], {"name": "Other"}, {}, {})
+
+
+def cards(service, deck_id):
+    return [c for c in service.snapshot()["cards"] if c["deckId"] == deck_id]
+
+
+def stage_cards(service, subject, batch):
+    report = {}
+    stage_flashcards(service, subject, batch, report)
+    return report
+
+
+def test_staging_flashcards_creates_decks_and_merges_by_name(staged):
+    service, subject = staged
+    before = service.snapshot()
+    topic, deck = before["topics"][0], before["decks"][0]
+    card = {"front": "F", "back": "B", "sources": " "}
+    report = stage_cards(
+        service,
+        subject,
+        {
+            "topics": [
+                {
+                    "name": topic["name"].upper(),
+                    "decks": [
+                        {"name": deck["name"], "cards": [card]},
+                        {"name": "New deck", "description": "D", "cards": [card, card]},
+                        {"name": " new deck ", "cards": [{**card, "front": "Last"}]},
+                    ],
+                },
+                {"name": "New topic", "decks": [{"name": "Other", "cards": [card]}]},
+            ]
+        },
+    )
+    after = service.snapshot()
+    assert [t["name"] for t in report["createdTopics"]] == ["New topic"]
+    assert [d["name"] for d in report["createdDecks"]] == ["New deck", "Other"]
+    assert [a["count"] for a in report["cardsAdded"]] == [1, 3, 1]
+    assert after["topics"][: len(before["topics"])] == before["topics"]
+    assert after["decks"][0] == deck
+    added = cards(service, report["createdDecks"][0]["id"])
+    assert [c["front"] for c in added] == ["F", "F", "Last"] and "sources" not in added[0]
+    assert len(cards(service, deck["id"])) == 2
+    assert after["changed"] is True and after["activeReleaseId"] == before["activeReleaseId"]
+
+
+def test_flashcard_edits_patch_given_fields_and_deletes_remove(staged):
+    service, subject = staged
+    deck = service.snapshot()["decks"][0]
+    stage_cards(
+        service,
+        subject,
+        {
+            "topics": [
+                {
+                    "name": "T",
+                    "decks": [
+                        {
+                            "name": "D",
+                            "cards": [
+                                {"front": f"F{i}", "back": f"B{i}", "sources": "S"}
+                                for i in range(3)
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
+    )
+    deck = next(d for d in service.snapshot()["decks"] if d["name"] == "D")
+    first, second, third = cards(service, deck["id"])
+    report = stage_cards(
+        service,
+        subject,
+        {
+            "edits": [
+                {"id": first["id"], "version": first["version"], "back": "New", "sources": ""}
+            ],
+            "deletes": [{"id": second["id"], "version": second["version"]}],
+        },
+    )
+    left = cards(service, deck["id"])
+    assert report["edited"] == [first["id"]] and report["deleted"] == [second["id"]]
+    assert left == [
+        {
+            "id": first["id"],
+            "deckId": deck["id"],
+            "version": first["version"] + 1,
+            "front": "F0",
+            "back": "New",
+        },
+        third,
+    ]
+    assert len(report["changeIds"]) == 2
+
+
+def test_flashcard_batch_with_stale_or_foreign_cards_writes_nothing(staged):
+    service, subject = staged
+    stage_cards(
+        service,
+        subject,
+        {
+            "topics": [
+                {"name": "T", "decks": [{"name": "D", "cards": [{"front": "F", "back": "B"}]}]}
+            ]
+        },
+    )
+    card = service.snapshot()["cards"][-1]
+    before = service.snapshot()
+    edit = {"id": card["id"], "version": card["version"], "front": "X"}
+    new = {
+        "topics": [
+            {"name": "Never", "decks": [{"name": "D", "cards": [{"front": "F", "back": "B"}]}]}
+        ]
+    }
+    for batch, path in (
+        ({**new, "edits": [edit, {**edit, "version": 99}]}, r"\$\.edits\[1\]\.id"),
+        ({**new, "edits": [{**edit, "version": 99}]}, r"\$\.edits\[0\]\.version"),
+        ({**new, "deletes": [{"id": "fmissing", "version": 1}]}, r"\$\.deletes\[0\]\.id"),
+        ({"edits": [edit], "deletes": [{"id": card["id"], "version": 1}]}, r"\$\.deletes\[0\]\.id"),
+    ):
+        with pytest.raises(DraftError, match=path):
+            stage_flashcards(service, subject, batch, {})
+    with pytest.raises(DraftError, match="not an editable field"):
+        stage_cards(service, subject, {"edits": [{**edit, "oops": 1}]})
+    assert service.snapshot() == before
+
+
+def test_flashcard_card_of_another_subject_is_refused(db):
+    seed(db)
+    service = DraftService(db.editor, "agent:test", lambda fresh: None)
+    snapshot = service.snapshot()
+    other = service.create(
+        KINDS["subjects"], None, MISSING, {"name": "Other subject", "accent": "#123456"}
+    )
+    card = snapshot["cards"][0]
+    batch = {"deletes": [{"id": card["id"], "version": card["version"]}]}
+    with pytest.raises(DraftError, match="not a card of this subject"):
+        stage_cards(service, other["record"]["name"], batch)
+    assert service.snapshot()["cards"] == snapshot["cards"]
+
+
+def test_deck_outline_lists_decks_cards_versions_and_subtopic_counts(staged):
+    service, subject = staged
+    stage(
+        service,
+        subject,
+        {
+            "topics": [
+                {
+                    "name": "Outlined",
+                    "quizzes": [
+                        {
+                            "name": "Q",
+                            "items": [
+                                item("S1", metadata={"subtopic": "b"}),
+                                item("S2", metadata={"subtopic": "b"}),
+                                item("S3", metadata={"subtopic": "a"}),
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
+    )
+    stage_cards(
+        service,
+        subject,
+        {
+            "topics": [
+                {
+                    "name": "Outlined",
+                    "decks": [
+                        {
+                            "name": "Deck",
+                            "description": "D",
+                            "cards": [
+                                {"front": "F", "back": "B", "sources": "S"},
+                                {"front": "G", "back": "H"},
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
+    )
+    topic = deck_outline(service, subject)["topics"][-1]
+    deck = topic["decks"][0]
+    assert topic["questionCount"] == 3 and topic["subtopics"] == {"a": 1, "b": 2}
+    assert deck["name"] == "Deck" and deck["description"] == "D"
+    assert deck["cards"] == [
+        {"id": deck["cards"][0]["id"], "version": 1, "front": "F", "back": "B", "sources": "S"},
+        {"id": deck["cards"][1]["id"], "version": 1, "front": "G", "back": "H"},
+    ]
+    with pytest.raises(DraftError, match="No subject"):
+        deck_outline(service, "Missing")

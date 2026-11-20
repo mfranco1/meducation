@@ -35,7 +35,7 @@ Publish keeps the active release, the draft's base and the most recently active 
 
 ## Agent authoring
 
-The `write-quizzes` skill (`.agents/skills/write-quizzes/`) writes new quizzes and stages them in the draft with `meducation-db stage-quizzes`, through the same validation, versions and change history as the editor. Staging never publishes; review and publish in the editor.
+The `write-quizzes` skill (`.agents/skills/write-quizzes/`) writes new quizzes and stages them in the draft with `meducation-db stage-quizzes`, through the same validation, versions and change history as the editor. The `write-flashcards` skill (`.agents/skills/write-flashcards/`) writes, tops up and corrects decks the same way with `meducation-db stage-flashcards`. Staging never publishes; review and publish in the editor.
 
 ## Record API and publication
 

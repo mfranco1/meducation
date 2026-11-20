@@ -51,7 +51,11 @@ def outline(service: DraftService, subject_name: str) -> dict[str, Any]:
                     **({"description": quiz["description"]} if "description" in quiz else {}),
                     "questionCount": len(questions),
                     "difficulty": dict(
-                        Counter(q["metadata"]["difficulty"] for q in questions if q.get("metadata", {}).get("difficulty"))
+                        Counter(
+                            q["metadata"]["difficulty"]
+                            for q in questions
+                            if q.get("metadata", {}).get("difficulty")
+                        )
                     ),
                     "stems": [q["stem"] for q in questions],
                 }
@@ -159,6 +163,34 @@ def _fields(entry: dict[str, Any]) -> dict[str, Any]:
     return {k: entry[k] for k in ("name", "description") if not _blank(entry.get(k))}
 
 
+def _create(
+    service: DraftService,
+    kind: str,
+    parent_id: str,
+    entry: dict[str, Any],
+    report: dict[str, Any],
+    created: str,
+) -> str:
+    done = service.create(KINDS[kind], parent_id, MISSING, _fields(entry))
+    report["changeIds"].append(done["changeId"])
+    report[created].append({"id": done["record"]["id"], "name": done["record"]["name"]})
+    return str(done["record"]["id"])
+
+
+def _add(
+    service: DraftService,
+    kind: str,
+    parent_id: str,
+    items: list[dict[str, Any]],
+    added: dict[str, Any],
+    report: dict[str, Any],
+) -> None:
+    for start in range(0, len(items), CHUNK):
+        done = service.bulk(KINDS[kind], parent_id, MISSING, items[start : start + CHUNK])
+        report["changeIds"].extend(done["changeIds"])
+        added["count"] += len(done["records"])
+
+
 def stage_quizzes(
     service: DraftService, subject_name: str, batch: Any, report: dict[str, Any]
 ) -> None:
@@ -168,13 +200,6 @@ def stage_quizzes(
     snapshot = service.snapshot()
     subject = _subject(snapshot, subject_name)
     report.update(createdTopics=[], createdQuizzes=[], merged=[], questionsAdded=[], changeIds=[])
-    changes: list[int] = report["changeIds"]
-
-    def create(kind: str, parent_id: str, entry: dict[str, Any], created: str) -> str:
-        done = service.create(KINDS[kind], parent_id, MISSING, _fields(entry))
-        changes.append(done["changeId"])
-        report[created].append({"id": done["record"]["id"], "name": done["record"]["name"]})
-        return str(done["record"]["id"])
 
     existing_topics = [t for t in snapshot["topics"] if t["subjectId"] == subject["id"]]
     for topic in plan:
@@ -183,7 +208,9 @@ def stage_quizzes(
             topic_id = match["id"]
             report["merged"].append({"id": topic_id, "name": match["name"]})
         else:
-            topic_id = create("topics", subject["id"], topic["topic"], "createdTopics")
+            topic_id = _create(
+                service, "topics", subject["id"], topic["topic"], report, "createdTopics"
+            )
         existing_quizzes = [q for q in snapshot["quizzes"] if q["topicId"] == topic_id]
         for entry in topic["quizzes"].values():
             match = _find(existing_quizzes, entry["quiz"]["name"])
@@ -191,17 +218,196 @@ def stage_quizzes(
                 quiz_id, name = match["id"], match["name"]
                 report["merged"].append({"id": quiz_id, "name": name})
             else:
-                quiz_id = create("quizzes", topic_id, entry["quiz"], "createdQuizzes")
+                quiz_id = _create(
+                    service, "quizzes", topic_id, entry["quiz"], report, "createdQuizzes"
+                )
                 name = entry["quiz"]["name"]
             added = {"quizId": quiz_id, "name": name, "count": 0}
             report["questionsAdded"].append(added)
-            questions = entry["questions"]
-            for start in range(0, len(questions), CHUNK):
-                done = service.bulk(
-                    KINDS["questions"], quiz_id, MISSING, questions[start : start + CHUNK]
+            _add(service, "questions", quiz_id, entry["questions"], added, report)
+
+
+def deck_outline(service: DraftService, subject_name: str) -> dict[str, Any]:
+    """Topics, quiz subtopic counts, decks and cards of one subject, in draft order."""
+    snapshot = service.snapshot()
+    subject = _subject(snapshot, subject_name)
+    topics = []
+    for topic in snapshot["topics"]:
+        if topic["subjectId"] != subject["id"]:
+            continue
+        quiz_ids = {q["id"] for q in snapshot["quizzes"] if q["topicId"] == topic["id"]}
+        questions = [q for q in snapshot["questions"] if q["quizId"] in quiz_ids]
+        decks = []
+        for deck in snapshot["decks"]:
+            if deck["topicId"] != topic["id"]:
+                continue
+            cards = [
+                {
+                    "id": c["id"],
+                    "version": c["version"],
+                    "front": c["front"],
+                    "back": c["back"],
+                    **({"sources": c["sources"]} if "sources" in c else {}),
+                }
+                for c in snapshot["cards"]
+                if c["deckId"] == deck["id"]
+            ]
+            decks.append(
+                {
+                    "id": deck["id"],
+                    "name": deck["name"],
+                    **({"description": deck["description"]} if "description" in deck else {}),
+                    "cards": cards,
+                }
+            )
+        topics.append(
+            {
+                "id": topic["id"],
+                "name": topic["name"],
+                **({"description": topic["description"]} if "description" in topic else {}),
+                "questionCount": len(questions),
+                "subtopics": dict(
+                    Counter(
+                        q["metadata"]["subtopic"]
+                        for q in questions
+                        if q.get("metadata", {}).get("subtopic")
+                    )
+                ),
+                "decks": decks,
+            }
+        )
+    return {"subject": {"id": subject["id"], "name": subject["name"]}, "topics": topics}
+
+
+def _text(entry: dict[str, Any], key: str, path: str) -> None:
+    if not isinstance(entry[key], str) or not entry[key].strip():
+        raise _reject(f"{path}.{key}", "must be a non-empty string.")
+
+
+def _card_fields(entry: dict[str, Any], path: str, keys: tuple[str, ...]) -> dict[str, Any]:
+    """Checks the given face and sources values. A blank `sources` becomes None."""
+    for key in ("front", "back"):
+        if key in keys and key in entry:
+            _text(entry, key, path)
+    if "sources" in entry and not isinstance(entry["sources"], str):
+        raise _reject(f"{path}.sources", "must be a string.")
+    fields = {k: entry[k] for k in keys if k in entry}
+    if "sources" in fields and _blank(fields["sources"]):
+        fields["sources"] = None
+    return fields
+
+
+def _flashcard_plan(batch: Any) -> tuple[list[dict[str, Any]], list[Any], list[Any]]:
+    """Validates the batch shape and folds same-named topics and decks together."""
+    batch = _object(batch, "$", {"topics", "edits", "deletes"})
+    if not batch:
+        raise _reject("$", "must hold topics, edits or deletes.")
+    topics: dict[str, dict[str, Any]] = {}
+    raw_topics = _list(batch["topics"], "$.topics") if "topics" in batch else []
+    for t, raw_topic in enumerate(raw_topics):
+        path = f"$.topics[{t}]"
+        topic = _named(raw_topic, path, {"decks"})
+        folded = topics.setdefault(_key(topic["name"]), {"topic": topic, "decks": {}})
+        for d, raw_deck in enumerate(_list(topic.get("decks"), f"{path}.decks")):
+            deck_path = f"{path}.decks[{d}]"
+            deck = _named(raw_deck, deck_path, {"cards"})
+            entry = folded["decks"].setdefault(_key(deck["name"]), {"deck": deck, "cards": []})
+            for c, raw_card in enumerate(_list(deck.get("cards"), f"{deck_path}.cards")):
+                card_path = f"{deck_path}.cards[{c}]"
+                card = _object(raw_card, card_path, {"front", "back", "sources"})
+                for key in ("front", "back"):
+                    if key not in card:
+                        raise _reject(f"{card_path}.{key}", "must be a non-empty string.")
+                fields = _card_fields(card, card_path, ("front", "back", "sources"))
+                entry["cards"].append({k: v for k, v in fields.items() if v is not None})
+    edits = _list(batch["edits"], "$.edits") if "edits" in batch else []
+    for i, edit in enumerate(edits):
+        path = f"$.edits[{i}]"
+        _versioned(edit, path, {"front", "back", "sources"})
+        if not {"front", "back", "sources"} & edit.keys():
+            raise _reject(path, "must change front, back or sources.")
+    deletes = _list(batch["deletes"], "$.deletes") if "deletes" in batch else []
+    for i, delete in enumerate(deletes):
+        _versioned(delete, f"$.deletes[{i}]", set())
+    return list(topics.values()), edits, deletes
+
+
+def _versioned(entry: Any, path: str, keys: set[str]) -> None:
+    entry = _object(entry, path, {"id", "version", *keys})
+    if not isinstance(entry.get("id"), str) or not entry["id"]:
+        raise _reject(f"{path}.id", "must be a card ID.")
+    if type(entry.get("version")) is not int:
+        raise _reject(f"{path}.version", "must be a whole number.")
+
+
+def stage_flashcards(
+    service: DraftService, subject_name: str, batch: Any, report: dict[str, Any]
+) -> None:
+    """Edits and deletes cards of the subject, then adds new topics, decks and cards. Every
+    edit and delete is checked against one snapshot before anything is written. `report`
+    fills in as records are saved."""
+    plan, edits, deletes = _flashcard_plan(batch)
+    snapshot = service.snapshot()
+    subject = _subject(snapshot, subject_name)
+    topic_ids = {t["id"] for t in snapshot["topics"] if t["subjectId"] == subject["id"]}
+    deck_topics = {d["id"]: d["topicId"] for d in snapshot["decks"]}
+    cards = {c["id"]: c for c in snapshot["cards"] if deck_topics.get(c["deckId"]) in topic_ids}
+    seen: set[str] = set()
+    for name, entries in (("edits", edits), ("deletes", deletes)):
+        for i, entry in enumerate(entries):
+            path = f"$.{name}[{i}]"
+            if entry["id"] not in cards:
+                raise _reject(f"{path}.id", "is not a card of this subject.")
+            if entry["id"] in seen:
+                raise _reject(f"{path}.id", "appears more than once.")
+            seen.add(entry["id"])
+            if entry["version"] != cards[entry["id"]]["version"]:
+                raise _reject(
+                    f"{path}.version",
+                    f"is stale. The card is at version {cards[entry['id']]['version']}.",
                 )
-                changes.extend(done["changeIds"])
-                added["count"] += len(done["records"])
+    report.update(
+        createdTopics=[],
+        createdDecks=[],
+        merged=[],
+        cardsAdded=[],
+        edited=[],
+        deleted=[],
+        changeIds=[],
+    )
+    for i, edit in enumerate(edits):
+        fields = _card_fields(edit, f"$.edits[{i}]", ("front", "back", "sources"))
+        done = service.update(KINDS["cards"], edit["id"], edit["version"], fields)
+        report["edited"].append(edit["id"])
+        if done["changeId"] is not None:
+            report["changeIds"].append(done["changeId"])
+    for entry in deletes:
+        done = service.delete(KINDS["cards"], entry["id"], entry["version"], False)
+        report["deleted"].append(entry["id"])
+        report["changeIds"].extend(done["changeIds"])
+
+    existing_topics = [t for t in snapshot["topics"] if t["subjectId"] == subject["id"]]
+    for topic in plan:
+        match = _find(existing_topics, topic["topic"]["name"])
+        if match:
+            topic_id = match["id"]
+            report["merged"].append({"id": topic_id, "name": match["name"]})
+        else:
+            topic_id = _create(
+                service, "topics", subject["id"], topic["topic"], report, "createdTopics"
+            )
+        existing_decks = [d for d in snapshot["decks"] if d["topicId"] == topic_id]
+        for entry in topic["decks"].values():
+            match = _find(existing_decks, entry["deck"]["name"])
+            if match:
+                deck_id, name = match["id"], match["name"]
+                report["merged"].append({"id": deck_id, "name": name})
+            else:
+                deck_id = _create(service, "decks", topic_id, entry["deck"], report, "createdDecks")
+                name = entry["deck"]["name"]
+            added = {"deckId": deck_id, "name": name, "count": 0}
+            report["cardsAdded"].append(added)
+            _add(service, "cards", deck_id, entry["cards"], added, report)
 
 
 def split_quiz(

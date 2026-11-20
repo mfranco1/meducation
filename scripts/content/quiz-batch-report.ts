@@ -41,14 +41,14 @@ interface Entry {
 
 const DIFFICULTY_TARGET = { easy: 20, medium: 60, hard: 20 };
 const key = (name: string) => name.trim().toLowerCase();
-const normalize = (stem: string) =>
+export const normalize = (stem: string) =>
   stem
     .toLowerCase()
     .replace(/[^\p{L}\p{N}\s]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
-const tokens = (stem: string) => new Set(normalize(stem).split(' '));
-const jaccard = (a: Set<string>, b: Set<string>) => {
+export const tokens = (stem: string) => new Set(normalize(stem).split(' '));
+export const jaccard = (a: Set<string>, b: Set<string>) => {
   let shared = 0;
   for (const word of a) if (b.has(word)) shared += 1;
   return shared / (a.size + b.size - shared || 1);

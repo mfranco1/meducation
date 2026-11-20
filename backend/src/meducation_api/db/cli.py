@@ -16,6 +16,14 @@ from meducation_api.db.engine import ContentDatabaseError, create_database_engin
 from meducation_api.db.migrate import migration_head, upgrade
 from meducation_api.settings import Settings
 
+STAGING_ACTIONS = (
+    "draft-outline",
+    "deck-outline",
+    "stage-quizzes",
+    "stage-flashcards",
+    "split-quiz",
+)
+
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
@@ -44,6 +52,13 @@ def main() -> None:
     command.add_argument("--subject", required=True)
     command.add_argument("--output", type=Path, required=True)
     command = commands.add_parser("stage-quizzes")
+    command.add_argument("--subject", required=True)
+    command.add_argument("--file", type=Path, required=True)
+    command.add_argument("--actor", required=True)
+    command = commands.add_parser("deck-outline")
+    command.add_argument("--subject", required=True)
+    command.add_argument("--output", type=Path, required=True)
+    command = commands.add_parser("stage-flashcards")
     command.add_argument("--subject", required=True)
     command.add_argument("--file", type=Path, required=True)
     command.add_argument("--actor", required=True)
@@ -96,7 +111,7 @@ def main() -> None:
         ):
             secret, role = settings.migration_database_url, "meducation_migrator"
             passwords = None
-        elif args.action in ("publish-draft", "draft-outline", "stage-quizzes", "split-quiz"):
+        elif args.action in ("publish-draft", *STAGING_ACTIONS):
             # The editor's role and privileges, for when the API cannot start to publish.
             secret, role = settings.admin_editor_database_url, "meducation_editor"
             passwords = None
@@ -173,18 +188,25 @@ def main() -> None:
                 except DraftError as error:
                     raise ContentDatabaseError(str(error)) from None
                 print(json.dumps(result))
-            elif args.action in ("draft-outline", "stage-quizzes", "split-quiz"):
+            elif args.action in STAGING_ACTIONS:
                 from meducation_api.admin.service import DraftError, DraftService
-                from meducation_api.admin.staging import outline, split_quiz, stage_quizzes
+                from meducation_api.admin.staging import (
+                    deck_outline,
+                    outline,
+                    split_quiz,
+                    stage_flashcards,
+                    stage_quizzes,
+                )
                 from meducation_api.content_policy import ContentPolicyError
 
                 service = DraftService(engine, getattr(args, "actor", "agent"), lambda fresh: None)
                 saved: dict = {}
                 try:
-                    if args.action == "draft-outline":
+                    if args.action in ("draft-outline", "deck-outline"):
                         if args.output.exists():
                             raise ContentDatabaseError(f"{args.output} already exists.")
-                        result = outline(service, args.subject)
+                        make = outline if args.action == "draft-outline" else deck_outline
+                        result = make(service, args.subject)
                         # Refuse overwrite.
                         with args.output.open("x", encoding="utf-8") as output:
                             output.write(json.dumps(result, ensure_ascii=False, indent=2) + "\n")
@@ -203,7 +225,10 @@ def main() -> None:
                             raise ContentDatabaseError(
                                 f"{args.file} could not be read as JSON."
                             ) from None
-                        stage_quizzes(service, args.subject, batch, saved)
+                        stage = (
+                            stage_quizzes if args.action == "stage-quizzes" else stage_flashcards
+                        )
+                        stage(service, args.subject, batch, saved)
                         print(json.dumps(saved, ensure_ascii=False, indent=2))
                 except (DraftError, ContentPolicyError) as error:
                     if saved:
