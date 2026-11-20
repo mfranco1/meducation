@@ -77,14 +77,18 @@ export function retiredFindings(where: string, texts: (string | undefined)[], te
 // Pages that may locate a primary document but are never cited (content-standards.md, Citations).
 const WEAK_SOURCE =
   /\b(MSD Manual|Merck Manual|StatPearls|UpToDate|Medscape|Wikipedia|Radiopaedia|DermNet|EyeWiki|WebMD|Healthline|Mayo Clinic|Cleveland Clinic|Amboss|Osmosis|Lecturio|McMaster Textbook|Cureus|Am Fam Physician|case reports?)\b/i;
+// Narrative review titles; systematic reviews and meta-analyses stay citable.
+const NARRATIVE_REVIEW =
+  /\b(narrative|literature|concise|comprehensive|brief|clinical|updated?) review\b|: a review\b|\breview of (the|current) literature\b/i;
 export function weakSourceFindings(where: string, sources: string | undefined): Finding[] {
-  const match = sources?.match(WEAK_SOURCE);
+  const match =
+    sources?.match(WEAK_SOURCE)?.[0] ?? (sources && NARRATIVE_REVIEW.test(sources) ? 'a narrative review' : undefined);
   return match
     ? [
         {
           level: 'warning' as const,
           where,
-          message: `Cites \`${match[0]}\`, which is not a citable source; cite the guideline, trial or textbook that states the fact, or nothing for a stable textbook fact.`,
+          message: `Cites \`${match}\`, which is not a citable source; cite the guideline, trial or textbook that states the fact, or nothing for a stable textbook fact.`,
         },
       ]
     : [];

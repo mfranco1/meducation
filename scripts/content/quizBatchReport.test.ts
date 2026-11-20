@@ -147,9 +147,15 @@ describe('quiz batch report', () => {
     const report = run([
       item('First stem here?', { rationaleMeta: { sources: 'Doe J. Gout: a review. *Cureus*. 2022.' } }),
       item('Second stem differs?', { rationaleMeta: { sources: 'WHO. *Guideline*. WHO; 2020.' } }),
+      item('Third one is new?', { rationaleMeta: { sources: 'Roe K. Sepsis: a narrative review. *J Med*. 2023.' } }),
+      item('Fourth stem here?', { rationaleMeta: { sources: 'Lee A. Statins: a systematic review. *BMJ*. 2021.' } }),
+      item('Fifth stem here?', { rationaleMeta: { sources: 'IARC. *A Review of Human Carcinogens*. IARC; 2012.' } }),
     ]);
     expect(report.text).toContain('item 1 ("First stem here?"): Cites `Cureus`');
     expect(report.text).not.toContain('item 2 ("Second stem differs?"): Cites');
+    expect(report.text).toContain('item 3 ("Third one is new?"): Cites `a narrative review`');
+    expect(report.text).not.toContain('item 4 ("Fourth stem here?"): Cites');
+    expect(report.text).not.toContain('item 5 ("Fifth stem here?"): Cites');
   });
 
   it('counts rationale length outside tables', () => {
