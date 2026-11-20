@@ -60,7 +60,7 @@ General indexes first, then the rest alphabetically by body.
 | Philippine Statistics Authority (psa.gov.ph: causes of death, press-release PDFs) | 403 or HTML instead of the PDF | The raw archive copy |
 | *Respiratory Care* (rcjournal.com) | Refused | The raw archive copy of the PDF |
 | RSNA (pubs.rsna.org: *Radiology*, Fleischner statements) | Refused | Europe PMC copy, or a hospital- or society-hosted copy of the recommendation table |
-| WHO (who.int, WHO IRIS: Ottawa Charter, fact sheets, other WHO PDFs) | 403, 502, 503 or timeouts | The raw archive copy or the PAHO (iris.paho.org) copy of the PDF; otherwise the document's who.int summary page, recorded as summary-only. For contraception, the WHO MEC 6th edition annex; for STI regimens, CDC 2021 STI guidelines, cited as CDC |
+| WHO (who.int, WHO IRIS: Ottawa Charter, fact sheets, other WHO PDFs) | 403, 502, 503 or timeouts | The raw archive copy or the PAHO (iris.paho.org) copy of the PDF; otherwise the document's who.int summary page, recorded as summary-only. For contraception, the WHO MEC 6th edition annex; for STI regimens, CDC 2021 STI guidelines, cited as CDC. Country TB estimates by age and sex: CSV with curl from `extranet.who.int/tme/generateCSV.asp?ds=estimates_age_sex` (`ds=dictionary` for fields) |
 | Wolters Kluwer (journals.lww.com: *Crit Care Med*, PADIS 2018, *Anesth Analg*, PONV consensus guidelines) | 402 or 403 | PubMed Central copy if one exists; otherwise list the fact as unverified |
 
 ## Drug labels
