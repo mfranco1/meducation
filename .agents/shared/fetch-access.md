@@ -56,7 +56,7 @@ General indexes first, then the rest alphabetically by body.
 | National Privacy Commission (privacy.gov.ph: DPA IRR, NPC circulars) | Refused, as is the Senate copy | Supreme Court E-Library copy, then a compiled legal database (chanrobles), recorded as unofficial in the ledger |
 | NCCN guidelines (nccn.org) | Login required | The matching ESGO guideline (open access in *Int J Gynecol Cancer*, often in PMC) for gynecologic cancers, ACMG or ASCO for hereditary risk, or the drug's FDA label for an approval; cite that body |
 | Neurocritical Care Society (neurocriticalcare.org) | 403 | Journal article PDF hosted by a university neurocritical care page (2023 SAH guideline) |
-| Philippine laws (lawphil.net, officialgazette.gov.ph) | Unreachable, refused | WIPO Lex full text of the Act; a compiled legal database (LawPlayer) when WIPO lacks it, recorded as unofficial in the ledger |
+| Philippine laws (lawphil.net, officialgazette.gov.ph) | Unreachable or refused by WebFetch | lawphil.net with `curl -sL` and a browser User-Agent; then WIPO Lex full text of the Act; a compiled legal database (LawPlayer) when WIPO lacks it, recorded as unofficial in the ledger |
 | Philippine Statistics Authority (psa.gov.ph: causes of death, press-release PDFs) | 403 or HTML instead of the PDF | The raw archive copy |
 | *Respiratory Care* (rcjournal.com) | Refused | The raw archive copy of the PDF |
 | RSNA (pubs.rsna.org: *Radiology*, Fleischner statements) | Refused | Europe PMC copy, or a hospital- or society-hosted copy of the recommendation table |

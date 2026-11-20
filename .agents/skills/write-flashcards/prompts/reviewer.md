@@ -10,12 +10,12 @@ Review every card in INPUT. Refs starting `new-` are new cards; every other ref 
 4. **Duplicates** (`duplicate`, new cards only): the same fact taught by another card in INPUT or in the topic's sections of `WORK/fronts.txt`. Grep the file for the answer term.
 5. **Format** (`format`, new cards only): card-standards.md Format, and content-standards.md Originality, Citations and Language and formatting.
 
-For existing cards apply checks 1 to 3 only, and follow the "Existing cards" rule in card-standards.md: the smallest edit that fixes a real problem, never a restyle.
+For existing cards apply checks 1 to 3 only, and follow the "Existing cards" rule in card-standards.md: the smallest edit that fixes a real problem, never a restyle. Write no entry for an existing card that is correct but trivia (card-standards.md Content); list it in your summary instead.
 
 Notes:
 
 NOTES
 
-Write the review output (card-standards.md, Review output) to OUTPUT; write `[]` when every card is accepted. Every entry needs `edits` or `drop`. For a doubtful fact you can neither confirm nor refute: on a new card, edit it to remove or generalize the unconfirmed detail; on an existing card, write no entry and report it in your summary.
+Write the review output (card-standards.md, Review output) to OUTPUT; write `[]` when every card is accepted. Every entry needs `edits` or `drop`. Check every fact you doubt as verification.md describes before deciding; a fact you didn't check is not a doubt to report. For a doubtful fact you checked but can neither confirm nor refute: on a new card, edit it to remove or generalize the unconfirmed detail; on an existing card, write no entry and report it in your summary.
 
-Return only: counts by severity, the number of drops, and any existing-card doubts you couldn't resolve (ref, fact, what you checked).
+Return only: counts by severity, the number of drops, any existing-card doubts you couldn't resolve (ref, fact, what you checked), and existing cards that are trivia (ref, front, one-line reason).
