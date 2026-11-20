@@ -19,7 +19,7 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - Sources: a guideline-dependent correction cites the primary document; a stable textbook fact takes no citation (content-standards Citations). The gate warns on non-citable sources (MSD Manual, *Cureus* and similar) and on unnamed attributions.
 - Narrative reviews and single-hospital protocols the gate can't match: read each staged `sources` before publishing.
 - Per topic: audit, then delete the reviewers' trivia and existing-duplicate cards on your own judgment (user approved; top-ups can add better cards). Ask only about cards whose fix rests on judgment, not a source. Add coverage gaps to Top-ups below.
-- Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: the topics under Staged. Next: Systemic Autoimmune and Rheumatic Disease. Run one IM topic per session to save context.
+- Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: the topics under Staged. Next: Neurology, then Psychiatry. Run one IM topic per session to save context.
 
 ## Top-ups (after audits)
 
@@ -35,6 +35,8 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - IM › Thyroid, Pituitary and Adrenal: `D coverage` shows 0 cards for Hyperprolactinemia, Acromegaly, Hypopituitarism and Diabetes Insipidus (heuristic; confirm before writing); Thyroiditis 8 cards (10 questions); MEN deck SMALL (6 cards).
 - IM › Obesity, Lipid and Bone: Hypocalcemia and Hypoparathyroidism 0 cards (8 questions), Hypercalcemia and Hyperparathyroidism 1 (15 questions), Lipid Disorders 2 (13 questions) by `D coverage`; Obesity deck 11 cards, Dyslipidemia 10 (both SMALL); obesity-associated cancers and conditions need single-answer cards after the list deletes.
 - IM › Rheumatology: Approach to Joint Disease (9 cards) and Spondyloarthropathies (9) are SMALL; Spondyloarthropathies holds RA cards (Caplan, Felty) and few ankylosing spondylitis cards; `D coverage` shows 0 fibromyalgia cards (3 questions).
+- IM › Systemic Autoimmune: `D coverage` shows 0 cards for ANCA-Associated and Medium-Vessel Vasculitis (11 questions), Other Vasculitides (4) and Inflammatory Myopathies (8), 1 for Large-Vessel Vasculitis and PMR (10), 2 for Systemic Sclerosis (9), 6 for SLE Classification (16); Lupus Nephritis and Drug-Induced Lupus deck SMALL (14 cards).
+- IM › Allergology and Immunology: Allergic Rhinitis deck SMALL (14 cards); `D coverage` shows 0 cards for Hypersensitivity Reactions (9 questions), few for Urticaria (2), Angioedema (1), Drug Allergy (1), Primary Immunodeficiency (3) and Secondary Immunodeficiency and Vaccination (1).
 - IM › Critical Care: subtopics Supportive ICU Care (0 cards) and Vasopressors and Inotropes (2 cards).
 
 ## Staged (not published)
@@ -54,6 +56,9 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - IM › Thyroid, Pituitary and Adrenal Disorders: 16 edits, 4 deletes.
 - IM › Obesity, Lipid and Bone Disorders: 6 edits, 2 deletes.
 - IM › Rheumatology: 7 edits, 3 deletes.
+- IM › Systemic Autoimmune and Rheumatic Disease: 11 edits, 3 deletes.
+- IM › Allergology and Immunology: 4 edits, 8 deletes.
 - Sources backfill: 47 edits (13 back changes, 1 front), 1 delete, across IM and 1 Biochemistry card.
 - Re-source of 29 non-citable citations: 29 edits (7 back changes, 2 re-cited to primary documents, 20 cleared as stable facts).
 - Full check of 16 weakly sourced cards: 12 edits (6 fact changes, 2 fronts), 1 duplicate deleted.
+- Re-source of 7 narrative-review citations: 7 edits (1 fact change: APL differentiation syndrome onset), 5 cleared as stable facts, 2 re-cited (UK SJS/TEN 2016, EASL gallstones 2016).

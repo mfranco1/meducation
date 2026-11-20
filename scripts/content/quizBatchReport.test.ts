@@ -148,7 +148,9 @@ describe('quiz batch report', () => {
       item('First stem here?', { rationaleMeta: { sources: 'Doe J. Gout: a review. *Cureus*. 2022.' } }),
       item('Second stem differs?', { rationaleMeta: { sources: 'WHO. *Guideline*. WHO; 2020.' } }),
       item('Third one is new?', { rationaleMeta: { sources: 'Roe K. Sepsis: a narrative review. *J Med*. 2023.' } }),
-      item('Fourth stem here?', { rationaleMeta: { sources: 'Lee A. Statins: a systematic review. *BMJ*. 2021.' } }),
+      item('Fourth stem here?', {
+        rationaleMeta: { sources: 'Lee A. Statins: a systematic literature review. *BMJ*. 2021.' },
+      }),
       item('Fifth stem here?', { rationaleMeta: { sources: 'IARC. *A Review of Human Carcinogens*. IARC; 2012.' } }),
     ]);
     expect(report.text).toContain('item 1 ("First stem here?"): Cites `Cureus`');

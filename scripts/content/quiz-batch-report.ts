@@ -79,7 +79,7 @@ const WEAK_SOURCE =
   /\b(MSD Manual|Merck Manual|StatPearls|UpToDate|Medscape|Wikipedia|Radiopaedia|DermNet|EyeWiki|WebMD|Healthline|Mayo Clinic|Cleveland Clinic|Amboss|Osmosis|Lecturio|McMaster Textbook|Cureus|Am Fam Physician|case reports?)\b/i;
 // Narrative review titles; systematic reviews and meta-analyses stay citable.
 const NARRATIVE_REVIEW =
-  /\b(narrative|literature|concise|comprehensive|brief|clinical|updated?) review\b|: a review\b|\breview of (the|current) literature\b/i;
+  /(?<!systematic )\b(narrative|literature|concise|comprehensive|brief|clinical|updated?) review\b|: a review\b|\breview of (the|current) literature\b/i;
 export function weakSourceFindings(where: string, sources: string | undefined): Finding[] {
   const match =
     sources?.match(WEAK_SOURCE)?.[0] ?? (sources && NARRATIVE_REVIEW.test(sources) ? 'a narrative review' : undefined);
