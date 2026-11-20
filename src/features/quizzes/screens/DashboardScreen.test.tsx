@@ -1,6 +1,7 @@
 import { ThemeProvider } from '@mui/material';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import { mixedTestQuiz } from '../../../domain/generatedTests';
 import { theme } from '../../../shared/theme';
 import type { SubjectStat } from '../selectors/progress';
 import { DashboardScreen } from './DashboardScreen';
@@ -237,4 +238,40 @@ it('uses separate continuation and ordinary subject actions', () => {
   expect(onSelectSubject).not.toHaveBeenCalled();
   fireEvent.click(within(screen.getByTestId('all-subjects-grid')).getByRole('button', { name: 'Open Biochemistry' }));
   expect(onSelectSubject).toHaveBeenCalledExactlyOnceWith(subject);
+});
+
+describe('Mixed Test card', () => {
+  it('starts a Mixed Test and resumes an unfinished one', () => {
+    const onStart = vi.fn();
+    const onResume = vi.fn();
+    const quiz = mixedTestQuiz(500);
+    const controls = (active: boolean) => ({
+      progress: {
+        quiz,
+        completionCount: 0,
+        active: active ? ({ id: 'a', responses: {} } as never) : undefined,
+        answeredCount: 0,
+      },
+      attempts: [],
+      onStart,
+      onResume,
+      onReview: vi.fn(),
+    });
+    const { rerender } = render(
+      <ThemeProvider theme={theme}>
+        <DashboardScreen attempts={[]} subjectStats={[]} mixedTest={controls(false)} onSelectSubject={() => {}} />
+      </ThemeProvider>,
+    );
+    expect(screen.getByText('300 questions')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Mixed Test' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+    expect(onStart).toHaveBeenCalledWith(quiz, 'immediate', true);
+    rerender(
+      <ThemeProvider theme={theme}>
+        <DashboardScreen attempts={[]} subjectStats={[]} mixedTest={controls(true)} onSelectSubject={() => {}} />
+      </ThemeProvider>,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Resume quiz: Mixed Test' }));
+    expect(onResume).toHaveBeenCalledWith(quiz);
+  });
 });

@@ -8,7 +8,7 @@ from typing import Any, Self
 from uuid import UUID
 
 from pydantic import ValidationError
-from sqlalchemy import Connection, Engine, text
+from sqlalchemy import Connection, Engine, RowMapping, text
 from sqlalchemy.exc import SQLAlchemyError
 
 from meducation_api.db.engine import ContentDatabaseError, create_database_engine, database_url
@@ -153,6 +153,25 @@ def _load_catalog(connection: Connection, release: UUID) -> Catalog:
     return Catalog(subjects, topics, quizzes, memberships[0], decks, memberships[1])
 
 
+_QUESTION_COLUMNS = {
+    "id": "id",
+    "quizId": "quiz_id",
+    "stem": "stem",
+    "choices": "choices",
+    "rationale": "rationale",
+    "answer": "answer",
+    "rationaleMeta": "rationale_meta",
+    "pearls": "pearls",
+    "metadata": "metadata",
+}
+
+
+def _question(row: RowMapping) -> Question:
+    return Question.model_validate(
+        {key: row[column] for key, column in _QUESTION_COLUMNS.items() if row[column] is not None}
+    )
+
+
 class PostgresQuestionBankRepository:
     def __init__(self, connection: Connection, release: UUID, revision: str, catalog: Catalog):
         self.connection, self.release, self._revision, self.catalog = (
@@ -178,10 +197,6 @@ class PostgresQuestionBankRepository:
     def topic_subject(self, topic_id: str) -> str:
         return self.catalog.topic_subject(topic_id)
 
-    def subject_quiz_summary(self, subject_id: str) -> tuple[int, list[str]]:
-        ids = [q.id for q, _ in self.list_quizzes(subject_id)]
-        return len(ids), ids
-
     def list_quizzes(self, subject_id: str) -> list[tuple[Quiz, int]]:
         return [
             (q.model_copy(deep=True), len(self.catalog.question_ids.get(q.id, ())))
@@ -203,29 +218,23 @@ class PostgresQuestionBankRepository:
         return list(self.catalog.question_ids.get(quiz_id, ()))
 
     def list_questions(self, quiz_id: str) -> list[Question]:
-        fields = {
-            "id": "id",
-            "quizId": "quiz_id",
-            "stem": "stem",
-            "choices": "choices",
-            "rationale": "rationale",
-            "answer": "answer",
-            "rationaleMeta": "rationale_meta",
-            "pearls": "pearls",
-            "metadata": "metadata",
-        }
         rows = self.connection.execute(
             text(
                 "SELECT * FROM content.published_questions WHERE release_id=:release AND quiz_id=:parent ORDER BY position"
             ),
             {"release": self.release, "parent": quiz_id},
         ).mappings()
-        return [
-            Question.model_validate(
-                {key: r[column] for key, column in fields.items() if r[column] is not None}
-            )
-            for r in rows
-        ]
+        return [_question(r) for r in rows]
+
+    def get_questions(self, ids: list[str]) -> list[Question]:
+        rows = self.connection.execute(
+            text(
+                "SELECT * FROM content.published_questions WHERE release_id=:release AND id = ANY(:ids)"
+            ),
+            {"release": self.release, "ids": ids},
+        ).mappings()
+        found = {r["id"]: _question(r) for r in rows}
+        return [found[i] for i in ids if i in found]
 
 
 class PostgresFlashcardCatalogRepository:

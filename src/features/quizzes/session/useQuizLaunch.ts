@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { isGeneratedQuizId } from '../../../domain/generatedTests';
 import type { Question, Quiz } from '../../../domain/types';
 
 export interface QuestionLoader {
   validateLaunch?(quiz: Quiz): Promise<() => void>;
   ensureQuestions(quizId: string): Promise<Question[]>;
+  ensureTestQuestions(quiz: Quiz, questionIds?: string[]): Promise<string[]>;
   cancelQuestionLoads(): void;
 }
 export interface QuestionLoadFailure {
@@ -25,7 +27,8 @@ export function useQuizLaunch(loader: QuestionLoader, onFailure?: (failure: Ques
     [loader],
   );
 
-  const launch = (quiz: Quiz, action: () => void) => {
+  /** Generated tests pass the loaded question IDs to `action`: `questionIds` when given, otherwise a new selection. */
+  const launch = (quiz: Quiz, action: (questionIds?: string[]) => void, questionIds?: string[]) => {
     if (inFlight.current.has(quiz.id)) return;
     if (inFlight.current.size) cancel();
     const token = Symbol(quiz.id);
@@ -36,10 +39,12 @@ export function useQuizLaunch(loader: QuestionLoader, onFailure?: (failure: Ques
     const load = async () => {
       const admit = loader.validateLaunch ? await loader.validateLaunch(quiz) : () => undefined;
       if (!current()) return;
-      await loader.ensureQuestions(quiz.id);
+      const loadedIds = isGeneratedQuizId(quiz.id)
+        ? await loader.ensureTestQuestions(quiz, questionIds)
+        : (await loader.ensureQuestions(quiz.id), undefined);
       if (!current()) return;
       admit();
-      action();
+      action(loadedIds);
     };
     void load()
       .catch((error) => {

@@ -53,6 +53,7 @@ def test_content_api_and_revision_conflicts(bank_data: dict) -> None:
         revision = subjects.json()["revision"]
         assert subjects.json()["subjects"][0]["quizCount"] == 1
         assert subjects.json()["subjects"][0]["quizIds"] == ["q1"]
+        assert subjects.json()["subjects"][0]["questionCount"] == 1
         quizzes = client.get("/api/v1/subjects/s1/quizzes")
         assert quizzes.json()["topics"] == [{"id": "t1", "subjectId": "s1", "name": "Topic"}]
         assert quizzes.json()["quizzes"][0]["subjectId"] == "s1"
@@ -146,12 +147,13 @@ def test_missing_catalog_resources_return_specific_404(
         "/api/v1/subjects/s1/quizzes",
         "/api/v1/quizzes/q1",
         "/api/v1/quizzes/q1/questions",
+        "/api/v1/questions?ids=i1",
     ],
 )
 def test_all_content_routes_reject_stale_revision_and_if_match(bank_data: dict, path: str) -> None:
     with TestClient(fixture_app(bank_data)) as client:
         for response in (
-            client.get(f"{path}?revision=stale"),
+            client.get(f"{path}{'&' if '?' in path else '?'}revision=stale"),
             client.get(path, headers={"If-Match": '"stale"'}),
         ):
             assert response.status_code == 409
@@ -161,3 +163,45 @@ def test_all_content_routes_reject_stale_revision_and_if_match(bank_data: dict, 
         assert (
             client.get(path, headers={"If-None-Match": current.headers["etag"]}).status_code == 304
         )
+
+
+def two_quiz_bank(bank_data: dict) -> dict:
+    first = bank_data["questions"][0]
+    return {
+        **bank_data,
+        "quizzes": [*bank_data["quizzes"], {"id": "q2", "topicId": "t1", "name": "Quiz 2"}],
+        "questions": [
+            first,
+            {**first, "id": "i2", "quizId": "q2"},
+            {**first, "id": "i3", "quizId": "q2"},
+        ],
+    }
+
+
+def test_questions_by_id_follow_requested_order_and_omit_unknown(bank_data: dict) -> None:
+    with TestClient(fixture_app(two_quiz_bank(bank_data))) as client:
+        response = client.get("/api/v1/questions?ids=i3,i1,i99,i2")
+        assert response.status_code == 200
+        assert [q["id"] for q in response.json()["questions"]] == ["i3", "i1", "i2"]
+        subject = client.get("/api/v1/subjects").json()["subjects"][0]
+        assert subject["questionCount"] == 3
+        assert subject["quizCount"] == 2
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "",
+        "?ids=",
+        "?ids=i1,i1",
+        "?ids=q1",
+        "?ids=i0",
+        "?ids=i1,,i2",
+        "?ids=" + ",".join(f"i{n}" for n in range(1, 302)),
+    ],
+)
+def test_questions_by_id_reject_invalid_ids(bank_data: dict, query: str) -> None:
+    with TestClient(fixture_app(bank_data)) as client:
+        response = client.get(f"/api/v1/questions{query}")
+        assert response.status_code == 422
+        assert response.json() == {"detail": {"code": "invalid_question_ids"}}

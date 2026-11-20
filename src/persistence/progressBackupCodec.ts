@@ -1,5 +1,6 @@
 import type { Attempt, CompletedAttempt, RecentScore } from '../domain/types';
 import { scorePercentage } from '../domain/quizEngine';
+import { MIXED_TEST_SIZE, isGeneratedQuizId } from '../domain/generatedTests';
 import type { FlashcardDailyStats } from '../domain/flashcardDailyStats';
 import { isFlashcardDailyStats } from '../domain/flashcardDailyStats';
 import type { FlashcardCheckpoint } from '../domain/flashcardStudy';
@@ -138,6 +139,15 @@ function validResponseMap(value: unknown, mode: unknown): value is Attempt['resp
       (mode !== 'immediate' || v.selectedChoiceId === undefined || v.locked),
   );
 }
+function validQuestionIds(value: unknown): boolean {
+  return (
+    Array.isArray(value) &&
+    value.length >= 1 &&
+    value.length <= MIXED_TEST_SIZE &&
+    value.every(safeId) &&
+    new Set(value).size === value.length
+  );
+}
 function validAttempt(value: unknown, active: boolean): value is Attempt | CompletedAttempt {
   const required = [
     'id',
@@ -150,8 +160,8 @@ function validAttempt(value: unknown, active: boolean): value is Attempt | Compl
     'responses',
   ];
   const optional = active
-    ? ['currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed']
-    : ['currentQuestionId', 'contentRevision', 'shuffleSeed', 'completedAt', 'score'];
+    ? ['currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed', 'questionIds']
+    : ['currentQuestionId', 'contentRevision', 'shuffleSeed', 'questionIds', 'completedAt', 'score'];
   if (
     !keys(value, required, optional) ||
     !safeId(value.id) ||
@@ -162,6 +172,7 @@ function validAttempt(value: unknown, active: boolean): value is Attempt | Compl
     !safeNumber(value.elapsedMs) ||
     (value.currentQuestionId !== undefined && !safeId(value.currentQuestionId)) ||
     (value.shuffleSeed !== undefined && !safeInt(value.shuffleSeed)) ||
+    (value.questionIds === undefined ? isGeneratedQuizId(value.quizId) : !validQuestionIds(value.questionIds)) ||
     (value.contentRevision !== undefined && !safeReference(value.contentRevision))
   )
     return false;
@@ -357,7 +368,7 @@ function validLiveQuiz(state: unknown): state is ProgressState {
         !keys(
           value,
           ['id', 'quizId', 'subjectId', 'feedbackMode', 'startedAt', 'elapsedMs', 'celebrationProgress', 'responses'],
-          ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed'],
+          ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed', 'questionIds'],
         )
       )
         return false;
@@ -388,7 +399,7 @@ function validLiveQuiz(state: unknown): state is ProgressState {
             'completedAt',
             'score',
           ],
-          ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed'],
+          ['timerStartedAt', 'currentQuestionId', 'contentSignature', 'contentRevision', 'shuffleSeed', 'questionIds'],
         )
       )
         return false;
@@ -458,6 +469,7 @@ function projectAttempt(attempt: Attempt | CompletedAttempt, active: boolean): A
   };
   if (attempt.currentQuestionId !== undefined) result.currentQuestionId = attempt.currentQuestionId;
   if (attempt.shuffleSeed !== undefined) result.shuffleSeed = attempt.shuffleSeed;
+  if (attempt.questionIds !== undefined) result.questionIds = [...attempt.questionIds];
   if (active) {
     result.contentSignature = attempt.contentSignature;
     if (attempt.contentRevision !== undefined) result.contentRevision = attempt.contentRevision;

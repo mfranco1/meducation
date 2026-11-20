@@ -7,7 +7,7 @@ Use these terms in UI copy, docs and new code. Where the code or a stored format
 - **Bank**: all published or draft content. Two paired documents: the quiz document (subjects, topics, quizzes, questions) and the flashcard document (decks, cards).
 - **Subject**: top-level grouping, shared by quizzes and flashcards.
 - **Topic**: grouping within a subject, shared by quizzes and flashcards. Unrelated to the free-text `question.metadata.topic`.
-- **Quiz**: ordered set of questions in one topic.
+- **Quiz**: authored, ordered set of questions in one topic. Subject Tests and the Mixed Test are generated, not authored.
 - **Question** (editor UI and bulk-add JSON: "item", `items`; ID prefix `i`): a stem, ordered choices, one answer key and a rationale.
 - **Stem**: the question text.
 - **Choice**: one answer option. Learners see choices lettered by position.
@@ -31,6 +31,8 @@ Use these terms in UI copy, docs and new code. Where the code or a stored format
 
 - **Learner**: anyone using the study app. No account. Progress stays in the browser.
 - **Attempt**: one run through a quiz, active or completed. Quizzes only.
+- **Subject Test** (quiz ID `subject-test:<subjectId>`): a generated quiz of up to 100 questions drawn from all of one subject's quizzes, split evenly across its topics. A new set is drawn at each start; the attempt stores its `questionIds`.
+- **Mixed Test** (quiz ID `mixed-test`): a generated quiz of up to 300 questions split evenly across subjects, then topics. Drawn like a Subject Test.
 - **Feedback mode** (`feedbackMode`): **Fast Feedback** (`immediate`) reveals each answer once locked; **Exam Mode** (`exam`) reveals nothing until submission.
 - **Response**: the learner's answer, flag and time for one question in an attempt.
 - **Score**: correct, incorrect and unanswered counts of a completed attempt.

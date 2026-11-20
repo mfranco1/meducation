@@ -4,9 +4,11 @@ import {
   isFullyAnsweredFastFeedback,
   pauseAttempt,
   questionIndexFor,
+  questionsFor,
   resumeAttempt,
   scoreAttempt,
 } from '../../../domain/quizEngine';
+import { MIXED_TEST_ID } from '../../../domain/generatedTests';
 import { contentSignature } from '../../../domain/contentSignature';
 import type {
   Attempt,
@@ -28,9 +30,9 @@ interface QuizSession {
   pendingResume?: { quiz: Quiz };
   clearPersistenceError: () => void;
   cancelPendingResume: () => void;
-  restartPendingResume: () => void;
+  restartPendingResume: (questionIds?: string[]) => void;
   resumeQuiz: (quiz: Quiz) => void;
-  startQuiz: (quiz: Quiz, mode: FeedbackMode, shuffle?: boolean) => void;
+  startQuiz: (quiz: Quiz, mode: FeedbackMode, shuffle?: boolean, questionIds?: string[]) => void;
   browseQuiz: (quiz: Quiz) => void;
   navigateBrowse: (index: number) => void;
   leaveBrowse: () => void;
@@ -65,12 +67,15 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     }
   }, []);
   const subjects = questionBank.listSubjects();
-  const showQuizSubject = (quiz: Quiz) => setView({ page: 'subject', subject: subjectForQuiz(subjects, quiz) });
+  const showQuizSubject = (quiz: Quiz) =>
+    setView(
+      quiz.id === MIXED_TEST_ID ? { page: 'dashboard' } : { page: 'subject', subject: subjectForQuiz(subjects, quiz) },
+    );
 
   const checkpoint = useCallback(
     (next: Attempt, nextIndex?: number) => {
       if (view.page !== 'quiz') return;
-      const bank = questionBank.listQuestions(view.quiz.id);
+      const bank = questionsFor(questionBank, view.quiz.id, next);
       const index = nextIndex ?? view.index;
       const withCheckpoint = { ...next, currentQuestionId: attemptQuestions(bank, next)[index]?.id };
       const checkpointed = isFullyAnsweredFastFeedback(withCheckpoint, bank)
@@ -85,7 +90,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
   const resumeQuiz = (quiz: Quiz) => {
     const existing = attempts.getActive(quiz.id);
     if (!existing) return;
-    const questions = questionBank.listQuestions(quiz.id);
+    const questions = questionsFor(questionBank, quiz.id, existing);
     const signature = contentSignature(questions);
     if (existing.contentSignature !== signature) {
       setPendingResume({ quiz });
@@ -101,9 +106,9 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     });
   };
 
-  const beginQuiz = (quiz: Quiz, mode: FeedbackMode, shuffle: boolean): boolean => {
+  const beginQuiz = (quiz: Quiz, mode: FeedbackMode, shuffle: boolean, questionIds?: string[]): boolean => {
     const now = new Date().toISOString();
-    const questions = questionBank.listQuestions(quiz.id);
+    const questions = questionsFor(questionBank, quiz.id, { questionIds });
     const shuffleSeed = shuffle ? crypto.getRandomValues(new Uint32Array(1))[0] : undefined;
     const attempt: Attempt = {
       id: crypto.randomUUID(),
@@ -114,6 +119,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
       elapsedMs: 0,
       timerStartedAt: now,
       ...(shuffleSeed === undefined ? {} : { shuffleSeed }),
+      ...(questionIds ? { questionIds } : {}),
       currentQuestionId: attemptQuestions(questions, { shuffleSeed })[0]?.id,
       contentSignature: contentSignature(questions),
       contentRevision: questionBank.contentRevision?.(),
@@ -124,17 +130,17 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     setView({ page: 'quiz', quiz, attempt, index: 0 });
     return true;
   };
-  const startQuiz = (quiz: Quiz, mode: FeedbackMode, shuffle = true) => {
-    void beginQuiz(quiz, mode, shuffle);
+  const startQuiz = (quiz: Quiz, mode: FeedbackMode, shuffle = true, questionIds?: string[]) => {
+    void beginQuiz(quiz, mode, shuffle, questionIds);
   };
-  const restartPendingResume = () => {
+  const restartPendingResume = (questionIds?: string[]) => {
     if (!pendingResume) return;
     const existing = attempts.getActive(pendingResume.quiz.id);
     if (!existing) {
       setPendingResume(undefined);
       return;
     }
-    if (beginQuiz(pendingResume.quiz, existing.feedbackMode, existing.shuffleSeed !== undefined))
+    if (beginQuiz(pendingResume.quiz, existing.feedbackMode, existing.shuffleSeed !== undefined, questionIds))
       setPendingResume(undefined);
   };
 
@@ -156,7 +162,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     setView({ page: 'quiz-review', quiz, attempt, index: 0 });
   const navigateReview = (index: number) => {
     if (view.page !== 'quiz-review') return;
-    const lastIndex = questionBank.listQuestions(view.quiz.id).length - 1;
+    const lastIndex = questionsFor(questionBank, view.quiz.id, view.attempt).length - 1;
     setView({ ...view, index: Math.max(0, Math.min(index, lastIndex)) });
   };
   const leaveReview = (destination: QuizExitDestination = 'subject') => {
@@ -172,7 +178,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
     const complete: CompletedAttempt = {
       ...paused,
       completedAt: new Date().toISOString(),
-      score: scoreAttempt(paused, questionBank.listQuestions(view.quiz.id)),
+      score: scoreAttempt(paused, questionsFor(questionBank, view.quiz.id, paused)),
     };
     if (!persist(() => attempts.saveCompleted(complete))) return;
     setView({ page: 'results', quiz: view.quiz, attempt: complete });
@@ -180,7 +186,7 @@ export function useQuizSession(questionBank: QuizRepository, attempts: AttemptRe
 
   const leaveQuiz = (destination: QuizExitDestination = 'subject') => {
     if (view.page !== 'quiz') return;
-    const question = attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)[view.index];
+    const question = attemptQuestions(questionsFor(questionBank, view.quiz.id, view.attempt), view.attempt)[view.index];
     if (!persist(() => attempts.saveActive(pauseAttempt({ ...view.attempt, currentQuestionId: question.id })))) return;
     if (destination === 'dashboard') setView({ page: 'dashboard' });
     else if (destination === 'flashcards') setView({ page: 'flashcards' });

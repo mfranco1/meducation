@@ -36,6 +36,43 @@ describe('progress backup codec', () => {
     expect(validateProgressBackup(value).ok).toBe(ok);
   });
 
+  it('preserves question IDs of generated test attempts and rejects invalid ones', () => {
+    type WithIds = { questionIds?: unknown };
+    type Backup = { quiz: { active: Record<string, WithIds>; completed: WithIds[] } };
+    const questionIds = ['q1', 'q2', 'q3'];
+    const value = cloneFixture() as Backup;
+    value.quiz.active['deleted-quiz']!.questionIds = questionIds;
+    value.quiz.completed[0]!.questionIds = [...questionIds];
+    const result = validateProgressBackup(value);
+    expect(result.ok && result.value.quiz.active['deleted-quiz']?.questionIds).toEqual(questionIds);
+    expect(result.ok && result.value.quiz.completed[0]?.questionIds).toEqual(questionIds);
+
+    for (const invalid of [[], ['q1', 'q1'], ['q1', 2], Array.from({ length: 301 }, (_, i) => `q${i}`)]) {
+      const active = cloneFixture() as Backup;
+      active.quiz.active['deleted-quiz']!.questionIds = invalid;
+      expect(validateProgressBackup(active).ok).toBe(false);
+      const completed = cloneFixture() as Backup;
+      completed.quiz.completed[0]!.questionIds = invalid;
+      expect(validateProgressBackup(completed).ok).toBe(false);
+    }
+  });
+
+  it('requires question IDs on a generated test attempt', () => {
+    const value = cloneFixture() as {
+      quiz: {
+        active: Record<string, { quizId: string }>;
+        completionCounts: Record<string, number>;
+      };
+    };
+    const attempt = value.quiz.active['deleted-quiz']!;
+    delete value.quiz.active['deleted-quiz'];
+    attempt.quizId = 'mixed-test';
+    value.quiz.active['mixed-test'] = attempt;
+    expect(validateProgressBackup(value).ok).toBe(false);
+    (attempt as { questionIds?: string[] }).questionIds = ['q1'];
+    expect(validateProgressBackup(value).ok).toBe(true);
+  });
+
   it('accepts explicit empty progress and an absent optional daily aggregate', () => {
     expect(validateProgressBackup(structuredClone(emptyFixture)).ok).toBe(true);
     const legacyLocalPayload = structuredClone(fixture) as { flashcards: Record<string, unknown> };

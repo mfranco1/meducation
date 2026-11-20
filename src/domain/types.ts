@@ -79,6 +79,8 @@ export interface Attempt {
   contentSignature?: string;
   contentRevision?: string;
   shuffleSeed?: number;
+  /** Ordered selected question IDs of a generated test attempt; absent for authored quizzes. */
+  questionIds?: string[];
   completedAt?: string;
   celebrationProgress: CelebrationProgress;
   responses: Record<string, QuestionResponse>;
@@ -103,6 +105,8 @@ export interface QuizRepository {
   listSubjects(): Subject[];
   listQuizzes(subjectId: string): Quiz[];
   listQuestions(quizId: string): Question[];
+  /** Loaded questions with these IDs, in the given order; IDs not in the release are skipped. */
+  listQuestionsById(questionIds: string[]): Question[];
   contentRevision?(): string | undefined;
 }
 export interface AttemptRepository {

@@ -34,6 +34,14 @@ describe('API response boundary fixtures', () => {
     await expect(bank.ensureSubjects()).rejects.toMatchObject({ kind: 'invalid' });
   });
 
+  it('rejects a subject catalog without a question count', async () => {
+    const bank = new RuntimeQuestionBank(noRetries);
+    const subjects = structuredClone(fixtures.subjects) as unknown as { subjects: Record<string, unknown>[] };
+    delete subjects.subjects[0].questionCount;
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(subjects)));
+    await expect(bank.ensureSubjects()).rejects.toMatchObject({ kind: 'invalid' });
+  });
+
   it('rejects a quiz catalog that disagrees with subject membership', async () => {
     const bank = new RuntimeQuestionBank(noRetries);
     const quizzes = structuredClone(fixtures.quizzes);

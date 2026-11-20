@@ -1,4 +1,12 @@
-import type { Attempt, AttemptScore, FeedbackMode, Question, QuestionResponse, StreakMilestone } from './types';
+import type {
+  Attempt,
+  AttemptScore,
+  FeedbackMode,
+  Question,
+  QuestionResponse,
+  QuizRepository,
+  StreakMilestone,
+} from './types';
 
 const STREAK_MILESTONES: readonly StreakMilestone[] = [3, 5, 10, 25, 50];
 
@@ -47,7 +55,7 @@ export function commitAnswer(
     streakMilestone: milestone,
   };
 }
-function mulberry32(seed: number) {
+export function mulberry32(seed: number) {
   return () => {
     seed = (seed + 0x6d2b79f5) >>> 0;
     let t = Math.imul(seed ^ (seed >>> 15), seed | 1);
@@ -55,7 +63,7 @@ function mulberry32(seed: number) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const shuffled = <T>(items: readonly T[], random: () => number): T[] => {
+export const shuffled = <T>(items: readonly T[], random: () => number): T[] => {
   const result = [...items];
   for (let i = result.length - 1; i > 0; i--) {
     const j = Math.floor(random() * (i + 1));
@@ -63,6 +71,12 @@ const shuffled = <T>(items: readonly T[], random: () => number): T[] => {
   }
   return result;
 };
+/** The questions an attempt is built from: its selected IDs for a generated test, otherwise the quiz's questions. */
+export const questionsFor = (
+  bank: Pick<QuizRepository, 'listQuestions' | 'listQuestionsById'>,
+  quizId: string,
+  attempt?: Pick<Attempt, 'questionIds'>,
+) => (attempt?.questionIds ? bank.listQuestionsById(attempt.questionIds) : bank.listQuestions(quizId));
 export function attemptQuestions(questions: Question[], attempt: Pick<Attempt, 'shuffleSeed'>): Question[] {
   if (attempt.shuffleSeed === undefined) return questions;
   const random = mulberry32(attempt.shuffleSeed);

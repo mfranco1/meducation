@@ -1,3 +1,4 @@
+import { MIXED_TEST_ID, subjectTestId } from '../domain/generatedTests';
 import type { QuizSessionView } from '../features/quizzes/session/navigation';
 import type { FlashcardsView } from '../features/flashcards/session/navigation';
 
@@ -44,7 +45,8 @@ export function restoresScroll(fromScreenId: string, toScreenId: string): boolea
 export type Route =
   | { page: 'dashboard' }
   | { page: 'flashcards' }
-  | { page: 'subject'; subjectId: string; quizId?: string }
+  | { page: 'mixed-test' }
+  | { page: 'subject'; subjectId: string; quizId?: string; subjectTest?: true }
   | { page: 'flashcards-subject'; subjectId: string; deckId?: string };
 
 /** The address of a view. Study screens share their quiz's or deck's address. */
@@ -65,6 +67,8 @@ export function pathFor(view: View): string {
     case 'quiz-browse':
     case 'quiz-review':
     case 'results':
+      if (view.quiz.id === MIXED_TEST_ID) return path('quizzes', 'mixed-test');
+      if (view.quiz.id === subjectTestId(view.quiz.subjectId)) return path('quizzes', view.quiz.subjectId, 'test');
       return path('quizzes', view.quiz.subjectId, view.quiz.id);
   }
 }
@@ -83,6 +87,8 @@ export function routeFor(path: string): Route {
     if (!subjectId) return { page: 'flashcards' };
     return { page: 'flashcards-subject', subjectId, ...(itemId ? { deckId: itemId } : {}) };
   }
+  if (section === 'quizzes' && subjectId === MIXED_TEST_ID && !itemId) return { page: 'mixed-test' };
+  if (section === 'quizzes' && subjectId && itemId === 'test') return { page: 'subject', subjectId, subjectTest: true };
   if (section === 'quizzes' && subjectId) return { page: 'subject', subjectId, ...(itemId ? { quizId: itemId } : {}) };
   return { page: 'dashboard' };
 }

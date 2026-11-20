@@ -1,6 +1,7 @@
 import { Box, Button, Stack } from '@mui/material';
 import { useState } from 'react';
 import type { CompletedAttempt, FeedbackMode, Quiz, Subject, Topic } from '../../../domain/types';
+import { GeneratedTestCard, type GeneratedTestControls } from '../components/GeneratedTestCard';
 import { ScoreTrendIndicator } from '../components/ScoreTrendIndicator';
 import { PastAttemptsDialog } from '../components/quiz/PastAttemptsDialog';
 import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
@@ -30,6 +31,7 @@ export function SubjectScreen({
   onStartQuiz,
   onBrowseQuiz,
   onPrepareQuiz = () => undefined,
+  subjectTest,
 }: {
   subject: Subject;
   topics: readonly Topic[];
@@ -49,6 +51,7 @@ export function SubjectScreen({
   onStartQuiz: (quiz: Quiz, mode: FeedbackMode, shuffle: boolean) => void;
   onBrowseQuiz: (quiz: Quiz) => void;
   onPrepareQuiz?: (quiz: Quiz) => void;
+  subjectTest?: GeneratedTestControls;
 }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
   const [reviewQuiz, setReviewQuiz] = useState<Quiz | null>(null);
@@ -107,9 +110,11 @@ export function SubjectScreen({
     },
   );
 
+  // When the Subject Test is the most recent, its card sits at the top and no topic opens.
   const initialSetId = continueStudying
-    ? progress.filter((item) => item.active).sort((a, b) => (b.activityAt ?? '').localeCompare(a.activityAt ?? ''))[0]
-        ?.quiz.id
+    ? [...progress, ...(subjectTest ? [subjectTest.progress] : [])]
+        .filter((item) => item.active)
+        .sort((a, b) => (b.activityAt ?? '').localeCompare(a.activityAt ?? ''))[0]?.quiz.id
     : undefined;
 
   return (
@@ -142,7 +147,14 @@ export function SubjectScreen({
       ) : progress.length === 0 ? (
         <SubjectCatalogEmptyState title="No quizzes available yet" />
       ) : (
-        <TopicSetBrowser topics={topics} sets={sets} noun="quiz" initialSetId={initialSetId} />
+        <>
+          {subjectTest && (
+            <Box sx={{ mb: 3 }}>
+              <GeneratedTestCard {...subjectTest} description="Questions from every topic, new each time" />
+            </Box>
+          )}
+          <TopicSetBrowser topics={topics} sets={sets} noun="quiz" initialSetId={initialSetId} />
+        </>
       )}
       {reviewQuiz && (
         <PastAttemptsDialog

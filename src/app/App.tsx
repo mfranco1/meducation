@@ -16,8 +16,9 @@ import { LocalAttemptRepository } from '../persistence/localRepository';
 import { LocalFlashcardProgressRepository } from '../persistence/localFlashcardProgressRepository';
 import { consumeProgressChangeNotice } from '../persistence/progressBackupStorage';
 import { hasSeenTip, markTipSeen, type TipId } from '../persistence/onboardingTips';
-import type { Subject } from '../domain/types';
-import { attemptQuestions } from '../domain/quizEngine';
+import type { CompletedAttempt, FeedbackMode, Quiz, Subject } from '../domain/types';
+import { attemptQuestions, questionsFor } from '../domain/quizEngine';
+import { mixedTestQuiz, MIXED_TEST_ID, subjectTestQuiz } from '../domain/generatedTests';
 import { contentSignature } from '../domain/contentSignature';
 import { AppNavigationDrawer, type LearnerSection } from './components/AppNavigationDrawer';
 import { ProgressBackupDialog } from './components/ProgressBackupDialog';
@@ -37,6 +38,7 @@ import type { SubjectStat } from '../features/quizzes/selectors/progress';
 import {
   createProgressView,
   dashboardScoreSummary,
+  quizProgressFor,
   quizProgressForSubject,
   subjectStatsFor,
 } from '../features/quizzes/selectors/progress';
@@ -133,7 +135,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       ttlMs: null,
       closeButton: true,
       dismissPolicy: 'manual',
-      scope: { type: 'screen', key: `subject:${quiz.subjectId}` },
+      scope: { type: 'screen', key: quiz.id === MIXED_TEST_ID ? 'dashboard' : `subject:${quiz.subjectId}` },
     });
   });
   const view: View = session.view.page === 'flashcards' ? flashcards.view : session.view;
@@ -171,7 +173,8 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     () => subjectStatsFor(questionBank, progressView, summaries),
     [questionBank, progressView, summaries],
   );
-  const { averageLatest, personalLowest, personalLowestSubject } = dashboardScoreSummary(subjectStats);
+  const { averageLatest, personalLowest, personalLowestSubject } = dashboardScoreSummary(subjectStats, progressView);
+  const mixedQuestionCount = summaries.reduce((total, { questionCount }) => total + questionCount, 0);
   const currentSubject = session.view.page === 'subject' ? session.view.subject : undefined;
   const currentFlashcardSubject = view.page === 'flashcards-subject' ? view.subject : undefined;
   const currentQuizState = currentSubject ? questionBank.getQuizState(currentSubject.id) : 'idle';
@@ -181,6 +184,15 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     cancel();
     session.showSubject(subject, continueStudying);
     void questionBank.ensureQuizzes(subject.id).catch(() => undefined);
+  };
+
+  const resumeQuiz = (quiz: Quiz) => {
+    preloadQuizScreen();
+    launch(quiz, () => session.resumeQuiz(quiz), attemptRepository.getActive(quiz.id)?.questionIds);
+  };
+  const reviewAttempt = (quiz: Quiz, attempt: CompletedAttempt) => {
+    preloadReviewScreen();
+    launch(quiz, () => session.reviewAttempt(quiz, attempt), attempt.questionIds);
   };
 
   const selectFlashcardSubject = (subject: Subject, continueStudying = false) => {
@@ -204,6 +216,22 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
 
   const subject = currentSubject ?? currentFlashcardSubject;
   const quizProgress = currentSubject ? quizProgressForSubject(questionBank, progressView, currentSubject.id) : [];
+  const subjectQuestionCount = currentSubject
+    ? questionBank.listQuizzes(currentSubject.id).reduce((total, quiz) => total + quiz.questionCount, 0)
+    : 0;
+  const testAttempts = (quizId: string) => progressSnapshot.completed.filter((attempt) => attempt.quizId === quizId);
+  const testControls = (quiz: Quiz) => ({
+    progress: quizProgressFor(progressView, quiz),
+    busy: loadingQuizIds.has(quiz.id),
+    attempts: testAttempts(quiz.id),
+    onStart: (started: Quiz, mode: FeedbackMode, shuffle: boolean) => {
+      preloadQuizScreen();
+      launch(started, (ids) => session.startQuiz(started, mode, shuffle, ids));
+    },
+    onResume: resumeQuiz,
+    onReview: reviewAttempt,
+    onPrepare: preloadQuizScreen,
+  });
   const flashcardCatalog = currentFlashcardSubject
     ? runtimeFlashcardBank.getSubjectCatalog(currentFlashcardSubject.id)
     : undefined;
@@ -388,6 +416,19 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       });
     if (route.page === 'dashboard') return showDashboard();
     if (route.page === 'flashcards') return showFlashcards();
+    if (route.page === 'mixed-test') {
+      show('/', () => {
+        flashcards.showDashboard();
+        session.showDashboard();
+      });
+      const active = attemptRepository.getActive(MIXED_TEST_ID);
+      if (!active) return;
+      await questionBank.ensureSubjects().catch(() => undefined);
+      const count = questionBank.listSubjectSummaries().reduce((total, { questionCount }) => total + questionCount, 0);
+      if (window.location.pathname !== '/' || count === 0) return;
+      resumeQuiz(mixedTestQuiz(count));
+      return;
+    }
     if (route.page === 'subject') {
       if (!questionBank.listSubjects().some(({ id }) => id === route.subjectId)) {
         await questionBank.ensureSubjects().catch(() => undefined);
@@ -397,12 +438,12 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       if (!subject) return showDashboard();
       const subjectPath = pathFor({ page: 'subject', subject });
       show(subjectPath, () => selectSubject(subject));
-      if (!route.quizId) return;
+      if (!route.quizId && !route.subjectTest) return;
       const quizzes = await questionBank.ensureQuizzes(subject.id).catch(() => []);
-      const quiz = quizzes.find(({ id }) => id === route.quizId);
+      const count = quizzes.reduce((total, { questionCount }) => total + questionCount, 0);
+      const quiz = route.subjectTest ? subjectTestQuiz(subject, count) : quizzes.find(({ id }) => id === route.quizId);
       if (window.location.pathname !== subjectPath || !quiz || !attemptRepository.getActive(quiz.id)) return;
-      preloadQuizScreen();
-      launch(quiz, () => session.resumeQuiz(quiz));
+      resumeQuiz(quiz);
       return;
     }
     if (!runtimeFlashcardBank.listSubjects().some(({ id }) => id === route.subjectId)) {
@@ -503,7 +544,9 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
           <Alert severity="error">{flashcards.persistenceError}</Alert>
         </Container>
       )}
-      {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
+      {(currentSubject || session.view.page === 'dashboard') && loadingQuizIds.size > 0 && (
+        <LinearProgress aria-label="Loading quiz questions" />
+      )}
       {currentFlashcardSubject && flashcards.loadingDeckId && <LinearProgress aria-label="Loading flashcard deck" />}
       {routing ? (
         <ScreenLoading />
@@ -528,7 +571,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
                 loading={catalogState === 'idle' || catalogState === 'loading'}
                 retrying={catalogState === 'retrying'}
                 statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'}
-                activeAttempts={Object.keys(progressSnapshot.active).length > 0}
+                activeAttempts={Object.keys(progressSnapshot.active).some((quizId) => quizId !== MIXED_TEST_ID)}
                 error={catalogState === 'error' ? catalogError : undefined}
                 retryAt={questionBank.getCatalogRetryAt()}
                 onRetry={() => {
@@ -544,6 +587,11 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
                 }}
                 onSelectSubject={selectSubject}
                 onContinueSubject={(subject) => selectSubject(subject, true)}
+                mixedTest={
+                  catalogState === 'ready' && mixedQuestionCount > 0
+                    ? testControls(mixedTestQuiz(mixedQuestionCount))
+                    : undefined
+                }
               />
             )}
             {view.page === 'flashcards' && (
@@ -640,14 +688,13 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
                       );
                     }}
                     attemptsFor={(quizId) => progressSnapshot.completed.filter((attempt) => attempt.quizId === quizId)}
-                    onReviewAttempt={(quiz, attempt) => {
-                      preloadReviewScreen();
-                      launch(quiz, () => session.reviewAttempt(quiz, attempt));
-                    }}
-                    onResumeQuiz={(quiz) => {
-                      preloadQuizScreen();
-                      launch(quiz, () => session.resumeQuiz(quiz));
-                    }}
+                    onReviewAttempt={reviewAttempt}
+                    onResumeQuiz={resumeQuiz}
+                    subjectTest={
+                      currentQuizState === 'ready' && subjectQuestionCount > 0
+                        ? testControls(subjectTestQuiz(currentSubject, subjectQuestionCount))
+                        : undefined
+                    }
                     onStartQuiz={(quiz, mode, shuffle) => {
                       preloadQuizScreen();
                       launch(quiz, () => session.startQuiz(quiz, mode, shuffle));
@@ -667,7 +714,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
             {view.page === 'quiz' && (
               <QuizScreen
                 {...view}
-                questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
+                questions={attemptQuestions(questionsFor(questionBank, view.quiz.id, view.attempt), view.attempt)}
                 onCheckpoint={session.checkpoint}
                 onFinish={session.finishQuiz}
                 onRequestExit={() => requestQuizExit('subject')}
@@ -694,10 +741,11 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
             {view.page === 'quiz-review' && (
               <QuizReviewScreen
                 {...view}
-                questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
+                questions={attemptQuestions(questionsFor(questionBank, view.quiz.id, view.attempt), view.attempt)}
                 contentChanged={
                   view.attempt.contentSignature !== undefined &&
-                  view.attempt.contentSignature !== contentSignature(questionBank.listQuestions(view.quiz.id))
+                  view.attempt.contentSignature !==
+                    contentSignature(questionsFor(questionBank, view.quiz.id, view.attempt))
                 }
                 onNavigate={session.navigateReview}
                 onRequestExit={() => requestReviewExit('subject')}
@@ -706,7 +754,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
             {view.page === 'results' && (
               <ResultsScreen
                 {...view}
-                questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
+                questions={attemptQuestions(questionsFor(questionBank, view.quiz.id, view.attempt), view.attempt)}
                 onBack={leaveResults}
                 onReview={() => {
                   preloadReviewScreen();
@@ -781,7 +829,7 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
         }}
         onRestart={() => {
           const pending = session.pendingResume;
-          if (pending) launch(pending.quiz, session.restartPendingResume);
+          if (pending) launch(pending.quiz, (ids) => session.restartPendingResume(ids));
         }}
       />
       <Dialog

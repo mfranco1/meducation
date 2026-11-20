@@ -57,6 +57,21 @@ def test_postgres_learner_routes_match_protocol_and_release_connections(db, tmp_
     assert pg_app.state.source is None
 
 
+def test_postgres_questions_by_id_follow_requested_order(db):
+    from fastapi.testclient import TestClient
+
+    from meducation_api.main import create_app
+
+    q, _ = banks()
+    first = q["questions"][0]
+    q["questions"].append({**first, "id": "i2"})
+    publish(db, store(db, q=q))
+    with TestClient(create_app(reader_settings(db))) as client:
+        response = client.get("/api/v1/questions?ids=i2,i99,i1")
+        assert response.status_code == 200
+        assert [row["id"] for row in response.json()["questions"]] == ["i2", "i1"]
+
+
 def test_publication_during_api_body_build_keeps_one_release(db, monkeypatch):
     from fastapi.testclient import TestClient
 

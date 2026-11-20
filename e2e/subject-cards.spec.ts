@@ -69,7 +69,7 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   await expect(card).toBeFocused();
   expect(await card.evaluate((element) => getComputedStyle(element).outlineStyle)).toBe('solid');
   await page.keyboard.press('Space');
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
   await page.goto('/');
   await expect(card).toBeVisible();
 
@@ -125,7 +125,7 @@ test('flashcard subject grid shares the subject header and progress track withou
 
   await card.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
 });
 
 test('subject tabs switch content and reset browsing', async ({ page }) => {

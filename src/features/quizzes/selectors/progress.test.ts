@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { MIXED_TEST_ID, subjectTestQuiz } from '../../../domain/generatedTests';
 import type { CompletedAttempt, QuizRepository } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
 import {
   activeSubjectStats,
   createProgressView,
   dashboardScoreSummary,
+  quizProgressFor,
   quizProgressForSubject,
   subjectStatsFor,
 } from './progress';
@@ -28,6 +30,7 @@ const bank: QuizRepository = {
           { id: 'i2', quizId, stem: '', choices: [], answer: 'A', rationale: '', metadata: {} },
         ]
       : [{ id: 'i3', quizId, stem: '', choices: [], answer: 'A', rationale: '', metadata: {} }],
+  listQuestionsById: () => [],
 };
 
 const completed = (quizId: string, subjectId: string, percentage: number, completedAt: string): CompletedAttempt => ({
@@ -121,6 +124,47 @@ describe('learner progress selectors', () => {
     expect(quizzes[0].answeredCount).toBeUndefined();
     expect(quizzes[1].activityAt).toBeDefined();
     expect(quizzes[0]).toMatchObject({ completionCount: 2, latestScore: 80, trend: 'increase' });
+  });
+
+  it('counts a Subject Test toward subject activity and scores but not toward its quizzes', () => {
+    const test = subjectTestQuiz({ id: 's2', name: 'Second', accent: '#222' }, 3);
+    const withTest = createProgressView({
+      ...snapshot,
+      completed: [...history, completed(test.id, 's2', 10, '2026-09-04T00:00:00.000Z')],
+      active: {
+        ...snapshot.active,
+        [test.id]: { ...snapshot.active.q2!, id: 'test', quizId: test.id, subjectId: 's2' },
+      },
+      completionCounts: { ...snapshot.completionCounts, [test.id]: 1 },
+      latestScores: {
+        ...snapshot.latestScores,
+        [test.id]: { percentage: 10, completedAt: '2026-09-04T00:00:00.000Z' },
+      },
+      activity: { ...snapshot.activity, [test.id]: '2026-09-05T00:00:00.000Z' },
+    });
+    expect(subjectStatsFor(bank, withTest)[1]).toMatchObject({
+      quizCount: 1,
+      completedQuizCount: 0,
+      activeQuizCount: 1,
+      latestActiveAt: '2026-09-05T00:00:00.000Z',
+      latest: 10,
+    });
+    expect(quizProgressFor(withTest, test)).toMatchObject({ completionCount: 1, latestScore: 10 });
+  });
+
+  it('counts the Mixed Test latest score in the dashboard summary', () => {
+    const withMixed = createProgressView({
+      ...snapshot,
+      latestScores: {
+        ...snapshot.latestScores,
+        [MIXED_TEST_ID]: { percentage: 40, completedAt: '2026-09-04T00:00:00.000Z' },
+      },
+    });
+    expect(dashboardScoreSummary(subjectStatsFor(bank, withMixed), withMixed)).toEqual({
+      averageLatest: 60,
+      personalLowest: 40,
+      personalLowestSubject: 'Mixed Test',
+    });
   });
 
   it('summarizes the average and lowest latest subject scores', () => {

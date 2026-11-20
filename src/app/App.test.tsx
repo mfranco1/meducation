@@ -67,8 +67,8 @@ describe('progressive dashboard statistics', () => {
         json: async () => ({
           revision: 'rev-dashboard',
           subjects: [
-            { id: 's1', name: 'First', accent: '#111111', quizCount: 1, quizIds: ['q1'] },
-            { id: 's2', name: 'Second', accent: '#222222', quizCount: 1, quizIds: ['q2'] },
+            { id: 's1', name: 'First', accent: '#111111', quizCount: 1, questionCount: 1, quizIds: ['q1'] },
+            { id: 's2', name: 'Second', accent: '#222222', quizCount: 1, questionCount: 1, quizIds: ['q2'] },
           ],
         }),
       }),
@@ -95,7 +95,7 @@ describe('progressive dashboard statistics', () => {
       questionIds: ['i-cancel'],
     };
     runtimeQuestionBank.configureApi(
-      { revision: 'rev-cancel-app', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] },
+      { revision: 'rev-cancel-app', subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }] },
       [{ revision: 'rev-cancel-app', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
     );
     let resolveQuestions!: (response: { ok: boolean; json: () => Promise<unknown> }) => void;
@@ -111,7 +111,7 @@ describe('progressive dashboard statistics', () => {
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Test Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     await waitFor(() => expect(fetchMock.mock.calls.some(([url]) => String(url).includes('/questions'))).toBe(true));
 
@@ -155,14 +155,17 @@ describe('progressive dashboard statistics', () => {
       questionIds: ['i1'],
     };
     runtimeQuestionBank.configureApi(
-      { revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] },
+      { revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }] },
       [{ revision: 'rev-lazy', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
     );
     const fetchMock = vi.fn().mockImplementation(async (url: string) =>
       url === '/api/v1/subjects'
         ? {
             ok: true,
-            json: async () => ({ revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }),
+            json: async () => ({
+              revision: 'rev-lazy',
+              subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }],
+            }),
           }
         : {
             ok: true,
@@ -193,7 +196,7 @@ describe('progressive dashboard statistics', () => {
       </ThemeProvider>,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Open Lazy Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz/ }));
+    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }));
     await waitFor(() => expect(questionRequests()).toBeGreaterThan(0));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
 
@@ -258,7 +261,11 @@ describe('progressive dashboard statistics', () => {
       );
       if (type === 'flashcard') fireEvent.click(screen.getByRole('button', { name: 'Flashcards' }));
       fireEvent.click(await screen.findByRole('button', { name: 'Open Backup subject' }));
-      fireEvent.click(await screen.findByRole('button', { name: type === 'quiz' ? /^Start quiz/ : /^Study deck/ }));
+      fireEvent.click(
+        await screen.findByRole('button', {
+          name: type === 'quiz' ? /^Start quiz: (?!.*Subject Test)/ : /^Study deck/,
+        }),
+      );
       if (type === 'quiz') fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
       const position = type === 'quiz' ? 'Question 1 of 1' : 'Card 1 of 1';
       expect(await screen.findByText(position)).toBeVisible();

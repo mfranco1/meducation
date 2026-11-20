@@ -1,5 +1,6 @@
 import type { Attempt, CompletedAttempt, RecentScore } from '../domain/types';
 import { isObject } from '../domain/json';
+import { MIXED_TEST_SIZE, isGeneratedQuizId } from '../domain/generatedTests';
 
 export interface StoragePort {
   getItem(key: string): string | null;
@@ -21,6 +22,13 @@ export interface ProgressState {
 export const progressKey = 'meducation.progress.v2';
 const text = (value: unknown): value is string => typeof value === 'string' && value.length > 0;
 const number = (value: unknown): value is number => typeof value === 'number' && Number.isFinite(value) && value >= 0;
+
+const validQuestionIds = (value: unknown): boolean =>
+  Array.isArray(value) &&
+  value.length >= 1 &&
+  value.length <= MIXED_TEST_SIZE &&
+  value.every(text) &&
+  new Set(value).size === value.length;
 
 function validAttempt(value: unknown): value is Attempt {
   if (
@@ -46,6 +54,8 @@ function validAttempt(value: unknown): value is Attempt {
   if (value.timerStartedAt !== undefined && !text(value.timerStartedAt)) return false;
   if (value.currentQuestionId !== undefined && !text(value.currentQuestionId)) return false;
   if (value.shuffleSeed !== undefined && !validCount(value.shuffleSeed)) return false;
+  if (value.questionIds === undefined ? isGeneratedQuizId(value.quizId) : !validQuestionIds(value.questionIds))
+    return false;
   return Object.values(value.responses).every(
     (response) =>
       isObject(response) &&

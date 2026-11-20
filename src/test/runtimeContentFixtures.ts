@@ -42,6 +42,9 @@ export function installQuizApiFixture(
           subjects: subjects.map((subject) => ({
             ...subject,
             quizCount: quizzes.filter((quiz) => quiz.subjectId === subject.id).length,
+            questionCount: quizzes
+              .filter((quiz) => quiz.subjectId === subject.id)
+              .reduce((sum, quiz) => sum + quiz.questionCount, 0),
             quizIds: quizzes.filter((quiz) => quiz.subjectId === subject.id).map((quiz) => quiz.id),
           })),
         };

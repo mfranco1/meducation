@@ -1,3 +1,4 @@
+import { MIXED_TEST_ID, subjectTestId } from '../../../domain/generatedTests';
 import { averageScore, lowestRecentScore, mostRecentScore, scoreTrend } from '../../../domain/scores';
 import type { Attempt, Quiz, QuizRepository, RecentScore, Subject } from '../../../domain/types';
 import type { ProgressState } from '../../../persistence/progressCodec';
@@ -64,16 +65,16 @@ export function subjectStatsFor(
   const quizIdsBySubject = new Map(membership?.map((item) => [item.id, item.quizIds]));
   return questionBank.listSubjects().map((subject) => {
     const quizIds = quizIdsBySubject?.get(subject.id) ?? questionBank.listQuizzes(subject.id).map((quiz) => quiz.id);
-    const activeQuizIds = quizIds.filter((quizId) => progress.snapshot.active[quizId] !== undefined);
-    const recentQuizScores = quizIds
-      .map((quizId) => progress.snapshot.latestScores[quizId])
-      .filter((score): score is RecentScore => score !== undefined);
-    const latest = mostRecentScore(recentQuizScores);
+    // The Subject Test counts toward activity and scores, but not toward the quiz counts.
+    const studyIds = [...quizIds, subjectTestId(subject.id)];
+    const activeQuizIds = studyIds.filter((quizId) => progress.snapshot.active[quizId] !== undefined);
+    const latestScore = (quizId: string) => progress.snapshot.latestScores[quizId] ?? [];
+    const latest = mostRecentScore(studyIds.flatMap(latestScore));
     const subjectScores = progress.scoresBySubject.get(subject.id) ?? [];
     return {
       subject,
       quizCount: quizIds.length,
-      completedQuizCount: recentQuizScores.length,
+      completedQuizCount: quizIds.flatMap(latestScore).length,
       activeQuizCount: activeQuizIds.length,
       latestActiveAt: activeQuizIds
         .map((quizId) => progress.activityAt[quizId])
@@ -87,25 +88,27 @@ export function subjectStatsFor(
   });
 }
 
+export function quizProgressFor(progressView: ProgressView, quiz: Quiz): QuizProgress {
+  const active = progressView.snapshot.active[quiz.id];
+  const latest = progressView.snapshot.latestScores[quiz.id];
+  const scores = progressView.scoresByQuiz.get(quiz.id) ?? [];
+  return {
+    quiz,
+    active,
+    completionCount: progressView.snapshot.completionCounts[quiz.id] ?? 0,
+    latestScore: latest?.percentage,
+    trend: trendFor(latest, scores),
+    activityAt: progressView.activityAt[quiz.id],
+    answeredCount: active && Object.values(active.responses).filter((response) => response.selectedChoiceId).length,
+  };
+}
+
 export function quizProgressForSubject(
   questionBank: QuizRepository,
   progressView: ProgressView,
   subjectId: string,
 ): QuizProgress[] {
-  return questionBank.listQuizzes(subjectId).map((quiz) => {
-    const active = progressView.snapshot.active[quiz.id];
-    const latest = progressView.snapshot.latestScores[quiz.id];
-    const scores = progressView.scoresByQuiz.get(quiz.id) ?? [];
-    return {
-      quiz,
-      active,
-      completionCount: progressView.snapshot.completionCounts[quiz.id] ?? 0,
-      latestScore: latest?.percentage,
-      trend: trendFor(latest, scores),
-      activityAt: progressView.activityAt[quiz.id],
-      answeredCount: active && Object.values(active.responses).filter((response) => response.selectedChoiceId).length,
-    };
-  });
+  return questionBank.listQuizzes(subjectId).map((quiz) => quizProgressFor(progressView, quiz));
 }
 
 /** Returns active subjects in most-recent active-quiz order, preserving catalog order for ties. */
@@ -120,16 +123,18 @@ export function activeSubjectStats(subjectStats: SubjectStat[]): SubjectStat[] {
     .map(({ stat }) => stat);
 }
 
-export function dashboardScoreSummary(subjectStats: SubjectStat[]) {
-  const averageLatest = averageScore(
-    subjectStats.map((stat) => stat.latest).filter((score): score is number => score !== undefined),
-  );
-  const lowest = lowestRecentScore(
-    subjectStats.flatMap((stat) =>
+/** Average and lowest of each subject's latest score and the Mixed Test's latest score. */
+export function dashboardScoreSummary(subjectStats: SubjectStat[], progress?: ProgressView) {
+  const mixed = progress?.snapshot.latestScores[MIXED_TEST_ID];
+  const latestScores = [
+    ...subjectStats.flatMap((stat) =>
       stat.latest === undefined || stat.latestCompletedAt === undefined
         ? []
         : [{ percentage: stat.latest, completedAt: stat.latestCompletedAt, subjectName: stat.subject.name }],
     ),
-  );
+    ...(mixed ? [{ ...mixed, subjectName: 'Mixed Test' }] : []),
+  ];
+  const averageLatest = averageScore(latestScores.map((score) => score.percentage));
+  const lowest = lowestRecentScore(latestScores);
   return { averageLatest, personalLowest: lowest?.percentage, personalLowestSubject: lowest?.subjectName };
 }

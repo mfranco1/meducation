@@ -3,6 +3,7 @@ import { isObject, nonBlank, onlyKeys, unique } from '../../domain/json';
 
 export interface SubjectSummary extends Subject {
   quizCount: number;
+  questionCount: number;
   quizIds: string[];
 }
 export interface SubjectCatalogResponse {
@@ -50,7 +51,10 @@ export function isSubjectCatalog(value: unknown): value is SubjectCatalogRespons
   const subjects = value.subjects;
   if (
     !subjects.every((entry: unknown) => {
-      if (!isObject(entry) || !onlyKeys(entry, ['id', 'name', 'accent', 'description', 'quizCount', 'quizIds']))
+      if (
+        !isObject(entry) ||
+        !onlyKeys(entry, ['id', 'name', 'accent', 'description', 'quizCount', 'questionCount', 'quizIds'])
+      )
         return false;
       if (
         !nonBlank(entry.id) ||
@@ -63,7 +67,9 @@ export function isSubjectCatalog(value: unknown): value is SubjectCatalogRespons
       if (
         !ids(entry.quizIds, /^q[1-9]\d*$/) ||
         !Number.isInteger(entry.quizCount) ||
-        entry.quizCount !== entry.quizIds.length
+        entry.quizCount !== entry.quizIds.length ||
+        !Number.isInteger(entry.questionCount) ||
+        (entry.questionCount as number) < 0
       )
         return false;
       allQuizIds.push(...entry.quizIds);
@@ -188,6 +194,26 @@ export function isQuestionList(
   return sameOrder(
     value.questions.map((question: Question) => question.id),
     expectedQuestionIds,
+  );
+}
+
+/** Questions requested by ID: exactly the requested IDs, in order, each belonging to a known quiz. */
+export function isQuestionsById(
+  value: unknown,
+  expectedIds: string[],
+  quizIdOf: (questionId: string) => string | undefined,
+): value is QuestionListResponse {
+  if (!isObject(value) || !nonBlank(value.revision) || !Array.isArray(value.questions)) return false;
+  const valid = value.questions.every((question: unknown) => {
+    const quizId = isObject(question) && typeof question.id === 'string' ? quizIdOf(question.id) : undefined;
+    return quizId !== undefined && validQuestion(question, quizId);
+  });
+  return (
+    valid &&
+    sameOrder(
+      value.questions.map((question: Question) => question.id),
+      expectedIds,
+    )
   );
 }
 

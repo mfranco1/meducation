@@ -104,7 +104,7 @@ test('quiz Continue Studying card is responsive and reveals the active quiz', as
   await page.setViewportSize({ width: 1280, height: 844 });
   await page.goto('/');
   await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await page.getByRole('radio').first().check();
   await page.goto('/');
@@ -127,19 +127,19 @@ test('quiz Continue Studying card is responsive and reveals the active quiz', as
   const action = page.getByTestId('continue-study-card');
   await action.focus();
   await page.keyboard.press('Enter');
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeInViewport();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Resume quiz: (?!.*Subject Test)/ })).toBeInViewport();
   await expect(page.getByRole('heading', { level: 4 })).toBeFocused();
   await page.goBack();
   await expect(page.getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: /^Resume quiz: (?!.*Subject Test)/ })).toHaveCount(0);
   await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
   await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await expect(page.getByRole('heading', { name: 'Topics', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Dashboard', exact: true }).click();
   await page.setViewportSize({ width: 1280, height: 844 });
   await page.getByTestId('continue-study-card').click();
-  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeInViewport();
+  await expect(page.getByRole('button', { name: /^Resume quiz: (?!.*Subject Test)/ })).toBeInViewport();
   await expect(page.getByRole('heading', { level: 4 })).toBeFocused();
 });
 
@@ -171,7 +171,7 @@ test('flashcard Continue Studying card shows deck activity and reveals the saved
   const action = page.getByTestId('continue-study-card');
   await action.focus();
   await page.keyboard.press('Space');
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: /^Resume deck/ })).toBeInViewport();
   await expect(page.getByRole('heading', { level: 4 })).toBeFocused();
   await page.goBack();

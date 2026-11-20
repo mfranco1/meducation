@@ -10,6 +10,7 @@ import type {
   Quiz,
   QuizRepository,
 } from '../../../domain/types';
+import { mixedTestQuiz, subjectTestQuiz } from '../../../domain/generatedTests';
 import { useQuizSession } from './useQuizSession';
 
 const subject = { id: 'subject', name: 'Subject', accent: '#123456' };
@@ -53,6 +54,7 @@ function setup() {
     listSubjects: () => [subject],
     listQuizzes: () => [quiz],
     listQuestions: () => questions,
+    listQuestionsById: (ids) => questions.filter((question) => ids.includes(question.id)),
   };
   let active: Attempt | undefined = activeAttempt;
   const completed: CompletedAttempt[] = [];
@@ -117,6 +119,31 @@ describe('read-only quiz browse session', () => {
     expect(result.current.view).toMatchObject({ page: 'quiz-browse', index: 1 });
     act(() => result.current.navigateBrowse(-1));
     expect(result.current.view).toMatchObject({ page: 'quiz-browse', index: 0 });
+  });
+});
+
+describe('generated tests', () => {
+  it('stores the selected questions and scores only those', () => {
+    const { result, attempts } = setup();
+    const test = subjectTestQuiz(subject, 2);
+    act(() => result.current.startQuiz(test, 'exam', false, ['q2']));
+    expect(attempts.getActive(test.id)).toMatchObject({ questionIds: ['q2'] });
+    expect(result.current.view).toMatchObject({ page: 'quiz', index: 0 });
+    act(() => result.current.finishQuiz());
+    expect(result.current.view).toMatchObject({
+      page: 'results',
+      attempt: { questionIds: ['q2'], score: { total: 1, unanswered: 1 } },
+    });
+  });
+
+  it('leaves a Mixed Test for the dashboard and a Subject Test for its subject', () => {
+    const { result } = setup();
+    act(() => result.current.startQuiz(mixedTestQuiz(2), 'exam', false, ['q1']));
+    act(() => result.current.leaveQuiz());
+    expect(result.current.view).toEqual({ page: 'dashboard' });
+    act(() => result.current.startQuiz(subjectTestQuiz(subject, 2), 'exam', false, ['q1']));
+    act(() => result.current.leaveQuiz());
+    expect(result.current.view).toEqual({ page: 'subject', subject });
   });
 });
 

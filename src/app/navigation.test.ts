@@ -1,3 +1,4 @@
+import { mixedTestQuiz, subjectTestQuiz } from '../domain/generatedTests';
 import { describe, expect, it } from 'vitest';
 import { pathFor, presentationIdentity, restoresScroll, routeFor, screenIdentity, type View } from './navigation';
 
@@ -94,6 +95,15 @@ describe('addresses', () => {
       subjectId: 'subject 1',
       deckId: 'deck-1',
     });
+  });
+
+  it('gives generated tests their own addresses', () => {
+    const subjectTest: View = { page: 'quiz-browse', quiz: subjectTestQuiz(subject, 5), index: 0 };
+    const mixedTest: View = { page: 'quiz-browse', quiz: mixedTestQuiz(5), index: 0 };
+    expect(pathFor(subjectTest)).toBe('/quizzes/subject%201/test');
+    expect(routeFor(pathFor(subjectTest))).toEqual({ page: 'subject', subjectId: 'subject 1', subjectTest: true });
+    expect(pathFor(mixedTest)).toBe('/quizzes/mixed-test');
+    expect(routeFor(pathFor(mixedTest))).toEqual({ page: 'mixed-test' });
   });
 
   it('opens the dashboard for unknown or malformed addresses', () => {

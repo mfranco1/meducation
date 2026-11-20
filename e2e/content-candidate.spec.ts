@@ -16,7 +16,7 @@ for (const candidate of contentCases()) {
       const path = new URL(route.request().url()).pathname;
       const body =
         path === '/api/v1/subjects'
-          ? { revision, subjects: [{ ...subject, quizCount: 1, quizIds: [quiz.id] }] }
+          ? { revision, subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }] }
           : path === `/api/v1/subjects/${subject.id}/quizzes`
             ? {
                 revision,
@@ -39,7 +39,7 @@ for (const candidate of contentCases()) {
       .last()
       .click();
     await openTopicIfNeeded(page);
-    await page.getByRole('button', { name: /^Start quiz/ }).click();
+    await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
     await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
     // Answering in Fast Feedback reveals the rationale, so stem, choices and explanation all render.
     await page.getByRole('radio').first().check();

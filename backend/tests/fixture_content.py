@@ -42,10 +42,6 @@ class FixtureQuestionRepository:
     def topic_subject(self, id):
         return next(row.subjectId for row in self.bank.topics if row.id == id)
 
-    def subject_quiz_summary(self, id):
-        ids = [row.id for row, _ in self.list_quizzes(id)]
-        return len(ids), ids
-
     def list_quizzes(self, id):
         return [
             (row, len(self.list_questions(row.id)))
@@ -59,6 +55,10 @@ class FixtureQuestionRepository:
 
     def list_questions(self, id):
         return [row for row in self.bank.questions if row.quizId == id]
+
+    def get_questions(self, ids):
+        found = {row.id: row for row in self.bank.questions}
+        return [found[i] for i in ids if i in found]
 
     def list_question_ids(self, id):
         return [row.id for row in self.list_questions(id)]

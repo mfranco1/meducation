@@ -1,7 +1,15 @@
 import type { Question, Quiz, QuizRepository, Subject, Topic } from '../../domain/types';
+import {
+  isGeneratedQuizId,
+  MIXED_TEST_ID,
+  MIXED_TEST_SIZE,
+  selectTestQuestions,
+  SUBJECT_TEST_SIZE,
+} from '../../domain/generatedTests';
 import { contentRetryPolicy, type RetryPolicy } from './retryPolicy';
 import {
   isQuestionList,
+  isQuestionsById,
   isQuizCatalog,
   isSubjectCatalog,
   responseRevision,
@@ -17,7 +25,7 @@ import {
 } from './contentTransport';
 import { LaunchFreshness } from './launchFreshness';
 
-type SubjectCatalogRecord = Subject & Partial<Pick<SubjectSummary, 'quizCount' | 'quizIds'>>;
+type SubjectCatalogRecord = Subject & Partial<Pick<SubjectSummary, 'quizCount' | 'questionCount' | 'quizIds'>>;
 type ResourceState = 'idle' | 'loading' | 'retrying' | 'ready' | 'error';
 
 /** Indexed, revision-scoped content. Request lifecycle stays with RuntimeQuestionBank. */
@@ -27,6 +35,12 @@ export class RuntimeContentCache {
   private readonly quizzesBySubject = new Map<string, Quiz[]>();
   private readonly quizzesById = new Map<string, Quiz>();
   private readonly questionsByQuiz = new Map<string, Question[]>();
+  private readonly quizIdByQuestion = new Map<string, string>();
+  private readonly questionsById = new Map<string, Question>();
+
+  private indexQuestions(quiz: Quiz) {
+    for (const questionId of quiz.questionIds ?? []) this.quizIdByQuestion.set(questionId, quiz.id);
+  }
 
   replaceCatalog(subjects: Subject[], topics: Topic[] = [], quizzes: Quiz[] = []) {
     this.subjects = subjects;
@@ -35,7 +49,10 @@ export class RuntimeContentCache {
     this.quizzesBySubject.clear();
     this.quizzesById.clear();
     this.questionsByQuiz.clear();
+    this.quizIdByQuestion.clear();
+    this.questionsById.clear();
     for (const quiz of quizzes) {
+      this.indexQuestions(quiz);
       const group = this.quizzesBySubject.get(quiz.subjectId) ?? [];
       group.push(quiz);
       this.quizzesBySubject.set(quiz.subjectId, group);
@@ -60,9 +77,15 @@ export class RuntimeContentCache {
   }
   setQuizzes(subjectId: string, topics: Topic[], quizzes: Quiz[]) {
     this.topicsBySubject.set(subjectId, topics);
-    for (const old of this.listQuizzes(subjectId)) this.quizzesById.delete(old.id);
+    for (const old of this.listQuizzes(subjectId)) {
+      this.quizzesById.delete(old.id);
+      for (const questionId of old.questionIds ?? []) this.quizIdByQuestion.delete(questionId);
+    }
     this.quizzesBySubject.set(subjectId, quizzes);
-    for (const quiz of quizzes) this.quizzesById.set(quiz.id, quiz);
+    for (const quiz of quizzes) {
+      this.quizzesById.set(quiz.id, quiz);
+      this.indexQuestions(quiz);
+    }
   }
   hasQuestions(quizId: string) {
     return this.questionsByQuiz.has(quizId);
@@ -72,6 +95,16 @@ export class RuntimeContentCache {
   }
   setQuestions(quizId: string, questions: Question[]) {
     this.questionsByQuiz.set(quizId, questions);
+    this.addQuestions(questions);
+  }
+  quizIdOf(questionId: string) {
+    return this.quizIdByQuestion.get(questionId);
+  }
+  addQuestions(questions: Question[]) {
+    for (const question of questions) this.questionsById.set(question.id, question);
+  }
+  getQuestion(questionId: string) {
+    return this.questionsById.get(questionId);
   }
 }
 
@@ -171,7 +204,12 @@ export class RuntimeQuestionBank implements QuizRepository {
     this.summaries = subjectResponse.subjects.map((subject) => {
       const quizzes = allQuizzes.filter((quiz) => quiz.subjectId === subject.id);
       const quizIds = subject.quizIds ?? quizzes.map((quiz) => quiz.id);
-      return { ...subject, quizCount: subject.quizCount ?? quizIds.length, quizIds };
+      return {
+        ...subject,
+        quizCount: subject.quizCount ?? quizIds.length,
+        questionCount: subject.questionCount ?? quizzes.reduce((sum, quiz) => sum + quiz.questionCount, 0),
+        quizIds,
+      };
     });
     this.cache.replaceCatalog(
       subjectResponse.subjects,
@@ -208,6 +246,9 @@ export class RuntimeQuestionBank implements QuizRepository {
   listQuestions(quizId: string) {
     return this.cache.listQuestions(quizId);
   }
+  listQuestionsById(questionIds: string[]) {
+    return questionIds.flatMap((id) => this.cache.getQuestion(id) ?? []);
+  }
 
   validateLaunch(quiz: Pick<Quiz, 'id' | 'subjectId'>): Promise<() => void> {
     const revision = this.revision;
@@ -220,8 +261,9 @@ export class RuntimeQuestionBank implements QuizRepository {
       if (!isSubjectCatalog(payload))
         throw new ContentLoadError('invalid', 'The subject catalog is incomplete. Retry later.');
       if (payload.revision !== revision) throw revisionError();
+      if (quiz.id === MIXED_TEST_ID) return;
       const subject = payload.subjects.find((subject) => subject.id === quiz.subjectId);
-      if (!subject?.quizIds.includes(quiz.id)) throw revisionError();
+      if (!subject || (!isGeneratedQuizId(quiz.id) && !subject.quizIds.includes(quiz.id))) throw revisionError();
     });
   }
 
@@ -406,6 +448,80 @@ export class RuntimeQuestionBank implements QuizRepository {
       });
     this.pending.set(quizId, request);
     return request;
+  }
+
+  async ensureQuestionsById(questionIds: string[]): Promise<Question[]> {
+    const missing = questionIds.filter((id) => !this.cache.getQuestion(id));
+    if (missing.length > 0) {
+      const key = `ids:${missing.join(',')}`;
+      const pending = this.pending.get(key);
+      if (pending) await pending;
+      else await this.loadQuestionsById(key, missing);
+    }
+    return this.listQuestionsById(questionIds);
+  }
+
+  private loadQuestionsById(key: string, ids: string[]): Promise<Question[]> {
+    const generation = this.generation;
+    const controller = new AbortController();
+    this.questionControllers.set(key, controller);
+    const request = this.transport
+      .get<unknown>(
+        `/api/v1/questions?ids=${encodeURIComponent(ids.join(','))}&revision=${encodeURIComponent(this.revision)}`,
+        {
+          signal: controller.signal,
+          policy: this.retryPolicy,
+          random: this.random,
+        },
+      )
+      .then((payload) => {
+        if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
+        if (responseRevision(payload) === undefined)
+          throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
+        if (responseRevision(payload) !== this.revision) throw revisionError();
+        if (!isQuestionsById(payload, ids, (id) => this.cache.quizIdOf(id)))
+          throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
+        const questions = payload.questions.map((question) => ({ ...question, metadata: question.metadata ?? {} }));
+        this.cache.addQuestions(questions);
+        this.notify();
+        return questions;
+      })
+      .catch((error) => {
+        if (generation !== this.generation) throw genericFailure('cancelled');
+        throw error;
+      })
+      .finally(() => {
+        if (this.pending.get(key) === request) {
+          this.pending.delete(key);
+          this.questionControllers.delete(key);
+        }
+      });
+    this.pending.set(key, request);
+    return request;
+  }
+
+  /** Loads the catalogs a generated test draws from, picks its questions (or keeps `questionIds` still in the catalog), and loads them. */
+  async ensureTestQuestions(quiz: Quiz, questionIds?: string[]): Promise<string[]> {
+    const mixed = quiz.id === MIXED_TEST_ID;
+    let subjectIds = [quiz.subjectId];
+    if (mixed) {
+      subjectIds = (await this.ensureSubjects()).map((subject) => subject.id);
+      await Promise.all(subjectIds.map((id) => this.ensureQuizzes(id)));
+    } else await this.ensureQuizzes(quiz.subjectId);
+    let ids: string[];
+    if (questionIds) ids = questionIds.filter((id) => this.cache.quizIdOf(id) !== undefined);
+    else {
+      const pool = subjectIds.map((subjectId) =>
+        this.listTopics(subjectId).map((topic) =>
+          this.listQuizzes(subjectId)
+            .filter((candidate) => candidate.topicId === topic.id)
+            .map((candidate) => candidate.questionIds ?? []),
+        ),
+      );
+      ids = selectTestQuestions(pool, mixed ? MIXED_TEST_SIZE : SUBJECT_TEST_SIZE, Math.floor(this.random() * 2 ** 32));
+    }
+    if (ids.length > 0) await this.ensureQuestionsById(ids);
+    return ids;
   }
 
   cancelQuestionLoad(quizId: string) {

@@ -11,6 +11,7 @@ import { activeSubjectStats, type SubjectStat } from '../selectors/progress';
 import { ActiveSubjectCarousel } from '../components/ActiveSubjectCarousel';
 import { StatCard, formatStatCount } from '../../../shared/ui/catalog/StatCard';
 import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
+import { GeneratedTestCard, type GeneratedTestControls } from '../components/GeneratedTestCard';
 import { QuizSubjectCard } from '../components/QuizSubjectCard';
 import { SubjectCatalogPage, SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardLayout';
@@ -128,6 +129,7 @@ export function DashboardScreen({
   onContinueSubject = onSelectSubject,
   statsError,
   subjectsError,
+  mixedTest,
 }: {
   attempts: readonly CompletedAttempt[];
   subjectStats: SubjectStat[];
@@ -145,6 +147,7 @@ export function DashboardScreen({
   onContinueSubject?: (subject: Subject) => void;
   statsError?: Error;
   subjectsError?: Error;
+  mixedTest?: GeneratedTestControls;
 }) {
   const [manualRetryPending, setManualRetryPending] = useState(false);
   const manualRetryStarted = useRef(false);
@@ -185,6 +188,14 @@ export function DashboardScreen({
         />
       )}
       <StudyDashboardLayout
+        beforeSubjects={
+          mixedTest &&
+          !loading &&
+          !sharedRecovery &&
+          !subjectsFailure && (
+            <GeneratedTestCard {...mixedTest} description="Questions from every subject and topic, new each time" />
+          )
+        }
         subjectsActions={
           <SubjectFilterPill
             value={catalog.filter}

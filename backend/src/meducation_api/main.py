@@ -1,3 +1,4 @@
+import re
 from collections.abc import AsyncIterator, Callable, Iterator
 from contextlib import asynccontextmanager
 from typing import cast
@@ -39,6 +40,7 @@ from meducation_api.settings import Settings
 class SubjectSummary(Subject):
     quizCount: int
     quizIds: list[str]
+    questionCount: int
 
 
 class SubjectCatalogResponse(BaseModel):
@@ -50,6 +52,13 @@ class CatalogQuiz(Quiz):
     subjectId: str
     questionCount: int
     questionIds: list[str]
+
+
+# Part of every content ETag. Bump it whenever a learner response shape changes, so browsers
+# don't revalidate a cached body in the old shape against an unchanged content revision.
+RESPONSE_FORMAT = 2
+MAX_QUESTION_IDS = 300
+QUESTION_ID = re.compile(r"i[1-9]\d*")
 
 
 class QuizCatalogResponse(BaseModel):
@@ -189,7 +198,7 @@ def create_app(
         request: Request,
         revision: str | None,
     ) -> Response:
-        etag = f'"{bank.revision}"'
+        etag = f'"{bank.revision}.v{RESPONSE_FORMAT}"'
         if revision is not None and revision != bank.revision:
             raise HTTPException(status_code=409, detail={"code": "content_revision_changed"})
         if request.headers.get("if-match") not in (None, etag):
@@ -204,8 +213,15 @@ def create_app(
     ) -> SubjectCatalogResponse:
         summaries: list[SubjectSummary] = []
         for subject in bank_subjects:
-            count, ids = bank.subject_quiz_summary(subject.id)
-            summaries.append(SubjectSummary(**subject.model_dump(exclude_none=True), quizCount=count, quizIds=ids))
+            quizzes = bank.list_quizzes(subject.id)
+            summaries.append(
+                SubjectSummary(
+                    **subject.model_dump(exclude_none=True),
+                    quizCount=len(quizzes),
+                    quizIds=[quiz.id for quiz, _ in quizzes],
+                    questionCount=sum(count for _, count in quizzes),
+                )
+            )
         return SubjectCatalogResponse(revision=bank.revision, subjects=summaries)
 
     def flashcard_subject_catalog(bank: FlashcardCatalogRepository) -> FlashcardSubjectListResponse:
@@ -360,6 +376,34 @@ def create_app(
         return content_response(
             lambda: QuestionListResponse(
                 revision=bank.revision, questions=bank.list_questions(quiz_id)
+            ),
+            bank,
+            request,
+            revision,
+        )
+
+    @app.get(
+        "/api/v1/questions",
+        response_model=QuestionListResponse,
+        response_model_exclude_unset=True,
+    )
+    def get_questions(
+        request: Request,
+        ids: str | None = None,
+        revision: str | None = None,
+        view: ContentView = view_dependency,
+    ) -> Response:
+        parts = (ids or "").split(",")
+        if (
+            not 1 <= len(parts) <= MAX_QUESTION_IDS
+            or len(set(parts)) != len(parts)
+            or not all(QUESTION_ID.fullmatch(part) for part in parts)
+        ):
+            raise HTTPException(status_code=422, detail={"code": "invalid_question_ids"})
+        bank = view.questions
+        return content_response(
+            lambda: QuestionListResponse(
+                revision=bank.revision, questions=bank.get_questions(parts)
             ),
             bank,
             request,

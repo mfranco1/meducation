@@ -19,6 +19,7 @@ describe('quiz launch coordinator', () => {
     const next = deferred<Question[]>();
     const loader = {
       ensureQuestions: vi.fn().mockReturnValueOnce(old.promise).mockReturnValueOnce(next.promise),
+      ensureTestQuestions: vi.fn(),
       cancelQuestionLoads: vi.fn(),
     };
     const action = vi.fn();
@@ -42,6 +43,7 @@ describe('quiz launch coordinator', () => {
   it('reports only the current failure and allows a fresh launch to recover', async () => {
     const loader = {
       ensureQuestions: vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce([]),
+      ensureTestQuestions: vi.fn(),
       cancelQuestionLoads: vi.fn(),
     };
     const action = vi.fn();
@@ -66,6 +68,7 @@ describe('quiz launch coordinator', () => {
             reject = fail;
           }),
       ),
+      ensureTestQuestions: vi.fn(),
       cancelQuestionLoads: vi.fn(),
     };
     const onFailure = vi.fn();
@@ -85,6 +88,7 @@ describe('fresh quiz launch admission', () => {
     const loader = {
       validateLaunch: vi.fn().mockRejectedValueOnce(new Error('offline')).mockResolvedValue(admit),
       ensureQuestions: vi.fn().mockResolvedValue([]),
+      ensureTestQuestions: vi.fn(),
       cancelQuestionLoads: vi.fn(),
     };
     const action = vi.fn();
@@ -107,6 +111,7 @@ describe('fresh quiz launch admission', () => {
         .mockReturnValueOnce(old.promise)
         .mockResolvedValue(() => undefined),
       ensureQuestions: vi.fn().mockResolvedValue([]),
+      ensureTestQuestions: vi.fn(),
       cancelQuestionLoads: vi.fn(),
     };
     const oldAction = vi.fn();
@@ -119,5 +124,20 @@ describe('fresh quiz launch admission', () => {
     expect(oldAction).not.toHaveBeenCalled();
     expect(loader.ensureQuestions).toHaveBeenCalledTimes(1);
     expect(loader.ensureQuestions).toHaveBeenCalledWith('next');
+  });
+
+  it('loads a generated test by its question IDs and passes them to the action', async () => {
+    const loader = {
+      ensureQuestions: vi.fn(),
+      ensureTestQuestions: vi.fn().mockResolvedValue(['q1', 'q2']),
+      cancelQuestionLoads: vi.fn(),
+    };
+    const action = vi.fn();
+    const test = { ...quiz, id: 'mixed-test' };
+    const { result } = renderHook(() => useQuizLaunch(loader));
+    act(() => result.current.launch(test, action, ['q1', 'q2', 'gone']));
+    await waitFor(() => expect(action).toHaveBeenCalledWith(['q1', 'q2']));
+    expect(loader.ensureTestQuestions).toHaveBeenCalledWith(test, ['q1', 'q2', 'gone']);
+    expect(loader.ensureQuestions).not.toHaveBeenCalled();
   });
 });

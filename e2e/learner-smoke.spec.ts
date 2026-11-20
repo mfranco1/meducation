@@ -173,7 +173,7 @@ test('a failed flashcard deck request shows a toast and recovers through the dec
   releaseFailure();
   await expect(page.getByRole('progressbar', { name: 'Loading flashcard deck' })).toHaveCount(0);
   await expect(page.getByRole('alert')).toContainText('Unable to load deck');
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Browser Test Deck' })).toBeVisible();
   for (const width of [320, 390, 1048, 1440]) {
     await page.setViewportSize({ width, height: 800 });
@@ -205,7 +205,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
     contentType: 'image/png',
   });
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
   await expect(page.getByText('2 cards')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Topic' })).toHaveCount(0);
   const subjectScreenshot = testInfo.outputPath('flashcard-subject-desktop.png');
@@ -343,10 +343,10 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
-  await expect(page.getByText('2 questions')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
+  await expect(page.getByText('2 questions').first()).toBeVisible();
 
-  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
   const firstQuizStart = Date.now();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await showQuestion(page, /What is/);
@@ -421,7 +421,7 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   await expect(page.getByText('2 correct · 0 incorrect · 0 unanswered')).toBeVisible();
   await page.getByRole('button', { name: 'Back to quizzes' }).click();
 
-  await expect(page.getByRole('button', { name: /^Retake quiz/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Retake quiz: (?!.*Subject Test)/ })).toBeVisible();
 });
 
 test('addresses follow navigation and work with reload, Back, Forward and links', async ({ page }) => {
@@ -434,9 +434,9 @@ test('addresses follow navigation and work with reload, Back, Forward and links'
   await expect(page).toHaveURL('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.goForward();
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
 
-  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByText(/^Question 1 of 2$/)).toBeVisible();
   expect(page.url().startsWith(`${subjectUrl}/`)).toBe(true);
@@ -448,7 +448,7 @@ test('addresses follow navigation and work with reload, Back, Forward and links'
   await page.goBack();
   await exit.getByRole('button', { name: 'Leave', exact: true }).click();
   await expect(page).toHaveURL(subjectUrl);
-  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Resume quiz: (?!.*Subject Test)/ })).toBeVisible();
 
   await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
   await page.getByRole('button', { name: /^Study deck/ }).click();
@@ -460,7 +460,7 @@ test('addresses follow navigation and work with reload, Back, Forward and links'
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
   // A link to a deck leaves its subject page behind it.
   await page.goBack();
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
   await expect(page).toHaveURL(/\/flashcards\/[^/]+$/);
   await page.goForward();
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
@@ -553,7 +553,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await openTopicIfNeeded(page);
-  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
   await page.getByRole('button', { name: 'Flashcards' }).click();
@@ -563,14 +563,14 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await openTopicIfNeeded(page);
-  await page.getByRole('button', { name: /^Resume quiz/ }).click();
+  await page.getByRole('button', { name: /^Resume quiz: (?!.*Subject Test)/ }).click();
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
 });
 
 test('Exam Mode submission offers a one-time read-only review', async ({ page }, testInfo) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
   await page.getByRole('button', { name: 'Exam Mode' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await showQuestion(page, /What is/);
@@ -615,7 +615,7 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page },
   await expect(page.getByRole('heading', { name: /What is/ })).toBeVisible();
   await page.getByRole('button', { name: 'Leave review' }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Leave', exact: true }).click();
-  await expect(page.getByRole('button', { name: /^Retake quiz/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Retake quiz: (?!.*Subject Test)/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Review results' })).toHaveCount(0);
 });
 
@@ -702,7 +702,7 @@ test('subject quiz failure stays below the tabs with shimmer placeholders throug
   await expect(banner.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
   releaseRetry();
   await openTopicIfNeeded(page);
-  await expect(page.getByRole('button', { name: /^Start quiz/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ })).toBeVisible();
   expect(failures).toBe(2);
   await expectNoHorizontalOverflow(page);
 });
@@ -720,14 +720,14 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await openTopicIfNeeded(page);
-  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
 
   const toast = page.getByRole('alert');
   await expect(toast).toContainText('Unable to load questions');
   await expect(toast).toContainText('Browser Test Quiz');
   await expect(toast).not.toContainText('private backend detail');
-  await expect(page.getByRole('button', { name: /^Start quiz/ })).toBeEnabled();
+  await expect(page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ })).toBeEnabled();
   const box = await toast.boundingBox();
   expect(box).not.toBeNull();
   expect(box!.x + box!.width).toBeGreaterThan(370);
@@ -737,7 +737,7 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   await expect(toast).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await openTopicIfNeeded(page);
-  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await expect(page.getByRole('alert')).toBeVisible();
   await page.reload();
@@ -764,7 +764,7 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   await expect(loading).toHaveCount(0);
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await openTopicIfNeeded(page);
-  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await showQuestion(page, /What is/);
   await expect(page.locator('.katex')).toBeVisible();
@@ -778,4 +778,37 @@ test('nginx learner image hides the editor and sends security headers', async ({
   const headers = (await request.get(`${origin}/`)).headers();
   expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
   expect(headers['x-content-type-options']).toBe('nosniff');
+});
+
+test('a Subject Test resumes from its address and a Mixed Test starts from the dashboard', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await page.getByRole('button', { name: 'Start quiz: Browser Test Subject Subject Test' }).click();
+  const setup = page.getByRole('dialog');
+  await expect(setup.getByRole('button', { name: 'Browse Answers' })).toHaveCount(0);
+  await setup.getByRole('button', { name: 'Begin Quiz' }).click();
+  await expect(page).toHaveURL(/\/quizzes\/s1\/test$/);
+  await expect(page.getByText(/^Question 1 of 2$/)).toBeVisible();
+  await page.getByRole('radio').first().check();
+
+  await page.reload();
+  await expect(page.getByText(/^Question 1 of 2$/)).toBeVisible();
+  await page.goBack();
+  await page.getByRole('dialog').getByRole('button', { name: 'Leave', exact: true }).click();
+  await expect(page.getByRole('button', { name: 'Resume quiz: Browser Test Subject Subject Test' })).toBeVisible();
+  await page.goto('/quizzes/s1/test');
+  await expect(page.getByText(/^Question 1 of 2$/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Finish' }).first().click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
+  await page.getByRole('button', { name: 'Review results' }).click();
+  await expect(page.getByText(/^Question 1 of 2$/)).toBeVisible();
+
+  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Leave', exact: true }).click();
+  await expect(page.getByRole('group', { name: 'Completed quizzes' })).toContainText('1');
+  await page.getByRole('button', { name: 'Start quiz: Mixed Test' }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
+  await expect(page).toHaveURL(/\/quizzes\/mixed-test$/);
+  await expect(page.getByText(/^Question 1 of 2$/)).toBeVisible();
 });

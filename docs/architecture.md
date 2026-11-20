@@ -34,7 +34,7 @@ Cycles are not checked. The learner build fails if it ships admin or bank module
 
 1. Editors change draft records; publication builds both documents from the draft, stores an immutable release and moves the active pointer.
 2. Each API content request reads the active pointer once and pins that release for both quiz and flashcard readers. A database failure returns a sanitized 503; nothing falls back to files or stale caches.
-3. The learner loads content in stages and revalidates at launch ([product](product.md#loading-and-freshness)). `src/content/api` validates every response before it enters a revision-scoped cache.
+3. The learner loads content in stages and revalidates at launch ([product](product.md#loading-and-freshness)). `src/content/api` validates every response before it enters a revision-scoped cache. Subject Tests and the Mixed Test pick question IDs in the browser from the quiz catalogs (`src/domain/generatedTests.ts`) and load them with one `GET /api/v1/questions?ids=` request.
 
 Worker startup checks schema and publication once. Workers never migrate or bootstrap, and health routes do not query Postgres.
 

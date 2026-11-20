@@ -14,6 +14,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useEffect, useState } from 'react';
+import { isGeneratedQuizId } from '../../../../domain/generatedTests';
 import type { FeedbackMode, Quiz } from '../../../../domain/types';
 
 type SetupMode = FeedbackMode | 'browse';
@@ -29,6 +30,7 @@ interface QuizSetupDialogProps {
 export function QuizSetupDialog({ open, quiz, onClose, onStart, onBrowse }: QuizSetupDialogProps) {
   const [mode, setMode] = useState<SetupMode>('immediate');
   const [shuffle, setShuffle] = useState(true);
+  const canBrowse = import.meta.env.DEV && !isGeneratedQuizId(quiz.id);
 
   useEffect(() => {
     if (open) {
@@ -58,12 +60,12 @@ export function QuizSetupDialog({ open, quiz, onClose, onStart, onBrowse }: Quiz
             >
               <ToggleButton value="immediate">Fast Feedback</ToggleButton>
               <ToggleButton value="exam">Exam Mode</ToggleButton>
-              {import.meta.env.DEV && <ToggleButton value="browse">Browse Answers</ToggleButton>}
+              {canBrowse && <ToggleButton value="browse">Browse Answers</ToggleButton>}
             </ToggleButtonGroup>
             <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
               {mode === 'immediate'
                 ? 'Selecting an answer locks it and shows the explanation right away.'
-                : mode === 'browse' && import.meta.env.DEV
+                : mode === 'browse' && canBrowse
                   ? 'Browse every question with the correct answer and explanation shown. Nothing is recorded.'
                   : 'Answers remain hidden until you finish and submit the entire test.'}
             </Typography>

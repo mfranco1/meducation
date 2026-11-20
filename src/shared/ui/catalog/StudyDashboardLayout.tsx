@@ -6,6 +6,7 @@ export function StudyDashboardLayout({
   title,
   summary,
   continueStudying,
+  beforeSubjects,
   children,
   subjectsHeading = 'All Subjects',
   subjectsActions,
@@ -13,6 +14,7 @@ export function StudyDashboardLayout({
   title?: string;
   summary?: ReactNode;
   continueStudying?: ReactNode;
+  beforeSubjects?: ReactNode;
   children: ReactNode;
   subjectsHeading?: string;
   subjectsActions?: ReactNode;
@@ -47,6 +49,7 @@ export function StudyDashboardLayout({
       ) : (
         summary
       )}
+      {beforeSubjects && <Box sx={{ mb: 4 }}>{beforeSubjects}</Box>}
       <Box
         sx={{
           display: 'flex',

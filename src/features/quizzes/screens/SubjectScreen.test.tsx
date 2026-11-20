@@ -4,6 +4,7 @@ import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Attempt, CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
 import { theme } from '../../../shared/theme';
+import { subjectTestQuiz } from '../../../domain/generatedTests';
 import { SubjectScreen, type QuizProgress } from './SubjectScreen';
 import { matchMediaFor } from '../../../test/setup';
 
@@ -570,5 +571,36 @@ describe('continue studying destination', () => {
     );
     expect(screen.getByRole('heading', { name: 'Topics' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: quiz.name })).toBeNull();
+  });
+});
+
+describe('subject test card', () => {
+  it('starts a Subject Test from the setup dialog without offering Browse Answers', () => {
+    const onStart = vi.fn();
+    const test = subjectTestQuiz(subject, 40);
+    render(
+      <ThemeProvider theme={theme}>
+        <SubjectScreen
+          subject={subject}
+          topics={topics}
+          progress={[{ quiz, completionCount: 0 }]}
+          subjectTest={{
+            progress: { quiz: test, completionCount: 0 },
+            attempts: [],
+            onStart,
+            onResume: vi.fn(),
+            onReview: vi.fn(),
+          }}
+          onResumeQuiz={vi.fn()}
+          onStartQuiz={vi.fn()}
+          onBrowseQuiz={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    expect(screen.getByText('40 questions')).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: `Start quiz: ${test.name}` }));
+    expect(screen.queryByRole('button', { name: 'Browse Answers' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
+    expect(onStart).toHaveBeenCalledWith(test, 'immediate', true);
   });
 });
