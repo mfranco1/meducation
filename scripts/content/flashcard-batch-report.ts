@@ -1,7 +1,16 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { markdownIssues } from '../../src/content/validation/markdownValidation';
-import { jaccard, normalize, tokens, type Finding } from './quiz-batch-report';
+import {
+  CURRENCY_NOTES,
+  jaccard,
+  normalize,
+  retiredFindings,
+  retiredTerms,
+  tokens,
+  type Finding,
+  type RetiredTerm,
+} from './quiz-batch-report';
 
 export interface FlashcardOutline {
   topics: {
@@ -29,7 +38,12 @@ const FIELD_POLICY = { front: 'stem', back: 'rationale', sources: 'sources' } as
 
 export function buildReport(
   value: unknown,
-  { outline, plan, topic }: { outline: FlashcardOutline; plan?: FlashcardPlan; topic?: string },
+  {
+    outline,
+    plan,
+    topic,
+    retired = [],
+  }: { outline: FlashcardOutline; plan?: FlashcardPlan; topic?: string; retired?: RetiredTerm[] },
 ) {
   const findings: Finding[] = [];
   const error = (where: string, message: string) => findings.push({ level: 'error', where, message });
@@ -153,15 +167,18 @@ export function buildReport(
   });
 
   // Style warnings on new cards and on edited faces.
-  const faces: { where: string; front?: string; back?: string }[] = [
+  const text = (value: unknown) => (typeof value === 'string' ? value : undefined);
+  const faces: { where: string; front?: string; back?: string; sources?: string }[] = [
     ...added.map((a) => ({ where: a.where, ...a.card })),
     ...edits.map((e) => ({
       where: `edits (${e.id})`,
-      front: typeof e.card.front === 'string' ? e.card.front : undefined,
-      back: typeof e.card.back === 'string' ? e.card.back : undefined,
+      front: text(e.card.front),
+      back: text(e.card.back),
+      sources: text(e.card.sources),
     })),
   ];
-  for (const { where, front, back } of faces) {
+  for (const { where, front, back, sources } of faces) {
+    findings.push(...retiredFindings(where, [front, back, sources], retired));
     if (front && front.length > 160) warn(where, `Front is ${front.length} characters; keep it to 160.`);
     if (back && back.length > 400 && !/^\s*\|.*\|\s*$/m.test(back))
       warn(where, `Back is ${back.length} characters; keep it to 400 or use a table.`);
@@ -231,6 +248,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     outline: read(outlinePath),
     plan: planPath ? read(planPath) : undefined,
     topic,
+    retired: retiredTerms(readFileSync(CURRENCY_NOTES, 'utf8')),
   });
   console.log(report.text);
   if (report.errors) process.exitCode = 1;

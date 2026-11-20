@@ -47,6 +47,33 @@ export const normalize = (stem: string) =>
     .replace(/[^\p{L}\p{N}\s]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
+// Retired terms come from the Gate column of .agents/shared/currency-notes.md: each backticked cell entry
+// is a case-insensitive pattern matched as whole words, except right after "formerly (called)".
+export const CURRENCY_NOTES = '.agents/shared/currency-notes.md';
+export interface RetiredTerm {
+  flag: string;
+  pattern: RegExp;
+}
+export function retiredTerms(markdown: string): RetiredTerm[] {
+  return markdown
+    .split('\n')
+    .filter((line) => line.startsWith('|'))
+    .flatMap((line) => [...(line.split('|').at(-2) ?? '').matchAll(/`([^`]+)`/g)].map((m) => m[1]))
+    .map((flag) => ({
+      flag,
+      pattern: new RegExp(`(?<![\\p{L}\\p{N}-])(?<!formerly (?:called )?)(?:${flag})(?![\\p{L}\\p{N}-])`, 'iu'),
+    }));
+}
+export function retiredFindings(where: string, texts: (string | undefined)[], terms: RetiredTerm[]): Finding[] {
+  const text = texts.filter(Boolean).join('\n');
+  return terms
+    .filter((t) => t.pattern.test(text))
+    .map((t) => ({
+      level: 'warning' as const,
+      where,
+      message: `Uses retired \`${t.flag}\`; write the current form from currency-notes.md (fine in a published title).`,
+    }));
+}
 export const tokens = (stem: string) => new Set(normalize(stem).split(' '));
 export const jaccard = (a: Set<string>, b: Set<string>) => {
   let shared = 0;
@@ -236,7 +263,12 @@ function blueprintFindings(entries: Entry[], blueprint: Blueprint) {
 
 export function buildReport(
   value: unknown,
-  { vocabulary, outline, blueprint }: { vocabulary: Vocabulary; outline?: Outline; blueprint?: Blueprint },
+  {
+    vocabulary,
+    outline,
+    blueprint,
+    retired = [],
+  }: { vocabulary: Vocabulary; outline?: Outline; blueprint?: Blueprint; retired?: RetiredTerm[] },
 ) {
   const parsed = parseBulkAddDraft(value, { kind: 'subject', subjectId: 'x' });
   const findings: Finding[] = parsed.errors.map((message) => ({ level: 'error', where: 'Batch shape', message }));
@@ -260,7 +292,17 @@ export function buildReport(
       })),
     ),
   );
-  entries.forEach((entry) => findings.push(...itemFindings(entry, vocabulary)));
+  for (const entry of entries) {
+    const { item, where } = entry;
+    findings.push(...itemFindings(entry, vocabulary));
+    findings.push(
+      ...retiredFindings(
+        where,
+        [item.stem, ...item.choices, item.rationale, ...(item.pearls ?? []), item.rationaleMeta?.sources],
+        retired,
+      ),
+    );
+  }
   const questions = entries.map((entry, index) => ({
     id: String(index),
     quizId: entry.quiz,
@@ -384,6 +426,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     vocabulary: read(vocabularyPath),
     outline: outlinePath ? read(outlinePath) : undefined,
     blueprint: blueprintPath ? read(blueprintPath) : undefined,
+    retired: retiredTerms(readFileSync(CURRENCY_NOTES, 'utf8')),
   });
   console.log(report.text);
   if (report.errors) process.exitCode = 1;

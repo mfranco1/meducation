@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildReport } from './quiz-batch-report';
+import { buildReport, retiredTerms } from './quiz-batch-report';
 
 const vocabulary = { system: ['Cardiovascular'], questionType: ['Diagnosis'], difficulty: ['easy', 'medium', 'hard'] };
 const item = (stem: string, extra: object = {}) => ({
@@ -160,5 +160,27 @@ describe('quiz batch report', () => {
     const report = run([item('Which rhythm is shown?'), item('which RHYTHM is shown')]);
     expect(report.errors).toBe(1);
     expect(report.text).toContain('Duplicate of T › Q › item 1');
+  });
+
+  it('warns on retired terms from the currency notes Gate column', () => {
+    const notes = [
+      '| Retired | Current | Since | Gate |',
+      '| --- | --- | --- | --- |',
+      '| Amrinone | Inamrinone | USAN | `amrinone` |',
+      '| NAFLD | MASLD | 2023 | `NAFLD`, `non-?alcoholic fatty liver` |',
+      '| A rule | Its fix | 2020 | |',
+    ].join('\n');
+    const retired = retiredTerms(notes);
+    expect(retired.map((t) => t.flag)).toEqual(['amrinone', 'NAFLD', 'non-?alcoholic fatty liver']);
+    const items = [
+      item('Which drug is Amrinone?'),
+      item('Is inamrinone current?', { pearls: ['Non-alcoholic fatty liver.'] }),
+      item('Which one?', { rationale: 'Inamrinone (formerly amrinone) is used.' }),
+    ];
+    const report = buildReport(batch(items), { vocabulary, retired }).text;
+    expect(report).toContain('item 1 ("Which drug is Amrinone?"): Uses retired `amrinone`');
+    expect(report).toContain('item 2 ("Is inamrinone current?"): Uses retired `non-?alcoholic fatty liver`');
+    expect(report).not.toContain('item 2 ("Is inamrinone current?"): Uses retired `amrinone`');
+    expect(report).not.toContain('item 3 ("Which one?"): Uses retired');
   });
 });

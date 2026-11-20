@@ -93,4 +93,14 @@ describe('flashcard batch report', () => {
     const other = { topics: [{ name: 'T', decks: [{ name: 'X', add: 1 }] }] };
     expect(run(batch([card('One new card')]), other).text).toContain('Deck is not in the plan');
   });
+
+  it('warns on retired terms in new cards and edits', () => {
+    const retired = [{ flag: 'PCOS', pattern: /\bPCOS\b/i }];
+    const report = buildReport(
+      { ...batch([card('First-line drug in PCOS?')]), edits: [{ id: 'f1', version: 2, back: 'Not PMOS.' }] },
+      { outline, retired },
+    ).text;
+    expect(report).toContain('card 1 ("First-line drug in PCOS?"): Uses retired `PCOS`');
+    expect(report).not.toContain('edits (f1): Uses retired');
+  });
 });

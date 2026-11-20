@@ -11,7 +11,7 @@ Rules every quiz item and flashcard follows. Shared by write-quizzes and write-f
 ## Philippine audience
 
 - The audience trains for Philippine licensure. Scope epidemiology, rankings and data to the Philippines first, then the region (Southeast Asia, Asia), then global. Never key a fact scoped only to one foreign country. Key a ranking only from a guideline, national surveillance or multicenter data, never one hospital's case series.
-- Where Philippine and international guidance differ, key the Philippine specialty society (POGS in obstetrics and gynecology), then the international body (FIGO, WHO), then the US body (ACOG). Cite the body whose position is keyed and name it in the stem or on the card.
+- Key the guideline Philippine practice follows, within Philippine law. In obstetrics and gynecology that is POGS, then FIGO or WHO, then ACOG. In most other fields it is usually the international or specialty society guideline (ACC/AHA, ADA, IDSA, KDIGO, GINA, GOLD), unless a Philippine guideline or DOH program sets the national standard (TB, HIV, immunization). Cite the body whose position is keyed, and name it in the stem or on the card where bodies differ.
 - Induced abortion is illegal in the Philippines: never key or teach elective termination, termination for fetal anomaly or selective reduction as an option. Postabortion care and management of spontaneous loss and fetal death stay in scope.
 - Legal Medicine: current law only, with no superseded rules or outdated forensics.
 
