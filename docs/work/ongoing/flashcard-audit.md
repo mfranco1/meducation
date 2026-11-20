@@ -15,8 +15,9 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 ## Status
 
 - Pilot done: Critical Care, 109 cards, 12 edits (11%), 8 trivia or duplicate cards deleted. Reviewers kept reporting ledger-only doubts; the reviewer prompt now loads web tools up front and asks for URLs. Send back any reviewer that reports an unchecked doubt.
+- Unresolved doubts: user rule is to follow the latest guideline; where it differs from the latest primary textbook, give both, labelled.
 - Per topic: audit, then show the user the reviewers' trivia and existing-duplicate lists; delete only what the user approves. Add coverage gaps to Top-ups below.
-- Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: Cardiovascular Medicine. Next: Structural Heart Disease, Arrhythmia and Heart Failure.
+- Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: Cardiovascular Medicine; Structural Heart. Next: Pulmonology. Run one IM topic per session to save context.
 
 ## Top-ups (after audits)
 
@@ -27,3 +28,4 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 
 - IM › Critical Care Medicine: 12 edits, 8 deletes.
 - IM › Cardiovascular Medicine: 21 edits, 22 deletes.
+- IM › Structural Heart Disease, Arrhythmia and Heart Failure: 25 edits, 18 deletes.
