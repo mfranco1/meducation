@@ -6,7 +6,7 @@ PostgreSQL holds the only writable paired quiz/flashcard bank. The FastAPI servi
 
 One frontend package and one Python package. Root HTML entries and tool configuration stay at the root. Use relative imports.
 
-- `src/app`: learner composition, navigation, lazy screens, landing page, progress backup wiring.
+- `src/app`: learner composition, navigation (session views own screen state; `navigation.ts` maps them to and from addresses and `App` keeps browser history in step), lazy screens, landing page, progress backup wiring.
 - `src/features/quizzes`, `src/features/flashcards`: screens, session coordination, selectors.
 - `src/shared`: theme, brand and reusable presentation under `ui/`.
 - `src/domain`: pure rules, types, repository interfaces. `src/persistence`: storage repositories and codecs.

@@ -40,7 +40,9 @@ import {
   quizProgressForSubject,
   subjectStatsFor,
 } from '../features/quizzes/selectors/progress';
-import { presentationIdentity, restoresScroll, screenIdentity, type View } from './navigation';
+import { pathFor, presentationIdentity, restoresScroll, routeFor, screenIdentity, type View } from './navigation';
+import { brand } from '../shared/brand';
+import { ScreenLoading } from '../shared/ui/loading/ScreenLoading';
 import { DashboardScreen } from '../features/quizzes/screens/DashboardScreen';
 import {
   QuizScreen,
@@ -335,6 +337,122 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       void loadRuntimeFlashcardSubjects().catch(() => undefined);
     }
   };
+  // The address follows the view; Back, Forward and opened links move the view.
+  const path = pathFor(view);
+  const pageName =
+    view.page === 'dashboard'
+      ? undefined
+      : view.page === 'flashcards'
+        ? 'Flashcards'
+        : view.page === 'subject'
+          ? `${view.subject.name} quizzes`
+          : view.page === 'flashcards-subject'
+            ? `${view.subject.name} flashcards`
+            : view.page === 'flashcards-study'
+              ? view.deck.name
+              : view.quiz.name;
+  const title = pageName ? `${pageName} | ${brand.name}` : brand.name;
+  const [routing, setRouting] = useState(() => window.location.pathname !== '/');
+  useEffect(() => {
+    if (routing) return;
+    document.title = title;
+    const from = window.location.pathname;
+    if (from === path) return;
+    const state = history.state as { back?: string; topic?: boolean } | null;
+    // Returning to the page this one was opened from reuses its history entry.
+    if (state?.back === path) history.back();
+    // An open topic's entry, or one that repeats the page before it, becomes the new page.
+    else if (state?.topic || state?.back === from) history.replaceState({ back: from }, '', path);
+    else history.pushState({ back: from }, '', path);
+  }, [routing, path, title]);
+  const openPath = async (target: string) => {
+    const route = routeFor(target);
+    const show = (to: string, action: () => void) => {
+      history.replaceState(history.state, '', to);
+      action();
+      setRouting(false);
+    };
+    cancel();
+    flashcards.cancelLaunch();
+    runtimeFlashcardBank.cancelAll();
+    const showDashboard = () =>
+      show('/', () => {
+        flashcards.showDashboard();
+        session.showDashboard();
+      });
+    const showFlashcards = () =>
+      show('/flashcards', () => {
+        flashcards.showDashboard();
+        session.showFlashcards();
+        void loadRuntimeFlashcardSubjects().catch(() => undefined);
+      });
+    if (route.page === 'dashboard') return showDashboard();
+    if (route.page === 'flashcards') return showFlashcards();
+    if (route.page === 'subject') {
+      if (!questionBank.listSubjects().some(({ id }) => id === route.subjectId)) {
+        await questionBank.ensureSubjects().catch(() => undefined);
+        if (window.location.pathname !== target) return;
+      }
+      const subject = questionBank.listSubjects().find(({ id }) => id === route.subjectId);
+      if (!subject) return showDashboard();
+      const subjectPath = pathFor({ page: 'subject', subject });
+      show(subjectPath, () => selectSubject(subject));
+      if (!route.quizId) return;
+      const quizzes = await questionBank.ensureQuizzes(subject.id).catch(() => []);
+      const quiz = quizzes.find(({ id }) => id === route.quizId);
+      if (window.location.pathname !== subjectPath || !quiz || !attemptRepository.getActive(quiz.id)) return;
+      preloadQuizScreen();
+      launch(quiz, () => session.resumeQuiz(quiz));
+      return;
+    }
+    if (!runtimeFlashcardBank.listSubjects().some(({ id }) => id === route.subjectId)) {
+      await loadRuntimeFlashcardSubjects().catch(() => undefined);
+      if (window.location.pathname !== target) return;
+    }
+    const subject = runtimeFlashcardBank.listSubjects().find(({ id }) => id === route.subjectId);
+    if (!subject) return showFlashcards();
+    const subjectPath = pathFor({ page: 'flashcards-subject', subject });
+    show(subjectPath, () => {
+      session.showFlashcards();
+      selectFlashcardSubject(subject);
+    });
+    if (!route.deckId) return;
+    const catalog = await runtimeFlashcardBank.ensureSubjectCatalog(subject.id).catch(() => undefined);
+    const deck = catalog?.decks.find(({ id }) => id === route.deckId);
+    if (window.location.pathname !== subjectPath || !deck) return;
+    preloadFlashcardStudyScreen();
+    void flashcards.launchDeck(deck, subject);
+  };
+  const followHistory = () => {
+    const target = window.location.pathname;
+    if (target === path) return;
+    // Leaving a quiz or review asks first, so the address stays until the learner confirms.
+    const stay = () => history.pushState({ back: target }, '', path);
+    if (session.view.page === 'quiz' || session.view.page === 'quiz-review') {
+      stay();
+      const route = routeFor(target);
+      if (route.page === 'dashboard') handleNavigation('quizzes');
+      else if (route.page === 'flashcards') handleNavigation('flashcards');
+      else if (session.view.page === 'quiz') requestQuizExit('subject');
+      else requestReviewExit('subject');
+      return;
+    }
+    if (view.page === 'flashcards-study' && !flashcards.saveAndExit()) return stay();
+    void openPath(target);
+  };
+  const latestRouting = useRef({ followHistory, openPath });
+  latestRouting.current = { followHistory, openPath };
+  const opened = useRef(false);
+  useEffect(() => {
+    const onPopState = () => latestRouting.current.followHistory();
+    window.addEventListener('popstate', onPopState);
+    // Strict Mode replays this effect; a second open would cancel the first one's loads.
+    if (!opened.current && window.location.pathname !== '/') {
+      opened.current = true;
+      void latestRouting.current.openPath(window.location.pathname).finally(() => setRouting(false));
+    }
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
   const leaveResults = () => {
     if (session.view.page === 'results') session.showQuizSubject(session.view.quiz);
   };
@@ -387,240 +505,244 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
       )}
       {currentSubject && loadingQuizIds.size > 0 && <LinearProgress aria-label="Loading quiz questions" />}
       {currentFlashcardSubject && flashcards.loadingDeckId && <LinearProgress aria-label="Loading flashcard deck" />}
-      <ScreenTransition
-        screenId={presentationIdentity(view)}
-        scrollId={currentScreenKey}
-        restoreScroll={restoresScroll}
-      >
-        <ScreenLoadBoundary
-          key={presentationIdentity(view)}
-          loadingLabel={loadingLabel}
-          onLoadingChange={setScreenLoading}
+      {routing ? (
+        <ScreenLoading />
+      ) : (
+        <ScreenTransition
+          screenId={presentationIdentity(view)}
+          scrollId={currentScreenKey}
+          restoreScroll={restoresScroll}
         >
-          {session.view.page === 'dashboard' && (
-            <DashboardScreen
-              attempts={progressSnapshot.completed}
-              subjectStats={subjectStats}
-              averageLatest={averageLatest}
-              personalLowest={personalLowest}
-              personalLowestSubject={personalLowestSubject}
-              loading={catalogState === 'idle' || catalogState === 'loading'}
-              retrying={catalogState === 'retrying'}
-              statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'}
-              activeAttempts={Object.keys(progressSnapshot.active).length > 0}
-              error={catalogState === 'error' ? catalogError : undefined}
-              retryAt={questionBank.getCatalogRetryAt()}
-              onRetry={() => {
-                if (catalogError instanceof ContentLoadError && catalogError.kind === 'revision') {
-                  window.location.reload();
-                  return;
+          <ScreenLoadBoundary
+            key={presentationIdentity(view)}
+            loadingLabel={loadingLabel}
+            onLoadingChange={setScreenLoading}
+          >
+            {session.view.page === 'dashboard' && (
+              <DashboardScreen
+                attempts={progressSnapshot.completed}
+                subjectStats={subjectStats}
+                averageLatest={averageLatest}
+                personalLowest={personalLowest}
+                personalLowestSubject={personalLowestSubject}
+                loading={catalogState === 'idle' || catalogState === 'loading'}
+                retrying={catalogState === 'retrying'}
+                statsLoading={catalogState === 'idle' || catalogState === 'loading' || catalogState === 'retrying'}
+                activeAttempts={Object.keys(progressSnapshot.active).length > 0}
+                error={catalogState === 'error' ? catalogError : undefined}
+                retryAt={questionBank.getCatalogRetryAt()}
+                onRetry={() => {
+                  if (catalogError instanceof ContentLoadError && catalogError.kind === 'revision') {
+                    window.location.reload();
+                    return;
+                  }
+                  if (catalogState === 'retrying') questionBank.retryCatalogNow();
+                  return questionBank.ensureSubjects().then(
+                    () => undefined,
+                    () => undefined,
+                  );
+                }}
+                onSelectSubject={selectSubject}
+                onContinueSubject={(subject) => selectSubject(subject, true)}
+              />
+            )}
+            {view.page === 'flashcards' && (
+              <FlashcardsDashboardScreen
+                subjects={flashcardDashboardData}
+                activeSubjects={activeFlashcardSubjectCards}
+                progress={flashcards.progress}
+                progressError={flashcards.persistenceError}
+                loading={
+                  runtimeFlashcardBank.getState('subjects') === 'idle' ||
+                  runtimeFlashcardBank.getState('subjects') === 'loading'
                 }
-                if (catalogState === 'retrying') questionBank.retryCatalogNow();
-                return questionBank.ensureSubjects().then(
-                  () => undefined,
-                  () => undefined,
-                );
-              }}
-              onSelectSubject={selectSubject}
-              onContinueSubject={(subject) => selectSubject(subject, true)}
-            />
-          )}
-          {view.page === 'flashcards' && (
-            <FlashcardsDashboardScreen
-              subjects={flashcardDashboardData}
-              activeSubjects={activeFlashcardSubjectCards}
-              progress={flashcards.progress}
-              progressError={flashcards.persistenceError}
-              loading={
-                runtimeFlashcardBank.getState('subjects') === 'idle' ||
-                runtimeFlashcardBank.getState('subjects') === 'loading'
-              }
-              error={runtimeFlashcardBank.getError('subjects')}
-              onRetry={() =>
-                loadRuntimeFlashcardSubjects().then(
-                  () => undefined,
-                  () => undefined,
-                )
-              }
-              onSelectSubject={selectFlashcardSubject}
-              onContinueSubject={(subject) => selectFlashcardSubject(subject, true)}
-            />
-          )}
-          {subject && (
-            <SubjectBrowseLayout
-              subjectId={subject.id}
-              subjectName={subject.name}
-              subjectDescription={subject.description}
-              contentType={currentSubject ? 'quizzes' : 'flashcards'}
-              onContentTypeChange={(type) => switchSubjectContent(subject, type)}
-              selectedTabRef={subjectTabRef}
-              progress={subjectProgress}
-              onBack={() => {
-                if (currentSubject) {
-                  cancel();
-                  session.showDashboard();
-                } else {
-                  runtimeFlashcardBank.cancel(`catalog:${subject.id}`);
-                  flashcards.showDashboard();
+                error={runtimeFlashcardBank.getError('subjects')}
+                onRetry={() =>
+                  loadRuntimeFlashcardSubjects().then(
+                    () => undefined,
+                    () => undefined,
+                  )
                 }
-              }}
-            >
-              {currentFlashcardSubject && (
-                <FlashcardSubjectScreen
-                  subject={currentFlashcardSubject}
-                  continueStudying={view.page === 'flashcards-subject' && view.continueStudying}
-                  catalog={flashcardCatalog}
-                  checkpoints={flashcards.progress.checkpoints}
-                  completionCounts={flashcards.progress.completionCounts}
-                  finishedAt={flashcards.progress.finishedAt ?? {}}
-                  loading={flashcardLoading}
-                  error={flashcardError}
-                  loadingDeckId={flashcards.loadingDeckId}
-                  onRetry={() => {
-                    const error = runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`);
-                    if (error instanceof ContentLoadError && error.kind === 'revision') {
-                      window.location.reload();
-                      return;
-                    }
-                    return runtimeFlashcardBank.ensureSubjectCatalog(currentFlashcardSubject.id).then(
-                      () => undefined,
-                      () => undefined,
-                    );
-                  }}
-                  onSelectDeck={(deck) => {
-                    void flashcards.launchDeck(deck, currentFlashcardSubject);
-                  }}
-                  onPrepareDeck={(deck) => {
-                    void runtimeFlashcardBank.ensureCards(deck.id).catch(() => undefined);
-                  }}
-                />
-              )}
-              {currentSubject && (
-                <SubjectScreen
-                  continueStudying={session.view.page === 'subject' && session.view.continueStudying}
-                  subject={currentSubject}
-                  topics={questionBank.listTopics(currentSubject.id)}
-                  progress={quizProgress}
-                  loadingQuizIds={loadingQuizIds}
-                  loading={currentQuizState === 'idle' || currentQuizState === 'loading'}
-                  retrying={currentQuizState === 'retrying'}
-                  recovery={currentQuizRecovery}
-                  error={currentQuizError}
-                  onRetry={() => {
-                    if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') {
-                      window.location.reload();
-                      return;
-                    }
-                    if (currentQuizRecovery?.busy) return;
-                    if (currentQuizState === 'retrying') questionBank.retryQuizNow(currentSubject.id);
-                    return questionBank.ensureQuizzes(currentSubject.id).then(
-                      () => undefined,
-                      () => undefined,
-                    );
-                  }}
-                  attemptsFor={(quizId) => progressSnapshot.completed.filter((attempt) => attempt.quizId === quizId)}
-                  onReviewAttempt={(quiz, attempt) => {
-                    preloadReviewScreen();
-                    launch(quiz, () => session.reviewAttempt(quiz, attempt));
-                  }}
-                  onResumeQuiz={(quiz) => {
-                    preloadQuizScreen();
-                    launch(quiz, () => session.resumeQuiz(quiz));
-                  }}
-                  onStartQuiz={(quiz, mode, shuffle) => {
-                    preloadQuizScreen();
-                    launch(quiz, () => session.startQuiz(quiz, mode, shuffle));
-                  }}
-                  onBrowseQuiz={(quiz) => {
-                    preloadBrowseScreen();
-                    launch(quiz, () => session.browseQuiz(quiz));
-                  }}
-                  onPrepareQuiz={(quiz) => {
-                    preloadQuizScreen();
-                    void questionBank.ensureQuestions(quiz.id).catch(() => undefined);
-                  }}
-                />
-              )}
-            </SubjectBrowseLayout>
-          )}
-          {view.page === 'quiz' && (
-            <QuizScreen
-              {...view}
-              questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
-              onCheckpoint={session.checkpoint}
-              onFinish={session.finishQuiz}
-              onRequestExit={() => requestQuizExit('subject')}
-              tip={
-                quizCompletions === 0 &&
-                !seenTips.has('quiz-keys') && (
-                  <ShortcutTip
-                    message="Press a choice's number or letter to answer. Use ← and → to move between questions."
-                    keys={quizTipKeys}
-                    onDone={seeQuizTip}
+                onSelectSubject={selectFlashcardSubject}
+                onContinueSubject={(subject) => selectFlashcardSubject(subject, true)}
+              />
+            )}
+            {subject && (
+              <SubjectBrowseLayout
+                subjectId={subject.id}
+                subjectName={subject.name}
+                subjectDescription={subject.description}
+                contentType={currentSubject ? 'quizzes' : 'flashcards'}
+                onContentTypeChange={(type) => switchSubjectContent(subject, type)}
+                selectedTabRef={subjectTabRef}
+                progress={subjectProgress}
+                onBack={() => {
+                  if (currentSubject) {
+                    cancel();
+                    session.showDashboard();
+                  } else {
+                    runtimeFlashcardBank.cancel(`catalog:${subject.id}`);
+                    flashcards.showDashboard();
+                  }
+                }}
+              >
+                {currentFlashcardSubject && (
+                  <FlashcardSubjectScreen
+                    subject={currentFlashcardSubject}
+                    continueStudying={view.page === 'flashcards-subject' && view.continueStudying}
+                    catalog={flashcardCatalog}
+                    checkpoints={flashcards.progress.checkpoints}
+                    completionCounts={flashcards.progress.completionCounts}
+                    finishedAt={flashcards.progress.finishedAt ?? {}}
+                    loading={flashcardLoading}
+                    error={flashcardError}
+                    loadingDeckId={flashcards.loadingDeckId}
+                    onRetry={() => {
+                      const error = runtimeFlashcardBank.getError(`catalog:${currentFlashcardSubject.id}`);
+                      if (error instanceof ContentLoadError && error.kind === 'revision') {
+                        window.location.reload();
+                        return;
+                      }
+                      return runtimeFlashcardBank.ensureSubjectCatalog(currentFlashcardSubject.id).then(
+                        () => undefined,
+                        () => undefined,
+                      );
+                    }}
+                    onSelectDeck={(deck) => {
+                      void flashcards.launchDeck(deck, currentFlashcardSubject);
+                    }}
+                    onPrepareDeck={(deck) => {
+                      void runtimeFlashcardBank.ensureCards(deck.id).catch(() => undefined);
+                    }}
                   />
-                )
-              }
-            />
-          )}
-          {import.meta.env.DEV && view.page === 'quiz-browse' && (
-            <QuizBrowseScreen
-              {...view}
-              questions={questionBank.listQuestions(view.quiz.id)}
-              onNavigate={session.navigateBrowse}
-              onDone={session.leaveBrowse}
-            />
-          )}
-          {view.page === 'quiz-review' && (
-            <QuizReviewScreen
-              {...view}
-              questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
-              contentChanged={
-                view.attempt.contentSignature !== undefined &&
-                view.attempt.contentSignature !== contentSignature(questionBank.listQuestions(view.quiz.id))
-              }
-              onNavigate={session.navigateReview}
-              onRequestExit={() => requestReviewExit('subject')}
-            />
-          )}
-          {view.page === 'results' && (
-            <ResultsScreen
-              {...view}
-              questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
-              onBack={leaveResults}
-              onReview={() => {
-                preloadReviewScreen();
-                session.reviewResults();
-              }}
-            />
-          )}
-          {view.page === 'flashcards-study' && (
-            <FlashcardStudyScreen
-              {...view}
-              cards={runtimeFlashcardBank.listCards(view.deck.id)}
-              openedCardIds={flashcards.openedCardIds}
-              flaggedCardIds={flashcards.flaggedCardIds}
-              persistenceError={flashcards.persistenceError}
-              onReveal={flashcards.toggleReveal}
-              onToggleFlag={flashcards.toggleFlag}
-              onNavigate={flashcards.navigateTo}
-              onPrevious={flashcards.previous}
-              onNext={flashcards.next}
-              onSaveAndExit={flashcards.saveAndExit}
-              onFinish={flashcards.finish}
-              tip={
-                deckCompletions === 0 &&
-                !seenTips.has('deck-keys') && (
-                  <ShortcutTip
-                    message="Press Space to reveal a card and again to go to the next one. Use ← and → to move. Click a revealed answer to hide it."
-                    keys={deckTipKeys}
-                    onDone={seeDeckTip}
+                )}
+                {currentSubject && (
+                  <SubjectScreen
+                    continueStudying={session.view.page === 'subject' && session.view.continueStudying}
+                    subject={currentSubject}
+                    topics={questionBank.listTopics(currentSubject.id)}
+                    progress={quizProgress}
+                    loadingQuizIds={loadingQuizIds}
+                    loading={currentQuizState === 'idle' || currentQuizState === 'loading'}
+                    retrying={currentQuizState === 'retrying'}
+                    recovery={currentQuizRecovery}
+                    error={currentQuizError}
+                    onRetry={() => {
+                      if (currentQuizError instanceof ContentLoadError && currentQuizError.kind === 'revision') {
+                        window.location.reload();
+                        return;
+                      }
+                      if (currentQuizRecovery?.busy) return;
+                      if (currentQuizState === 'retrying') questionBank.retryQuizNow(currentSubject.id);
+                      return questionBank.ensureQuizzes(currentSubject.id).then(
+                        () => undefined,
+                        () => undefined,
+                      );
+                    }}
+                    attemptsFor={(quizId) => progressSnapshot.completed.filter((attempt) => attempt.quizId === quizId)}
+                    onReviewAttempt={(quiz, attempt) => {
+                      preloadReviewScreen();
+                      launch(quiz, () => session.reviewAttempt(quiz, attempt));
+                    }}
+                    onResumeQuiz={(quiz) => {
+                      preloadQuizScreen();
+                      launch(quiz, () => session.resumeQuiz(quiz));
+                    }}
+                    onStartQuiz={(quiz, mode, shuffle) => {
+                      preloadQuizScreen();
+                      launch(quiz, () => session.startQuiz(quiz, mode, shuffle));
+                    }}
+                    onBrowseQuiz={(quiz) => {
+                      preloadBrowseScreen();
+                      launch(quiz, () => session.browseQuiz(quiz));
+                    }}
+                    onPrepareQuiz={(quiz) => {
+                      preloadQuizScreen();
+                      void questionBank.ensureQuestions(quiz.id).catch(() => undefined);
+                    }}
                   />
-                )
-              }
-            />
-          )}
-        </ScreenLoadBoundary>
-      </ScreenTransition>
+                )}
+              </SubjectBrowseLayout>
+            )}
+            {view.page === 'quiz' && (
+              <QuizScreen
+                {...view}
+                questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
+                onCheckpoint={session.checkpoint}
+                onFinish={session.finishQuiz}
+                onRequestExit={() => requestQuizExit('subject')}
+                tip={
+                  quizCompletions === 0 &&
+                  !seenTips.has('quiz-keys') && (
+                    <ShortcutTip
+                      message="Press a choice's number or letter to answer. Use ← and → to move between questions."
+                      keys={quizTipKeys}
+                      onDone={seeQuizTip}
+                    />
+                  )
+                }
+              />
+            )}
+            {import.meta.env.DEV && view.page === 'quiz-browse' && (
+              <QuizBrowseScreen
+                {...view}
+                questions={questionBank.listQuestions(view.quiz.id)}
+                onNavigate={session.navigateBrowse}
+                onDone={session.leaveBrowse}
+              />
+            )}
+            {view.page === 'quiz-review' && (
+              <QuizReviewScreen
+                {...view}
+                questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
+                contentChanged={
+                  view.attempt.contentSignature !== undefined &&
+                  view.attempt.contentSignature !== contentSignature(questionBank.listQuestions(view.quiz.id))
+                }
+                onNavigate={session.navigateReview}
+                onRequestExit={() => requestReviewExit('subject')}
+              />
+            )}
+            {view.page === 'results' && (
+              <ResultsScreen
+                {...view}
+                questions={attemptQuestions(questionBank.listQuestions(view.quiz.id), view.attempt)}
+                onBack={leaveResults}
+                onReview={() => {
+                  preloadReviewScreen();
+                  session.reviewResults();
+                }}
+              />
+            )}
+            {view.page === 'flashcards-study' && (
+              <FlashcardStudyScreen
+                {...view}
+                cards={runtimeFlashcardBank.listCards(view.deck.id)}
+                openedCardIds={flashcards.openedCardIds}
+                flaggedCardIds={flashcards.flaggedCardIds}
+                persistenceError={flashcards.persistenceError}
+                onReveal={flashcards.toggleReveal}
+                onToggleFlag={flashcards.toggleFlag}
+                onNavigate={flashcards.navigateTo}
+                onPrevious={flashcards.previous}
+                onNext={flashcards.next}
+                onSaveAndExit={flashcards.saveAndExit}
+                onFinish={flashcards.finish}
+                tip={
+                  deckCompletions === 0 &&
+                  !seenTips.has('deck-keys') && (
+                    <ShortcutTip
+                      message="Press Space to reveal a card and again to go to the next one. Use ← and → to move. Click a revealed answer to hide it."
+                      keys={deckTipKeys}
+                      onDone={seeDeckTip}
+                    />
+                  )
+                }
+              />
+            )}
+          </ScreenLoadBoundary>
+        </ScreenTransition>
+      )}
       <HelpDialog open={helpOpen} onClose={() => setHelpOpen(false)} />
       <ExitQuizDialog
         open={exitOpen}

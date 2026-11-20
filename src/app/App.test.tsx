@@ -25,6 +25,7 @@ function completed(quizId: string, subjectId: string, percentage: number): Compl
 }
 
 beforeEach(() => {
+  history.replaceState(null, '', '/');
   const values = new Map<string, string>();
   vi.stubGlobal('localStorage', {
     getItem: (key: string) => values.get(key) ?? null,

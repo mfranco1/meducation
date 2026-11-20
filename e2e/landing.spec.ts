@@ -313,7 +313,7 @@ test('About opens from both dashboards and preserves saved progress through brow
   await expect(about).toHaveCount(0);
   expect(await storedProgress()).toEqual(before);
   await page.goBack();
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/flashcards');
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
   await page.goForward();
   await expect(landing).toBeVisible();
@@ -326,8 +326,14 @@ test('About opens from both dashboards and preserves saved progress through brow
   expect(await storedProgress()).toEqual(before);
   // Start studying replaces About rather than leaving it as a redundant Back destination.
   await page.goBack();
-  await expect(page).toHaveURL('/');
+  await expect(page).toHaveURL('/flashcards');
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
+});
+
+test('a link into the app opens it without the landing page', async ({ page }) => {
+  await page.goto('/flashcards');
+  await expect(page.getByRole('button', { name: 'Flashcards', exact: true })).toHaveAttribute('aria-current', 'page');
+  await expect(page.getByRole('heading', { level: 1, name: heroTitle })).toHaveCount(0);
 });
 
 test('a direct About visit saves nothing until Start studying', async ({ page }) => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { presentationIdentity, restoresScroll, screenIdentity, type View } from './navigation';
+import { pathFor, presentationIdentity, restoresScroll, routeFor, screenIdentity, type View } from './navigation';
 
 describe('screenIdentity', () => {
   it('uses the quiz and attempt identity while ignoring question progress and attempt updates', () => {
@@ -73,4 +73,31 @@ it('shares subject presentation identity across tabs while keeping navigation sc
   expect(restoresScroll(screenIdentity(quizzes), 'flashcards')).toBe(false);
   expect(restoresScroll(screenIdentity(flashcards), 'dashboard')).toBe(false);
   expect(restoresScroll('quiz:q1:a1', 'dashboard')).toBe(false);
+});
+
+describe('addresses', () => {
+  const subject = { id: 'subject 1', name: 'Medicine', description: '', accent: '#000000' };
+  const deck = { id: 'deck-1', subjectId: 'subject 1', topicId: 't1', name: 'Deck', cardCount: 1, cardIds: ['c1'] };
+  const quiz = { id: 'quiz-1', subjectId: 'subject 1', topicId: 't1', name: 'Quiz', questionCount: 1 };
+
+  it('round-trips every page through its address', () => {
+    expect(routeFor(pathFor({ page: 'dashboard' }))).toEqual({ page: 'dashboard' });
+    expect(routeFor(pathFor({ page: 'flashcards' }))).toEqual({ page: 'flashcards' });
+    expect(routeFor(pathFor({ page: 'subject', subject }))).toEqual({ page: 'subject', subjectId: 'subject 1' });
+    expect(routeFor(pathFor({ page: 'quiz-browse', quiz, index: 0 }))).toEqual({
+      page: 'subject',
+      subjectId: 'subject 1',
+      quizId: 'quiz-1',
+    });
+    expect(routeFor(pathFor({ page: 'flashcards-study', subject, deck, index: 0, revealed: false }))).toEqual({
+      page: 'flashcards-subject',
+      subjectId: 'subject 1',
+      deckId: 'deck-1',
+    });
+  });
+
+  it('opens the dashboard for unknown or malformed addresses', () => {
+    for (const path of ['/quizzes', '/unknown', '/quizzes/s/q/extra', '/quizzes/%E0%A4%A'])
+      expect(routeFor(path)).toEqual({ page: 'dashboard' });
+  });
 });

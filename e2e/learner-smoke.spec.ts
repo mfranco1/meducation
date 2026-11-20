@@ -405,8 +405,6 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   await expect(page.getByText('What is')).toBeVisible();
 
   await page.reload();
-  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
-  await page.getByRole('button', { name: /^Resume quiz/ }).click();
   await expect(page.getByText('What is')).toBeVisible();
   await expect(page.getByRole('radio', { name: /Four/ })).toBeChecked();
   await showQuestion(page, /Which choice names the heart/);
@@ -424,6 +422,69 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   await page.getByRole('button', { name: 'Back to quizzes' }).click();
 
   await expect(page.getByRole('button', { name: /^Retake quiz/ })).toBeVisible();
+});
+
+test('addresses follow navigation and work with reload, Back, Forward and links', async ({ page }) => {
+  await page.goto('/');
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await expect(page).toHaveURL(/^[^?#]*\/quizzes\/[^/]+$/);
+  await expect(page).toHaveTitle('Browser Test Subject quizzes | Meducation');
+  const subjectUrl = page.url();
+  await page.goBack();
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
+  await page.goForward();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+
+  await page.getByRole('button', { name: /^Start quiz/ }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
+  await expect(page.getByText(/^Question 1 of 2$/)).toBeVisible();
+  expect(page.url().startsWith(`${subjectUrl}/`)).toBe(true);
+  await page.goBack();
+  const exit = page.getByRole('dialog');
+  await expect(exit).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByText(/^Question 1 of 2$/)).toBeVisible();
+  await page.goBack();
+  await exit.getByRole('button', { name: 'Leave', exact: true }).click();
+  await expect(page).toHaveURL(subjectUrl);
+  await expect(page.getByRole('button', { name: /^Resume quiz/ })).toBeVisible();
+
+  await page.getByRole('tab', { name: 'Flashcards', exact: true }).click();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+  await expect(page).toHaveURL(/\/flashcards\/[^/]+\/[^/]+$/);
+  const deckUrl = page.url();
+  await page.goto('/');
+  await page.goto(deckUrl);
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+  // A link to a deck leaves its subject page behind it.
+  await page.goBack();
+  await expect(page.getByRole('heading', { name: 'Browser Test Subject' })).toBeVisible();
+  await expect(page).toHaveURL(/\/flashcards\/[^/]+$/);
+  await page.goForward();
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+  // Forward into a deck adds no second subject entry.
+  await page.goBack();
+  await expect(page).toHaveURL(/\/flashcards\/[^/]+$/);
+  await page.goBack();
+  await expect(page).toHaveURL('/');
+
+  // On a phone, the open topic adds no extra Back step after studying.
+  await page.setViewportSize({ width: 390, height: 800 });
+  await page.getByRole('button', { name: 'Expand navigation' }).click();
+  await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await openTopicIfNeeded(page);
+  await page.getByRole('button', { name: /^Resume deck/ }).click();
+  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
+  await page.goBack();
+  await expect(page).toHaveURL(/\/flashcards\/[^/]+$/);
+  await page.goBack();
+  await expect(page).toHaveURL('/flashcards');
+  await page.goto('/quizzes/missing-subject');
+  await expect(page).toHaveURL('/');
+  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
 });
 
 test('left navigation switches dashboards in collapsed and mobile layouts', async ({ page }, testInfo) => {

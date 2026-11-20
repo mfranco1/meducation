@@ -212,16 +212,18 @@ export function TopicSetBrowser({
     return () => {
       removeEventListener('popstate', onPopState);
       mounted.current = false;
-      // Drop the topic entry on departure, but keep it through Strict Mode effect replay.
+      // Drop the topic entry on departure, but keep it through Strict Mode effect replay and when
+      // the departure already added its own entry.
       queueMicrotask(() => {
-        if (!mounted.current && ownsHistoryEntry.current) history.back();
+        if (!mounted.current && ownsHistoryEntry.current && (history.state as { topic?: boolean } | null)?.topic)
+          history.back();
       });
     };
   }, []);
 
   useEffect(() => {
     if (desktop || !selectedId || ownsHistoryEntry.current) return;
-    history.pushState(history.state, '');
+    history.pushState({ topic: true }, '');
     ownsHistoryEntry.current = true;
   }, [desktop, selectedId]);
 

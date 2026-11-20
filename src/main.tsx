@@ -137,5 +137,6 @@ async function showLanding() {
   }
 }
 
-if (!showingAbout && hasStartedStudying()) void boot();
+// Links to a page inside the app open it directly.
+if (!showingAbout && (hasStartedStudying() || window.location.pathname !== '/')) void boot();
 else void showLanding();

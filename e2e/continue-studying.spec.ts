@@ -107,7 +107,7 @@ test('quiz Continue Studying card is responsive and reveals the active quiz', as
   await page.getByRole('button', { name: /^Start quiz/ }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await page.getByRole('radio').first().check();
-  await page.reload();
+  await page.goto('/');
 
   const region = page.getByRole('region', { name: 'Continue Studying' });
   const card = region.getByRole('button', { name: 'Continue studying Browser Test Subject' });

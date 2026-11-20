@@ -40,3 +40,49 @@ export function restoresScroll(fromScreenId: string, toScreenId: string): boolea
     (toScreenId === 'flashcards' && fromScreenId.startsWith('flashcards-subject:'))
   );
 }
+
+export type Route =
+  | { page: 'dashboard' }
+  | { page: 'flashcards' }
+  | { page: 'subject'; subjectId: string; quizId?: string }
+  | { page: 'flashcards-subject'; subjectId: string; deckId?: string };
+
+/** The address of a view. Study screens share their quiz's or deck's address. */
+export function pathFor(view: View): string {
+  const path = (...parts: string[]) => `/${parts.map(encodeURIComponent).join('/')}`;
+  switch (view.page) {
+    case 'dashboard':
+      return '/';
+    case 'flashcards':
+      return '/flashcards';
+    case 'subject':
+      return path('quizzes', view.subject.id);
+    case 'flashcards-subject':
+      return path('flashcards', view.subject.id);
+    case 'flashcards-study':
+      return path('flashcards', view.subject.id, view.deck.id);
+    case 'quiz':
+    case 'quiz-browse':
+    case 'quiz-review':
+    case 'results':
+      return path('quizzes', view.quiz.subjectId, view.quiz.id);
+  }
+}
+
+/** Unknown addresses open the quiz dashboard. */
+export function routeFor(path: string): Route {
+  let parts: string[];
+  try {
+    parts = path.split('/').filter(Boolean).map(decodeURIComponent);
+  } catch {
+    return { page: 'dashboard' };
+  }
+  const [section, subjectId, itemId, ...rest] = parts;
+  if (rest.length > 0) return { page: 'dashboard' };
+  if (section === 'flashcards') {
+    if (!subjectId) return { page: 'flashcards' };
+    return { page: 'flashcards-subject', subjectId, ...(itemId ? { deckId: itemId } : {}) };
+  }
+  if (section === 'quizzes' && subjectId) return { page: 'subject', subjectId, ...(itemId ? { quizId: itemId } : {}) };
+  return { page: 'dashboard' };
+}
