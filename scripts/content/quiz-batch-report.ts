@@ -77,21 +77,40 @@ export function retiredFindings(where: string, texts: (string | undefined)[], te
 // Pages that may locate a primary document but are never cited (content-standards.md, Citations).
 const WEAK_SOURCE =
   /\b(MSD Manual|Merck Manual|StatPearls|UpToDate|Medscape|Wikipedia|Radiopaedia|DermNet|EyeWiki|WebMD|Healthline|Mayo Clinic|Cleveland Clinic|Amboss|Osmosis|Lecturio|McMaster Textbook|Cureus|Am Fam Physician|case reports?)\b/i;
-// Narrative review titles; systematic reviews and meta-analyses stay citable.
+// Narrative reviews and single-center or retrospective series; systematic reviews and meta-analyses stay citable.
 const NARRATIVE_REVIEW =
-  /(?<!systematic )\b(narrative|literature|concise|comprehensive|brief|clinical|updated?) review\b|: a review\b|\breview of (the|current) literature\b/i;
+  /(?<!systematic )\b(narrative|literature|concise|comprehensive|brief|clinical|contemporary|complete|updated?) review\b|: a review\b|\breview of (the|current) literature\b/i;
+const SERIES = /\b(single[- ]cent(er|re)|case series|retrospective (study|review|analysis))\b/i;
 export function weakSourceFindings(where: string, sources: string | undefined): Finding[] {
+  if (!sources) return [];
   const match =
-    sources?.match(WEAK_SOURCE)?.[0] ?? (sources && NARRATIVE_REVIEW.test(sources) ? 'a narrative review' : undefined);
-  return match
-    ? [
-        {
-          level: 'warning' as const,
-          where,
-          message: `Cites \`${match}\`, which is not a citable source; cite the guideline, trial or textbook that states the fact, or nothing for a stable textbook fact.`,
-        },
-      ]
-    : [];
+    sources.match(WEAK_SOURCE)?.[0] ??
+    (NARRATIVE_REVIEW.test(sources) ? 'a narrative review' : SERIES.test(sources) ? 'a case series' : undefined);
+  // Semicolons separate references but also author names, joint publishers, title clauses, and year from volume or
+  // section. A reference starts with a capital and has "Author. Title.", so other parts continue the previous one.
+  const references = sources.split(/;\s+(?!\d)/).reduce<string[]>((refs, part) => {
+    if (refs.length && (!refs[refs.length - 1].includes('.') || !part.includes('. ') || /^[a-z]/.test(part)))
+      refs[refs.length - 1] += `; ${part}`;
+    else refs.push(part);
+    return refs;
+  }, []);
+  const undated = references.filter((reference) => !/\b(19|20)\d\d\b/.test(reference));
+  return [
+    ...(match
+      ? [
+          {
+            level: 'warning' as const,
+            where,
+            message: `Cites \`${match}\`, which is not a citable source; cite the guideline, trial or textbook that states the fact, or nothing for a stable textbook fact.`,
+          },
+        ]
+      : []),
+    ...undated.map((reference) => ({
+      level: 'warning' as const,
+      where,
+      message: `Citation has no year: "${reference.slice(0, 60)}". Give the year of the version you read.`,
+    })),
+  ];
 }
 export const tokens = (stem: string) => new Set(normalize(stem).split(' '));
 export const jaccard = (a: Set<string>, b: Set<string>) => {

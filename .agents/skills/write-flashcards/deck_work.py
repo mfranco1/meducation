@@ -320,6 +320,13 @@ def cmd_build(work: Work, args) -> None:
             sys.exit(f"{review_path} is missing; run the reviewer for deck {n}.")
         rows, review = load(path), load(review_path)
         refs = {r["ref"] for r in rows}
+        checks = work.dir / f"sources-review-{n}.json"
+        if any(not r.startswith("new-") for r in refs) and not (
+            checks.exists() and load(checks)
+        ):
+            problems.append(
+                f"{checks.name}: no document checks recorded for existing cards; send reviewer {n} back to verify them on the web."
+            )
         seen = set()
         for i, e in enumerate(review, 1):
             where = f"{review_path.name} entry {i} ({e.get('ref')})"

@@ -14,16 +14,17 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 
 ## Status
 
-- Pilot done: Critical Care, 109 cards, 12 edits (11%), 8 trivia or duplicate cards deleted. Reviewers kept reporting ledger-only doubts; the reviewer prompt now loads web tools up front and asks for URLs. Send back any reviewer that reports an unchecked doubt.
+- Pilot done: Critical Care, 109 cards, 12 edits (11%), 8 trivia or duplicate cards deleted. Reviewers kept reporting ledger-only doubts; the reviewer prompt now loads web tools up front and asks for URLs. Send back any reviewer that reports an unchecked doubt. `D build` now refuses an audit deck whose `sources-review-<n>.json` is empty (Sonnet reviewers often return zero findings with no lookups).
 - Unresolved doubts: user rule is to follow the latest guideline; where it differs from the latest primary textbook, give both, labelled by name (now in content-standards Facts).
 - Sources: a guideline-dependent correction cites the primary document; a stable textbook fact takes no citation (content-standards Citations). The gate warns on non-citable sources (MSD Manual, *Cureus* and similar) and on unnamed attributions.
 - Narrative reviews and single-hospital protocols the gate can't match: read each staged `sources` before publishing.
 - Per topic: audit, then delete the reviewers' trivia and existing-duplicate cards on your own judgment (user approved; top-ups can add better cards). Ask only about cards whose fix rests on judgment, not a source. Add coverage gaps to Top-ups below.
-- Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: the topics under Staged. Next: Neurology, then Psychiatry. Run one IM topic per session to save context.
+- Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: the topics under Staged. All IM topics audited. Run one topic per session to save context.
+- Pharmacology: all 15 topics (38 decks) in `plan.json` as audit decks. Done: the Pharmacology topics under Staged. Next: Cardiovascular and Renal Pharmacology, then the rest in `plan.json` order.
 
 ## Top-ups (after audits)
 
-- THIN topics from `D coverage` (rerun before planning): Pathology 14; Internal Medicine: Psychiatry, Obesity Lipid and Bone, Allergology and Immunology; OB-GYN: Gynecology, Medical Disorders in Pregnancy; Pediatrics: Preventive Pediatrics, Growth and Development; one each in Anatomy (General Anatomy), Biochemistry (Genetics and Inheritance), Microbiology (Clinical Microbiology Integration), Pharmacology (Immunopharmacology), Preventive Medicine (Primary Health Care), Physiology (Integrated and Environmental).
+- THIN topics from `D coverage` (rerun before planning): Pathology 14; Internal Medicine: Psychiatry, Obesity Lipid and Bone, Allergology and Immunology; OB-GYN: Gynecology, Medical Disorders in Pregnancy; Pediatrics: Preventive Pediatrics, Growth and Development; one each in Anatomy (General Anatomy), Biochemistry (Genetics and Inheritance), Microbiology (Clinical Microbiology Integration), Pharmacology (Immunopharmacology: 27 cards for 113 questions), Preventive Medicine (Primary Health Care), Physiology (Integrated and Environmental).
 - IM › Infectious Diseases: Urinary Tract Infection, Diagnostic Clues and COVID-19 decks are SMALL (12, 10, 4 cards).
 - IM › Enteric, Tropical and Zoonotic Infections: Dengue subtopic has 0 cards (17 questions); Cholera 1 card, Amebiasis and Intestinal Protozoa 3.
 - IM › Dermatology: Leprosy (6 questions) and Autoimmune Blistering Disease (7 questions) have 0 cards.
@@ -37,6 +38,9 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - IM › Rheumatology: Approach to Joint Disease (9 cards) and Spondyloarthropathies (9) are SMALL; Spondyloarthropathies holds RA cards (Caplan, Felty) and few ankylosing spondylitis cards; `D coverage` shows 0 fibromyalgia cards (3 questions).
 - IM › Systemic Autoimmune: `D coverage` shows 0 cards for ANCA-Associated and Medium-Vessel Vasculitis (11 questions), Other Vasculitides (4) and Inflammatory Myopathies (8), 1 for Large-Vessel Vasculitis and PMR (10), 2 for Systemic Sclerosis (9), 6 for SLE Classification (16); Lupus Nephritis and Drug-Induced Lupus deck SMALL (14 cards).
 - IM › Allergology and Immunology: Allergic Rhinitis deck SMALL (14 cards); `D coverage` shows 0 cards for Hypersensitivity Reactions (9 questions), few for Urticaria (2), Angioedema (1), Drug Allergy (1), Primary Immunodeficiency (3) and Secondary Immunodeficiency and Vaccination (1).
+- IM › Neurology: Status Epilepticus (9 cards) and Headache (14) decks SMALL; `D coverage` shows 2 cards for Multiple Sclerosis (6 questions), 5 for Myasthenia Gravis (6) and Dementia (6), 2 for Peripheral and Entrapment Neuropathy; no preventive migraine card.
+- IM › Psychiatry: one deck of 15 cards for 110 questions; `D coverage` shows 0 cards for Antidepressants and Serotonin Syndrome, Mood Stabilizers, Suicide Risk, Anxiety, OCD and Trauma, Eating Disorders, Personality Disorders and Delirium, and 1 for Other Substance Use Disorders. Needs new decks, not a top-up.
+- Pharm › Autonomic and Ophthalmic: `D coverage` shows 5 cards for Glaucoma Drugs (15 questions), 1 for Catecholamines and Vasopressors (11), 4 for Beta Agonists (7), 3 for Adrenergic Neurotransmission (7) (heuristic; confirm before writing).
 - IM › Critical Care: subtopics Supportive ICU Care (0 cards) and Vasopressors and Inotropes (2 cards).
 
 ## Staged (not published)
@@ -58,6 +62,10 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - IM › Rheumatology: 7 edits, 3 deletes.
 - IM › Systemic Autoimmune and Rheumatic Disease: 11 edits, 3 deletes.
 - IM › Allergology and Immunology: 4 edits, 8 deletes.
+- IM › Neurology: 28 edits, 9 deletes.
+- IM › Psychiatry: 2 edits (DSM duration criteria), 0 deletes.
+- Pharm › General Pharmacology: 0 edits, 2 deletes (Fick's-law trivia).
+- Pharm › Autonomic and Ophthalmic Pharmacology: 8 edits (pralidoxime role, 4 sources added), 2 deletes (tacrine, edrophonium test). AHA 2025 ALS citation on the cardiac arrest epinephrine card is from the ledger, not reread (AHA hosts 403).
 - Sources backfill: 47 edits (13 back changes, 1 front), 1 delete, across IM and 1 Biochemistry card.
 - Re-source of 29 non-citable citations: 29 edits (7 back changes, 2 re-cited to primary documents, 20 cleared as stable facts).
 - Full check of 16 weakly sourced cards: 12 edits (6 fact changes, 2 fronts), 1 duplicate deleted.

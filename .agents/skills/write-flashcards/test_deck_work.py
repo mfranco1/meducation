@@ -206,6 +206,7 @@ def test_build_applies_reviews_and_summarises_fact_changes(tmp_path, capsys):
         folder / "review-2.json",
         [{"ref": "new-1", "severity": "inaccurate", "drop": True, "reason": "Wrong."}],
     )
+    write(folder / "sources-review-1.json", [{"source": "Law."}])
     summary = json.loads(run(work, "build", TOPIC, capsys=capsys))
     assert summary["newCards"] == {"Jaundice": 1}
     assert (summary["edits"], summary["deletes"], summary["dropped"]) == (1, 0, 2)
@@ -238,6 +239,7 @@ def test_build_deletes_existing_cards_and_clears_sources(tmp_path, capsys):
         ],
     )
     write(folder / "review-2.json", [])
+    write(folder / "sources-review-1.json", [{"source": "Law."}])
     summary = json.loads(run(work, "build", TOPIC, capsys=capsys))
     stage = json.loads((folder / "stage.json").read_text())
     assert stage["deletes"] == [{"id": "f2", "version": 2}]
@@ -270,6 +272,7 @@ def test_build_refuses_bad_reviews_and_writes_nothing(tmp_path, capsys):
         and "severity must be" in message
         and "edit keys" in message
         and "needs edits or drop" in message
+        and "no document checks recorded" in message
     )
     assert not (folder / "stage.json").exists()
 
@@ -285,6 +288,7 @@ def test_build_says_when_nothing_remains(tmp_path, capsys):
                 for r in refs
             ],
         )
+    write(folder / "sources-review-1.json", [{"source": "Src."}])
     assert "Nothing to stage" in fail(work, "build", TOPIC, capsys=capsys)
 
 

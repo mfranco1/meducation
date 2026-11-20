@@ -152,12 +152,25 @@ describe('quiz batch report', () => {
         rationaleMeta: { sources: 'Lee A. Statins: a systematic literature review. *BMJ*. 2021.' },
       }),
       item('Fifth stem here?', { rationaleMeta: { sources: 'IARC. *A Review of Human Carcinogens*. IARC; 2012.' } }),
+      item('Sixth stem here?', {
+        rationaleMeta: {
+          sources: 'Li J. Takayasu arteritis: a retrospective study of 411 patients. *Arthritis Res Ther*. 2017.',
+        },
+      }),
+      item('Seventh stem here?', {
+        rationaleMeta: { sources: 'WHO. *Guideline*. WHO; 2018; CDC. Clinical care of toxoplasmosis. CDC.' },
+      }),
     ]);
     expect(report.text).toContain('item 1 ("First stem here?"): Cites `Cureus`');
     expect(report.text).not.toContain('item 2 ("Second stem differs?"): Cites');
     expect(report.text).toContain('item 3 ("Third one is new?"): Cites `a narrative review`');
     expect(report.text).not.toContain('item 4 ("Fourth stem here?"): Cites');
     expect(report.text).not.toContain('item 5 ("Fifth stem here?"): Cites');
+    expect(report.text).toContain('item 6 ("Sixth stem here?"): Cites `a case series`');
+    expect(report.text).toContain(
+      'item 7 ("Seventh stem here?"): Citation has no year: "CDC. Clinical care of toxoplasmosis. CDC."',
+    );
+    expect(report.text).not.toContain('item 2 ("Second stem differs?"): Citation has no year');
   });
 
   it('counts rationale length outside tables', () => {
