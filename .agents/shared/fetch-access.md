@@ -47,7 +47,7 @@ General indexes first, then the rest alphabetically by body.
 | ESMO (annalsofoncology.org) | 403, not open access | 2025 UK bone sarcoma guideline (Gerrand et al., *Br J Cancer*, PMC11723950) for bone sarcomas; otherwise an equivalent open guideline; cite that body |
 | EULAR (ard.bmj.com) | 403 | Author manuscript in a university repository (eprints, institutional open-access pages) |
 | FNRI-DOST (fnri.dost.gov.ph: Pinggang Pinoy, dietary guidelines) | Firewall error | The raw archive copy of the FNRI page or PDF |
-| GOLD, GINA report PDFs (goldcopd.org, ginasthma.org) | WebFetch size limit (over 10 MB) | Download the PDF with `curl -sL` and read it with `pdftotext -layout` |
+| GOLD, GINA report PDFs (goldcopd.org, ginasthma.org) | WebFetch size limit (over 10 MB) | Download the PDF with `curl -sL` and read it with `pdftotext -layout`. Figures and tables are images: render the page with `pdftoppm -png` and view it (the pocket guide holds the key figures) |
 | GRADE guidelines series (jclinepi.com) | 403 | GRADE Handbook on gdt.gradepro.org; cite the handbook |
 | Japanese Circulation Society (*Circ J* guidelines, J-STAGE) | Not tested on J-STAGE | University-hosted PDF of the guideline (JCS 2023 vasospastic angina on a Tohoku University page) |
 | *The Lancet* (thelancet.com) | 403; Europe PMC has the abstract only | PubMed Central author manuscript, or a university repository PDF (GBD papers are often in coauthors' repositories); otherwise list the fact as abstract-only |

@@ -7,6 +7,7 @@ Rules every quiz item and flashcard follows. Shared by write-quizzes and write-f
 - Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC and similar. Provided sources are a minimum coverage map, never the authority on facts. When a source is outdated or wrong, write the current fact, term and classification. Never teach a retired scheme or a withdrawn drug as current; [currency-notes.md](currency-notes.md) lists the current forms.
 - Verify guideline-dependent facts (guidelines, criteria, classifications, staging, thresholds, doses, schedules, laws, keyed rankings) in the primary document as [verification.md](verification.md) describes. Roles without web access escalate them or list them as unverified, as their prompt says; never guess.
 - Where practice or notation varies by region, body or author, test what is consistent across them or name the guideline in the stem or on the card.
+- When the latest guideline differs from the latest edition of a major textbook, key the guideline and give the textbook value too. Label each by name and year or edition (GOLD 2026; *Harrison's*, 22nd ed.) and cite each in AMA style in the sources field. Name the guideline, textbook or study behind every attributed or qualified claim; never write "textbook value", "some studies", "many series" or "experts".
 
 ## Philippine audience
 

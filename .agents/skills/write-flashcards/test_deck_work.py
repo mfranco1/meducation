@@ -261,6 +261,7 @@ def test_build_refuses_bad_reviews_and_writes_nothing(tmp_path, capsys):
             },
             {"ref": "f1", "severity": "bad", "edits": {"answer": "x"}, "reason": "r"},
             {"ref": "new-1", "severity": "format", "edits": {}, "reason": "r"},
+            {"ref": "f2", "severity": "inaccurate", "edits": {"back": "x"}, "reason": "r"},
         ],
     )
     write(folder / "review-2.json", [])
@@ -270,6 +271,7 @@ def test_build_refuses_bad_reviews_and_writes_nothing(tmp_path, capsys):
         and "severity must be" in message
         and "edit keys" in message
         and "needs edits or drop" in message
+        and "correction needs sources" in message
     )
     assert not (folder / "stage.json").exists()
 

@@ -56,6 +56,7 @@ describe('flashcard batch report', () => {
         card('Another front', { back: 'B'.repeat(401) }),
         card(front, { back: `${front} Phototherapy.` }),
         card('Third question', { back: 'See the handout.' }),
+        card('Fourth question', { back: 'Heart failure (textbook); TB in many hospital series.' }),
       ]),
     );
     expect(report.errors).toBe(0);
@@ -64,6 +65,7 @@ describe('flashcard batch report', () => {
       'Back is 401 characters',
       'Back repeats the front',
       'mentions source material',
+      'Unnamed attribution',
     ])
       expect(report.text).toContain(text);
     expect(run(batch([card('Table', { back: `${'|a|b|\n'.repeat(100)}` })])).text).not.toContain('Back is');

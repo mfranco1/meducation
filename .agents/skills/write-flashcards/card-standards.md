@@ -22,7 +22,7 @@ Follow the shared [content-standards.md](../../shared/content-standards.md) (fac
 - **Front**: one question or prompt, usually under 100 characters ("Which enzyme...?", "JVP y descent: event.").
 - **Back**: the answer first, in bold when it is a term or value, then at most one short sentence of reason or context. Usually under 150 characters outside tables.
 - Both faces take Markdown.
-- **Sources**: the references as [content-standards.md](../../shared/content-standards.md#citations) describes, for cards with a guideline-dependent fact; omit it for stable textbook facts.
+- **Sources**: the references as [content-standards.md](../../shared/content-standards.md#citations) describes, for cards with a guideline-dependent fact and for every corrected card; omit it for stable textbook facts.
 
 ```json
 { "cards": [

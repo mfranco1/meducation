@@ -318,7 +318,8 @@ def cmd_build(work: Work, args) -> None:
         if not review_path.exists():
             sys.exit(f"{review_path} is missing; run the reviewer for deck {n}.")
         rows, review = load(path), load(review_path)
-        refs = {r["ref"] for r in rows}
+        rows_by_ref = {r["ref"]: r for r in rows}
+        refs = set(rows_by_ref)
         seen = set()
         for i, e in enumerate(review, 1):
             where = f"{review_path.name} entry {i} ({e.get('ref')})"
@@ -336,6 +337,13 @@ def cmd_build(work: Work, args) -> None:
                 problems.append(f"{where}: edit keys must be front, back or sources.")
             if not edits and not e.get("drop"):
                 problems.append(f"{where}: needs edits or drop.")
+            row = rows_by_ref.get(e.get("ref"), {})
+            if (
+                e.get("severity") in ("inaccurate", "outdated")
+                and not e.get("drop")
+                and not str(edits.get("sources", row.get("sources", ""))).strip()
+            ):
+                problems.append(f"{where}: a correction needs sources (AMA) for the source that supports it.")
             for k, v in edits.items():
                 if k in EDIT_KEYS and (
                     not isinstance(v, str) or (k != "sources" and not v.strip())

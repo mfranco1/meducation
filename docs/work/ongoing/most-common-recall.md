@@ -19,13 +19,16 @@ Count the stems that match the required form before review.
 - Gap lists: done 2026-11-20. MISSING rows: Pathology 431 (file shows up to 4 per quiz), Surgery 265, Pediatrics 143, Microbiology & Parasitology 134, Anatomy & Histology 93, OB-GYN 45. CLUED and STAGED calls rest on keyword grep: confirm before striking or writing.
 - Coverage approved 2026-11-20: up to 5 items per quiz (highest-yield MISSING rows; fewer where the list is thin). Subject order: Microbiology & Parasitology, Pediatrics, Pathology, Surgery, OB-GYN, Anatomy & Histology. Within a subject, topics by MISSING count, most first.
 - Left to their owners per the gap list's "Belongs elsewhere": HPV 16 (OB-GYN), NPC, Kaposi, ATLL (Pathology), roseola, measles, HFMD, RSV (Pediatrics), cryptococcal meningitis (Medical Mycology). Points taken by a done topic are listed in the gap file's "Done topics".
-- Next: Microbiology & Parasitology › Parasitology and Medical Entomology (15 MISSING), then Helminths and Medical Mycology (14), Clinical Microbiology Integration (10), Gram-Positive Bacteria (9), Microbiology Foundations (5).
+- Next: Microbiology & Parasitology › Clinical Microbiology Integration (10), Gram-Positive Bacteria (9), Microbiology Foundations (5).
 
 ## Staged (not published)
 
 - Microbiology & Parasitology › Virology: 14 items over 7 quizzes (12 in ranking form), 2026-11-20. Backlog 1 (Naked DNA Viruses and Poxviruses).
 - Microbiology & Parasitology › Gram-Negative Bacteria: 11 items over 4 quizzes (all in ranking form), 2026-11-20. Backlog 1 (Zoonotic, HACEK and Genital Gram-Negative Bacteria).
 - Microbiology & Parasitology › Spirochetes, Mycobacteria and Intracellular Bacteria: 3 items over 2 quizzes (all in ranking form), 2026-11-20. Mycobacteria got none (every gap point already keyed by staged vignettes). Backlog 0.
+- Microbiology & Parasitology › Parasitology and Medical Entomology: 6 items over 3 quizzes (all in ranking form), 2026-11-20. Malaria got none (its rankings are staged in Internal Medicine). Backlog 0.
+- Microbiology & Parasitology › Helminths: 4 items over 2 quizzes (all in ranking form), 2026-11-20. Tissue Nematodes and Trematodes got none (every gap point already staged or keyed by staged vignettes). Backlog 0.
+- Microbiology & Parasitology › Medical Mycology: 6 items over 3 quizzes (all in ranking form), 2026-11-20. Fungal Biology, Diagnosis and Antifungals got none (its antifungal adverse-effect points are staged in Pharmacology). Backlog 0.
 
 ## Remaining
 

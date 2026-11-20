@@ -34,6 +34,8 @@ const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const SOURCE_WORDS =
   /\b(handout|lecture notes?|reviewer|review center|trans(es)?|according to the (source|document|notes))\b/i;
+const VAGUE_ATTRIBUTION =
+  /\btextbooks\b|\(textbook\b|\btextbook\)|\btextbook (value|figure|cutoff|answer|definition|teaching)\b|\b(some|many|most|older) (studies|sources|authors|references|experts)\b|\b(many|hospital) series\b/i;
 const FIELD_POLICY = { front: 'stem', back: 'rationale', sources: 'sources' } as const;
 
 export function buildReport(
@@ -186,6 +188,8 @@ export function buildReport(
     if (nf.length >= 20 && back && normalize(back).startsWith(nf)) warn(where, 'Back repeats the front.');
     if (front && SOURCE_WORDS.test(front)) warn(where, 'Front mentions source material.');
     if (back && SOURCE_WORDS.test(back)) warn(where, 'Back mentions source material.');
+    if ([front, back].some((face) => face && VAGUE_ATTRIBUTION.test(face)))
+      warn(where, 'Unnamed attribution ("textbook", "some studies"); name the guideline, textbook or study.');
   }
 
   // Deck size after this batch.

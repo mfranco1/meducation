@@ -25,6 +25,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | ACOG Committee Opinion 760 (dysmenorrhea and endometriosis in adolescents) | Withdrawn; don't cite it. Cite the SOGC primary dysmenorrhea guideline or a standard textbook | ACOG withdrawal | `Committee Opinion (No\. )?760` |
 | ACOG Committee Opinion 695 (sterilization of women: ethical issues) | Withdrawn; don't cite it. Cite the CDC US SPR for counseling facts and primary studies (CREST) for regret rates | ACOG withdrawal | `Committee Opinion (No\. )?695` |
 | Bezlotoxumab to prevent C. difficile recurrence | Withdrawn by the manufacturer; never key or recommend it. Fecal microbiota-based therapy for recurrence | 2025 | `bezlotoxumab` |
+| Andexanet alfa to reverse factor Xa inhibitors | Withdrawn from US sales (FDA safety communication, December 2025: excess thrombosis); never key it as the reversal agent. Prothrombin complex concentrate | 2025 | `andexanet` |
 | HIV-1/HIV-2 Western blot as the confirmatory test | HIV-1/HIV-2 antibody differentiation immunoassay, then HIV-1 RNA if discordant (laboratory testing algorithm) | CDC/APHL 2014 | `Western blot` |
 | SDG 3.8.2 catastrophic spending at 10% or 25% of total household budget | Out-of-pocket health spending above 40% of household discretionary budget (consumption or income minus the societal poverty line) | UN indicator metadata, current in 2026 | |
 | PhilHealth 45-day annual confinement limit per member and dependents | Lifted; never key the 45-day limit as current | PhilHealth Circular 2025-0007 | |
