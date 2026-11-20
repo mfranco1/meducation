@@ -17,6 +17,6 @@ Write TOPICDIR/batch.json in the batch shape with each entry's exact topic and q
 1. Check near-duplicates: `Q similar replacements`, then grep, as item-standards.md describes.
 2. Check every item against review-rubric.md checks 2 to 8.
 3. Run `Q gate replacements` and clear every error and applicable warning except size warnings.
-4. Verify every guideline- or label-dependent fact as verification.md describes, recording checks in TOPICDIR/sources-1.json and unconfirmed facts in TOPICDIR/unverified-1.json.
+4. Verify every guideline- or label-dependent fact as verification.md describes, recording checks in TOPICDIR/sources-1.json and unconfirmed facts in TOPICDIR/unverified-1.json as `{"quiz": "<quiz name>", "item": <position in that quiz>, "fact": "..."}`.
 
 Return only a short summary.

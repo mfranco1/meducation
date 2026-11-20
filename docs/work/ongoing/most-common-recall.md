@@ -7,8 +7,8 @@ Method: follow the [write-quizzes skill](../../../.agents/skills/write-quizzes/S
 ## Files (gitignored, `var/quiz-work/`)
 
 - Gap lists: `most-common-gaps/{internal-medicine,pharmacology,preventive-medicine}.md`. Statuses came from keyword search: re-search a MISSING row before writing. Internal Medicine PARTIAL counts are inflated by acronym matches. Each file ends with "Done topics: unverified and skipped": add each staged topic's weak-source facts and skipped points there, not here, and check it before writing a neighboring topic.
-- Work dirs per subject: `internal-medicine/`, `pharmacology/`, `preventive-medicine/`, each with `notes.md` for subagents and `replace-backlog.json` (`Q backlog`). Brief and batch numbers are the quiz's position in its topic.
-- Rejected first attempts: `internal-medicine/psychiatry/off-target/`, `pharmacology/antibacterial-and-antimycobacterial-pharmacology/off-target/`. Do not reuse.
+- Work dirs per subject: `pharmacology/`, `preventive-medicine/` (Internal Medicine is cleaned up), each with `notes.md` for subagents and `replace-backlog.json` (`Q backlog`). Brief and batch numbers are the quiz's position in its topic.
+- Rejected first attempt: `pharmacology/antibacterial-and-antimycobacterial-pharmacology/off-target/`. Do not reuse.
 - Cross-subject stems: run `draft-outline` for every subject into the scratchpad each session and combine the stems into `cross-subject-stems.txt` (topic notes point writers to it). Line format `Subject › Topic › Quiz |  | stem`; the outline's `subject` is an object, use its `name`. Subjects: Anatomy & Histology, Biochemistry, Internal Medicine, Legal Medicine, Microbiology & Parasitology, Obstetrics & Gynecology, Pathology, Pediatrics, Pharmacology, Physiology, Preventive Medicine, Surgery.
 
 Count the stems that match the required form before review. Preventive Medicine: 21 topics that need a primary source are listed in its gap file under "Needs primary source".
@@ -25,5 +25,5 @@ Items added per quiz, about 2 to 10 each.
 
 1. User reviews and publishes in Review & publish.
 2. Gap-list topics: done. Preventive Medicine Biostatistics skipped (its rows are not rankings a source states).
-3. Run the replacement batch for each work dir's backlog ([replacements.md](../../../.agents/skills/write-quizzes/replacements.md)).
+3. Run the replacement batch for each work dir's backlog ([replacements.md](../../../.agents/skills/write-quizzes/replacements.md)), then `Q clean`. Internal Medicine: done. Next: Pharmacology (15 slots), then Preventive Medicine (3).
 4. When done, delete this tracker and `var/quiz-work/cross-subject-stems.txt`.

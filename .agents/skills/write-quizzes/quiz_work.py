@@ -369,17 +369,23 @@ def cmd_triage(work: Work, args) -> None:
     batch = work.batch(args.batch)
     log = work.log()
     sizes: dict[str, int] = {}
-    for _, quiz, _ in items_of(batch):
+    topic_of: dict[str, str] = {}
+    for ref, quiz, _ in items_of(batch):
         sizes[quiz] = sizes.get(quiz, 0) + 1
+        topic_of[quiz] = ref.split(SEP)[0]
     unverified = {}
     for path in sorted(work.dir.glob("unverified-*.json")):
         rows, brief = load(path), path.with_name(path.name.replace("unverified", "brief"))
-        if not brief.exists():
-            continue
-        quiz = load(brief)["quiz"]["name"]
-        if len(rows) > min(UNVERIFIED_LIMIT, sizes.get(quiz, 0) // 10):
+        if brief.exists():
+            quiz = load(brief)["quiz"]["name"]
+            rows = [{**row, "quiz": quiz} for row in rows]
+            size = sizes.get(quiz, 0)
+        else:  # a replacement batch spans quizzes; each row names its quiz
+            size = sum(sizes.values())
+        if len(rows) > min(UNVERIFIED_LIMIT, size // 10):
             for row in rows:
-                unverified[SEP.join((work.topic, quiz, str(row["item"])))] = row["fact"]
+                ref = SEP.join((topic_of[row["quiz"]], row["quiz"], str(row["item"])))
+                unverified[ref] = row["fact"]
     standards: dict[str, list] = {}
     escalated = []
     for ref, quiz, item in items_of(batch):

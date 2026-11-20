@@ -111,6 +111,7 @@ def test_triage_escalates_blind_disagreements_not_writer_unverified_facts(tmp_pa
     k_blind = list(k)
     k_blind[2] = "D" if k[2] != "D" else "A"
     answer(topic_dir, "r1", k_blind)
+    (topic_dir / "brief-1.json").write_text(json.dumps({"quiz": {"name": QUIZ}}))
     (topic_dir / "unverified-1.json").write_text(
         json.dumps([{"item": 5, "fact": "IPNA 2022 threshold"}])
     )
@@ -154,6 +155,19 @@ def test_triage_escalates_unverified_facts_above_one_per_ten_items(tmp_path):
     run(tmp_path, "triage", TOPIC, "--batch", "batch.json", "--round", "r1")
     escalated = json.loads((topic_dir / "escalated.json").read_text())
     assert [e["ref"] for e in escalated] == [ref(2), ref(4)]
+
+
+def test_triage_escalates_replacement_unverified_facts_by_their_named_quiz(tmp_path):
+    topic_dir = setup(tmp_path)  # no brief: a replacement batch
+    run(tmp_path, "blind", TOPIC, "--batch", "batch.json", "--round", "r1")
+    answer(topic_dir, "r1", keys(topic_dir))
+    (topic_dir / "unverified-1.json").write_text(
+        json.dumps([{"quiz": QUIZ, "item": n, "fact": f"fact {n}"} for n in (1, 3)])
+    )
+    assert run(tmp_path, "check-blind", TOPIC, "--round", "r1").returncode == 0
+    run(tmp_path, "triage", TOPIC, "--batch", "batch.json", "--round", "r1")
+    escalated = json.loads((topic_dir / "escalated.json").read_text())
+    assert [e["ref"] for e in escalated] == [ref(1), ref(3)]
 
 
 def test_route_standards_keeps_self_evident_corrections_and_routes_drops_and_accuracy_edits(
