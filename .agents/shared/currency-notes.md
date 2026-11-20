@@ -11,6 +11,9 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | FDA pregnancy letter categories (A, B, C, D, X) | Narrative pregnancy and lactation labeling (PLLR); never test the letters | 2015 | `pregnancy (risk )?category` |
 | Polycystic ovary syndrome (PCOS) | Polyendocrine metabolic ovarian syndrome (PMOS); write PMOS with no "formerly called" note | 2026 consensus | `PCOS`, `polycystic ovary syndrome`, `polycystic ovarian syndrome` |
 | NAFLD, NASH | MASLD, MASH | 2023 multisociety nomenclature | `NAFLD`, `NASH`, `non-?alcoholic fatty liver`, `non-?alcoholic steatohepatitis` |
+| Hepatorenal syndrome type 1 and type 2 | HRS-AKI and HRS-NAKI; no fixed 2-week rule | ICA 2015, EASL 2018 | `HRS type [12]`, `type [12] HRS`, `hepatorenal syndrome type [12]`, `type [12] hepatorenal` |
+| Obscure GI bleeding for any bleed not found on EGD and colonoscopy | Suspected small bowel bleeding; "obscure" only when no source is found after small bowel evaluation too | ACG 2015 small bowel bleeding guideline | `obscure GI bleeding`, `obscure gastrointestinal bleeding` |
+| Globus hystericus | Globus | Rome IV 2016 | `globus hystericus` |
 | Severe sepsis, SIRS-based sepsis definitions | Sepsis (life-threatening organ dysfunction from a dysregulated host response) and septic shock (Sepsis-3); "severe sepsis" is not a category | 2016 Sepsis-3 | `severe sepsis`, `SIRS` |
 | Hypertensive urgency | Severe hypertension: SBP >180 and/or DBP >120 mmHg without acute target organ damage | 2025 AHA/ACC high blood pressure guideline | `hypertensive urgency` |
 | Amrinone | Inamrinone | USAN change | `amrinone` |
