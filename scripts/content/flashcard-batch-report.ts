@@ -7,6 +7,7 @@ import {
   normalize,
   retiredFindings,
   retiredTerms,
+  weakSourceFindings,
   tokens,
   type Finding,
   type RetiredTerm,
@@ -180,7 +181,10 @@ export function buildReport(
     })),
   ];
   for (const { where, front, back, sources } of faces) {
-    findings.push(...retiredFindings(where, [front, back, sources], retired));
+    findings.push(
+      ...retiredFindings(where, [front, back, sources], retired),
+      ...weakSourceFindings(where, text(sources)),
+    );
     if (front && front.length > 160) warn(where, `Front is ${front.length} characters; keep it to 160.`);
     if (back && back.length > 400 && !/^\s*\|.*\|\s*$/m.test(back))
       warn(where, `Back is ${back.length} characters; keep it to 400 or use a table.`);

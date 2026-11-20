@@ -74,6 +74,21 @@ export function retiredFindings(where: string, texts: (string | undefined)[], te
       message: `Uses retired \`${t.flag}\`; write the current form from currency-notes.md (fine in a published title).`,
     }));
 }
+// Pages that may locate a primary document but are never cited (content-standards.md, Citations).
+const WEAK_SOURCE =
+  /\b(MSD Manual|Merck Manual|StatPearls|UpToDate|Medscape|Wikipedia|Radiopaedia|DermNet|EyeWiki|WebMD|Healthline|Mayo Clinic|Cleveland Clinic|Amboss|Osmosis|Lecturio|McMaster Textbook|Cureus|Am Fam Physician|case reports?)\b/i;
+export function weakSourceFindings(where: string, sources: string | undefined): Finding[] {
+  const match = sources?.match(WEAK_SOURCE);
+  return match
+    ? [
+        {
+          level: 'warning' as const,
+          where,
+          message: `Cites \`${match[0]}\`, which is not a citable source; cite the guideline, trial or textbook that states the fact, or nothing for a stable textbook fact.`,
+        },
+      ]
+    : [];
+}
 export const tokens = (stem: string) => new Set(normalize(stem).split(' '));
 export const jaccard = (a: Set<string>, b: Set<string>) => {
   let shared = 0;
@@ -301,6 +316,7 @@ export function buildReport(
         [item.stem, ...item.choices, item.rationale, ...(item.pearls ?? []), item.rationaleMeta?.sources],
         retired,
       ),
+      ...weakSourceFindings(where, item.rationaleMeta?.sources),
     );
   }
   const questions = entries.map((entry, index) => ({

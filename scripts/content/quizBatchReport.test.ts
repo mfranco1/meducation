@@ -143,6 +143,15 @@ describe('quiz batch report', () => {
     expect(report.text).not.toContain('item 2 ("Second stem differs?"): Source citation');
   });
 
+  it('warns on a citation of a page that is not a citable source', () => {
+    const report = run([
+      item('First stem here?', { rationaleMeta: { sources: 'Doe J. Gout: a review. *Cureus*. 2022.' } }),
+      item('Second stem differs?', { rationaleMeta: { sources: 'WHO. *Guideline*. WHO; 2020.' } }),
+    ]);
+    expect(report.text).toContain('item 1 ("First stem here?"): Cites `Cureus`');
+    expect(report.text).not.toContain('item 2 ("Second stem differs?"): Cites');
+  });
+
   it('counts rationale length outside tables', () => {
     const words = (n: number) => Array(n).fill('word').join(' ');
     const table = `\n\n| A | B |\n| --- | --- |\n| ${words(100)} | x |`;

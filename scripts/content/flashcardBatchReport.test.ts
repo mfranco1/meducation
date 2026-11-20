@@ -57,6 +57,7 @@ describe('flashcard batch report', () => {
         card(front, { back: `${front} Phototherapy.` }),
         card('Third question', { back: 'See the handout.' }),
         card('Fourth question', { back: 'Heart failure (textbook); TB in many hospital series.' }),
+        card('Fifth question', { sources: 'Psoriasis. *MSD Manual Professional Edition*. Merck & Co; 2026.' }),
       ]),
     );
     expect(report.errors).toBe(0);
@@ -66,6 +67,7 @@ describe('flashcard batch report', () => {
       'Back repeats the front',
       'mentions source material',
       'Unnamed attribution',
+      'Cites `MSD Manual`',
     ])
       expect(report.text).toContain(text);
     expect(run(batch([card('Table', { back: `${'|a|b|\n'.repeat(100)}` })])).text).not.toContain('Back is');

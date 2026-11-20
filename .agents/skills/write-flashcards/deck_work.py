@@ -223,6 +223,7 @@ def cmd_prompt(work: Work, args) -> None:
         subs |= {
             "INPUT": str(folder / needs),
             "OUTPUT": str(folder / f"review-{n}.json"),
+            "SOURCES": str(folder / f"sources-review-{n}.json"),
         }
     render_prompt(PROMPTS / f"{args.role}.md", subs, folder / f"prompt-{tag}.md")
 
@@ -309,7 +310,7 @@ def cmd_review_input(work: Work, args) -> None:
 
 
 def cmd_build(work: Work, args) -> None:
-    """Apply review-<n>.json to the cards and write TOPICDIR/stage.json (new decks and cards, edits and deletes of existing cards). A review is [{ref, severity, edits: {front?, back?, sources?}, drop?, reason}]; unlisted cards are accepted. Prints a JSON summary."""
+    """Apply review-<n>.json to the cards and write TOPICDIR/stage.json (new decks and cards, edits and deletes of existing cards). A review is [{ref, severity, edits: {front?, back?, sources?}, drop?, reason}]; unlisted cards are accepted. Prints a JSON summary whose factChanges give each fact change's reason and sources."""
     topic = work.plan_topic()
     problems, decks = [], []
     for path in work.numbered("review-input-*.json"):
@@ -318,8 +319,7 @@ def cmd_build(work: Work, args) -> None:
         if not review_path.exists():
             sys.exit(f"{review_path} is missing; run the reviewer for deck {n}.")
         rows, review = load(path), load(review_path)
-        rows_by_ref = {r["ref"]: r for r in rows}
-        refs = set(rows_by_ref)
+        refs = {r["ref"] for r in rows}
         seen = set()
         for i, e in enumerate(review, 1):
             where = f"{review_path.name} entry {i} ({e.get('ref')})"
@@ -337,13 +337,6 @@ def cmd_build(work: Work, args) -> None:
                 problems.append(f"{where}: edit keys must be front, back or sources.")
             if not edits and not e.get("drop"):
                 problems.append(f"{where}: needs edits or drop.")
-            row = rows_by_ref.get(e.get("ref"), {})
-            if (
-                e.get("severity") in ("inaccurate", "outdated")
-                and not e.get("drop")
-                and not str(edits.get("sources", row.get("sources", ""))).strip()
-            ):
-                problems.append(f"{where}: a correction needs sources (AMA) for the source that supports it.")
             for k, v in edits.items():
                 if k in EDIT_KEYS and (
                     not isinstance(v, str) or (k != "sources" and not v.strip())
@@ -364,6 +357,7 @@ def cmd_build(work: Work, args) -> None:
             for r in rows
             if r["ref"].startswith("new-")
         }
+        cited = {r["ref"]: r.get("sources", "") for r in rows}
         for e in review:
             ref, edit = e["ref"], e.get("edits") or {}
             fact = {
@@ -371,6 +365,7 @@ def cmd_build(work: Work, args) -> None:
                 "deck": deck["name"],
                 "severity": e["severity"],
                 "reason": e["reason"],
+                "sources": edit.get("sources", cited[ref]),
             }
             if ref in cards:
                 if e.get("drop"):

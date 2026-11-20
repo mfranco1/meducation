@@ -179,7 +179,7 @@ def test_build_applies_reviews_and_summarises_fact_changes(tmp_path, capsys):
             {
                 "ref": "f1",
                 "severity": "outdated",
-                "edits": {"back": "New 1", "front": "Front 1"},
+                "edits": {"back": "New 1", "front": "Front 1", "sources": "Law."},
                 "reason": "Law changed.",
             },
             {
@@ -209,12 +209,12 @@ def test_build_applies_reviews_and_summarises_fact_changes(tmp_path, capsys):
     summary = json.loads(run(work, "build", TOPIC, capsys=capsys))
     assert summary["newCards"] == {"Jaundice": 1}
     assert (summary["edits"], summary["deletes"], summary["dropped"]) == (1, 0, 2)
-    assert [(f["ref"], f["severity"]) for f in summary["factChanges"]] == [
-        ("f1", "outdated"),
-        ("new-1", "inaccurate"),
+    assert [(f["ref"], f["severity"], f["sources"]) for f in summary["factChanges"]] == [
+        ("f1", "outdated", "Law."),
+        ("new-1", "inaccurate", ""),
     ]
     stage = json.loads((folder / "stage.json").read_text())
-    assert stage["edits"] == [{"id": "f1", "version": 2, "back": "New 1"}]
+    assert stage["edits"] == [{"id": "f1", "version": 2, "back": "New 1", "sources": "Law."}]
     assert "deletes" not in stage
     assert [d["name"] for d in stage["topics"][0]["decks"]] == ["Jaundice"]
     assert stage["topics"][0]["decks"][0]["cards"] == [
@@ -261,7 +261,6 @@ def test_build_refuses_bad_reviews_and_writes_nothing(tmp_path, capsys):
             },
             {"ref": "f1", "severity": "bad", "edits": {"answer": "x"}, "reason": "r"},
             {"ref": "new-1", "severity": "format", "edits": {}, "reason": "r"},
-            {"ref": "f2", "severity": "inaccurate", "edits": {"back": "x"}, "reason": "r"},
         ],
     )
     write(folder / "review-2.json", [])
@@ -271,7 +270,6 @@ def test_build_refuses_bad_reviews_and_writes_nothing(tmp_path, capsys):
         and "severity must be" in message
         and "edit keys" in message
         and "needs edits or drop" in message
-        and "correction needs sources" in message
     )
     assert not (folder / "stage.json").exists()
 

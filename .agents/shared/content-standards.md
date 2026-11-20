@@ -4,7 +4,7 @@ Rules every quiz item and flashcard follows. Shared by write-quizzes and write-f
 
 ## Facts
 
-- Use current, reputable knowledge: major textbooks, specialty society guidelines, WHO, CDC and similar. Provided sources are a minimum coverage map, never the authority on facts. When a source is outdated or wrong, write the current fact, term and classification. Never teach a retired scheme or a withdrawn drug as current; [currency-notes.md](currency-notes.md) lists the current forms.
+- Use current knowledge from primary references, in this order: (1) the latest clinical practice guideline or official issuance of the body Philippine practice follows (see Philippine audience), national surveillance data, the drug label, and a landmark trial for what it showed; (2) the latest edition of the subject's standard reference textbook; (3) a systematic review or consensus statement in a major journal, only where the first two are silent. Provided sources are a minimum coverage map, never the authority on facts. When a source is outdated or wrong, write the current fact, term and classification. Never teach a retired scheme or a withdrawn drug as current; [currency-notes.md](currency-notes.md) lists the current forms.
 - Verify guideline-dependent facts (guidelines, criteria, classifications, staging, thresholds, doses, schedules, laws, keyed rankings) in the primary document as [verification.md](verification.md) describes. Roles without web access escalate them or list them as unverified, as their prompt says; never guess.
 - Where practice or notation varies by region, body or author, test what is consistent across them or name the guideline in the stem or on the card.
 - When the latest guideline differs from the latest edition of a major textbook, key the guideline and give the textbook value too. Label each by name and year or edition (GOLD 2026; *Harrison's*, 22nd ed.) and cite each in AMA style in the sources field. Name the guideline, textbook or study behind every attributed or qualified claim; never write "textbook value", "some studies", "many series" or "experts".
@@ -26,7 +26,9 @@ Write every field in your own words; never copy sentences from sources. Never me
 
 ## Citations
 
-The sources field is a string of AMA-style references (AMA Manual of Style, 11th edition) separated by semicolons. Cite only published primary references, and only documents you read.
+The sources field is a string of AMA-style references (AMA Manual of Style, 11th edition) separated by semicolons. Cite only the primary references listed in Facts, and only documents you read. A stable textbook fact takes no citation.
+
+- Never cite a reference site or point-of-care summary (MSD or Merck Manual, StatPearls, UpToDate, Medscape, Wikipedia, Radiopaedia, DermNet), a narrative review, a case report or single-center series, a low-tier journal (*Cureus*), one hospital's protocol, lecture or course material, an unofficial copy of a book, or a superseded edition. Such a page may point you to the primary document; a guideline-dependent fact that only such a page supports is unverified. The batch gate warns on the common ones.
 
 - Required: authors (up to 6, then "et al") or the issuing organization, title, journal abbreviation or publisher, and year. Add volume, issue, pages and DOI only when they are on the page you read; never look them up separately, and a citation without them is complete. Never add access dates.
 - Italicize journal and book titles with `*...*`; no HTML. End with a period.

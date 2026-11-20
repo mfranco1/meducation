@@ -76,13 +76,13 @@ Every reviewer runs in a fresh context that didn't write the cards.
 
 1. `D review-input "<Topic>"`. It lists each deck's new cards and, for decks with `audit`, their existing cards.
 2. Spawn one reviewer per input file with `D prompt reviewer "<Topic>" --n <n>`.
-3. `D build "<Topic>"`. It applies the reviews, writes `stage.json` and prints `factChanges`: every `inaccurate` or `outdated` finding and every change to an existing card. Read each reason and new back. Remove a review entry you can show is wrong, fix a wording or unit slip in an entry, and send a reviewer back when its source doesn't match the card's scope; rebuild after each. Ask the user only about a change that rests on judgment, not a source. Don't stage with known issues for the user to fix.
+3. `D build "<Topic>"`. It applies the reviews, writes `stage.json` and prints `factChanges`: every `inaccurate` or `outdated` finding and every change to an existing card. Read each reason, new back and `sources`. Remove a review entry you can show is wrong, fix a wording or unit slip in an entry, and send a reviewer back when its source doesn't match the card's scope or isn't a primary reference (content-standards.md, Citations); rebuild after each. Ask the user only about a change that rests on judgment, not a source. Don't stage with known issues for the user to fix.
 4. `D gate "<Topic>" --batch stage.json`. A count below the plan's `add` is expected after drops; top up only when the deck lost a point it needs.
 
 ### 5. Stage
 
 1. Run `J stage-flashcards`, then refresh the outline and rerun `D coverage "<Topic>"` to confirm the counts. Staging checks every edit and delete against the draft before writing; if it refuses a stale version, refresh the outline and rerun from `D review-input`. If it fails partway, it reports what was saved: remove that from `stage.json`, fix the rest and rerun.
-2. `D ledger` merges the new source records.
+2. `D ledger` merges the writers' and reviewers' source records.
 3. Report to the user: decks created or topped up with card counts, each edit and delete of an existing card with its reason, facts no one could verify (`unverified-<n>.json`), remaining gate warnings, and 5 sample cards rendered as Markdown.
 4. Remind the user to review and publish in **Review & publish**. Every staged record is listed in **More > Changes** under `agent:write-flashcards` and can be reverted there.
 

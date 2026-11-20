@@ -31,7 +31,7 @@ A saved copy replaces the fetch, not the currency check. Use it when step 1 find
 ## Procedure
 
 1. Search for the newest version of the document first, and cite that edition.
-2. Grep the saved copy when there is one for that edition. Otherwise fetch the publisher's full text (journal, PubMed Central, society, government or WHO site). Search results, abstracts and secondary summaries only locate the document. Save the full text you read.
+2. Grep the saved copy when there is one for that edition. Otherwise fetch the publisher's full text (journal, PubMed Central, society, government or WHO site). Search results, abstracts, secondary summaries and the pages content-standards.md (Citations) bars from citation only locate the document; never confirm a fact in them or record them as `verified`. Save the full text you read.
 3. Confirm the exact numbers and wording there. State a recommendation's strength or certainty grade only if you read it there.
 4. When a fetch is refused, grep [fetch-access.md](fetch-access.md) for the host, then the issuing body; for a site not listed, follow its general routes. When you verify a fact in another body's guideline, cite that body, and name it in the stem or on the card where the bodies differ.
 5. For a law or circular, also confirm the provision is still in force: not repealed, amended, or a lapsed transition rule. Review handouts often keep superseded rules. Never write a provision number you didn't confirm.
