@@ -14,8 +14,16 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 
 ## Status
 
-- Pilot: running.
+- Pilot done: Critical Care, 109 cards, 12 edits (11%), 8 trivia or duplicate cards deleted. Reviewers kept reporting ledger-only doubts; the reviewer prompt now loads web tools up front and asks for URLs. Send back any reviewer that reports an unchecked doubt.
+- Per topic: audit, then show the user the reviewers' trivia and existing-duplicate lists; delete only what the user approves. Add coverage gaps to Top-ups below.
+- Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: Cardiovascular Medicine. Next: Structural Heart Disease, Arrhythmia and Heart Failure.
+
+## Top-ups (after audits)
+
+- THIN topics from `D coverage` (rerun before planning): Pathology 14; Internal Medicine: Psychiatry, Obesity Lipid and Bone, Allergology and Immunology; OB-GYN: Gynecology, Medical Disorders in Pregnancy; Pediatrics: Preventive Pediatrics, Growth and Development; one each in Anatomy (General Anatomy), Biochemistry (Genetics and Inheritance), Microbiology (Clinical Microbiology Integration), Pharmacology (Immunopharmacology), Preventive Medicine (Primary Health Care), Physiology (Integrated and Environmental).
+- IM › Critical Care: subtopics Supportive ICU Care (0 cards) and Vasopressors and Inotropes (2 cards).
 
 ## Staged (not published)
 
-(none yet)
+- IM › Critical Care Medicine: 12 edits, 8 deletes.
+- IM › Cardiovascular Medicine: 21 edits, 22 deletes.
