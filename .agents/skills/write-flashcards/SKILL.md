@@ -76,7 +76,7 @@ Every reviewer runs in a fresh context that didn't write the cards.
 
 1. `D review-input "<Topic>"`. It lists each deck's new cards and, for decks with `audit`, their existing cards.
 2. Spawn one reviewer per input file with `D prompt reviewer "<Topic>" --n <n>`.
-3. `D build "<Topic>"`. It applies the reviews, writes `stage.json` and prints `factChanges`: every `inaccurate` or `outdated` finding and every change to an existing card. Read each reason. Remove a review entry you can show is wrong and rebuild; ask the user about a change that rests on judgment, not a source.
+3. `D build "<Topic>"`. It applies the reviews, writes `stage.json` and prints `factChanges`: every `inaccurate` or `outdated` finding and every change to an existing card. Read each reason and new back. Remove a review entry you can show is wrong, fix a wording or unit slip in an entry, and send a reviewer back when its source doesn't match the card's scope; rebuild after each. Ask the user only about a change that rests on judgment, not a source. Don't stage with known issues for the user to fix.
 4. `D gate "<Topic>" --batch stage.json`. A count below the plan's `add` is expected after drops; top up only when the deck lost a point it needs.
 
 ### 5. Stage
