@@ -7,7 +7,7 @@ Sites that refuse automated fetches, and the route that loads instead. Shared by
 For a site not listed, try these in order:
 
 1. **PubMed Central copy**, as the PubMed Central row below describes.
-2. **Raw archive copy**: `curl -sL` with a browser User-Agent on `web.archive.org/web/<year>id_/<URL>` (`id_` returns the raw page or PDF). WebFetch refuses web.archive.org.
+2. **Raw archive copy**: `curl -sL` with a browser User-Agent on `web.archive.org/web/<year>id_/<URL>` (`id_` returns the raw page or PDF); if the archive blocks the browser User-Agent, retry with curl's default. WebFetch refuses web.archive.org.
 3. A copy hosted by another society, agency or university repository.
 
 **PDF through WebFetch**: when WebFetch returns a PDF as binary, save the file and read it with `pdftotext -layout`.
@@ -43,6 +43,7 @@ General indexes first, then the rest alphabetically by body.
 | drugs.com (AHFS monographs) | 403 | The drug's label (see Drug labels) |
 | EMA product information (ema.europa.eu SmPC PDFs) | 429 at times | `curl -sL` with a browser User-Agent on `ema.europa.eu/en/documents/product-information/<name>-epar-product-information_en.pdf`; after a 429, wait or use the raw archive copy |
 | ESC, ERS (escardio.org, academic.oup.com *Eur Heart J*, ersjournals.com) | 403 | PubMed Central copy, then society pocket-guide PDFs. Joint ERS/ATS guideline PDFs load from member.thoracic.org with `curl -sL`. Recent guidelines without a PMCID (2025 pregnancy guideline): the OUP full text at academic.oup.com loads but truncates partway or runs past 300,000 characters (2018 syncope guideline), so fetch the needed section from the OUP chapter or supplementary links, or read the article page with WebFetch in chunks by offset (plain curl gets a Cloudflare challenge) |
+| IDSA guidelines (academic.oup.com *Clin Infect Dis*) | Long pages truncate | Read the article page with WebFetch in chunks by offset; the etiology and recommendation sections sit far into the page |
 | ESGO (esgo.org) | | Pocket-guideline PDFs on esgo.org; some full texts are hosted by national societies (BGCS) |
 | ESMO (annalsofoncology.org) | 403, not open access | 2025 UK bone sarcoma guideline (Gerrand et al., *Br J Cancer*, PMC11723950) for bone sarcomas; otherwise an equivalent open guideline; cite that body |
 | EULAR (ard.bmj.com) | 403 | Author manuscript in a university repository (eprints, institutional open-access pages) |

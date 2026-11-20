@@ -33,6 +33,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | NeuPSIG 2015 neuropathic pain recommendations (Finnerup) | NeuPSIG 2025 update (Soliman et al., Lancet Neurol 2025); cite it for first-line and not-recommended drugs | 2025 | |
 | 2018 ESC guidelines on cardiovascular disease in pregnancy | 2025 ESC guidelines (Eur Heart J, doi 10.1093/eurheartj/ehaf193); several positions softened (endocarditis antibiotics "may be considered", heparin with bromocriptine "should be considered") | 2025 | |
 | CDC 2010 perinatal GBS guideline | ACOG Committee Opinion 797 (2020), which replaced the CDC guideline for intrapartum GBS prophylaxis | 2020 | |
+| IDSA 2012 diabetic foot infection guideline | IWGDF/IDSA 2023 guideline on diabetes-related foot infections | 2023 | |
 
 ## Current editions
 
