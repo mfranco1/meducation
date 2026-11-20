@@ -2,17 +2,26 @@
 
 A change here changes both workflows: run both skills' tests and this folder's tests.
 
-Usage: python3 -I .agents/shared/authoring.py find-sources TERM... [--ledger PATH]
-prints the source ledger entries that contain every term, newest first.
+Usage:
+  python3 -I .agents/shared/authoring.py find-sources TERM... [--ledger PATH]
+    prints the source ledger entries that contain every term, newest first, with any saved copy.
+  python3 -I .agents/shared/authoring.py save-source URL [--from URL_OR_FILE] [--ledger PATH]
+    saves the document's text in sources/ next to the ledger and prints the path.
 """
 
 import argparse
+import datetime
 import fcntl
+import hashlib
+import html
+import html.parser
 import json
 import os
 import re
 import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[2]
@@ -21,6 +30,8 @@ LEDGER = REPO / "var" / "source-ledger.json"
 SEP = " › "
 STATUS_RANK = {"verified": 3, "summary-only": 2, "unconfirmed": 1, "blocked": 0}
 FIND_FULL, FIND_TITLES = 8, 40  # past FIND_FULL matches, list titles only
+BROWSER_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36"
+MIN_TEXT = 1000  # shorter text is a block, challenge or error page, not the document
 
 
 def load(path: Path):
@@ -73,6 +84,76 @@ def render_prompt(template: Path, subs: dict[str, str], out: Path) -> None:
     print(out)
 
 
+def url_key(url: str) -> str:
+    """A URL without scheme, www, trailing slash or case, so citations of one page match."""
+    return re.sub(r"^(https?://)?(www\.)?", "", url.strip().lower()).rstrip("/")
+
+
+def saved_copy(ledger: Path, url: str) -> Path:
+    """Where save-source keeps the text of the document at URL."""
+    return ledger.with_name("sources") / f"{hashlib.sha256(url_key(url).encode()).hexdigest()[:16]}.txt"
+
+
+class _Text(html.parser.HTMLParser):
+    """Visible text of an HTML or XML page."""
+
+    SKIP = frozenset({"script", "style", "noscript", "svg", "head"})
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.parts: list[str] = []
+        self.skip = 0
+
+    def handle_starttag(self, tag, attrs):
+        self.skip += tag in self.SKIP
+        self.parts.append("\n")
+
+    def handle_endtag(self, tag):
+        if tag in self.SKIP and self.skip:
+            self.skip -= 1
+
+    def handle_data(self, data):
+        if not self.skip:
+            self.parts.append(data)
+
+
+def document_text(raw: bytes, folder: Path) -> str:
+    """Text of a downloaded PDF, HTML/XML page or plain-text response."""
+    if raw.lstrip().startswith(b"%PDF"):
+        pdf = folder / "document.pdf"
+        pdf.write_bytes(raw)
+        return subprocess.run(["pdftotext", "-layout", str(pdf), "-"], capture_output=True, text=True, check=True).stdout
+    text = raw.decode("utf-8", errors="replace")
+    if text.lstrip().startswith("<"):
+        parser = _Text()
+        parser.feed(text)
+        text = html.unescape("".join(parser.parts))
+    return re.sub(r"\n\s*\n+", "\n\n", re.sub(r"[ \t]+", " ", text)).strip() + "\n"
+
+
+def save_source(ledger: Path, url: str, source: str | None) -> None:
+    """Save the text of the document cited as URL, downloaded from URL or SOURCE (a URL or a saved file)."""
+    with tempfile.TemporaryDirectory() as tmp:
+        folder = Path(tmp)
+        if source and Path(source).is_file():
+            raw = Path(source).read_bytes()
+        else:
+            out = folder / "download"
+            cmd = ["curl", "-sSfL", "--max-time", "180", "-A", BROWSER_UA, "-o", str(out), source or url]
+            if (done := subprocess.run(cmd, capture_output=True, text=True, check=False)).returncode:
+                sys.exit(f"Download failed: {done.stderr.strip()}. Try a route in fetch-access.md.")
+            raw = out.read_bytes()
+        text = document_text(raw, folder)
+    if len(text) < MIN_TEXT:
+        sys.exit(f"Only {len(text)} characters of text, likely a block or challenge page; not saved:\n{text[:300]}")
+    path = saved_copy(ledger, url)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    tmp.write_text(text, "utf-8")
+    os.replace(tmp, path)  # a concurrent reader never sees a partial file
+    print(f"{path} ({len(text)} characters)")
+
+
 def find_sources(ledger: Path, terms: list[str]) -> None:
     """Print the ledger entries that contain every term, newest first."""
     terms = [t.lower() for t in terms]
@@ -87,6 +168,9 @@ def find_sources(ledger: Path, terms: list[str]) -> None:
         print(f"{e['status']} {e.get('year', '')} {e['title']}")
         if full:
             print(f"  {e.get('url', '')}")
+            if e.get("url") and (copy := saved_copy(ledger, e["url"])).exists():
+                saved = datetime.datetime.fromtimestamp(copy.stat().st_mtime, datetime.UTC).date()
+                print(f"  saved {saved}: {copy.relative_to(REPO) if copy.is_relative_to(REPO) else copy}")
             print("".join(f"  - {f}\n" for f in e.get("facts", [])), end="")
     if not hits:
         print("No matching sources.")
@@ -104,7 +188,7 @@ def merge_ledger(ledger: Path, work: Path) -> None:
 
         def fold(row: dict) -> bool:
             """Merge a row into the index; True when it is a new entry."""
-            url = re.sub(r"^(https?://)?(www\.)?", "", row.get("url", "").strip().lower()).rstrip("/")
+            url = url_key(row.get("url", ""))
             k = (url or row["title"].strip().lower(), str(row.get("year", "")))
             entry = index.get(k)
             if entry is None:
@@ -146,8 +230,15 @@ def main() -> None:
     find = sub.add_parser("find-sources", help=find_sources.__doc__)
     find.add_argument("terms", nargs="+", metavar="TERM")
     find.add_argument("--ledger", type=Path, default=LEDGER)
+    save = sub.add_parser("save-source", help=save_source.__doc__)
+    save.add_argument("url", metavar="URL", help="the document's own URL, as cited in sources files")
+    save.add_argument("--from", dest="source", metavar="URL_OR_FILE", help="another route to the same document")
+    save.add_argument("--ledger", type=Path, default=LEDGER)
     args = parser.parse_args()
-    find_sources(args.ledger, args.terms)
+    if args.command == "find-sources":
+        find_sources(args.ledger, args.terms)
+    else:
+        save_source(args.ledger, args.url, args.source)
 
 
 if __name__ == "__main__":

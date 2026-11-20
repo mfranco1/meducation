@@ -64,3 +64,23 @@ def test_find_sources_prints_entries_matching_every_term_newest_first(tmp_path):
     out = find("KDIGO")
     assert out.index("KDIGO CKD") < out.index("KDIGO AKI")
     assert find("nothing") == "No matching sources.\n"
+
+
+def test_saved_copy_is_listed_with_its_ledger_entry(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    write(ledger, [{"title": "KDIGO AKI", "year": "2012", "url": "http://example.org/kdigo", "status": "verified", "facts": []}])
+    page = tmp_path / "page.html"
+    body = "<p>Stage 3: creatinine 3.0 times baseline &amp; urine output below 0.3 mL/kg/h.</p>" * 20
+    page.write_text(f"<html><head><title>x</title><script>var hidden = 1;</script></head><body>{body}</body></html>")
+
+    def run(*args: str) -> subprocess.CompletedProcess:
+        return subprocess.run([sys.executable, "-I", str(TOOL), *args, "--ledger", str(ledger)], capture_output=True, text=True, check=False)
+
+    saved = run("save-source", "https://www.example.org/kdigo/", "--from", str(page))
+    assert saved.returncode == 0, saved.stderr
+    text = Path(saved.stdout.split(" (")[0]).read_text()
+    assert "baseline & urine output below 0.3 mL/kg/h" in text and "hidden" not in text
+    assert "saved " in run("find-sources", "KDIGO").stdout
+
+    page.write_text("<html><body>Just a moment...</body></html>")
+    assert run("save-source", "https://example.org/other", "--from", str(page)).returncode != 0
