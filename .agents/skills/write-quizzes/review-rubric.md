@@ -8,7 +8,7 @@ Writers check their own items against checks 2 to 8 before returning them. Revie
 2. **Currency**: guideline-dependent facts, criteria, classifications, staging, thresholds, doses and schedules match the current version, and no retired term from [currency-notes.md](../../shared/currency-notes.md) is used. Each such item cites the right document in AMA style (content-standards.md, Citations). Missing volume, pages or DOI is not a defect.
 3. **Accuracy**: the rationale, pearls and distractor bullets contain no errors and no unsupported claims.
 4. **Standards**: the stem is self-contained, the lead-in is answerable with the choices covered, the choices are homogeneous, and none of the technical flaws apply.
-5. **Near-duplicates and enemy items**: no item gives away another's answer, and no item tests a point already tested the same way in the batch or in `stems.txt` (Near-duplicates).
+5. **Near-duplicates and enemy items**: no item gives away the answer to another item in its quiz, and no item tests a point already tested the same way in the batch or in `stems.txt` (Near-duplicates).
 6. **Metadata**: subtopic, system, difficulty and questionType fit the item.
 7. **Rationale format**: structure and formatting follow Rationale.
 8. **Language**: plain, precise, original; no mention of provided sources in any field; no stereotyping details.

@@ -37,7 +37,8 @@ Alphabetical by body.
 - **ADA Standards of Care** (diabetesjournals.org, *Diabetes Care*; Cloudflare; Europe PMC and efetch lack the body): UA curl on the section's PMC page, or WebFetch by offset (pages run past 300,000 characters). 2026: PMC12690183 section 2, PMC12690185 section 9, PMC12690187 section 10, PMC12690180 section 16. Then the archive copy of the diabetesjournals.org section.
 - **AHA/ACC** (ahajournals.org, jacc.org): PMC copy, then archive copy of the full-text page. A saved *Circulation* text can lack the recommendation and drug tables; the archive copy of the *JACC* co-publication has them. ACC "Guidelines Made Simple" or pocket-guide PDFs for classes and thresholds; a university mirror as WebFetch PDF. Resuscitation: cpr.heart.org pages.
 - **AHA/ACC 2025 and ESC 2024 hypertension** (blocked everywhere): 2020 Philippine hypertension guideline (PMC8678709), NICE NG136 and NG133, or ADA Standards section 10; cite that body.
-- **ASCRS** (*Diseases of the Colon & Rectum*; summaries only): a repository copy (2020 Crohn guideline on eScholarship); otherwise WSES, AGA or UEG/ESCP, citing that body.
+- **ASCRS** (*Diseases of the Colon & Rectum*; summaries only; ascrsu.com learning copies return 403): a repository copy (2020 Crohn guideline on eScholarship); otherwise WSES, AGA or UEG/ESCP, citing that body. ESCP 2020 diverticular disease: UA curl of the published version on archive-ouverte.unige.ch.
+- **AWMF** (register.awmf.org guideline PDFs; bot challenge to curl): WebFetch saves the PDF, then `pdftotext`.
 - **ASH, ISTH, BSH** (efetch returns front matter only): guideline PDFs on thebloodproject.com as WebFetch PDF.
 - **ASRA** neuraxial anticoagulation (rapm.bmj.com): the anticoagulant's label (spinal/epidural hematoma and catheter timing; see Drug labels); cite the label.
 - **AUA** (auanet.org; login): EAU chapters; cite EAU.

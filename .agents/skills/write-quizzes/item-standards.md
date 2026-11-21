@@ -26,7 +26,7 @@ Check every item against these before returning it. They are the flaws reviewers
 - Two choices mean the same thing, one contains another, or a distractor is partly true. In a "most common" item, a distractor the source lists alongside the key or at a similar rate is partly true: use effects the source gives a clearly lower rate, or rare serious ones.
 - A distractor no partly prepared learner would pick.
 - Irrelevant difficulty: vague frequency terms, double negatives, needless jargon, a long stem for a simple recall fact, trick wording, trivia.
-- A stem, rationale, table or pearl that gives away another item's answer, including staged items in the same quiz (pearls often state a staged item's next step or key). Grep `stems.txt` for each pearl's fact.
+- A stem, rationale, table or pearl that gives away the answer to another item in the same quiz, new or staged (pearls often state a staged item's next step or key). Grep the quiz's section of `stems.txt` for each pearl's fact. Items in other quizzes don't count.
 - A fact, number or absolute claim ("only", "never", "most common", a percentage) in any field that the cited document or a standard textbook doesn't state.
 - A pearl that restates the rationale, or a rationale padded with repeated or filler sentences. Add a distinguishing fact instead.
 - A rationale left garbled by edits (a stray sentence after the bullets, a sentence repeated or cut off). Reread every edited rationale whole.
@@ -41,7 +41,7 @@ The gate (`quiz_work.py gate`) measures these.
 
 ## Near-duplicates
 
-Revisiting a core concept from a different angle is welcome. Testing the same point the same way, within the quiz or anywhere in the subject, is not. Points in a quiz's `excludes` belong to another quiz.
+Revisiting a core concept from a different angle is welcome. Testing the same point the same way, within the quiz or anywhere in the subject, is not. Other subjects don't count. Points in a quiz's `excludes` belong to another quiz.
 
 `stems.txt` holds every staged stem of the subject plus `(unstaged)` sections from other topics in progress, one `## <Topic> › <Quiz>` section per quiz. To check items against it:
 
