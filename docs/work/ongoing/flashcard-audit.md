@@ -20,7 +20,7 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - Narrative reviews and single-hospital protocols the gate can't match: read each staged `sources` before publishing.
 - Per topic: audit, then delete the reviewers' trivia and existing-duplicate cards on your own judgment (user approved; top-ups can add better cards). Ask only about cards whose fix rests on judgment, not a source. Add coverage gaps to Top-ups below.
 - Internal Medicine: all 19 topics in `plan.json` as audit decks. Done: the topics under Staged. All IM topics audited. Run one topic per session to save context.
-- Pharmacology: all 15 topics (38 decks) in `plan.json` as audit decks. Done: the Pharmacology topics under Staged. Next: Cardiovascular and Renal Pharmacology, then the rest in `plan.json` order.
+- Pharmacology: all 15 topics (38 decks) in `plan.json` as audit decks. Done: the Pharmacology topics under Staged. Next: Antibacterial and Antimycobacterial Pharmacology, then the rest in `plan.json` order. Pharmacology reviewers lean on the ledger and fetch little (all 4 Endocrine reviewers needed a send-back); send back any that leave a guideline- or label-dependent fact unchecked. The openFDA label API works for labels.
 
 ## Top-ups (after audits)
 
@@ -41,6 +41,11 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - IM › Neurology: Status Epilepticus (9 cards) and Headache (14) decks SMALL; `D coverage` shows 2 cards for Multiple Sclerosis (6 questions), 5 for Myasthenia Gravis (6) and Dementia (6), 2 for Peripheral and Entrapment Neuropathy; no preventive migraine card.
 - IM › Psychiatry: one deck of 15 cards for 110 questions; `D coverage` shows 0 cards for Antidepressants and Serotonin Syndrome, Mood Stabilizers, Suicide Risk, Anxiety, OCD and Trauma, Eating Disorders, Personality Disorders and Delirium, and 1 for Other Substance Use Disorders. Needs new decks, not a top-up.
 - Pharm › Autonomic and Ophthalmic: `D coverage` shows 5 cards for Glaucoma Drugs (15 questions), 1 for Catecholamines and Vasopressors (11), 4 for Beta Agonists (7), 3 for Adrenergic Neurotransmission (7) (heuristic; confirm before writing).
+- Pharm › Cardiovascular and Renal: `D coverage` shows 0 cards for Antihypertensive Selection by Comorbidity (7 questions), 4 for Sympatholytics and Direct Vasodilators (12), 4 for Nitrates (9), 5 for Statins (11) (heuristic; confirm before writing).
+- Pharm › Autacoids and Respiratory: `D coverage` shows 0 cards for Methylxanthines (6 questions; 3 theophylline cards exist, so heuristic) and Antitussives, Expectorants and Mucolytics (8), 2 for Ergot Alkaloids (6), 3 for Drugs for Migraine (12) (heuristic; confirm before writing).
+- Pharm › Neuropsychopharmacology: no Alzheimer drug cards (4 questions; `D coverage` miscounts via "Disease"), 0 for Stimulants, Hallucinogens and Cannabis (6), 1 for Nicotine and Smoking Cessation (5), 2 for Barbiturates (4).
+- Pharm › Hematology and Antithrombotic: `D coverage` shows 0 cards for Fibrinolytics (6 questions), 1 for Chelation for Transfusional Iron Overload (7), 1 for Thrombopoietic Agents (6), 2 for Erythropoiesis-Stimulating Agents (8), 3 for Iron Therapy (11) (heuristic; confirm before writing).
+- Pharm › Endocrine and Reproductive: `D coverage` shows 4 cards for Hormonal Contraceptives (13 questions), 0 for Androgens and Antiandrogens (7; finasteride, flutamide cards exist, so heuristic), 3 for Bisphosphonates (8), 3 for Sulfonylureas and Meglitinides (6); Thionamides shows 0 but several cards exist (heuristic).
 - IM › Critical Care: subtopics Supportive ICU Care (0 cards) and Vasopressors and Inotropes (2 cards).
 
 ## Staged (not published)
@@ -66,6 +71,13 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - IM › Psychiatry: 2 edits (DSM duration criteria), 0 deletes.
 - Pharm › General Pharmacology: 0 edits, 2 deletes (Fick's-law trivia).
 - Pharm › Autonomic and Ophthalmic Pharmacology: 8 edits (pralidoxime role, 4 sources added), 2 deletes (tacrine, edrophonium test). AHA 2025 ALS citation on the cardiac arrest epinephrine card is from the ledger, not reread (AHA hosts 403).
+- Pharm › Cardiovascular and Renal Pharmacology: 6 edits (lidocaine toxicity order, 5 lipid cards cited to the 2026 ACC/AHA dyslipidemia guideline), 0 deletes.
+- Pharm › Autacoids and Respiratory Pharmacology: 2 edits (carboprost in asthma reworded to caution per FDA label, depemokimab added to anti-IL-5 biologics per GINA 2026), 0 deletes.
+- Pharm › Neuropsychopharmacology: 3 edits (quetiapine in PD psychosis per MDS 2019, eszopiclone not alpha1-selective, gabapentinoid mechanism), 0 deletes.
+- Pharm › Anesthesia and Pain Pharmacology: audited, 0 edits, 0 deletes (nothing staged). AHA 2025 opioid-emergency card unread (AHA hosts 403); search summaries agree.
+- Pharm › Hematology and Antithrombotic Pharmacology: 1 edit (abciximab no longer marketed), 2 deletes (oprelvekin trivia).
+- Pharm › Anti-Inflammatory and Rheumatologic Pharmacology: audited, 0 edits, 0 deletes (nothing staged). Checked against ACR 2020 gout, ACR 2021 RA, the 2023 acetaminophen consensus and FDA JAK and ketorolac labels; the febuxostat mortality card rests on the ledger's Uloric label (FDA 2019 communication 404). No aspirin primary-prevention card exists.
+- Pharm › Endocrine and Reproductive Pharmacology: 6 edits (mifepristone front reworded to early pregnancy loss, PTH-analogue osteosarcoma front made specific, progestin-only front reworded, 3 sources added), 0 deletes. Kept atosiban, danazol and etonogestrel-implant cards (relevant in the Philippines).
 - Sources backfill: 47 edits (13 back changes, 1 front), 1 delete, across IM and 1 Biochemistry card.
 - Re-source of 29 non-citable citations: 29 edits (7 back changes, 2 re-cited to primary documents, 20 cleared as stable facts).
 - Full check of 16 weakly sourced cards: 12 edits (6 fact changes, 2 fronts), 1 duplicate deleted.
