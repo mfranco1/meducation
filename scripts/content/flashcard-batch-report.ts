@@ -71,9 +71,12 @@ export function buildReport(
       } else if (typeof text !== 'string') error(where, `${field} must be a string.`);
       else if (!text.trim()) {
         if (field !== 'sources') error(where, `${field} is blank.`);
-      } else
+      } else {
         for (const issue of markdownIssues(text, FIELD_POLICY[field as keyof typeof FIELD_POLICY], where))
           error(`${where}.${field}`, issue.message.replace(/^(stem|rationale)/, field));
+        // Markdown reads \( as an escaped parenthesis, so only $...$ renders as math.
+        if (/\\[([]/.test(text)) error(`${where}.${field}`, `${field} uses \\( or \\[ math; write $...$ or $$...$$.`);
+      }
     }
   };
 

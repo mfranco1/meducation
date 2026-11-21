@@ -26,6 +26,12 @@ describe('flashcard batch report', () => {
     expect(report.text).toContain('.sources: sources contains an image');
   });
 
+  it('rejects backslash math delimiters', () => {
+    const report = run(batch([card('Hb Bart', { back: '\\(\\gamma_4\\).' }), card('HbH', { back: '$\\beta_4$.' })]));
+    expect(report.errors).toBe(1);
+    expect(report.text).toContain('back uses \\( or \\[ math');
+  });
+
   it('errors on exact duplicates and warns on near-duplicates', () => {
     const dup = run(batch([card('existing FRONT 3!'), card('Brand new thing'), card('brand new thing')]));
     expect(dup.errors).toBe(2);

@@ -44,5 +44,6 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 
 - Tumor classification: WHO Classification of Tumours, 5th edition, except Soft Tissue and Bone (6th edition, 2026; Hornick et al., Am J Surg Pathol 2026;50(12):e48-e64). Check whether a site's 6th edition volume has appeared before writing.
 - Staging: AJCC 8th edition, unless the site has a Version 9 chapter; check the site before writing a stage.
+- Gynecologic cancer reviews: FIGO Cancer Report 2025 (*Int J Gynaecol Obstet* 2025;171 suppl 1) replaces the 2021 updates. It uses GLOBOCAN 2022 figures; cancer incidence and mortality come from GLOBOCAN 2024, so rankings can differ (cervical cancer is fifth in women worldwide in 2024, fourth in 2022). Name the GLOBOCAN edition behind a ranking.
 - Contraceptive eligibility: WHO Medical Eligibility Criteria, 6th edition (November 2025). DMPA in breastfeeding women before 6 weeks postpartum is category 2 (was 3 in the 2015 5th edition); name the edition in the stem or on the card.
 - HPV vaccine dose count: WHO SAGE recommends a single dose for girls aged 9 to 14 (October 2026); the PIDSP 2026 calendar still gives 2 doses, and no DOH issuance on the NIP dose count was found. Don't key a dose count for girls 9 to 14 without naming the schedule's body in the stem or on the card.

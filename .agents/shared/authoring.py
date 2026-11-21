@@ -4,7 +4,8 @@ A change here changes both workflows: run both skills' tests and this folder's t
 
 Usage:
   python3 -I .agents/shared/authoring.py find-sources TERM... [--ledger PATH]
-    prints the source ledger entries that contain every term, newest first, with any saved copy.
+    prints the source ledger entries that contain every term, newest first, with any saved copy,
+    and the files in sources/manual/ whose name contains any term.
   python3 -I .agents/shared/authoring.py save-source URL [--from URL_OR_FILE] [--ledger PATH]
     saves the document's text in sources/ next to the ledger and prints the path.
 """
@@ -149,7 +150,7 @@ def save_source(ledger: Path, url: str, source: str | None) -> None:
             raw = Path(source).read_bytes()
         else:
             out = folder / "download"
-            cmd = ["curl", "-sSfL", "--max-time", "180", "-A", BROWSER_UA, "-o", str(out), source or url]
+            cmd = ["curl", "-sSfL", "--compressed", "--max-time", "180", "-A", BROWSER_UA, "-o", str(out), source or url]
             if (done := subprocess.run(cmd, capture_output=True, text=True, check=False)).returncode:
                 sys.exit(f"Download failed: {done.stderr.strip()}. Try a route in fetch-access.md.")
             raw = out.read_bytes()
@@ -173,6 +174,11 @@ def find_sources(ledger: Path, terms: list[str]) -> None:
         if all(t in json.dumps(e, ensure_ascii=False).lower() for t in terms)
     ]
     hits.sort(key=lambda e: str(e.get("year", "")), reverse=True)
+    # Copies the user downloaded because the publisher refuses fetches; filenames are hyphenated.
+    manual = ledger.with_name("sources") / "manual"
+    for copy in sorted(manual.iterdir()) if manual.is_dir() else []:
+        if any(t.replace(" ", "-") in copy.name.lower() for t in terms):
+            print(f"manual copy: {copy.relative_to(REPO) if copy.is_relative_to(REPO) else copy}")
     full = len(hits) <= FIND_FULL
     for e in hits[:FIND_TITLES]:
         print(f"{e['status']} {e.get('year', '')} {e['title']}")

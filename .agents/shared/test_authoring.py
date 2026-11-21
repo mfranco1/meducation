@@ -75,6 +75,9 @@ def test_find_sources_prints_entries_matching_every_term_newest_first(tmp_path):
     out = find("KDIGO")
     assert out.index("KDIGO CKD") < out.index("KDIGO AKI")
     assert find("nothing") == "No matching sources.\n"
+    (tmp_path / "sources" / "manual").mkdir(parents=True)
+    (tmp_path / "sources" / "manual" / "aap-iron-deficiency-2026.pdf").write_bytes(b"%PDF")
+    assert "manual copy:" in find("iron deficiency") and "manual copy:" not in find("kdigo")
 
 
 def test_saved_copy_is_listed_with_its_ledger_entry(tmp_path):
