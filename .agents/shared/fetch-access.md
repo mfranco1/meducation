@@ -5,21 +5,25 @@ Sites that refuse automated fetches, and the route that loads instead. Shared by
 ## Terms
 
 - **UA curl**: `curl -sL` with a browser User-Agent.
-- **Archive copy**: UA curl on `web.archive.org/web/<year>id_/<URL>` (`id_` returns the raw page or PDF); if the archive blocks the browser User-Agent, retry with curl's default. WebFetch refuses web.archive.org.
+- **Archive copy**: `save-source <URL> --from web.archive.org/web/<year>id_/<URL>` (`id_` returns the raw page or PDF). WebFetch refuses web.archive.org.
 - **PMC copy**: the article in PubMed Central, read as the PubMed Central entry says.
 - **WebFetch PDF**: when WebFetch returns a PDF as binary, save it and read it with `pdftotext -layout`.
 
+First check `var/sources/manual/` for a copy the user downloaded (`ls var/sources/manual/`) and save it with `save-source <the document's own URL> --from var/sources/manual/<file>`.
+
 For a site not listed: PMC copy, then archive copy, then a copy hosted by another society, agency or university repository; otherwise record the fact as abstract-only.
+
+Use only the routes listed. After a site refuses a fetch, don't retry its own host with a browser User-Agent or other URL variants: the permission classifier reads that as getting around access control and then refuses the archive copy too. When the classifier denies a fetch, don't retry or rephrase it: record the document as `blocked` and name it in your summary so the user can download it into `var/sources/manual/`.
 
 ## Indexes
 
 - **PubMed Central** (pmc.ncbi.nlm.nih.gov; browser check): UA curl on the article page, then Europe PMC full text (`https://www.ebi.ac.uk/europepmc/webservices/rest/<PMCID>/fullTextXML`), then NCBI efetch (`https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pmc&id=<PMCID digits>`), then WebFetch on the article page. Find the copy with `https://pmc.ncbi.nlm.nih.gov/search/?term=<DOI>`. Articles outside the open-access subset, and pre-2000 page scans, come back without text: record them as abstract-only.
 - **PubMed** (pubmed.ncbi.nlm.nih.gov; cookie wall), **BVS / LILACS** (search.bvsalud.org): Europe PMC REST search for the abstract and citation: `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:<PMID>%20AND%20SRC:MED&resultType=core`.
-- **NCBI Bookshelf** (ncbi.nlm.nih.gov/books, GeneReviews; CAPTCHA): Europe PMC or another agency's copy.
+- **NCBI Bookshelf** (ncbi.nlm.nih.gov/books, GeneReviews; CAPTCHA): Europe PMC or another agency's copy. Endotext chapters: UA curl of the chapter PDF from endotext.org (`https://endotext.org/wp-content/uploads/pdfs/<chapter-slug>.pdf`), then `pdftotext`.
 
 ## Archive copy works
 
-These return 403 or HTML instead of the PDF; the archive copy loads: clinicalinfo.hiv.gov (NIH HIV guideline PDFs), BMJ specialty journals (lupus.bmj.com and other *.bmj.com article pages), DOH Epidemiology Bureau surveillance PDFs (pia.gov.ph), FNRI-DOST (fnri.dost.gov.ph: Pinggang Pinoy, dietary guidelines), Philippine Statistics Authority (psa.gov.ph), *Respiratory Care* (rcjournal.com), SOGC (*J Obstet Gynaecol Can*, `jogc.com/article/<PII>/pdf`), The Menopause Society (menopause.org PDFs; or the *Menopause* article in PMC), UNICEF data (data.unicef.org: UN IGME reports).
+These return 403 or HTML instead of the PDF; the archive copy loads: clinicalinfo.hiv.gov (NIH HIV guideline PDFs), BMJ specialty journals (lupus.bmj.com and other *.bmj.com article pages; not jnnp.bmj.com), DOH Epidemiology Bureau surveillance PDFs (pia.gov.ph), FNRI-DOST (fnri.dost.gov.ph: Pinggang Pinoy, dietary guidelines), Philippine Statistics Authority (psa.gov.ph), *Respiratory Care* (rcjournal.com), SOGC (*J Obstet Gynaecol Can*, `jogc.com/article/<PII>/pdf`), The Menopause Society (menopause.org PDFs; or the *Menopause* article in PMC), UNICEF data (data.unicef.org: UN IGME reports).
 
 ## Sites
 
@@ -40,6 +44,7 @@ Alphabetical by body.
 - **BTS** (brit-thoracic.org.uk): PDFs in its document library.
 - **CDC** (cdc.gov, stacks.cdc.gov): WebFetch for pages; Stacks PDFs as WebFetch PDF. STI treatment pages are often refused: PMC copy of the MMWR guideline.
 - **CHEMM triage** (chemm.hhs.gov: START, JumpSTART; page text lacks the steps): render the linked flowchart SVG (`/media/.../*.svg`) with `qlmanage -t -s 1800 -o <dir> <file>.svg` and view it.
+- **CPIC** (cpicpgx.org; redirects to clinpgx.org, which WebFetch reads as empty): the guideline's PMC page through WebFetch.
 - **Cochrane Library** (cochranelibrary.com): the review's PMC page through WebFetch.
 - **DOH** administrative orders and IRRs (doh.gov.ph; PhilPEN AO 2012-0029): ship.ph PDFs with curl (HIV AOs 2018-0024, 2022-0024, 2022-0024-A); older HIV orders by direct curl on aidsdatahub.org (`/sites/default/files/resource/<file>.pdf`, not the archive copy); then the Supreme Court E-Library (elibrary.judiciary.gov.ph); otherwise a PhilHealth circular that reproduces the protocol (Circular 20, 2013, for PhilPEN), cited as the circular.
 - **DOLE** department orders (dole.gov.ph; DO 53-03, DO 208-20): Supreme Court E-Library, then archive copy of the DOLE PDF. ECC rules: the ECC booklet of the Amended Rules.
@@ -53,17 +58,21 @@ Alphabetical by body.
 - **EULAR** (ard.bmj.com): author manuscript in a university repository.
 - **GOLD, GINA** (goldcopd.org, ginasthma.org; over WebFetch's 10 MB limit): curl the PDF, `pdftotext -layout`. Figures and tables are images: `pdftoppm -png` the page and view it (the pocket guide holds the key figures).
 - **GRADE** series (jclinepi.com): GRADE Handbook on gdt.gradepro.org; cite the handbook.
-- **HAL** (*.hal.science; Anubis page): the PMC or publisher copy.
+- **HAL** (*.hal.science and university portals such as hal.univ-lorraine.fr; Anubis page): the PMC or publisher copy.
+- **ISPAD** (*Pediatric Diabetes* on onlinelibrary.wiley.com; 403 everywhere, ISPAD asset URLs return other PDFs): an ISPAD-hosted translated chapter PDF as WebFetch PDF (the 2022 DKA chapter in Portuguese); otherwise ADA Standards section 14.
+- ***J Hum Immun*** (rupress.org: IUIS classification, ESID registry reports): a university repository PDF (UCL Discovery), or the PMC copy through Europe PMC or efetch.
+- ***J Neurol Neurosurg Psychiatry*** (jnnp.bmj.com; 403, archive copy paywalled, PMC PDFs behind a browser check, Europe PMC full text fails for older articles): record it as abstract-only and verify the fact in another source.
 - **Japanese Circulation Society** (*Circ J*, J-STAGE untested): a university-hosted PDF (JCS 2023 vasospastic angina on a Tohoku University page).
 - ***The Lancet*** (thelancet.com; Europe PMC has the abstract only): PMC author manuscript or a university repository PDF (GBD papers are often in coauthors' repositories); otherwise abstract-only.
 - ***Mayo Clin Proc***, ***J Clin Oncol*** (ascopubs.org): PMC copy, then archive copy of the full-text page; otherwise abstract-only.
 - **Medscape** (emedicine.medscape.com): a PMC review or a textbook.
 - **National Privacy Commission** (privacy.gov.ph: DPA IRR, circulars; Senate copy refused too): Supreme Court E-Library, then chanrobles, recorded as unofficial in the ledger.
+- ***Nature Reviews*** journals (nature.com; redirects to a login): PMC copy of the same or an earlier edition; otherwise abstract-only.
 - **NCCN** (nccn.org; login): ESGO (*Int J Gynecol Cancer*, often in PMC) for gynecologic cancers, ACMG or ASCO for hereditary risk, the FDA label for an approval; cite that body.
 - **NICE** (nice.org.uk): archive copy of `https://www.nice.org.uk/guidance/<id>/chapter/Recommendations` (year 2025); save-source `--from` that URL works.
 - **Neurocritical Care Society** (neurocriticalcare.org): the article PDF on a university neurocritical care page (2023 SAH guideline).
 - **NINDS** (ninds.nih.gov): MedlinePlus or MedlinePlus Genetics (slugs follow current names), or a PMC review.
-- **Oxford Academic** (academic.oup.com: *Clin Infect Dis*, *Br J Dermatol*, *Eur Heart J*; curl and save-source blocked): WebFetch the article page by offset; recommendations sit far in.
+- **Oxford Academic** (academic.oup.com: *Clin Infect Dis*, *Br J Dermatol*, *Eur Heart J*, *Europace*; curl and save-source blocked): WebFetch the article page by offset; recommendations sit far in.
 - **Philippine laws** (lawphil.net, officialgazette.gov.ph): UA curl on lawphil.net; then WIPO Lex; then LawPlayer, recorded as unofficial in the ledger.
 - **RSNA** (pubs.rsna.org: *Radiology*, Fleischner): Europe PMC, or a hospital- or society-hosted copy of the recommendation table.
 - **Thieme** (thieme-connect.com; bot check on PDFs too): PMC or Europe PMC copy, then the abstract by Europe PMC REST search; otherwise a later review.
@@ -76,7 +85,7 @@ Alphabetical by body.
 Cite the US prescribing information. DailyMed is sometimes unreachable; use the openFDA label API with curl:
 
 - `https://api.fda.gov/drug/label.json?search=openfda.generic_name:<drug>&limit=1` with one unquoted word (quoted often returns "all shards failed"; search a combination product by its full name). Read `adverse_reactions` and `effective_time`.
-- A generic name can return another product first (Jynarque for tolvaptan); some brands (Zyban) return nothing. Narrow with `+AND+indications_and_usage:<word>` or `openfda.brand_name:<brand>`, and by route with `+AND+openfda.route:INTRAVENOUS` (topical labels otherwise come first) or `ORAL` (tranexamic acid).
+- A generic name can return another product first (Jynarque for tolvaptan, Kadcyla for trastuzumab); some brands (Zyban) return nothing. Narrow with `+AND+indications_and_usage:<word>` or `openfda.brand_name:<brand>`, and by route with `+AND+openfda.route:INTRAVENOUS` (topical labels otherwise come first) or `ORAL` (tranexamic acid).
 - OTC labels have no adverse-reaction section. Prescription-and-OTC drugs (loperamide): add `+AND+_exists_:adverse_reactions`. OTC-only (nicotine replacement): UK SmPC at `medicines.org.uk/emc/product/<id>/smpc`.
 - Missing from openFDA (dimercaprol): `https://dailymed.nlm.nih.gov/dailymed/services/v2/spls.json?drug_name=<brand>`, then the SPL XML by setid.
 - Withdrawn in the US (single-ingredient indacaterol): the EMA SmPC (see EMA), or the old label PDF on accessdata.fda.gov by UA curl.

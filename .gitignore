@@ -2,6 +2,7 @@ node_modules/
 dist/
 .cache/
 *.tsbuildinfo
+.DS_Store
 
 # Private source material
 /tn-pdfs/
