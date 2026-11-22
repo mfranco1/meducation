@@ -17,7 +17,7 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 ## Status
 
 - Done: Internal Medicine (19 topics), Pharmacology (15 topics), Pediatrics (14 topics).
-- OB-GYN: all 7 topics (18 decks) in `plan.json`, work dir `obstetrics-gynecology`. Done: Obstetrics. Next: Labor and Delivery.
+- OB-GYN: all 7 topics (18 decks) in `plan.json`, work dir `obstetrics-gynecology`. Done: Obstetrics, Labor and Delivery. Next: Pregnancy Complications.
 
 ## Staged (not published)
 
@@ -26,7 +26,7 @@ Per-card reasons are in the draft change history.
 - Internal Medicine: 312 edits, 133 deletes.
 - Pharmacology: 47 edits, 10 deletes.
 - Pediatrics: 54 edits, 8 deletes.
-- OB-GYN (1 topic): 3 edits (iron, iodine and calcium fronts now name the US RDA).
+- OB-GYN (2 topics): 13 edits, 0 deletes.
 - Cross-subject math pass: 67 edits converting `\(...\)` and `\[...\]` to `$...$` and `$$...$$` (45 Preventive Medicine, 8 Pharmacology, 7 Surgery, 4 Pathology, 2 Pediatrics, 1 OB-GYN).
 - Cross-subject source passes (backfill, re-source of non-citable and narrative-review citations, full check of weak cards): 95 edits, 2 deletes.
 
@@ -49,6 +49,7 @@ Manual copies in `var/sources/manual/` now cover AHA/AAP 2025 neonatal resuscita
 - Peds › Cardiology: adenosine 0.1 mg/kg (max 6) and 0.2 mg/kg (max 12) rest on the 2020 PALS tachycardia algorithm (the 2025 text states no doses).
 - Peds › Immunology and Allergy: persistent allergic rhinitis cutoff (ARIA 2001 and 2008 unreadable; secondary sources split on ">4" and "at least 4"; card hedges "using the applicable ARIA convention").
 - OB › Obstetrics: postpartum visit timing (ACOG CO 736, summaries only); NST, BPP and CST criteria, polyhydramnios cutoffs (ACOG PB 229 paywalled); GDM and GBS screening windows, cfDNA from 10 weeks, CVS and amniocentesis timing, NVP first line, caffeine limit, first-visit labs (acog.org blocked; no POGS guideline checked).
+- OB › Labor and Delivery: ECV at 36–37 weeks (RCOG GTG 20a and ACOG PB 221 unreadable); 3 shoulder dystocia cards checked against GTG 42 2012 only (2026 edition on Wiley); intra-amniotic infection fever thresholds and findings (ACOG 2024 update blocked; findings card edited to the 2016 NICHD workshop); cerclage cards against ACOG CPG 12 (2026, abstract only).
 - Peds › Hematology and Oncology: TLS hypocalcemia and consequences (Coiffier 2008, BSH 2015 and 2025 all 403); severe aplastic anemia checked against adult BSH 2024 only.
 
 ## Top-ups (after audits)

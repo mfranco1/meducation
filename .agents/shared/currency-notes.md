@@ -20,6 +20,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | Pituitary adenoma | Pituitary neuroendocrine tumor (PitNET) | WHO Classification of Tumours, 5th ed. | `pituitary adenomas?` |
 | 46,XX male syndrome | 46,XX testicular difference of sex development (46,XX testicular DSD) | Chicago DSD consensus 2006 | `46,XX male syndrome`, `XX male syndrome` |
 | ACOG Committee Opinion 734 (2018): ultrasound alone (endometrium 4 mm or less) is enough after postmenopausal bleeding | ACOG Clinical Practice Update on postmenopausal bleeding (Obstet Gynecol 2026;148(1):e87-e91): ultrasound plus endometrial sampling for most; ultrasound alone only for a single episode with a fully seen endometrium of 4 mm or less, no strong risk factors and prompt follow-up | April 2026 | `Committee Opinion (No\. )?734` |
+| ACOG Practice Bulletin 142 (Cerclage for the management of cervical insufficiency) | ACOG Clinical Practice Guideline No. 12, Obstetric Cerclage | September 2026 | `Practice Bulletin (No\. )?142` |
 | Neurofibromatosis type 2 (NF2) | NF2-related schwannomatosis | 2022 international consensus (Plotkin et al.) | `neurofibromatosis type 2`, `neurofibromatosis type II` |
 | Pre-2021 CNS tumor names (IDH-mutant glioblastoma) | IDH-based WHO CNS5 names: glioblastoma is IDH-wildtype only; IDH-mutant grade 4 is astrocytoma | WHO CNS5, 2021 | `IDH-mutant glioblastoma`, `glioblastoma,? IDH-mutant` |
 | Extranodal NK/T-cell lymphoma, nasal type | Extranodal NK/T-cell lymphoma | WHO-HAEM5, 2022 | `nasal type` |
