@@ -1,6 +1,6 @@
 # Surgery quizzes: "most common" top-ups
 
-Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work dir `var/quiz-work/surgery/`. Gap list 203 MISSING rows (2026-11-22). The gap list keeps about 5 rows per quiz.
+Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work dir `var/quiz-work/surgery/`. Gap list 189 MISSING rows (2026-11-22). The gap list keeps about 5 rows per quiz.
 
 ## Staged (not published)
 
@@ -8,7 +8,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Trauma and Emergency Surgery: 10 items (2/3/3/2), 2026-11-21. Backlog 0.
 - Vascular Surgery: 10 items (4/4/2), 2026-11-22. Backlog 0.
 - Orthopedic Surgery: 14 items (5/4/5), 2026-11-22. Backlog 0.
+- Urologic Surgery: 9 items (4/3/2), 2026-11-22. Backlog 0.
 
 ## Next
 
-The topic with the most MISSING rows in `most-common-gaps.md` (Urologic Surgery, 14).
+The topic with the most MISSING rows in `most-common-gaps.md` (Surgical Foundations, Small Bowel and Appendix or Pediatric Surgery, 13 each).

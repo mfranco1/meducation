@@ -39,6 +39,7 @@ Alphabetical by body.
 - **AHA/ACC 2025 and ESC 2024 hypertension** (blocked everywhere): 2020 Philippine hypertension guideline (PMC8678709), NICE NG136 and NG133, or ADA Standards section 10; cite that body.
 - **ASCRS** (*Diseases of the Colon & Rectum*; summaries only; ascrsu.com learning copies return 403): a repository copy (2020 Crohn guideline on eScholarship); otherwise WSES, AGA or UEG/ESCP, citing that body. ESCP 2020 diverticular disease: UA curl of the published version on archive-ouverte.unige.ch.
 - **AWMF** (register.awmf.org guideline PDFs; bot challenge to curl): WebFetch saves the PDF, then `pdftotext`.
+- **ATA** (*Thyroid* on journals.sagepub.com; 403, not in PMC): the eScholarship PDF (2026 pregnancy guideline: `escholarship.org/content/qt0pw091c0/qt0pw091c0.pdf`).
 - **ASH, ISTH, BSH** (efetch returns front matter only): guideline PDFs on thebloodproject.com as WebFetch PDF.
 - **ASRA** neuraxial anticoagulation (rapm.bmj.com): the anticoagulant's label (spinal/epidural hematoma and catheter timing; see Drug labels); cite the label.
 - **AUA** (auanet.org; login): EAU chapters; cite EAU.
@@ -51,7 +52,7 @@ Alphabetical by body.
 - **DOH** administrative orders and IRRs (doh.gov.ph; PhilPEN AO 2012-0029): ship.ph PDFs with curl (HIV AOs 2018-0024, 2022-0024, 2022-0024-A); older HIV orders by direct curl on aidsdatahub.org (`/sites/default/files/resource/<file>.pdf`, not the archive copy); then the Supreme Court E-Library (elibrary.judiciary.gov.ph); otherwise a PhilHealth circular that reproduces the protocol (Circular 20, 2013, for PhilPEN), cited as the circular. LegalDex serves some AO texts (rabies AO 2018-0013).
 - **DOLE** department orders (dole.gov.ph; DO 53-03, DO 208-20): Supreme Court E-Library, then archive copy of the DOLE PDF. ECC rules: the ECC booklet of the Amended Rules.
 - **drugs.com** (AHFS): the drug's label (see Drug labels).
-- **EAU** (uroweb.org; WebFetch fails): UA curl on `d56bochluxqnz.cloudfront.net/documents/full-guideline/EAU-Guidelines-on-<Name>-<year>.pdf`, then `pdftotext -layout`.
+- **EAU** (uroweb.org; WebFetch fails): UA curl on `d56bochluxqnz.cloudfront.net/documents/full-guideline/EAU-Guidelines-on-<Name>-<year>.pdf`, then `pdftotext -layout`. `<Name>` is the short title with hyphens (`Non-Neurogenic-Male-LUTS`, not `Management-of-...`); if refused, try `-<year>-1.pdf`. Prostate-Cancer is refused for 2024 to 2026.
 - **EMA** (ema.europa.eu; 429 at times): UA curl on `ema.europa.eu/en/documents/product-information/<name>-epar-product-information_en.pdf`; after a 429, wait or use the archive copy.
 - **ESC, ERS** (escardio.org, *Eur Heart J*, ersjournals.com): PMC copy, then pocket-guide PDFs. ERS/ATS joint PDFs: curl from member.thoracic.org. Without a PMCID, see Oxford Academic.
 - **ESGO** (esgo.org): pocket-guideline PDFs on esgo.org; some full texts hosted by national societies (BGCS).
