@@ -6,7 +6,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 
 - Central Nervous System: 14 items (1/2/4/2/5). Backlog 1 (Demyelinating and Neurodegenerative Diseases). Skipped and weak-source points are in the gap list's "Done topics" section.
 - Gastrointestinal Tract: 13 items (5/4/2/2). Backlog 0.
+- Female Genital Tract and Gestational Disease: 13 items (2/5/4/2). Backlog 1 (Ovary and Fallopian Tube).
 
 ## Next
 
-The topic with the most MISSING rows in `most-common-gaps.md` plus `most-common-gaps-extra/`, excluding Central Nervous System and Gastrointestinal Tract (next by count: Female Genital Tract and Gestational Disease).
+The topic with the most MISSING rows in `most-common-gaps.md` plus `most-common-gaps-extra/`, excluding the staged topics above.

@@ -58,7 +58,7 @@ Alphabetical by body.
 - **ESC, ERS** (escardio.org, *Eur Heart J*, ersjournals.com): PMC copy, then pocket-guide PDFs. ERS/ATS joint PDFs: curl from member.thoracic.org. Without a PMCID, see Oxford Academic.
 - **ESGO** (esgo.org): pocket-guideline PDFs on esgo.org; some full texts hosted by national societies (BGCS).
 - **ESMO** (annalsofoncology.org, *Ann Oncol*; not in PMC; EANO-ESMO repository copies on iris.uniroma1.it return 403 and zora.uzh.ch shows a bot check): for bone sarcoma, the 2025 UK guideline (Gerrand et al., *Br J Cancer*, PMC11723950); otherwise an open equivalent; cite that body; for a citation, the Europe PMC DOI search.
-- **ESVS, SVS** (*Eur J Vasc Endovasc Surg*, *J Vasc Surg* on jvascsurg.org; JVS returns 403 and its archive copy is refused): ESVS guideline full text as the archive copy with curl `--compressed`; for an SVS reporting standard, verify in ESVS or AHA/ACC and cite that body.
+- **ESVS, SVS** (*Eur J Vasc Endovasc Surg*, *J Vasc Surg* on jvascsurg.org; JVS returns 403 and its archive copy is refused): ESVS guideline full text as the archive copy with curl `--compressed`, or a coauthor's university repository PDF by plain curl (2025 mesenteric guideline on lup.lub.lu.se; slow, run it in the background); for an SVS reporting standard, verify in ESVS or AHA/ACC and cite that body.
 - ***Eur J Cancer*** (ejcancer.com: EDF-EADO-EORTC skin cancer): curl on Université libre de Bruxelles repository PDFs (dipot.ulb.ac.be).
 - **EULAR** (ard.bmj.com): author manuscript in a university repository.
 - **FIGO Cancer Report** (*Int J Gynaecol Obstet* on onlinelibrary.wiley.com; 403): Europe PMC full text of the PMC copy (2025 cervix PMC12411820, ovary PMC12411830, GTD PMC12411817).
