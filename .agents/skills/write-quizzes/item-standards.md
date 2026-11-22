@@ -26,7 +26,7 @@ Check every item against these before returning it. They are the flaws reviewers
 - Two choices mean the same thing, one contains another, or a distractor is partly true. In a "most common" item, a distractor the source lists alongside the key or at a similar rate is partly true: use effects the source gives a clearly lower rate, or rare serious ones.
 - A distractor no partly prepared learner would pick.
 - Irrelevant difficulty: vague frequency terms, double negatives, needless jargon, a long stem for a simple recall fact, trick wording, trivia.
-- A stem, rationale, table or pearl that gives away the answer to another item in the same quiz, new or staged (pearls often state a staged item's next step or key). Grep the quiz's section of `stems.txt` for each pearl's fact. Items in other quizzes don't count.
+- A stem, rationale, table or pearl that gives away the answer to another item in the same quiz, new or staged (pearls often state a staged item's next step or key; in a ranking item, the bullets on the other choices often restate a staged vignette's features, so give each its rank or share, not its clinical picture). Grep the quiz's section of `stems.txt` for each pearl's and bullet's fact. Items in other quizzes don't count.
 - A fact, number or absolute claim ("only", "never", "most common", a percentage) in any field that the cited document or a standard textbook doesn't state.
 - A pearl that restates the rationale, or a rationale padded with repeated or filler sentences. Add a distinguishing fact instead.
 - A rationale left garbled by edits (a stray sentence after the bullets, a sentence repeated or cut off). Reread every edited rationale whole.

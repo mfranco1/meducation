@@ -4,12 +4,9 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 
 ## Staged (not published)
 
-None yet.
-
-## In progress
-
-Central Nervous System: 18 items (2/3/4/4/5) in blueprint `add`. Struck because a staged stem in the same quiz already gives or tests the pairing: contusion site, neural tube defect site, hypertensive hemorrhage cause and site, saccular aneurysm site and SAH cause, cerebral amyloid angiopathy, neonatal GBS, Toxoplasma in AIDS, MS plaque site, Friedreich ataxia, cerebellopontine schwannoma.
+- Central Nervous System: 14 items (1/2/4/2/5). Backlog 1 (Demyelinating and Neurodegenerative Diseases). Skipped and weak-source points are in the gap list's "Done topics" section.
+- Gastrointestinal Tract: 13 items (5/4/2/2). Backlog 0.
 
 ## Next
 
-The topic with the most MISSING rows in `most-common-gaps.md` plus `most-common-gaps-extra/`, after Central Nervous System.
+The topic with the most MISSING rows in `most-common-gaps.md` plus `most-common-gaps-extra/`, excluding Central Nervous System and Gastrointestinal Tract (next by count: Female Genital Tract and Gestational Disease).

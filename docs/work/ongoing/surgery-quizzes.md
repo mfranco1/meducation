@@ -9,7 +9,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Vascular Surgery: 10 items (4/4/2), 2026-11-22. Backlog 0.
 - Orthopedic Surgery: 14 items (5/4/5), 2026-11-22. Backlog 0.
 - Urologic Surgery: 9 items (4/3/2), 2026-11-22. Backlog 0.
+- Surgical Foundations: 10 items (3/1/3/3), 2026-11-22. Backlog 0.
 
 ## Next
 
-The topic with the most MISSING rows in `most-common-gaps.md` (Surgical Foundations, Small Bowel and Appendix or Pediatric Surgery, 13 each).
+The topic with the most MISSING rows in `most-common-gaps.md` (Small Bowel and Appendix or Pediatric Surgery, 13 each).

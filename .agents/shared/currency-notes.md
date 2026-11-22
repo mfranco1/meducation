@@ -24,6 +24,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | ACOG Practice Bulletin 142 (Cerclage for the management of cervical insufficiency) | ACOG Clinical Practice Guideline No. 12, Obstetric Cerclage | September 2026 | `Practice Bulletin (No\. )?142` |
 | Neurofibromatosis type 2 (NF2) | NF2-related schwannomatosis | 2022 international consensus (Plotkin et al.) | `neurofibromatosis type 2`, `neurofibromatosis type II` |
 | Pre-2021 CNS tumor names (IDH-mutant glioblastoma) | IDH-based WHO CNS5 names: glioblastoma is IDH-wildtype only; IDH-mutant grade 4 is astrocytoma | WHO CNS5, 2021 | `IDH-mutant glioblastoma`, `glioblastoma,? IDH-mutant` |
+| Pineoblastoma as an embryonal tumor | Pineoblastoma is a pineal tumor; CNS embryonal tumors are medulloblastoma, AT/RT, ETMR, CNS neuroblastoma (*FOXR2*-activated) and others | WHO CNS5, 2021 | |
 | Extranodal NK/T-cell lymphoma, nasal type | Extranodal NK/T-cell lymphoma | WHO-HAEM5, 2022 | `nasal type` |
 | Chondrosarcoma, grade 1 of the long and short tubular bones | Atypical cartilaginous tumor; "chondrosarcoma, grade 1" only for axial sites (pelvis, scapula, skull base) | WHO Soft Tissue and Bone, 6th ed., 2026 | |
 | Brown tumor as a reactive, non-neoplastic lesion | Brown tumor of hyperparathyroidism: a separate benign *KRAS*-mutant neoplasm that regresses when PTH normalizes | WHO Soft Tissue and Bone, 6th ed., 2026 | |

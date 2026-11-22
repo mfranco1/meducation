@@ -37,6 +37,7 @@ Alphabetical by body.
 - **ADA Standards of Care** (diabetesjournals.org, *Diabetes Care*; Cloudflare; Europe PMC and efetch lack the body): UA curl on the section's PMC page, or WebFetch by offset (pages run past 300,000 characters). 2026: PMC12690183 section 2, PMC12690185 section 9, PMC12690187 section 10, PMC12690180 section 16. Then the archive copy of the diabetesjournals.org section.
 - **AHA/ACC** (ahajournals.org, jacc.org): PMC copy, then archive copy of the full-text page. A saved *Circulation* text can lack the recommendation and drug tables; the archive copy of the *JACC* co-publication has them. ACC "Guidelines Made Simple" or pocket-guide PDFs for classes and thresholds; a university mirror as WebFetch PDF. Resuscitation: cpr.heart.org pages.
 - **AHA/ACC 2025 and ESC 2024 hypertension** (blocked everywhere): 2020 Philippine hypertension guideline (PMC8678709), NICE NG136 and NG133, or ADA Standards section 10; cite that body.
+- **Atlas of MS** (MSIF; the atlas report PDF and chart pages lack the type-at-diagnosis figures): the country fact-sheet pages on atlasofms.org (`/fact-sheet/<country>`) through WebFetch.
 - **ASCRS** (*Diseases of the Colon & Rectum*; summaries only; ascrsu.com learning copies return 403): a repository copy (2020 Crohn guideline on eScholarship); otherwise WSES, AGA or UEG/ESCP, citing that body. ESCP 2020 diverticular disease: UA curl of the published version on archive-ouverte.unige.ch.
 - **AWMF** (register.awmf.org guideline PDFs; bot challenge to curl): WebFetch saves the PDF, then `pdftotext`.
 - **ATA** (*Thyroid* on journals.sagepub.com; 403, not in PMC): the eScholarship PDF (2026 pregnancy guideline: `escholarship.org/content/qt0pw091c0/qt0pw091c0.pdf`).
@@ -45,7 +46,7 @@ Alphabetical by body.
 - **AUA** (auanet.org; login): EAU chapters; cite EAU.
 - ***BMJ*** (bmj.com): PMC copy.
 - **BTS** (brit-thoracic.org.uk): PDFs in its document library.
-- **CDC** (cdc.gov, stacks.cdc.gov): WebFetch for pages; Stacks PDFs as WebFetch PDF. STI treatment pages are often refused: PMC copy of the MMWR guideline.
+- **CDC** (cdc.gov, stacks.cdc.gov): WebFetch for pages; Stacks PDFs as WebFetch PDF. MMWR PDFs (`rr*.pdf`) return HTML by curl; for U.S. SPR and MEC figure text, WebFetch the `cdc.gov/contraception/hcp/` pages. STI treatment pages are often refused: PMC copy of the MMWR guideline. Guideline PDFs under `cdc.gov/infectioncontrol` can return 403 or 404: WebFetch the guideline's HTML pages. NHSN pathogen tables: WebFetch `cdc.gov/nhsn/hai-report/data-tables-adult/table-<n>.html`.
 - **CHEMM triage** (chemm.hhs.gov: START, JumpSTART; page text lacks the steps): render the linked flowchart SVG (`/media/.../*.svg`) with `qlmanage -t -s 1800 -o <dir> <file>.svg` and view it.
 - **CPIC** (cpicpgx.org; redirects to clinpgx.org, which WebFetch reads as empty): the guideline's PMC page through WebFetch.
 - **Cochrane Library** (cochranelibrary.com): the review's PMC page through WebFetch.
@@ -56,7 +57,7 @@ Alphabetical by body.
 - **EMA** (ema.europa.eu; 429 at times): UA curl on `ema.europa.eu/en/documents/product-information/<name>-epar-product-information_en.pdf`; after a 429, wait or use the archive copy.
 - **ESC, ERS** (escardio.org, *Eur Heart J*, ersjournals.com): PMC copy, then pocket-guide PDFs. ERS/ATS joint PDFs: curl from member.thoracic.org. Without a PMCID, see Oxford Academic.
 - **ESGO** (esgo.org): pocket-guideline PDFs on esgo.org; some full texts hosted by national societies (BGCS).
-- **ESMO** (annalsofoncology.org): for bone sarcoma, the 2025 UK guideline (Gerrand et al., *Br J Cancer*, PMC11723950); otherwise an open equivalent; cite that body.
+- **ESMO** (annalsofoncology.org, *Ann Oncol*; not in PMC; EANO-ESMO repository copies on iris.uniroma1.it return 403 and zora.uzh.ch shows a bot check): for bone sarcoma, the 2025 UK guideline (Gerrand et al., *Br J Cancer*, PMC11723950); otherwise an open equivalent; cite that body; for a citation, the Europe PMC DOI search.
 - **ESVS, SVS** (*Eur J Vasc Endovasc Surg*, *J Vasc Surg* on jvascsurg.org; JVS returns 403 and its archive copy is refused): ESVS guideline full text as the archive copy with curl `--compressed`; for an SVS reporting standard, verify in ESVS or AHA/ACC and cite that body.
 - ***Eur J Cancer*** (ejcancer.com: EDF-EADO-EORTC skin cancer): curl on Université libre de Bruxelles repository PDFs (dipot.ulb.ac.be).
 - **EULAR** (ard.bmj.com): author manuscript in a university repository.

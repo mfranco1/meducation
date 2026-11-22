@@ -11,13 +11,12 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 - Delete the reviewers' trivia and duplicate cards on your own judgment; keep classic exam facts and cards relevant in the Philippines. Ask only about fixes that rest on judgment, not a source. Add coverage gaps to Top-ups.
 - Reviewers skip web checks on facts they feel sure of and misreport card counts. Send back any reviewer that leaves a guideline-dependent fact on an existing card unchecked, naming the facts.
 - Retired-term hits still to handle in their decks: 5 Biochemistry, 2 Pathology, 1 Microbiology.
-- archive.org fetches (`save-source --from`, WebFetch or curl) are denied by the permission classifier here.
 - Before publishing: read each staged `sources` (the gate can't match narrative reviews or single-hospital protocols) and settle the Unverified list.
 
 ## Status
 
 - Done: Internal Medicine (19 topics), Pharmacology (15 topics), Pediatrics (14 topics).
-- OB-GYN: all 7 topics (18 decks) in `plan.json`, work dir `obstetrics-gynecology`. Done: Obstetrics, Labor and Delivery, Pregnancy Complications, Medical Disorders in Pregnancy. Next: Reproductive Endocrinology, Fertility and Contraception.
+- OB-GYN: all 7 topics (18 decks) in `plan.json`, work dir `obstetrics-gynecology`, subject name `Obstetrics & Gynecology`. Done: Obstetrics, Labor and Delivery, Pregnancy Complications, Medical Disorders in Pregnancy, Reproductive Endocrinology, Fertility and Contraception, Gynecology (no changes). Next: Gynecologic Oncology.
 
 ## Staged (not published)
 
@@ -26,7 +25,7 @@ Per-card reasons are in the draft change history.
 - Internal Medicine: 312 edits, 133 deletes.
 - Pharmacology: 47 edits, 10 deletes.
 - Pediatrics: 54 edits, 8 deletes.
-- OB-GYN (4 topics): 19 edits, 1 delete.
+- OB-GYN (5 topics): 30 edits, 1 delete.
 - Cross-subject math pass: 67 edits converting `\(...\)` and `\[...\]` to `$...$` and `$$...$$` (45 Preventive Medicine, 8 Pharmacology, 7 Surgery, 4 Pathology, 2 Pediatrics, 1 OB-GYN).
 - Cross-subject source passes (backfill, re-source of non-citable and narrative-review citations, full check of weak cards): 95 edits, 2 deletes.
 
@@ -52,6 +51,8 @@ Manual copies in `var/sources/manual/` now cover AHA/AAP 2025 neonatal resuscita
 - OB › Labor and Delivery: ECV at 36–37 weeks (RCOG GTG 20a and ACOG PB 221 unreadable); 3 shoulder dystocia cards checked against GTG 42 2012 only (2026 edition on Wiley); intra-amniotic infection fever thresholds and findings (ACOG 2024 update blocked; findings card edited to the 2016 NICHD workshop); cerclage cards against ACOG CPG 12 (2026, abstract only).
 - OB › Pregnancy Complications: methotrexate 50 mg/m², ≥15% hCG fall day 4 to 7, contraindications and counseling (ACOG PB 193 and RCOG GTG 21 unreadable; NICE NG126 has no dose or 15% figure); history-indicated cerclage at 12–14 weeks (FIGO 2021 gives no week); ACOG 2024 anti-D under 12 weeks (search summary only; card states FIGO/ICM 2021); LGA, macrosomia and planned-cesarean weight thresholds (ACOG PB 216 paywalled).
 - OB › Medical Disorders in Pregnancy: free T4 target on antithyroid drugs (ATA 2026 full text read has no numeric target); PE imaging (ESC 2025 text truncated, ACOG PB 196 paywalled); methadone or buprenorphine and avoiding withdrawal (ACOG CO 711 summary only); pyelonephritis admission with IV antibiotics and nitrofurantoin or fosfomycin exclusion (ACOG 2023 blocked, NICE NG111 partial); toxoplasma IgM alone; MCA Doppler for fetal anemia; "major aortopathy" in mWHO IV.
+- OB › Reproductive Endocrinology: SSRIs first-line for PMDD (ACOG CPG 7 summary only, RCOG GTG 48 on Wiley); NSAIDs first-line for primary dysmenorrhea (SOGC 345 challenge pages, ACOG CO 760 withdrawn); LNG-IUD for endometrial protection in anovulatory PMOS (kept; 2023 guideline names only progestogens, COCs and POPs; ACOG PB 194 unread).
+- Gyn › Gynecology: red degeneration and its conservative management in pregnancy, rapid growth not diagnosing leiomyosarcoma, GnRH analogues and add-back (ACOG PB 228 members-only, SOGC 461 abstract only); Bartholin biopsy at ≥40, Word catheter or marsupialization, no routine antibiotics (narrative reviews only); staphylococcal TSS management (CDC clinical pages 404).
 - Peds › Hematology and Oncology: TLS hypocalcemia and consequences (Coiffier 2008, BSH 2015 and 2025 all 403); severe aplastic anemia checked against adult BSH 2024 only.
 
 ## Top-ups (after audits)
@@ -71,4 +72,6 @@ Rerun `D coverage` per subject for THIN topics, SMALL decks and subtopic counts;
 - Peds › Immunology and Allergy (`D coverage`, unconfirmed): Urticaria and Angioedema 2 cards (6 questions), Phagocyte Disorders 2 (9), Combined and Cellular Deficiencies 4 (14), Antibody Deficiencies 6 (15).
 - OB › Pregnancy Complications (`D coverage`, unconfirmed): Zygosity and Chorionicity 1 card (10 questions), Polyhydramnios 4 (9), Oligohydramnios 5 (9), PPH Definition and Risk Factors 3 (8), Management of the Sensitized Patient 6 (10), Surgical and Transfusion Management 8 (9); no amniotic fluid embolism or maternal cardiac arrest cards in the hemorrhage deck.
 - OB › Medical Disorders in Pregnancy (`D coverage`, unconfirmed): no hyperemesis gravidarum, listeriosis, urolithiasis, IBD, GERD, influenza, dengue or malaria cards; Peripartum Cardiomyopathy 1 card (6 questions), Psychiatric Disorders and Substance Use 1 (7), SLE 3 (9), Pathogenesis and Risk Factors (preeclampsia) 0 (6). GBS and chorioamnionitis zeros are false (cards sit in Obstetrics and Labor and Delivery); CMV and VTE counts are false lows.
+- OB › Reproductive Endocrinology, Fertility and Contraception (`D coverage`, unconfirmed): Mullerian Anomalies 1 card (13 questions), Ambiguous Genitalia 2 (11), Intrauterine Devices 2 (9), Implants and Injectables 1 (7), Assisted Reproduction 0 (6), Precocious Puberty 6 (11), Male Factor 6 (9), PMOS Long-Term Risks and Management 2 (14). PMS and PMDD and PMOS Diagnosis zeros are likely false (cards exist).
+- Gyn › Gynecology (`D coverage`, unconfirmed): Osteoporosis and Bone Health 1 card (11 questions), Stress Urinary Incontinence 1 (12), Mucopurulent Cervicitis 1 (10), PID Diagnosis 2 (9), Pessary and Surgical Management 5 (12), Condyloma and Molluscum 2 (5), Vulvodynia 0 (3), Ectoparasites 0 (2). PALM-COEIN 2 and AUB Medical Management 1 are likely false lows.
 - Peds: no M-CHAT, developmental screening ages, microarray or fragile X, or maltreatment workup (sentinel injuries, skeletal survey) cards.
