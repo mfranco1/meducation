@@ -16,8 +16,8 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 
 ## Status
 
-- Done: Internal Medicine (19 topics), Pharmacology (15 topics).
-- Pediatrics: all 14 topics (38 decks) in `plan.json`. Done: Neonatology, Pediatric Nutrition, Preventive Pediatrics, Growth and Development, Gastroenterology, Nephrology, Hematology and Oncology, Neurology, Pulmonology, Rheumatology, Cardiology. Next: Infectious Diseases.
+- Done: Internal Medicine (19 topics), Pharmacology (15 topics), Pediatrics (14 topics).
+- OB-GYN: all 7 topics (18 decks) in `plan.json`, work dir `obstetrics-gynecology`. Done: Obstetrics. Next: Labor and Delivery.
 
 ## Staged (not published)
 
@@ -25,7 +25,8 @@ Per-card reasons are in the draft change history.
 
 - Internal Medicine: 312 edits, 133 deletes.
 - Pharmacology: 47 edits, 10 deletes.
-- Pediatrics (11 topics): 44 edits, 2 deletes.
+- Pediatrics: 54 edits, 8 deletes.
+- OB-GYN (1 topic): 3 edits (iron, iodine and calcium fronts now name the US RDA).
 - Cross-subject math pass: 67 edits converting `\(...\)` and `\[...\]` to `$...$` and `$$...$$` (45 Preventive Medicine, 8 Pharmacology, 7 Surgery, 4 Pathology, 2 Pediatrics, 1 OB-GYN).
 - Cross-subject source passes (backfill, re-source of non-citable and narrative-review citations, full check of weak cards): 95 edits, 2 deletes.
 
@@ -46,6 +47,8 @@ Manual copies in `var/sources/manual/` now cover AHA/AAP 2025 neonatal resuscita
 - Peds › Pulmonology: IMCI fast breathing ≥50 at 2–11 months (PAPP 2021 says 3–12 months) and ≥60 under 2 months (2014 booklet unreadable).
 - Peds › Rheumatology: MAS laboratory criteria (2016 EULAR/ACR/PRINTO, 403 everywhere; card matches secondary tables).
 - Peds › Cardiology: adenosine 0.1 mg/kg (max 6) and 0.2 mg/kg (max 12) rest on the 2020 PALS tachycardia algorithm (the 2025 text states no doses).
+- Peds › Immunology and Allergy: persistent allergic rhinitis cutoff (ARIA 2001 and 2008 unreadable; secondary sources split on ">4" and "at least 4"; card hedges "using the applicable ARIA convention").
+- OB › Obstetrics: postpartum visit timing (ACOG CO 736, summaries only); NST, BPP and CST criteria, polyhydramnios cutoffs (ACOG PB 229 paywalled); GDM and GBS screening windows, cfDNA from 10 weeks, CVS and amniocentesis timing, NVP first line, caffeine limit, first-visit labs (acog.org blocked; no POGS guideline checked).
 - Peds › Hematology and Oncology: TLS hypocalcemia and consequences (Coiffier 2008, BSH 2015 and 2025 all 403); severe aplastic anemia checked against adult BSH 2024 only.
 
 ## Top-ups (after audits)
@@ -60,4 +63,7 @@ Rerun `D coverage` per subject for THIN topics, SMALL decks and subtopic counts;
 - Peds › Pulmonology: no obstructive sleep apnea cards (6 questions); Cystic Fibrosis 1 card (6 questions), none on sweat chloride; Childhood Tuberculosis 7 (18).
 - Peds › Rheumatology (`D coverage`, unconfirmed): MIS-C 6 cards (12 questions), JIA 11 (20), SLE 6 (15), Approach to Joint Pain 4 (8).
 - Peds › Cardiology (`D coverage`, unconfirmed): Myocarditis and Pericarditis 0 cards (8 questions), Arrhythmias 0 (7; SVT cards exist, likely a false zero), Septal Defects 6 (16), Tetralogy of Fallot 5 (14), Syndromes and Maternal Conditions 2 (6).
+- Peds › Infectious Diseases (`D coverage`, unconfirmed): Malaria 0 cards (6 questions), Soil-Transmitted Helminths 0 (8; albendazole and hookworm cards exist, likely a false zero), Tetanus 0 (6), Pediatric HIV 1 (16), Sexually Transmitted Infections 3 (15), Oral Vesicular Diseases 3 (6).
+- Peds › Endocrinology: Calcium and Vitamin D Disorders 0 cards (7 questions); DKA well covered (the 2 is a false low); Type 2 Diabetes has 1 real card, none on screening or treatment (8 questions); Short Stature 4 (14), Failure to Thrive 1 (6).
+- Peds › Immunology and Allergy (`D coverage`, unconfirmed): Urticaria and Angioedema 2 cards (6 questions), Phagocyte Disorders 2 (9), Combined and Cellular Deficiencies 4 (14), Antibody Deficiencies 6 (15).
 - Peds: no M-CHAT, developmental screening ages, microarray or fragile X, or maltreatment workup (sentinel injuries, skeletal survey) cards.

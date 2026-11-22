@@ -11,7 +11,7 @@ Rules every quiz item and flashcard follows. Shared by write-quizzes and write-f
 
 ## Philippine audience
 
-- The audience trains for Philippine licensure. Scope epidemiology, rankings and data to the Philippines first, then the region (Southeast Asia, Asia), then global. Never key a fact scoped only to one foreign country. Key a ranking only from a guideline, national surveillance or multicenter data, never one hospital's case series.
+- The audience trains for Philippine licensure. Scope epidemiology, rankings and data to the Philippines first, then the region (Southeast Asia, Asia), then global. Never key a fact scoped only to one foreign country. Key a ranking only from a guideline, national surveillance or multicenter data, never one hospital's case series. When no source ranks the point as worded, narrow the question to a ranking a source does state (a category, population or setting it names) or pick another point. Never fall back to "which is a common X" or "which does guideline Y list": the other listed or reported findings make the distractors partly true.
 - Key the guideline Philippine practice actually uses, within Philippine law. There is no fixed order of bodies:
   - Obstetrics and gynecology: POGS, then FIGO or WHO, then ACOG.
   - Most other fields follow the international or US specialty guideline (ACC/AHA, ADA, IDSA, KDIGO, GINA, GOLD).
