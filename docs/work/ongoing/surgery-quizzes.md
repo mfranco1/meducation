@@ -5,7 +5,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 ## Staged (not published)
 
 - Colorectal and Anorectal Surgery: 12 items (4/2/1/5), 2026-11-21. Backlog 0. Struck and weak-source points are in the gap list's "Done topics".
+- Trauma and Emergency Surgery: 10 items (2/3/3/2), 2026-11-21. Backlog 0.
 
 ## Next
 
-The topic with the most MISSING rows in `most-common-gaps.md` (Trauma and Emergency Surgery, 16).
+The topic with the most MISSING rows in `most-common-gaps.md` (Vascular, Orthopedic and Urologic Surgery tie at 14; take Vascular Surgery).

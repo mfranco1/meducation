@@ -58,7 +58,7 @@ Alphabetical by body.
 - **ESMO** (annalsofoncology.org): for bone sarcoma, the 2025 UK guideline (Gerrand et al., *Br J Cancer*, PMC11723950); otherwise an open equivalent; cite that body.
 - ***Eur J Cancer*** (ejcancer.com: EDF-EADO-EORTC skin cancer): curl on Université libre de Bruxelles repository PDFs (dipot.ulb.ac.be).
 - **EULAR** (ard.bmj.com): author manuscript in a university repository.
-- **FIGO Cancer Report** (*Int J Gynaecol Obstet* on onlinelibrary.wiley.com; 403): Europe PMC full text of the PMC copy (2025 cervix PMC12411820, ovary PMC12411830).
+- **FIGO Cancer Report** (*Int J Gynaecol Obstet* on onlinelibrary.wiley.com; 403): Europe PMC full text of the PMC copy (2025 cervix PMC12411820, ovary PMC12411830, GTD PMC12411817).
 - **GOLD, GINA** (goldcopd.org, ginasthma.org; over WebFetch's 10 MB limit): curl the PDF, `pdftotext -layout`. Figures and tables are images: `pdftoppm -png` the page and view it (the pocket guide holds the key figures).
 - **GRADE** series (jclinepi.com): GRADE Handbook on gdt.gradepro.org; cite the handbook.
 - **HAL** (*.hal.science and university portals such as hal.univ-lorraine.fr; Anubis page): the PMC or publisher copy.
@@ -67,8 +67,9 @@ Alphabetical by body.
 - ***J Hum Immun*** (rupress.org: IUIS classification, ESID registry reports): a university repository PDF (UCL Discovery), or the PMC copy through Europe PMC or efetch.
 - ***J Neurol Neurosurg Psychiatry*** (jnnp.bmj.com; 403, archive copy paywalled, PMC PDFs behind a browser check, Europe PMC full text fails for older articles): record it as abstract-only and verify the fact in another source.
 - **Japanese Circulation Society** (*Circ J*, J-STAGE untested): a university-hosted PDF (JCS 2023 vasospastic angina on a Tohoku University page).
+- **Karger journals** (karger.com; article PDFs return a challenge page): PMC copy; otherwise abstract-only.
 - **KDIGO** (kdigo.org; some PDFs 404, *Kidney Int* 403): curl the kdigo.org PDF first (2012 AKI: `/wp-content/uploads/2016/10/KDIGO-2012-AKI-Guideline-English.pdf`). 2021 glomerular diseases executive summary: the Cambridge repository copy (`api.repository.cam.ac.uk/server/api/core/bitstreams/<id>/content`, 15 MB); curl drops about every 3 minutes, so resume with `curl -C -`.
-- ***The Lancet*** (thelancet.com; Europe PMC has the abstract only): PMC author manuscript or a university repository PDF (GBD papers are often in coauthors' repositories); otherwise abstract-only.
+- ***The Lancet*** (thelancet.com; Europe PMC has the abstract only): open-access journals such as *Lancet Global Health* have Europe PMC full text. Otherwise a PMC author manuscript or a university repository PDF (GBD papers are often in coauthors' repositories); otherwise abstract-only.
 - ***Mayo Clin Proc***, ***J Clin Oncol*** (ascopubs.org): PMC copy, then archive copy of the full-text page; otherwise abstract-only.
 - **Medscape** (emedicine.medscape.com): a PMC review or a textbook.
 - **National Privacy Commission** (privacy.gov.ph: DPA IRR, circulars; Senate copy refused too): Supreme Court E-Library, then chanrobles, recorded as unofficial in the ledger.

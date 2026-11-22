@@ -17,7 +17,7 @@ Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
 ## Status
 
 - Done: Internal Medicine (19 topics), Pharmacology (15 topics).
-- Pediatrics: all 14 topics (38 decks) in `plan.json`. Done: Neonatology, Pediatric Nutrition, Preventive Pediatrics, Growth and Development, Gastroenterology, Nephrology, Hematology and Oncology, Neurology, Pulmonology. Next: Rheumatology.
+- Pediatrics: all 14 topics (38 decks) in `plan.json`. Done: Neonatology, Pediatric Nutrition, Preventive Pediatrics, Growth and Development, Gastroenterology, Nephrology, Hematology and Oncology, Neurology, Pulmonology, Rheumatology, Cardiology. Next: Infectious Diseases.
 
 ## Staged (not published)
 
@@ -25,7 +25,7 @@ Per-card reasons are in the draft change history.
 
 - Internal Medicine: 312 edits, 133 deletes.
 - Pharmacology: 47 edits, 10 deletes.
-- Pediatrics (9 topics): 33 edits, 1 delete.
+- Pediatrics (11 topics): 44 edits, 2 deletes.
 - Cross-subject math pass: 67 edits converting `\(...\)` and `\[...\]` to `$...$` and `$$...$$` (45 Preventive Medicine, 8 Pharmacology, 7 Surgery, 4 Pathology, 2 Pediatrics, 1 OB-GYN).
 - Cross-subject source passes (backfill, re-source of non-citable and narrative-review citations, full check of weak cards): 95 edits, 2 deletes.
 
@@ -44,6 +44,8 @@ Manual copies in `var/sources/manual/` now cover AHA/AAP 2025 neonatal resuscita
 - Peds › Nephrology: HUS platelets only for bleeding or procedures, HUS supportive care, complement-mediated HUS, bag-specimen contamination, UTI confirmation by urinalysis plus culture, 48–72 hour reassessment (NICE NG224 says 24–48).
 - Peds › Neurology: AAP 2008 long-term febrile seizure guideline (antipyretics, no prophylaxis, recurrence risks, no brain injury); refractory status epilepticus definition; NF2-related schwannomatosis criteria (Plotkin 2022 table); migraine cards against Oskoui 2019 full text (JAMA Neurol summary only); 7 stroke cards against AHA 2019 (403).
 - Peds › Pulmonology: IMCI fast breathing ≥50 at 2–11 months (PAPP 2021 says 3–12 months) and ≥60 under 2 months (2014 booklet unreadable).
+- Peds › Rheumatology: MAS laboratory criteria (2016 EULAR/ACR/PRINTO, 403 everywhere; card matches secondary tables).
+- Peds › Cardiology: adenosine 0.1 mg/kg (max 6) and 0.2 mg/kg (max 12) rest on the 2020 PALS tachycardia algorithm (the 2025 text states no doses).
 - Peds › Hematology and Oncology: TLS hypocalcemia and consequences (Coiffier 2008, BSH 2015 and 2025 all 403); severe aplastic anemia checked against adult BSH 2024 only.
 
 ## Top-ups (after audits)
@@ -56,4 +58,6 @@ Rerun `D coverage` per subject for THIN topics, SMALL decks and subtopic counts;
 - Peds › Hematology and Oncology: `D coverage` shows 0 for Thalassemias, Oncologic Emergencies and Lymphomas (heuristic; thalassemia and Hodgkin cards exist), 5 for Hemophilia (13 questions), 6 for ITP (12).
 - Peds › Neurology: no SMA, Duchenne or myasthenia cards (`D coverage` shows Neuromuscular Disorders 0 for 14 questions; its Neurocutaneous 0 is a false zero). Thin: Antiseizure Medications 4 (8 questions), CSF Analysis 1 (10), Hydrocephalus 4 (12), Headache 3 (10), Neural Tube Defects 4 (10).
 - Peds › Pulmonology: no obstructive sleep apnea cards (6 questions); Cystic Fibrosis 1 card (6 questions), none on sweat chloride; Childhood Tuberculosis 7 (18).
+- Peds › Rheumatology (`D coverage`, unconfirmed): MIS-C 6 cards (12 questions), JIA 11 (20), SLE 6 (15), Approach to Joint Pain 4 (8).
+- Peds › Cardiology (`D coverage`, unconfirmed): Myocarditis and Pericarditis 0 cards (8 questions), Arrhythmias 0 (7; SVT cards exist, likely a false zero), Septal Defects 6 (16), Tetralogy of Fallot 5 (14), Syndromes and Maternal Conditions 2 (6).
 - Peds: no M-CHAT, developmental screening ages, microarray or fragile X, or maltreatment workup (sentinel injuries, skeletal survey) cards.
