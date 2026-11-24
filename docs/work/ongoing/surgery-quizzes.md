@@ -24,7 +24,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Reconstructive Surgery: 7 items (3/4), 2026-11-24. Backlog 0. Carpal and cubital tunnel rows moved to Neurosurgery.
 - Neurosurgery: 8 items (3/5), 2026-11-24. Backlog 0. ICH, ulnar site, nerve root and cord compression level struck (staged vignettes).
 - Breast Surgery: 6 items (3/3), 2026-11-24. Backlog 0. Bloody nipple discharge struck (staged vignette); histologic types left to Pathology.
+- Abdominal Wall and Hernias: 5 items (3/2), 2026-11-24. Backlog 0. Incisional hernia timing had no ranking source.
 
 ## Next
 
-The unstaged topic with the most MISSING rows in `most-common-gaps.md` (Abdominal Wall and Hernias, 8). Then Esophageal, Gastric and Duodenal, Hepatic, Pancreatic (7 each) and Splenic (3). Staged topics keep leftover MISSING rows past the per-quiz cap.
+The unstaged topic with the most MISSING rows in `most-common-gaps.md`: Esophageal, Gastric and Duodenal, Hepatic, Pancreatic (7 each), then Splenic (3). Staged topics keep leftover MISSING rows past the per-quiz cap.

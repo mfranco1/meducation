@@ -4,7 +4,7 @@ Subject `Surgery`, work dir `var/flashcard-work/surgery/`, audit-only `plan.json
 
 ## Status
 
-Phase: Audit. In progress: Endocrine Surgery. Done: Surgical Foundations, Trauma and Emergency Surgery, Burns and Soft-Tissue Emergencies, Head, Neck, and Salivary Surgery. Next: Endocrine Surgery.
+Phase: Audit. In progress: none. Done: Surgical Foundations, Trauma and Emergency Surgery, Burns and Soft-Tissue Emergencies, Head, Neck, and Salivary Surgery, Endocrine Surgery, Breast Surgery, Skin and Soft-Tissue Tumors, Abdominal Wall and Hernias, Esophageal Surgery. Next: Gastric and Duodenal Surgery.
 
 ## Carried over
 
@@ -14,6 +14,11 @@ Phase: Audit. In progress: Endocrine Surgery. Done: Surgical Foundations, Trauma
 - Trauma and Emergency Surgery: 9 edits, 2 deletes (airway-obstruction trivia, eFAST duplicate). Second look: f-bce62879 spinal cord injury steroids now follows AO Spine 2017 (methylprednisolone within 8 h as an option); AANS/CNS 2013 advised against. 7 edits only add sources (BTF 4th ed., ISNCSCI 2019); f-eb78a2c4 delta P now "less than 30 mmHg" (TQIP 2015).
 - Burns and Soft-Tissue Emergencies: 9 edits, 0 deletes. Second look: f-c94efe6d pressure injury stage 3 vs 4 now separates by visible fat vs exposed deeper structures (NPIAP 2016). The other 8 only add sources (ABA 2024 burn shock, WSES/SIS-E 2018, NPIAP 2016).
 - Head, Neck, and Salivary Surgery: 7 edits, 0 deletes, all source-only (NCI PDQ adult 2025 and childhood 2024, ACR Neck Mass 2018, French lymphatic malformation PNDS 2023, Sheikh 2023 deep neck infection review).
+- Endocrine Surgery: 1 edit, 0 deletes. Second look: f-2f4dce05 Bethesda IV renamed "follicular neoplasm" (formerly suspicious for follicular neoplasm), Bethesda 2023.
+- Breast Surgery: 17 edits, 0 deletes. Second look: f-840e8342 palpable mass at 40 or older now mammography or tomosynthesis first, ultrasound as needed (ACR 2022). The other 16 only add sources (SSO-ASTRO margins 2014 and 2016, ASCO SLNB 2025, NCI PDQ 2025, IBC consensus 2011).
+- Skin and Soft-Tissue Tumors: 0 edits, 2 deletes (lipoma and pilonidal disease definitions, trivia).
+- Abdominal Wall and Hernias: 4 edits, 0 deletes. Second look: f-8a531097 umbilical hernia in cirrhosis now "optimize liver function, MELD below 15" (EHS/AHS 2020 rare locations); f-f24788c8 notes HerniaSurge 2023 advises "acutely or chronically irreducible" over "incarcerated". f-16b68cf4 desmoid adds a source; f-9b633c2d omentum front "dominant" to "most common".
+- Esophageal Surgery: 1 edit, 0 deletes. Second look: f-74e2b1a3 caustic ingestion endoscopy no longer "within 12 to 24 h"; now endoscopy when CT is unavailable, contraindicated or equivocal, and in children, with contrast CT at 3 to 6 h preferred (WSES 2019).
 
 ## Unverified (check before publishing)
 
@@ -27,9 +32,19 @@ Phase: Audit. In progress: Endocrine Surgery. Done: Surgical Foundations, Trauma
 - f-a357c25b, f-f29bb9af, f-e22c6556, f-36f6ed10 extremity vascular hard signs, API 0.9, CTA: ESVS 2025 blocked (403); download into `var/sources/manual/`. f-38162871, f-ba36e275 penetrating neck: narrative review only.
 - f-80027fbe pressure injury treatment principles: 2019 international guideline not opened. f-a7dfa9a4 silver sulfadiazine "may delay epithelialization": not on the FDA label (label says delayed eschar separation). f-2e8835f7 pediatric urine output about 1 mL/kg/h: COBIS 2024 gives 0.5 to 1; ABLS not opened.
 - AAO-HNS 2017 neck mass guideline full text not reachable (SAGE and Wiley 403; the archive fetch was blocked and needs the user's approval, or a PDF in `var/sources/manual/`): f-c3bf0174 FNA first, f-600bec63 mucosal evaluation for persistent adenopathy. f-e650ab79 contrast CT for deep neck abscess: no primary source. f-c8483791 avoid open parotid biopsy, and the core-biopsy part of f-839ea435: not in ACR 2018 or PDQ (try NCCN). f-e147f7d6 biopsy of persistent oral ulcer or leukoplakia: ADA 2026 guideline read as a summary only. f-d9635c47 order of antibiotics vs source control after airway: not stated in Sheikh 2023.
+- Bethesda 2023 full text blocked (Liebert, Karger, ScienceDirect 403; abstract only): f-2f4dce05 "formerly called" wording, "unsatisfactory" synonym on f-fc6052ca, category names on f-69bb47d7, and whether the AUS subgroups change f-4a7c9809. f-0aa51500 intraoperative PTH drop over 50% at 10 min (Miami criterion): AAES 2016 on jamanetwork.com 403.
+- Breast: BI-RADS 0, 3, 4, 5 (f-67d8b958, f-66c1cc35, f-8ecc337a): ACR Atlas blocked, v2025 review only. ADH and classic LCIS (f-1988093a, f-ae2f952b): ASBrS/SBI/CAP 2026 abstract only (jamanetwork 403). Nipple discharge (f-5c7c63f8, f-6364fc70, f-9003a94d): ACR 2022 not opened. ASCO-CAP HER2 2023 and ER/PR 2020 full text not opened (allenpress Cloudflare). f-e255f879 premenopausal aromatase inhibitor needs ovarian suppression: no guideline opened. f-869172b3 "avoid chemotherapy close to delivery": not in PDQ.
+- Skin: melanoma cards checked against AAD 2019 only; EADO 2024 update blocked (403) and NCCN behind login.
+- Hernias: f-c52ee580 childhood umbilical hernia repair at 4 to 5 years: no society guideline exists (systematic review abstract only). f-8a1db155 indirect as most common groin hernia in both sexes: textbook position, not in HerniaSurge. Desmoid 2024 update not reached. EHS/AHS 2020 main guideline read in part only.
+- Esophagus: f-3e77fdff Barrett definition checked against the ACG 2022 ledger entry only. ESGE caustic ingestion guidance not opened.
 
 ## Top-ups
 
 - Surgical Foundations (confirm with `fronts.txt` grep): sodium disorders, nutritional assessment, perioperative risk assessment and ERAS, suture materials.
 - Burns and Soft-Tissue Emergencies (confirm with `fronts.txt` grep): burn pathophysiology, burn complications, cellulitis and abscess, hidradenitis and pilonidal disease.
 - Head, Neck, and Salivary Surgery (one deck, 36 cards for 106 questions; confirm with `fronts.txt` grep): oral cavity and lip lesions, odontogenic lesions, head and neck cancer risk factors and staging (AJCC 8th, p16), site-specific cancer management.
+- Endocrine Surgery (confirm with `fronts.txt` grep): adrenal incidentaloma and adrenocortical carcinoma (ESE/ENSAT 2023), primary aldosteronism (Endocrine Society 2025) and Cushing syndrome, adrenalectomy, goiter, thyroiditis, thyroidectomy complications.
+- Breast Surgery (61 cards for 106 questions; coverage shows few cards on these, confirm with `fronts.txt` grep): high-risk lesions and DCIS, adjuvant radiation and systemic therapy, nipple discharge.
+- Skin and Soft-Tissue Tumors (30 cards for 108 questions): infantile hemangioma (AAP 2019) and other vascular lesions (ISSVA), BCC and cSCC treatment and risk groups, keratoacanthoma, Merkel cell carcinoma, Kaposi sarcoma, DFSP, melanoma staging (AJCC 8th), soft-tissue sarcoma treatment, benign lesions (dermatofibroma, keloid).
+- Abdominal Wall and Hernias (45 cards for 105 questions): unusual hernias (3 cards for 12 questions), omental and mesenteric disease (1 card for 9 questions), desmoid tumor.
+- Esophageal Surgery (53 cards for 100 questions): hiatal hernia and paraesophageal hernia repair (1 card for 8 questions), GERD and antireflux surgery (5 cards for 12 questions), Mallory-Weiss tear (1 card for 4 questions).
