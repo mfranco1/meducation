@@ -2,79 +2,64 @@
 
 Goal: audit the 20,121 pre-skill flashcards for accuracy, currency, clarity and relevance, then top up thin topics. Follow the [write-flashcards skill](../../../.agents/skills/write-flashcards/SKILL.md): `audit: true` decks, one Sonnet reviewer per deck. Never publish.
 
-Work dirs: `var/flashcard-work/<subject-slug>/` (gitignored).
+This file holds the rules for every subject. Each subject's status, staged counts, Unverified list and top-ups live in its own tracker (see Subjects).
+
+## Parallel sessions
+
+- One session per subject at a time; sessions for different subjects run at the same time. Within a subject, one topic per session.
+- Start a session with: "Audit the `<Subject>` flashcards: read `docs/work/ongoing/flashcard-audit.md`, then the subject's tracker, and do the next topic."
+- A session writes only its subject's tracker and work dir `var/flashcard-work/<slug>/`. Don't edit this file during parallel work; the user does.
+- At session start, set `In progress: <Topic>` in the subject tracker. If a topic is already in progress, stop and ask the user. Clear it when the topic is staged.
+- A subject without a tracker: refresh the outline, write an audit-only `plan.json` with every topic (a plain audit is its own approval), write `notes.md` where the subject needs one, create the tracker from the template below, then audit the first topic.
+- Shared state is safe across sessions: `D ledger` merges under a file lock, and staging serializes on the draft lock and checks each card's version. If staging times out on the lock while another session stages, handle it as a partial failure (SKILL.md, step 5) and rerun.
+- Each session keeps the skill's limit of 3 subagents at a time.
+- Lessons that change shared skill files: re-read the file right before editing, make a narrow edit, and don't undo lines another session wrote. Run both skills' tests and the shared tests after a change to `.agents/shared/`.
+- Fix only your own subject's cards. Note a problem in another subject in your report to the user, not in that subject's tracker. Run no cross-subject pass (math, sources, retired terms) while subject sessions are active: it makes their review inputs stale.
 
 ## Decisions
 
-- Order by risk: Internal Medicine, Pharmacology, Pediatrics, OB-GYN, Preventive Medicine, Legal Medicine, Surgery, Microbiology. Anatomy, Biochemistry and Physiology last, possibly a lighter pass.
-- One topic per session.
-- Delete the reviewers' trivia and duplicate cards on your own judgment; keep classic exam facts and cards relevant in the Philippines. Ask only about fixes that rest on judgment, not a source. Add coverage gaps to Top-ups.
+- Start subjects by risk: Preventive Medicine, Legal Medicine, Surgery, Microbiology & Parasitology, Pathology. Anatomy & Histology, Biochemistry and Physiology last, possibly a lighter pass.
+- Delete the reviewers' trivia and duplicate cards on your own judgment; keep classic exam facts and cards relevant in the Philippines. Ask only about fixes that rest on judgment, not a source. Add coverage gaps to the subject's Top-ups.
 - Reviewers skip web checks on facts they feel sure of and misreport card counts. Send back any reviewer that leaves a guideline-dependent fact on an existing card unchecked, naming the facts.
-- Retired-term hits still to handle in their decks: 5 Biochemistry, 2 Pathology, 1 Microbiology.
-- Before publishing: read each staged `sources` (the gate can't match narrative reviews or single-hospital protocols) and settle the Unverified list.
+- Before publishing: read each staged `sources` (the gate can't match narrative reviews or single-hospital protocols) and settle each subject's Unverified list.
+- Top-ups come after a subject's audit. Rerun `D coverage` for THIN topics, SMALL decks and subtopic counts; its counts are heuristic (false zeros and false lows are common), so confirm with a grep of `fronts.txt` before writing.
+
+## Subjects
+
+| Subject | Tracker | Topics |
+| --- | --- | --- |
+| Internal Medicine | [internal-medicine-flashcards.md](internal-medicine-flashcards.md) | 19, audited |
+| Pharmacology | [pharmacology-flashcards.md](pharmacology-flashcards.md) | 15, audited |
+| Pediatrics | [pediatrics-flashcards.md](pediatrics-flashcards.md) | 14, audited |
+| Obstetrics & Gynecology | [obstetrics-gynecology-flashcards.md](obstetrics-gynecology-flashcards.md) | 7, audited |
+| Preventive Medicine | [preventive-medicine-flashcards.md](preventive-medicine-flashcards.md) | 10 |
+| Legal Medicine | `legal-medicine-flashcards.md` (not started) | 7 |
+| Surgery | `surgery-flashcards.md` (not started) | 26 |
+| Microbiology & Parasitology | [microbiology-parasitology-flashcards.md](microbiology-parasitology-flashcards.md) | 9 |
+| Pathology | [pathology-flashcards.md](pathology-flashcards.md) | 27 |
+| Anatomy & Histology | `anatomy-histology-flashcards.md` (not started) | 14 |
+| Biochemistry | [biochemistry-flashcards.md](biochemistry-flashcards.md) | 21 |
+| Physiology | `physiology-flashcards.md` (not started) | 11 |
+
+## Cross-subject passes (staged, not published)
+
+- Math pass: 67 edits converting `\(...\)` and `\[...\]` to `$...$` and `$$...$$` (45 Preventive Medicine, 8 Pharmacology, 7 Surgery, 4 Pathology, 2 Pediatrics, 1 OB-GYN).
+- Source passes (backfill, re-source of non-citable and narrative-review citations, full check of weak cards): 95 edits, 2 deletes.
+
+## Subject tracker template
+
+```md
+# <Subject> flashcards
+
+Subject `<Subject>`, work dir `var/flashcard-work/<slug>/`, audit-only `plan.json` with <n> topics. Rules: [flashcard-audit](flashcard-audit.md).
 
 ## Status
 
-- Done: Internal Medicine (19 topics), Pharmacology (15 topics), Pediatrics (14 topics), OB-GYN (7 topics; work dir `obstetrics-gynecology`, subject name `Obstetrics & Gynecology`).
-- Preventive Medicine: all 10 topics (24 decks) audit-only in `plan.json`, work dir `preventive-medicine`; subject `notes.md` sets Philippine-issuance-first checks. Done: Epidemiology and Population Health. Next: Biostatistics and Evidence-Based Decisions.
+In progress: none. Done: <topics>. Next: <topic>.
 
 ## Staged (not published)
 
-Per-card reasons are in the draft change history.
-
-- Internal Medicine: 312 edits, 133 deletes.
-- Pharmacology: 47 edits, 10 deletes.
-- Pediatrics: 54 edits, 8 deletes.
-- OB-GYN: 31 edits, 2 deletes.
-- Preventive Medicine (1 topic): 2 edits, 6 deletes.
-- Cross-subject math pass: 67 edits converting `\(...\)` and `\[...\]` to `$...$` and `$$...$$` (45 Preventive Medicine, 8 Pharmacology, 7 Surgery, 4 Pathology, 2 Pediatrics, 1 OB-GYN).
-- Cross-subject source passes (backfill, re-source of non-citable and narrative-review citations, full check of weak cards): 95 edits, 2 deletes.
-
 ## Unverified (check before publishing)
 
-Primary text unreadable; secondary sources agree unless noted.
-
-Manual copies in `var/sources/manual/` now cover AHA/AAP 2025 neonatal resuscitation, AAP 2022 hyperbilirubinemia and AAP 2026 UTI: recheck the Neonatology and Nephrology items against them.
-
-- Pharm: cardiac arrest epinephrine (AHA 2025 ALS) and opioid-emergency cards (AHA hosts 403); febuxostat mortality (Uloric label from ledger); H. pylori (ACG 2024 highlights only); arsenic and mercury chelators (no source read); leprosy citation read from a mirror.
-- Peds › Neonatology: 8 NRP cards (SpO2 targets, 3:1, HR thresholds, meconium suction, preductal probe), AAP 2022 hyperbilirubinemia, NEC management, human milk and NEC.
-- Peds › Nutrition: vitamin K 1 mg (AAP 2022 abstract), iron (AAP 2026), inadequate-intake signs (ABM #3), 6 refeeding cards (ASPEN 2020), obesity comorbidity and treatment (AAP 2023).
-- Peds › Preventive: day-28 repeat newborn screen for preterm or sick infants (only a 2014 study states it). No DOH rabies order newer than AO 2018-0013 found.
-- Peds › Growth and Development: shape-copying ages (secondary tables: square 4 to 4.5, triangle 5; cards say 5 and 6), tricycle at 3, skipping at 5, hand preference "before 18 months" (secondary: 12), 3 autism and screening cards (AAP 2020).
-- Peds › Gastroenterology: Kasai timing "first 1–2 months", intussusception enema first-line and contraindications, coeliac serology (ESPGHAN 2020 abstract). Plan A/B/C volumes rest on IMCI 2014 and WHO 2005 (WHO 2024 has none).
-- Peds › Nephrology: HUS platelets only for bleeding or procedures, HUS supportive care, complement-mediated HUS, bag-specimen contamination, UTI confirmation by urinalysis plus culture, 48–72 hour reassessment (NICE NG224 says 24–48).
-- Peds › Neurology: AAP 2008 long-term febrile seizure guideline (antipyretics, no prophylaxis, recurrence risks, no brain injury); refractory status epilepticus definition; NF2-related schwannomatosis criteria (Plotkin 2022 table); migraine cards against Oskoui 2019 full text (JAMA Neurol summary only); 7 stroke cards against AHA 2019 (403).
-- Peds › Pulmonology: IMCI fast breathing ≥50 at 2–11 months (PAPP 2021 says 3–12 months) and ≥60 under 2 months (2014 booklet unreadable).
-- Peds › Rheumatology: MAS laboratory criteria (2016 EULAR/ACR/PRINTO, 403 everywhere; card matches secondary tables).
-- Peds › Cardiology: adenosine 0.1 mg/kg (max 6) and 0.2 mg/kg (max 12) rest on the 2020 PALS tachycardia algorithm (the 2025 text states no doses).
-- Peds › Immunology and Allergy: persistent allergic rhinitis cutoff (ARIA 2001 and 2008 unreadable; secondary sources split on ">4" and "at least 4"; card hedges "using the applicable ARIA convention").
-- OB › Obstetrics: postpartum visit timing (ACOG CO 736, summaries only); NST, BPP and CST criteria, polyhydramnios cutoffs (ACOG PB 229 paywalled); GDM and GBS screening windows, cfDNA from 10 weeks, CVS and amniocentesis timing, NVP first line, caffeine limit, first-visit labs (acog.org blocked; no POGS guideline checked).
-- OB › Labor and Delivery: ECV at 36–37 weeks (RCOG GTG 20a and ACOG PB 221 unreadable); 3 shoulder dystocia cards checked against GTG 42 2012 only (2026 edition on Wiley); intra-amniotic infection fever thresholds and findings (ACOG 2024 update blocked; findings card edited to the 2016 NICHD workshop); cerclage cards against ACOG CPG 12 (2026, abstract only).
-- OB › Pregnancy Complications: methotrexate 50 mg/m², ≥15% hCG fall day 4 to 7, contraindications and counseling (ACOG PB 193 and RCOG GTG 21 unreadable; NICE NG126 has no dose or 15% figure); history-indicated cerclage at 12–14 weeks (FIGO 2021 gives no week); ACOG 2024 anti-D under 12 weeks (search summary only; card states FIGO/ICM 2021); LGA, macrosomia and planned-cesarean weight thresholds (ACOG PB 216 paywalled).
-- OB › Medical Disorders in Pregnancy: free T4 target on antithyroid drugs (ATA 2026 full text read has no numeric target); PE imaging (ESC 2025 text truncated, ACOG PB 196 paywalled); methadone or buprenorphine and avoiding withdrawal (ACOG CO 711 summary only); pyelonephritis admission with IV antibiotics and nitrofurantoin or fosfomycin exclusion (ACOG 2023 blocked, NICE NG111 partial); toxoplasma IgM alone; MCA Doppler for fetal anemia; "major aortopathy" in mWHO IV.
-- OB › Reproductive Endocrinology: SSRIs first-line for PMDD (ACOG CPG 7 summary only, RCOG GTG 48 on Wiley); NSAIDs first-line for primary dysmenorrhea (SOGC 345 challenge pages, ACOG CO 760 withdrawn); LNG-IUD for endometrial protection in anovulatory PMOS (kept; 2023 guideline names only progestogens, COCs and POPs; ACOG PB 194 unread).
-- Gyn › Gynecology: red degeneration and its conservative management in pregnancy, rapid growth not diagnosing leiomyosarcoma, GnRH analogues and add-back (ACOG PB 228 members-only, SOGC 461 abstract only); Bartholin biopsy at ≥40, Word catheter or marsupialization, no routine antibiotics (narrative reviews only); staphylococcal TSS management (CDC clinical pages 404).
-- Gyn › Gynecologic Oncology: WHO 2021 screening from 30 every 5 to 10 years (full text unreachable); ACOG cytology every 3 years at 21 to 29 (Committee Statement 28, paywalled); no routine endometrial biopsy in asymptomatic tamoxifen users (ACOG CO 601 unreadable, reaffirmation unconfirmed); dVIN as HPV-independent (ISSVD summary only, WHO 2020 unreachable).
-- Peds › Hematology and Oncology: TLS hypocalcemia and consequences (Coiffier 2008, BSH 2015 and 2025 all 403); severe aplastic anemia checked against adult BSH 2024 only.
-
-## Top-ups (after audits)
-
-Rerun `D coverage` per subject for THIN topics, SMALL decks and subtopic counts; its counts are heuristic, so confirm before writing. False zeros seen: Methylxanthines, Androgens, Thionamides, Antiproliferative Agents, Dentition. Gaps it doesn't show:
-
-- New decks, not top-ups: IM › Psychiatry (one 15-card deck for 110 questions); Peds › Preventive Pediatrics IMCI and dehydration.
-- IM: Dengue, Leprosy and autoimmune blistering disease have 0 cards; no cancer-associated VTE or preventive migraine card; anal fissure card vague (no posterior midline or sphincter spasm); obesity-associated cancers and conditions need single-answer cards; Spondyloarthropathies deck holds RA cards (Caplan, Felty) and few ankylosing spondylitis cards; Critical Care Supportive ICU Care 0 cards.
-- Pharm: no Alzheimer drug cards (`D coverage` miscounts via "Disease"); no ondansetron or dopamine-antagonist antiemetic; no misoprostol, octreotide, terlipressin or nonselective beta-blocker for portal hypertension; no BRAF, ALK, BTK or CDK4/6 inhibitor; no abatacept or anakinra plus TNF inhibitor infection card (Orencia label); no acetylcysteine regimen or nomogram, no fomepizole.
-- Peds › Hematology and Oncology: `D coverage` shows 0 for Thalassemias, Oncologic Emergencies and Lymphomas (heuristic; thalassemia and Hodgkin cards exist), 5 for Hemophilia (13 questions), 6 for ITP (12).
-- Peds › Neurology: no SMA, Duchenne or myasthenia cards (`D coverage` shows Neuromuscular Disorders 0 for 14 questions; its Neurocutaneous 0 is a false zero). Thin: Antiseizure Medications 4 (8 questions), CSF Analysis 1 (10), Hydrocephalus 4 (12), Headache 3 (10), Neural Tube Defects 4 (10).
-- Peds › Pulmonology: no obstructive sleep apnea cards (6 questions); Cystic Fibrosis 1 card (6 questions), none on sweat chloride; Childhood Tuberculosis 7 (18).
-- Peds › Rheumatology (`D coverage`, unconfirmed): MIS-C 6 cards (12 questions), JIA 11 (20), SLE 6 (15), Approach to Joint Pain 4 (8).
-- Peds › Cardiology (`D coverage`, unconfirmed): Myocarditis and Pericarditis 0 cards (8 questions), Arrhythmias 0 (7; SVT cards exist, likely a false zero), Septal Defects 6 (16), Tetralogy of Fallot 5 (14), Syndromes and Maternal Conditions 2 (6).
-- Peds › Infectious Diseases (`D coverage`, unconfirmed): Malaria 0 cards (6 questions), Soil-Transmitted Helminths 0 (8; albendazole and hookworm cards exist, likely a false zero), Tetanus 0 (6), Pediatric HIV 1 (16), Sexually Transmitted Infections 3 (15), Oral Vesicular Diseases 3 (6).
-- Peds › Endocrinology: Calcium and Vitamin D Disorders 0 cards (7 questions); DKA well covered (the 2 is a false low); Type 2 Diabetes has 1 real card, none on screening or treatment (8 questions); Short Stature 4 (14), Failure to Thrive 1 (6).
-- Peds › Immunology and Allergy (`D coverage`, unconfirmed): Urticaria and Angioedema 2 cards (6 questions), Phagocyte Disorders 2 (9), Combined and Cellular Deficiencies 4 (14), Antibody Deficiencies 6 (15).
-- OB › Pregnancy Complications (`D coverage`, unconfirmed): Zygosity and Chorionicity 1 card (10 questions), Polyhydramnios 4 (9), Oligohydramnios 5 (9), PPH Definition and Risk Factors 3 (8), Management of the Sensitized Patient 6 (10), Surgical and Transfusion Management 8 (9); no amniotic fluid embolism or maternal cardiac arrest cards in the hemorrhage deck.
-- OB › Medical Disorders in Pregnancy (`D coverage`, unconfirmed): no hyperemesis gravidarum, listeriosis, urolithiasis, IBD, GERD, influenza, dengue or malaria cards; Peripartum Cardiomyopathy 1 card (6 questions), Psychiatric Disorders and Substance Use 1 (7), SLE 3 (9), Pathogenesis and Risk Factors (preeclampsia) 0 (6). GBS and chorioamnionitis zeros are false (cards sit in Obstetrics and Labor and Delivery); CMV and VTE counts are false lows.
-- OB › Reproductive Endocrinology, Fertility and Contraception (`D coverage`, unconfirmed): Mullerian Anomalies 1 card (13 questions), Ambiguous Genitalia 2 (11), Intrauterine Devices 2 (9), Implants and Injectables 1 (7), Assisted Reproduction 0 (6), Precocious Puberty 6 (11), Male Factor 6 (9), PMOS Long-Term Risks and Management 2 (14). PMS and PMDD and PMOS Diagnosis zeros are likely false (cards exist).
-- Gyn › Gynecology (`D coverage`, unconfirmed): Osteoporosis and Bone Health 1 card (11 questions), Stress Urinary Incontinence 1 (12), Mucopurulent Cervicitis 1 (10), PID Diagnosis 2 (9), Pessary and Surgical Management 5 (12), Condyloma and Molluscum 2 (5), Vulvodynia 0 (3), Ectoparasites 0 (2). PALM-COEIN 2 and AUB Medical Management 1 are likely false lows.
-- Gyn › Gynecologic Oncology (`D coverage`, unconfirmed): Uterine Sarcomas 4 cards (9 questions), HPV Vaccination 3 (7), CIN Classification 1 (5). Hereditary Risk and Prevention 1 is a false low (BRCA and Lynch cards exist).
-- Peds: no M-CHAT, developmental screening ages, microarray or fragile X, or maltreatment workup (sentinel injuries, skeletal survey) cards.
+## Top-ups
+```
