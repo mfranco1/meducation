@@ -4,7 +4,7 @@ Subject `Pathology`, work dir `var/flashcard-work/pathology/`, audit-only `plan.
 
 ## Status
 
-In progress: none. Done: Cell Injury and Adaptation, Inflammation and Repair, Hemodynamic Disorders, Genetic Disorders, Immune System Disorders, Neoplasia (all no changes), Infectious Disease Pathology, Environmental and Nutritional Pathology (no changes), Infancy and Childhood (no changes), Blood Vessels, Heart, Hematolymphoid Neoplasia, Red Cells and Hemostasis (no changes), Lung and Pleura, Head and Neck, Gastrointestinal Tract, Liver, Gallbladder, and Pancreas, Kidney (no changes), Lower Urinary and Male Genital Tract, Female Genital Tract and Gestational Disease. Next: Breast.
+Phase: Audit. In progress: Breast. Done: Cell Injury and Adaptation, Inflammation and Repair, Hemodynamic Disorders, Genetic Disorders, Immune System Disorders, Neoplasia (all no changes), Infectious Disease Pathology, Environmental and Nutritional Pathology (no changes), Infancy and Childhood (no changes), Blood Vessels, Heart, Hematolymphoid Neoplasia, Red Cells and Hemostasis (no changes), Lung and Pleura, Head and Neck, Gastrointestinal Tract, Liver, Gallbladder, and Pancreas, Kidney (no changes), Lower Urinary and Male Genital Tract, Female Genital Tract and Gestational Disease. Next: Breast.
 
 ## Staged (not published)
 

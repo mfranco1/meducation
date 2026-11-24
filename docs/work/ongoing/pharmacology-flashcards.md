@@ -4,7 +4,7 @@ Subject `Pharmacology`, work dir `var/flashcard-work/pharmacology/`. Rules: [fla
 
 ## Status
 
-In progress: none. Audit done (15 topics). Next: top-ups.
+Phase: Top-up (audit done, 15 topics). In progress: none. Next: plan the top-ups.
 
 ## Staged (not published)
 

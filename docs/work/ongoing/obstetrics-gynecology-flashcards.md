@@ -4,7 +4,7 @@ Subject `Obstetrics & Gynecology`, work dir `var/flashcard-work/obstetrics-gynec
 
 ## Status
 
-In progress: none. Audit done (7 topics). Next: top-ups.
+Phase: Top-up (audit done, 7 topics). In progress: none. Next: plan the top-ups.
 
 ## Staged (not published)
 

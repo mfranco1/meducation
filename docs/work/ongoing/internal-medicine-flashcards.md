@@ -4,7 +4,7 @@ Subject `Internal Medicine`, work dir `var/flashcard-work/internal-medicine/`. R
 
 ## Status
 
-In progress: none. Audit done (19 topics). Next: top-ups.
+Phase: Top-up (audit done, 19 topics). In progress: none. Next: plan the top-ups.
 
 ## Staged (not published)
 

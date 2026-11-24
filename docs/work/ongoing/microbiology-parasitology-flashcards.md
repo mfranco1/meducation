@@ -4,7 +4,7 @@ Subject `Microbiology & Parasitology`, work dir `var/flashcard-work/microbiology
 
 ## Status
 
-In progress: none. Not started: no `plan.json` yet.
+Phase: Not started. No `plan.json` yet.
 
 ## Carried over
 

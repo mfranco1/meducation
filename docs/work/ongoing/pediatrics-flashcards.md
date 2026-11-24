@@ -4,7 +4,7 @@ Subject `Pediatrics`, work dir `var/flashcard-work/pediatrics/`. Rules: [flashca
 
 ## Status
 
-In progress: none. Audit done (14 topics). Next: top-ups.
+Phase: Top-up (audit done, 14 topics). In progress: none. Next: plan the top-ups.
 
 ## Staged (not published)
 

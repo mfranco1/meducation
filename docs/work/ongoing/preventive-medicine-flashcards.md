@@ -4,7 +4,7 @@ Subject `Preventive Medicine`, work dir `var/flashcard-work/preventive-medicine/
 
 ## Status
 
-In progress: none. Audit done for all 10 topics: Epidemiology and Population Health; Biostatistics and Evidence-Based Decisions; Prevention, Health Promotion, and Clinical Screening; Occupational and Environmental Health; Communicable Disease Prevention and Clinical Programs; Maternal, Child, Nutrition, and Immunization Programs; Primary Health Care and Community Medicine; Philippine Health Systems and Universal Health Care; Family Medicine, Communication, and Supportive Care; Professional Practice, Safety, and Public Health Administration. Next: settle Unverified, then Top-ups.
+Phase: Top-up (audit done, 10 topics). In progress: none. Next: plan the top-ups.
 
 ## Staged (not published)
 

@@ -8,8 +8,8 @@ This file holds the rules for every subject and each subject's phase. Topic stat
 
 Each subject moves through three phases, in order. A session works on one subject in its current phase.
 
-1. **Audit**: `audit: true` decks, one Sonnet reviewer per deck, one topic per session. Start: "Audit the `<Subject>` flashcards: read `docs/work/ongoing/flashcard-audit.md`, then the subject's tracker, and do the next topic."
-2. **Top-up**: write the cards listed in the tracker's Top-ups. Rerun `D coverage` for THIN topics, SMALL decks and subtopic counts; its counts are heuristic (false zeros and false lows are common), so confirm with a grep of `fronts.txt` before planning. Top-ups need a plan the user approves ([plan.md](../../../.agents/skills/write-flashcards/plan.md)); then one topic per session. Start: "Top up the `<Subject>` flashcards: read `docs/work/ongoing/flashcard-audit.md`, then the subject's tracker, and do the next step."
+1. **Audit**: `audit: true` decks, one Sonnet reviewer per deck. Start: "Audit the `<Subject>` flashcards: read `docs/work/ongoing/flashcard-audit.md`, then the subject's tracker, and do the next topic."
+2. **Top-up**: write the cards listed in the tracker's Top-ups. Rerun `D coverage` for THIN topics, SMALL decks and subtopic counts; its counts are heuristic (false zeros and false lows are common), so confirm with a grep of `fronts.txt` before planning. Top-ups need a plan the user approves ([plan.md](../../../.agents/skills/write-flashcards/plan.md)). Start: "Top up the `<Subject>` flashcards: read `docs/work/ongoing/flashcard-audit.md`, then the subject's tracker, and do the next step."
 3. **Publish check**: read each staged `sources` (the gate can't match narrative reviews or single-hospital protocols) and settle the Unverified list. Then the user reviews and publishes.
 
 Moving a subject to the next phase:
@@ -20,7 +20,6 @@ Moving a subject to the next phase:
 ## Parallel sessions
 
 - One session per subject at a time; sessions for different subjects run at the same time. Within a subject, one topic per session.
-- Start a session with: "Audit the `<Subject>` flashcards: read `docs/work/ongoing/flashcard-audit.md`, then the subject's tracker, and do the next topic."
 - A session writes its subject's tracker, its work dir `var/flashcard-work/<slug>/`, and in this file only its subject's row at a phase change.
 - At session start, set `In progress: <Topic>` in the subject tracker. If a topic is already in progress, stop and ask the user. Clear it when the topic is staged.
 - A subject with no `plan.json` yet: refresh the outline, write an audit-only `plan.json` with every topic (a plain audit is its own approval), write `notes.md` where the subject needs one, fill in the tracker's header and Status, move the subject's row to Audit, then audit the first topic.
@@ -41,8 +40,7 @@ Tracker for each subject: `<slug>-flashcards.md` in this folder.
 
 ### Publish check
 
-| Subject | Topics |
-| --- | --- |
+None yet.
 
 ### Top-up
 

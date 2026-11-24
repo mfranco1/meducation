@@ -4,7 +4,7 @@ Subject `Biochemistry`, work dir `var/flashcard-work/biochemistry/`, audit-only 
 
 ## Status
 
-In progress: none. Done: Amino Acids and Proteins, Hemoglobin and Hemoglobinopathies, Carbohydrate and Lipid Structure, Enzymes and Bioenergetics, Nutrition, Vitamin Basics and Fat-Soluble Vitamins, Water-Soluble Vitamins, Minerals and Trace Elements, Cell Biology and Biochemical Techniques. Next: Nucleic Acid Structure.
+Phase: Audit. In progress: Nucleic Acid Structure. Done: Amino Acids and Proteins, Hemoglobin and Hemoglobinopathies, Carbohydrate and Lipid Structure, Enzymes and Bioenergetics, Nutrition, Vitamin Basics and Fat-Soluble Vitamins, Water-Soluble Vitamins, Minerals and Trace Elements, Cell Biology and Biochemical Techniques. Next: Nucleic Acid Structure.
 
 ## Carried over
 
