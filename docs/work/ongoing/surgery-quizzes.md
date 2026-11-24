@@ -20,7 +20,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Head, Neck, and Salivary Surgery: 6 items (2/4), 2026-11-24. Backlog 0.
 - Skin and Soft-Tissue Tumors: 8 items (4/4), 2026-11-24. Backlog 0.
 - Metabolic and Bariatric Surgery: 1 item (0/1), 2026-11-24. Backlog 0. Other points had no ranking source.
+- Otolaryngology: 4 items (2/2), 2026-11-24. Backlog 0. Three ear points had no ranking source.
 
 ## Next
 
-The unstaged topic with the most MISSING rows in `most-common-gaps.md` (9 each: Otolaryngology; Reconstructive Surgery). Staged topics keep leftover MISSING rows past the per-quiz cap.
+The unstaged topic with the most MISSING rows in `most-common-gaps.md` (9: Reconstructive Surgery). Staged topics keep leftover MISSING rows past the per-quiz cap.

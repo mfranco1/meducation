@@ -15,7 +15,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Hematolymphoid Neoplasia: 10 items (5/4/1). Backlog 0.
 - Heart: 9 items (4/5). Backlog 0.
 - Breast: 7 items (4/3). Backlog 0.
+- Head and Neck: 7 items (4/3). Backlog 0.
 
 ## Next
 
-One of Skin, Head and Neck or Eye (8 MISSING rows each), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.
+Skin or Eye (8 MISSING rows each), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.

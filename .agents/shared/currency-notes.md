@@ -50,6 +50,8 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | Six enzyme classes (IUB, EC 1 to 6) | Seven IUBMB classes: EC 7 translocases added | 2018 IUBMB | `six (IUB(MB)? )?enzyme classes`, `six classes of enzymes` |
 | Hemorrhagic disease of the newborn | Vitamin K deficiency bleeding (VKDB) | ISTH 1999; AAP 2022 policy | `hemorrhagic disease of the newborn`, `haemorrhagic disease of the newborn` |
 | Churg-Strauss syndrome, Wegener granulomatosis | Eosinophilic granulomatosis with polyangiitis (EGPA), granulomatosis with polyangiitis (GPA) | Chapel Hill 2012 (Jennette, Arthritis Rheum 2013) | `Churg-Strauss`, `Wegener\w*` |
+| Best evidence rule (Philippine evidence) | Original document rule (Rule 130 Sec. 3) | 2019 Revised Rules on Evidence (A.M. No. 19-08-15-SC) | `best evidence rule` |
+| Dangerous Drugs Act of 1972 (RA 6425) | Comprehensive Dangerous Drugs Act of 2002 (RA 9165, as amended) | 2002 | `Dangerous Drugs Act of 1972`, `RA 6425` |
 
 ## Current editions
 
