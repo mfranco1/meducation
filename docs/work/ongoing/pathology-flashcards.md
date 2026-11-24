@@ -4,7 +4,7 @@ Subject `Pathology`, work dir `var/flashcard-work/pathology/`, audit-only `plan.
 
 ## Status
 
-In progress: none. Done: Cell Injury and Adaptation, Inflammation and Repair, Hemodynamic Disorders, Genetic Disorders (all no changes). Next: Immune System Disorders.
+In progress: none. Done: Cell Injury and Adaptation, Inflammation and Repair, Hemodynamic Disorders, Genetic Disorders, Immune System Disorders, Neoplasia (all no changes). Next: Infectious Disease Pathology.
 
 ## Staged (not published)
 
@@ -18,6 +18,8 @@ In progress: none. Done: Cell Injury and Adaptation, Inflammation and Repair, He
 - Inflammation and Repair: fibrosis as a process (1 card, TGF-beta): persistent injury, macrophage and TGF-beta drive, organ examples (hepatic stellate cells), reversibility.
 - Hemodynamic Disorders: hemorrhage (0 cards): petechiae, purpura, ecchymoses, hematoma, clinical significance by volume and site. Infarction (3 cards): factors that decide infarct development, morphologic evolution over time, septic infarcts.
 - Genetic Disorders: glycogen storage diseases and other inborn errors (only Pompe): von Gierke, McArdle, PKU, alkaptonuria, galactosemia. Structural chromosomal syndromes: cri-du-chat, Williams, Robertsonian translocation (none).
+- Immune System Disorders: mechanisms of autoimmunity (0 cards): central and peripheral tolerance, AIRE (APECED), FOXP3 regulatory T cells (IPEX), molecular mimicry (rheumatic fever). Amyloidosis and primary immunodeficiencies are covered (coverage zeros are false).
+- Neoplasia: paraneoplastic syndromes (3 cards): Lambert-Eaton, Trousseau, EPO polycythemia (RCC, HCC), hypertrophic osteoarthropathy, dermatomyositis, acanthosis nigricans. Microbial carcinogens: EBV (Burkitt, nasopharyngeal carcinoma), HBV and HCV, liver flukes and cholangiocarcinoma. Chemical and radiation: initiation and promotion, asbestos, aromatic amines, radiation and papillary thyroid carcinoma. Oncogenes: MYC, ERBB2, BCR-ABL. Serum markers: PSA, CA-125, beta-hCG, CA 19-9. Dysplasia (no definition card). Grading and staging are covered (coverage low is false).
 
 ## Carried over
 

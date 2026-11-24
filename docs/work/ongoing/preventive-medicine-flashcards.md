@@ -4,11 +4,11 @@ Subject `Preventive Medicine`, work dir `var/flashcard-work/preventive-medicine/
 
 ## Status
 
-In progress: none. Done: Epidemiology and Population Health; Biostatistics and Evidence-Based Decisions; Prevention, Health Promotion, and Clinical Screening; Occupational and Environmental Health; Communicable Disease Prevention and Clinical Programs; Maternal, Child, Nutrition, and Immunization Programs; Primary Health Care and Community Medicine; Philippine Health Systems and Universal Health Care. Next: Family Medicine, Communication, and Supportive Care.
+In progress: none. Audit done for all 10 topics: Epidemiology and Population Health; Biostatistics and Evidence-Based Decisions; Prevention, Health Promotion, and Clinical Screening; Occupational and Environmental Health; Communicable Disease Prevention and Clinical Programs; Maternal, Child, Nutrition, and Immunization Programs; Primary Health Care and Community Medicine; Philippine Health Systems and Universal Health Care; Family Medicine, Communication, and Supportive Care; Professional Practice, Safety, and Public Health Administration. Next: settle Unverified, then Top-ups.
 
 ## Staged (not published)
 
-60 edits, 27 deletes. Per-card reasons are in the draft change history.
+66 edits, 31 deletes. Per-card reasons are in the draft change history.
 
 ## Unverified (check before publishing)
 
@@ -29,6 +29,13 @@ In progress: none. Done: Epidemiology and Population Health; Biostatistics and E
 - f-2ab36736-c143-4775-9b3b-36a464f7bd6f (Operation Timbang Plus 0 to 59 months): nnc.gov.ph refused fetches; secondary sources say NNC 2012 guidelines cover 0 to 71 months and a 2017 memo narrowed forms to 0 to 59.
 - f-429f29bd-108d-4ee2-ae53-b2830214e355 (Z benefits): rests on Circular 2021-0022 in the ledger; Circulars 35 s. 2015 and 2022-0012 not opened.
 - RA 11223 statutory cards (premium schedule, Board, HTAC, penalties): no enacted amendment found; SB 2620 and HB 11357 (3.5% premium) passed their chambers in 2025. PIA confirms the 5% rate for 2026. Recheck the Official Gazette before publishing.
+- Family illness phases (f-05c7d598-34dd-436c-a86c-5a3b89a897dc and phase-task cards f-fee94d38-b702-4ef8-ae4e-abcd1251531b, f-b8b823ea-4f3f-40ba-bb9a-f1f32d4ad9fb, f-bed5dcb2-3974-4040-aad9-de4731588007, f-03584623-d1e7-4fcf-ba7a-4cd843b53604): no source for the five-phase scheme; Rolland uses crisis, chronic, terminal phases.
+- Hospice cards (f-9cb9640a-f370-4ecd-8749-46a29eee3467, f-585bdac7-862f-4c66-8ff8-9304ad618dee, f-d3e928d3-896a-4fd0-9bc0-edb7f569c9b2): match CMS; DOH AO 2015-0052 read only via an aggregator, current status unconfirmed.
+- Family APGAR bands 8 to 10 and 4 to 7 (f-7c4e4127 set): match the Filipino study PMC3233495; Smilkstein's original 7 to 10 and 4 to 6 not opened.
+- f-86afade6-9d2d-4a24-9e53-f22c3995fbe2 (ICD-11 full adoption from CY 2027): read in the AO PDF, whose number line is OCR-garbled; "2025-0021" comes from the DOH HFDB page title.
+- Telemedicine cards (f-3efab1f5 set): rest on DOH-DILG-PHIC JAO 2021-0001; telemedicine bills pending in 2026, none confirmed enacted.
+- Death certificate layout cards (f-efc285d0, f-3d7af66b): match the WHO ICD-11 Reference Guide; PSA Municipal Form 103 not opened (403).
+- f-4ac4003f-70d4-4937-9bb8-2bff80f0d983 (emergency codes not standardized): no DOH issuance found for in-hospital codes; the DOH Code White/Blue/Red alert system (AO 2008-0024 or 2010-0029) not read in primary text.
 
 ## Top-ups
 
@@ -38,3 +45,5 @@ In progress: none. Done: Epidemiology and Population Health; Biostatistics and E
 - Maternal, Child, Nutrition, and Immunization Programs: Family Planning (near 0 cards; DOH FP Clinical Standards Manual, WHO MEC), Prenatal and Postpartum Care (2; DOH ANC contacts), MNCHN Strategy and Maternal Mortality (2), Micronutrient Supplementation (5; vitamin A, iron, MNP doses).
 - Primary Health Care and Community Medicine: Managed Care (0 cards, 4 questions), Traditional and Herbal Medicine (0, 9; RA 8423, DOH-approved herbal medicines), Five-Star Doctor (1, 4), Elements and Strategies of PHC (1, 8).
 - Philippine Health Systems and Universal Health Care (heuristic counts, confirm in `fronts.txt`): UHC Act Objectives and Principles (0 cards, 11 questions), NHIP History and Mandate (0, 4), No Balance Billing (1, 4), Regulation, Accountability and Penal Provisions (2, 8).
+- Family Medicine, Communication, and Supportive Care: Ordinal Position and Parenting Styles (0 cards, 7 questions), Counseling and the CEA Method (1, 7), Bereavement Care (1, 7), Breaking Bad News (2, 6), Hospice Care (3, 7), Active Listening Skills (3, 10).
+- Professional Practice, Safety, and Public Health Administration (heuristic counts, confirm in `fronts.txt`): Management Functions and Organizational Acts (no staffing or controlling card, 10 questions), Medicolegal Deaths (1, 5), Health Economics (3, 13), Health Care Waste Management (4, 12; other DOH colors), Data Privacy Act (4, 10; sensitive personal information, NPC, DPO).
