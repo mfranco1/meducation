@@ -283,8 +283,8 @@ def cmd_gate(work: Work, args) -> None:
 
 
 def cmd_review_input(work: Work, args) -> None:
-    """For each plan deck write review-input-<n>.json: [{ref, front, back, sources?}]. New cards from cards-<n>.json get ref new-<i>; with audit: true the deck's existing cards come first, ref = card id. Decks with nothing to review are skipped."""
-    for stale in work.numbered("review-input-*.json"):
+    """For each plan deck write review-input-<n>.json: [{ref, front, back, sources?}]. New cards from cards-<n>.json get ref new-<i>; with audit: true the deck's existing cards come first, ref = card id. Decks with nothing to review are skipped. Earlier review inputs and reviews are deleted, so build never applies a stale review."""
+    for stale in work.numbered("review-input-*.json") + work.numbered("review-[0-9]*.json"):
         stale.unlink()
     for n, deck in enumerate(work.plan_topic()["decks"], 1):
         rows = []

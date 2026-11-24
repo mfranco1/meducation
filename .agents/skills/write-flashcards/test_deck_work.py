@@ -148,6 +148,7 @@ def test_review_input_lists_audited_cards_first_then_new_cards(tmp_path, capsys)
         },
     )
     (folder / "review-input-9.json").write_text("[]")
+    (folder / "review-1.json").write_text("[]")
     out = run(work, "review-input", TOPIC, capsys=capsys)
     assert "review-input-1.json: 2 existing, 2 new" in out
     rows = json.loads((folder / "review-input-1.json").read_text())
@@ -156,6 +157,7 @@ def test_review_input_lists_audited_cards_first_then_new_cards(tmp_path, capsys)
     assert (
         not (folder / "review-input-2.json").exists()
         and not (folder / "review-input-9.json").exists()
+        and not (folder / "review-1.json").exists()
     )
 
 

@@ -16,7 +16,9 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Heart: 9 items (4/5). Backlog 0.
 - Breast: 7 items (4/3). Backlog 0.
 - Head and Neck: 7 items (4/3). Backlog 0.
+- Skin: 8 items (4/4). Backlog 0.
+- Eye: 9 items (5/4). Backlog 1 (Glaucoma, Retina, Optic Nerve, and Intraocular Tumors).
 
 ## Next
 
-Skin or Eye (8 MISSING rows each), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.
+The topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.

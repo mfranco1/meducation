@@ -4,7 +4,7 @@ Subject `Biochemistry`, work dir `var/flashcard-work/biochemistry/`, audit-only 
 
 ## Status
 
-Phase: Top-up. In progress: none. Next: plan the Top-ups below.
+Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 decks (`plan.json`; the Top-ups below are its source). Done: Genetics and Inheritance; Minerals and Trace Elements. Next: Cell Biology and Biochemical Techniques.
 
 ## Carried over
 
@@ -34,6 +34,8 @@ Phase: Top-up. In progress: none. Next: plan the Top-ups below.
 - Inborn Errors of Metabolism and Storage Diseases: 14 edits (Pompe infantile course labelled untreated per ACMG 2006; MPS without CNS involvement is Morquio and Maroteaux-Lamy; PKU diet and sapropterin per van Wegberg 2017; nitisinone for alkaptonuria per HARLIKU label 2025; MMA protein and B12 per Baumgartner 2014; homocystinuria per Morris 2017; cystinuria without acetazolamide per EAU 2026; 7 "mental retardation" to intellectual disability), 24 deletes (keratan sulfate "most heterogeneous" and Morquio "only MPS without CNS" were wrong; rest duplicate, including 12 GSD enzyme-only copies and 8 GAG/ABO copies). 170 to 146 cards.
 
 - Immunology: 5 edits (NK cell as the cytotoxic innate lymphocyte since ILCs exist, EGPA formerly Churg-Strauss per Chapel Hill 2012, gonorrhea removed from asplenia pathogens, barriers split from cells, myeloma front), 45 duplicate or trivia deletes (C2 "most common complement deficiency worldwide" was unsupported). 143 to 98 cards.
+- Genetics and Inheritance top-up: new decks Inheritance Patterns and Population Genetics (33) and Chromosomal Disorders (30). 36 to 99 cards.
+- Minerals and Trace Elements top-up: Iron Metabolism +8 (iron poisoning per AAPCC 2005 and the deferoxamine label), Macrominerals, Selenium and Other Trace Elements +10 (calcium, phosphorus, magnesium, iodine). 71 to 89 cards.
 
 ## Unverified (check before publishing)
 
@@ -57,14 +59,14 @@ Phase: Top-up. In progress: none. Next: plan the Top-ups below.
 - Metabolic Integration and Hormones, left unedited: DKA/ketogenic comparison table (f-...bd9982e5) and ketogenic diet "<50 g/day" (f-...b75c710c) not checked against ADA/EASD 2024; thyroid production, total concentration, free fraction (0.02% vs Merck 0.03%) and T3/T4 potency figures (f-7e6a960e, f-cd2f196e, f-7aa057bd, f-d4011073) have no source (Endotext behind CAPTCHA). Insulin secretion edit (f-0d2d8eac) still lists CCK alongside the incretins.
 - Inborn Errors of Metabolism and Storage Diseases, left unedited: SLOS "often stillborn" (f-92dbd472; review says severe cases die perinatally, narrative review only); Lorenzo's oil on the X-ALD treatment card (f-afc7b18f; no source for efficacy); Gaucher imiglucerase or substrate reduction (f-956e799d) not opened; tyrosinemia I nitisinone (f-9d8422da) and MSUD treatment (f-9ffcd779) unchecked; CAH newborn screening card (f-87495d04) not checked against Philippine NBS practice. Morquio/Maroteaux-Lamy edit (f-ab8eeb17) rests on textbook knowledge. Pompe edit cites ACMG 2006 without volume or pages, read to 100k of 249k characters.
 - Immunology, left unedited: WBC differential ranges (f-cd4fc4f3; sources differ on neutrophil %); complement cards and IgM primary response checked against no document; HLA-DR4 listing Hashimoto (f-fcf19a9d); HLA-B27 PAIR card (f-6d7767bf) confirmed for ankylosing spondylitis only; "Goodpasture syndrome" on f-a3b2725c (Chapel Hill 2012 says anti-GBM disease). C2 deficiency no longer has a card; add one only with a source for its ranking.
+- Genetics and Inheritance top-up: Down syndrome recurrence (about 1% after free trisomy 21, 10 to 15% for a maternal 14;21 carrier, 21;21 about 100%) and Turner X loss "usually paternal" from textbooks only; ACOG PB 226 cell-free DNA follow-up card rests on a third-party PDF copy.
+- Minerals and Trace Elements top-up: no iron poisoning card on radiopaque tablets, serum iron timing or thresholds, or dose bands other than 40 mg/kg (AAPCC 2005 is out-of-hospital and gives none). Chvostek and Trousseau signs card from textbook knowledge only.
 
 ## Top-ups
 
 - Water-Soluble Vitamins: Riboflavin subtopic has 2 cards by heuristic (7 questions); confirm with a grep of `fronts.txt`.
 
-- Minerals and Trace Elements: Iron Poisoning has 0 cards (10 questions; confirmed by grep). Calcium, Phosphorus and Magnesium (3 cards, 10 questions) and Iodine (2 cards, 7 questions) are thin. Zinc's 0 is a false zero.
 - Cell Biology and Biochemical Techniques: Gene Editing and Gene Silencing (12 questions), Cloning and Recombinant DNA (12) and Blotting Techniques (12) look thin by heuristic; confirm with a grep of `fronts.txt`.
-- Genetics and Inheritance is THIN (36 cards, 100 questions, mostly CF and chromosome locations). Genetic Principles and Terms, Hardy-Weinberg and Recurrence Risk, and Microdeletions and Structural Rearrangements show 0 cards; Mendelian and Non-Mendelian Inheritance, Autosomal Trisomies and Autosomal Dominant Disorders 1 to 2 each. Confirm with a grep of `fronts.txt`.
 - Thyroid Hormone Parameters is SMALL (7 cards).
 - Glucose Utilization and Transporters is SMALL (12 cards).
 - Nutrition: Refeeding Syndrome has 0 cards (8 questions); Human Milk Composition, Breastfeeding Benefits and Contraindications and Malabsorption Syndromes have 1 to 2 cards each.

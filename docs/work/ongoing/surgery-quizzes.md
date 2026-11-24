@@ -1,6 +1,6 @@
 # Surgery quizzes: "most common" top-ups
 
-Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work dir `var/quiz-work/surgery/`. Gap list 168 MISSING rows (2026-11-24). The gap list keeps about 5 rows per quiz.
+Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work dir `var/quiz-work/surgery/`. Gap list 148 MISSING rows (2026-11-24). The gap list keeps about 5 rows per quiz.
 
 ## Staged (not published)
 
@@ -21,7 +21,10 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Skin and Soft-Tissue Tumors: 8 items (4/4), 2026-11-24. Backlog 0.
 - Metabolic and Bariatric Surgery: 1 item (0/1), 2026-11-24. Backlog 0. Other points had no ranking source.
 - Otolaryngology: 4 items (2/2), 2026-11-24. Backlog 0. Three ear points had no ranking source.
+- Reconstructive Surgery: 7 items (3/4), 2026-11-24. Backlog 0. Carpal and cubital tunnel rows moved to Neurosurgery.
+- Neurosurgery: 8 items (3/5), 2026-11-24. Backlog 0. ICH, ulnar site, nerve root and cord compression level struck (staged vignettes).
+- Breast Surgery: 6 items (3/3), 2026-11-24. Backlog 0. Bloody nipple discharge struck (staged vignette); histologic types left to Pathology.
 
 ## Next
 
-The unstaged topic with the most MISSING rows in `most-common-gaps.md` (9: Reconstructive Surgery). Staged topics keep leftover MISSING rows past the per-quiz cap.
+The unstaged topic with the most MISSING rows in `most-common-gaps.md` (Abdominal Wall and Hernias, 8). Then Esophageal, Gastric and Duodenal, Hepatic, Pancreatic (7 each) and Splenic (3). Staged topics keep leftover MISSING rows past the per-quiz cap.

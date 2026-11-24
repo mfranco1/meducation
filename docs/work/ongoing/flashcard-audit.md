@@ -54,20 +54,19 @@ None yet.
 | [Pathology](pathology-flashcards.md) | 27 |
 | [Microbiology & Parasitology](microbiology-parasitology-flashcards.md) | 9 |
 | [Biochemistry](biochemistry-flashcards.md) | 21 |
+| [Physiology](physiology-flashcards.md) | 11 |
+| [Anatomy & Histology](anatomy-histology-flashcards.md) | 14 |
+| [Legal Medicine](legal-medicine-flashcards.md) | 7 |
 
 ### Audit
 
 | Subject | Topics |
 | --- | --- |
-| [Anatomy & Histology](anatomy-histology-flashcards.md) | 14 |
-| [Legal Medicine](legal-medicine-flashcards.md) | 7 |
-| [Physiology](physiology-flashcards.md) | 11 |
+| [Surgery](surgery-flashcards.md) | 26 |
 
 ### Not started
 
-| Subject | Topics |
-| --- | --- |
-| [Surgery](surgery-flashcards.md) | 26 |
+None.
 
 ## Cross-subject passes (staged, not published)
 

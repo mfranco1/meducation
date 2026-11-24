@@ -12,6 +12,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | Polycystic ovary syndrome (PCOS) | Polyendocrine metabolic ovarian syndrome (PMOS); write PMOS with no "formerly called" note | 2026 consensus | `PCOS`, `polycystic ovary syndrome`, `polycystic ovarian syndrome` |
 | NAFLD, NASH | MASLD, MASH | 2023 multisociety nomenclature | `NAFLD`, `NASH`, `non-?alcoholic fatty liver`, `non-?alcoholic steatohepatitis` |
 | Hepatorenal syndrome type 1 and type 2 | HRS-AKI and HRS-NAKI; no fixed 2-week rule | ICA 2015, EASL 2018 | `HRS type [12]`, `type [12] HRS`, `hepatorenal syndrome type [12]`, `type [12] hepatorenal` |
+| Microalbuminuria, macroalbuminuria | Moderately (A2) and severely (A3) increased albuminuria | KDIGO 2012 CKD | `microalbuminuria`, `macroalbuminuria` |
 | Obscure GI bleeding for any bleed not found on EGD and colonoscopy | Suspected small bowel bleeding; "obscure" only when no source is found after small bowel evaluation too | ACG 2015 small bowel bleeding guideline | `obscure GI bleeding`, `obscure gastrointestinal bleeding` |
 | Globus hystericus | Globus | Rome IV 2016 | `globus hystericus` |
 | Severe sepsis, SIRS-based sepsis definitions | Sepsis (life-threatening organ dysfunction from a dysregulated host response) and septic shock (Sepsis-3); "severe sepsis" is not a category | 2016 Sepsis-3 | `severe sepsis`, `SIRS` |
@@ -28,6 +29,8 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | ACOG Practice Bulletin 142 (Cerclage for the management of cervical insufficiency) | ACOG Clinical Practice Guideline No. 12, Obstetric Cerclage | September 2026 | `Practice Bulletin (No\. )?142` |
 | Neurofibromatosis type 2 (NF2) | NF2-related schwannomatosis | 2022 international consensus (Plotkin et al.) | `neurofibromatosis type 2`, `neurofibromatosis type II` |
 | Mental retardation | Intellectual disability | DSM-5 2013, ICD-11 (disorder of intellectual development) | `mental(ly)? retard` |
+| Idiot, imbecile, moron as IQ grades | Intellectual disability graded mild to profound by adaptive functioning; "imbecile" only when quoting a statute (RPC Art. 12) | DSM-5 2013 | `idiots?`, `morons?` |
+| Dementia praecox | Schizophrenia | Bleuler 1911; DSM, ICD | `dementia pr[a]?ecox` |
 | Pre-2021 CNS tumor names (IDH-mutant glioblastoma) | IDH-based WHO CNS5 names: glioblastoma is IDH-wildtype only; IDH-mutant grade 4 is astrocytoma | WHO CNS5, 2021 | `IDH-mutant glioblastoma`, `glioblastoma,? IDH-mutant` |
 | Pineoblastoma as an embryonal tumor | Pineoblastoma is a pineal tumor; CNS embryonal tumors are medulloblastoma, AT/RT, ETMR, CNS neuroblastoma (*FOXR2*-activated) and others | WHO CNS5, 2021 | |
 | Extranodal NK/T-cell lymphoma, nasal type | Extranodal NK/T-cell lymphoma | WHO-HAEM5, 2022 | `nasal type` |
@@ -52,6 +55,8 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | Churg-Strauss syndrome, Wegener granulomatosis | Eosinophilic granulomatosis with polyangiitis (EGPA), granulomatosis with polyangiitis (GPA) | Chapel Hill 2012 (Jennette, Arthritis Rheum 2013) | `Churg-Strauss`, `Wegener\w*` |
 | Best evidence rule (Philippine evidence) | Original document rule (Rule 130 Sec. 3) | 2019 Revised Rules on Evidence (A.M. No. 19-08-15-SC) | `best evidence rule` |
 | Dangerous Drugs Act of 1972 (RA 6425) | Comprehensive Dangerous Drugs Act of 2002 (RA 9165, as amended) | 2002 | `Dangerous Drugs Act of 1972`, `RA 6425` |
+| 1996 IRR of PD 856 Chapter XXI (disposal of dead persons) and DOH AO 2010-0033 | DOH AO 2021-0056 (revised IRR of the Code on Sanitation, as amended by AO 2021-0056-A); cite PD 856 for statute rules | 2021 | `AO 2010-0033` |
+| Acute interstitial pneumonia; desquamative interstitial pneumonia (2013 ATS/ERS idiopathic interstitial pneumonia classification) | Idiopathic diffuse alveolar damage; alveolar macrophage pneumonia (2025 ERS/ATS update) | 2025 | `acute interstitial pneumonia`, `desquamative interstitial pneumonia` |
 
 ## Current editions
 

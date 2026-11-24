@@ -4,7 +4,7 @@ Subject `Anatomy & Histology`, work dir `var/flashcard-work/anatomy-histology/`,
 
 ## Status
 
-Phase: Audit. In progress: Back and Spinal Cord. Done: Head and Neck, Special Senses, Thorax, Abdomen, Abdominal Wall and Peritoneum, Pelvis and Perineum, Female Reproductive System, Upper Limb, Lower Limb. Next: Back and Spinal Cord.
+Phase: Top-up. In progress: none. Plan approved 2026-11-24 (148 cards, 9 topics; Top-ups not in plan were confirmed covered). Done: General Anatomy, Abdomen, Special Senses, Pelvis and Perineum, Lower Limb, Histology, Organ System Histology, Neuroanatomy. Next: clean up after the user's publish review.
 
 ## Carried over
 
@@ -17,7 +17,11 @@ Phase: Audit. In progress: Back and Spinal Cord. Done: Head and Neck, Special Se
 - Female Reproductive System doubts left unchanged: about 400,000 oocytes at puberty (f-30589bc6, OpenStax; Langman says about 40,000); labia minora keyed as non-keratinized (f-60b06e97, texts describe a keratinized outer surface); Bartholin glands "compound alveolar/acinar" (f-4bd042c6, often tubuloalveolar); ovarian artery supplies the lateral third of the tube (f-3346069c, some texts say two-thirds).
 - Upper Limb doubts left unchanged: lunate keyed as most commonly dislocated carpal (f-69f832e6, perilunate pattern is more common); Monteggia mechanism card describes only Bado I (f-ff23bf1d); radial artery "two most distal branches" (f-74f45f1b); sacrococcygeal joint card misplaced in Forearm and Hand (f-a1cf8b5d); supracondylar nerve cards overlap across decks (f-bf0aaeb1, f-31709557).
 - Lower Limb doubts left unchanged: psoas major roots keyed L2 to L3 (f-e427e605, Moore gives L1 to L3); pubofemoral ligament limits external rotation (f-d76af811); pectineus placed in the anterior compartment (Snell, Moore says medial); TA "fibular" not added to most "peroneal" cards (exam term).
+- Back and Spinal Cord doubts left unchanged: suboccipital nerve listed as supplying semispinalis capitis (f-7a9cd309, most texts give the greater occipital nerve); transverse foramen card says the vertebral artery runs through C1 to C6 (f-662552c6, not checked); cord end given as lower border of L1 (f-7cad09d5) and as L1 to L2 (f-11e5d409).
+- Histology doubts left unchanged: serotonin listed in mast cell granules (f-7527435d, mainly rodent; OpenStax lists histamine and heparin); bone composition 20% water, 30 to 40% organic, 40 to 50% inorganic with no stated basis (f-7fbdb152, by weight is usually about 10/25/65); stratum corneum 15 to 20 layers (f-709ea2a6, OpenStax says 15 to 30).
+- Organ System Histology doubts left unchanged: collecting duct "simple cuboidal to columnar" (f-3fb34e8a, OpenStax says squamous, Ross agrees with the card); macroglia listed as only astrocytes and oligodendrocytes (f-c9471dbb); eye, ear, placenta and Hassall corpuscle cards checked from knowledge only.
 - Head and Neck smaller doubts left unchanged: sneeze reflex efferent listed as "vagus" first (f-19b80b42), "loss of voice" keyed to bilateral recurrent laryngeal nerves (f-d4dcb64a), CSF opening pressure 60 to 150 mm H2O (f-44cc84bc).
+- Neuroanatomy doubts left unchanged: Wernicke area as areas 22 and 39/40 (f-d8c405f2); superior hypophyseal artery supplies the adenohypophysis, without the portal route (f-6fecc173); anterior and dorsomedial thalamic nuclei for alertness (f-0e23e1aa, usually intralaminar); ACom as the most common berry aneurysm site (f-5b2f08e2, AHA/ASA 2023 not opened); CN XI listed at the lateral medulla (f-f738715a).
 
 ## Staged (not published)
 
@@ -30,6 +34,19 @@ Phase: Audit. In progress: Back and Spinal Cord. Done: Head and Neck, Special Se
 - Female Reproductive System: 10 edits, 4 duplicate or trivia deletes. 89 to 85 cards. Worth a second look: Skene glands no longer equated with lesser vestibular glands (f-ccc5f4bf, f-ca25fee5, TA lists them separately); metaphase II arrest now "shortly before ovulation" (f-df5456c3); "meiosis I resumes at puberty" deleted as a duplicate (f-e1516a0f); main uterine support now pelvic diaphragm, with cardinal ligaments the main ligamentous support (f-10cdd804).
 - Upper Limb: 18 edits, 3 duplicate deletes. 246 to 243 cards. Worth a second look: "most commonly fractured bone" front narrowed to the shoulder girdle, since distal radius outnumbers clavicle (f-e35ff594, MacDermid 2021); sternoclavicular joint now saddle (f-9eb48804); supracondylar back now AIN in extension type, ulnar in flexion type (f-31709557, Babal 2010 abstract only); boxer fracture now 5th metacarpal neck, 4th sometimes (f-770c8deb).
 - Lower Limb: 9 edits, 10 duplicate or trivia deletes. 169 to 159 cards. Worth a second look: gluteal injection back now says the ventrogluteal site is preferred (f-9daaa1a3, Roldán-Chicano 2023 systematic review, no formal guideline found); transverse arch now cuboid and the three cuneiforms, navicular removed (f-10a7e924); anterior compartment syndrome cause now raised compartment pressure, was anterior tibial artery damage (f-07104348); gluteal injection nerve card trimmed to sciatic, pudendal removed (f-b74211b3).
+- Back and Spinal Cord: 6 edits, 12 duplicate or trivia deletes. 123 to 111 cards. Worth a second look: Jefferson and hangman fracture management card deleted, since it gave one oversimplified treatment for both (f-3171e0c1); filum terminale back now pial internal part, then dural external part (f-756a501f); intervertebral foramen back now transmits the spinal nerve, was rami roots (f-cfbca1a1).
+- Histology: 4 edits, 5 duplicate or trivia deletes. 103 to 98 cards. Worth a second look: dense irregular list now has epineurium, was perineurium (f-1b499317); thickest epidermal layer front and back now say "nucleated" (f-5318f780, f-14ddf1a3).
+- Organ System Histology: 1 edit, 3 duplicate or trivia deletes. 91 to 88 cards. Worth a second look: alveoli count now "two lungs combined, about 300 to 500 million", was 300 million per lung (f-5e0650fb, Ochs stereology seen only in a search summary, no source on the card).
+- General Anatomy: top-up +29 to General Anatomy (63), new deck Germ Layers and Early Embryology +24. Worth a second look: neural crest origin of C cells dropped as contested (endoderm in recent lineage tracing).
+- Neuroanatomy: 4 edits, 4 trivia or ambiguous deletes. 85 to 81 cards. Worth a second look: neural crest list drops retinal pigment cells (f-437f8f5e); caudate plus putamen front now "striatum (neostriatum)", was corpus striatum (f-0a342904); hydrocephalus front now asks for the obstructive type (f-df33e460); cavernous sinus "lacrimation spared" card deleted as ambiguous (f-a57f7584).
+
+- Abdomen top-up: +6 to Abdominal Aorta and Arterial Supply (48): Griffith and Sudeck points, marginal artery, arc of Riolan, ischemic colitis sites (ACG 2015).
+- Special Senses top-up: +5 to Eye, Orbit and Visual Pathway (45): aqueous flow and outflow routes, lens epithelium, accommodation, pupillary block. One duplicate of the ciliary process card dropped.
+- Pelvis and Perineum top-up: +5 to Male Reproductive System: ectopic and retractile testis, orchidopexy by 18 months, cryptorchidism risks (EAU 2026). Gubernaculum duplicate dropped.
+- Lower Limb top-up: +6 to Leg, Foot and Gait: stance and swing split, tibialis anterior, hamstrings and calf timing, steppage and circumduction gait. Eccentric labels rest on textbook teaching only.
+- Histology top-up: +12 Skin and Cell Biology (organelles, cytoskeleton markers, motors, cilia, G1/S), +9 Bone and Muscle Histology (ossification, growth plate, bone cells, RANKL/OPG, canals), +4 Epithelium (secretion modes). Cilia card corrected to 9 doublets plus 2 central singlets.
+- Organ System Histology top-up: +10 to Renal, Endocrine and Reproductive Histology: chromophobes, pars intermedia, pituicytes, Herring bodies, pinealocytes, Leydig cells and Reinke crystalloids, adluminal compartment, acrosome.
+- Neuroanatomy top-up: +8 to Brainstem, Ventricles and Vasculature: Weber, Benedikt, medial medullary, lateral medullary (artery, deficits, crossed sensory loss), lateral pontine (AICA), locked-in.
 
 ## Unverified (check before publishing)
 
@@ -41,11 +58,3 @@ Phase: Audit. In progress: Back and Spinal Cord. Done: Head and Neck, Special Se
 - f-738f6c1e: median cubital vein venipuncture card; WHO blood-drawing guideline not reached.
 - f-905cde45: posterior femoral cutaneous and sciatic nerves at risk from an injection between the ischial tuberosity and lesser trochanter; no source opened.
 - Lateral decubitus aspiration segments (f-dcb0e540, f-a2ecce10, f-d4b65946, f-0fe6da93): no open reference found.
-
-## Top-ups
-
-- General Anatomy: THIN (34 cards for 100 questions).
-- Abdomen: SMA and IMA watershed areas (splenic flexure, rectosigmoid, marginal artery) have no cards (6 questions).
-- Special Senses: lens, chambers and aqueous drainage has no cards (5 questions).
-- Pelvis and Perineum: cryptorchidism management and descent anomalies (orchiopexy timing, retractile and ectopic testis) have no cards (8 questions on testicular descent).
-- Lower Limb: gait cycle phases (stance and swing, muscles active in each) have no cards; only Trendelenburg gait is covered (5 questions).
