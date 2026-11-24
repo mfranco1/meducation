@@ -4,11 +4,11 @@ Subject `Preventive Medicine`, work dir `var/flashcard-work/preventive-medicine/
 
 ## Status
 
-In progress: none. Done: Epidemiology and Population Health; Biostatistics and Evidence-Based Decisions; Prevention, Health Promotion, and Clinical Screening; Occupational and Environmental Health; Communicable Disease Prevention and Clinical Programs; Maternal, Child, Nutrition, and Immunization Programs. Next: Primary Health Care and Community Medicine.
+In progress: none. Done: Epidemiology and Population Health; Biostatistics and Evidence-Based Decisions; Prevention, Health Promotion, and Clinical Screening; Occupational and Environmental Health; Communicable Disease Prevention and Clinical Programs; Maternal, Child, Nutrition, and Immunization Programs; Primary Health Care and Community Medicine; Philippine Health Systems and Universal Health Care. Next: Family Medicine, Communication, and Supportive Care.
 
 ## Staged (not published)
 
-58 edits, 25 deletes. Per-card reasons are in the draft change history.
+60 edits, 27 deletes. Per-card reasons are in the draft change history.
 
 ## Unverified (check before publishing)
 
@@ -24,7 +24,11 @@ In progress: none. Done: Epidemiology and Population Health; Biostatistics and E
 - f-578de3cf-f4f7-4504-b5c1-561ca3b44046 (occupational exposure steps): no source opened.
 - f-6d7be43a-bab2-431a-9575-41b78c523ff3 (DOH 5S dengue): news pages only; no DOH issuance opened.
 - NIP schedule ages (f-999d90a6-7b0b-4b31-ab91-7538e577c329 IPV 14 weeks and 9 months, f-6e9ae6bf-bbd6-4d0f-bf48-e08fcbfb2f2a MMR 9 and 12 months, f-0644a7da-483a-4cff-ad3d-760bd809b644 school MR and Td Grades 1 and 7): PIDSP 2026 calendar only; no DOH issuance opened (Bakuna Eskwela DM 2024-0250 not read).
+- f-b3371fdb-3561-452b-9a6a-68af6fb8b48e (five-star Filipino physician roles): matches bank question q462 and a Silliman page; no CHED or DOH document fixes the list. WHO/Boelen original differs (decision-maker, communicator, community leader).
+- f-a406d5bf-6838-441d-85a3-2b78b83b128b (BHW role): RA 7883 opened; no current DOH BHW issuance opened.
 - f-2ab36736-c143-4775-9b3b-36a464f7bd6f (Operation Timbang Plus 0 to 59 months): nnc.gov.ph refused fetches; secondary sources say NNC 2012 guidelines cover 0 to 71 months and a 2017 memo narrowed forms to 0 to 59.
+- f-429f29bd-108d-4ee2-ae53-b2830214e355 (Z benefits): rests on Circular 2021-0022 in the ledger; Circulars 35 s. 2015 and 2022-0012 not opened.
+- RA 11223 statutory cards (premium schedule, Board, HTAC, penalties): no enacted amendment found; SB 2620 and HB 11357 (3.5% premium) passed their chambers in 2025. PIA confirms the 5% rate for 2026. Recheck the Official Gazette before publishing.
 
 ## Top-ups
 
@@ -32,3 +36,5 @@ In progress: none. Done: Epidemiology and Population Health; Biostatistics and E
 - Occupational and Environmental Health: Pressure, Radiation and Vibration (4 cards, 13 questions), Excreta and Solid Waste Disposal (4, 9; Sanitation Code latrine rules), Workplace Medical and Dental Services (2, 4).
 - Communicable Disease Prevention and Clinical Programs: Leptospirosis (near 0 cards; DOH/PSMID prophylaxis and treatment), STI Syndromic Management (near 0), Typhoid, Cholera and Hepatitis A (4), Food Poisoning Agents (1), Filariasis and Soil-Transmitted Helminths (3, MDA), Isolation, Masking and Public Health Standards (3).
 - Maternal, Child, Nutrition, and Immunization Programs: Family Planning (near 0 cards; DOH FP Clinical Standards Manual, WHO MEC), Prenatal and Postpartum Care (2; DOH ANC contacts), MNCHN Strategy and Maternal Mortality (2), Micronutrient Supplementation (5; vitamin A, iron, MNP doses).
+- Primary Health Care and Community Medicine: Managed Care (0 cards, 4 questions), Traditional and Herbal Medicine (0, 9; RA 8423, DOH-approved herbal medicines), Five-Star Doctor (1, 4), Elements and Strategies of PHC (1, 8).
+- Philippine Health Systems and Universal Health Care (heuristic counts, confirm in `fronts.txt`): UHC Act Objectives and Principles (0 cards, 11 questions), NHIP History and Mandate (0, 4), No Balance Billing (1, 4), Regulation, Accountability and Penal Provisions (2, 8).

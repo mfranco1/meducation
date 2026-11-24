@@ -9,7 +9,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Female Genital Tract and Gestational Disease: 13 items (2/5/4/2). Backlog 1 (Ovary and Fallopian Tube).
 - Liver, Gallbladder, and Pancreas: 12 items (3/3/5/1). Backlog 0.
 - Endocrine System: 17 items (3/5/5/4). Backlog 0.
+- Kidney: 12 items (3/2/3/4). Backlog 0.
 
 ## Next
 
-Kidney (14 MISSING rows), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.
+Red Cells and Hemostasis (11 MISSING rows), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.
