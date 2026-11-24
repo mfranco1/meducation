@@ -34,7 +34,7 @@ const key = (name: string) => name.trim().toLowerCase();
 const isObject = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
 const SOURCE_WORDS =
-  /\b(handout|lecture notes?|reviewer|review center|trans(es)?|according to the (source|document|notes))\b/i;
+  /\b(handout|lecture notes?|reviewer|review center|trans(es)?(?![\s-]*fat)|according to the (source|document|notes))\b/i;
 const VAGUE_ATTRIBUTION =
   /\btextbooks\b|\(textbook\b|\btextbook\)|\btextbook (value|figure|cutoff|answer|definition|teaching)\b|\b(some|many|most|older) (studies|sources|authors|references|experts)\b|\b(many|hospital) series\b/i;
 const FIELD_POLICY = { front: 'stem', back: 'rationale', sources: 'sources' } as const;

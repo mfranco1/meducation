@@ -31,6 +31,7 @@ Alphabetical by body.
 
 - **AAP** (*Pediatrics*, publications.aap.org): older articles as the archive copy of `pediatrics.aappublications.org/content/pediatrics/<vol>/<issue>/<article>.full.pdf`; otherwise the guideline's algorithm or summary pages on aap.org. Cite the guideline. CDC/AAP 2022 milestones (Zubler): the VCU PDF copy.
 - **AASLD** (aasld.org, *Hepatology* on journals.lww.com; often not in PMC): an EASL or ESPGHAN guideline or registry report in PMC; cite that body. EASL clinical practice guideline PDFs on easl.eu (`easl.eu/wp-content/uploads/...`) download with plain curl.
+- **ACEP clinical policies** (acep.org sign-in page; *Ann Emerg Med* not in Europe PMC): another body's guideline in PMC, citing that body (CO poisoning: German S2k 2021, PMC8607608).
 - **ACOG** (acog.org; 402): Committee Opinions and Practice Advisories load at `web.archive.org/web/2026/<acog.org URL>` (archive copy for a PDF); Practice Bulletins and Clinical Consensus documents there are paywalled stubs. Otherwise an SMFM-hosted copy or NICE, WHO or FIGO.
 - **ACR Appropriateness Criteria** (acsearch.acr.org; narratives can return "Coming Soon"): a university-hosted PDF copy (e.g. widionline.xray.ufl.edu); WebFetch saves it, then `pdftotext`.
 - ***Acta Medica Philippina*** (actamedicaphilippina.upm.edu.ph; abstract only on the page): UA curl on the galley PDF link (`.../article/download/<id>/<galley>/<file>`).

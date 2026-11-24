@@ -77,6 +77,9 @@ describe('flashcard batch report', () => {
     ])
       expect(report.text).toContain(text);
     expect(run(batch([card('Table', { back: `${'|a|b|\n'.repeat(100)}` })])).text).not.toContain('Back is');
+    expect(run(batch([card('Fats', { back: 'Trans fat and trans-fatty acids lower HDL.' })])).text).not.toContain(
+      'mentions source material',
+    );
   });
 
   it('warns on deck size after deletes', () => {

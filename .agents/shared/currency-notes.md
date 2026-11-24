@@ -16,6 +16,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | Globus hystericus | Globus | Rome IV 2016 | `globus hystericus` |
 | Severe sepsis, SIRS-based sepsis definitions | Sepsis (life-threatening organ dysfunction from a dysregulated host response) and septic shock (Sepsis-3); "severe sepsis" is not a category | 2016 Sepsis-3 | `severe sepsis`, `SIRS` |
 | Hypertensive urgency | Severe hypertension: SBP >180 and/or DBP >120 mmHg without acute target organ damage | 2025 AHA/ACC high blood pressure guideline | `hypertensive urgency` |
+| Myocardial infarction types 1, 2, 3, 4a-c, 5 (Fourth Universal Definition, 2018) | Primary, secondary or procedure-related MI; type 3 removed (Fifth Universal Definition, Eur Heart J, doi 10.1093/eurheartj/ehag101) | 2026 | `type [1-5] MI`, `type 4[abc] MI`, `type [1-5] myocardial infarction` |
 | Amrinone | Inamrinone | USAN change | `amrinone` |
 | Pituitary adenoma | Pituitary neuroendocrine tumor (PitNET) | WHO Classification of Tumours, 5th ed. | `pituitary adenomas?` |
 | Malignant pheochromocytoma or paraganglioma | Metastatic pheochromocytoma or paraganglioma; every pheochromocytoma has metastatic potential | WHO Endocrine and Neuroendocrine Tumours, 5th ed., 2022 | `malignant pheochromocytomas?`, `malignant paragangliomas?` |
@@ -44,6 +45,8 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | 2018 ESC guidelines on cardiovascular disease in pregnancy | 2025 ESC guidelines (Eur Heart J, doi 10.1093/eurheartj/ehaf193); several positions softened (endocarditis antibiotics "may be considered", heparin with bromocriptine "should be considered") | 2025 | |
 | CDC 2010 perinatal GBS guideline | ACOG Committee Opinion 797 (2020), which replaced the CDC guideline for intrapartum GBS prophylaxis | 2020 | |
 | IDSA 2012 diabetic foot infection guideline | IWGDF/IDSA 2023 guideline on diabetes-related foot infections | 2023 | |
+| Six enzyme classes (IUB, EC 1 to 6) | Seven IUBMB classes: EC 7 translocases added | 2018 IUBMB | `six (IUB(MB)? )?enzyme classes`, `six classes of enzymes` |
+| Hemorrhagic disease of the newborn | Vitamin K deficiency bleeding (VKDB) | ISTH 1999; AAP 2022 policy | `hemorrhagic disease of the newborn`, `haemorrhagic disease of the newborn` |
 
 ## Current editions
 
