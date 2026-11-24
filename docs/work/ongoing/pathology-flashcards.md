@@ -4,7 +4,7 @@ Subject `Pathology`, work dir `var/flashcard-work/pathology/`, audit-only `plan.
 
 ## Status
 
-In progress: Kidney. Done: Cell Injury and Adaptation, Inflammation and Repair, Hemodynamic Disorders, Genetic Disorders, Immune System Disorders, Neoplasia (all no changes), Infectious Disease Pathology, Environmental and Nutritional Pathology (no changes), Infancy and Childhood (no changes), Blood Vessels, Heart, Hematolymphoid Neoplasia, Red Cells and Hemostasis (no changes), Lung and Pleura, Head and Neck, Gastrointestinal Tract, Liver, Gallbladder, and Pancreas. Next: Kidney.
+In progress: none. Done: Cell Injury and Adaptation, Inflammation and Repair, Hemodynamic Disorders, Genetic Disorders, Immune System Disorders, Neoplasia (all no changes), Infectious Disease Pathology, Environmental and Nutritional Pathology (no changes), Infancy and Childhood (no changes), Blood Vessels, Heart, Hematolymphoid Neoplasia, Red Cells and Hemostasis (no changes), Lung and Pleura, Head and Neck, Gastrointestinal Tract, Liver, Gallbladder, and Pancreas, Kidney (no changes), Lower Urinary and Male Genital Tract, Female Genital Tract and Gestational Disease. Next: Breast.
 
 ## Staged (not published)
 
@@ -16,12 +16,15 @@ In progress: Kidney. Done: Cell Injury and Adaptation, Inflammation and Repair, 
 - Head and Neck: 1 delete (f-cd7a74d0, "What causes mumps parotitis?", trivia; the mumps complications card covers it).
 - Gastrointestinal Tract: 1 edit (f-7118ec73, diverticular disease site now says sigmoid in Western populations, right colon in many Asian populations; Yang 2025, Northern China colonoscopy cohort).
 - Liver, Gallbladder, and Pancreas: 1 edit (f-24f3b375, MASLD back now gives the 2023 Delphi definition, "Formerly called NAFLD"; Rinella 2023).
+- Lower Urinary and Male Genital Tract: 2 edits (f-6b724550, infant hydronephrosis front made single-answer: most common congenital cause, UPJ obstruction; f-fc9c0949, BPH-to-cancer "No." back now gives the reason: transition vs peripheral zone).
+- Female Genital Tract and Gestational Disease: 2 edits (f-0def92c8, advanced cervical cancer front now asks which structures it obstructs, matching the ureter back; f-a9265413, vulvar Paget back now names the underlying malignancy: adnexal adenocarcinoma, or spread from anorectal or urothelial carcinoma).
 
 ## Unverified (check before publishing)
 
 - Inflammation and Repair (existing cards, no source opened): infection as the most important local cause of delayed healing (f-28c263fd); maximal scar tensile strength about 70-80% of normal (f-3767c669).
 - Hemodynamic Disorders: prolonged aPTT in the DIC lab pattern (f-e340a863); sources opened name PT, platelets, fibrinogen and D-dimer only.
 - Blood Vessels: giant cell arteritis "treatment should not wait for biopsy" (f-28db4d39); ACR 2021 only implies it, EULAR not opened.
+- Kidney: lupus nephritis class IV as involving at least 50% of glomeruli (f-60f63960); ISN/RPS 2003 primary text not opened, KDIGO 2024 and the Bajema 2018 abstract don't state the threshold.
 - Head and Neck: 2021 WHO leukoplakia and erythroplakia definitions (f-f807185a, f-37ae7e9b); primary paper (doi:10.1111/odi.13704) read as abstract only, two 2026 secondary papers quote matching wording.
 
 ## Top-ups
@@ -42,6 +45,9 @@ In progress: Kidney. Done: Cell Injury and Adaptation, Inflammation and Repair, 
 - Head and Neck (1 deck, 30 cards): odontogenic cysts and tumors (0: dentigerous cyst, odontogenic keratocyst, ameloblastoma); nose and sinuses (0: nasal polyps, juvenile nasopharyngeal angiofibroma, extranodal NK/T-cell lymphoma nasal type); larynx beyond papillomatosis (vocal cord nodules and polyps, laryngeal SCC); oral infections and reactive lesions (herpetic stomatitis, oral hairy leukoplakia, irritation fibroma, mucocele and ranula); sialadenitis and sialolithiasis; otosclerosis; carotid body tumor. Pyogenic granuloma, vestibular schwannoma and paraganglioma histology sit in other topics.
 - Gastrointestinal Tract (3 decks, 94 cards): bacterial enterocolitis (0 colon cards: Salmonella and typhoid, Shigella, Campylobacter, cholera, Yersinia, EHEC); viral enterocolitis (0: rotavirus, norovirus); ulcerative colitis (2: pseudopolyps, toxic megacolon, cancer risk, contrast with Crohn); appendix beyond histology and mucinous neoplasm (presentation, appendiceal neuroendocrine tumor); non-neoplastic polyps (hyperplastic, juvenile, inflammatory: 0, only Peutz-Jeghers); malabsorption (Whipple disease, abetalipoproteinemia, pancreatic insufficiency: 0); anal canal beyond hemorrhoids (anal fissure, anal SCC and HPV).
 - Liver, Gallbladder, and Pancreas (3 decks, 81 cards): pancreatic cystic neoplasms (0: IPMN, mucinous cystic neoplasm, serous cystadenoma, solid pseudopapillary neoplasm; only the pseudocyst card); hemochromatosis diagnosis (2 cards: C282Y, transferrin saturation and ferritin, HCC risk); pediatric liver tumors and fibrolamellar HCC (0: hepatoblastoma); Reye syndrome (0); autoimmune pancreatitis types and IgG4 histology (1). Gallstones, cholangitis and portal hypertension are covered (cholelithiasis zero is false). f-6a2f0c4b (HCC in HBV without cirrhosis) has a bare "Yes." back: add the reason (HBV DNA integration) when topping up.
+- Kidney (3 decks, 90 cards): nephrosclerosis (0: hyaline arteriolosclerosis and granular contracted kidney, malignant hypertension with fibrinoid necrosis and flea-bitten kidney); renal artery stenosis (0: atherosclerotic vs fibromuscular dysplasia, renin-mediated hypertension); renal infarcts and diffuse cortical necrosis (0); hydronephrosis in adults (causes, pressure atrophy); RPGN types I to III and ANCA specificity (PR3 in GPA, MPO in MPA; 1 RPGN card); thin basement membrane disease (0); CKD complications (renal osteodystrophy, anemia, uremic serositis); other cystic disease (medullary sponge kidney, acquired cystic disease on dialysis, nephronophthisis); diabetic nephropathy beyond nodules and arteriolar hyalinosis (2 cards); renal amyloidosis. Urolithiasis is covered (zero is false). Wilms, horseshoe kidney, Potter sequence, oncocytoma, myeloma cast nephropathy, hyperplastic arteriolosclerosis and UPJ obstruction sit in other topics.
+- Lower Urinary and Male Genital Tract (2 decks, 55 cards): prostatitis (0 cards in the subject: acute bacterial, chronic bacterial, chronic pelvic pain syndrome, granulomatous); scrotal masses and male infertility (1 card: hydrocele, varicocele, spermatocele).
+- Female Genital Tract and Gestational Disease (2 decks, 71 cards): placental pathology (0 cards: placenta previa and accreta spectrum, abruption, chorioamnionitis and villitis, twin placentation, preeclampsia with decidual arteriopathy and infarcts); spontaneous abortion (0: causes, chromosomal anomalies); endometritis (0: acute postpartum and retained products, chronic with plasma cells); placental site trophoblastic tumor and epithelioid trophoblastic tumor (0).
 
 ## Carried over
 

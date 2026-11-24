@@ -14,7 +14,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Pediatric Surgery: 14 items (4/5/5), 2026-11-24. Backlog 0.
 - Thoracic and Cardiac Surgery: 9 items (4/3/2), 2026-11-24. Backlog 0.
 - Gallbladder and Biliary Surgery: 7 items (3/4), 2026-11-24. Backlog 0.
+- Endocrine Surgery: 8 items (2/3/3), 2026-11-24. Backlog 0.
 
 ## Next
 
-The unstaged topic with the most MISSING rows in `most-common-gaps.md` (Ophthalmic Surgery and Emergencies, Endocrine Surgery: 10 each; staged topics keep leftover MISSING rows past the per-quiz cap).
+The unstaged topic with the most MISSING rows in `most-common-gaps.md` (Ophthalmic Surgery and Emergencies: 10; staged topics keep leftover MISSING rows past the per-quiz cap).

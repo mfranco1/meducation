@@ -41,8 +41,8 @@ Alphabetical by body.
 - **Atlas of MS** (MSIF; the atlas report PDF and chart pages lack the type-at-diagnosis figures): the country fact-sheet pages on atlasofms.org (`/fact-sheet/<country>`) through WebFetch.
 - **ASCRS** (*Diseases of the Colon & Rectum*; summaries only; ascrsu.com learning copies return 403): a repository copy (2020 Crohn guideline on eScholarship); otherwise WSES, AGA or UEG/ESCP, citing that body. ESCP 2020 diverticular disease: UA curl of the published version on archive-ouverte.unige.ch.
 - **AWMF** (register.awmf.org guideline PDFs; bot challenge to curl): WebFetch saves the PDF, then `pdftotext`.
-- **ATA** (*Thyroid* on journals.sagepub.com; 403, not in PMC): the eScholarship PDF (2026 pregnancy guideline: `escholarship.org/content/qt0pw091c0/qt0pw091c0.pdf`).
-- **ASH, ISTH, BSH** (efetch returns front matter only): guideline PDFs on thebloodproject.com as WebFetch PDF.
+- **ATA** (*Thyroid* on journals.sagepub.com and liebertpub.com; 403, not in PMC; thyroid.org guideline PDFs return HTML): the eScholarship PDF (2026 pregnancy guideline: `escholarship.org/content/qt0pw091c0/qt0pw091c0.pdf`); the 2025 differentiated thyroid cancer guideline on thyca.org as WebFetch PDF; older thyroid.org PDFs as the archive copy (`thyroid.org/thyroidguidelines/file/thy.2012.0205.pdf`).
+- **ASH, ISTH, BSH** (efetch returns front matter only): guideline PDFs on thebloodproject.com as WebFetch PDF. BSH accepted manuscripts: the docx linked from the St George's repository eprint page (openaccess.sgul.ac.uk/id/eprint/<id>/), plain curl, then `unzip -p <file>.docx word/document.xml` and strip the tags.
 - **ASRA** neuraxial anticoagulation (rapm.bmj.com): the anticoagulant's label (spinal/epidural hematoma and catheter timing; see Drug labels); cite the label.
 - **AUA** (auanet.org; login): EAU chapters; cite EAU.
 - ***BMJ*** (bmj.com): PMC copy.

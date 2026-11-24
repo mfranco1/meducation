@@ -10,7 +10,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Liver, Gallbladder, and Pancreas: 12 items (3/3/5/1). Backlog 0.
 - Endocrine System: 17 items (3/5/5/4). Backlog 0.
 - Kidney: 12 items (3/2/3/4). Backlog 0.
+- Red Cells and Hemostasis: 12 items (3/4/5). Backlog 1 (Hemolytic Anemias).
 
 ## Next
 
-Red Cells and Hemostasis (11 MISSING rows), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.
+Bones, Joints, and Soft Tissue (11 MISSING rows), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.
