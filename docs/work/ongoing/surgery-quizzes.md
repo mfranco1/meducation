@@ -15,7 +15,12 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Thoracic and Cardiac Surgery: 9 items (4/3/2), 2026-11-24. Backlog 0.
 - Gallbladder and Biliary Surgery: 7 items (3/4), 2026-11-24. Backlog 0.
 - Endocrine Surgery: 8 items (2/3/3), 2026-11-24. Backlog 0.
+- Ophthalmic Surgery and Emergencies: 6 items (5/1), 2026-11-24. Backlog 0.
+- Burns and Soft-Tissue Emergencies: 5 items (2/3), 2026-11-24. Backlog 1 (unrankable point dropped; replace with any hard item).
+- Head, Neck, and Salivary Surgery: 6 items (2/4), 2026-11-24. Backlog 0.
+- Skin and Soft-Tissue Tumors: 8 items (4/4), 2026-11-24. Backlog 0.
+- Metabolic and Bariatric Surgery: 1 item (0/1), 2026-11-24. Backlog 0. Other points had no ranking source.
 
 ## Next
 
-The unstaged topic with the most MISSING rows in `most-common-gaps.md` (Ophthalmic Surgery and Emergencies: 10; staged topics keep leftover MISSING rows past the per-quiz cap).
+The unstaged topic with the most MISSING rows in `most-common-gaps.md` (9 each: Otolaryngology; Reconstructive Surgery). Staged topics keep leftover MISSING rows past the per-quiz cap.

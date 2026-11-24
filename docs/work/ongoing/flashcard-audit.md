@@ -51,23 +51,23 @@ None yet.
 | [Pediatrics](pediatrics-flashcards.md) | 14 |
 | [Obstetrics & Gynecology](obstetrics-gynecology-flashcards.md) | 7 |
 | [Preventive Medicine](preventive-medicine-flashcards.md) | 10 |
+| [Pathology](pathology-flashcards.md) | 27 |
+| [Microbiology & Parasitology](microbiology-parasitology-flashcards.md) | 9 |
+| [Biochemistry](biochemistry-flashcards.md) | 21 |
 
 ### Audit
 
 | Subject | Topics |
 | --- | --- |
-| [Pathology](pathology-flashcards.md) | 27 |
-| [Biochemistry](biochemistry-flashcards.md) | 21 |
+| [Anatomy & Histology](anatomy-histology-flashcards.md) | 14 |
+| [Legal Medicine](legal-medicine-flashcards.md) | 7 |
+| [Physiology](physiology-flashcards.md) | 11 |
 
 ### Not started
 
 | Subject | Topics |
 | --- | --- |
-| [Legal Medicine](legal-medicine-flashcards.md) | 7 |
 | [Surgery](surgery-flashcards.md) | 26 |
-| [Microbiology & Parasitology](microbiology-parasitology-flashcards.md) | 9 |
-| [Anatomy & Histology](anatomy-histology-flashcards.md) | 14 |
-| [Physiology](physiology-flashcards.md) | 11 |
 
 ## Cross-subject passes (staged, not published)
 

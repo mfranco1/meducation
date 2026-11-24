@@ -11,7 +11,11 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Endocrine System: 17 items (3/5/5/4). Backlog 0.
 - Kidney: 12 items (3/2/3/4). Backlog 0.
 - Red Cells and Hemostasis: 12 items (3/4/5). Backlog 1 (Hemolytic Anemias).
+- Bones, Joints, and Soft Tissue: 12 items (4/4/4). Backlog 0.
+- Hematolymphoid Neoplasia: 10 items (5/4/1). Backlog 0.
+- Heart: 9 items (4/5). Backlog 0.
+- Breast: 7 items (4/3). Backlog 0.
 
 ## Next
 
-Bones, Joints, and Soft Tissue (11 MISSING rows), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.
+One of Skin, Head and Neck or Eye (8 MISSING rows each), then the topic with the most MISSING rows in `most-common-gaps.md`, excluding the staged topics above.

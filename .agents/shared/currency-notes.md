@@ -22,10 +22,12 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | Malignant pheochromocytoma or paraganglioma | Metastatic pheochromocytoma or paraganglioma; every pheochromocytoma has metastatic potential | WHO Endocrine and Neuroendocrine Tumours, 5th ed., 2022 | `malignant pheochromocytomas?`, `malignant paragangliomas?` |
 | Hürthle cell adenoma or carcinoma | Oncocytic adenoma or carcinoma of the thyroid | WHO Endocrine and Neuroendocrine Tumours, 5th ed., 2022 | `H[üu]rthle cell adenomas?`, `H[üu]rthle cell carcinomas?`, `H[üu]rthle cell neoplasms?` |
 | 46,XX male syndrome | 46,XX testicular difference of sex development (46,XX testicular DSD) | Chicago DSD consensus 2006 | `46,XX male syndrome`, `XX male syndrome` |
+| Male and female pseudohermaphroditism | 46,XY DSD and 46,XX DSD | Chicago DSD consensus 2006 | `(fe)?male pseudohermaphrodit\w*` |
 | ACOG Committee Opinion 734 (2018): ultrasound alone (endometrium 4 mm or less) is enough after postmenopausal bleeding | ACOG Clinical Practice Update on postmenopausal bleeding (Obstet Gynecol 2026;148(1):e87-e91): ultrasound plus endometrial sampling for most; ultrasound alone only for a single episode with a fully seen endometrium of 4 mm or less, no strong risk factors and prompt follow-up | April 2026 | `Committee Opinion (No\. )?734` |
 | 2017 ATA guidelines for thyroid disease during pregnancy and the postpartum | 2026 ATA guideline for thyroid disease during pregnancy and the postpartum (Korevaar et al., *Thyroid* 2026;36(5):481-544) | 2026 | |
 | ACOG Practice Bulletin 142 (Cerclage for the management of cervical insufficiency) | ACOG Clinical Practice Guideline No. 12, Obstetric Cerclage | September 2026 | `Practice Bulletin (No\. )?142` |
 | Neurofibromatosis type 2 (NF2) | NF2-related schwannomatosis | 2022 international consensus (Plotkin et al.) | `neurofibromatosis type 2`, `neurofibromatosis type II` |
+| Mental retardation | Intellectual disability | DSM-5 2013, ICD-11 (disorder of intellectual development) | `mental(ly)? retard` |
 | Pre-2021 CNS tumor names (IDH-mutant glioblastoma) | IDH-based WHO CNS5 names: glioblastoma is IDH-wildtype only; IDH-mutant grade 4 is astrocytoma | WHO CNS5, 2021 | `IDH-mutant glioblastoma`, `glioblastoma,? IDH-mutant` |
 | Pineoblastoma as an embryonal tumor | Pineoblastoma is a pineal tumor; CNS embryonal tumors are medulloblastoma, AT/RT, ETMR, CNS neuroblastoma (*FOXR2*-activated) and others | WHO CNS5, 2021 | |
 | Extranodal NK/T-cell lymphoma, nasal type | Extranodal NK/T-cell lymphoma | WHO-HAEM5, 2022 | `nasal type` |
@@ -47,6 +49,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | IDSA 2012 diabetic foot infection guideline | IWGDF/IDSA 2023 guideline on diabetes-related foot infections | 2023 | |
 | Six enzyme classes (IUB, EC 1 to 6) | Seven IUBMB classes: EC 7 translocases added | 2018 IUBMB | `six (IUB(MB)? )?enzyme classes`, `six classes of enzymes` |
 | Hemorrhagic disease of the newborn | Vitamin K deficiency bleeding (VKDB) | ISTH 1999; AAP 2022 policy | `hemorrhagic disease of the newborn`, `haemorrhagic disease of the newborn` |
+| Churg-Strauss syndrome, Wegener granulomatosis | Eosinophilic granulomatosis with polyangiitis (EGPA), granulomatosis with polyangiitis (GPA) | Chapel Hill 2012 (Jennette, Arthritis Rheum 2013) | `Churg-Strauss`, `Wegener\w*` |
 
 ## Current editions
 
