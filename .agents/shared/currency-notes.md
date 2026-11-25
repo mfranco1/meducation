@@ -73,7 +73,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 
 ## Current editions
 
-- Tumor classification: WHO Classification of Tumours, 5th edition, except Soft Tissue and Bone (6th edition, 2026; Hornick et al., Am J Surg Pathol 2026;50(12):e48-e64). Check whether a site's 6th edition volume has appeared before writing.
+- Tumor classification: WHO Classification of Tumours, 5th edition, except Soft Tissue and Bone (6th edition, 2026; Hornick et al., Am J Surg Pathol 2026;50(12):e48-e64) and Digestive System (6th edition, 2026; Arends et al., Histopathology 2026, doi:10.1111/his.70116, PMC13128328; anal HSIL follows LAST). Check whether a site's 6th edition volume has appeared before writing.
 - Staging: AJCC 8th edition, unless the site has a Version 9 chapter; check the site before writing a stage.
 - Gynecologic cancer reviews: FIGO Cancer Report 2025 (*Int J Gynaecol Obstet* 2025;171 suppl 1) replaces the 2021 updates. It uses GLOBOCAN 2022 figures; cancer incidence and mortality come from GLOBOCAN 2024, so rankings can differ (cervical cancer is fifth in women worldwide in 2024, fourth in 2022). Name the GLOBOCAN edition behind a ranking.
 - Contraceptive eligibility: WHO Medical Eligibility Criteria, 6th edition (November 2025). DMPA in breastfeeding women before 6 weeks postpartum is category 2 (was 3 in the 2015 5th edition); name the edition in the stem or on the card.
@@ -84,3 +84,5 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 - Phenylketonuria: European guideline first revision (van Wegberg et al., *Mol Genet Metab* 2025;145(2):109125) replaces the 2017 guideline.
 - Wilson disease: EASL-ERN 2025 (doi:10.1016/j.jhep.2024.11.007) is newer than AASLD 2022; check it before keying treatment.
 - Malignant hyperthermia triggers: all volatile anesthetics (sevoflurane, desflurane, isoflurane) and succinylcholine; ether and methoxyflurane are no longer in use.
+- IMCI sick young infant: WHO *Management of the sick young infant aged up to 2 months* (2019) replaces the 2014 chart booklet young infant section. Fast breathing alone is pneumonia at 7 to 59 days (oral amoxicillin 7 days) and possible serious bacterial infection under 7 days; local bacterial infection takes amoxicillin 5 days; severe jaundice is yellow palms or soles. The 2014 booklet still holds for the sick child aged 2 months to 5 years.
+- Pediatric HIV first-line ART: WHO *Updated Recommendations on HIV Clinical Management* (December 2025) makes abacavir + lamivudine + dolutegravir preferred for neonates too (dolutegravir every 48 hours in the first 2 weeks); the 2021 guideline limited dolutegravir to infants from 4 weeks and 3 kg.

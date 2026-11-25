@@ -4,7 +4,7 @@ Subject `Preventive Medicine`, work dir `var/flashcard-work/preventive-medicine/
 
 ## Status
 
-Phase: Top-up (audit done, 10 topics). In progress: none. Next: plan the top-ups.
+Phase: Top-up. Plan approved 2026-11-25 (`plan.json`, 272 cards, 8 topics). In progress: Prevention, Health Promotion, and Clinical Screening. Next: topics in plan order.
 
 ## Staged (not published)
 

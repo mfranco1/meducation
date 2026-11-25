@@ -26,6 +26,9 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Infectious Disease Pathology: 6 items (3/3). Backlog 0.
 - Blood Vessels: 7 items (2/5). Backlog 0. Most quiz 1 rows were staged or clued; secondary hypertension cause skipped (sources conflict).
 - Genetic Disorders: 7 items (2/5). Backlog 0. The Niemann-Pick A/B choice in the Gaucher item should read acid sphingomyelinase deficiency (fix in the editor).
+- Cell Injury and Adaptation: 3 items (2/1). Backlog 0. Most rows were staged or clued.
+- Immune System Disorders: 6 items (2/4). Backlog 0. Late graft loss skipped (sources conflict).
+- Environmental and Nutritional Pathology: 2 items (1/1). Backlog 0. Tobacco death and rickets cause skipped (sources conflict); thiamine and iron already staged.
 
 ## Next
 
