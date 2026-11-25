@@ -445,8 +445,8 @@ def cmd_ledger(work: Work, args) -> None:
 
 
 def cmd_clean(work: Work, args) -> None:
-    """Merge the ledger, then delete everything in WORK but plan.json."""
-    clean_work(work.ledger, work.root, {"plan.json"})
+    """Merge the ledger, then delete everything in WORK."""
+    clean_work(work.ledger, work.root, set())
 
 
 def main() -> None:

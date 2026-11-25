@@ -239,7 +239,7 @@ def clean_work(ledger: Path, work: Path, keep: set[str]) -> None:
             continue
         shutil.rmtree(path) if path.is_dir() else path.unlink()
         removed += 1
-    print(f"Removed {removed} entries; kept {', '.join(sorted(keep))}")
+    print(f"Removed {removed} entries" + (f"; kept {', '.join(sorted(keep))}" if keep else ""))
 
 
 def main() -> None:

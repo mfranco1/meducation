@@ -4,7 +4,7 @@ Subject `Surgery`, work dir `var/flashcard-work/surgery/`, audit-only `plan.json
 
 ## Status
 
-Phase: Audit. In progress: Small Bowel and Appendix. Done: Surgical Foundations, Trauma and Emergency Surgery, Burns and Soft-Tissue Emergencies, Head, Neck, and Salivary Surgery, Endocrine Surgery, Breast Surgery, Skin and Soft-Tissue Tumors, Abdominal Wall and Hernias, Esophageal Surgery, Gastric and Duodenal Surgery, Metabolic and Bariatric Surgery, Hepatic Surgery and Portal Hypertension, Gallbladder and Biliary Surgery, Pancreatic Surgery, Splenic Surgery. Next: Small Bowel and Appendix.
+Phase: Audit. In progress: none. Done: Surgical Foundations, Trauma and Emergency Surgery, Burns and Soft-Tissue Emergencies, Head, Neck, and Salivary Surgery, Endocrine Surgery, Breast Surgery, Skin and Soft-Tissue Tumors, Abdominal Wall and Hernias, Esophageal Surgery, Gastric and Duodenal Surgery, Metabolic and Bariatric Surgery, Hepatic Surgery and Portal Hypertension, Gallbladder and Biliary Surgery, Pancreatic Surgery, Splenic Surgery, Small Bowel and Appendix. Next: Colorectal and Anorectal Surgery.
 
 ## Carried over
 
@@ -25,6 +25,7 @@ Phase: Audit. In progress: Small Bowel and Appendix. Done: Surgical Foundations,
 - Gallbladder and Biliary Surgery: 0 edits, 0 deletes. Both decks checked against EASL 2016 gallstones, WSES 2020 cholecystitis and bile duct injury, ASGE 2019 choledocholithiasis, TG18 cholangitis flowchart and ESMO 2023 biliary tract cancer.
 - Pancreatic Surgery: 10 edits, 0 deletes. Second look: f-7afb148f five-item chronic pancreatitis list now the classic triad (calcifications, steatorrhea, diabetes; no source); f-c3be71cc front now "two most common causes"; f-4ff38762 enzymes "greater than 3 times" (ACG 2024). The other 7 only add sources (REDISCOVER 2024, Kyoto 2024, Endocrine Society 2009, SEOM-GETNE 2022).
 - Splenic Surgery: 1 edit, 0 deletes. Second look: f-78b78012 vaccines after emergency splenectomy now "as soon as the patient is stable" (was about 2 weeks after; CDC 2024 general best practices).
+- Small Bowel and Appendix: 4 edits, 0 deletes. Fronts narrowed to one answer: f-a3022ec9 (skin malignancy that spreads to small bowel: melanoma), f-893bf90a (polyposis syndrome with duodenal adenocarcinoma: FAP). f-be15b457 and f-bb4dacd5 only add ENETS 2023 appendiceal NET.
 
 ## Unverified (check before publishing)
 
@@ -49,6 +50,7 @@ Phase: Audit. In progress: Small Bowel and Appendix. Done: Surgical Foundations,
 - Biliary: f-3ac1984b endoscopic drainage preferred for cholangitis: TG18 drainage-techniques paper (Mukai, jhbp.508) search summaries only. f-900d0692 source control in high-risk cholecystitis checked against WSES 2020, not TG18. Gallstone ileus operative goal: no society guideline exists.
 - Pancreas: revised Atlanta 2012 full text, ESGE 2018 and AGA 2020 necrosis guidance unreachable: f-38bb16ba acute peripancreatic fluid collection and f-6ddbde46 pseudocyst after about 4 weeks. ENETS 2023 functioning PanNEN guidance blocked (Wiley 403): f-7ca15f89 insulinoma most common and f-1976bf2c VIPoma triad rest on ENETS 2012. NICE NG85 and ASCO 2019 not opened (REDISCOVER 2024 used). f-5302066f left-sided portal hypertension, Courvoisier, Trousseau: unchecked stable facts.
 - Spleen: BSH 2024 asplenia guideline blocked (403); f-78b78012 rests on a WebFetch summary of the CDC page. OPSI fever card checked only against ASH 2026 ITP.
+- Appendix: WSES 2025 appendicitis full text paywalled (JAMA Surg 2026, abstract only); antibiotic, imaging and abscess cards checked against WSES 2020: f-94423905, f-7631f6ea, f-f779779c, f-15dfb9dd, f-58becea5 (abscess follow-up age may now be 35), f-0b81a5f7 pediatric ultrasound, f-1d1c71b8 MRI in pregnancy (ACR RLQ 2022 fetch failed).
 
 ## Top-ups
 
@@ -65,3 +67,4 @@ Phase: Audit. In progress: Small Bowel and Appendix. Done: Surgical Foundations,
 - Gallbladder and Biliary Surgery (60 cards for 107 questions; confirm with `fronts.txt` grep): cholangiocarcinoma (4 cards for 9 questions), acute cholecystitis including TG18 severity grades (10 cards for 16 questions), cholecystectomy and bile duct injury (9 cards for 12 questions), choledocholithiasis risk stratification (coverage shows 0, likely a false zero).
 - Pancreatic Surgery (63 cards for 100 questions; confirm with `fronts.txt` grep): periampullary tumors and pancreaticoduodenectomy (3 cards for 8 questions).
 - Splenic Surgery (21 cards for 50 questions; confirm with `fronts.txt` grep, splenic trauma may sit in Trauma): overwhelming postsplenectomy infection and vaccination (3 cards for 12 questions), splenic trauma grading and nonoperative management, splenic abscess, cysts and infarct.
+- Small Bowel and Appendix (confirm with `fronts.txt` grep): enterocutaneous fistula (4 cards for 11 questions), postoperative ileus (3 cards for 6 questions), appendiceal neoplasms (8 cards for 9 questions).

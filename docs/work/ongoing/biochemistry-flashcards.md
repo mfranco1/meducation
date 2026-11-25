@@ -4,7 +4,7 @@ Subject `Biochemistry`, work dir `var/flashcard-work/biochemistry/`, audit-only 
 
 ## Status
 
-Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 decks (`plan.json`; the Top-ups below are its source). Done: Genetics and Inheritance; Minerals and Trace Elements; Cell Biology and Biochemical Techniques; Nucleic Acid Structure; DNA, RNA and Molecular Biology; Lipid Metabolism; Nucleotide Metabolism; Heme, Alcohol and Other Metabolism; Metabolic Integration and Hormones; Inborn Errors of Metabolism and Storage Diseases; Immunology; Carbohydrate and Lipid Structure. Next: Enzymes and Bioenergetics, Nutrition, Vitamin Basics and Fat-Soluble Vitamins, Water-Soluble Vitamins.
+Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 decks (`plan.json`; the Top-ups below are its source). Done: Genetics and Inheritance; Minerals and Trace Elements; Cell Biology and Biochemical Techniques; Nucleic Acid Structure; DNA, RNA and Molecular Biology; Lipid Metabolism; Nucleotide Metabolism; Heme, Alcohol and Other Metabolism; Metabolic Integration and Hormones; Inborn Errors of Metabolism and Storage Diseases; Immunology; Carbohydrate and Lipid Structure; Enzymes and Bioenergetics; Nutrition. Next: Vitamin Basics and Fat-Soluble Vitamins, Water-Soluble Vitamins.
 
 ## Carried over
 
@@ -42,6 +42,8 @@ Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 deck
 - Inborn Errors of Metabolism and Storage Diseases top-up: Aminoacidopathies +5 (Philippine expanded NBS per DOH AO 2020-0052 and Padilla 2022, sampling after 24 h, recall for confirmation, metabolic crisis first steps and tests). 146 to 151 cards.
 - Immunology top-up: Immune Cells and Immunity +8 cytokine cards (IL-1/IL-6/TNF, IL-2, IL-4 and dupilumab, IL-5 and mepolizumab, IL-12/23 and ustekinumab, IL-17 and secukinumab per labels; IL-10/TGF-beta; type I interferons). 98 to 106 cards.
 - Carbohydrate and Lipid Structure top-up: Glucose Utilization and Transporters +5 (SGLT2 inhibitors, GLUT4 by contraction vs insulin, GLUT1 deficiency per Klepper 2020 x2, GLUT2 beta-cell sensing). 143 to 148 cards.
+- Enzymes and Bioenergetics top-up: Enzyme Inhibition +8 (uncompetitive and mixed per Jakubowski and Flatt, NNRTIs as noncompetitive example, organophosphates, allopurinol suicide inhibition, penicillin, transition-state analogs). 155 to 163 cards.
+- Nutrition top-up: Malnutrition and Nutritional Status +8 refeeding syndrome cards per ASPEN 2020; Macronutrients, Protein Quality and Breastfeeding +5 (galactosemia, HIV on ART per WHO 2021 vs CDC 2025, HTLV-1/2, lactoferrin, oligosaccharides). 160 to 173 cards.
 - Cell Biology and Biochemical Techniques top-up: Molecular Biology Techniques +6 (cDNA cloning, RT-PCR, recombinant insulin, siRNA, antisense, CRISPR-Cas9). 86 to 92 cards.
 - Nucleic Acid Structure top-up: Histones and Chromatin +7 (DNMTs and SAM, MBD-HDAC silencing, HDACs, H3K4me3 vs H3K9me3/H3K27me3, XIST in cis, Barr bodies, decitabine vs vorinostat per current labels). 98 to 105 cards.
 - DNA, RNA and Molecular Biology top-up: DNA Replication and Repair +5 (telomeres, telomerase, dyskeratosis congenita), Transcription and RNA Processing +8 (lac operon, Pol I, TBP, enhancers, alpha-amanitin). 154 to 167 cards.
@@ -80,13 +82,13 @@ Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 deck
 - Inborn Errors top-up: NBS sampling time from newbornscreening.ph only; metabolic crisis cards from textbook knowledge.
 - Immunology top-up: IL-2, IL-12 and TGF-beta facts from textbook knowledge only.
 - Carbohydrate and Lipid Structure top-up: SGLT2 inhibitor mechanism not checked against a label.
+- Enzymes top-up: NNRTI, organophosphate, allopurinol, penicillin and oseltamivir cards from textbook knowledge only.
+- Nutrition top-up: lactoferrin and oligosaccharide cards from textbook knowledge only; no NICE refeeding criteria.
 
 ## Top-ups
 
 - Water-Soluble Vitamins: Riboflavin subtopic has 2 cards by heuristic (7 questions); confirm with a grep of `fronts.txt`.
 
-- Nutrition: Refeeding Syndrome has 0 cards (8 questions); Human Milk Composition, Breastfeeding Benefits and Contraindications and Malabsorption Syndromes have 1 to 2 cards each.
-- Enzyme Inhibition is SMALL (11 cards); it lost its only noncompetitive inhibition example.
 - Vitamin D (16 cards) lost its only 25(OH)D level card; add one on deficiency cutoffs labelled by body (Endocrine Society 2024 sets none) and on who to test.
 - Nucleic Acid Structure: RNA Types and Structure (14 questions, 1 card), DNA Forms (3 cards) and Chargaff's Rules and DNA Denaturation (5 cards) look thin by heuristic; confirm with a grep of `fronts.txt`.
 - Amino Acid and Protein Metabolism: Transamination and Oxidative Deamination (12 questions, 5 cards) and One-Carbon Metabolism and S-Adenosylmethionine (11 questions, 8 cards) look thin by heuristic.

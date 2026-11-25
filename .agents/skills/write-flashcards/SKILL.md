@@ -88,7 +88,7 @@ Every reviewer runs in a fresh context that didn't write the cards.
 
 ### 6. Clean up
 
-When the whole scope is staged, run `D clean`. It merges the ledger and deletes the work dir except `plan.json`. Delete the tracker.
+When the whole scope is staged, run `D clean`. It merges the ledger and empties the work dir. Delete the tracker.
 
 ## Tracker
 
