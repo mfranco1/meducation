@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
-import { radius } from '../../theme';
+import { radius, shadow } from '../../theme';
 import { continueCardBackground, tallHero } from './ContinueStudyCard';
 
 export function ContinueStudyCardSkeleton() {
@@ -9,9 +9,10 @@ export function ContinueStudyCardSkeleton() {
       aria-hidden="true"
       sx={{
         background: continueCardBackground,
-        border: '1px solid',
-        borderColor: 'divider',
+        border: '2px solid',
+        borderColor: 'common.white',
         borderRadius: radius.feature,
+        boxShadow: shadow.overlay,
         boxSizing: 'border-box',
         containerName: 'continue-card',
         containerType: 'inline-size',

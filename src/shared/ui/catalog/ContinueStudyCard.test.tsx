@@ -14,7 +14,7 @@ describe('ContinueStudyCard', () => {
           activityLabel="1 quiz in progress"
           accessibleLabel="Continue studying Obstetrics & Gynecology"
           onContinue={onContinue}
-          illustration={<svg aria-hidden="true" data-testid="artwork" />}
+          illustration={<svg aria-hidden="true" />}
         />
       </ThemeProvider>,
     );
@@ -24,7 +24,6 @@ describe('ContinueStudyCard', () => {
     expect(button).toHaveTextContent('Continue Studying');
     expect(button).toHaveTextContent('Continue');
     expect(button.querySelectorAll('button')).toHaveLength(0);
-    expect(screen.getByTestId('artwork')).toHaveAttribute('aria-hidden', 'true');
     fireEvent.click(button);
     expect(onContinue).toHaveBeenCalledExactlyOnceWith();
   });

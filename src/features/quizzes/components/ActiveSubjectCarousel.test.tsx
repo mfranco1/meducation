@@ -52,7 +52,7 @@ describe('ActiveSubjectCarousel', () => {
 
     const biochemistry = centeredCard();
     expect(biochemistry).toHaveAccessibleName('Continue studying Biochemistry');
-    expect(biochemistry).toHaveAccessibleDescription('1 quiz in progress · Latest score 74% 3 of 8 quizzes completed');
+    expect(biochemistry).toHaveAccessibleDescription('1 quiz in progress 3 of 8 quizzes completed');
     expect(within(biochemistry).getByText('3 of 8 quizzes completed')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
     expect(centeredCard()).toHaveAccessibleName('Continue studying Physiology');
@@ -63,12 +63,25 @@ describe('ActiveSubjectCarousel', () => {
     expect(centeredCard()).toHaveAccessibleName('Continue studying Physiology');
   });
 
-  it('shows the selected position between the arrows', () => {
+  it('marks the selected subject with a dot and moves to the subject of the dot chosen', () => {
     renderCarousel();
 
-    expect(screen.getByRole('button', { name: 'Previous active subject' })).toBeVisible();
-    expect(screen.getByRole('button', { name: 'Next active subject' })).toBeVisible();
-    expect(screen.getByText('1 of 2')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Show active subject 1 of 2' })).toHaveAttribute('aria-current', 'true');
+    fireEvent.click(screen.getByRole('button', { name: 'Show active subject 2 of 2' }));
+    expect(centeredCard()).toHaveAccessibleName('Continue studying Physiology');
+    expect(screen.getByRole('button', { name: 'Show active subject 2 of 2' })).toHaveAttribute('aria-current', 'true');
+  });
+
+  it('keeps only the five most recent subjects', () => {
+    renderCarousel(
+      Array.from({ length: 7 }, (_, index) => ({
+        ...stats[1],
+        subject: { ...stats[1].subject, id: `s${index}`, name: `Subject ${index}` },
+      })),
+    );
+
+    expect(screen.getAllByRole('button', { name: /^Show active subject \d of 5$/ })).toHaveLength(5);
+    expect(screen.queryByRole('button', { name: 'Continue studying Subject 5' })).toBeNull();
   });
 
   it('selects the visible subject', () => {

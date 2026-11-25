@@ -185,9 +185,7 @@ describe('dashboard in-progress indicator', () => {
     const continueRegion = screen.getByRole('region', { name: 'Continue Studying' });
     expect(within(grid).getAllByText(`${activeQuizCount} in progress`)).toHaveLength(1);
     expect(
-      within(continueRegion).getByText(
-        `${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress · Latest score 75%`,
-      ),
+      within(continueRegion).getByText(`${activeQuizCount} ${activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress`),
     ).toBeVisible();
   });
 

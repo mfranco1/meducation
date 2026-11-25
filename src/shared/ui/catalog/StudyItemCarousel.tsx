@@ -6,11 +6,11 @@ import useEmblaCarousel from 'embla-carousel-react';
 import type { EmblaCarouselType } from 'embla-carousel';
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { shadow } from '../../theme';
+import { focusRingInset, radius, shadow } from '../../theme';
 
 const SLIDE_GAP = 16;
 /** Scale of a peeking neighbor; it grows to full size as it moves into the center. */
-const PEEK_SCALE = 0.85;
+const PEEK_SCALE = 0.78;
 /** How far a peeking neighbor tucks behind the selected card, in px. */
 const PEEK_TUCK = 12;
 const PEEK_TILT_DEG = 8;
@@ -19,13 +19,20 @@ const PEEK_TILT_DEG = 8;
  * visible card from one side to the other, so short lists are rendered several times over.
  */
 const MIN_LOOP_SLIDES = 5;
+/** Callers pass items most recent first; only these many are kept. */
+const MAX_ITEMS = 5;
+/** Height of the dot row below the cards, in px. */
+const DOTS_HEIGHT = 24;
 
 /** Blocks the browser's swipe-back navigation for any wheel gesture with a real horizontal part. */
 function preventHorizontalWheel(event: WheelEvent) {
   if (event.deltaX !== 0 && Math.abs(event.deltaX) * 2 >= Math.abs(event.deltaY)) event.preventDefault();
 }
 
-/** Scales, tucks and tilts each card by its distance from the center so neighbors read as set back. */
+/**
+ * Scales, tucks, tilts and fades each card by its distance from the center so neighbors read as set back.
+ * Cards read `--carousel-peek` (0 centered, 1 peeking) to swap their text for artwork.
+ */
 function applyDepth(api: EmblaCarouselType) {
   const viewport = api.rootNode().getBoundingClientRect();
   const center = viewport.left + viewport.width / 2;
@@ -45,12 +52,13 @@ function applyDepth(api: EmblaCarouselType) {
     slide.style.zIndex = String(100 - Math.round(distance * 10));
     if (!card) return;
     card.style.transform = `translateX(${-tuck}px) perspective(1200px) rotateY(${-direction * depth * PEEK_TILT_DEG}deg) scale(${scale})`;
-    card.style.opacity = String(Math.max(0, 1 - 0.4 * depth - Math.max(0, distance - 1)));
+    card.style.opacity = String(Math.max(0, 1 - 0.5 * depth - Math.max(0, distance - 1)));
+    card.style.setProperty('--carousel-peek', String(depth));
   });
 }
 
 export function StudyItemCarousel<T>({
-  items,
+  items: allItems,
   id,
   title,
   itemLabel,
@@ -68,6 +76,7 @@ export function StudyItemCarousel<T>({
   const [selectedSlide, setSelectedSlide] = useState(0);
   const [root, setRoot] = useState<HTMLElement | null>(null);
   const reducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)');
+  const items = useMemo(() => allItems.slice(0, MAX_ITEMS), [allItems]);
   // Listening on the whole section lets a swipe that starts over an arrow move the carousel too.
   const plugins = useMemo(() => (root ? [WheelGesturesPlugin({ target: root })] : []), [root]);
   const [viewportRef, emblaApi] = useEmblaCarousel(
@@ -143,15 +152,34 @@ export function StudyItemCarousel<T>({
 
   if (!items.length) return null;
   const single = items.length === 1;
+  const selectedItem = selectedSlide % items.length;
+  // Stays within the selected copy so the carousel moves the short way.
+  const scrollToItem = (item: number) => emblaApi?.scrollTo(selectedSlide - selectedItem + item, jump);
   const copies = single ? 1 : Math.ceil(MIN_LOOP_SLIDES / items.length);
   const slides = Array.from({ length: copies }, (_, copy) => items.map((item) => ({ item, copy }))).flat();
-  const arrowSx = { bgcolor: 'background.paper', boxShadow: shadow.raised, height: 40, width: 40 } as const;
+  const arrowSx = {
+    bgcolor: 'background.paper',
+    boxShadow: shadow.raised,
+    height: 40,
+    position: 'absolute',
+    top: `calc(50% - ${DOTS_HEIGHT / 2}px)`,
+    transform: 'translateY(-50%)',
+    width: 40,
+    zIndex: 200,
+  } as const;
   return (
     <Box
       ref={setRoot}
       component="section"
       aria-labelledby={headingId}
-      sx={{ containerName: 'study-carousel', containerType: 'inline-size', height: '100%', position: 'relative' }}
+      sx={{
+        containerName: 'study-carousel',
+        containerType: 'inline-size',
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100%',
+        position: 'relative',
+      }}
     >
       <Typography id={headingId} component="h2" variant="h6" sx={visuallyHidden}>
         {title}
@@ -161,8 +189,10 @@ export function StudyItemCarousel<T>({
         data-carousel-id={id}
         sx={{
           boxSizing: 'border-box',
+          flex: '1 1 auto',
           overflow: 'hidden',
-          py: 0.5,
+          // Room for the card shadow, which the viewport would otherwise clip.
+          py: 3,
           // Fades the outer edges of the peeking cards into the page.
           '--edge-fade': '20px',
           // With the arrows overlaid, the cards fill the height they are given (see StudyDashboardLayout).
@@ -204,51 +234,47 @@ export function StudyItemCarousel<T>({
         </Box>
       </Box>
       {canRotate && (
-        <Box
-          sx={{
-            alignItems: 'center',
-            display: 'flex',
-            gap: 1.5,
-            justifyContent: 'center',
-            mt: 1,
-            '@container study-carousel (min-width: 440px)': {
-              mt: 0,
-              '& .study-carousel-arrow': {
-                position: 'absolute',
-                top: '50%',
-                transform: 'translateY(-50%)',
-                zIndex: 200,
-              },
-              '& .study-carousel-previous': { left: 12 },
-              '& .study-carousel-next': { right: 12 },
-              '& .study-carousel-position': visuallyHidden,
-            },
-          }}
-        >
-          <IconButton
-            className="study-carousel-arrow study-carousel-previous"
-            aria-label={`Previous ${itemLabel}`}
-            onClick={scrollPrevious}
-            sx={arrowSx}
-          >
-            <ChevronLeftRoundedIcon />
-          </IconButton>
-          <Typography
-            className="study-carousel-position"
-            variant="body2"
-            sx={{ color: 'text.secondary', fontVariantNumeric: 'tabular-nums', minWidth: 48, textAlign: 'center' }}
-          >
-            {(selectedSlide % items.length) + 1} of {items.length}
-          </Typography>
-          <IconButton
-            className="study-carousel-arrow study-carousel-next"
-            aria-label={`Next ${itemLabel}`}
-            onClick={scrollNext}
-            sx={arrowSx}
-          >
-            <ChevronRightRoundedIcon />
-          </IconButton>
-        </Box>
+        <>
+          {/* Narrow widths rely on swiping and the dots. */}
+          <Box sx={{ '@container study-carousel (max-width: 439px)': { display: 'none' } }}>
+            <IconButton aria-label={`Previous ${itemLabel}`} onClick={scrollPrevious} sx={{ ...arrowSx, left: 12 }}>
+              <ChevronLeftRoundedIcon />
+            </IconButton>
+            <IconButton aria-label={`Next ${itemLabel}`} onClick={scrollNext} sx={{ ...arrowSx, right: 12 }}>
+              <ChevronRightRoundedIcon />
+            </IconButton>
+          </Box>
+          <Box sx={{ display: 'flex', height: DOTS_HEIGHT, justifyContent: 'center' }}>
+            {items.map((item, index) => (
+              <Box
+                key={itemKey(item)}
+                component="button"
+                type="button"
+                aria-label={`Show ${itemLabel} ${index + 1} of ${items.length}`}
+                aria-current={index === selectedItem || undefined}
+                onClick={() => scrollToItem(index)}
+                sx={{
+                  alignItems: 'center',
+                  bgcolor: 'transparent',
+                  border: 0,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  p: 0,
+                  width: 20,
+                  '&::after': {
+                    bgcolor: index === selectedItem ? 'primary.main' : 'primary.light',
+                    borderRadius: radius.pill,
+                    content: '""',
+                    height: 8,
+                    width: 8,
+                  },
+                  '&:focus-visible': { ...focusRingInset, borderRadius: radius.pill },
+                }}
+              />
+            ))}
+          </Box>
+        </>
       )}
     </Box>
   );

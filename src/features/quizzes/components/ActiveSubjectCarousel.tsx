@@ -20,12 +20,7 @@ export function ActiveSubjectCarousel({
       renderItem={(stat) => (
         <ContinueStudyCard
           title={stat.subject.name}
-          activityLabel={[
-            `${stat.activeQuizCount} ${stat.activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress`,
-            stat.latest !== undefined && `Latest score ${stat.latest}%`,
-          ]
-            .filter(Boolean)
-            .join(' · ')}
+          activityLabel={`${stat.activeQuizCount} ${stat.activeQuizCount === 1 ? 'quiz' : 'quizzes'} in progress`}
           progress={completionProgress(stat.completedQuizCount, stat.quizCount, 'quiz')}
           accessibleLabel={`Continue studying ${stat.subject.name}`}
           onContinue={() => onSelectSubject(stat.subject)}
