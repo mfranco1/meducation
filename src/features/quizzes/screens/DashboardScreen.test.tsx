@@ -264,7 +264,6 @@ describe('Mixed Test card', () => {
       within(screen.getByRole('region', { name: 'Mixed Test' })).getByText(label).nextElementSibling;
     expect(fact('Questions')).toHaveTextContent('300');
     expect(fact('Latest score')).toHaveTextContent('—');
-    expect(fact('In progress')).toHaveTextContent('0');
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Mixed Test' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(onStart).toHaveBeenCalledWith(quiz, 'immediate', true);
@@ -273,7 +272,6 @@ describe('Mixed Test card', () => {
         <DashboardScreen attempts={[]} subjectStats={[]} mixedTest={controls(true)} onSelectSubject={() => {}} />
       </ThemeProvider>,
     );
-    expect(fact('In progress')).toHaveTextContent('1');
     fireEvent.click(screen.getByRole('button', { name: 'Resume quiz: Mixed Test' }));
     expect(onResume).toHaveBeenCalledWith(quiz);
   });

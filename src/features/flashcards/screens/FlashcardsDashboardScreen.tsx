@@ -7,7 +7,11 @@ import type { FlashcardDashboardSubject } from '../selectors/flashcards';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
 import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardLayout';
 import { StudyItemCarousel } from '../../../shared/ui/catalog/StudyItemCarousel';
-import { ContinueStudyCard, completedPercent, deckProgress } from '../../../shared/ui/catalog/ContinueStudyCard';
+import {
+  ContinueStudyCard,
+  completedPercent,
+  latestActiveProgress,
+} from '../../../shared/ui/catalog/ContinueStudyCard';
 import { StudyCardIllustration } from '../../../shared/ui/catalog/StudyCardIllustration';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
 import { SubjectCatalogPage, SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
@@ -138,7 +142,11 @@ export function FlashcardsDashboardScreen({
                   activityLabel={`${item.activeDeckCount} ${item.activeDeckCount === 1 ? 'deck' : 'decks'} in progress`}
                   accessibleLabel={`Continue studying ${item.subject.name}`}
                   onContinue={() => onContinueSubject(item.subject)}
-                  progress={progressError ? undefined : deckProgress(item.completedDeckCount, item.deckCount)}
+                  progress={
+                    progressError || !item.latestActive
+                      ? undefined
+                      : latestActiveProgress(item.latestActive.revealed, item.latestActive.total, 'card')
+                  }
                   illustration={<StudyCardIllustration subjectId={item.subject.id} />}
                 />
               )}

@@ -66,4 +66,19 @@ describe('flashcard dashboard and deck selectors', () => {
     });
     expect(activeFlashcardSubjects(oneActive).map((item) => item.subject.id)).toEqual(['s1']);
   });
+
+  it('counts cards revealed in the most recently active deck, once its card count is known', () => {
+    const state: FlashcardProgressState = {
+      ...progress,
+      checkpoints: {
+        d1: { ...progress.checkpoints.d1, updatedAt: '2026-10-05', openedCardIds: ['f1', 'f2', 'removed'] },
+        d2: { ...progress.checkpoints.d1, deckId: 'd2', updatedAt: '2026-10-02', openedCardIds: ['f9'] },
+      },
+    };
+    expect(flashcardDashboardSubjects(subjects, state)[0].latestActive).toEqual({ revealed: 3, total: undefined });
+    const deck = { id: 'd1', subjectId: 's1', cardCount: 10, cardIds: ['f1', 'f2', 'f3'] } as never;
+    expect(
+      flashcardDashboardSubjects(subjects, state, (id) => (id === 'd1' ? deck : undefined))[0].latestActive,
+    ).toEqual({ revealed: 2, total: 10 });
+  });
 });

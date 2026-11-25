@@ -115,7 +115,10 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
   );
   const flashcardSubjects = runtimeFlashcardBank.listSubjects();
   const flashcardDashboardData = useMemo(
-    () => flashcardDashboardSubjects(flashcardSubjects, flashcards.progress),
+    () =>
+      flashcardDashboardSubjects(flashcardSubjects, flashcards.progress, (deckId) =>
+        runtimeFlashcardBank.getDeck(deckId),
+      ),
     // The runtime cache exposes a version because its summary arrays are stable between writes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [flashcardSubjects, flashcards.progress, flashcardContentVersion],
@@ -187,6 +190,18 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     for (const subjectId of subjectsMissingQuizzes ? subjectsMissingQuizzes.split(',') : [])
       void questionBank.ensureQuizzes(subjectId).catch(() => undefined);
   }, [questionBank, subjectsMissingQuizzes]);
+  // Likewise the card count of each subject's latest active deck, which is in its flashcard catalog.
+  const subjectsMissingDecks =
+    view.page === 'flashcards'
+      ? activeFlashcardSubjectCards
+          .filter((item) => item.latestActive && item.latestActive.total === undefined)
+          .map((item) => item.subject.id)
+          .join()
+      : '';
+  useEffect(() => {
+    for (const subjectId of subjectsMissingDecks ? subjectsMissingDecks.split(',') : [])
+      void runtimeFlashcardBank.ensureSubjectCatalog(subjectId).catch(() => undefined);
+  }, [subjectsMissingDecks]);
   const { averageLatest, personalLowest, personalLowestSubject } = dashboardScoreSummary(subjectStats, progressView);
   const mixedQuestionCount = summaries.reduce((total, { questionCount }) => total + questionCount, 0);
   const currentSubject = session.view.page === 'subject' ? session.view.subject : undefined;

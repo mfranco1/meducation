@@ -1,5 +1,5 @@
 import { ThemeProvider } from '@mui/material';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { FlashcardCatalogResponse } from '../../../content/api/flashcardApiDecoders';
 import { theme } from '../../../shared/theme';
@@ -245,6 +245,7 @@ it.each([true, false])(
     expect(screen.getByRole('button', { name: 'Resume deck: Heart' })).toBeVisible();
     expect(props.onSelectDeck).not.toHaveBeenCalled();
     if (!desktop) {
+      await act(async () => {});
       history.back();
       expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
     }

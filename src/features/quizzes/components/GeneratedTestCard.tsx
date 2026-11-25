@@ -1,10 +1,6 @@
 import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
-import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
-import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
-import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
 import { useState, type ReactNode } from 'react';
 import type { CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
 import { fontWeight, radius } from '../../../shared/theme';
@@ -24,22 +20,19 @@ export interface GeneratedTestControls {
   onPrepare?: (quiz: Quiz) => void;
 }
 
-function Fact({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
+function Fact({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <Box sx={{ alignItems: 'center', display: 'flex', gap: 1, minWidth: 0, '& > svg': { color: 'primary.main' } }}>
-      {icon}
-      <Box sx={{ display: 'flex', flexDirection: 'column-reverse', minWidth: 0 }}>
-        <Typography component="dt" variant="caption" sx={{ color: 'text.secondary' }}>
-          {label}
-        </Typography>
-        <Typography
-          component="dd"
-          variant="subtitle1"
-          sx={{ alignItems: 'center', display: 'flex', fontWeight: fontWeight.semibold, gap: 0.75, m: 0 }}
-        >
-          {children}
-        </Typography>
-      </Box>
+    <Box sx={{ display: 'flex', flexDirection: 'column-reverse', minWidth: 0 }}>
+      <Typography component="dt" variant="caption" sx={{ color: 'text.secondary' }}>
+        {label}
+      </Typography>
+      <Typography
+        component="dd"
+        variant="subtitle1"
+        sx={{ alignItems: 'center', display: 'flex', fontWeight: fontWeight.semibold, gap: 0.75, m: 0 }}
+      >
+        {children}
+      </Typography>
     </Box>
   );
 }
@@ -48,6 +41,7 @@ function Fact({ icon, label, children }: { icon: ReactNode; label: string; child
 export function GeneratedTestCard({
   progress: { quiz, active, completionCount, latestScore, trend },
   description,
+  icon = <ShuffleRoundedIcon sx={{ fontSize: 28 }} />,
   subjectCount,
   busy = false,
   attempts,
@@ -56,7 +50,8 @@ export function GeneratedTestCard({
   onReview,
   onPrepare = () => undefined,
 }: GeneratedTestControls & {
-  description: string;
+  description?: string;
+  icon?: ReactNode;
   /** Subjects the test draws from. When given, the card lists its facts in place of the score bar. */
   subjectCount?: number;
 }) {
@@ -105,15 +100,17 @@ export function GeneratedTestCard({
                   justifyContent: 'center',
                 }}
               >
-                <ShuffleRoundedIcon sx={{ fontSize: 28 }} />
+                {icon}
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography variant="h6" component="h2">
                   {quiz.name}
                 </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {description}
-                </Typography>
+                {description && (
+                  <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                    {description}
+                  </Typography>
+                )}
               </Box>
             </Box>
             <Stack className="test-card-actions" direction="row" spacing={1} sx={{ flexShrink: 0 }}>
@@ -153,28 +150,21 @@ export function GeneratedTestCard({
                 borderColor: 'divider',
                 display: 'grid',
                 gap: 2,
-                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
                 m: 0,
                 pt: 2,
                 '@container test-card (min-width: 480px)': {
                   gap: 0,
-                  gridTemplateColumns: 'repeat(4, auto)',
+                  gridTemplateColumns: 'repeat(3, auto)',
                   justifyContent: 'space-between',
                 },
               }}
             >
-              <Fact icon={<QuizOutlinedIcon aria-hidden="true" />} label="Questions">
-                {quiz.questionCount}
-              </Fact>
-              <Fact icon={<LayersOutlinedIcon aria-hidden="true" />} label="Subjects">
-                {subjectCount}
-              </Fact>
-              <Fact icon={<TimelineRoundedIcon aria-hidden="true" />} label="Latest score">
+              <Fact label="Questions">{quiz.questionCount}</Fact>
+              <Fact label="Subjects">{subjectCount}</Fact>
+              <Fact label="Latest score">
                 {latestScore === undefined ? '—' : `${latestScore}%`}
                 {trend && <ScoreTrendIndicator trend={trend} />}
-              </Fact>
-              <Fact icon={<HourglassTopRoundedIcon aria-hidden="true" />} label="In progress">
-                {active ? 1 : 0}
               </Fact>
             </Box>
           )}

@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { ThemeProvider } from '@mui/material';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Attempt, CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
 import { theme } from '../../../shared/theme';
@@ -390,6 +390,7 @@ describe('subject topics on small screens', () => {
     expect(screen.getByRole('heading', { name: 'Glycolysis quiz' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Topics' })).toBeNull();
 
+    await act(async () => {});
     fireEvent.click(screen.getByRole('button', { name: 'Topics' }));
     expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
     expect(screen.queryByRole('heading', { name: 'Glycolysis quiz' })).toBeNull();
@@ -413,6 +414,7 @@ describe('subject topics on small screens', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Cell biology/ }));
     expect(screen.queryByRole('heading', { name: 'Topics' })).toBeNull();
+    await act(async () => {});
     history.back();
     expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
   });
@@ -447,6 +449,7 @@ describe('subject search on small screens', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /Metabolism/ }));
     expect(screen.queryByRole('searchbox')).toBeNull();
+    await act(async () => {});
     history.back();
     expect(await screen.findByRole('searchbox')).toHaveValue('glyco');
     expect(screen.getByRole('heading', { name: 'Results' })).toBeVisible();
@@ -517,6 +520,7 @@ describe('continue studying destination', () => {
     expect(screen.getByRole('button', { name: `Resume quiz: ${recent.name}` })).toBeVisible();
     expect(props.onResumeQuiz).not.toHaveBeenCalled();
     if (!desktop) {
+      await act(async () => {});
       history.back();
       expect(await screen.findByRole('heading', { name: 'Topics' })).toBeVisible();
       expect(screen.getByRole('button', { name: /Metabolism/ })).toHaveFocus();

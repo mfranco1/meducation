@@ -68,7 +68,14 @@ describe('FlashcardsDashboardScreen', () => {
             { subject, deckCount: 4, completedDeckCount: 2, activeDeckCount: 1, latestActiveAt: '2026-10-01' },
           ]}
           activeSubjects={[
-            { subject, deckCount: 4, completedDeckCount: 2, activeDeckCount: 1, latestActiveAt: '2026-10-01' },
+            {
+              subject,
+              deckCount: 4,
+              completedDeckCount: 2,
+              activeDeckCount: 1,
+              latestActiveAt: '2026-10-01',
+              latestActive: { revealed: 12, total: 40 },
+            },
           ]}
           progress={{
             ...emptyProgress,
@@ -91,7 +98,7 @@ describe('FlashcardsDashboardScreen', () => {
     expect(screen.getByRole('heading', { name: 'Continue Studying' })).toHaveStyle({ position: 'absolute' });
     expect(
       within(continueRegion).getByRole('button', { name: 'Continue studying Anatomy' }),
-    ).toHaveAccessibleDescription('1 deck in progress 2 of 4 decks completed');
+    ).toHaveAccessibleDescription('1 deck in progress 12 of 40 cards revealed');
     expect(within(continueRegion).getByText('Continue')).toBeVisible();
     const grid = screen.getByTestId('all-subjects-grid');
     expect(within(grid).getByText('1 in progress')).toBeVisible();

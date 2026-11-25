@@ -1,6 +1,6 @@
 import type { Subject } from '../../../domain/types';
 import type { FlashcardCheckpoint, FlashcardProgressState } from '../../../domain/flashcardStudy';
-import type { FlashcardSubjectSummary } from '../../../content/api/flashcardApiDecoders';
+import type { FlashcardDeckSummary, FlashcardSubjectSummary } from '../../../content/api/flashcardApiDecoders';
 
 export interface FlashcardDashboardSubject {
   subject: Subject;
@@ -8,11 +8,14 @@ export interface FlashcardDashboardSubject {
   completedDeckCount: number;
   activeDeckCount: number;
   latestActiveAt?: string;
+  /** Cards revealed in the most recently active deck. `total` is unknown until the subject's catalog loads. */
+  latestActive?: { revealed: number; total?: number };
 }
 
 export function flashcardDashboardSubjects(
   subjects: readonly FlashcardSubjectSummary[],
   progress: FlashcardProgressState,
+  getDeck: (deckId: string) => FlashcardDeckSummary | undefined = () => undefined,
 ): FlashcardDashboardSubject[] {
   return subjects.map((subject) => {
     const emptyDeckIds = new Set(subject.emptyDeckIds ?? []);
@@ -20,6 +23,11 @@ export function flashcardDashboardSubjects(
       .filter((deckId) => !emptyDeckIds.has(deckId))
       .map((deckId) => progress.checkpoints[deckId])
       .filter((checkpoint): checkpoint is FlashcardCheckpoint => checkpoint !== undefined);
+    const latest = active.reduce<FlashcardCheckpoint | undefined>(
+      (found, checkpoint) => (found === undefined || checkpoint.updatedAt > found.updatedAt ? checkpoint : found),
+      undefined,
+    );
+    const latestDeck = latest && getDeck(latest.deckId);
     return {
       subject: {
         id: subject.id,
@@ -30,10 +38,13 @@ export function flashcardDashboardSubjects(
       deckCount: subject.deckCount,
       completedDeckCount: subject.deckIds.filter((deckId) => (progress.completionCounts[deckId] ?? 0) > 0).length,
       activeDeckCount: active.length,
-      latestActiveAt: active
-        .map((checkpoint) => checkpoint.updatedAt)
-        .sort()
-        .at(-1),
+      latestActiveAt: latest?.updatedAt,
+      latestActive: latest && {
+        revealed: latestDeck
+          ? latest.openedCardIds.filter((cardId) => latestDeck.cardIds.includes(cardId)).length
+          : latest.openedCardIds.length,
+        total: latestDeck?.cardCount,
+      },
     };
   });
 }

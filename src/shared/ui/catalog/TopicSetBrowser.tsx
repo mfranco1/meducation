@@ -223,8 +223,11 @@ export function TopicSetBrowser({
 
   useEffect(() => {
     if (desktop || !selectedId || ownsHistoryEntry.current) return;
-    history.pushState({ topic: true }, '');
     ownsHistoryEntry.current = true;
+    // After the page's own history entry, which App adds in a parent effect when the page opens with a topic.
+    queueMicrotask(() => {
+      if (mounted.current && ownsHistoryEntry.current) history.pushState({ topic: true }, '');
+    });
   }, [desktop, selectedId]);
 
   const openTopic = (id: string) => {

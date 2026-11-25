@@ -23,12 +23,16 @@ export function completedPercent(completed: number, total: number) {
   return completed > 0 && total > 0 ? Math.max(1, Math.round((completed / total) * 100)) : 0;
 }
 
-/** The Flashcards Continue Studying progress line, such as "12 of 40 decks completed". */
-export function deckProgress(completed: number, total: number) {
-  return {
-    percent: completedPercent(completed, total),
-    label: `${completed} of ${total} ${total === 1 ? 'deck' : 'decks'} completed`,
-  };
+/**
+ * Progress in a subject's most recently active quiz or deck, such as "12 of 40 questions answered".
+ * `total` is unknown until the subject's catalog loads.
+ */
+export function latestActiveProgress(done: number, total: number | undefined, unit: 'question' | 'card') {
+  const noun = (total ?? done) === 1 ? unit : `${unit}s`;
+  const verb = unit === 'question' ? 'answered' : 'revealed';
+  return total === undefined
+    ? { label: `${done} ${noun} ${verb}` }
+    : { percent: completedPercent(done, total), label: `${done} of ${total} ${noun} ${verb}` };
 }
 
 export type ContinueStudyCardProps = {
@@ -39,7 +43,7 @@ export type ContinueStudyCardProps = {
   accessibleLabel: string;
   eyebrow?: string;
   illustration: ReactNode;
-  /** Study progress as a label, with a bar when the share done is known. */
+  /** Study progress as a label and a bar, which fills once the share done is known. */
   progress?: { percent?: number; label: string };
   sx?: SxProps<Theme>;
 };
@@ -198,9 +202,7 @@ export function ContinueStudyCard({
               component="span"
               sx={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '4px 8px', mt: '8px' }}
             >
-              {progress.percent !== undefined && (
-                <ProgressTrack percent={progress.percent} sx={{ flexShrink: 0, width: 120 }} />
-              )}
+              <ProgressTrack percent={progress.percent} sx={{ flexShrink: 0, width: 120 }} />
               <Typography id={progressId} variant="caption" component="span" sx={{ color: 'text.secondary' }}>
                 {progress.label}
               </Typography>
