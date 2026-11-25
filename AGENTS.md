@@ -87,7 +87,7 @@ Reusable workflows live in `.agents/skills/<name>/SKILL.md`. When a task matches
 - `meducation-icons`: find, draw and integrate subject and topic icons.
 - `meducation-code-review`: review a diff, commit or pull request.
 
-`write-quizzes` and `write-flashcards` share `.agents/shared/`. Change shared behavior there, never by copying it into one skill, and keep it valid for both; run both skills' tests and the shared tests after a change.
+`write-quizzes` and `write-flashcards` share `.agents/shared/`. Change shared behavior there, never by copying it into one skill, and keep it valid for both. After changing code or prompt templates, run both skills' tests and the shared tests; Markdown notes need none.
 
 ## Work tracking
 

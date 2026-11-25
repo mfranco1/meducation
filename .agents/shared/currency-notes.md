@@ -11,6 +11,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | FDA pregnancy letter categories (A, B, C, D, X) | Narrative pregnancy and lactation labeling (PLLR); never test the letters | 2015 | `pregnancy (risk )?category` |
 | Polycystic ovary syndrome (PCOS) | Polyendocrine metabolic ovarian syndrome (PMOS); write PMOS with no "formerly called" note | 2026 consensus | `PCOS`, `polycystic ovary syndrome`, `polycystic ovarian syndrome` |
 | NAFLD, NASH | MASLD, MASH | 2023 multisociety nomenclature | `NAFLD`, `NASH`, `non-?alcoholic fatty liver`, `non-?alcoholic steatohepatitis` |
+| Idiopathic noncirrhotic portal hypertension (INCPH), obliterative portal venopathy | Porto-sinusoidal vascular disorder (PSVD) | VALDIG 2019, EASL 2025 | `idiopathic non-?cirrhotic portal hypertension`, `idiopathic portal hypertension`, `obliterative portal venopathy` |
 | Hepatorenal syndrome type 1 and type 2 | HRS-AKI and HRS-NAKI; no fixed 2-week rule | ICA 2015, EASL 2018 | `HRS type [12]`, `type [12] HRS`, `hepatorenal syndrome type [12]`, `type [12] hepatorenal` |
 | Microalbuminuria, macroalbuminuria | Moderately (A2) and severely (A3) increased albuminuria | KDIGO 2012 CKD | `microalbuminuria`, `macroalbuminuria` |
 | Obscure GI bleeding for any bleed not found on EGD and colonoscopy | Suspected small bowel bleeding; "obscure" only when no source is found after small bowel evaluation too | ACG 2015 small bowel bleeding guideline | `obscure GI bleeding`, `obscure gastrointestinal bleeding` |

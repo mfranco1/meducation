@@ -27,7 +27,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Abdominal Wall and Hernias: 5 items (3/2), 2026-11-24. Backlog 0. Incisional hernia timing had no ranking source.
 - Esophageal Surgery: 7 items (5/2), 2026-11-25. Backlog 0. Barrett, cancer histology and site rows struck.
 - Gastric and Duodenal Surgery: 5 items (3/2), 2026-11-25. Backlog 0. Ulcer sites, histologic types and gastric GIST or lymphoma site struck.
+- Hepatic Surgery and Portal Hypertension: 7 items (5/2), 2026-11-25. Backlog 0. Liver metastasis source had no consistent ranking; amebic organism, Klebsiella abscess and hydatid site struck.
 
 ## Next
 
-The unstaged topic with the most MISSING rows in `most-common-gaps.md`: Hepatic, Pancreatic (7 each), then Splenic (3). Staged topics keep leftover MISSING rows past the per-quiz cap.
+The unstaged topic with the most MISSING rows in `most-common-gaps.md`: Pancreatic (7), then Splenic (3). Staged topics keep leftover MISSING rows past the per-quiz cap.

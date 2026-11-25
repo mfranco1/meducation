@@ -21,6 +21,7 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Lung and Pleura: 3 items (1/2). Backlog 0. Most rows were staged, clued or unranked by a primary source.
 - Lower Urinary and Male Genital Tract: 7 items (3/4). Backlog 0. Most rows were staged or clued.
 - Peripheral Nerves and Skeletal Muscle: 8 items (4/4). Backlog 0.
+- Neoplasia: 8 items (4/4). Backlog 0. Brain metastasis primary skipped (staged vignettes).
 
 ## Next
 

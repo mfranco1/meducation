@@ -4,7 +4,7 @@ Subject `Biochemistry`, work dir `var/flashcard-work/biochemistry/`, audit-only 
 
 ## Status
 
-Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 decks (`plan.json`; the Top-ups below are its source). Done: Genetics and Inheritance; Minerals and Trace Elements; Cell Biology and Biochemical Techniques; Nucleic Acid Structure; DNA, RNA and Molecular Biology; Lipid Metabolism; Nucleotide Metabolism; Heme, Alcohol and Other Metabolism; Metabolic Integration and Hormones; Inborn Errors of Metabolism and Storage Diseases; Immunology; Carbohydrate and Lipid Structure; Enzymes and Bioenergetics; Nutrition. Next: Vitamin Basics and Fat-Soluble Vitamins, Water-Soluble Vitamins.
+Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 decks (`plan.json`; the Top-ups below are its source). Done: Genetics and Inheritance; Minerals and Trace Elements; Cell Biology and Biochemical Techniques; Nucleic Acid Structure; DNA, RNA and Molecular Biology; Lipid Metabolism; Nucleotide Metabolism; Heme, Alcohol and Other Metabolism; Metabolic Integration and Hormones; Inborn Errors of Metabolism and Storage Diseases; Immunology; Carbohydrate and Lipid Structure; Enzymes and Bioenergetics; Nutrition; Vitamin Basics and Fat-Soluble Vitamins. Next: Water-Soluble Vitamins.
 
 ## Carried over
 
@@ -44,6 +44,7 @@ Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 deck
 - Carbohydrate and Lipid Structure top-up: Glucose Utilization and Transporters +5 (SGLT2 inhibitors, GLUT4 by contraction vs insulin, GLUT1 deficiency per Klepper 2020 x2, GLUT2 beta-cell sensing). 143 to 148 cards.
 - Enzymes and Bioenergetics top-up: Enzyme Inhibition +8 (uncompetitive and mixed per Jakubowski and Flatt, NNRTIs as noncompetitive example, organophosphates, allopurinol suicide inhibition, penicillin, transition-state analogs). 155 to 163 cards.
 - Nutrition top-up: Malnutrition and Nutritional Status +8 refeeding syndrome cards per ASPEN 2020; Macronutrients, Protein Quality and Breastfeeding +5 (galactosemia, HIV on ART per WHO 2021 vs CDC 2025, HTLV-1/2, lactoferrin, oligosaccharides). 160 to 173 cards.
+- Vitamin Basics and Fat-Soluble Vitamins top-up: Vitamin D +4 (25(OH)D as status marker, IOM 2011 cutoffs, Endocrine Society 2024 sets none and advises against routine testing). 89 to 93 cards.
 - Cell Biology and Biochemical Techniques top-up: Molecular Biology Techniques +6 (cDNA cloning, RT-PCR, recombinant insulin, siRNA, antisense, CRISPR-Cas9). 86 to 92 cards.
 - Nucleic Acid Structure top-up: Histones and Chromatin +7 (DNMTs and SAM, MBD-HDAC silencing, HDACs, H3K4me3 vs H3K9me3/H3K27me3, XIST in cis, Barr bodies, decitabine vs vorinostat per current labels). 98 to 105 cards.
 - DNA, RNA and Molecular Biology top-up: DNA Replication and Repair +5 (telomeres, telomerase, dyskeratosis congenita), Transcription and RNA Processing +8 (lac operon, Pol I, TBP, enhancers, alpha-amanitin). 154 to 167 cards.
@@ -89,6 +90,5 @@ Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 deck
 
 - Water-Soluble Vitamins: Riboflavin subtopic has 2 cards by heuristic (7 questions); confirm with a grep of `fronts.txt`.
 
-- Vitamin D (16 cards) lost its only 25(OH)D level card; add one on deficiency cutoffs labelled by body (Endocrine Society 2024 sets none) and on who to test.
 - Nucleic Acid Structure: RNA Types and Structure (14 questions, 1 card), DNA Forms (3 cards) and Chargaff's Rules and DNA Denaturation (5 cards) look thin by heuristic; confirm with a grep of `fronts.txt`.
 - Amino Acid and Protein Metabolism: Transamination and Oxidative Deamination (12 questions, 5 cards) and One-Carbon Metabolism and S-Adenosylmethionine (11 questions, 8 cards) look thin by heuristic.

@@ -4,12 +4,12 @@ Subject `Internal Medicine`, work dir `var/flashcard-work/internal-medicine/`. R
 
 ## Status
 
-Phase: Top-up, plan approved (708 cards, `plan.json`). In progress: none. Done: Enteric, Tropical and Zoonotic Infections; Nephrology; Psychiatry; Cardiovascular Medicine; Structural Heart Disease, Arrhythmia and Heart Failure; Critical Care Medicine; Infectious Diseases. Next: Dermatology, then the rest in plan order.
+Phase: Top-up, plan approved (708 cards, `plan.json`). In progress: none. Done: Enteric, Tropical and Zoonotic Infections; Nephrology; Psychiatry; Cardiovascular Medicine; Structural Heart Disease, Arrhythmia and Heart Failure; Critical Care Medicine; Infectious Diseases; Dermatology. Next: Hematology, then the rest in plan order.
 
 ## Staged (not published)
 
 Audit: 312 edits, 133 deletes. Per-card reasons are in the draft change history.
-Top-up: Enteric +36 (Dengue new deck 30, cholera 6). Nephrology +60 (Glomerular Disease new deck 30, Acid-Base 10, Electrolyte 12, CKD 8). Psychiatry +86 (Schizophrenia and Mood 30, Anxiety, Trauma, Eating and Personality new deck 30, Delirium and Substance Use new deck 26). Cardiovascular +27 (ACS Treatment 15, VTE 12). Structural Heart +27 (Valvular endocarditis 15, Heart Failure cardiomyopathies 12). Critical Care +34 (Supportive ICU Care new deck 24, Shock and Sepsis vasopressors 10). Infectious Diseases +43 (UTI 15, HIV/AIDS 20, COVID-19 8).
+Top-up: Enteric +36 (Dengue new deck 30, cholera 6). Nephrology +60 (Glomerular Disease new deck 30, Acid-Base 10, Electrolyte 12, CKD 8). Psychiatry +86 (Schizophrenia and Mood 30, Anxiety, Trauma, Eating and Personality new deck 30, Delirium and Substance Use new deck 26). Cardiovascular +27 (ACS Treatment 15, VTE 12). Structural Heart +27 (Valvular endocarditis 15, Heart Failure cardiomyopathies 12). Critical Care +34 (Supportive ICU Care new deck 24, Shock and Sepsis vasopressors 10). Infectious Diseases +43 (UTI 15, HIV/AIDS 20, COVID-19 8). Dermatology +34 (Skin Infections leprosy, herpes, cellulitis 25; blistering disease 9).
 
 ## Unverified (check before publishing)
 
@@ -18,10 +18,11 @@ Top-up: Enteric +36 (Dengue new deck 30, cholera 6). Nephrology +60 (Glomerular 
 - Hypernatremia: 0.5 mmol/L/h chronic correction limit and water deficit coefficients (0.6 men, 0.5 women) rest on textbook and a narrative review only.
 - Critical Care: SCCM/ASHP 2024 stress ulcer cards and PADIS 2025 cards rest on the society summary pages and abstract; full texts returned 402.
 - PrEP: card keys the FDA Truvada label (CrCl ≥60, weight ≥35 kg); DOH AO 2026-0005 on PrEP and PEP could not be read, so DOH criteria may differ.
+- Leprosy: MDT and contact prophylaxis cards rest on WHO only (DOH program manual unreachable); reaction treatment cards are textbook.
 
 ## Top-ups
 
 - Endocarditis: no empiric drug regimen card (ESC 2023 tables now readable via the route in fetch-access.md).
 
 - Psychiatry: no bupropion card.
-- Leprosy and autoimmune blistering disease have 0 cards; no cancer-associated VTE or preventive migraine card; anal fissure card vague (no posterior midline or sphincter spasm); obesity-associated cancers and conditions need single-answer cards; Spondyloarthropathies deck holds RA cards (Caplan, Felty) and few ankylosing spondylitis cards.
+- Bullous pemphigoid: no treatment card (EADV 2022 full text unreachable). No cancer-associated VTE or preventive migraine card; anal fissure card vague (no posterior midline or sphincter spasm); obesity-associated cancers and conditions need single-answer cards; Spondyloarthropathies deck holds RA cards (Caplan, Felty) and few ankylosing spondylitis cards.
