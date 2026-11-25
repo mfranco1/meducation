@@ -10,7 +10,7 @@ import { ProgressTrack } from './SubjectProgressSummary';
 export const tallHero = '@container study-hero (min-width: 960px)';
 
 export const continueCardBackground = ({ palette }: Theme) =>
-  `linear-gradient(110deg, ${alpha(palette.primary.light, 0.55)} 0%, ${palette.primary.light} 100%), ${palette.background.paper}`;
+  `linear-gradient(110deg, ${palette.background.paper} 0%, ${alpha(palette.primary.light, 0.5)} 45%, ${palette.primary.light} 100%), ${palette.background.paper}`;
 
 /** Warms the artwork toward the brand orange. */
 const artworkTint = 'sepia(.15) saturate(1.3)';
@@ -23,12 +23,11 @@ export function completedPercent(completed: number, total: number) {
   return completed > 0 && total > 0 ? Math.max(1, Math.round((completed / total) * 100)) : 0;
 }
 
-/** The Continue Studying progress line, such as "12 of 40 quizzes completed". */
-export function completionProgress(completed: number, total: number, unit: 'quiz' | 'deck') {
-  const plural = unit === 'quiz' ? 'quizzes' : 'decks';
+/** The Flashcards Continue Studying progress line, such as "12 of 40 decks completed". */
+export function deckProgress(completed: number, total: number) {
   return {
     percent: completedPercent(completed, total),
-    label: `${completed} of ${total} ${total === 1 ? unit : plural} completed`,
+    label: `${completed} of ${total} ${total === 1 ? 'deck' : 'decks'} completed`,
   };
 }
 
@@ -40,8 +39,8 @@ export type ContinueStudyCardProps = {
   accessibleLabel: string;
   eyebrow?: string;
   illustration: ReactNode;
-  /** Share of the subject completed, shown as a bar with its label. */
-  progress?: { percent: number; label: string };
+  /** Study progress as a label, with a bar when the share done is known. */
+  progress?: { percent?: number; label: string };
   sx?: SxProps<Theme>;
 };
 
@@ -115,7 +114,8 @@ export function ContinueStudyCard({
       >
         {illustration}
       </Box>
-      {/* A peeking card shows its artwork across the whole card instead of its text. */}
+      {/* A peeking card shows its artwork across the whole card instead of its text. On the left it is mirrored, so
+          the edge that shows carries the subject of the photo instead of its pale side. */}
       <Box
         aria-hidden="true"
         sx={{
@@ -125,6 +125,7 @@ export function ContinueStudyCard({
           opacity: peek,
           pointerEvents: 'none',
           position: 'absolute',
+          scale: 'var(--carousel-side, 1) 1',
           zIndex: 0,
           '& svg, & img': {
             display: 'block',
@@ -197,7 +198,9 @@ export function ContinueStudyCard({
               component="span"
               sx={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '4px 8px', mt: '8px' }}
             >
-              <ProgressTrack percent={progress.percent} sx={{ flexShrink: 0, width: 120 }} />
+              {progress.percent !== undefined && (
+                <ProgressTrack percent={progress.percent} sx={{ flexShrink: 0, width: 120 }} />
+              )}
               <Typography id={progressId} variant="caption" component="span" sx={{ color: 'text.secondary' }}>
                 {progress.label}
               </Typography>

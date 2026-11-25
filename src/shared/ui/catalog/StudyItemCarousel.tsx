@@ -7,12 +7,13 @@ import type { EmblaCarouselType } from 'embla-carousel';
 import { WheelGesturesPlugin } from 'embla-carousel-wheel-gestures';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { focusRingInset, radius, shadow } from '../../theme';
+import { tallHero } from './ContinueStudyCard';
 
 const SLIDE_GAP = 16;
 /** Scale of a peeking neighbor; it grows to full size as it moves into the center. */
 const PEEK_SCALE = 0.78;
-/** How far a peeking neighbor tucks behind the selected card, in px. */
-const PEEK_TUCK = 12;
+/** Share of the space beside the selected card that a peeking neighbor shows; the rest of it sits behind the card. */
+const PEEK_REVEAL = 0.7;
 const PEEK_TILT_DEG = 8;
 /**
  * Fewest slides that keep both peeks filled while the loop wraps. With fewer, Embla must move a
@@ -21,8 +22,8 @@ const PEEK_TILT_DEG = 8;
 const MIN_LOOP_SLIDES = 5;
 /** Callers pass items most recent first; only these many are kept. */
 const MAX_ITEMS = 5;
-/** Height of the dot row below the cards, in px. */
-const DOTS_HEIGHT = 24;
+/** Room around the cards for their shadow, which the viewport would otherwise clip, in px. */
+const SHADOW_ROOM = 24;
 
 /** Blocks the browser's swipe-back navigation for any wheel gesture with a real horizontal part. */
 function preventHorizontalWheel(event: WheelEvent) {
@@ -30,8 +31,9 @@ function preventHorizontalWheel(event: WheelEvent) {
 }
 
 /**
- * Scales, tucks, tilts and fades each card by its distance from the center so neighbors read as set back.
- * Cards read `--carousel-peek` (0 centered, 1 peeking) to swap their text for artwork.
+ * Scales, tucks, tilts and fades each card by its distance from the center so neighbors peek from behind it.
+ * Cards read `--carousel-peek` (0 centered, 1 peeking) to swap their text for artwork, and `--carousel-side`
+ * (-1 left of center, otherwise 1) to turn that artwork toward the edge that shows.
  */
 function applyDepth(api: EmblaCarouselType) {
   const viewport = api.rootNode().getBoundingClientRect();
@@ -47,13 +49,17 @@ function applyDepth(api: EmblaCarouselType) {
     const depth = Math.min(distance, 1);
     const direction = Math.sign(offset);
     const scale = 1 - (1 - PEEK_SCALE) * depth;
-    const tuck = direction * depth * (SLIDE_GAP + ((1 - PEEK_SCALE) * width) / 2 + PEEK_TUCK);
+    // A peeking card's center sits here, leaving only its outer edge showing beside the selected card.
+    const peekOffset = ((1 - PEEK_SCALE) * width) / 2 + ((viewport.width - width) / 2) * PEEK_REVEAL;
+    const tuck = direction * depth * (width + SLIDE_GAP - peekOffset);
     const card = slide.firstElementChild as HTMLElement | null;
     slide.style.zIndex = String(100 - Math.round(distance * 10));
     if (!card) return;
     card.style.transform = `translateX(${-tuck}px) perspective(1200px) rotateY(${-direction * depth * PEEK_TILT_DEG}deg) scale(${scale})`;
-    card.style.opacity = String(Math.max(0, 1 - 0.5 * depth - Math.max(0, distance - 1)));
+    // Opaque until halfway out, so a card crossing in front of another hides it.
+    card.style.opacity = String(Math.max(0, 1 - Math.max(0, depth - 0.5) - Math.max(0, distance - 1)));
     card.style.setProperty('--carousel-peek', String(depth));
+    card.style.setProperty('--carousel-side', direction < 0 ? '-1' : '1');
   });
 }
 
@@ -162,7 +168,7 @@ export function StudyItemCarousel<T>({
     boxShadow: shadow.raised,
     height: 40,
     position: 'absolute',
-    top: `calc(50% - ${DOTS_HEIGHT / 2}px)`,
+    top: '50%',
     transform: 'translateY(-50%)',
     width: 40,
     zIndex: 200,
@@ -184,58 +190,52 @@ export function StudyItemCarousel<T>({
       <Typography id={headingId} component="h2" variant="h6" sx={visuallyHidden}>
         {title}
       </Typography>
-      <Box
-        ref={viewportRef}
-        data-carousel-id={id}
-        sx={{
-          boxSizing: 'border-box',
-          flex: '1 1 auto',
-          overflow: 'hidden',
-          // Room for the card shadow, which the viewport would otherwise clip.
-          py: 3,
-          // Fades the outer edges of the peeking cards into the page.
-          '--edge-fade': '20px',
-          // With the arrows overlaid, the cards fill the height they are given (see StudyDashboardLayout).
-          '@container study-carousel (min-width: 440px)': { '--edge-fade': '40px', height: '100%' },
-          '@container study-carousel (min-width: 800px)': { '--edge-fade': '96px' },
-          maskImage: single
-            ? undefined
-            : 'linear-gradient(to right, transparent, #000 var(--edge-fade), #000 calc(100% - var(--edge-fade)), transparent)',
-        }}
-      >
+      <Box sx={{ flex: '1 1 auto', position: 'relative' }}>
         <Box
-          data-testid="study-carousel-track"
-          sx={{ alignItems: 'stretch', display: 'flex', gap: `${SLIDE_GAP}px`, height: '100%' }}
+          ref={viewportRef}
+          data-carousel-id={id}
+          sx={{
+            boxSizing: 'border-box',
+            overflow: 'hidden',
+            // The shadow room hangs outside the layout box, so the cards align with what sits beside the carousel.
+            my: `-${SHADOW_ROOM}px`,
+            py: `${SHADOW_ROOM}px`,
+            // With the arrows overlaid, the cards fill the height they are given (see StudyDashboardLayout).
+            '@container study-carousel (min-width: 440px)': { height: `calc(100% + ${SHADOW_ROOM * 2}px)` },
+          }}
         >
-          {slides.map(({ item, copy }, index) => (
-            <Box
-              className="study-item-carousel-slide"
-              data-testid="study-carousel-slide"
-              key={`${itemKey(item)}:${copy}`}
-              // Peeking cards are inert, so a click on one lands here and brings it to the center.
-              onClick={() => {
-                if (emblaApi && index !== emblaApi.selectedScrollSnap()) emblaApi.scrollTo(index, jump);
-              }}
-              sx={{
-                boxSizing: 'border-box',
-                flex: single ? '0 0 100%' : '0 0 calc(100% - 48px)',
-                minWidth: 0,
-                position: 'relative',
-                '& > *': { transformOrigin: 'center', willChange: 'transform' },
-                '@container study-carousel (min-width: 440px)': single ? {} : { flex: '0 0 calc(100% - 112px)' },
-                '@container study-carousel (min-width: 800px)': single ? {} : { flex: '0 0 calc(100% - 240px)' },
-              }}
-            >
-              <Box inert={!single && index !== selectedSlide} sx={{ height: '100%' }}>
-                {renderItem(item)}
+          <Box
+            data-testid="study-carousel-track"
+            sx={{ alignItems: 'stretch', display: 'flex', gap: `${SLIDE_GAP}px`, height: '100%' }}
+          >
+            {slides.map(({ item, copy }, index) => (
+              <Box
+                className="study-item-carousel-slide"
+                data-testid="study-carousel-slide"
+                key={`${itemKey(item)}:${copy}`}
+                // Peeking cards are inert, so a click on one lands here and brings it to the center.
+                onClick={() => {
+                  if (emblaApi && index !== emblaApi.selectedScrollSnap()) emblaApi.scrollTo(index, jump);
+                }}
+                sx={{
+                  boxSizing: 'border-box',
+                  flex: single ? '0 0 100%' : '0 0 calc(100% - 48px)',
+                  minWidth: 0,
+                  position: 'relative',
+                  '& > *': { transformOrigin: 'center', willChange: 'transform' },
+                  '@container study-carousel (min-width: 440px)': single ? {} : { flex: '0 0 calc(100% - 112px)' },
+                  '@container study-carousel (min-width: 800px)': single ? {} : { flex: '0 0 calc(100% - 240px)' },
+                }}
+              >
+                <Box inert={!single && index !== selectedSlide} sx={{ height: '100%' }}>
+                  {renderItem(item)}
+                </Box>
               </Box>
-            </Box>
-          ))}
+            ))}
+          </Box>
         </Box>
-      </Box>
-      {canRotate && (
-        <>
-          {/* Narrow widths rely on swiping and the dots. */}
+        {canRotate && (
+          // Narrow widths rely on swiping and the dots.
           <Box sx={{ '@container study-carousel (max-width: 439px)': { display: 'none' } }}>
             <IconButton aria-label={`Previous ${itemLabel}`} onClick={scrollPrevious} sx={{ ...arrowSx, left: 12 }}>
               <ChevronLeftRoundedIcon />
@@ -244,37 +244,47 @@ export function StudyItemCarousel<T>({
               <ChevronRightRoundedIcon />
             </IconButton>
           </Box>
-          <Box sx={{ display: 'flex', height: DOTS_HEIGHT, justifyContent: 'center' }}>
-            {items.map((item, index) => (
-              <Box
-                key={itemKey(item)}
-                component="button"
-                type="button"
-                aria-label={`Show ${itemLabel} ${index + 1} of ${items.length}`}
-                aria-current={index === selectedItem || undefined}
-                onClick={() => scrollToItem(index)}
-                sx={{
-                  alignItems: 'center',
-                  bgcolor: 'transparent',
-                  border: 0,
-                  cursor: 'pointer',
-                  display: 'flex',
-                  justifyContent: 'center',
-                  p: 0,
-                  width: 20,
-                  '&::after': {
-                    bgcolor: index === selectedItem ? 'primary.main' : 'primary.light',
-                    borderRadius: radius.pill,
-                    content: '""',
-                    height: 8,
-                    width: 8,
-                  },
-                  '&:focus-visible': { ...focusRingInset, borderRadius: radius.pill },
-                }}
-              />
-            ))}
-          </Box>
-        </>
+        )}
+      </Box>
+      {canRotate && (
+        <Box
+          sx={{
+            display: 'flex',
+            height: 28,
+            justifyContent: 'center',
+            // Beside the stats the dots hang below, so the cards end level with the column next to them.
+            [tallHero]: { left: 0, position: 'absolute', right: 0, top: '100%' },
+          }}
+        >
+          {items.map((item, index) => (
+            <Box
+              key={itemKey(item)}
+              component="button"
+              type="button"
+              aria-label={`Show ${itemLabel} ${index + 1} of ${items.length}`}
+              aria-current={index === selectedItem || undefined}
+              onClick={() => scrollToItem(index)}
+              sx={{
+                alignItems: 'center',
+                bgcolor: 'transparent',
+                border: 0,
+                cursor: 'pointer',
+                display: 'flex',
+                justifyContent: 'center',
+                p: 0,
+                width: 20,
+                '&::after': {
+                  bgcolor: index === selectedItem ? 'primary.main' : 'primary.light',
+                  borderRadius: radius.pill,
+                  content: '""',
+                  height: 8,
+                  width: 8,
+                },
+                '&:focus-visible': { ...focusRingInset, borderRadius: radius.pill },
+              }}
+            />
+          ))}
+        </Box>
       )}
     </Box>
   );

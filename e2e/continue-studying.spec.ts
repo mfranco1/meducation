@@ -111,7 +111,7 @@ test('quiz Continue Studying card is responsive and reveals the active quiz', as
 
   const region = page.getByRole('region', { name: 'Continue Studying' });
   const card = region.getByRole('button', { name: 'Continue studying Browser Test Subject' });
-  await expect(card).toHaveAccessibleDescription(/^1 quiz in progress \d+ of \d+ (quiz|quizzes) completed$/);
+  await expect(card).toHaveAccessibleDescription(/^1 quiz in progress 1 of \d+ questions? answered$/);
   await expect(card.locator('.continue-study-cta')).toHaveText(/Continue/);
   await expectSingleCardAtAllWidths(
     page,

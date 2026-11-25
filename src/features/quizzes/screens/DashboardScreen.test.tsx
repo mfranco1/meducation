@@ -12,7 +12,7 @@ const renderDashboard = (trend: SubjectStat['trend'], activeQuizCount = 0) =>
     <ThemeProvider theme={theme}>
       <DashboardScreen
         attempts={[]}
-        subjectStats={[{ subject, quizCount: 8, completedQuizCount: 0, activeQuizCount, latest: 75, trend }]}
+        subjectStats={[{ subject, quizCount: 8, activeQuizCount, latest: 75, trend }]}
         onSelectSubject={() => {}}
       />
     </ThemeProvider>,
@@ -135,7 +135,7 @@ describe('dashboard lowest score', () => {
           attempts={[]}
           personalLowest={42}
           personalLowestSubject="Physiology"
-          subjectStats={[{ subject, quizCount: 8, completedQuizCount: 0, activeQuizCount: 0, latest: 75 }]}
+          subjectStats={[{ subject, quizCount: 8, activeQuizCount: 0, latest: 75 }]}
           onSelectSubject={() => {}}
         />
       </ThemeProvider>,
@@ -200,7 +200,7 @@ it('pages the All Subjects grid and filters it to active subjects', () => {
   const stats = Array.from({ length: 13 }, (_, index) => ({
     subject: { ...subject, id: `s${index}`, name: `Subject ${index + 1}` },
     quizCount: 1,
-    completedQuizCount: 0,
+
     activeQuizCount: index === 12 ? 1 : 0,
   }));
   render(
@@ -225,7 +225,7 @@ it('uses separate continuation and ordinary subject actions', () => {
     <ThemeProvider theme={theme}>
       <DashboardScreen
         attempts={[]}
-        subjectStats={[{ subject, quizCount: 2, completedQuizCount: 0, activeQuizCount: 1 }]}
+        subjectStats={[{ subject, quizCount: 2, activeQuizCount: 1 }]}
         onSelectSubject={onSelectSubject}
         onContinueSubject={onContinueSubject}
       />
@@ -260,7 +260,11 @@ describe('Mixed Test card', () => {
         <DashboardScreen attempts={[]} subjectStats={[]} mixedTest={controls(false)} onSelectSubject={() => {}} />
       </ThemeProvider>,
     );
-    expect(screen.queryByText('1 in progress')).toBeNull();
+    const fact = (label: string) =>
+      within(screen.getByRole('region', { name: 'Mixed Test' })).getByText(label).nextElementSibling;
+    expect(fact('Questions')).toHaveTextContent('300');
+    expect(fact('Latest score')).toHaveTextContent('—');
+    expect(fact('In progress')).toHaveTextContent('0');
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Mixed Test' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(onStart).toHaveBeenCalledWith(quiz, 'immediate', true);
@@ -269,7 +273,7 @@ describe('Mixed Test card', () => {
         <DashboardScreen attempts={[]} subjectStats={[]} mixedTest={controls(true)} onSelectSubject={() => {}} />
       </ThemeProvider>,
     );
-    expect(screen.getByText('1 in progress')).toBeVisible();
+    expect(fact('In progress')).toHaveTextContent('1');
     fireEvent.click(screen.getByRole('button', { name: 'Resume quiz: Mixed Test' }));
     expect(onResume).toHaveBeenCalledWith(quiz);
   });

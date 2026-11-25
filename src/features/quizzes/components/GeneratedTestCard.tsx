@@ -1,10 +1,15 @@
 import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
+import HourglassTopRoundedIcon from '@mui/icons-material/HourglassTopRounded';
+import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
+import QuizOutlinedIcon from '@mui/icons-material/QuizOutlined';
 import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
-import { useState } from 'react';
+import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
+import { useState, type ReactNode } from 'react';
 import type { CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
-import { radius } from '../../../shared/theme';
+import { fontWeight, radius } from '../../../shared/theme';
 import type { QuizProgress } from '../selectors/progress';
+import { ScoreTrendIndicator } from './ScoreTrendIndicator';
 import { SubjectScoreSummary } from './SubjectScoreSummary';
 import { PastAttemptsDialog } from './quiz/PastAttemptsDialog';
 import { QuizSetupDialog } from './quiz/QuizSetupDialog';
@@ -19,17 +24,42 @@ export interface GeneratedTestControls {
   onPrepare?: (quiz: Quiz) => void;
 }
 
+function Fact({ icon, label, children }: { icon: ReactNode; label: string; children: ReactNode }) {
+  return (
+    <Box sx={{ alignItems: 'center', display: 'flex', gap: 1, minWidth: 0, '& > svg': { color: 'primary.main' } }}>
+      {icon}
+      <Box sx={{ display: 'flex', flexDirection: 'column-reverse', minWidth: 0 }}>
+        <Typography component="dt" variant="caption" sx={{ color: 'text.secondary' }}>
+          {label}
+        </Typography>
+        <Typography
+          component="dd"
+          variant="subtitle1"
+          sx={{ alignItems: 'center', display: 'flex', fontWeight: fontWeight.semibold, gap: 0.75, m: 0 }}
+        >
+          {children}
+        </Typography>
+      </Box>
+    </Box>
+  );
+}
+
 /** A Subject Test or Mixed Test: a generated quiz with its own progress, kept apart from the subject's. */
 export function GeneratedTestCard({
   progress: { quiz, active, completionCount, latestScore, trend },
   description,
+  subjectCount,
   busy = false,
   attempts,
   onStart,
   onResume,
   onReview,
   onPrepare = () => undefined,
-}: GeneratedTestControls & { description: string }) {
+}: GeneratedTestControls & {
+  description: string;
+  /** Subjects the test draws from. When given, the card lists its facts in place of the score bar. */
+  subjectCount?: number;
+}) {
   const [setupOpen, setSetupOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const label = active ? 'Resume' : completionCount > 0 ? 'Retake' : 'Start';
@@ -113,7 +143,41 @@ export function GeneratedTestCard({
               </Button>
             </Stack>
           </Box>
-          <SubjectScoreSummary score={latestScore} trend={trend} activeCount={active ? 1 : 0} />
+          {subjectCount === undefined ? (
+            <SubjectScoreSummary score={latestScore} trend={trend} activeCount={active ? 1 : 0} />
+          ) : (
+            <Box
+              component="dl"
+              sx={{
+                borderTop: '1px solid',
+                borderColor: 'divider',
+                display: 'grid',
+                gap: 2,
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+                m: 0,
+                pt: 2,
+                '@container test-card (min-width: 480px)': {
+                  gap: 0,
+                  gridTemplateColumns: 'repeat(4, auto)',
+                  justifyContent: 'space-between',
+                },
+              }}
+            >
+              <Fact icon={<QuizOutlinedIcon aria-hidden="true" />} label="Questions">
+                {quiz.questionCount}
+              </Fact>
+              <Fact icon={<LayersOutlinedIcon aria-hidden="true" />} label="Subjects">
+                {subjectCount}
+              </Fact>
+              <Fact icon={<TimelineRoundedIcon aria-hidden="true" />} label="Latest score">
+                {latestScore === undefined ? '—' : `${latestScore}%`}
+                {trend && <ScoreTrendIndicator trend={trend} />}
+              </Fact>
+              <Fact icon={<HourglassTopRoundedIcon aria-hidden="true" />} label="In progress">
+                {active ? 1 : 0}
+              </Fact>
+            </Box>
+          )}
         </CardContent>
       </Card>
       {reviewOpen && (

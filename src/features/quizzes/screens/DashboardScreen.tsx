@@ -192,7 +192,13 @@ export function DashboardScreen({
           mixedTest &&
           !loading &&
           !sharedRecovery &&
-          !subjectsFailure && <GeneratedTestCard {...mixedTest} description="Randomized questions from all subjects" />
+          !subjectsFailure && (
+            <GeneratedTestCard
+              {...mixedTest}
+              description="Randomized questions from all subjects"
+              subjectCount={subjectStats.length}
+            />
+          )
         }
         subjectsActions={
           <SubjectFilterPill

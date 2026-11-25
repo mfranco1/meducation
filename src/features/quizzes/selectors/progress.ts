@@ -16,10 +16,10 @@ export interface QuizProgress {
 export interface SubjectStat {
   subject: Subject;
   quizCount: number;
-  /** Quizzes completed at least once. */
-  completedQuizCount: number;
   activeQuizCount: number;
   latestActiveAt?: string;
+  /** Questions answered in the most recently active quiz. `total` is unknown until its quiz catalog loads. */
+  latestActive?: { answered: number; total?: number };
   latest?: number;
   latestCompletedAt?: string;
   trend?: ReturnType<typeof scoreTrend>;
@@ -47,6 +47,9 @@ export function createProgressView(snapshot: ProgressState): ProgressView {
   return { snapshot, scoresByQuiz, scoresBySubject, activityAt: snapshot.activity };
 }
 
+const answeredCount = (attempt: Attempt) =>
+  Object.values(attempt.responses).filter((response) => response.selectedChoiceId).length;
+
 function trendFor(latest: RecentScore | undefined, scores: RecentScore[]) {
   const latestAttempt = mostRecentScore(scores);
   return latest &&
@@ -64,23 +67,29 @@ export function subjectStatsFor(
 ): SubjectStat[] {
   const quizIdsBySubject = new Map(membership?.map((item) => [item.id, item.quizIds]));
   return questionBank.listSubjects().map((subject) => {
-    const quizIds = quizIdsBySubject?.get(subject.id) ?? questionBank.listQuizzes(subject.id).map((quiz) => quiz.id);
+    const quizzes = questionBank.listQuizzes(subject.id);
+    const quizIds = quizIdsBySubject?.get(subject.id) ?? quizzes.map((quiz) => quiz.id);
     // The Subject Test counts toward activity and scores, but not toward the quiz counts.
     const studyIds = [...quizIds, subjectTestId(subject.id)];
     const activeQuizIds = studyIds.filter((quizId) => progress.snapshot.active[quizId] !== undefined);
     const latestScore = (quizId: string) => progress.snapshot.latestScores[quizId] ?? [];
     const latest = mostRecentScore(studyIds.flatMap(latestScore));
     const subjectScores = progress.scoresBySubject.get(subject.id) ?? [];
+    const activityAt = (quizId: string) => progress.activityAt[quizId] ?? '';
+    const latestActiveId = activeQuizIds.reduce<string | undefined>(
+      (latestId, quizId) => (latestId === undefined || activityAt(quizId) > activityAt(latestId) ? quizId : latestId),
+      undefined,
+    );
+    const latestAttempt = latestActiveId === undefined ? undefined : progress.snapshot.active[latestActiveId];
     return {
       subject,
       quizCount: quizIds.length,
-      completedQuizCount: quizIds.flatMap(latestScore).length,
       activeQuizCount: activeQuizIds.length,
-      latestActiveAt: activeQuizIds
-        .map((quizId) => progress.activityAt[quizId])
-        .filter((at): at is string => at !== undefined)
-        .sort()
-        .at(-1),
+      latestActiveAt: latestActiveId === undefined ? undefined : progress.activityAt[latestActiveId],
+      latestActive: latestAttempt && {
+        answered: answeredCount(latestAttempt),
+        total: latestAttempt.questionIds?.length ?? quizzes.find((quiz) => quiz.id === latestActiveId)?.questionCount,
+      },
       latest: latest?.percentage,
       latestCompletedAt: latest?.completedAt,
       trend: trendFor(latest, subjectScores),
@@ -99,7 +108,7 @@ export function quizProgressFor(progressView: ProgressView, quiz: Quiz): QuizPro
     latestScore: latest?.percentage,
     trend: trendFor(latest, scores),
     activityAt: progressView.activityAt[quiz.id],
-    answeredCount: active && Object.values(active.responses).filter((response) => response.selectedChoiceId).length,
+    answeredCount: active && answeredCount(active),
   };
 }
 

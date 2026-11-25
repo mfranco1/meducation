@@ -171,8 +171,22 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
   const catalogError = questionBank.getCatalogError();
   const subjectStats = useMemo<SubjectStat[]>(
     () => subjectStatsFor(questionBank, progressView, summaries),
-    [questionBank, progressView, summaries],
+    // The external-store version brings in quiz catalogs as they load.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [questionBank, progressView, summaries, contentSnapshotVersion],
   );
+  // Continue Studying needs the question count of each subject's latest active quiz, which is in its quiz catalog.
+  const subjectsMissingQuizzes =
+    session.view.page === 'dashboard'
+      ? subjectStats
+          .filter((stat) => stat.latestActive && stat.latestActive.total === undefined)
+          .map((stat) => stat.subject.id)
+          .join()
+      : '';
+  useEffect(() => {
+    for (const subjectId of subjectsMissingQuizzes ? subjectsMissingQuizzes.split(',') : [])
+      void questionBank.ensureQuizzes(subjectId).catch(() => undefined);
+  }, [questionBank, subjectsMissingQuizzes]);
   const { averageLatest, personalLowest, personalLowestSubject } = dashboardScoreSummary(subjectStats, progressView);
   const mixedQuestionCount = summaries.reduce((total, { questionCount }) => total + questionCount, 0);
   const currentSubject = session.view.page === 'subject' ? session.view.subject : undefined;

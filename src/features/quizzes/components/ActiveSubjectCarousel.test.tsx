@@ -9,15 +9,15 @@ const stats: SubjectStat[] = [
   {
     subject: { id: 'biochem', name: 'Biochemistry', accent: '#b9511b' },
     quizCount: 8,
-    completedQuizCount: 3,
     activeQuizCount: 1,
+    latestActive: { answered: 12, total: 40 },
     latest: 74,
   },
   {
     subject: { id: 'physio', name: 'Physiology', accent: '#b9511b' },
     quizCount: 6,
-    completedQuizCount: 0,
     activeQuizCount: 2,
+    latestActive: { answered: 1 },
   },
 ];
 
@@ -52,11 +52,11 @@ describe('ActiveSubjectCarousel', () => {
 
     const biochemistry = centeredCard();
     expect(biochemistry).toHaveAccessibleName('Continue studying Biochemistry');
-    expect(biochemistry).toHaveAccessibleDescription('1 quiz in progress 3 of 8 quizzes completed');
-    expect(within(biochemistry).getByText('3 of 8 quizzes completed')).toBeVisible();
+    expect(biochemistry).toHaveAccessibleDescription('1 quiz in progress 12 of 40 questions answered');
+    expect(within(biochemistry).getByText('12 of 40 questions answered')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
     expect(centeredCard()).toHaveAccessibleName('Continue studying Physiology');
-    expect(centeredCard()).toHaveAccessibleDescription('2 quizzes in progress 0 of 6 quizzes completed');
+    expect(centeredCard()).toHaveAccessibleDescription('2 quizzes in progress 1 question answered');
     fireEvent.click(screen.getByRole('button', { name: 'Next active subject' }));
     expect(centeredCard()).toHaveAccessibleName('Continue studying Biochemistry');
     fireEvent.click(screen.getByRole('button', { name: 'Previous active subject' }));

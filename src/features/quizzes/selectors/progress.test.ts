@@ -82,13 +82,13 @@ describe('learner progress selectors', () => {
     const stats = subjectStatsFor(bank, progress);
     expect(stats[0]).toMatchObject({
       quizCount: 2,
-      completedQuizCount: 1,
       activeQuizCount: 1,
       latest: 80,
       trend: 'increase',
     });
     expect(stats[0].latestActiveAt).toBe('2026-09-03T00:00:00.000Z');
-    expect(stats[1]).toMatchObject({ quizCount: 1, completedQuizCount: 0, activeQuizCount: 0 });
+    expect(stats[0].latestActive).toEqual({ answered: 0, total: bank.listQuizzes('s1')[1]!.questionCount });
+    expect(stats[1]).toMatchObject({ quizCount: 1, activeQuizCount: 0 });
   });
 
   it('derives dashboard statistics from subject membership before quiz catalogs load', () => {
@@ -144,7 +144,6 @@ describe('learner progress selectors', () => {
     });
     expect(subjectStatsFor(bank, withTest)[1]).toMatchObject({
       quizCount: 1,
-      completedQuizCount: 0,
       activeQuizCount: 1,
       latestActiveAt: '2026-09-05T00:00:00.000Z',
       latest: 10,
@@ -171,7 +170,6 @@ describe('learner progress selectors', () => {
     const subject = (id: string, name: string, latest?: number) => ({
       subject: { id, name },
       quizCount: 1,
-      completedQuizCount: 0,
       activeQuizCount: 0,
       latest,
       latestCompletedAt: latest === undefined ? undefined : '2026-09-02T00:00:00.000Z',
@@ -194,21 +192,18 @@ describe('active subject stats', () => {
     const newer = {
       subject: { ...subject, id: 'newer', name: 'Newer' },
       quizCount: 2,
-      completedQuizCount: 0,
       activeQuizCount: 1,
       latestActiveAt: '2026-09-22T10:00:00.000Z',
     };
     const inactive = {
       subject: { ...subject, id: 'inactive', name: 'Inactive' },
       quizCount: 2,
-      completedQuizCount: 0,
       activeQuizCount: 0,
       latestActiveAt: '2026-09-23T10:00:00.000Z',
     };
     const older = {
       subject: { ...subject, id: 'older', name: 'Older' },
       quizCount: 2,
-      completedQuizCount: 0,
       activeQuizCount: 1,
       latestActiveAt: '2026-09-21T10:00:00.000Z',
     };
@@ -220,14 +215,12 @@ describe('active subject stats', () => {
     const first = {
       subject: { ...subject, id: 'first', name: 'First' },
       quizCount: 2,
-      completedQuizCount: 0,
       activeQuizCount: 1,
       latestActiveAt: '2026-09-22T10:00:00.000Z',
     };
     const second = {
       subject: { ...subject, id: 'second', name: 'Second' },
       quizCount: 2,
-      completedQuizCount: 0,
       activeQuizCount: 1,
       latestActiveAt: '2026-09-22T10:00:00.000Z',
     };
