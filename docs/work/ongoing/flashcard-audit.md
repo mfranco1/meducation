@@ -45,17 +45,17 @@ Tracker for each subject: `<slug>-flashcards.md` in this folder.
 | Legal Medicine (all staged, user publishes; tracker removed) | 7 |
 | Microbiology & Parasitology (all staged, user publishes; tracker removed) | 9 |
 | Obstetrics & Gynecology (all staged, user publishes; tracker removed) | 7 |
-| [Physiology](physiology-flashcards.md) | 11 |
+| Physiology (all staged, user publishes; tracker removed) | 11 |
 | Pharmacology (all staged, user publishes; tracker removed) | 15 |
-| [Pediatrics](pediatrics-flashcards.md) | 14 |
+| Pediatrics (all staged, user publishes; tracker removed) | 14 |
+| Pathology (all staged, user publishes; tracker removed) | 27 |
+| Preventive Medicine (all staged, user publishes; tracker removed) | 10 |
 
 ### Top-up
 
 | Subject | Topics |
 | --- | --- |
 | [Internal Medicine](internal-medicine-flashcards.md) | 19 |
-| [Preventive Medicine](preventive-medicine-flashcards.md) | 10 |
-| [Pathology](pathology-flashcards.md) | 27 |
 | [Surgery](surgery-flashcards.md) | 26 |
 
 ### Audit
