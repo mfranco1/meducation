@@ -14,9 +14,6 @@ export type ReadOnlyFeedbackStatus = 'correct' | 'incorrect' | 'unanswered' | 'u
 function ExplanationContent({ question }: { question: Question }) {
   return (
     <Box sx={{ maxWidth: '72ch' }}>
-      <Typography variant="overline" sx={{ display: 'block', mb: 1, color: 'text.secondary' }}>
-        Explanation
-      </Typography>
       <MarkdownContent markdown={question.rationale} contentKind="rich" />
     </Box>
   );
