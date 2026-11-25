@@ -50,13 +50,13 @@ Tracker for each subject: `<slug>-flashcards.md` in this folder.
 | Pediatrics (all staged, user publishes; tracker removed) | 14 |
 | Pathology (all staged, user publishes; tracker removed) | 27 |
 | Preventive Medicine (all staged, user publishes; tracker removed) | 10 |
+| [Surgery](surgery-flashcards.md) | 26 |
 
 ### Top-up
 
 | Subject | Topics |
 | --- | --- |
 | [Internal Medicine](internal-medicine-flashcards.md) | 19 |
-| [Surgery](surgery-flashcards.md) | 26 |
 
 ### Audit
 

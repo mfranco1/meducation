@@ -221,6 +221,7 @@ export const theme = createTheme({
       styleOverrides: { circle: { strokeLinecap: 'round' } },
     },
     MuiButton: {
+      defaultProps: { disableElevation: true },
       styleOverrides: { root: { borderRadius: radius.control, padding: '9px 16px' }, sizeLarge: { fontSize: '1rem' } },
     },
     MuiToggleButton: {

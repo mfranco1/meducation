@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import StyleOutlinedIcon from '@mui/icons-material/StyleOutlined';
-import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
+import LeaderboardOutlinedIcon from '@mui/icons-material/LeaderboardOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import type { Subject } from '../../../domain/types';
 import type { FlashcardDashboardSubject } from '../selectors/flashcards';
@@ -115,7 +115,7 @@ export function FlashcardsDashboardScreen({
             <StatCard
               label="Average"
               accessibleLabel="Average flashcard deck finishes per day"
-              icon={<BarChartOutlinedIcon aria-hidden="true" focusable="false" />}
+              icon={<LeaderboardOutlinedIcon aria-hidden="true" focusable="false" />}
               value={metric(stats.averagePerDay)}
               supportingText="decks / day"
             />

@@ -1,6 +1,6 @@
 import { Box, Button, Stack, Typography } from '@mui/material';
 import MenuBookOutlinedIcon from '@mui/icons-material/MenuBookOutlined';
-import BarChartOutlinedIcon from '@mui/icons-material/BarChartOutlined';
+import LeaderboardOutlinedIcon from '@mui/icons-material/LeaderboardOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -225,7 +225,7 @@ export function DashboardScreen({
                 <StatCard
                   label="Average"
                   accessibleLabel="Average quiz score"
-                  icon={<BarChartOutlinedIcon aria-hidden="true" focusable="false" />}
+                  icon={<LeaderboardOutlinedIcon aria-hidden="true" focusable="false" />}
                   supportingText="correct"
                   value={null}
                 />
@@ -243,7 +243,7 @@ export function DashboardScreen({
                   label="Average"
                   accessibleLabel="Average quiz score"
                   supportingText="correct"
-                  icon={<BarChartOutlinedIcon fontSize="inherit" aria-hidden="true" focusable="false" />}
+                  icon={<LeaderboardOutlinedIcon fontSize="inherit" aria-hidden="true" focusable="false" />}
                   onRetry={onRetry}
                 />
                 <StatFailure
@@ -259,7 +259,7 @@ export function DashboardScreen({
                 <StatCard
                   label="Average"
                   accessibleLabel="Average quiz score"
-                  icon={<BarChartOutlinedIcon fontSize="inherit" aria-hidden="true" focusable="false" />}
+                  icon={<LeaderboardOutlinedIcon fontSize="inherit" aria-hidden="true" focusable="false" />}
                   supportingText="correct"
                   value={statsLoading ? null : averageLatest === undefined ? '—' : <ScoreValue value={averageLatest} />}
                 />

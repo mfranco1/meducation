@@ -77,7 +77,7 @@ Never pass a number to `borderRadius` in `sx`: it multiplies the theme radius.
 | `control` | buttons, toggles, inputs, nav items, list rows, answer choices, navigator tiles, bordered groups inside a card |
 | `badge` | pale square behind an icon |
 | `card` | cards, panels, dialogs, toasts, images, tables (theme default) |
-| `feature` | Continue Studying card, large empty-state badge |
+| `feature` | large empty-state badge, Continue Studying card (see exceptions) |
 | `pill` | progress bars, segmented filters |
 
 Circles (`'50%'`) are for dots, rings and round buttons only.
@@ -85,7 +85,8 @@ Circles (`'50%'`) are for dots, rings and round buttons only.
 - Borders: `divider` for card edges, separators and rules; `feedback.choiceBorder` for interactive outlines such as unselected choices and tiles; `primary.main` for selected and current; feedback tones for correctness. Hairlines are 1px, emphasis rules (pearls, blockquotes) 3px on the left.
 - Shadows: `shadow.card` for resting cards, `shadow.raised` for toasts and carousel arrows, `shadow.overlay` for bars over content, `shadow.currentRing` for the current item.
 - Focus: spread `focusRing` into the focus-visible rule; use `focusRingInset` where the parent clips overflow.
-- Deliberate exceptions: flashcard faces (`radius.flashcard`, with a layered thickness shadow and the gold momentum glow), celebration cards, the results score ring, and the landing page's rules-not-cards layout.
+- Buttons are flat; the theme turns off MUI elevation.
+- Deliberate exceptions: the Continue Studying card (`feature` radius, 2px white border, gradient, `shadow.overlay`), flashcard faces (`radius.flashcard`, with a layered thickness shadow and the gold momentum glow), celebration cards, the results score ring, and the landing page's rules-not-cards layout.
 
 ## Motion
 
@@ -123,7 +124,7 @@ Motion confirms an action, shows where something went, or marks an achievement. 
 ## Landing page
 
 - A frame around unmodified product components; the samples behave like the real study screens, including keyboard shortcuts.
-- Rules, not cards, group page content: 1px hairlines between sections and inside grids. 12-column grid at `md` and up, a single column below. Buttons are flat.
+- Rules, not cards, group page content: 1px hairlines between sections and inside grids. 12-column grid at `md` and up, a single column below.
 - Orange marks actions, the brand and the current tile.
 - FAQ answers shared with the Help dialog come from `faqs` in `HelpDialog.tsx`.
 

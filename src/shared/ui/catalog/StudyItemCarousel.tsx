@@ -23,7 +23,7 @@ const MIN_LOOP_SLIDES = 5;
 /** Callers pass items most recent first; only these many are kept. */
 const MAX_ITEMS = 5;
 /** Room around the cards for their shadow, which the viewport would otherwise clip, in px. */
-const SHADOW_ROOM = 24;
+const SHADOW_ROOM = 32;
 
 /** Blocks the browser's swipe-back navigation for any wheel gesture with a real horizontal part. */
 function preventHorizontalWheel(event: WheelEvent) {
@@ -196,7 +196,8 @@ export function StudyItemCarousel<T>({
           data-carousel-id={id}
           sx={{
             boxSizing: 'border-box',
-            overflow: 'hidden',
+            // A single card fills the viewport, so clipping would cut its shadow at the sides.
+            overflow: single ? 'visible' : 'hidden',
             // The shadow room hangs outside the layout box, so the cards align with what sits beside the carousel.
             my: `-${SHADOW_ROOM}px`,
             py: `${SHADOW_ROOM}px`,

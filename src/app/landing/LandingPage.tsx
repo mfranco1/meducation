@@ -376,7 +376,6 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
           </Box>
           <Button
             variant="contained"
-            disableElevation
             {...startProps('header')}
             sx={{
               ...startLoading,
@@ -444,7 +443,6 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                   ref={heroCta}
                   variant="contained"
                   size="large"
-                  disableElevation
                   {...startProps('hero')}
                   sx={{ ...startButton, ...startLoading }}
                 >
@@ -712,7 +710,6 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               ref={closingCta}
               variant="contained"
               size="large"
-              disableElevation
               {...startProps('closing')}
               sx={{ px: 3, py: 1.5, ...startLoading }}
             >
