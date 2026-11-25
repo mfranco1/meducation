@@ -19,6 +19,8 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Skin: 8 items (4/4). Backlog 0.
 - Eye: 9 items (5/4). Backlog 1 (Glaucoma, Retina, Optic Nerve, and Intraocular Tumors).
 - Lung and Pleura: 3 items (1/2). Backlog 0. Most rows were staged, clued or unranked by a primary source.
+- Lower Urinary and Male Genital Tract: 7 items (3/4). Backlog 0. Most rows were staged or clued.
+- Peripheral Nerves and Skeletal Muscle: 8 items (4/4). Backlog 0.
 
 ## Next
 

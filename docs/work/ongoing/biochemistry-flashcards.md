@@ -4,7 +4,7 @@ Subject `Biochemistry`, work dir `var/flashcard-work/biochemistry/`, audit-only 
 
 ## Status
 
-Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 decks (`plan.json`; the Top-ups below are its source). Done: Genetics and Inheritance; Minerals and Trace Elements. Next: Cell Biology and Biochemical Techniques.
+Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 decks (`plan.json`; the Top-ups below are its source). Done: Genetics and Inheritance; Minerals and Trace Elements; Cell Biology and Biochemical Techniques; Nucleic Acid Structure; DNA, RNA and Molecular Biology; Lipid Metabolism; Nucleotide Metabolism; Heme, Alcohol and Other Metabolism; Metabolic Integration and Hormones; Inborn Errors of Metabolism and Storage Diseases; Immunology; Carbohydrate and Lipid Structure. Next: Enzymes and Bioenergetics, Nutrition, Vitamin Basics and Fat-Soluble Vitamins, Water-Soluble Vitamins.
 
 ## Carried over
 
@@ -35,6 +35,16 @@ Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 deck
 
 - Immunology: 5 edits (NK cell as the cytotoxic innate lymphocyte since ILCs exist, EGPA formerly Churg-Strauss per Chapel Hill 2012, gonorrhea removed from asplenia pathogens, barriers split from cells, myeloma front), 45 duplicate or trivia deletes (C2 "most common complement deficiency worldwide" was unsupported). 143 to 98 cards.
 - Genetics and Inheritance top-up: new decks Inheritance Patterns and Population Genetics (33) and Chromosomal Disorders (30). 36 to 99 cards.
+- Lipid Metabolism top-up: Lipoprotein Metabolism and Dyslipidemias +9 drug cards per 2026 ACC/AHA (statin intensity, ezetimibe, PCSK9 antibodies, inclisiran, bempedoic acid, sequestrants, gemfibrozil, statin muscle symptoms; niacin card dropped as a duplicate). 117 to 126 cards.
+- Nucleotide Metabolism top-up: Purine and Pyrimidine Synthesis +5 (hydroxyurea, leflunomide, azathioprine activation, TPMT, CPIC 2025 poor-metabolizer dosing), Purine Salvage, Degradation and Disorders +5 (ACR 2020 urate-lowering indications, allopurinol first line, urate below 6 mg/dL, HLA-B*58:01, flare prophylaxis). 81 to 91 cards.
+- Heme, Alcohol and Other Metabolism top-up: Heme Synthesis and Porphyrias +7 (CDC blood lead reference value 3.5 µg/dL, exposure sources, basophilic stippling, succimer above 45 µg/dL, BAL plus edetate above 70 µg/dL per labels, givosiran per AGA 2023). 99 to 106 cards.
+- Metabolic Integration and Hormones top-up: Insulin, Glucagon and Fed-Fasting States +8 (ADA 2026 hypoglycemia levels, Whipple triad and endogenous hyperinsulinism criteria per Endocrine Society 2009, symptoms, counterregulation), Thyroid Hormone Parameters +10 (synthesis, Wolff-Chaikoff, deiodinases, thionamides, TBG). 51 to 69 cards.
+- Inborn Errors of Metabolism and Storage Diseases top-up: Aminoacidopathies +5 (Philippine expanded NBS per DOH AO 2020-0052 and Padilla 2022, sampling after 24 h, recall for confirmation, metabolic crisis first steps and tests). 146 to 151 cards.
+- Immunology top-up: Immune Cells and Immunity +8 cytokine cards (IL-1/IL-6/TNF, IL-2, IL-4 and dupilumab, IL-5 and mepolizumab, IL-12/23 and ustekinumab, IL-17 and secukinumab per labels; IL-10/TGF-beta; type I interferons). 98 to 106 cards.
+- Carbohydrate and Lipid Structure top-up: Glucose Utilization and Transporters +5 (SGLT2 inhibitors, GLUT4 by contraction vs insulin, GLUT1 deficiency per Klepper 2020 x2, GLUT2 beta-cell sensing). 143 to 148 cards.
+- Cell Biology and Biochemical Techniques top-up: Molecular Biology Techniques +6 (cDNA cloning, RT-PCR, recombinant insulin, siRNA, antisense, CRISPR-Cas9). 86 to 92 cards.
+- Nucleic Acid Structure top-up: Histones and Chromatin +7 (DNMTs and SAM, MBD-HDAC silencing, HDACs, H3K4me3 vs H3K9me3/H3K27me3, XIST in cis, Barr bodies, decitabine vs vorinostat per current labels). 98 to 105 cards.
+- DNA, RNA and Molecular Biology top-up: DNA Replication and Repair +5 (telomeres, telomerase, dyskeratosis congenita), Transcription and RNA Processing +8 (lac operon, Pol I, TBP, enhancers, alpha-amanitin). 154 to 167 cards.
 - Minerals and Trace Elements top-up: Iron Metabolism +8 (iron poisoning per AAPCC 2005 and the deferoxamine label), Macrominerals, Selenium and Other Trace Elements +10 (calcium, phosphorus, magnesium, iodine). 71 to 89 cards.
 
 ## Unverified (check before publishing)
@@ -61,23 +71,22 @@ Phase: Top-up. In progress: none. Plan approved 2026-11-24: 204 cards in 22 deck
 - Immunology, left unedited: WBC differential ranges (f-cd4fc4f3; sources differ on neutrophil %); complement cards and IgM primary response checked against no document; HLA-DR4 listing Hashimoto (f-fcf19a9d); HLA-B27 PAIR card (f-6d7767bf) confirmed for ankylosing spondylitis only; "Goodpasture syndrome" on f-a3b2725c (Chapel Hill 2012 says anti-GBM disease). C2 deficiency no longer has a card; add one only with a source for its ranking.
 - Genetics and Inheritance top-up: Down syndrome recurrence (about 1% after free trisomy 21, 10 to 15% for a maternal 14;21 carrier, 21;21 about 100%) and Turner X loss "usually paternal" from textbooks only; ACOG PB 226 cell-free DNA follow-up card rests on a third-party PDF copy.
 - Minerals and Trace Elements top-up: no iron poisoning card on radiopaque tablets, serum iron timing or thresholds, or dose bands other than 40 mg/kg (AAPCC 2005 is out-of-hospital and gives none). Chvostek and Trousseau signs card from textbook knowledge only.
+- Nucleic Acid Structure top-up: XIST coating in cis and Barr body count from textbook knowledge only.
+- DNA, RNA and Molecular Biology top-up: all 5 telomere cards from textbook knowledge (only a narrative review opened, to 100k of 174k characters); lacI constitutive and super-repressor cards and alpha-amanitin/Pol II not found in the chapters read.
+- Cell Biology and Biochemical Techniques top-up: siRNA (Dicer, RISC) and antisense (RNase H) cards from textbook knowledge only (PMC blocked).
+- Nucleotide Metabolism top-up: leflunomide/DHODH card from textbook knowledge only. No pegloticase or G6PD testing card.
+- Heme top-up: basophilic stippling (pyrimidine 5'-nucleotidase) card from textbook knowledge only.
+- Metabolic Integration top-up: counterregulation order, androgens lowering TBG, D3 in placenta and high-dose propranolol from textbook knowledge only; ADA 2026 and Cryer 2009 read to 100k characters.
+- Inborn Errors top-up: NBS sampling time from newbornscreening.ph only; metabolic crisis cards from textbook knowledge.
+- Immunology top-up: IL-2, IL-12 and TGF-beta facts from textbook knowledge only.
+- Carbohydrate and Lipid Structure top-up: SGLT2 inhibitor mechanism not checked against a label.
 
 ## Top-ups
 
 - Water-Soluble Vitamins: Riboflavin subtopic has 2 cards by heuristic (7 questions); confirm with a grep of `fronts.txt`.
 
-- Cell Biology and Biochemical Techniques: Gene Editing and Gene Silencing (12 questions), Cloning and Recombinant DNA (12) and Blotting Techniques (12) look thin by heuristic; confirm with a grep of `fronts.txt`.
-- Thyroid Hormone Parameters is SMALL (7 cards).
-- Glucose Utilization and Transporters is SMALL (12 cards).
 - Nutrition: Refeeding Syndrome has 0 cards (8 questions); Human Milk Composition, Breastfeeding Benefits and Contraindications and Malabsorption Syndromes have 1 to 2 cards each.
 - Enzyme Inhibition is SMALL (11 cards); it lost its only noncompetitive inhibition example.
 - Vitamin D (16 cards) lost its only 25(OH)D level card; add one on deficiency cutoffs labelled by body (Endocrine Society 2024 sets none) and on who to test.
-- Nucleic Acid Structure: Epigenetic Modification (12 questions, 0 cards), RNA Types and Structure (14 questions, 1 card), DNA Forms (3 cards) and Chargaff's Rules and DNA Denaturation (5 cards) look thin by heuristic; confirm with a grep of `fronts.txt`.
-- DNA, RNA and Molecular Biology: Telomeres and Telomerase has 1 card (5 questions; confirmed by grep). RNA Polymerases and Promoters (3 cards, 10 questions) and Gene Regulation and the Lac Operon (4 cards, 10 questions) look thin by heuristic.
-- Lipid Metabolism: Lipid-Lowering Drugs (7 questions) has only statin mechanism and fibrate cards (no ezetimibe, PCSK9 inhibitors, bempedoic acid, statin intensity); LDL and HDL Metabolism (8 questions, 2 cards) and Apolipoproteins (7 questions) look thin by heuristic. Check drugs against the current ACC/AHA dyslipidemia guideline.
+- Nucleic Acid Structure: RNA Types and Structure (14 questions, 1 card), DNA Forms (3 cards) and Chargaff's Rules and DNA Denaturation (5 cards) look thin by heuristic; confirm with a grep of `fronts.txt`.
 - Amino Acid and Protein Metabolism: Transamination and Oxidative Deamination (12 questions, 5 cards) and One-Carbon Metabolism and S-Adenosylmethionine (11 questions, 8 cards) look thin by heuristic.
-- Nucleotide Metabolism: Antimetabolite Drugs (17 questions) shows 0 cards, a false zero (5-FU, methotrexate, mycophenolate, allopurinol and febuxostat mechanism cards exist), but there are no hydroxyurea, leflunomide or 6-mercaptopurine/TPMT cards. Purine Degradation and Gout has no urate-lowering therapy or HLA-B*58:01 testing card; check against ACR 2020.
-- Heme, Alcohol and Other Metabolism: Lead Poisoning (12 questions, 3 cards; no blood lead reference value or chelation card, use current CDC guidance) and Inherited Hyperbilirubinemias (13 questions, 2 cards by heuristic, likely a false low) look thin. No givosiran card for recurrent acute hepatic porphyria attacks (AGA 2023).
-- Metabolic Integration and Hormones: Hypoglycemia Biochemistry (12 questions, 1 card; no ADA level 1/2/3 thresholds, Whipple triad or insulinoma criteria per Endocrine Society), Prolonged Starvation (12 questions, 2 cards) and Tissue Fuel Preferences (11 questions, 4 cards) look thin by heuristic.
-- Inborn Errors of Metabolism and Storage Diseases: Peroxisomal Disorders (7 questions, 1 card) and Approach to Metabolic Crisis and Newborn Screening (6 questions, 4 cards; no Philippine expanded NBS panel card) look thin by heuristic. Sphingolipidoses shows 4 cards for 13 questions, likely a false low.
-- Immunology: Cytokines (13 questions, 2 cards) looks thin by heuristic; MHC and HLA Associations subtopic (16 questions, 5 cards) is likely a false low.

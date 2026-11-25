@@ -57,7 +57,7 @@ The rationale does most of the teaching, and learners skim it on a phone. Make i
 
 1. **Answer and key reasoning**: open with the correct answer in bold and the reasoning that reaches it, in 1 to 3 sentences. Bold the discriminating findings. A calculation opens with the bolded answer, not the formula.
 2. **Core teaching**: a table whenever 2 or more entities are compared on 2 or more features (look-alike diagnoses, drug choices, thresholds, staging levels, lab patterns). A numbered list for sequences (an algorithm, a work-up, a calculation). Only facts a standard reference states.
-3. **Other choices**: one bullet per distractor, starting with the choice's content in bold, then why it's wrong or what it fits instead. Never refer to choices by letter.
+3. **Other choices**: one bullet per distractor, starting with the choice's content in bold, then why it's wrong or what it fits instead. Never refer to choices by letter. In a ranking item, take each share or rank from a cited source; without one, say only that it is less common than the key (an unsourced "rare" or "more than the others combined" is an unsupported claim).
 
 **Formatting**:
 

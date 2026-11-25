@@ -40,7 +40,7 @@ Tracker for each subject: `<slug>-flashcards.md` in this folder.
 
 ### Publish check
 
-None yet.
+None.
 
 ### Top-up
 
@@ -55,7 +55,6 @@ None yet.
 | [Microbiology & Parasitology](microbiology-parasitology-flashcards.md) | 9 |
 | [Biochemistry](biochemistry-flashcards.md) | 21 |
 | [Physiology](physiology-flashcards.md) | 11 |
-| [Anatomy & Histology](anatomy-histology-flashcards.md) | 14 |
 | [Legal Medicine](legal-medicine-flashcards.md) | 7 |
 
 ### Audit
