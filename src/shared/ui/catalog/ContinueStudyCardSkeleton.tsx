@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
 import { radius } from '../../theme';
-import { continueCardBackground } from './ContinueStudyCard';
+import { continueCardBackground, tallHero } from './ContinueStudyCard';
 
 export function ContinueStudyCardSkeleton() {
   return (
@@ -23,6 +23,7 @@ export function ContinueStudyCardSkeleton() {
         '@container continue-card (min-width: 478px)': { minHeight: 156, px: 3, py: 2 },
         '@container continue-card (min-width: 638px)': { minHeight: 160, px: 4, py: 2.5 },
         '@container continue-card (max-width: 297px)': { px: 2, py: 1.5 },
+        [tallHero]: { display: 'flex', flexDirection: 'column', justifyContent: 'center', minHeight: 280, px: 3.5 },
       }}
     >
       <LoadingSkeleton variant="text" width="34%" height={27} />

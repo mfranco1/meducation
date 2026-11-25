@@ -6,7 +6,7 @@ export function StudyDashboardLayout({
   title,
   summary,
   continueStudying,
-  beforeSubjects,
+  feature,
   children,
   subjectsHeading = 'All Subjects',
   subjectsActions,
@@ -14,7 +14,8 @@ export function StudyDashboardLayout({
   title?: string;
   summary?: ReactNode;
   continueStudying?: ReactNode;
-  beforeSubjects?: ReactNode;
+  /** A card shown beside Continue Studying under the stats on wide widths, such as the Mixed Test. */
+  feature?: ReactNode;
   children: ReactNode;
   subjectsHeading?: string;
   subjectsActions?: ReactNode;
@@ -27,29 +28,59 @@ export function StudyDashboardLayout({
         </Typography>
       )}
       {continueStudying ? (
-        // With Continue Studying, the stats share its row on wide widths (see StatCardRow).
-        <Box sx={{ containerName: 'study-hero', containerType: 'inline-size', mb: 4 }}>
+        // On wide widths Continue Studying is tall on the left. With a feature, the stats strip and the feature
+        // share the right column; without one, the stats stack into a narrow panel (see StatCardRow).
+        <Box
+          sx={{
+            containerName: feature ? 'study-hero' : 'study-hero study-hero-panel',
+            containerType: 'inline-size',
+            mb: 4,
+          }}
+        >
           <Box
             sx={{
-              display: 'flex',
-              flexDirection: 'column',
+              display: 'grid',
+              gridTemplateColumns: 'minmax(0, 1fr)',
               gap: { xs: 2, sm: 3 },
               '& .stat-card-row': { mb: 0 },
               '@container study-hero (min-width: 960px)': {
-                alignItems: 'stretch',
-                flexDirection: 'row-reverse',
-                gap: 5,
+                columnGap: 4,
+                rowGap: 2,
+                '& > .hero-summary': { gridArea: 'summary' },
+                '& > .hero-continue': { gridArea: 'continue' },
+                '& > .hero-feature': { gridArea: 'feature' },
+                ...(feature
+                  ? {
+                      gridTemplateAreas: '"continue summary" "continue feature"',
+                      gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)',
+                      gridTemplateRows: 'auto 1fr',
+                    }
+                  : {
+                      gridTemplateAreas: '"continue summary"',
+                      gridTemplateColumns: 'minmax(0, 1fr) 280px',
+                    }),
               },
             }}
           >
-            <Box sx={{ '@container study-hero (min-width: 960px)': { flex: '0 0 280px', py: 0.5 } }}>{summary}</Box>
-            <Box sx={{ flex: '1 1 auto', minWidth: 0 }}>{continueStudying}</Box>
+            <Box className="hero-summary" sx={{ minWidth: 0 }}>
+              {summary}
+            </Box>
+            <Box className="hero-continue" sx={{ minWidth: 0 }}>
+              {continueStudying}
+            </Box>
+            {feature && (
+              <Box className="hero-feature" sx={{ display: 'flex', minWidth: 0 }}>
+                {feature}
+              </Box>
+            )}
           </Box>
         </Box>
       ) : (
-        summary
+        <>
+          {summary}
+          {feature && <Box sx={{ mb: 4 }}>{feature}</Box>}
+        </>
       )}
-      {beforeSubjects && <Box sx={{ mb: 4 }}>{beforeSubjects}</Box>}
       <Box
         sx={{
           display: 'flex',

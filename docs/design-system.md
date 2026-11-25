@@ -112,6 +112,7 @@ Motion confirms an action, shows where something went, or marks an achievement. 
 
 - Quiz, Browse, Review and flashcard study share the progress header and a right-aligned Previous/Next footer. The quiz or deck name is the screen's h1.
 - Dashboard layout uses container queries on the content width, not viewport breakpoints, because the rail changes the available width.
+- On wide dashboards Continue Studying stands tall on the left. The Quizzes dashboard puts the stats strip and the Mixed Test card beside it; Flashcards, with no Mixed Test, stacks the stats into a narrow panel. Narrower widths stack stats, Continue Studying, then the Mixed Test.
 - Collapsed rail items keep accessible names and tooltips. Decorative progress tracks have a visible percentage as their accessible equivalent.
 - Empty states are transparent and borderless: one concise heading and the logo on a pale rounded square, with a single action only when it resolves the state.
 - Loading keeps the header and layout visible and shows placeholders shaped like the real rows, `aria-busy` and outside the focus order.

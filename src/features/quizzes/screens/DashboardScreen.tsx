@@ -188,13 +188,11 @@ export function DashboardScreen({
         />
       )}
       <StudyDashboardLayout
-        beforeSubjects={
+        feature={
           mixedTest &&
           !loading &&
           !sharedRecovery &&
-          !subjectsFailure && (
-            <GeneratedTestCard {...mixedTest} description="Questions from every subject and topic, new each time" />
-          )
+          !subjectsFailure && <GeneratedTestCard {...mixedTest} description="Randomized questions from all subjects" />
         }
         subjectsActions={
           <SubjectFilterPill

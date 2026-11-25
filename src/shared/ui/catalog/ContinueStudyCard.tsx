@@ -6,6 +6,9 @@ import { reducedMotion } from '../motion';
 import { focusRingInset, radius } from '../../theme';
 import { ProgressTrack } from './SubjectProgressSummary';
 
+/** The wide dashboard hero, where the card stands tall beside the stats. */
+export const tallHero = '@container study-hero (min-width: 960px)';
+
 export const continueCardBackground = ({ palette }: Theme) =>
   `linear-gradient(110deg, ${palette.background.default} 0%, ${palette.background.paper} 58%, ${palette.primary.light} 100%)`;
 
@@ -77,6 +80,8 @@ export function ContinueStudyCard({
           '@container continue-card (min-width: 638px)': {
             '& .continue-study-action': { minHeight: 160, px: '32px', py: '20px' },
           },
+          // Tall beside the stats in the wide dashboard hero (see StudyDashboardLayout).
+          [tallHero]: { '& .continue-study-action': { minHeight: 280, px: '28px', py: '24px' } },
         },
         ...customSx,
       ]}
@@ -96,6 +101,7 @@ export function ContinueStudyCard({
           '& svg, & img': { display: 'block', height: '100%', width: '100%' },
           '@container continue-card (min-width: 478px) and (max-width: 637px)': { width: '44%' },
           '@container continue-card (max-width: 477px)': { opacity: 0.22, width: 145 },
+          [tallHero]: { opacity: 1, width: '70%' },
         }}
       >
         {illustration}
@@ -133,6 +139,7 @@ export function ContinueStudyCard({
           '@container continue-card (max-width: 477px)': {
             '& .continue-study-copy': { width: '100%' },
           },
+          [tallHero]: { alignItems: 'center', '& .continue-study-copy': { width: '58%' } },
         }}
       >
         <Box className="continue-study-copy" sx={{ minWidth: 0 }}>

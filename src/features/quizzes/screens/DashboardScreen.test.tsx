@@ -262,7 +262,7 @@ describe('Mixed Test card', () => {
         <DashboardScreen attempts={[]} subjectStats={[]} mixedTest={controls(false)} onSelectSubject={() => {}} />
       </ThemeProvider>,
     );
-    expect(screen.getByText('300 questions')).toBeVisible();
+    expect(screen.queryByText('1 in progress')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Mixed Test' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(onStart).toHaveBeenCalledWith(quiz, 'immediate', true);
@@ -271,6 +271,7 @@ describe('Mixed Test card', () => {
         <DashboardScreen attempts={[]} subjectStats={[]} mixedTest={controls(true)} onSelectSubject={() => {}} />
       </ThemeProvider>,
     );
+    expect(screen.getByText('1 in progress')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: 'Resume quiz: Mixed Test' }));
     expect(onResume).toHaveBeenCalledWith(quiz);
   });

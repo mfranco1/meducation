@@ -151,7 +151,7 @@ export function StudyItemCarousel<T>({
       ref={setRoot}
       component="section"
       aria-labelledby={headingId}
-      sx={{ containerName: 'study-carousel', containerType: 'inline-size', position: 'relative' }}
+      sx={{ containerName: 'study-carousel', containerType: 'inline-size', height: '100%', position: 'relative' }}
     >
       <Typography id={headingId} component="h2" variant="h6" sx={visuallyHidden}>
         {title}
@@ -160,17 +160,23 @@ export function StudyItemCarousel<T>({
         ref={viewportRef}
         data-carousel-id={id}
         sx={{
+          boxSizing: 'border-box',
           overflow: 'hidden',
           py: 0.5,
           // Fades the outer edges of the peeking cards into the page.
           '--edge-fade': '20px',
-          '@container study-carousel (min-width: 600px)': { '--edge-fade': '96px' },
+          // With the arrows overlaid, the cards fill the height they are given (see StudyDashboardLayout).
+          '@container study-carousel (min-width: 440px)': { '--edge-fade': '40px', height: '100%' },
+          '@container study-carousel (min-width: 800px)': { '--edge-fade': '96px' },
           maskImage: single
             ? undefined
             : 'linear-gradient(to right, transparent, #000 var(--edge-fade), #000 calc(100% - var(--edge-fade)), transparent)',
         }}
       >
-        <Box data-testid="study-carousel-track" sx={{ alignItems: 'stretch', display: 'flex', gap: `${SLIDE_GAP}px` }}>
+        <Box
+          data-testid="study-carousel-track"
+          sx={{ alignItems: 'stretch', display: 'flex', gap: `${SLIDE_GAP}px`, height: '100%' }}
+        >
           {slides.map(({ item, copy }, index) => (
             <Box
               className="study-item-carousel-slide"
@@ -186,10 +192,13 @@ export function StudyItemCarousel<T>({
                 minWidth: 0,
                 position: 'relative',
                 '& > *': { transformOrigin: 'center', willChange: 'transform' },
-                '@container study-carousel (min-width: 600px)': single ? {} : { flex: '0 0 calc(100% - 240px)' },
+                '@container study-carousel (min-width: 440px)': single ? {} : { flex: '0 0 calc(100% - 112px)' },
+                '@container study-carousel (min-width: 800px)': single ? {} : { flex: '0 0 calc(100% - 240px)' },
               }}
             >
-              <Box inert={!single && index !== selectedSlide}>{renderItem(item)}</Box>
+              <Box inert={!single && index !== selectedSlide} sx={{ height: '100%' }}>
+                {renderItem(item)}
+              </Box>
             </Box>
           ))}
         </Box>
@@ -202,7 +211,7 @@ export function StudyItemCarousel<T>({
             gap: 1.5,
             justifyContent: 'center',
             mt: 1,
-            '@container study-carousel (min-width: 600px)': {
+            '@container study-carousel (min-width: 440px)': {
               mt: 0,
               '& .study-carousel-arrow': {
                 position: 'absolute',

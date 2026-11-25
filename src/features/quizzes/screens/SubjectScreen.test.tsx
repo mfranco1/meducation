@@ -597,7 +597,6 @@ describe('subject test card', () => {
         />
       </ThemeProvider>,
     );
-    expect(screen.getByText('40 questions')).toBeVisible();
     fireEvent.click(screen.getByRole('button', { name: `Start quiz: ${test.name}` }));
     expect(screen.queryByRole('button', { name: 'Browse Answers' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));

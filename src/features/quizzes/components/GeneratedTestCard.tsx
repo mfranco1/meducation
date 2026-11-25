@@ -1,9 +1,11 @@
-import { Box, Button, Card, CardContent, Chip, LinearProgress, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
+import ShuffleRoundedIcon from '@mui/icons-material/ShuffleRounded';
 import { useState } from 'react';
 import type { CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
 import { radius } from '../../../shared/theme';
 import type { QuizProgress } from '../selectors/progress';
-import { ScoreTrendIndicator } from './ScoreTrendIndicator';
+import { SubjectScoreSummary } from './SubjectScoreSummary';
 import { PastAttemptsDialog } from './quiz/PastAttemptsDialog';
 import { QuizSetupDialog } from './quiz/QuizSetupDialog';
 
@@ -19,7 +21,7 @@ export interface GeneratedTestControls {
 
 /** A Subject Test or Mixed Test: a generated quiz with its own progress, kept apart from the subject's. */
 export function GeneratedTestCard({
-  progress: { quiz, active, completionCount, latestScore, trend, answeredCount },
+  progress: { quiz, active, completionCount, latestScore, trend },
   description,
   busy = false,
   attempts,
@@ -31,82 +33,87 @@ export function GeneratedTestCard({
   const [setupOpen, setSetupOpen] = useState(false);
   const [reviewOpen, setReviewOpen] = useState(false);
   const label = active ? 'Resume' : completionCount > 0 ? 'Retake' : 'Start';
-  const done = Math.min(answeredCount ?? 0, quiz.questionCount);
   return (
     <>
-      <Card component="section" aria-label={quiz.name}>
+      <Card
+        component="section"
+        aria-label={quiz.name}
+        sx={{ containerName: 'test-card', containerType: 'inline-size', display: 'flex', width: '100%' }}
+      >
         <CardContent
           sx={{
-            alignItems: { sm: 'center' },
             display: 'flex',
-            flexDirection: { xs: 'column', sm: 'row' },
+            flex: 1,
+            flexDirection: 'column',
             gap: 2,
             justifyContent: 'space-between',
+            minWidth: 0,
+            p: 2.5,
+            '&:last-child': { pb: 2.5 },
           }}
         >
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="h6" component="h2">
-              {quiz.name}
-            </Typography>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {description}
-            </Typography>
-            <Stack direction="row" spacing={1} useFlexGap sx={{ alignItems: 'center', flexWrap: 'wrap', mt: 1 }}>
-              <Chip
-                size="small"
-                label={`${quiz.questionCount} ${quiz.questionCount === 1 ? 'question' : 'questions'}`}
-              />
-              {latestScore !== undefined && (
-                <Chip
-                  size="small"
-                  label={
-                    <Box component="span" sx={{ alignItems: 'center', display: 'inline-flex', gap: 1 }}>
-                      Score {latestScore}%{trend && <ScoreTrendIndicator trend={trend} />}
-                    </Box>
-                  }
-                />
-              )}
-            </Stack>
-            {active && (
-              <Stack direction="row" spacing={1} sx={{ alignItems: 'center', mt: 1.5 }}>
-                <LinearProgress
-                  aria-hidden
-                  variant="determinate"
-                  value={quiz.questionCount ? (done / quiz.questionCount) * 100 : 0}
-                  sx={{ borderRadius: radius.pill, flex: 1, maxWidth: 240 }}
-                />
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {`${done}/${quiz.questionCount} answered`}
-                </Typography>
-              </Stack>
-            )}
-          </Box>
-          <Stack direction="row" spacing={1} sx={{ flexShrink: 0 }}>
-            {completionCount > 0 && (
-              <Button
-                variant="outlined"
-                aria-label={`Review attempts: ${quiz.name}`}
-                onClick={() => setReviewOpen(true)}
+          <Box
+            sx={{
+              alignItems: 'center',
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 2,
+              '@container test-card (max-width: 419px)': { '& .test-card-actions': { width: '100%' } },
+            }}
+          >
+            <Box sx={{ alignItems: 'center', display: 'flex', flex: '1 1 0', gap: 1.5, minWidth: 0 }}>
+              <Box
+                aria-hidden="true"
+                sx={{
+                  alignItems: 'center',
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.07),
+                  borderRadius: radius.badge,
+                  color: 'primary.main',
+                  display: 'flex',
+                  flex: '0 0 48px',
+                  height: 48,
+                  justifyContent: 'center',
+                }}
               >
-                Review
+                <ShuffleRoundedIcon sx={{ fontSize: 28 }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="h6" component="h2">
+                  {quiz.name}
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                  {description}
+                </Typography>
+              </Box>
+            </Box>
+            <Stack className="test-card-actions" direction="row" spacing={1} sx={{ flexShrink: 0 }}>
+              {completionCount > 0 && (
+                <Button
+                  variant="outlined"
+                  aria-label={`Review attempts: ${quiz.name}`}
+                  onClick={() => setReviewOpen(true)}
+                >
+                  Review
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                aria-label={busy ? undefined : `${label} quiz: ${quiz.name}`}
+                disabled={busy}
+                onClick={() => {
+                  if (active) {
+                    onResume(quiz);
+                    return;
+                  }
+                  onPrepare(quiz);
+                  setSetupOpen(true);
+                }}
+              >
+                {busy ? 'Loading questions…' : label}
               </Button>
-            )}
-            <Button
-              variant="contained"
-              aria-label={busy ? undefined : `${label} quiz: ${quiz.name}`}
-              disabled={busy}
-              onClick={() => {
-                if (active) {
-                  onResume(quiz);
-                  return;
-                }
-                onPrepare(quiz);
-                setSetupOpen(true);
-              }}
-            >
-              {busy ? 'Loading questions…' : label}
-            </Button>
-          </Stack>
+            </Stack>
+          </Box>
+          <SubjectScoreSummary score={latestScore} trend={trend} activeCount={active ? 1 : 0} />
         </CardContent>
       </Card>
       {reviewOpen && (
