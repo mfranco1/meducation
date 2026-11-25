@@ -235,7 +235,7 @@ export function FlashcardStudyCard({
                 >
                   <MarkdownContent
                     markdown={card.back}
-                    variant="explanation"
+                    variant="flashcard"
                     contentKind="rich"
                     align="center"
                     fontWeight={fontWeight.semibold}

@@ -42,12 +42,14 @@ declare module '@mui/material/styles' {
     display: CSSProperties;
     lede: CSSProperties;
     stem: CSSProperties;
+    flashcard: CSSProperties;
     stat: CSSProperties;
   }
   interface TypographyVariantsOptions {
     display?: CSSProperties;
     lede?: CSSProperties;
     stem?: CSSProperties;
+    flashcard?: CSSProperties;
     stat?: CSSProperties;
   }
 }
@@ -57,6 +59,7 @@ declare module '@mui/material/Typography' {
     display: true;
     lede: true;
     stem: true;
+    flashcard: true;
     stat: true;
   }
 }
@@ -193,6 +196,8 @@ export const theme = createTheme({
     lede: { fontSize: '1.0625rem', lineHeight: 1.55, [up('md')]: { fontSize: '1.1875rem' } },
     /** Question stems and flashcard fronts. */
     stem: { fontWeight: fontWeight.medium, fontSize: '1.25rem', lineHeight: 1.5, [up('sm')]: { fontSize: '1.375rem' } },
+    /** Flashcard answers. */
+    flashcard: { fontSize: '1.125rem', lineHeight: 1.6, [up('sm')]: { fontSize: '1.25rem' } },
     /** Large numbers: stat values, scores. Tabular so digits do not shift. */
     stat: {
       fontWeight: fontWeight.heading,

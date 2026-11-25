@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Box } from '@mui/material';
 
-export type MarkdownVariant = 'stem' | 'explanation' | 'inline';
+export type MarkdownVariant = 'stem' | 'explanation' | 'flashcard' | 'inline';
 export type MarkdownContentKind = 'restricted' | 'rich';
 
 // The renderer pulls in markdown, rehype and KaTeX, so it loads on first use.

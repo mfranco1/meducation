@@ -45,6 +45,7 @@ export default function MarkdownRenderer({
 }) {
   const inline = variant === 'inline';
   const rich = contentKind === 'rich';
+  const textVariant = variant === 'stem' || variant === 'flashcard' ? variant : 'body1';
   return (
     <ReactMarkdown
       skipHtml={!rich}
@@ -61,7 +62,7 @@ export default function MarkdownRenderer({
             <>{children}</>
           ) : (
             <Typography
-              variant={variant === 'stem' ? 'stem' : 'body1'}
+              variant={textVariant}
               component={variant === 'stem' ? 'h5' : 'p'}
               sx={{
                 lineHeight: variant === 'explanation' ? 1.7 : undefined,
@@ -100,7 +101,7 @@ export default function MarkdownRenderer({
           </Box>
         ),
         li: ({ children }) => (
-          <Typography component="li" sx={{ fontWeight }}>
+          <Typography component="li" variant={variant === 'flashcard' ? 'flashcard' : undefined} sx={{ fontWeight }}>
             {children}
           </Typography>
         ),

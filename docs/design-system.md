@@ -62,6 +62,7 @@ One family, Plus Jakarta Sans Variable. Pick a theme variant instead of setting 
 | `subtitle1`, `subtitle2` | row names, labels |
 | `body1`, `body2`, `caption`, `overline` | reading text, secondary text, captions, eyebrows |
 | `stem` | question stems and flashcard fronts |
+| `flashcard` | flashcard answers |
 | `stat` | large numbers |
 
 Colors follow the same rule: use palette tokens or `alpha()` of one. Artwork (logo, glyphs, drawn illustrations) is exempt.
