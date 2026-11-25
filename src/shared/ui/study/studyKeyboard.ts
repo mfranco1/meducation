@@ -10,7 +10,7 @@ export function canHandleStudyShortcut(event: KeyboardEvent, key: 'arrow' | 'spa
       (!isChoiceRadio && target.closest('[contenteditable="true"], input, textarea, select, a, [aria-modal="true"]'))
     )
       return false;
-    if (key === 'space' && target.closest('button, [role="button"]')) return false;
+    if (key === 'space' && target.closest('button, summary, [role="button"]')) return false;
     if (
       key === 'arrow' &&
       target.closest(

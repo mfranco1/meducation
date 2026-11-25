@@ -241,16 +241,28 @@ export function FlashcardStudyCard({
                     fontWeight={fontWeight.semibold}
                   />
                 </Box>
-                {card.sources && (
-                  <Box sx={{ width: '100%', color: 'inherit', opacity: 0.85, '& a': { color: 'inherit' } }}>
-                    <strong>Source: </strong>
-                    <MarkdownContent markdown={card.sources} variant="inline" />
-                  </Box>
-                )}
               </Box>
             </Box>
           </Box>
         </Box>
+        {revealed && card.sources && (
+          <Box
+            key={card.id}
+            component="details"
+            sx={{
+              mt: 2.5,
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              pt: 1.5,
+              '& summary': { cursor: 'pointer', fontWeight: fontWeight.semibold, color: 'text.secondary' },
+            }}
+          >
+            <Box component="summary">Sources</Box>
+            <Box sx={{ mt: 1, '& p': { typography: 'body2' } }}>
+              <MarkdownContent markdown={card.sources} />
+            </Box>
+          </Box>
+        )}
       </CardContent>
     </Card>
   );
