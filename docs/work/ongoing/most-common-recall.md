@@ -1,10 +1,8 @@
 # "Most common" recall top-ups, round 2
 
-Shared method for all subjects. Status lives in each subject's tracker: [Microbiology & Parasitology](microbiology-parasitology-quizzes.md), [Pediatrics](pediatrics-quizzes.md), [Pathology](pathology-quizzes.md), [Surgery](surgery-quizzes.md), [OB-GYN](obstetrics-gynecology-quizzes.md), [Anatomy & Histology](anatomy-histology-quizzes.md). Sessions don't edit this file while others run.
+Shared method for the subjects still in progress. Status lives in each subject's tracker: [Pathology](pathology-quizzes.md). The other subjects in scope are done and staged.
 
-Goal: fill the gap in direct "most common / leading / principal X" recall questions (cause, organism, site, type, complication, risk factor, route, reservoir, cause of death). "Most likely cause" vignettes do not count. Measured on the draft 2026-11-20 (non-vignette stems with ranking wording): Surgery 0.8%, Pathology 0.4%, Pediatrics 0.4%, Anatomy & Histology 0.4%, OB-GYN 0.2%, Microbiology & Parasitology 0.1%.
-
-Scope: the six subjects above. Internal Medicine, Pharmacology and Preventive Medicine were done in round 1. Legal Medicine, Biochemistry and Physiology are out of scope.
+Goal: fill the gap in direct "most common / leading / principal X" recall questions (cause, organism, site, type, complication, risk factor, route, reservoir, cause of death). "Most likely cause" vignettes do not count.
 
 Method: follow the [write-quizzes skill](../../../.agents/skills/write-quizzes/SKILL.md), blueprint "Gap-filling top-ups". Each batch is a top-up of one staged quiz (blueprint `add` with notes), not a new quiz. One topic per session. Never publish.
 
@@ -17,13 +15,13 @@ Coverage approved 2026-11-20: up to 5 items per quiz (highest-yield MISSING rows
 
 Count the stems that match the required form before review.
 
-## Running subjects in parallel
+## Running sessions in parallel
 
-- One session per subject at a time. A session writes only its own work dir and tracker, never another subject's gap list, notes or tracker. The source ledger is locked by `Q ledger`; re-read a skill or `.agents/shared/` file right before a lessons edit.
+- A session writes only its own work dir and tracker. The source ledger is locked by `Q ledger`; re-read a skill or `.agents/shared/` file right before a lessons edit.
 - Check near-duplicates within the subject only (`stems.txt`). A point another subject also tests is still written if it is in this subject's scope.
 
 ## Finishing a subject
 
 1. Top up topic by topic.
-2. Replacement batch from the backlog ([replacements.md](../../../.agents/skills/write-quizzes/replacements.md)), then `Q clean`, the lessons pass and delete the subject's tracker.
+2. Replacement batch from the backlog ([replacements.md](../../../.agents/skills/write-quizzes/replacements.md)), then `Q clean`, the lessons pass and delete the subject's tracker. Remove the subject from the tracker list above.
 3. The session that deletes the last subject tracker deletes this file. The user reviews and publishes.

@@ -22,6 +22,10 @@ Method and parallel rules: [most-common-recall.md](most-common-recall.md). Work 
 - Lower Urinary and Male Genital Tract: 7 items (3/4). Backlog 0. Most rows were staged or clued.
 - Peripheral Nerves and Skeletal Muscle: 8 items (4/4). Backlog 0.
 - Neoplasia: 8 items (4/4). Backlog 0. Brain metastasis primary skipped (staged vignettes).
+- Hemodynamic Disorders: 6 items (3/3). Backlog 1 (Embolism, Infarction, and Shock).
+- Infectious Disease Pathology: 6 items (3/3). Backlog 0.
+- Blood Vessels: 7 items (2/5). Backlog 0. Most quiz 1 rows were staged or clued; secondary hypertension cause skipped (sources conflict).
+- Genetic Disorders: 7 items (2/5). Backlog 0. The Niemann-Pick A/B choice in the Gaucher item should read acid sphingomyelinase deficiency (fix in the editor).
 
 ## Next
 

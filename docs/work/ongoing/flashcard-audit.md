@@ -40,7 +40,10 @@ Tracker for each subject: `<slug>-flashcards.md` in this folder.
 
 ### Publish check
 
-None.
+| Subject | Topics |
+| --- | --- |
+| Legal Medicine (all staged, user publishes; tracker removed) | 7 |
+| [Microbiology & Parasitology](microbiology-parasitology-flashcards.md) | 9 |
 
 ### Top-up
 
@@ -52,16 +55,12 @@ None.
 | [Obstetrics & Gynecology](obstetrics-gynecology-flashcards.md) | 7 |
 | [Preventive Medicine](preventive-medicine-flashcards.md) | 10 |
 | [Pathology](pathology-flashcards.md) | 27 |
-| [Microbiology & Parasitology](microbiology-parasitology-flashcards.md) | 9 |
-| [Biochemistry](biochemistry-flashcards.md) | 21 |
 | [Physiology](physiology-flashcards.md) | 11 |
-| [Legal Medicine](legal-medicine-flashcards.md) | 7 |
+| [Surgery](surgery-flashcards.md) | 26 |
 
 ### Audit
 
-| Subject | Topics |
-| --- | --- |
-| [Surgery](surgery-flashcards.md) | 26 |
+None.
 
 ### Not started
 

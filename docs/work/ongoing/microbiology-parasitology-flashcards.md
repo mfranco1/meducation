@@ -4,7 +4,7 @@ Subject `Microbiology & Parasitology`, work dir `var/flashcard-work/microbiology
 
 ## Status
 
-Phase: Top-up. In progress: none. Next: plan the Top-ups below.
+Phase: Publish check. In progress: Unverified list. Top-ups staged 2026-11-25 (Medical Mycology, Gram-Negative and Spirochetes topics needed none). Next: read each staged `sources` and settle the Unverified list.
 
 ## Carried over
 
@@ -20,16 +20,22 @@ Phase: Top-up. In progress: none. Next: plan the Top-ups below.
 - Gram-Positive Bacteria: none (114 cards reviewed, no changes).
 - Microbiology Foundations: 2 edits (f-3f9eccde, MRSA cephalosporin front made plural: ceftaroline and ceftobiprole, FDA Zevtera label; f-ab179144, toxoid vaccines back adds pertussis toxoid in acellular pertussis vaccines).
 
+- Top-up, Microbiology Foundations: +8 sterilization and disinfection (CDC 2008/2024; glutaraldehyde card corrected to >2% for 10 h), +8 fluoroquinolone, metronidazole, sulfonamide and trimethoprim mechanisms. Not written: filtration, chlorhexidine, povidone-iodine, hypochlorite, prion reprocessing.
+- Top-up, Gram-Positive Bacteria: +3 diphtheria stains and media (WHO 2021 diphtheria lab manual).
+- Top-up, Virology: +4 prion cards (CDC CJD overview 2026); vCJD age and onset and kuru details rest on textbooks.
+- Top-up, Parasitology and Medical Entomology: +3 Trichomonas (CDC 2021, WHO 2024), +11 entomology (CDC scabies 2023, head lice 2025, STI 2021 pubic lice); Aedes card dropped as duplicate.
+- Top-up, Helminths: +2 Dibothriocephalus (CDC DPDx), +3 Clonorchis and Opisthorchis (CDC 2024).
+- Top-up, Clinical Microbiology Integration: +28 syndromes (IDSA 2017 diarrhea, CDC STI 2021, Yellow Book 2026), new deck Empiric Antimicrobial Therapy +28 (PSMID CAP 2016 with ATS/IDSA 2019, PSMID UTI 2013, IDSA 2004 meningitis, IDSA 2010 febrile neutropenia, IDSA 2014 SSTI, SIS/IDSA 2010, CDC STI 2021 with WHO 2024). Two duplicates dropped; ticarcillin-clavulanate removed (withdrawn); no 2020 PSMID CAP edition found on psmid.org.
+
 ## Unverified (check before publishing)
 
 - Gram-Positive Bacteria, existing cards (unchanged, hedged): f-66d42a2e-a330-4c33-a885-a4d202dd82ed metronidazole for tetanus (CDC Pink Book and WHO fact sheet name no drug; try the WHO 2010 tetanus technical note); f-c09fbbd8-6708-422d-9593-88718097dcbf BabyBIG for infant botulism (CDPH infantbotulism.org failed with a certificate error).
 
+- Helminths, new Trematodes card on recurrent pyogenic cholangitis and chronic Clonorchis infection: textbook association, no primary source opened.
+
+- Virology, new prion cards: vCJD young age and psychiatric onset, kuru details (textbook; CDC pages 404).
+- Clinical Microbiology Integration, new cards: prosthetic joint infection organisms by time since surgery (IDSA 2013 not re-read); S. aureus as commonest adult septic arthritis cause; brain abscess regimen rests on the ESCMID 2024 abstract only; meningitis regimens checked against IDSA 2004 only (ESCMID 2016 blocked); syndromic STI card not checked against a DOH issuance; complicated UTI card uses IDSA 2025 only (PSMID UTI 2015 Part 2 not checked).
+
 ## Top-ups
 
-- Microbiology Foundations: sterilization and disinfection (2 cards, 10 questions: autoclave, ethylene oxide, prions, Spaulding categories, antiseptics vs disinfectants); nucleic acid and folate antagonists (2 cards: fluoroquinolones, rifampin, metronidazole, sulfonamides and trimethoprim mechanisms and resistance).
-- Gram-Positive Bacteria: diphtheria (2 cards: tox gene carried by a beta-prophage (lysogenic conversion), tellurite and Loeffler culture media).
-- Virology (confirm in Top-up): prion diseases (2 cards in fronts), HTLV-1 (2), polyomaviruses JC/BK (3), CMV (7) look thin against question counts.
-- Parasitology and Medical Entomology: medical entomology is thin (about 11 cards against 37 questions in Arthropod Classification, Flies/Bugs/Fleas/Lice, Ticks and Mites, Infestations and Envenomation): insects vs arachnids, fleas (plague, murine typhus, tungiasis), sandflies and blackflies, pediculosis and scabies treatment, spider and scorpion envenomation. Trichomonas (3 cards, 6 questions) also thin.
-- Helminths (heuristic counts, confirm by grep): lymphatic filariasis (4 cards, 14 questions), Echinococcus (3, 8), Diphyllobothrium (1, 6), Paragonimus (2, 7), Clonorchis and Opisthorchis (2, 6), hookworms (3, 7), Trichinella (3, 7).
-- Medical Mycology (heuristic counts, confirm by grep): antifungal drugs (4 cards, 14 questions), Blastomyces (1, 9), Paracoccidioides (1, 5), Cryptococcus (2, 10), other subcutaneous mycoses such as chromoblastomycosis and mycetoma (4, 11).
-- Clinical Microbiology Integration (27 cards, 105 questions; heuristic counts, confirm by grep): diarrheal syndromes (0 cards, 11 questions), bone and joint infections (0, 6), genital ulcers and discharge (0, 8), infections in immunocompromised hosts (0, 8), pneumonia in special groups (2, 10), empiric therapy for respiratory and CNS infections (2, 12) and for genitourinary infections (2, 8). Check empiric regimens against current guidelines.
+None left. Optional: sterilization points not written (filtration, chlorhexidine, povidone-iodine, hypochlorite, prion reprocessing); empiric native-valve endocarditis regimen (ESC/AHA tables are images); HSV genital ulcer features card.

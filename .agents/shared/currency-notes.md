@@ -10,8 +10,11 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | --- | --- | --- | --- |
 | FDA pregnancy letter categories (A, B, C, D, X) | Narrative pregnancy and lactation labeling (PLLR); never test the letters | 2015 | `pregnancy (risk )?category` |
 | Polycystic ovary syndrome (PCOS) | Polyendocrine metabolic ovarian syndrome (PMOS); write PMOS with no "formerly called" note | 2026 consensus | `PCOS`, `polycystic ovary syndrome`, `polycystic ovarian syndrome` |
+| Niemann-Pick disease types A and B | Acid sphingomyelinase deficiency (ASMD); Niemann-Pick type C keeps its name (a different disease) | 2023 consensus guideline | `Niemann-Pick( disease)? types? A` |
+| *Candida glabrata* | *Nakaseomyces glabratus*; add "(formerly *Candida glabrata*)" at first mention, since guidelines still use both | 2022 taxonomy |  |
 | NAFLD, NASH | MASLD, MASH | 2023 multisociety nomenclature | `NAFLD`, `NASH`, `non-?alcoholic fatty liver`, `non-?alcoholic steatohepatitis` |
 | Idiopathic noncirrhotic portal hypertension (INCPH), obliterative portal venopathy | Porto-sinusoidal vascular disorder (PSVD) | VALDIG 2019, EASL 2025 | `idiopathic non-?cirrhotic portal hypertension`, `idiopathic portal hypertension`, `obliterative portal venopathy` |
+| Baveno VII (2022) portal hypertension consensus | Baveno VIII (*J Hepatol* 2026;85(5):993-1018, doi 10.1016/j.jhep.2026.07.030); cite Baveno VII only for a fact confirmed unchanged in Baveno VIII | 2026 | `Baveno VII` |
 | Hepatorenal syndrome type 1 and type 2 | HRS-AKI and HRS-NAKI; no fixed 2-week rule | ICA 2015, EASL 2018 | `HRS type [12]`, `type [12] HRS`, `hepatorenal syndrome type [12]`, `type [12] hepatorenal` |
 | Microalbuminuria, macroalbuminuria | Moderately (A2) and severely (A3) increased albuminuria | KDIGO 2012 CKD | `microalbuminuria`, `macroalbuminuria` |
 | Obscure GI bleeding for any bleed not found on EGD and colonoscopy | Suspected small bowel bleeding; "obscure" only when no source is found after small bowel evaluation too | ACG 2015 small bowel bleeding guideline | `obscure GI bleeding`, `obscure gastrointestinal bleeding` |
@@ -19,6 +22,9 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | Severe sepsis, SIRS-based sepsis definitions | Sepsis (life-threatening organ dysfunction from a dysregulated host response) and septic shock (Sepsis-3); "severe sepsis" is not a category | 2016 Sepsis-3 | `severe sepsis`, `SIRS` |
 | Mechanical ventilation over 48 hours alone as a stress ulcer prophylaxis indication (ASHP 1999) | Prophylaxis for coagulopathy, shock or chronic liver disease; PPI or H2RA; stop when the risk factor resolves | SCCM/ASHP 2024 | |
 | PADIS 2018: suggest against routine antipsychotics for ICU delirium; suggest rehabilitation or mobilization | PADIS 2025 focused update (Lewis et al., Crit Care Med 2025;53(3):e711-e727): no recommendation for or against antipsychotics; enhanced mobilization over usual care; dexmedetomidine over propofol for light sedation | 2025 | |
+| ELN 2018 polycythemia vera cytoreduction recommendations (Barbui et al.) | ELN 2021 (Marchetti et al., Lancet Haematol 2022;9(4):e301-e311): same high-risk definition and first-line drugs, plus cytoreduction for selected low-risk patients | 2022 | |
+| Central and nephrogenic diabetes insipidus | Arginine vasopressin deficiency (AVP-D) and arginine vasopressin resistance (AVP-R); give the old name in parentheses, since boards and textbooks still use it | 2022 multisociety statement (Arima et al.) | |
+| ACR/SAA/SPARTAN 2019 axial spondyloarthritis treatment: TNF inhibitor before IL-17 inhibitor; sulfasalazine for axial disease when TNF inhibitors are unavailable | 2026 ACR/SAA/SPARTAN update (summary posted June 2026): TNFi or IL-17i as first biologic; no csDMARDs for axial disease, sulfasalazine only for peripheral arthritis (matches ASAS-EULAR 2022) | 2026 | |
 | Hypertensive urgency | Severe hypertension: SBP >180 and/or DBP >120 mmHg without acute target organ damage | 2025 AHA/ACC high blood pressure guideline | `hypertensive urgency` |
 | Myocardial infarction types 1, 2, 3, 4a-c, 5 (Fourth Universal Definition, 2018) | Primary, secondary or procedure-related MI; type 3 removed (Fifth Universal Definition, Eur Heart J, doi 10.1093/eurheartj/ehag101) | 2026 | `type [1-5] MI`, `type 4[abc] MI`, `type [1-5] myocardial infarction` |
 | Amrinone | Inamrinone | USAN change | `amrinone` |
@@ -53,6 +59,7 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | NeuPSIG 2015 neuropathic pain recommendations (Finnerup) | NeuPSIG 2025 update (Soliman et al., Lancet Neurol 2025); cite it for first-line and not-recommended drugs | 2025 | |
 | 2018 ESC guidelines on cardiovascular disease in pregnancy | 2025 ESC guidelines (Eur Heart J, doi 10.1093/eurheartj/ehaf193); several positions softened (endocarditis antibiotics "may be considered", heparin with bromocriptine "should be considered") | 2025 | |
 | CDC 2010 perinatal GBS guideline | ACOG Committee Opinion 797 (2020), which replaced the CDC guideline for intrapartum GBS prophylaxis | 2020 | |
+| SMFM Clinical Guideline #8 (2015), critical titer "set by each laboratory" | Moise et al. red cell alloimmunization guideline (*JAMA Netw Open* 2025;8(11):e2544649): critical titer 16 or more (4 or more for anti-Kell), weekly MCA-PSV Doppler by 16 weeks, delivery at 37 0/7 to 38 6/7 weeks without transfusion | 2025 | |
 | IDSA 2012 diabetic foot infection guideline | IWGDF/IDSA 2023 guideline on diabetes-related foot infections | 2023 | |
 | Six enzyme classes (IUB, EC 1 to 6) | Seven IUBMB classes: EC 7 translocases added | 2018 IUBMB | `six (IUB(MB)? )?enzyme classes`, `six classes of enzymes` |
 | Hemorrhagic disease of the newborn | Vitamin K deficiency bleeding (VKDB) | ISTH 1999; AAP 2022 policy | `hemorrhagic disease of the newborn`, `haemorrhagic disease of the newborn` |
@@ -61,6 +68,8 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 | Dangerous Drugs Act of 1972 (RA 6425) | Comprehensive Dangerous Drugs Act of 2002 (RA 9165, as amended) | 2002 | `Dangerous Drugs Act of 1972`, `RA 6425` |
 | 1996 IRR of PD 856 Chapter XXI (disposal of dead persons) and DOH AO 2010-0033 | DOH AO 2021-0056 (revised IRR of the Code on Sanitation, as amended by AO 2021-0056-A); cite PD 856 for statute rules | 2021 | `AO 2010-0033` |
 | Acute interstitial pneumonia; desquamative interstitial pneumonia (2013 ATS/ERS idiopathic interstitial pneumonia classification) | Idiopathic diffuse alveolar damage; alveolar macrophage pneumonia (2025 ERS/ATS update) | 2025 | `acute interstitial pneumonia`, `desquamative interstitial pneumonia` |
+| Chromosomal microarray as the one first-tier genetic test for developmental delay or intellectual disability (2010 consensus) | Exome or genome sequencing as a first- or second-tier test (ACMG 2021, Manickam); microarray and fragile X testing remain standard where sequencing is not available | ACMG 2021 |  |
+| Etonogestrel implant (Nexplanon) approved for 3 years | Up to 5 years in the US label; WHO and older sources may still give 3 years, so name the source | Nexplanon prescribing information 2026 |  |
 
 ## Current editions
 
@@ -70,3 +79,8 @@ The batch gate (`gate` in both skills) warns on every match of a Gate entry in n
 - Contraceptive eligibility: WHO Medical Eligibility Criteria, 6th edition (November 2025). DMPA in breastfeeding women before 6 weeks postpartum is category 2 (was 3 in the 2015 5th edition); name the edition in the stem or on the card.
 - HPV vaccine dose count: WHO SAGE recommends a single dose for girls aged 9 to 14 (October 2026); the PIDSP 2026 calendar still gives 2 doses, and no DOH issuance on the NIP dose count was found. Don't key a dose count for girls 9 to 14 without naming the schedule's body in the stem or on the card.
 - Thiopurine pharmacogenetics: CPIC 2025 update (Maillard et al., *Clin Pharmacol Ther* 2026, doi:10.1002/cpt.70209) replaces the 2018 update (PMC6576267). TPMT or NUDT15 poor metabolizers with malignancy start at a 10-fold lower dose given thrice weekly; nonmalignant disease takes a non-thiopurine agent.
+- Hepatic encephalopathy: ACG 2026 (*Am J Gastroenterol* 2026;121(3):588-618) replaces AASLD/EASL 2014.
+- Methylmalonic and propionic acidemia: first revision (Forny et al., *J Inherit Metab Dis* 2021, doi:10.1002/jimd.12370) replaces the 2014 guideline.
+- Phenylketonuria: European guideline first revision (van Wegberg et al., *Mol Genet Metab* 2025;145(2):109125) replaces the 2017 guideline.
+- Wilson disease: EASL-ERN 2025 (doi:10.1016/j.jhep.2024.11.007) is newer than AASLD 2022; check it before keying treatment.
+- Malignant hyperthermia triggers: all volatile anesthetics (sevoflurane, desflurane, isoflurane) and succinylcholine; ether and methoxyflurane are no longer in use.

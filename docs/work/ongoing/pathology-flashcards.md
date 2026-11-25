@@ -4,10 +4,16 @@ Subject `Pathology`, work dir `var/flashcard-work/pathology/`, audit-only `plan.
 
 ## Status
 
-Phase: Top-up. In progress: none. Audit done for all 27 topics. Next: plan the top-ups below for user approval.
+Phase: Top-up. In progress: Infectious Disease Pathology. Top-up plan approved 2026-11-25 (572 cards, 45 decks; `plan.json`); topics run in plan order. Done: Cell Injury and Adaptation, Inflammation and Repair, Hemodynamic Disorders, Genetic Disorders, Immune System Disorders, Neoplasia.
 
 ## Staged (not published)
 
+- Top-up, Cell Injury and Adaptation: +17 cards (adaptations, ROS, reperfusion, necroptosis, pyroptosis, ferroptosis, accumulations, hypercalcemia of malignancy, telomeres).
+- Top-up, Inflammation and Repair: +6 fibrosis cards (Mediators deck).
+- Top-up, Hemodynamic Disorders: +14 cards (hemorrhage terms and significance, infarct determinants, septic infarcts).
+- Top-up, Genetic Disorders: +16 cards (glycogen storage diseases I, III, V; PKU, alkaptonuria, galactosemia; cri-du-chat, Williams, Robertsonian translocation).
+- Top-up, Immune System Disorders: +5 autoimmunity cards (AIRE and APECED, FOXP3 and IPEX, anergy, HLA-DR4); 3 dropped as duplicates.
+- Top-up, Neoplasia: +6 Classification (dysplasia, PSA, CA-125, CA 19-9 limits), +21 Oncogenes (paraneoplastic syndromes with Graus 2021 and IMACS 2023 sources, carcinogens, oncogenes).
 - Infectious Disease Pathology: 1 edit (f-21a5cff0, Ascaris front made single-answer: Loeffler syndrome).
 - Blood Vessels: 1 edit (f-d043b55d, true aneurysm back now says bounded by all wall layers, unlike a pseudoaneurysm).
 - Heart: 1 edit (f-bedd02c9, early post-MI complication front made single-answer: sudden death in the first hours, ventricular arrhythmia).
@@ -24,6 +30,8 @@ Phase: Top-up. In progress: none. Audit done for all 27 topics. Next: plan the t
 
 ## Unverified (check before publishing)
 
+- Cell Injury and Adaptation top-up: no source opened for the ROS scavenger enzymes and reperfusion cards; pyroptosis "release of IL-1" not in the NCCD 2018 text read.
+- Hemodynamic Disorders top-up: petechiae, purpura and ecchymosis sizes follow Robbins (Merck differs); hypovolemic shock above about 20% blood loss and neuron and myocardium ischemia times not checked in a citable source.
 - Inflammation and Repair (existing cards, no source opened): infection as the most important local cause of delayed healing (f-28c263fd); maximal scar tensile strength about 70-80% of normal (f-3767c669).
 - Hemodynamic Disorders: prolonged aPTT in the DIC lab pattern (f-e340a863); sources opened name PT, platelets, fibrinogen and D-dimer only.
 - Blood Vessels: giant cell arteritis "treatment should not wait for biopsy" (f-28db4d39); ACR 2021 only implies it, EULAR not opened.
