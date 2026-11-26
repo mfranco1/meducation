@@ -54,11 +54,13 @@ Phase 3 notes: removed unit duplicates of browser round trips (card and question
 
 ## Phase 4: learner unit and browser overlap
 
-- [ ] Loading, failure, shimmer and retry states: keep in the screen unit tests (`SubjectScreen`, `DashboardScreen`, flashcard screens), remove the matching browser tests in `learner-smoke.spec.ts` and `subject-cards.spec.ts` unless they check something only a browser can (reduced motion, focus, real network abort).
-- [ ] Fix or remove the pixel-position checks in `landing.spec.ts` "header and hero links jump" (`y - 96 < 2`) and "flashcard steps track" (`scrollIntoViewIfNeeded`). Both flaked locally; the first also on the old serial config.
-- [ ] Geometry: keep the no-horizontal-overflow sweep at the design-system widths. Remove pixel-alignment and computed-style checks in `subject-cards.spec.ts`, `continue-studying.spec.ts`, `landing.spec.ts` and `learner-smoke.spec.ts`.
-- [ ] Landing: 15 tests. Keep first visit, start studying, deep link and saved-progress routing; review the rest.
-- [ ] `App.test.tsx`: drop flows already covered end to end by `learner-smoke.spec.ts`, or the reverse, one layer each.
+- [x] Loading, failure, shimmer and retry states: keep in the screen unit tests (`SubjectScreen`, `DashboardScreen`, flashcard screens), remove the matching browser tests in `learner-smoke.spec.ts` and `subject-cards.spec.ts` unless they check something only a browser can (reduced motion, focus, real network abort).
+- [x] Fix or remove the pixel-position checks in `landing.spec.ts` "header and hero links jump" (`y - 96 < 2`) and "flashcard steps track" (`scrollIntoViewIfNeeded`). Both flaked locally; the first also on the old serial config.
+- [x] Geometry: keep the no-horizontal-overflow sweep at the design-system widths. Remove pixel-alignment and computed-style checks in `subject-cards.spec.ts`, `continue-studying.spec.ts`, `landing.spec.ts` and `learner-smoke.spec.ts`.
+- [x] Landing: 15 tests. Keep first visit, start studying, deep link and saved-progress routing; review the rest.
+- [x] `App.test.tsx`: drop flows already covered end to end by `learner-smoke.spec.ts`, or the reverse, one layer each.
+
+Phase 4 notes: removed browser tests for stat card layout, abandoned and failed deck loads (`useFlashcardSession` tests cover both), subject quiz failure shimmer, pending catalog, both subject card geometry tests, landing layout (samples beside hero, sample navigation position at each width, hero photo fade, streak centering). Kept real-network browser checks: catalog Retry, question failure toast, and the subject frame staying steady (scroll position, no remount) through tab load and recovery. One sweep in `subject-cards.spec.ts` checks both dashboards and both subject tabs at 320, 390, 1048 and 1440px; the first-visit landing test does the same for the landing page. Landing shortcuts run at 390px only; the slow start holds the request instead of a 2 s sleep. `App.test.tsx` lost the quiz launch flow that "API-backed quiz survives reload" covers. Local: learner suite 50 tests to 33, 1.3 min including the build; landing passed five repeats.
 
 ## Decisions
 
@@ -73,3 +75,4 @@ Phase 3 notes: removed unit duplicates of browser round trips (card and question
 | --- | --- | --- | --- | --- |
 | Baseline | 13 | 168 s | 98 s | 64 s |
 | 2 (local, not CI) | | 138 s wall incl. build (was 228 s) | | |
+| 4 (local, not CI) | | | 81 s wall incl. build, 33 tests | 749 tests |

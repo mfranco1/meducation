@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { expectNoHorizontalOverflow, startedLearner } from './support/learner';
 import { openTopicIfNeeded, showQuestion } from './support/topic';
 
@@ -47,156 +47,19 @@ test('Help preserves flashcard study and blocks study shortcuts while open', asy
   await expect(page.getByRole('button', { name: 'Help', exact: true })).toBeFocused();
 });
 
-async function statCardBounds(firstCard: Locator) {
-  const cards = firstCard.locator('..').getByRole('group');
-  await expect(cards).toHaveCount(3);
-  // The responsive drawer animates the available width. Read the entire row
-  // in one browser task so comparisons cannot span different animation frames.
-  return cards.evaluateAll((elements) =>
-    elements.map((element) => {
-      const { y, width, height } = element.getBoundingClientRect();
-      return { y, width, height };
-    }),
-  );
-}
-
-async function expectStatCardsLayout(page: Page, firstCard: Locator) {
-  for (const width of [1280, 768, 390, 320]) {
-    await page.setViewportSize({ width, height: 800 });
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    const bounds = await statCardBounds(firstCard);
-    expect(bounds.every(({ width, height }) => width > 0 && height > 0)).toBe(true);
-    if (width >= 600) {
-      expect(bounds[0]!.y).toBeCloseTo(bounds[1]!.y, 0);
-      expect(bounds[1]!.y).toBeCloseTo(bounds[2]!.y, 0);
-      expect(Math.abs(bounds[0]!.width - bounds[2]!.width)).toBeLessThan(2);
-    } else {
-      expect(bounds[1]!.y).toBeGreaterThan(bounds[0]!.y);
-      expect(bounds[2]!.y).toBeGreaterThan(bounds[1]!.y);
-    }
-  }
-}
-
-test('dashboard stat cards stay readable across desktop and narrow layouts', async ({ page }) => {
-  await page.goto('/');
-  const quizCards = [
-    page.locator('[role="group"]').filter({ hasText: 'Completed' }),
-    page.locator('[role="group"]').filter({ hasText: 'Average' }),
-    page.locator('[role="group"]').filter({ hasText: 'Lowest' }),
-  ];
-  await expect(quizCards[0]).toContainText('quizzes');
-  await expect(quizCards[1]).toContainText('correct');
-  await expectStatCardsLayout(page, quizCards[0]!);
-  await page.setViewportSize({ width: 1280, height: 800 });
-  await page.getByRole('button', { name: 'Flashcards' }).click();
-  const flashcardCards = [
-    page.getByRole('group', { name: 'Completed', exact: true }),
-    page.getByRole('group', { name: 'Average flashcard deck finishes per day' }),
-    page.getByRole('group', { name: 'Highest flashcard deck finishes in a day' }),
-  ];
-  await expect(flashcardCards[0]).toContainText('decks');
-  await expect(flashcardCards[1]).toContainText('decks / day');
-  await expect(flashcardCards[2]).toContainText('decks / day');
-  await expectStatCardsLayout(page, flashcardCards[0]!);
-});
-
-test('abandoned flashcard loads do not reopen study or create progress', async ({ page }) => {
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  let requested!: () => void;
-  const requestedPromise = new Promise<void>((resolve) => {
-    requested = resolve;
-  });
-  await page.route('**/api/v1/flashcards/decks/d-browser/cards*', async (route) => {
-    requested();
-    await held;
-    await route.continue().catch(() => undefined);
-  });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Flashcards' }).click();
-  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: /^Study deck/ }).click();
-  await requestedPromise;
-  await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
-  release();
-  await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v2'))).toBeNull();
-  await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
-  await page.getByRole('button', { name: 'Flashcards' }).click();
-  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: /^Study deck/ }).click();
-  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
-});
-
-test('a failed flashcard deck request shows a toast and recovers through the deck action', async ({ page }) => {
-  let releaseFailure!: () => void;
-  const holdFailure = new Promise<void>((resolve) => {
-    releaseFailure = resolve;
-  });
-  let requestStarted!: () => void;
-  const started = new Promise<void>((resolve) => {
-    requestStarted = resolve;
-  });
-  await page.route('**/api/v1/flashcards/decks/d-browser/cards*', async (route) => {
-    requestStarted();
-    await holdFailure;
-    await route.fulfill({ status: 503, body: '{}' });
-  });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Flashcards' }).click();
-  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await page.getByRole('button', { name: /^Study deck/ }).click();
-  await started;
-  await expect(page.getByRole('progressbar', { name: 'Loading flashcard deck' })).toBeVisible();
-  releaseFailure();
-  await expect(page.getByRole('progressbar', { name: 'Loading flashcard deck' })).toHaveCount(0);
-  await expect(page.getByRole('alert')).toContainText('Unable to load deck');
-  await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Browser Test Deck' })).toBeVisible();
-  for (const width of [320, 390, 1048, 1440]) {
-    await page.setViewportSize({ width, height: 800 });
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-  }
-  await expect(page.getByRole('region', { name: 'Topics', exact: true })).toBeVisible();
-  expect(await page.evaluate(() => localStorage.getItem('meducation.flashcards.progress.v2'))).toBeNull();
-  await page.unroute('**/api/v1/flashcards/decks/d-browser/cards*');
-  const retry = page.getByRole('button', { name: /^Study deck/ });
-  await retry.focus();
-  await expect(retry).toBeFocused();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
-});
-
 test('flashcards browse, resume an imported fixture deck, and finish without quiz analytics', async ({ page }) => {
   await page.clock.install({ time: new Date(2026, 9, 7, 12) });
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
-  await expect(page.getByTestId('screen-transition')).toHaveCSS('opacity', '1');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
   await expect(page.getByText('2 cards')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Topic' })).toHaveCount(0);
-  await expect(page.getByTestId('screen-transition')).toHaveCSS('opacity', '1');
-  await expect(page.getByRole('button', { name: /^Study deck/ })).toBeVisible();
   const studyButton = page.getByRole('button', { name: /^Study deck/ });
   await studyButton.focus();
   await page.keyboard.press('Enter');
   await expect(page.getByText('Card 1 of 2')).toBeVisible();
-  const concealedFace = page.getByRole('button', { name: 'Reveal answer' });
-  const hiddenAnswerFace = page.locator(
-    '[aria-label="Answer revealed. Click to hide or press Space or Enter to continue."]',
-  );
-  const [concealedBounds, hiddenAnswerBounds] = await Promise.all([
-    concealedFace.boundingBox(),
-    hiddenAnswerFace.boundingBox(),
-  ]);
-  expect(concealedBounds).not.toBeNull();
-  expect(hiddenAnswerBounds).not.toBeNull();
-  expect(Math.abs(concealedBounds!.height - hiddenAnswerBounds!.height)).toBeLessThan(1);
   await expect(page.locator('.katex')).toHaveCount(2);
   await page.keyboard.press('ArrowRight');
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
@@ -304,7 +167,7 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expect(page.getByText(/score|completed quizzes/i)).toHaveCount(0);
 });
 
-test('API-backed quiz survives reload and completes', async ({ page }, testInfo) => {
+test('API-backed quiz survives reload and completes', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
@@ -312,45 +175,15 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   await expect(page.getByText('2 questions').first()).toBeVisible();
 
   await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
-  const firstQuizStart = Date.now();
   await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
   await showQuestion(page, /What is/);
   await expect(page.locator('.katex')).toBeVisible();
   const questionFlag = page.getByRole('button', { name: 'Flag question' });
-  const questionFlagBackground = await questionFlag.evaluate((element) => getComputedStyle(element).backgroundColor);
-  await questionFlag.hover();
-  await expect(questionFlag).toHaveCSS('background-color', questionFlagBackground);
-  await expect(questionFlag.locator('.MuiTouchRipple-root')).toHaveCount(0);
-  const firstParagraph = page.locator('h5').filter({ hasText: 'What is' }).first();
-  const secondParagraph = page.getByRole('heading', { name: 'Additional context for the question.' });
-  const stemList = page.getByRole('list');
-  await expect(firstParagraph).toBeVisible();
-  await expect(secondParagraph).toBeVisible();
-  await expect(stemList).toBeVisible();
-  expect((await secondParagraph.boundingBox())!.y).toBeGreaterThan((await firstParagraph.boundingBox())!.y);
-  expect((await stemList.boundingBox())!.y).toBeGreaterThan((await secondParagraph.boundingBox())!.y);
-  const firstQuizMs = Date.now() - firstQuizStart;
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(secondParagraph).toBeVisible();
   await expect(page.locator('#root')).not.toHaveAttribute('aria-hidden', 'true');
   await expect(page.locator('.MuiDrawer-modal')).not.toBeVisible();
-  const mobileParagraphPositions = await page
-    .locator('h5')
-    .evaluateAll((headings) =>
-      headings.map((heading) => ({ text: heading.textContent, y: heading.getBoundingClientRect().y })),
-    );
-  const mobileFirstParagraphY = mobileParagraphPositions.find(({ text }) => text?.includes('What is'))?.y;
-  const mobileSecondParagraphY = mobileParagraphPositions.find(({ text }) => text?.includes('Additional context'))?.y;
-  expect(mobileFirstParagraphY).toBeDefined();
-  expect(mobileSecondParagraphY).toBeDefined();
-  expect(mobileSecondParagraphY).toBeGreaterThan(mobileFirstParagraphY!);
   await expectNoHorizontalOverflow(page);
   await page.setViewportSize({ width: 1280, height: 720 });
-  await testInfo.attach('first-quiz-ms.txt', {
-    body: String(firstQuizMs),
-    contentType: 'text/plain',
-  });
-  console.info(`First quiz screen after Begin Quiz: ${firstQuizMs} ms (local fixture and API)`);
   await page.getByRole('radio', { name: /Four/ }).check();
   await expect(page.getByText('Correct', { exact: true })).toBeVisible();
   await questionFlag.focus();
@@ -449,14 +282,11 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Meducation, go to Quizzes' })).toBeVisible();
   const edgeToggle = page.getByTestId('drawer-edge-toggle').first();
-  const aside = page.getByLabel('Meducation navigation');
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
   await edgeToggle.click({ position: { x: 6, y: 96 } });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
-  await expect.poll(async () => (await aside.boundingBox())?.width).toBe(64);
   await edgeToggle.click({ position: { x: 6, y: 96 } });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
-  await expect.poll(async () => (await aside.boundingBox())?.width).toBe(240);
   await edgeToggle.focus();
   await page.keyboard.press('Enter');
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
@@ -592,62 +422,7 @@ test('failed catalog request recovers by keyboard Retry on a narrow reduced-moti
   await expectNoHorizontalOverflow(page);
 });
 
-test('subject quiz failure stays below the tabs with shimmer placeholders through recovery', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  let failures = 0;
-  let releaseRetry!: () => void;
-  const retryResponse = new Promise<void>((resolve) => {
-    releaseRetry = resolve;
-  });
-  await page.route(/\/api\/v1\/subjects\/[^/]+\/quizzes/, async (route) => {
-    if (failures++ === 0)
-      await route.fulfill({
-        status: 404,
-        contentType: 'application/json',
-        body: '{"detail":"private backend detail"}',
-      });
-    else {
-      await retryResponse;
-      await route.continue();
-    }
-  });
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-
-  const banner = page.getByTestId('content-recovery-banner');
-  await expect(banner).toBeVisible();
-  await expect(banner.getByRole('alert')).toContainText('We can’t load quizzes for Browser Test Subject right now.');
-  await expect(banner).not.toContainText('private backend detail');
-  await expect(page.locator('.MuiSkeleton-wave').first()).toBeVisible();
-  await expect(page.getByTestId('screen-transition')).toHaveCSS('top', '0px');
-  const bounds = await page.evaluate(() => {
-    const panel = document.querySelector('[role="tabpanel"]')!.getBoundingClientRect();
-    const recovery = document.querySelector('[data-testid="content-recovery-banner"]')!.getBoundingClientRect();
-    return {
-      panelTop: panel.top,
-      panelLeft: panel.left,
-      panelRight: panel.right,
-      top: recovery.top,
-      left: recovery.left,
-      right: recovery.right,
-    };
-  });
-  expect(bounds.top).toBe(bounds.panelTop);
-  expect(bounds.left).toBe(bounds.panelLeft);
-  expect(bounds.right).toBe(bounds.panelRight);
-
-  const retry = banner.getByRole('button', { name: 'Retry' });
-  await retry.focus();
-  await page.keyboard.press('Enter');
-  await expect(banner.getByRole('button', { name: 'Retrying...' })).toBeDisabled();
-  releaseRetry();
-  await openTopicIfNeeded(page);
-  await expect(page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ })).toBeVisible();
-  expect(failures).toBe(2);
-  await expectNoHorizontalOverflow(page);
-});
-
-test('failed question loading shows a persistent bottom-right toast that can be closed', async ({ page }) => {
+test('failed question loading shows a toast that clears on navigation and reload', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.route(/\/api\/v1\/quizzes\/[^/]+\/questions/, (route) =>
@@ -668,10 +443,6 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   await expect(toast).toContainText('Browser Test Quiz');
   await expect(toast).not.toContainText('private backend detail');
   await expect(page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ })).toBeEnabled();
-  const box = await toast.boundingBox();
-  expect(box).not.toBeNull();
-  expect(box!.x + box!.width).toBeGreaterThan(370);
-  expect(box!.y + box!.height).toBeGreaterThan(800);
   await expectNoHorizontalOverflow(page);
   await page.getByRole('button', { name: 'Dashboard' }).click();
   await expect(toast).toHaveCount(0);
@@ -682,33 +453,6 @@ test('failed question loading shows a persistent bottom-right toast that can be 
   await expect(page.getByRole('alert')).toBeVisible();
   await page.reload();
   await expect(page.getByRole('alert')).toHaveCount(0);
-});
-
-test('pending catalog stays accessible and static with reduced motion', async ({ page }) => {
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  let release!: () => void;
-  const held = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  await page.route('**/api/v1/subjects', async (route) => {
-    await held;
-    await route.continue();
-  });
-  await page.goto('/');
-  const loading = page.getByRole('status', { name: 'Loading subjects' });
-  await expect(loading).toBeVisible();
-  await expect(loading).toHaveAttribute('aria-busy', 'true');
-  release();
-  await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
-  await expect(loading).toHaveCount(0);
-  await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
-  await openTopicIfNeeded(page);
-  await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
-  await page.getByRole('dialog').getByRole('button', { name: 'Begin Quiz' }).click();
-  await showQuestion(page, /What is/);
-  await expect(page.locator('.katex')).toBeVisible();
-  await expectNoHorizontalOverflow(page);
 });
 
 test('a Subject Test resumes from its address and a Mixed Test starts from the dashboard', async ({ page }) => {

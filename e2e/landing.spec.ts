@@ -1,5 +1,6 @@
 import { expect, test, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { expectNoHorizontalOverflow } from './support/learner';
 
 const heroTitle = 'Practice for your medical boards';
 
@@ -30,94 +31,34 @@ test('the reveal hint opens on hover and click without flipping the card', async
   await expect(tooltip).toBeHidden();
 });
 
-for (const width of [390, 1440]) {
-  test(`scrolling activates only the current sample's shortcuts at ${width}px`, async ({ page }) => {
-    await page.setViewportSize({ width, height: 844 });
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
-    const quiz = page.getByRole('region', { name: 'Sample Quizzes' });
-    const flashcards = page.getByRole('region', { name: 'Sample Flashcards' });
-    await enterSection(page, 'Board-style Questions');
-    await page.keyboard.press('3');
-    await expect(quiz.getByText('Correct', { exact: true })).toBeVisible();
-    await page.keyboard.press('ArrowRight');
-    await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
-    await expect(flashcards.getByRole('button', { name: 'Card 1, unopened, current card' })).toBeVisible();
-
-    await enterSection(page, 'High-yield Flashcards');
-    await page.keyboard.press('4');
-    await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
-    await page.keyboard.press('Space');
-    await expect(flashcards.getByRole('group', { name: /Answer revealed/ })).toBeVisible();
-    await page.keyboard.press('Space');
-    await expect(flashcards.getByRole('button', { name: 'Card 2, unopened, current card' })).toBeVisible();
-
-    await enterSection(page, 'Twelve Subjects');
-    await page.keyboard.press('ArrowRight');
-    await page.keyboard.press('4');
-    await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
-    await expect(flashcards.getByRole('button', { name: 'Card 2, unopened, current card' })).toBeVisible();
-    await expect(flashcards.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
-  });
-}
-
-test('samples follow the hero with copy beside them on desktop and above them on phones', async ({ page }) => {
+test("scrolling activates only the current sample's shortcuts", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
-  await page.evaluate(() => document.fonts.ready);
-  for (const width of [320, 390, 1048, 1440]) {
-    await page.setViewportSize({ width, height: 900 });
-    const quizzes = page.getByRole('region', { name: 'Board-style Questions', exact: true });
-    await expect
-      .poll(async () => {
-        const hero = await page.getByRole('region', { name: heroTitle }).boundingBox();
-        const quizSection = await quizzes.boundingBox();
-        return quizSection!.y - (hero!.y + hero!.height);
-      })
-      .toBeGreaterThanOrEqual(-0.5);
-    await expect(quizzes.getByRole('list', { name: 'How it works' })).toBeVisible();
+  const quiz = page.getByRole('region', { name: 'Sample Quizzes' });
+  const flashcards = page.getByRole('region', { name: 'Sample Flashcards' });
+  await enterSection(page, 'Board-style Questions');
+  await page.keyboard.press('3');
+  await expect(quiz.getByText('Correct', { exact: true })).toBeVisible();
+  await page.keyboard.press('ArrowRight');
+  await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
+  await expect(flashcards.getByRole('button', { name: 'Card 1, unopened, current card' })).toBeVisible();
 
-    for (const [copyName, sampleName] of [
-      ['Board-style Questions', 'Sample Quizzes'],
-      ['High-yield Flashcards', 'Sample Flashcards'],
-    ]) {
-      const copy = await page.getByRole('heading', { name: copyName, exact: true }).boundingBox();
-      const sample = await page.getByRole('region', { name: sampleName }).boundingBox();
-      if (width >= 900) expect(copy!.x + copy!.width).toBeLessThan(sample!.x);
-      else expect(copy!.y + copy!.height).toBeLessThan(sample!.y);
-    }
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-  }
+  await enterSection(page, 'High-yield Flashcards');
+  await page.keyboard.press('4');
+  await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
+  await page.keyboard.press('Space');
+  await expect(flashcards.getByRole('group', { name: /Answer revealed/ })).toBeVisible();
+  await page.keyboard.press('Space');
+  await expect(flashcards.getByRole('button', { name: 'Card 2, unopened, current card' })).toBeVisible();
+
+  await enterSection(page, 'Twelve Subjects');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('4');
+  await expect(quiz.getByRole('button', { name: 'Case 2, unanswered, current case' })).toBeVisible();
+  await expect(flashcards.getByRole('button', { name: 'Card 2, unopened, current card' })).toBeVisible();
+  await expect(flashcards.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
 });
-
-for (const [sampleName, navName] of [
-  ['Sample Quizzes', 'Cases'],
-  ['Sample Flashcards', 'Cards'],
-]) {
-  test(`${sampleName} navigation stays in place across all sample items at each width`, async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
-    await page.evaluate(() => document.fonts.ready);
-    const sample = page.getByRole('region', { name: sampleName });
-    const nav = sample.getByRole('navigation', { name: navName });
-    for (const width of [320, 390, 820, 1048, 1440]) {
-      await page.setViewportSize({ width, height: 900 });
-      await nav.getByRole('button').first().click();
-      const header = await sample.getByRole('heading', { name: sampleName }).boundingBox();
-      const initial = await nav.boundingBox();
-      const initialSample = await sample.boundingBox();
-      if (width <= 390) expect(initial!.y).toBeGreaterThan(header!.y + header!.height);
-      if (width === 820 || width === 1440) expect(initial!.y).toBeLessThan(header!.y + header!.height);
-      for (const card of await nav.getByRole('button').all()) {
-        await card.click();
-        const bounds = await nav.boundingBox();
-        const sampleBounds = await sample.boundingBox();
-        expect(Math.abs(bounds!.x - sampleBounds!.x - (initial!.x - initialSample!.x))).toBeLessThan(1);
-        expect(Math.abs(bounds!.y - sampleBounds!.y - (initial!.y - initialSample!.y))).toBeLessThan(1);
-      }
-      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-    }
-  });
-}
 
 test('header and hero links jump to the quiz, flashcard and subject sections', async ({ page }) => {
   await page.goto('/');
@@ -130,56 +71,20 @@ test('header and hero links jump to the quiz, flashcard and subject sections', a
     await links.getByRole('link', { name: label, exact: true }).click();
     await expect(page.getByRole('heading', { name: heading, exact: true })).toBeInViewport();
     await expect(page).toHaveURL(new RegExp(`#${hash}$`));
-    await expect
-      .poll(async () => {
-        const bounds = await page.getByRole('region', { name: heading, exact: true }).boundingBox();
-        return Math.abs(bounds!.y - 96);
-      })
-      .toBeLessThan(2);
   }
   await page.evaluate(() => window.scrollTo(0, 0));
   await page.getByRole('link', { name: 'Try a question' }).click();
   await expect(page).toHaveURL(/#quizzes$/);
 });
 
-test('hero copy stays readable beside the photo on desktop and above it on smaller screens', async ({ page }) => {
-  await page.goto('/');
-  await page.evaluate(() => document.fonts.ready);
-  const hero = page.getByRole('region', { name: heroTitle });
-  const photo = hero.locator('img');
-  const lede = hero.getByText('Answer board-style questions with explanations and review with flashcards', {
-    exact: true,
-  });
-  const reassurance = hero.getByText('Free to use. No account needed.');
-  await expect(reassurance).toBeVisible();
-  await expect
-    .poll(() => photo.evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0))
-    .toBe(true);
-  for (const width of [320, 390, 820, 900, 1048, 1440]) {
-    await page.setViewportSize({ width, height: 844 });
-    const heading = await hero.getByRole('heading').boundingBox();
-    const subtitle = await lede.boundingBox();
-    const note = await reassurance.boundingBox();
-    const image = await photo.boundingBox();
-    // The left 40% of the photo fades into the background on desktop.
-    if (width >= 900) {
-      const fadeEnd = image!.x + image!.width * 0.4;
-      expect(heading!.x + heading!.width).toBeLessThanOrEqual(fadeEnd);
-      expect(subtitle!.x + subtitle!.width).toBeLessThanOrEqual(fadeEnd);
-    } else {
-      expect(image!.y).toBeGreaterThanOrEqual(note!.y + note!.height);
-    }
-    if (width === 390) await expect(page.getByRole('heading', { name: 'Board-style Questions' })).toBeInViewport();
-    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(width);
-  }
-  await hero.getByRole('button', { name: 'Start studying' }).click();
-  await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
-});
-
 test('a slow start keeps the pressed button busy until the app opens', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
+  let release!: () => void;
+  const held = new Promise<void>((resolve) => {
+    release = resolve;
+  });
   await page.route('**/api/v1/subjects', async (route) => {
-    await new Promise((resolve) => setTimeout(resolve, 2000));
+    await held;
     await route.continue();
   });
   await page.goto('/');
@@ -188,6 +93,7 @@ test('a slow start keeps the pressed button busy until the app opens', async ({ 
   await start.click();
   await expect(start).toBeDisabled();
   await expect(page.getByRole('banner').getByRole('button', { name: 'Start studying' })).toBeEnabled();
+  release();
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
 });
 
@@ -197,10 +103,7 @@ test('flashcard steps track revealing and navigating independently', async ({ pa
   await page.goto('/');
   const steps = page.getByRole('list', { name: 'How flashcards work' }).getByRole('listitem');
   const sample = page.getByRole('region', { name: 'Sample Flashcards' });
-  const question = sample.getByText('What is the classic murmur of patent ductus arteriosus?');
-  await question.evaluate(() => document.fonts.ready);
-  await question.scrollIntoViewIfNeeded();
-  await expect(question).toBeInViewport();
+  await expect(sample.getByText('What is the classic murmur of patent ductus arteriosus?')).toBeVisible();
   await expect(steps.filter({ hasText: '(done)' })).toHaveCount(0);
 
   const cards = sample.getByRole('navigation', { name: 'Cards' }).getByRole('button');
@@ -238,6 +141,11 @@ test('a first visit shows the landing page until the visitor starts studying', a
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/');
   await expect(page.getByRole('heading', { level: 1, name: heroTitle })).toBeVisible();
+  for (const width of [320, 390, 1048, 1440]) {
+    await page.setViewportSize({ width, height: 900 });
+    await expectNoHorizontalOverflow(page);
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.getByRole('heading', { name: 'Sample Quizzes' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Sample Flashcards' })).toBeVisible();
   const steps = page.getByRole('list', { name: 'How it works' });
@@ -347,47 +255,6 @@ test('a direct About visit saves nothing until Start studying', async ({ page })
   await expect(page).toHaveURL('/');
   await expect(page.getByTestId('all-subjects-grid')).toBeVisible();
   expect(await page.evaluate(() => localStorage.getItem('meducation.started.v1'))).toBe('1');
-});
-
-test('the sample streak stays centered in the viewport vertically and the quiz horizontally', async ({ page }) => {
-  await page.emulateMedia({ reducedMotion: 'reduce' });
-  await page.goto('/');
-  const sample = page.getByRole('region', { name: 'Sample Quizzes' });
-  await sample.getByRole('radio', { name: /Maternal IgG/ }).click();
-  await sample.getByRole('button', { name: 'Continue', exact: true }).click();
-  await sample.getByRole('radio', { name: /Calcium oxalate crystals formed/ }).click();
-  await sample.getByRole('button', { name: 'Continue', exact: true }).click();
-  await sample.getByRole('radio', { name: /Normal, and the nonstress test/ }).click();
-  const celebration = page.getByRole('status').filter({ has: page.getByTestId('celebration-card') });
-  await expect(celebration).toBeVisible();
-  // Keep the reward visible while checking scroll and breakpoint changes.
-  await page.getByTestId('celebration-card').evaluate((element) => {
-    element.getAnimations().forEach((animation) => animation.pause());
-  });
-  const steps = page.getByRole('list', { name: 'How it works' }).getByRole('listitem');
-  await expect(steps.filter({ hasText: '(done)' })).toHaveCount(3);
-  for (let index = 0; index < 3; index++) await expect(steps.nth(index)).not.toContainText(String(index + 1));
-
-  const expectCentered = async () => {
-    await expect
-      .poll(async () => {
-        const quiz = await sample.boundingBox();
-        const overlay = await celebration.boundingBox();
-        if (!quiz || !overlay) return Infinity;
-        return Math.max(
-          Math.abs(overlay.x + overlay.width / 2 - (quiz.x + quiz.width / 2)),
-          Math.abs(overlay.y + overlay.height / 2 - page.viewportSize()!.height / 2),
-        );
-      })
-      .toBeLessThan(2);
-  };
-  await expectCentered();
-  await page.evaluate(() => window.scrollBy(0, 150));
-  await expectCentered();
-  await page.setViewportSize({ width: 390, height: 844 });
-  await expectCentered();
-  await page.evaluate(() => window.scrollBy(0, 150));
-  await expectCentered();
 });
 
 test('a visitor with saved progress opens the dashboard directly', async ({ page }) => {

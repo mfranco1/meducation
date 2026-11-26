@@ -162,64 +162,6 @@ describe('progressive dashboard statistics', () => {
     expect(bank.listQuestions(quiz.id)).toEqual([]);
   });
 
-  it('fetches questions when quiz setup opens, loads the quiz screen once they arrive and keeps the attempt in browser storage', async () => {
-    const subject = { id: 's1', name: 'Lazy Subject', accent: '#b9511b' };
-    const quiz = {
-      id: 'q1',
-      subjectId: subject.id,
-      topicId: 't1',
-      name: 'Lazy Quiz',
-      questionCount: 1,
-      questionIds: ['i1'],
-    };
-    const reply = (body: unknown) => ({ ok: true, json: async () => body });
-    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
-      if (url === '/api/v1/subjects')
-        return reply({
-          revision: 'rev-lazy',
-          subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }],
-        });
-      if (url.includes('/subjects/s'))
-        return reply({
-          revision: 'rev-lazy',
-          topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }],
-          quizzes: [quiz],
-        });
-      return reply({
-        revision: 'rev-lazy',
-        questions: [
-          {
-            id: 'i1',
-            quizId: quiz.id,
-            stem: 'Lazy question stem',
-            choices: [
-              { id: 'A', text: 'Choice' },
-              { id: 'B', text: 'Alternative' },
-            ],
-            answer: 'A',
-            rationale: 'Explanation',
-          },
-        ],
-      });
-    });
-    vi.stubGlobal('fetch', fetchMock);
-    await installRuntimeBank(new RuntimeQuestionBank({ maxRetries: 0, baseDelayMs: 1, maxDelayMs: 1 }, () => 0));
-    const questionRequests = () => fetchMock.mock.calls.filter(([url]) => String(url).includes('/questions')).length;
-
-    render(
-      <ThemeProvider theme={theme}>
-        <App />
-      </ThemeProvider>,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Open Lazy Subject' }));
-    fireEvent.click(await screen.findByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }));
-    await waitFor(() => expect(questionRequests()).toBeGreaterThan(0));
-    fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
-
-    await waitFor(() => expect(screen.getByText('Lazy question stem')).toBeVisible(), { timeout: 10_000 });
-    expect(screen.getByText('Question 1 of 1')).toBeVisible();
-    expect(new LocalAttemptRepository().getActive(quiz.id)).toBeDefined();
-  }, 15_000);
   it.each(['quiz', 'flashcard'] as const)(
     'disables progress backup during %s study with save-and-leave guidance',
     async (type) => {

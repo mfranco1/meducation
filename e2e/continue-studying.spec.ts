@@ -1,82 +1,9 @@
-import { startedLearner } from './support/learner';
+import { expectNoHorizontalOverflow, startedLearner } from './support/learner';
 import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await startedLearner(page);
 });
-
-async function expectCardFitsViewport(
-  page: import('@playwright/test').Page,
-  width: number,
-  dashboard: 'Quizzes' | 'Flashcards' = 'Quizzes',
-) {
-  await page.setViewportSize({ width, height: 844 });
-  await page.reload();
-  if (dashboard === 'Flashcards') await page.getByRole('button', { name: 'Flashcards', exact: true }).click();
-  const card = page.getByTestId('continue-study-card');
-  await expect(card).toBeVisible();
-  await expect(card).toHaveAttribute('aria-label', 'Continue studying Browser Test Subject');
-  const bounds = await card.boundingBox();
-  expect(bounds).not.toBeNull();
-  expect(bounds!.x).toBeGreaterThanOrEqual(-1);
-  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width + 1);
-  const overflow = await page.evaluate(() => ({
-    fits: document.documentElement.scrollWidth <= window.innerWidth + 1,
-    geometry: {
-      viewport: window.innerWidth,
-      document: document.documentElement.scrollWidth,
-      body: document.body.scrollWidth,
-      card: document.querySelector('[data-testid="continue-study-card"]')?.getBoundingClientRect().toJSON(),
-      cardRoot: document
-        .querySelector('[data-testid="continue-study-card"]')
-        ?.parentElement?.getBoundingClientRect()
-        .toJSON(),
-      art: document
-        .querySelector('[data-testid="continue-study-card"]')
-        ?.parentElement?.firstElementChild?.getBoundingClientRect()
-        .toJSON(),
-      svg: document
-        .querySelector('[data-testid="continue-study-card"] svg[viewBox="0 0 360 270"]')
-        ?.getBoundingClientRect()
-        .toJSON(),
-      main: document.querySelector('main')?.getBoundingClientRect().toJSON(),
-    },
-    offenders: [...document.querySelectorAll('body *')]
-      .map((element) => ({
-        tag: element.tagName,
-        className: typeof element.className === 'string' ? element.className : '',
-        left: element.getBoundingClientRect().left,
-        right: element.getBoundingClientRect().right,
-      }))
-      .filter(({ left, right }) => left < -1 || right > window.innerWidth + 1)
-      .slice(0, 6),
-  }));
-  expect(overflow.fits, JSON.stringify({ geometry: overflow.geometry, offenders: overflow.offenders })).toBe(true);
-}
-
-async function expectSingleCardAtAllWidths(page: import('@playwright/test').Page, carouselId: string) {
-  const measurements = await page.evaluate((carouselId) => {
-    const carousel = document.querySelector<HTMLElement>(`[data-carousel-id="${carouselId}"]`)!;
-    const track = carousel.querySelector<HTMLElement>('[data-testid="study-carousel-track"]')!;
-    const original = track.querySelector<HTMLElement>('[data-testid="study-carousel-slide"]')!;
-    const secondCard = original.cloneNode(true) as HTMLElement;
-    track.append(secondCard);
-    const measure = (width: number) => {
-      carousel.style.width = `${width}px`;
-      const bounds = carousel.getBoundingClientRect();
-      const slides = [...track.children].map((slide) => slide.getBoundingClientRect().toJSON());
-      return { bounds: bounds.toJSON(), slides };
-    };
-    const measurements = [measure(320), measure(975), measure(976), measure(1280)];
-    track.lastElementChild?.remove();
-    carousel.style.removeProperty('width');
-    return measurements;
-  }, carouselId);
-  for (const { bounds, slides } of measurements) {
-    expect(slides[0]!.width).toBeCloseTo(bounds.width, 0);
-    expect(slides[1]!.left).toBeGreaterThanOrEqual(bounds.right + 15);
-  }
-}
 
 test('quiz Continue Studying card is responsive and reveals the active quiz', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 844 });
@@ -91,9 +18,10 @@ test('quiz Continue Studying card is responsive and reveals the active quiz', as
   const card = region.getByRole('button', { name: 'Continue studying Browser Test Subject' });
   await expect(card).toHaveAccessibleDescription(/^1 quiz in progress 1 of \d+ questions? answered$/);
   await expect(card.locator('.continue-study-cta')).toHaveText(/Continue/);
-  await expectSingleCardAtAllWidths(page, 'continue-studying-subjects');
-  await expectCardFitsViewport(page, 390);
-  await expectCardFitsViewport(page, 320);
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expectNoHorizontalOverflow(page);
+  }
   const action = page.getByTestId('continue-study-card');
   await action.focus();
   await page.keyboard.press('Enter');
@@ -127,9 +55,10 @@ test('flashcard Continue Studying card shows deck activity and reveals the saved
   await expect(card).toHaveAccessibleDescription(/^1 deck in progress \d+ of \d+ cards? revealed$/);
   await expect(card.locator('.continue-study-cta')).toHaveText(/Continue/);
   await expect(region.getByTestId('subject-score-track')).toHaveCount(0);
-  await expectSingleCardAtAllWidths(page, 'continue-studying-flashcards');
-  await expectCardFitsViewport(page, 390, 'Flashcards');
-  await expectCardFitsViewport(page, 320, 'Flashcards');
+  for (const width of [390, 320]) {
+    await page.setViewportSize({ width, height: 844 });
+    await expectNoHorizontalOverflow(page);
+  }
   const action = page.getByTestId('continue-study-card');
   await action.focus();
   await page.keyboard.press('Space');
