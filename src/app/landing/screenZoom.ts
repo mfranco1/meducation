@@ -3,12 +3,18 @@ export type Quad = [[number, number], [number, number], [number, number], [numbe
 
 type Matrix = [number, number, number, number, number, number, number, number, number];
 
-/** The laptop display in the landing hero photo, as fractions of the image. */
-const photoScreen: Quad = [
-  [0.4701, 0.137],
-  [0.9375, 0.1685],
-  [0.9097, 0.5713],
-  [0.4396, 0.5213],
+/** The laptop display in each landing photo, as fractions of the image. The baked-in dashboard uses the same corners. */
+export const heroScreen: Quad = [
+  [0.5757, 0.3123],
+  [0.89, 0.3086],
+  [0.877, 0.7214],
+  [0.5655, 0.6878],
+];
+export const closingScreen: Quad = [
+  [0.3306, 0.2986],
+  [0.6679, 0.2983],
+  [0.6681, 0.7101],
+  [0.331, 0.7102],
 ];
 
 const duration = 1300;
@@ -82,12 +88,30 @@ export function zoomPath(screen: Quad, viewport: Quad, step: number): Quad {
   ) as Quad;
 }
 
-/** The photo's screen in viewport pixels when enough of the photo is in view to zoom into it. */
-export function photoScreenQuad(photo: HTMLElement): Quad | undefined {
+type Box = { left: number; top: number; width: number; height: number };
+
+/**
+ * A screen marked on an image, placed in a box the image fills with object-fit: cover.
+ * `ratio` is the image's width over its height; `position` is its object-position as fractions.
+ */
+export function coverQuad(screen: Quad, box: Box, ratio: number, [alignX, alignY]: [number, number]): Quad {
+  const height = Math.max(box.height, box.width / ratio);
+  const width = height * ratio;
+  const left = box.left + (box.width - width) * alignX;
+  const top = box.top + (box.height - height) * alignY;
+  return screen.map(([x, y]) => [left + x * width, top + y * height]) as Quad;
+}
+
+/** The photo's screen in viewport pixels when enough of the loaded photo is in view to zoom into it. */
+export function photoScreenQuad(photo: HTMLImageElement, screen: Quad): Quad | undefined {
   const rect = photo.getBoundingClientRect();
   const visible = Math.min(rect.bottom, innerHeight) - Math.max(rect.top, 0);
-  if (visible < rect.height * 0.7 || innerWidth < innerHeight * 1.25) return undefined;
-  return photoScreen.map(([x, y]) => [rect.left + x * rect.width, rect.top + y * rect.height]) as Quad;
+  if (!photo.naturalHeight || visible < rect.height * 0.7 || innerWidth < innerHeight * 1.25) return undefined;
+  // The computed object-position is a pair of percentages.
+  const [alignX, alignY] = getComputedStyle(photo)
+    .objectPosition.split(' ')
+    .map((value) => parseFloat(value) / 100);
+  return coverQuad(screen, rect, photo.naturalWidth / photo.naturalHeight, [alignX, alignY]);
 }
 
 const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));

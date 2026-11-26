@@ -34,7 +34,7 @@ Phases 0 to 5 (2026-11-26): tooling, barred sources, classes `L`, `Lg`, `I` and 
 For each string, find the guideline or official issuance behind the tested point (IDSA, ACIP or *MMWR*, a WHO guideline, a DOH order) and read the point in it. Stage per item with an `edits` file, since most strings also have items that keep the page: a `covered` item only loses the page; the others take the guideline in its place. When the page is the body's only statement of the point, keep it with that reason.
 
 - [x] List the strings and items (see Status)
-- [ ] CDC pages, strings 1 to 27 of the 79 with items to replace
+- [x] CDC pages, strings 1 to 27 of the 79 with items to replace
 - [ ] CDC pages, 28 to 54
 - [ ] CDC pages, 55 to 79
 - [ ] CDC Yellow Book chapters (6 strings) and other bodies (4 strings)
@@ -70,11 +70,14 @@ Check in the manual passes: narrative reviews with plain titles (*N Engl J Med* 
 
 ## Status
 
-Next: Phase 6, CDC pages 1 to 27.
+Next: Phase 6, CDC pages 28 to 54.
 
-- Counts (2026-11-26): 8,140 questions and 2,361 cards have sources. `P` 11,654 citations in 3,440 strings, `L` 89 in 30, `Lg` 2, `I` 0, `M` 0. Flags: `summarypage` 123 strings, `pre2010` 175, `2010-15` 354, `narrative` 2 (both kept: a working group guideline and a systematic review).
+- Counts (2026-11-26): 8,140 questions and 2,361 cards have sources. `P` 11,639 citations in 3,438 strings, `L` 89 in 30, `Lg` 2, `I` 0, `M` 0. Flags: `summarypage` 114 strings, `pre2010` 177, `2010-15` 354, `narrative` 2 (both kept: a working group guideline and a systematic review).
 - URLs and program names: 34 citations lost their URL and three program-name strings were dropped (31 questions and 14 cards staged, map `phase6-urls-programs.json`). i27408 now has no source.
 - Phase 6 list: 199 strings on 535 items (the flag, 64 WHO fact sheets and 21 CDC pages the flag misses). 114 strings have items to replace: 303 items (regimen 181, criterion 50, dose 41, threshold 31), 63 of them `covered`. 85 strings and 232 items keep the page. CDC "Clinical Guidance for" pages, schedules and *General Best Practice Guidelines for Immunization* were left out as CDC's own guidance.
+- CDC pages 1 to 27: 48 items staged (33 took a guideline, 15 `covered` lost the page), 16 keep the page; reasons per item are in `maps/phase6-cdc-1.json`. Guidelines now cited: IDSA babesiosis 2020 and leishmaniasis 2016, Shane 2017, PAHO Chagas 2019, WHO dengue 2009, WHO cystic echinococcosis 2025, WHO WPRO HFMD 2011, CDC pertussis 2005 and plague 2021 (*MMWR*), Workowski 2021, CDC folic acid 1991 (*MMWR*). The pertussis and folic acid documents have no newer edition (for Phase 7).
+- Head lice (f-db57bd81, i34221, i39459) keep the CDC page: the AAP 2022 report (Nolt et al, *Pediatrics*, doi:10.1542/peds.2022-059282) is blocked. Replace them if the user saves it in `var/sources/manual/`.
+- i34088 still cites *Patient Care for Giardia Infection*; Shane 2017 now covers it, so the later CDC box only drops that page.
 - Kept `L` strings (30): each has its reason in a `phase2-*.json` map. They need per-item staging, a record that was blocked, or a user decision (documents that are not one document, such as "FDA approval of selumetinib" and the Millennium Development Goals).
 - Kept `Lg` strings: `Philippines DOH Administrative Order 164 (2002)` (i21801, no title or record found) and DOH AO 2012-0012 "as amended by AO 2012-0012-A" (i32143, the amendment was not found).
 - `A groups` prints 11 sets that are different documents with one title and year. Leave them.
@@ -87,5 +90,6 @@ For a later content audit (the source disagrees with the item or supports it onl
 - i44486: the membranous nephropathy ranking depends on region. i45540, i45541: the rationale names MedlinePlus Genetics.
 - Figures not in the source: i45298 (60 to 80%, Fleseriu 2021), i45327 (warm AIHA 70 to 80%; BSH 2017 says 65%), i45333 and i44618 (VWD about 1%; ASH 2021 gives 1 in 100 to 1 in 10,000), i44928 (*E. coli* 25 to 33%, BSG 2021), i44949 (85%; Clark 2024 gives 50 to 88.2%), i44864 (arthritis 75%, a CDC summary page), card f-39765d83 ("0.9%" and "until volume is restored", Endocrine Society 2023).
 - Partial support: card f-9ef97ef9 (Lucas 2014, HIVAN in untreated HIV only), i43885 (GINA 2026 does not say "continue omalizumab"), i45328 (NHLBI 2014, not the emergency department wording), i42940 (ΔP "30 mm Hg or less"; ACS TQIP 2015 says less than 30, and AAOS updated its guideline in November 2025), i36357 (NICE NG198 has no 3 to 4 month limit), i27859 (cites the 2022 priapism article; tests acute treatment, covered by the 2021 one), i27504 (cites the 2021 STI guideline; a 2024 update exists).
+- From Phase 6, the guideline supports the key but not a detail of the item: Chagas i34125 and i39442 call benznidazole preferred (PAHO 2019: either drug, without distinction), and i34125, i34126, i39442, i39444 give a 60-day course and age limits of 18 and 50 that PAHO does not state; i34220 lists ivermectin days 1, 2, 8 (Workowski 2021: days 1, 2, 8, 9, 15); i33367 calls fluoroquinolones alternatives (Nelson 2021: first-line with doxycycline); i39454 has surgery in 4 weeks (WHO 2025: albendazole 1 to 7 days before, hepatic cysts only, not before lung cyst surgery); card f-8397ada5 gives "falling hematocrit despite adequate fluids" (WHO 2009: a fall with unstable vital signs); i43944 says pregnant patients are admitted (WHO 2009: may need admission); i39441 says liposomal amphotericin B is the choice in pregnancy (not stated in IDSA 2016); i34101 gives 7 to 10 days (not seen in Shane 2017).
 - Card faces: f-0c29a602 names "Zhai 2016 review" (now cited to Aggarwal 2019); f-36b25b4e cited *Garcia v People* (the case is *Lagao v People*).
 - News releases and non-primary pages cited as sources: AAP Down syndrome 2022, two WHO news items, WHO Philippines SPEED 2012, the EMA ulipristal notice, the FDA frostbite release, an NHS Specialist Pharmacy Service page.

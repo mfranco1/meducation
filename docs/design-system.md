@@ -98,7 +98,7 @@ Motion confirms an action, shows where something went, or marks an achievement. 
 - One-shot flourishes play once per event, use the element's own color and fade to nothing.
 - In-screen swaps: moving to a neighbor slides; replacing unrelated content crossfades; content added below the learner's action rises; updates that repeat while typing or holding a key stay instant. Use `ScreenTransition`, `SwapTransition` and `CatalogPageTransition` rather than new keyframes.
 - Under reduced motion every animation is removed or shown in its final state, and sequences reveal everything at once.
-- Landing page exceptions: sections after the hero fade and rise once on first entering the viewport, and Start studying on desktop zooms into the laptop screen in the hero photo (`screenZoom.ts`). Neither runs under reduced motion.
+- Landing page exceptions: sections after the hero fade and rise once on first entering the viewport, and Start studying on desktop zooms into the laptop screen of whichever photo is in view, hero or closing (`screenZoom.ts`); with neither in view the app opens without a zoom. Neither runs under reduced motion. Each photo's screen corners in `screenZoom.ts` are the ones its dashboard screenshot was composited with, so replace a photo and its corners together.
 - Dialogs, menus and the drawer use MUI defaults. Search filtering, counters, the timer, error alerts and breakpoint changes are instant.
 
 ## Brand

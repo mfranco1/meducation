@@ -29,7 +29,7 @@ import { radius, shadow, theme } from '../../shared/theme';
 import { SampleCases } from './SampleCases';
 import { SampleFlashcards } from './SampleFlashcards';
 import { useSampleActive } from './useSampleActive';
-import { photoScreenQuad, type Quad } from './screenZoom';
+import { closingScreen, heroScreen, photoScreenQuad, type Quad } from './screenZoom';
 import { hairline } from './typography';
 import samples from './samples.json';
 
@@ -245,6 +245,10 @@ function Reveal({ children, delay = 0, sx }: { children: ReactNode; delay?: numb
   );
 }
 
+// On desktop the hero photo runs from the top of the page, under the header, to the end of the hero.
+const headerHeight = 72;
+const heroPhotoHeight = 'clamp(560px, 50vw, 820px)';
+
 const startButton = { px: 3.5, py: 1.75 } as const;
 // A pressed Start studying button keeps its color while it waits, since the app is on its way rather than unavailable.
 const startLoading = {
@@ -256,9 +260,10 @@ const slowStart = 400;
 // Samples start from their own finish buttons, which show no spinner.
 type StartButton = 'header' | 'hero' | 'closing' | 'sample';
 
-/** Calls onStart with the hero photo's laptop screen when the page should zoom into it on the way to the app. */
+/** Calls onStart with the laptop screen of the photo in view when the page should zoom into it on the way to the app. */
 export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => void }) {
-  const photo = useRef<HTMLImageElement>(null);
+  const heroPhoto = useRef<HTMLImageElement>(null);
+  const closingPhoto = useRef<HTMLImageElement>(null);
   // While zooming, the page holds still: the push in would otherwise read as scrolling to the observers below.
   const [zooming, setZooming] = useState(false);
   const [pressed, setPressed] = useState<StartButton>();
@@ -272,10 +277,9 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
   const onStart = (button: StartButton) => {
     if (pressed) return;
     setPressed(button);
-    const screen =
-      photo.current && matchMedia('(min-width: 900px) and (prefers-reduced-motion: no-preference)').matches
-        ? photoScreenQuad(photo.current)
-        : undefined;
+    const screen = matchMedia('(min-width: 900px) and (prefers-reduced-motion: no-preference)').matches
+      ? (photoScreenQuad(heroPhoto.current!, heroScreen) ?? photoScreenQuad(closingPhoto.current!, closingScreen))
+      : undefined;
     if (screen) setZooming(true);
     start(screen);
   };
@@ -343,6 +347,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
             gridTemplateColumns: { xs: 'minmax(0, 1fr) auto', md: '1fr auto 1fr' },
             alignItems: 'center',
             gap: 2,
+            height: { md: headerHeight },
             py: { xs: 1.5, md: 2 },
             px: scrolled ? { xs: 1.5, md: 2.5 } : 0,
             border: '1px solid',
@@ -396,14 +401,13 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
             component="section"
             aria-labelledby="hero-title"
             sx={{
-              position: 'relative',
-              isolation: 'isolate',
               display: 'flex',
               flexDirection: { xs: 'column', md: 'row' },
               alignItems: 'center',
-              minHeight: { md: 640, lg: 720 },
-              pt: { xs: 4, md: 8 },
-              pb: { xs: 3, md: 8 },
+              height: { md: `calc(${heroPhotoHeight} - ${headerHeight}px)` },
+              pt: { xs: 4, md: 0 },
+              // On desktop the copy sits on the wall, above the desk.
+              pb: { xs: 3, md: `calc(${heroPhotoHeight} * 0.2)` },
               gap: { xs: 2, md: 0 },
             }}
           >
@@ -455,37 +459,34 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
             </Box>
             <Box
               component="img"
-              ref={photo}
+              ref={heroPhoto}
               aria-hidden
               src="/assets/illustrations/landing-hero-960.webp"
-              srcSet="/assets/illustrations/landing-hero-640.webp 640w, /assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w"
-              sizes="(min-width: 900px) 760px, 100vw"
-              width={1448}
-              height={1086}
+              srcSet="/assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w"
+              sizes="(min-width: 900px) max(100vw, 1120px), max(100vw, 560px)"
+              width={1440}
+              height={720}
               alt=""
               loading="eager"
               fetchPriority="high"
               decoding="async"
               sx={{
-                position: { md: 'absolute' },
-                zIndex: { md: -1 },
                 display: 'block',
                 pointerEvents: 'none',
                 objectFit: 'cover',
-                // Phones: a full-width band below the actions, faded at the top.
-                // Desktop: the whole photo at its own ratio, centered right of the copy, fading out on every edge.
-                right: { md: -32 },
-                top: { md: '50%' },
-                transform: { md: 'translateY(-50%)' },
-                width: { xs: '100%', md: '64%' },
-                height: { xs: 216, sm: 280, md: 'auto' },
-                aspectRatio: { md: '1448 / 1086' },
+                width: '100%',
+                // Phones: a band below the actions showing the laptop, faded at the top.
+                height: { xs: 216, sm: 280, md: heroPhotoHeight },
+                objectPosition: { xs: '85% 60%', md: '55% 70%' },
                 borderRadius: { xs: radius.card, md: 0 },
                 maskImage: {
                   xs: 'linear-gradient(to bottom, transparent, #000 28%)',
-                  md: 'linear-gradient(to right, transparent, #000 40%, #000 90%, transparent), linear-gradient(to bottom, transparent, #000 14%, #000 86%, transparent)',
+                  md: 'linear-gradient(to bottom, #000 calc(100% - 96px), transparent)',
                 },
-                maskComposite: { md: 'intersect' },
+                // Desktop: the page's full-width background from its top edge. The hero section is not positioned, so this resolves against the page.
+                position: { md: 'absolute' },
+                top: { md: 0 },
+                left: { md: 0 },
               }}
             />
           </Box>
@@ -696,7 +697,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               alignItems: 'center',
               gap: { xs: 3, md: 4 },
               textAlign: 'center',
-              py: { xs: 8, md: 12 },
+              pt: { xs: 8, md: 12 },
               borderTop: hairline,
             }}
           >
@@ -712,6 +713,29 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
             >
               Start studying
             </Button>
+            <Box
+              component="img"
+              ref={closingPhoto}
+              aria-hidden
+              src="/assets/illustrations/landing-closing-800.webp"
+              srcSet="/assets/illustrations/landing-closing-800.webp 800w, /assets/illustrations/landing-closing-1200.webp 1200w"
+              sizes="(min-width: 1200px) 1136px, 100vw"
+              width={1200}
+              height={600}
+              alt=""
+              loading="lazy"
+              decoding="async"
+              sx={{
+                display: 'block',
+                pointerEvents: 'none',
+                width: '100%',
+                height: 'auto',
+                objectFit: 'cover',
+                maskImage:
+                  'linear-gradient(to bottom, transparent, #000 30%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent)',
+                maskComposite: 'intersect',
+              }}
+            />
           </Reveal>
         </Box>
         <Box sx={{ pb: 3 }}>
