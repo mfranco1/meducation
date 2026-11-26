@@ -579,9 +579,8 @@ describe('continue studying destination', () => {
 });
 
 describe('subject test card', () => {
-  it('starts a Subject Test from the setup dialog without offering Browse Answers', () => {
-    const onStart = vi.fn();
-    const test = subjectTestQuiz(subject, 40);
+  const test = subjectTestQuiz(subject, 40);
+  const renderTest = (progress: Partial<QuizProgress>, onStart = vi.fn()) =>
     render(
       <ThemeProvider theme={theme}>
         <SubjectScreen
@@ -589,7 +588,7 @@ describe('subject test card', () => {
           topics={topics}
           progress={[{ quiz, completionCount: 0 }]}
           subjectTest={{
-            progress: { quiz: test, completionCount: 0 },
+            progress: { quiz: test, completionCount: 0, ...progress },
             attempts: [],
             onStart,
             onResume: vi.fn(),
@@ -601,9 +600,25 @@ describe('subject test card', () => {
         />
       </ThemeProvider>,
     );
+
+  it('opens to start a Subject Test from the setup dialog without offering Browse Answers', () => {
+    const onStart = vi.fn();
+    renderTest({}, onStart);
+    expect(screen.queryByRole('button', { name: `Start quiz: ${test.name}` })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: test.name }));
+    expect(screen.getByText('40 questions')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: `Start quiz: ${test.name}` }));
     expect(screen.queryByRole('button', { name: 'Browse Answers' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(onStart).toHaveBeenCalledWith(test, 'immediate', true);
+  });
+
+  it('starts open with progress while an attempt is unfinished', () => {
+    renderTest({ active: { ...activeAttempt, quizId: test.id }, answeredCount: 10, latestScore: 72 });
+    const card = within(screen.getByRole('region', { name: test.name }));
+    expect(card.getByRole('button', { name: `Resume quiz: ${test.name}` })).toBeTruthy();
+    expect(card.getByText('10/40 answered')).toBeTruthy();
+    expect(card.getByText('25%')).toBeTruthy();
+    expect(card.getByText('Latest score 72%')).toBeTruthy();
   });
 });

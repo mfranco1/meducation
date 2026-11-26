@@ -4,7 +4,6 @@ import LeaderboardOutlinedIcon from '@mui/icons-material/LeaderboardOutlined';
 import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
 import ErrorOutlineRoundedIcon from '@mui/icons-material/ErrorOutlineRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 import type { CompletedAttempt, Subject } from '../../../domain/types';
@@ -198,14 +197,7 @@ export function DashboardScreen({
           contentPending ? (
             <GeneratedTestCardSkeleton />
           ) : (
-            mixedTest &&
-            !subjectsFailure && (
-              <GeneratedTestCard
-                {...mixedTest}
-                icon={<QuizRoundedIcon sx={{ fontSize: 28 }} />}
-                subjectCount={subjectStats.length}
-              />
-            )
+            mixedTest && !subjectsFailure && <GeneratedTestCard {...mixedTest} subjectCount={subjectStats.length} />
           )
         }
         subjectsActions={

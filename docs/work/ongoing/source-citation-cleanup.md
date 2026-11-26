@@ -52,7 +52,8 @@ The tools outlive this task. Keep them in the repository, tested, and built for 
 
 ## Phase 1: barred sources (1 session)
 
-- [ ] Replace the `refsite` and `narrative` strings (39 strings, 42 items) with the primary guideline, classification or textbook that covers the same point. Drop the citation when the point is a stable textbook fact. Skim the journal titles in class `P` for narrative reviews the pattern missed (seminars, "primer", "review" in the title) and add them.
+- [x] Replace the `refsite` and `narrative` strings (39 strings, 42 items) with the primary guideline, classification or textbook that covers the same point. Drop the citation when the point is a stable textbook fact.
+- [ ] Narrative reviews the pattern missed: 73 strings on 83 items, listed in `var/source-audit/phase1-missed-narrative.json` (review journals such as *Nat Rev*, *Cleve Clin J Med*, *Front*, MDPI and ASH Education Program, read by title). Same rule as the box above. Reviews with plain titles in general journals (*N Engl J Med* review articles, *Lancet* seminars) can't be found by title; Phase 8 sees each record.
 
 ## Phase 2: title and year only, class `L` (7 sessions)
 
@@ -113,10 +114,14 @@ Existence only: the document exists and its authors, title, journal or publisher
 
 ## Status
 
-Phase 0 done (2026-11-26). Next: Phase 1.
+Phases 0 and 1 (first box) done (2026-11-26). Next: Phase 1, second box.
 
-- Trial: 14 strings mapped to 11 documents (bariatric 2019, IEI 2025, AAD melanoma, ACG pancreatitis, Baveno VII, AHA Kawasaki 2017, ACR Kawasaki 2021, CDC STI 2021, WHO dengue 2009, WSES appendicitis, Endocrine Society CAH), 245 questions staged, unpublished. Maps in `var/source-audit/maps/phase0-trial*.json`.
-- Counts after the trial: `L` 1,957 citations and 734 strings, `P` 8,179, `M` 802, `Lg` 767, `I` 90. The splitter now starts a new citation at a year-first title (`; 2021 ACR guideline ...`), which moved a few strings between classes. Box sizes in Phase 2 are a little smaller than listed.
-- Pitfall: a listed string can still hold two documents (about 5 remain, such as `Jeffrey Modell Foundation 10 Warning Signs ...; 2025 Inborn Errors ...`). Never map those; stage the items by hand.
+- Phase 1, first box: 39 strings. 10 replaced, 27 dropped, 2 kept (Kalish 2024 is the AACR working group guideline; Jiang 2013 is a PRISMA systematic review). 35 questions and 5 cards staged, unpublished; 14 questions and 3 cards now have no sources. `refsite` is at 0. Maps in `var/source-audit/maps/phase1*.json`.
+- Dropped for lack of a readable primary document, with the lead to try again: Cushing causes (Nieman 2008, OUP blocked), hypercalcemia causes (Endocrine Society 2023, no open text), SCA3 (Ruano 2014, abstract only), NF2 (Plotkin 2022, blocked), neonatal meningitis (Okike 2014, Gaschignard 2011, abstract only), asplenia (BSH 2024, blocked), ARDS survivors (Herridge 2003, blocked).
+- For a later content audit (the replacement or remaining source disagrees with the item): i44380 keys infection as the top thyroid storm precipitant, JTA/JES 2016 ranks it second after stopping antithyroid drugs; i41295 links lichen sclerosus to differentiated PeIN, EAU-ASCO 2026 says it is not associated; i44486 membranous nephropathy ranking is region-dependent; i45540 and i45541 name MedlinePlus Genetics in the rationale; i45298 gives 60 to 80%, not in Fleseriu 2021; i44864 arthritis 75% rests on a CDC summary page.
+- Phase 0 trial: 14 strings, 245 questions staged. The actor `agent:source-cleanup` also has 281 changes from 2026-11-20, before this tracker.
+- Counts now: `L` 1,954 citations and 733 strings, `P` 8,160, `M` 791, `Lg` 767, `I` 87. Box sizes in Phase 2 are a little smaller than listed.
+- Pitfall: a listed string can still hold two documents (about 5 remain, such as `Jeffrey Modell Foundation 10 Warning Signs ...; 2025 Inborn Errors ...`). Never map those; stage the items by hand. Do the same when the items under one string need different documents (`"KEEP: per-item"` in the map, then an `edits` file through `J stage-quizzes`).
+- Pitfall: a trailing fragment the splitter cut off (`updated 2026.`) stays behind when its citation is dropped. Check the items' full sources and map the fragment to `null` too.
 - Crossref (`api.crossref.org/works/<DOI>`, or `?query.bibliographic=<title>`) gives the publisher record for journal articles without a fetch. Title search often returns comments and corrigenda first: confirm the DOI's own record.
-- The actor `agent:source-cleanup` also has 281 changes from 2026-11-20, before this tracker.
+- A replacement needs the tested point read in full text. Many "most common" keys have no guideline that ranks them: allow about 15 minutes per string, then drop.

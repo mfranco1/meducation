@@ -128,7 +128,7 @@ const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : 
 const relativeTimeFormat = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
 
 /** Relative to now, in the largest whole unit ("2 days ago"). */
-function relativeTime(iso: string): string {
+export function relativeTime(iso: string): string {
   const seconds = Math.min(0, (Date.parse(iso) - Date.now()) / 1000);
   const units = [
     ['month', 2_592_000],

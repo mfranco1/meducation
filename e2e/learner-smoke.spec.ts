@@ -458,6 +458,7 @@ test('failed question loading shows a toast that clears on navigation and reload
 test('a Subject Test resumes from its address and a Mixed Test starts from the dashboard', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await page.getByRole('button', { name: 'Browser Test Subject Subject Test', exact: true }).click();
   await page.getByRole('button', { name: 'Start quiz: Browser Test Subject Subject Test' }).click();
   const setup = page.getByRole('dialog');
   await expect(setup.getByRole('button', { name: 'Browse Answers' })).toHaveCount(0);

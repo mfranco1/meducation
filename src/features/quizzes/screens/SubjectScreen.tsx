@@ -1,7 +1,7 @@
 import { Box, Button, Stack } from '@mui/material';
 import { useState } from 'react';
 import type { CompletedAttempt, FeedbackMode, Quiz, Subject, Topic } from '../../../domain/types';
-import { GeneratedTestCard, type GeneratedTestControls } from '../components/GeneratedTestCard';
+import { SubjectTestCard, type GeneratedTestControls } from '../components/GeneratedTestCard';
 import { ScoreTrendIndicator } from '../components/ScoreTrendIndicator';
 import { PastAttemptsDialog } from '../components/quiz/PastAttemptsDialog';
 import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
@@ -150,7 +150,7 @@ export function SubjectScreen({
         <>
           {subjectTest && (
             <Box sx={{ mb: 3 }}>
-              <GeneratedTestCard {...subjectTest} description="Questions from every topic, new each time" />
+              <SubjectTestCard {...subjectTest} />
             </Box>
           )}
           <TopicSetBrowser topics={topics} sets={sets} noun="quiz" initialSetId={initialSetId} />
