@@ -1,6 +1,6 @@
 # Testing
 
-Pick checks by the contract you changed. Do not add tests that mirror implementation or incidental styling. Assert observable outcomes and safety invariants. CI (`.github/workflows/checks.yml`) runs the host gates, the real-PostgreSQL backend cases and both browser suites, plus an Nginx check against the built learner image. It skips pushes that only change `docs/`, `.agents/` or Markdown files, and cancels a run when a newer push to the same branch arrives. The admin suite runs against a development-mode admin build served by `vite preview`.
+Pick checks by the contract you changed. Do not add tests that mirror implementation or incidental styling. Assert observable outcomes and safety invariants. CI (`.github/workflows/checks.yml`) runs one job: lint and format, Ruff and mypy, typecheck, unit tests, the backend tests against real PostgreSQL, then the learner and admin browser suites. It skips pushes that only change `docs/`, `.agents/` or Markdown files, and cancels a run when a newer push to the same branch arrives. The admin suite runs against a development-mode admin build served by `vite preview`. The learner image and its Nginx check (`.github/workflows/learner-image.yml`) run only when the Dockerfile, container files, `vite.config.ts` or the lockfile change.
 
 ## Suites and commands
 
@@ -17,15 +17,16 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | Content validation | `npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json` |
 | New quiz batch (before staging) | `npm run report:quiz-batch -- <batch.json> [--outline <outline.json>] [--blueprint <blueprint.json>]`; workflow tool: `.venv/bin/python -m pytest -q .agents/skills/write-quizzes .agents/shared` |
 | New flashcard batch (before staging) | `npm run report:flashcard-batch -- <batch.json> --outline <outline.json> [--plan <plan.json>] [--topic <name>]`; workflow tool: `.venv/bin/python -m pytest -q .agents/skills/write-flashcards .agents/shared` |
-| Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python -m pytest backend/tests -q` |
-| Real PostgreSQL backend cases | `.venv/bin/python scripts/testing/test-postgres-content.py` (runs `backend/tests/test_pg_*.py`; `--keyword` to focus) |
-| Learner browser (Chromium; includes progress backup) | `npm run test:e2e` (builds with content retries off) |
+| Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python scripts/testing/test-postgres-content.py` (all of `backend/tests` against disposable PostgreSQL; `--keyword` to focus). Plain `pytest backend/tests -q` skips the PostgreSQL cases |
+| Learner browser (Chromium; includes progress backup) | `npm run test:e2e` (two parallel workers; builds with content retries off and checks the build omits the admin entry and modules) |
 | Admin browser | `npm run test:e2e:admin` |
-| Learner image (Nginx) | `docker build --target learner -t meducation-learner:ci .`, `docker run -d -p 127.0.0.1:8088:8080 meducation-learner:ci`, then `MEDUCATION_E2E_NGINX_URL=http://127.0.0.1:8088 npx playwright test -g nginx` |
+| Learner image (Nginx) | The build and `curl` steps in `.github/workflows/learner-image.yml` |
 
 To replay the streak and Perfect Test cards and the perfect-score results animation without taking a quiz, run `npm run dev` and open `/celebrations.html`. The page is dev only and is not part of any build.
 
 Pytest skips real-PostgreSQL cases unless an isolated test database exists; a skip is not database acceptance. Run `test-postgres-content.py` for that gate.
+
+Vitest runs `*.test.ts` in Node and `*.test.tsx` in jsdom. A `.test.ts` file that needs the DOM (hooks, `localStorage`, `document`) goes in `domTests` in `vite.config.ts`.
 
 Learner and admin browser suites share ports and `dist`; run them sequentially, and never rebuild `dist` while one is running. Playwright starts `scripts/testing/serve-postgres-fixture.py`, which seeds synthetic fixtures into a disposable PG17 tmpfs container with generated credentials (API port 8765 for learner, overridable with `MEDUCATION_E2E_API_PORT`; 8766 for admin). It never reads authority credentials or content.
 
@@ -36,7 +37,7 @@ Learner and admin browser suites share ports and `dist`; run them sequentially, 
 - Admin UI, record store, authoring: admin browser suite and `build:admin`.
 - Shared UI, content rendering, entry points, lazy boundaries: build both entries and run affected flows in both apps. The ordinary build must omit `admin.html`; the admin build must include it.
 - Persistence and backup: codec validation, restore rollback and dialog-flow unit tests plus the learner browser suite.
-- Backend, stored contracts, policy, shared fixtures: Ruff, mypy, pytest and the real-PostgreSQL gate. Run `npm run build:content-policy` first.
+- Backend, stored contracts, policy, shared fixtures: Ruff, mypy and the backend tests against real PostgreSQL. Run `npm run build:content-policy` first.
 - Schema, serialization or content changes: validate and compare a fresh selected export (`validate-export`, `audit-export`); fixtures never certify live content.
 - Container or Nginx changes: build the learner (and if relevant admin) image and run the Nginx check.
 - Database, recovery or release changes: the real-PostgreSQL gate.

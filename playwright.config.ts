@@ -5,8 +5,9 @@ const e2eApiPort = process.env.MEDUCATION_E2E_API_PORT ?? '8765';
 export default defineConfig({
   testDir: './e2e',
   testIgnore: ['**/admin-http/**'],
-  fullyParallel: false,
-  workers: 1,
+  // The learner API is read-only and each test gets its own browser context.
+  fullyParallel: true,
+  workers: 2,
   retries: 0,
   reporter: 'list',
   use: {
@@ -23,7 +24,7 @@ export default defineConfig({
       gracefulShutdown: { signal: 'SIGTERM', timeout: 30_000 },
     },
     {
-      command: `VITE_CONTENT_MAX_RETRIES=0 npm run build:learner && MEDUCATION_API_PORT=${e2eApiPort} npx vite preview --host 127.0.0.1 --port 4173 --strictPort`,
+      command: `VITE_CONTENT_MAX_RETRIES=0 npm run build:learner -- --manifest --sourcemap hidden && node scripts/containers/check-learner-artifacts.mjs dist && MEDUCATION_API_PORT=${e2eApiPort} npx vite preview --host 127.0.0.1 --port 4173 --strictPort`,
       url: 'http://127.0.0.1:4173',
       reuseExistingServer: false,
       timeout: 60_000,

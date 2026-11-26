@@ -4,6 +4,15 @@ import { configDefaults, defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { brandingPlugin, fontPreloadPlugin } from './scripts/branding/brandingPlugin.ts';
 
+const exclude = [...configDefaults.exclude, 'e2e/**'];
+const domTests = [
+  'src/admin/useRecordEditor.test.ts',
+  'src/app/progressBackupFiles.test.ts',
+  'src/features/flashcards/session/*.test.ts',
+  'src/features/quizzes/components/**/*.test.ts',
+  'src/persistence/*.test.ts',
+];
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), 'VITE_');
   const input: Record<string, string> = { learner: resolve(import.meta.dirname, 'index.html') };
@@ -23,9 +32,20 @@ export default defineConfig(({ mode }) => {
     build: { rolldownOptions: { input } },
     test: {
       maxWorkers: 2,
-      environment: 'jsdom',
-      setupFiles: './src/test/setup.ts',
-      exclude: [...configDefaults.exclude, 'e2e/**'],
+      exclude,
+      // Pure-logic tests skip jsdom setup; components, hooks and DOM-backed modules keep it.
+      projects: [
+        { extends: true, test: { name: 'node', include: ['**/*.test.ts'], exclude: [...exclude, ...domTests] } },
+        {
+          extends: true,
+          test: {
+            name: 'dom',
+            include: ['**/*.test.tsx', ...domTests],
+            environment: 'jsdom',
+            setupFiles: './src/test/setup.ts',
+          },
+        },
+      ],
     },
   };
 });

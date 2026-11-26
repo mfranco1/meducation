@@ -1,4 +1,4 @@
-"""Run fixture integration tests against one disposable loopback/tmpfs PG17 server."""
+"""Run all backend tests, including the real-PG17 cases, against one disposable loopback/tmpfs server."""
 
 import argparse
 import os
@@ -41,7 +41,7 @@ def main():
                 sys.executable,
                 "-m",
                 "pytest",
-                *sorted(str(path) for path in (ROOT / "backend/tests").glob("test_pg_*.py")),
+                "backend/tests",
                 "-q",
                 "--tb=short",
                 "--maxfail=" + str(args.maxfail),
@@ -54,7 +54,7 @@ def main():
             print(result.stdout)
             if result.returncode:
                 raise RuntimeError(
-                    "Postgres content integration failed; see fixture test output above"
+                    "Backend tests failed; see the output above"
                 )
     finally:
         subprocess.run(

@@ -771,15 +771,6 @@ test('pending catalog stays accessible and static with reduced motion', async ({
   await expectNoHorizontalOverflow(page);
 });
 
-test('nginx learner image hides the editor and sends security headers', async ({ request }) => {
-  const origin = process.env.MEDUCATION_E2E_NGINX_URL;
-  test.skip(!origin, 'Set MEDUCATION_E2E_NGINX_URL to a running learner image');
-  expect((await request.get(`${origin}/admin.html`)).status()).toBe(404);
-  const headers = (await request.get(`${origin}/`)).headers();
-  expect(headers['content-security-policy']).toContain("frame-ancestors 'none'");
-  expect(headers['x-content-type-options']).toBe('nosniff');
-});
-
 test('a Subject Test resumes from its address and a Mixed Test starts from the dashboard', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();

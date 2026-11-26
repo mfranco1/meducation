@@ -1,0 +1,39 @@
+name: Learner image
+
+on:
+  push:
+    branches: [master]
+    paths: &image-paths
+      - Dockerfile
+      - .dockerignore
+      - ops/containers/**
+      - scripts/containers/**
+      - vite.config.ts
+      - package-lock.json
+      - .github/workflows/learner-image.yml
+  pull_request:
+    paths: *image-paths
+  workflow_dispatch:
+
+concurrency:
+  group: learner-image-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  learner-image:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build and start the learner image
+        run: |
+          docker build --target learner -t meducation-learner:ci .
+          docker run -d -p 127.0.0.1:8088:8080 meducation-learner:ci
+      - name: Check that Nginx hides the editor and sends security headers
+        run: |
+          origin=http://127.0.0.1:8088
+          curl --silent --fail --retry 10 --retry-connrefused --retry-delay 1 -o /dev/null "$origin/"
+          test "$(curl --silent -o /dev/null -w '%{http_code}' "$origin/admin.html")" = 404
+          headers="$(curl --silent --fail -D - -o /dev/null "$origin/")"
+          grep -qi "^content-security-policy:.*frame-ancestors 'none'" <<< "$headers"
+          grep -qi '^x-content-type-options: nosniff' <<< "$headers"
