@@ -108,7 +108,7 @@ describe('flashcard batch report', () => {
   });
 
   it('warns on retired terms in new cards and edits', () => {
-    const retired = [{ flag: 'PCOS', pattern: /\bPCOS\b/i }];
+    const retired = [{ flag: 'PCOS', current: 'PCOS', pattern: /\bPCOS\b/i }];
     const report = buildReport(
       { ...batch([card('First-line drug in PCOS?')]), edits: [{ id: 'f1', version: 2, back: 'Not PMOS.' }] },
       { outline, retired },

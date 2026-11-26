@@ -26,8 +26,9 @@ This session reads only this file, plus [blueprint.md](blueprint.md) when planni
 | shared [content-standards.md](../../shared/content-standards.md), [item-standards.md](item-standards.md) | writers, reviewers |
 | shared [verification.md](../../shared/verification.md) | writers, judge (roles with web access) |
 | [review-rubric.md](review-rubric.md) | writers (self-check), reviewers |
-| shared [currency-notes.md](../../shared/currency-notes.md), [vocabulary.json](vocabulary.json) | writers, reviewers |
-| shared [fetch-access.md](../../shared/fetch-access.md) | whoever hits a refused fetch |
+| [vocabulary.json](vocabulary.json) | writers, reviewers |
+| shared [currency-notes.md](../../shared/currency-notes.md) | no one in full: `Q prompt` inserts the subject's rows |
+| shared [fetch-access.md](../../shared/fetch-access.md) | whoever `save-source` could find no route for |
 | [prompts/](prompts/) | one template per role, rendered by `Q prompt` |
 
 ## Work dir and commands
@@ -46,7 +47,7 @@ rm -f <work>/outline.json && J draft-outline --subject "<Subject>" --output <wor
 J stage-quizzes --subject "<Subject>" --file <work>/<topic>/<final>.json --actor agent:write-quizzes
 ```
 
-`Q --help` and `Q <command> --help` describe every command. Round and batch flags default to the latest round and its batch.
+`Q --help` and `Q <command> --help` describe every command. Round and batch flags default to the latest round and its batch. `Q next "<Topic>"` prints the next command of steps 3 to 6 from the files in the topic folder; use it to resume and whenever you are unsure where a topic stands. It can't see whether the gate passed, the drops were read or the batch was staged.
 
 ## Models
 
@@ -137,10 +138,10 @@ Later runs depend on what this run learned. After each topic is staged, read the
 | How to verify a fact | shared `verification.md` |
 | What a reviewer checks | `review-rubric.md` or the role's prompt |
 | Orchestration | this file, `blueprint.md` or `replacements.md` |
-| A retired term or edition | a row in shared `currency-notes.md` |
-| A site that refuses fetches | its row in shared `fetch-access.md` |
+| A retired term or edition | a row in shared `currency-notes.md`, with its Subjects |
+| A site that refuses fetches | shared `fetch-access.md`, only for what its "What belongs here" section allows |
 
-Subagents report retired terms and fetch routes in their summaries; add them. Files in `.agents/shared/` serve write-flashcards too: keep them valid for both skills. Before deleting the tracker, move anything in it that would help another subject into the skill, and tell the user what changed.
+Subagents report retired terms and site-level fetch findings in their summaries; add them. `save-source` records single-document routes itself. Files in `.agents/shared/` serve write-flashcards too: keep them valid for both skills. Before deleting the tracker, move anything in it that would help another subject into the skill, and tell the user what changed.
 
 How to write a lesson:
 

@@ -1,6 +1,6 @@
 You are the reviewer for the write-flashcards workflow. You didn't write these cards. Work from the repository root REPO. You cannot spawn subagents. Don't commit or stage anything to the database. Write only to OUTPUT and your scratch folder SCRATCH.
 
-Read .agents/shared/content-standards.md, .agents/skills/write-flashcards/card-standards.md, .agents/shared/currency-notes.md and .agents/shared/verification.md, and load the web tools as verification.md says before you start: reviews of existing cards need web checks, not just the ledger.
+Read .agents/shared/content-standards.md, .agents/skills/write-flashcards/card-standards.md and .agents/shared/verification.md, and load the web tools as verification.md says before you start: reviews of existing cards need web checks, not just the ledger.
 
 Review every card in INPUT. Refs starting `new-` are new cards; every other ref is the ID of an existing published card. Check each card for:
 
@@ -19,3 +19,7 @@ NOTES
 Write the review output (card-standards.md, Review output) to OUTPUT; write `[]` when every card is accepted. Every entry needs `edits` or `drop`. Check every fact you doubt as verification.md describes before deciding; a fact you didn't check is not a doubt to report. A ledger search that finds nothing, or finds an entry that doesn't state the fact, is not a check: go to the web for the primary document. A page that merely agrees with you is not a check either: correct a guideline-dependent fact only from a reference content-standards.md (Facts) ranks, and a stable fact only when you are sure of the standard textbook's position. Record every document check in SOURCES (verification.md, Records) so later reviewers find it in the ledger. For a doubtful fact you checked but can neither confirm nor refute: on a new card, edit it to remove or generalize the unconfirmed detail; on an existing card, write no entry and report it in your summary.
 
 Return only: counts by severity, the number of drops, the documents you read with the cards each one checked, any existing-card doubts you couldn't resolve (ref, fact, the URLs you checked), and existing cards that are trivia (ref, front, one-line reason).
+
+Retired names and current editions for this subject. Use the current form; mention an old name only as "formerly called" where it helps a learner:
+
+CURRENCY

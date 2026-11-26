@@ -8,7 +8,8 @@ folder (WORK/<topic-slug>/) with briefs, batches, blind rounds (blind/rounds.jso
 in order) and review files under fixed names. Shared helpers and the source ledger path are in
 .agents/shared/authoring.py. Blind rounds default to the next one (initial, recheck-1, ...) and later
 commands default to the latest round. `prompt` renders a role's prompt template, `similar`
-lists lexical near-duplicates, `gate` runs the batch report. Run `--help` on a command for
+lists lexical near-duplicates, `gate` runs the batch report, `next` prints the next step from the
+files present. Run `--help` on a command for
 its options.
 """
 
@@ -23,7 +24,7 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
-from authoring import LEDGER, REPO, SEP, clean_work, dump, load, merge_ledger, notes, numbered, page_text, render_prompt, slug  # noqa: E402
+from authoring import LEDGER, REPO, SEP, clean_work, currency_notes, dump, load, merge_ledger, notes, numbered, page_text, render_prompt, slug  # noqa: E402
 
 ITEM_FIELDS = {"stem", "choices", "answer", "rationale", "pearls"}
 NESTED = {
@@ -587,22 +588,81 @@ def cmd_accept(work: Work, args) -> None:
     print(f"{len(args.refs)} items accepted as judged")
 
 
-def cmd_ready(work: Work, args) -> None:
-    """Every item must have a clean blind solve of its current content, or have been judged as is."""
+def uncleared(work: Work, batch_name: str) -> list:
+    """Refs whose current content has no clean blind solve and wasn't judged as is."""
     log = work.log()
     # Match by content, not ref: drops renumber items between rounds.
     cleared = set(log["judged"]) | {
         s["hash"] for solves in log["solved"].values() for s in solves if s["clean"]
     }
-    missing = [
-        ref for ref, _, item in items_of(work.batch(args.batch)) if content_hash(item) not in cleared
-    ]
-    if missing:
+    return [ref for ref, _, item in items_of(work.batch(batch_name)) if content_hash(item) not in cleared]
+
+
+def cmd_ready(work: Work, args) -> None:
+    """Every item must have a clean blind solve of its current content, or have been judged as is."""
+    if missing := uncleared(work, args.batch):
         sys.exit(
             "Not ready; these need a blind solve of their current content (or a fix):\n"
             + "\n".join(missing)
         )
     print("Ready to stage.")
+
+
+def cmd_next(work: Work, args) -> None:
+    """Print the next workflow step for TOPIC, decided from the files in its folder. The gate and the
+    drops review leave no file: there it prints the earlier step, then "if already done, then: ..."."""
+    d, T = work.dir, f'"{work.topic}"'
+    say = lambda state, *lines: print("\n".join([state, *lines]))
+    wanted = [int(p.stem.split("-")[1]) for p in numbered(d, "brief-*.json")]
+    todo = [n for n in wanted if not (d / f"batch-{n}.json").exists()]
+    if not wanted and not (d / "batch.json").exists():
+        return say("no briefs yet", f"Q slices {T}")
+    if todo:
+        return say(f"writers pending for batch-{', '.join(map(str, todo))}.json", *[f"spawn writer: Q prompt writer {T} --n {n}" for n in todo])
+    merged = d / "batch.json"
+    if not merged.exists() or any(p.stat().st_mtime > merged.stat().st_mtime for p in d.glob("batch-*.json")):
+        return say("batches not merged", f"Q merge {T} && Q gate {T} && Q ledger")
+    rounds = work.rounds()
+    if not rounds:
+        return say("merged, no blind round", f"Q gate {T} && Q ledger  (the gate leaves no file; fix its errors first)", f"if already done, then: Q blind {T}")
+    r = rounds[-1]
+    meta = load(d / "blind" / r / "meta.json")
+    absent = [n for n in range(1, meta["files"] + 1) if not (d / "blind" / r / f"answers-{n}.json").exists()]
+    if absent:
+        n = "" if len(absent) == meta["files"] else " --n " + " ".join(map(str, absent))
+        return say(f"round {r}: solver answers missing", f"spawn blind solver: Q prompt blind {T}{n}")
+    if not any(s["round"] == r for solves in work.log()["solved"].values() for s in solves):
+        return say(f"round {r}: answers not checked", f"Q check-blind {T}")
+    final = max(d.glob("reviewed*.json"), key=lambda p: p.stat().st_mtime, default=merged).name
+    stage = f'Q ready {T} --batch {final} && J stage-quizzes --subject "<Subject>" --file {d / final} --actor agent:write-quizzes'
+    if final != meta["batch"]:
+        rewritten = d / f"rewritten-{Path(final).stem}.json"
+        if rewritten.exists() and not load(rewritten):
+            return say(f"{final} applied, nothing rewritten", stage)
+        return say(f"{final} applied, not rechecked", f"Q gate {T} --batch {final} && Q blind {T} --batch {final}")
+    judging, judged = d / f"judgment-input-{r}.json", d / f"review-judgment-{r}.json"
+    if r == "initial":
+        if not (d / "escalated.json").exists():
+            return say("round initial checked, not triaged", f"Q triage {T}")
+        inputs = [p.stem.rsplit("-", 1)[1] for p in numbered(d, "standards-input-*.json")]
+        open_ = [n for n in inputs if not all((d / f"{name}-{n}.json").exists() for name in ("review-standards", "standards-escalate"))]
+        if open_:
+            return say(f"standards reviews missing for input {', '.join(open_)}", f"spawn standards reviewer (one at a time): Q prompt standards {T} --n {open_[0]}")
+        if not (d / "review-drops.json").exists():
+            return say("standards reviews in", f"Q route-standards {T}")
+        if not judging.exists():
+            return say("standards routed", "read review-drops.json (drop one side of a near-duplicate pair)", f"if already done, then: Q judge-input {T}")
+    elif not judging.exists():
+        if missing := uncleared(work, final):
+            return say(f"round {r}: {len(missing)} items lack a clean solve", f"fix and recheck, or: Q judge-input {T}, or: Q accept {T} --batch {final} <ref>...")
+        return say(f"round {r} clean", stage)
+    sent = load(judging)
+    if sent and not judged.exists():
+        return say(f"judgment input has {len(sent)} items", f"spawn judge: Q prompt judge {T}")
+    if r == "initial":
+        reviews = ["review-standards.json", *(["review-judgment-initial.json"] * bool(sent)), "review-drops.json"]
+        return say("ready to apply", "first read the wrong-key, ambiguous and correction edits", f"Q apply {T} --batch batch.json --output reviewed.json {' '.join(reviews)}")
+    return say(f"round {r} judged", f"Q apply {T} --batch {final} --output reviewed-{r}.json review-judgment-{r}.json" if sent else stage)
 
 
 def cmd_ledger(work: Work, args) -> None:
@@ -692,6 +752,7 @@ def cmd_prompt(work: Work, args) -> None:
             sys.exit("No standards-input files; run triage first.")
         subs["INPUTS"] = "\n".join(f"- {p}" for p in paths)
     subs["SUBJECT_NOTES"] = notes(root / "notes.md", folder / "notes.md")
+    subs["CURRENCY"] = currency_notes(root.name)
     render_prompt(PROMPTS / f"{role}.md", subs, folder / f"prompt-{tag}.md")
 
 
@@ -786,6 +847,7 @@ def main() -> None:
         ("apply", cmd_apply, ["batch", "output"]),
         ("accept", cmd_accept, ["batch"]),
         ("ready", cmd_ready, ["batch"]),
+        ("next", cmd_next, []),
         ("ledger", cmd_ledger, []),
         ("backlog", cmd_backlog, []),
         ("prompt", cmd_prompt, []),

@@ -5,7 +5,6 @@ Read first, and meet every standard from the first draft:
 - .agents/shared/content-standards.md
 - .agents/skills/write-flashcards/card-standards.md
 - .agents/shared/verification.md
-- .agents/shared/currency-notes.md
 
 Your brief: BRIEF. It names the deck, the number of cards to add (`deck.add`), the `focus`, the deck's existing card count, the topic's quiz subtopics with question counts, the topic's other decks, the fronts file, the source ledger, your source pages and your output paths. Write exactly `deck.add` cards.
 
@@ -16,6 +15,10 @@ Before writing, read every section of your topic in the fronts file in full. `(u
 Notes:
 
 NOTES
+
+Retired names and current editions for this subject. Use the current form; mention an old name only as "formerly called" where it helps a learner:
+
+CURRENCY
 
 Write `{ "cards": [...] }` to CARDS, ordered for learning (basics first, related cards together). Then, with D meaning `python3 -I .agents/skills/write-flashcards/deck_work.py --work WORK`:
 

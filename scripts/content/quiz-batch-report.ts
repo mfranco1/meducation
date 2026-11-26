@@ -47,22 +47,41 @@ export const normalize = (stem: string) =>
     .replace(/[^\p{L}\p{N}\s]/gu, '')
     .replace(/\s+/g, ' ')
     .trim();
-// Retired terms come from the Gate column of .agents/shared/currency-notes.md: each backticked cell entry
-// is a case-insensitive pattern matched as whole words, except right after "formerly (called)".
+// Retired terms come from the Gate column of each table in .agents/shared/currency-notes.md that has one: each
+// backticked cell entry is a case-insensitive pattern matched as whole words, except right after "formerly (called)".
 export const CURRENCY_NOTES = '.agents/shared/currency-notes.md';
 export interface RetiredTerm {
   flag: string;
+  current: string;
   pattern: RegExp;
 }
 export function retiredTerms(markdown: string): RetiredTerm[] {
-  return markdown
-    .split('\n')
-    .filter((line) => line.startsWith('|'))
-    .flatMap((line) => [...(line.split('|').at(-2) ?? '').matchAll(/`([^`]+)`/g)].map((m) => m[1]))
-    .map((flag) => ({
-      flag,
-      pattern: new RegExp(`(?<![\\p{L}\\p{N}-])(?<!formerly (?:called )?)(?:${flag})(?![\\p{L}\\p{N}-])`, 'iu'),
-    }));
+  const terms: RetiredTerm[] = [];
+  let header: string[] | undefined;
+  for (const line of markdown.split('\n')) {
+    if (!line.startsWith('|')) {
+      header = undefined;
+      continue;
+    }
+    const cells = line
+      .split('|')
+      .slice(1, -1)
+      .map((cell) => cell.trim());
+    if (!header) {
+      header = cells;
+      continue;
+    }
+    const gate = header.indexOf('Gate');
+    if (gate < 0 || /^[-: ]+$/.test(cells[0])) continue;
+    const current = cells[header.indexOf('Current')] ?? '';
+    for (const [, flag] of (cells[gate] ?? '').matchAll(/`([^`]+)`/g))
+      terms.push({
+        flag,
+        current,
+        pattern: new RegExp(`(?<![\\p{L}\\p{N}-])(?<!formerly (?:called )?)(?:${flag})(?![\\p{L}\\p{N}-])`, 'iu'),
+      });
+  }
+  return terms;
 }
 export function retiredFindings(where: string, texts: (string | undefined)[], terms: RetiredTerm[]): Finding[] {
   const text = texts.filter(Boolean).join('\n');
@@ -71,7 +90,7 @@ export function retiredFindings(where: string, texts: (string | undefined)[], te
     .map((t) => ({
       level: 'warning' as const,
       where,
-      message: `Uses retired \`${t.flag}\`; write the current form from currency-notes.md (fine in a published title).`,
+      message: `Uses retired \`${t.flag}\`. Current: ${t.current} (fine in a published title).`,
     }));
 }
 // Pages that may locate a primary document but are never cited (content-standards.md, Citations).
@@ -94,7 +113,10 @@ export function weakSourceFindings(where: string, sources: string | undefined): 
     else refs.push(part);
     return refs;
   }, []);
-  const undated = references.filter((reference) => !/\b(19|20)\d\d\b/.test(reference));
+  const isLink = (reference: string) => /^(https?:\/\/|doi:|www\.)\S*$/i.test(reference.trim());
+  const undated = references.filter((reference) => !isLink(reference) && !/\b(19|20)\d\d\b/.test(reference));
+  const accessed = references.filter((reference) => /\baccessed\b/i.test(reference));
+  const links = references.filter(isLink);
   return [
     ...(match
       ? [
@@ -109,6 +131,16 @@ export function weakSourceFindings(where: string, sources: string | undefined): 
       level: 'warning' as const,
       where,
       message: `Citation has no year: "${reference.slice(0, 60)}". Give the year of the version you read.`,
+    })),
+    ...accessed.map((reference) => ({
+      level: 'warning' as const,
+      where,
+      message: `Citation has an access date: "${reference.slice(0, 60)}". Remove it.`,
+    })),
+    ...links.map((reference) => ({
+      level: 'warning' as const,
+      where,
+      message: `Citation is only a link: "${reference.slice(0, 60)}". Give the author or organization, title, publisher and year.`,
     })),
   ];
 }

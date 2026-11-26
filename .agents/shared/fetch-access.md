@@ -1,19 +1,23 @@
 # Fetch access
 
-Sites that refuse automated fetches, and the route that loads instead. Shared by write-quizzes and write-flashcards. When a fetch fails, grep this file for the failing host (`grep -i "<domain>" .agents/shared/fetch-access.md`), then for the issuing body. The source ledger records blocked documents; this file records blocked sites.
+What a site needs when `save-source` can't fetch its documents. Shared by write-quizzes and write-flashcards. `save-source <URL>` already tries the page with a browser User-Agent, the article's PubMed Central page, Europe PMC full text and NCBI efetch (from a PMCID or DOI in the URL), and the archive copy, and it records the route that worked. Come here only after it fails: grep this file for the failing host (`grep -i "<domain>" .agents/shared/fetch-access.md`), then for the issuing body.
+
+## What belongs here
+
+Only what `save-source` can't work out or record: a URL pattern for a whole site, a tool other than curl (WebFetch, a REST API, `pdftoppm`), a body to cite instead, or the fact that no route exists. Don't add one document's route: pass it as `--from` and `save-source` records it, `find-sources` prints it with the document, and a failed `save-source` lists the routes that worked for the same site. When you edit an entry, remove single-document routes from it.
 
 ## Terms
 
 - **UA curl**: `curl -sL` with a browser User-Agent.
-- **Archive copy**: `save-source <URL> --from web.archive.org/web/<year>id_/<URL>` (`id_` returns the raw page or PDF). WebFetch refuses web.archive.org.
+- **Archive copy**: `web.archive.org/web/<year>id_/<URL>` (`id_` returns the raw page or PDF). `save-source` tries the current year; pass another year as `--from`. WebFetch refuses web.archive.org.
 - **PMC copy**: the article in PubMed Central, read as the PubMed Central entry says.
-- **WebFetch PDF**: when WebFetch returns a PDF as binary, save it and read it with `pdftotext -layout`.
+- **WebFetch PDF**: when WebFetch returns a PDF as binary, save it with `save-source <URL> --from <saved file>`.
 
-First check `var/sources/manual/` for a copy the user downloaded (`ls var/sources/manual/`) and save it with `save-source <the document's own URL> --from var/sources/manual/<file>`.
+First check `var/sources/manual/` for a copy the user downloaded (`find-sources` lists matches) and save it with `save-source <the document's own URL> --from var/sources/manual/<file>`.
 
-For a site not listed: PMC copy, then archive copy, then a copy hosted by another society, agency or university repository (`api.openalex.org/works/doi:<DOI>` lists open copies under `locations`); otherwise record the fact as abstract-only.
+For a site not listed, after `save-source` fails: a PMC copy found by title when the URL has no DOI, then a copy hosted by another society, agency or university repository (`api.openalex.org/works/doi:<DOI>` lists open copies under `locations`); otherwise record the fact as abstract-only.
 
-Use only the routes listed. After a site refuses a fetch, don't retry its own host with a browser User-Agent or other URL variants: the permission classifier reads that as getting around access control and then refuses the archive copy too. When the classifier denies a fetch, don't retry or rephrase it: record the document as `blocked` and name it in your summary so the user can download it into `var/sources/manual/`.
+Use only the routes listed. After a site refuses a fetch, don't retry its own host with other URL variants: the permission classifier reads that as getting around access control and then refuses the archive copy too. When the classifier denies a fetch, don't retry or rephrase it: record the document as `blocked` and name it in your summary so the user can download it into `var/sources/manual/`.
 
 ## Indexes
 
@@ -22,9 +26,15 @@ Use only the routes listed. After a site refuses a fetch, don't retry its own ho
 - **PubMed** (pubmed.ncbi.nlm.nih.gov; cookie wall), **BVS / LILACS** (search.bvsalud.org, pesquisa.bvsalud.org): Europe PMC REST search for the abstract and citation: `https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=EXT_ID:<PMID>%20AND%20SRC:MED&resultType=core`.
 - **NCBI Bookshelf** (ncbi.nlm.nih.gov/books, GeneReviews; CAPTCHA): `curl -s --compressed` on `web.archive.org/web/2025id_/https://www.ncbi.nlm.nih.gov/books/NBK<id>/` returns the full chapter; save it with `save-source --from`. Otherwise another agency's copy. Europe PMC search plus `fullTextXML` works for PMC articles; for StatPearls and other Bookshelf chapters (NBK IDs) the PMID search returns only the abstract (record it as summary-only), so for a textbook fact beyond the abstract use a journal article found through Europe PMC. Endotext chapters: UA curl of the chapter PDF from endotext.org (`https://endotext.org/wp-content/uploads/pdfs/<chapter-slug>.pdf`), then `pdftotext`.
 
-## Archive copy works
+## Archive copy caveats
 
-These return 403 or HTML instead of the PDF; the archive copy loads: clinicalinfo.hiv.gov (NIH HIV guideline PDFs and OI chapter pages; the CMV chapter loads only from 2024 snapshots), endocrinology.org media PDFs (2022 hypoparathyroidism workshop guideline), BMJ specialty journals (lupus.bmj.com and other *.bmj.com article pages; for gut.bmj.com only the `/content/gutjnl/<vol>/<issue>/<page>.full.pdf` URL; not jnnp.bmj.com), DOH Epidemiology Bureau surveillance PDFs (pia.gov.ph), FNRI-DOST (fnri.dost.gov.ph: Pinggang Pinoy, dietary guidelines), National Academies Press (nap.nationalacademies.org: IOM reports; or WebFetch the redirected `www.nationalacademies.org/read/<id>/chapter/<n>`), NIH ODS fact sheets (ods.od.nih.gov; use `curl -sL --compressed` on the `web.archive.org/web/2026id_/` URL), Philippine Statistics Authority (psa.gov.ph), SAGE journal articles (journals.sagepub.com/doi/full/<DOI> from a 2022 or 2023 snapshot, or /doi/pdf/<DOI> from a 2025 snapshot, such as *Otolaryngol Head Neck Surg*; later snapshots return a Cloudflare page; the archive copy comes back gzip-compressed, so decompress it before reading), SAGES guidelines (sages.org/publications/guidelines pages), *Respiratory Care* (rcjournal.com), SOGC (*J Obstet Gynaecol Can*, `jogc.com/article/<PII>/pdf`), The Menopause Society (menopause.org PDFs; or the *Menopause* article in PMC), UCL Discovery (discovery.ucl.ac.uk and discovery-pp.ucl.ac.uk author PDFs; UA curl on the archive copy), UNICEF data (data.unicef.org: UN IGME reports).
+`save-source` tries the archive copy itself. These need more than that:
+
+- clinicalinfo.hiv.gov (NIH HIV guidelines): the CMV chapter loads only from 2024 snapshots.
+- BMJ specialty journals (*.bmj.com): for gut.bmj.com only the `/content/gutjnl/<vol>/<issue>/<page>.full.pdf` URL has an archive copy; jnnp.bmj.com has none.
+- National Academies Press (nap.nationalacademies.org): or WebFetch the redirected `www.nationalacademies.org/read/<id>/chapter/<n>`.
+- SAGE journals (journals.sagepub.com, such as *Otolaryngol Head Neck Surg*): `/doi/full/<DOI>` from a 2022 or 2023 snapshot, or `/doi/pdf/<DOI>` from a 2025 snapshot; later snapshots return a Cloudflare page.
+- The Menopause Society (menopause.org PDFs): or the *Menopause* article in PMC.
 
 ## Sites
 
@@ -43,7 +53,6 @@ Alphabetical by body.
 - **ACOG** (acog.org; 402): Committee Opinions and Practice Advisories load at `web.archive.org/web/2026/<acog.org URL>` (archive copy for a PDF); Practice Bulletins and Clinical Consensus documents there are paywalled stubs, as are Committee Statements (No. 28 cervical screening; use the WPSI page, which WebFetch reads but save-source cannot store). Otherwise an SMFM-hosted copy (Obstetric Care Consensus PDFs on assets.noviams.com: download, then `save-source --from`) or NICE, WHO or FIGO.
 - **ACR Appropriateness Criteria** (acsearch.acr.org; narratives can return "Coming Soon"): `curl -sL -A "Mozilla/5.0" https://web.archive.org/web/2024id_/https://acsearch.acr.org/docs/<id>/Narrative/` returns the full PDF (2025 snapshots can hold only the rating tables), then `pdftotext -layout`; else a university-hosted PDF copy (e.g. widionline.xray.ufl.edu, check the title: GUID paths can return another topic).
 - ***Acta Medica Philippina*** (actamedicaphilippina.upm.edu.ph; abstract only on the page): UA curl on the galley PDF link (`.../article/download/<id>/<galley>/<file>`).
-- ***Anticancer Res*** (ar.iiarjournals.org; 403 on full text and PDF): the PMC copy; otherwise the Europe PMC abstract.
 - **ADA Standards of Care** (diabetesjournals.org, *Diabetes Care*; Cloudflare; Europe PMC and efetch lack the body): UA curl on the section's PMC page, or WebFetch by offset (pages run past 300,000 characters). 2026: PMC12690183 section 2, PMC12690185 section 9, PMC12690187 section 10, PMC12690180 section 16. Then the archive copy of the diabetesjournals.org section.
 - **AHA/ACC** (ahajournals.org, jacc.org): PMC copy, then archive copy of the full-text page. A saved *Circulation* text can lack the recommendation and drug tables; the archive copy of the *JACC* co-publication has them. ACC "Guidelines Made Simple" or pocket-guide PDFs for classes and thresholds; a university mirror as WebFetch PDF or plain curl (encode spaces as `%20`; the AHA/ASA 2023 SAH guideline loads from a UCSD neurosciences mirror). Resuscitation: cpr.heart.org pages, or `save-source <cpr.heart.org URL> --from "web.archive.org/web/2026id_/<URL>"` (2025 Parts 9 and 10; 2025 algorithm text descriptions, `.../2025-Accessible/Algorithm-...-LngDscrp-...pdf`). Scientific statements as the archive copy of `ahajournals.org/doi/pdf/<DOI>` (2019 pediatric stroke, 2021 snapshot).
 - **AHA/ACC 2025 and ESC 2024 hypertension** (blocked everywhere): 2020 Philippine hypertension guideline (PMC8678709), NICE NG136 and NG133, or ADA Standards section 10; cite that body.
@@ -59,7 +68,6 @@ Alphabetical by body.
 - **ASRA** neuraxial anticoagulation (rapm.bmj.com): the anticoagulant's label (spinal/epidural hematoma and catheter timing; see Drug labels); cite the label.
 - **AUA** (auanet.org; login): EAU chapters; cite EAU.
 - **Baveno VIII** consensus (*J Hepatol* 2026; journal-of-hepatology.eu, sciencedirect.com, doi.org, easl.eu and the flore.unifi.it repository 403; Europe PMC abstract only; archive copies of doi.org, the flore PDF and easl.eu give an error page or 404): a copy in `var/sources/manual/`; otherwise record as abstract-only.
-- ***BMJ*** (bmj.com): PMC copy.
 - **BTS** (brit-thoracic.org.uk): PDFs in its document library, by UA curl with a long timeout (a short one saves a truncated PDF).
 - **CDC** (cdc.gov, stacks.cdc.gov): WebFetch for pages; Stacks PDFs as WebFetch PDF. MMWR PDFs (`rr*.pdf`) return HTML by curl, and MMWR pages can return 403: archive copy (ACIP influenza, MMWR 74(32)); for U.S. SPR and MEC figure text, WebFetch the `cdc.gov/contraception/hcp/` pages. STI treatment pages are often refused: PMC copy of the MMWR guideline. Moved pages: `tb/hcp/testing-diagnosis/tuberculin-skin-test.html`, `std/treatment-guidelines/mycoplasmagenitalium.htm` (no hyphen). Guideline PDFs under `cdc.gov/infectioncontrol` can return 403 or 404: WebFetch the guideline's HTML pages. NHSN pathogen tables: WebFetch `cdc.gov/nhsn/hai-report/data-tables-adult/table-<n>.html`. Parasites: `cdc.gov/<disease>/hcp/clinical-care/index.html` (for example `sth`, `strongyloides`, `filarial-worms`, `zoonotic-hookworm`, `taeniasis`), `cdc.gov/guinea-worm/hcp/clinical-overview/index.html`, and `cdc.gov/dpdx/<disease>/index.html` for life cycle and morphology; `ascariasis/hcp`, `hookworm/hcp`, `trichuriasis/hcp` and `dracunculiasis/hcp` paths return 404.
 - **CHEMM triage** (chemm.hhs.gov: START, JumpSTART; page text lacks the steps): render the linked flowchart SVG (`/media/.../*.svg`) with `qlmanage -t -s 1800 -o <dir> <file>.svg` and view it.
@@ -104,12 +112,9 @@ Alphabetical by body.
 - ***J Neurol Neurosurg Psychiatry*** (jnnp.bmj.com; 403, archive copy paywalled, PMC PDFs behind a browser check, Europe PMC full text fails for older articles): record it as abstract-only and verify the fact in another source.
 - ***J Thorac Oncol*** (jto.org, Elsevier; 403, archive copy refused): the PMC copy or a copy the user downloads into `var/sources/manual/`; otherwise verify in another source.
 - **Japanese Circulation Society** (*Circ J*, J-STAGE untested): a university-hosted PDF (JCS 2023 vasospastic angina on a Tohoku University page).
-- **Karger journals** (karger.com; article PDFs return a challenge page): PMC copy; otherwise abstract-only.
 - **Joint Trauma System CPGs** (jts.health.mil): WebFetch saves the PDF, then `pdftotext -layout`. The eye trauma initial care infographic (2026) is a summary: record it as summary-only, and use UK MoD Clinical Guidelines for Operations alongside it.
 - **KDIGO** (kdigo.org; some PDFs 404, *Kidney Int* 403): curl the kdigo.org PDF first (2012 AKI: `/wp-content/uploads/2016/10/KDIGO-2012-AKI-Guideline-English.pdf`; 2025 IgAN/IgAV: `/wp-content/uploads/2024/08/KDIGO-2025-IgAN-IgAV-Guideline.pdf`; 2024 ANCA vasculitis: `/wp-content/uploads/2024/05/KDIGO-2024-ANCA-Vasculitis-Guideline.pdf`; 2024 CKD: `/wp-content/uploads/2024/03/KDIGO-2024-CKD-Guideline.pdf`; 2026 anemia in CKD: `/wp-content/uploads/2026/04/KDIGO-2026-Anemia-in-CKD-Guideline.pdf`; 2017 CKD-MBD: `/wp-content/uploads/2017/02/KDIGO_CKD_MBD_Guideline_r6.pdf`). 2021 glomerular diseases full guideline: `/wp-content/uploads/2017/02/KDIGO-Glomerular-Diseases-Guideline-2021-English.pdf` (11 MB). Its executive summary: the Cambridge repository copy (`api.repository.cam.ac.uk/server/api/core/bitstreams/<id>/content`, 15 MB); curl drops about every 3 minutes, so resume with `curl -C -`.
 - ***The Lancet*** (thelancet.com; Europe PMC has the abstract only): open-access journals such as *Lancet Global Health* have Europe PMC full text. Otherwise a PMC author manuscript or a university repository PDF (GBD papers are often in coauthors' repositories); otherwise abstract-only.
-- ***Mayo Clin Proc***, ***J Clin Oncol*** (ascopubs.org): PMC copy, then archive copy of the full-text page; otherwise abstract-only.
-- **MDPI journals** (mdpi.com; 403): Europe PMC `fullTextXML` of the PMC copy.
 - **Medscape** (emedicine.medscape.com): a PMC review or a textbook.
 - **National Privacy Commission** (privacy.gov.ph: DPA IRR, circulars; Senate copy refused too): Supreme Court E-Library, then chanrobles, recorded as unofficial in the ledger.
 - ***Nature Reviews*** journals and *Leukemia* (nature.com; redirects to a login): PMC copy of the same or an earlier edition; otherwise abstract-only.
@@ -132,7 +137,6 @@ Alphabetical by body.
 - **SMFM** Consult Series and guidelines (publications.smfm.org): take the PDF link from the publication page (`s3.amazonaws.com/cdn.smfm.org/attachments/...` or, for newer documents, `assets.noviams.com/...`), then `save-source --from`.
 - **SOGC** (jogc.com; 403): the archive copy of `jogc.com/article/<PII>/fulltext` sometimes loads full text, sometimes the abstract only; the `/pdf` form has no capture.
 - **Springer Nature and BMC** (*.biomedcentral.com redirects to a Springer login; link.springer.com archive copies, such as *Hernia*, hold only the abstract): Europe PMC full text of the PMC copy (find the PMCID with an `EXT_ID:<PMID>` search in Europe PMC; a `DOI:` search can return HTTP 500).
-- **Taylor & Francis** (tandfonline.com, *Acta Oncol*; 403): PMC copy; otherwise abstract-only.
 - **Thieme** (thieme-connect.com; bot check on PDFs too): PMC or Europe PMC copy; for ESGE guidelines, a society-hosted PDF (BSG `bsg.org.uk/getmedia/...pdf`) as WebFetch PDF, or a university repository PDF by plain curl (ULB `dipot.ulb.ac.be/dspace/bitstream/...pdf`; Leiden: UA curl of the `citation_pdf_url` on the `scholarlypublications.universiteitleiden.nl/access/item%3A<id>/view` page, for example ESGE 2021 ampullary tumors); then the abstract by Europe PMC REST search; otherwise a later review.
 - **UK MoD Clinical Guidelines for Operations** (cgo.mod.uk): pages load with WebFetch (ophthalmology: orbital compartment syndrome, eye trauma).
 - **University of Turku and Würzburg repositories** (utupub.fi PDFs return 403; opus.bibliothek.uni-wuerzburg.de PDFs return HTML to curl): the PMC or Europe PMC copy, otherwise abstract-only.

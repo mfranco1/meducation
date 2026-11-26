@@ -515,3 +515,30 @@ def test_apply_leaves_out_a_quiz_that_its_drops_empty(tmp_path):
     args = ["apply", TOPIC, "--batch", "batch.json", "--output", "out.json", "review.json"]
     assert run(tmp_path, *args).returncode == 0
     assert json.loads((topic_dir / "out.json").read_text())["topics"] == []
+
+
+def test_next_follows_the_files_from_writers_to_stage(tmp_path):
+    topic_dir = setup(tmp_path)
+    (topic_dir / "batch.json").rename(topic_dir / "batch-1.json")
+    for n in (1, 2):
+        (topic_dir / f"brief-{n}.json").write_text("{}")
+
+    def nxt() -> str:
+        return run(tmp_path, "next", TOPIC).stdout
+
+    assert f'Q prompt writer "{TOPIC}" --n 2' in nxt() and "--n 1" not in nxt()
+    (topic_dir / "batch-2.json").write_text(json.dumps({"topics": []}))
+    assert f'Q merge "{TOPIC}" && Q gate "{TOPIC}" && Q ledger' in nxt()
+    run(tmp_path, "merge", TOPIC)
+    assert f'if already done, then: Q blind "{TOPIC}"' in nxt()
+    run(tmp_path, "blind", TOPIC)
+    assert f'Q prompt blind "{TOPIC}"' in nxt()
+    answer(topic_dir, "initial", keys(topic_dir))
+    assert f'Q check-blind "{TOPIC}"' in nxt()
+    run(tmp_path, "check-blind", TOPIC)
+    assert f'Q triage "{TOPIC}"' in nxt()
+    run(tmp_path, "triage", TOPIC)
+    assert f'Q prompt standards "{TOPIC}" --n 1' in nxt()
+    (topic_dir / "reviewed.json").write_text((topic_dir / "batch.json").read_text())
+    (topic_dir / "rewritten-reviewed.json").write_text("[]")
+    assert f'Q ready "{TOPIC}" --batch reviewed.json && J stage-quizzes' in nxt()

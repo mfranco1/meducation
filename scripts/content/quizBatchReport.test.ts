@@ -173,6 +173,26 @@ describe('quiz batch report', () => {
     expect(report.text).not.toContain('item 2 ("Second stem differs?"): Citation has no year');
   });
 
+  it('warns on access dates and bare links but not a doi at the end of a reference', () => {
+    const report = run([
+      item('First stem here?', {
+        rationaleMeta: { sources: 'WHO. *Guideline*. WHO; 2018. Accessed March 3, 2024; CDC. *Care*. CDC; 2020.' },
+      }),
+      item('Second stem differs?', { rationaleMeta: { sources: 'https://example.org/guideline' } }),
+      item('Third one is new?', {
+        rationaleMeta: { sources: 'Lee A. Statins. *BMJ*. 2021. doi:10.1136/bmj.1234' },
+      }),
+    ]).text;
+    expect(report).toContain(
+      'item 1 ("First stem here?"): Citation has an access date: "WHO. *Guideline*. WHO; 2018. Accessed',
+    );
+    expect(report).toContain(
+      'item 2 ("Second stem differs?"): Citation is only a link: "https://example.org/guideline"',
+    );
+    expect(report).not.toContain('item 2 ("Second stem differs?"): Citation has no year');
+    expect(report).not.toContain('item 3 ("Third one is new?"): Citation');
+  });
+
   it('counts rationale length outside tables', () => {
     const words = (n: number) => Array(n).fill('word').join(' ');
     const table = `\n\n| A | B |\n| --- | --- |\n| ${words(100)} | x |`;
@@ -194,11 +214,15 @@ describe('quiz batch report', () => {
 
   it('warns on retired terms from the currency notes Gate column', () => {
     const notes = [
-      '| Retired | Current | Since | Gate |',
-      '| --- | --- | --- | --- |',
-      '| Amrinone | Inamrinone | USAN | `amrinone` |',
-      '| NAFLD | MASLD | 2023 | `NAFLD`, `non-?alcoholic fatty liver` |',
-      '| A rule | Its fix | 2020 | |',
+      '| Retired | Current | Since | Subjects | Gate |',
+      '| --- | --- | --- | --- | --- |',
+      '| Amrinone | Inamrinone | USAN | Pharm | `amrinone` |',
+      '| NAFLD | MASLD | 2023 | IM | `NAFLD`, `non-?alcoholic fatty liver` |',
+      '| A rule | Its fix | 2020 | All | |',
+      '',
+      '| Area | Current | Subjects |',
+      '| --- | --- | --- |',
+      '| Sepsis | `Sepsis-3` | IM |',
     ].join('\n');
     const retired = retiredTerms(notes);
     expect(retired.map((t) => t.flag)).toEqual(['amrinone', 'NAFLD', 'non-?alcoholic fatty liver']);
@@ -208,7 +232,7 @@ describe('quiz batch report', () => {
       item('Which one?', { rationale: 'Inamrinone (formerly amrinone) is used.' }),
     ];
     const report = buildReport(batch(items), { vocabulary, retired }).text;
-    expect(report).toContain('item 1 ("Which drug is Amrinone?"): Uses retired `amrinone`');
+    expect(report).toContain('item 1 ("Which drug is Amrinone?"): Uses retired `amrinone`. Current: Inamrinone (');
     expect(report).toContain('item 2 ("Is inamrinone current?"): Uses retired `non-?alcoholic fatty liver`');
     expect(report).not.toContain('item 2 ("Is inamrinone current?"): Uses retired `amrinone`');
     expect(report).not.toContain('item 3 ("Which one?"): Uses retired');

@@ -22,6 +22,7 @@ from authoring import (  # noqa: E402
     REPO,
     SEP,
     clean_work,
+    currency_notes,
     dump,
     load,
     merge_ledger,
@@ -216,6 +217,7 @@ def cmd_prompt(work: Work, args) -> None:
         "TOPICNAME": work.topic,
         "SCRATCH": str(scratch) + "/",
         "NOTES": notes(root / "notes.md", folder / "notes.md"),
+        "CURRENCY": currency_notes(root.name),
     }
     if args.role == "writer":
         subs |= {"BRIEF": str(folder / needs), "CARDS": str(folder / f"cards-{n}.json")}

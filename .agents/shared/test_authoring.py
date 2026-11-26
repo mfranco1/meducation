@@ -98,3 +98,65 @@ def test_saved_copy_is_listed_with_its_ledger_entry(tmp_path):
 
     page.write_text("<html><body>Just a moment...</body></html>")
     assert run("save-source", "https://example.org/other", "--from", str(page)).returncode != 0
+
+
+def test_merge_ledger_folds_every_address_of_one_article(tmp_path):
+    ledger = tmp_path / "ledger.json"
+    row = {"title": "ADA section 10", "year": "2026", "url": "https://pmc.ncbi.nlm.nih.gov/articles/PMC123/", "status": "summary-only", "facts": ["a"]}
+    mirror = {**row, "url": "https://europepmc.org/article/PMC/PMC123", "status": "verified", "facts": ["b"]}
+    doi = {**row, "title": "KDIGO", "url": "https://doi.org/10.1000/KI.2024.1", "facts": ["c"]}
+    publisher = {**doi, "url": "https://journal.example.org/doi/full/10.1000/ki.2024.1", "facts": ["d"]}
+    write(tmp_path / "work" / "topic" / "sources-1.json", [row, mirror, doi, publisher])
+    assert merge(ledger, tmp_path / "work").wait() == 0
+    entries = {e["title"]: e for e in json.loads(ledger.read_text())}
+    assert sorted(entries["ADA section 10"]["facts"]) == ["a", "b"] and entries["ADA section 10"]["status"] == "verified"
+    assert sorted(entries["KDIGO"]["facts"]) == ["c", "d"]
+
+
+def test_save_source_tries_routes_in_turn_and_remembers_the_one_that_worked(tmp_path, monkeypatch, capsys):
+    sys.path.insert(0, str(TOOL.parent))
+    import authoring
+
+    ledger = tmp_path / "ledger.json"
+    url = "https://journal.example.org/guideline"
+    write(ledger, [{"title": "Sepsis guideline", "year": "2026", "url": url, "status": "verified", "facts": []}])
+    block = tmp_path / "block.html"
+    block.write_text("<html><body>Just a moment..." + "x" * 2000 + "</body></html>")
+    copy = tmp_path / "copy.html"
+    copy.write_text("<html><body>" + "<p>Give 30 mL/kg crystalloid within 3 hours.</p>" * 40 + "</body></html>")
+    monkeypatch.setattr(authoring, "candidates", lambda url, folder: [f"file://{tmp_path}/missing", block.as_uri(), copy.as_uri()])
+
+    authoring.save_source(ledger, url, None)
+    out = capsys.readouterr().out
+    assert f"via {copy.as_uri()}" in out and "30 mL/kg" in Path(out.split(" (")[0]).read_text()
+    authoring.find_sources(ledger, ["sepsis"])
+    assert f"fetched from {copy.as_uri()}" in capsys.readouterr().out
+
+    monkeypatch.setattr(authoring, "candidates", lambda url, folder: [block.as_uri()])
+    authoring.save_source(ledger, url, None)  # already saved: no fetch
+    assert "saved " in capsys.readouterr().out
+    try:
+        authoring.save_source(ledger, "https://journal.example.org/other", None)
+    except SystemExit as stop:
+        assert "block page" in str(stop.code) and f"worked before for journal.example.org: {url} --from {copy.as_uri()}" in str(stop.code)
+    else:
+        raise AssertionError("a block page was saved")
+
+
+def test_currency_notes_keeps_the_rows_of_a_subject_and_rows_for_every_subject(tmp_path):
+    sys.path.insert(0, str(TOOL.parent))
+    import authoring
+
+    notes = tmp_path / "currency-notes.md"
+    notes.write_text(
+        "# Currency notes\n\nIntro.\n\n"
+        "| Retired | Current | Since | Subjects | Gate |\n| --- | --- | --- | --- | --- |\n"
+        "| NAFLD | MASLD | 2023 | internal-medicine, pathology | `NAFLD` |\n"
+        "| Pregnancy letters | PLLR | 2015 | | `pregnancy category` |\n"
+        "| Best evidence rule | Original document rule | 2019 | legal-medicine | |\n\n"
+        "## Current editions\n\n| Area | Current | Subjects |\n| --- | --- | --- |\n| Staging | AJCC 8 | surgery pathology |\n"
+    )
+    out = authoring.currency_notes("pathology", notes)
+    assert "| NAFLD | MASLD | 2023 |" in out and "PLLR" in out and "AJCC 8" in out
+    assert "Best evidence" not in out and "`" not in out and "Subjects" not in out and "Intro" not in out
+    assert "Best evidence" in authoring.currency_notes("a-new-subject", notes)

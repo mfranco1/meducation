@@ -5,7 +5,6 @@ Read first, and meet every standard from the first draft:
 - .agents/shared/content-standards.md
 - .agents/skills/write-quizzes/item-standards.md
 - .agents/shared/verification.md
-- .agents/shared/currency-notes.md
 - .agents/skills/write-quizzes/review-rubric.md (Checks)
 - .agents/skills/write-quizzes/vocabulary.json
 
@@ -18,6 +17,10 @@ Before writing, read every section of your own topic in the stems file in full, 
 Subject and topic notes:
 
 SUBJECT_NOTES
+
+Retired names and current editions for this subject. Use the current form; mention an old name only as "formerly called" where it helps a learner:
+
+CURRENCY
 
 Write the batch in the item standards' batch shape: one topic with one quiz, using the brief's names and descriptions. Then, with Q meaning `python3 -I .agents/skills/write-quizzes/quiz_work.py --work WORK`:
 
