@@ -21,7 +21,7 @@ export default defineConfig({
     },
     {
       command:
-        'NODE_ENV=development npm run build:admin && MEDUCATION_API_PORT=8766 MEDUCATION_TEST_FIXTURE_PROXY=true npx vite preview --host 127.0.0.1 --port 4174 --strictPort',
+        'NODE_ENV=development VITE_CONTENT_MAX_RETRIES=0 npm run build:admin &&MEDUCATION_API_PORT=8766 MEDUCATION_TEST_FIXTURE_PROXY=true npx vite preview --host 127.0.0.1 --port 4174 --strictPort',
       url: 'http://127.0.0.1:4174/admin.html',
       reuseExistingServer: false,
       timeout: 120_000,

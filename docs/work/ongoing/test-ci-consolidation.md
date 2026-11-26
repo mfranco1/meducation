@@ -34,11 +34,13 @@ Phase 1 notes: the learner suite's build now runs `check-learner-artifacts.mjs`,
 
 ## Phase 2: admin browser suite
 
-- [ ] Sign in once per worker (`storageState` or a worker fixture) and reset the draft through the API, instead of login, discard and reload in every test (about 3 s each).
-- [ ] Replace the six width-parameterized layout tests (`editor.spec.ts` "keyboard access and layout", `workflows.spec.ts` "panels use available width") with one overflow check at 390px inside an existing test. Drop the RGB colour, border radius and header height assertions.
-- [ ] Reduce "structured editing preserves untouched fields" from five kinds to question and card.
-- [ ] Delete `screenshot()` calls in both browser suites (25 across 7 files). Nothing compares them; traces cover failures.
-- [ ] Find out why `freshness.spec.ts` takes 23 s and shorten it if the wait is avoidable.
+- [x] Sign in once per worker (`storageState` or a worker fixture) and reset the draft through the API, instead of login, discard and reload in every test (about 3 s each).
+- [x] Replace the six width-parameterized layout tests (`editor.spec.ts` "keyboard access and layout", `workflows.spec.ts` "panels use available width") with one overflow check at 390px inside an existing test. Drop the RGB colour, border radius and header height assertions.
+- [x] Reduce "structured editing preserves untouched fields" from five kinds to question and card.
+- [x] Delete `screenshot()` calls in both browser suites (25 across 7 files). Nothing compares them; traces cover failures.
+- [x] Find out why `freshness.spec.ts` takes 23 s and shorten it if the wait is avoidable.
+
+Phase 2 notes: `login()` in `fixtures.ts` keeps the session cookies in module state and signs in again only when the session is unauthenticated or not fresh (sign-out, `/fixture/expire` and `/fixture/old-factor` hit every session); it clears cookies first because an aged session still opens the editor. All admin specs use it. The 390px overflow check lives in "shared subject editing". Freshness: the review tab uses reduced motion to skip the 3.4 s results intro, and the admin build sets `VITE_CONTENT_MAX_RETRIES=0` like the learner build; the remaining 21 s is three learner tabs through three publications. Local admin suite: 33 tests in 3.8 min to 24 in 2.3 min, including the build.
 
 ## Phase 3: admin unit and browser overlap
 
@@ -68,3 +70,4 @@ The backend PostgreSQL tests, the unit tests backed by the in-memory fake server
 | Phase | Billed min per run | Admin suite | Learner suite | Unit |
 | --- | --- | --- | --- | --- |
 | Baseline | 13 | 168 s | 98 s | 64 s |
+| 2 (local, not CI) | | 138 s wall incl. build (was 228 s) | | |

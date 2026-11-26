@@ -223,39 +223,6 @@ test('discard replaces unpublished changes with the published version', async ({
   await expect(page.getByRole('button', { name: 'Review & publish', exact: true })).toBeDisabled();
 });
 
-for (const width of [390, 1048, 1440]) {
-  test(`both PostgreSQL editor panels use available width at ${width}px`, async ({ page }, testInfo) => {
-    await page.setViewportSize({ width, height: 900 });
-    await login(page);
-    for (const [section, prefix] of [
-      ['Quizzes', 'Quiz'],
-      ['Flashcards', 'Flashcard'],
-    ]) {
-      await page.getByRole('tab', { name: section, exact: true }).click();
-      const navigator = page.getByRole('region', { name: `${prefix} navigator` });
-      const editor = page.getByRole('region', { name: `${prefix} editor` });
-      await expect(editor).toBeVisible();
-      const nav = (await navigator.boundingBox())!;
-      const edit = (await editor.boundingBox())!;
-      const parentWidth = await navigator.evaluate((el) => el.parentElement!.getBoundingClientRect().width);
-      if (width < 1200) {
-        expect(Math.abs(nav.width - parentWidth)).toBeLessThan(2);
-        expect(Math.abs(edit.width - parentWidth)).toBeLessThan(2);
-        expect(edit.y).toBeGreaterThan(nav.y + nav.height);
-      } else {
-        expect(Math.abs(edit.y - nav.y)).toBeLessThan(2);
-        expect(edit.x).toBeGreaterThan(nav.x + nav.width);
-      }
-      // Empty editors are compact; navigator height is determined by its own content.
-      expect(nav.width).toBeGreaterThan(0);
-      await expect(editor.getByRole('textbox', { name: 'JSON', exact: true })).toHaveCount(0);
-      expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-      await expect.poll(() => navigator.evaluate((el) => getComputedStyle(el).borderRadius)).toBe('14px');
-      await page.screenshot({ path: testInfo.outputPath(`workspace-${prefix}-${width}.png`), fullPage: true });
-    }
-  });
-}
-
 test('saves deck and card CRUD, order, and cross-deck moves through record calls', async ({ page }) => {
   await login(page);
   await selectFlashcards(page);
@@ -363,7 +330,7 @@ test('canceled quiz context changes restore picker text and preserve the unsaved
   expect((await draft(page)).latestChangeId).toBe(before.latestChangeId);
 });
 
-test('flashcard batch close preserves exact JSON until explicit discard', async ({ page }, testInfo) => {
+test('flashcard batch close preserves exact JSON until explicit discard', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await login(page);
   const nav = await selectFlashcards(page);
@@ -375,7 +342,6 @@ test('flashcard batch close preserves exact JSON until explicit discard', async 
   await batch.getByRole('button', { name: 'Cancel', exact: true }).click();
   const discard = page.getByRole('dialog', { name: 'Discard unsaved edits?', exact: true });
   await expect(discard.getByRole('button', { name: 'Keep editing', exact: true })).toBeFocused();
-  await page.screenshot({ path: testInfo.outputPath('admin-discard-390.png'), fullPage: true });
   await page.keyboard.press('Escape');
   await expect(batch.getByRole('textbox', { name: 'JSON', exact: true })).toHaveValue(text);
   await batch.getByRole('button', { name: 'Cancel', exact: true }).click();
@@ -386,9 +352,7 @@ test('flashcard batch close preserves exact JSON until explicit discard', async 
   expect(after.latestChangeId).toBe(before.latestChangeId);
 });
 
-test('shared subject editing stays in Flashcards and preserves both hidden record drafts', async ({
-  page,
-}, testInfo) => {
+test('shared subject editing stays in Flashcards and preserves both hidden record drafts', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 900 });
   await login(page);
   const quizNav = await selectQuiz(page);
@@ -419,6 +383,8 @@ test('shared subject editing stays in Flashcards and preserves both hidden recor
   });
   await flashEditor.fill(flashText);
   await expect(page.getByRole('tab', { name: 'Flashcards', exact: true })).toHaveAccessibleDescription(/Unsaved/);
+  // Narrow layout: the open editor and navigator fit without horizontal scrolling.
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await expect(page.getByRole('button', { name: 'Review & publish', exact: true })).toBeDisabled();
   const before = await draft(page);
   await flashNav.getByRole('button', { name: 'Manage subjects…', exact: true }).click();
@@ -428,7 +394,6 @@ test('shared subject editing stays in Flashcards and preserves both hidden recor
   await expect(subjectEditor).not.toHaveValue('');
   const original = JSON.parse(await subjectEditor.inputValue());
   await subjectEditor.fill(JSON.stringify({ ...original, name: 'Shared subject reviewed edit' }));
-  await subjectDialog.screenshot({ path: testInfo.outputPath('shared-subject-390.png') });
   await subjectDialog.getByRole('button', { name: 'Save', exact: true }).click();
   await expect
     .poll(async () => (await draft(page)).subjects.find((row) => row.id === original.id)?.name)
@@ -446,29 +411,20 @@ test('shared subject editing stays in Flashcards and preserves both hidden recor
   expect((await draft(page)).subjects.find((row) => row.id === original.id)?.name).toBe(original.name);
 });
 
-for (const kind of ['subject', 'quiz', 'deck', 'card', 'question'] as const) {
+for (const kind of ['question', 'card'] as const) {
   test(`structured ${kind} editing preserves untouched fields and exact source through save and revert`, async ({
     page,
-  }, testInfo) => {
+  }) => {
     await login(page);
     const before = await draft(page);
-    const flash = kind === 'deck' || kind === 'card';
-    const nav = flash ? await selectFlashcards(page) : await selectQuiz(page);
-    let editor = flash ? flashcardEditor(page) : quizEditor(page);
-    if (kind === 'subject') {
-      await nav.getByRole('button', { name: 'Manage subjects…', exact: true }).click();
-      editor = page.getByRole('dialog', { name: 'Manage subjects', exact: true }) as typeof editor;
-    } else if (kind === 'quiz' || kind === 'deck') {
-      await nav.getByRole('button', { name: kind === 'quiz' ? 'Quiz actions' : 'Deck actions', exact: true }).click();
-      await page.getByRole('menuitem', { name: kind === 'quiz' ? 'Edit quiz' : 'Edit deck', exact: true }).click();
-    } else {
-      await nav
-        .getByRole('button')
-        .filter({ has: page.locator('.MuiListItemText-root') })
-        .first()
-        .click();
-    }
-    const field = kind === 'question' ? 'Question stem' : kind === 'card' ? 'Front' : 'Name';
+    const nav = kind === 'card' ? await selectFlashcards(page) : await selectQuiz(page);
+    const editor = kind === 'card' ? flashcardEditor(page) : quizEditor(page);
+    await nav
+      .getByRole('button')
+      .filter({ has: page.locator('.MuiListItemText-root') })
+      .first()
+      .click();
+    const field = kind === 'question' ? 'Question stem' : 'Front';
     await expect(editor.getByRole('textbox', { name: field, exact: true })).toBeVisible();
     await editor.getByRole('tab', { name: 'JSON', exact: true }).click();
     const raw = await editor.getByRole('textbox', { name: 'JSON', exact: true }).inputValue();
@@ -482,36 +438,19 @@ for (const kind of ['subject', 'quiz', 'deck', 'card', 'question'] as const) {
     const value = `Exact ${kind}  $x^2$\n<b>source</b>  `;
     await editor.getByRole('textbox', { name: field, exact: true }).fill(value);
     await editor.getByRole('tab', { name: 'JSON', exact: true }).click();
-    const expected = { ...original, [kind === 'question' ? 'stem' : kind === 'card' ? 'front' : 'name']: value };
+    const expected = { ...original, [kind === 'question' ? 'stem' : 'front']: value };
     expect(JSON.parse(await editor.getByRole('textbox', { name: 'JSON', exact: true }).inputValue())).toEqual(expected);
     await editor.getByRole('tab', { name: 'Preview', exact: true }).click();
     if (kind === 'question') await expect(editor.locator('.katex').first()).toBeVisible();
-    if (kind === 'question') {
-      await page.setViewportSize({ width: 390, height: 900 });
-      await editor.screenshot({ path: testInfo.outputPath('structured-question-preview-390.png') });
-      await page.setViewportSize({ width: 1440, height: 1000 });
-      await editor.getByRole('tab', { name: 'Edit', exact: true }).click();
-      await editor.screenshot({ path: testInfo.outputPath('structured-question-edit-1440.png') });
-    }
     await editor.getByRole('button', { name: 'Save', exact: true }).click();
     const savedRecord = async () => {
       const saved = await draft(page);
-      const records =
-        kind === 'subject'
-          ? saved.subjects
-          : kind === 'quiz'
-            ? saved.quizzes
-            : kind === 'question'
-              ? saved.questions
-              : kind === 'deck'
-                ? saved.decks
-                : saved.cards;
+      const records: Array<{ id: string; version: number }> = kind === 'question' ? saved.questions : saved.cards;
       const { version: _version, ...record } =
         records.find((row) => row.id === original.id) ?? ({} as { version?: number });
       return record;
     };
     await expect.poll(savedRecord).toEqual(expected);
-    if (kind === 'subject') await expect(editor).not.toBeVisible();
     await revertLatest(page);
     expect(await savedRecord()).toEqual(original);
   });

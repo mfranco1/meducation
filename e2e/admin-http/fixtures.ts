@@ -1,4 +1,4 @@
-import { expect, test as base, type Page } from '@playwright/test';
+import { expect, test as base, type BrowserContext, type Page } from '@playwright/test';
 import type { DraftSnapshot } from '../../src/admin/data/DraftStore';
 
 export { expect } from '@playwright/test';
@@ -16,15 +16,26 @@ export const test = base.extend<{ authRateIsolation: void }>({
   ],
 });
 
+// One editor session is reused across the worker's tests. Tests that sign out,
+// expire sessions or age the sign-in leave it unusable, so the next login signs in again.
+let signedIn: Awaited<ReturnType<BrowserContext['storageState']>>['cookies'] = [];
+
+/** Opens the editor signed in, with the draft reset to the published content. */
 export async function login(page: Page) {
-  await page.goto('/admin.html');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
-  page.on('dialog', (dialog) => void dialog.accept());
+  await page.context().addCookies(signedIn);
+  const session = await (await page.request.get('/api/admin/session')).json();
+  if (!session.authenticated || !session.fresh) {
+    await page.context().clearCookies();
+    await page.goto('/admin.html');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+    await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
+    signedIn = (await page.context().storageState()).cookies;
+  }
   // Tests share one database: every test starts from the published content, not another test's draft.
   const reset = await adminApi(page, 'POST', '/draft/discard', {});
   expect(reset.ok()).toBe(true);
-  await page.reload();
+  page.on('dialog', (dialog) => void dialog.accept());
+  await page.goto('/admin.html');
   await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
 }
 
@@ -41,7 +52,7 @@ export async function adminApi(page: Page, method: 'POST' | 'PUT' | 'DELETE', pa
   return page.request.fetch('/api/admin' + path, {
     method,
     data,
-    headers: { Origin: new URL(page.url()).origin, 'X-CSRF-Token': session.csrfToken },
+    headers: { Origin: test.info().project.use.baseURL!, 'X-CSRF-Token': session.csrfToken },
   });
 }
 

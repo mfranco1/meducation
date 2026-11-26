@@ -164,25 +164,6 @@ test('lists the server validation issues and keeps the text when content is reje
   expect((await draft(page)).questions[0].version).toBe(before.questions[0].version);
 });
 
-for (const width of [390, 1048, 1440])
-  test(`HTTP editor keyboard access and layout at ${width}px`, async ({ page }, testInfo) => {
-    await page.setViewportSize({ width, height: 900 });
-    await login(page);
-    await page.getByRole('tab', { name: 'Quizzes', exact: true }).focus();
-    await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeFocused();
-    const editor = await openQuestion(page);
-    await editor.focus();
-    await expect(editor).toBeFocused();
-    const save = saveButton(quizEditor(page));
-    await expect
-      .poll(() => save.evaluate((element) => getComputedStyle(element).backgroundColor))
-      .toBe('rgb(185, 81, 27)');
-    expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
-    const header = await page.getByRole('banner').boundingBox();
-    expect(header!.height).toBeLessThanOrEqual(width === 390 ? 180 : 110);
-    await page.getByRole('banner').screenshot({ path: testInfo.outputPath(`admin-header-${width}.png`) });
-  });
-
 test('publication needing a recent login asks to sign in again, keeps the draft and never resends', async ({
   page,
   context,

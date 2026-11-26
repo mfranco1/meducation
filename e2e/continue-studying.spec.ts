@@ -5,16 +5,6 @@ test.beforeEach(async ({ page }) => {
   await startedLearner(page);
 });
 
-async function attachScreenshot(
-  page: import('@playwright/test').Page,
-  testInfo: import('@playwright/test').TestInfo,
-  name: string,
-) {
-  const path = testInfo.outputPath(name);
-  await page.screenshot({ path });
-  await testInfo.attach(name, { path, contentType: 'image/png' });
-}
-
 async function expectCardFitsViewport(
   page: import('@playwright/test').Page,
   width: number,
@@ -64,12 +54,7 @@ async function expectCardFitsViewport(
   expect(overflow.fits, JSON.stringify({ geometry: overflow.geometry, offenders: overflow.offenders })).toBe(true);
 }
 
-async function expectSingleCardAtAllWidths(
-  page: import('@playwright/test').Page,
-  testInfo: import('@playwright/test').TestInfo,
-  screenshotName: string,
-  carouselId: string,
-) {
+async function expectSingleCardAtAllWidths(page: import('@playwright/test').Page, carouselId: string) {
   const measurements = await page.evaluate((carouselId) => {
     const carousel = document.querySelector<HTMLElement>(`[data-carousel-id="${carouselId}"]`)!;
     const track = carousel.querySelector<HTMLElement>('[data-testid="study-carousel-track"]')!;
@@ -91,16 +76,9 @@ async function expectSingleCardAtAllWidths(
     expect(slides[0]!.width).toBeCloseTo(bounds.width, 0);
     expect(slides[1]!.left).toBeGreaterThanOrEqual(bounds.right + 15);
   }
-  await page.evaluate((carouselId) => {
-    document.querySelector<HTMLElement>(`[data-carousel-id="${carouselId}"]`)!.style.width = '976px';
-  }, carouselId);
-  await attachScreenshot(page, testInfo, screenshotName);
-  await page.evaluate((carouselId) => {
-    document.querySelector<HTMLElement>(`[data-carousel-id="${carouselId}"]`)!.style.removeProperty('width');
-  }, carouselId);
 }
 
-test('quiz Continue Studying card is responsive and reveals the active quiz', async ({ page }, testInfo) => {
+test('quiz Continue Studying card is responsive and reveals the active quiz', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 844 });
   await page.goto('/');
   await page.getByTestId('all-subjects-grid').getByRole('button', { name: 'Open Browser Test Subject' }).click();
@@ -113,17 +91,9 @@ test('quiz Continue Studying card is responsive and reveals the active quiz', as
   const card = region.getByRole('button', { name: 'Continue studying Browser Test Subject' });
   await expect(card).toHaveAccessibleDescription(/^1 quiz in progress 1 of \d+ questions? answered$/);
   await expect(card.locator('.continue-study-cta')).toHaveText(/Continue/);
-  await expectSingleCardAtAllWidths(
-    page,
-    testInfo,
-    'quiz-continue-card-single-at-976px.png',
-    'continue-studying-subjects',
-  );
-  await attachScreenshot(page, testInfo, 'quiz-continue-card-wide.png');
+  await expectSingleCardAtAllWidths(page, 'continue-studying-subjects');
   await expectCardFitsViewport(page, 390);
-  await attachScreenshot(page, testInfo, 'quiz-continue-card-mobile.png');
   await expectCardFitsViewport(page, 320);
-  await attachScreenshot(page, testInfo, 'quiz-continue-card-narrow.png');
   const action = page.getByTestId('continue-study-card');
   await action.focus();
   await page.keyboard.press('Enter');
@@ -143,7 +113,7 @@ test('quiz Continue Studying card is responsive and reveals the active quiz', as
   await expect(page.getByRole('heading', { level: 4 })).toBeFocused();
 });
 
-test('flashcard Continue Studying card shows deck activity and reveals the saved deck', async ({ page }, testInfo) => {
+test('flashcard Continue Studying card shows deck activity and reveals the saved deck', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 844 });
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
@@ -157,17 +127,9 @@ test('flashcard Continue Studying card shows deck activity and reveals the saved
   await expect(card).toHaveAccessibleDescription(/^1 deck in progress \d+ of \d+ cards? revealed$/);
   await expect(card.locator('.continue-study-cta')).toHaveText(/Continue/);
   await expect(region.getByTestId('subject-score-track')).toHaveCount(0);
-  await expectSingleCardAtAllWidths(
-    page,
-    testInfo,
-    'flashcards-continue-card-single-at-976px.png',
-    'continue-studying-flashcards',
-  );
-  await attachScreenshot(page, testInfo, 'flashcards-continue-card-wide.png');
+  await expectSingleCardAtAllWidths(page, 'continue-studying-flashcards');
   await expectCardFitsViewport(page, 390, 'Flashcards');
-  await attachScreenshot(page, testInfo, 'flashcards-continue-card-mobile.png');
   await expectCardFitsViewport(page, 320, 'Flashcards');
-  await attachScreenshot(page, testInfo, 'flashcards-continue-card-narrow.png');
   const action = page.getByTestId('continue-study-card');
   await action.focus();
   await page.keyboard.press('Space');

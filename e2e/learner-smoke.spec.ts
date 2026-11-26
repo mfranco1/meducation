@@ -77,7 +77,7 @@ async function expectStatCardsLayout(page: Page, firstCard: Locator) {
   }
 }
 
-test('dashboard stat cards stay readable across desktop and narrow layouts', async ({ page }, testInfo) => {
+test('dashboard stat cards stay readable across desktop and narrow layouts', async ({ page }) => {
   await page.goto('/');
   const quizCards = [
     page.locator('[role="group"]').filter({ hasText: 'Completed' }),
@@ -87,15 +87,6 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
   await expect(quizCards[0]).toContainText('quizzes');
   await expect(quizCards[1]).toContainText('correct');
   await expectStatCardsLayout(page, quizCards[0]!);
-  await page.setViewportSize({ width: 1280, height: 800 });
-  const quizDesktop = testInfo.outputPath('quiz-dashboard-stat-cards.png');
-  await page.screenshot({ path: quizDesktop });
-  await testInfo.attach('quiz-dashboard-stat-cards.png', { path: quizDesktop, contentType: 'image/png' });
-  await page.setViewportSize({ width: 390, height: 800 });
-  const quizMobile = testInfo.outputPath('quiz-dashboard-stat-cards-mobile.png');
-  await page.screenshot({ path: quizMobile });
-  await testInfo.attach('quiz-dashboard-stat-cards-mobile.png', { path: quizMobile, contentType: 'image/png' });
-
   await page.setViewportSize({ width: 1280, height: 800 });
   await page.getByRole('button', { name: 'Flashcards' }).click();
   const flashcardCards = [
@@ -107,17 +98,6 @@ test('dashboard stat cards stay readable across desktop and narrow layouts', asy
   await expect(flashcardCards[1]).toContainText('decks / day');
   await expect(flashcardCards[2]).toContainText('decks / day');
   await expectStatCardsLayout(page, flashcardCards[0]!);
-  await page.setViewportSize({ width: 1280, height: 800 });
-  const flashcardDesktop = testInfo.outputPath('flashcard-dashboard-stat-cards.png');
-  await page.screenshot({ path: flashcardDesktop });
-  await testInfo.attach('flashcard-dashboard-stat-cards.png', { path: flashcardDesktop, contentType: 'image/png' });
-  await page.setViewportSize({ width: 390, height: 800 });
-  const flashcardMobile = testInfo.outputPath('flashcard-dashboard-stat-cards-mobile.png');
-  await page.screenshot({ path: flashcardMobile });
-  await testInfo.attach('flashcard-dashboard-stat-cards-mobile.png', {
-    path: flashcardMobile,
-    contentType: 'image/png',
-  });
 });
 
 test('abandoned flashcard loads do not reopen study or create progress', async ({ page }) => {
@@ -189,29 +169,18 @@ test('a failed flashcard deck request shows a toast and recovers through the dec
   await expect(page.getByRole('button', { name: 'Reveal answer' })).toBeVisible();
 });
 
-test('flashcards browse, resume an imported fixture deck, and finish without quiz analytics', async ({
-  page,
-}, testInfo) => {
+test('flashcards browse, resume an imported fixture deck, and finish without quiz analytics', async ({ page }) => {
   await page.clock.install({ time: new Date(2026, 9, 7, 12) });
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Open Browser Test Subject' })).toBeVisible();
-  const dashboardScreenshot = testInfo.outputPath('flashcards-dashboard-desktop.png');
   await expect(page.getByTestId('screen-transition')).toHaveCSS('opacity', '1');
-  await page.screenshot({ path: dashboardScreenshot });
-  await testInfo.attach('flashcards-dashboard-desktop.png', {
-    path: dashboardScreenshot,
-    contentType: 'image/png',
-  });
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
   await expect(page.getByRole('heading', { name: 'Browser Test Subject', exact: true })).toBeVisible();
   await expect(page.getByText('2 cards')).toBeVisible();
   await expect(page.getByRole('combobox', { name: 'Topic' })).toHaveCount(0);
-  const subjectScreenshot = testInfo.outputPath('flashcard-subject-desktop.png');
   await expect(page.getByTestId('screen-transition')).toHaveCSS('opacity', '1');
-  await page.screenshot({ path: subjectScreenshot });
-  await testInfo.attach('flashcard-subject-desktop.png', { path: subjectScreenshot, contentType: 'image/png' });
   await expect(page.getByRole('button', { name: /^Study deck/ })).toBeVisible();
   const studyButton = page.getByRole('button', { name: /^Study deck/ });
   await studyButton.focus();
@@ -239,10 +208,6 @@ test('flashcards browse, resume an imported fixture deck, and finish without qui
   await expectNoHorizontalOverflow(page);
   await page.setViewportSize({ width: 320, height: 780 });
   await expectNoHorizontalOverflow(page);
-  await page.setViewportSize({ width: 390, height: 844 });
-  const studyScreenshot = testInfo.outputPath('flashcard-study-mobile.png');
-  await page.screenshot({ path: studyScreenshot });
-  await testInfo.attach('flashcard-study-mobile.png', { path: studyScreenshot, contentType: 'image/png' });
   await page.setViewportSize({ width: 1280, height: 720 });
   await page.getByRole('button', { name: 'Card 2, unopened' }).click();
   await expect(page.getByText('Card 2 of 2')).toBeVisible();
@@ -365,10 +330,6 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   expect((await secondParagraph.boundingBox())!.y).toBeGreaterThan((await firstParagraph.boundingBox())!.y);
   expect((await stemList.boundingBox())!.y).toBeGreaterThan((await secondParagraph.boundingBox())!.y);
   const firstQuizMs = Date.now() - firstQuizStart;
-  await testInfo.attach('main-quiz-desktop.png', {
-    body: await page.screenshot({ path: testInfo.outputPath('main-quiz-desktop.png') }),
-    contentType: 'image/png',
-  });
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(secondParagraph).toBeVisible();
   await expect(page.locator('#root')).not.toHaveAttribute('aria-hidden', 'true');
@@ -384,10 +345,6 @@ test('API-backed quiz survives reload and completes', async ({ page }, testInfo)
   expect(mobileSecondParagraphY).toBeDefined();
   expect(mobileSecondParagraphY).toBeGreaterThan(mobileFirstParagraphY!);
   await expectNoHorizontalOverflow(page);
-  await testInfo.attach('main-quiz-mobile.png', {
-    body: await page.screenshot({ path: testInfo.outputPath('main-quiz-mobile.png') }),
-    contentType: 'image/png',
-  });
   await page.setViewportSize({ width: 1280, height: 720 });
   await testInfo.attach('first-quiz-ms.txt', {
     body: String(firstQuizMs),
@@ -487,7 +444,7 @@ test('addresses follow navigation and work with reload, Back, Forward and links'
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
 });
 
-test('left navigation switches dashboards in collapsed and mobile layouts', async ({ page }, testInfo) => {
+test('left navigation switches dashboards in collapsed and mobile layouts', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Meducation, go to Quizzes' })).toBeVisible();
@@ -507,10 +464,6 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'true');
   await edgeToggle.click({ position: { x: 6, y: 96 } });
   await expect(edgeToggle).toHaveAttribute('aria-expanded', 'false');
-  await testInfo.attach('navigation-desktop-collapsed.png', {
-    body: await page.screenshot({ path: testInfo.outputPath('navigation-desktop-collapsed.png') }),
-    contentType: 'image/png',
-  });
   await page.getByRole('button', { name: 'Flashcards' }).click();
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
   await page.getByRole('button', { name: 'Quizzes', exact: true }).click();
@@ -535,14 +488,10 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await page.mouse.click(380, 40);
   await expect(backdropDialog).toBeHidden();
   await page.getByTestId('drawer-edge-toggle').first().click();
-  const screenshotDialog = page.getByRole('presentation').last();
-  await expect(screenshotDialog).toBeVisible();
-  await testInfo.attach('navigation-mobile-expanded.png', {
-    body: await page.screenshot({ path: testInfo.outputPath('navigation-mobile-expanded.png') }),
-    contentType: 'image/png',
-  });
+  const dialog = page.getByRole('presentation').last();
+  await expect(dialog).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(screenshotDialog).toBeHidden();
+  await expect(dialog).toBeHidden();
   await expect(page.getByTestId('drawer-edge-toggle').first()).toBeFocused();
   await page.getByTestId('drawer-edge-toggle').first().click();
   await page.getByRole('button', { name: 'Flashcards' }).last().click();
@@ -567,7 +516,7 @@ test('left navigation switches dashboards in collapsed and mobile layouts', asyn
   await expect(page.getByText('Question 1 of 2')).toBeVisible();
 });
 
-test('Exam Mode submission offers a one-time read-only review', async ({ page }, testInfo) => {
+test('Exam Mode submission offers a one-time read-only review', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Open Browser Test Subject' }).click();
   await page.getByRole('button', { name: /^Start quiz: (?!.*Subject Test)/ }).click();
@@ -585,15 +534,6 @@ test('Exam Mode submission offers a one-time read-only review', async ({ page },
   await page.getByRole('dialog').getByRole('button', { name: 'Submit', exact: true }).click();
   await page.getByRole('button', { name: 'Review results' }).click();
   await expect(page.getByLabel(/Final time:/)).toBeVisible();
-  await testInfo.attach('review-desktop.png', {
-    body: await page.screenshot({ path: testInfo.outputPath('review-desktop.png') }),
-    contentType: 'image/png',
-  });
-  await page.setViewportSize({ width: 390, height: 844 });
-  await testInfo.attach('review-mobile.png', {
-    body: await page.screenshot({ path: testInfo.outputPath('review-mobile.png') }),
-    contentType: 'image/png',
-  });
   await page.setViewportSize({ width: 1280, height: 720 });
   await expect(page.getByRole('button', { name: 'Wrong questions, 1' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Flagged questions, 1' })).toBeVisible();

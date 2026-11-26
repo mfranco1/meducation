@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 });
 
 for (const candidate of contentCases()) {
-  test(`L6 learner content acceptance ${candidate.label}`, async ({ page }, testInfo) => {
+  test(`L6 learner content acceptance ${candidate.label}`, async ({ page }) => {
     const { item, subject, topic } = candidate;
     const quiz = { ...candidate.quiz, subjectId: subject.id };
     const revision = 'sha256-synthetic-content-acceptance';
@@ -65,7 +65,6 @@ for (const candidate of contentCases()) {
       const finish = page.getByRole('button', { name: 'Finish', exact: true }).first();
       await finish.scrollIntoViewIfNeeded();
       await expect(finish).toBeInViewport();
-      await page.screenshot({ path: testInfo.outputPath(`content-${width}.png`), fullPage: true });
     }
   });
 }

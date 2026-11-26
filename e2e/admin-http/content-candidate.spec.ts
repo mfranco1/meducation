@@ -1,8 +1,8 @@
-import { expect, quizEditor, saveButton, selectQuiz, test } from './fixtures';
+import { expect, login, quizEditor, saveButton, selectQuiz, test } from './fixtures';
 import { contentCases } from '../support/contentCases';
 
 for (const candidate of contentCases()) {
-  test(`L6 HTTP editor exact content display ${candidate.label}`, async ({ page }, testInfo) => {
+  test(`L6 HTTP editor exact content display ${candidate.label}`, async ({ page }) => {
     const { item, subject, topic, quiz } = candidate;
     await page.route('**/api/admin/draft', async (route) => {
       const response = await route.fetch();
@@ -24,9 +24,7 @@ for (const candidate of contentCases()) {
     });
     await page.setViewportSize({ width: 390, height: 900 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/admin.html');
-    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-    await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
+    await login(page);
     await page.addStyleTag({ content: 'html {font-size:20px}' });
     const nav = await selectQuiz(page);
     await nav.getByRole('button', { name: new RegExp(`^1\\. ${item.id}\\b`) }).click();
@@ -42,7 +40,6 @@ for (const candidate of contentCases()) {
       const save = saveButton(quizEditor(page));
       await save.scrollIntoViewIfNeeded();
       await expect(save).toBeInViewport();
-      await page.screenshot({ path: testInfo.outputPath(`editor-content-${width}.png`), fullPage: true });
     }
     expect(writes).toBe(0);
   });

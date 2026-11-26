@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test';
 import { startedLearner } from '../support/learner';
-import { adminApi, draft, expect, test } from './fixtures';
+import { adminApi, draft, expect, login, test } from './fixtures';
 
 test('L5 open learner tabs revalidate cached launches and preserve active study through publication', async ({
   page,
@@ -8,17 +8,13 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   browser,
 }) => {
   test.setTimeout(120_000);
-  await page.goto('/admin.html');
-  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
-  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toBeVisible();
+  await login(page);
   const snapshot = () => draft(page);
   const send = async (method: 'POST' | 'PUT', path: string, data: unknown) => {
     const response = await adminApi(page, method, path, data);
     expect(response.status(), await response.text()).toBeLessThan(300);
     return response.json();
   };
-  // Start from the published content, whatever earlier tests left in the draft.
-  await send('POST', '/draft/discard', {});
   const original = await snapshot();
   const subject = original.subjects[0];
   const stem = original.questions[0].stem;
@@ -49,7 +45,8 @@ test('L5 open learner tabs revalidate cached launches and preserve active study 
   await startedLearner(context);
   const quiz = await context.newPage();
   const deck = await context.newPage();
-  const reviewContext = await browser.newContext({ baseURL: new URL(page.url()).origin });
+  // Reduced motion skips the results intro, which this test does not check.
+  const reviewContext = await browser.newContext({ baseURL: new URL(page.url()).origin, reducedMotion: 'reduce' });
   await startedLearner(reviewContext);
   const review = await reviewContext.newPage();
   await quiz.goto('/');

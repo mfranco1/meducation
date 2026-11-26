@@ -5,9 +5,7 @@ test.beforeEach(async ({ page }) => {
   await startedLearner(page);
 });
 
-test('quiz subject cards keep title, icon, score track, and card geometry aligned responsively', async ({
-  page,
-}, testInfo) => {
+test('quiz subject cards keep title, icon, score track, and card geometry aligned responsively', async ({ page }) => {
   await page.setViewportSize({ width: 1280, height: 900 });
   await page.goto('/');
 
@@ -63,7 +61,6 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   });
   expect(alignment.titleLeft).toBeGreaterThanOrEqual(alignment.iconRight);
   expect(alignment.titleTop).toBeLessThan(alignment.iconTop + 40);
-  await testInfo.attach('quiz-subject-grid-desktop', { body: await page.screenshot(), contentType: 'image/png' });
 
   await card.focus();
   await expect(card).toBeFocused();
@@ -104,12 +101,9 @@ test('quiz subject cards keep title, icon, score track, and card geometry aligne
   expect(layout.title.right).toBeLessThanOrEqual(320);
   expect(layout.documentWidth).toBeLessThanOrEqual(321);
   expect(await card.evaluate((element) => getComputedStyle(element).transitionDuration)).toBe('0s');
-  await testInfo.attach('quiz-subject-grid-mobile', { body: await page.screenshot(), contentType: 'image/png' });
 });
 
-test('flashcard subject grid shares the subject header and progress track without quiz scores', async ({
-  page,
-}, testInfo) => {
+test('flashcard subject grid shares the subject header and progress track without quiz scores', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/');
   await page.getByRole('button', { name: 'Flashcards' }).click();
@@ -121,7 +115,6 @@ test('flashcard subject grid shares the subject header and progress track withou
   await expect(card.getByTestId('subject-score-track')).toBeVisible();
   await expect(card.getByText(/Latest score|Completed|in progress/)).toHaveCount(0);
   await expectNoHorizontalOverflow(page);
-  await testInfo.attach('flashcard-subject-grid-mobile', { body: await page.screenshot(), contentType: 'image/png' });
 
   await card.focus();
   await page.keyboard.press('Enter');
