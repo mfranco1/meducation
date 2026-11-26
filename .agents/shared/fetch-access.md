@@ -105,6 +105,7 @@ Alphabetical by body.
 - **GRADE** series (jclinepi.com): GRADE Handbook on gdt.gradepro.org; cite the handbook.
 - **HAL** (*.hal.science and university portals such as hal.univ-lorraine.fr; Anubis page): the PMC or publisher copy.
 - **IARC GLOBOCAN** (gco.iarc.who.int; dashboards are scripts): curl the fact sheet PDF, `pdftotext -layout`. Cancer sites: `/media/globocan/factsheets/cancers/<n>-<site>-fact-sheet.pdf` (23-cervix-uteri, 24-corpus-uteri); countries: `/media/globocan/factsheets/populations/<code>-<name>-fact-sheet.pdf` (900-world, 608-philippines).
+- **IDSA infectious diarrhea 2017** (Shane, *Clin Infect Dis*, cix669): the full guideline is PMC5850553; PMC5848254 is the executive summary only. Restrepo 2019 AST *Nocardia* guideline (*Clin Transplant*, ctr.13509; Wiley 403, no PMC or archive copy): record as blocked.
 - **IRIS university repositories** (iris.unict.it, iris.uniroma1.it, iris.unisr.it; 403): the PMC or Europe PMC copy; then for iris.uniroma1.it bitstream PDFs the archive copy with `id_` (ENETS 2016 gastroduodenal consensus); otherwise abstract-only.
 - **ISSVA classification** (issva.org): UA curl on `https://www.issva.org/UserFiles/file/ISSVAClassificationSchemaandGlossary_combined_Sept12026.pdf`, then `pdftotext`.
 - **ISPAD** (*Pediatric Diabetes* on onlinelibrary.wiley.com; 403 everywhere, ISPAD asset URLs return other PDFs): an ISPAD-hosted translated chapter PDF as WebFetch PDF (the 2022 DKA chapter in Portuguese); otherwise ADA Standards section 14.

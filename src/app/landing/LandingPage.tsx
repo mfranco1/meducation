@@ -464,7 +464,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               ref={heroPhoto}
               aria-hidden
               src="/assets/illustrations/landing-hero-960.webp"
-              srcSet="/assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w"
+              srcSet="/assets/illustrations/landing-hero-960.webp 960w, /assets/illustrations/landing-hero-1440.webp 1440w, /assets/illustrations/landing-hero-2160.webp 2160w, /assets/illustrations/landing-hero-2880.webp 2880w"
               sizes="(min-width: 900px) max(100vw, 1120px), max(100vw, 560px)"
               width={1440}
               height={720}
@@ -720,7 +720,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               ref={closingPhoto}
               aria-hidden
               src="/assets/illustrations/landing-closing-800.webp"
-              srcSet="/assets/illustrations/landing-closing-800.webp 800w, /assets/illustrations/landing-closing-1200.webp 1200w"
+              srcSet="/assets/illustrations/landing-closing-800.webp 800w, /assets/illustrations/landing-closing-1200.webp 1200w, /assets/illustrations/landing-closing-1920.webp 1920w, /assets/illustrations/landing-closing-2880.webp 2880w"
               sizes="max(100vw, 400px)"
               width={1200}
               height={600}
