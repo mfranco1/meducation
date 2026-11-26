@@ -39,7 +39,6 @@
       }
     ],
     "completionCounts": { "deleted-quiz": 2 },
-    "lowestScores": { "deleted-quiz": 100 },
     "latestScores": { "deleted-quiz": { "percentage": 100, "completedAt": "2026-09-01T00:02:00.000Z" } },
     "activity": { "deleted-quiz": "2026-10-01T00:00:00.000Z" },
     "completedIds": { "retained-completion": true, "pruned-completion": true }

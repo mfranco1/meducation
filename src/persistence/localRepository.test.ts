@@ -49,7 +49,7 @@ describe('LocalAttemptRepository quiz activity', () => {
 
     repository.saveActive(activeAttempt('quiz'));
 
-    expect(repository.latestActivityAt('quiz')).toBe('2026-09-21T10:00:00.000Z');
+    expect(repository.getSnapshot().activity.quiz).toBe('2026-09-21T10:00:00.000Z');
   });
 
   it('uses completion time as the quiz activity time', () => {
@@ -59,7 +59,7 @@ describe('LocalAttemptRepository quiz activity', () => {
     repository.saveActive(activeAttempt('quiz'));
     repository.saveCompleted(completedAttempt('quiz', '2026-09-22T11:00:00.000Z'));
 
-    expect(repository.latestActivityAt('quiz')).toBe('2026-09-22T11:00:00.000Z');
+    expect(repository.getSnapshot().activity.quiz).toBe('2026-09-22T11:00:00.000Z');
   });
 
   it('keeps the content signature of completed attempts in history', () => {
@@ -67,7 +67,7 @@ describe('LocalAttemptRepository quiz activity', () => {
 
     repository.saveCompleted(completedAttempt('quiz', '2026-09-22T11:00:00.000Z'));
 
-    expect(repository.list()[0].contentSignature).toBe('fixture-content');
+    expect(repository.getSnapshot().completed[0].contentSignature).toBe('fixture-content');
   });
 });
 
@@ -101,8 +101,6 @@ describe('cached browser progress snapshots', () => {
     for (let index = 0; index < 100; index++) {
       expect(repository.getSnapshot()).toBe(first);
       expect(repository.getActive('quiz')).toBe(first.active.quiz);
-      repository.completionCount('quiz');
-      repository.latestActivityAt('quiz');
     }
     expect(storage.setItem).not.toHaveBeenCalled();
     expect(Object.isFrozen(first)).toBe(true);
@@ -165,12 +163,12 @@ describe('browser storage boundary fixtures', () => {
 
   it('falls back for malformed progress JSON', () => {
     values.set(progressKey, fixtures.invalidStoredValues[0].value);
-    expect(new LocalAttemptRepository().list()).toEqual([]);
+    expect(new LocalAttemptRepository().getSnapshot().completed).toEqual([]);
   });
 
   it('rejects valid JSON with the wrong progress shape', () => {
     values.set(progressKey, fixtures.invalidStoredValues[1].value);
-    expect(new LocalAttemptRepository().list()).toEqual([]);
+    expect(new LocalAttemptRepository().getSnapshot().completed).toEqual([]);
   });
 
   it.each(['elapsedMs', 'celebrationProgress', 'contentSignature'])(
@@ -227,11 +225,11 @@ describe('browser storage boundary fixtures', () => {
     });
     for (let index = 0; index < 40; index++)
       repository.saveCompleted({ ...fixtures.completed, id: `finished-${index}` } as CompletedAttempt);
-    const kept = repository.list();
+    const kept = repository.getSnapshot().completed;
     expect(kept.length).toBeGreaterThan(0);
     expect(kept.length).toBeLessThan(40);
     expect(kept[0].id).toBe('finished-39');
-    expect(repository.completionCount('q1')).toBe(40);
+    expect(repository.getSnapshot().completionCounts.q1).toBe(40);
     expect(repository.getSnapshot().completedIds['finished-0']).toBe(true);
     expect(stored.get(progressKey)!.length).toBeLessThanOrEqual(limit);
   });
@@ -246,10 +244,10 @@ describe('browser storage boundary fixtures', () => {
     );
     for (let index = 0; index < 30; index++)
       repository.saveCompleted({ ...fixtures.completed, id: `big-${index}`, responses } as unknown as CompletedAttempt);
-    const kept = repository.list();
+    const kept = repository.getSnapshot().completed;
     expect(kept.length).toBeLessThan(30);
     expect(kept[0].id).toBe('big-29');
-    expect(repository.completionCount('q1')).toBe(30);
+    expect(repository.getSnapshot().completionCounts.q1).toBe(30);
   });
 
   it('does not count the same completed attempt twice', () => {
@@ -257,8 +255,8 @@ describe('browser storage boundary fixtures', () => {
     const completed = fixtures.completed as CompletedAttempt;
     repository.saveCompleted(completed);
     repository.saveCompleted(completed);
-    expect(repository.completionCount('q1')).toBe(1);
-    expect(repository.list()).toHaveLength(1);
+    expect(repository.getSnapshot().completionCounts.q1).toBe(1);
+    expect(repository.getSnapshot().completed).toHaveLength(1);
   });
 
   it('remains idempotent after the completed history is pruned', () => {
@@ -266,13 +264,13 @@ describe('browser storage boundary fixtures', () => {
     for (let index = 0; index < 255; index++)
       repository.saveCompleted({ ...fixtures.completed, id: `finished-${index}` } as CompletedAttempt);
     repository.saveCompleted({ ...fixtures.completed, id: 'finished-0' } as CompletedAttempt);
-    expect(repository.list()).toHaveLength(250);
-    expect(repository.completionCount('q1')).toBe(255);
+    expect(repository.getSnapshot().completed).toHaveLength(250);
+    expect(repository.getSnapshot().completionCounts.q1).toBe(255);
   });
 
   it('rejects a stale tab before replacing another tab’s progress', () => {
     const first = new LocalAttemptRepository();
-    first.list();
+    first.getSnapshot();
     const second = new LocalAttemptRepository();
     second.saveActive({ ...fixtures.active, id: 'second-tab' } as Attempt);
     expect(() => first.saveActive({ ...fixtures.active, id: 'first-tab' } as Attempt)).toThrowError(PersistenceError);

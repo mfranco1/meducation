@@ -13,7 +13,6 @@ export interface ProgressState {
   active: Record<string, Attempt>;
   completed: CompletedAttempt[];
   completionCounts: Record<string, number>;
-  lowestScores: Record<string, number>;
   latestScores: Record<string, RecentScore>;
   activity: Record<string, string>;
   completedIds: Record<string, true>;
@@ -88,7 +87,6 @@ function mapOf<T>(value: unknown, guard: (entry: unknown) => entry is T): Record
 const validRecent = (value: unknown): value is RecentScore =>
   isObject(value) && number(value.percentage) && value.percentage <= 100 && text(value.completedAt);
 const validCount = (value: unknown): value is number => Number.isInteger(value) && number(value);
-const validNumber = (value: unknown): value is number => number(value) && value <= 100;
 const validText = (value: unknown): value is string => text(value);
 const validTrue = (value: unknown): value is true => value === true;
 
@@ -103,14 +101,16 @@ export function decodeProgress(value: unknown): ProgressState | undefined {
     return undefined;
   const active = mapOf(value.active, (entry): entry is Attempt => validAttempt(entry) && text(entry.contentSignature));
   const counts = mapOf(value.completionCounts, validCount);
-  const lowest = mapOf(value.lowestScores, validNumber);
   const latest = mapOf(value.latestScores, validRecent);
   const activity = mapOf(value.activity, validText);
   const completedIds = mapOf(value.completedIds, validTrue);
-  if (!active || !counts || !lowest || !latest || !activity || !completedIds) return undefined;
+  if (!active || !counts || !latest || !activity || !completedIds) return undefined;
   if (Object.entries(active).some(([quizId, attempt]) => attempt.quizId !== quizId)) return undefined;
   if (value.completed.some((attempt: CompletedAttempt) => completedIds[attempt.id] !== true)) return undefined;
-  return value as unknown as ProgressState;
+  // Progress saved by earlier builds also kept each quiz's lowest score. Nothing reads it, so it is dropped.
+  const state = { ...value };
+  delete state.lowestScores;
+  return state as unknown as ProgressState;
 }
 
 export function emptyProgress(): ProgressState {
@@ -120,7 +120,6 @@ export function emptyProgress(): ProgressState {
     active: {},
     completed: [],
     completionCounts: {},
-    lowestScores: {},
     latestScores: {},
     activity: {},
     completedIds: {},

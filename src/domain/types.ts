@@ -110,11 +110,6 @@ export interface QuizRepository {
   contentRevision?(): string | undefined;
 }
 export interface AttemptRepository {
-  list(): CompletedAttempt[];
-  completionCount(quizId: string): number;
-  lowestScore(quizId: string): number | undefined;
-  latestScore(quizId: string): RecentScore | undefined;
-  latestActivityAt(quizId: string): string | undefined;
   getActive(quizId: string): Attempt | undefined;
   getStorageError?(): string | undefined;
   saveActive(attempt: Attempt): void;

@@ -5,8 +5,8 @@ import type { CompletedAttempt } from '../domain/types';
 import { LocalAttemptRepository } from '../persistence/localRepository';
 import App from './App';
 import { theme } from '../shared/theme';
-import { runtimeQuestionBank } from '../content/api/runtimeQuestionBank';
-import { installFlashcardApiFixture, installQuizApiFixture } from '../test/runtimeContentFixtures';
+import { RuntimeQuestionBank } from '../content/api/runtimeQuestionBank';
+import { installFlashcardApiFixture, installQuizApiFixture, installRuntimeBank } from '../test/runtimeContentFixtures';
 
 function completed(quizId: string, subjectId: string, percentage: number): CompletedAttempt {
   const at = '2026-10-02T00:00:00.000Z';
@@ -85,25 +85,43 @@ describe('progressive dashboard statistics', () => {
   });
 
   it('cancels a pending question launch on navigation without creating an attempt', async () => {
-    const subject = { id: 's-cancel', name: 'Test Subject', accent: '#b9511b' };
+    const subject = { id: 's7', name: 'Test Subject', accent: '#b9511b' };
     const quiz = {
-      id: 'q-cancel',
+      id: 'q7',
       subjectId: subject.id,
       topicId: 't1',
       name: 'Test Quiz',
       questionCount: 1,
-      questionIds: ['i-cancel'],
+      questionIds: ['i7'],
     };
-    runtimeQuestionBank.configureApi(
-      { revision: 'rev-cancel-app', subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }] },
-      [{ revision: 'rev-cancel-app', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
-    );
     let resolveQuestions!: (response: { ok: boolean; json: () => Promise<unknown> }) => void;
     const pendingQuestions = new Promise<{ ok: boolean; json: () => Promise<unknown> }>((resolve) => {
       resolveQuestions = resolve;
     });
-    const fetchMock = vi.fn().mockReturnValue(pendingQuestions);
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      if (url === '/api/v1/subjects')
+        return {
+          ok: true,
+          json: async () => ({
+            revision: 'rev-cancel-app',
+            subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }],
+          }),
+        };
+      if (url.includes('/subjects/s'))
+        return {
+          ok: true,
+          json: async () => ({
+            revision: 'rev-cancel-app',
+            topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }],
+            quizzes: [quiz],
+          }),
+        };
+      return pendingQuestions;
+    });
     vi.stubGlobal('fetch', fetchMock);
+    const bank = await installRuntimeBank(
+      new RuntimeQuestionBank({ maxRetries: 0, baseDelayMs: 1, maxDelayMs: 1 }, () => 0),
+    );
 
     render(
       <ThemeProvider theme={theme}>
@@ -126,7 +144,7 @@ describe('progressive dashboard statistics', () => {
           revision: 'rev-cancel-app',
           questions: [
             {
-              id: 'i-cancel',
+              id: 'i7',
               quizId: quiz.id,
               stem: 'Question',
               choices: [
@@ -141,7 +159,7 @@ describe('progressive dashboard statistics', () => {
     );
     expect(screen.queryByRole('heading', { name: 'Test Quiz' })).toBeNull();
     expect(new LocalAttemptRepository().getActive(quiz.id)).toBeUndefined();
-    expect(runtimeQuestionBank.listQuestions(quiz.id)).toEqual([]);
+    expect(bank.listQuestions(quiz.id)).toEqual([]);
   });
 
   it('fetches questions when quiz setup opens, loads the quiz screen once they arrive and keeps the attempt in browser storage', async () => {
@@ -154,40 +172,38 @@ describe('progressive dashboard statistics', () => {
       questionCount: 1,
       questionIds: ['i1'],
     };
-    runtimeQuestionBank.configureApi(
-      { revision: 'rev-lazy', subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }] },
-      [{ revision: 'rev-lazy', topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }], quizzes: [quiz] }],
-    );
-    const fetchMock = vi.fn().mockImplementation(async (url: string) =>
-      url === '/api/v1/subjects'
-        ? {
-            ok: true,
-            json: async () => ({
-              revision: 'rev-lazy',
-              subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }],
-            }),
-          }
-        : {
-            ok: true,
-            json: async () => ({
-              revision: 'rev-lazy',
-              questions: [
-                {
-                  id: 'i1',
-                  quizId: quiz.id,
-                  stem: 'Lazy question stem',
-                  choices: [
-                    { id: 'A', text: 'Choice' },
-                    { id: 'B', text: 'Alternative' },
-                  ],
-                  answer: 'A',
-                  rationale: 'Explanation',
-                },
-              ],
-            }),
+    const reply = (body: unknown) => ({ ok: true, json: async () => body });
+    const fetchMock = vi.fn().mockImplementation(async (url: string) => {
+      if (url === '/api/v1/subjects')
+        return reply({
+          revision: 'rev-lazy',
+          subjects: [{ ...subject, quizCount: 1, questionCount: 1, quizIds: [quiz.id] }],
+        });
+      if (url.includes('/subjects/s'))
+        return reply({
+          revision: 'rev-lazy',
+          topics: [{ id: 't1', subjectId: subject.id, name: 'Topic' }],
+          quizzes: [quiz],
+        });
+      return reply({
+        revision: 'rev-lazy',
+        questions: [
+          {
+            id: 'i1',
+            quizId: quiz.id,
+            stem: 'Lazy question stem',
+            choices: [
+              { id: 'A', text: 'Choice' },
+              { id: 'B', text: 'Alternative' },
+            ],
+            answer: 'A',
+            rationale: 'Explanation',
           },
-    );
+        ],
+      });
+    });
     vi.stubGlobal('fetch', fetchMock);
+    await installRuntimeBank(new RuntimeQuestionBank({ maxRetries: 0, baseDelayMs: 1, maxDelayMs: 1 }, () => 0));
     const questionRequests = () => fetchMock.mock.calls.filter(([url]) => String(url).includes('/questions')).length;
 
     render(
@@ -219,7 +235,7 @@ describe('progressive dashboard statistics', () => {
           questionCount: 1,
           questionIds: ['i3'],
         };
-        installQuizApiFixture(
+        await installQuizApiFixture(
           [subject],
           [quiz],
           [
@@ -238,7 +254,7 @@ describe('progressive dashboard statistics', () => {
           ],
         );
       } else {
-        runtimeQuestionBank.configureApi({ revision: 'empty', subjects: [] });
+        await installQuizApiFixture([], [], []);
         await installFlashcardApiFixture(
           [{ ...subject, deckCount: 1, deckIds: ['d-backup'] }],
           [
@@ -280,7 +296,7 @@ describe('progressive dashboard statistics', () => {
   );
 
   it('keeps the current card open and reports an error when arrow navigation cannot save', async () => {
-    runtimeQuestionBank.configureApi({ revision: 'rev-arrow-quota', subjects: [] });
+    await installQuizApiFixture([], [], []);
     await installFlashcardApiFixture(
       [{ id: 's5', name: 'Arrow quota subject', accent: '#123456', deckCount: 1, deckIds: ['d-arrow-quota'] }],
       [
@@ -296,10 +312,6 @@ describe('progressive dashboard statistics', () => {
         { id: 'f-arrow-q1', deckId: 'd-arrow-quota', front: 'Saved first front', back: 'Saved first back' },
         { id: 'f-arrow-q2', deckId: 'd-arrow-quota', front: 'Saved second front', back: 'Saved second back' },
       ],
-    );
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ revision: 'rev-arrow-quota', subjects: [] }) }),
     );
     let progress: string | null = null;
     let progressWrites = 0;
@@ -349,7 +361,7 @@ describe('progressive dashboard statistics', () => {
         cardCount: 1,
       };
       const cards = [{ id: 'f-tabs', deckId: deck.id, front: 'Front', back: 'Back' }];
-      installQuizApiFixture([subject], [quiz], []);
+      const quizBank = await installQuizApiFixture([subject], [quiz], []);
       const bank = await installFlashcardApiFixture([{ ...subject, deckCount: 1, deckIds: [deck.id] }], [deck], cards);
       const values = new Map<string, string>();
       vi.stubGlobal('localStorage', {
@@ -359,7 +371,7 @@ describe('progressive dashboard statistics', () => {
       });
       let finishLoad!: () => void;
       if (type === 'quizzes') {
-        vi.spyOn(runtimeQuestionBank, 'ensureQuestions').mockImplementation(
+        vi.spyOn(quizBank, 'ensureQuestions').mockImplementation(
           () =>
             new Promise((resolve) => {
               finishLoad = () => resolve([]);

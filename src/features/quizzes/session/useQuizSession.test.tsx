@@ -59,11 +59,6 @@ function setup() {
   let active: Attempt | undefined = activeAttempt;
   const completed: CompletedAttempt[] = [];
   const attempts: AttemptRepository = {
-    list: () => completed,
-    completionCount: () => 3,
-    lowestScore: () => 50,
-    latestScore: () => ({ percentage: 80, completedAt: '2026-09-19T00:00:00.000Z' }),
-    latestActivityAt: () => '2026-09-20T00:00:00.000Z',
     getActive: vi.fn(() => active),
     saveActive: vi.fn((attempt: Attempt) => {
       active = attempt;
@@ -81,35 +76,21 @@ function setup() {
     saveCompleted: ReturnType<typeof vi.fn>;
   };
   const hook = renderHook(() => useQuizSession(questionBank, attempts));
-  return { ...hook, attempts, writes };
+  return { ...hook, attempts, writes, completed };
 }
 
 describe('read-only quiz browse session', () => {
-  it('navigates and exits without writing attempts or changing attempt summaries', () => {
-    const { result, attempts } = setup();
-    const before = {
-      active: attempts.getActive(quiz.id),
-      completed: attempts.list(),
-      count: attempts.completionCount(quiz.id),
-      latest: attempts.latestScore(quiz.id),
-      lowest: attempts.lowestScore(quiz.id),
-      activity: attempts.latestActivityAt(quiz.id),
-    };
-
+  it('navigates and exits without writing attempts', () => {
+    const { result, writes } = setup();
     act(() => result.current.browseQuiz(quiz));
     expect(result.current.view).toEqual({ page: 'quiz-browse', quiz, index: 0 });
     act(() => result.current.navigateBrowse(1));
     expect(result.current.view).toEqual({ page: 'quiz-browse', quiz, index: 1 });
     act(() => result.current.leaveBrowse());
     expect(result.current.view).toEqual({ page: 'subject', subject });
-    expect({
-      active: attempts.getActive(quiz.id),
-      completed: attempts.list(),
-      count: attempts.completionCount(quiz.id),
-      latest: attempts.latestScore(quiz.id),
-      lowest: attempts.lowestScore(quiz.id),
-      activity: attempts.latestActivityAt(quiz.id),
-    }).toEqual(before);
+    expect(writes.saveActive).not.toHaveBeenCalled();
+    expect(writes.clearActive).not.toHaveBeenCalled();
+    expect(writes.saveCompleted).not.toHaveBeenCalled();
   });
 
   it('clamps direct navigation to the available question range', () => {
@@ -149,11 +130,11 @@ describe('generated tests', () => {
 
 describe('results review', () => {
   it('opens only from newly completed results and never writes progress while reviewing', () => {
-    const { result, attempts } = setup();
+    const { result, completed } = setup();
     act(() => result.current.startQuiz(quiz, 'exam'));
     act(() => result.current.finishQuiz());
     expect(result.current.view.page).toBe('results');
-    const completedBefore = [...attempts.list()];
+    const completedBefore = [...completed];
 
     act(() => result.current.reviewResults());
     expect(result.current.view).toMatchObject({ page: 'quiz-review', index: 0 });
@@ -161,7 +142,7 @@ describe('results review', () => {
     expect(result.current.view).toMatchObject({ page: 'quiz-review', index: 1 });
     act(() => result.current.leaveReview());
     expect(result.current.view).toEqual({ page: 'subject', subject });
-    expect(attempts.list()).toEqual(completedBefore);
+    expect(completed).toEqual(completedBefore);
 
     act(() => result.current.reviewResults());
     expect(result.current.view.page).toBe('subject');
@@ -203,20 +184,20 @@ describe('quiz exit destinations', () => {
   });
 
   it('can leave read-only results review for Flashcards without changing the completed record', () => {
-    const { result, attempts } = setup();
+    const { result, completed } = setup();
     act(() => result.current.startQuiz(quiz, 'exam'));
     act(() => result.current.finishQuiz());
-    const completedBefore = [...attempts.list()];
+    const completedBefore = [...completed];
     act(() => result.current.reviewResults());
     act(() => result.current.leaveReview('flashcards'));
     expect(result.current.view).toEqual({ page: 'flashcards' });
-    expect(attempts.list()).toEqual(completedBefore);
+    expect(completed).toEqual(completedBefore);
   });
 });
 
 describe('saved content and storage recovery', () => {
   it('requires an explicit restart for changed content and keeps the attempt when cancelled', () => {
-    const { result, attempts } = setup();
+    const { result, attempts, completed } = setup();
     const stale = { ...activeAttempt, contentSignature: 'changed-content' };
     vi.mocked(attempts.getActive).mockReturnValue(stale);
 
@@ -229,7 +210,7 @@ describe('saved content and storage recovery', () => {
 
     act(() => result.current.resumeQuiz(quiz));
     act(() => result.current.restartPendingResume());
-    expect(attempts.list()).toEqual([]);
+    expect(completed).toEqual([]);
     expect(result.current.view).toMatchObject({
       page: 'quiz',
       attempt: { contentSignature: contentSignature(questions), feedbackMode: 'exam', responses: {} },
@@ -252,7 +233,7 @@ describe('Fast Feedback completion timing', () => {
   it('freezes at the final locked answer and keeps time fixed through review, leave/resume, and submission', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-09-30T00:00:00.000Z'));
-    const { result, attempts } = setup();
+    const { result, completed } = setup();
 
     act(() => result.current.startQuiz(quiz, 'immediate'));
     let current = result.current.view.page === 'quiz' ? result.current.view.attempt : undefined;
@@ -286,8 +267,8 @@ describe('Fast Feedback completion timing', () => {
 
     vi.advanceTimersByTime(20_000);
     act(() => result.current.finishQuiz());
-    expect(attempts.list()).toHaveLength(1);
-    expect(attempts.list()[0].score.elapsedMs).toBe(5_000);
+    expect(completed).toHaveLength(1);
+    expect(completed[0].score.elapsedMs).toBe(5_000);
   });
 
   it('keeps incomplete Fast Feedback and Exam Mode timers running when resumed', () => {

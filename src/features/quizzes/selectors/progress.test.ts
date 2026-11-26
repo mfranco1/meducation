@@ -71,7 +71,6 @@ describe('learner progress selectors', () => {
       },
     },
     completionCounts: { q1: 2 },
-    lowestScores: {},
     latestScores: { q1: { percentage: 80, completedAt: '2026-09-02T00:00:00.000Z' } },
     activity: { q2: '2026-09-03T00:00:00.000Z' },
     completedIds: {},

@@ -1,4 +1,4 @@
-import type { Attempt, AttemptRepository, CompletedAttempt, RecentScore } from '../domain/types';
+import type { Attempt, AttemptRepository, CompletedAttempt } from '../domain/types';
 import { LocalJsonStore, PersistenceError } from './localJsonStore';
 import { MAX_COMPLETED_ATTEMPTS } from './progressBackupCodec';
 import { decodeProgress, emptyProgress, progressKey, type ProgressState, type StoragePort } from './progressCodec';
@@ -47,7 +47,6 @@ export class LocalAttemptRepository implements AttemptRepository {
     return this.store.getStorageError();
   }
 
-  private state = () => this.store.state();
   /** When browser storage is full, drops the oldest half of the completed history and retries the same change. */
   private commit(change: (state: ProgressState) => ProgressState | undefined) {
     let keep: number | undefined;
@@ -68,25 +67,8 @@ export class LocalAttemptRepository implements AttemptRepository {
     }
   }
 
-  list(): CompletedAttempt[] {
-    return this.state().completed;
-  }
-  completionCount(quizId: string): number {
-    return this.state().completionCounts[quizId] ?? 0;
-  }
-  lowestScore(quizId: string): number | undefined {
-    return this.state().lowestScores[quizId];
-  }
-  latestScore(quizId: string): RecentScore | undefined {
-    return this.state().latestScores[quizId];
-  }
-
-  latestActivityAt(quizId: string): string | undefined {
-    return this.state().activity[quizId];
-  }
-
   getActive(quizId: string): Attempt | undefined {
-    return this.state().active[quizId];
+    return this.store.state().active[quizId];
   }
 
   saveActive(attempt: Attempt): void {
@@ -128,10 +110,6 @@ export class LocalAttemptRepository implements AttemptRepository {
         completionCounts: {
           ...state.completionCounts,
           [attempt.quizId]: (state.completionCounts[attempt.quizId] ?? 0) + 1,
-        },
-        lowestScores: {
-          ...state.lowestScores,
-          [attempt.quizId]: Math.min(state.lowestScores[attempt.quizId] ?? 100, attempt.score.percentage),
         },
         latestScores: { ...state.latestScores, [attempt.quizId]: latest },
         activity: { ...state.activity, [attempt.quizId]: attempt.completedAt },

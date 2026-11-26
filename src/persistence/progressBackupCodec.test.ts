@@ -80,17 +80,23 @@ describe('progress backup codec', () => {
     expect(validateProgressBackup(legacyLocalPayload).ok).toBe(true);
   });
 
+  it('accepts an older backup that carries lowest scores and drops them', () => {
+    const older = cloneFixture() as { quiz: Record<string, unknown> };
+    older.quiz.lowestScores = { 'deleted-quiz': 100 };
+    const result = validateProgressBackup(older);
+    expect(result.ok && 'lowestScores' in result.value.quiz).toBe(false);
+  });
+
   it('uses own-property access for valid IDs that shadow object prototype members', () => {
     const value = cloneFixture() as {
       quiz: {
         completed: Array<{ quizId: string }>;
         completionCounts: Record<string, number>;
-        lowestScores: Record<string, number>;
         latestScores: Record<string, { percentage: number; completedAt: string }>;
       };
     };
     value.quiz.completed[0].quizId = 'toString';
-    for (const key of ['completionCounts', 'lowestScores', 'latestScores'] as const) {
+    for (const key of ['completionCounts', 'latestScores'] as const) {
       const record = value.quiz[key] as Record<string, unknown>;
       const old = record['deleted-quiz'];
       delete record['deleted-quiz'];

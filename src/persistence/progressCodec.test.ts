@@ -26,6 +26,11 @@ describe('progress codec generated test attempts', () => {
     expect(decode(attempt('subject-test:s1', ['a', 'b']))?.active['subject-test:s1']?.questionIds).toEqual(['a', 'b']);
   });
 
+  it('reads progress saved with lowest scores and drops them', () => {
+    const decoded = decodeProgress({ ...emptyProgress(), lowestScores: { q1: 40 } });
+    expect(decoded).toEqual(emptyProgress());
+  });
+
   it('keeps authored quiz attempts without question IDs', () => {
     expect(decode(attempt('quiz-1'))).toBeDefined();
   });

@@ -46,8 +46,7 @@ describe('API response boundary fixtures', () => {
     const bank = new RuntimeQuestionBank(noRetries);
     const quizzes = structuredClone(fixtures.quizzes);
     quizzes.quizzes[0].id = 'q2';
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(quizzes)));
-    bank.configureApi(fixtures.subjects);
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(reply(fixtures.subjects)).mockResolvedValue(reply(quizzes)));
     await expect(bank.ensureQuizzes('s1')).rejects.toMatchObject({ kind: 'invalid' });
   });
 
@@ -55,8 +54,15 @@ describe('API response boundary fixtures', () => {
     const bank = new RuntimeQuestionBank(noRetries);
     const questions = structuredClone(fixtures.questions);
     questions.questions[0].answer = 'Z';
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(questions)));
-    bank.configureApi(fixtures.subjects, [fixtures.quizzes]);
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(reply(fixtures.subjects))
+        .mockResolvedValueOnce(reply(fixtures.quizzes))
+        .mockResolvedValue(reply(questions)),
+    );
+    await bank.ensureQuizzes('s1');
     await expect(bank.ensureQuestions('q1')).rejects.toMatchObject({ kind: 'invalid' });
   });
 
@@ -64,8 +70,15 @@ describe('API response boundary fixtures', () => {
     const bank = new RuntimeQuestionBank(noRetries);
     const questions = structuredClone(fixtures.questions);
     questions.questions[0].id = 'i2';
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(reply(questions)));
-    bank.configureApi(fixtures.subjects, [fixtures.quizzes]);
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValueOnce(reply(fixtures.subjects))
+        .mockResolvedValueOnce(reply(fixtures.quizzes))
+        .mockResolvedValue(reply(questions)),
+    );
+    await bank.ensureQuizzes('s1');
     await expect(bank.ensureQuestions('q1')).rejects.toMatchObject({ kind: 'invalid' });
   });
 

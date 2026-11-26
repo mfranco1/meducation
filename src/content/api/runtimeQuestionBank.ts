@@ -14,7 +14,6 @@ import {
   isSubjectCatalog,
   responseRevision,
   type QuestionListResponse,
-  type QuizCatalogResponse,
   type SubjectSummary,
 } from './apiDecoders';
 import {
@@ -26,7 +25,6 @@ import {
 } from './contentTransport';
 import { LaunchFreshness } from './launchFreshness';
 
-type SubjectCatalogRecord = Subject & Partial<Pick<SubjectSummary, 'quizCount' | 'questionCount' | 'quizIds'>>;
 type ResourceState = 'idle' | 'loading' | 'retrying' | 'ready' | 'error';
 
 /** Indexed, revision-scoped content. Request lifecycle stays with RuntimeQuestionBank. */
@@ -41,24 +39,6 @@ export class RuntimeContentCache {
 
   private indexQuestions(quiz: Quiz) {
     for (const questionId of quiz.questionIds ?? []) this.quizIdByQuestion.set(questionId, quiz.id);
-  }
-
-  replaceCatalog(subjects: Subject[], topics: Topic[] = [], quizzes: Quiz[] = []) {
-    this.subjects = subjects;
-    this.topicsBySubject.clear();
-    for (const topic of topics) this.topicsBySubject.set(topic.subjectId, [...this.listTopics(topic.subjectId), topic]);
-    this.quizzesBySubject.clear();
-    this.quizzesById.clear();
-    this.questionsByQuiz.clear();
-    this.quizIdByQuestion.clear();
-    this.questionsById.clear();
-    for (const quiz of quizzes) {
-      this.indexQuestions(quiz);
-      const group = this.quizzesBySubject.get(quiz.subjectId) ?? [];
-      group.push(quiz);
-      this.quizzesBySubject.set(quiz.subjectId, group);
-      this.quizzesById.set(quiz.id, quiz);
-    }
   }
 
   setSubjects(subjects: Subject[]) {
@@ -128,7 +108,6 @@ export class RuntimeQuestionBank implements QuizRepository {
   private readonly pendingCatalogs = new Map<string, Promise<Quiz[]>>();
   private listeners = new Set<() => void>();
   private snapshotVersion = 0;
-  private generation = 0;
 
   private readonly freshness: LaunchFreshness;
 
@@ -194,47 +173,6 @@ export class RuntimeQuestionBank implements QuizRepository {
     return this.summaries;
   }
 
-  configureApi(
-    subjectResponse: { revision: string; subjects: SubjectCatalogRecord[] },
-    quizResponses: QuizCatalogResponse[] = [],
-  ) {
-    this.generation++;
-    this.cancelQuestionLoads();
-    this.revision = subjectResponse.revision;
-    const allQuizzes = quizResponses.flatMap((response) => response.quizzes);
-    this.summaries = subjectResponse.subjects.map((subject) => {
-      const quizzes = allQuizzes.filter((quiz) => quiz.subjectId === subject.id);
-      const quizIds = subject.quizIds ?? quizzes.map((quiz) => quiz.id);
-      return {
-        ...subject,
-        quizCount: subject.quizCount ?? quizIds.length,
-        questionCount: subject.questionCount ?? quizzes.reduce((sum, quiz) => sum + quiz.questionCount, 0),
-        quizIds,
-      };
-    });
-    this.cache.replaceCatalog(
-      subjectResponse.subjects,
-      quizResponses.flatMap((response) => response.topics),
-      allQuizzes,
-    );
-    this.catalogState = 'ready';
-    this.catalogError = undefined;
-    this.catalogRetryAt = undefined;
-    this.quizStates.clear();
-    this.quizErrors.clear();
-    this.quizRecovery.clear();
-    this.quizRetryAt.clear();
-    this.quizRetryAfterAt.clear();
-    this.quizRetryNow.clear();
-    this.pendingCatalogs.clear();
-    for (const response of quizResponses) {
-      const subjectId = response.topics[0]?.subjectId;
-      if (subjectId) this.quizStates.set(subjectId, 'ready');
-    }
-    this.notify();
-    this.pending.clear();
-  }
-
   listSubjects() {
     return this.cache.listSubjects();
   }
@@ -271,7 +209,6 @@ export class RuntimeQuestionBank implements QuizRepository {
   async ensureSubjects(): Promise<SubjectSummary[]> {
     if (this.catalogState === 'ready') return this.summaries;
     if (this.catalogState === 'loading' || this.catalogState === 'retrying') return this.catalogRequest!;
-    const generation = this.generation;
     this.catalogState = 'loading';
     this.catalogError = undefined;
     this.catalogRetryAt = undefined;
@@ -283,7 +220,6 @@ export class RuntimeQuestionBank implements QuizRepository {
         random: this.random,
         getRetryNowSignal: () => this.catalogRetryNow?.signal,
         onAttempt: () => {
-          if (generation !== this.generation) return;
           if (this.catalogState === 'retrying') {
             this.catalogState = 'loading';
             this.catalogRetryAt = undefined;
@@ -291,14 +227,12 @@ export class RuntimeQuestionBank implements QuizRepository {
           }
         },
         onRetry: (_retry, delayMs) => {
-          if (generation !== this.generation) return;
           this.catalogState = 'retrying';
           this.catalogRetryAt = Date.now() + delayMs;
           this.notify();
         },
       })
       .then((response) => {
-        if (generation !== this.generation) throw genericFailure('cancelled');
         if (!isSubjectCatalog(response))
           throw new ContentLoadError(
             'invalid',
@@ -313,7 +247,6 @@ export class RuntimeQuestionBank implements QuizRepository {
         return this.summaries;
       })
       .catch((error) => {
-        if (generation !== this.generation) throw genericFailure('cancelled');
         if (error instanceof ContentLoadError && error.kind === 'cancelled') throw error;
         this.catalogState = 'error';
         this.catalogRetryAt = undefined;
@@ -337,11 +270,9 @@ export class RuntimeQuestionBank implements QuizRepository {
     if (this.quizStates.get(subjectId) === 'ready') return this.listQuizzes(subjectId);
     const pending = this.pendingCatalogs.get(subjectId);
     if (pending) return pending;
-    const generation = this.generation;
     const request: Promise<Quiz[]> = (async () => {
       try {
         await this.ensureSubjects();
-        if (generation !== this.generation) throw genericFailure('cancelled');
         this.quizStates.set(subjectId, 'loading');
         this.quizErrors.delete(subjectId);
         this.quizRetryAt.delete(subjectId);
@@ -355,7 +286,6 @@ export class RuntimeQuestionBank implements QuizRepository {
             random: this.random,
             getRetryNowSignal: () => this.quizRetryNow.get(subjectId)?.signal,
             onAttempt: () => {
-              if (generation !== this.generation) return;
               if (this.quizRecovery.has(subjectId) && this.quizStates.get(subjectId) === 'retrying') {
                 this.quizStates.set(subjectId, 'loading');
                 this.quizRetryAt.delete(subjectId);
@@ -363,7 +293,6 @@ export class RuntimeQuestionBank implements QuizRepository {
               }
             },
             onRetry: (_retry, delayMs, retryAfterMs) => {
-              if (generation !== this.generation) return;
               this.quizRecovery.add(subjectId);
               this.quizStates.set(subjectId, 'retrying');
               this.quizRetryAt.set(subjectId, Date.now() + delayMs);
@@ -373,7 +302,6 @@ export class RuntimeQuestionBank implements QuizRepository {
             },
           },
         );
-        if (generation !== this.generation) throw genericFailure('cancelled');
         if (responseRevision(response) === undefined)
           throw new ContentLoadError('invalid', 'The quiz catalog is incomplete. Try again later.');
         if (responseRevision(response) !== this.revision) throw revisionError();
@@ -389,7 +317,6 @@ export class RuntimeQuestionBank implements QuizRepository {
         this.notify();
         return response.quizzes;
       } catch (error) {
-        if (generation !== this.generation) throw genericFailure('cancelled');
         if (error instanceof ContentLoadError && error.kind === 'cancelled') throw error;
         this.quizStates.set(subjectId, 'error');
         this.quizRecovery.add(subjectId);
@@ -446,7 +373,6 @@ export class RuntimeQuestionBank implements QuizRepository {
     isValid: (payload: unknown) => payload is QuestionListResponse,
     store: (questions: Question[]) => void,
   ): Promise<Question[]> {
-    const generation = this.generation;
     const controller = new AbortController();
     this.questionControllers.set(key, controller);
     const request = this.transport
@@ -456,7 +382,7 @@ export class RuntimeQuestionBank implements QuizRepository {
         random: this.random,
       })
       .then((payload) => {
-        if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
+        if (controller.signal.aborted) throw genericFailure('cancelled');
         if (responseRevision(payload) === undefined)
           throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
         if (responseRevision(payload) !== this.revision) throw revisionError();
@@ -465,10 +391,6 @@ export class RuntimeQuestionBank implements QuizRepository {
         store(questions);
         this.notify();
         return questions;
-      })
-      .catch((error) => {
-        if (generation !== this.generation) throw genericFailure('cancelled');
-        throw error;
       })
       .finally(() => {
         if (this.pending.get(key) === request) {

@@ -29,7 +29,6 @@ export interface QuizBackupV2 {
   active: Record<string, Attempt>;
   completed: CompletedAttempt[];
   completionCounts: Record<string, number>;
-  lowestScores: Record<string, number>;
   latestScores: Record<string, RecentScore>;
   activity: Record<string, string>;
   completedIds: Record<string, true>;
@@ -229,17 +228,13 @@ function validScore(v: unknown, elapsed: unknown): boolean {
   );
 }
 function validQuiz(value: unknown): value is QuizBackupV2 {
+  // Backups from earlier builds also carry `lowestScores`. It is accepted and ignored.
   if (
-    !keys(value, [
-      'schemaVersion',
-      'active',
-      'completed',
-      'completionCounts',
-      'lowestScores',
-      'latestScores',
-      'activity',
-      'completedIds',
-    ]) ||
+    !keys(
+      value,
+      ['schemaVersion', 'active', 'completed', 'completionCounts', 'latestScores', 'activity', 'completedIds'],
+      ['lowestScores'],
+    ) ||
     value.schemaVersion !== 2
   )
     return false;
@@ -249,7 +244,6 @@ function validQuiz(value: unknown): value is QuizBackupV2 {
     value.completed.length > MAX_COMPLETED_ATTEMPTS ||
     !value.completed.every((v) => validAttempt(v, false)) ||
     !validMap(value.completionCounts, 2048, (_k, v): v is number => safeInt(v)) ||
-    !validMap(value.lowestScores, 2048, (_k, v): v is number => safeInt(v) && v <= 100) ||
     !validMap(
       value.latestScores,
       2048,
@@ -288,20 +282,12 @@ function validQuiz(value: unknown): value is QuizBackupV2 {
     retainedByQuiz.set(attempt.quizId, [...(retainedByQuiz.get(attempt.quizId) ?? []), attempt]);
   for (const [quizId, count] of Object.entries(completionCounts)) {
     const retained = retainedByQuiz.get(quizId) ?? [];
-    const lowest = ownValue(value.lowestScores as Record<string, unknown>, quizId) as number | undefined;
     const latest = ownValue(value.latestScores as Record<string, unknown>, quizId) as RecentScore | undefined;
-    if (count < retained.length || (count > 0 && (lowest === undefined || latest === undefined))) return false;
-    if (
-      lowest !== undefined &&
-      latest !== undefined &&
-      retained.some((a) => lowest > a.score.percentage || Date.parse(latest.completedAt) < Date.parse(a.completedAt))
-    )
+    if (count < retained.length || (count > 0 && latest === undefined)) return false;
+    if (latest !== undefined && retained.some((a) => Date.parse(latest.completedAt) < Date.parse(a.completedAt)))
       return false;
   }
-  return (
-    Object.keys(value.lowestScores as object).every((k) => Number(ownValue(completionCounts, k) ?? 0) > 0) &&
-    Object.keys(value.latestScores as object).every((k) => Number(ownValue(completionCounts, k) ?? 0) > 0)
-  );
+  return Object.keys(value.latestScores as object).every((k) => Number(ownValue(completionCounts, k) ?? 0) > 0);
 }
 function validFlashcards(value: unknown): value is FlashcardsBackupV2 {
   if (
@@ -352,7 +338,6 @@ function validLiveQuiz(state: unknown): state is ProgressState {
       'active',
       'completed',
       'completionCounts',
-      'lowestScores',
       'latestScores',
       'activity',
       'completedIds',
@@ -493,7 +478,6 @@ function projectQuiz(state: ProgressState): QuizBackupV2 {
     active,
     completed: state.completed.map((a) => projectAttempt(a, false) as CompletedAttempt),
     completionCounts: sortedRecord(state.completionCounts),
-    lowestScores: sortedRecord(state.lowestScores),
     latestScores: sortedRecord(state.latestScores, (value) => ({
       percentage: value.percentage,
       completedAt: value.completedAt,
@@ -510,7 +494,6 @@ function projectImportedBackup(value: ProgressBackupV1): ProgressBackupV1 {
     active: sortedRecord(value.quiz.active, (attempt) => projectAttempt(attempt, true) as Attempt),
     completed: value.quiz.completed.map((attempt) => projectAttempt(attempt, false) as CompletedAttempt),
     completionCounts: sortedRecord(value.quiz.completionCounts),
-    lowestScores: sortedRecord(value.quiz.lowestScores),
     latestScores: sortedRecord(value.quiz.latestScores, (score) => ({
       percentage: score.percentage,
       completedAt: score.completedAt,
@@ -577,7 +560,6 @@ export function summarizeProgressBackup(value: ProgressBackupV1): ProgressBackup
     ...Object.keys(value.quiz.active),
     ...value.quiz.completed.map((attempt) => attempt.quizId),
     ...Object.keys(value.quiz.completionCounts),
-    ...Object.keys(value.quiz.lowestScores),
     ...Object.keys(value.quiz.latestScores),
     ...Object.keys(value.quiz.activity),
   ]);
