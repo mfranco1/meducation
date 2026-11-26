@@ -260,10 +260,9 @@ describe('Mixed Test card', () => {
         <DashboardScreen attempts={[]} subjectStats={[]} mixedTest={controls(false)} onSelectSubject={() => {}} />
       </ThemeProvider>,
     );
-    const fact = (label: string) =>
-      within(screen.getByRole('region', { name: 'Mixed Test' })).getByText(label).nextElementSibling;
-    expect(fact('Questions')).toHaveTextContent('300');
-    expect(fact('Latest score')).toHaveTextContent('—');
+    const card = within(screen.getByRole('region', { name: 'Mixed Test' }));
+    expect(card.getByText('300 questions across all subjects')).toBeVisible();
+    expect(card.queryByText(/^Score/)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Start quiz: Mixed Test' }));
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(onStart).toHaveBeenCalledWith(quiz, 'immediate', true);

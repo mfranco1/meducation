@@ -1,9 +1,9 @@
-import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
-import { useState, type ReactNode } from 'react';
+import { useState } from 'react';
 import type { CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
-import { fontWeight, radius } from '../../../shared/theme';
+import { radius } from '../../../shared/theme';
 import type { QuizProgress } from '../selectors/progress';
 import { ScoreTrendIndicator } from './ScoreTrendIndicator';
 import { PastAttemptsDialog } from './quiz/PastAttemptsDialog';
@@ -20,23 +20,6 @@ export interface GeneratedTestControls {
   onResume: (quiz: Quiz) => void;
   onReview: (quiz: Quiz, attempt: CompletedAttempt) => void;
   onPrepare?: (quiz: Quiz) => void;
-}
-
-function Fact({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <Box sx={{ display: 'flex', flexDirection: 'column-reverse', minWidth: 0 }}>
-      <Typography component="dt" variant="caption" sx={{ color: 'text.secondary' }}>
-        {label}
-      </Typography>
-      <Typography
-        component="dd"
-        variant="subtitle1"
-        sx={{ alignItems: 'center', display: 'flex', fontWeight: fontWeight.semibold, gap: 0.75, m: 0 }}
-      >
-        {children}
-      </Typography>
-    </Box>
-  );
 }
 
 const cardContentSx = {
@@ -132,12 +115,12 @@ function TestActions({
   );
 }
 
-/** A generated test (Mixed Test or Subject Test) with its own progress, listed as facts. */
+/** A generated test (Mixed Test or Subject Test) with its own progress and latest score. */
 export function GeneratedTestCard({
   scope,
   id,
   ...controls
-}: GeneratedTestControls & { scope: { label: string; count: number }; id?: string }) {
+}: GeneratedTestControls & { scope: 'subjects' | 'topics'; id?: string }) {
   const { quiz, active, latestScore, trend, answeredCount = 0, activityAt } = controls.progress;
   return (
     <Card
@@ -158,37 +141,31 @@ export function GeneratedTestCard({
         >
           <Box sx={{ alignItems: 'center', display: 'flex', flex: '1 1 0', gap: 1.5, minWidth: 0 }}>
             {testIcon}
-            <Typography variant="h6" component="h2" sx={{ minWidth: 0 }}>
-              {quiz.name}
-            </Typography>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="h6" component="h2">
+                {quiz.name}
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {`${quiz.questionCount} questions across all ${scope}`}
+              </Typography>
+            </Box>
           </Box>
           <TestActions {...controls} />
         </Box>
+        {latestScore !== undefined && (
+          <Box>
+            <Chip
+              size="small"
+              variant="outlined"
+              label={
+                <Box component="span" sx={{ alignItems: 'center', display: 'inline-flex', gap: 1 }}>
+                  Score {latestScore}%{trend && <ScoreTrendIndicator trend={trend} />}
+                </Box>
+              }
+            />
+          </Box>
+        )}
         {active && <AnsweredProgress answered={answeredCount} total={quiz.questionCount} activityAt={activityAt} />}
-        <Box
-          component="dl"
-          sx={{
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            display: 'grid',
-            gap: 2,
-            gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
-            m: 0,
-            pt: 2,
-            '@container test-card (min-width: 480px)': {
-              gap: 0,
-              gridTemplateColumns: 'repeat(3, auto)',
-              justifyContent: 'space-between',
-            },
-          }}
-        >
-          <Fact label="Questions">{quiz.questionCount}</Fact>
-          <Fact label={scope.label}>{scope.count}</Fact>
-          <Fact label="Latest score">
-            {latestScore === undefined ? '—' : `${latestScore}%`}
-            {trend && <ScoreTrendIndicator trend={trend} />}
-          </Fact>
-        </Box>
       </CardContent>
     </Card>
   );
@@ -231,7 +208,10 @@ export function GeneratedTestCardSkeleton() {
               height={48}
               sx={{ borderRadius: radius.badge, flexShrink: 0 }}
             />
-            <LoadingSkeleton variant="text" width="40%" height={32} />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <LoadingSkeleton variant="text" width="40%" height={32} />
+              <LoadingSkeleton variant="text" width="60%" height={20} />
+            </Box>
           </Box>
           <LoadingSkeleton
             variant="rounded"
@@ -239,23 +219,6 @@ export function GeneratedTestCardSkeleton() {
             height={36}
             sx={{ borderRadius: radius.control, flexShrink: 0 }}
           />
-        </Box>
-        <Box
-          sx={{
-            borderTop: '1px solid',
-            borderColor: 'divider',
-            display: 'flex',
-            justifyContent: 'space-between',
-            gap: 2,
-            pt: 2,
-          }}
-        >
-          {[0, 1, 2].map((fact) => (
-            <Box key={fact} sx={{ flex: '0 1 88px' }}>
-              <LoadingSkeleton variant="text" width="50%" height={28} />
-              <LoadingSkeleton variant="text" width="100%" height={18} />
-            </Box>
-          ))}
         </Box>
       </CardContent>
     </Card>

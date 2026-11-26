@@ -197,10 +197,7 @@ export function DashboardScreen({
           contentPending ? (
             <GeneratedTestCardSkeleton />
           ) : (
-            mixedTest &&
-            !subjectsFailure && (
-              <GeneratedTestCard {...mixedTest} scope={{ label: 'Subjects', count: subjectStats.length }} />
-            )
+            mixedTest && !subjectsFailure && <GeneratedTestCard {...mixedTest} scope="subjects" />
           )
         }
         subjectsActions={

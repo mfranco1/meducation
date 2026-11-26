@@ -59,9 +59,11 @@ The tools outlive this task. Keep them in the repository, tested, and built for 
 
 Rewrite in AMA form. About 125 strings per session.
 
-- [ ] Pediatrics, strings 1 to 100 by use
-- [ ] Pediatrics, 101 to 200
-- [ ] Pediatrics, 201 to 293
+Each box takes the first 100 strings `A list L <Subject>` prints then (done strings leave the list).
+
+- [x] Pediatrics, first 100 by use
+- [ ] Pediatrics, next 100 (195 remain, including the 11 kept)
+- [ ] Pediatrics, the rest
 - [ ] Surgery, 1 to 120
 - [ ] Surgery, 121 to 234
 - [ ] Preventive Medicine (120)
@@ -114,7 +116,7 @@ Existence only: the document exists and its authors, title, journal or publisher
 
 ## Status
 
-Phases 0 and 1 done (2026-11-26). Next: Phase 2, Pediatrics 1 to 100.
+Phases 0 and 1 and the first Phase 2 box done (2026-11-26). Next: Phase 2, Pediatrics, next 100.
 
 - Phase 1, first box: 39 strings. 10 replaced, 27 dropped, 2 kept (Kalish 2024 is the AACR working group guideline; Jiang 2013 is a PRISMA systematic review). 35 questions and 5 cards staged. `refsite` is at 0. Maps in `var/source-audit/maps/phase1*.json`.
 - Phase 1, second box: 73 strings. 14 replaced, 55 dropped, 4 split per item (4 of their 9 items replaced). 68 questions and 13 cards staged, unpublished; 39 questions and 4 cards lost their only source. Maps in `var/source-audit/maps/phase1-narr*.json`.
@@ -122,7 +124,12 @@ Phases 0 and 1 done (2026-11-26). Next: Phase 2, Pediatrics 1 to 100.
 - Rankings searched with no primary document that states the order (now uncited): hookworm species i44945, enterococcal species i44961, anicteric leptospirosis i44971 (WHO 2003 and the 2010 Philippine guideline give no proportion), GCA headache i44867, spinal TB i45355, stone composition i44490, SLE pericarditis i44861, OA risk factor i44841, cirrhosis cause in the Philippines i43949, VWD type 1 share i44619, TB as leading exudate cause i44553, pancreatic head i44000. Also uncited: hypercyanotic spell items i23037, i23047, i23038, calciphylaxis i43066, pectus bracing i43223 and its card, MS relapse in pregnancy i43903.
 - For a later content audit (the replacement or remaining source disagrees with the item, or supports it only in part): i44380 keys infection as the top thyroid storm precipitant, JTA/JES 2016 ranks it second after stopping antithyroid drugs; i41295 links lichen sclerosus to differentiated PeIN, EAU-ASCO 2026 says it is not associated; i44486 membranous nephropathy ranking is region-dependent; i45540 and i45541 name MedlinePlus Genetics in the rationale; i45298 gives 60 to 80%, not in Fleseriu 2021; i44864 arthritis 75% rests on a CDC summary page; i45327 says warm AIHA is 70 to 80%, BSH 2017 says 65%; i45333 and i44618 say VWD affects about 1%, ASH 2021 gives 1 in 100 to 1 in 10,000; i44928 gives *E. coli* 25 to 33%, BSG 2021 lists it first without a figure; i44949 cites "a 2024 review" for 85%, Clark 2024 gives 50 to 88.2%; card f-0c29a602 names "Zhai 2016 review" on its back, now cited to Aggarwal 2019; card f-39765d83 says "0.9%" and "until volume is restored", not in Endocrine Society 2023; card f-9ef97ef9: Lucas 2014 read in part, supports HIVAN in untreated HIV only; i43885: GINA 2026 supports continuing ICS and reports omalizumab registry safety but does not say "continue omalizumab"; i45328: NHLBI 2014 supports pain as the most common complication and admission reason, not the emergency department wording; i42940 says ΔP "30 mm Hg or less", ACS TQIP 2015 says less than 30 (AAOS updated its compartment syndrome guideline in November 2025, not read); i36357: NICE NG198 has no 3 to 4 month limit.
 - Phase 0 trial: 14 strings, 245 questions staged. The actor `agent:source-cleanup` also has 281 changes from 2026-11-20, before this tracker.
-- Counts now: `L` 1,954 citations and 733 strings, `P` 8,095, `M` 791, `Lg` 767, `I` 87. Box sizes in Phase 2 are a little smaller than listed. The 2 strings under `narrative` are the kept ones.
+- Phase 2, Pediatrics first 100: 89 rewritten, 11 kept. 571 questions staged, unpublished. Map in `var/source-audit/maps/phase2-peds1.json` (kept strings carry their reason and the records found). All 41 DOIs in the map match Crossref.
+- Kept, needing per-item work or a decision: Rome IV 2016 and the 2018 Duchenne care considerations (each string covers two or three articles; stage per item); ARIA 2019 German guideline (published in both *Allergo J Int* and *Allergol Select*); AAP congenital hypothyroidism 2023 (two *Pediatrics* records with one title, e2022060419 and e2022060420; read which is the clinical report); CDC milestone checklists 2022 (a set of pages; CDC blocked); PIDSP 2015 bacterial meningitis CPG (no record reached; lead: *PIDSP Journal* 2015;16(2)); PPS/PIDSP/PFV schedule "2025" (only the 2026 schedule was found); NCI PDQ osteosarcoma and Ewing sarcoma "2025" (the pages read showed last updates of late 2024, and Ewing has a new title); two aplastic anemia narrative reviews (Peslak 2017, Hartung 2013: replace or drop as in Phase 1; the bank cites an ASH 2026 guideline).
+- Years changed to the record: WHO soil-transmitted helminth fact sheet 2026 to 2023, IPNA nephrotic syndrome 2022 to 2023, AAAAI/ACAAI atopic dermatitis 2023 to 2024, anaphylaxis practice parameter to 2024, PIDS/IDSA arthritis 2023 to 2024. The PhilHealth leptospirosis statements took 2012 from the file date (the text has none). CDC pages were blocked: their titles come from the ledger or search results and their years from the old strings.
+- Forms settled: NCI PDQ as `National Cancer Institute. *<Title> (PDQ): Health Professional Version*. National Cancer Institute; <year>.`; ADA sections as the bank's `Standards of Care in Diabetes—2026 ... 49(Suppl 1)` wording; a web page or report as `Organization. *Title*. Organization; year.` Phase 5 still has to merge older wordings into these (PDQ has four forms; four citations give the adult Surviving Sepsis DOI 10.1097/CCM.0000000000007075 for the children's guideline).
+- Subagent brief for class `L` (reuse it): give each string up to 3 items and the bank's full-form citations that share its title words, ask for the record from Crossref, Europe PMC, WHO IRIS or the ledger with no `save-source` (parallel writes to the ledger), and reuse of an existing wording when it matches the record. Three subagents run at once. About 6 to 10 minutes per batch of 25.
+- Counts now: `L` 1,354 citations and 644 strings, `P` 8,695, `M` 791, `Lg` 767, `I` 86. The 2 strings under `narrative` are the kept ones.
 - Pitfall: a listed string can still hold two documents (about 5 remain, such as `Jeffrey Modell Foundation 10 Warning Signs ...; 2025 Inborn Errors ...`). Never map those; stage the items by hand. Do the same when the items under one string need different documents (`"KEEP: per-item"` in the map, then an `edits` file through `J stage-quizzes`).
 - Pitfall: a trailing fragment the splitter cut off (`updated 2026.`) stays behind when its citation is dropped. Check the items' full sources and map the fragment to `null` too.
 - Crossref (`api.crossref.org/works/<DOI>`, or `?query.bibliographic=<title>`) gives the publisher record for journal articles without a fetch. Title search often returns comments and corrigenda first: confirm the DOI's own record.

@@ -188,11 +188,7 @@ export function SubjectScreen({
                 )}
               <Collapse in={testShown} unmountOnExit sx={{ [reducedMotion]: { transition: 'none' } }}>
                 <Box sx={{ mb: 3 }}>
-                  <GeneratedTestCard
-                    {...subjectTest}
-                    id={testCardId}
-                    scope={{ label: 'Topics', count: topics.length }}
-                  />
+                  <GeneratedTestCard {...subjectTest} id={testCardId} scope="topics" />
                 </Box>
               </Collapse>
             </>

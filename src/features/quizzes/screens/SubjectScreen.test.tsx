@@ -615,7 +615,9 @@ describe('subject test card', () => {
     renderTest({}, onStart);
     expect(screen.queryByRole('region', { name: test.name })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Subject Test' }));
-    expect(within(screen.getByRole('region', { name: test.name })).getByText('Questions')).toBeTruthy();
+    expect(
+      within(screen.getByRole('region', { name: test.name })).getByText('40 questions across all topics'),
+    ).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: `Start quiz: ${test.name}` }));
     expect(screen.queryByRole('button', { name: 'Browse Answers' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
@@ -628,7 +630,7 @@ describe('subject test card', () => {
     expect(card.getByRole('button', { name: `Resume quiz: ${test.name}` })).toBeTruthy();
     expect(card.getByText('10/40 answered')).toBeTruthy();
     expect(card.getByText('25%')).toBeTruthy();
-    expect(card.getByText('72%')).toBeTruthy();
+    expect(card.getByText('Score 72%')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Subject Test' }));
     await waitFor(() => expect(screen.queryByRole('region', { name: test.name })).toBeNull());
   });
