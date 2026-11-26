@@ -29,21 +29,6 @@ async function chooseTopic() {
   await quizNav().findByRole('combobox', { name: 'Quiz' });
 }
 
-it('deletes a subject with its topics, quizzes, items, decks and cards', async () => {
-  const { store } = mount();
-  await chooseSubject();
-  fireEvent.click(quizNav().getByRole('button', { name: 'Subject actions' }));
-  fireEvent.click(screen.getByRole('menuitem', { name: 'Delete subject…' }));
-  const dialog = screen.getByRole('dialog', { name: 'Delete subject?' });
-  expect(
-    within(dialog).getByText('Affected: 1 subjects · 1 topics · 2 quizzes · 3 items · 2 decks · 2 cards.'),
-  ).toBeVisible();
-  fireEvent.click(within(dialog).getByRole('button', { name: 'Delete subject' }));
-  await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-  expect(store.snapshot.subjects.map((row) => row.id)).toEqual(['s2']);
-  expect(store.snapshot.decks).toEqual([]);
-});
-
 it('deletes selected questions and shows a version conflict without losing the dialog', async () => {
   const { store } = mount();
   await chooseTopic();
@@ -61,22 +46,4 @@ it('deletes selected questions and shows a version conflict without losing the d
   fireEvent.click(within(dialog).getByRole('button', { name: 'Delete selected items' }));
   await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
   expect(store.snapshot.questions.map((row) => row.id)).toEqual(['i2', 'i4']);
-});
-
-it('keeps unsaved text in both tabs and reports it for the publish gate', async () => {
-  const { onDirtyChange } = mount();
-  fireEvent.click(screen.getByRole('tab', { name: 'Flashcards' }));
-  const flashNav = within(screen.getByRole('region', { name: 'Flashcard navigator' }));
-  fireEvent.click(flashNav.getAllByTitle('Open')[0]);
-  fireEvent.click(screen.getByRole('option', { name: 'Subject One' }));
-  await flashNav.findByRole('combobox', { name: 'Topic' });
-  fireEvent.click(flashNav.getAllByTitle('Open')[1]);
-  fireEvent.click(screen.getByRole('option', { name: 'Topic 1' }));
-  await flashNav.findByRole('combobox', { name: 'Deck' });
-  fireEvent.click(flashNav.getByRole('button', { name: 'Add decks' }));
-  fireEvent.change(within(screen.getByRole('dialog')).getByRole('textbox', { name: 'JSON' }), {
-    target: { value: '{ "decks": [] }' },
-  });
-  await waitFor(() => expect(onDirtyChange).toHaveBeenLastCalledWith({ quizzes: false, flashcards: true }));
-  expect(screen.getByRole('tab', { name: 'Flashcards', hidden: true })).toHaveAccessibleDescription(/Unsaved/);
 });

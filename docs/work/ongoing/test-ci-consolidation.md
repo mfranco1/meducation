@@ -46,9 +46,11 @@ Phase 2 notes: `login()` in `fixtures.ts` keeps the session cookies in module st
 
 The backend PostgreSQL tests, the unit tests backed by the in-memory fake server (`src/test/adminGateway.ts`), and the admin browser suite cover the same save, create, bulk add, move, delete, discard, publish, revert and conflict behaviors.
 
-- [ ] List each behavior and the layers that test it (`FlashcardAdminPanel`, `QuizAdminPanel`, `AdminWorkspace`, `HttpAdminApp` unit tests against `e2e/admin-http`).
-- [ ] Keep one layer per behavior: browser for real round trips, auth and conflicts; unit for editor-state edge cases. Delete the duplicates.
-- [ ] Shrink `adminGateway.ts` to what the remaining unit tests use.
+- [x] List each behavior and the layers that test it (`FlashcardAdminPanel`, `QuizAdminPanel`, `AdminWorkspace`, `HttpAdminApp` unit tests against `e2e/admin-http`).
+- [x] Keep one layer per behavior: browser for real round trips, auth and conflicts; unit for editor-state edge cases. Delete the duplicates.
+- [x] Shrink `adminGateway.ts` to what the remaining unit tests use.
+
+Phase 3 notes: removed unit duplicates of browser round trips (card and question save, bulk add, move, delete hand-off, deck multi-select, vanished record, subject cascade, two-tab dirty state, publish, discard, revert, fresh-auth publish) and browser duplicates of editor-state tests (newer text during save, cleared JSON editor). Units keep single-record create, ID change refusal, partial bulk failure, dirty guards, blocked commands and the delete conflict; `HttpAdminApp.test.tsx` keeps only the publish review totals and word diff. `useRecordEditor`, `DraftStore` and `SubjectEditorDialog` tests were out of scope and unchanged. The fake gateway lost its releases route and unused accessors. Local: admin suite 22 tests in 2.2 min, admin unit tests 116.
 
 ## Phase 4: learner unit and browser overlap
 

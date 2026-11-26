@@ -43,16 +43,6 @@ const jsonEditor = () => {
 };
 
 describe('quiz editor over the record API', () => {
-  it('edits a question and shows the saved record', async () => {
-    const { store } = mount();
-    const stem = await openQuestion();
-    fireEvent.change(stem, { target: { value: 'Exact stem $x^2$\n' } });
-    fireEvent.click(frame().getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(store.find('question', 'i1')).toMatchObject({ stem: 'Exact stem $x^2$\n', version: 2 }));
-    expect(await frame().findByText(/Saved to the draft/)).toBeVisible();
-    expect(frame().getByRole('textbox', { name: 'Question stem' })).toHaveValue('Exact stem $x^2$\n');
-  });
-
   it('creates a new question under the selected quiz with a server-assigned ID', async () => {
     const { store } = mount();
     await openQuestion();
@@ -63,46 +53,6 @@ describe('quiz editor over the record API', () => {
     fireEvent.click(frame().getByRole('button', { name: 'Save' }));
     await waitFor(() => expect(frame().getByRole('textbox', { name: 'ID' })).toHaveValue('i91'));
     expect(store.snapshot.questions.map((row) => row.id)).toEqual(['i1', 'i3', 'i91', 'i2', 'i4']);
-  });
-
-  it('adds a topic, quizzes and questions from content-only JSON', async () => {
-    const { store } = mount();
-    await chooseSubject();
-    fireEvent.click(frame().getByRole('tab', { name: 'Add' }));
-    const json = await frame().findByRole('textbox', { name: 'JSON' });
-    fireEvent.change(json, {
-      target: {
-        value: JSON.stringify({
-          topics: [
-            {
-              name: 'Second topic',
-              quizzes: [
-                {
-                  name: 'Second quiz',
-                  items: [{ stem: 'New stem', choices: ['A', 'B'], answer: 'A', rationale: 'New rationale' }],
-                },
-              ],
-            },
-          ],
-        }),
-      },
-    });
-    fireEvent.click(frame().getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(store.snapshot.topics).toHaveLength(3));
-    expect(store.snapshot.topics.find((row) => row.id === 't91')).toMatchObject({
-      id: 't91',
-      subjectId: 's1',
-      name: 'Second topic',
-    });
-    expect(store.snapshot.questions.at(-1)).toMatchObject({
-      quizId: 'q91',
-      choices: [
-        { id: 'A', text: 'A' },
-        { id: 'B', text: 'B' },
-      ],
-    });
-    // The new quiz is selected afterwards.
-    await navigator().findByRole('button', { name: /1\. i91/ });
   });
 
   it('does not send invalid batch JSON and keeps it, including after a server refusal', async () => {
@@ -142,20 +92,6 @@ describe('quiz editor over the record API', () => {
     );
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(frame().getByRole('textbox', { name: 'JSON' })).toHaveValue('{ "unsaved": true }');
-  });
-
-  it('reorders a question with the move route and hands deletion to the shared dialog', async () => {
-    const { store, props } = mount();
-    await openQuestion();
-    fireEvent.click(frame().getByRole('button', { name: 'Record actions' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Move down' }));
-    await waitFor(() => expect(store.snapshot.questions.map((row) => row.id)).toEqual(['i3', 'i1', 'i2', 'i4']));
-    fireEvent.click(frame().getByRole('button', { name: 'Record actions' }));
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Delete…' }));
-    expect(props.onDelete).toHaveBeenCalledWith({
-      selection: { kind: 'question', id: 'i1', parentId: 'q1' },
-      label: 'i1',
-    });
   });
 
   it('keeps a cleared record editor open and reports unsaved text', async () => {

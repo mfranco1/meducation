@@ -251,52 +251,6 @@ test('logout wins before an in-flight save reaches the API and keeps unsaved tex
   await expect(page.getByText(/session expired|Sign in/).first()).toBeVisible();
 });
 
-test('keeps newer text typed while a save is in flight', async ({ page }) => {
-  await login(page);
-  const editor = await openQuestion(page);
-  const item = JSON.parse(await editor.inputValue());
-  await editor.fill(JSON.stringify({ ...item, stem: 'Captured saved stem' }));
-  let release!: () => void;
-  const wait = new Promise<void>((resolve) => {
-    release = resolve;
-  });
-  let arrived!: () => void;
-  const ready = new Promise<void>((resolve) => {
-    arrived = resolve;
-  });
-  await page.route('**/api/admin/draft/questions/i1', async (route) => {
-    arrived();
-    await wait;
-    await route.continue();
-  });
-  const saved = page.waitForResponse(
-    (response) => response.url().endsWith('/api/admin/draft/questions/i1') && response.request().method() === 'PUT',
-  );
-  await saveButton(quizEditor(page)).click();
-  await ready;
-  const text = JSON.stringify({ ...item, stem: 'Newer text during save' });
-  await editor.fill(text);
-  release();
-  expect((await saved).status()).toBe(200);
-  await expect.poll(async () => (await draft(page)).questions[0].stem).toBe('Captured saved stem');
-  await expect(editor).toHaveValue(text);
-  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toHaveAccessibleDescription(/Unsaved/);
-});
-
-test('a selected quiz editor remains editable after all JSON text is cleared', async ({ page }) => {
-  await login(page);
-  const editor = await openQuestion(page);
-  const original = await editor.inputValue();
-  const before = await draft(page);
-  await editor.fill('');
-  await expect(editor).toBeVisible();
-  await expect(editor).toBeEditable();
-  await expect(page.getByRole('tab', { name: 'Quizzes', exact: true })).toHaveAccessibleDescription(/Unsaved/);
-  await editor.fill(original);
-  await expect(editor).toHaveValue(original);
-  expect((await draft(page)).latestChangeId).toBe(before.latestChangeId);
-});
-
 test('Changes lists a saved edit and Revert restores the record, even in the open editor', async ({ page }) => {
   await login(page);
   const editor = await openQuestion(page);

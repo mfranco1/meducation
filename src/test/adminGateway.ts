@@ -131,20 +131,6 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
       }));
       return json({ entries, totals: {}, truncated: false });
     }
-    if (method === 'GET' && path.startsWith('/releases'))
-      return json({
-        releases: [
-          {
-            releaseId: 'release-1',
-            quizRevision: 'q',
-            flashcardRevision: 'f',
-            createdAt: '2026-01-01T00:00:00Z',
-            latestPublicationSequence: 1,
-            active: true,
-          },
-        ],
-        nextCursor: null,
-      });
     if (method === 'POST' && path === '/draft/discard') {
       load();
       state.changed = false;
@@ -279,10 +265,6 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
   const store = new DraftStore(client, snapshot());
   return Object.assign(store, {
     fetcher,
-    /** Records as the fake server holds them, independent of the store's local copy. */
-    serverRows: () => rows,
-    /** The server's snapshot as `GET /draft` would return it right now. */
-    serverSnapshot: snapshot,
     /** Change a record behind the editor's back, as another editor would. */
     editElsewhere(kind: ApiKind, id: string, fields: object) {
       const row = find(kind, id)!;
@@ -303,6 +285,5 @@ export function createAdminStore(quizzes: StoredQuestionBank, flashcards: Stored
         hold = undefined;
       };
     },
-    changeLog: changes,
   });
 }

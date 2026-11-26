@@ -69,18 +69,6 @@ describe('flashcard editor over the record API', () => {
     expect(screen.queryByRole('button', { name: 'Undo' })).toBeNull();
   });
 
-  it('saves a card edit and shows the saved record', async () => {
-    const { store } = mount();
-    await chooseDeck();
-    openFirstCard();
-    fireEvent.change(editor(), { target: { value: JSON.stringify({ ...card, back: 'Exact newer text\n$x^2$' }) } });
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    await waitFor(() =>
-      expect(store.find('card', 'f-1')).toMatchObject({ back: 'Exact newer text\n$x^2$', version: 2 }),
-    );
-    expect(await screen.findByText(/Saved to the draft/)).toBeVisible();
-  });
-
   it('rejects an ID change', async () => {
     const { store } = mount();
     await chooseDeck();
@@ -89,32 +77,6 @@ describe('flashcard editor over the record API', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText(/IDs are stable and cannot be changed/)).toBeVisible();
     expect(store.find('card', 'f-1')).toMatchObject({ version: 1 });
-  });
-
-  it('adds nested decks and cards in bulk', async () => {
-    const { store } = mount();
-    await chooseTopic();
-    const dialog = openBulk('Add decks');
-    fireEvent.change(within(dialog).getByRole('textbox', { name: 'JSON' }), {
-      target: {
-        value: JSON.stringify({
-          decks: [
-            { name: 'Nested deck', cards: [{ front: 'Exact $x^2$ front', back: 'Back\n' }] },
-            { name: 'Empty deck' },
-          ],
-        }),
-      },
-    });
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Save' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
-    expect(store.snapshot.cards.at(-1)).toMatchObject({ front: 'Exact $x^2$ front', back: 'Back\n' });
-    expect(store.snapshot.decks.map((deck) => deck.name)).toEqual([
-      'Cranial nerves',
-      'No cards yet',
-      'Nested deck',
-      'Empty deck',
-    ]);
-    expect(screen.getByRole('combobox', { name: 'Deck' })).toHaveValue('Nested deck · 1 cards');
   });
 
   it('does not send an invalid batch and keeps the batch JSON when the server stops part-way', async () => {
@@ -135,40 +97,6 @@ describe('flashcard editor over the record API', () => {
     expect(await within(dialog).findByText(/Already saved to the draft: parents d-new91/)).toBeVisible();
     expect(within(dialog).getByText(/\$\.records\[0\]\.front: Front is required\./)).toBeVisible();
     expect(json).toHaveValue(text);
-  });
-
-  it('moves a card down and follows it in the list', async () => {
-    const { store } = mount();
-    await chooseDeck();
-    openFirstCard();
-    fireEvent.click(screen.getByRole('button', { name: 'Record actions' }));
-    expect(screen.getByRole('menuitem', { name: 'Move up' })).toHaveAttribute('aria-disabled', 'true');
-    fireEvent.click(screen.getByRole('menuitem', { name: 'Move down' }));
-    await waitFor(() => expect(store.snapshot.cards.map((row) => row.id)).toEqual(['f-2', 'f-1']));
-    await waitFor(() => expect(screen.getByRole('button', { name: /^2\. CN/ })).toHaveClass('Mui-selected'));
-  });
-
-  it('asks for delete confirmation through the shared dialog instead of deleting', async () => {
-    const { props, store } = mount();
-    await chooseDeck();
-    openFirstCard();
-    action('Delete…');
-    expect(props.onDelete).toHaveBeenCalledWith({ selection: { kind: 'card', id: 'f-1' }, label: 'f-1' });
-    expect(store.find('card', 'f-1')).toBeDefined();
-  });
-
-  it('deletes ticked decks from the deck list together', async () => {
-    const { props } = mount();
-    await chooseTopic();
-    fireEvent.click(screen.getByRole('button', { name: 'Select' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Select deck d-cranial' }));
-    fireEvent.click(screen.getByRole('checkbox', { name: 'Select deck d-empty' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Delete selected…' }));
-    expect(props.onDelete).toHaveBeenCalledWith({
-      selection: { kind: 'deck', parentId: 't1' },
-      ids: ['d-cranial', 'd-empty'],
-      label: '2 selected decks',
-    });
   });
 
   it('keeps dirty record text until an explicit discard', async () => {
@@ -202,14 +130,5 @@ describe('flashcard editor over the record API', () => {
     const text = JSON.stringify({ ...card, front: 'Newer text while another command is running' });
     fireEvent.change(editor(), { target: { value: text } });
     expect(editor()).toHaveValue(text);
-  });
-
-  it('removes a record from view when it disappears from the server', async () => {
-    const { store } = mount();
-    await chooseDeck();
-    openFirstCard();
-    await store.remove('card', [{ id: 'f-1', version: 1 }]);
-    await waitFor(() => expect(screen.queryByRole('textbox', { name: 'JSON' })).toBeNull());
-    expect(screen.queryByText(/olfactorius/)).toBeNull();
   });
 });
