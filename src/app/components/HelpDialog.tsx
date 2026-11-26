@@ -37,7 +37,7 @@ export const faqs: (readonly [string, ReactNode])[] = [
   ],
   [
     'How do I review a past quiz?',
-    'Open the subject and choose Review on the quiz, then pick an attempt. This browser keeps your 250 most recent attempts.',
+    'Open the subject and choose Review on the quiz, then pick an attempt. This browser keeps up to 250 recent attempts, or fewer when they include long tests. The oldest attempts are removed first. Your scores and completion counts stay.',
   ],
   [
     'Why can’t I resume after a content update?',

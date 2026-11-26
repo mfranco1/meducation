@@ -125,6 +125,8 @@ const fold = (text: string) =>
     .replace(/\p{Diacritic}/gu, '');
 const count = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
+const relativeTimeFormat = new Intl.RelativeTimeFormat('en', { numeric: 'auto' });
+
 /** Relative to now, in the largest whole unit ("2 days ago"). */
 function relativeTime(iso: string): string {
   const seconds = Math.min(0, (Date.parse(iso) - Date.now()) / 1000);
@@ -136,7 +138,7 @@ function relativeTime(iso: string): string {
     ['minute', 60],
   ] as const;
   const [unit, size] = units.find(([, size]) => -seconds >= size) ?? ['minute', 60];
-  return new Intl.RelativeTimeFormat('en', { numeric: 'auto' }).format(Math.round(seconds / size) || 0, unit);
+  return relativeTimeFormat.format(Math.round(seconds / size) || 0, unit);
 }
 
 export function TopicSetBrowser({

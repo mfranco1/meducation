@@ -4,7 +4,7 @@ import { MAX_COMPLETED_ATTEMPTS } from './progressBackupCodec';
 import { decodeProgress, emptyProgress, progressKey, type ProgressState, type StoragePort } from './progressCodec';
 
 /** Serialized progress above this many characters drops the oldest completed attempts (localStorage allows about 5M). */
-const historyBudgetChars = 2_500_000;
+const historyBudgetChars = 1_500_000;
 const messages = {
   unavailable: 'Progress could not be saved. Check browser storage and try again.',
   conflict: 'Progress changed in another tab. Reload this page before continuing.',
