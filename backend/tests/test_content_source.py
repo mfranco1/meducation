@@ -47,7 +47,7 @@ def test_injected_paired_source_closes_for_success_conditional_and_errors(source
         for path, headers, status in [
             ("/api/v1/subjects", {"If-None-Match": etag}, 304),
             ("/api/v1/subjects", {"If-Match": "wrong"}, 409),
-            ("/api/v1/quizzes/unknown", {}, 404),
+            ("/api/v1/quizzes/unknown/questions", {}, 404),
         ]:
             paired.events.clear()
             assert client.get(path, headers=headers).status_code == status

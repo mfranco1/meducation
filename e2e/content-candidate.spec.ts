@@ -25,9 +25,7 @@ for (const candidate of contentCases()) {
               }
             : path === `/api/v1/quizzes/${quiz.id}/questions`
               ? { revision, questions: [item] }
-              : path === `/api/v1/quizzes/${quiz.id}`
-                ? { revision, quiz: { ...quiz, questionCount: 1, questionIds: [item.id] } }
-                : { revision, subjects: [] };
+              : { revision, subjects: [] };
       await route.fulfill({ json: body });
     });
     await page.setViewportSize({ width: 390, height: 850 });

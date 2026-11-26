@@ -18,7 +18,6 @@ pytestmark = pytest.mark.postgres
     [
         "/api/v1/subjects",
         "/api/v1/subjects/s1/quizzes",
-        "/api/v1/quizzes/q1",
         "/api/v1/quizzes/q1/questions",
         "/api/v1/flashcards/subjects",
         "/api/v1/flashcards/subjects/s1/catalog",

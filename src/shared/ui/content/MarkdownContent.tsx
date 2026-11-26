@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, memo, Suspense } from 'react';
 import { Box } from '@mui/material';
 
 export type MarkdownVariant = 'stem' | 'explanation' | 'flashcard' | 'inline';
@@ -19,7 +19,8 @@ type MarkdownContentProps = {
   fontWeight?: number;
 };
 
-export function MarkdownContent(props: MarkdownContentProps) {
+// Memoized because parsing is the costly part of a study screen render and the props are plain values.
+export const MarkdownContent = memo(function MarkdownContent(props: MarkdownContentProps) {
   // Hidden source text reserves roughly the final layout until the renderer loads.
   const fallback = (
     <Box
@@ -35,4 +36,4 @@ export function MarkdownContent(props: MarkdownContentProps) {
       <MarkdownRenderer {...props} />
     </Suspense>
   );
-}
+});

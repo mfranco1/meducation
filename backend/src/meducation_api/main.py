@@ -67,11 +67,6 @@ class QuizCatalogResponse(BaseModel):
     quizzes: list[CatalogQuiz]
 
 
-class QuizDetailResponse(BaseModel):
-    revision: str
-    quiz: CatalogQuiz
-
-
 class QuestionListResponse(BaseModel):
     revision: str
     questions: list[Question]
@@ -330,27 +325,6 @@ def create_app(
                 quizzes=[
                     catalog_quiz(bank, quiz, count) for quiz, count in bank.list_quizzes(subject_id)
                 ],
-            ),
-            bank,
-            request,
-            revision,
-        )
-
-    @app.get("/api/v1/quizzes/{quiz_id}", response_model=QuizDetailResponse)
-    def get_quiz(
-        quiz_id: str,
-        request: Request,
-        revision: str | None = None,
-        view: ContentView = view_dependency,
-    ) -> Response:
-        bank = view.questions
-        found = bank.get_quiz(quiz_id)
-        if found is None:
-            raise HTTPException(status_code=404, detail={"code": "quiz_not_found"})
-        quiz, count = found
-        return content_response(
-            lambda: QuizDetailResponse(
-                revision=bank.revision, quiz=catalog_quiz(bank, quiz, count)
             ),
             bank,
             request,

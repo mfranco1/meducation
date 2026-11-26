@@ -11,7 +11,6 @@ import { isObject, onlyKeys } from '../domain/json';
 export const MAX_COMPLETED_ATTEMPTS = 250;
 
 export const PROGRESS_BACKUP_FORMAT = 'meducation-progress-backup';
-export const PROGRESS_BACKUP_VERSION = 1;
 export const PROGRESS_BACKUP_MAX_BYTES = 4 * 1024 * 1024;
 const MAX_DEPTH = 16;
 const MAX_NODES = 250_000;

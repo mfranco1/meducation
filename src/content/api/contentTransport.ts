@@ -88,19 +88,15 @@ export async function getJsonWithRetry<T>(
     let timeoutId: ReturnType<typeof setTimeout> | undefined;
     let parentAborted = false;
     let timedOut = false;
-    const abortFromParent = () => {
-      parentAborted = true;
-      controller.abort();
-    };
     let rejectParentAbort: ((reason?: unknown) => void) | undefined;
     const abort = new Promise<never>((_, reject) => {
       rejectParentAbort = reject;
     });
     const notifyParentAbort = () => {
-      abortFromParent();
+      parentAborted = true;
+      controller.abort();
       rejectParentAbort?.(genericFailure('cancelled'));
     };
-    options.signal?.addEventListener('abort', abortFromParent, { once: true });
     options.signal?.addEventListener('abort', notifyParentAbort, { once: true });
     if (options.signal?.aborted) notifyParentAbort();
     const timeout = new Promise<never>((_, reject) => {
@@ -168,7 +164,6 @@ export async function getJsonWithRetry<T>(
       await waitForRetry(delay, options.signal, options.getRetryNowSignal?.());
     } finally {
       if (timeoutId !== undefined) clearTimeout(timeoutId);
-      options.signal?.removeEventListener('abort', abortFromParent);
       options.signal?.removeEventListener('abort', notifyParentAbort);
     }
   }

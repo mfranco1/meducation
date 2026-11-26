@@ -13,6 +13,7 @@ import {
   isQuizCatalog,
   isSubjectCatalog,
   responseRevision,
+  type QuestionListResponse,
   type QuizCatalogResponse,
   type SubjectSummary,
 } from './apiDecoders';
@@ -408,81 +409,60 @@ export class RuntimeQuestionBank implements QuizRepository {
 
   async ensureQuestions(quizId: string): Promise<Question[]> {
     if (this.cache.hasQuestions(quizId)) return this.cache.listQuestions(quizId);
-    const pending = this.pending.get(quizId);
-    if (pending) return pending;
-
-    const generation = this.generation;
-    const controller = new AbortController();
-    this.questionControllers.set(quizId, controller);
-    const request = this.transport
-      .get<unknown>(
-        `/api/v1/quizzes/${encodeURIComponent(quizId)}/questions?revision=${encodeURIComponent(this.revision)}`,
-        {
-          signal: controller.signal,
-          policy: this.retryPolicy,
-          random: this.random,
+    return (
+      this.pending.get(quizId) ??
+      this.loadQuestions(
+        quizId,
+        `/api/v1/quizzes/${encodeURIComponent(quizId)}/questions`,
+        (payload): payload is QuestionListResponse => {
+          const expectedQuestionIds = this.cache.getQuiz(quizId)?.questionIds;
+          return expectedQuestionIds !== undefined && isQuestionList(payload, quizId, expectedQuestionIds);
         },
+        (questions) => this.cache.setQuestions(quizId, questions),
       )
-      .then((payload) => {
-        if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
-        if (responseRevision(payload) === undefined)
-          throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
-        if (responseRevision(payload) !== this.revision) throw revisionError();
-        const expectedQuestionIds = this.cache.getQuiz(quizId)?.questionIds;
-        if (!expectedQuestionIds || !isQuestionList(payload, quizId, expectedQuestionIds))
-          throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
-        const questions = payload.questions.map((question) => ({ ...question, metadata: question.metadata ?? {} }));
-        this.cache.setQuestions(quizId, questions);
-        this.notify();
-        return questions;
-      })
-      .catch((error) => {
-        if (generation !== this.generation) throw genericFailure('cancelled');
-        throw error;
-      })
-      .finally(() => {
-        if (this.pending.get(quizId) === request) {
-          this.pending.delete(quizId);
-          this.questionControllers.delete(quizId);
-        }
-      });
-    this.pending.set(quizId, request);
-    return request;
+    );
   }
 
   async ensureQuestionsById(questionIds: string[]): Promise<Question[]> {
     const missing = questionIds.filter((id) => !this.cache.getQuestion(id));
     if (missing.length > 0) {
       const key = `ids:${missing.join(',')}`;
-      const pending = this.pending.get(key);
-      if (pending) await pending;
-      else await this.loadQuestionsById(key, missing);
+      await (this.pending.get(key) ??
+        this.loadQuestions(
+          key,
+          `/api/v1/questions?ids=${encodeURIComponent(missing.join(','))}`,
+          (payload): payload is QuestionListResponse =>
+            isQuestionsById(payload, missing, (id) => this.cache.quizIdOf(id)),
+          (questions) => this.cache.addQuestions(questions),
+        ));
     }
     return this.listQuestionsById(questionIds);
   }
 
-  private loadQuestionsById(key: string, ids: string[]): Promise<Question[]> {
+  /** One cancellable question request for the current revision. `key` identifies it in `pending`. */
+  private loadQuestions(
+    key: string,
+    path: string,
+    isValid: (payload: unknown) => payload is QuestionListResponse,
+    store: (questions: Question[]) => void,
+  ): Promise<Question[]> {
     const generation = this.generation;
     const controller = new AbortController();
     this.questionControllers.set(key, controller);
     const request = this.transport
-      .get<unknown>(
-        `/api/v1/questions?ids=${encodeURIComponent(ids.join(','))}&revision=${encodeURIComponent(this.revision)}`,
-        {
-          signal: controller.signal,
-          policy: this.retryPolicy,
-          random: this.random,
-        },
-      )
+      .get<unknown>(`${path}${path.includes('?') ? '&' : '?'}revision=${encodeURIComponent(this.revision)}`, {
+        signal: controller.signal,
+        policy: this.retryPolicy,
+        random: this.random,
+      })
       .then((payload) => {
         if (controller.signal.aborted || generation !== this.generation) throw genericFailure('cancelled');
         if (responseRevision(payload) === undefined)
           throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
         if (responseRevision(payload) !== this.revision) throw revisionError();
-        if (!isQuestionsById(payload, ids, (id) => this.cache.quizIdOf(id)))
-          throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
+        if (!isValid(payload)) throw new ContentLoadError('invalid', 'The questions are incomplete. Try again later.');
         const questions = payload.questions.map((question) => ({ ...question, metadata: question.metadata ?? {} }));
-        this.cache.addQuestions(questions);
+        store(questions);
         this.notify();
         return questions;
       })

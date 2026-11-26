@@ -3,6 +3,7 @@
 from collections.abc import Iterator
 from contextlib import AbstractContextManager, contextmanager
 from dataclasses import dataclass
+from functools import cached_property
 from threading import Lock
 from typing import Any, Self
 from uuid import UUID
@@ -93,8 +94,13 @@ class Catalog:
     decks: tuple[FlashcardDeck, ...]
     card_ids: dict[str, tuple[str, ...]]
 
+    # Subject summaries resolve every quiz's and deck's subject, so this is a lookup, not a scan.
+    @cached_property
+    def _subject_by_topic(self) -> dict[str, str]:
+        return {t.id: t.subjectId for t in self.topics}
+
     def topic_subject(self, topic_id: str) -> str:
-        return next(t.subjectId for t in self.topics if t.id == topic_id)
+        return self._subject_by_topic[topic_id]
 
     def list_topics(self, subject_id: str) -> list[Topic]:
         return [t.model_copy() for t in self.topics if t.subjectId == subject_id]

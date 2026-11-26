@@ -127,7 +127,6 @@ def test_sparse_nested_metadata_is_preserved_in_api_response(
     ("path", "code"),
     [
         ("/api/v1/subjects/s-missing/quizzes", "subject_not_found"),
-        ("/api/v1/quizzes/q-missing", "quiz_not_found"),
         ("/api/v1/quizzes/q-missing/questions", "quiz_not_found"),
     ],
 )
@@ -145,7 +144,6 @@ def test_missing_catalog_resources_return_specific_404(
     [
         "/api/v1/subjects",
         "/api/v1/subjects/s1/quizzes",
-        "/api/v1/quizzes/q1",
         "/api/v1/quizzes/q1/questions",
         "/api/v1/questions?ids=i1",
     ],
