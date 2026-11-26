@@ -24,10 +24,10 @@ Flags: `refsite` 21 strings, `narrative` 18, `summarypage` 279 (511 citations, t
 
 One session does one unchecked box, then updates Status and stops. Orchestrate in the main session; give batches of about 25 strings to Sonnet subagents that return only a map file.
 
-1. `docker start meducation-authority-postgres`, then run the audit (until Phase 0 moves it into the skill: `python3 -I var/source-audit/audit.py`, read-only, usage in its docstring). `<class or flag> [Subject]` lists the distinct strings for a box, most used first. Classes are pattern-based: read the strings, and fix any the pattern put in the wrong class.
+1. Follow [audit-sources](../../../.agents/skills/audit-sources/SKILL.md): `A summary`, then `A list <class or flag> [Subject]` for the box. Stage with `--actor agent:source-cleanup`.
 2. Work per distinct string, not per item. Write `var/source-audit/maps/<box>.json` as `{ "<old citation>": "<new citation>" }`. Use `null` to drop a citation and a `"KEEP: <reason>"` value to leave one alone.
 3. Look each document up before fetching: `python3 -I .agents/shared/authoring.py find-sources <term>...` (the ledger has about 5,700 documents with title, year and URL), then `save-source`. Follow [verification.md](../../../.agents/shared/verification.md) and [fetch-access.md](../../../.agents/shared/fetch-access.md). Write only details read in the document or its publisher record. A citation without volume, pages or DOI is complete.
-4. Apply the map with the Phase 0 command, rerun the audit and confirm the box's count dropped as expected.
+4. `A apply` the map (dry run first), rerun `A summary` and confirm the box's count dropped as expected.
 5. Record in Status: box done, strings changed, strings kept or unresolved and why.
 
 ## Tools
@@ -45,10 +45,10 @@ The tools outlive this task. Keep them in the repository, tested, and built for 
 
 ## Phase 0: tooling (1 session)
 
-- [ ] Let `stage-quizzes` edit existing questions: an `edits` list of `{ id, version, rationaleMeta }`, mirroring the `edits` that `stage-flashcards` already accepts (`backend/src/meducation_api/admin/staging.py`), with stale-version refusal and a backend test. Update the bulk JSON note in `docs/content-management.md`.
-- [ ] Create the `audit-sources` skill (see Tools) from `var/source-audit/audit.py` and delete that file. Add an `apply` command: read a map, rebuild each affected item's full sources string (split, replace, drop duplicates, join with `; `), write per-subject stage files under `var/source-audit/` and run `J stage-quizzes` and `J stage-flashcards`. It must refuse an item whose stored string no longer matches the audit.
-- [ ] Gate: add MedlinePlus, Endotext, GeneReviews and *Nat Rev Dis Primers* to `NON_CITABLE` in `.agents/shared/authoring.py`, and make the batch gate in both skills warn on any citation the shared classifier does not put in class `P`. Run both skills' tests and the shared tests.
-- [ ] Trial the whole loop on 10 strings before Phase 1.
+- [x] Let `stage-quizzes` edit existing questions: an `edits` list of `{ id, version, rationaleMeta }`, mirroring the `edits` that `stage-flashcards` already accepts (`backend/src/meducation_api/admin/staging.py`), with stale-version refusal and a backend test. Update the bulk JSON note in `docs/content-management.md`.
+- [x] Create the `audit-sources` skill (see Tools) from `var/source-audit/audit.py` and delete that file. Add an `apply` command: read a map, rebuild each affected item's full sources string (split, replace, drop duplicates, join with `; `), write per-subject stage files under `var/source-audit/` and run `J stage-quizzes` and `J stage-flashcards`. It must refuse an item whose stored string no longer matches the audit.
+- [x] Gate: add MedlinePlus, Endotext, GeneReviews and *Nat Rev Dis Primers* to `NON_CITABLE` in `.agents/shared/authoring.py`, and make the batch gate in both skills warn on any citation the shared classifier does not put in class `P`. Run both skills' tests and the shared tests.
+- [x] Trial the whole loop on 10 strings before Phase 1.
 
 ## Phase 1: barred sources (1 session)
 
@@ -113,4 +113,10 @@ Existence only: the document exists and its authors, title, journal or publisher
 
 ## Status
 
-Not started. Next: Phase 0, first box.
+Phase 0 done (2026-11-26). Next: Phase 1.
+
+- Trial: 14 strings mapped to 11 documents (bariatric 2019, IEI 2025, AAD melanoma, ACG pancreatitis, Baveno VII, AHA Kawasaki 2017, ACR Kawasaki 2021, CDC STI 2021, WHO dengue 2009, WSES appendicitis, Endocrine Society CAH), 245 questions staged, unpublished. Maps in `var/source-audit/maps/phase0-trial*.json`.
+- Counts after the trial: `L` 1,957 citations and 734 strings, `P` 8,179, `M` 802, `Lg` 767, `I` 90. The splitter now starts a new citation at a year-first title (`; 2021 ACR guideline ...`), which moved a few strings between classes. Box sizes in Phase 2 are a little smaller than listed.
+- Pitfall: a listed string can still hold two documents (about 5 remain, such as `Jeffrey Modell Foundation 10 Warning Signs ...; 2025 Inborn Errors ...`). Never map those; stage the items by hand.
+- Crossref (`api.crossref.org/works/<DOI>`, or `?query.bibliographic=<title>`) gives the publisher record for journal articles without a fetch. Title search often returns comments and corrigenda first: confirm the DOI's own record.
+- The actor `agent:source-cleanup` also has 281 changes from 2026-11-20, before this tracker.

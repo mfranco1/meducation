@@ -95,7 +95,7 @@ export function retiredFindings(where: string, texts: (string | undefined)[], te
 }
 // Pages that may locate a primary document but are never cited (content-standards.md, Citations).
 const WEAK_SOURCE =
-  /\b(MSD Manual|Merck Manual|StatPearls|UpToDate|Medscape|Wikipedia|Radiopaedia|DermNet|EyeWiki|WebMD|Healthline|Mayo Clinic|Cleveland Clinic|Amboss|Osmosis|Lecturio|McMaster Textbook|Cureus|Am Fam Physician|case reports?)\b/i;
+  /\b(MSD Manual|Merck Manual|StatPearls|UpToDate|Medscape|Wikipedia|Radiopaedia|DermNet|EyeWiki|MedlinePlus|Endotext|GeneReviews|Nat Rev Dis Primers|WebMD|Healthline|Mayo Clinic|Cleveland Clinic|Amboss|Osmosis|Lecturio|McMaster Textbook|Cureus|Am Fam Physician|case reports?)\b/i;
 // Narrative reviews and single-center or retrospective series; systematic reviews and meta-analyses stay citable.
 const NARRATIVE_REVIEW =
   /(?<!systematic )\b(narrative|literature|concise|comprehensive|brief|clinical|contemporary|complete|updated?) review\b|: a review\b|\breview of (the|current) literature\b/i;

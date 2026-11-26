@@ -139,10 +139,13 @@ def _question(item: Any, path: str) -> dict[str, Any]:
     }
 
 
-def _plan(batch: Any) -> list[dict[str, Any]]:
+def _plan(batch: Any) -> tuple[list[dict[str, Any]], list[Any]]:
     """Validates the batch shape and folds same-named topics and quizzes together."""
+    batch = _object(batch, "$", {"topics", "edits"})
+    if not batch:
+        raise _reject("$", "must hold topics or edits.")
     topics: dict[str, dict[str, Any]] = {}
-    for t, raw_topic in enumerate(_list(_object(batch, "$", {"topics"}).get("topics"), "$.topics")):
+    for t, raw_topic in enumerate(_list(batch["topics"], "$.topics") if "topics" in batch else []):
         path = f"$.topics[{t}]"
         topic = _named(raw_topic, path, {"quizzes"})
         folded = topics.setdefault(_key(topic["name"]), {"topic": topic, "quizzes": {}})
@@ -156,7 +159,36 @@ def _plan(batch: Any) -> list[dict[str, Any]]:
                 _question(item, f"{quiz_path}.items[{i}]")
                 for i, item in enumerate(_list(quiz.get("items"), f"{quiz_path}.items"))
             ]
-    return list(topics.values())
+    edits = _list(batch["edits"], "$.edits") if "edits" in batch else []
+    for i, edit in enumerate(edits):
+        path = f"$.edits[{i}]"
+        _versioned(edit, path, {"rationaleMeta"})
+        if "rationaleMeta" not in edit:
+            raise _reject(f"{path}.rationaleMeta", "is required.")
+    return list(topics.values()), edits
+
+
+def _versioned(entry: Any, path: str, keys: set[str]) -> None:
+    entry = _object(entry, path, {"id", "version", *keys})
+    if not isinstance(entry.get("id"), str) or not entry["id"]:
+        raise _reject(f"{path}.id", "must be a record ID.")
+    if type(entry.get("version")) is not int:
+        raise _reject(f"{path}.version", "must be a whole number.")
+
+
+def _check_current(
+    entries: list[Any], path: str, records: dict[str, dict[str, Any]], noun: str, seen: set[str]
+) -> None:
+    """Refuses an ID outside the subject, a repeated ID or a stale version."""
+    for i, entry in enumerate(entries):
+        if entry["id"] not in records:
+            raise _reject(f"{path}[{i}].id", f"is not a {noun} of this subject.")
+        if entry["id"] in seen:
+            raise _reject(f"{path}[{i}].id", "appears more than once.")
+        seen.add(entry["id"])
+        current = records[entry["id"]]["version"]
+        if entry["version"] != current:
+            raise _reject(f"{path}[{i}].version", f"is stale. The {noun} is at version {current}.")
 
 
 def _fields(entry: dict[str, Any]) -> dict[str, Any]:
@@ -194,12 +226,26 @@ def _add(
 def stage_quizzes(
     service: DraftService, subject_name: str, batch: Any, report: dict[str, Any]
 ) -> None:
-    """Adds the batch under the subject. `report` fills in as records are saved, so a
-    DraftError partway leaves it describing what was already written."""
-    plan = _plan(batch)
+    """Replaces `rationaleMeta` on existing questions of the subject, then adds the batch's
+    topics under it. Every edit is checked against one snapshot before anything is written.
+    `report` fills in as records are saved, so a DraftError partway leaves it describing
+    what was already written."""
+    plan, edits = _plan(batch)
     snapshot = service.snapshot()
     subject = _subject(snapshot, subject_name)
-    report.update(createdTopics=[], createdQuizzes=[], merged=[], questionsAdded=[], changeIds=[])
+    topic_ids = {t["id"] for t in snapshot["topics"] if t["subjectId"] == subject["id"]}
+    quiz_ids = {q["id"] for q in snapshot["quizzes"] if q["topicId"] in topic_ids}
+    questions = {q["id"]: q for q in snapshot["questions"] if q["quizId"] in quiz_ids}
+    _check_current(edits, "$.edits", questions, "question", set())
+    report.update(
+        createdTopics=[], createdQuizzes=[], merged=[], questionsAdded=[], edited=[], changeIds=[]
+    )
+    for edit in edits:
+        fields = {"rationaleMeta": _without_blanks(edit["rationaleMeta"])}
+        done = service.update(KINDS["questions"], edit["id"], edit["version"], fields)
+        report["edited"].append(edit["id"])
+        if done["changeId"] is not None:
+            report["changeIds"].append(done["changeId"])
 
     existing_topics = [t for t in snapshot["topics"] if t["subjectId"] == subject["id"]]
     for topic in plan:
@@ -332,14 +378,6 @@ def _flashcard_plan(batch: Any) -> tuple[list[dict[str, Any]], list[Any], list[A
     return list(topics.values()), edits, deletes
 
 
-def _versioned(entry: Any, path: str, keys: set[str]) -> None:
-    entry = _object(entry, path, {"id", "version", *keys})
-    if not isinstance(entry.get("id"), str) or not entry["id"]:
-        raise _reject(f"{path}.id", "must be a card ID.")
-    if type(entry.get("version")) is not int:
-        raise _reject(f"{path}.version", "must be a whole number.")
-
-
 def stage_flashcards(
     service: DraftService, subject_name: str, batch: Any, report: dict[str, Any]
 ) -> None:
@@ -353,19 +391,8 @@ def stage_flashcards(
     deck_topics = {d["id"]: d["topicId"] for d in snapshot["decks"]}
     cards = {c["id"]: c for c in snapshot["cards"] if deck_topics.get(c["deckId"]) in topic_ids}
     seen: set[str] = set()
-    for name, entries in (("edits", edits), ("deletes", deletes)):
-        for i, entry in enumerate(entries):
-            path = f"$.{name}[{i}]"
-            if entry["id"] not in cards:
-                raise _reject(f"{path}.id", "is not a card of this subject.")
-            if entry["id"] in seen:
-                raise _reject(f"{path}.id", "appears more than once.")
-            seen.add(entry["id"])
-            if entry["version"] != cards[entry["id"]]["version"]:
-                raise _reject(
-                    f"{path}.version",
-                    f"is stale. The card is at version {cards[entry['id']]['version']}.",
-                )
+    _check_current(edits, "$.edits", cards, "card", seen)
+    _check_current(deletes, "$.deletes", cards, "card", seen)
     report.update(
         createdTopics=[],
         createdDecks=[],

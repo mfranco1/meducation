@@ -26,6 +26,7 @@ Bulk adds take content-only JSON with no IDs; the editor's Add view shows a temp
 
 - Quizzes: `{ "topics": [...] }` under a subject, `{ "quizzes": [...] }` under a topic, `{ "items": [...] }` in a quiz. Topics and quizzes have `name` and optional `description`. An item has `stem`, `choices` (strings, lettered A to Z by position), `answer` (a letter), `rationale` and optional `rationaleMeta`, `pearls` and `metadata`.
 - Flashcards: `{ "topics": [...] }`, `{ "decks": [...] }` or `{ "cards": [...] }` in the same way. A card has `front`, `back` and optional `sources`.
+- `meducation-db stage-quizzes` and `stage-flashcards` also take `edits` beside or instead of `topics`: `{ "id", "version", "rationaleMeta" }` replaces a question's `rationaleMeta` (blank removes it), and `{ "id", "version" }` with any of `front`, `back`, `sources` patches a card. `stage-flashcards` takes `deletes` of `{ "id", "version" }` too. A stale version or an ID outside the subject refuses the whole batch before anything is written.
 - A topic, quiz or deck whose name matches an existing sibling receives the new children instead of being created again; its own fields are left unchanged.
 - One request creates up to 1,000 children of one parent. The editor sends each parent and each bulk separately, so a failure part-way keeps what was already saved and says so.
 
@@ -35,7 +36,7 @@ Publish keeps the active release, the draft's base and the most recently active 
 
 ## Agent authoring
 
-The `write-quizzes` skill (`.agents/skills/write-quizzes/`) writes new quizzes and stages them in the draft with `meducation-db stage-quizzes`, through the same validation, versions and change history as the editor. The `write-flashcards` skill (`.agents/skills/write-flashcards/`) writes, tops up and corrects decks the same way with `meducation-db stage-flashcards`. Staging never publishes; review and publish in the editor.
+The `write-quizzes` skill (`.agents/skills/write-quizzes/`) writes new quizzes and stages them in the draft with `meducation-db stage-quizzes`, through the same validation, versions and change history as the editor. The `write-flashcards` skill (`.agents/skills/write-flashcards/`) writes, tops up and corrects decks the same way with `meducation-db stage-flashcards`. The `audit-sources` skill (`.agents/skills/audit-sources/`) corrects citations on existing questions and cards through both commands. Staging never publishes; review and publish in the editor.
 
 ## Record API and publication
 

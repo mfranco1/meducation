@@ -151,11 +151,85 @@ def currency_notes(subject: str, source: Path = CURRENCY_NOTES) -> str:
 # Reference sites, summaries, narrative reviews and case reports are never cited (content-standards.md, Citations), so the ledger drops them.
 NON_CITABLE = re.compile(
     r"\b(MSD Manual|Merck Manual|StatPearls|UpToDate|Medscape|Wikipedia|Radiopaedia|DermNet|EyeWiki|Amboss|Cureus"
-    r"|Am Fam Physician|case reports?|narrative review|state of the art)\b"
+    r"|MedlinePlus|Endotext|GeneReviews|Nat Rev Dis Primers|Am Fam Physician|case reports?|narrative review|state of the art)\b"
     r"|//(www\.)?(\w+\.)?(msdmanuals|merckmanuals|statpearls|uptodate|medscape|wikipedia|radiopaedia|dermnetnz|eyewiki"
     r"|amboss|cureus|aafp|emdocs|guidelinecentral|obgproject|mdcalc|drugs|medlineplus)\.",
     re.I,
 )
+
+
+YEAR = r"(?:19\d\d|20[0-2]\d)"
+LEGAL = re.compile(
+    r"\b(Republic Act|R\.?A\.? (No\. )?\d|Presidential Decree|Executive Order|Revised Penal Code|Civil Code|Family Code"
+    r"|Rules of Court|Rule \d+|Constitution|Batas Pambansa|Act No\.|G\.R\. No|Administrative Order|Code of Ethics|Labor Code|Circular)"
+)
+CITATION_FORMS = {
+    "P": "full AMA form",
+    "M": "elements present, no italics",
+    "L": "title and year only",
+    "Lg": "law or case, short form",
+    "I": "incomplete",
+}
+
+
+def split_citations(sources: str) -> list[str]:
+    """The citations of a sources string. "; " separates them, but also sits inside author groups and before a publisher's year."""
+    out: list[str] = []
+    for part in (p.strip() for p in re.split(r";\s+|\n+", sources.strip())):
+        if not part:
+            continue
+        # A title can open with its year ("2021 ACR guideline ..."); a publisher's year is followed by punctuation.
+        starts_title = re.match(YEAR + r" [A-Za-z]", part)
+        if out and not starts_title and (re.match(YEAR + r"\b", part) or (not re.search(r"\.\s|\.$", out[-1]) and not re.search(r"\)$|" + YEAR + "$", out[-1]))):
+            out[-1] += "; " + part
+        else:
+            out.append(part)
+    return out
+
+
+def citation_form(c: str) -> str:
+    """The CITATION_FORMS class of one citation. Pattern-based: only P is the form content-standards.md asks for."""
+    ital = re.search(r"\*[^*]+\*", c)
+    legal = bool(LEGAL.search(c)) and not re.search(r"\*[^*]+\*\. " + YEAR + "[;:.]", c)
+    lead = ital and not c.startswith("*") and c[: ital.start()].strip()
+    if ital and lead and re.search(r"\*[^*]+\*\.\s*(Published (online )?)?[A-Za-z ]*" + YEAR, c):
+        return "P"
+    if ital and (
+        re.search(r"\*\.?\s.*[;,] ?(?:Updated |Revised |Published )?[A-Za-z ]*" + YEAR, c[ital.end() - 1 :])
+        or re.search(r"\*[^*]+\*\.\s*(\d+\w* ed\.|Vol)", c)
+    ):
+        return "P"
+    if not re.search(YEAR, c):
+        return "I"
+    if ital:
+        return "P" if (lead or legal or c.startswith("*")) else "I"
+    if legal:
+        return "Lg"
+    if re.search(r"\(" + YEAR + r"[^)]*\)\.?$", c):
+        return "L"
+    segs = [s for s in re.split(r"\.\s+", c) if s.strip()]
+    return "M" if len(segs) >= 3 or (len(segs) >= 2 and re.search(r";\s*" + YEAR, c)) else "L"
+
+
+def warn_citation_forms(batch) -> None:
+    """Print one warning per distinct citation in a batch's `sources` strings that is not in full AMA form."""
+    found: dict[str, None] = {}
+
+    def walk(value) -> None:
+        if isinstance(value, dict):
+            for key, child in value.items():
+                if key == "sources" and isinstance(child, str):
+                    found.update(dict.fromkeys(split_citations(child)))
+                else:
+                    walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    walk(batch)
+    for c in found:
+        if (form := citation_form(c)) != "P":
+            print(f"warning: citation is not in AMA form ({CITATION_FORMS[form]}): {c}", flush=True)
 
 
 def saved_copy(ledger: Path, url: str) -> Path:

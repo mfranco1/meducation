@@ -28,7 +28,7 @@ Write every field in your own words; never copy sentences from sources. Never me
 
 The sources field is a string of AMA-style references (AMA Manual of Style, 11th edition) separated by semicolons. Cite only the primary references listed in Facts, and only documents you read. A stable textbook fact takes no citation.
 
-- Never cite a reference site or point-of-care summary (MSD or Merck Manual, StatPearls, UpToDate, Medscape, Wikipedia, Radiopaedia, DermNet), a narrative review, a case report or single-center series, a low-tier journal (*Cureus*), one hospital's protocol, lecture or course material, an unofficial copy of a book, or a superseded edition. Such a page may point you to the primary document; a guideline-dependent fact that only such a page supports is unverified. The batch gate warns on the common ones.
+- Never cite a reference site or point-of-care summary (MSD or Merck Manual, StatPearls, UpToDate, Medscape, Wikipedia, Radiopaedia, DermNet), a narrative review, a case report or single-center series, a low-tier journal (*Cureus*), one hospital's protocol, lecture or course material, an unofficial copy of a book, or a superseded edition. Such a page may point you to the primary document; a guideline-dependent fact that only such a page supports is unverified. The batch gate warns on the common ones, and on any citation that is not in the form below.
 
 - Required: authors (up to 6, then "et al") or the issuing organization, title, journal abbreviation or publisher, and year. Add volume, issue, pages and DOI only when they are on the page you read; never look them up separately, and a citation without them is complete. Never add access dates.
 - Italicize journal and book titles with `*...*`; no HTML. End with a period.

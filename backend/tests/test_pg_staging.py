@@ -121,6 +121,61 @@ def test_invalid_item_reports_error_and_adds_no_questions(staged):
         stage(service, subject, {"topics": [{"name": "T", "oops": 1, "quizzes": []}]})
 
 
+def test_question_edits_replace_rationale_meta_and_refuse_stale_or_foreign(db, staged):
+    service, subject = staged
+    stage(
+        service,
+        subject,
+        {
+            "topics": [
+                {
+                    "name": "T",
+                    "quizzes": [
+                        {
+                            "name": "Q",
+                            "items": [
+                                item("S1", rationaleMeta={"sources": "Old"}),
+                                item("S2", rationaleMeta={"sources": "Old"}),
+                            ],
+                        }
+                    ],
+                }
+            ]
+        },
+    )
+    first, second = service.snapshot()["questions"][-2:]
+    edits = [
+        {"id": first["id"], "version": first["version"], "rationaleMeta": {"sources": "New"}},
+        {"id": second["id"], "version": second["version"], "rationaleMeta": {"sources": " "}},
+    ]
+    report = stage(service, subject, {"edits": edits})
+    after = service.snapshot()
+    assert report["edited"] == [first["id"], second["id"]] and len(report["changeIds"]) == 2
+    assert after["questions"][-2:] == [
+        {**first, "version": first["version"] + 1, "rationaleMeta": {"sources": "New"}},
+        {
+            k: v
+            for k, v in {**second, "version": second["version"] + 1}.items()
+            if k != "rationaleMeta"
+        },
+    ]
+    other = service.create(
+        KINDS["subjects"], None, MISSING, {"name": "Other subject", "accent": "#123456"}
+    )
+    before = service.snapshot()
+    fresh = {**edits[0], "version": first["version"] + 1}
+    for name, batch, match in (
+        (subject, {"edits": [fresh, edits[1]]}, r"\$\.edits\[1\]\.version is stale"),
+        (subject, {"edits": [fresh, fresh]}, "more than once"),
+        (subject, {"edits": [{**fresh, "stem": "X"}]}, "not an editable field"),
+        (subject, {"edits": [{"id": first["id"], "version": 2}]}, "rationaleMeta is required"),
+        (other["record"]["name"], {"edits": [fresh]}, "not a question of this subject"),
+    ):
+        with pytest.raises(DraftError, match=match):
+            stage(service, name, batch)
+    assert service.snapshot() == before
+
+
 def test_outline_lists_topics_counts_subtopics_and_stems(staged):
     service, subject = staged
     stage(

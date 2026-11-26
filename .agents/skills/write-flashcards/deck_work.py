@@ -31,6 +31,7 @@ from authoring import (  # noqa: E402
     page_text,
     render_prompt,
     slug,
+    warn_citation_forms,
 )
 
 SEVERITIES = {"inaccurate", "outdated", "unclear", "duplicate", "format"}
@@ -260,12 +261,13 @@ def assemble_batch(work: Work) -> dict:
 
 
 def cmd_gate(work: Work, args) -> None:
-    """Run the batch report (npm run report:flashcard-batch). Without --batch, first assemble TOPICDIR/batch.json from every cards-<n>.json; with --batch, check that file in the topic folder."""
+    """Warn on citations not in AMA form, then run the batch report (npm run report:flashcard-batch). Without --batch, first assemble TOPICDIR/batch.json from every cards-<n>.json; with --batch, check that file in the topic folder."""
     if args.batch:
         batch = work.dir.resolve() / args.batch
     else:
         batch = work.dir.resolve() / "batch.json"
         dump(batch, assemble_batch(work))
+    warn_citation_forms(load(batch))
     root = work.root.resolve()
     cmd = [
         "npm",

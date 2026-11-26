@@ -24,7 +24,7 @@ from collections import Counter
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
-from authoring import LEDGER, REPO, SEP, clean_work, currency_notes, dump, load, merge_ledger, notes, numbered, page_text, render_prompt, slug  # noqa: E402
+from authoring import LEDGER, REPO, SEP, clean_work, currency_notes, dump, load, merge_ledger, notes, numbered, page_text, render_prompt, slug, warn_citation_forms  # noqa: E402
 
 ITEM_FIELDS = {"stem", "choices", "answer", "rationale", "pearls"}
 NESTED = {
@@ -814,8 +814,9 @@ def cmd_similar(work: Work, args) -> None:
 
 
 def cmd_gate(work: Work, args) -> None:
-    """Run the batch report (npm run report:quiz-batch) on a batch with the outline and blueprint."""
+    """Run the batch report (npm run report:quiz-batch) on a batch with the outline and blueprint, after warning on citations not in AMA form."""
     root = work.root.resolve()
+    warn_citation_forms(load(work.dir / args.batch))
     cmd = ["npm", "run", "-s", "report:quiz-batch", "--", str(work.dir.resolve() / args.batch),
            "--outline", str(root / "outline.json"), "--blueprint", str(root / "blueprint.json")]
     sys.exit(subprocess.run(cmd, cwd=REPO, check=False).returncode)

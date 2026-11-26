@@ -17,6 +17,7 @@ Setup: `npm ci`, `npm run build:content-policy`, the backend venv from [operatio
 | Content validation | `npm run validate:content -- tests/fixtures/question-bank.json tests/fixtures/empty-flashcard-bank.json` |
 | New quiz batch (before staging) | `npm run report:quiz-batch -- <batch.json> [--outline <outline.json>] [--blueprint <blueprint.json>]`; workflow tool: `.venv/bin/python -m pytest -q .agents/skills/write-quizzes .agents/shared` |
 | New flashcard batch (before staging) | `npm run report:flashcard-batch -- <batch.json> --outline <outline.json> [--plan <plan.json>] [--topic <name>]`; workflow tool: `.venv/bin/python -m pytest -q .agents/skills/write-flashcards .agents/shared` |
+| Source audit tool | `.venv/bin/python -m pytest -q .agents/skills/audit-sources .agents/shared` |
 | Backend | `.venv/bin/ruff check backend scripts`, `.venv/bin/mypy backend/src`, `.venv/bin/python scripts/testing/test-postgres-content.py` (all of `backend/tests` against disposable PostgreSQL; `--keyword` to focus). Plain `pytest backend/tests -q` skips the PostgreSQL cases |
 | Learner browser (Chromium; includes progress backup) | `npm run test:e2e` (two parallel workers; builds with content retries off and checks the build omits the admin entry and modules) |
 | Admin browser | `npm run test:e2e:admin` |

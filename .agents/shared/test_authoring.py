@@ -160,3 +160,18 @@ def test_currency_notes_keeps_the_rows_of_a_subject_and_rows_for_every_subject(t
     assert "| NAFLD | MASLD | 2023 |" in out and "PLLR" in out and "AJCC 8" in out
     assert "Best evidence" not in out and "`" not in out and "Subjects" not in out and "Intro" not in out
     assert "Best evidence" in authoring.currency_notes("a-new-subject", notes)
+
+
+def test_citations_split_classify_and_warn_when_not_in_ama_form(capsys):
+    sys.path.insert(0, str(TOOL.parent))
+    import authoring
+
+    full = "Doe J, Roe K. A trial of rest. *J Med*. 2021;1(2):3-4. doi:10.1/x"
+    book = "World Health Organization. *Antenatal Care*. World Health Organization; 2016."
+    forms = {full: "P", book: "P", "Nelson Textbook of Pediatrics (2024).": "L", "Republic Act No. 9165 (2002).": "Lg", "Section 30.": "I"}
+    forms["Doe J. A trial of rest. J Med. 2021."] = "M"
+    assert authoring.split_citations("; ".join(forms) + "\n") == list(forms)
+    assert authoring.split_citations("AHA Kawasaki statement; 2021 ACR Guideline for Kawasaki Disease (2022)") == ["AHA Kawasaki statement", "2021 ACR Guideline for Kawasaki Disease (2022)"]
+    assert {c: authoring.citation_form(c) for c in forms} == forms
+    authoring.warn_citation_forms({"topics": [{"items": [{"rationaleMeta": {"sources": f"{full}; Section 30."}}]}], "edits": [{"sources": "Section 30."}]})
+    assert capsys.readouterr().out == "warning: citation is not in AMA form (incomplete): Section 30.\n"

@@ -84,10 +84,11 @@ Reusable workflows live in `.agents/skills/<name>/SKILL.md`. When a task matches
 
 - `write-quizzes`: write new quizzes for a subject and stage them in the draft for review.
 - `write-flashcards`: write, top up or audit flashcard decks for a subject and stage the changes in the draft for review.
+- `audit-sources`: audit and clean up citations on existing questions and cards and stage the corrections in the draft for review.
 - `meducation-icons`: find, draw and integrate subject and topic icons.
 - `meducation-code-review`: review a diff, commit or pull request.
 
-`write-quizzes` and `write-flashcards` share `.agents/shared/`. Change shared behavior there, never by copying it into one skill, and keep it valid for both. After changing code or prompt templates, run both skills' tests and the shared tests; Markdown notes need none.
+`write-quizzes`, `write-flashcards` and `audit-sources` share `.agents/shared/`. Change shared behavior there, never by copying it into one skill, and keep it valid for all of them. After changing code or prompt templates, run every skill's tests and the shared tests (`.venv/bin/python -m pytest -q .agents`); Markdown notes need none.
 
 ## Work tracking
 
