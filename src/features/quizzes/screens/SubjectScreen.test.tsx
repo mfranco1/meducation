@@ -1,11 +1,12 @@
 import { StrictMode } from 'react';
 import { ThemeProvider } from '@mui/material';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import type { Attempt, CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
 import { theme } from '../../../shared/theme';
 import { subjectTestQuiz } from '../../../domain/generatedTests';
 import { SubjectScreen, type QuizProgress } from './SubjectScreen';
+import { SubjectBrowseLayout } from '../../../shared/ui/catalog/SubjectBrowseLayout';
 import { matchMediaFor } from '../../../test/setup';
 
 const subject = { id: 'subject', name: 'Biochemistry', description: '', accent: '#b9511b' };
@@ -583,42 +584,52 @@ describe('subject test card', () => {
   const renderTest = (progress: Partial<QuizProgress>, onStart = vi.fn()) =>
     render(
       <ThemeProvider theme={theme}>
-        <SubjectScreen
-          subject={subject}
-          topics={topics}
-          progress={[{ quiz, completionCount: 0 }]}
-          subjectTest={{
-            progress: { quiz: test, completionCount: 0, ...progress },
-            attempts: [],
-            onStart,
-            onResume: vi.fn(),
-            onReview: vi.fn(),
-          }}
-          onResumeQuiz={vi.fn()}
-          onStartQuiz={vi.fn()}
-          onBrowseQuiz={vi.fn()}
-        />
+        <SubjectBrowseLayout
+          subjectId={subject.id}
+          subjectName={subject.name}
+          contentType="quizzes"
+          onContentTypeChange={vi.fn()}
+          onBack={vi.fn()}
+        >
+          <SubjectScreen
+            subject={subject}
+            topics={topics}
+            progress={[{ quiz, completionCount: 0 }]}
+            subjectTest={{
+              progress: { quiz: test, completionCount: 0, ...progress },
+              attempts: [],
+              onStart,
+              onResume: vi.fn(),
+              onReview: vi.fn(),
+            }}
+            onResumeQuiz={vi.fn()}
+            onStartQuiz={vi.fn()}
+            onBrowseQuiz={vi.fn()}
+          />
+        </SubjectBrowseLayout>
       </ThemeProvider>,
     );
 
-  it('opens to start a Subject Test from the setup dialog without offering Browse Answers', () => {
+  it('shows on request to start a Subject Test from the setup dialog without offering Browse Answers', () => {
     const onStart = vi.fn();
     renderTest({}, onStart);
-    expect(screen.queryByRole('button', { name: `Start quiz: ${test.name}` })).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: test.name }));
-    expect(screen.getByText('40 questions')).toBeTruthy();
+    expect(screen.queryByRole('region', { name: test.name })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Subject Test' }));
+    expect(within(screen.getByRole('region', { name: test.name })).getByText('Questions')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: `Start quiz: ${test.name}` }));
     expect(screen.queryByRole('button', { name: 'Browse Answers' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Begin Quiz' }));
     expect(onStart).toHaveBeenCalledWith(test, 'immediate', true);
   });
 
-  it('starts open with progress while an attempt is unfinished', () => {
+  it('starts shown with progress while an attempt is unfinished', async () => {
     renderTest({ active: { ...activeAttempt, quizId: test.id }, answeredCount: 10, latestScore: 72 });
     const card = within(screen.getByRole('region', { name: test.name }));
     expect(card.getByRole('button', { name: `Resume quiz: ${test.name}` })).toBeTruthy();
     expect(card.getByText('10/40 answered')).toBeTruthy();
     expect(card.getByText('25%')).toBeTruthy();
-    expect(card.getByText('Latest score 72%')).toBeTruthy();
+    expect(card.getByText('72%')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Subject Test' }));
+    await waitFor(() => expect(screen.queryByRole('region', { name: test.name })).toBeNull());
   });
 });

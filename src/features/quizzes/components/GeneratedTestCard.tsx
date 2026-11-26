@@ -1,15 +1,9 @@
-import { Box, Button, ButtonBase, Card, CardContent, Collapse, Stack, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
-import type { SvgIconComponent } from '@mui/icons-material';
-import ArticleOutlinedIcon from '@mui/icons-material/ArticleOutlined';
-import EmojiEventsOutlinedIcon from '@mui/icons-material/EmojiEventsOutlined';
-import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import LayersOutlinedIcon from '@mui/icons-material/LayersOutlined';
 import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
-import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
 import { useState, type ReactNode } from 'react';
 import type { CompletedAttempt, FeedbackMode, Quiz } from '../../../domain/types';
-import { focusRingInset, fontWeight, radius } from '../../../shared/theme';
+import { fontWeight, radius } from '../../../shared/theme';
 import type { QuizProgress } from '../selectors/progress';
 import { ScoreTrendIndicator } from './ScoreTrendIndicator';
 import { PastAttemptsDialog } from './quiz/PastAttemptsDialog';
@@ -17,7 +11,6 @@ import { QuizSetupDialog } from './quiz/QuizSetupDialog';
 import { ProgressTrack } from '../../../shared/ui/catalog/SubjectProgressSummary';
 import { relativeTime } from '../../../shared/ui/catalog/TopicSetBrowser';
 import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
-import { reducedMotion } from '../../../shared/ui/motion';
 
 export interface GeneratedTestControls {
   progress: QuizProgress;
@@ -139,12 +132,17 @@ function TestActions({
   );
 }
 
-/** The Mixed Test: a generated quiz with its own progress, listed as facts. */
-export function GeneratedTestCard({ subjectCount, ...controls }: GeneratedTestControls & { subjectCount: number }) {
-  const { quiz, latestScore, trend } = controls.progress;
+/** A generated test (Mixed Test or Subject Test) with its own progress, listed as facts. */
+export function GeneratedTestCard({
+  scope,
+  id,
+  ...controls
+}: GeneratedTestControls & { scope: { label: string; count: number }; id?: string }) {
+  const { quiz, active, latestScore, trend, answeredCount = 0, activityAt } = controls.progress;
   return (
     <Card
       component="section"
+      id={id}
       aria-label={quiz.name}
       sx={{ containerName: 'test-card', containerType: 'inline-size', display: 'flex', width: '100%' }}
     >
@@ -166,6 +164,7 @@ export function GeneratedTestCard({ subjectCount, ...controls }: GeneratedTestCo
           </Box>
           <TestActions {...controls} />
         </Box>
+        {active && <AnsweredProgress answered={answeredCount} total={quiz.questionCount} activityAt={activityAt} />}
         <Box
           component="dl"
           sx={{
@@ -184,7 +183,7 @@ export function GeneratedTestCard({ subjectCount, ...controls }: GeneratedTestCo
           }}
         >
           <Fact label="Questions">{quiz.questionCount}</Fact>
-          <Fact label="Subjects">{subjectCount}</Fact>
+          <Fact label={scope.label}>{scope.count}</Fact>
           <Fact label="Latest score">
             {latestScore === undefined ? '—' : `${latestScore}%`}
             {trend && <ScoreTrendIndicator trend={trend} />}
@@ -195,121 +194,27 @@ export function GeneratedTestCard({ subjectCount, ...controls }: GeneratedTestCo
   );
 }
 
-function Detail({ icon: Icon, children }: { icon: SvgIconComponent; children: ReactNode }) {
+function AnsweredProgress({ answered, total, activityAt }: { answered: number; total: number; activityAt?: string }) {
+  const percent = total ? Math.round((answered / total) * 100) : 0;
   return (
-    <Typography
-      component="li"
-      variant="body2"
-      sx={{ alignItems: 'center', color: 'text.secondary', display: 'flex', gap: 1, whiteSpace: 'nowrap' }}
-    >
-      <Icon aria-hidden color="primary" fontSize="small" />
-      {children}
-    </Typography>
-  );
-}
-
-/** A Subject Test: collapsed to its name until opened, and open from the start while an attempt is unfinished. */
-export function SubjectTestCard(controls: GeneratedTestControls) {
-  const { quiz, active, latestScore, trend, answeredCount = 0, activityAt } = controls.progress;
-  const [expanded, setExpanded] = useState(Boolean(active));
-  const percent = quiz.questionCount ? Math.round((answeredCount / quiz.questionCount) * 100) : 0;
-  return (
-    <Card
-      component="section"
-      aria-label={quiz.name}
-      sx={{ containerName: 'test-card', containerType: 'inline-size', width: '100%' }}
-    >
-      <Box component="h2" sx={{ m: 0 }}>
-        <ButtonBase
-          aria-expanded={expanded}
-          aria-controls="subject-test-details"
-          onClick={() => setExpanded(!expanded)}
-          sx={{
-            borderRadius: 'inherit',
-            gap: 1.5,
-            justifyContent: 'flex-start',
-            p: 2.5,
-            textAlign: 'left',
-            width: '100%',
-            '&.Mui-focusVisible': { ...focusRingInset },
-          }}
-        >
-          {testIcon}
-          <Typography variant="h6" component="span" sx={{ flex: 1, minWidth: 0 }}>
-            {quiz.name}
+    <Box>
+      <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
+        <ProgressTrack percent={percent} sx={{ flex: 1 }} />
+        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+          {percent}%
+        </Typography>
+      </Stack>
+      <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap' }}>
+        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+          {`${Math.min(answered, total)}/${total} answered`}
+        </Typography>
+        {activityAt && (
+          <Typography variant="caption" sx={{ color: 'text.secondary' }}>
+            {relativeTime(activityAt)}
           </Typography>
-          <ExpandMoreRoundedIcon
-            aria-hidden
-            color="action"
-            sx={{
-              transform: expanded ? 'rotate(180deg)' : undefined,
-              transition: (theme) => theme.transitions.create('transform', { duration: 180 }),
-              [reducedMotion]: { transition: 'none' },
-            }}
-          />
-        </ButtonBase>
-      </Box>
-      <Collapse id="subject-test-details" in={expanded} unmountOnExit sx={{ [reducedMotion]: { transition: 'none' } }}>
-        <Stack
-          spacing={2}
-          sx={{
-            px: 2.5,
-            pb: 2.5,
-            // From this width the details line up under the name, past the icon.
-            '@container test-card (min-width: 480px)': { pl: 10 },
-            '@container test-card (max-width: 419px)': { '& .test-card-actions': { width: '100%' } },
-          }}
-        >
-          <Box sx={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-            <Box
-              component="ul"
-              sx={{
-                display: 'flex',
-                flex: '1 1 0',
-                flexWrap: 'wrap',
-                columnGap: 3,
-                rowGap: 1,
-                listStyle: 'none',
-                m: 0,
-                p: 0,
-              }}
-            >
-              <Detail icon={ArticleOutlinedIcon}>
-                {quiz.questionCount} {quiz.questionCount === 1 ? 'question' : 'questions'}
-              </Detail>
-              <Detail icon={LayersOutlinedIcon}>All topics</Detail>
-              {latestScore !== undefined && (
-                <Detail icon={EmojiEventsOutlinedIcon}>
-                  Latest score {latestScore}%{trend && <ScoreTrendIndicator trend={trend} />}
-                </Detail>
-              )}
-              {activityAt && !active && <Detail icon={ScheduleRoundedIcon}>{relativeTime(activityAt)}</Detail>}
-            </Box>
-            <TestActions {...controls} />
-          </Box>
-          {active && (
-            <Box>
-              <Stack direction="row" spacing={1.5} sx={{ alignItems: 'center' }}>
-                <ProgressTrack percent={percent} sx={{ flex: 1 }} />
-                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {percent}%
-                </Typography>
-              </Stack>
-              <Stack direction="row" spacing={1.5} useFlexGap sx={{ flexWrap: 'wrap' }}>
-                <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                  {`${Math.min(answeredCount, quiz.questionCount)}/${quiz.questionCount} answered`}
-                </Typography>
-                {activityAt && (
-                  <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                    {relativeTime(activityAt)}
-                  </Typography>
-                )}
-              </Stack>
-            </Box>
-          )}
-        </Stack>
-      </Collapse>
-    </Card>
+        )}
+      </Stack>
+    </Box>
   );
 }
 

@@ -12,10 +12,13 @@ import {
   useMediaQuery,
   type Theme,
 } from '@mui/material';
-import { useId, type ReactNode, type Ref } from 'react';
+import { createContext, useId, useState, type ReactNode, type Ref } from 'react';
 import { SubjectIconBadge } from './icons/SubjectIconBadge';
 import { reducedMotion } from '../motion';
 import { LoadingSkeleton } from '../loading/LoadingSkeleton';
+
+/** The end of the tab row, where the tab panel can place an action with a portal. */
+export const TabRowActionSlot = createContext<HTMLElement | null>(null);
 
 export function SubjectBrowseLayout({
   subjectId,
@@ -41,6 +44,7 @@ export function SubjectBrowseLayout({
   const waveId = useId();
   const showProgress = useMediaQuery((theme: Theme) => theme.breakpoints.up('sm'));
   const navigationId = useId();
+  const [actionSlot, setActionSlot] = useState<HTMLElement | null>(null);
   const percent = progress && progress.total > 0 ? Math.round((progress.completed / progress.total) * 100) : 0;
   return (
     <Box sx={{ position: 'relative', isolation: 'isolate' }}>
@@ -182,31 +186,45 @@ export function SubjectBrowseLayout({
             )}
           </Stack>
         </Box>
-        <Tabs
-          value={contentType}
-          onChange={(_, value: 'quizzes' | 'flashcards') => onContentTypeChange(value)}
-          aria-label="Subject content"
-          sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        <Box
+          sx={{
+            alignItems: 'center',
+            borderBottom: 1,
+            borderColor: 'divider',
+            display: 'flex',
+            gap: { xs: 1, sm: 2 },
+            mb: 3,
+          }}
         >
-          <Tab
-            component="button"
-            ref={contentType === 'quizzes' ? selectedTabRef : undefined}
-            id={`${navigationId}-quizzes`}
-            aria-controls={`${navigationId}-panel`}
-            value="quizzes"
-            label="Quizzes"
-          />
-          <Tab
-            component="button"
-            ref={contentType === 'flashcards' ? selectedTabRef : undefined}
-            id={`${navigationId}-flashcards`}
-            aria-controls={`${navigationId}-panel`}
-            value="flashcards"
-            label="Flashcards"
-          />
-        </Tabs>
+          <Tabs
+            value={contentType}
+            onChange={(_, value: 'quizzes' | 'flashcards') => onContentTypeChange(value)}
+            aria-label="Subject content"
+            variant="scrollable"
+            scrollButtons={false}
+            sx={{ minWidth: 0 }}
+          >
+            <Tab
+              component="button"
+              ref={contentType === 'quizzes' ? selectedTabRef : undefined}
+              id={`${navigationId}-quizzes`}
+              aria-controls={`${navigationId}-panel`}
+              value="quizzes"
+              label="Quizzes"
+            />
+            <Tab
+              component="button"
+              ref={contentType === 'flashcards' ? selectedTabRef : undefined}
+              id={`${navigationId}-flashcards`}
+              aria-controls={`${navigationId}-panel`}
+              value="flashcards"
+              label="Flashcards"
+            />
+          </Tabs>
+          <Box ref={setActionSlot} sx={{ flexShrink: 0, ml: 'auto', '&:empty': { display: 'none' } }} />
+        </Box>
         <Box role="tabpanel" id={`${navigationId}-panel`} aria-labelledby={`${navigationId}-${contentType}`}>
-          {children}
+          <TabRowActionSlot.Provider value={actionSlot}>{children}</TabRowActionSlot.Provider>
         </Box>
       </Container>
     </Box>

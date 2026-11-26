@@ -1,7 +1,10 @@
-import { Box, Button, Stack } from '@mui/material';
-import { useState } from 'react';
+import { Box, Button, Collapse, Stack } from '@mui/material';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
+import QuizRoundedIcon from '@mui/icons-material/QuizRounded';
+import { useContext, useId, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type { CompletedAttempt, FeedbackMode, Quiz, Subject, Topic } from '../../../domain/types';
-import { SubjectTestCard, type GeneratedTestControls } from '../components/GeneratedTestCard';
+import { GeneratedTestCard, type GeneratedTestControls } from '../components/GeneratedTestCard';
 import { ScoreTrendIndicator } from '../components/ScoreTrendIndicator';
 import { PastAttemptsDialog } from '../components/quiz/PastAttemptsDialog';
 import { QuizSetupDialog } from '../components/quiz/QuizSetupDialog';
@@ -9,6 +12,8 @@ import type { QuizProgress } from '../selectors/progress';
 import { ContentLoadFailure } from '../../../shared/ui/loading/ContentLoadFailure';
 import { ContentRecoveryBanner } from '../../../shared/ui/loading/ContentRecoveryBanner';
 import { TopicSetBrowser, TopicSetBrowserSkeleton, type TopicSet } from '../../../shared/ui/catalog/TopicSetBrowser';
+import { TabRowActionSlot } from '../../../shared/ui/catalog/SubjectBrowseLayout';
+import { reducedMotion } from '../../../shared/ui/motion';
 import { SubjectCatalogEmptyState } from '../../../shared/ui/catalog/SubjectCatalogEmptyState';
 export type { QuizProgress } from '../selectors/progress';
 
@@ -55,6 +60,11 @@ export function SubjectScreen({
 }) {
   const [setupQuiz, setSetupQuiz] = useState<Quiz | null>(null);
   const [reviewQuiz, setReviewQuiz] = useState<Quiz | null>(null);
+  // Hidden by default, shown from the start while its attempt is unfinished.
+  const [testToggled, setTestToggled] = useState<boolean>();
+  const testShown = testToggled ?? Boolean(subjectTest?.progress.active);
+  const tabRowAction = useContext(TabRowActionSlot);
+  const testCardId = useId();
   const sets: TopicSet[] = progress.map(
     ({ quiz, active, completionCount, latestScore, trend, answeredCount, activityAt }) => {
       const label = active ? 'Resume' : completionCount > 0 ? 'Retake' : 'Start';
@@ -149,9 +159,43 @@ export function SubjectScreen({
       ) : (
         <>
           {subjectTest && (
-            <Box sx={{ mb: 3 }}>
-              <SubjectTestCard {...subjectTest} />
-            </Box>
+            <>
+              {tabRowAction &&
+                createPortal(
+                  <Button
+                    variant="contained"
+                    aria-expanded={testShown}
+                    aria-controls={testCardId}
+                    aria-label="Subject Test"
+                    onClick={() => setTestToggled(!testShown)}
+                    sx={{ gap: 1, minWidth: 0, px: { xs: 1, sm: 2 } }}
+                  >
+                    <QuizRoundedIcon fontSize="small" />
+                    {/* Icon-only on phones, so both tabs keep their room. */}
+                    <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                      Subject Test
+                    </Box>
+                    <ChevronRightRoundedIcon
+                      fontSize="small"
+                      sx={{
+                        transform: testShown ? 'rotate(90deg)' : undefined,
+                        transition: (theme) => theme.transitions.create('transform', { duration: 180 }),
+                        [reducedMotion]: { transition: 'none' },
+                      }}
+                    />
+                  </Button>,
+                  tabRowAction,
+                )}
+              <Collapse in={testShown} unmountOnExit sx={{ [reducedMotion]: { transition: 'none' } }}>
+                <Box sx={{ mb: 3 }}>
+                  <GeneratedTestCard
+                    {...subjectTest}
+                    id={testCardId}
+                    scope={{ label: 'Topics', count: topics.length }}
+                  />
+                </Box>
+              </Collapse>
+            </>
           )}
           <TopicSetBrowser topics={topics} sets={sets} noun="quiz" initialSetId={initialSetId} />
         </>
