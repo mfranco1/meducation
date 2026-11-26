@@ -34,8 +34,12 @@ The sources field is a string of AMA-style references (AMA Manual of Style, 11th
 - Italicize journal and book titles with `*...*`; no HTML. End with a period.
 - Cite the document that covers the tested point itself, not a related guideline from the same body. Cite a guideline read as web chapters (EAU on uroweb.org) by its organization. For a continuously updated web page, use the year of the version read.
 - Write only details read in the document or its publisher record, never from memory.
+- A law, decree, order or court rule: the issuing body as author and publisher, then number and title in italics, joined by a colon. Use the short title the law gives itself, else its long title up to the first "amending", "appropriating" or "and for other purposes" clause. The year is the year of approval. Put the article, section or rule the item tests after the citation. Cite an amending act as its own citation. No URLs.
+- A court case: the case name in italics, then the docket number and `(Phil. <year>)`.
 
 ```text
+Philippine Legislature. *Act No. 3815: The Revised Penal Code*. Philippine Legislature; 1930. Art. 249.
+*People v Lim*, G.R. No. 231989 (Phil. 2018).
 Kemper AR, Newman TB, Slaughter JL, et al. Clinical practice guideline revision: management of hyperbilirubinemia in the newborn infant 35 or more weeks of gestation. *Pediatrics*. 2022;150(3):e2022058859. doi:10.1542/peds.2022-058859
 World Health Organization. *WHO Recommendations on Antenatal Care for a Positive Pregnancy Experience*. World Health Organization; 2016.
 ```
