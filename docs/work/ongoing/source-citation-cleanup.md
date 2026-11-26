@@ -37,8 +37,8 @@ Flag only. For each string, check whether the same body has issued a newer editi
 
 - [x] `pre2010`, strings 1 to 182
 - [x] `2010-15`, 1 to 120
-- [ ] `2010-15`, 121 to 240
-- [ ] `2010-15`, 241 to 358
+- [x] `2010-15`, 121 to 240
+- [x] `2010-15`, 241 to 358
 
 ## Phase 8: every source is real (size after the first box)
 
@@ -55,7 +55,7 @@ Existence only: the document exists and its authors, title, journal or publisher
 
 ## Status
 
-Next: Phase 7, `2010-15`, strings 121 to 240.
+Next: Phase 8, scripted pass.
 
 - Counts (2026-11-26): 8,140 questions and 2,361 cards have sources. `P` 11,605 citations in 3,447 strings, `L` 89 in 30 (kept), `Lg` 2 (kept), `I` 0, `M` 0. Flags: `summarypage` 95 strings (168 citations), `pre2010` 182, `2010-15` 358, `narrative` 2 (kept).
-- Phase 7 so far: 44 strings (175 citations) in `superseded.json`; WHO dengue 2009 is 44 of the citations. In `2010-15` 1 to 120: 17 superseded, 18 with a later document from another body or scope, 75 with no newer edition, 10 studies.
+- Phase 7 done: 87 strings (237 citations) in `superseded.json`, listed by subject in `var/source-audit/superseded-by-subject.md`; WHO dengue 2009 is 44 of the citations. In `2010-15`: 52 superseded, 51 with a later document from another body or scope, 146 with no newer edition, 109 studies. Eight of the 87 are strings dated after 2015, added from earlier leads; no other string dated 2016 or later was checked.
