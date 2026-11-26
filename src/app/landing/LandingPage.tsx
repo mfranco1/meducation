@@ -448,13 +448,10 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
                 >
                   Start studying
                 </Button>
-                <Button href="#quizzes" size="large" sx={{ ...startButton, px: 2.5 }}>
+                <Button href="#quizzes" variant="outlined" size="large" sx={startButton}>
                   Try a question
                 </Button>
               </Box>
-              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2 }}>
-                Free to use. No account needed.
-              </Typography>
             </Box>
             <Box
               component="img"
@@ -559,7 +556,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
             <Reveal sx={centered}>
               <SectionHead title="Twelve Subjects" id="contents-title" />
               <Typography sx={{ mt: 2.5, mx: 'auto', maxWidth: '62ch', color: 'text.secondary' }}>
-                Explore 17,000+ questions and 20,000+ flashcards organized by topic
+                Explore over 20,000 questions and flashcards organized by topic
               </Typography>
             </Reveal>
             <Reveal delay={100} sx={{ mt: { xs: 5, md: 8 } }}>
