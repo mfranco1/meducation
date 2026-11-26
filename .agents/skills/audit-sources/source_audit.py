@@ -4,6 +4,7 @@ Usage (from the repository root, with meducation-authority-postgres running):
   A() { python3 -I .agents/skills/audit-sources/source_audit.py "$@"; }
   A summary                    counts per class and flag
   A list CLASS_OR_FLAG [SUBJECT]   distinct citations, most used first, with their use count
+  A groups [SUBJECT]           documents cited in more than one wording (same DOI, or same title and year)
   A apply MAP.json [--actor NAME] [--dry-run]
     stages the map's replacements in the draft through stage-quizzes and stage-flashcards.
 
@@ -104,6 +105,47 @@ def listing(cites: dict[str, dict], want: str, subject: str = "") -> list[tuple[
     return sorted(out, key=lambda x: -x[0])
 
 
+def document_keys(c: str) -> list[str]:
+    """What identifies a citation's document: its DOI, and its title with its year."""
+    found = re.search(r"doi:\s*(10\.\S+)", c, re.I)
+    bare = re.sub(r"doi:\s*\S+|https?://\S+", "", c, flags=re.I)
+    ital = re.search(r"\*([^*]+)\*", bare)
+    lead = [s for s in re.split(r"\.\s+", bare[: ital.start()].strip(". ")) if s and not s.startswith("In:")] if ital else []
+    # Authors. Title. *Journal* has its title before the italics; Organization. *Title* has it in them.
+    title = lead[-1] if len(lead) > 1 else ital.group(1) if ital else bare
+    years = re.findall(YEAR, bare)
+    words = " ".join(re.findall(r"[a-z0-9]+", title.lower()))
+    return ([found.group(1).rstrip(".").lower()] if found else []) + ([f"{words} {years[-1]}"] if words and years else [])
+
+
+def groups(cites: dict[str, dict], subject: str = "") -> list[list[tuple[int, str]]]:
+    """Sets of two or more wordings that share a DOI or a title and year, as (uses, citation), most used set first.
+
+    With SUBJECT, only sets used in subjects whose name starts with it. Pattern-based: one wrong DOI joins two documents."""
+    parent = {c: c for c in cites}
+
+    def root(c: str) -> str:
+        while parent[c] != c:
+            c = parent[c]
+        return c
+
+    first: dict[str, str] = {}
+    for c in cites:
+        for key in document_keys(c):
+            parent[root(c)] = root(first.setdefault(key, c))
+    sets = collections.defaultdict(list)
+    for c, e in cites.items():
+        sets[root(c)].append((len(e["items"]), c))
+    wanted = [
+        sorted(g, reverse=True)
+        for g in sets.values()
+        # One wording cited with several articles or sections after its year is still one wording.
+        if len({re.sub(r"(; " + YEAR + r"\.) .*", r"\1", c) for _, c in g}) > 1
+        and any(i[3].lower().startswith(subject.lower()) for _, c in g for i in cites[c]["items"])
+    ]
+    return sorted(wanted, key=lambda g: -sum(n for n, _ in g))
+
+
 def plan(rows: list[dict], cites: dict[str, dict], mapping: dict[str, str | None]) -> tuple[dict[str, dict[str, list]], list[str], list[str]]:
     """Stage batches per subject ({subject: {q: edits, f: edits}}), refused item IDs and map keys the audit doesn't hold.
 
@@ -162,6 +204,7 @@ def main() -> None:
     lst = sub.add_parser("list")
     lst.add_argument("want", metavar="CLASS_OR_FLAG")
     lst.add_argument("subject", nargs="*")
+    sub.add_parser("groups").add_argument("subject", nargs="*")
     app = sub.add_parser("apply")
     app.add_argument("map", type=Path)
     app.add_argument("--actor", default="agent:audit-sources")
@@ -174,6 +217,9 @@ def main() -> None:
     dump(args.audit, cites)
     if args.command == "summary":
         print(summary(rows, cites))
+    elif args.command == "groups":
+        for group in groups(cites, " ".join(args.subject)):
+            print("\n".join(f"{n:4d}  {c}" for n, c in group) + "\n")
     else:
         for n, c in listing(cites, args.want, " ".join(args.subject)):
             print(f"{n:4d}  {c}")

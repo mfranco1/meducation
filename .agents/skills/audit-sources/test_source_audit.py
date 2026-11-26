@@ -36,3 +36,12 @@ def test_plan_replaces_drops_and_dedupes_per_subject_and_refuses_changed_items()
         }
     }
     assert refused == ["q2"] and unknown == ["Gone (2020)."]
+
+
+def test_groups_join_wordings_by_doi_or_by_title_and_year():
+    doi = "Doe J, Roe A. A Trial of Rest. *J Med*. 2021;1:3-4. doi:10.1/X."
+    by_org = "Rest Society. A trial of rest. *J Med*. 2021. doi:10.1/x"
+    book = "World Health Organization. *Rest: A Handbook*. World Health Organization; 2020."
+    rows = [{"kind": "q", "id": f"q{n}", "version": 1, "subject": "Surgery", "sources": c} for n, c in enumerate([FULL, FULL, doi, by_org, book, book.replace("2020", "2024"), book + " Sec. 2.", SITE])]
+    assert sa.groups(sa.audit(rows)) == [[(2, FULL), (1, by_org), (1, doi)]]
+    assert sa.groups(sa.audit(rows), "Pediatrics") == []

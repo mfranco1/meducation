@@ -17,10 +17,11 @@ Run from the repository root. Local authoring needs `docker start meducation-aut
 A() { python3 -I .agents/skills/audit-sources/source_audit.py "$@"; }
 A summary
 A list <class or flag> [Subject]
+A groups [Subject]
 A apply <map.json> --actor agent:audit-sources [--dry-run]
 ```
 
-`A --help` lists the classes and flags. They are pattern-based: read the strings, and fix any the pattern put in the wrong class. The class definition is `citation_form` in `.agents/shared/authoring.py`, which the batch gates of write-quizzes and write-flashcards also use.
+`A groups` prints each document cited in more than one wording (same DOI, or same title and year) so one wording can replace the others. `A --help` lists the classes and flags. They are pattern-based: read the strings, and fix any the pattern put in the wrong class. The class definition is `citation_form` in `.agents/shared/authoring.py`, which the batch gates of write-quizzes and write-flashcards also use.
 
 ## Workflow
 
