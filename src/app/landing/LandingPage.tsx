@@ -333,6 +333,8 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
         bgcolor: 'background.default',
         color: 'text.primary',
         minHeight: '100dvh',
+        // The closing photo is 100vw wide, which includes the scrollbar.
+        overflowX: 'clip',
       }}
     >
       <Box ref={topSentinel} aria-hidden sx={{ position: 'absolute', top: 0, height: '1px', width: '1px' }} />
@@ -719,7 +721,7 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               aria-hidden
               src="/assets/illustrations/landing-closing-800.webp"
               srcSet="/assets/illustrations/landing-closing-800.webp 800w, /assets/illustrations/landing-closing-1200.webp 1200w"
-              sizes="(min-width: 1200px) 1136px, 100vw"
+              sizes="max(100vw, 400px)"
               width={1200}
               height={600}
               alt=""
@@ -728,12 +730,13 @@ export function LandingPage({ onStart: start }: { onStart: (screen?: Quad) => vo
               sx={{
                 display: 'block',
                 pointerEvents: 'none',
-                width: '100%',
-                height: 'auto',
+                // Full width of the page, like the hero photo: the centered column lets it overflow evenly on both sides.
+                flexShrink: 0,
+                width: '100vw',
+                height: 'clamp(200px, 40vw, 720px)',
                 objectFit: 'cover',
-                maskImage:
-                  'linear-gradient(to bottom, transparent, #000 30%), linear-gradient(to right, transparent, #000 14%, #000 86%, transparent)',
-                maskComposite: 'intersect',
+                objectPosition: '50% 60%',
+                maskImage: 'linear-gradient(to bottom, transparent, #000 16%)',
               }}
             />
           </Reveal>
