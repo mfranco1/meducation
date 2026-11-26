@@ -34,6 +34,30 @@ describe('FlashcardsDashboardScreen', () => {
     expect(screen.getAllByText('decks / day')).toHaveLength(2);
   });
 
+  it('holds a Continue Studying placeholder while subjects load if a deck is unfinished', () => {
+    const checkpoint = {
+      deckId: 'd1',
+      currentCardId: 'c1',
+      contentSignature: 'sig',
+      updatedAt: '2026-11-26T00:00:00.000Z',
+      openedCardIds: [],
+      flaggedCardIds: [],
+    };
+    render(
+      <ThemeProvider theme={theme}>
+        <FlashcardsDashboardScreen
+          subjects={[]}
+          activeSubjects={[]}
+          progress={{ ...emptyProgress, checkpoints: { d1: checkpoint } }}
+          loading
+          onRetry={vi.fn()}
+          onSelectSubject={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole('status', { name: 'Loading active subjects' })).toBeInTheDocument();
+  });
+
   it('opens the privacy notice from the footer', async () => {
     render(
       <ThemeProvider theme={theme}>

@@ -198,12 +198,14 @@ export function ContinueStudyCard({
             {activityLabel}
           </Typography>
           {progress && (
-            <Box
-              component="span"
-              sx={{ alignItems: 'center', display: 'flex', flexWrap: 'wrap', gap: '4px 8px', mt: '8px' }}
-            >
-              <ProgressTrack percent={progress.percent} sx={{ flexShrink: 0, width: 120 }} />
-              <Typography id={progressId} variant="caption" component="span" sx={{ color: 'text.secondary' }}>
+            <Box component="span" sx={{ display: 'block', mt: '8px' }}>
+              <ProgressTrack percent={progress.percent} sx={{ width: 120 }} />
+              <Typography
+                id={progressId}
+                variant="caption"
+                component="span"
+                sx={{ color: 'text.secondary', display: 'block', mt: '4px' }}
+              >
                 {progress.label}
               </Typography>
             </Box>

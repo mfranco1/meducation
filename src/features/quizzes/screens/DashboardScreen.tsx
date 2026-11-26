@@ -12,7 +12,11 @@ import { activeSubjectStats, type SubjectStat } from '../selectors/progress';
 import { ActiveSubjectCarousel } from '../components/ActiveSubjectCarousel';
 import { StatCard, formatStatCount } from '../../../shared/ui/catalog/StatCard';
 import { StatCardRow } from '../../../shared/ui/catalog/StatCardRow';
-import { GeneratedTestCard, type GeneratedTestControls } from '../components/GeneratedTestCard';
+import {
+  GeneratedTestCard,
+  GeneratedTestCardSkeleton,
+  type GeneratedTestControls,
+} from '../components/GeneratedTestCard';
 import { QuizSubjectCard } from '../components/QuizSubjectCard';
 import { SubjectCatalogPage, SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StudyDashboardLayout } from '../../../shared/ui/catalog/StudyDashboardLayout';
@@ -169,6 +173,7 @@ export function DashboardScreen({
     return onRetry();
   };
   const sharedRecovery = Boolean(sharedError || retrying || manualRetryPending);
+  const contentPending = loading || sharedRecovery;
   const activeSubjects = activeSubjectStats(subjectStats);
   const catalog = useSubjectCatalog(
     'quizzes',
@@ -190,15 +195,17 @@ export function DashboardScreen({
       )}
       <StudyDashboardLayout
         feature={
-          mixedTest &&
-          !loading &&
-          !sharedRecovery &&
-          !subjectsFailure && (
-            <GeneratedTestCard
-              {...mixedTest}
-              icon={<QuizRoundedIcon sx={{ fontSize: 28 }} />}
-              subjectCount={subjectStats.length}
-            />
+          contentPending ? (
+            <GeneratedTestCardSkeleton />
+          ) : (
+            mixedTest &&
+            !subjectsFailure && (
+              <GeneratedTestCard
+                {...mixedTest}
+                icon={<QuizRoundedIcon sx={{ fontSize: 28 }} />}
+                subjectCount={subjectStats.length}
+              />
+            )
           )
         }
         subjectsActions={
@@ -278,20 +285,16 @@ export function DashboardScreen({
           </StatCardRow>
         }
         continueStudying={
-          (loading || retrying || sharedError || manualRetryPending) && activeAttempts ? (
+          contentPending && activeAttempts ? (
             <Box
               role="status"
               aria-busy={!sharedError}
               aria-label={retrying ? 'Retrying active subjects' : 'Loading active subjects'}
+              sx={{ height: '100%' }}
             >
               <ContinueStudyCardSkeleton />
             </Box>
-          ) : !loading &&
-            !sharedError &&
-            !subjectsFailure &&
-            !retrying &&
-            !manualRetryPending &&
-            activeSubjects.length > 0 ? (
+          ) : !contentPending && !subjectsFailure && activeSubjects.length > 0 ? (
             <ActiveSubjectCarousel subjects={activeSubjects} onSelectSubject={onContinueSubject} />
           ) : null
         }

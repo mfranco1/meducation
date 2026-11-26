@@ -290,7 +290,7 @@ def create_app(
                         **deck.model_dump(exclude_none=True),
                         subjectId=subject_id,
                         cardCount=count,
-                        cardIds=[card.id for card in bank.list_cards(deck.id)],
+                        cardIds=bank.list_card_ids(deck.id),
                     )
                     for deck, count in decks
                 ],

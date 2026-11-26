@@ -9,6 +9,7 @@ import { ScoreTrendIndicator } from './ScoreTrendIndicator';
 import { SubjectScoreSummary } from './SubjectScoreSummary';
 import { PastAttemptsDialog } from './quiz/PastAttemptsDialog';
 import { QuizSetupDialog } from './quiz/QuizSetupDialog';
+import { LoadingSkeleton } from '../../../shared/ui/loading/LoadingSkeleton';
 
 export interface GeneratedTestControls {
   progress: QuizProgress;
@@ -194,5 +195,60 @@ export function GeneratedTestCard({
         />
       )}
     </>
+  );
+}
+
+/** Placeholder for the Mixed Test card while the catalog loads; it keeps the card's layout and lines. */
+export function GeneratedTestCardSkeleton() {
+  return (
+    <Card aria-hidden="true" sx={{ display: 'flex', width: '100%' }}>
+      <CardContent
+        sx={{
+          display: 'flex',
+          flex: 1,
+          flexDirection: 'column',
+          gap: 2,
+          justifyContent: 'space-between',
+          minWidth: 0,
+          p: 2.5,
+          '&:last-child': { pb: 2.5 },
+        }}
+      >
+        <Box sx={{ alignItems: 'center', display: 'flex', gap: 2 }}>
+          <Box sx={{ alignItems: 'center', display: 'flex', flex: '1 1 0', gap: 1.5, minWidth: 0 }}>
+            <LoadingSkeleton
+              variant="rounded"
+              width={48}
+              height={48}
+              sx={{ borderRadius: radius.badge, flexShrink: 0 }}
+            />
+            <LoadingSkeleton variant="text" width="40%" height={32} />
+          </Box>
+          <LoadingSkeleton
+            variant="rounded"
+            width={72}
+            height={36}
+            sx={{ borderRadius: radius.control, flexShrink: 0 }}
+          />
+        </Box>
+        <Box
+          sx={{
+            borderTop: '1px solid',
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-between',
+            gap: 2,
+            pt: 2,
+          }}
+        >
+          {[0, 1, 2].map((fact) => (
+            <Box key={fact} sx={{ flex: '0 1 88px' }}>
+              <LoadingSkeleton variant="text" width="50%" height={28} />
+              <LoadingSkeleton variant="text" width="100%" height={18} />
+            </Box>
+          ))}
+        </Box>
+      </CardContent>
+    </Card>
   );
 }

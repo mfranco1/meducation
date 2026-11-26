@@ -13,6 +13,7 @@ import {
   latestActiveProgress,
 } from '../../../shared/ui/catalog/ContinueStudyCard';
 import { StudyCardIllustration } from '../../../shared/ui/catalog/StudyCardIllustration';
+import { ContinueStudyCardSkeleton } from '../../../shared/ui/catalog/ContinueStudyCardSkeleton';
 import { SubjectCard } from '../../../shared/ui/catalog/SubjectCard';
 import { SubjectCatalogPage, SubjectGrid } from '../../../shared/ui/catalog/SubjectGrid';
 import { StatCard, formatStatCount } from '../../../shared/ui/catalog/StatCard';
@@ -129,7 +130,11 @@ export function FlashcardsDashboardScreen({
           </StatCardRow>
         }
         continueStudying={
-          !loading && !error && activeSubjects.length > 0 ? (
+          loading && Object.keys(progress.checkpoints).length > 0 ? (
+            <Box role="status" aria-busy="true" aria-label="Loading active subjects" sx={{ height: '100%' }}>
+              <ContinueStudyCardSkeleton />
+            </Box>
+          ) : !loading && !error && activeSubjects.length > 0 ? (
             <StudyItemCarousel
               items={activeSubjects}
               id="continue-studying-flashcards"
