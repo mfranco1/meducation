@@ -5,7 +5,7 @@ describe('flashcard API decoders', () => {
   it('rejects legacy topic fields and unexpected response fields', () => {
     const catalog = {
       revision: 'sha256-example',
-      decks: [{ id: 'd-one', subjectId: 's1', name: 'Deck', cardCount: 0, cardIds: [] }],
+      decks: [{ id: 'd-one', subjectId: 's1', name: 'Deck', cardCount: 0 }],
     };
     expect(isFlashcardCatalog({ ...catalog, topics: [] }, 's1')).toBe(false);
     expect(

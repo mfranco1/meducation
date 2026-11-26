@@ -56,7 +56,7 @@ class CatalogQuiz(Quiz):
 
 # Part of every content ETag. Bump it whenever a learner response shape changes, so browsers
 # don't revalidate a cached body in the old shape against an unchanged content revision.
-RESPONSE_FORMAT = 2
+RESPONSE_FORMAT = 3
 MAX_QUESTION_IDS = 300
 QUESTION_ID = re.compile(r"i[1-9]\d*")
 
@@ -85,7 +85,6 @@ class FlashcardSubjectListResponse(BaseModel):
 class FlashcardDeckSummary(FlashcardDeck):
     subjectId: str
     cardCount: int
-    cardIds: list[str]
 
 
 class FlashcardCatalogResponse(BaseModel):
@@ -290,7 +289,6 @@ def create_app(
                         **deck.model_dump(exclude_none=True),
                         subjectId=subject_id,
                         cardCount=count,
-                        cardIds=bank.list_card_ids(deck.id),
                     )
                     for deck, count in decks
                 ],

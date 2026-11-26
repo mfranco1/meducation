@@ -68,7 +68,6 @@ def test_flashcard_api_catalog_cards_revision_and_missing_routes(
         assert [deck["topicId"] for deck in catalog.json()["decks"]] == ["t1", "t1"]
         cards = client.get(f"/api/v1/flashcards/decks/d-cranial/cards?revision={revision}")
         assert [card["id"] for card in cards.json()["cards"]] == ["f-1", "f-2"]
-        assert catalog.json()["decks"][0]["cardIds"] == ["f-1", "f-2"]
 
         assert client.get("/api/v1/flashcards/subjects/s-missing/catalog").status_code == 404
         assert client.get("/api/v1/flashcards/decks/d-missing/cards").status_code == 404

@@ -213,7 +213,7 @@ export class RuntimeFlashcardBank {
       .then((payload) => {
         if (controller.signal.aborted) throw genericFailure('cancelled');
         const deck = this.getDeck(deckId);
-        if (!deck || !isFlashcardList(payload, deckId, deck.cardIds))
+        if (!deck || !isFlashcardList(payload, deckId))
           throw new ContentLoadError('invalid', 'The flashcard deck is incomplete. Retry later.');
         if (payload.revision !== this.revision) throw revisionError();
         if (payload.cards.length !== deck.cardCount)

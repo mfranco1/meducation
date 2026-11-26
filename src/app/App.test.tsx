@@ -248,7 +248,6 @@ describe('progressive dashboard statistics', () => {
               topicId: 't3',
               name: 'Backup deck',
               cardCount: 1,
-              cardIds: ['f-backup'],
             },
           ],
           [{ id: 'f-backup', deckId: 'd-backup', front: 'Front', back: 'Back' }],
@@ -291,7 +290,6 @@ describe('progressive dashboard statistics', () => {
           topicId: 't5',
           name: 'Arrow quota deck',
           cardCount: 2,
-          cardIds: ['f-arrow-q1', 'f-arrow-q2'],
         },
       ],
       [
@@ -349,7 +347,6 @@ describe('progressive dashboard statistics', () => {
         topicId: 't6',
         name: 'Tab deck',
         cardCount: 1,
-        cardIds: ['f-tabs'],
       };
       const cards = [{ id: 'f-tabs', deckId: deck.id, front: 'Front', back: 'Back' }];
       installQuizApiFixture([subject], [quiz], []);

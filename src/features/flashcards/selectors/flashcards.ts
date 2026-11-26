@@ -41,7 +41,7 @@ export function flashcardDashboardSubjects(
       latestActiveAt: latest?.updatedAt,
       latestActive: latest && {
         revealed: latestDeck
-          ? latest.openedCardIds.filter((cardId) => latestDeck.cardIds.includes(cardId)).length
+          ? Math.min(latest.openedCardIds.length, latestDeck.cardCount)
           : latest.openedCardIds.length,
         total: latestDeck?.cardCount,
       },

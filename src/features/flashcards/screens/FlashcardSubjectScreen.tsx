@@ -87,7 +87,6 @@ function deckSet(
   onSelect: () => void,
   onPrepare: () => void,
 ): TopicSet {
-  const inProgress = checkpoint !== undefined && deck.cardIds.includes(checkpoint.currentCardId);
   return {
     id: deck.id,
     topicId: deck.topicId,
@@ -95,13 +94,14 @@ function deckSet(
     detail: `${deck.cardCount} ${deck.cardCount === 1 ? 'card' : 'cards'}`,
     completionCount,
     activityAt: [checkpoint?.updatedAt, finishedAt].filter(Boolean).sort().at(-1),
-    progress: inProgress
-      ? {
-          done: checkpoint.openedCardIds.filter((id) => deck.cardIds.includes(id)).length,
-          total: deck.cardCount,
-          label: 'reviewed',
-        }
-      : undefined,
+    progress:
+      checkpoint && deck.cardCount > 0
+        ? {
+            done: Math.min(checkpoint.openedCardIds.length, deck.cardCount),
+            total: deck.cardCount,
+            label: 'reviewed',
+          }
+        : undefined,
     chips: [],
     action: (
       <Button

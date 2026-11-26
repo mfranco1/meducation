@@ -11,7 +11,6 @@ export interface FlashcardSubjectSummary extends Subject {
 export interface FlashcardDeckSummary extends StoredFlashcardDeck {
   subjectId: string;
   cardCount: number;
-  cardIds: string[];
 }
 export interface FlashcardSubjectResponse {
   revision: string;
@@ -94,10 +93,7 @@ export function isFlashcardCatalog(
   if (expectedDeckCount !== undefined && value.decks.length !== expectedDeckCount) return false;
   const deckIds: string[] = [];
   const decksValid = value.decks.every((deck: unknown) => {
-    if (
-      !isObject(deck) ||
-      !onlyKeys(deck, ['id', 'subjectId', 'topicId', 'name', 'description', 'cardCount', 'cardIds'])
-    )
+    if (!isObject(deck) || !onlyKeys(deck, ['id', 'subjectId', 'topicId', 'name', 'description', 'cardCount']))
       return false;
     if (
       !nonBlank(deck.id) ||
@@ -108,24 +104,14 @@ export function isFlashcardCatalog(
     )
       return false;
     if (!optionalString(deck.description)) return false;
-    if (
-      !Number.isInteger(deck.cardCount) ||
-      (deck.cardCount as number) < 0 ||
-      !ids(deck.cardIds, /^f[a-zA-Z0-9-]+$/) ||
-      deck.cardIds.length !== deck.cardCount
-    )
-      return false;
+    if (!Number.isInteger(deck.cardCount) || (deck.cardCount as number) < 0) return false;
     deckIds.push(deck.id);
     return true;
   });
   return decksValid && unique(deckIds);
 }
 
-export function isFlashcardList(
-  value: unknown,
-  deckId: string,
-  expectedCardIds?: string[],
-): value is FlashcardListResponse {
+export function isFlashcardList(value: unknown, deckId: string): value is FlashcardListResponse {
   if (
     !isObject(value) ||
     !onlyKeys(value, ['revision', 'cards']) ||
@@ -148,10 +134,5 @@ export function isFlashcardList(
     cardIds.push(card.id);
     return true;
   });
-  return (
-    cardsValid &&
-    unique(cardIds) &&
-    (expectedCardIds === undefined ||
-      (cardIds.length === expectedCardIds.length && cardIds.every((id, index) => id === expectedCardIds[index])))
-  );
+  return cardsValid && unique(cardIds);
 }

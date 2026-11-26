@@ -16,7 +16,6 @@ const deck: FlashcardDeckSummary = {
   topicId: 't1',
   name: 'Deck',
   cardCount: 2,
-  cardIds: ['f1', 'f2'],
 };
 function deferred<T>() {
   let resolve!: (value: T) => void;
@@ -134,7 +133,7 @@ describe('flashcard session controller', () => {
       await result.current.launchDeck(deck, subject);
     });
     await act(async () => {
-      await result.current.launchDeck({ ...deck, id: 'd2', cardCount: 1, cardIds: ['f3'] }, subject);
+      await result.current.launchDeck({ ...deck, id: 'd2', cardCount: 1 }, subject);
     });
     await act(async () => {
       first.resolve(cards);
@@ -240,12 +239,11 @@ describe('flashcard session controller', () => {
     expect(repository.getSnapshot().completionCounts).toEqual({ d1: 1 });
 
     const changedCards = [{ ...cards[0], back: 'Updated answer' }, cards[1]];
-    const changedDeck = { ...deck, cardIds: changedCards.map((card) => card.id) };
     const oldCheckpoint = checkpointForCard('d1', cards, 'f1', await flashcardContentSignature(cards));
     act(() => repository.saveCheckpoint(oldCheckpoint));
     loader.ensureCards.mockResolvedValueOnce(changedCards);
     await act(async () => {
-      await result.current.launchDeck(changedDeck, subject);
+      await result.current.launchDeck(deck, subject);
     });
     expect(result.current.pendingRestart?.reason).toBe('changed-content');
     await act(async () => {

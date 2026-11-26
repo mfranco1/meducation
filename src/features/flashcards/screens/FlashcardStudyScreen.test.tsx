@@ -9,7 +9,7 @@ import { FlashcardStudyScreen } from './FlashcardStudyScreen';
 
 beforeAll(markdownReady, 30000);
 
-const deck = { id: 'd1', subjectId: 's1', topicId: 't1', name: 'Brachial plexus', cardCount: 2, cardIds: ['f1', 'f2'] };
+const deck = { id: 'd1', subjectId: 's1', topicId: 't1', name: 'Brachial plexus', cardCount: 2 };
 const cards: FlashcardCard[] = [
   { id: 'f1', deckId: 'd1', front: 'What forms the **cords**?', back: 'The axillary artery.' },
   { id: 'f2', deckId: 'd1', front: 'Second front', back: 'Second back' },
@@ -63,7 +63,7 @@ describe('FlashcardStudyScreen', () => {
       { id: 'f-blocks', deckId: 'd1', front: 'Front one.\n\nFront two.', back: 'Back one.\n\nBack two.' },
     ];
     const props = {
-      deck: { ...deck, cardCount: 1, cardIds: ['f-blocks'] },
+      deck: { ...deck, cardCount: 1 },
       cards: multiBlock,
       index: 0,
       onReveal: vi.fn(),
@@ -101,7 +101,7 @@ describe('FlashcardStudyScreen', () => {
     render(
       <ThemeProvider theme={theme}>
         <FlashcardStudyScreen
-          deck={{ ...deck, cardCount: 1, cardIds: ['f-link'] }}
+          deck={{ ...deck, cardCount: 1 }}
           cards={linkedCards}
           index={0}
           revealed
@@ -127,7 +127,7 @@ describe('FlashcardStudyScreen', () => {
     render(
       <ThemeProvider theme={theme}>
         <FlashcardStudyScreen
-          deck={{ ...deck, cardCount: 1, cardIds: ['f-long'] }}
+          deck={{ ...deck, cardCount: 1 }}
           cards={longCards}
           index={0}
           revealed={false}

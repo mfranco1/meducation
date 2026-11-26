@@ -285,9 +285,6 @@ class PostgresFlashcardCatalogRepository:
     def has_deck(self, deck_id: str) -> bool:
         return any(d.id == deck_id for d in self.catalog.decks)
 
-    def list_card_ids(self, deck_id: str) -> list[str]:
-        return list(self.catalog.card_ids.get(deck_id, ()))
-
     def list_cards(self, deck_id: str) -> list[Flashcard]:
         fields = {
             "id": "id",

@@ -103,9 +103,6 @@ class FixtureFlashcardRepository:
     def has_deck(self, id):
         return any(row.id == id for row in self.bank.decks)
 
-    def list_card_ids(self, id):
-        return [row.id for row in self.list_cards(id)]
-
     def list_cards(self, id):
         return [row for row in self.bank.cards if row.deckId == id]
 

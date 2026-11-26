@@ -78,7 +78,7 @@ it('shares subject presentation identity across tabs while keeping navigation sc
 
 describe('addresses', () => {
   const subject = { id: 'subject 1', name: 'Medicine', description: '', accent: '#000000' };
-  const deck = { id: 'deck-1', subjectId: 'subject 1', topicId: 't1', name: 'Deck', cardCount: 1, cardIds: ['c1'] };
+  const deck = { id: 'deck-1', subjectId: 'subject 1', topicId: 't1', name: 'Deck', cardCount: 1 };
   const quiz = { id: 'quiz-1', subjectId: 'subject 1', topicId: 't1', name: 'Quiz', questionCount: 1 };
 
   it('round-trips every page through its address', () => {

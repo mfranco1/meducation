@@ -14,9 +14,9 @@ const catalog: FlashcardCatalogResponse = {
     { id: 't2', subjectId: 's1', name: 'Thorax' },
   ],
   decks: [
-    { id: 'd1', subjectId: 's1', topicId: 't1', name: 'Brachial plexus', cardCount: 2, cardIds: ['f1', 'f2'] },
-    { id: 'd2', subjectId: 's1', topicId: 't1', name: 'Shoulder', cardCount: 0, cardIds: [] },
-    { id: 'd3', subjectId: 's1', topicId: 't2', name: 'Heart', cardCount: 1, cardIds: ['f3'] },
+    { id: 'd1', subjectId: 's1', topicId: 't1', name: 'Brachial plexus', cardCount: 2 },
+    { id: 'd2', subjectId: 's1', topicId: 't1', name: 'Shoulder', cardCount: 0 },
+    { id: 'd3', subjectId: 's1', topicId: 't2', name: 'Heart', cardCount: 1 },
   ],
 };
 

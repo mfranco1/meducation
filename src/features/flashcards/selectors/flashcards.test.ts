@@ -76,9 +76,9 @@ describe('flashcard dashboard and deck selectors', () => {
       },
     };
     expect(flashcardDashboardSubjects(subjects, state)[0].latestActive).toEqual({ revealed: 3, total: undefined });
-    const deck = { id: 'd1', subjectId: 's1', cardCount: 10, cardIds: ['f1', 'f2', 'f3'] } as never;
+    const deck = { id: 'd1', subjectId: 's1', cardCount: 2 } as never;
     expect(
       flashcardDashboardSubjects(subjects, state, (id) => (id === 'd1' ? deck : undefined))[0].latestActive,
-    ).toEqual({ revealed: 2, total: 10 });
+    ).toEqual({ revealed: 2, total: 2 });
   });
 });

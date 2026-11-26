@@ -6,7 +6,7 @@ const subjects = [{ id: 's1', name: 'Subject', accent: '#123456', deckCount: 1, 
 const catalog = {
   revision: 'rev-1',
   topics: [{ id: 't1', subjectId: 's1', name: 'Neurology' }],
-  decks: [{ id: 'd-neuro', subjectId: 's1', topicId: 't1', name: 'Neuro basics', cardCount: 1, cardIds: ['f-1'] }],
+  decks: [{ id: 'd-neuro', subjectId: 's1', topicId: 't1', name: 'Neuro basics', cardCount: 1 }],
 };
 const cards = { revision: 'rev-1', cards: [{ id: 'f-1', deckId: 'd-neuro', front: 'Front', back: 'Back' }] };
 const noRetries = { maxRetries: 0, baseDelayMs: 100, maxDelayMs: 100 };
@@ -72,7 +72,7 @@ describe('runtime flashcard bank', () => {
     expect(String(fetchMock.mock.calls[2][0])).toContain('/api/v1/flashcards/decks/d-neuro/cards?revision=rev-1');
   });
 
-  it('rejects catalog revision changes and mismatched card membership or order', async () => {
+  it('rejects catalog revision changes and a deck whose card count differs from its catalog', async () => {
     const fetchMock = vi
       .fn()
       .mockResolvedValueOnce({ ok: true, json: async () => ({ revision: 'rev-1', subjects }) })
@@ -88,7 +88,7 @@ describe('runtime flashcard bank', () => {
       .mockResolvedValueOnce({ ok: true, json: async () => catalog })
       .mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ ...cards, cards: [{ ...cards.cards[0], id: 'f-other' }] }),
+        json: async () => ({ ...cards, cards: [...cards.cards, { ...cards.cards[0], id: 'f-other' }] }),
       });
     vi.stubGlobal('fetch', wrongCards);
     const second = new RuntimeFlashcardBank(noRetries);
