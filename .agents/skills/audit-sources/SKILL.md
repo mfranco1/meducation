@@ -31,3 +31,14 @@ A apply <map.json> --actor agent:audit-sources [--dry-run]
 4. Give batches of about 25 strings to mid-tier subagents (name the model) that return only a map file. Merge the maps.
 5. `A apply <map.json> --dry-run` and read the counts, then apply. It rebuilds each affected item's sources (replace, drop, remove duplicates, join with `; `), writes one stage file per subject next to the map and stages them. It refuses items edited since the audit and lists map keys the audit doesn't hold; rerun `A summary` and apply again for those.
 6. `A summary` again and confirm the counts moved as expected. Report to the user: strings changed, dropped and kept, with reasons for the kept ones.
+
+## Pitfalls
+
+- The splitter cuts at `; `. A title with its own `; ` becomes two citations: write it with a comma. A trailing fragment it cut off (`updated 2026.`) stays behind when its citation is dropped: read the items' full sources and map the fragment to `null` too.
+- To split a string that holds two documents, map it to both citations joined with `.; `. When the items under one string need different documents, use `"KEEP: per-item"` and an `edits` file.
+- Before the dry run, read the whole map and run every value through `split_citations` and `citation_form` from `authoring.py`.
+- `groups` misses wordings whose titles differ (a label with and without its dosage form). After merging, group labels by brand and year, and scan for strings with two publisher-year endings.
+- Crossref gives a journal article's record without a fetch (`api.crossref.org/works/<DOI>`, or `?query.bibliographic=<title>`). A title search often returns comments and corrigenda first: confirm the DOI's own record. Crossref and Europe PMC rate-limit (HTTP 429, 503): pace requests, retry, and run long checks in the background.
+- `apply` takes about 2 minutes per 450 items: run large maps in the background.
+- A replacement source needs the tested point read in full text. Many "most common" keys have no primary document that ranks them: allow about 15 minutes per string, then drop the citation.
+- Subagent batches: 20 to 25 strings sorted by document type, three at once. Give each string up to 3 items (stem, key, full sources) and the bank's full-form citations that share its title words. Tell them to reuse a bank wording that matches the record, to quote the supporting sentence for every replacement, to search before dropping, and to skip `save-source` (parallel writes to the ledger).
