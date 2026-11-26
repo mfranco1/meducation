@@ -283,16 +283,26 @@ def cmd_gate(work: Work, args) -> None:
 
 
 def cmd_review_input(work: Work, args) -> None:
-    """For each plan deck write review-input-<n>.json: [{ref, front, back, sources?}]. New cards from cards-<n>.json get ref new-<i>; with audit: true the deck's existing cards come first, ref = card id. Decks with nothing to review are skipped. Earlier review inputs and reviews are deleted, so build never applies a stale review."""
+    """For each plan deck write review-input-<n>.json: [{ref, front, back, sources?}]. New cards from cards-<n>.json get ref new-<i>; with audit: true the deck's existing cards come first, ref = card id. With --cards, only the named existing cards are listed. Decks with nothing to review are skipped. Earlier review inputs and reviews are deleted, so build never applies a stale review."""
+    decks = work.plan_topic()["decks"]
+    audited = {
+        c["id"]
+        for d in decks
+        if d.get("audit")
+        for c in work.outline_deck(d["name"]).get("cards", [])
+    }
+    if args.cards and (unknown := set(args.cards) - audited):
+        sys.exit(f"Not in an audited deck: {', '.join(sorted(unknown))}")
     for stale in work.numbered("review-input-*.json") + work.numbered("review-[0-9]*.json"):
         stale.unlink()
-    for n, deck in enumerate(work.plan_topic()["decks"], 1):
+    for n, deck in enumerate(decks, 1):
         rows = []
         if deck.get("audit"):
             rows += [
                 {"ref": c["id"]}
                 | {k: c[k] for k in ("front", "back", "sources") if c.get(k)}
                 for c in work.outline_deck(deck["name"]).get("cards", [])
+                if not args.cards or c["id"] in args.cards
             ]
         existing = len(rows)
         path = work.dir / f"cards-{n}.json"
@@ -474,6 +484,8 @@ def main() -> None:
         )
         if name == "prompt":
             p.add_argument("--n", nargs="+", type=int)
+        if name == "review-input":
+            p.add_argument("--cards", nargs="+", metavar="ID")
         if name == "gate":
             p.add_argument("--batch")
         p.set_defaults(fn=fn)

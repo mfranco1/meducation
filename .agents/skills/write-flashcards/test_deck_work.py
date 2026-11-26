@@ -161,6 +161,18 @@ def test_review_input_lists_audited_cards_first_then_new_cards(tmp_path, capsys)
     )
 
 
+def test_review_input_limits_existing_cards_to_named_ids(tmp_path, capsys):
+    work = setup(tmp_path)
+    folder = work / "neonatology"
+    write(folder / "cards-1.json", {"cards": [{"front": "N1", "back": "B1"}]})
+    out = run(work, "review-input", TOPIC, "--cards", "f2", capsys=capsys)
+    assert "review-input-1.json: 1 existing, 1 new" in out
+    rows = json.loads((folder / "review-input-1.json").read_text())
+    assert [r["ref"] for r in rows] == ["f2", "new-1"]
+    with pytest.raises(SystemExit, match="f9"):
+        run(work, "review-input", TOPIC, "--cards", "f9", capsys=capsys)
+
+
 def staged(work: Path, capsys) -> Path:
     folder = work / "neonatology"
     write(
