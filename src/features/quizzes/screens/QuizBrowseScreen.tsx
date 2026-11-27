@@ -95,6 +95,7 @@ export function QuizBrowseScreen({ quiz, index, questions, onNavigate, onDone }:
         </SwapTransition>
         <ReadOnlyQuizFooter
           index={index}
+          questionId={question.id}
           total={questions.length}
           onNavigate={onNavigate}
           onDone={onDone}

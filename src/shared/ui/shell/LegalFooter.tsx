@@ -15,13 +15,12 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { brand } from '../../brand';
 
-const contactUrl = 'https://t.me/MeducationSupport';
 const lastUpdated = 'October 29, 2026';
 
 const Contact = () => (
   <>
-    <Link href={contactUrl} target="_blank" rel="noopener noreferrer">
-      @MeducationSupport
+    <Link href={brand.support.url} target="_blank" rel="noopener noreferrer">
+      {brand.support.handle}
     </Link>{' '}
     on Telegram
   </>
@@ -191,7 +190,7 @@ export function LegalFooter({ showAbout = false }: { showAbout?: boolean }) {
           Terms
         </Button>
         <span aria-hidden="true">·</span>
-        <Link href={contactUrl} target="_blank" rel="noopener noreferrer" sx={linkSx}>
+        <Link href={brand.support.url} target="_blank" rel="noopener noreferrer" sx={linkSx}>
           Contact
         </Link>
       </Typography>

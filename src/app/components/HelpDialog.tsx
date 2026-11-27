@@ -15,8 +15,7 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import { useState, type ReactNode } from 'react';
-
-const telegramUrl = 'https://t.me/MeducationSupport';
+import { brand } from '../../shared/brand';
 
 export const faqs: (readonly [string, ReactNode])[] = [
   [
@@ -53,14 +52,7 @@ export const faqs: (readonly [string, ReactNode])[] = [
   ],
   [
     'How do I report a content mistake?',
-    <>
-      Message us on{' '}
-      <Link href={telegramUrl} target="_blank" rel="noopener noreferrer">
-        Telegram
-      </Link>
-      . Include the quiz or deck name, the question or card text, and what seems incorrect. A screenshot helps. Question
-      numbers and answer letters alone may not identify the item because quizzes shuffle questions and choices.
-    </>,
+    'Choose Report below the question or card. It opens a Telegram message to us that already identifies the item. Add what seems incorrect and send it.',
   ],
 ];
 
@@ -100,11 +92,11 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose: () => vo
           </Typography>
           <Typography variant="body2" sx={{ mb: 1.5 }}>
             Telegram:{' '}
-            <Link href={telegramUrl} target="_blank" rel="noopener noreferrer">
-              @MeducationSupport
+            <Link href={brand.support.url} target="_blank" rel="noopener noreferrer">
+              {brand.support.handle}
             </Link>
           </Typography>
-          <Button component="a" href={telegramUrl} target="_blank" rel="noopener noreferrer" variant="contained">
+          <Button component="a" href={brand.support.url} target="_blank" rel="noopener noreferrer" variant="contained">
             Open Telegram
           </Button>
         </Box>

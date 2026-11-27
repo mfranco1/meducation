@@ -1,10 +1,12 @@
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import ReportProblemOutlinedIcon from '@mui/icons-material/ReportProblemOutlined';
 import { keyframes } from '@emotion/react';
 import { alpha, Box, Button, IconButton, Stack, Typography } from '@mui/material';
 import { useState, type MutableRefObject, type ReactNode } from 'react';
 import { easing, reducedMotion } from '../motion';
 import { radius } from '../../theme';
+import { brand } from '../../brand';
 
 const fillTransition = `450ms ${easing.out}`;
 const glint = keyframes`
@@ -184,6 +186,7 @@ export function StudyNavigationFooter({
   hasNext = index < total - 1,
   nextButtonRef,
   finishButtonRef,
+  report,
 }: {
   index: number;
   total: number;
@@ -197,9 +200,26 @@ export function StudyNavigationFooter({
   disabled?: boolean;
   nextButtonRef?: MutableRefObject<HTMLButtonElement | null>;
   finishButtonRef?: MutableRefObject<HTMLButtonElement | null>;
+  /** The item a Report link identifies in a prefilled support message. */
+  report?: { kind: 'Question' | 'Card'; id: string };
 }) {
   return (
-    <Stack direction="row" sx={{ justifyContent: 'flex-end', alignItems: 'center', mt: 3 }}>
+    <Stack direction="row" sx={{ justifyContent: report ? 'space-between' : 'flex-end', alignItems: 'center', mt: 3 }}>
+      {report && (
+        <Button
+          href={reportUrl(report)}
+          target="_blank"
+          rel="noopener noreferrer"
+          color="inherit"
+          aria-label="Report a problem"
+          startIcon={<ReportProblemOutlinedIcon />}
+          sx={{ color: 'text.secondary', minWidth: 0, '& .MuiButton-startIcon': { mr: { xs: 0, sm: 1 } } }}
+        >
+          <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+            Report
+          </Box>
+        </Button>
+      )}
       <Stack direction="row" spacing={1}>
         <Button startIcon={<ArrowBackRoundedIcon />} disabled={!hasPrevious || disabled} onClick={onPrevious}>
           Previous
@@ -216,4 +236,9 @@ export function StudyNavigationFooter({
       </Stack>
     </Stack>
   );
+}
+
+function reportUrl({ kind, id }: { kind: string; id: string }) {
+  const text = `${kind} ${id}\nWhat seems wrong: `;
+  return `${brand.support.url}?text=${encodeURIComponent(text)}`;
 }

@@ -191,6 +191,7 @@ export function QuizScreen({
             nextLabel={feedback ? 'Continue' : 'Next'}
             nextButtonRef={nextRef}
             finishButtonRef={finishRef}
+            report={{ kind: 'Question', id: question.id }}
           />
         </Box>
       </QuestionNavigationLayout>

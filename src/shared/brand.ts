@@ -8,6 +8,7 @@ export const brand = {
   wordmark,
   accentColor: '#b9511b',
   faviconUrl: '/favicon.svg',
+  support: { url: 'https://t.me/MeducationSupport', handle: '@MeducationSupport' },
   palette: {
     light: { left: '#C45117', right: '#EF9B6B', text: '#262626' },
     dark: { left: '#EF9B6B', right: '#FFC39E', text: '#FFFFFF' },

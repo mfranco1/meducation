@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { StudyHeader } from './StudyHeader';
+import { StudyHeader, StudyNavigationFooter } from './StudyHeader';
 
 describe('study header progress', () => {
   it('reports completed items separately from the current position', () => {
@@ -38,5 +38,23 @@ describe('study header progress', () => {
       'aria-valuetext',
       'Question 5 of 20',
     );
+  });
+});
+
+describe('study navigation footer', () => {
+  it('links Report to a support message that names the item', () => {
+    render(
+      <StudyNavigationFooter
+        index={0}
+        total={2}
+        onPrevious={() => undefined}
+        onNext={() => undefined}
+        onFinish={() => undefined}
+        finishLabel="Finish"
+        report={{ kind: 'Card', id: 'card-1' }}
+      />,
+    );
+    const href = screen.getByRole('link', { name: 'Report a problem' }).getAttribute('href') ?? '';
+    expect(new URL(href).searchParams.get('text')).toContain('Card card-1');
   });
 });

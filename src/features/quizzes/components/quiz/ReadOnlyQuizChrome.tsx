@@ -56,9 +56,11 @@ export function ReadOnlyQuizFooter({
   onDone,
   nextButtonRef,
   finishButtonRef,
+  questionId,
 }: {
   index: number;
   total: number;
+  questionId: string;
   previousIndex?: number;
   nextIndex?: number;
   onNavigate: (index: number) => void;
@@ -78,6 +80,7 @@ export function ReadOnlyQuizFooter({
       finishLabel="Done"
       nextButtonRef={nextButtonRef}
       finishButtonRef={finishButtonRef}
+      report={{ kind: 'Question', id: questionId }}
     />
   );
 }

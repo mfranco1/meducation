@@ -152,6 +152,7 @@ export function QuizReviewScreen({
         </SwapTransition>
         <ReadOnlyQuizFooter
           index={index}
+          questionId={question.id}
           total={questions.length}
           previousIndex={previous}
           nextIndex={next}

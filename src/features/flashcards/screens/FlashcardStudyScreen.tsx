@@ -156,6 +156,7 @@ export function FlashcardStudyScreen({
           disabled={saving}
           nextButtonRef={nextRef}
           finishButtonRef={finishRef}
+          report={{ kind: 'Card', id: card.id }}
         />
       </QuestionNavigationLayout>
     </Container>
