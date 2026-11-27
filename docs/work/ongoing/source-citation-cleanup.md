@@ -46,7 +46,7 @@ Work through `var/source-audit/superseded-by-subject.md` (108 citations, 307 ite
 
 Record a `verdict` on every entry. Entries marked unconfirmed or "not recorded" need the newer document found first.
 
-- [ ] Pediatrics, first 15 citations
+- [x] Pediatrics, first 15 citations
 - [ ] Pediatrics, the rest (29 citations, 63 items in all)
 - [ ] Preventive Medicine, first 12 citations
 - [ ] Preventive Medicine, the rest (24 citations, 72 items in all)
@@ -82,9 +82,10 @@ The items under "Content audit list" in `notes.md` (about 150): the source disag
 
 ## Status
 
-Next: Phase 9, Pediatrics, first 15 citations. Move the two Phase 8 rules in Decisions into `content-standards.md` when the skill is brought in line.
+Next: Phase 9, Pediatrics, the rest (citation 16 on, from the WHO DTP reaction-rates sheet). Move the two Phase 8 rules in Decisions into `content-standards.md` when the skill is brought in line.
 
-- Counts (2026-11-27): 8,135 questions and 2,359 cards have sources. `P` 11,686 citations in 3,333 strings, `L` 1 (kept), `Lg` 0, `I` 0, `M` 0. Flags: `refsite` 0, `summarypage` 80 strings (165 citations), `pre2010` 178, `2010-15` 341, `narrative` 2 (kept).
+- Counts (2026-11-28): 8,135 questions and 2,359 cards have sources. `P` 11,690 citations in 3,330 strings, `L` 1 (kept), `Lg` 0, `I` 0, `M` 0. Flags: `refsite` 0, `summarypage` 80 strings (165 citations), `pre2010` 178, `2010-15` 338, `narrative` 2 (kept).
+- Phase 9 so far: 15 of 108 citations have a verdict. 23 items re-cited, 7 of them corrected (one key change, i21671). Open user decisions are under "Phase 9" in `notes.md`. Each box: build the item file, give batches to subagents with `var/source-audit/phase9/brief.md`, check every `changed` verdict against the saved text before editing.
 - Phase 7 done. On 2026-11-28 `superseded.json` was matched to the current strings and the newer editions seen during Phase 8 were added: 108 citations, 307 items. Verdicts go in the JSON; the by-subject file is the worklist.
 - Drafts rechecked on 2026-11-28 (`maps/phase9-recheck.json`): only the IgG4-RD guideline has published (added). Still in draft: KDIGO AKI (one lead in the file to look at), LAST, RCOG Green-top 62, WHO newborn resuscitation, WHO urinary iodine. Recheck these at Phase 12.
 - Phase 8 done: every current string has a verdict in `existence.json` (41 unsettled and 6 standing mismatches are kept with a reason; see "Kept strings" in `notes.md`).

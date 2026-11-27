@@ -8,6 +8,7 @@ from meducation_api.content.draft import KINDS
 
 CHUNK = 1000
 ITEM_KEYS = {"stem", "choices", "answer", "rationale", "rationaleMeta", "pearls", "metadata"}
+EDIT_KEYS = ("stem", "answer", "rationale", "pearls", "rationaleMeta")
 
 
 def _key(name: str) -> str:
@@ -162,9 +163,9 @@ def _plan(batch: Any) -> tuple[list[dict[str, Any]], list[Any]]:
     edits = _list(batch["edits"], "$.edits") if "edits" in batch else []
     for i, edit in enumerate(edits):
         path = f"$.edits[{i}]"
-        _versioned(edit, path, {"rationaleMeta"})
-        if "rationaleMeta" not in edit:
-            raise _reject(f"{path}.rationaleMeta", "is required.")
+        _versioned(edit, path, set(EDIT_KEYS))
+        if not set(EDIT_KEYS) & edit.keys():
+            raise _reject(path, f"must change one of {', '.join(EDIT_KEYS)}.")
     return list(topics.values()), edits
 
 
@@ -226,10 +227,10 @@ def _add(
 def stage_quizzes(
     service: DraftService, subject_name: str, batch: Any, report: dict[str, Any]
 ) -> None:
-    """Replaces `rationaleMeta` on existing questions of the subject, then adds the batch's
-    topics under it. Every edit is checked against one snapshot before anything is written.
-    `report` fills in as records are saved, so a DraftError partway leaves it describing
-    what was already written."""
+    """Patches existing questions of the subject (EDIT_KEYS; a blank `rationaleMeta` removes
+    it), then adds the batch's topics under it. Every edit is checked against one snapshot
+    before anything is written. `report` fills in as records are saved, so a DraftError
+    partway leaves it describing what was already written."""
     plan, edits = _plan(batch)
     snapshot = service.snapshot()
     subject = _subject(snapshot, subject_name)
@@ -241,7 +242,9 @@ def stage_quizzes(
         createdTopics=[], createdQuizzes=[], merged=[], questionsAdded=[], edited=[], changeIds=[]
     )
     for edit in edits:
-        fields = {"rationaleMeta": _without_blanks(edit["rationaleMeta"])}
+        fields = {k: edit[k] for k in EDIT_KEYS if k in edit}
+        if "rationaleMeta" in fields:
+            fields["rationaleMeta"] = _without_blanks(fields["rationaleMeta"])
         done = service.update(KINDS["questions"], edit["id"], edit["version"], fields)
         report["edited"].append(edit["id"])
         if done["changeId"] is not None:
