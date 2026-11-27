@@ -69,3 +69,23 @@ def test_check_compares_a_doi_record_and_matches_verified_ledger_entries(tmp_pat
     sa.check(sa.audit([{"kind": "q", "id": "q1", "version": 1, "subject": "Surgery", "sources": f"{cited}; {book}; {SHORT}; {SITE}"}]), out, ledger)
     assert sa.load(out) == {SITE: {"verdict": "not found"}, cited: {"verdict": "real", "by": "crossref"}, book: {"verdict": "real", "by": "ledger"}}
     assert "    1  no verdict" in capsys.readouterr().out
+
+
+def test_check_finds_articles_without_a_doi_by_title_and_labels_in_openfda(tmp_path, monkeypatch):
+    record = {"DOI": "10.1/x", "author": [{"family": "Doe"}], "title": ["A trial of rest"], "container-title": ["Journal of Medicine"], "issued": {"date-parts": [[2021]]}}
+    other = record | {"DOI": "10.1/y", "title": ["A trial of exercise"]}
+    by_society = "Rest Society. A trial of rest. *J Med*. 2021."
+    unknown = "Doe J. A trial of sleep. *J Med*. 2021."
+    label = "Acme Inc. *Restora (restium) tablets prescribing information*. Acme Inc; 2024."
+    revised = label.replace("2024", "2019")
+    found = {"set_id": "s1", "openfda": {"brand_name": ["RESTORA"]}, "description": "Restium tablet"}
+    monkeypatch.setattr(sa, "crossref_search", lambda c: [other, record])
+    monkeypatch.setattr(sa, "openfda", lambda field, name, labeler, year: [{"set_id": "s0"}, found] if (field, labeler, year) == ("brand_name", "Acme Inc", "2024") else [])
+    out = tmp_path / "existence.json"
+    rows = [{"kind": "q", "id": "q1", "version": 1, "subject": "Surgery", "sources": "; ".join([FULL, by_society, unknown, label, revised])}]
+    sa.check(sa.audit(rows), out, tmp_path / "ledger.json")
+    verdicts = sa.load(out)
+    assert verdicts[FULL] == {"verdict": "real", "by": "crossref-title", "doi": "10.1/x"}
+    assert (verdicts[by_society]["verdict"], verdicts[by_society]["fields"], verdicts[by_society]["doi"]) == ("mismatch", ["author"], "10.1/x")
+    assert verdicts[label] == {"verdict": "real", "by": "openfda", "set_id": "s1"}
+    assert unknown not in verdicts and revised not in verdicts

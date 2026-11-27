@@ -8,7 +8,8 @@ Usage (from the repository root, with meducation-authority-postgres running):
   A apply MAP.json [--actor NAME] [--dry-run]
     stages the map's replacements in the draft through stage-quizzes and stage-flashcards.
   A check [--out FILE]         existence verdicts: each DOI's Crossref record against its citation,
-    and citations whose title and year are a verified ledger entry. Keeps the verdicts FILE already holds.
+    citations whose title and year are a verified ledger entry, journal articles without a DOI by
+    Crossref title search, and drug labels in openFDA. Keeps the verdicts FILE already holds.
 
 summary and list read the draft and rewrite the audit file (--audit, default
 var/source-audit/citations.json); apply changes only items still at the version that file records.
@@ -200,14 +201,14 @@ def crossref_verdict(c: str, record: dict | None) -> dict:
     return {"verdict": "mismatch", "fields": fields, "record": found}
 
 
-def crossref(doi: str) -> dict | None:
-    """The Crossref record of a DOI, or None when Crossref has none."""
-    request = urllib.request.Request("https://api.crossref.org/works/" + urllib.parse.quote(doi), headers={"User-Agent": "source-audit/1.0"})
+def fetch(url: str) -> dict | None:
+    """The JSON at URL, or None on HTTP 404. Retries rate limits and server errors."""
+    request = urllib.request.Request(url, headers={"User-Agent": "source-audit/1.0"})
     for wait in (0, 5, 20, 60, 180):
         time.sleep(wait or 0.25)
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
-                return json.load(response)["message"]
+                return json.load(response)
         except urllib.error.HTTPError as error:
             if error.code == 404:
                 return None
@@ -215,7 +216,56 @@ def crossref(doi: str) -> dict | None:
                 raise
         except (urllib.error.URLError, TimeoutError):
             pass
-    sys.exit(f"Crossref did not answer for {doi}. Run check again to continue.")
+    sys.exit(f"No answer from {url}. Run check again to continue.")
+
+
+def crossref(doi: str) -> dict | None:
+    """The Crossref record of a DOI, or None when Crossref has none."""
+    return (fetch("https://api.crossref.org/works/" + urllib.parse.quote(doi)) or {}).get("message")
+
+
+def crossref_search(c: str) -> list[dict]:
+    """Crossref's five best records for a citation's text."""
+    query = urllib.parse.urlencode({"query.bibliographic": re.sub(r"[*]", "", c), "rows": 5})
+    return fetch("https://api.crossref.org/works?" + query)["message"]["items"]
+
+
+def title_verdict(c: str, records: list[dict]) -> dict | None:
+    """A journal article without a DOI against title search results: real when one record matches in full,
+    a mismatch when one shares the title and journal, None (left for a manual read) otherwise."""
+    found = [(crossref_verdict(c, r), r["DOI"]) for r in records]
+    for verdict, doi in found:
+        if verdict["verdict"] == "real":
+            return {"verdict": "real", "by": "crossref-title", "doi": doi}
+    return next((v | {"doi": doi} for v, doi in found if not {"title", "journal"} & set(v["fields"])), None)
+
+
+def label_parts(c: str) -> tuple[str, str, str, str] | None:
+    """(field, name, labeler, year) of a drug label citation: field is the openFDA name field its name is searched in."""
+    found = re.search(r"\*([^*]+?) prescribing information\*\. (.+); (" + YEAR + r")\.$", c, re.I)
+    if not found:
+        return None
+    name, labeler, year = found.groups()
+    return "brand_name" if "(" in name else "generic_name", name, "" if "Food and Drug" in labeler else labeler, year
+
+
+def openfda(field: str, name: str, labeler: str, year: str) -> list[dict]:
+    """openFDA labels effective in YEAR whose FIELD has the first word of NAME, by LABELER when one is named.
+
+    openFDA holds only the current version of each label, so a label revised since the cited year is not found."""
+    company = [w for w in re.findall(r"[A-Za-z0-9]+", labeler) if w.lower() not in ("inc", "llc", "ltd", "co", "corp", "usa", "us")]
+    terms = [f"openfda.{field}:{re.findall(r'[A-Za-z0-9]+', name)[0]}", *(f"openfda.manufacturer_name:{w}" for w in company)]
+    terms.append(f"effective_time:%5B{year}0101+TO+{year}1231%5D")
+    return (fetch("https://api.fda.gov/drug/label.json?limit=5&search=" + "+AND+".join(terms)) or {}).get("results", [])
+
+
+def label_verdict(name: str, labels: list[dict]) -> dict | None:
+    """Real when one label's text has every word of the cited name, else None (left for a manual read)."""
+    wanted = {w.rstrip("s") for w in words(name).split()}
+    for label in labels:
+        if wanted <= {w.rstrip("s") for w in words(json.dumps(label)).split()}:
+            return {"verdict": "real", "by": "openfda", "set_id": label["set_id"]}
+    return None
 
 
 def check(cites: dict[str, dict], out: Path, ledger: Path = LEDGER) -> None:
@@ -224,10 +274,17 @@ def check(cites: dict[str, dict], out: Path, ledger: Path = LEDGER) -> None:
     todo = [c for c in cites if c not in verdicts]
     for n, c in enumerate(todo, 1):
         *doi, key = document_keys(c) or [""]
+        verdict = None
         if re.search(r"doi:", c, re.I):
-            verdicts[c] = crossref_verdict(c, crossref(doi[0] if doi else key))
+            verdict = crossref_verdict(c, crossref(doi[0] if doi else key))
         elif words(key) in verified:
-            verdicts[c] = {"verdict": "real", "by": "ledger"}
+            verdict = {"verdict": "real", "by": "ledger"}
+        elif label := label_parts(c):
+            verdict = label_verdict(label[1], openfda(*label))
+        elif re.search(r"\*\.\s*" + YEAR, c) and f"*{cited_title(c)}*" not in c:  # Title. *Journal*. year: a journal article
+            verdict = title_verdict(c, crossref_search(c))
+        if verdict:
+            verdicts[c] = verdict
         if n % 50 == 0 or n == len(todo):
             dump(out, verdicts)
     counts = collections.Counter(" ".join([v["verdict"], v.get("by", ""), *v.get("fields", [])]).strip() for c, v in verdicts.items() if c in cites)
