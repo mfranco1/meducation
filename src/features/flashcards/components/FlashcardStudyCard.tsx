@@ -63,7 +63,7 @@ export function FlashcardStudyCard({
 
   return (
     <Card variant="outlined" sx={{ minHeight: { xs: 390, sm: 460 }, display: 'flex', overflow: 'visible' }}>
-      <CardContent sx={{ p: { xs: 2.5, sm: 4 }, width: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardContent sx={{ p: { xs: 2.5, sm: 4 }, width: '100%', minWidth: 0, display: 'flex', flexDirection: 'column' }}>
         <Box
           sx={{
             position: 'relative',
@@ -122,6 +122,7 @@ export function FlashcardStudyCard({
               sx={{
                 position: 'relative',
                 display: 'grid',
+                gridTemplateColumns: 'minmax(0, 1fr)',
                 transformStyle: 'preserve-3d',
                 transformOrigin: '50% 50%',
                 transform: revealed ? 'rotateY(180deg)' : 'rotateY(0deg)',
