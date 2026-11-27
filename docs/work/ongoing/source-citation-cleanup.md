@@ -45,17 +45,17 @@ Flag only. For each string, check whether the same body has issued a newer editi
 Existence only: the document exists and its authors, title, journal or publisher and year match the citation. Record a verdict per distinct string in `var/source-audit/existence.json`: `real`, `mismatch` (which field, and the corrected citation) or `not found`. Start from the Phase 8 leads in `notes.md`.
 
 - [x] Scripted pass (`A check`): DOI records, verified ledger entries, Crossref title search for journal articles without a DOI, openFDA for labels. 2,168 strings real, 35 mismatches with a corrected citation in `existence.json`.
-- Manual passes on the 1,276 strings in `maps/phase8-left.json` (sorted by document type, then by name; box numbers are positions in that file). Find each on the publisher, PubMed, the issuing body's site, or lawphil.net and the Supreme Court E-Library for laws and cases. Search results may locate a document but the record page confirms it. Add each verdict to `existence.json`. A guideline published as a journal article takes its article authors: a society named as author is a `mismatch`.
-  - [ ] 1 to 150 (journal articles and labels the scripted pass could not settle, to 145; chapters from 146)
-  - [ ] 151 to 300 (reports, pages and books from 194, with labels in other wordings among them)
-  - [ ] 301 to 450
-  - [ ] 451 to 600
-  - [ ] 601 to 750
-  - [ ] 751 to 900
-  - [ ] 901 to 1,050 (PDQ summaries from 995; laws and cases from 1,015)
-  - [ ] 1,051 to 1,200
-  - [ ] 1,201 to 1,276
-- [ ] Fix `mismatch` strings through a map. Give the user every `not found` string with its item IDs; do not delete or replace those without their decision.
+- Manual passes on the 1,276 strings in `maps/phase8-left.json` (sorted by document type, then by name; box numbers are positions in that file). Find each on the publisher, PubMed, the issuing body's site, or lawphil.net and the Supreme Court E-Library for laws and cases. Search results may locate a document but the record page confirms it. Add each verdict to `existence.json`. A guideline published as a journal article takes its article authors: a society named as author is a `mismatch`. Give each subagent batch of 25 the brief in `maps/phase8-brief.md` and the leads for its strings from `notes.md`. A `form` key on a `real` verdict holds the string in standard form.
+  - [x] 1 to 150: 102 real, 46 mismatch, 1 not found, 1 unsettled (147, stays in the list)
+  - [x] 151 to 300: 113 real, 27 mismatch, 10 unsettled (202, 212 to 216, 241, 247, 260, 273, stay in the list)
+  - [x] 301 to 450: 77 real, 70 mismatch, 1 not found, 2 unsettled (448, 449, stay in the list)
+  - [x] 451 to 600: 108 real, 32 mismatch, 10 unsettled (464, 494 to 496, 501, 528, 529, 541, 574, 575, stay in the list)
+  - [x] 601 to 750: 111 real, 28 mismatch, 11 unsettled (603, 608, 645, 646, 666, 680, 681, 686, 687, 726, 728, stay in the list)
+  - [x] 751 to 900: 124 real, 21 mismatch, 5 unsettled (770, 775, 839, 841, 849, stay in the list)
+  - [x] 901 to 1,050: 120 real, 27 mismatch, 1 not found, 2 unsettled (919, 920, stay in the list)
+  - [x] 1,051 to 1,200: 139 real, 10 mismatch, 1 unsettled (1177, stays in the list)
+  - [x] 1,201 to 1,276: 74 real, 1 mismatch, 1 unsettled (1221, stays in the list)
+- [ ] Fix `mismatch` strings through a map. Give the user every `not found` string and the 43 unsettled strings (reasons in `notes.md`) with their item IDs; do not delete or replace those without their decision.
 
 ## Phase 9: close
 
@@ -64,8 +64,8 @@ Existence only: the document exists and its authors, title, journal or publisher
 
 ## Status
 
-Next: Phase 8, manual pass 1 to 150.
+Next: Phase 8, fix `mismatch` strings through a map. Read the "For the fix box" notes in `notes.md` first: many corrections need a user decision before applying.
 
 - Counts (2026-11-27): 8,140 questions and 2,361 cards have sources. `P` 11,605 citations in 3,447 strings, `L` 89 in 30 (kept), `Lg` 2 (kept), `I` 0, `M` 0. Flags: `summarypage` 95 strings (168 citations), `pre2010` 182, `2010-15` 358, `narrative` 2 (kept).
 - Phase 7 done: 87 strings (237 citations) in `superseded.json`, listed by subject in `var/source-audit/superseded-by-subject.md`.
-- Phase 8 so far, of 3,479 strings: 2,168 real (1,245 by Crossref DOI record, 233 by Crossref title search, 397 by verified ledger entry, 226 by openFDA, 67 read by hand after a pattern flag), 35 mismatch, 1,276 left.
+- Phase 8 so far, of 3,479 strings: 3,136 real (1,245 by Crossref DOI record, 233 by Crossref title search, 398 by verified ledger entry, 226 by openFDA, 1,034 read by hand), 297 mismatch, 3 not found, 43 left (all unsettled).
