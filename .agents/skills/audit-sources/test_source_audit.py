@@ -45,3 +45,27 @@ def test_groups_join_wordings_by_doi_or_by_title_and_year():
     rows = [{"kind": "q", "id": f"q{n}", "version": 1, "subject": "Surgery", "sources": c} for n, c in enumerate([FULL, FULL, doi, by_org, book, book.replace("2020", "2024"), book + " Sec. 2.", SITE])]
     assert sa.groups(sa.audit(rows)) == [[(2, FULL), (1, by_org), (1, doi)]]
     assert sa.groups(sa.audit(rows), "Pediatrics") == []
+
+
+def test_check_compares_a_doi_record_and_matches_verified_ledger_entries(tmp_path, monkeypatch, capsys):
+    record = {
+        "author": [{"family": "Doé", "given": "J"}],
+        "title": ["A Trial of <i>Rest</i>"],
+        "container-title": ["Journal of Medicine"],
+        "issued": {"date-parts": [[2020, 12, 1]]},
+        "published-print": {"date-parts": [[2021]]},
+    }
+    cited = FULL + " doi:10.1/x"
+    assert sa.crossref_verdict(cited, record) == {"verdict": "real", "by": "crossref"}
+    wrong = sa.crossref_verdict("Roe A. A trial of rest. *Lancet*. 2019;1:3. doi:10.1/x", record)
+    assert wrong["verdict"] == "mismatch" and wrong["fields"] == ["author", "journal", "year"]
+    assert sa.crossref_verdict(cited, None)["fields"] == ["doi"]
+
+    book = "World Health Organization. *Rest: A Handbook*. World Health Organization; 2020."
+    ledger, out = tmp_path / "ledger.json", tmp_path / "existence.json"
+    sa.dump(ledger, [{"title": "Rest: a handbook", "year": "2020", "status": "verified"}, {"title": "Nelson Textbook of Pediatrics", "year": "2024", "status": "blocked"}])
+    sa.dump(out, {SITE: {"verdict": "not found"}})
+    monkeypatch.setattr(sa, "crossref", lambda doi: record if doi == "10.1/x" else None)
+    sa.check(sa.audit([{"kind": "q", "id": "q1", "version": 1, "subject": "Surgery", "sources": f"{cited}; {book}; {SHORT}; {SITE}"}]), out, ledger)
+    assert sa.load(out) == {SITE: {"verdict": "not found"}, cited: {"verdict": "real", "by": "crossref"}, book: {"verdict": "real", "by": "ledger"}}
+    assert "    1  no verdict" in capsys.readouterr().out

@@ -44,8 +44,20 @@ Flag only. For each string, check whether the same body has issued a newer editi
 
 Existence only: the document exists and its authors, title, journal or publisher and year match the citation. Record a verdict per distinct string in `var/source-audit/existence.json`: `real`, `mismatch` (which field, and the corrected citation) or `not found`. Start from the Phase 8 leads in `notes.md`.
 
-- [ ] Scripted pass. Resolve every DOI through the Crossref REST API and compare first author, title and year. Mark strings that match a `verified` ledger entry as real. Report the count left over and add one box per 150 remaining strings below.
-- [ ] Manual passes on the remainder: find each on the publisher, PubMed, the issuing body's site, or lawphil.net and the Supreme Court E-Library for laws and cases. Search results may locate a document but the record page confirms it.
+- [x] Scripted pass (`A check`): 1,715 strings real, 10 mismatches with a corrected citation in `existence.json`.
+- Manual passes on the 1,754 strings in `maps/phase8-left.json` (sorted by document type, then by name; box numbers are positions in that file). Find each on the publisher, PubMed, the issuing body's site, or lawphil.net and the Supreme Court E-Library for laws and cases. Search results may locate a document but the record page confirms it. Add each verdict to `existence.json`.
+  - [ ] 1 to 150 (journal articles without a DOI, to 398)
+  - [ ] 151 to 300
+  - [ ] 301 to 450 (chapters from 399; reports, pages and books from 447)
+  - [ ] 451 to 600
+  - [ ] 601 to 750
+  - [ ] 751 to 900
+  - [ ] 901 to 1,050
+  - [ ] 1,051 to 1,200 (drug labels from 1,180)
+  - [ ] 1,201 to 1,350
+  - [ ] 1,351 to 1,500 (PDQ summaries from 1,473; laws and cases from 1,493)
+  - [ ] 1,501 to 1,650
+  - [ ] 1,651 to 1,754
 - [ ] Fix `mismatch` strings through a map. Give the user every `not found` string with its item IDs; do not delete or replace those without their decision.
 
 ## Phase 9: close
@@ -55,7 +67,8 @@ Existence only: the document exists and its authors, title, journal or publisher
 
 ## Status
 
-Next: Phase 8, scripted pass.
+Next: Phase 8, manual pass 1 to 150.
 
-- Counts (2026-11-26): 8,140 questions and 2,361 cards have sources. `P` 11,605 citations in 3,447 strings, `L` 89 in 30 (kept), `Lg` 2 (kept), `I` 0, `M` 0. Flags: `summarypage` 95 strings (168 citations), `pre2010` 182, `2010-15` 358, `narrative` 2 (kept).
-- Phase 7 done: 87 strings (237 citations) in `superseded.json`, listed by subject in `var/source-audit/superseded-by-subject.md`; WHO dengue 2009 is 44 of the citations. In `2010-15`: 52 superseded, 51 with a later document from another body or scope, 146 with no newer edition, 109 studies. Eight of the 87 are strings dated after 2015, added from earlier leads; no other string dated 2016 or later was checked.
+- Counts (2026-11-27): 8,140 questions and 2,361 cards have sources. `P` 11,605 citations in 3,447 strings, `L` 89 in 30 (kept), `Lg` 2 (kept), `I` 0, `M` 0. Flags: `summarypage` 95 strings (168 citations), `pre2010` 182, `2010-15` 358, `narrative` 2 (kept).
+- Phase 7 done: 87 strings (237 citations) in `superseded.json`, listed by subject in `var/source-audit/superseded-by-subject.md`.
+- Phase 8 so far, of 3,479 strings: 1,715 real (1,245 by Crossref record, 397 by verified ledger entry, 73 read by hand after a pattern flag), 10 mismatch, 1,754 left.

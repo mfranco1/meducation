@@ -19,7 +19,10 @@ A summary
 A list <class or flag> [Subject]
 A groups [Subject]
 A apply <map.json> --actor agent:audit-sources [--dry-run]
+A check
 ```
+
+`A check` records an existence verdict per citation in `var/source-audit/existence.json`: `real` when the Crossref record of its DOI has the same first author, title, journal and year, or when its title and year are a `verified` ledger entry; `mismatch` with the fields that differ. It skips citations the file already holds, so a stopped run continues. Read every mismatch: a group author, a subtitle or an unusual journal abbreviation also produces one.
 
 `A groups` prints each document cited in more than one wording (same DOI, or same title and year) so one wording can replace the others. `A --help` lists the classes and flags. They are pattern-based: read the strings, and fix any the pattern put in the wrong class. The class definition is `citation_form` in `.agents/shared/authoring.py`, which the batch gates of write-quizzes and write-flashcards also use.
 

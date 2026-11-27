@@ -7,6 +7,8 @@ Usage (from the repository root, with meducation-authority-postgres running):
   A groups [SUBJECT]           documents cited in more than one wording (same DOI, or same title and year)
   A apply MAP.json [--actor NAME] [--dry-run]
     stages the map's replacements in the draft through stage-quizzes and stage-flashcards.
+  A check [--out FILE]         existence verdicts: each DOI's Crossref record against its citation,
+    and citations whose title and year are a verified ledger entry. Keeps the verdicts FILE already holds.
 
 summary and list read the draft and rewrite the audit file (--audit, default
 var/source-audit/citations.json); apply changes only items still at the version that file records.
@@ -16,16 +18,24 @@ summarypage, pre2010, 2010-15. Both are pattern-based: read the strings before a
 
 import argparse
 import collections
+import difflib
+import html
 import json
 import re
 import subprocess
 import sys
+import time
+import unicodedata
+import urllib.error
+import urllib.parse
+import urllib.request
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "shared"))
-from authoring import LEGAL, REPO, YEAR, citation_form, dump, load, slug, split_citations  # noqa: E402
+from authoring import LEDGER, LEGAL, REPO, YEAR, citation_form, dump, load, slug, split_citations  # noqa: E402
 
 AUDIT = REPO / "var" / "source-audit" / "citations.json"
+EXISTENCE = REPO / "var" / "source-audit" / "existence.json"
 SQL = """select json_agg(x) from (
  select 'q' kind, q.id, q.version, s.name subject, q.rationale_meta->>'sources' sources from content.draft_questions q
   join content.draft_quizzes z on z.id=q.quiz_id join content.draft_topics t on t.id=z.topic_id join content.draft_subjects s on s.id=t.subject_id
@@ -105,17 +115,26 @@ def listing(cites: dict[str, dict], want: str, subject: str = "") -> list[tuple[
     return sorted(out, key=lambda x: -x[0])
 
 
+def cited_title(bare: str) -> str:
+    """The title of a citation without its DOI. Authors. Title. *Journal* has it before the italics; Organization. *Title* has it in them."""
+    ital = re.search(r"\*([^*]+)\*", bare)
+    lead = [s for s in re.split(r"\.\s+", bare[: ital.start()].strip(". ")) if s and not s.startswith("In:")] if ital else []
+    return lead[-1] if len(lead) > 1 else ital.group(1) if ital else bare
+
+
+def words(text: str) -> str:
+    """Lowercase ASCII letters and digits of TEXT, so accents, case and punctuation don't count."""
+    text = re.sub(r"[\u2010-\u2015]", "-", text).replace("\u2019", "'")
+    return " ".join(re.findall(r"[a-z0-9]+", unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode().lower()))
+
+
 def document_keys(c: str) -> list[str]:
     """What identifies a citation's document: its DOI, and its title with its year."""
     found = re.search(r"doi:\s*(10\.\S+)", c, re.I)
     bare = re.sub(r"doi:\s*\S+|https?://\S+", "", c, flags=re.I)
-    ital = re.search(r"\*([^*]+)\*", bare)
-    lead = [s for s in re.split(r"\.\s+", bare[: ital.start()].strip(". ")) if s and not s.startswith("In:")] if ital else []
-    # Authors. Title. *Journal* has its title before the italics; Organization. *Title* has it in them.
-    title = lead[-1] if len(lead) > 1 else ital.group(1) if ital else bare
+    title = " ".join(re.findall(r"[a-z0-9]+", cited_title(bare).lower()))
     years = re.findall(YEAR, bare)
-    words = " ".join(re.findall(r"[a-z0-9]+", title.lower()))
-    return ([found.group(1).rstrip(".").lower()] if found else []) + ([f"{words} {years[-1]}"] if words and years else [])
+    return ([found.group(1).rstrip(".").lower()] if found else []) + ([f"{title} {years[-1]}"] if title and years else [])
 
 
 def groups(cites: dict[str, dict], subject: str = "") -> list[list[tuple[int, str]]]:
@@ -144,6 +163,76 @@ def groups(cites: dict[str, dict], subject: str = "") -> list[list[tuple[int, st
         and any(i[3].lower().startswith(subject.lower()) for _, c in g for i in cites[c]["items"])
     ]
     return sorted(wanted, key=lambda g: -sum(n for n, _ in g))
+
+
+def crossref_verdict(c: str, record: dict | None) -> dict:
+    """Compare a citation with the Crossref record of its DOI: first author, title, journal and year.
+
+    Pattern-based: read every mismatch. A journal matches when each word of its abbreviation starts a word of the full name, in order."""
+    if record is None:
+        return {"verdict": "mismatch", "fields": ["doi"], "record": "not in Crossref"}
+    bare = re.sub(r"doi:\s*\S+", "", c, flags=re.I)
+    ital = ([None] + list(re.finditer(r"\*([^*]+)\*", bare)))[-1]  # the journal: a title can hold italics too
+    family = (record.get("author") or [{}])[0].get("family", "")
+    title = words(re.sub(r"<[^>]+>", "", html.unescape(" ".join(record.get("title", []) + record.get("subtitle", [])))))
+    mine = words(cited_title(bare))
+    journals = record.get("container-title", []) + record.get("short-container-title", [])
+    years = {record[k]["date-parts"][0][0] for k in ("issued", "published", "published-print", "published-online") if k in record}
+    year = re.search(YEAR, bare[ital.end() :] if ital else bare)
+
+    def abbreviates(full: str) -> bool:
+        rest = iter(words(full).split())
+        return all(any(w.startswith(short) for w in rest) for short in words(re.sub(r"\(.*?\)", "", ital.group(1))).split())
+
+    fields = [
+        name
+        for name, ok in (
+            ("author", not family or words(family) in words(re.split(r"[,.]", bare)[0])),
+            ("title", bool(title) and (title in mine or mine in title or difflib.SequenceMatcher(None, title, mine).ratio() >= 0.9)),
+            ("journal", not journals or not ital or any(abbreviates(j) for j in journals)),
+            ("year", bool(year) and int(year[0]) in years),
+        )
+        if not ok
+    ]
+    if not fields:
+        return {"verdict": "real", "by": "crossref"}
+    found = f"{family}. {' '.join(record.get('title', []))}. {' / '.join(journals)}. {' '.join(map(str, sorted(years)))}."
+    return {"verdict": "mismatch", "fields": fields, "record": found}
+
+
+def crossref(doi: str) -> dict | None:
+    """The Crossref record of a DOI, or None when Crossref has none."""
+    request = urllib.request.Request("https://api.crossref.org/works/" + urllib.parse.quote(doi), headers={"User-Agent": "source-audit/1.0"})
+    for wait in (0, 5, 20, 60, 180):
+        time.sleep(wait or 0.25)
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return json.load(response)["message"]
+        except urllib.error.HTTPError as error:
+            if error.code == 404:
+                return None
+            if error.code not in (429, 500, 502, 503, 504):
+                raise
+        except (urllib.error.URLError, TimeoutError):
+            pass
+    sys.exit(f"Crossref did not answer for {doi}. Run check again to continue.")
+
+
+def check(cites: dict[str, dict], out: Path, ledger: Path = LEDGER) -> None:
+    verdicts = load(out) if out.exists() else {}
+    verified = {f"{words(e['title'])} {e['year']}" for e in (load(ledger) if ledger.exists() else []) if e["status"] == "verified"}
+    todo = [c for c in cites if c not in verdicts]
+    for n, c in enumerate(todo, 1):
+        *doi, key = document_keys(c) or [""]
+        if re.search(r"doi:", c, re.I):
+            verdicts[c] = crossref_verdict(c, crossref(doi[0] if doi else key))
+        elif words(key) in verified:
+            verdicts[c] = {"verdict": "real", "by": "ledger"}
+        if n % 50 == 0 or n == len(todo):
+            dump(out, verdicts)
+    counts = collections.Counter(" ".join([v["verdict"], v.get("by", ""), *v.get("fields", [])]).strip() for c, v in verdicts.items() if c in cites)
+    print("\n".join(f"{n:5d}  {k}" for k, n in sorted(counts.items())))
+    print(f"{sum(c not in verdicts for c in cites):5d}  no verdict")
 
 
 def plan(rows: list[dict], cites: dict[str, dict], mapping: dict[str, str | None]) -> tuple[dict[str, dict[str, list]], list[str], list[str]]:
@@ -209,6 +298,7 @@ def main() -> None:
     app.add_argument("map", type=Path)
     app.add_argument("--actor", default="agent:audit-sources")
     app.add_argument("--dry-run", action="store_true", help="write the stage files without staging them")
+    sub.add_parser("check").add_argument("--out", type=Path, default=EXISTENCE)
     args = parser.parse_args()
     if args.command == "apply":
         return apply(args)
@@ -217,6 +307,8 @@ def main() -> None:
     dump(args.audit, cites)
     if args.command == "summary":
         print(summary(rows, cites))
+    elif args.command == "check":
+        check(cites, args.out)
     elif args.command == "groups":
         for group in groups(cites, " ".join(args.subject)):
             print("\n".join(f"{n:4d}  {c}" for n, c in group) + "\n")
