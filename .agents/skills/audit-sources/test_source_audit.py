@@ -17,7 +17,7 @@ ROWS = [
 
 def test_audit_counts_classes_and_flags_and_lists_by_use_and_subject():
     cites = sa.audit(ROWS)
-    assert {c: (e["class"], e["flags"]) for c, e in cites.items()} == {SHORT: ("L", []), FULL: ("P", []), SITE: ("P", ["refsite", "pre2010"])}
+    assert {c: (e["class"], e["flags"]) for c, e in cites.items()} == {SHORT: ("L", ["2021-24"]), FULL: ("P", ["2021-24"]), SITE: ("P", ["refsite", "pre2010"])}
     text = sa.summary(ROWS, cites)
     assert "questions with sources 2 of 2; cards 1 of 2" in text
     assert "class L: 2 citations, 1 distinct" in text and "flag refsite: 2 citations, 1 distinct" in text
@@ -89,3 +89,14 @@ def test_check_finds_articles_without_a_doi_by_title_and_labels_in_openfda(tmp_p
     assert (verdicts[by_society]["verdict"], verdicts[by_society]["fields"], verdicts[by_society]["doi"]) == ("mismatch", ["author"], "10.1/x")
     assert verdicts[label] == {"verdict": "real", "by": "openfda", "set_id": "s1"}
     assert unknown not in verdicts and revised not in verdicts
+
+
+def test_flags_give_each_citation_one_year_band():
+    bands = {
+        "Rest Society. *Rest*. Rest Society.": "noyear",
+        "Philippine Legislature. *Act No. 3815: The Revised Penal Code*. Philippine Legislature; 1930.": "historic",
+        "Doe J. Rest. *J Med*. 2012;1(2):2019-2024. doi:10.1/x2025": "2010-15",
+        "Doe J. Rest. *J Med*. 2016;1:3.": "2016-20",
+        "Doe J. Rest in 2019. *J Med*. 2026;1:3.": "2025-26",
+    }
+    assert {c: sa.flags(c) for c in bands} == {c: [band] for c, band in bands.items()}

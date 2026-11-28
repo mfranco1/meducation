@@ -14,7 +14,9 @@ Usage (from the repository root, with meducation-authority-postgres running):
 summary and list read the draft and rewrite the audit file (--audit, default
 var/source-audit/citations.json); apply changes only items still at the version that file records.
 Classes are in CITATION_FORMS of .agents/shared/authoring.py. Flags: refsite, narrative,
-summarypage, pre2010, 2010-15. Both are pattern-based: read the strings before acting on a count.
+summarypage, and one for the latest year a citation prints: noyear, historic (a law or historic
+document before 2016), pre2010, 2010-15, 2016-20, 2021-24, 2025-26. Both are pattern-based: read
+the strings before acting on a count.
 """
 
 import argparse
@@ -71,7 +73,13 @@ def flags(c: str) -> list[str]:
     if SUMMARY_PAGE.search(c):
         out.append("summarypage")
     years = [int(y) for y in re.findall(r"\b" + YEAR + r"\b", re.sub(r"doi:\S+|https?://\S+|\d+[-–]\d+", "", c)) if int(y) <= 2026]
-    if years and not LEGAL.search(c) and not HISTORIC.search(c) and max(years) < 2016:
+    if not years:
+        out.append("noyear")
+    elif max(years) >= 2016:
+        out.append("2016-20" if max(years) <= 2020 else "2021-24" if max(years) <= 2024 else "2025-26")
+    elif LEGAL.search(c) or HISTORIC.search(c):
+        out.append("historic")
+    else:
         out.append("pre2010" if max(years) < 2010 else "2010-15")
     return out
 
