@@ -410,18 +410,27 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
               : view.quiz.name;
   const title = pageName ? `${pageName} | ${brand.name}` : brand.name;
   const [routing, setRouting] = useState(() => window.location.pathname !== '/');
-  useEffect(() => {
-    if (routing) return;
-    document.title = title;
+  // A Back step finishes later; until its popstate arrives, the address and history state are stale.
+  const backPending = useRef(false);
+  const syncAddress = useCallback(() => {
+    if (backPending.current) return;
     const from = window.location.pathname;
     if (from === path) return;
     const state = history.state as { back?: string; topic?: boolean } | null;
     // Returning to the page this one was opened from reuses its history entry.
-    if (state?.back === path) history.back();
+    if (state?.back === path) {
+      backPending.current = true;
+      history.back();
+    }
     // An open topic's entry, or one that repeats the page before it, becomes the new page.
     else if (state?.topic || state?.back === from) history.replaceState({ back: from }, '', path);
     else history.pushState({ back: from }, '', path);
-  }, [routing, path, title]);
+  }, [path]);
+  useEffect(() => {
+    if (routing) return;
+    document.title = title;
+    syncAddress();
+  }, [routing, title, syncAddress]);
   const openPath = async (target: string) => {
     const route = routeFor(target);
     const show = (to: string, action: () => void) => {
@@ -510,11 +519,16 @@ function LearnerApp({ onProgress }: { onProgress: () => void }) {
     if (view.page === 'flashcards-study' && !flashcards.saveAndExit()) return stay();
     void openPath(target);
   };
-  const latestRouting = useRef({ followHistory, openPath });
-  latestRouting.current = { followHistory, openPath };
+  const latestRouting = useRef({ followHistory, openPath, syncAddress });
+  latestRouting.current = { followHistory, openPath, syncAddress };
   const opened = useRef(false);
   useEffect(() => {
-    const onPopState = () => latestRouting.current.followHistory();
+    const onPopState = () => {
+      if (!backPending.current) return latestRouting.current.followHistory();
+      // Our own Back step landed; bring the address up to date with any view change made meanwhile.
+      backPending.current = false;
+      latestRouting.current.syncAddress();
+    };
     window.addEventListener('popstate', onPopState);
     // Strict Mode replays this effect; a second open would cancel the first one's loads.
     if (!opened.current && window.location.pathname !== '/') {

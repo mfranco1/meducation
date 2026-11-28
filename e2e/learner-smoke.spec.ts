@@ -277,6 +277,24 @@ test('addresses follow navigation and work with reload, Back, Forward and links'
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();
 });
 
+test('navigating right after leaving a deck lands on the chosen page when Back is slow', async ({ page }) => {
+  // A slow device finishes the Back step that leaving a deck takes after the next click.
+  await page.addInitScript(() => {
+    const back = History.prototype.back;
+    History.prototype.back = function () {
+      setTimeout(() => back.call(this), 500);
+    };
+  });
+  await page.goto('/flashcards');
+  await page.getByRole('button', { name: 'Open Browser Test Subject' }).last().click();
+  await page.getByRole('button', { name: /^Study deck/ }).click();
+  await page.getByRole('button', { name: 'Save and exit deck' }).click();
+  await page.getByRole('button', { name: 'Dashboard' }).click();
+  await page.waitForTimeout(1_000);
+  await expect(page.getByRole('region', { name: 'Continue Studying' })).toBeVisible();
+  await expect(page).toHaveURL('/flashcards');
+});
+
 test('left navigation switches dashboards in collapsed and mobile layouts', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'All Subjects' })).toBeVisible();

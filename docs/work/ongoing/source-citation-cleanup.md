@@ -53,8 +53,8 @@ Record a `verdict` on every entry. Entries marked unconfirmed or "not recorded" 
 - [x] Surgery (14 citations, 45 items)
 - [x] Internal Medicine (13 citations, 39 items)
 - [x] Microbiology & Parasitology and Obstetrics & Gynecology (23 citations, 44 items)
-- [ ] Legal Medicine (10 citations, 20 items)
-- [ ] Biochemistry, Pharmacology, Physiology, Anatomy & Histology, Pathology (17 citations, 25 items)
+- [x] Legal Medicine (10 citations, 20 items)
+- [x] Biochemistry, Pharmacology, Physiology, Anatomy & Histology, Pathology (17 citations, 25 items)
 
 ## Phase 10: strings dated 2016 or later (size the correction boxes after the flag boxes)
 
@@ -82,10 +82,10 @@ The items under "Content audit list" in `notes.md` (about 150): the source disag
 
 ## Status
 
-Next: Phase 9, Legal Medicine (10 citations, 20 items). Move the two Phase 8 rules in Decisions into `content-standards.md` when the skill is brought in line.
+Next: Phase 10, first flag box (no year or before 2016, unflagged; add the `source_audit.py` list by year band first). Move the two Phase 8 rules in Decisions into `content-standards.md` when the skill is brought in line.
 
-- Counts (2026-11-28): 8,135 questions and 2,359 cards have sources. `P` 11,702 citations in 3,323 strings, `L` 1 (kept), `Lg` 0, `I` 0, `M` 0. Flags: `refsite` 0, `summarypage` 78 strings (161 citations), `pre2010` 177, `2010-15` 322, `narrative` 2 (kept).
-- Phase 9 so far: 88 of 108 citations have a verdict (a few cover only the subjects done; see "Phase 9" in `notes.md`). 95 items re-cited, 28 of them corrected (one key change, i21671), and 9 dengue items now give the WHO 2025 critical-phase figures. Two editions from one body are not a user decision: the newer one wins. Open user decisions and the documents that need a manual copy are under "Phase 9" in `notes.md`. Each box: build the item file, give batches to subagents with `var/source-audit/phase9/brief.md`, check every `changed` verdict against the saved text before editing, then stage with `phase9/build.py`.
+- Counts (2026-11-28): 8,135 questions and 2,359 cards have sources. `P` 11,706 citations in 3,321 strings, `L` 1 (kept), `Lg` 0, `I` 0, `M` 0. Flags: `refsite` 0, `summarypage` 78 strings (161 citations), `pre2010` 175, `2010-15` 318, `narrative` 2 (kept).
+- Phase 9 done: all 108 citations have a verdict. 109 items re-cited and 32 corrected (one key change, i21671), and 9 dengue items now give the WHO 2025 critical-phase figures. Two editions from one body are not a user decision: the newer one wins. Open user decisions and the documents that need a manual copy (11; their items keep the older citation until read) are under "Phase 9" in `notes.md`. Each correction box: build the item file, give batches to subagents with `var/source-audit/phase9/brief.md`, check every `changed` verdict against the saved text before editing, then stage with `phase9/build.py`.
 - Phase 7 done. On 2026-11-28 `superseded.json` was matched to the current strings and the newer editions seen during Phase 8 were added: 108 citations, 307 items. Verdicts go in the JSON; the by-subject file is the worklist.
-- Drafts rechecked on 2026-11-28 (`maps/phase9-recheck.json`): only the IgG4-RD guideline has published (added). Still in draft: KDIGO AKI (one lead in the file to look at), LAST, RCOG Green-top 62, WHO newborn resuscitation, WHO urinary iodine. Recheck these at Phase 12.
+- Drafts rechecked on 2026-11-28 (`maps/phase9-recheck.json`): only the IgG4-RD guideline has published (added). Still in draft: KDIGO AKI (one lead in the file to look at), LAST, RCOG Green-top 62, WHO newborn resuscitation, WHO urinary iodine. Recheck these at Phase 12, with the revised child witness rule (A.M. No. 25-03-23-SC; text not yet online).
 - Phase 8 done: every current string has a verdict in `existence.json` (41 unsettled and 6 standing mismatches are kept with a reason; see "Kept strings" in `notes.md`).
