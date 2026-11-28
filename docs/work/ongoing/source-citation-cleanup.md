@@ -56,15 +56,34 @@ Record a `verdict` on every entry. Entries marked unconfirmed or "not recorded" 
 - [x] Legal Medicine (10 citations, 20 items)
 - [x] Biochemistry, Pharmacology, Physiology, Anatomy & Histology, Pathology (17 citations, 25 items)
 
-## Phase 10: strings dated 2016 or later (size the correction boxes after the flag boxes)
+## Phase 10: strings dated 2016 or later
 
 No string without a `pre2010` or `2010-15` flag was checked in Phase 7: 2,785 strings. Leave out drug labels and court cases (about 440). Flag as in Phase 7, adding to `superseded.json` and writing verdicts to `maps/phase10-<box>-verdicts.json`; a trial, cohort or other primary study gets `not an edition` without a search. `A list <band>` gives the strings (`historic`, `2016-20`, `2021-24`, `2025-26`); `phase10/build_batches.py <band> <prefix> <size>` writes the batch files without labels, cases and strings already flagged. Batches of 25 to Sonnet subagents (three run at once), about 150 strings a box. Then correct the flagged ones under the Phase 9 rules.
 
 - [x] Flag: laws, orders, court rules and historic documents before 2016 (184 strings; 13 flagged, 62 items)
 - [x] Flag: 2016 to 2020 (755 strings in 5 boxes; 119 flagged)
-- [ ] Flag: 2021 to 2024 (840 strings in 34 batches, 6 boxes; boxes 1 to 5 done)
-- [ ] Flag: 2025 and 2026 (about 580 strings, 4 boxes)
-- [ ] Correct the flagged citations, by subject (boxes added here after flagging)
+- [x] Flag: 2021 to 2024 (840 strings in 6 boxes; 71 flagged)
+- [x] Flag: 2025 and 2026 (595 strings in 4 boxes; 21 flagged)
+
+Correct the 224 flagged citations under the Phase 9 rules, working through `var/source-audit/phase10-by-subject.md` (numbered within each subject; item counts include the items of other subjects that cite the same string):
+
+- [x] Surgery 1 to 14 (87 items)
+- [ ] Surgery 15 to 28 (37 items)
+- [ ] Surgery 29 to 42 (91 items)
+- [ ] Surgery 43 to 52 (64 items)
+- [ ] Obstetrics & Gynecology 1 to 14 (63 items)
+- [ ] Obstetrics & Gynecology 15 to 28 (62 items)
+- [ ] Obstetrics & Gynecology 29 to 43 (319 items, 240 of them on the CDC 2021 STI guidelines, where only prevention after exposure changed)
+- [ ] Internal Medicine 1 to 14 (49 items)
+- [ ] Internal Medicine 15 to 28 (61 items)
+- [ ] Internal Medicine 29 to 42 (69 items)
+- [ ] Pediatrics 1 to 14 (55 items)
+- [ ] Pediatrics 15 to 30 (63 items)
+- [ ] Preventive Medicine 1 to 14 (67 items)
+- [ ] Preventive Medicine 15 to 24 (47 items)
+- [ ] Pathology (12 citations, 55 items)
+- [ ] Microbiology & Parasitology (9 citations, 56 items)
+- [ ] Legal Medicine, Pharmacology, Biochemistry (12 citations, 36 items)
 
 ## Phase 11: content audit list
 
@@ -82,11 +101,12 @@ The items under "Content audit list" in `notes.md` (about 150): the source disag
 
 ## Status
 
-Next: Phase 10, last of the six 2021 to 2024 flag boxes: batches `phase10/y2124-31` to `-34` with `phase10/brief-editions.md`; then tick the 2021 to 2024 box. The batch files are built: do not rebuild, since `superseded.json` changes and the batches would shift. Move the two Phase 8 rules in Decisions into `content-standards.md` when the skill is brought in line.
+Next: Phase 10 correction, box "Surgery 15 to 28". Each box follows the Phase 9 method (see "Phase 9 done" below; `phase10/build_items.py <Subject> <first> <last> <prefix>` writes the item file and `phase10/build.py` stages a spec) and starts from the leads, judgment calls and re-date lists under "Phase 10" in `notes.md`; record a `verdict` on each `superseded.json` entry. Do not rebuild `phase10-by-subject.md` mid-phase: the numbering would shift. Move the two Phase 8 rules in Decisions into `content-standards.md` when the skill is brought in line.
 
 - Counts (2026-11-28): 8,135 questions and 2,359 cards have sources. `P` 11,706 citations in 3,321 strings, `L` 1 (kept), `Lg` 0, `I` 0, `M` 0. Flags: `refsite` 0, `summarypage` 78 strings (161 citations), `narrative` 2 (kept). Year bands, labels and cases included: `historic` 210, `pre2010` 175, `2010-15` 317, `2016-20` 778, `2021-24` 937, `2025-26` 905.
-- Phase 10 flag boxes done: historic (`maps/phase10-historic-verdicts.json`; 13 flagged, 62 items), 2016 to 2020 box 1 (`maps/phase10-2016-20-1-verdicts.json`; 30 flagged, 122 items, 17 of them partial updates), box 2 (`maps/phase10-2016-20-2-verdicts.json`; 19 flagged, 76 items, 9 partial), box 3 (`maps/phase10-2016-20-3-verdicts.json`; 28 flagged, 119 items, 9 partial) box 4 (`maps/phase10-2016-20-4-verdicts.json`; 22 flagged, 114 items, 7 partial; 3 strings unread) and box 5 (`maps/phase10-2016-20-5-verdicts.json`; 20 flagged, 96 items, 8 partial); 2021 to 2024 box 1 (`maps/phase10-2021-24-1-verdicts.json`; 7 flagged, 26 items, 6 partial) box 2 (`maps/phase10-2021-24-2-verdicts.json`; 8 flagged, 33 items, 1 partial), box 3 (`maps/phase10-2021-24-3-verdicts.json`; 8 flagged, 22 items, 3 partial) box 4 (`maps/phase10-2021-24-4-verdicts.json`; 17 flagged, 104 items, 8 partial) and box 5 (`maps/phase10-2021-24-5-verdicts.json`; 19 flagged, 319 items, 240 of them on the CDC 2021 STI guidelines, 10 partial). Leads, judgment calls, items that disagree with current law and weak verdicts are under "Phase 10" in `notes.md`. Give subagents the brief as it stands (web search as well as Crossref before `none`), ask them to read the body's guideline index page where it loads (routes under "Guideline index pages" in `fetch-access.md`), and pass on the fetch routes each finished batch reports. For CDC pages, say that the live page is read by WebFetch (curl returns 403) and ask for a search for a separate newer CDC document as well. Crossref title search fails often and the PubMed list route is unreliable: name the Europe PMC search by curl (`TITLE:"<words>" AND PUB_YEAR:[2024 TO 2026]`). Say that a focused update from the same body is `superseded` with "partial" in the note. Name in each prompt the document types the batch holds and their routes (pages updated in place, PhilHealth archive lists, the body's index page). Say that a `none` resting on search results alone must say so in its note. The merge check is `phase10/merge_box.py y2124 <first> <last> <map name> [--write]`, run from `var/source-audit` (it validates `n` and citation against the items file, appends `superseded` and `amended` to `superseded.json` and writes the map); then confirm each newer DOI on Crossref.
+- Phase 10 correction, Surgery 1 to 14 (2026-11-29): 29 items staged (17 re-cited, 12 corrected, 3 key changes under the WSES 2025 appendicitis edition: i43118, i43121, i43120). Three manual copies read since (hidradenitis, hemorrhoids, AJCC oropharynx): 15 more items staged, 7 corrected, no key change. 2 documents still need a manual copy (7 items wait on them). `stage-quizzes` edits can now reword a choice (`choices: {"B": "..."}`); i25755's choice is staged. Open choice edits and user decisions are under "Phase 10" in `notes.md`.
+- Phase 10 flagging done (2026-11-29): 2,374 strings checked, 224 flagged (`superseded.json` entries with a "Phase 10 flag" note; verdicts per string in `maps/phase10-*-verdicts.json`). Partial updates, wordings to merge, years to re-date and weak `none` verdicts are listed per box under "Phase 10" in `notes.md`. Re-dating and merging wordings are map work for the box whose subject holds the string.
 - Phase 9 done: all 108 citations have a verdict. 109 items re-cited and 32 corrected (one key change, i21671), and 9 dengue items now give the WHO 2025 critical-phase figures. Two editions from one body are not a user decision: the newer one wins. Open user decisions and the documents that need a manual copy (10, after the IgG4-RD guideline was read and i38449 corrected; their items keep the older citation until read) are under "Phase 9" in `notes.md`. Each correction box: build the item file, give batches to subagents with `var/source-audit/phase9/brief.md`, check every `changed` verdict against the saved text before editing, then stage with `phase9/build.py`.
-- Phase 7 done. On 2026-11-28 `superseded.json` was matched to the current strings and the newer editions seen during Phase 8 were added: 108 citations, 307 items (280 entries with the Phase 10 flags). Verdicts go in the JSON; the by-subject file is the worklist.
+- Phase 7 done. On 2026-11-28 `superseded.json` was matched to the current strings and the newer editions seen during Phase 8 were added: 108 citations, 307 items (324 entries with the Phase 10 flags). Verdicts go in the JSON; the by-subject file is the worklist.
 - Drafts rechecked on 2026-11-28 (`maps/phase9-recheck.json`): only the IgG4-RD guideline has published (read, i38449 corrected). Still in draft: KDIGO AKI (one lead in the file to look at), LAST, RCOG Green-top 62, WHO newborn resuscitation, WHO urinary iodine. Recheck these at Phase 12, with the revised child witness rule (A.M. No. 25-03-23-SC; text not yet online).
 - Phase 8 done: every current string has a verdict in `existence.json` (41 unsettled and 6 standing mismatches are kept with a reason; see "Kept strings" in `notes.md`).

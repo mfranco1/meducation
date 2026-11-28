@@ -149,6 +149,7 @@ def test_question_edits_patch_fields_and_refuse_stale_or_foreign(db, staged):
             "id": first["id"],
             "version": first["version"],
             "stem": "S1 corrected",
+            "choices": {"B": "Two reworded"},
             "answer": "A",
             "rationaleMeta": {"sources": "New"},
         },
@@ -162,6 +163,7 @@ def test_question_edits_patch_fields_and_refuse_stale_or_foreign(db, staged):
             **first,
             "version": first["version"] + 1,
             "stem": "S1 corrected",
+            "choices": [{"id": "A", "text": "One"}, {"id": "B", "text": "Two reworded"}],
             "answer": "A",
             "rationaleMeta": {"sources": "New"},
         },
@@ -179,7 +181,10 @@ def test_question_edits_patch_fields_and_refuse_stale_or_foreign(db, staged):
     for name, batch, match in (
         (subject, {"edits": [fresh, edits[1]]}, r"\$\.edits\[1\]\.version is stale"),
         (subject, {"edits": [fresh, fresh]}, "more than once"),
-        (subject, {"edits": [{**fresh, "choices": ["X"]}]}, "not an editable field"),
+        (subject, {"edits": [{**fresh, "choices": ["X"]}]}, "must map choice IDs"),
+        (subject, {"edits": [{**fresh, "choices": {"B": " "}}]}, "non-empty string"),
+        (subject, {"edits": [{**fresh, "choices": {"C": "X"}}]}, "not a choice of the question"),
+        (subject, {"edits": [{**fresh, "oops": 1}]}, "not an editable field"),
         (subject, {"edits": [{"id": first["id"], "version": 2}]}, "must change one of"),
         (other["record"]["name"], {"edits": [fresh]}, "not a question of this subject"),
     ):

@@ -8,7 +8,7 @@ from meducation_api.content.draft import KINDS
 
 CHUNK = 1000
 ITEM_KEYS = {"stem", "choices", "answer", "rationale", "rationaleMeta", "pearls", "metadata"}
-EDIT_KEYS = ("stem", "answer", "rationale", "pearls", "rationaleMeta")
+EDIT_KEYS = ("stem", "choices", "answer", "rationale", "pearls", "rationaleMeta")
 
 
 def _key(name: str) -> str:
@@ -166,6 +166,13 @@ def _plan(batch: Any) -> tuple[list[dict[str, Any]], list[Any]]:
         _versioned(edit, path, set(EDIT_KEYS))
         if not set(EDIT_KEYS) & edit.keys():
             raise _reject(path, f"must change one of {', '.join(EDIT_KEYS)}.")
+        if "choices" in edit:
+            texts = edit["choices"]
+            if not isinstance(texts, dict) or not texts:
+                raise _reject(f"{path}.choices", "must map choice IDs to their new text.")
+            for choice_id, value in texts.items():
+                if not isinstance(value, str) or not value.strip():
+                    raise _reject(f"{path}.choices.{choice_id}", "must be a non-empty string.")
     return list(topics.values()), edits
 
 
@@ -228,7 +235,7 @@ def stage_quizzes(
     service: DraftService, subject_name: str, batch: Any, report: dict[str, Any]
 ) -> None:
     """Patches existing questions of the subject (EDIT_KEYS; a blank `rationaleMeta` removes
-    it), then adds the batch's topics under it. Every edit is checked against one snapshot
+    it; `choices` rewords the named choices in place), then adds the batch's topics under it. Every edit is checked against one snapshot
     before anything is written. `report` fills in as records are saved, so a DraftError
     partway leaves it describing what was already written."""
     plan, edits = _plan(batch)
@@ -238,6 +245,13 @@ def stage_quizzes(
     quiz_ids = {q["id"] for q in snapshot["quizzes"] if q["topicId"] in topic_ids}
     questions = {q["id"]: q for q in snapshot["questions"] if q["quizId"] in quiz_ids}
     _check_current(edits, "$.edits", questions, "question", set())
+    for i, edit in enumerate(edits):
+        known = {c["id"] for c in questions[edit["id"]]["choices"]}
+        for choice_id in edit.get("choices", {}):
+            if choice_id not in known:
+                raise _reject(
+                    f"$.edits[{i}].choices.{choice_id}", "is not a choice of the question."
+                )
     report.update(
         createdTopics=[], createdQuizzes=[], merged=[], questionsAdded=[], edited=[], changeIds=[]
     )
@@ -245,6 +259,11 @@ def stage_quizzes(
         fields = {k: edit[k] for k in EDIT_KEYS if k in edit}
         if "rationaleMeta" in fields:
             fields["rationaleMeta"] = _without_blanks(fields["rationaleMeta"])
+        if "choices" in fields:
+            fields["choices"] = [
+                {**c, "text": fields["choices"].get(c["id"], c["text"])}
+                for c in questions[edit["id"]]["choices"]
+            ]
         done = service.update(KINDS["questions"], edit["id"], edit["version"], fields)
         report["edited"].append(edit["id"])
         if done["changeId"] is not None:
