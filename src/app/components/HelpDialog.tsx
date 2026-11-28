@@ -52,7 +52,7 @@ export const faqs: (readonly [string, ReactNode])[] = [
   ],
   [
     'How do I report a content mistake?',
-    'Choose Report below the question or card. It opens a Telegram message to us that already identifies the item. Add what seems incorrect and send it.',
+    `Choose Report below the question or card. It opens a Telegram message to us that already identifies the item. Add what seems incorrect and send it. Without Telegram, email ${brand.email.support} with the subject, the question or card text, and what seems incorrect.`,
   ],
 ];
 
@@ -85,16 +85,19 @@ export function HelpDialog({ open, onClose }: { open: boolean; onClose: () => vo
             Contact support
           </Typography>
           <Typography variant="body2" sx={{ mb: 1 }}>
-            Message us on Telegram for help or to report a problem.
+            Message us on Telegram or email us for help or to report a problem.
           </Typography>
           <Typography variant="body2" sx={{ mb: 1 }}>
             For an app problem, include what happened, your browser and device, and a screenshot if possible.
           </Typography>
-          <Typography variant="body2" sx={{ mb: 1.5 }}>
+          <Typography variant="body2" sx={{ mb: 1 }}>
             Telegram:{' '}
             <Link href={brand.support.url} target="_blank" rel="noopener noreferrer">
               {brand.support.handle}
             </Link>
+          </Typography>
+          <Typography variant="body2" sx={{ mb: 1.5 }}>
+            Email: <Link href={`mailto:${brand.email.support}`}>{brand.email.support}</Link>
           </Typography>
           <Button component="a" href={brand.support.url} target="_blank" rel="noopener noreferrer" variant="contained">
             Open Telegram

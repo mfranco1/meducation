@@ -17,6 +17,7 @@ export function transformBrandHtml(html: string, base = '/') {
   return html
     .replaceAll('%BRAND_TITLE%', escapeBrandHtml(learnerTitle))
     .replaceAll('%BRAND_ADMIN_TITLE%', escapeBrandHtml(adminTitle))
+    .replaceAll('%BRAND_URL%', escapeBrandHtml(brand.url))
     .replaceAll('%BRAND_THEME_COLOR%', escapeBrandHtml(brand.accentColor))
     .replaceAll('%BRAND_FAVICON_URL%', escapeBrandHtml(faviconUrl));
 }

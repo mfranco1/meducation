@@ -15,14 +15,14 @@ import {
 import { useTheme } from '@mui/material/styles';
 import { brand } from '../../brand';
 
-const lastUpdated = 'October 29, 2026';
+const lastUpdated = 'November 29, 2026';
 
 const Contact = () => (
   <>
     <Link href={brand.support.url} target="_blank" rel="noopener noreferrer">
       {brand.support.handle}
     </Link>{' '}
-    on Telegram
+    on Telegram or <Link href={`mailto:${brand.email.contact}`}>{brand.email.contact}</Link>
   </>
 );
 const P = ({ children }: { children: ReactNode }) => (

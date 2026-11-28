@@ -20,6 +20,10 @@ test('Help stays accessible from the desktop rail and mobile drawer', async ({ p
       'https://t.me/MeducationSupport',
     );
     await expect(dialog.getByRole('link', { name: '@MeducationSupport' })).toBeVisible();
+    await expect(dialog.getByRole('link', { name: 'support@meducation-app.com' })).toHaveAttribute(
+      'href',
+      'mailto:support@meducation-app.com',
+    );
     await dialog.getByRole('button', { name: 'Where is my progress saved?' }).click();
     await expect(dialog.getByText(/Clearing browser data deletes your progress/)).toBeVisible();
     await expect.poll(() => dialog.evaluate((element) => element.scrollWidth <= element.clientWidth)).toBe(true);
