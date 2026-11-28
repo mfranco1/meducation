@@ -18,6 +18,7 @@ Rules every quiz item and flashcard follows. Shared by write-quizzes and write-f
   - A Philippine guideline or DOH program takes precedence where it sets the national standard, mostly for diseases common locally and national programs (TB, HIV, dengue, leptospirosis, immunization, community-acquired pneumonia).
   - When it's unclear which one practice follows, treat it as varying practice (see Facts). Cite the body whose position is keyed.
 - Induced abortion is illegal in the Philippines: never key or teach elective termination, termination for fetal anomaly or selective reduction as an option. Postabortion care and management of spontaneous loss and fetal death stay in scope.
+- Mifepristone and misoprostol are not registered in the Philippines: test their pharmacology or guideline use with a note saying so (rationale or card back), and key the drug or procedure used locally for clinical management.
 - Legal Medicine: current law only, with no superseded rules or outdated forensics.
 
 ## Originality
