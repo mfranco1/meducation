@@ -204,7 +204,7 @@ export function StudyNavigationFooter({
   report?: { kind: 'Question' | 'Card'; id: string };
 }) {
   return (
-    <Stack direction="row" sx={{ justifyContent: report ? 'space-between' : 'flex-end', alignItems: 'center', mt: 3 }}>
+    <Stack direction="row" sx={{ flexWrap: 'wrap', alignItems: 'center', rowGap: 1, mt: 3 }}>
       {report && (
         <Button
           href={reportUrl(report)}
@@ -220,7 +220,7 @@ export function StudyNavigationFooter({
           </Box>
         </Button>
       )}
-      <Stack direction="row" spacing={1}>
+      <Stack direction="row" spacing={1} sx={{ ml: 'auto' }}>
         <Button startIcon={<ArrowBackRoundedIcon />} disabled={!hasPrevious || disabled} onClick={onPrevious}>
           Previous
         </Button>
